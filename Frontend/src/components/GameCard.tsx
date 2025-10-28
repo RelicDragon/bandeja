@@ -294,11 +294,11 @@ export const GameCard = ({
             <div className={`text-sm px-3 py-2 rounded-lg ${
               resultStatus.message === 'games.results.problems.accessDenied'
                 ? 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
-                : resultStatus.canModify 
+                : resultStatus.canModify
                   ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800'
                   : 'bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400'
             }`}>
-              {t(resultStatus.message)}
+              {resultStatus.message.split(' • ').map(key => t(key)).join(' • ')}
             </div>
           </div>
         )}
