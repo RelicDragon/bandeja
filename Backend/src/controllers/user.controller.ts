@@ -47,8 +47,8 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
     success: true,
     data: {
       ...user,
-      avatar: user.avatar ? UrlConstructor.constructImageUrl(user.avatar) : user.avatar,
-      originalAvatar: user.originalAvatar ? UrlConstructor.constructImageUrl(user.originalAvatar) : user.originalAvatar,
+      //avatar: user.avatar ? UrlConstructor.constructImageUrl(user.avatar) : user.avatar,
+      //originalAvatar: user.originalAvatar ? UrlConstructor.constructImageUrl(user.originalAvatar) : user.originalAvatar,
     },
   });
 });
@@ -281,8 +281,8 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     data: {
       user: {
         ...user,
-        avatar: user.avatar ? UrlConstructor.constructImageUrl(user.avatar) : user.avatar,
-        originalAvatar: user.originalAvatar ? UrlConstructor.constructImageUrl(user.originalAvatar) : user.originalAvatar,
+        //avatar: user.avatar ? UrlConstructor.constructImageUrl(user.avatar) : user.avatar,
+        //originalAvatar: user.originalAvatar ? UrlConstructor.constructImageUrl(user.originalAvatar) : user.originalAvatar,
       },
       levelHistory: levelHistory.reverse(),
       gamesLast30Days,
