@@ -127,7 +127,7 @@ export class MessageService {
   static async createMessage(data: {
     gameId: string;
     senderId: string;
-    content: string;
+    content?: string;
     mediaUrls: string[];
     replyToId?: string;
     chatType: ChatType;

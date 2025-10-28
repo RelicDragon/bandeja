@@ -8,6 +8,9 @@ export const config = {
   // API base URL
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
   
+  // Telegram bot URL
+  telegramBotUrl: import.meta.env.VITE_TELEGRAM_BOT_URL || 'https://t.me/bandeja_padel_dev_bot',
+  
   // Helper function to construct full media URL from relative path
   getMediaUrl: (relativePath: string): string => {
     if (!relativePath) return '';

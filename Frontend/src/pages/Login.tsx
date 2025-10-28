@@ -5,6 +5,7 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 import { Button, Input, OTPInput } from '@/components';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
+import { config } from '@/config/media';
 
 export const Login = () => {
   const { t } = useTranslation();
@@ -70,7 +71,7 @@ export const Login = () => {
   const handleTelegramClick = () => {
     const telegramId = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
     localStorage.setItem('telegramId', telegramId);
-    window.open('https://t.me/bandeja_padel_bot', '_blank');
+    window.open(config.telegramBotUrl, '_blank');
   };
 
   return (

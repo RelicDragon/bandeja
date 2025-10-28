@@ -25,7 +25,7 @@ router.post(
   '/messages',
   validate([
     body('gameId').notEmpty().withMessage('Game ID is required'),
-    body('content').notEmpty().withMessage('Message content is required'),
+    body('content').optional().isString().withMessage('Message content must be a string'),
     body('mediaUrls').optional().isArray().withMessage('Media URLs must be an array'),
     body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type')
   ]),

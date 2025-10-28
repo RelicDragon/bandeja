@@ -69,7 +69,7 @@ export interface MessageReadReceipt {
 
 export interface CreateMessageRequest {
   gameId: string;
-  content: string;
+  content?: string;
   mediaUrls?: string[];
   thumbnailUrls?: string[];
   replyToId?: string;

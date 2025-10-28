@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { chatApi, CreateMessageRequest, ChatMessage } from '@/api/chat';
@@ -32,6 +32,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const imagePreviewUrls = useMemo(() => {
+    return selectedImages.map(file => URL.createObjectURL(file));
+  }, [selectedImages]);
+
+  useEffect(() => {
+    return () => {
+      imagePreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [imagePreviewUrls]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -104,9 +114,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     try {
       const { originalUrls, thumbnailUrls } = await uploadImages();
       
+      const trimmedContent = message.trim();
       const messageData: CreateMessageRequest = {
         gameId,
-        content: message.trim(),
+        content: trimmedContent || undefined,
         mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
         thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
         replyToId: replyTo?.id,
@@ -149,10 +160,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
       {selectedImages.length > 0 && (
         <div className="mb-3 flex gap-2 overflow-x-auto">
-          {selectedImages.map((file, index) => (
+          {imagePreviewUrls.map((url, index) => (
             <div key={index} className="relative flex-shrink-0">
               <img
-                src={URL.createObjectURL(file)}
+                src={url}
                 alt={`Preview ${index + 1}`}
                 className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
               />

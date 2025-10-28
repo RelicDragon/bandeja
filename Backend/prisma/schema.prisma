@@ -377,7 +377,7 @@ model ChatMessage {
   id            String               @id @default(cuid())
   gameId        String
   senderId      String?
-  content       String
+  content       String?
   mediaUrls     String[]
   thumbnailUrls String[]
   state         MessageState         @default(SENT)
