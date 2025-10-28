@@ -47,6 +47,9 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
   const [invitedPlayers, setInvitedPlayers] = useState<InvitablePlayer[]>([]);
   const [showPastTimes, setShowPastTimes] = useState<boolean>(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const clubSectionRef = useRef<HTMLDivElement>(null);
+  const timeSectionRef = useRef<HTMLDivElement>(null);
+  const durationSectionRef = useRef<HTMLDivElement>(null);
 
   const generateTimeOptionsForDate = useCallback((date: Date) => {
     const times = [];
@@ -235,8 +238,33 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
     }
   };
 
+  const scrollToAndHighlightError = (ref: React.RefObject<HTMLDivElement>) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      ref.current.classList.add('error-bounce');
+      setTimeout(() => {
+        ref.current?.classList.remove('error-bounce');
+      }, 2000);
+    }
+  };
+
   const handleCreateGame = async () => {
     if (!user) return;
+
+    if (!selectedClub) {
+      scrollToAndHighlightError(clubSectionRef);
+      return;
+    }
+
+    if (!selectedTime || selectedTime === '') {
+      scrollToAndHighlightError(timeSectionRef);
+      return;
+    }
+
+    if (!duration) {
+      scrollToAndHighlightError(durationSectionRef);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -318,26 +346,28 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-6">
 
-        <LocationSection
-          clubs={clubs}
-          courts={courts}
-          selectedClub={selectedClub}
-          selectedCourt={selectedCourt}
-          hasBookedCourt={hasBookedCourt}
-          isClubModalOpen={isClubModalOpen}
-          isCourtModalOpen={isCourtModalOpen}
-          entityType={entityType}
-          onSelectClub={(id: string) => {
-            setSelectedClub(id);
-            setSelectedCourt('notBooked');
-          }}
-          onSelectCourt={setSelectedCourt}
-          onToggleHasBookedCourt={setHasBookedCourt}
-          onOpenClubModal={() => setIsClubModalOpen(true)}
-          onCloseClubModal={() => setIsClubModalOpen(false)}
-          onOpenCourtModal={() => setIsCourtModalOpen(true)}
-          onCloseCourtModal={() => setIsCourtModalOpen(false)}
-        />
+        <div ref={clubSectionRef}>
+          <LocationSection
+            clubs={clubs}
+            courts={courts}
+            selectedClub={selectedClub}
+            selectedCourt={selectedCourt}
+            hasBookedCourt={hasBookedCourt}
+            isClubModalOpen={isClubModalOpen}
+            isCourtModalOpen={isCourtModalOpen}
+            entityType={entityType}
+            onSelectClub={(id: string) => {
+              setSelectedClub(id);
+              setSelectedCourt('notBooked');
+            }}
+            onSelectCourt={setSelectedCourt}
+            onToggleHasBookedCourt={setHasBookedCourt}
+            onOpenClubModal={() => setIsClubModalOpen(true)}
+            onCloseClubModal={() => setIsClubModalOpen(false)}
+            onOpenCourtModal={() => setIsCourtModalOpen(true)}
+            onCloseCourtModal={() => setIsCourtModalOpen(false)}
+          />
+        </div>
 
         {entityType !== 'BAR' && entityType !== 'TRAINING' && (
           <PlayerLevelSection
@@ -386,35 +416,39 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
           onCommentsChange={setComments}
         />
 
-        <GameStartSection
-          selectedDate={selectedDate}
-          selectedTime={selectedTime}
-          duration={duration}
-          showPastTimes={showPastTimes}
-          showDatePicker={showDatePicker}
-          selectedClub={selectedClub}
-          generateTimeOptions={generateTimeOptions}
-          generateTimeOptionsForDate={generateTimeOptionsForDate}
-          canAccommodateDuration={canAccommodateDuration}
-          getAdjustedStartTime={getAdjustedStartTime}
-          getTimeSlotsForDuration={getTimeSlotsForDuration}
-          isSlotHighlighted={isSlotHighlighted}
-          getDurationLabel={getDurationLabel}
-          onDateSelect={(date) => {
-            setSelectedDate(date);
-          }}
-          onCalendarClick={() => setShowDatePicker(true)}
-          onToggleShowPastTimes={setShowPastTimes}
-          onCloseDatePicker={() => setShowDatePicker(false)}
-          onTimeSelect={setSelectedTime}
-          onDurationChange={setDuration}
-          entityType={entityType}
-          dateInputRef={dateInputRef}
-        />
+        <div ref={timeSectionRef}>
+          <div ref={durationSectionRef}>
+            <GameStartSection
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              duration={duration}
+              showPastTimes={showPastTimes}
+              showDatePicker={showDatePicker}
+              selectedClub={selectedClub}
+              generateTimeOptions={generateTimeOptions}
+              generateTimeOptionsForDate={generateTimeOptionsForDate}
+              canAccommodateDuration={canAccommodateDuration}
+              getAdjustedStartTime={getAdjustedStartTime}
+              getTimeSlotsForDuration={getTimeSlotsForDuration}
+              isSlotHighlighted={isSlotHighlighted}
+              getDurationLabel={getDurationLabel}
+              onDateSelect={(date) => {
+                setSelectedDate(date);
+              }}
+              onCalendarClick={() => setShowDatePicker(true)}
+              onToggleShowPastTimes={setShowPastTimes}
+              onCloseDatePicker={() => setShowDatePicker(false)}
+              onTimeSelect={setSelectedTime}
+              onDurationChange={setDuration}
+              entityType={entityType}
+              dateInputRef={dateInputRef}
+            />
+          </div>
+        </div>
 
         <Button
           onClick={handleCreateGame}
-          disabled={loading || !selectedClub || !selectedTime || selectedTime === '' || !duration}
+          disabled={loading}
           className="w-full py-3 text-base font-semibold mt-4"
           size="lg"
         >
