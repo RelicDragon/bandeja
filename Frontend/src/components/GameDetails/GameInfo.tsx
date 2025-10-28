@@ -12,6 +12,7 @@ import {
   Beer,
   Crown,
   Ban,
+  Navigation,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -24,18 +25,34 @@ interface GameInfoProps {
   onEditCourt: () => void;
 }
 
-export const GameInfo = ({ 
-  game, 
-  isOwner, 
-  isGuest, 
-  courts, 
-  onToggleFavorite, 
-  onEditCourt 
+export const GameInfo = ({
+  game,
+  isOwner,
+  isGuest,
+  courts,
+  onToggleFavorite,
+  onEditCourt
 }: GameInfoProps) => {
   const { t } = useTranslation();
 
+  const handleNavigate = () => {
+    const club = game.court?.club || game.club;
+    if (!club) return;
+
+    const destination = encodeURIComponent(`${club.city?.country}+${club.city?.name}+${club.address}`);
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+    window.open(url, '_blank');
+  };
+
   return (
-    <Card>
+    <Card className="relative">
+      <button
+        onClick={handleNavigate}
+        className="absolute top-4 right-4 p-2 rounded-lg border border-primary-300 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors z-10"
+        title={t('gameDetails.navigateToClub')}
+      >
+        <Navigation size={20} className="text-primary-600 dark:text-primary-400" />
+      </button>
       <div className="flex items-start justify-between mb-4">
         <div>
           <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -134,12 +151,12 @@ export const GameInfo = ({
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 title={game.isClubFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
               >
-                <Star 
-                  size={20} 
-                  className={game.isClubFavorite 
-                    ? 'text-yellow-500 fill-yellow-500' 
+                <Star
+                  size={20}
+                  className={game.isClubFavorite
+                    ? 'text-yellow-500 fill-yellow-500'
                     : 'text-gray-400 hover:text-yellow-500'
-                  } 
+                  }
                 />
               </button>
             </div>

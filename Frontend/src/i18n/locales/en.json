@@ -344,7 +344,8 @@
     "editHall": "Edit Hall",
     "courtUpdated": "Court updated successfully",
     "hallUpdated": "Hall updated successfully",
-    "settingsUpdated": "Settings updated successfully"
+    "settingsUpdated": "Settings updated successfully",
+    "navigateToClub": "Navigate to club"
   },
   "common": {
     "yes": "Yes",
