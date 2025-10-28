@@ -1,0 +1,1 @@
+ssh -N -L 9000:127.0.0.1:8080 root@back.bandeja.com -i ~/.ssh/id_hetzner

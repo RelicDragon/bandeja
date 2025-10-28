@@ -1,0 +1,523 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+model User {
+  id                      String               @id @default(cuid())
+  phone                   String?              @unique
+  email                   String?              @unique
+  telegramId              String?              @unique
+  telegramUsername        String?
+  firstName               String?
+  lastName                String?
+  avatar                  String?
+  originalAvatar          String?
+  authProvider            AuthProvider
+  passwordHash            String?
+  isActive                Boolean              @default(true)
+  level                   Float                @default(1.0)
+  reliability             Float                @default(0)
+  totalPoints             Int                  @default(0)
+  gamesPlayed             Int                  @default(0)
+  gamesWon                Int                  @default(0)
+  currentCityId           String?
+  language                String?
+  preferredHandLeft       Boolean              @default(false)
+  preferredHandRight      Boolean              @default(false)
+  preferredCourtSideLeft  Boolean              @default(false)
+  preferredCourtSideRight Boolean              @default(false)
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  isAdmin                 Boolean              @default(false)
+  isTrainer               Boolean              @default(false)
+  gender                  Gender               @default(PREFER_NOT_TO_SAY)
+  chatMessages            ChatMessage[]
+  participateInGames      GameParticipant[]    @relation("ParticipantUser")
+  receivedInvites         Invite[]             @relation("InviteReceiver")
+  sentInvites             Invite[]             @relation("InviteSender")
+  messageReactions        MessageReaction[]
+  messageReadReceipts     MessageReadReceipt[]
+  currentCity             City?                @relation("UserCurrentCity", fields: [currentCityId], references: [id])
+  favoriteClubs           UserFavoriteClub[]
+  interactionsFrom        UserInteraction[]    @relation("InteractionFromUser")
+  interactionsTo          UserInteraction[]    @relation("InteractionToUser")
+  teamPlayers             TeamPlayer[]
+  roundOutcomes           RoundOutcome[]
+  gameOutcomes            GameOutcome[]
+  gameTeamPlayers         GameTeamPlayer[]
+
+  @@index([phone])
+  @@index([telegramId])
+  @@index([currentCityId])
+  @@index([level])
+  @@index([totalPoints])
+}
+
+model City {
+  id        String   @id @default(cuid())
+  name      String
+  country   String
+  timezone  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clubs     Club[]
+  users     User[]   @relation("UserCurrentCity")
+
+  @@index([isActive])
+}
+
+model Club {
+  id          String             @id @default(cuid())
+  name        String
+  description String?
+  address     String
+  cityId      String
+  phone       String?
+  email       String?
+  website     String?
+  latitude    Float?
+  longitude   Float?
+  openingTime String?
+  closingTime String?
+  amenities   Json?
+  isActive    Boolean            @default(true)
+  isBar       Boolean            @default(false)
+  isForPlaying Boolean           @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  city        City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  courts      Court[]
+  games       Game[]
+  favoritedBy UserFavoriteClub[]
+
+  @@index([cityId])
+  @@index([isActive])
+}
+
+model Court {
+  id           String   @id @default(cuid())
+  name         String
+  clubId       String
+  courtType    String?
+  isIndoor     Boolean  @default(false)
+  surfaceType  String?
+  pricePerHour Float?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  club         Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  games        Game[]
+
+  @@index([clubId])
+  @@index([isActive])
+}
+
+model Game {
+  id              String            @id @default(cuid())
+  entityType      EntityType
+  gameType        GameType
+  name            String?
+  description     String?
+  clubId          String?
+  courtId         String?
+  startTime       DateTime
+  endTime         DateTime
+  maxParticipants Int               @default(4)
+  minParticipants Int               @default(2)
+  minLevel        Float?
+  maxLevel        Float?
+  isPublic        Boolean           @default(true)
+  affectsRating   Boolean           @default(true)
+  anyoneCanInvite Boolean           @default(false)
+  resultsByAnyone Boolean           @default(false)
+  hasBookedCourt  Boolean           @default(false)
+  afterGameGoToBar Boolean          @default(false)
+  hasFixedTeams   Boolean           @default(false)
+  teamsReady      Boolean           @default(false)
+  participantsReady Boolean         @default(false)
+  status          String            @default("scheduled")
+  hasResults      Boolean           @default(false)
+  mediaUrls       String[]
+  parentId        String?
+  metadata        Json?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  chatMessages    ChatMessage[]
+  club            Club?             @relation(fields: [clubId], references: [id])
+  court           Court?            @relation(fields: [courtId], references: [id])
+  parent          Game?             @relation("GameHierarchy", fields: [parentId], references: [id])
+  children        Game[]            @relation("GameHierarchy")
+  participants    GameParticipant[]
+  invites         Invite[]
+  rounds          Round[]
+  outcomes        GameOutcome[]
+  fixedTeams      GameTeam[]
+
+  @@index([clubId])
+  @@index([courtId])
+  @@index([startTime])
+  @@index([status])
+  @@index([entityType])
+  @@index([parentId])
+  @@index([affectsRating])
+  @@index([hasResults])
+  @@index([hasFixedTeams])
+}
+
+
+model GameParticipant {
+  id        String          @id @default(cuid())
+  userId    String
+  gameId    String
+  role      ParticipantRole
+  isPlaying Boolean         @default(true)
+  joinedAt  DateTime        @default(now())
+  stats     Json?
+  game      Game            @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User            @relation("ParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+  @@index([userId])
+  @@index([gameId])
+  @@index([role])
+  @@index([isPlaying])
+}
+
+model Invite {
+  id         String       @id @default(cuid())
+  senderId   String
+  receiverId String
+  gameId     String?
+  status     InviteStatus @default(PENDING)
+  message    String?
+  expiresAt  DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  game       Game?        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  receiver   User         @relation("InviteReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender     User         @relation("InviteSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([gameId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model Round {
+  id          String         @id @default(cuid())
+  gameId      String
+  roundNumber Int
+  status      RoundStatus    @default(IN_PROGRESS)
+  metadata    Json?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  game        Game           @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  matches     Match[]
+  outcomes    RoundOutcome[]
+
+  @@unique([gameId, roundNumber])
+  @@index([gameId])
+  @@index([status])
+}
+
+model Match {
+  id          String      @id @default(cuid())
+  roundId     String
+  matchNumber Int
+  status      MatchStatus @default(IN_PROGRESS)
+  winnerId    String?
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  round       Round       @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  winner      Team?       @relation("MatchWinner", fields: [winnerId], references: [id])
+  teams       Team[]
+  sets        Set[]
+
+  @@index([roundId])
+  @@index([status])
+  @@index([winnerId])
+}
+
+model Team {
+  id          String       @id @default(cuid())
+  matchId     String
+  teamNumber  Int
+  score       Int          @default(0)
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  match       Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  players     TeamPlayer[]
+  wonMatches  Match[]      @relation("MatchWinner")
+
+  @@index([matchId])
+}
+
+model TeamPlayer {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  createdAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+model Set {
+  id         String   @id @default(cuid())
+  matchId    String
+  setNumber  Int
+  teamAScore Int      @default(0)
+  teamBScore Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, setNumber])
+  @@index([matchId])
+}
+
+model RoundOutcome {
+  id          String   @id @default(cuid())
+  roundId     String
+  userId      String
+  levelChange Float    @default(0)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  round       Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, userId])
+  @@index([roundId])
+  @@index([userId])
+}
+
+model GameOutcome {
+  id                String   @id @default(cuid())
+  gameId            String
+  userId            String
+  levelBefore       Float
+  levelAfter        Float
+  levelChange       Float
+  reliabilityBefore Float
+  reliabilityAfter  Float
+  reliabilityChange Float
+  pointsEarned      Int      @default(0)
+  position          Int?
+  isWinner          Boolean  @default(false)
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  game              Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId])
+  @@index([gameId])
+  @@index([userId])
+  @@index([isWinner])
+}
+
+model GameTeam {
+  id         String           @id @default(cuid())
+  gameId     String
+  teamNumber Int
+  name       String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  game       Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  players    GameTeamPlayer[]
+
+  @@unique([gameId, teamNumber])
+  @@index([gameId])
+}
+
+model GameTeamPlayer {
+  id         String   @id @default(cuid())
+  gameTeamId String
+  userId     String
+  createdAt  DateTime @default(now())
+  gameTeam   GameTeam @relation(fields: [gameTeamId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameTeamId, userId])
+  @@index([gameTeamId])
+  @@index([userId])
+}
+
+model UserInteraction {
+  id                String   @id @default(cuid())
+  fromUserId        String
+  toUserId          String
+  count             Int      @default(1)
+  lastInteractionAt DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  fromUser          User     @relation("InteractionFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser            User     @relation("InteractionToUser", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([count])
+}
+
+model ChatMessage {
+  id            String               @id @default(cuid())
+  gameId        String
+  senderId      String?
+  content       String
+  mediaUrls     String[]
+  thumbnailUrls String[]
+  state         MessageState         @default(SENT)
+  chatType      ChatType             @default(PUBLIC)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  replyToId     String?
+  game          Game                 @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  replyTo       ChatMessage?         @relation("MessageReply", fields: [replyToId], references: [id])
+  replies       ChatMessage[]        @relation("MessageReply")
+  sender        User?                @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reactions     MessageReaction[]
+  readReceipts  MessageReadReceipt[]
+
+  @@index([gameId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([state])
+  @@index([replyToId])
+  @@index([chatType])
+}
+
+model MessageReaction {
+  id        String      @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime    @default(now())
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+}
+
+model MessageReadReceipt {
+  id        String      @id @default(cuid())
+  messageId String
+  userId    String
+  readAt    DateTime    @default(now())
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+}
+
+model UserFavoriteClub {
+  id        String   @id @default(cuid())
+  userId    String
+  clubId    String
+  createdAt DateTime @default(now())
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clubId])
+  @@index([userId])
+  @@index([clubId])
+}
+
+enum AuthProvider {
+  PHONE
+  TELEGRAM
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  PREFER_NOT_TO_SAY
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum GameType {
+  CLASSIC
+  AMERICANO
+  MEXICANO
+  ROUND_ROBIN
+  WINNER_COURT
+}
+
+enum EntityType {
+  GAME
+  TOURNAMENT
+  LEAGUE
+  BAR
+  TRAINING
+}
+
+enum ParticipantRole {
+  OWNER
+  ADMIN
+  PARTICIPANT
+}
+
+enum MessageState {
+  SENT
+  DELIVERED
+  READ
+}
+
+enum ChatType {
+  PUBLIC
+  PRIVATE
+  ADMINS
+}
+
+enum RoundStatus {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MatchStatus {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model TelegramOtp {
+  id              String   @id @default(cuid())
+  code            String   @db.VarChar(6)
+  telegramId      String   @db.VarChar(255)
+  username        String?  @db.VarChar(255)
+  firstName       String?  @db.VarChar(255)
+  lastName        String?  @db.VarChar(255)
+  languageCode    String?  @db.VarChar(10)
+  chatId          String?  @db.VarChar(255)
+  textMessageId   String?  @db.VarChar(255)
+  codeMessageId   String?  @db.VarChar(255)
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+
+  @@index([code])
+  @@index([telegramId])
+  @@index([expiresAt])
+}

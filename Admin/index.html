@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PadelPulse Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="loginPage" class="login-page">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>🎾 PadelPulse</h1>
+                <p>Admin Dashboard</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" placeholder="+1234567890" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn-primary">Login</button>
+                <div id="loginError" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="dashboardPage" class="dashboard-page" style="display: none;">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>🎾 PadelPulse</h2>
+                <p class="admin-name" id="adminName"></p>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#" data-page="overview" class="nav-link active">📊 Overview</a></li>
+                <li><a href="#" data-page="users" class="nav-link">👥 Users</a></li>
+                <li><a href="#" data-page="games" class="nav-link">🎮 Games</a></li>
+                <li><a href="#" data-page="invites" class="nav-link">📨 Invites</a></li>
+                <li><a href="#" data-page="cities" class="nav-link">🌆 Cities</a></li>
+                <li><a href="#" data-page="clubs" class="nav-link">🏢 Clubs</a></li>
+                <li><a href="#" data-page="logs" class="nav-link">📋 Logs</a></li>
+            </ul>
+            <button id="logoutBtn" class="btn-logout">Logout</button>
+        </nav>
+
+        <main class="main-content">
+            <div class="global-filter">
+                <div class="filter-group">
+                    <label for="globalCityFilter">🌆 Filter by City:</label>
+                    <select id="globalCityFilter" onchange="handleGlobalCityChange()">
+                        <option value="">All Cities</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="overviewPage" class="content-page active">
+                <h1>Dashboard Overview</h1>
+                <div class="stats-grid">
+                    <div class="stat-card clickable" data-page="users">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Total Users</p>
+                            <p class="stat-value" id="totalUsers">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card clickable" data-page="games">
+                        <div class="stat-icon">🎮</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Total Games</p>
+                            <p class="stat-value" id="totalGames">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card clickable" data-page="cities">
+                        <div class="stat-icon">🌆</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Active Cities</p>
+                            <p class="stat-value" id="totalCities">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card clickable" data-page="clubs">
+                        <div class="stat-icon">🏢</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Clubs</p>
+                            <p class="stat-value" id="totalClubs">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card clickable" data-page="games">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Active Games</p>
+                            <p class="stat-value" id="activeGames">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="usersPage" class="content-page">
+                <div class="page-header">
+                    <h1>Users Management</h1>
+                    <button class="btn-primary" onclick="createUserModal()">+ Add User</button>
+                </div>
+                <div class="table-container">
+                    <table id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Gender</th>
+                                <th>Level</th>
+                                <th>Games Played</th>
+                                <th>Points</th>
+                                <th>Status</th>
+                                <th>Admin</th>
+                                <th>Trainer</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="gamesPage" class="content-page">
+                <h1>Games Management</h1>
+                <div class="table-container">
+                    <table id="gamesTable">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Location</th>
+                                <th>Start Time</th>
+                                <th>Participants</th>
+                                <th>Status</th>
+                                <th>Has Results</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gamesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="invitesPage" class="content-page">
+                <div class="page-header">
+                    <h1>Pending Invites</h1>
+                    <div class="invites-controls">
+                        <button class="btn-secondary" onclick="refreshInvites()">Refresh</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="invitesTable">
+                        <thead>
+                            <tr>
+                                <th>Game</th>
+                                <th>Sender</th>
+                                <th>Receiver</th>
+                                <th>Location</th>
+                                <th>Start Time</th>
+                                <th>Message</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invitesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="citiesPage" class="content-page">
+                <div class="page-header">
+                    <h1>Cities Management</h1>
+                    <button class="btn-primary" onclick="createCityModal()">+ Add City</button>
+                </div>
+                <div class="table-container">
+                    <table id="citiesTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Country</th>
+                                <th>Timezone</th>
+                                <th>Clubs</th>
+                                <th>Users</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="citiesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="clubsPage" class="content-page">
+                <div id="centersList" class="centers-view">
+                    <div class="page-header">
+                        <h1>Clubs Management</h1>
+                        <button class="btn-primary" onclick="createCenterModal()">+ Add Club</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="centersTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>City</th>
+                                    <th>Address</th>
+                                    <th>Courts</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="centersTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="courtsView" class="courts-view" style="display: none;">
+                    <div class="page-header">
+                        <button class="btn-secondary" onclick="backToCenters()">← Back to Centers</button>
+                        <div class="center-info">
+                            <h1 id="centerName"></h1>
+                            <p id="centerLocation"></p>
+                        </div>
+                        <button class="btn-primary" onclick="createCourtForCenter()">+ Add Court</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="courtsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Indoor/Outdoor</th>
+                                    <th>Surface Type</th>
+                                    <th>Price/Hour</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="courtsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="logsPage" class="content-page">
+                <div class="page-header">
+                    <h1>Backend Logs</h1>
+                    <div class="logs-controls">
+                        <button class="btn-secondary" onclick="loadHistoricalLogs()">Load Historical</button>
+                        <button class="btn-primary" id="toggleStreamBtn" onclick="toggleLogStream()">Start Stream</button>
+                        <button class="btn-danger" onclick="clearLogs()">Clear Logs</button>
+                    </div>
+                </div>
+                <div class="logs-container">
+                    <div class="logs-status">
+                        <span id="logsStatus">📋 Idle</span>
+                        <span id="logsCount">0 logs</span>
+                    </div>
+                    <div id="logsOutput" class="logs-output"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="cityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="cityModalTitle">Create City</h2>
+                <button class="modal-close" onclick="closeModal('cityModal')">&times;</button>
+            </div>
+            <form id="cityForm" onsubmit="handleCitySubmit(event)">
+                <div class="form-group">
+                    <label for="cityName">Name *</label>
+                    <input type="text" id="cityName" required>
+                </div>
+                <div class="form-group">
+                    <label for="cityCountry">Country *</label>
+                    <select id="cityCountry" required>
+                        <option value="">Select Country</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cityTimezone">Timezone</label>
+                    <select id="cityTimezone">
+                        <option value="">Default (Central European Time)</option>
+                    </select>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="cityIsActive" checked>
+                    <label for="cityIsActive">Active</label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('cityModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="centerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="centerModalTitle">Create Club</h2>
+                <button class="modal-close" onclick="closeModal('centerModal')">&times;</button>
+            </div>
+            <form id="centerForm" onsubmit="handleCenterSubmit(event)">
+                <div class="form-group">
+                    <label for="centerName">Name *</label>
+                    <input type="text" id="centerName" name="centerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="centerCityId">City *</label>
+                    <select id="centerCityId" name="centerCityId" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="centerAddress">Address *</label>
+                    <input type="text" id="centerAddress" name="centerAddress" required>
+                </div>
+                <div class="form-group">
+                    <label for="centerDescription">Description</label>
+                    <textarea id="centerDescription" name="centerDescription" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="centerPhone">Phone</label>
+                        <input type="tel" id="centerPhone" name="centerPhone">
+                    </div>
+                    <div class="form-group">
+                        <label for="centerEmail">Email</label>
+                        <input type="email" id="centerEmail" name="centerEmail">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="centerWebsite">Website</label>
+                    <input type="url" id="centerWebsite" name="centerWebsite">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="centerOpeningTime">Opening Time</label>
+                        <input type="time" id="centerOpeningTime" name="centerOpeningTime">
+                    </div>
+                    <div class="form-group">
+                        <label for="centerClosingTime">Closing Time</label>
+                        <input type="time" id="centerClosingTime" name="centerClosingTime">
+                    </div>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="centerIsActive" checked>
+                    <label for="centerIsActive">Active</label>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="centerIsBar">
+                    <label for="centerIsBar">Is Bar</label>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="centerIsForPlaying" checked>
+                    <label for="centerIsForPlaying">Is For Playing</label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('centerModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="courtModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="courtModalTitle">Create Court</h2>
+                <button class="modal-close" onclick="closeModal('courtModal')">&times;</button>
+            </div>
+            <form id="courtForm" onsubmit="handleCourtSubmit(event)">
+                <div class="form-group">
+                        <label>Club</label>
+                    <div class="form-readonly" id="courtCenterName"></div>
+                    <input type="hidden" id="courtClubId">
+                </div>
+                <div class="form-group">
+                    <label for="courtName">Court Name *</label>
+                    <input type="text" id="courtName" placeholder="e.g., Court 1" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="courtType">Court Type</label>
+                        <input type="text" id="courtType" placeholder="e.g., Standard">
+                    </div>
+                    <div class="form-group">
+                        <label for="courtSurfaceType">Surface Type</label>
+                        <input type="text" id="courtSurfaceType" placeholder="e.g., Glass">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="courtPricePerHour">Price per Hour ($)</label>
+                    <input type="number" id="courtPricePerHour" step="0.01" min="0">
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="courtIsIndoor">
+                    <label for="courtIsIndoor">Indoor</label>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="courtIsActive" checked>
+                    <label for="courtIsActive">Active</label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('courtModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="userModalTitle">Create User</h2>
+                <button class="modal-close" onclick="closeModal('userModal')">&times;</button>
+            </div>
+            <form id="userForm" onsubmit="handleUserSubmit(event)">
+                <div class="form-group">
+                    <label for="userPhone">Phone Number *</label>
+                    <input type="tel" id="userPhone" placeholder="+1234567890" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userFirstName">First Name</label>
+                        <input type="text" id="userFirstName" placeholder="John">
+                    </div>
+                    <div class="form-group">
+                        <label for="userLastName">Last Name</label>
+                        <input type="text" id="userLastName" placeholder="Doe">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email</label>
+                    <input type="email" id="userEmail" placeholder="user@example.com">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userGender">Gender *</label>
+                        <select id="userGender" required>
+                            <option value="PREFER_NOT_TO_SAY" selected>Prefer not to say</option>
+                            <option value="MALE">Male</option>
+                            <option value="FEMALE">Female</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="userLevel">Level (0-7)</label>
+                        <input type="number" id="userLevel" step="0.5" min="0" max="7" value="3.5">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userCityId">City</label>
+                        <select id="userCityId">
+                            <option value="">No City</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="userIsActive" checked>
+                    <label for="userIsActive">Active</label>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="userIsAdmin">
+                    <label for="userIsAdmin">Admin</label>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="userIsTrainer">
+                    <label for="userIsTrainer">Trainer</label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('userModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="resetPasswordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Reset User Password</h2>
+                <button class="modal-close" onclick="closeModal('resetPasswordModal')">&times;</button>
+            </div>
+            <form id="resetPasswordForm" onsubmit="handleResetPasswordSubmit(event)">
+                <p style="margin-bottom: 1rem;">Reset password for: <strong id="resetPasswordUserName"></strong></p>
+                <div class="form-group">
+                    <label for="newPassword">New Password *</label>
+                    <input type="password" id="newPassword" placeholder="Enter new password" minlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password *</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm new password" minlength="6" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('resetPasswordModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="gameModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="gameModalTitle">View Game</h2>
+                <button class="modal-close" onclick="closeModal('gameModal')">&times;</button>
+            </div>
+            <div id="gameModalContent">
+                <div class="game-info-section">
+                    <h3>Game Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Entity Type</label>
+                            <div class="form-readonly" id="gameEntityType"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Game Type</label>
+                            <div class="form-readonly" id="gameGameType"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <div class="form-readonly" id="gameName"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <div class="form-readonly" id="gameDescription"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Start Time</label>
+                            <div class="form-readonly" id="gameStartTime"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>End Time</label>
+                            <div class="form-readonly" id="gameEndTime"></div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Min Participants</label>
+                            <div class="form-readonly" id="gameMinParticipants"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Max Participants</label>
+                            <div class="form-readonly" id="gameMaxParticipants"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Level</label>
+                        <div class="form-readonly" id="gameLevel"></div>
+                    </div>
+                </div>
+
+                <div class="game-location-section">
+                    <h3>Location</h3>
+                    <div class="form-group">
+                        <label>Club</label>
+                        <div class="form-readonly" id="gameClub"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Court</label>
+                        <div class="form-readonly" id="gameCourt"></div>
+                    </div>
+                </div>
+
+                <div class="game-settings-section">
+                    <h3>Game Settings</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Status</label>
+                            <div class="form-readonly" id="gameStatus"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Has Results</label>
+                            <div class="form-readonly" id="gameHasResults"></div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Public Game</label>
+                            <div class="form-readonly" id="gameIsPublic"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Affects Rating</label>
+                            <div class="form-readonly" id="gameAffectsRating"></div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Anyone Can Invite</label>
+                            <div class="form-readonly" id="gameAnyoneCanInvite"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Results By Anyone</label>
+                            <div class="form-readonly" id="gameResultsByAnyone"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Has Booked Court</label>
+                        <div class="form-readonly" id="gameHasBookedCourt"></div>
+                    </div>
+                </div>
+
+                <div class="game-participants-section">
+                    <h3>Participants</h3>
+                    <div class="participants-info">
+                        <p><strong>Total:</strong> <span id="gameParticipantsCount"></span></p>
+                    </div>
+                    <div class="participants-list" id="gameParticipantsList">
+                    </div>
+                </div>
+
+                <div class="game-metadata-section">
+                    <h3>Metadata</h3>
+                    <div class="form-group">
+                        <label>Created At</label>
+                        <div class="form-readonly" id="gameCreatedAt"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeModal('gameModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="modals.js"></script>
+</body>
+</html>
+
