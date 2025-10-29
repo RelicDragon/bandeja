@@ -162,6 +162,18 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/bugs"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <MainPage />
+              )}
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

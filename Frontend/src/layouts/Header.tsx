@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Bell, MessageCircle, User, ArrowLeft } from 'lucide-react';
+import { Bell, MessageCircle, User, ArrowLeft, Bug } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate } from 'react-router-dom';
@@ -44,6 +44,13 @@ export const Header = ({
     setIsAnimating(true);
     setCurrentPage('home');
     navigate('/', { replace: true });
+    setTimeout(() => setIsAnimating(false), 300);
+  };
+
+  const handleBugClick = () => {
+    setIsAnimating(true);
+    setCurrentPage('bugs');
+    navigate('/bugs', { replace: true });
     setTimeout(() => setIsAnimating(false), 300);
   };
 
@@ -108,7 +115,15 @@ export const Header = ({
               )}
             </button>
           )}
-          
+
+          <button
+            onClick={handleBugClick}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title={t('bug.bugTracker')}
+          >
+            <Bug size={20} className="text-gray-600 dark:text-gray-400" />
+          </button>
+
           {/* Content wrappers for different pages */}
           <HeaderContentWrapper page="home">
             <HomeHeaderContent />

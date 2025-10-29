@@ -8,5 +8,6 @@ export * from './invites';
 export * from './chat';
 export * from './media';
 export * from './favorites';
+export * from './bugs';
 export { default as api } from './axios';
 

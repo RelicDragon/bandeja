@@ -40,6 +40,25 @@
     "profile": "Perfil",
     "chat": "Chat"
   },
+  "bug": {
+    "bugTracker": "Rastreador de Errores",
+    "addBug": "Agregar Error",
+    "description": "Reporta errores, sugerencias y preguntas para ayudar a mejorar la app",
+    "type": "Tipo",
+    "descriptionPlaceholder": "Describe el error, sugerencia o pregunta...",
+    "submit": "Enviar",
+    "created": "Reporte de error enviado exitosamente",
+    "createError": "Error al enviar el reporte de error",
+    "textRequired": "La descripción del error es obligatoria",
+    "loadError": "Error al cargar los errores",
+    "noBugs": "Aún no se han reportado errores",
+    "allTypes": "Todos los Tipos",
+    "allStatuses": "Todos los Estados",
+    "statusUpdated": "Estado del error actualizado",
+    "statusUpdateError": "Error al actualizar el estado del error",
+    "deleted": "Error eliminado",
+    "deleteError": "Error al eliminar el error"
+  },
   "home": {
     "title": "Mis juegos",
     "myGames": "Mis juegos",

@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 
 interface NavigationState {
-  currentPage: 'home' | 'profile' | 'gameDetails' | 'gameResultsEntry';
+  currentPage: 'home' | 'profile' | 'gameDetails' | 'gameResultsEntry' | 'bugs';
   isAnimating: boolean;
   gameDetailsCanAccessChat: boolean;
-  setCurrentPage: (page: 'home' | 'profile' | 'gameDetails' | 'gameResultsEntry') => void;
+  setCurrentPage: (page: 'home' | 'profile' | 'gameDetails' | 'gameResultsEntry' | 'bugs') => void;
   setIsAnimating: (animating: boolean) => void;
   setGameDetailsCanAccessChat: (canAccessChat: boolean) => void;
 }

@@ -1,0 +1,112 @@
+import prisma from '../config/database';
+import { BugStatus, BugType } from '@prisma/client';
+
+export class BugService {
+  static async createBug(text: string, bugType: BugType, senderId: string) {
+    return await prisma.bug.create({
+      data: {
+        text: text.trim(),
+        bugType,
+        senderId,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  }
+
+  static async getBugs(filters: {
+    status?: BugStatus;
+    bugType?: BugType;
+    page?: number;
+    limit?: number;
+  }) {
+    const { status, bugType, page = 1, limit = 10 } = filters;
+
+    const where: any = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (bugType) {
+      where.bugType = bugType;
+    }
+
+    const [bugs, total] = await Promise.all([
+      prisma.bug.findMany({
+        where,
+        include: {
+          sender: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatar: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.bug.count({ where }),
+    ]);
+
+    return {
+      bugs,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  static async updateBugStatus(id: string, status: BugStatus) {
+    return await prisma.bug.update({
+      where: { id },
+      data: { status },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  }
+
+  static async deleteBug(id: string) {
+    await prisma.bug.delete({
+      where: { id },
+    });
+  }
+
+  static async getBugById(id: string) {
+    return await prisma.bug.findUnique({
+      where: { id },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  }
+}

@@ -5,6 +5,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { HomeContent } from './Home';
 import { ProfileContent } from './Profile';
 import { GameDetailsContent } from './GameDetails';
+import { BugsContent } from './Bugs';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { usersApi } from '@/api/users';
@@ -152,6 +153,8 @@ export const MainPage = () => {
     const path = location.pathname;
     if (path === '/profile') {
       setCurrentPage('profile');
+    } else if (path === '/bugs') {
+      setCurrentPage('bugs');
     } else if (path.startsWith('/games/') && !path.includes('/chat')) {
       setCurrentPage('gameDetails');
     } else if (path === '/') {
@@ -205,11 +208,20 @@ export const MainPage = () => {
 
         {/* Game Details Page */}
         <div className={`transition-all duration-300 ease-in-out ${
-          currentPage === 'gameDetails' 
-            ? 'opacity-100 transform translate-x-0' 
+          currentPage === 'gameDetails'
+            ? 'opacity-100 transform translate-x-0'
             : 'opacity-0 transform translate-x-full absolute inset-0'
         }`}>
           <GameDetailsContent />
+        </div>
+
+        {/* Bugs Page */}
+        <div className={`transition-all duration-300 ease-in-out ${
+          currentPage === 'bugs'
+            ? 'opacity-100 transform translate-x-0'
+            : 'opacity-0 transform translate-x-full absolute inset-0'
+        }`}>
+          <BugsContent />
         </div>
       </div>
     </MainLayout>

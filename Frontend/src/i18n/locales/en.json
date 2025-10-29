@@ -36,6 +36,25 @@
     "profile": "Profile",
     "chat": "Chat"
   },
+  "bug": {
+    "bugTracker": "Bug Tracker",
+    "addBug": "Add Bug",
+    "description": "Report bugs, suggestions, and questions to help improve the app",
+    "type": "Type",
+    "descriptionPlaceholder": "Describe the bug, suggestion, or question...",
+    "submit": "Submit",
+    "created": "Bug report submitted successfully",
+    "createError": "Failed to submit bug report",
+    "textRequired": "Bug description is required",
+    "loadError": "Failed to load bugs",
+    "noBugs": "No bugs reported yet",
+    "allTypes": "All Types",
+    "allStatuses": "All Statuses",
+    "statusUpdated": "Bug status updated",
+    "statusUpdateError": "Failed to update bug status",
+    "deleted": "Bug deleted",
+    "deleteError": "Failed to delete bug"
+  },
   "home": {
     "title": "My Games",
     "myGames": "My Games",

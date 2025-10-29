@@ -50,6 +50,7 @@ model User {
   roundOutcomes           RoundOutcome[]
   gameOutcomes            GameOutcome[]
   gameTeamPlayers         GameTeamPlayer[]
+  bugs                    Bug[]
 
   @@index([phone])
   @@index([telegramId])
@@ -520,4 +521,35 @@ model TelegramOtp {
   @@index([code])
   @@index([telegramId])
   @@index([expiresAt])
+}
+
+model Bug {
+  id        String     @id @default(cuid())
+  text      String
+  senderId  String
+  status    BugStatus  @default(CREATED)
+  bugType   BugType    @default(BUG)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  sender    User       @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([status])
+  @@index([bugType])
+}
+
+enum BugStatus {
+  CREATED
+  CONFIRMED
+  IN_PROGRESS
+  TEST
+  FINISHED
+  ARCHIVED
+}
+
+enum BugType {
+  BUG
+  CRITICAL
+  SUGGESTION
+  QUESTION
 }

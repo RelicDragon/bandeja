@@ -6,6 +6,8 @@ export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
 export type Gender = 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
 export type GameStatus = 'ANNOUNCED' | 'READY' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
 export type ChatType = 'PUBLIC' | 'PRIVATE' | 'ADMINS';
+export type BugStatus = 'CREATED' | 'CONFIRMED' | 'IN_PROGRESS' | 'TEST' | 'FINISHED' | 'ARCHIVED';
+export type BugType = 'BUG' | 'CRITICAL' | 'SUGGESTION' | 'QUESTION';
 
 export interface User {
   id: string;
@@ -182,6 +184,32 @@ export interface Invite {
     gender: Gender;
   };
   game?: Game;
+}
+
+export interface Bug {
+  id: string;
+  text: string;
+  senderId: string;
+  status: BugStatus;
+  bugType: BugType;
+  createdAt: string;
+  updatedAt: string;
+  sender: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+  };
+}
+
+export interface BugsResponse {
+  bugs: Bug[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 export interface ApiResponse<T> {
