@@ -338,6 +338,14 @@ function renderCitiesTable(cities) {
 }
 
 async function loadClubs() {
+    const errorDiv = document.getElementById('clubsError');
+    const loadingDiv = document.getElementById('clubsLoading');
+    const retryDiv = document.getElementById('clubsRetry');
+
+    errorDiv.textContent = ''; // Clear previous errors
+    retryDiv.style.display = 'none'; // Hide retry button
+    loadingDiv.style.display = 'block'; // Show loading
+
     try {
         const queryParams = selectedCityId ? `?cityId=${selectedCityId}` : '';
         const response = await apiRequest(`/admin/clubs${queryParams}`);
@@ -346,6 +354,10 @@ async function loadClubs() {
         }
     } catch (error) {
         console.error('Failed to load clubs:', error);
+        errorDiv.textContent = error.message || 'Failed to load clubs. Please try again.';
+        retryDiv.style.display = 'block'; // Show retry button on error
+    } finally {
+        loadingDiv.style.display = 'none'; // Hide loading
     }
 }
 

@@ -203,6 +203,11 @@
                         <h1>Clubs Management</h1>
                         <button class="btn-primary" onclick="createCenterModal()">+ Add Club</button>
                     </div>
+                    <div id="clubsError" class="error-message" style="text-align: left; margin-bottom: 1rem;"></div>
+                    <div id="clubsRetry" style="margin-bottom: 1rem; display: none;">
+                        <button class="btn-secondary" onclick="loadClubs()">Retry Loading Clubs</button>
+                    </div>
+                    <div id="clubsLoading" class="loading-message" style="text-align: center; margin-bottom: 1rem; display: none;">Loading clubs...</div>
                     <div class="table-container">
                         <table id="centersTable">
                             <thead>
