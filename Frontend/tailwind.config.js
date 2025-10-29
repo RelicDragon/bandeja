@@ -21,6 +21,15 @@ export default {
           900: '#0c4a6e',
         },
       },
+      animation: {
+        'fadeOutUp': 'fadeOutUp 0.3s ease-out forwards',
+      },
+      keyframes: {
+        fadeOutUp: {
+          '0%': { opacity: '1', transform: 'translateY(0)' },
+          '100%': { opacity: '0', transform: 'translateY(-1rem)' },
+        },
+      },
     },
   },
   plugins: [],

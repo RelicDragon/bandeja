@@ -246,6 +246,17 @@ class SocketService {
     this.io.to(`game-${gameId}`).emit('typing-indicator', { userId, isTyping });
   }
 
+  // Emit new invite notification to specific user
+  public emitNewInvite(receiverId: string, invite: any) {
+    // Emit to all sockets connected by this user
+    this.connectedUsers.get(receiverId)?.forEach(socketId => {
+      const socket = this.io.sockets.sockets.get(socketId);
+      if (socket) {
+        socket.emit('new-invite', invite);
+      }
+    });
+  }
+
   // Check if user is online
   public isUserOnline(userId: string): boolean {
     return this.connectedUsers.has(userId) && this.connectedUsers.get(userId)!.size > 0;

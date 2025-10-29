@@ -7,6 +7,7 @@ import { Divider } from '@/components';
 import { invitesApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '../store/navigationStore';
+import { useHeaderStore } from '@/store/headerStore';
 import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
 import { useHomeGames } from '@/hooks/useHomeGames';
 import { usePastGames } from '@/hooks/usePastGames';
@@ -54,7 +55,12 @@ export const HomeContent = () => {
     try {
       await invitesApi.accept(inviteId);
       setInvites(invites.filter((inv) => inv.id !== inviteId));
-      fetchData(false);
+      // Update header store to decrement pending invites count
+      const { setPendingInvites } = useHeaderStore.getState();
+      const currentCount = useHeaderStore.getState().pendingInvites;
+      setPendingInvites(Math.max(0, currentCount - 1));
+      // Defer fetchData to next event loop tick to ensure backend processing is complete
+      Promise.resolve().then(() => fetchData(false, true));
     } catch (error) {
       console.error('Failed to accept invite:', error);
     }
@@ -64,6 +70,12 @@ export const HomeContent = () => {
     try {
       await invitesApi.decline(inviteId);
       setInvites(invites.filter((inv) => inv.id !== inviteId));
+      // Update header store to decrement pending invites count
+      const { setPendingInvites } = useHeaderStore.getState();
+      const currentCount = useHeaderStore.getState().pendingInvites;
+      setPendingInvites(Math.max(0, currentCount - 1));
+      // Defer fetchData to next event loop tick to ensure backend processing is complete
+      Promise.resolve().then(() => fetchData(false, true));
     } catch (error) {
       console.error('Failed to decline invite:', error);
     }

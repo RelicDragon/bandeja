@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 export interface SocketEvents {
   'new-message': (message: any) => void;
   'new-bug-message': (message: any) => void;
+  'new-invite': (invite: any) => void;
   'message-reaction': (reaction: any) => void;
   'bug-message-reaction': (reaction: any) => void;
   'read-receipt': (readReceipt: any) => void;

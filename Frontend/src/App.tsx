@@ -17,6 +17,8 @@ import { isProfileComplete, hasValidUsername } from './utils/userValidation';
 import { PlayerCardModalManager } from './components/PlayerCardModalManager';
 import { ToastProvider } from './components/ToastProvider';
 import { headerService } from './services/headerService';
+import { socketService } from './services/socketService';
+import { useHeaderStore } from './store/headerStore';
 import './i18n/config';
 
 function App() {
@@ -26,6 +28,23 @@ function App() {
   useEffect(() => {
     if (isAuthenticated) {
       headerService.startPolling();
+
+      // Set up socket listener for new invites
+      const handleNewInvite = (_invite: any) => {
+        const { setPendingInvites, triggerNewInviteAnimation } = useHeaderStore.getState();
+        // Increment the pending invites count
+        const currentCount = useHeaderStore.getState().pendingInvites;
+        setPendingInvites(currentCount + 1);
+        // Trigger animation for new invite
+        triggerNewInviteAnimation();
+      };
+
+      socketService.on('new-invite', handleNewInvite);
+
+      return () => {
+        socketService.off('new-invite', handleNewInvite);
+        headerService.stopPolling();
+      };
     } else {
       headerService.stopPolling();
     }

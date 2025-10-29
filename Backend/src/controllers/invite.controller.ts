@@ -80,7 +80,58 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
         select: {
           id: true,
           name: true,
+          gameType: true,
           startTime: true,
+          endTime: true,
+          maxParticipants: true,
+          minParticipants: true,
+          minLevel: true,
+          maxLevel: true,
+          isPublic: true,
+          affectsRating: true,
+          hasBookedCourt: true,
+          afterGameGoToBar: true,
+          hasFixedTeams: true,
+          teamsReady: true,
+          participantsReady: true,
+          status: true,
+          hasResults: true,
+          entityType: true,
+          court: {
+            select: {
+              id: true,
+              name: true,
+              club: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+          club: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          participants: {
+            select: {
+              userId: true,
+              isPlaying: true,
+              role: true,
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  avatar: true,
+                  level: true,
+                  gender: true,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -100,6 +151,11 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
       console.error('Failed to create system message for invite:', error);
       // Don't fail the invite creation if system message fails
     }
+  }
+
+  // Emit notification to receiver via Socket.IO
+  if ((global as any).socketService) {
+    (global as any).socketService.emitNewInvite(receiverId, invite);
   }
 
   res.status(201).json({
@@ -132,11 +188,62 @@ export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response)
           gender: true,
         },
       },
-      // Include court and club relations
       game: {
-        include: {
-          court: true,
-          club: true,
+        select: {
+          id: true,
+          name: true,
+          gameType: true,
+          startTime: true,
+          endTime: true,
+          maxParticipants: true,
+          minParticipants: true,
+          minLevel: true,
+          maxLevel: true,
+          isPublic: true,
+          affectsRating: true,
+          hasBookedCourt: true,
+          afterGameGoToBar: true,
+          hasFixedTeams: true,
+          teamsReady: true,
+          participantsReady: true,
+          status: true,
+          hasResults: true,
+          entityType: true,
+          court: {
+            select: {
+              id: true,
+              name: true,
+              club: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+          club: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          participants: {
+            select: {
+              userId: true,
+              isPlaying: true,
+              role: true,
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  avatar: true,
+                  level: true,
+                  gender: true,
+                },
+              },
+            },
+          },
         },
       },
     },

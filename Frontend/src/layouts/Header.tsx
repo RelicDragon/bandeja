@@ -32,7 +32,7 @@ export const Header = ({
 }: HeaderProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { pendingInvites, unreadMessages } = useHeaderStore();
+  const { pendingInvites, unreadMessages, isNewInviteAnimating } = useHeaderStore();
   const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications, bugsButtonSlidingUp, bugsButtonSlidingDown, setBugsButtonSlidingUp, setBugsButtonSlidingDown } = useNavigationStore();
 
   const previousPageRef = useRef(currentPage);
@@ -109,10 +109,14 @@ export const Header = ({
           {pendingInvites > 0 && (
             <button
               onClick={handleNotificationsClick}
-              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-110 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current"
+              className={`relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-110 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current ${
+                isNewInviteAnimating ? 'animate-pulse animate-bounce' : ''
+              }`}
             >
               <Bell size={20} className="text-gray-600 dark:text-gray-400" />
-              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              <span className={`absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center transition-all duration-300 ${
+                isNewInviteAnimating ? 'animate-ping scale-110' : ''
+              }`}>
                 {pendingInvites}
               </span>
             </button>

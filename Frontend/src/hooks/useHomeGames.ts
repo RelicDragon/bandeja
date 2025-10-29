@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { gamesApi, invitesApi } from '@/api';
 import { chatApi } from '@/api/chat';
 import { Game, Invite } from '@/types';
+import { socketService } from '@/services/socketService';
 
 export const useHomeGames = (
   user: any,
@@ -49,14 +50,14 @@ export const useHomeGames = (
     return {};
   };
 
-  const fetchData = useCallback(async (showLoader = true) => {
+  const fetchData = useCallback(async (showLoader = true, force = false) => {
     if (!user?.currentCity?.id) return;
 
     // Create a unique key for this request to prevent duplicates
     const fetchParams = `city-${user.currentCity.id}`;
 
-    // Prevent duplicate requests
-    if (isLoadingRef.current || lastFetchParamsRef.current === fetchParams) {
+    // Prevent duplicate requests unless forced
+    if (!force && (isLoadingRef.current || lastFetchParamsRef.current === fetchParams)) {
       return;
     }
 
@@ -123,6 +124,26 @@ export const useHomeGames = (
       fetchData();
     }
   }, [user?.currentCity?.id, fetchData]);
+
+  // Listen for new invites via Socket.IO
+  useEffect(() => {
+    const handleNewInvite = (invite: Invite) => {
+      setInvites(prevInvites => {
+        // Check if invite already exists to avoid duplicates
+        const exists = prevInvites.some(existingInvite => existingInvite.id === invite.id);
+        if (exists) return prevInvites;
+
+        // Add new invite at the beginning of the array (most recent first)
+        return [invite, ...prevInvites];
+      });
+    };
+
+    socketService.on('new-invite', handleNewInvite);
+
+    return () => {
+      socketService.off('new-invite', handleNewInvite);
+    };
+  }, []);
 
   return {
     games,
