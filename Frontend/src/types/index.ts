@@ -199,6 +199,9 @@ export interface Bug {
     firstName?: string;
     lastName?: string;
     avatar?: string;
+    level?: number;
+    gender?: Gender;
+    isAdmin?: boolean;
   };
 }
 

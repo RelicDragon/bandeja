@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components';
 import { Bug, BugStatus, BugType } from '@/types';
 
 const BUG_STATUS_VALUES: BugStatus[] = ['CREATED', 'CONFIRMED', 'IN_PROGRESS', 'TEST', 'FINISHED', 'ARCHIVED'];
+const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION'];
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { bugsApi } from '@/api';
@@ -27,6 +29,27 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
   const [isExpanded, setIsExpanded] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showMenu]);
 
   const getStatusColor = (status: BugStatus) => {
     switch (status) {
@@ -61,6 +84,22 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
       onUpdate?.();
     } catch (error) {
       toast.error(t('bug.statusUpdateError'));
+    } finally {
+      setIsUpdating(false);
+      setShowMenu(false);
+    }
+  };
+
+  const handleTypeChange = async (newType: BugType) => {
+    if (!user?.isAdmin) return;
+
+    setIsUpdating(true);
+    try {
+      await bugsApi.updateBug(bug.id, { bugType: newType });
+      toast.success(t('bug.typeUpdated'));
+      onUpdate?.();
+    } catch (error) {
+      toast.error(t('bug.typeUpdateError'));
     } finally {
       setIsUpdating(false);
       setShowMenu(false);
@@ -167,33 +206,77 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
                 <MoreVertical className="w-4 h-4" />
               </Button>
 
-            {showMenu && (
-              <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
-                {user?.isAdmin && (
-                  <div className="py-1">
-                    {BUG_STATUS_VALUES.map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => handleStatusChange(status)}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
-                        disabled={isUpdating}
-                      >
-                        {t(`bug.statuses.${status}`)}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div className="border-t border-gray-200">
-                  <button
-                    onClick={handleDelete}
-                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                    disabled={isUpdating}
-                  >
-                    <Trash2 className="w-3 h-3 mr-2 inline" />
-                    {t('common.delete')}
-                  </button>
+            {showMenu && createPortal(
+              <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div
+                  ref={modalRef}
+                  className="bg-white rounded-lg shadow-xl max-w-sm w-full max-h-[80vh] overflow-y-auto"
+                >
+                  {user?.isAdmin ? (
+                    <>
+                      <div className="p-4 border-b border-gray-200">
+                        <h3 className="text-lg font-semibold text-gray-900">{t('bug.actions')}</h3>
+                      </div>
+                      <div className="p-2">
+                        <div className="py-1">
+                          <button
+                            onClick={handleDelete}
+                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+                            disabled={isUpdating}
+                          >
+                            <Trash2 className="w-3 h-3 mr-2 inline" />
+                            {t('common.delete')}
+                          </button>
+                        </div>
+                        <div className="border-t border-gray-200 py-1 mt-2">
+                          <h4 className="px-3 py-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t('bug.changeStatus')}
+                          </h4>
+                          {BUG_STATUS_VALUES.map((status) => (
+                            <button
+                              key={status}
+                              onClick={() => handleStatusChange(status)}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+                              disabled={isUpdating}
+                            >
+                              {t(`bug.statuses.${status}`)}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="border-t border-gray-200 py-1 mt-2">
+                          <h4 className="px-3 py-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t('bug.changeType')}
+                          </h4>
+                          {BUG_TYPE_VALUES.map((type) => (
+                            <button
+                              key={type}
+                              onClick={() => handleTypeChange(type)}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+                              disabled={isUpdating}
+                            >
+                              {t(`bug.types.${type}`)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-4">
+                      <div className="py-1">
+                        <button
+                          onClick={handleDelete}
+                          className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+                          disabled={isUpdating}
+                        >
+                          <Trash2 className="w-3 h-3 mr-2 inline" />
+                          {t('common.delete')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         )}

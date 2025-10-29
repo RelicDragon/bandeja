@@ -3,7 +3,9 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import { BugService } from '../services/bug.service';
-import { BugStatus, BugType } from '@prisma/client';
+import { BugSystemMessageService } from '../services/bug/bugSystemMessage.service';
+import { SystemMessageType } from '../utils/systemMessages';
+import { BugStatus, BugType, ChatType } from '@prisma/client';
 
 export const createBug = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { text, bugType } = req.body;
@@ -57,10 +59,11 @@ export const getBugs = asyncHandler(async (req: AuthRequest, res: Response) => {
 
 export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, bugType } = req.body;
 
-  if (!status || !Object.values(BugStatus).includes(status as BugStatus)) {
-    throw new ApiError(400, 'Valid status is required');
+  if ((!status || !Object.values(BugStatus).includes(status as BugStatus)) &&
+      (!bugType || !Object.values(BugType).includes(bugType as BugType))) {
+    throw new ApiError(400, 'Valid status or bugType is required');
   }
 
   const existingBug = await BugService.getBugById(id);
@@ -69,7 +72,30 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
     throw new ApiError(404, 'Bug not found');
   }
 
-  const bug = await BugService.updateBugStatus(id, status);
+  const bug = await BugService.updateBug(id, { status, bugType });
+
+  // Send system messages for status/type changes
+  if (status && status !== existingBug.status) {
+    await BugSystemMessageService.createSystemMessage(
+      id,
+      {
+        type: SystemMessageType.BUG_STATUS_CHANGED,
+        variables: { status: status.toLowerCase() }
+      },
+      ChatType.PUBLIC
+    );
+  }
+
+  if (bugType && bugType !== existingBug.bugType) {
+    await BugSystemMessageService.createSystemMessage(
+      id,
+      {
+        type: SystemMessageType.BUG_TYPE_CHANGED,
+        variables: { type: bugType.toLowerCase() }
+      },
+      ChatType.PUBLIC
+    );
+  }
 
   res.json({
     success: true,

@@ -56,9 +56,14 @@
     "allStatuses": "Todos los Estados",
     "statusUpdated": "Estado del error actualizado",
     "statusUpdateError": "Error al actualizar el estado del error",
+    "typeUpdated": "Tipo del error actualizado",
+    "typeUpdateError": "Error al actualizar el tipo del error",
     "deleted": "Error eliminado",
     "deleteError": "Error al eliminar el error",
     "openChat": "Abrir chat",
+    "actions": "Acciones del Error",
+    "changeStatus": "Cambiar Estado",
+    "changeType": "Cambiar Tipo",
     "types": {
       "BUG": "Error",
       "CRITICAL": "Crítico",
@@ -464,6 +469,8 @@
       "USER_ACCEPTED_INVITE": "{{userName}} se unió al juego",
       "USER_DECLINED_INVITE": "{{userName}} rechazó la invitación",
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
+      "BUG_STATUS_CHANGED": "Estado del error cambiado a {{status}}",
+      "BUG_TYPE_CHANGED": "Tipo del error cambiado a {{type}}",
       "actions": {
         "joined": "se unió al juego",
         "left": "abandonó el juego"

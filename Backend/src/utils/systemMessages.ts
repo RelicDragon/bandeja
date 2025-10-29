@@ -10,7 +10,9 @@ export enum SystemMessageType {
   USER_KICKED = 'USER_KICKED',
   USER_PROMOTED_TO_ADMIN = 'USER_PROMOTED_TO_ADMIN',
   USER_REVOKED_ADMIN = 'USER_REVOKED_ADMIN',
-  OWNERSHIP_TRANSFERRED = 'OWNERSHIP_TRANSFERRED'
+  OWNERSHIP_TRANSFERRED = 'OWNERSHIP_TRANSFERRED',
+  BUG_STATUS_CHANGED = 'BUG_STATUS_CHANGED',
+  BUG_TYPE_CHANGED = 'BUG_TYPE_CHANGED'
 }
 
 export interface SystemMessageTemplate {
@@ -79,6 +81,16 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
     type: SystemMessageType.OWNERSHIP_TRANSFERRED,
     template: '{{newOwnerName}} is now the owner of the game',
     variables: ['newOwnerName']
+  },
+  [SystemMessageType.BUG_STATUS_CHANGED]: {
+    type: SystemMessageType.BUG_STATUS_CHANGED,
+    template: 'Bug status changed to {{status}}',
+    variables: ['status']
+  },
+  [SystemMessageType.BUG_TYPE_CHANGED]: {
+    type: SystemMessageType.BUG_TYPE_CHANGED,
+    template: 'Bug type changed to {{type}}',
+    variables: ['type']
   }
 };
 

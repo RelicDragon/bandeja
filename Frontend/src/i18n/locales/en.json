@@ -52,9 +52,14 @@
     "allStatuses": "All Statuses",
     "statusUpdated": "Bug status updated",
     "statusUpdateError": "Failed to update bug status",
+    "typeUpdated": "Bug type updated",
+    "typeUpdateError": "Failed to update bug type",
     "deleted": "Bug deleted",
     "deleteError": "Failed to delete bug",
     "openChat": "Open chat",
+    "actions": "Bug Actions",
+    "changeStatus": "Change Status",
+    "changeType": "Change Type",
     "types": {
       "BUG": "Bug",
       "CRITICAL": "Critical",
@@ -457,6 +462,8 @@
       "USER_ACCEPTED_INVITE": "{{userName}} joined the game",
       "USER_DECLINED_INVITE": "{{userName}} declined the invite",
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
+      "BUG_STATUS_CHANGED": "Bug status changed to {{status}}",
+      "BUG_TYPE_CHANGED": "Bug type changed to {{type}}",
       "actions": {
         "joined": "joined the game",
         "left": "left the game"

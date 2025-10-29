@@ -23,7 +23,8 @@ router.put(
   authenticate,
   validate([
     param('id').notEmpty().withMessage('Bug ID is required'),
-    body('status').isIn(['CREATED', 'CONFIRMED', 'IN_PROGRESS', 'TEST', 'FINISHED', 'ARCHIVED']).withMessage('Valid status is required'),
+    body('status').optional().isIn(['CREATED', 'CONFIRMED', 'IN_PROGRESS', 'TEST', 'FINISHED', 'ARCHIVED']).withMessage('Valid status is required'),
+    body('bugType').optional().isIn(['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION']).withMessage('Valid bug type is required'),
   ]),
   bugController.updateBug
 );

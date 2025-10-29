@@ -54,9 +54,14 @@
     "allStatuses": "Все Статусы",
     "statusUpdated": "Статус ошибки обновлён",
     "statusUpdateError": "Не удалось обновить статус ошибки",
+    "typeUpdated": "Тип ошибки обновлён",
+    "typeUpdateError": "Не удалось обновить тип ошибки",
     "deleted": "Ошибка удалена",
     "deleteError": "Не удалось удалить ошибку",
     "openChat": "Открыть чат",
+    "actions": "Действия с ошибкой",
+    "changeStatus": "Изменить статус",
+    "changeType": "Изменить тип",
     "types": {
       "BUG": "Ошибка",
       "CRITICAL": "Критично",
@@ -464,6 +469,8 @@
       "USER_ACCEPTED_INVITE": "{{userName}} присоединился к игре",
       "USER_DECLINED_INVITE": "{{userName}} отклонил приглашение",
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
+      "BUG_STATUS_CHANGED": "Статус ошибки изменен на {{status}}",
+      "BUG_TYPE_CHANGED": "Тип ошибки изменен на {{type}}",
       "actions": {
         "joined": "присоединился к игре",
         "left": "покинул игру"

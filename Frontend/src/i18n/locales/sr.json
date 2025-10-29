@@ -56,9 +56,14 @@
     "allStatuses": "Сви Статуси",
     "statusUpdated": "Статус грешке ажуриран",
     "statusUpdateError": "Неуспешно ажурирање статуса грешке",
+    "typeUpdated": "Тип грешке ажуриран",
+    "typeUpdateError": "Неуспешно ажурирање типа грешке",
     "deleted": "Грешка обрисана",
     "deleteError": "Неуспешно брисање грешке",
     "openChat": "Отвори чет",
+    "actions": "Акције грешке",
+    "changeStatus": "Промени статус",
+    "changeType": "Промени тип",
     "types": {
       "BUG": "Грешка",
       "CRITICAL": "Критично",
@@ -466,6 +471,8 @@
       "USER_ACCEPTED_INVITE": "{{userName}} се придружио игри",
       "USER_DECLINED_INVITE": "{{userName}} одбио позив",
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
+      "BUG_STATUS_CHANGED": "Статус грешке промењен на {{status}}",
+      "BUG_TYPE_CHANGED": "Тип грешке промењен на {{type}}",
       "actions": {
         "joined": "се придружио игри",
         "left": "напустио игру"

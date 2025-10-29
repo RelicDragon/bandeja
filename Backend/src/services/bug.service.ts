@@ -16,6 +16,9 @@ export class BugService {
             firstName: true,
             lastName: true,
             avatar: true,
+            level: true,
+            gender: true,
+            isAdmin: true,
           },
         },
       },
@@ -50,6 +53,9 @@ export class BugService {
               firstName: true,
               lastName: true,
               avatar: true,
+              level: true,
+              gender: true,
+              isAdmin: true,
             },
           },
         },
@@ -82,6 +88,29 @@ export class BugService {
             firstName: true,
             lastName: true,
             avatar: true,
+            level: true,
+            gender: true,
+            isAdmin: true,
+          },
+        },
+      },
+    });
+  }
+
+  static async updateBug(id: string, data: { status?: BugStatus; bugType?: BugType }) {
+    return await prisma.bug.update({
+      where: { id },
+      data,
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+            level: true,
+            gender: true,
+            isAdmin: true,
           },
         },
       },
@@ -104,6 +133,9 @@ export class BugService {
             firstName: true,
             lastName: true,
             avatar: true,
+            level: true,
+            gender: true,
+            isAdmin: true,
           },
         },
       },

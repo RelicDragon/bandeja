@@ -7,7 +7,8 @@ export interface CreateBugData {
 }
 
 export interface UpdateBugData {
-  status: BugStatus;
+  status?: BugStatus;
+  bugType?: BugType;
 }
 
 export const bugsApi = {
