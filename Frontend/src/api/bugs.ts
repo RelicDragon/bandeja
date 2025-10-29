@@ -20,6 +20,7 @@ export const bugsApi = {
   getBugs: async (params?: {
     status?: BugStatus;
     bugType?: BugType;
+    myBugsOnly?: boolean;
     page?: number;
     limit?: number;
   }) => {

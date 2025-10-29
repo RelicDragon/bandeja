@@ -28,10 +28,11 @@ export class BugService {
   static async getBugs(filters: {
     status?: BugStatus;
     bugType?: BugType;
+    senderId?: string;
     page?: number;
     limit?: number;
   }) {
-    const { status, bugType, page = 1, limit = 10 } = filters;
+    const { status, bugType, senderId, page = 1, limit = 10 } = filters;
 
     const where: any = {};
 
@@ -41,6 +42,10 @@ export class BugService {
 
     if (bugType) {
       where.bugType = bugType;
+    }
+
+    if (senderId) {
+      where.senderId = senderId;
     }
 
     const [bugs, total] = await Promise.all([

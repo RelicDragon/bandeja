@@ -64,6 +64,7 @@
     "actions": "Acciones del Error",
     "changeStatus": "Cambiar Estado",
     "changeType": "Cambiar Tipo",
+    "myBugsOnly": "Creado por mí",
     "types": {
       "BUG": "Error",
       "CRITICAL": "Crítico",

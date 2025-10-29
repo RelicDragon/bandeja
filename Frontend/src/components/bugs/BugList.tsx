@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, Loading } from '@/components';
+import { Card, Loading, ToggleSwitch, Select } from '@/components';
 import { BugCard } from './BugCard';
 import { Bug, BugStatus, BugType } from '@/types';
 
@@ -25,6 +25,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   const [filters, setFilters] = useState<{
     status?: BugStatus;
     bugType?: BugType;
+    myBugsOnly?: boolean;
   }>({});
 
   const loadBugs = useCallback(async () => {
@@ -100,39 +101,64 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     </Card>
   );
 
-  const FilterSection = () => (
-    <div className="mb-4 flex flex-wrap gap-2">
-      <select
-        value={filters.bugType || ''}
-        onChange={(e) => setFilters(prev => ({
-          ...prev,
-          bugType: e.target.value as BugType || undefined
-        }))}
-        className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-      >
-        <option value="">{t('bug.allTypes')}</option>
-        {BUG_TYPE_VALUES.map((type) => (
-          <option key={type} value={type}>{t(`bug.types.${type}`)}</option>
-        ))}
-      </select>
+  const FilterSection = () => {
+    const bugTypeOptions = [
+      { value: '', label: t('bug.allTypes') },
+      ...BUG_TYPE_VALUES.map((type) => ({
+        value: type,
+        label: t(`bug.types.${type}`)
+      }))
+    ];
 
-      <select
-        value={filters.status || ''}
-        onChange={(e) => setFilters(prev => ({
-          ...prev,
-          status: e.target.value as BugStatus || undefined
-        }))}
-        className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-      >
-        <option value="">{t('bug.allStatuses')}</option>
-        {BUG_STATUS_VALUES.map((status) => (
-          <option key={status} value={status}>
-            {t(`bug.statuses.${status}`)}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
+    const statusOptions = [
+      { value: '', label: t('bug.allStatuses') },
+      ...BUG_STATUS_VALUES.map((status) => ({
+        value: status,
+        label: t(`bug.statuses.${status}`)
+      }))
+    ];
+
+    return (
+      <div className="mb-4 space-y-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          <Select
+            options={bugTypeOptions}
+            value={filters.bugType || ''}
+            onChange={(value) => setFilters(prev => ({
+              ...prev,
+              bugType: value as BugType || undefined
+            }))}
+            placeholder={t('bug.allTypes')}
+            className="min-w-32"
+          />
+
+          <Select
+            options={statusOptions}
+            value={filters.status || ''}
+            onChange={(value) => setFilters(prev => ({
+              ...prev,
+              status: value as BugStatus || undefined
+            }))}
+            placeholder={t('bug.allStatuses')}
+            className="min-w-32"
+          />
+        </div>
+
+        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors">
+          <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+            {t('bug.myBugsOnly')}
+          </span>
+          <ToggleSwitch
+            checked={filters.myBugsOnly || false}
+            onChange={(checked) => setFilters(prev => ({
+              ...prev,
+              myBugsOnly: checked
+            }))}
+          />
+        </div>
+      </div>
+    );
+  };
 
   if (!isVisible) {
     return null;

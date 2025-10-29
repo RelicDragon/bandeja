@@ -62,6 +62,7 @@
     "actions": "Действия с ошибкой",
     "changeStatus": "Изменить статус",
     "changeType": "Изменить тип",
+    "myBugsOnly": "Создано мной",
     "types": {
       "BUG": "Ошибка",
       "CRITICAL": "Критично",

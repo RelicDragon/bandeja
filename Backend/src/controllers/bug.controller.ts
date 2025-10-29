@@ -27,7 +27,7 @@ export const createBug = asyncHandler(async (req: AuthRequest, res: Response) =>
 });
 
 export const getBugs = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { status, bugType, page = '1', limit = '10' } = req.query;
+  const { status, bugType, myBugsOnly, page = '1', limit = '10' } = req.query;
 
   const pageNum = parseInt(page as string, 10);
   const limitNum = parseInt(limit as string, 10);
@@ -47,6 +47,10 @@ export const getBugs = asyncHandler(async (req: AuthRequest, res: Response) => {
 
   if (bugType && Object.values(BugType).includes(bugType as BugType)) {
     filters.bugType = bugType;
+  }
+
+  if (myBugsOnly === 'true') {
+    filters.senderId = req.userId;
   }
 
   const result = await BugService.getBugs(filters);

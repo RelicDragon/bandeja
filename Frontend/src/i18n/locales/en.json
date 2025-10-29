@@ -60,6 +60,7 @@
     "actions": "Bug Actions",
     "changeStatus": "Change Status",
     "changeType": "Change Type",
+    "myBugsOnly": "Created by me",
     "types": {
       "BUG": "Bug",
       "CRITICAL": "Critical",

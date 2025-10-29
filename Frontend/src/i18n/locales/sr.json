@@ -64,6 +64,7 @@
     "actions": "Акције грешке",
     "changeStatus": "Промени статус",
     "changeType": "Промени тип",
+    "myBugsOnly": "Креирано од мене",
     "types": {
       "BUG": "Грешка",
       "CRITICAL": "Критично",
