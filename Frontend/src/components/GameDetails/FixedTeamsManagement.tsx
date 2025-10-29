@@ -7,6 +7,7 @@ import { gamesApi } from '@/api/games';
 import { Game, GameTeam } from '@/types';
 import { Users } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '@/store/authStore';
 
 interface FixedTeamsManagementProps {
   game: Game;
@@ -15,6 +16,11 @@ interface FixedTeamsManagementProps {
 
 export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagementProps) => {
   const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
+  const isOwner = game?.participants.some(
+    (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
+  ) || false;
+  const canEdit = isOwner || user?.isAdmin || false;
   const [teams, setTeams] = useState<GameTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTeamIndex, setSelectedTeamIndex] = useState<number | null>(null);
@@ -337,7 +343,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
                   }}
                   showName={false}
                   extrasmall={true}
-                  removable={true}
+                  removable={canEdit}
                   onRemoveClick={() => handleRemovePlayer(index, player.userId)}
                 />
                 <span className="text-[10px] font-medium text-gray-900 dark:text-white">
@@ -370,12 +376,12 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
 
             <div
               className={`flex justify-start rounded-lg p-2 transition-all ${
-                !team.players[0]
+                !team.players[0] && canEdit
                   ? 'cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/20'
                   : 'cursor-default'
               }`}
               onClick={() => {
-                if (!team.players[0]) {
+                if (!team.players[0] && canEdit) {
                   // Add player to slot 0
                   setSelectedTeamIndex(index);
                   setShowPlayerSelector(true);
@@ -387,12 +393,12 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
 
             <div
               className={`flex justify-start rounded-lg p-2 transition-all ${
-                !team.players[1]
+                !team.players[1] && canEdit
                   ? 'cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/20'
                   : 'cursor-default'
               }`}
               onClick={() => {
-                if (!team.players[1]) {
+                if (!team.players[1] && canEdit) {
                   // Add player to slot 1
                   setSelectedTeamIndex(index);
                   setShowPlayerSelector(true);
@@ -406,7 +412,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
       })}
 
 
-      {showPlayerSelector && selectedTeamIndex !== null && hasEmptySlots() && (
+      {showPlayerSelector && selectedTeamIndex !== null && hasEmptySlots() && canEdit && (
         <TeamPlayerSelector
           gameParticipants={game.participants}
           onClose={() => {
