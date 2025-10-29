@@ -199,6 +199,7 @@
     "noTeamsYet": "No teams created yet",
     "noPlayers": "No players",
     "addPlayer": "Add Player",
+    "emptySlot": "Empty Slot",
     "availablePlayers": "Available players",
     "teamFull": "Team is full",
     "teamsUpdatedSuccessfully": "Teams updated successfully",

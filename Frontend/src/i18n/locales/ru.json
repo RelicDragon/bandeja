@@ -201,6 +201,7 @@
     "noTeamsYet": "Команды еще не созданы",
     "noPlayers": "Нет игроков",
     "addPlayer": "Добавить игрока",
+    "emptySlot": "Пустое место",
     "availablePlayers": "Доступные игроки",
     "teamFull": "Команда заполнена",
     "teamsUpdatedSuccessfully": "Команды успешно обновлены",

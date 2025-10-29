@@ -203,6 +203,7 @@
     "noTeamsYet": "No se han creado equipos aún",
     "noPlayers": "Sin jugadores",
     "addPlayer": "Añadir jugador",
+    "emptySlot": "Espacio vacío",
     "availablePlayers": "Jugadores disponibles",
     "teamFull": "Equipo completo",
     "teamsUpdatedSuccessfully": "Equipos actualizados exitosamente",

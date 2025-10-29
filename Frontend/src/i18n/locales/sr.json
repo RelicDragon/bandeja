@@ -203,6 +203,7 @@
     "noTeamsYet": "Тимови још нису креирани",
     "noPlayers": "Нема играча",
     "addPlayer": "Додај играча",
+    "emptySlot": "Празно место",
     "availablePlayers": "Доступни играчи",
     "teamFull": "Тим је попуњен",
     "teamsUpdatedSuccessfully": "Тимови су успешно ажурирани",

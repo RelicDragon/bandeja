@@ -355,10 +355,10 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
             playerSlots.push(
               <div key={`placeholder-${i}`} className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                  <span className="text-xs text-gray-400 dark:text-gray-500">+</span>
+                  {canEdit && <span className="text-xs text-gray-400 dark:text-gray-500">+</span>}
                 </div>
                 <span className="text-[10px] font-medium text-gray-500 dark:text-gray-500">
-                  {t('games.addPlayer')}
+                  {canEdit ? t('games.addPlayer') : t('games.emptySlot')}
                 </span>
               </div>
             );
