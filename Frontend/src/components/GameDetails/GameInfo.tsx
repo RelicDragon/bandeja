@@ -47,7 +47,7 @@ export const GameInfo = ({
     <Card className="relative">
       <button
         onClick={handleNavigate}
-        className="absolute top-4 right-4 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors active:scale-110 z-10"
+        className="absolute top-4 right-4 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors active:scale-110 z-10"
         title={t('gameDetails.navigateToClub')}
       >
         <svg width="24" height="24" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">

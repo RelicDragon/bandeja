@@ -172,7 +172,7 @@ async function loadPageData(page) {
         case 'cities':
             loadCities();
             break;
-        case 'centers':
+        case 'clubs':
             backToCenters();
             loadClubs();
             break;
