@@ -15,6 +15,13 @@
             </div>
             <form id="loginForm" class="login-form">
                 <div class="form-group">
+                    <label for="apiUrl">API URL</label>
+                    <select id="apiUrl" name="apiUrl">
+                        <option value="/api" selected>Production (/api)</option>
+                        <option value="http://localhost:3000/api">Development (localhost:3000)</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="phone">Phone Number</label>
                     <input type="tel" id="phone" name="phone" placeholder="+1234567890" required>
                 </div>

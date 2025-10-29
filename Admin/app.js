@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+let API_URL = localStorage.getItem('apiUrl') || '/api';
 let authToken = null;
 let selectedCityId = '';
 
@@ -54,6 +54,10 @@ elements.loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const phone = document.getElementById('phone').value;
     const password = document.getElementById('password').value;
+    const apiUrl = document.getElementById('apiUrl').value;
+
+    API_URL = apiUrl;
+    localStorage.setItem('apiUrl', apiUrl);
 
     try {
         const response = await apiRequest('/admin/login', {
@@ -799,6 +803,11 @@ window.refreshInvites = refreshInvites;
 document.addEventListener('DOMContentLoaded', () => {
     const savedToken = localStorage.getItem('adminToken');
     const savedAdmin = localStorage.getItem('adminData');
+    const savedApiUrl = localStorage.getItem('apiUrl');
+
+    if (savedApiUrl) {
+        document.getElementById('apiUrl').value = savedApiUrl;
+    }
 
     if (savedToken && savedAdmin) {
         authToken = savedToken;
