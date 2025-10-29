@@ -5,6 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { UrlConstructor } from '../utils/urlConstructor';
 import { ImageProcessor } from '../utils/imageProcessor';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const user = await prisma.user.findUnique({
@@ -20,6 +21,7 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
       avatar: true,
       originalAvatar: true,
       level: true,
+      socialLevel: true,
       gender: true,
       reliability: true,
       isAdmin: true,
@@ -105,6 +107,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
       avatar: true,
       originalAvatar: true,
       level: true,
+      socialLevel: true,
       gender: true,
       reliability: true,
       isAdmin: true,
@@ -158,6 +161,7 @@ export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) =
       lastName: true,
       avatar: true,
       level: true,
+      socialLevel: true,
       gender: true,
       reliability: true,
       isAdmin: true,
@@ -206,9 +210,10 @@ export const setInitialLevel = asyncHandler(async (req: AuthRequest, res: Respon
   const user = await prisma.user.update({
     where: { id: req.userId },
     data: { level },
-    select: {
+      select: {
       id: true,
       level: true,
+      socialLevel: true,
       reliability: true,
       totalPoints: true,
       gamesPlayed: true,
@@ -234,6 +239,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
       avatar: true,
       originalAvatar: true,
       level: true,
+      socialLevel: true,
       gender: true,
       reliability: true,
       isAdmin: true,

@@ -1,5 +1,6 @@
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Beer } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { CachedImage } from './CachedImage';
 import { UrlConstructor } from '@/utils/urlConstructor';
 import { UserStats } from '@/api/users';
@@ -11,6 +12,7 @@ interface PlayerAvatarViewProps {
 }
 
 export const PlayerAvatarView: React.FC<PlayerAvatarViewProps> = ({ stats, onBack }) => {
+  const { t } = useTranslation();
   const { user } = stats;
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
 
@@ -48,8 +50,26 @@ export const PlayerAvatarView: React.FC<PlayerAvatarViewProps> = ({ stats, onBac
             {user.lastName}
           </h3>
         )}
-        <div className="mt-4 inline-block bg-yellow-500 dark:bg-yellow-600 text-white px-6 py-2 rounded-full font-bold text-xl shadow-lg">
-          Level {user.level.toFixed(1)}
+        <div className="mt-4 flex gap-3">
+          <div className="inline-block bg-yellow-500 dark:bg-yellow-600 text-white px-4 py-2 rounded-full font-bold text-base shadow-lg">
+            {t('rating.level')} {user.level.toFixed(1)}
+          </div>
+          <div className="inline-block bg-amber-500 dark:bg-amber-600 text-white px-4 py-2 rounded-full font-bold text-base shadow-lg flex items-center gap-2">
+            {t('rating.socialLevel')}
+            <div className="relative flex items-center">
+              <Beer
+                size={16}
+                className="text-amber-600 dark:text-amber-500 absolute"
+                fill="currentColor"
+              />
+              <Beer
+                size={16}
+                className="text-white dark:text-gray-900 relative z-10"
+                strokeWidth={1.5}
+              />
+            </div>
+            {user.socialLevel?.toFixed(1) || '1.0'}
+          </div>
         </div>
       </div>
     </div>

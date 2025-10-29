@@ -1,5 +1,6 @@
 import prisma from '../config/database';
 import { BugStatus, BugType } from '@prisma/client';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export class BugService {
   static async createBug(text: string, bugType: BugType, senderId: string) {
@@ -12,12 +13,7 @@ export class BugService {
       include: {
         sender: {
           select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-            level: true,
-            gender: true,
+            ...USER_SELECT_FIELDS,
             isAdmin: true,
           },
         },
@@ -89,12 +85,7 @@ export class BugService {
       include: {
         sender: {
           select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-            level: true,
-            gender: true,
+            ...USER_SELECT_FIELDS,
             isAdmin: true,
           },
         },
@@ -109,12 +100,7 @@ export class BugService {
       include: {
         sender: {
           select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-            level: true,
-            gender: true,
+            ...USER_SELECT_FIELDS,
             isAdmin: true,
           },
         },
@@ -134,12 +120,7 @@ export class BugService {
       include: {
         sender: {
           select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-            level: true,
-            gender: true,
+            ...USER_SELECT_FIELDS,
             isAdmin: true,
           },
         },

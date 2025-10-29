@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { MessageState, ChatType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class MessageService {
   static async validateGameAccess(gameId: string, userId: string) {
@@ -68,14 +69,7 @@ export class MessageService {
   static getMessageInclude() {
     return {
       sender: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatar: true,
-          level: true,
-          gender: true,
-        }
+          select: USER_SELECT_FIELDS
       },
       replyTo: {
         select: {

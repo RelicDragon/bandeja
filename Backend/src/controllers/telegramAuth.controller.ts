@@ -5,6 +5,7 @@ import prisma from '../config/database';
 import { generateToken } from '../utils/jwt';
 import { AuthProvider } from '@prisma/client';
 import telegramBotService from '../services/telegramBot.service';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response) => {
   const { code } = req.body;
@@ -24,16 +25,11 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
   let user = await prisma.user.findUnique({
     where: { telegramId: actualTelegramId },
     select: {
-      id: true,
+      ...USER_SELECT_FIELDS,
       phone: true,
       email: true,
       telegramId: true,
       telegramUsername: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      level: true,
-      gender: true,
       reliability: true,
       isAdmin: true,
       isTrainer: true,
@@ -76,16 +72,11 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
         where: { id: user.id },
         data: updateData,
         select: {
-          id: true,
+          ...USER_SELECT_FIELDS,
           phone: true,
           email: true,
           telegramId: true,
           telegramUsername: true,
-          firstName: true,
-          lastName: true,
-          avatar: true,
-          level: true,
-          gender: true,
           reliability: true,
           isAdmin: true,
           isTrainer: true,
@@ -117,16 +108,11 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
         authProvider: AuthProvider.TELEGRAM,
       },
       select: {
-        id: true,
+        ...USER_SELECT_FIELDS,
         phone: true,
         email: true,
         telegramId: true,
         telegramUsername: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        level: true,
-        gender: true,
         reliability: true,
         isAdmin: true,
         isTrainer: true,

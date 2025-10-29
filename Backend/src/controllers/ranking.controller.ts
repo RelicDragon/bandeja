@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { getLevelName } from '../utils/ratingCalculator';
 import { UrlConstructor } from '../utils/urlConstructor';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export const getLeaderboard = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { page = '1', limit = '50', cityId } = req.query;
@@ -24,12 +25,7 @@ export const getLeaderboard = asyncHandler(async (req: AuthRequest, res: Respons
       skip,
       take: limitNum,
       select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        level: true,
-        gender: true,
+        ...USER_SELECT_FIELDS,
         reliability: true,
         totalPoints: true,
         gamesPlayed: true,
@@ -79,12 +75,7 @@ export const getLevelLeaderboard = asyncHandler(async (req: AuthRequest, res: Re
       skip,
       take: limitNum,
       select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        level: true,
-        gender: true,
+        ...USER_SELECT_FIELDS,
         reliability: true,
         totalPoints: true,
         gamesPlayed: true,

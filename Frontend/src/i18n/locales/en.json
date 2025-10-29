@@ -252,6 +252,7 @@
   "rating": {
     "title": "My Rating",
     "level": "Level",
+    "socialLevel": "Social",
     "points": "Total Points",
     "gamesPlayed": "Games Played",
     "gamesWon": "Games Won",

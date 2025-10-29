@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class ReactionService {
   static async addReaction(messageId: string, userId: string, emoji: string) {
@@ -39,14 +40,7 @@ export class ReactionService {
         },
         include: {
           user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-              level: true,
-              gender: true
-            }
+            select: USER_SELECT_FIELDS
           }
         }
       });

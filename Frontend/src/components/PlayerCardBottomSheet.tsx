@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, TrendingUp, TrendingDown } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, Beer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usersApi, UserStats } from '@/api/users';
 import { Loading } from './Loading';
@@ -293,8 +293,22 @@ const PlayerCardContent = ({ stats, t, onAvatarClick }: PlayerCardContentProps) 
             )}
           </div>
         </div>
-        <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-yellow-500 dark:bg-yellow-600 text-white px-4 py-1.5 rounded-full font-bold text-lg shadow-lg">
-          {user.level.toFixed(1)}
+        <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1">
+          <span>{user.level.toFixed(1)}</span>
+          <span>|</span>
+          <div className="relative flex items-center">
+            <Beer
+              size={14}
+              className="text-amber-600 dark:text-amber-500 absolute"
+              fill="currentColor"
+            />
+            <Beer
+              size={14}
+              className="text-white dark:text-gray-900 relative z-10"
+              strokeWidth={1.5}
+            />
+          </div>
+          <span>{user.socialLevel?.toFixed(1) || '1.0'}</span>
         </div>
         {user.isTrainer && (
           <div className="absolute top-3 left-3 bg-green-500 dark:bg-green-600 text-white px-3 py-1 rounded-full font-semibold text-sm shadow-lg">

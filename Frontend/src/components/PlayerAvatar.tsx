@@ -1,4 +1,4 @@
-import { X, User, Crown } from 'lucide-react';
+import { X, User, Crown, Beer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { User as UserType } from '@/types';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
@@ -6,6 +6,7 @@ import { useRef, useEffect } from 'react';
 import { CachedImage } from './CachedImage';
 import { UrlConstructor } from '@/utils/urlConstructor';
 import { GenderIndicator } from './GenderIndicator';
+import { useAppModeStore } from '@/store/appModeStore';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface PlayerAvatarProps {
@@ -15,6 +16,7 @@ interface PlayerAvatarProps {
     lastName?: string;
     avatar?: string;
     level?: number;
+    socialLevel?: number;
     gender?: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
   } | UserType | null;
   isCurrentUser?: boolean;
@@ -35,6 +37,7 @@ interface PlayerAvatarProps {
 export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, showName = true, draggable = false, smallLayout = false, extrasmall = false, role, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
   const { t } = useTranslation();
   const { openPlayerCard } = usePlayerCardModal();
+  const { mode: appMode } = useAppModeStore();
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const getSizeClasses = () => {
@@ -130,9 +133,31 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
             </div>
           )}
           {!extrasmall && <GenderIndicator gender={player.gender} layout={smallLayout ? 'small' : 'normal'} position="bottom-left" />}
-          <div className={`absolute -bottom-1 -right-1 ${sizeClasses.level} rounded-full bg-yellow-500 dark:bg-yellow-600 flex items-center justify-center text-white ${sizeClasses.level.includes('w-4') ? 'text-[8px]' : sizeClasses.level.includes('w-5') ? 'text-[10px]' : 'text-xs font-bold border-2'} border-white dark:border-gray-900`}>
-            {player.level?.toFixed(1) || '0.0'}
-          </div>
+          {appMode === 'PADEL' ? (
+            <div className={`absolute -bottom-1 -right-1 ${sizeClasses.level} rounded-full bg-yellow-500 dark:bg-yellow-600 flex items-center justify-center text-white ${sizeClasses.level.includes('w-4') ? 'text-[8px]' : sizeClasses.level.includes('w-5') ? 'text-[10px]' : 'text-xs font-bold border-2'} border-white dark:border-gray-900`}>
+              {player.level?.toFixed(1) || '0.0'}
+            </div>
+          ) : (
+            <div className="absolute -bottom-1 -right-1 flex flex-col items-center">
+              <span className={`text-white font-bold text-center leading-none mb-0.5 ${
+                extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'
+              } bg-black bg-opacity-60 rounded px-1 py-0.5`}>
+                {player.socialLevel?.toFixed(1) || '1.0'}
+              </span>
+              <div className="relative">
+                <Beer
+                  size={extrasmall ? 16 : smallLayout ? 20 : 24}
+                  className="text-amber-600 dark:text-amber-500 absolute inset-0"
+                  fill="currentColor"
+                />
+                <Beer
+                  size={extrasmall ? 16 : smallLayout ? 20 : 24}
+                  className="text-white dark:text-gray-900 relative z-10"
+                  strokeWidth={1.5}
+                />
+              </div>
+            </div>
+          )}
         </button>
         {removable && onRemoveClick && (
           <button

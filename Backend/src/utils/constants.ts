@@ -115,3 +115,13 @@ export const TIMEZONES = [
 
 export const DEFAULT_TIMEZONE = 'Europe/Paris';
 
+export const USER_SELECT_FIELDS = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  avatar: true,
+  level: true,
+  socialLevel: true,
+  gender: true,
+} as const;
+

@@ -1,5 +1,6 @@
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class AdminGamesService {
   static async getAllGames(cityId?: string) {
@@ -25,11 +26,7 @@ export class AdminGamesService {
           include: {
             user: {
               select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
+                ...USER_SELECT_FIELDS,
                 phone: true,
               },
             },
@@ -63,21 +60,13 @@ export class AdminGamesService {
       include: {
         sender: {
           select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-            level: true,
+            ...USER_SELECT_FIELDS,
             phone: true,
           },
         },
         receiver: {
           select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-            level: true,
+            ...USER_SELECT_FIELDS,
             phone: true,
           },
         },

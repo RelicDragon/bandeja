@@ -256,6 +256,7 @@
   "rating": {
     "title": "Mi puntuación",
     "level": "Nivel",
+    "socialLevel": "Social",
     "points": "Puntos totales",
     "gamesPlayed": "Juegos jugados",
     "gamesWon": "Juegos ganados",

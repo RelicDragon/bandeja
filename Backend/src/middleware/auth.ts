@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -31,15 +32,10 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
-        id: true,
+        ...USER_SELECT_FIELDS,
         phone: true,
         email: true,
         telegramId: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        level: true,
-        gender: true,
         isActive: true,
         isAdmin: true,
         isTrainer: true,
@@ -107,14 +103,9 @@ export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFu
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
-        id: true,
+        ...USER_SELECT_FIELDS,
         phone: true,
         email: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        level: true,
-        gender: true,
         isActive: true,
         isAdmin: true,
         isTrainer: true,

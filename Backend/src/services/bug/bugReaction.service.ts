@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { BugMessageService } from './bugMessage.service';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class BugReactionService {
   static async addReaction(messageId: string, userId: string, emoji: string) {
@@ -31,14 +32,7 @@ export class BugReactionService {
         },
         include: {
           user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-              level: true,
-              gender: true
-            }
+            select: USER_SELECT_FIELDS
           }
         }
       });

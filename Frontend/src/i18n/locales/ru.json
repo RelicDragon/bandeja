@@ -254,6 +254,7 @@
   "rating": {
     "title": "Мой рейтинг",
     "level": "Уровень",
+    "socialLevel": "Социальный",
     "points": "Всего очков",
     "gamesPlayed": "Игр сыграно",
     "gamesWon": "Игр выиграно",

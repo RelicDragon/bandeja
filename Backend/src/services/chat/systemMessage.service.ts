@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { MessageState, ChatType } from '@prisma/client';
 import { SystemMessageType, createSystemMessageContent } from '../../utils/systemMessages';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class SystemMessageService {
   static async createSystemMessage(
@@ -26,56 +27,28 @@ export class SystemMessageService {
       },
       include: {
         sender: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-            level: true,
-            gender: true,
-          }
+          select: USER_SELECT_FIELDS,
         },
         replyTo: {
           select: {
             id: true,
             content: true,
             sender: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true
-              }
+              select: USER_SELECT_FIELDS
             }
           }
         },
         reactions: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true
-              }
+              select: USER_SELECT_FIELDS
             }
           }
         },
         readReceipts: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true
-              }
+              select: USER_SELECT_FIELDS
             }
           }
         }

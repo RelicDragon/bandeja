@@ -21,6 +21,7 @@ model User {
   passwordHash            String?
   isActive                Boolean              @default(true)
   level                   Float                @default(1.0)
+  socialLevel             Float                @default(1.0)
   reliability             Float                @default(0)
   totalPoints             Int                  @default(0)
   gamesPlayed             Int                  @default(0)
@@ -54,12 +55,22 @@ model User {
   gameOutcomes            GameOutcome[]
   gameTeamPlayers         GameTeamPlayer[]
   bugs                    Bug[]
+  lundaProfile            LundaProfile?
 
   @@index([phone])
   @@index([telegramId])
   @@index([currentCityId])
   @@index([level])
   @@index([totalPoints])
+}
+
+model LundaProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  metadata    Json     // Store the entire player data response from Lunda API
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model City {

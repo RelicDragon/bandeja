@@ -29,12 +29,20 @@ export default defineConfig({
     // Enable host to allow external connections if needed
     host: true,
   },
-  // Optimize build for development
+  // Optimize build for production
   build: {
-    // Enable source maps for debugging
-    sourcemap: true,
+    // Disable source maps for production security
+    sourcemap: false,
     // Reduce chunk size warnings
     chunkSizeWarningLimit: 1000,
+    // Minify for smaller bundles
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
   },
   define: {
     // Define environment variables with defaults

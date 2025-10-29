@@ -17,6 +17,7 @@ import mediaRoutes from './media.routes';
 import favoritesRoutes from './favorites.routes';
 import bugRoutes from './bug.routes';
 import bugChatRoutes from './bugChat.routes';
+import lundaRoutes from './lunda.routes';
 
 const router = Router();
 
@@ -38,6 +39,7 @@ router.use('/media', mediaRoutes);
 router.use('/favorites', favoritesRoutes);
 router.use('/bugs', bugRoutes);
 router.use('/bug-chat', bugChatRoutes);
+router.use('/lunda', lundaRoutes);
 
 export default router;
 

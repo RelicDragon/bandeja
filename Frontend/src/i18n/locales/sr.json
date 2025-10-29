@@ -257,6 +257,7 @@
   "rating": {
     "title": "Мој рејтинг",
     "level": "Ниво",
+    "socialLevel": "Социјални",
     "points": "Укупно поена",
     "gamesPlayed": "Одиграних игара",
     "gamesWon": "Побеђених игара",

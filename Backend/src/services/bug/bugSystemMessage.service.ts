@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { MessageState, ChatType } from '@prisma/client';
 import { SystemMessageType, createSystemMessageContent } from '../../utils/systemMessages';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class BugSystemMessageService {
   static async createSystemMessage(
@@ -26,14 +27,7 @@ export class BugSystemMessageService {
       },
       include: {
         sender: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-            level: true,
-            gender: true,
-          }
+            select: USER_SELECT_FIELDS
         },
         replyTo: {
           select: {

@@ -6,6 +6,7 @@ import prisma from '../config/database';
 import { InviteStatus, ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from './chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { receiverId, gameId, message, expiresAt } = req.body;
@@ -57,24 +58,10 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
     },
     include: {
       sender: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatar: true,
-          level: true,
-          gender: true,
-        },
+        select: USER_SELECT_FIELDS,
       },
       receiver: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatar: true,
-          level: true,
-          gender: true,
-        },
+        select: USER_SELECT_FIELDS,
       },
       game: {
         select: {
@@ -121,14 +108,7 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
               isPlaying: true,
               role: true,
               user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  avatar: true,
-                  level: true,
-                  gender: true,
-                },
+                select: USER_SELECT_FIELDS,
               },
             },
           },
@@ -179,14 +159,7 @@ export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response)
     where,
     include: {
       sender: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatar: true,
-          level: true,
-          gender: true,
-        },
+        select: USER_SELECT_FIELDS,
       },
       game: {
         select: {
@@ -233,14 +206,7 @@ export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response)
               isPlaying: true,
               role: true,
               user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  avatar: true,
-                  level: true,
-                  gender: true,
-                },
+                select: USER_SELECT_FIELDS,
               },
             },
           },
@@ -456,25 +422,11 @@ export const getGameInvites = asyncHandler(async (req: AuthRequest, res: Respons
     },
     include: {
       sender: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatar: true,
-          level: true,
-          gender: true,
-        },
+        select: USER_SELECT_FIELDS,
       },
-      receiver: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatar: true,
-          level: true,
-          gender: true,
+        receiver: {
+          select: USER_SELECT_FIELDS,
         },
-      },
     },
     orderBy: { createdAt: 'desc' },
   });

@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { ParticipantRole, RoundStatus, MatchStatus } from '@prisma/client';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 interface SetData {
   setNumber: number;
@@ -353,6 +354,7 @@ export async function saveGameResults(
                             lastName: true,
                             avatar: true,
                             level: true,
+                            socialLevel: true,
                           },
                         },
                       },
@@ -380,14 +382,10 @@ export async function saveGameResults(
         outcomes: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                reliability: true,
-              },
+                  select: {
+                    ...USER_SELECT_FIELDS,
+                    reliability: true,
+                  },
             },
           },
         },
@@ -409,13 +407,7 @@ export async function getGameResults(gameId: string) {
                   players: {
                     include: {
                       user: {
-                        select: {
-                          id: true,
-                          firstName: true,
-                          lastName: true,
-                          avatar: true,
-                          level: true,
-                        },
+                        select: USER_SELECT_FIELDS,
                       },
                     },
                   },
@@ -446,14 +438,10 @@ export async function getGameResults(gameId: string) {
       outcomes: {
         include: {
           user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-              level: true,
-              reliability: true,
-            },
+                  select: {
+                    ...USER_SELECT_FIELDS,
+                    reliability: true,
+                  },
           },
         },
         orderBy: { position: 'asc' },

@@ -23,6 +23,7 @@ export interface User {
   currentCityId?: string;
   currentCity?: City;
   level: number;
+  socialLevel: number;
   reliability: number;
   totalPoints: number;
   gamesPlayed: number;

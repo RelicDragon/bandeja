@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer } from '@/components';
+import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { usersApi, citiesApi, mediaApi } from '@/api';
@@ -57,6 +57,7 @@ export const ProfileContent = ({
   const [cities, setCities] = useState<City[]>([]);
   const [showCityModal, setShowCityModal] = useState(false);
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
+  const [showLundaModal, setShowLundaModal] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   useEffect(() => {
@@ -246,6 +247,26 @@ export const ProfileContent = ({
           </div>
         </Card>
 
+        {false && i18n.language === 'ru' && (
+          <Card>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Lunda
+            </h2>
+            <div className="space-y-4">
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Подключите аккаунт Lunda Padel для синхронизации данных
+              </p>
+              <Button
+                onClick={() => setShowLundaModal(true)}
+                className="w-full"
+                variant="secondary"
+              >
+                Получить информацию из Lunda
+              </Button>
+            </div>
+          </Card>
+        )}
+
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.preferences')}
@@ -401,6 +422,26 @@ export const ProfileContent = ({
         <FullscreenImageViewer
           imageUrl={UrlConstructor.constructImageUrl(user.originalAvatar)}
           onClose={() => setShowFullscreenAvatar(false)}
+        />
+      )}
+
+      {showLundaModal && (
+        <LundaAccountModal
+          onClose={() => setShowLundaModal(false)}
+          onSuccess={() => {
+            setShowLundaModal(false);
+            // Refresh user profile after successful Lunda sync
+            const fetchUserProfile = async () => {
+              try {
+                const response = await usersApi.getProfile();
+                updateUser(response.data);
+                toast.success('Данные из Lunda успешно синхронизированы');
+              } catch (error) {
+                console.error('Failed to refresh user profile:', error);
+              }
+            };
+            fetchUserProfile();
+          }}
         />
       )}
     </>

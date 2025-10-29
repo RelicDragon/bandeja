@@ -2,19 +2,16 @@ import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { MediaCleanupService } from '../mediaCleanup.service';
 import { Gender } from '@prisma/client';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class AdminUsersService {
   static async getAllUsers(cityId?: string) {
     const users = await prisma.user.findMany({
       where: cityId ? { currentCityId: cityId } : undefined,
       select: {
-        id: true,
+        ...USER_SELECT_FIELDS,
         phone: true,
         email: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        level: true,
         isActive: true,
         isAdmin: true,
         isTrainer: true,
@@ -41,13 +38,9 @@ export class AdminUsersService {
       where: { id: userId },
       data: { isActive: !user.isActive },
       select: {
-        id: true,
+        ...USER_SELECT_FIELDS,
         phone: true,
         email: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        level: true,
         isActive: true,
       },
     });
@@ -127,13 +120,9 @@ export class AdminUsersService {
         isTrainer: isTrainer !== undefined ? isTrainer : false,
       },
       select: {
-        id: true,
+        ...USER_SELECT_FIELDS,
         phone: true,
         email: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        level: true,
         isActive: true,
         isAdmin: true,
         isTrainer: true,
@@ -222,13 +211,9 @@ export class AdminUsersService {
         ...(isTrainer !== undefined && { isTrainer }),
       },
       select: {
-        id: true,
+        ...USER_SELECT_FIELDS,
         phone: true,
         email: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        level: true,
         isActive: true,
         isAdmin: true,
         isTrainer: true,

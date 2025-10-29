@@ -5,6 +5,7 @@ import prisma from '../config/database';
 import { generateToken } from '../utils/jwt';
 import { hashPassword, comparePassword } from '../utils/hash';
 import { AuthProvider } from '@prisma/client';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export const registerWithPhone = asyncHandler(async (req: Request, res: Response) => {
   const { phone, password, firstName, lastName, email, language, gender, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
@@ -44,16 +45,11 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
       authProvider: AuthProvider.PHONE,
     },
     select: {
-      id: true,
+      ...USER_SELECT_FIELDS,
       phone: true,
       email: true,
       telegramId: true,
       telegramUsername: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      level: true,
-      gender: true,
       reliability: true,
       isAdmin: true,
       isTrainer: true,
@@ -86,16 +82,11 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
   const user = await prisma.user.findUnique({
     where: { phone },
     select: {
-      id: true,
+      ...USER_SELECT_FIELDS,
       phone: true,
       email: true,
       telegramId: true,
       telegramUsername: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      level: true,
-      gender: true,
       reliability: true,
       isAdmin: true,
       isTrainer: true,
@@ -180,16 +171,11 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
       authProvider: AuthProvider.TELEGRAM,
     },
     select: {
-      id: true,
+      ...USER_SELECT_FIELDS,
       phone: true,
       email: true,
       telegramId: true,
       telegramUsername: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      level: true,
-      gender: true,
       reliability: true,
       isAdmin: true,
       isTrainer: true,
@@ -222,16 +208,11 @@ export const loginWithTelegram = asyncHandler(async (req: Request, res: Response
   const user = await prisma.user.findUnique({
     where: { telegramId },
     select: {
-      id: true,
+      ...USER_SELECT_FIELDS,
       phone: true,
       email: true,
       telegramId: true,
       telegramUsername: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      level: true,
-      gender: true,
       reliability: true,
       isAdmin: true,
       isTrainer: true,

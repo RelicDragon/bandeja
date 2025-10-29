@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import { EntityType } from '@prisma/client';
 import { ApiError } from '../utils/ApiError';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export class GameService {
   static async calculateGameReadiness(gameId: string) {
@@ -154,14 +155,7 @@ export class GameService {
         participants: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true,
-              },
+              select: USER_SELECT_FIELDS,
             },
           },
         },
@@ -170,13 +164,7 @@ export class GameService {
             players: {
               include: {
                 user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    avatar: true,
-                    level: true,
-                  },
+                  select: USER_SELECT_FIELDS,
                 },
               },
             },
@@ -213,14 +201,7 @@ export class GameService {
         participants: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true,
-              },
+              select: USER_SELECT_FIELDS,
             },
           },
         },
@@ -229,13 +210,7 @@ export class GameService {
             players: {
               include: {
                 user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    avatar: true,
-                    level: true,
-                  },
+                  select: USER_SELECT_FIELDS,
                 },
               },
             },
@@ -268,14 +243,7 @@ export class GameService {
         participants: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true,
-              },
+              select: USER_SELECT_FIELDS,
             },
           },
         },
@@ -285,28 +253,14 @@ export class GameService {
           },
           include: {
             receiver: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true,
-              },
+              select: USER_SELECT_FIELDS,
             },
           },
         },
         outcomes: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true,
-              },
+              select: USER_SELECT_FIELDS,
             },
           },
           orderBy: { position: 'asc' },
@@ -320,13 +274,7 @@ export class GameService {
                     players: {
                       include: {
                         user: {
-                          select: {
-                            id: true,
-                            firstName: true,
-                            lastName: true,
-                            avatar: true,
-                            level: true,
-                          },
+                          select: USER_SELECT_FIELDS,
                         },
                       },
                     },
@@ -346,13 +294,7 @@ export class GameService {
             players: {
               include: {
                 user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    avatar: true,
-                    level: true,
-                  },
+                  select: USER_SELECT_FIELDS,
                 },
               },
             },
@@ -408,14 +350,7 @@ export class GameService {
         participants: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true,
-              },
+              select: USER_SELECT_FIELDS,
             },
           },
         },
@@ -425,28 +360,14 @@ export class GameService {
           },
           include: {
             receiver: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true,
-              },
+              select: USER_SELECT_FIELDS,
             },
           },
         },
         outcomes: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true,
-              },
+              select: USER_SELECT_FIELDS,
             },
           },
           orderBy: { position: 'asc' },
@@ -465,8 +386,9 @@ export class GameService {
                             firstName: true,
                             lastName: true,
                             avatar: true,
-                            level: true,
-                          },
+                level: true,
+                socialLevel: true,
+              },
                         },
                       },
                     },
@@ -486,13 +408,7 @@ export class GameService {
             players: {
               include: {
                 user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    avatar: true,
-                    level: true,
-                  },
+                  select: USER_SELECT_FIELDS,
                 },
               },
             },
@@ -602,14 +518,7 @@ export class GameService {
           where: { isPlaying: true },
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true,
-              },
+              select: USER_SELECT_FIELDS,
             },
           },
         },
@@ -678,14 +587,7 @@ export class GameService {
         participants: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true,
-              },
+              select: USER_SELECT_FIELDS,
             },
           },
         },
@@ -702,14 +604,7 @@ export class GameService {
         participants: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true,
-              },
+              select: USER_SELECT_FIELDS,
             },
           },
         },

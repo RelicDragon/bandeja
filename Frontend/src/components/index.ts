@@ -44,3 +44,5 @@ export * from './GenderIndicator';
 export * from './Divider';
 export * from './gameResults';
 export * from './ConfirmationModal';
+export * from './LundaAccountModal';
+export * from './GameModeToggle';
