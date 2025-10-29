@@ -38,7 +38,8 @@ export const GameInfo = ({
     const club = game.court?.club || game.club;
     if (!club) return;
 
-    const destination = encodeURIComponent(`${club.city?.country}+${club.city?.name}+${club.address}`);
+    const destinationParts = [club.city?.country, club.city?.name, club.address].filter(Boolean);
+    const destination = encodeURIComponent(destinationParts.join('+'));
     const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
     window.open(url, '_blank');
   };
