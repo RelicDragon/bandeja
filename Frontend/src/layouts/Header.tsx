@@ -57,8 +57,8 @@ export const Header = ({
 
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 fixed top-0 right-0 left-0 z-40 shadow-lg">
-      <div className="h-full px-4 flex items-center justify-between">
-        <div className="flex items-center">
+      <div className="h-full px-4 flex">
+        <div className="flex items-center gap-2">
           {currentPage === 'home' ? (
             <button
               onClick={handleProfileClick}
@@ -76,9 +76,7 @@ export const Header = ({
               {t('common.back')}
             </button>
           )}
-        </div>
 
-        <div className="flex items-center gap-4 relative">
           {pendingInvites > 0 && (
             <button className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
               <Bell size={20} className="text-gray-600 dark:text-gray-400" />
@@ -87,9 +85,9 @@ export const Header = ({
               </span>
             </button>
           )}
-          
+
           {(unreadMessages > 0 || showChatFilter) && (
-            <button 
+            <button
               onClick={() => {
                 if (onChatFilterToggle) {
                   onChatFilterToggle();
@@ -99,14 +97,14 @@ export const Header = ({
                 }
               }}
               className={`relative p-2 rounded-lg transition-colors ${
-                showChatFilter 
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400' 
+                showChatFilter
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
-              <MessageCircle 
-                size={20} 
-                className={showChatFilter ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} 
+              <MessageCircle
+                size={20}
+                className={showChatFilter ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'}
                 fill={showChatFilter ? 'currentColor' : 'none'}
               />
               {unreadMessages > 0 && (
@@ -117,19 +115,23 @@ export const Header = ({
             </button>
           )}
 
-          <button
-            onClick={handleBugClick}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            title={t('bug.bugTracker')}
-          >
-            <Bug size={20} className="text-gray-600 dark:text-gray-400" />
-          </button>
+          {currentPage !== 'bugs' && (
+            <button
+              onClick={handleBugClick}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              title={t('bug.bugTracker')}
+            >
+              <Bug size={20} className="text-gray-600 dark:text-gray-400" />
+            </button>
+          )}
+        </div>
 
+        <div className="flex items-center gap-4 relative ml-auto">
           {/* Content wrappers for different pages */}
           <HeaderContentWrapper page="home">
             <HomeHeaderContent />
           </HeaderContentWrapper>
-          
+
           <HeaderContentWrapper page="profile">
             <ProfileHeaderContent
               isEditMode={profileEditMode}
@@ -138,7 +140,7 @@ export const Header = ({
               disabled={profileSaveDisabled}
             />
           </HeaderContentWrapper>
-          
+
           <HeaderContentWrapper page="gameDetails">
             <GameDetailsHeaderContent canAccessChat={gameDetailsCanAccessChat} />
           </HeaderContentWrapper>
