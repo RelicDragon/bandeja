@@ -82,7 +82,6 @@ export const Header = ({
     setCurrentPage('home');
     navigate('/', { replace: true });
     setTimeout(() => setIsAnimating(false), 300);
-    setTimeout(() => setBounceNotifications(false), 2000); // Reset bounce after animation
   };
 
   return (
