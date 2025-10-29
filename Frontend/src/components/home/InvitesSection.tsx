@@ -4,6 +4,7 @@ import { Button, Card, PlayerAvatar } from '@/components';
 import { Invite } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { Calendar, MapPin, Check, X } from 'lucide-react';
+import { useNavigationStore } from '@/store/navigationStore';
 
 interface InvitesSectionProps {
   invites: Invite[];
@@ -14,12 +15,13 @@ interface InvitesSectionProps {
 export const InvitesSection = ({ invites, onAccept, onDecline }: InvitesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { bounceNotifications } = useNavigationStore();
 
   if (invites.length === 0) return null;
 
   return (
-    <div className="mb-6">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+    <div className={`mb-6 ${bounceNotifications ? 'animate-pulse' : ''}`}>
+      <h2 className={`text-xl font-semibold text-gray-900 dark:text-white mb-4 ${bounceNotifications ? 'animate-bounce text-primary-600 dark:text-primary-400' : ''}`}>
         {t('invites.title')} ({invites.length})
       </h2>
       <div className="space-y-3">
@@ -30,9 +32,9 @@ export const InvitesSection = ({ invites, onAccept, onDecline }: InvitesSectionP
           const gameId = invite.gameId;
           
           return (
-            <Card 
-              key={invite.id} 
-              className="p-4 cursor-pointer hover:shadow-lg transition-shadow"
+            <Card
+              key={invite.id}
+              className={`p-4 cursor-pointer hover:shadow-lg transition-shadow ${bounceNotifications ? 'animate-bounce bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700' : ''}`}
               onClick={() => gameId && navigate(`/games/${gameId}`)}
             >
               <div className="flex items-start gap-3">

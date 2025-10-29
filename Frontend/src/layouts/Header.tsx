@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useEffect, useRef } from 'react';
 import { Bell, MessageCircle, User, ArrowLeft, Bug } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -32,7 +33,18 @@ export const Header = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { pendingInvites, unreadMessages } = useHeaderStore();
-  const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat } = useNavigationStore();
+  const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications, bugsButtonSlidingUp, bugsButtonSlidingDown, setBugsButtonSlidingUp, setBugsButtonSlidingDown } = useNavigationStore();
+
+  const previousPageRef = useRef(currentPage);
+
+  // Trigger bugs button slide-down animation when navigating away from bugs page
+  useEffect(() => {
+    if (previousPageRef.current === 'bugs' && currentPage !== 'bugs') {
+      setBugsButtonSlidingDown(true);
+      setTimeout(() => setBugsButtonSlidingDown(false), 500);
+    }
+    previousPageRef.current = currentPage;
+  }, [currentPage, setBugsButtonSlidingDown]);
 
   const handleProfileClick = () => {
     setIsAnimating(true);
@@ -49,10 +61,28 @@ export const Header = ({
   };
 
   const handleBugClick = () => {
+    // Start slide-up animation
+    setBugsButtonSlidingUp(true);
+
+    // Trigger page navigation after slide-up animation
+    setTimeout(() => {
+      setIsAnimating(true);
+      setCurrentPage('bugs');
+      navigate('/bugs', { replace: true });
+      setTimeout(() => setIsAnimating(false), 300);
+    }, 200); // Small delay for slide-up effect
+
+    // Reset slide-up state after animation completes
+    setTimeout(() => setBugsButtonSlidingUp(false), 1000);
+  };
+
+  const handleNotificationsClick = () => {
     setIsAnimating(true);
-    setCurrentPage('bugs');
-    navigate('/bugs', { replace: true });
+    setBounceNotifications(true);
+    setCurrentPage('home');
+    navigate('/', { replace: true });
     setTimeout(() => setIsAnimating(false), 300);
+    setTimeout(() => setBounceNotifications(false), 2000); // Reset bounce after animation
   };
 
   return (
@@ -78,7 +108,10 @@ export const Header = ({
           )}
 
           {pendingInvites > 0 && (
-            <button className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <button
+              onClick={handleNotificationsClick}
+              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-110 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current"
+            >
               <Bell size={20} className="text-gray-600 dark:text-gray-400" />
               <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 {pendingInvites}
@@ -115,15 +148,13 @@ export const Header = ({
             </button>
           )}
 
-          {currentPage !== 'bugs' && (
-            <button
-              onClick={handleBugClick}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              title={t('bug.bugTracker')}
-            >
-              <Bug size={20} className="text-gray-600 dark:text-gray-400" />
-            </button>
-          )}
+          <button
+            onClick={handleBugClick}
+            className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-110 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current ${bugsButtonSlidingUp || currentPage === 'bugs' ? 'transform -translate-y-8 opacity-0' : ''} ${bugsButtonSlidingDown ? 'transform translate-y-8 opacity-0' : ''}`}
+            title={t('bug.bugTracker')}
+          >
+            <Bug size={20} className={`text-gray-600 dark:text-gray-400 transition-all duration-500 ${bugsButtonSlidingUp || bugsButtonSlidingDown || currentPage === 'bugs' ? 'opacity-0' : 'opacity-100'}`} />
+          </button>
         </div>
 
         <div className="flex items-center gap-4 relative ml-auto">
