@@ -12,6 +12,7 @@ import {
   Beer,
   Crown,
   Ban,
+  Users,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -86,6 +87,13 @@ export const GameInfo = ({
               <span className="px-3 py-1 text-sm font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
                 <Ban size={14} />
                 {t('games.noRating')}
+              </span>
+            )}
+            {game.hasFixedTeams && (
+              <span className="px-3 py-1 text-sm font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1">
+                <Users size={14} />
+                <Users size={14} />
+                {t('games.fixedTeams')}
               </span>
             )}
           </div>
