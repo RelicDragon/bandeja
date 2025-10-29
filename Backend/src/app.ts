@@ -20,6 +20,7 @@ app.use(cors({
   origin: [
     process.env.FRONTEND_URL || "http://localhost:3001",
     "http://localhost:3000",
+    "http://localhost:9000",
     "null" // Allow file:// protocol for admin interface
   ],
   credentials: true,
