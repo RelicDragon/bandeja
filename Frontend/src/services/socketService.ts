@@ -3,12 +3,19 @@ import { useAuthStore } from '@/store/authStore';
 
 export interface SocketEvents {
   'new-message': (message: any) => void;
+  'new-bug-message': (message: any) => void;
   'message-reaction': (reaction: any) => void;
+  'bug-message-reaction': (reaction: any) => void;
   'read-receipt': (readReceipt: any) => void;
+  'bug-read-receipt': (readReceipt: any) => void;
   'message-deleted': (data: { messageId: string }) => void;
+  'bug-message-deleted': (data: { messageId: string }) => void;
   'typing-indicator': (data: { userId: string; isTyping: boolean }) => void;
+  'bug-typing-indicator': (data: { userId: string; isTyping: boolean }) => void;
   'joined-game-room': (data: { gameId: string }) => void;
   'left-game-room': (data: { gameId: string }) => void;
+  'joined-bug-room': (data: { bugId: string }) => void;
+  'left-bug-room': (data: { bugId: string }) => void;
   'error': (error: { message: string }) => void;
 }
 
@@ -186,6 +193,32 @@ class SocketService {
       this.socket.emit('leave-game-room', gameId);
     } else {
       console.warn('Socket not connected, cannot leave game room');
+    }
+  }
+
+  // Join a bug chat room
+  public async joinBugRoom(bugId: string) {
+    try {
+      await this.waitForConnection();
+      if (this.socket) {
+        this.socket.emit('join-bug-room', bugId);
+      }
+    } catch (error) {
+      console.error('Failed to join bug room:', error);
+    }
+  }
+
+  // Leave a bug chat room
+  public leaveBugRoom(bugId: string) {
+    if (!this.socket) {
+      console.warn('Socket not initialized, cannot leave bug room');
+      return;
+    }
+
+    if (this.socket.connected) {
+      this.socket.emit('leave-bug-room', bugId);
+    } else {
+      console.warn('Socket not connected, cannot leave bug room');
     }
   }
 

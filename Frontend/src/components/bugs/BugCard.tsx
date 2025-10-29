@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components';
 import { Bug, BugStatus, BugType } from '@/types';
 
@@ -9,7 +10,7 @@ import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { bugsApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'react-hot-toast';
-import { ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, MoreVertical, Trash2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components';
 
 interface BugCardProps {
@@ -21,6 +22,7 @@ interface BugCardProps {
 export const BugCard = ({ bug, onUpdate, onDelete }: BugCardProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -80,23 +82,27 @@ export const BugCard = ({ bug, onUpdate, onDelete }: BugCardProps) => {
     setShowMenu(false);
   };
 
+  const handleOpenChat = () => {
+    navigate(`/bugs/${bug.id}/chat`);
+  };
+
   const canModify = user?.isAdmin || bug.senderId === user?.id;
 
   return (
     <Card className="p-4 mb-3">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-1">
             <PlayerAvatar
               player={bug.sender}
-              smallLayout
+              extrasmall
             />
             <span className="text-sm font-medium">
               {bug.sender.firstName} {bug.sender.lastName}
             </span>
-            <span className="text-xs text-gray-500">
-              {formatRelativeTime(bug.createdAt)}
-            </span>
+          </div>
+          <div className="text-xs text-gray-500 mb-2">
+            {formatRelativeTime(bug.createdAt)}
           </div>
 
           <div className="flex items-center gap-2 mb-2">
@@ -134,17 +140,28 @@ export const BugCard = ({ bug, onUpdate, onDelete }: BugCardProps) => {
           )}
         </div>
 
-        {canModify && (
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowMenu(!showMenu)}
-              disabled={isUpdating}
-              className="p-1"
-            >
-              <MoreVertical className="w-4 h-4" />
-            </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleOpenChat}
+            className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            title={t('bug.openChat')}
+          >
+            <MessageCircle className="w-4 h-4" />
+          </Button>
+
+          {canModify && (
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMenu(!showMenu)}
+                disabled={isUpdating}
+                className="p-1"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </Button>
 
             {showMenu && (
               <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32">
@@ -176,6 +193,7 @@ export const BugCard = ({ bug, onUpdate, onDelete }: BugCardProps) => {
             )}
           </div>
         )}
+        </div>
       </div>
     </Card>
   );

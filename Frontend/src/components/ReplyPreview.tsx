@@ -1,9 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatMessage } from '@/api/chat';
+import { BugMessage } from '@/api/bugChat';
+
+type ReplyToType = ChatMessage['replyTo'] | BugMessage['replyTo'];
 
 interface ReplyPreviewProps {
-  replyTo: ChatMessage['replyTo'];
+  replyTo: ReplyToType;
   onCancel?: () => void;
   onScrollToMessage?: (messageId: string) => void;
   className?: string;

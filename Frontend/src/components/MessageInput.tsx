@@ -2,16 +2,18 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { chatApi, CreateMessageRequest, ChatMessage } from '@/api/chat';
+import { bugChatApi, CreateBugMessageRequest, BugMessage } from '@/api/bugChat';
 import { mediaApi } from '@/api/media';
 import { ChatType } from '@/types';
 import { ReplyPreview } from './ReplyPreview';
 import { Image, X } from 'lucide-react';
 
 interface MessageInputProps {
-  gameId: string;
+  gameId?: string;
+  bugId?: string;
   onMessageSent: () => void;
   disabled?: boolean;
-  replyTo?: ChatMessage | null;
+  replyTo?: ChatMessage | BugMessage | null;
   onCancelReply?: () => void;
   onScrollToMessage?: (messageId: string) => void;
   chatType?: ChatType;
@@ -19,6 +21,7 @@ interface MessageInputProps {
 
 export const MessageInput: React.FC<MessageInputProps> = ({
   gameId,
+  bugId,
   onMessageSent,
   disabled = false,
   replyTo,
@@ -86,9 +89,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const uploadImages = async (): Promise<{ originalUrls: string[]; thumbnailUrls: string[] }> => {
     if (selectedImages.length === 0) return { originalUrls: [], thumbnailUrls: [] };
 
+    const targetId = gameId || bugId;
+    if (!targetId) return { originalUrls: [], thumbnailUrls: [] };
+
     const uploadPromises = selectedImages.map(async (file) => {
       try {
-        const response = await mediaApi.uploadChatImage(file, gameId);
+        const response = await mediaApi.uploadChatImage(file, targetId);
         return {
           originalUrl: response.originalUrl,
           thumbnailUrl: response.thumbnailUrl
@@ -113,18 +119,33 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     setIsLoading(true);
     try {
       const { originalUrls, thumbnailUrls } = await uploadImages();
-      
+
       const trimmedContent = message.trim();
-      const messageData: CreateMessageRequest = {
-        gameId,
-        content: trimmedContent || undefined,
-        mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
-        thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
-        replyToId: replyTo?.id,
-        chatType,
-      };
-      
-      await chatApi.createMessage(messageData);
+
+      if (gameId) {
+        const messageData: CreateMessageRequest = {
+          gameId,
+          content: trimmedContent || undefined,
+          mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
+          thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+          replyToId: replyTo?.id,
+          chatType,
+        };
+
+        await chatApi.createMessage(messageData);
+      } else if (bugId) {
+        const messageData: CreateBugMessageRequest = {
+          bugId,
+          content: trimmedContent || undefined,
+          mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
+          thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+          replyToId: replyTo?.id,
+          chatType,
+        };
+
+        await bugChatApi.createMessage(messageData);
+      }
+
       setMessage('');
       setSelectedImages([]);
       onCancelReply?.();

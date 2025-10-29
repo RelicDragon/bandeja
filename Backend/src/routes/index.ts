@@ -16,6 +16,7 @@ import chatRoutes from './chat.routes';
 import mediaRoutes from './media.routes';
 import favoritesRoutes from './favorites.routes';
 import bugRoutes from './bug.routes';
+import bugChatRoutes from './bugChat.routes';
 
 const router = Router();
 
@@ -36,6 +37,7 @@ router.use('/chat', chatRoutes);
 router.use('/media', mediaRoutes);
 router.use('/favorites', favoritesRoutes);
 router.use('/bugs', bugRoutes);
+router.use('/bug-chat', bugChatRoutes);
 
 export default router;
 

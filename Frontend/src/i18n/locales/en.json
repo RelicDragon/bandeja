@@ -53,7 +53,8 @@
     "statusUpdated": "Bug status updated",
     "statusUpdateError": "Failed to update bug status",
     "deleted": "Bug deleted",
-    "deleteError": "Failed to delete bug"
+    "deleteError": "Failed to delete bug",
+    "openChat": "Open chat"
   },
   "home": {
     "title": "My Games",

@@ -11,6 +11,7 @@ import { CreateGameWrapper } from './pages/CreateGameWrapper';
 import { GameChat } from './pages/GameChat';
 import { ChatList } from './pages/ChatList';
 import { GameResultsEntry } from './pages/GameResultsEntry';
+import { BugChat } from './pages/BugChat';
 import { useAuthStore } from './store/authStore';
 import { isProfileComplete, hasValidUsername } from './utils/userValidation';
 import { PlayerCardModalManager } from './components/PlayerCardModalManager';
@@ -170,6 +171,18 @@ function App() {
                 <Navigate to="/" replace />
               ) : (
                 <MainPage />
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bugs/:id/chat"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <BugChat />
               )}
             </ProtectedRoute>
           }

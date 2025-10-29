@@ -6,6 +6,7 @@ import prisma from '../config/database';
 interface AuthenticatedSocket extends Socket {
   userId?: string;
   gameRooms?: Set<string>;
+  bugRooms?: Set<string>;
 }
 
 class SocketService {
@@ -76,6 +77,7 @@ class SocketService {
 
       // Initialize game rooms tracking
       socket.gameRooms = new Set();
+      socket.bugRooms = new Set();
 
       // Handle joining game chat rooms
       socket.on('join-game-room', async (gameId: string) => {
@@ -131,6 +133,57 @@ class SocketService {
         socket.emit('left-game-room', { gameId });
       });
 
+      // Handle joining bug chat rooms
+      socket.on('join-bug-room', async (bugId: string) => {
+        try {
+          if (!socket.userId) return;
+
+          // Verify user has access to this bug
+          const bug = await prisma.bug.findUnique({
+            where: { id: bugId },
+            include: {
+              sender: true
+            }
+          });
+
+          if (!bug) {
+            socket.emit('error', { message: 'Bug not found' });
+            return;
+          }
+
+          // Check if user is the bug sender or an admin
+          const user = await prisma.user.findUnique({
+            where: { id: socket.userId },
+            select: { isAdmin: true, isTrainer: true }
+          });
+
+          const isSender = bug.senderId === socket.userId;
+          const isAdmin = user?.isAdmin || user?.isTrainer;
+
+          if (!isSender && !isAdmin) {
+            socket.emit('error', { message: 'Access denied to bug chat' });
+            return;
+          }
+
+          socket.join(`bug-${bugId}`);
+          socket.bugRooms?.add(bugId);
+
+          console.log(`User ${socket.userId} joined bug room ${bugId}`);
+          socket.emit('joined-bug-room', { bugId });
+        } catch (error) {
+          console.error('Error joining bug room:', error);
+          socket.emit('error', { message: 'Failed to join bug room' });
+        }
+      });
+
+      // Handle leaving bug chat rooms
+      socket.on('leave-bug-room', (bugId: string) => {
+        socket.leave(`bug-${bugId}`);
+        socket.bugRooms?.delete(bugId);
+        console.log(`User ${socket.userId} left bug room ${bugId}`);
+        socket.emit('left-bug-room', { bugId });
+      });
+
       // Handle disconnect
       socket.on('disconnect', () => {
         console.log(`User ${socket.userId} disconnected`);
@@ -166,6 +219,26 @@ class SocketService {
   // Emit message deletion to all users in a game room
   public emitMessageDeleted(gameId: string, messageId: string) {
     this.io.to(`game-${gameId}`).emit('message-deleted', { messageId });
+  }
+
+  // Emit new bug message to all users in a bug room
+  public emitNewBugMessage(bugId: string, message: any) {
+    this.io.to(`bug-${bugId}`).emit('new-bug-message', message);
+  }
+
+  // Emit bug message reaction to all users in a bug room
+  public emitBugMessageReaction(bugId: string, reaction: any) {
+    this.io.to(`bug-${bugId}`).emit('bug-message-reaction', reaction);
+  }
+
+  // Emit bug message read receipt to all users in a bug room
+  public emitBugReadReceipt(bugId: string, readReceipt: any) {
+    this.io.to(`bug-${bugId}`).emit('bug-read-receipt', readReceipt);
+  }
+
+  // Emit bug message deletion to all users in a bug room
+  public emitBugMessageDeleted(bugId: string, messageId: string) {
+    this.io.to(`bug-${bugId}`).emit('bug-message-deleted', { messageId });
   }
 
   // Emit typing indicator

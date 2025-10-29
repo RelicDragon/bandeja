@@ -37,11 +37,14 @@ model User {
   isTrainer               Boolean              @default(false)
   gender                  Gender               @default(PREFER_NOT_TO_SAY)
   chatMessages            ChatMessage[]
+  bugMessages             BugMessage[]
   participateInGames      GameParticipant[]    @relation("ParticipantUser")
   receivedInvites         Invite[]             @relation("InviteReceiver")
   sentInvites             Invite[]             @relation("InviteSender")
   messageReactions        MessageReaction[]
   messageReadReceipts     MessageReadReceipt[]
+  bugMessageReactions     BugMessageReaction[]
+  bugMessageReadReceipts  BugMessageReadReceipt[]
   currentCity             City?                @relation("UserCurrentCity", fields: [currentCityId], references: [id])
   favoriteClubs           UserFavoriteClub[]
   interactionsFrom        UserInteraction[]    @relation("InteractionFromUser")
@@ -415,6 +418,20 @@ model MessageReaction {
   @@index([userId])
 }
 
+model BugMessageReaction {
+  id        String     @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime   @default(now())
+  message   BugMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+}
+
 model MessageReadReceipt {
   id        String      @id @default(cuid())
   messageId String
@@ -422,6 +439,19 @@ model MessageReadReceipt {
   readAt    DateTime    @default(now())
   message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+}
+
+model BugMessageReadReceipt {
+  id        String     @id @default(cuid())
+  messageId String
+  userId    String
+  readAt    DateTime   @default(now())
+  message   BugMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId])
   @@index([messageId])
@@ -524,18 +554,46 @@ model TelegramOtp {
 }
 
 model Bug {
-  id        String     @id @default(cuid())
+  id        String       @id @default(cuid())
   text      String
   senderId  String
-  status    BugStatus  @default(CREATED)
-  bugType   BugType    @default(BUG)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  sender    User       @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  status    BugStatus    @default(CREATED)
+  bugType   BugType      @default(BUG)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  sender    User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  bugMessages BugMessage[]
 
   @@index([senderId])
   @@index([status])
   @@index([bugType])
+}
+
+model BugMessage {
+  id            String                  @id @default(cuid())
+  bugId         String
+  senderId      String?
+  content       String?
+  mediaUrls     String[]
+  thumbnailUrls String[]
+  state         MessageState            @default(SENT)
+  chatType      ChatType                @default(PUBLIC)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  replyToId     String?
+  bug           Bug                     @relation(fields: [bugId], references: [id], onDelete: Cascade)
+  replyTo       BugMessage?             @relation("BugMessageReply", fields: [replyToId], references: [id])
+  replies       BugMessage[]            @relation("BugMessageReply")
+  sender        User?                   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reactions     BugMessageReaction[]
+  readReceipts  BugMessageReadReceipt[]
+
+  @@index([bugId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([state])
+  @@index([replyToId])
+  @@index([chatType])
 }
 
 enum BugStatus {

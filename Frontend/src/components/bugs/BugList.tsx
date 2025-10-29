@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Loading } from '@/components';
 import { BugCard } from './BugCard';
@@ -25,7 +25,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     bugType?: BugType;
   }>({});
 
-  const loadBugs = async () => {
+  const loadBugs = useCallback(async () => {
     try {
       setLoading(true);
       const response = await bugsApi.getBugs(filters);
@@ -35,7 +35,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, t]);
 
   useEffect(() => {
     if (isVisible) {
@@ -44,7 +44,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
       // Clear bugs when not visible to free up memory
       setBugs([]);
     }
-  }, [filters, isVisible]);
+  }, [filters, isVisible, loadBugs]);
 
   const handleBugCreated = () => {
     setShowAddModal(false);
