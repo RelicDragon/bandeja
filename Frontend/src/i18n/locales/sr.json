@@ -57,7 +57,22 @@
     "statusUpdated": "Статус грешке ажуриран",
     "statusUpdateError": "Неуспешно ажурирање статуса грешке",
     "deleted": "Грешка обрисана",
-    "deleteError": "Неуспешно брисање грешке"
+    "deleteError": "Неуспешно брисање грешке",
+    "openChat": "Отвори чет",
+    "types": {
+      "BUG": "Грешка",
+      "CRITICAL": "Критично",
+      "SUGGESTION": "Предлог",
+      "QUESTION": "Питање"
+    },
+    "statuses": {
+      "CREATED": "Креирано",
+      "CONFIRMED": "Потврђено",
+      "IN_PROGRESS": "У току",
+      "TEST": "Тестирање",
+      "FINISHED": "Завршено",
+      "ARCHIVED": "Архивирано"
+    }
   },
   "home": {
     "title": "Моје игре",

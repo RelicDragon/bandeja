@@ -299,7 +299,7 @@ export const BugChat: React.FC = () => {
 
 
   const getBugTitle = () => {
-    return bug.text.length > 50 ? `${bug.text.substring(0, 50)}...` : bug.text;
+    return bug.text.length > 25 ? `${bug.text.substring(0, 25)}...` : bug.text;
   };
 
   return (
@@ -320,7 +320,7 @@ export const BugChat: React.FC = () => {
                 {getBugTitle()}
               </h1>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatDate(bug.createdAt, 'PPP')} • {bug.bugType} • {bug.status}
+                {formatDate(bug.createdAt, 'PPP')} • {t(`bug.types.${bug.bugType}`)} • {t(`bug.statuses.${bug.status}`)}
               </p>
             </div>
           </div>

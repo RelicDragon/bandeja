@@ -55,7 +55,22 @@
     "statusUpdated": "Статус ошибки обновлён",
     "statusUpdateError": "Не удалось обновить статус ошибки",
     "deleted": "Ошибка удалена",
-    "deleteError": "Не удалось удалить ошибку"
+    "deleteError": "Не удалось удалить ошибку",
+    "openChat": "Открыть чат",
+    "types": {
+      "BUG": "Ошибка",
+      "CRITICAL": "Критично",
+      "SUGGESTION": "Предложение",
+      "QUESTION": "Вопрос"
+    },
+    "statuses": {
+      "CREATED": "Создано",
+      "CONFIRMED": "Подтверждено",
+      "IN_PROGRESS": "В работе",
+      "TEST": "Тестирование",
+      "FINISHED": "Завершено",
+      "ARCHIVED": "Архивировано"
+    }
   },
   "home": {
     "title": "Мои игры",

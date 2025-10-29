@@ -15,11 +15,12 @@ import { Button } from '@/components';
 
 interface BugCardProps {
   bug: Bug;
+  unreadCount?: number;
   onUpdate?: () => void;
   onDelete?: (bugId: string) => void;
 }
 
-export const BugCard = ({ bug, onUpdate, onDelete }: BugCardProps) => {
+export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -49,9 +50,6 @@ export const BugCard = ({ bug, onUpdate, onDelete }: BugCardProps) => {
     }
   };
 
-  const getStatusText = (status: BugStatus) => {
-    return status.replace('_', ' ');
-  };
 
   const handleStatusChange = async (newStatus: BugStatus) => {
     if (!user?.isAdmin && bug.senderId !== user?.id) return;
@@ -89,32 +87,33 @@ export const BugCard = ({ bug, onUpdate, onDelete }: BugCardProps) => {
   const canModify = user?.isAdmin || bug.senderId === user?.id;
 
   return (
-    <Card className="p-4 mb-3">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
+    <Card className="p-4 mb-3 relative">
+      <div className="flex items-start">
+        <div className="flex-1 ">
           <div className="flex items-center gap-2 mb-1">
             <PlayerAvatar
               player={bug.sender}
               extrasmall
+              showName={false}
             />
             <span className="text-sm font-medium">
               {bug.sender.firstName} {bug.sender.lastName}
             </span>
           </div>
-          <div className="text-xs text-gray-500 mb-2">
-            {formatRelativeTime(bug.createdAt)}
-          </div>
 
           <div className="flex items-center gap-2 mb-2">
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(bug.bugType)}`}>
-              {bug.bugType}
+              {t(`bug.types.${bug.bugType}`)}
             </span>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bug.status)}`}>
-              {getStatusText(bug.status)}
+              {t(`bug.statuses.${bug.status}`)}
+            </span>
+            <span className="text-xs text-gray-500">
+              {formatRelativeTime(bug.createdAt)}
             </span>
           </div>
 
-          <div className="text-sm text-gray-700 mb-2">
+          <div className="text-sm text-gray-700 mb-2 w-full">
             {isExpanded ? bug.text : `${bug.text.substring(0, 100)}${bug.text.length > 100 ? '...' : ''}`}
           </div>
 
@@ -140,15 +139,20 @@ export const BugCard = ({ bug, onUpdate, onDelete }: BugCardProps) => {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="absolute top-4 right-4 flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleOpenChat}
-            className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 relative"
             title={t('bug.openChat')}
           >
             <MessageCircle className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Button>
 
           {canModify && (
@@ -174,7 +178,7 @@ export const BugCard = ({ bug, onUpdate, onDelete }: BugCardProps) => {
                         className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
                         disabled={isUpdating}
                       >
-                        {getStatusText(status)}
+                        {t(`bug.statuses.${status}`)}
                       </button>
                     ))}
                   </div>

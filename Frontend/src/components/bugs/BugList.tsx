@@ -7,6 +7,7 @@ import { Bug, BugStatus, BugType } from '@/types';
 const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION'];
 const BUG_STATUS_VALUES: BugStatus[] = ['CREATED', 'CONFIRMED', 'IN_PROGRESS', 'TEST', 'FINISHED', 'ARCHIVED'];
 import { bugsApi } from '@/api';
+import { bugChatApi } from '@/api/bugChat';
 import { toast } from 'react-hot-toast';
 import { Plus } from 'lucide-react';
 import { BugModal } from './BugModal';
@@ -18,6 +19,7 @@ interface BugListProps {
 export const BugList = ({ isVisible = true }: BugListProps) => {
   const { t } = useTranslation();
   const [bugs, setBugs] = useState<Bug[]>([]);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [filters, setFilters] = useState<{
@@ -30,6 +32,13 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
       setLoading(true);
       const response = await bugsApi.getBugs(filters);
       setBugs(response.data.bugs);
+
+      // Fetch unread counts for all bugs
+      if (response.data.bugs.length > 0) {
+        const bugIds = response.data.bugs.map(bug => bug.id);
+        const unreadResponse = await bugChatApi.getBugsUnreadCounts(bugIds);
+        setUnreadCounts(unreadResponse.data);
+      }
     } catch (error) {
       toast.error(t('bug.loadError'));
     } finally {
@@ -37,14 +46,34 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     }
   }, [filters, t]);
 
+  const refreshUnreadCounts = useCallback(async () => {
+    if (bugs.length > 0) {
+      try {
+        const bugIds = bugs.map(bug => bug.id);
+        const unreadResponse = await bugChatApi.getBugsUnreadCounts(bugIds);
+        setUnreadCounts(unreadResponse.data);
+      } catch (error) {
+        console.error('Failed to refresh unread counts:', error);
+      }
+    }
+  }, [bugs]);
+
   useEffect(() => {
     if (isVisible) {
       loadBugs();
     } else {
       // Clear bugs when not visible to free up memory
       setBugs([]);
+      setUnreadCounts({});
     }
   }, [filters, isVisible, loadBugs]);
+
+  // Refresh unread counts when component becomes visible (e.g., when navigating back from chat)
+  useEffect(() => {
+    if (isVisible && bugs.length > 0) {
+      refreshUnreadCounts();
+    }
+  }, [isVisible, refreshUnreadCounts, bugs.length]);
 
   const handleBugCreated = () => {
     setShowAddModal(false);
@@ -83,7 +112,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
       >
         <option value="">{t('bug.allTypes')}</option>
         {BUG_TYPE_VALUES.map((type) => (
-          <option key={type} value={type}>{type}</option>
+          <option key={type} value={type}>{t(`bug.types.${type}`)}</option>
         ))}
       </select>
 
@@ -98,7 +127,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
         <option value="">{t('bug.allStatuses')}</option>
         {BUG_STATUS_VALUES.map((status) => (
           <option key={status} value={status}>
-            {status.replace('_', ' ')}
+            {t(`bug.statuses.${status}`)}
           </option>
         ))}
       </select>
@@ -118,11 +147,8 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">{t('bug.bugTracker')}</h1>
-        <p className="text-gray-600">{t('bug.description')}</p>
-      </div>
+    <div className="max-w-4xl mx-auto">
+      <p className="text-xs text-gray-500 mb-6">{t('bug.description')}</p>
 
       <FilterSection />
 
@@ -138,6 +164,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
             <BugCard
               key={bug.id}
               bug={bug}
+              unreadCount={unreadCounts[bug.id] || 0}
               onUpdate={handleBugUpdated}
               onDelete={handleBugDeleted}
             />

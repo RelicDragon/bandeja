@@ -3,11 +3,12 @@ import { Bell, MessageCircle, User, ArrowLeft, Bug } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate } from 'react-router-dom';
-import { 
-  HeaderContentWrapper, 
-  HomeHeaderContent, 
-  ProfileHeaderContent, 
-  GameDetailsHeaderContent 
+import {
+  HeaderContentWrapper,
+  HomeHeaderContent,
+  ProfileHeaderContent,
+  GameDetailsHeaderContent,
+  BugHeaderContent
 } from '@/components';
 
 interface HeaderProps {
@@ -140,6 +141,10 @@ export const Header = ({
           
           <HeaderContentWrapper page="gameDetails">
             <GameDetailsHeaderContent canAccessChat={gameDetailsCanAccessChat} />
+          </HeaderContentWrapper>
+
+          <HeaderContentWrapper page="bugs">
+            <BugHeaderContent />
           </HeaderContentWrapper>
         </div>
       </div>

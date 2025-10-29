@@ -54,7 +54,21 @@
     "statusUpdateError": "Failed to update bug status",
     "deleted": "Bug deleted",
     "deleteError": "Failed to delete bug",
-    "openChat": "Open chat"
+    "openChat": "Open chat",
+    "types": {
+      "BUG": "Bug",
+      "CRITICAL": "Critical",
+      "SUGGESTION": "Suggestion",
+      "QUESTION": "Question"
+    },
+    "statuses": {
+      "CREATED": "Created",
+      "CONFIRMED": "Confirmed",
+      "IN_PROGRESS": "In Progress",
+      "TEST": "Testing",
+      "FINISHED": "Finished",
+      "ARCHIVED": "Archived"
+    }
   },
   "home": {
     "title": "My Games",

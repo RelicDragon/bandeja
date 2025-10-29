@@ -99,7 +99,7 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
             >
               {BUG_TYPE_VALUES.map((type) => (
                 <option key={type} value={type}>
-                  {type}
+                  {t(`bug.types.${type}`)}
                 </option>
               ))}
             </select>

@@ -57,7 +57,22 @@
     "statusUpdated": "Estado del error actualizado",
     "statusUpdateError": "Error al actualizar el estado del error",
     "deleted": "Error eliminado",
-    "deleteError": "Error al eliminar el error"
+    "deleteError": "Error al eliminar el error",
+    "openChat": "Abrir chat",
+    "types": {
+      "BUG": "Error",
+      "CRITICAL": "Crítico",
+      "SUGGESTION": "Sugerencia",
+      "QUESTION": "Pregunta"
+    },
+    "statuses": {
+      "CREATED": "Creado",
+      "CONFIRMED": "Confirmado",
+      "IN_PROGRESS": "En Progreso",
+      "TEST": "Pruebas",
+      "FINISHED": "Finalizado",
+      "ARCHIVED": "Archivado"
+    }
   },
   "home": {
     "title": "Mis juegos",
