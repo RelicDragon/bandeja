@@ -12,7 +12,6 @@ import {
   Beer,
   Crown,
   Ban,
-  Navigation,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -48,10 +47,13 @@ export const GameInfo = ({
     <Card className="relative">
       <button
         onClick={handleNavigate}
-        className="absolute top-4 right-4 p-2 rounded-lg border border-primary-300 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors z-10"
+        className="absolute top-4 right-4 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors active:scale-110 z-10"
         title={t('gameDetails.navigateToClub')}
       >
-        <Navigation size={20} className="text-primary-600 dark:text-primary-400" />
+        <svg width="24" height="24" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+          <path d="M63.3 512.2a448.5 448 0 1 0 897 0 448.5 448 0 1 0-897 0Z" fill="#4D6BFF" />
+          <path d="M416.09375 605.09375c1.21875 0.5625 2.15625 1.5 2.71875 2.71875l82.3125 175.6875c3.1875 6.84375 12.84375 7.03125 15.75 0.375l201.84375-465.75c3.5625-8.15625-4.78125-16.5-12.9375-12.9375L240.125 507.03125c-6.75 2.90625-6.5625 12.5625 0.375 15.75l175.59375 82.3125z" fill="#ffffff" />
+        </svg>
       </button>
       <div className="flex items-start justify-between mb-4">
         <div>
