@@ -69,6 +69,10 @@ export const GameSettings = ({
 }: GameSettingsProps) => {
   const { t } = useTranslation();
 
+  if (!canEdit) {
+    return null;
+  }
+
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">
