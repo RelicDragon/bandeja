@@ -13,7 +13,7 @@ export const useContextMenuManager = () => {
     position: { x: 0, y: 0 }
   });
   
-  const scrollTimeoutRef = useRef<number | null>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isScrollingRef = useRef(false);
 
   const openContextMenu = useCallback((messageId: string, position: { x: number; y: number }) => {

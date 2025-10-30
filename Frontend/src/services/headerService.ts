@@ -4,7 +4,7 @@ import { useHeaderStore } from '../store/headerStore';
 import { useAuthStore } from '../store/authStore';
 
 class HeaderService {
-  private intervalId: number | null = null;
+  private intervalId: ReturnType<typeof setInterval> | null = null;
 
   startPolling() {
     if (this.intervalId) return; // Already polling

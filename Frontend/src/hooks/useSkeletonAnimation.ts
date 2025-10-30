@@ -5,7 +5,7 @@ type SkeletonState = 'hidden' | 'fading-in' | 'visible' | 'fading-out';
 export const useSkeletonAnimation = () => {
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [skeletonStates, setSkeletonStates] = useState<Record<number, SkeletonState>>({});
-  const skeletonTimeoutsRef = useRef<number[]>([]);
+  const skeletonTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const showSkeletonsAnimated = useCallback(() => {
     skeletonTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
