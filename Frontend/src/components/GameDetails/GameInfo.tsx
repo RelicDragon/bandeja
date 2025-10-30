@@ -13,6 +13,7 @@ import {
   Crown,
   Ban,
   Users,
+  ExternalLink,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -45,18 +46,67 @@ export const GameInfo = ({
     window.open(url, '_blank');
   };
 
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const clubName = game.court?.club?.name || game.club?.name || '';
+
+    const shareParts = [];
+    if (game.entityType !== 'GAME') {
+      shareParts.push(t(`games.entityTypes.${game.entityType}`));
+    }
+    if (game.name) {
+      shareParts.push(game.name);
+    }
+    if (clubName) {
+      shareParts.push(clubName);
+    }
+
+    const shareTitle = shareParts.join(' - ');
+    const shareText = `${shareTitle} - ${formatDate(game.startTime, 'PPP')}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Error sharing:', error);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        alert(t('gameDetails.linkCopied'));
+      } catch (error) {
+        console.error('Error copying to clipboard:', error);
+      }
+    }
+  };
+
   return (
     <Card className="relative">
-      <button
-        onClick={handleNavigate}
-        className="absolute top-4 right-4 p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110 z-10"
-        title={t('gameDetails.navigateToClub')}
-      >
-        <svg width="24" height="24" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-          <path d="M63.3 512.2a448.5 448 0 1 0 897 0 448.5 448 0 1 0-897 0Z" fill="#ffffff" />
-          <path d="M416.09375 605.09375c1.21875 0.5625 2.15625 1.5 2.71875 2.71875l82.3125 175.6875c3.1875 6.84375 12.84375 7.03125 15.75 0.375l201.84375-465.75c3.5625-8.15625-4.78125-16.5-12.9375-12.9375L240.125 507.03125c-6.75 2.90625-6.5625 12.5625 0.375 15.75l175.59375 82.3125z" fill="#0284c7" />
-        </svg>
-      </button>
+      <div className="absolute top-4 right-4 flex gap-2 z-10">
+        <button
+          onClick={handleShare}
+          className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
+          title={t('gameDetails.shareGame')}
+        >
+          <ExternalLink size={24} className="text-white" />
+        </button>
+        <button
+          onClick={handleNavigate}
+          className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
+          title={t('gameDetails.navigateToClub')}
+        >
+          <svg width="24" height="24" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+            <path d="M63.3 512.2a448.5 448 0 1 0 897 0 448.5 448 0 1 0-897 0Z" fill="#ffffff" />
+            <path d="M416.09375 605.09375c1.21875 0.5625 2.15625 1.5 2.71875 2.71875l82.3125 175.6875c3.1875 6.84375 12.84375 7.03125 15.75 0.375l201.84375-465.75c3.5625-8.15625-4.78125-16.5-12.9375-12.9375L240.125 507.03125c-6.75 2.90625-6.5625 12.5625 0.375 15.75l175.59375 82.3125z" fill="#0284c7" />
+          </svg>
+        </button>
+      </div>
       <div className="flex items-start justify-between mb-4">
         <div>
           <div className="flex items-center gap-2 mb-2 flex-wrap">
