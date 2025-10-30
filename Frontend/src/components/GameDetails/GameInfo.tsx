@@ -88,7 +88,7 @@ export const GameInfo = ({
 
   return (
     <Card className="relative">
-      <div className="absolute top-4 right-4 flex gap-2 z-10">
+      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
         <button
           onClick={handleShare}
           className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
