@@ -1,6 +1,6 @@
 import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
 import { Game, Invite } from '@/types';
-import { Users, UserPlus, Sliders, CheckCircle, XCircle } from 'lucide-react';
+import { Users, UserPlus, Sliders, CheckCircle, XCircle, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface GameParticipantsProps {
@@ -11,6 +11,7 @@ interface GameParticipantsProps {
   isFull: boolean;
   isOwner: boolean;
   userId?: string;
+  canInvitePlayers: boolean;
   onJoin: () => void;
   onLeave: () => void;
   onAcceptInvite: (inviteId: string) => void;
@@ -28,6 +29,7 @@ export const GameParticipants = ({
   isFull,
   isOwner,
   userId,
+  canInvitePlayers,
   onJoin,
   onLeave,
   onAcceptInvite,
@@ -121,10 +123,22 @@ export const GameParticipants = ({
             />
           ))}
           {game.entityType !== 'BAR' && Array.from({ length: game.maxParticipants - game.participants.filter(p => p.isPlaying).length }).map((_, i) => (
-            <PlayerAvatar
-              key={`empty-${i}`}
-              player={null}
-            />
+            canInvitePlayers ? (
+              <button
+                key={`empty-${i}`}
+                onClick={onShowPlayerList}
+                className="flex flex-col items-center"
+              >
+                <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
+                  <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                </div>
+              </button>
+            ) : (
+              <PlayerAvatar
+                key={`empty-${i}`}
+                player={null}
+              />
+            )
           ))}
         </div>
         {(() => {
@@ -159,7 +173,7 @@ export const GameParticipants = ({
                 >
                   <Sliders size={18} />
                   <span className={`ml-2 ${buttonCount === 2 ? 'hidden sm:inline' : 'inline'}`}>
-                    {t('games.users')}
+                    {t('games.players')}
                   </span>
                 </Button>
               )}

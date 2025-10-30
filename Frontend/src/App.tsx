@@ -30,7 +30,7 @@ function App() {
       headerService.startPolling();
 
       // Set up socket listener for new invites
-      const handleNewInvite = (_invite: any) => {
+      const handleNewInvite = () => {
         const { setPendingInvites, triggerNewInviteAnimation } = useHeaderStore.getState();
         // Increment the pending invites count
         const currentCount = useHeaderStore.getState().pendingInvites;

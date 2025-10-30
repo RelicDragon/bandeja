@@ -205,6 +205,8 @@ export const GameDetailsContent = () => {
     return canUserEditResults(game, user);
   };
 
+  const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && !isFull);
+
   const handleEnterResults = () => {
     setIsAnimating(true);
     setCurrentPage('gameResultsEntry');
@@ -401,6 +403,7 @@ export const GameDetailsContent = () => {
         isFull={isFull}
         isOwner={isOwner}
         userId={user?.id}
+        canInvitePlayers={canInvitePlayers}
         onJoin={handleJoin}
         onLeave={handleLeave}
         onAcceptInvite={handleAcceptInvite}

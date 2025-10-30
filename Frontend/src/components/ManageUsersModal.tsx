@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X, Crown, Shield, User, UserX, ArrowRightLeft } from 'lucide-react';
 import { Button, Card, PlayerAvatar } from '@/components';
@@ -73,18 +74,18 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
     }
   };
 
-  return (
-    <div 
+  return createPortal(
+    <div
       className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
     >
-      <Card 
+      <Card
         className="w-full max-w-md max-h-[80vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('games.manageUsers')}
+            {t('games.managePlayers')}
           </h2>
           <button
             onClick={onClose}
@@ -93,13 +94,13 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
             <X size={20} className="text-gray-500 dark:text-gray-400" />
           </button>
         </div>
-        
+
         <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
           {participants.map((participant) => {
             const roleTag = getRoleTag(participant.role);
             const isSelected = selectedUserId === participant.userId;
             const actions = getAvailableActions(participant);
-            
+
             return (
               <div key={participant.userId} className={`transition-all duration-300 ${
                 selectedUserId && !isSelected ? 'blur-sm opacity-50' : ''
@@ -107,8 +108,8 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
                 <div
                   onClick={() => setSelectedUserId(isSelected ? null : participant.userId)}
                   className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 ${
-                    isSelected 
-                      ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 shadow-lg scale-105 z-10 relative' 
+                    isSelected
+                      ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 shadow-lg scale-105 z-10 relative'
                       : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                   }`}
                 >
@@ -139,10 +140,10 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
                     </p>
                   </div>
                 </div>
-                
+
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  isSelected && actions.length > 0 
-                    ? 'max-h-96 opacity-100 mt-2' 
+                  isSelected && actions.length > 0
+                    ? 'max-h-96 opacity-100 mt-2'
                     : 'max-h-0 opacity-0 mt-0'
                 }`}>
                   <div className="space-y-2">
@@ -167,7 +168,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
               </div>
             );
           })}
-          
+
           {participants.length === 0 && (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <User size={48} className="mx-auto mb-4 opacity-50" />
@@ -176,6 +177,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
           )}
         </div>
       </Card>
-    </div>
+    </div>,
+    document.body
   );
 };

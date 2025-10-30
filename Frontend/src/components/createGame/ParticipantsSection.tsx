@@ -1,4 +1,4 @@
-import { Users as UsersIcon, UserPlus, Users2 } from 'lucide-react';
+import { Users as UsersIcon, UserPlus, Users2, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, PlayerAvatar } from '@/components';
 import { User } from '@/types';
@@ -12,6 +12,7 @@ interface ParticipantsSectionProps {
   invitedPlayers?: InvitablePlayer[];
   user: User | null;
   entityType: EntityType;
+  canInvitePlayers: boolean;
   onMaxParticipantsChange: (num: number) => void;
   onAddUserToGame: () => void;
   onRemoveParticipant: (index: number) => void;
@@ -26,6 +27,7 @@ export const ParticipantsSection = ({
   invitedPlayers = [],
   user,
   entityType,
+  canInvitePlayers,
   onMaxParticipantsChange,
   onAddUserToGame,
   onRemoveParticipant,
@@ -68,13 +70,27 @@ export const ParticipantsSection = ({
     }
     if (entityType !== 'BAR') {
       for (let i = participants.length; i < maxParticipants; i++) {
-        result.push(
-          <PlayerAvatar
-            key={i}
-            player={null}
-            smallLayout={true}
-          />
-        );
+        if (canInvitePlayers) {
+          result.push(
+            <button
+              key={i}
+              onClick={onOpenInviteModal}
+              className="flex flex-col items-center"
+            >
+              <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
+                <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+              </div>
+            </button>
+          );
+        } else {
+          result.push(
+            <PlayerAvatar
+              key={i}
+              player={null}
+              smallLayout={true}
+            />
+          );
+        }
       }
     }
     return result;

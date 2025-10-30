@@ -383,6 +383,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
           invitedPlayers={invitedPlayers}
           user={user}
           entityType={entityType}
+          canInvitePlayers={true}
           onMaxParticipantsChange={handleMaxParticipantsChange}
           onAddUserToGame={handleAddMeToGame}
           onRemoveParticipant={handleRemoveParticipant}
