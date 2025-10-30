@@ -295,7 +295,7 @@ const PlayerCardContent = ({ stats, t, onAvatarClick }: PlayerCardContentProps) 
         </div>
         <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1">
           <span>{user.level.toFixed(1)}</span>
-          <span>|</span>
+          <span>•</span>
           <div className="relative flex items-center">
             <Beer
               size={14}
