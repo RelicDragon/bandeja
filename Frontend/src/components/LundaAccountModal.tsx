@@ -20,20 +20,6 @@ interface AuthData {
   temporalToken: string;
 }
 
-interface PlayerData {
-  gender: string;
-  displayName: string;
-  shareLink: string;
-  leftSide: boolean;
-  identity: {
-    uid: string;
-  };
-  countryCode: string;
-  displayRating: string;
-  rightSide: boolean;
-  phone: string;
-  nameInitials: string;
-}
 
 const LUNDA_BASE_URL = 'https://app.lundapadel.ru/api';
 
@@ -53,7 +39,6 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
   const steps = [
     'Номер телефона',
     'Авторизация',
-    'Капча',
     'Код подтверждения',
     'Получение данных',
     'Завершение'
@@ -98,55 +83,61 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
     setCurrentStep(1);
   };
 
+  const solveCaptcha = (captchaData: CaptchaData): string => {
+    const op1 = parseInt(captchaData.operand1);
+    const op2 = parseInt(captchaData.operand2);
+    
+    switch (captchaData.operation) {
+      case '+':
+        return String(op1 + op2);
+      case '-':
+        return String(op1 - op2);
+      case '*':
+        return String(op1 * op2);
+      case '/':
+        return String(Math.floor(op1 / op2));
+      default:
+        return String(op1 + op2);
+    }
+  };
+
   const handleStartAuth = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const response = await makeLundaRequest('/player/captcha', 'PUT', {
+      const captchaResponse = await makeLundaRequest('/player/captcha', 'PUT', {
         parameters: {
           countryCode: '+7',
           phone: phone,
         }
       });
 
-      setCaptcha(response.result);
-      setCurrentStep(2);
-    } catch (err: any) {
-      setError('Ошибка получения капчи: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      const captchaResult = captchaResponse.result;
+      setCaptcha(captchaResult);
+      
+      const answer = solveCaptcha(captchaResult);
+      setCaptchaAnswer(answer);
 
-  const handleCaptchaSubmit = async () => {
-    if (!captcha || !captchaAnswer.trim()) {
-      setError('Введите ответ на капчу');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
       const response = await makeLundaRequest('/player/send-code', 'POST', {
         parameters: {
           countryCode: '+7',
           phone: phone,
-          answer: captchaAnswer.trim(),
+          answer: answer,
           method: 'TELEGRAM',
-          ticket: captcha.ticket,
+          ticket: captchaResult.ticket,
         }
       });
 
       setAuthData(response.result);
-      setCurrentStep(3);
+      setCurrentStep(2);
     } catch (err: any) {
-      setError('Ошибка отправки кода: ' + err.message);
+      setError('Ошибка авторизации: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleAuthSubmit = async () => {
     if (code.length !== 4) {
@@ -154,34 +145,28 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
       return;
     }
 
+    if (!authData?.temporalToken) {
+      setError('Temporal token не найден');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const response = await makeLundaRequest('/player/auth', 'POST', {
-        parameters: {
-          countryCode: '+7',
-          phone: phone,
-          code: code,
-          temporalToken: authData?.temporalToken,
-          method: 'TELEGRAM',
-        }
+      const response = await lundaApi.auth({
+        phone: phone,
+        code: code,
+        temporalToken: authData.temporalToken,
       });
 
-      if (response.result.status !== 'SUCCESSFUL') {
-        throw new Error('Авторизация не удалась');
+      if (response.cookie) {
+        localStorage.setItem('lundaCookie', response.cookie);
       }
 
-      // Extract cookie from response headers
-      const cookie = response.headers?.['set-cookie'] || response.headers?.['Set-Cookie'];
-      
-      if (cookie) {
-        localStorage.setItem('lundaCookie', cookie);
-      }
-
-      setCurrentStep(4);
+      setCurrentStep(3);
     } catch (err: any) {
-      setError('Ошибка авторизации: ' + err.message);
+      setError('Ошибка авторизации: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
@@ -192,37 +177,12 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
     setError('');
 
     try {
-      const cookie = localStorage.getItem('lundaCookie');
-      if (!cookie) {
-        throw new Error('Cookie не найден');
-      }
-
-      const response = await makeLundaRequest('/player/current', 'GET', undefined, {
-        Cookie: cookie,
-      });
-
-      await saveLundaData(response.result);
-      setCurrentStep(5);
+      await lundaApi.getProfile({});
+      setCurrentStep(4);
     } catch (err: any) {
-      setError('Ошибка получения данных: ' + err.message);
+      setError('Ошибка получения данных: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const saveLundaData = async (data: PlayerData) => {
-    try {
-      await lundaApi.syncProfile({
-        phone: `+${data.countryCode}${data.phone}`,
-        gender: data.gender === 'MAN' ? 'MALE' : data.gender === 'WOMAN' ? 'FEMALE' : 'PREFER_NOT_TO_SAY',
-        level: parseFloat(data.displayRating),
-        preferredCourtSideLeft: data.leftSide,
-        preferredCourtSideRight: data.rightSide,
-        metadata: data,
-      });
-    } catch (err: any) {
-      console.error('Error saving Lunda data:', err);
-      throw new Error('Ошибка сохранения данных');
     }
   };
 
@@ -298,48 +258,28 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Получение капчи...' : 'Начать авторизацию'}
+              {loading ? 'Отправка кода в Telegram...' : 'Начать авторизацию'}
             </Button>
           </div>
         );
 
-      case 2: // Captcha solving
-        return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Решите капчу
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {captcha?.operand1} {captcha?.operation} {captcha?.operand2} = ?
-              </p>
-            </div>
-
-            <Input
-              type="number"
-              value={captchaAnswer}
-              onChange={(e) => setCaptchaAnswer(e.target.value)}
-              placeholder="Ответ"
-              className="text-center text-xl"
-            />
-
-            <Button
-              onClick={handleCaptchaSubmit}
-              className="w-full"
-              disabled={loading || !captchaAnswer.trim()}
-            >
-              {loading ? 'Отправка кода...' : 'Получить код в Telegram'}
-            </Button>
-          </div>
-        );
-
-      case 3: // Code entry
+      case 2: // Code entry
         return (
           <div className="space-y-6">
             <div className="text-center">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Введите код из Telegram
               </h3>
+              {captcha && (
+                <div className="mb-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    Капча решена автоматически:
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {captcha.operand1} {captcha.operation} {captcha.operand2} = {captchaAnswer}
+                  </p>
+                </div>
+              )}
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Откройте <a
                   href="https://t.me/VerificationCodes"
@@ -369,7 +309,7 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
           </div>
         );
 
-      case 4: // Get player data
+      case 3: // Get player data
         return (
           <div className="space-y-6">
             <div className="text-center">
@@ -391,7 +331,7 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
           </div>
         );
 
-      case 5: // Success
+      case 4: // Success
         return (
           <div className="space-y-6">
             <div className="text-center">

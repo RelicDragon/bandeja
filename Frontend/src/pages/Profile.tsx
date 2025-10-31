@@ -5,9 +5,9 @@ import toast from 'react-hot-toast';
 import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
-import { usersApi, citiesApi, mediaApi } from '@/api';
+import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
 import { City, Gender } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer } from 'lucide-react';
 import { UrlConstructor } from '@/utils/urlConstructor';
 
 interface ProfileContentProps {
@@ -59,6 +59,12 @@ export const ProfileContent = ({
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showLundaModal, setShowLundaModal] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [lundaStatus, setLundaStatus] = useState<{
+    hasCookie: boolean;
+    hasProfile: boolean;
+    lastSync: string | null;
+  } | null>(null);
+  const [isLoadingLundaStatus, setIsLoadingLundaStatus] = useState(true);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -81,8 +87,20 @@ export const ProfileContent = ({
       }
     };
 
+    const fetchLundaStatus = async () => {
+      try {
+        const response = await lundaApi.getStatus();
+        setLundaStatus(response);
+      } catch (error) {
+        console.error('Failed to fetch Lunda status:', error);
+      } finally {
+        setIsLoadingLundaStatus(false);
+      }
+    };
+
     fetchCities();
     fetchUserProfile();
+    fetchLundaStatus();
   }, [updateUser]);
 
   const handleChangeLanguage = (lang: string) => {
@@ -169,8 +187,22 @@ export const ProfileContent = ({
               </button>
             )}
             {!isLoadingProfile && user?.level && (
-              <div className="absolute -bottom-1 -right-8 bg-primary-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-lg">
-                {t('rating.level')}: {user.level}
+              <div className="absolute -bottom-1 -right-8 bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1">
+                <span>{user.level.toFixed(1)}</span>
+                <span>•</span>
+                <div className="relative flex items-center">
+                  <Beer
+                    size={14}
+                    className="text-amber-600 dark:text-amber-500 absolute"
+                    fill="currentColor"
+                  />
+                  <Beer
+                    size={14}
+                    className="text-white dark:text-gray-900 relative z-10"
+                    strokeWidth={1.5}
+                  />
+                </div>
+                <span>{user.socialLevel?.toFixed(1) || '1.0'}</span>
               </div>
             )}
           </div>
@@ -247,22 +279,70 @@ export const ProfileContent = ({
           </div>
         </Card>
 
-        {false && i18n.language === 'ru' && (
+        {i18n.language === 'ru' && (
           <Card>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Lunda
             </h2>
             <div className="space-y-4">
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                Подключите аккаунт Lunda Padel для синхронизации данных
-              </p>
-              <Button
-                onClick={() => setShowLundaModal(true)}
-                className="w-full"
-                variant="secondary"
-              >
-                Получить информацию из Lunda
-              </Button>
+              {isLoadingLundaStatus ? (
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  Загрузка...
+                </p>
+              ) : lundaStatus?.hasCookie ? (
+                <>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    {lundaStatus.hasProfile
+                      ? 'Аккаунт Lunda подключен'
+                      : 'Авторизация выполнена. Получите данные профиля'}
+                    {lundaStatus.lastSync && (
+                      <span className="block text-xs mt-1 text-gray-500 dark:text-gray-500">
+                        Последняя синхронизация: {new Date(lundaStatus.lastSync).toLocaleString('ru-RU')}
+                      </span>
+                    )}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={async () => {
+                        try {
+                          await lundaApi.getProfile({});
+                          const response = await usersApi.getProfile();
+                          updateUser(response.data);
+                          const statusResponse = await lundaApi.getStatus();
+                          setLundaStatus(statusResponse);
+                          toast.success('Данные из Lunda успешно обновлены');
+                        } catch (error: any) {
+                          toast.error(error.response?.data?.message || 'Ошибка обновления данных');
+                        }
+                      }}
+                      className="flex-1"
+                      variant="primary"
+                    >
+                      Обновить профиль
+                    </Button>
+                    <Button
+                      onClick={() => setShowLundaModal(true)}
+                      className="flex-1"
+                      variant="secondary"
+                    >
+                      Авторизоваться снова
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    Подключите аккаунт Lunda Padel для синхронизации данных
+                  </p>
+                  <Button
+                    onClick={() => setShowLundaModal(true)}
+                    className="w-full"
+                    variant="secondary"
+                  >
+                    Получить информацию из Lunda
+                  </Button>
+                </>
+              )}
             </div>
           </Card>
         )}
@@ -428,19 +508,18 @@ export const ProfileContent = ({
       {showLundaModal && (
         <LundaAccountModal
           onClose={() => setShowLundaModal(false)}
-          onSuccess={() => {
+          onSuccess={async () => {
             setShowLundaModal(false);
-            // Refresh user profile after successful Lunda sync
-            const fetchUserProfile = async () => {
-              try {
-                const response = await usersApi.getProfile();
-                updateUser(response.data);
-                toast.success('Данные из Lunda успешно синхронизированы');
-              } catch (error) {
-                console.error('Failed to refresh user profile:', error);
-              }
-            };
-            fetchUserProfile();
+            // Refresh user profile and Lunda status after successful sync
+            try {
+              const response = await usersApi.getProfile();
+              updateUser(response.data);
+              const statusResponse = await lundaApi.getStatus();
+              setLundaStatus(statusResponse);
+              toast.success('Данные из Lunda успешно синхронизированы');
+            } catch (error) {
+              console.error('Failed to refresh user profile:', error);
+            }
           }}
         />
       )}

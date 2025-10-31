@@ -26,3 +26,4 @@ export const useAppModeStore = create<AppModeState>((set) => {
     },
   };
 });
+

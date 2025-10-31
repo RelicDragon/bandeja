@@ -4,6 +4,8 @@ import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 
+const LUNDA_BASE_URL = 'https://app.lundapadel.ru/api';
+
 interface SyncLundaProfileRequest extends AuthRequest {
   body: {
     phone: string;
@@ -26,6 +28,12 @@ export const syncLundaProfile = asyncHandler(async (req: SyncLundaProfileRequest
   if (level !== undefined) updateData.level = level;
   if (preferredCourtSideLeft !== undefined) updateData.preferredCourtSideLeft = preferredCourtSideLeft;
   if (preferredCourtSideRight !== undefined) updateData.preferredCourtSideRight = preferredCourtSideRight;
+  
+  if (metadata?.displayName) {
+    const parsed = metadata.displayName.split(' ');
+    updateData.firstName = parsed[parsed.length - 1];
+    updateData.lastName = parsed.slice(0, -1).join(' ');
+  }
 
   // Update user profile
   await prisma.user.update({
@@ -48,5 +56,155 @@ export const syncLundaProfile = asyncHandler(async (req: SyncLundaProfileRequest
   res.json({
     success: true,
     message: 'Lunda profile synchronized successfully',
+  });
+});
+
+interface LundaAuthRequest extends AuthRequest {
+  body: {
+    phone: string;
+    code: string;
+    temporalToken: string;
+  };
+}
+
+export const lundaAuth = asyncHandler(async (req: LundaAuthRequest, res: Response) => {
+  const { phone, code, temporalToken } = req.body;
+  const userId = req.userId!;
+
+  const response = await fetch(`${LUNDA_BASE_URL}/player/auth`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      parameters: {
+        countryCode: '+7',
+        phone: phone,
+        code: code,
+        temporalToken: temporalToken,
+        method: 'TELEGRAM',
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response.status, `Lunda API error: ${response.status}`);
+  }
+
+  const data = await response.json() as { result: { status: string } };
+
+  if (data.result.status !== 'SUCCESSFUL') {
+    throw new ApiError(400, 'Авторизация не удалась');
+  }
+
+  const setCookieHeader = response.headers.get('set-cookie');
+  if (!setCookieHeader) {
+    throw new ApiError(500, 'Cookie не получен от Lunda API');
+  }
+
+  await prisma.lundaProfile.upsert({
+    where: { userId },
+    update: {
+      cookie: setCookieHeader,
+      updatedAt: new Date(),
+    } as any,
+    create: {
+      userId,
+      cookie: setCookieHeader,
+      metadata: {},
+    } as any,
+  });
+
+  res.json({
+    success: true,
+    cookie: setCookieHeader,
+  });
+});
+
+export const lundaGetProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
+
+  const lundaProfile = await prisma.lundaProfile.findUnique({
+    where: { userId },
+  }) as { id: string; userId: string; cookie: string | null; metadata: any; createdAt: Date; updatedAt: Date } | null;
+
+  if (!lundaProfile || !lundaProfile.cookie) {
+    throw new ApiError(404, 'Lunda cookie не найден. Сначала выполните авторизацию.');
+  }
+
+  const response = await fetch(`${LUNDA_BASE_URL}/player/current`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Cookie: lundaProfile.cookie,
+    },
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response.status, `Lunda API error: ${response.status}`);
+  }
+
+  const data = await response.json() as { result: any };
+  const playerData = data.result;
+
+  const updateData: any = {};
+  
+  if (playerData.phone && playerData.countryCode) {
+    updateData.phone = `+${playerData.countryCode}${playerData.phone}`;
+  }
+  
+  if (playerData.gender) {
+    updateData.gender = playerData.gender === 'MAN' ? 'MALE' : playerData.gender === 'WOMAN' ? 'FEMALE' : 'PREFER_NOT_TO_SAY';
+  }
+  
+  if (playerData.displayRating) {
+    updateData.level = parseFloat(playerData.displayRating);
+  }
+  
+  if (playerData.leftSide !== undefined) {
+    updateData.preferredCourtSideLeft = playerData.leftSide;
+  }
+  
+  if (playerData.rightSide !== undefined) {
+    updateData.preferredCourtSideRight = playerData.rightSide;
+  }
+  
+  if (playerData.displayName) {
+    const parsed = playerData.displayName.split(' ');
+    updateData.firstName = parsed[parsed.length - 1];
+    updateData.lastName = parsed.slice(0, -1).join(' ');
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+  });
+
+  await prisma.lundaProfile.update({
+    where: { userId },
+    data: {
+      metadata: playerData,
+      updatedAt: new Date(),
+    },
+  });
+
+  res.json({
+    success: true,
+    data: playerData,
+  });
+});
+
+export const lundaGetStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
+
+  const lundaProfile = await prisma.lundaProfile.findUnique({
+    where: { userId },
+  }) as { id: string; userId: string; cookie: string | null; metadata: any; createdAt: Date; updatedAt: Date } | null;
+
+  res.json({
+    success: true,
+    hasCookie: !!lundaProfile?.cookie,
+    hasProfile: !!lundaProfile?.metadata && Object.keys(lundaProfile.metadata).length > 0,
+    lastSync: lundaProfile?.updatedAt || null,
   });
 });

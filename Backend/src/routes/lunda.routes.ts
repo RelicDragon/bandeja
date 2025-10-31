@@ -15,9 +15,32 @@ router.post(
     body('level').optional().isFloat({ min: 0 }).withMessage('Level must be a positive number'),
     body('preferredCourtSideLeft').optional().isBoolean().withMessage('preferredCourtSideLeft must be boolean'),
     body('preferredCourtSideRight').optional().isBoolean().withMessage('preferredCourtSideRight must be boolean'),
-    body('metadata').notEmpty().withMessage('Lunda metadata is required'),
+    body('metadata').notEmpty().withMessage('Lunda metadata is required'),    
   ]),
   lundaController.syncLundaProfile
+);
+
+router.post(
+  '/auth',
+  authenticate,
+  validate([
+    body('phone').notEmpty().withMessage('Phone is required'),
+    body('code').notEmpty().withMessage('Code is required'),
+    body('temporalToken').notEmpty().withMessage('Temporal token is required'),
+  ]),
+  lundaController.lundaAuth
+);
+
+router.post(
+  '/profile',
+  authenticate,
+  lundaController.lundaGetProfile
+);
+
+router.get(
+  '/status',
+  authenticate,
+  lundaController.lundaGetStatus
 );
 
 export default router;
