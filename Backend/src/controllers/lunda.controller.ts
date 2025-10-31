@@ -64,11 +64,12 @@ interface LundaAuthRequest extends AuthRequest {
     phone: string;
     code: string;
     temporalToken: string;
+    countryCode: string;
   };
 }
 
 export const lundaAuth = asyncHandler(async (req: LundaAuthRequest, res: Response) => {
-  const { phone, code, temporalToken } = req.body;
+  const { phone, code, temporalToken, countryCode } = req.body;
   const userId = req.userId!;
 
   const response = await fetch(`${LUNDA_BASE_URL}/player/auth`, {
@@ -78,7 +79,7 @@ export const lundaAuth = asyncHandler(async (req: LundaAuthRequest, res: Respons
     },
     body: JSON.stringify({
       parameters: {
-        countryCode: '+7',
+        countryCode: countryCode,
         phone: phone,
         code: code,
         temporalToken: temporalToken,

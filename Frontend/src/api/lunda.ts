@@ -13,6 +13,7 @@ interface LundaAuthData {
   phone: string;
   code: string;
   temporalToken: string;
+  countryCode: string;
 }
 
 interface LundaProfileData {

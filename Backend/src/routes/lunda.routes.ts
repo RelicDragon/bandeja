@@ -27,6 +27,7 @@ router.post(
     body('phone').notEmpty().withMessage('Phone is required'),
     body('code').notEmpty().withMessage('Code is required'),
     body('temporalToken').notEmpty().withMessage('Temporal token is required'),
+    body('countryCode').notEmpty().withMessage('Country code is required'),
   ]),
   lundaController.lundaAuth
 );

@@ -18,6 +18,7 @@ interface CaptchaData {
 
 interface AuthData {
   temporalToken: string;
+  method: 'TELEGRAM' | 'SMS';
 }
 
 
@@ -29,6 +30,7 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+7');
   const [captcha, setCaptcha] = useState<CaptchaData | null>(null);
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [authData, setAuthData] = useState<AuthData | null>(null);
@@ -108,7 +110,7 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
     try {
       const captchaResponse = await makeLundaRequest('/player/captcha', 'PUT', {
         parameters: {
-          countryCode: '+7',
+          countryCode: countryCode,
           phone: phone,
         }
       });
@@ -121,7 +123,7 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
 
       const response = await makeLundaRequest('/player/send-code', 'POST', {
         parameters: {
-          countryCode: '+7',
+          countryCode: countryCode,
           phone: phone,
           answer: answer,
           method: 'TELEGRAM',
@@ -129,7 +131,10 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
         }
       });
 
-      setAuthData(response.result);
+      setAuthData({
+        temporalToken: response.result.temporalToken,
+        method: response.result.method,
+      });
       setCurrentStep(2);
     } catch (err: any) {
       setError('Ошибка авторизации: ' + err.message);
@@ -158,6 +163,7 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
         phone: phone,
         code: code,
         temporalToken: authData.temporalToken,
+        countryCode: countryCode,
       });
 
       if (response.cookie) {
@@ -218,9 +224,14 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
             </div>
 
             <div className="flex gap-2">
-              <div className="flex items-center justify-center w-16 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg font-medium text-gray-900 dark:text-white">
-                +7
-              </div>
+              <Input
+                type="text"
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value.replace(/[^+0-9]/g, ''))}
+                placeholder="+7"
+                className="w-20"
+                maxLength={5}
+              />
               <Input
                 type="tel"
                 value={phone}
@@ -268,9 +279,9 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
           <div className="space-y-6">
             <div className="text-center">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Введите код из Telegram
+                {authData?.method === 'SMS' ? 'Введите код подтверждения' : 'Введите код из Telegram'}
               </h3>
-              {captcha && (
+              {captcha && authData?.method === 'TELEGRAM' && (
                 <div className="mb-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Капча решена автоматически:
@@ -281,14 +292,20 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
                 </div>
               )}
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Откройте <a
-                  href="https://t.me/VerificationCodes"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-600 dark:text-primary-400 hover:underline"
-                >
-                  @VerificationCodes
-                </a> и скопируйте 4-значный код
+                {authData?.method === 'SMS' ? (
+                  'Введите код, отправленный на телефон'
+                ) : (
+                  <>
+                    Откройте <a
+                      href="https://t.me/VerificationCodes"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary-600 dark:text-primary-400 hover:underline"
+                    >
+                      @VerificationCodes
+                    </a> и скопируйте 4-значный код
+                  </>
+                )}
               </p>
             </div>
 
