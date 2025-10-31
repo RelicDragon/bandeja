@@ -22,7 +22,6 @@ interface AuthData {
 }
 
 
-const LUNDA_BASE_URL = 'https://app.lundapadel.ru/api';
 
 export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
   onClose,
@@ -45,33 +44,6 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
     'Получение данных',
     'Завершение'
   ];
-
-  const makeLundaRequest = async (endpoint: string, method: string, body?: any, headers?: any): Promise<any> => {
-    const defaultHeaders = {
-      //'X-App-Version': '65',
-      //'X-Current-App-Page': 'main',
-      //'X-Request-ID': generateRequestId(),
-      'Content-Type': 'application/json',
-      ...headers,
-    };
-
-    const config: RequestInit = {
-      method,
-      headers: defaultHeaders,
-    };
-
-    if (body) {
-      config.body = JSON.stringify(body);
-    }
-
-    const response = await fetch(`${LUNDA_BASE_URL}${endpoint}`, config);
-
-    if (!response.ok) {
-      throw new Error(`Lunda API error: ${response.status}`);
-    }
-
-    return response.json();
-  };
 
   const handlePhoneSubmit = () => {
     // Validate phone: +7, 10 digits after +7, first digit is 9
@@ -108,11 +80,9 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
     setError('');
 
     try {
-      const captchaResponse = await makeLundaRequest('/player/captcha', 'PUT', {
-        parameters: {
-          countryCode: countryCode,
-          phone: phone,
-        }
+      const captchaResponse = await lundaApi.getCaptcha({
+        countryCode: countryCode,
+        phone: phone,
       });
 
       const captchaResult = captchaResponse.result;
@@ -121,14 +91,12 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
       const answer = solveCaptcha(captchaResult);
       setCaptchaAnswer(answer);
 
-      const response = await makeLundaRequest('/player/send-code', 'POST', {
-        parameters: {
-          countryCode: countryCode,
-          phone: phone,
-          answer: answer,
-          method: 'TELEGRAM',
-          ticket: captchaResult.ticket,
-        }
+      const response = await lundaApi.sendCode({
+        countryCode: countryCode,
+        phone: phone,
+        answer: answer,
+        method: 'TELEGRAM',
+        ticket: captchaResult.ticket,
       });
 
       setAuthData({
@@ -137,7 +105,7 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
       });
       setCurrentStep(2);
     } catch (err: any) {
-      setError('Ошибка авторизации: ' + err.message);
+      setError('Ошибка авторизации: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }

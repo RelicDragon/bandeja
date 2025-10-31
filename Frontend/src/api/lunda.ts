@@ -24,6 +24,19 @@ interface LundaProfileData {
   preferredCourtSideRight?: boolean;
 }
 
+interface LundaGetCaptchaData {
+  countryCode: string;
+  phone: string;
+}
+
+interface LundaSendCodeData {
+  countryCode: string;
+  phone: string;
+  answer: string;
+  method: 'TELEGRAM' | 'SMS';
+  ticket: string;
+}
+
 export const lundaApi = {
   syncProfile: async (data: SyncLundaProfileData) => {
     const response = await api.post('/lunda/sync-profile', data);
@@ -39,6 +52,14 @@ export const lundaApi = {
   },
   getStatus: async () => {
     const response = await api.get('/lunda/status');
+    return response.data;
+  },
+  getCaptcha: async (data: LundaGetCaptchaData) => {
+    const response = await api.put('/lunda/captcha', data);
+    return response.data;
+  },
+  sendCode: async (data: LundaSendCodeData) => {
+    const response = await api.post('/lunda/send-code', data);
     return response.data;
   },
 };

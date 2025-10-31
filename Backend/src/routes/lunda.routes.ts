@@ -44,4 +44,27 @@ router.get(
   lundaController.lundaGetStatus
 );
 
+router.put(
+  '/captcha',
+  authenticate,
+  validate([
+    body('countryCode').notEmpty().withMessage('Country code is required'),
+    body('phone').notEmpty().withMessage('Phone is required'),
+  ]),
+  lundaController.lundaGetCaptcha
+);
+
+router.post(
+  '/send-code',
+  authenticate,
+  validate([
+    body('countryCode').notEmpty().withMessage('Country code is required'),
+    body('phone').notEmpty().withMessage('Phone is required'),
+    body('answer').notEmpty().withMessage('Answer is required'),
+    body('method').isIn(['TELEGRAM', 'SMS']).withMessage('Method must be TELEGRAM or SMS'),
+    body('ticket').notEmpty().withMessage('Ticket is required'),
+  ]),
+  lundaController.lundaSendCode
+);
+
 export default router;

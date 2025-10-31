@@ -209,3 +209,79 @@ export const lundaGetStatus = asyncHandler(async (req: AuthRequest, res: Respons
     lastSync: lundaProfile?.updatedAt || null,
   });
 });
+
+interface LundaGetCaptchaRequest extends AuthRequest {
+  body: {
+    countryCode: string;
+    phone: string;
+  };
+}
+
+export const lundaGetCaptcha = asyncHandler(async (req: LundaGetCaptchaRequest, res: Response) => {
+  const { countryCode, phone } = req.body;
+
+  const response = await fetch(`${LUNDA_BASE_URL}/player/captcha`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      parameters: {
+        countryCode,
+        phone,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response.status, `Lunda API error: ${response.status}`);
+  }
+
+  const data = await response.json() as { result: any };
+
+  res.json({
+    success: true,
+    result: data.result,
+  });
+});
+
+interface LundaSendCodeRequest extends AuthRequest {
+  body: {
+    countryCode: string;
+    phone: string;
+    answer: string;
+    method: 'TELEGRAM' | 'SMS';
+    ticket: string;
+  };
+}
+
+export const lundaSendCode = asyncHandler(async (req: LundaSendCodeRequest, res: Response) => {
+  const { countryCode, phone, answer, method, ticket } = req.body;
+
+  const response = await fetch(`${LUNDA_BASE_URL}/player/send-code`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      parameters: {
+        countryCode,
+        phone,
+        answer,
+        method,
+        ticket,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response.status, `Lunda API error: ${response.status}`);
+  }
+
+  const data = await response.json() as { result: any };
+
+  res.json({
+    success: true,
+    result: data.result,
+  });
+});
