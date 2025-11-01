@@ -139,17 +139,23 @@ class TelegramBotService {
           });
           
           this.pendingReplies.delete(telegramId);
-          await this.bot?.sendMessage(
+          const successMessage = await this.bot?.sendMessage(
             msg.chat.id,
             t('telegram.replySent', pendingReply.lang)
           );
+          if (successMessage?.message_id) {
+            this.scheduleMessageDeletion(msg.chat.id, successMessage.message_id);
+          }
         } catch (error) {
           console.error('Error sending reply:', error);
           this.pendingReplies.delete(telegramId);
-          await this.bot?.sendMessage(
+          const errorMessage = await this.bot?.sendMessage(
             msg.chat.id,
             '❌ Failed to send reply. Please try again.'
           );
+          if (errorMessage?.message_id) {
+            this.scheduleMessageDeletion(msg.chat.id, errorMessage.message_id);
+          }
         }
         return;
       }
@@ -279,6 +285,19 @@ class TelegramBotService {
       // Ignore errors if messages are already deleted or bot can't delete them
       console.log('Could not delete OTP messages:', error);
     }
+  }
+
+  private scheduleMessageDeletion(chatId: number, messageId: number) {
+    setTimeout(async () => {
+      try {
+        if (this.bot) {
+          await this.bot.deleteMessage(chatId, messageId);
+        }
+      } catch (error) {
+        // Ignore errors if message is already deleted or bot can't delete it
+        console.log('Could not delete notification message:', error);
+      }
+    }, 20000);
   }
 
   private startCleanupInterval() {

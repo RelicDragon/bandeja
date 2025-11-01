@@ -5,40 +5,12 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { UrlConstructor } from '../utils/urlConstructor';
 import { ImageProcessor } from '../utils/imageProcessor';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: {
-      id: true,
-      phone: true,
-      email: true,
-      telegramId: true,
-      telegramUsername: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      originalAvatar: true,
-      level: true,
-      socialLevel: true,
-      gender: true,
-      reliability: true,
-      isAdmin: true,
-      isTrainer: true,
-      preferredHandLeft: true,
-      preferredHandRight: true,
-      preferredCourtSideLeft: true,
-      preferredCourtSideRight: true,
-      createdAt: true,
-      currentCity: {
-        select: {
-          id: true,
-          name: true,
-          country: true,
-        },
-      },
-    },
+    select: PROFILE_SELECT_FIELDS,
   });
 
   if (!user) {
@@ -97,35 +69,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
       ...(preferredCourtSideRight !== undefined && { preferredCourtSideRight }),
       ...(sendTelegramMessages !== undefined && { sendTelegramMessages }),
     },
-    select: {
-      id: true,
-      phone: true,
-      email: true,
-      telegramId: true,
-      telegramUsername: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      originalAvatar: true,
-      level: true,
-      socialLevel: true,
-      gender: true,
-      reliability: true,
-      isAdmin: true,
-      isTrainer: true,
-      preferredHandLeft: true,
-      preferredHandRight: true,
-      preferredCourtSideLeft: true,
-      preferredCourtSideRight: true,
-      createdAt: true,
-      currentCity: {
-        select: {
-          id: true,
-          name: true,
-          country: true,
-        },
-      },
-    },
+    select: PROFILE_SELECT_FIELDS,
   });
 
   res.json({
@@ -152,34 +96,7 @@ export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) =
   const user = await prisma.user.update({
     where: { id: req.userId },
     data: { currentCityId: cityId },
-    select: {
-      id: true,
-      phone: true,
-      email: true,
-      telegramId: true,
-      telegramUsername: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      level: true,
-      socialLevel: true,
-      gender: true,
-      reliability: true,
-      isAdmin: true,
-      isTrainer: true,
-      preferredHandLeft: true,
-      preferredHandRight: true,
-      preferredCourtSideLeft: true,
-      preferredCourtSideRight: true,
-      createdAt: true,
-      currentCity: {
-        select: {
-          id: true,
-          name: true,
-          country: true,
-        },
-      },
-    },
+    select: PROFILE_SELECT_FIELDS,
   });
 
   res.json({

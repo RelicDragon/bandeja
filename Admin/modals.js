@@ -307,7 +307,7 @@ function editUserModal(user) {
     document.getElementById('userEmail').value = user.email || '';
     document.getElementById('userGender').value = user.gender || 'PREFER_NOT_TO_SAY';
     document.getElementById('userLevel').value = user.level || 3.5;
-    document.getElementById('userCityId').value = user.currentCityId || '';
+    document.getElementById('userCityId').value = user.currentCity?.id || '';
     document.getElementById('userIsActive').checked = user.isActive;
     document.getElementById('userIsAdmin').checked = user.isAdmin;
     document.getElementById('userIsTrainer').checked = user.isTrainer || false;

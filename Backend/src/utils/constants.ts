@@ -125,3 +125,35 @@ export const USER_SELECT_FIELDS = {
   gender: true,
 } as const;
 
+export const PROFILE_SELECT_FIELDS = {
+  id: true,
+  phone: true,
+  email: true,
+  telegramId: true,
+  telegramUsername: true,
+  firstName: true,
+  lastName: true,
+  avatar: true,
+  originalAvatar: true,
+  level: true,
+  socialLevel: true,
+  gender: true,
+  reliability: true,
+  isAdmin: true,
+  isTrainer: true,
+  preferredHandLeft: true,
+  preferredHandRight: true,
+  preferredCourtSideLeft: true,
+  preferredCourtSideRight: true,
+  createdAt: true,
+  isActive: true,
+  language: true,
+  currentCity: {
+    select: {
+      id: true,
+      name: true,
+      country: true,
+    },
+  },
+} as const;
+

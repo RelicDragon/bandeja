@@ -5,7 +5,7 @@ import prisma from '../config/database';
 import { generateToken } from '../utils/jwt';
 import { AuthProvider } from '@prisma/client';
 import telegramBotService from '../services/telegramBot.service';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 
 export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response) => {
   const { code, language } = req.body;
@@ -24,30 +24,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
 
   let user = await prisma.user.findUnique({
     where: { telegramId: actualTelegramId },
-    select: {
-      ...USER_SELECT_FIELDS,
-      phone: true,
-      email: true,
-      telegramId: true,
-      telegramUsername: true,
-      reliability: true,
-      isAdmin: true,
-      isTrainer: true,
-      preferredHandLeft: true,
-      preferredHandRight: true,
-      preferredCourtSideLeft: true,
-      preferredCourtSideRight: true,
-      createdAt: true,
-      isActive: true,
-      language: true,
-      currentCity: {
-        select: {
-          id: true,
-          name: true,
-          country: true,
-        },
-      },
-    },
+    select: PROFILE_SELECT_FIELDS,
   });
 
   let token: string;
@@ -75,30 +52,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
       user = await prisma.user.update({
         where: { id: user.id },
         data: updateData,
-        select: {
-          ...USER_SELECT_FIELDS,
-          phone: true,
-          email: true,
-          telegramId: true,
-          telegramUsername: true,
-          reliability: true,
-          isAdmin: true,
-          isTrainer: true,
-          preferredHandLeft: true,
-          preferredHandRight: true,
-          preferredCourtSideLeft: true,
-          preferredCourtSideRight: true,
-          createdAt: true,
-          isActive: true,
-          language: true,
-          currentCity: {
-            select: {
-              id: true,
-              name: true,
-              country: true,
-            },
-          },
-        },
+        select: PROFILE_SELECT_FIELDS,
       });
     }
 
@@ -113,30 +67,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
         language,
         authProvider: AuthProvider.TELEGRAM,
       },
-      select: {
-        ...USER_SELECT_FIELDS,
-        phone: true,
-        email: true,
-        telegramId: true,
-        telegramUsername: true,
-        reliability: true,
-        isAdmin: true,
-        isTrainer: true,
-        preferredHandLeft: true,
-        preferredHandRight: true,
-        preferredCourtSideLeft: true,
-        preferredCourtSideRight: true,
-        createdAt: true,
-        isActive: true,
-        language: true,
-        currentCity: {
-          select: {
-            id: true,
-            name: true,
-            country: true,
-          },
-        },
-      },
+      select: PROFILE_SELECT_FIELDS,
     });
 
     token = generateToken({ userId: user.id, telegramId: actualTelegramId });

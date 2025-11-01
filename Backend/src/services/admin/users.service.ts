@@ -2,22 +2,16 @@ import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { MediaCleanupService } from '../mediaCleanup.service';
 import { Gender } from '@prisma/client';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
 
 export class AdminUsersService {
   static async getAllUsers(cityId?: string) {
     const users = await prisma.user.findMany({
       where: cityId ? { currentCityId: cityId } : undefined,
       select: {
-        ...USER_SELECT_FIELDS,
-        phone: true,
-        email: true,
-        isActive: true,
-        isAdmin: true,
-        isTrainer: true,
+        ...PROFILE_SELECT_FIELDS,
         totalPoints: true,
         gamesPlayed: true,
-        createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -37,12 +31,7 @@ export class AdminUsersService {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: { isActive: !user.isActive },
-      select: {
-        ...USER_SELECT_FIELDS,
-        phone: true,
-        email: true,
-        isActive: true,
-      },
+      select: PROFILE_SELECT_FIELDS,
     });
 
     return updatedUser;
@@ -119,16 +108,7 @@ export class AdminUsersService {
         isAdmin: isAdmin !== undefined ? isAdmin : false,
         isTrainer: isTrainer !== undefined ? isTrainer : false,
       },
-      select: {
-        ...USER_SELECT_FIELDS,
-        phone: true,
-        email: true,
-        isActive: true,
-        isAdmin: true,
-        isTrainer: true,
-        currentCityId: true,
-        createdAt: true,
-      },
+      select: PROFILE_SELECT_FIELDS,
     });
 
     return user;
@@ -210,16 +190,7 @@ export class AdminUsersService {
         ...(isAdmin !== undefined && { isAdmin }),
         ...(isTrainer !== undefined && { isTrainer }),
       },
-      select: {
-        ...USER_SELECT_FIELDS,
-        phone: true,
-        email: true,
-        isActive: true,
-        isAdmin: true,
-        isTrainer: true,
-        currentCityId: true,
-        createdAt: true,
-      },
+      select: PROFILE_SELECT_FIELDS,
     });
 
     return user;
