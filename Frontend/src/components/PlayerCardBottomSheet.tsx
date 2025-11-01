@@ -196,7 +196,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           <div className="absolute top-4 right-4 flex gap-2 z-10">
             {stats && (
               <button
-                onClick={onToggleFavorite}
+                onClick={handleToggleFavorite}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 title={stats.user.isFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
               >
@@ -251,7 +251,6 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                           setShowAvatarView(true);
                         }
                       }}
-                      onToggleFavorite={handleToggleFavorite}
                     />
                   </motion.div>
                 )}
@@ -268,10 +267,9 @@ interface PlayerCardContentProps {
   stats: UserStats;
   t: (key: string) => string;
   onAvatarClick: () => void;
-  onToggleFavorite: () => void;
 }
 
-const PlayerCardContent = ({ stats, t, onAvatarClick, onToggleFavorite }: PlayerCardContentProps) => {
+const PlayerCardContent = ({ stats, t, onAvatarClick }: PlayerCardContentProps) => {
   const { user, levelHistory, gamesLast30Days } = stats;
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const winRate = user.gamesPlayed > 0 ? ((user.gamesWon / user.gamesPlayed) * 100).toFixed(1) : '0';

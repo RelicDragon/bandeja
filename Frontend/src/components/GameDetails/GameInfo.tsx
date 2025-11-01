@@ -249,7 +249,6 @@ export const GameInfo = ({
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         shareUrl={shareData.url}
-        shareTitle={shareData.title}
         shareText={shareData.text}
       />
     </Card>

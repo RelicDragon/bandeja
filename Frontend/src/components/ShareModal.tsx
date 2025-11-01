@@ -8,7 +8,6 @@ interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
   shareUrl: string;
-  shareTitle: string;
   shareText: string;
 }
 
@@ -16,7 +15,6 @@ export const ShareModal = ({
   isOpen,
   onClose,
   shareUrl,
-  shareTitle,
   shareText
 }: ShareModalProps) => {
   const { t } = useTranslation();
