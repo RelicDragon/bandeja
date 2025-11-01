@@ -65,6 +65,7 @@ export const ProfileContent = ({
     lastSync: string | null;
   } | null>(null);
   const [isLoadingLundaStatus, setIsLoadingLundaStatus] = useState(true);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -304,6 +305,7 @@ export const ProfileContent = ({
                   <div className="flex gap-2">
                     <Button
                       onClick={async () => {
+                        setIsUpdatingProfile(true);
                         try {
                           await lundaApi.getProfile({});
                           const response = await usersApi.getProfile();
@@ -313,12 +315,15 @@ export const ProfileContent = ({
                           toast.success('Данные из Lunda успешно обновлены');
                         } catch (error: any) {
                           toast.error(error.response?.data?.message || 'Ошибка обновления данных');
+                        } finally {
+                          setIsUpdatingProfile(false);
                         }
                       }}
                       className="flex-1"
                       variant="primary"
+                      disabled={isUpdatingProfile}
                     >
-                      Обновить профиль
+                      {isUpdatingProfile ? 'Обновление...' : 'Обновить профиль'}
                     </Button>
                     <Button
                       onClick={() => setShowLundaModal(true)}
