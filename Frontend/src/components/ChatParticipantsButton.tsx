@@ -12,7 +12,7 @@ export const ChatParticipantsButton: React.FC<ChatParticipantsButtonProps> = ({ 
   return (
     <button 
       onClick={onClick}
-      className="flex -space-x-2 hover:opacity-80 transition-opacity"
+      className="flex -space-x-5 hover:opacity-80 transition-opacity"
     >
       {(() => {
         const playingParticipants = game.participants.filter(p => p.isPlaying);
