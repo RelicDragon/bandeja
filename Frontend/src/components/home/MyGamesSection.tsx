@@ -116,9 +116,11 @@ export const MyGamesSection = ({
     return (gamesUnreadCounts[game.id] || 0) > 0;
   });
 
-  const upcomingGames = filteredGames.filter(game => isTodayOrLater(game.startTime));
+  const displayGames = showChatFilter 
+    ? filteredGames 
+    : filteredGames.filter(game => isTodayOrLater(game.startTime));
 
-  if (upcomingGames.length === 0) {
+  if (displayGames.length === 0) {
     return (
       <div>
         {!showChatFilter && (
@@ -153,7 +155,7 @@ export const MyGamesSection = ({
       )}
       <div>
         <div className="space-y-4">
-          {upcomingGames.map((game, index) => (
+          {displayGames.map((game, index) => (
             <div
               key={game.id}
               className={`transition-all duration-500 ease-in-out ${

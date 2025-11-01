@@ -12,7 +12,8 @@ import {
   getUnreadCount,
   getUserChatGames,
   getGameUnreadCount,
-  getGamesUnreadCounts
+  getGamesUnreadCounts,
+  markAllMessagesAsRead
 } from '../controllers/chat.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -55,6 +56,7 @@ router.patch(
 );
 
 router.post('/messages/:messageId/read', markMessageAsRead);
+router.post('/games/:gameId/mark-all-read', markAllMessagesAsRead);
 
 router.post(
   '/messages/:messageId/reactions',

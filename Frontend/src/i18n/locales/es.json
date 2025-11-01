@@ -527,6 +527,8 @@
     "noChatsDescription": "Únete a juegos para empezar a chatear con otros jugadores",
     "noUnreadMessages": "No hay juegos con mensajes sin leer",
     "showAllGames": "Mostrar todos los juegos",
+    "markAllAsRead": "Marcar todo como leído",
+    "allMarkedAsRead": "Todos los mensajes marcados como leídos",
     "participants": "Participantes",
     "participant": "Participante",
     "invited": "Invitado",

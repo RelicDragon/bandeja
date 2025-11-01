@@ -10,6 +10,7 @@ import { ChatParticipantsModal } from '@/components/ChatParticipantsModal';
 import { ChatParticipantsButton } from '@/components/ChatParticipantsButton';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useAuthStore } from '@/store/authStore';
+import { useHeaderStore } from '@/store/headerStore';
 import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
 import { MessageCircle, ArrowLeft, MapPin, LogOut } from 'lucide-react';
@@ -45,14 +46,16 @@ export const GameChat: React.FC = () => {
   const isCurrentUserGuest = game?.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying) ?? false;
 
   const loadGame = useCallback(async () => {
-    if (!gameId) return;
+    if (!gameId) return null;
     
     try {
       const response = await gamesApi.getById(gameId);
       setGame(response.data);
+      return response.data;
     } catch (error) {
       console.error('Failed to load game:', error);
       navigate('/');
+      return null;
     } finally {
       setIsLoadingGame(false);
     }
@@ -218,6 +221,15 @@ export const GameChat: React.FC = () => {
     try {
       const response = await chatApi.getGameMessages(gameId!, 1, 50, newChatType);
       
+      if (gameId && user?.id) {
+        const markReadResponse = await chatApi.markAllMessagesAsRead(gameId, [newChatType]);
+        const markedCount = markReadResponse.data.count || 0;
+        
+        const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+        const newCount = Math.max(0, unreadMessages - markedCount);
+        setUnreadMessages(newCount);
+      }
+      
       // Ensure at least 1.5 seconds have passed since loading started for parallel transition
       const elapsedTime = Date.now() - startTime;
       const remainingTime = Math.max(0, 1500 - elapsedTime);
@@ -240,7 +252,7 @@ export const GameChat: React.FC = () => {
     } finally {
       setIsSwitchingChatType(false);
     }
-  }, [currentChatType, gameId]);
+  }, [currentChatType, gameId, user?.id]);
 
   // Determine which chat types the user can access
   const getAvailableChatTypes = useCallback((): ChatType[] => {
@@ -331,11 +343,47 @@ export const GameChat: React.FC = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([loadGame(), loadMessages()]);
+      if (!gameId || !user?.id) return;
+      
+      const loadedGame = await loadGame();
+      await loadMessages();
+      
+      if (!loadedGame) return;
+      
+      const loadedUserParticipant = loadedGame.participants.find(p => p.userId === user.id);
+      const loadedIsParticipant = !!loadedUserParticipant;
+      const loadedIsPlayingParticipant = loadedUserParticipant?.isPlaying ?? false;
+      const loadedIsAdminOrOwner = loadedUserParticipant?.role === 'ADMIN' || loadedUserParticipant?.role === 'OWNER';
+      const loadedHasPendingInvite = loadedGame.invites?.some(invite => invite.receiverId === user.id) ?? false;
+      const loadedIsGuest = loadedGame.participants.some(p => p.userId === user.id && !p.isPlaying) ?? false;
+      
+      if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
+        try {
+          const availableChatTypes: ChatType[] = [];
+          availableChatTypes.push('PUBLIC');
+          if (loadedIsParticipant && loadedIsPlayingParticipant) {
+            availableChatTypes.push('PRIVATE');
+          }
+          if (loadedIsParticipant && loadedIsAdminOrOwner) {
+            availableChatTypes.push('ADMINS');
+          }
+          
+          const gameUnreadResponse = await chatApi.getGameUnreadCount(gameId);
+          const gameUnreadCount = gameUnreadResponse.data.count || 0;
+          
+          await chatApi.markAllMessagesAsRead(gameId, availableChatTypes);
+          
+          const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+          const newCount = Math.max(0, unreadMessages - gameUnreadCount);
+          setUnreadMessages(newCount);
+        } catch (error) {
+          console.error('Failed to mark all messages as read:', error);
+        }
+      }
     };
     
     loadData();
-  }, [loadGame, loadMessages]);
+  }, [loadGame, loadMessages, gameId, user?.id]);
 
   // Note: Messages are now loaded directly in handleChatTypeChange to avoid double loading
 

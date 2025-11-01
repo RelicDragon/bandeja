@@ -529,6 +529,8 @@
     "noChatsDescription": "Придружи се играма да почнеш да ћаскаш са другим играчима",
     "noUnreadMessages": "Нема игара са непрочитаним порукама",
     "showAllGames": "Прикажи све игре",
+    "markAllAsRead": "Означи све као прочитано",
+    "allMarkedAsRead": "Све поруке су означене као прочитане",
     "participants": "Учесници",
     "participant": "Учесник",
     "invited": "Позван",

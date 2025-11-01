@@ -1,6 +1,8 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { gamesApi } from '@/api';
+import { chatApi } from '@/api/chat';
 import { Game } from '@/types';
+import { useHeaderStore } from '@/store/headerStore';
 
 export const usePastGames = (user: any) => {
   const [pastGames, setPastGames] = useState<Game[]>([]);
@@ -8,10 +10,13 @@ export const usePastGames = (user: any) => {
   const [showPastGames, setShowPastGames] = useState(false);
   const [pastGamesOffset, setPastGamesOffset] = useState(0);
   const [hasMorePastGames, setHasMorePastGames] = useState(true);
+  const [pastGamesUnreadCounts, setPastGamesUnreadCounts] = useState<Record<string, number>>({});
+  const showChatFilter = useHeaderStore((state) => state.showChatFilter);
 
   // Request deduplication
   const isLoadingRef = useRef(false);
   const lastFetchParamsRef = useRef<string | null>(null);
+  const isLoadingUnreadPastGamesRef = useRef(false);
 
   const sortGames = (games: Game[]) => {
     return games.sort((a, b) => {
@@ -19,6 +24,28 @@ export const usePastGames = (user: any) => {
       if (a.status !== 'ARCHIVED' && b.status === 'ARCHIVED') return -1;
       return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
     });
+  };
+
+  const fetchGamesWithUnread = async (myGames: Game[], userId: string): Promise<Record<string, number>> => {
+    const accessibleGameIds = myGames
+      .filter(game => {
+        const isParticipant = game.participants.some(p => p.userId === userId);
+        const hasPendingInvite = game.invites?.some(invite => invite.receiverId === userId);
+        return isParticipant || hasPendingInvite;
+      })
+      .map(game => game.id);
+
+    if (accessibleGameIds.length > 0) {
+      try {
+        const unreadResponse = await chatApi.getGamesUnreadCounts(accessibleGameIds);
+        return unreadResponse.data;
+      } catch (error) {
+        console.error('Failed to fetch unread counts:', error);
+        return {};
+      }
+    }
+
+    return {};
   };
 
   const loadPastGames = useCallback(async () => {
@@ -56,7 +83,10 @@ export const usePastGames = (user: any) => {
         setHasMorePastGames(false);
       }
       
+      const unreadCounts = await fetchGamesWithUnread(newPastGames, user?.id);
+      
       setPastGames(prev => [...prev, ...newPastGames]);
+      setPastGamesUnreadCounts(prev => ({ ...prev, ...unreadCounts }));
       setPastGamesOffset(pastGamesOffset + 20);
     } catch (error) {
       console.error('Failed to load past games:', error);
@@ -65,6 +95,64 @@ export const usePastGames = (user: any) => {
       setLoadingPastGames(false);
     }
   }, [user?.currentCity?.id, user?.id, loadingPastGames, hasMorePastGames, pastGamesOffset]);
+
+  const loadAllPastGamesWithUnread = useCallback(async () => {
+    if (!user?.id || isLoadingUnreadPastGamesRef.current) return;
+
+    isLoadingUnreadPastGamesRef.current = true;
+    try {
+      const allChatGamesResponse = await chatApi.getUserChatGames();
+      const allChatGames = allChatGamesResponse.data;
+      
+      if (allChatGames.length === 0) {
+        isLoadingUnreadPastGamesRef.current = false;
+        return;
+      }
+
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(23, 59, 59, 999);
+
+      const pastChatGames = allChatGames.filter(game => {
+        const gameDate = new Date(game.startTime);
+        return gameDate <= yesterday;
+      });
+
+      if (pastChatGames.length === 0) {
+        isLoadingUnreadPastGamesRef.current = false;
+        return;
+      }
+
+      const gameIds = pastChatGames.map(game => game.id);
+      const unreadCounts = await chatApi.getGamesUnreadCounts(gameIds);
+      
+      const pastGamesWithUnread = pastChatGames.filter(game => (unreadCounts.data[game.id] || 0) > 0);
+      
+      if (pastGamesWithUnread.length > 0) {
+        setPastGames(prevGames => {
+          const existingGameIds = new Set(prevGames.map(g => g.id));
+          const newGames = pastGamesWithUnread.filter(game => !existingGameIds.has(game.id));
+          
+          if (newGames.length === 0) return prevGames;
+          
+          const mergedGames = [...prevGames, ...newGames];
+          return sortGames(mergedGames);
+        });
+        
+        setPastGamesUnreadCounts(prev => ({ ...prev, ...unreadCounts.data }));
+      }
+    } catch (error) {
+      console.error('Failed to load past games with unread messages:', error);
+    } finally {
+      isLoadingUnreadPastGamesRef.current = false;
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (showChatFilter && user?.id) {
+      loadAllPastGamesWithUnread();
+    }
+  }, [showChatFilter, user?.id, loadAllPastGamesWithUnread]);
 
   const togglePastGames = useCallback(() => {
     setShowPastGames(!showPastGames);
@@ -78,8 +166,10 @@ export const usePastGames = (user: any) => {
     loadingPastGames,
     showPastGames,
     hasMorePastGames,
+    pastGamesUnreadCounts,
     loadPastGames,
     togglePastGames,
+    loadAllPastGamesWithUnread,
   };
 };
 

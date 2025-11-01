@@ -141,4 +141,11 @@ export const chatApi = {
     const response = await api.post<ApiResponse<Record<string, number>>>(`/chat/games/unread-counts`, { gameIds });
     return response.data;
   },
+
+  markAllMessagesAsRead: async (gameId: string, chatTypes?: ChatType[]) => {
+    const response = await api.post<ApiResponse<{ count: number }>>(`/chat/games/${gameId}/mark-all-read`, { 
+      chatTypes: chatTypes || [] 
+    });
+    return response.data;
+  },
 };

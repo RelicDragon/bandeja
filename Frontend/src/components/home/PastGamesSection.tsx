@@ -10,6 +10,7 @@ interface PastGamesSectionProps {
   loadingPastGames: boolean;
   hasMorePastGames: boolean;
   user: any;
+  pastGamesUnreadCounts?: Record<string, number>;
   onToggle: () => void;
   onLoadMore: () => void;
 }
@@ -20,6 +21,7 @@ export const PastGamesSection = ({
   loadingPastGames,
   hasMorePastGames,
   user,
+  pastGamesUnreadCounts = {},
   onToggle,
   onLoadMore,
 }: PastGamesSectionProps) => {
@@ -83,6 +85,7 @@ export const PastGamesSection = ({
                       game={game}
                       user={user}
                       isInitiallyCollapsed={index !== 0}
+                      unreadCount={pastGamesUnreadCounts[game.id] || 0}
                     />
                   </div>
                 ))

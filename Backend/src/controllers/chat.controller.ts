@@ -230,6 +230,32 @@ export const getGamesUnreadCounts = asyncHandler(async (req: AuthRequest, res: R
   });
 });
 
+export const markAllMessagesAsRead = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId } = req.params;
+  const { chatTypes } = req.body;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!gameId) {
+    throw new ApiError(400, 'Game ID is required');
+  }
+
+  const result = await ReadReceiptService.markAllMessagesAsRead(gameId, userId, chatTypes);
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    socketService.emitReadReceipt(gameId, { userId, readAt: new Date() });
+  }
+
+  res.json({
+    success: true,
+    data: result
+  });
+});
+
 export const deleteMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { messageId } = req.params;
   const userId = req.userId;

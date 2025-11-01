@@ -227,4 +227,61 @@ export class ReadReceiptService {
 
     return unreadCounts;
   }
+
+  static async markAllMessagesAsRead(gameId: string, userId: string, chatTypes: string[] = []) {
+    const { participant } = await MessageService.validateGameAccess(gameId, userId);
+
+    // Build chat type filter based on user access
+    const chatTypeFilter: any[] = chatTypes.length > 0 ? chatTypes : ['PUBLIC'];
+
+    // Add PRIVATE if user is a playing participant
+    if (participant && participant.isPlaying && !chatTypes.length) {
+      chatTypeFilter.push('PRIVATE');
+    }
+
+    // Add ADMINS if user is owner or admin
+    if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN') && !chatTypes.length) {
+      chatTypeFilter.push('ADMINS');
+    }
+
+    // Get all unread messages for this game and chat types
+    const unreadMessages = await prisma.chatMessage.findMany({
+      where: {
+        gameId,
+        chatType: {
+          in: chatTypeFilter
+        },
+        senderId: {
+          not: userId
+        },
+        readReceipts: {
+          none: {
+            userId
+          }
+        }
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (unreadMessages.length === 0) {
+      return { count: 0 };
+    }
+
+    // Mark all messages as read
+    const readAt = new Date();
+    const readReceipts = unreadMessages.map(message => ({
+      messageId: message.id,
+      userId,
+      readAt
+    }));
+
+    await prisma.messageReadReceipt.createMany({
+      data: readReceipts,
+      skipDuplicates: true
+    });
+
+    return { count: unreadMessages.length };
+  }
 }

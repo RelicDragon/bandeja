@@ -520,6 +520,8 @@
     "noChatsDescription": "Join games to start chatting with other players",
     "noUnreadMessages": "No games with unread messages",
     "showAllGames": "Show all games",
+    "markAllAsRead": "Mark all as read",
+    "allMarkedAsRead": "All messages marked as read",
     "participants": "Participants",
     "participant": "Participant",
     "invited": "Invited",

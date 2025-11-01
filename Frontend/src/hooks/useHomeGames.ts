@@ -3,6 +3,7 @@ import { gamesApi, invitesApi } from '@/api';
 import { chatApi } from '@/api/chat';
 import { Game, Invite } from '@/types';
 import { socketService } from '@/services/socketService';
+import { useHeaderStore } from '@/store/headerStore';
 
 export const useHomeGames = (
   user: any,
@@ -13,10 +14,12 @@ export const useHomeGames = (
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [gamesUnreadCounts, setGamesUnreadCounts] = useState<Record<string, number>>({});
+  const showChatFilter = useHeaderStore((state) => state.showChatFilter);
 
   // Request deduplication
   const isLoadingRef = useRef(false);
   const lastFetchParamsRef = useRef<string | null>(null);
+  const isLoadingUnreadGamesRef = useRef(false);
 
   const sortGames = (games: Game[]) => {
     return games.sort((a, b) => {
@@ -119,11 +122,69 @@ export const useHomeGames = (
     }
   }, [user?.currentCity?.id, user?.id, skeletonAnimation, onLoading]);
 
+  const loadAllGamesWithUnread = useCallback(async () => {
+    if (!user?.id || isLoadingUnreadGamesRef.current) return;
+
+    isLoadingUnreadGamesRef.current = true;
+    try {
+      const allChatGamesResponse = await chatApi.getUserChatGames();
+      const allChatGames = allChatGamesResponse.data;
+      
+      if (allChatGames.length === 0) {
+        isLoadingUnreadGamesRef.current = false;
+        return;
+      }
+
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+
+      const upcomingChatGames = allChatGames.filter(game => {
+        const gameDate = new Date(game.startTime);
+        return gameDate >= yesterday;
+      });
+
+      if (upcomingChatGames.length === 0) {
+        isLoadingUnreadGamesRef.current = false;
+        return;
+      }
+
+      const gameIds = upcomingChatGames.map(game => game.id);
+      const unreadCounts = await chatApi.getGamesUnreadCounts(gameIds);
+      
+      const gamesWithUnread = upcomingChatGames.filter(game => (unreadCounts.data[game.id] || 0) > 0);
+      
+      if (gamesWithUnread.length > 0) {
+        setGames(prevGames => {
+          const existingGameIds = new Set(prevGames.map(g => g.id));
+          const newGames = gamesWithUnread.filter(game => !existingGameIds.has(game.id));
+          
+          if (newGames.length === 0) return prevGames;
+          
+          const mergedGames = [...prevGames, ...newGames];
+          return sortGames(mergedGames);
+        });
+        
+        setGamesUnreadCounts(prev => ({ ...prev, ...unreadCounts.data }));
+      }
+    } catch (error) {
+      console.error('Failed to load games with unread messages:', error);
+    } finally {
+      isLoadingUnreadGamesRef.current = false;
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     if (user?.currentCity?.id) {
       fetchData();
     }
   }, [user?.currentCity?.id, fetchData]);
+
+  useEffect(() => {
+    if (showChatFilter && user?.id) {
+      loadAllGamesWithUnread();
+    }
+  }, [showChatFilter, user?.id, loadAllGamesWithUnread]);
 
   // Listen for new invites and deleted invites via Socket.IO
   useEffect(() => {
@@ -158,6 +219,7 @@ export const useHomeGames = (
     gamesUnreadCounts,
     fetchData,
     setInvites,
+    loadAllGamesWithUnread,
   };
 };
 
