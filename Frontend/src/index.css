@@ -291,3 +291,9 @@ html {
   border-radius: 0.5rem;
 }
 
+/* Ensure toasts are always on top, even above portals */
+[data-hot-toast-container],
+[data-hot-toast] {
+  z-index: 999999 !important;
+}
+

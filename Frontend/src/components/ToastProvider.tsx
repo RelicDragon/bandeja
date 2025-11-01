@@ -14,6 +14,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
         containerStyle={{
           top: 20,
           right: 20,
+          zIndex: 999999,
         }}
         toastOptions={{
           duration: 4000,
@@ -29,6 +30,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)',
             maxWidth: '400px',
             minWidth: '300px',
+            zIndex: 999999,
           },
           success: {
             duration: 3000,
@@ -44,6 +46,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
               boxShadow: '0 25px 50px -12px rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
               maxWidth: '400px',
               minWidth: '300px',
+              zIndex: 999999,
             },
             iconTheme: {
               primary: '#ffffff',
@@ -64,6 +67,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
               boxShadow: '0 25px 50px -12px rgba(239, 68, 68, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
               maxWidth: '400px',
               minWidth: '300px',
+              zIndex: 999999,
             },
             iconTheme: {
               primary: '#ffffff',
@@ -83,6 +87,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
               boxShadow: '0 25px 50px -12px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
               maxWidth: '400px',
               minWidth: '300px',
+              zIndex: 999999,
             },
             iconTheme: {
               primary: '#ffffff',
