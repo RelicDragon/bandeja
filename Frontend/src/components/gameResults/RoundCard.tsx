@@ -170,6 +170,7 @@ export const RoundCard = ({
 
         {showDeleteConfirmation && (
           <ConfirmationModal
+            isOpen={showDeleteConfirmation}
             title={t('gameResults.deleteRound')}
             message={t('gameResults.deleteRoundConfirmation')}
             highlightedText={round.name}
