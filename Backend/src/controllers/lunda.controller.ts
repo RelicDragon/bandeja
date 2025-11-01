@@ -1,10 +1,17 @@
+// =======================
+// PART 2 — Your NodeJS code (TypeScript), updated to call the Worker
+// Replace LUNDA_BASE_URL with your Worker base URL and keep all DB logic.
+// Only network calls are routed via the Worker proxy, preserving cookies.
+// =======================
+
 import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 
-const LUNDA_BASE_URL = 'https://app.lundapadel.ru/api';
+// Point this to your Worker (no trailing slash), e.g. "https://your-worker.workers.dev"
+const WORKER_PROXY_BASE_URL = process.env.LUNDA_WORKER_URL ?? 'https://reroute-worker.relic-ilya.workers.dev/api/lunda';
 
 interface SyncLundaProfileRequest extends AuthRequest {
   body: {
@@ -28,7 +35,7 @@ export const syncLundaProfile = asyncHandler(async (req: SyncLundaProfileRequest
   if (level !== undefined) updateData.level = level;
   if (preferredCourtSideLeft !== undefined) updateData.preferredCourtSideLeft = preferredCourtSideLeft;
   if (preferredCourtSideRight !== undefined) updateData.preferredCourtSideRight = preferredCourtSideRight;
-  
+
   if (metadata?.displayName) {
     const parsed = metadata.displayName.split(' ');
     updateData.firstName = parsed[parsed.length - 1];
@@ -72,10 +79,11 @@ export const lundaAuth = asyncHandler(async (req: LundaAuthRequest, res: Respons
   const { phone, code, temporalToken, countryCode } = req.body;
   const userId = req.userId!;
 
-  const response = await fetch(`${LUNDA_BASE_URL}/player/auth`, {
+  const response = await fetch(`${WORKER_PROXY_BASE_URL}/player/auth`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      // No Cookie for auth; upstream will set it and the worker will pass Set-Cookie back
     },
     body: JSON.stringify({
       parameters: {
@@ -92,7 +100,7 @@ export const lundaAuth = asyncHandler(async (req: LundaAuthRequest, res: Respons
     throw new ApiError(response.status, `Lunda API error: ${response.status}`);
   }
 
-  const data = await response.json() as { result: { status: string } };
+  const data = (await response.json()) as { result: { status: string } };
 
   if (data.result.status !== 'SUCCESSFUL') {
     throw new ApiError(400, 'Авторизация не удалась');
@@ -125,18 +133,19 @@ export const lundaAuth = asyncHandler(async (req: LundaAuthRequest, res: Respons
 export const lundaGetProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId!;
 
-  const lundaProfile = await prisma.lundaProfile.findUnique({
+  const lundaProfile = (await prisma.lundaProfile.findUnique({
     where: { userId },
-  }) as { id: string; userId: string; cookie: string | null; metadata: any; createdAt: Date; updatedAt: Date } | null;
+  })) as { id: string; userId: string; cookie: string | null; metadata: any; createdAt: Date; updatedAt: Date } | null;
 
   if (!lundaProfile || !lundaProfile.cookie) {
     throw new ApiError(404, 'Lunda cookie не найден. Сначала выполните авторизацию.');
   }
 
-  const response = await fetch(`${LUNDA_BASE_URL}/player/current`, {
+  const response = await fetch(`${WORKER_PROXY_BASE_URL}/player/current`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
+      // Forward the stored Lunda cookie to the worker; worker forwards to upstream
       Cookie: lundaProfile.cookie,
     },
   });
@@ -145,31 +154,36 @@ export const lundaGetProfile = asyncHandler(async (req: AuthRequest, res: Respon
     throw new ApiError(response.status, `Lunda API error: ${response.status}`);
   }
 
-  const data = await response.json() as { result: any };
+  const data = (await response.json()) as { result: any };
   const playerData = data.result;
 
   const updateData: any = {};
-  
+
   if (playerData.phone && playerData.countryCode) {
     updateData.phone = `+${playerData.countryCode}${playerData.phone}`;
   }
-  
+
   if (playerData.gender) {
-    updateData.gender = playerData.gender === 'MAN' ? 'MALE' : playerData.gender === 'WOMAN' ? 'FEMALE' : 'PREFER_NOT_TO_SAY';
+    updateData.gender =
+      playerData.gender === 'MAN'
+        ? 'MALE'
+        : playerData.gender === 'WOMAN'
+        ? 'FEMALE'
+        : 'PREFER_NOT_TO_SAY';
   }
-  
+
   if (playerData.displayRating) {
     updateData.level = parseFloat(playerData.displayRating);
   }
-  
+
   if (playerData.leftSide !== undefined) {
     updateData.preferredCourtSideLeft = playerData.leftSide;
   }
-  
+
   if (playerData.rightSide !== undefined) {
     updateData.preferredCourtSideRight = playerData.rightSide;
   }
-  
+
   if (playerData.displayName) {
     const parsed = playerData.displayName.split(' ');
     updateData.firstName = parsed[parsed.length - 1];
@@ -198,9 +212,9 @@ export const lundaGetProfile = asyncHandler(async (req: AuthRequest, res: Respon
 export const lundaGetStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId!;
 
-  const lundaProfile = await prisma.lundaProfile.findUnique({
+  const lundaProfile = (await prisma.lundaProfile.findUnique({
     where: { userId },
-  }) as { id: string; userId: string; cookie: string | null; metadata: any; createdAt: Date; updatedAt: Date } | null;
+  })) as { id: string; userId: string; cookie: string | null; metadata: any; createdAt: Date; updatedAt: Date } | null;
 
   res.json({
     success: true,
@@ -220,7 +234,7 @@ interface LundaGetCaptchaRequest extends AuthRequest {
 export const lundaGetCaptcha = asyncHandler(async (req: LundaGetCaptchaRequest, res: Response) => {
   const { countryCode, phone } = req.body;
 
-  const response = await fetch(`${LUNDA_BASE_URL}/player/captcha`, {
+  const response = await fetch(`${WORKER_PROXY_BASE_URL}/player/captcha`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -237,7 +251,7 @@ export const lundaGetCaptcha = asyncHandler(async (req: LundaGetCaptchaRequest, 
     throw new ApiError(response.status, `Lunda API error: ${response.status}`);
   }
 
-  const data = await response.json() as { result: any };
+  const data = (await response.json()) as { result: any };
 
   res.json({
     success: true,
@@ -258,7 +272,7 @@ interface LundaSendCodeRequest extends AuthRequest {
 export const lundaSendCode = asyncHandler(async (req: LundaSendCodeRequest, res: Response) => {
   const { countryCode, phone, answer, method, ticket } = req.body;
 
-  const response = await fetch(`${LUNDA_BASE_URL}/player/send-code`, {
+  const response = await fetch(`${WORKER_PROXY_BASE_URL}/player/send-code`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -278,7 +292,7 @@ export const lundaSendCode = asyncHandler(async (req: LundaSendCodeRequest, res:
     throw new ApiError(response.status, `Lunda API error: ${response.status}`);
   }
 
-  const data = await response.json() as { result: any };
+  const data = (await response.json()) as { result: any };
 
   res.json({
     success: true,
