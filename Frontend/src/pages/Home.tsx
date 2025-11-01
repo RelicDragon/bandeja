@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -14,15 +13,11 @@ import { useHomeGames } from '@/hooks/useHomeGames';
 import { usePastGames } from '@/hooks/usePastGames';
 
 export const HomeContent = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const { showChatFilter, setShowChatFilter } = useHeaderStore();
 
   const [loading, setLoading] = useState(true);
-  const [showChatFilter, setShowChatFilter] = useState(
-    location.state?.showChatFilter || false
-  );
 
   const skeletonAnimation = useSkeletonAnimation();
   
@@ -47,11 +42,6 @@ export const HomeContent = () => {
     togglePastGames,
   } = usePastGames(user);
 
-  useEffect(() => {
-    if (location.state?.showChatFilter) {
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [location.state, navigate, location.pathname]);
 
   const handleAcceptInvite = async (inviteId: string) => {
     try {
@@ -98,13 +88,19 @@ export const HomeContent = () => {
 
   return (
     <>
-      {!loading && (
+      <div
+        className={`transition-all duration-500 ease-in-out overflow-hidden ${
+          !loading && !showChatFilter
+            ? 'max-h-[2000px] opacity-100 translate-y-0'
+            : 'max-h-0 opacity-0 -translate-y-4'
+        }`}
+      >
         <InvitesSection
           invites={invites}
           onAccept={handleAcceptInvite}
           onDecline={handleDeclineInvite}
         />
-      )}
+      </div>
 
       <MyGamesSection
         games={games}
@@ -117,7 +113,13 @@ export const HomeContent = () => {
         onShowAllGames={() => setShowChatFilter(false)}
       />
 
-      {!loading && (
+      <div
+        className={`transition-all duration-500 ease-in-out overflow-hidden ${
+          !loading && !showChatFilter
+            ? 'max-h-[2000px] opacity-100 translate-y-0'
+            : 'max-h-0 opacity-0 -translate-y-4'
+        }`}
+      >
         <PastGamesSection
           pastGames={pastGames}
           showPastGames={showPastGames}
@@ -127,16 +129,32 @@ export const HomeContent = () => {
           onToggle={togglePastGames}
           onLoadMore={loadPastGames}
         />
-      )}
+      </div>
 
-      <Divider />
+      <div
+        className={`transition-all duration-500 ease-in-out overflow-hidden ${
+          !showChatFilter
+            ? 'max-h-[50px] opacity-100 translate-y-0'
+            : 'max-h-0 opacity-0 -translate-y-4'
+        }`}
+      >
+        <Divider />
+      </div>
 
-      <AvailableGamesSection
-        availableGames={availableGames}
-        user={user}
-        loading={loading}
-        onJoin={handleJoinGame}
-      />
+      <div
+        className={`transition-all duration-500 ease-in-out overflow-hidden ${
+          !showChatFilter
+            ? 'max-h-[5000px] opacity-100 translate-y-0'
+            : 'max-h-0 opacity-0 -translate-y-4'
+        }`}
+      >
+        <AvailableGamesSection
+          availableGames={availableGames}
+          user={user}
+          loading={loading}
+          onJoin={handleJoinGame}
+        />
+      </div>
     </>
   );
 };

@@ -13,6 +13,7 @@ import { ChatList } from './pages/ChatList';
 import { GameResultsEntry } from './pages/GameResultsEntry';
 import { BugChat } from './pages/BugChat';
 import { useAuthStore } from './store/authStore';
+import { useFavoritesStore } from './store/favoritesStore';
 import { isProfileComplete, hasValidUsername } from './utils/userValidation';
 import { PlayerCardModalManager } from './components/PlayerCardModalManager';
 import { ToastProvider } from './components/ToastProvider';
@@ -24,10 +25,12 @@ import './i18n/config';
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
+  const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
 
   useEffect(() => {
     if (isAuthenticated) {
       headerService.startPolling();
+      fetchFavorites();
 
       // Set up socket listener for new invites
       const handleNewInvite = () => {
@@ -61,7 +64,7 @@ function App() {
     return () => {
       headerService.stopPolling();
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchFavorites]);
 
 
   return (

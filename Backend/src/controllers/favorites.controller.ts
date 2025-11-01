@@ -261,3 +261,19 @@ export const checkIfUserFavorite = asyncHandler(async (req: AuthRequest, res: Re
     },
   });
 });
+
+export const getUserFavoriteUserIds = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const favorites = await prisma.userFavoriteUser.findMany({
+    where: { userId: req.userId! },
+    select: {
+      favoriteUserId: true,
+    },
+  });
+
+  const favoriteUserIds = favorites.map((f) => f.favoriteUserId);
+
+  res.json({
+    success: true,
+    data: favoriteUserIds,
+  });
+});

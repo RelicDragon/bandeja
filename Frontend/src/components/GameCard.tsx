@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/components';
@@ -20,6 +20,7 @@ interface GameCardProps {
   isInitiallyCollapsed?: boolean;
   showDate?: boolean;
   unreadCount?: number;
+  forceCollapsed?: boolean;
 }
 
 export const GameCard = ({ 
@@ -31,7 +32,8 @@ export const GameCard = ({
   onJoin,
   isInitiallyCollapsed = true,
   showDate = true,
-  unreadCount = 0
+  unreadCount = 0,
+  forceCollapsed
 }: GameCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -39,6 +41,21 @@ export const GameCard = ({
   const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
   const [isCollapsing, setIsCollapsing] = useState(false);
   const expandedContentRef = useRef<HTMLDivElement>(null);
+  const previousForceCollapsedRef = useRef<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    const previousForceCollapsed = previousForceCollapsedRef.current;
+    previousForceCollapsedRef.current = forceCollapsed;
+    
+    if (forceCollapsed !== undefined && previousForceCollapsed !== forceCollapsed && forceCollapsed !== isCollapsed && !isCollapsing) {
+      setIsCollapsing(true);
+      setIsCollapsed(forceCollapsed);
+      
+      setTimeout(() => {
+        setIsCollapsing(false);
+      }, 300);
+    }
+  }, [forceCollapsed, isCollapsed, isCollapsing]);
 
   const isParticipant = game.participants.some(p => p.userId === user?.id && p.isPlaying);
   const hasPendingInvite = game.invites?.some(invite => invite.receiverId === user?.id);

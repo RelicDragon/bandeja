@@ -33,19 +33,32 @@ export const Header = ({
 }: HeaderProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { pendingInvites, unreadMessages, isNewInviteAnimating } = useHeaderStore();
+  const { pendingInvites, unreadMessages, isNewInviteAnimating, showChatFilter: globalShowChatFilter, setShowChatFilter } = useHeaderStore();
   const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications, bugsButtonSlidingUp, bugsButtonSlidingDown, setBugsButtonSlidingUp, setBugsButtonSlidingDown } = useNavigationStore();
+  
+  const isChatFilterActive = onChatFilterToggle ? showChatFilter : globalShowChatFilter;
 
   const previousPageRef = useRef(currentPage);
 
-  // Trigger bugs button slide-down animation when navigating away from bugs page
+  // Handle page transitions
   useEffect(() => {
-    if (previousPageRef.current === 'bugs' && currentPage !== 'bugs') {
+    const previousPage = previousPageRef.current;
+    
+    // Trigger bugs button slide-down animation when navigating away from bugs page
+    if (previousPage === 'bugs' && currentPage !== 'bugs') {
       setBugsButtonSlidingDown(true);
       setTimeout(() => setBugsButtonSlidingDown(false), 500);
     }
+    
+    // Turn off chat filter when navigating away from home
+    if (previousPage === 'home' && currentPage !== 'home') {
+      if (!onChatFilterToggle) {
+        setShowChatFilter(false);
+      }
+    }
+    
     previousPageRef.current = currentPage;
-  }, [currentPage, setBugsButtonSlidingDown]);
+  }, [currentPage, setBugsButtonSlidingDown, setShowChatFilter, onChatFilterToggle]);
 
   const handleProfileClick = () => {
     setIsAnimating(true);
@@ -124,28 +137,37 @@ export const Header = ({
               </button>
             )}
 
-            {(unreadMessages > 0 || showChatFilter) && (
+            {(unreadMessages > 0 || isChatFilterActive) && (
               <button
                 onClick={() => {
-                  if (onChatFilterToggle) {
-                    onChatFilterToggle();
+                  if (currentPage !== 'home') {
+                    setIsAnimating(true);
+                    setCurrentPage('home');
+                    navigate('/', { replace: true });
+                    setTimeout(() => {
+                      setIsAnimating(false);
+                      setShowChatFilter(true);
+                    }, 300);
                   } else {
-                    // If we're not on the home page, navigate to home with chat filter enabled
-                    navigate('/', { state: { showChatFilter: true } });
+                    if (onChatFilterToggle) {
+                      onChatFilterToggle();
+                    } else {
+                      setShowChatFilter(!globalShowChatFilter);
+                    }
                   }
                 }}
                 className={`relative p-2 rounded-lg transition-colors ${
-                  showChatFilter
+                  isChatFilterActive
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 <MessageCircle
                   size={20}
-                  className={showChatFilter ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'}
-                  fill={showChatFilter ? 'currentColor' : 'none'}
+                  className={isChatFilterActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'}
+                  fill={isChatFilterActive ? 'currentColor' : 'none'}
                 />
-                {unreadMessages > 0 && (
+                {unreadMessages > 0 && !isChatFilterActive && (
                   <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {unreadMessages > 99 ? '99+' : unreadMessages}
                   </span>

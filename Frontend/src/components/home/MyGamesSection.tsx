@@ -13,22 +13,12 @@ interface MyGamesSectionProps {
   onShowAllGames: () => void;
 }
 
-const isToday = (date: Date | string) => {
+const isTodayOrLater = (date: Date | string) => {
   const gameDate = typeof date === 'string' ? new Date(date) : date;
   const today = new Date();
   const gameDateOnly = new Date(gameDate.getFullYear(), gameDate.getMonth(), gameDate.getDate());
   const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  return gameDateOnly.getTime() === todayOnly.getTime();
-};
-
-const isYesterday = (date: Date | string) => {
-  const gameDate = typeof date === 'string' ? new Date(date) : date;
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  const gameDateOnly = new Date(gameDate.getFullYear(), gameDate.getMonth(), gameDate.getDate());
-  const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-  return gameDateOnly.getTime() === yesterdayOnly.getTime();
+  return gameDateOnly.getTime() >= todayOnly.getTime();
 };
 
 export const MyGamesSection = ({
@@ -115,107 +105,54 @@ export const MyGamesSection = ({
     return (gamesUnreadCounts[game.id] || 0) > 0;
   });
 
-  const todayGames = filteredGames.filter(game => isToday(game.startTime));
-  const yesterdayGames = filteredGames.filter(game => isYesterday(game.startTime));
-  const upcomingGames = filteredGames.filter(game => !isToday(game.startTime) && !isYesterday(game.startTime) && new Date(game.startTime) > new Date());
+  const upcomingGames = filteredGames.filter(game => isTodayOrLater(game.startTime));
+
+  if (upcomingGames.length === 0) {
+    return (
+      <div>
+        {!showChatFilter && (
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            {t('home.myGames')}
+          </h2>
+        )}
+        <Card className="text-center py-12">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{t('home.noGames')}</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-        {t('home.myGames')}
-      </h2>
-      <div className="space-y-6">
-        {todayGames.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              {t('createGame.today')}
-            </h3>
-            <div className="space-y-4">
-              {todayGames.map((game, index) => (
-                <div
-                  key={game.id}
-                  className={`transition-all duration-500 ease-in-out ${
-                    showChatFilter 
-                      ? 'animate-in slide-in-from-top-4 fade-in' 
-                      : 'animate-in slide-in-from-top-4'
-                  }`}
-                  style={{
-                    animationDelay: showChatFilter ? `${index * 100}ms` : '0ms'
-                  }}
-                >
-                  <GameCard
-                    game={game}
-                    user={user}
-                    isInitiallyCollapsed={index !== 0}
-                    showDate={false}
-                    unreadCount={gamesUnreadCounts[game.id] || 0}
-                  />
-                </div>
-              ))}
+      {!showChatFilter && (
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          {t('home.myGames')}
+        </h2>
+      )}
+      <div>
+        <div className="space-y-4">
+          {upcomingGames.map((game, index) => (
+            <div
+              key={game.id}
+              className={`transition-all duration-500 ease-in-out ${
+                showChatFilter 
+                  ? 'animate-in slide-in-from-top-4 fade-in' 
+                  : 'animate-in slide-in-from-top-4'
+              }`}
+              style={{
+                animationDelay: showChatFilter ? `${index * 100}ms` : '0ms'
+              }}
+            >
+              <GameCard
+                game={game}
+                user={user}
+                isInitiallyCollapsed={index !== 0}
+                unreadCount={gamesUnreadCounts[game.id] || 0}
+                forceCollapsed={showChatFilter ? true : undefined}
+              />
             </div>
-          </div>
-        )}
-
-        {upcomingGames.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              {t('home.upcoming')}
-            </h3>
-            <div className="space-y-4">
-              {upcomingGames.map((game, index) => (
-                <div
-                  key={game.id}
-                  className={`transition-all duration-500 ease-in-out ${
-                    showChatFilter 
-                      ? 'animate-in slide-in-from-top-4 fade-in' 
-                      : 'animate-in slide-in-from-top-4'
-                  }`}
-                  style={{
-                    animationDelay: showChatFilter ? `${index * 100}ms` : '0ms'
-                  }}
-                >
-                  <GameCard
-                    game={game}
-                    user={user}
-                    isInitiallyCollapsed={index !== 0}
-                    unreadCount={gamesUnreadCounts[game.id] || 0}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {yesterdayGames.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              {t('createGame.yesterday')}
-            </h3>
-            <div className="space-y-4">
-              {yesterdayGames.map((game, index) => (
-                <div
-                  key={game.id}
-                  className={`transition-all duration-500 ease-in-out ${
-                    showChatFilter 
-                      ? 'animate-in slide-in-from-top-4 fade-in' 
-                      : 'animate-in slide-in-from-top-4'
-                  }`}
-                  style={{
-                    animationDelay: showChatFilter ? `${index * 100}ms` : '0ms'
-                  }}
-                >
-                  <GameCard
-                    game={game}
-                    user={user}
-                    isInitiallyCollapsed={index !== 0}
-                    showDate={false}
-                    unreadCount={gamesUnreadCounts[game.id] || 0}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { CachedImage } from './CachedImage';
 import { UrlConstructor } from '@/utils/urlConstructor';
 import { GenderIndicator } from './GenderIndicator';
 import { useAppModeStore } from '@/store/appModeStore';
+import { useFavoritesStore } from '@/store/favoritesStore';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface PlayerAvatarProps {
@@ -38,6 +39,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
   const { t } = useTranslation();
   const { openPlayerCard } = usePlayerCardModal();
   const { mode: appMode } = useAppModeStore();
+  const isFavorite = useFavoritesStore((state) => player ? state.isFavorite(player.id) : false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const getSizeClasses = () => {
@@ -113,12 +115,12 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
             <CachedImage
               src={UrlConstructor.constructImageUrl(player.avatar)}
               alt={`${player.firstName} ${player.lastName}`}
-              className={`${sizeClasses.avatar} rounded-full object-cover`}
+              className={`${sizeClasses.avatar} rounded-full object-cover ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
               showLoadingSpinner={true}
               loadingClassName="rounded-full"
             />
           ) : (
-            <div className={`${sizeClasses.avatar} rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text}`}>
+            <div className={`${sizeClasses.avatar} rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text} ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>
               {initials}
             </div>
           )}

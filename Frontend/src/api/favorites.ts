@@ -14,6 +14,11 @@ export const favoritesApi = {
     return response.data;
   },
 
+  getUserFavoriteUserIds: async (): Promise<string[]> => {
+    const response = await api.get<ApiResponse<string[]>>('/favorites/users');
+    return response.data.data;
+  },
+
   addUserToFavorites: async (userId: string) => {
     const response = await api.post<ApiResponse<any>>('/favorites/users', {
       userId,

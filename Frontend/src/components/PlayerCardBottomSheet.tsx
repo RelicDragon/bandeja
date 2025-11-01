@@ -9,6 +9,8 @@ import { CachedImage } from './CachedImage';
 import { UrlConstructor } from '@/utils/urlConstructor';
 import { PlayerAvatarView } from './PlayerAvatarView';
 import { GenderIndicator } from './GenderIndicator';
+import { useAuthStore } from '@/store/authStore';
+import { useFavoritesStore } from '@/store/favoritesStore';
 import toast from 'react-hot-toast';
 
 interface PlayerCardBottomSheetProps {
@@ -18,11 +20,14 @@ interface PlayerCardBottomSheetProps {
 
 export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomSheetProps) => {
   const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
+  const { addFavorite, removeFavorite } = useFavoritesStore();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isClosing, setIsClosing] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [showAvatarView, setShowAvatarView] = useState(false);
+  const isCurrentUser = playerId === user?.id;
 
   // Disable background scrolling and interactions when modal is open
   useEffect(() => {
@@ -108,10 +113,12 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
       if (stats.user.isFavorite) {
         await favoritesApi.removeUserFromFavorites(playerId);
         setStats({ ...stats, user: { ...stats.user, isFavorite: false } });
+        removeFavorite(playerId);
         toast.success(t('favorites.userRemovedFromFavorites'));
       } else {
         await favoritesApi.addUserToFavorites(playerId);
         setStats({ ...stats, user: { ...stats.user, isFavorite: true } });
+        addFavorite(playerId);
         toast.success(t('favorites.userAddedToFavorites'));
       }
     } catch (error: any) {
@@ -194,7 +201,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           <div className="h-8 w-full cursor-grab active:cursor-grabbing" />
           
           <div className="absolute top-4 right-4 flex gap-2 z-10">
-            {stats && (
+            {stats && !isCurrentUser && (
               <button
                 onClick={handleToggleFavorite}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -271,6 +278,7 @@ interface PlayerCardContentProps {
 
 const PlayerCardContent = ({ stats, t, onAvatarClick }: PlayerCardContentProps) => {
   const { user, levelHistory, gamesLast30Days } = stats;
+  const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const winRate = user.gamesPlayed > 0 ? ((user.gamesWon / user.gamesPlayed) * 100).toFixed(1) : '0';
 
@@ -297,10 +305,10 @@ const PlayerCardContent = ({ stats, t, onAvatarClick }: PlayerCardContentProps) 
                   <CachedImage
                     src={UrlConstructor.constructImageUrl(user.avatar)}
                     alt={`${user.firstName} ${user.lastName}`}
-                    className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
+                    className={`w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
                   />
                 ) : (
-                  <div className="w-32 h-32 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl">
+                  <div className={`w-32 h-32 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>
                     {initials}
                   </div>
                 )}
@@ -309,10 +317,10 @@ const PlayerCardContent = ({ stats, t, onAvatarClick }: PlayerCardContentProps) 
               <CachedImage
                 src={UrlConstructor.constructImageUrl(user.avatar)}
                 alt={`${user.firstName} ${user.lastName}`}
-                className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
+                className={`w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
               />
             ) : (
-              <div className="w-32 h-32 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl">
+              <div className={`w-32 h-32 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>
                 {initials}
               </div>
             )}
