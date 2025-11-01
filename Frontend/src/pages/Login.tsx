@@ -25,7 +25,8 @@ export const Login = () => {
     setError('');
 
     try {
-      const response = await authApi.loginPhone({ phone, password });
+      const language = localStorage.getItem('language') || 'en';
+      const response = await authApi.loginPhone({ phone, password, language });
       setAuth(response.data.user, response.data.token);
       
       if (!response.data.user.currentCity) {
@@ -52,7 +53,8 @@ export const Login = () => {
 
     try {
       const telegramId = localStorage.getItem('telegramId') || '';
-      const response = await authApi.verifyTelegramOtp({ code: otp, telegramId });
+      const language = localStorage.getItem('language') || 'en';
+      const response = await authApi.verifyTelegramOtp({ code: otp, telegramId, language });
       setAuth(response.data.user, response.data.token);
       localStorage.removeItem('telegramId');
       

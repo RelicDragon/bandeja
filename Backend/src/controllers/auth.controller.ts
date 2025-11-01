@@ -77,9 +77,9 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
 });
 
 export const loginWithPhone = asyncHandler(async (req: Request, res: Response) => {
-  const { phone, password } = req.body;
+  const { phone, password, language } = req.body;
 
-  const user = await prisma.user.findUnique({
+  let user = await prisma.user.findUnique({
     where: { phone },
     select: {
       ...USER_SELECT_FIELDS,
@@ -97,6 +97,7 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
       createdAt: true,
       passwordHash: true,
       isActive: true,
+      language: true,
       currentCity: {
         select: {
           id: true,
@@ -119,6 +120,14 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
 
   if (!user.isActive) {
     throw new ApiError(403, 'Account is inactive');
+  }
+
+  if (language) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { language },
+    });
+    user.language = language;
   }
 
   const token = generateToken({ userId: user.id, phone: user.phone! });
@@ -203,9 +212,9 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
 });
 
 export const loginWithTelegram = asyncHandler(async (req: Request, res: Response) => {
-  const { telegramId } = req.body;
+  const { telegramId, language } = req.body;
 
-  const user = await prisma.user.findUnique({
+  let user = await prisma.user.findUnique({
     where: { telegramId },
     select: {
       ...USER_SELECT_FIELDS,
@@ -222,6 +231,7 @@ export const loginWithTelegram = asyncHandler(async (req: Request, res: Response
       preferredCourtSideRight: true,
       createdAt: true,
       isActive: true,
+      language: true,
       currentCity: {
         select: {
           id: true,
@@ -238,6 +248,14 @@ export const loginWithTelegram = asyncHandler(async (req: Request, res: Response
 
   if (!user.isActive) {
     throw new ApiError(403, 'Account is inactive');
+  }
+
+  if (language) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { language },
+    });
+    user.language = language;
   }
 
   const token = generateToken({ userId: user.id, telegramId: user.telegramId! });

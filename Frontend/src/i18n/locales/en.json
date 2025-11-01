@@ -294,6 +294,8 @@
     "telegramUsername": "Telegram Username",
     "linkTelegram": "Link Telegram",
     "telegramNotLinked": "Not linked",
+    "sendTelegramMessages": "Receive notifications from chats in Telegram",
+    "sendTelegramMessagesDescription": "Get notified in Telegram when someone sends a message in your game chats or bug reports",
     "gender": "Gender",
     "male": "Male",
     "female": "Female",

@@ -19,7 +19,7 @@ export const authApi = {
     return response.data;
   },
 
-  loginPhone: async (data: { phone: string; password: string }) => {
+  loginPhone: async (data: { phone: string; password: string; language?: string }) => {
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/phone', data);
     return response.data;
   },
@@ -41,12 +41,12 @@ export const authApi = {
     return response.data;
   },
 
-  loginTelegram: async (data: { telegramId: string }) => {
+  loginTelegram: async (data: { telegramId: string; language?: string }) => {
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/telegram', data);
     return response.data;
   },
 
-  verifyTelegramOtp: async (data: { code: string; telegramId?: string }) => {
+  verifyTelegramOtp: async (data: { code: string; telegramId?: string; language?: string }) => {
     const response = await api.post<ApiResponse<LoginResponse>>('/telegram/verify-otp', data);
     return response.data;
   },

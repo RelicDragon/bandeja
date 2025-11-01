@@ -2,6 +2,7 @@ import prisma from '../../config/database';
 import { MessageState, ChatType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import telegramNotificationService from '../telegramNotification.service';
 
 export class BugMessageService {
   static async validateBugAccess(bugId: string, userId: string) {
@@ -142,7 +143,7 @@ export class BugMessageService {
 
     const thumbnailUrls = this.generateThumbnailUrls(mediaUrls);
 
-    return await prisma.bugMessage.create({
+    const message = await prisma.bugMessage.create({
       data: {
         bugId,
         senderId,
@@ -155,6 +156,14 @@ export class BugMessageService {
       },
       include: this.getMessageInclude()
     });
+
+    if (bug && message.sender) {
+      telegramNotificationService.sendBugChatNotification(message, bug, message.sender).catch(error => {
+        console.error('Failed to send Telegram notification:', error);
+      });
+    }
+
+    return message;
   }
 
   static async getMessages(bugId: string, userId: string, options: {

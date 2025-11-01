@@ -296,6 +296,8 @@
     "telegramUsername": "Имя пользователя Telegram",
     "linkTelegram": "Привязать Telegram",
     "telegramNotLinked": "Не привязан",
+    "sendTelegramMessages": "Получать уведомления чатов в Telegram",
+    "sendTelegramMessagesDescription": "Получайте уведомления в Telegram когда кто-то отправляет сообщение в ваших игровых чатах или отчётах об ошибках",
     "gender": "Пол",
     "male": "Мужской",
     "female": "Женский",

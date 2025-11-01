@@ -27,6 +27,8 @@ interface ProfileContentProps {
   setPreferredCourtSideLeft: (value: boolean) => void;
   preferredCourtSideRight: boolean;
   setPreferredCourtSideRight: (value: boolean) => void;
+  sendTelegramMessages: boolean;
+  setSendTelegramMessages: (value: boolean) => void;
   isEditMode?: boolean;
 }
 
@@ -47,6 +49,8 @@ export const ProfileContent = ({
   setPreferredCourtSideLeft,
   preferredCourtSideRight,
   setPreferredCourtSideRight,
+  sendTelegramMessages,
+  setSendTelegramMessages,
   isEditMode = false
 }: ProfileContentProps) => {
   const { t, i18n } = useTranslation();
@@ -260,11 +264,39 @@ export const ProfileContent = ({
           </h2>
           <div className="space-y-4">
             {user?.telegramUsername ? (
-              <Input
-                label={t('profile.telegramUsername')}
-                value={`@${user.telegramUsername}`}
-                disabled
-              />
+              <>
+                <Input
+                  label={t('profile.telegramUsername')}
+                  value={`@${user.telegramUsername}`}
+                  disabled
+                />
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0 pr-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t('profile.sendTelegramMessages')}
+                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {t('profile.sendTelegramMessagesDescription')}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => !isEditMode || setSendTelegramMessages(!sendTelegramMessages)}
+                      disabled={!isEditMode}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+                        sendTelegramMessages ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
+                      } ${!isEditMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          sendTelegramMessages ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center py-4">
                 <p className="text-gray-600 dark:text-gray-400 mb-4">

@@ -37,6 +37,7 @@ model User {
   isAdmin                 Boolean              @default(false)
   isTrainer               Boolean              @default(false)
   gender                  Gender               @default(PREFER_NOT_TO_SAY)
+  sendTelegramMessages    Boolean              @default(true)
   chatMessages            ChatMessage[]
   bugMessages             BugMessage[]
   participateInGames      GameParticipant[]    @relation("ParticipantUser")

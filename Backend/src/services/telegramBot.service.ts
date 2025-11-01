@@ -7,6 +7,10 @@ class TelegramBotService {
   private bot: TelegramBot | null = null;
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
+  getBot(): TelegramBot | null {
+    return this.bot;
+  }
+
   initialize() {
     if (!config.telegramBotToken) {
       console.warn('⚠️  Telegram bot token not configured');

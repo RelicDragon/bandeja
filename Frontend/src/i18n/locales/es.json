@@ -298,6 +298,8 @@
     "telegramUsername": "Usuario de Telegram",
     "linkTelegram": "Vincular Telegram",
     "telegramNotLinked": "No vinculado",
+    "sendTelegramMessages": "Recibir notificaciones de chats en Telegram",
+    "sendTelegramMessagesDescription": "Recibe notificaciones en Telegram cuando alguien envía un mensaje en tus chats de juego o informes de errores",
     "gender": "Género",
     "male": "Masculino",
     "female": "Femenino",

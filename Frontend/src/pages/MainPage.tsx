@@ -29,6 +29,7 @@ export const MainPage = () => {
   const [preferredHandRight, setPreferredHandRight] = useState(user?.preferredHandRight || false);
   const [preferredCourtSideLeft, setPreferredCourtSideLeft] = useState(user?.preferredCourtSideLeft || false);
   const [preferredCourtSideRight, setPreferredCourtSideRight] = useState(user?.preferredCourtSideRight || false);
+  const [sendTelegramMessages, setSendTelegramMessages] = useState(user?.sendTelegramMessages ?? true);
   
   // Snapshot for canceling
   const [profileSnapshot, setProfileSnapshot] = useState<any>(null);
@@ -54,6 +55,7 @@ export const MainPage = () => {
         setPreferredHandRight(profileSnapshot.preferredHandRight);
         setPreferredCourtSideLeft(profileSnapshot.preferredCourtSideLeft);
         setPreferredCourtSideRight(profileSnapshot.preferredCourtSideRight);
+        setSendTelegramMessages(profileSnapshot.sendTelegramMessages);
       }
       setProfileEditMode(false);
       setProfileSnapshot(null);
@@ -68,6 +70,7 @@ export const MainPage = () => {
         preferredHandRight,
         preferredCourtSideLeft,
         preferredCourtSideRight,
+        sendTelegramMessages,
       });
       setProfileEditMode(true);
     }
@@ -91,6 +94,7 @@ export const MainPage = () => {
         preferredHandRight,
         preferredCourtSideLeft,
         preferredCourtSideRight,
+        sendTelegramMessages,
       });
       updateUser(response.data);
       
@@ -104,6 +108,7 @@ export const MainPage = () => {
       setPreferredHandRight(savedUser.preferredHandRight || false);
       setPreferredCourtSideLeft(savedUser.preferredCourtSideLeft || false);
       setPreferredCourtSideRight(savedUser.preferredCourtSideRight || false);
+      setSendTelegramMessages(savedUser.sendTelegramMessages ?? true);
       
       toast.success(t('profile.saved'));
       setProfileSnapshot(null);
@@ -145,6 +150,7 @@ export const MainPage = () => {
       setPreferredHandRight(user.preferredHandRight || false);
       setPreferredCourtSideLeft(user.preferredCourtSideLeft || false);
       setPreferredCourtSideRight(user.preferredCourtSideRight || false);
+      setSendTelegramMessages(user.sendTelegramMessages ?? true);
     }
   }, [user, profileEditMode, profileSnapshot]);
   useEffect(() => {
@@ -202,6 +208,8 @@ export const MainPage = () => {
             setPreferredCourtSideLeft={setPreferredCourtSideLeft}
             preferredCourtSideRight={preferredCourtSideRight}
             setPreferredCourtSideRight={setPreferredCourtSideRight}
+            sendTelegramMessages={sendTelegramMessages}
+            setSendTelegramMessages={setSendTelegramMessages}
             isEditMode={profileEditMode}
           />
         </div>

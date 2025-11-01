@@ -4,6 +4,7 @@ import prisma from './config/database';
 import { initializeLogManager } from './controllers/logs.controller';
 import SocketService from './services/socket.service';
 import telegramBotService from './services/telegramBot.service';
+import telegramNotificationService from './services/telegramNotification.service';
 import { createServer } from 'http';
 
 const startServer = async () => {
@@ -15,6 +16,7 @@ const startServer = async () => {
     console.log('✅ Database connected successfully');
 
     telegramBotService.initialize();
+    telegramNotificationService.initialize(telegramBotService.getBot());
 
     // Create HTTP server
     const httpServer = createServer(app);

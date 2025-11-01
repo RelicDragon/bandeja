@@ -8,7 +8,7 @@ import telegramBotService from '../services/telegramBot.service';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response) => {
-  const { code } = req.body;
+  const { code, language } = req.body;
 
   if (!code) {
     throw new ApiError(400, 'Code is required');
@@ -39,6 +39,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
       preferredCourtSideRight: true,
       createdAt: true,
       isActive: true,
+      language: true,
       currentCity: {
         select: {
           id: true,
@@ -66,6 +67,9 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
     if (otp.lastName && user.lastName !== otp.lastName) {
       updateData.lastName = otp.lastName;
     }
+    if (language) {
+      updateData.language = language;
+    }
 
     if (Object.keys(updateData).length > 0) {
       user = await prisma.user.update({
@@ -86,6 +90,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
           preferredCourtSideRight: true,
           createdAt: true,
           isActive: true,
+          language: true,
           currentCity: {
             select: {
               id: true,
@@ -105,6 +110,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
         telegramUsername: otp.username,
         firstName: otp.firstName,
         lastName: otp.lastName,
+        language,
         authProvider: AuthProvider.TELEGRAM,
       },
       select: {

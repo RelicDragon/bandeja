@@ -2,6 +2,7 @@ import prisma from '../../config/database';
 import { MessageState, ChatType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import telegramNotificationService from '../telegramNotification.service';
 
 export class MessageService {
   static async validateGameAccess(gameId: string, userId: string) {
@@ -146,7 +147,7 @@ export class MessageService {
 
     const thumbnailUrls = this.generateThumbnailUrls(mediaUrls);
 
-    return await prisma.chatMessage.create({
+    const message = await prisma.chatMessage.create({
       data: {
         gameId,
         senderId,
@@ -159,6 +160,26 @@ export class MessageService {
       },
       include: this.getMessageInclude()
     });
+
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: {
+        court: {
+          include: {
+            club: true
+          }
+        },
+        club: true
+      }
+    });
+
+    if (game && message.sender) {
+      telegramNotificationService.sendGameChatNotification(message, game, message.sender).catch(error => {
+        console.error('Failed to send Telegram notification:', error);
+      });
+    }
+
+    return message;
   }
 
   static async getMessages(gameId: string, userId: string, options: {

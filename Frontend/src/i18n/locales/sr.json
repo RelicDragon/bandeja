@@ -299,6 +299,8 @@
     "telegramUsername": "Корисничко име на Телеграму",
     "linkTelegram": "Повежи Телеграм",
     "telegramNotLinked": "Није повезан",
+    "sendTelegramMessages": "Примај обавештења ћаскања у Телеграму",
+    "sendTelegramMessagesDescription": "Добијај обавештења у Телеграму када неко пошаље поруку у твојим игарским ћаскањима или извештајима о грешкама",
     "gender": "Пол",
     "male": "Мушки",
     "female": "Женски",
