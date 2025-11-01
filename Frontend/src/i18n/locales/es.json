@@ -420,7 +420,9 @@
     "upload": "Subir",
     "processing": "Procesando...",
     "h": "h",
-    "m": "m"
+    "m": "m",
+    "showMore": "Mostrar más",
+    "showLess": "Mostrar menos"
   },
   "errors": {
     "generic": "Algo salió mal",

@@ -413,7 +413,9 @@
     "upload": "Upload",
     "processing": "Processing...",
     "h": "h",
-    "m": "m"
+    "m": "m",
+    "showMore": "Show More",
+    "showLess": "Show Less"
   },
   "errors": {
     "generic": "Something went wrong",
