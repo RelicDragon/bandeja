@@ -12,7 +12,7 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
   const { receiverId, gameId, message, expiresAt } = req.body;
 
   if (!gameId) {
-    throw new ApiError(400, 'Must specify gameId');
+    throw new ApiError(400, 'errors.invites.mustSpecifyGameId');
   }
 
   const receiver = await prisma.user.findUnique({
@@ -20,7 +20,7 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
   });
 
   if (!receiver) {
-    throw new ApiError(404, 'Receiver not found');
+    throw new ApiError(404, 'errors.invites.receiverNotFound');
   }
 
   if (gameId) {
@@ -32,7 +32,7 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
     });
 
     if (!participant) {
-      throw new ApiError(403, 'Only participants can send invites');
+      throw new ApiError(403, 'errors.invites.onlyParticipantsCanSend');
     }
 
     const existingInvite = await prisma.invite.findFirst({
@@ -44,7 +44,7 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
     });
 
     if (existingInvite) {
-      throw new ApiError(400, 'Invite already sent to this user');
+      throw new ApiError(400, 'errors.invites.alreadySent');
     }
   }
 
@@ -280,15 +280,15 @@ export const acceptInvite = asyncHandler(async (req: AuthRequest, res: Response)
   });
 
   if (!invite) {
-    throw new ApiError(404, 'Invite not found');
+    throw new ApiError(404, 'errors.invites.notFound');
   }
 
   if (invite.receiverId !== req.userId) {
-    throw new ApiError(403, 'Not authorized to accept this invite');
+    throw new ApiError(403, 'errors.invites.notAuthorizedToAccept');
   }
 
   if (invite.status !== InviteStatus.PENDING) {
-    throw new ApiError(400, 'Invite has already been processed');
+    throw new ApiError(400, 'errors.invites.alreadyProcessed');
   }
 
   if (invite.expiresAt && new Date() > invite.expiresAt) {
@@ -296,12 +296,12 @@ export const acceptInvite = asyncHandler(async (req: AuthRequest, res: Response)
       where: { id },
       data: { status: InviteStatus.DECLINED },
     });
-    throw new ApiError(400, 'Invite has expired');
+    throw new ApiError(400, 'errors.invites.expired');
   }
 
   if (invite.gameId && invite.game) {
     if (invite.game.participants.length >= invite.game.maxParticipants) {
-      throw new ApiError(400, 'Game is full');
+      throw new ApiError(400, 'errors.invites.gameFull');
     }
 
     const existingParticipant = invite.game.participants.find(
@@ -362,15 +362,15 @@ export const declineInvite = asyncHandler(async (req: AuthRequest, res: Response
   });
 
   if (!invite) {
-    throw new ApiError(404, 'Invite not found');
+    throw new ApiError(404, 'errors.invites.notFound');
   }
 
   if (invite.receiverId !== req.userId) {
-    throw new ApiError(403, 'Not authorized to decline this invite');
+    throw new ApiError(403, 'errors.invites.notAuthorizedToDecline');
   }
 
   if (invite.status !== InviteStatus.PENDING) {
-    throw new ApiError(400, 'Invite has already been processed');
+    throw new ApiError(400, 'errors.invites.alreadyProcessed');
   }
 
   await prisma.invite.update({
@@ -436,12 +436,12 @@ export const getGameInvites = asyncHandler(async (req: AuthRequest, res: Respons
   });
 
   if (!game) {
-    throw new ApiError(404, 'Game not found');
+    throw new ApiError(404, 'errors.invites.gameNotFound');
   }
 
   const isParticipant = game.participants.some((p: any) => p.userId === req.userId);
   if (!isParticipant) {
-    throw new ApiError(403, 'Only participants can view game invites');
+    throw new ApiError(403, 'errors.invites.onlyParticipantsCanView');
   }
 
   const invites = await prisma.invite.findMany({
@@ -474,15 +474,15 @@ export const cancelInvite = asyncHandler(async (req: AuthRequest, res: Response)
   });
 
   if (!invite) {
-    throw new ApiError(404, 'Invite not found');
+    throw new ApiError(404, 'errors.invites.notFound');
   }
 
   if (invite.senderId !== req.userId) {
-    throw new ApiError(403, 'Only the sender can cancel this invite');
+    throw new ApiError(403, 'errors.invites.onlySenderCanCancel');
   }
 
   if (invite.status !== InviteStatus.PENDING) {
-    throw new ApiError(400, 'Can only cancel pending invites');
+    throw new ApiError(400, 'errors.invites.canOnlyCancelPending');
   }
 
   await prisma.invite.delete({

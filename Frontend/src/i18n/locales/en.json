@@ -423,7 +423,23 @@
     "unauthorized": "You are not authorized. Please login",
     "notFound": "Not found",
     "serverError": "Server error. Please try again later",
-    "accessDenied": "Access denied. You don't have permission to view this content."
+    "accessDenied": "Access denied. You don't have permission to view this content.",
+    "invites": {
+      "mustSpecifyGameId": "Must specify gameId",
+      "receiverNotFound": "Receiver not found",
+      "onlyParticipantsCanSend": "Only participants can send invites",
+      "alreadySent": "Invite already sent to this user",
+      "notFound": "Invite not found",
+      "notAuthorizedToAccept": "Not authorized to accept this invite",
+      "notAuthorizedToDecline": "Not authorized to decline this invite",
+      "alreadyProcessed": "Invite has already been processed",
+      "expired": "Invite has expired",
+      "gameFull": "Game is full",
+      "gameNotFound": "Game not found",
+      "onlyParticipantsCanView": "Only participants can view game invites",
+      "onlySenderCanCancel": "Only the sender can cancel this invite",
+      "canOnlyCancelPending": "Can only cancel pending invites"
+    }
   },
   "media": {
     "resetView": "Reset View"

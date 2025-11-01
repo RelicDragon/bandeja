@@ -430,7 +430,23 @@
     "unauthorized": "No estás autorizado. Por favor inicia sesión",
     "notFound": "No encontrado",
     "serverError": "Error del servidor. Inténtalo más tarde",
-    "accessDenied": "Acceso denegado. No tienes permisos para ver este contenido."
+    "accessDenied": "Acceso denegado. No tienes permisos para ver este contenido.",
+    "invites": {
+      "mustSpecifyGameId": "Debe especificar gameId",
+      "receiverNotFound": "Receptor no encontrado",
+      "onlyParticipantsCanSend": "Solo los participantes pueden enviar invitaciones",
+      "alreadySent": "Invitación ya enviada a este usuario",
+      "notFound": "Invitación no encontrada",
+      "notAuthorizedToAccept": "No autorizado para aceptar esta invitación",
+      "notAuthorizedToDecline": "No autorizado para rechazar esta invitación",
+      "alreadyProcessed": "La invitación ya ha sido procesada",
+      "expired": "La invitación ha expirado",
+      "gameFull": "El juego está lleno",
+      "gameNotFound": "Juego no encontrado",
+      "onlyParticipantsCanView": "Solo los participantes pueden ver las invitaciones del juego",
+      "onlySenderCanCancel": "Solo el remitente puede cancelar esta invitación",
+      "canOnlyCancelPending": "Solo se pueden cancelar invitaciones pendientes"
+    }
   },
   "media": {
     "resetView": "Restablecer Vista"

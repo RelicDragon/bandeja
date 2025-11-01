@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
 import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection } from '@/components/home';
@@ -15,6 +16,7 @@ import { usePastGames } from '@/hooks/usePastGames';
 export const HomeContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
 
   const [loading, setLoading] = useState(true);
@@ -61,8 +63,9 @@ export const HomeContent = () => {
       setPendingInvites(Math.max(0, currentCount - 1));
       // Defer fetchData to next event loop tick to ensure backend processing is complete
       Promise.resolve().then(() => fetchData(false, true));
-    } catch (error) {
-      console.error('Failed to accept invite:', error);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
   };
 
@@ -76,8 +79,9 @@ export const HomeContent = () => {
       setPendingInvites(Math.max(0, currentCount - 1));
       // Defer fetchData to next event loop tick to ensure backend processing is complete
       Promise.resolve().then(() => fetchData(false, true));
-    } catch (error) {
-      console.error('Failed to decline invite:', error);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
   };
 
@@ -87,7 +91,8 @@ export const HomeContent = () => {
       const { gamesApi } = await import('@/api');
       await gamesApi.join(gameId);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to join game');
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
   };
 

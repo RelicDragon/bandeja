@@ -432,7 +432,23 @@
     "unauthorized": "Нисте овлашћени. Молимо пријавите се",
     "notFound": "Није пронађено",
     "serverError": "Грешка сервера. Покушајте касније",
-    "accessDenied": "Приступ одбијен. Немате дозволу да видите овај садржај."
+    "accessDenied": "Приступ одбијен. Немате дозволу да видите овај садржај.",
+    "invites": {
+      "mustSpecifyGameId": "Мора се навести gameId",
+      "receiverNotFound": "Прималац није пронађен",
+      "onlyParticipantsCanSend": "Само учесници могу слати позиве",
+      "alreadySent": "Позив је већ послат овом кориснику",
+      "notFound": "Позив није пронађен",
+      "notAuthorizedToAccept": "Нисте овлашћени да прихватите овај позив",
+      "notAuthorizedToDecline": "Нисте овлашћени да одбаците овај позив",
+      "alreadyProcessed": "Позив је већ обрађен",
+      "expired": "Позив је истекао",
+      "gameFull": "Игра је попуњена",
+      "gameNotFound": "Игра није пронађена",
+      "onlyParticipantsCanView": "Само учесници могу прегледати позиве игре",
+      "onlySenderCanCancel": "Само пошиљалац може отказати овај позив",
+      "canOnlyCancelPending": "Може се отказати само позив на чекању"
+    }
   },
   "media": {
     "resetView": "Ресетуј приказ"

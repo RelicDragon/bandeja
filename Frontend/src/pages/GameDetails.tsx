@@ -153,7 +153,8 @@ export const GameDetailsContent = () => {
       const response = await gamesApi.getById(id);
       setGame(response.data);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || t('errors.generic'));
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
   };
 
@@ -165,7 +166,8 @@ export const GameDetailsContent = () => {
       const response = await gamesApi.getById(id);
       setGame(response.data);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || t('errors.generic'));
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
   };
 
@@ -180,7 +182,8 @@ export const GameDetailsContent = () => {
         setGameInvites(gameInvitesResponse.data);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || t('errors.generic'));
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
   };
 
@@ -189,7 +192,8 @@ export const GameDetailsContent = () => {
       await invitesApi.decline(inviteId);
       setMyInvites(myInvites.filter((inv) => inv.id !== inviteId));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || t('errors.generic'));
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
   };
 
@@ -198,7 +202,8 @@ export const GameDetailsContent = () => {
       await invitesApi.cancel(inviteId);
       setGameInvites(gameInvites.filter((inv) => inv.id !== inviteId));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || t('errors.generic'));
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
   };
 
@@ -280,7 +285,8 @@ export const GameDetailsContent = () => {
         setGame({ ...game, isClubFavorite: true });
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || t('errors.generic'));
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
   };
 
@@ -303,7 +309,8 @@ export const GameDetailsContent = () => {
       
       toast.success(game?.entityType === 'BAR' ? t('gameDetails.hallUpdated') : t('gameDetails.courtUpdated'));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || t('errors.generic'));
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
   };
 
@@ -364,7 +371,8 @@ export const GameDetailsContent = () => {
       }, 400);
       toast.success(t('gameDetails.settingsUpdated'));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || t('errors.generic'));
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
   };
 
