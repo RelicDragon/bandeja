@@ -7,6 +7,7 @@ import { usersApi, InvitablePlayer } from '@/api/users';
 import { invitesApi } from '@/api';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
+import { useFavoritesStore } from '@/store/favoritesStore';
 
 interface PlayerListModalProps {
   gameId?: string;
@@ -28,6 +29,7 @@ export const PlayerListModal = ({
   filterPlayerIds = []
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
+  const isFavorite = useFavoritesStore((state) => state.isFavorite);
   const [players, setPlayers] = useState<InvitablePlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviting, setInviting] = useState<string | null>(null);
@@ -73,8 +75,19 @@ export const PlayerListModal = ({
       });
     }
 
+    // Sort: favorites first, then by interaction count
+    filtered.sort((a, b) => {
+      const aIsFavorite = isFavorite(a.id);
+      const bIsFavorite = isFavorite(b.id);
+      
+      if (aIsFavorite && !bIsFavorite) return -1;
+      if (!aIsFavorite && bIsFavorite) return 1;
+      
+      return b.interactionCount - a.interactionCount;
+    });
+
     return filtered.slice(0, 50);
-  }, [players, searchQuery, filterPlayerIds]);
+  }, [players, searchQuery, filterPlayerIds, isFavorite]);
 
   const handlePlayerClick = (playerId: string) => {
     if (multiSelect) {
