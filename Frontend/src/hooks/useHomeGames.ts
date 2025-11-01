@@ -125,7 +125,7 @@ export const useHomeGames = (
     }
   }, [user?.currentCity?.id, fetchData]);
 
-  // Listen for new invites via Socket.IO
+  // Listen for new invites and deleted invites via Socket.IO
   useEffect(() => {
     const handleNewInvite = (invite: Invite) => {
       setInvites(prevInvites => {
@@ -138,10 +138,16 @@ export const useHomeGames = (
       });
     };
 
+    const handleInviteDeleted = (data: { inviteId: string; gameId?: string }) => {
+      setInvites(prevInvites => prevInvites.filter(invite => invite.id !== data.inviteId));
+    };
+
     socketService.on('new-invite', handleNewInvite);
+    socketService.on('invite-deleted', handleInviteDeleted);
 
     return () => {
       socketService.off('new-invite', handleNewInvite);
+      socketService.off('invite-deleted', handleInviteDeleted);
     };
   }, []);
 

@@ -20,6 +20,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { Game, Invite, Court, Club } from '@/types';
 import { canUserEditResults } from '@/utils/gameResults';
+import { socketService } from '@/services/socketService';
 
 export const GameDetailsContent = () => {
   const { id } = useParams<{ id: string }>();
@@ -80,6 +81,21 @@ export const GameDetailsContent = () => {
 
     fetchGame();
   }, [id, user?.id]);
+
+  useEffect(() => {
+    const handleInviteDeleted = (data: { inviteId: string; gameId?: string }) => {
+      if (data.gameId === id || !data.gameId) {
+        setMyInvites(prev => prev.filter(inv => inv.id !== data.inviteId));
+        setGameInvites(prev => prev.filter(inv => inv.id !== data.inviteId));
+      }
+    };
+
+    socketService.on('invite-deleted', handleInviteDeleted);
+
+    return () => {
+      socketService.off('invite-deleted', handleInviteDeleted);
+    };
+  }, [id]);
 
   useEffect(() => {
     const fetchCourts = async () => {

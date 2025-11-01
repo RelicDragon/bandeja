@@ -2,6 +2,7 @@ import prisma from '../config/database';
 import { EntityType } from '@prisma/client';
 import { ApiError } from '../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../utils/constants';
+import { deleteInvitesForStartedGame } from '../controllers/invite.controller';
 
 export class GameService {
   static async calculateGameReadiness(gameId: string) {
@@ -327,6 +328,9 @@ export class GameService {
 
     // Calculate and update readiness status
     await this.updateGameReadiness(id);
+
+    // Delete invites if game has started
+    await deleteInvitesForStartedGame(id);
 
     // Get the updated game with readiness fields
     const updatedGame = await prisma.game.findUnique({

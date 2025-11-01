@@ -216,9 +216,38 @@ export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response)
     orderBy: { createdAt: 'desc' },
   });
 
+  const now = new Date();
+  const invitesToDelete: string[] = [];
+
+  invites.forEach(invite => {
+    if (invite.game && invite.status === InviteStatus.PENDING) {
+      const isGameStarted = new Date(invite.game.startTime) <= now && new Date(invite.game.endTime) > now;
+      if (isGameStarted) {
+        invitesToDelete.push(invite.id);
+      }
+    }
+  });
+
+  if (invitesToDelete.length > 0) {
+    await prisma.invite.deleteMany({
+      where: {
+        id: { in: invitesToDelete },
+      },
+    });
+
+    if ((global as any).socketService) {
+      const invitesToNotify = invites.filter(inv => invitesToDelete.includes(inv.id));
+      invitesToNotify.forEach(invite => {
+        (global as any).socketService.emitInviteDeleted(invite.receiverId, invite.id, invite.gameId || undefined);
+      });
+    }
+  }
+
+  const filteredInvites = invites.filter(invite => !invitesToDelete.includes(invite.id));
+
   res.json({
     success: true,
-    data: invites,
+    data: filteredInvites,
   });
 });
 
@@ -465,4 +494,58 @@ export const cancelInvite = asyncHandler(async (req: AuthRequest, res: Response)
     message: 'Invite cancelled successfully',
   });
 });
+
+export const deleteInvitesForStartedGame = async (gameId: string) => {
+  const now = new Date();
+  
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    include: {
+      invites: {
+        where: {
+          status: InviteStatus.PENDING,
+        },
+        select: {
+          id: true,
+          receiverId: true,
+          gameId: true,
+        },
+      },
+    },
+  });
+
+  if (!game) {
+    return;
+  }
+
+  const isGameStarted = new Date(game.startTime) <= now && new Date(game.endTime) > now;
+
+  if (!isGameStarted) {
+    return;
+  }
+
+  if (game.invites.length === 0) {
+    return;
+  }
+
+  const inviteIds = game.invites.map(invite => invite.id);
+  const receiverIds = Array.from(new Set(game.invites.map(invite => invite.receiverId)));
+
+  await prisma.invite.deleteMany({
+    where: {
+      id: { in: inviteIds },
+      status: InviteStatus.PENDING,
+    },
+  });
+
+  if ((global as any).socketService) {
+    receiverIds.forEach(receiverId => {
+      game.invites
+        .filter(invite => invite.receiverId === receiverId)
+        .forEach(invite => {
+          (global as any).socketService.emitInviteDeleted(receiverId, invite.id, invite.gameId || undefined);
+        });
+    });
+  }
+};
 

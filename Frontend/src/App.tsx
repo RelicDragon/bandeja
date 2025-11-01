@@ -39,10 +39,19 @@ function App() {
         triggerNewInviteAnimation();
       };
 
+      const handleInviteDeleted = () => {
+        const { setPendingInvites } = useHeaderStore.getState();
+        // Decrement the pending invites count (minimum 0)
+        const currentCount = useHeaderStore.getState().pendingInvites;
+        setPendingInvites(Math.max(0, currentCount - 1));
+      };
+
       socketService.on('new-invite', handleNewInvite);
+      socketService.on('invite-deleted', handleInviteDeleted);
 
       return () => {
         socketService.off('new-invite', handleNewInvite);
+        socketService.off('invite-deleted', handleInviteDeleted);
         headerService.stopPolling();
       };
     } else {
