@@ -128,6 +128,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
         preferredCourtSideRight: true,
         createdAt: true,
         isActive: true,
+        language: true,
         currentCity: {
           select: {
             id: true,

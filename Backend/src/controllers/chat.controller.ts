@@ -29,7 +29,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const message = await MessageService.createMessage({
+  const message = await MessageService.createMessageWithEvent({
     gameId,
     senderId,
     content,
@@ -37,11 +37,6 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     replyToId,
     chatType
   });
-
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    socketService.emitNewMessage(gameId, message);
-  }
 
   res.status(201).json({
     success: true,

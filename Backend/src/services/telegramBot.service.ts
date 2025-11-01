@@ -1,11 +1,24 @@
 import TelegramBot from 'node-telegram-bot-api';
 import prisma from '../config/database';
 import { config } from '../config/env';
-import type { Message } from 'node-telegram-bot-api';
+import type { Message, CallbackQuery } from 'node-telegram-bot-api';
+import telegramNotificationService from './telegramNotification.service';
+import { MessageService } from './chat/message.service';
+import { ChatType } from '@prisma/client';
+import { t } from '../utils/translations';
+
+interface PendingReply {
+  messageId: string;
+  gameId: string;
+  userId: string;
+  chatType: ChatType;
+  lang: string;
+}
 
 class TelegramBotService {
   private bot: TelegramBot | null = null;
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
+  private pendingReplies: Map<string, PendingReply> = new Map();
 
   getBot(): TelegramBot | null {
     return this.bot;
@@ -81,12 +94,163 @@ class TelegramBotService {
     this.bot.onText(/\/auth/, handleAuthCommand);
     this.bot.onText(/\/start/, handleAuthCommand);
 
-    this.bot.on('message', (msg: Message) => {
+    this.bot.on('message', async (msg: Message) => {
+      if (!msg.from) return;
+      
+      const telegramId = msg.from.id.toString();
+      
+      if (this.pendingReplies.has(telegramId)) {
+        const pendingReply = this.pendingReplies.get(telegramId)!;
+        
+        if (msg.text && msg.text.startsWith('/')) {
+          this.pendingReplies.delete(telegramId);
+          await this.bot?.sendMessage(
+            msg.chat.id,
+            t('telegram.replyCancelled', pendingReply.lang)
+          );
+          return;
+        }
+        
+        if (!msg.text) {
+          await this.bot?.sendMessage(
+            msg.chat.id,
+            t('telegram.replyPrompt', pendingReply.lang)
+          );
+          return;
+        }
+        
+        const replyText = msg.text.trim();
+        if (replyText.length === 0) {
+          await this.bot?.sendMessage(
+            msg.chat.id,
+            t('telegram.replyPrompt', pendingReply.lang)
+          );
+          return;
+        }
+        
+        try {
+          await MessageService.createMessageWithEvent({
+            gameId: pendingReply.gameId,
+            senderId: pendingReply.userId,
+            content: replyText,
+            mediaUrls: [],
+            replyToId: pendingReply.messageId,
+            chatType: pendingReply.chatType
+          });
+          
+          this.pendingReplies.delete(telegramId);
+          await this.bot?.sendMessage(
+            msg.chat.id,
+            t('telegram.replySent', pendingReply.lang)
+          );
+        } catch (error) {
+          console.error('Error sending reply:', error);
+          this.pendingReplies.delete(telegramId);
+          await this.bot?.sendMessage(
+            msg.chat.id,
+            '❌ Failed to send reply. Please try again.'
+          );
+        }
+        return;
+      }
+      
       if (!msg.text?.startsWith('/')) {
         this.bot?.sendMessage(
           msg.chat.id,
           '👋 Welcome! Send /auth to get your authentication code.'
         );
+      }
+    });
+
+    this.bot.on('callback_query', async (query: CallbackQuery) => {
+      if (!query.data || !query.from) return;
+
+      try {
+        if (query.data.startsWith('sg:')) {
+          const parts = query.data.split(':');
+          if (parts.length === 3) {
+            const gameId = parts[1];
+            const userId = parts[2];
+            const telegramId = query.from.id.toString();
+
+            await this.bot?.answerCallbackQuery(query.id, {
+              text: 'Loading game...',
+              show_alert: false
+            });
+
+            const user = await prisma.user.findUnique({
+              where: { id: userId },
+              select: {
+                telegramId: true,
+                language: true,
+              }
+            });
+
+            if (user && user.telegramId && user.telegramId === telegramId) {
+              const lang = user.language || 'en';
+              await telegramNotificationService.sendGameCard(gameId, telegramId, lang);
+            } else {
+              await this.bot?.answerCallbackQuery(query.id, {
+                text: 'Unauthorized',
+                show_alert: true
+              });
+            }
+          }
+        } else if (query.data.startsWith('rm:')) {
+          const parts = query.data.split(':');
+          if (parts.length === 4) {
+            const messageId = parts[1];
+            const gameId = parts[2];
+            const chatTypeChar = parts[3];
+            const telegramId = query.from.id.toString();
+
+            const chatTypeMap: Record<string, ChatType> = {
+              'P': 'PUBLIC',
+              'V': 'PRIVATE',
+              'A': 'ADMINS'
+            };
+            const chatType = chatTypeMap[chatTypeChar] || 'PUBLIC';
+
+            await this.bot?.answerCallbackQuery(query.id);
+
+            const user = await prisma.user.findUnique({
+              where: { telegramId },
+              select: {
+                id: true,
+                language: true,
+              }
+            });
+
+            if (user) {
+              const lang = user.language || 'en';
+              this.pendingReplies.set(telegramId, {
+                messageId,
+                gameId,
+                userId: user.id,
+                chatType,
+                lang
+              });
+              
+              if (query.message?.chat.id) {
+                await this.bot?.sendMessage(
+                  query.message.chat.id,
+                  t('telegram.replyPrompt', lang)
+                );
+              }
+            } else {
+              await this.bot?.answerCallbackQuery(query.id, {
+                text: 'Unauthorized',
+                show_alert: true
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error handling callback query:', error);
+        await this.bot?.answerCallbackQuery(query.id, {
+          text: 'An error occurred',
+          show_alert: true
+        });
       }
     });
 

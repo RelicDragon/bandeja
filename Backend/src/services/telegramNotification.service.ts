@@ -94,7 +94,30 @@ class TelegramNotificationService {
           
           const formattedMessage = `📍 ${this.escapeMarkdown(place)} ${shortDate} ${startTime}, ${duration}\n👤 *${this.escapeMarkdown(senderName)}*: ${this.escapeMarkdown(messageContent)}`;
           
-          await this.bot.sendMessage(user.telegramId, formattedMessage, { parse_mode: 'Markdown' });
+          const showGameButton = t('telegram.showGame', lang);
+          const replyButton = t('telegram.reply', lang);
+          
+          const chatTypeChar = chatType === 'PUBLIC' ? 'P' : chatType === 'PRIVATE' ? 'V' : 'A';
+          const showGameData = `sg:${game.id}:${user.id}`;
+          const replyData = `rm:${message.id}:${game.id}:${chatTypeChar}`;
+          
+          const inlineKeyboard = {
+            inline_keyboard: [[
+              {
+                text: showGameButton,
+                callback_data: showGameData
+              },
+              {
+                text: replyButton,
+                callback_data: replyData
+              }
+            ]]
+          };
+          
+          await this.bot.sendMessage(user.telegramId, formattedMessage, { 
+            parse_mode: 'Markdown',
+            reply_markup: inlineKeyboard
+          });
         } catch (error) {
           console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
         }
@@ -152,6 +175,186 @@ class TelegramNotificationService {
           console.error(`Failed to send Telegram notification to admin ${admin.id}:`, error);
         }
       }
+    }
+  }
+
+  async sendGameCard(gameId: string, telegramId: string, lang: string = 'en') {
+    if (!this.bot) return;
+
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: {
+        club: {
+          include: {
+            city: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        court: {
+          include: {
+            club: true,
+          },
+        },
+        participants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!game) {
+      console.error(`Game ${gameId} not found`);
+      return;
+    }
+
+    const playingParticipants = game.participants.filter(p => p.isPlaying);
+    const owner = game.participants.find(p => p.role === 'OWNER');
+    const ownerName = owner ? `${owner.user.firstName || ''} ${owner.user.lastName || ''}`.trim() : null;
+
+    const statusEmoji: Record<string, string> = {
+      'announced': '📢',
+      'ready': '✅',
+      'started': '🏃',
+      'finished': '🏁',
+      'archived': '📦',
+      'ANNOUNCED': '📢',
+      'READY': '✅',
+      'STARTED': '🏃',
+      'FINISHED': '🏁',
+      'ARCHIVED': '📦',
+    };
+
+    let statusKey = game.status.toLowerCase();
+    if (statusKey === 'scheduled') {
+      statusKey = 'announced';
+    }
+    const statusText = t(`games.status.${statusKey}`, lang);
+    const statusDisplay = `${statusEmoji[game.status] || statusEmoji[statusKey] || '📅'} ${this.escapeMarkdown(statusText)}`;
+
+    const gameTitle = game.name || (game.gameType !== 'CLASSIC' ? t(`games.gameTypes.${game.gameType}`, lang) : '');
+    let header = gameTitle ? `*${this.escapeMarkdown(gameTitle)}*\n` : '';
+
+    if (game.entityType !== 'GAME') {
+      header += `🏷️ ${this.escapeMarkdown(t(`games.entityTypes.${game.entityType}`, lang))}\n`;
+    }
+
+    if (game.gameType !== 'CLASSIC') {
+      header += `🎮 ${this.escapeMarkdown(t(`games.gameTypes.${game.gameType}`, lang))}\n`;
+    }
+
+    if (ownerName) {
+      header += `👑 ${this.escapeMarkdown(t('games.organizer', lang))}: ${this.escapeMarkdown(ownerName)}\n`;
+    }
+
+    header += `${statusDisplay}\n`;
+
+    if (!game.affectsRating) {
+      header += `🚫 ${this.escapeMarkdown(t('games.noRating', lang))}\n`;
+    }
+
+    if (game.hasFixedTeams) {
+      header += `👥 ${this.escapeMarkdown(t('games.fixedTeams', lang))}\n`;
+    }
+
+    const shortDate = getDateLabel(game.startTime, lang, false);
+    const startTime = formatDate(game.startTime, 'HH:mm', lang);
+    const dateTimeLine = `📅 ${this.escapeMarkdown(shortDate)} ${this.escapeMarkdown(startTime)}`;
+    
+    let timeLine = dateTimeLine;
+    if (game.entityType !== 'BAR') {
+      const endTime = formatDate(game.endTime, 'HH:mm', lang);
+      const duration = this.formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
+      timeLine += ` - ${this.escapeMarkdown(endTime)} (${this.escapeMarkdown(duration)})`;
+    }
+
+    const club = game.court?.club || game.club;
+    const clubName = club?.name || 'Unknown location';
+    let locationLine = `📍 ${this.escapeMarkdown(clubName)}`;
+    
+    if (game.court && !(game.entityType === 'BAR')) {
+      locationLine += `\n   ${this.escapeMarkdown(game.court.name)}`;
+    }
+
+    if (game.court) {
+      const bookingStatus = game.hasBookedCourt
+        ? (game.entityType === 'BAR' ? t('createGame.hasBookedHall', lang) : t('createGame.hasBookedCourt', lang))
+        : t('createGame.notBookedYet', lang);
+      locationLine += `\n   ${this.escapeMarkdown(bookingStatus)}`;
+    } else if (game.club) {
+      locationLine += `\n   ${this.escapeMarkdown(t('createGame.notBookedYet', lang))}`;
+    }
+
+    let participantsLine = '';
+    if (game.entityType === 'BAR') {
+      participantsLine = `👥 ${this.escapeMarkdown(t('games.participants', lang))}: ${playingParticipants.length}`;
+    } else {
+      participantsLine = `👥 ${this.escapeMarkdown(t('games.participants', lang))}: ${playingParticipants.length}/${game.maxParticipants}`;
+    }
+
+    if (playingParticipants.length > 0) {
+      const participantNames = playingParticipants
+        .slice(0, 5)
+        .map(p => `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim())
+        .filter(Boolean)
+        .join(', ');
+      
+      if (participantNames) {
+        participantsLine += `\n   ${this.escapeMarkdown(participantNames)}`;
+        if (playingParticipants.length > 5) {
+          participantsLine += ` ${this.escapeMarkdown(`+${playingParticipants.length - 5} more`)}`;
+        }
+      }
+    }
+
+    let levelLine = '';
+    if (game.entityType !== 'BAR' && game.minLevel !== null && game.minLevel !== undefined && 
+        game.maxLevel !== null && game.maxLevel !== undefined) {
+      levelLine = `⭐ ${this.escapeMarkdown(t('games.level', lang))}: ${game.minLevel.toFixed(1)}-${game.maxLevel.toFixed(1)}`;
+    }
+
+    let descriptionLine = '';
+    if (game.description && game.description.trim()) {
+      descriptionLine = `💬 ${this.escapeMarkdown(game.description)}`;
+    }
+
+    const gameUrl = `${config.frontendUrl}/games/${game.id}`;
+
+    const message = [
+      header,
+      timeLine,
+      locationLine,
+      participantsLine,
+      levelLine,
+      descriptionLine,
+    ].filter(Boolean).join('\n\n');
+
+    const inlineKeyboard = {
+      inline_keyboard: [[
+        {
+          text: t('telegram.viewGame', lang),
+          url: gameUrl
+        }
+      ]]
+    };
+
+    try {
+      await this.bot.sendMessage(telegramId, message, { 
+        parse_mode: 'Markdown',
+        disable_web_page_preview: false,
+        reply_markup: inlineKeyboard,
+      });
+    } catch (error) {
+      console.error(`Failed to send game card to Telegram user ${telegramId}:`, error);
     }
   }
 }

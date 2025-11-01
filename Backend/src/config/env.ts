@@ -16,5 +16,6 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
 };
 

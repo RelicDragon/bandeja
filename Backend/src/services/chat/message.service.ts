@@ -182,6 +182,24 @@ export class MessageService {
     return message;
   }
 
+  static async createMessageWithEvent(data: {
+    gameId: string;
+    senderId: string;
+    content?: string;
+    mediaUrls: string[];
+    replyToId?: string;
+    chatType: ChatType;
+  }) {
+    const message = await this.createMessage(data);
+    
+    const socketService = (global as any).socketService;
+    if (socketService) {
+      socketService.emitNewMessage(data.gameId, message);
+    }
+    
+    return message;
+  }
+
   static async getMessages(gameId: string, userId: string, options: {
     page?: number;
     limit?: number;
