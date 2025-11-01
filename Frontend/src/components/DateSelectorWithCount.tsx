@@ -16,6 +16,8 @@ interface DateSelectorWithCountProps {
   availableGames: Game[];
   showDatePicker: boolean;
   onCloseDatePicker: () => void;
+  filterByLevel?: boolean;
+  user?: any;
 }
 
 const localeMap = {
@@ -41,6 +43,8 @@ export const DateSelectorWithCount = ({
   availableGames,
   showDatePicker,
   onCloseDatePicker,
+  filterByLevel = false,
+  user,
 }: DateSelectorWithCountProps) => {
   const { t, i18n } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -95,7 +99,22 @@ export const DateSelectorWithCount = ({
     const dateStr = format(date, 'yyyy-MM-dd');
     return availableGames.filter(game => {
       const gameDate = format(new Date(game.startTime), 'yyyy-MM-dd');
-      return gameDate === dateStr;
+      if (gameDate !== dateStr) {
+        return false;
+      }
+
+      // Filter by level if toggle is on
+      if (filterByLevel && user?.level) {
+        const userLevel = user.level;
+        const minLevel = game.minLevel || 0;
+        const maxLevel = game.maxLevel || 10;
+        
+        if (userLevel < minLevel || userLevel > maxLevel) {
+          return false;
+        }
+      }
+
+      return true;
     }).length;
   };
 

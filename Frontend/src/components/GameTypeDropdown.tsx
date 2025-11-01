@@ -71,10 +71,10 @@ export const GameTypeDropdown = ({ isOpen, onClose, onSelectType }: GameTypeDrop
   return (
     <>
       {/* Background darkening overlay */}
-      <div className={`fixed inset-0 bg-black/20 z-40 ${isAnimatingOut || isExiting ? 'animate-blur-out' : 'animate-blur-in'}`} />
+      <div className={`fixed inset-0 bg-black/20 z-60 ${isAnimatingOut || isExiting ? 'animate-blur-out' : 'animate-blur-in'}`} />
       
       {/* Dropdown buttons */}
-      <div ref={containerRef} className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50">
+      <div ref={containerRef} className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 pr-4 z-70">
         <div className="flex flex-col gap-2">
           {entityTypes.map((type, index) => (
             <button

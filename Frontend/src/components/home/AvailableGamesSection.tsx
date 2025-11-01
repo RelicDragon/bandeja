@@ -22,7 +22,7 @@ export const AvailableGamesSection = ({
   const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [filterByLevel, setFilterByLevel] = useState(false);
+  const [filterByLevel, setFilterByLevel] = useState(true);
 
   // Check if selected date is within the fixed date range (next 7 days)
   const fixedDates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
@@ -130,6 +130,8 @@ export const AvailableGamesSection = ({
         availableGames={availableGames}
         showDatePicker={showDatePicker}
         onCloseDatePicker={handleCloseDatePicker}
+        filterByLevel={filterByLevel}
+        user={user}
       />
       
       {filteredGames.length === 0 ? (

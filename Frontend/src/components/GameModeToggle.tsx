@@ -27,7 +27,7 @@ export const GameModeToggle = () => {
   };
 
   return (
-    <div className="fixed top-16 right-2 z-50">
+    <div className="fixed top-16 right-2 z-30">
       <button
         onClick={handleClick}
         className="w-8 h-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-md hover:shadow-lg transition-transform duration-200 flex items-center justify-center"
