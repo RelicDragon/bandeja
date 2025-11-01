@@ -72,7 +72,18 @@ export const MyGamesSection = ({
           {t('home.myGames')}
         </h2>
         <Card className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400 mb-4">{t('home.noGames')}</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {showChatFilter ? t('chat.noUnreadMessages') : t('home.noGames')}
+          </p>
+          {showChatFilter && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onShowAllGames}
+            >
+              {t('chat.showAllGames')}
+            </Button>
+          )}
         </Card>
       </div>
     );
@@ -116,7 +127,18 @@ export const MyGamesSection = ({
           </h2>
         )}
         <Card className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400 mb-4">{t('home.noGames')}</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {showChatFilter ? t('chat.noUnreadMessages') : t('home.noGames')}
+          </p>
+          {showChatFilter && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onShowAllGames}
+            >
+              {t('chat.showAllGames')}
+            </Button>
+          )}
         </Card>
       </div>
     );
