@@ -45,11 +45,24 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
     'Завершение'
   ];
 
+  const validatePhone = (phoneValue: string, countryCodeValue: string): boolean => {
+    if (countryCodeValue === '+7') {
+      // For +7: must start with 9 and be exactly 10 digits
+      const phoneRegex = /^9\d{9}$/;
+      return phoneRegex.test(phoneValue);
+    } else {
+      // For other countries: 7-14 digits (more than 6, less than 15)
+      return phoneValue.length > 6 && phoneValue.length < 15;
+    }
+  };
+
   const handlePhoneSubmit = () => {
-    // Validate phone: +7, 10 digits after +7, first digit is 9
-    const phoneRegex = /^9\d{9}$/;
-    if (!phoneRegex.test(phone)) {
+    if (!validatePhone(phone, countryCode)) {
+      if (countryCode === '+7') {
       setError('Неверный формат номера. Должен начинаться с 9 и содержать 10 цифр');
+      } else {
+        setError('Номер должен содержать от 7 до 14 цифр');
+      }
       return;
     }
 
@@ -187,7 +200,9 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
                 Введите номер телефона
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Номер должен начинаться с 9 и содержать 10 цифр
+                {countryCode === '+7' 
+                  ? 'Номер должен начинаться с 9 и содержать 10 цифр'
+                  : 'Номер должен содержать от 7 до 14 цифр'}
               </p>
             </div>
 
@@ -203,17 +218,21 @@ export const LundaAccountModal: React.FC<LundaAccountModalProps> = ({
               <Input
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                placeholder="9672825552"
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '');
+                  const maxLen = countryCode === '+7' ? 10 : 14;
+                  setPhone(digits.slice(0, maxLen));
+                }}
+                placeholder={countryCode === '+7' ? "9672825552" : "1234567890"}
                 className="flex-1"
-                maxLength={10}
+                maxLength={countryCode === '+7' ? 10 : 14}
               />
             </div>
 
             <Button
               onClick={handlePhoneSubmit}
               className="w-full"
-              disabled={phone.length !== 10 || !phone.startsWith('9')}
+              disabled={!validatePhone(phone, countryCode)}
             >
               Продолжить
             </Button>

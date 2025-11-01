@@ -382,7 +382,9 @@
     "removeFromFavorites": "Quitar de favoritos",
     "addedToFavorites": "Añadido a favoritos",
     "removedFromFavorites": "Quitado de favoritos",
-    "isFavorite": "Favorito"
+    "isFavorite": "Favorito",
+    "userAddedToFavorites": "Jugador añadido a favoritos",
+    "userRemovedFromFavorites": "Jugador quitado de favoritos"
   },
   "gameDetails": {
     "editCourt": "Editar cancha",
@@ -391,6 +393,9 @@
     "hallUpdated": "Salón actualizado exitosamente",
     "settingsUpdated": "Configuración actualizada exitosamente",
     "navigateToClub": "Navegar al club",
+    "shareGame": "Compartir juego",
+    "linkCopied": "Enlace copiado al portapapeles",
+    "copyError": "Error al copiar enlace",
     "avatarUploaded": "Avatar subido exitosamente",
     "avatarRemoved": "Avatar eliminado exitosamente",
     "uploadFailed": "Error al subir avatar",
@@ -411,6 +416,8 @@
     "next": "Siguiente",
     "previous": "Anterior",
     "confirm": "Confirmar",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
     "sending": "Enviando...",
     "error": "Error",
     "success": "Éxito",
@@ -446,6 +453,20 @@
       "onlyParticipantsCanView": "Solo los participantes pueden ver las invitaciones del juego",
       "onlySenderCanCancel": "Solo el remitente puede cancelar esta invitación",
       "canOnlyCancelPending": "Solo se pueden cancelar invitaciones pendientes"
+    },
+    "bugs": {
+      "notFound": "Error no encontrado",
+      "updateForbidden": "Solo el creador del error o un administrador pueden actualizar este error",
+      "textRequired": "Se requiere el texto del error",
+      "typeRequired": "Se requiere un tipo de error válido",
+      "statusOrTypeRequired": "Se requiere un estado o tipo de error válido"
+    },
+    "favorites": {
+      "userIdRequired": "Se requiere el ID de usuario",
+      "cannotAddYourself": "No puedes agregarte a ti mismo a favoritos",
+      "userNotFound": "Usuario no encontrado",
+      "alreadyInFavorites": "El usuario ya está en favoritos",
+      "userNotInFavorites": "El usuario no está en favoritos"
     }
   },
   "media": {

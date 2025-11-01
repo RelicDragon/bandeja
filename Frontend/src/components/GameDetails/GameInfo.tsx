@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Card } from '@/components';
 import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { GameStatusIcon } from '@/components';
+import { ShareModal } from '@/components/ShareModal';
 import {
   Calendar,
   MapPin,
@@ -16,6 +18,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 
 interface GameInfoProps {
   game: Game;
@@ -35,6 +38,8 @@ export const GameInfo = ({
   onEditCourt
 }: GameInfoProps) => {
   const { t } = useTranslation();
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareData, setShareData] = useState({ url: '', title: '', text: '' });
 
   const handleNavigate = () => {
     const club = game.court?.club || game.club;
@@ -64,26 +69,34 @@ export const GameInfo = ({
     const shareTitle = shareParts.join(' - ');
     const shareText = `${shareTitle} - ${formatDate(game.startTime, 'PPP')}`;
 
-    if (navigator.share) {
+    if (navigator.share && (window.isSecureContext || location.protocol === 'https:')) {
       try {
         await navigator.share({
           title: shareTitle,
           text: shareText,
           url: shareUrl,
         });
+        return;
       } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          console.error('Error sharing:', error);
+        if ((error as Error).name === 'AbortError') {
+          return;
         }
+        console.error('Error sharing:', error);
       }
-    } else {
+    }
+
+    if (navigator.clipboard && (window.isSecureContext || location.protocol === 'https:')) {
       try {
         await navigator.clipboard.writeText(shareUrl);
-        alert(t('gameDetails.linkCopied'));
+        toast.success(t('gameDetails.linkCopied'));
+        return;
       } catch (error) {
         console.error('Error copying to clipboard:', error);
       }
     }
+
+    setShareData({ url: shareUrl, title: shareTitle, text: shareText });
+    setShowShareModal(true);
   };
 
   return (
@@ -232,6 +245,13 @@ export const GameInfo = ({
           </div>
         )}
       </div>
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        shareUrl={shareData.url}
+        shareTitle={shareData.title}
+        shareText={shareData.text}
+      />
     </Card>
   );
 };

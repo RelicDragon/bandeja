@@ -282,11 +282,21 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     },
   });
 
+  const isFavorite = req.userId ? await prisma.userFavoriteUser.findUnique({
+    where: {
+      userId_favoriteUserId: {
+        userId: req.userId,
+        favoriteUserId: userId,
+      },
+    },
+  }) : null;
+
   res.json({
     success: true,
     data: {
       user: {
         ...user,
+        isFavorite: !!isFavorite,
         //avatar: user.avatar ? UrlConstructor.constructImageUrl(user.avatar) : user.avatar,
         //originalAvatar: user.originalAvatar ? UrlConstructor.constructImageUrl(user.originalAvatar) : user.originalAvatar,
       },

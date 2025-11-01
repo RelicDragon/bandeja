@@ -45,8 +45,9 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
       setText('');
       setBugType('BUG');
       onSuccess();
-    } catch (error) {
-      toast.error(t('bug.createError'));
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'bug.createError';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       setIsSubmitting(false);
     }

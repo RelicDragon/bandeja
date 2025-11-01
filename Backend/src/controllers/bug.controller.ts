@@ -11,11 +11,11 @@ export const createBug = asyncHandler(async (req: AuthRequest, res: Response) =>
   const { text, bugType } = req.body;
 
   if (!text || typeof text !== 'string' || text.trim().length === 0) {
-    throw new ApiError(400, 'Bug text is required');
+    throw new ApiError(400, 'errors.bugs.textRequired');
   }
 
   if (!bugType || !Object.values(BugType).includes(bugType)) {
-    throw new ApiError(400, 'Valid bug type is required');
+    throw new ApiError(400, 'errors.bugs.typeRequired');
   }
 
   const bug = await BugService.createBug(text, bugType, req.userId!);
@@ -33,7 +33,7 @@ export const getBugs = asyncHandler(async (req: AuthRequest, res: Response) => {
   const limitNum = parseInt(limit as string, 10);
 
   if (pageNum < 1 || limitNum < 1 || limitNum > 100) {
-    throw new ApiError(400, 'Invalid pagination parameters');
+    throw new ApiError(400, 'errors.generic');
   }
 
   const filters: any = {
@@ -67,13 +67,17 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
 
   if ((!status || !Object.values(BugStatus).includes(status as BugStatus)) &&
       (!bugType || !Object.values(BugType).includes(bugType as BugType))) {
-    throw new ApiError(400, 'Valid status or bugType is required');
+    throw new ApiError(400, 'errors.bugs.statusOrTypeRequired');
   }
 
   const existingBug = await BugService.getBugById(id);
 
   if (!existingBug) {
-    throw new ApiError(404, 'Bug not found');
+    throw new ApiError(404, 'errors.bugs.notFound');
+  }
+
+  if (existingBug.senderId !== req.userId && !req.user?.isAdmin) {
+    throw new ApiError(403, 'errors.bugs.updateForbidden');
   }
 
   const bug = await BugService.updateBug(id, { status, bugType });
@@ -113,7 +117,7 @@ export const deleteBug = asyncHandler(async (req: AuthRequest, res: Response) =>
   const existingBug = await BugService.getBugById(id);
 
   if (!existingBug) {
-    throw new ApiError(404, 'Bug not found');
+    throw new ApiError(404, 'errors.bugs.notFound');
   }
 
   await BugService.deleteBug(id);

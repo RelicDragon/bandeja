@@ -382,7 +382,9 @@
     "removeFromFavorites": "Удалить из избранного",
     "addedToFavorites": "Добавлено в избранное",
     "removedFromFavorites": "Удалено из избранного",
-    "isFavorite": "Избранное"
+    "isFavorite": "Избранное",
+    "userAddedToFavorites": "Игрок добавлен в избранное",
+    "userRemovedFromFavorites": "Игрок удален из избранного"
   },
   "gameDetails": {
     "editCourt": "Редактировать корт",
@@ -391,6 +393,9 @@
     "hallUpdated": "Зал успешно обновлен",
     "settingsUpdated": "Настройки успешно обновлены",
     "navigateToClub": "Проложить маршрут к клубу",
+    "shareGame": "Поделиться игрой",
+    "linkCopied": "Ссылка скопирована в буфер обмена",
+    "copyError": "Не удалось скопировать ссылку",
     "avatarUploaded": "Аватар успешно загружен",
     "avatarRemoved": "Аватар успешно удален",
     "uploadFailed": "Не удалось загрузить аватар",
@@ -411,6 +416,8 @@
     "next": "Далее",
     "previous": "Предыдущий",
     "confirm": "Подтвердить",
+    "copy": "Копировать",
+    "copied": "Скопировано!",
     "sending": "Отправка...",
     "error": "Ошибка",
     "success": "Успешно",
@@ -446,6 +453,20 @@
       "onlyParticipantsCanView": "Только участники могут просматривать приглашения игры",
       "onlySenderCanCancel": "Только отправитель может отменить это приглашение",
       "canOnlyCancelPending": "Можно отменить только pending приглашения"
+    },
+    "bugs": {
+      "notFound": "Ошибка не найдена",
+      "updateForbidden": "Только создатель ошибки или администратор могут обновить эту ошибку",
+      "textRequired": "Требуется текст ошибки",
+      "typeRequired": "Требуется действительный тип ошибки",
+      "statusOrTypeRequired": "Требуется действительный статус или тип ошибки"
+    },
+    "favorites": {
+      "userIdRequired": "Требуется ID пользователя",
+      "cannotAddYourself": "Нельзя добавить себя в избранное",
+      "userNotFound": "Пользователь не найден",
+      "alreadyInFavorites": "Пользователь уже в избранном",
+      "userNotInFavorites": "Пользователь не найден в избранном"
     }
   },
   "media": {

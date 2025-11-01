@@ -379,7 +379,9 @@
     "removeFromFavorites": "Remove from favorites",
     "addedToFavorites": "Added to favorites",
     "removedFromFavorites": "Removed from favorites",
-    "isFavorite": "Favorite"
+    "isFavorite": "Favorite",
+    "userAddedToFavorites": "Player added to favorites",
+    "userRemovedFromFavorites": "Player removed from favorites"
   },
   "gameDetails": {
     "editCourt": "Edit Court",
@@ -387,7 +389,10 @@
     "courtUpdated": "Court updated successfully",
     "hallUpdated": "Hall updated successfully",
     "settingsUpdated": "Settings updated successfully",
-    "navigateToClub": "Navigate to club"
+    "navigateToClub": "Navigate to club",
+    "shareGame": "Share Game",
+    "linkCopied": "Link copied to clipboard",
+    "copyError": "Failed to copy link"
   },
   "common": {
     "yes": "Yes",
@@ -404,6 +409,8 @@
     "next": "Next",
     "previous": "Previous",
     "confirm": "Confirm",
+    "copy": "Copy",
+    "copied": "Copied!",
     "sending": "Sending...",
     "error": "Error",
     "success": "Success",
@@ -439,6 +446,20 @@
       "onlyParticipantsCanView": "Only participants can view game invites",
       "onlySenderCanCancel": "Only the sender can cancel this invite",
       "canOnlyCancelPending": "Can only cancel pending invites"
+    },
+    "bugs": {
+      "notFound": "Bug not found",
+      "updateForbidden": "Only the bug creator or an admin can update this bug",
+      "textRequired": "Bug text is required",
+      "typeRequired": "Valid bug type is required",
+      "statusOrTypeRequired": "Valid status or bugType is required"
+    },
+    "favorites": {
+      "userIdRequired": "User ID is required",
+      "cannotAddYourself": "Cannot add yourself to favorites",
+      "userNotFound": "User not found",
+      "alreadyInFavorites": "User is already in favorites",
+      "userNotInFavorites": "User not found in favorites"
     }
   },
   "media": {

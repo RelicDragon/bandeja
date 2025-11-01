@@ -48,6 +48,8 @@ model User {
   bugMessageReadReceipts  BugMessageReadReceipt[]
   currentCity             City?                @relation("UserCurrentCity", fields: [currentCityId], references: [id])
   favoriteClubs           UserFavoriteClub[]
+  favoriteUsers           UserFavoriteUser[]   @relation("UserFavorites")
+  favoritedBy             UserFavoriteUser[]   @relation("UserFavoritedBy")
   interactionsFrom        UserInteraction[]    @relation("InteractionFromUser")
   interactionsTo          UserInteraction[]    @relation("InteractionToUser")
   teamPlayers             TeamPlayer[]
@@ -481,6 +483,19 @@ model UserFavoriteClub {
   @@unique([userId, clubId])
   @@index([userId])
   @@index([clubId])
+}
+
+model UserFavoriteUser {
+  id        String   @id @default(cuid())
+  userId    String
+  favoriteUserId String
+  createdAt DateTime @default(now())
+  user      User     @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
+  favoriteUser User   @relation("UserFavoritedBy", fields: [favoriteUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, favoriteUserId])
+  @@index([userId])
+  @@index([favoriteUserId])
 }
 
 enum AuthProvider {

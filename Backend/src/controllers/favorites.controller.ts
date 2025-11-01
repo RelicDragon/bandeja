@@ -153,3 +153,111 @@ export const checkIfFavorite = asyncHandler(async (req: AuthRequest, res: Respon
     },
   });
 });
+
+export const addUserToFavorites = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { userId: favoriteUserId } = req.body;
+
+  if (!favoriteUserId) {
+    throw new ApiError(400, 'errors.favorites.userIdRequired');
+  }
+
+  if (req.userId === favoriteUserId) {
+    throw new ApiError(400, 'errors.favorites.cannotAddYourself');
+  }
+
+  const favoriteUser = await prisma.user.findUnique({
+    where: { id: favoriteUserId },
+  });
+
+  if (!favoriteUser) {
+    throw new ApiError(404, 'errors.favorites.userNotFound');
+  }
+
+  const existingFavorite = await prisma.userFavoriteUser.findUnique({
+    where: {
+      userId_favoriteUserId: {
+        userId: req.userId!,
+        favoriteUserId,
+      },
+    },
+  });
+
+  if (existingFavorite) {
+    throw new ApiError(400, 'errors.favorites.alreadyInFavorites');
+  }
+
+  const favorite = await prisma.userFavoriteUser.create({
+    data: {
+      userId: req.userId!,
+      favoriteUserId,
+    },
+    include: {
+      favoriteUser: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatar: true,
+          level: true,
+          gender: true,
+        },
+      },
+    },
+  });
+
+  res.status(201).json({
+    success: true,
+    data: favorite,
+  });
+});
+
+export const removeUserFromFavorites = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { userId: favoriteUserId } = req.params;
+
+  const favorite = await prisma.userFavoriteUser.findUnique({
+    where: {
+      userId_favoriteUserId: {
+        userId: req.userId!,
+        favoriteUserId,
+      },
+    },
+  });
+
+  if (!favorite) {
+    throw new ApiError(404, 'errors.favorites.userNotInFavorites');
+  }
+
+  await prisma.userFavoriteUser.delete({
+    where: {
+      userId_favoriteUserId: {
+        userId: req.userId!,
+        favoriteUserId,
+      },
+    },
+  });
+
+  res.json({
+    success: true,
+    message: 'User removed from favorites',
+  });
+});
+
+export const checkIfUserFavorite = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { userId: favoriteUserId } = req.params;
+
+  const favorite = await prisma.userFavoriteUser.findUnique({
+    where: {
+      userId_favoriteUserId: {
+        userId: req.userId!,
+        favoriteUserId,
+      },
+    },
+  });
+
+  res.json({
+    success: true,
+    data: {
+      isFavorite: !!favorite,
+    },
+  });
+});

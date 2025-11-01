@@ -82,8 +82,9 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
       await bugsApi.updateBug(bug.id, { status: newStatus });
       toast.success(t('bug.statusUpdated'));
       onUpdate?.();
-    } catch (error) {
-      toast.error(t('bug.statusUpdateError'));
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'bug.statusUpdateError';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       setIsUpdating(false);
       setShowMenu(false);
@@ -91,15 +92,16 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
   };
 
   const handleTypeChange = async (newType: BugType) => {
-    if (!user?.isAdmin) return;
+    if (!user?.isAdmin && bug.senderId !== user?.id) return;
 
     setIsUpdating(true);
     try {
       await bugsApi.updateBug(bug.id, { bugType: newType });
       toast.success(t('bug.typeUpdated'));
       onUpdate?.();
-    } catch (error) {
-      toast.error(t('bug.typeUpdateError'));
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'bug.typeUpdateError';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       setIsUpdating(false);
       setShowMenu(false);
@@ -113,8 +115,9 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
       await bugsApi.deleteBug(bug.id);
       toast.success(t('bug.deleted'));
       onDelete?.(bug.id);
-    } catch (error) {
-      toast.error(t('bug.deleteError'));
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'bug.deleteError';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
     setShowMenu(false);
   };
@@ -212,7 +215,7 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
                   ref={modalRef}
                   className="bg-white rounded-lg shadow-xl max-w-sm w-full max-h-[80vh] overflow-y-auto"
                 >
-                  {user?.isAdmin ? (
+                  {(user?.isAdmin || bug.senderId === user?.id) ? (
                     <>
                       <div className="p-4 border-b border-gray-200">
                         <h3 className="text-lg font-semibold text-gray-900">{t('bug.actions')}</h3>

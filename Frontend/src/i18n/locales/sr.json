@@ -384,6 +384,8 @@
     "removeFromFavorites": "Уклони из омиљених",
     "addedToFavorites": "Додато у омиљене",
     "removedFromFavorites": "Уклоњено из омиљених",
+    "userAddedToFavorites": "Играч додат у омиљене",
+    "userRemovedFromFavorites": "Играч уклоњен из омиљених",
     "isFavorite": "Омиљено"
   },
   "gameDetails": {
@@ -393,6 +395,9 @@
     "hallUpdated": "Сала успешно ажурирана",
     "settingsUpdated": "Подешавања успешно ажурирана",
     "navigateToClub": "Навигација до клуба",
+    "shareGame": "Подели игру",
+    "linkCopied": "Линк је копиран у привремену меморију",
+    "copyError": "Није успело копирање линка",
     "avatarUploaded": "Аватар је успешно отпремљен",
     "avatarRemoved": "Аватар је успешно уклоњен",
     "uploadFailed": "Грешка при отпремању аватара",
@@ -413,6 +418,8 @@
     "next": "Следеће",
     "previous": "Претходно",
     "confirm": "Потврди",
+    "copy": "Копирај",
+    "copied": "Копирано!",
     "sending": "Шаљем...",
     "error": "Грешка",
     "success": "Успешно",
@@ -448,6 +455,20 @@
       "onlyParticipantsCanView": "Само учесници могу прегледати позиве игре",
       "onlySenderCanCancel": "Само пошиљалац може отказати овај позив",
       "canOnlyCancelPending": "Може се отказати само позив на чекању"
+    },
+    "bugs": {
+      "notFound": "Грешка није пронађена",
+      "updateForbidden": "Само креатор грешке или администратор могу ажурирати ову грешку",
+      "textRequired": "Потребан је текст грешке",
+      "typeRequired": "Потребан је важећи тип грешке",
+      "statusOrTypeRequired": "Потребан је важећи статус или тип грешке"
+    },
+    "favorites": {
+      "userIdRequired": "Потребан је ID корисника",
+      "cannotAddYourself": "Не можете додати себе у омиљене",
+      "userNotFound": "Корисник није пронађен",
+      "alreadyInFavorites": "Корисник је већ у омиљеним",
+      "userNotInFavorites": "Корисник није пронађен у омиљеним"
     }
   },
   "media": {

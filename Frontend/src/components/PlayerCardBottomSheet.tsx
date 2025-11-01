@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, TrendingUp, TrendingDown, Beer } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, Beer, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usersApi, UserStats } from '@/api/users';
+import { favoritesApi } from '@/api/favorites';
 import { Loading } from './Loading';
 import { CachedImage } from './CachedImage';
 import { UrlConstructor } from '@/utils/urlConstructor';
 import { PlayerAvatarView } from './PlayerAvatarView';
 import { GenderIndicator } from './GenderIndicator';
+import toast from 'react-hot-toast';
 
 interface PlayerCardBottomSheetProps {
   playerId: string | null;
@@ -99,6 +101,25 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     }
   };
 
+  const handleToggleFavorite = async () => {
+    if (!playerId || !stats) return;
+
+    try {
+      if (stats.user.isFavorite) {
+        await favoritesApi.removeUserFromFavorites(playerId);
+        setStats({ ...stats, user: { ...stats.user, isFavorite: false } });
+        toast.success(t('favorites.userRemovedFromFavorites'));
+      } else {
+        await favoritesApi.addUserToFavorites(playerId);
+        setStats({ ...stats, user: { ...stats.user, isFavorite: true } });
+        toast.success(t('favorites.userAddedToFavorites'));
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
+  };
+
   if (!playerId) return null;
 
   // Calculate dynamic blur based on drag position
@@ -172,12 +193,29 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         >
           <div className="h-8 w-full cursor-grab active:cursor-grabbing" />
           
-          <button
-            onClick={handleClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors z-10"
-          >
-            <X size={20} className="text-gray-600 dark:text-gray-300" />
-          </button>
+          <div className="absolute top-4 right-4 flex gap-2 z-10">
+            {stats && (
+              <button
+                onClick={onToggleFavorite}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title={stats.user.isFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
+              >
+                <Star
+                  size={20}
+                  className={stats.user.isFavorite
+                    ? 'text-yellow-500 fill-yellow-500'
+                    : 'text-gray-400 hover:text-yellow-500'
+                  }
+                />
+              </button>
+            )}
+            <button
+              onClick={handleClose}
+              className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              <X size={20} className="text-gray-600 dark:text-gray-300" />
+            </button>
+          </div>
 
           <div className="overflow-y-auto max-h-[calc(95vh-20px)]">
             {loading ? (
@@ -212,7 +250,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                         if (stats.user.originalAvatar) {
                           setShowAvatarView(true);
                         }
-                      }} 
+                      }}
+                      onToggleFavorite={handleToggleFavorite}
                     />
                   </motion.div>
                 )}
@@ -229,9 +268,10 @@ interface PlayerCardContentProps {
   stats: UserStats;
   t: (key: string) => string;
   onAvatarClick: () => void;
+  onToggleFavorite: () => void;
 }
 
-const PlayerCardContent = ({ stats, t, onAvatarClick }: PlayerCardContentProps) => {
+const PlayerCardContent = ({ stats, t, onAvatarClick, onToggleFavorite }: PlayerCardContentProps) => {
   const { user, levelHistory, gamesLast30Days } = stats;
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const winRate = user.gamesPlayed > 0 ? ((user.gamesWon / user.gamesPlayed) * 100).toFixed(1) : '0';

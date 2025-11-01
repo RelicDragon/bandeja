@@ -40,8 +40,9 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
         const unreadResponse = await bugChatApi.getBugsUnreadCounts(bugIds);
         setUnreadCounts(unreadResponse.data);
       }
-    } catch (error) {
-      toast.error(t('bug.loadError'));
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'bug.loadError';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       setLoading(false);
     }
@@ -53,11 +54,12 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
         const bugIds = bugs.map(bug => bug.id);
         const unreadResponse = await bugChatApi.getBugsUnreadCounts(bugIds);
         setUnreadCounts(unreadResponse.data);
-      } catch (error) {
-        console.error('Failed to refresh unread counts:', error);
+      } catch (error: any) {
+        const errorMessage = error.response?.data?.message || 'bug.loadError';
+        toast.error(t(errorMessage, { defaultValue: errorMessage }));
       }
     }
-  }, [bugs]);
+  }, [bugs, t]);
 
   useEffect(() => {
     if (isVisible) {
