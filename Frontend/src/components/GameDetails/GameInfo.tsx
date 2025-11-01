@@ -121,7 +121,7 @@ export const GameInfo = ({
         </button>
       </div>
       <div className="flex items-start justify-between mb-4">
-        <div>
+        <div className="pr-20 flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <GameStatusIcon status={game.status} className="p-1" />
             {isOwner && (

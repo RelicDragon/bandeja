@@ -171,6 +171,19 @@ export const GameDetailsContent = () => {
     }
   };
 
+  const handleAddToGame = async () => {
+    if (!id) return;
+
+    try {
+      await gamesApi.togglePlayingStatus(id, true);
+      const response = await gamesApi.getById(id);
+      setGame(response.data);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
+  };
+
   const handleAcceptInvite = async (inviteId: string) => {
     try {
       await invitesApi.accept(inviteId);
@@ -424,11 +437,13 @@ export const GameDetailsContent = () => {
         myInvites={myInvites}
         gameInvites={gameInvites}
         isParticipant={isParticipant}
+        isGuest={isGuest}
         isFull={isFull}
         isOwner={isOwner}
         userId={user?.id}
         canInvitePlayers={canInvitePlayers}
         onJoin={handleJoin}
+        onAddToGame={handleAddToGame}
         onLeave={handleLeave}
         onAcceptInvite={handleAcceptInvite}
         onDeclineInvite={handleDeclineInvite}

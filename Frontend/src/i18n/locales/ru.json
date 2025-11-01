@@ -534,6 +534,7 @@
     "noParticipants": "Нет участников",
     "joinChatToSend": "Присоединиться к Чату",
     "leave": "Покинуть чат",
+    "leaveConfirmation": "Вы уверены, что хотите покинуть этот чат?",
     "types": {
       "PUBLIC": "Общий",
       "PRIVATE": "Участники",

@@ -8,11 +8,13 @@ interface GameParticipantsProps {
   myInvites: Invite[];
   gameInvites: Invite[];
   isParticipant: boolean;
+  isGuest: boolean;
   isFull: boolean;
   isOwner: boolean;
   userId?: string;
   canInvitePlayers: boolean;
   onJoin: () => void;
+  onAddToGame: () => void;
   onLeave: () => void;
   onAcceptInvite: (inviteId: string) => void;
   onDeclineInvite: (inviteId: string) => void;
@@ -26,11 +28,13 @@ export const GameParticipants = ({
   myInvites,
   gameInvites,
   isParticipant,
+  isGuest,
   isFull,
   isOwner,
   userId,
   canInvitePlayers,
   onJoin,
+  onAddToGame,
   onLeave,
   onAcceptInvite,
   onDeclineInvite,
@@ -96,6 +100,16 @@ export const GameParticipants = ({
         {!isParticipant && !isFull && game.isPublic && myInvites.length === 0 && (
           <Button
             onClick={onJoin}
+            size="lg"
+            className="w-full flex items-center justify-center"
+          >
+            <UserPlus size={20} className="mr-2" />
+            {t('createGame.addMeToGame')}
+          </Button>
+        )}
+        {isGuest && !isFull && (
+          <Button
+            onClick={onAddToGame}
             size="lg"
             className="w-full flex items-center justify-center"
           >

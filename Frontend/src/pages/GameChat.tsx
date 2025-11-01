@@ -8,10 +8,11 @@ import { MessageList } from '@/components/MessageList';
 import { MessageInput } from '@/components/MessageInput';
 import { ChatParticipantsModal } from '@/components/ChatParticipantsModal';
 import { ChatParticipantsButton } from '@/components/ChatParticipantsButton';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useAuthStore } from '@/store/authStore';
 import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
-import { MessageCircle, ArrowLeft, MapPin } from 'lucide-react';
+import { MessageCircle, ArrowLeft, MapPin, LogOut } from 'lucide-react';
 
 export const GameChat: React.FC = () => {
   const { t } = useTranslation();
@@ -30,6 +31,8 @@ export const GameChat: React.FC = () => {
   const [isJoiningAsGuest, setIsJoiningAsGuest] = useState(false);
   const [currentChatType, setCurrentChatType] = useState<ChatType>('PUBLIC');
   const [isLoadingGame, setIsLoadingGame] = useState(true);
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [isLeavingChat, setIsLeavingChat] = useState(false);
 
   const userParticipant = game?.participants.find(p => p.userId === user?.id);
   const isParticipant = !!userParticipant;
@@ -39,6 +42,7 @@ export const GameChat: React.FC = () => {
   const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying) ?? false;
   const canAccessChat = isParticipant || hasPendingInvite || isGuest;
   const canViewPublicChat = canAccessChat || game?.isPublic;
+  const isCurrentUserGuest = game?.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying) ?? false;
 
   const loadGame = useCallback(async () => {
     if (!gameId) return;
@@ -185,6 +189,22 @@ export const GameChat: React.FC = () => {
   const handleGuestLeave = useCallback(async () => {
     await loadGame(); // Reload game to update guest status
   }, [loadGame]);
+
+  const handleLeaveChat = useCallback(async () => {
+    if (!gameId || isLeavingChat) return;
+    
+    setIsLeavingChat(true);
+    try {
+      await gamesApi.leave(gameId);
+      await loadGame();
+      navigate(-1);
+    } catch (error) {
+      console.error('Failed to leave chat:', error);
+    } finally {
+      setIsLeavingChat(false);
+      setShowLeaveConfirmation(false);
+    }
+  }, [gameId, isLeavingChat, loadGame, navigate]);
 
   const handleChatTypeChange = useCallback(async (newChatType: ChatType) => {
     if (newChatType === currentChatType) return;
@@ -419,10 +439,21 @@ export const GameChat: React.FC = () => {
             </div>
           </div>
           
-          <ChatParticipantsButton 
-            game={game} 
-            onClick={() => setShowParticipantsModal(true)}
-          />
+          <div className="flex items-center gap-2">
+            {isCurrentUserGuest && (
+              <button
+                onClick={() => setShowLeaveConfirmation(true)}
+                className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
+                title={t('chat.leave')}
+              >
+                <LogOut size={20} className="text-red-600 dark:text-red-400" />
+              </button>
+            )}
+            <ChatParticipantsButton 
+              game={game} 
+              onClick={() => setShowParticipantsModal(true)}
+            />
+          </div>
         </div>
       </div>
 
@@ -516,6 +547,18 @@ export const GameChat: React.FC = () => {
           currentChatType={currentChatType}
         />
       )}
+
+      {/* Leave Chat Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLeaveConfirmation}
+        title={t('chat.leave')}
+        message={t('chat.leaveConfirmation')}
+        confirmText={t('chat.leave')}
+        cancelText={t('common.cancel')}
+        confirmVariant="danger"
+        onConfirm={handleLeaveChat}
+        onClose={() => setShowLeaveConfirmation(false)}
+      />
     </div>
   );
 };

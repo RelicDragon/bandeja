@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 import { Button } from '@/components';
 import { X, AlertTriangle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ConfirmationModalProps {
   title: string;
@@ -11,6 +13,7 @@ interface ConfirmationModalProps {
   highlightedText?: string;
   onConfirm: () => void;
   onClose: () => void;
+  isOpen: boolean;
 }
 
 export const ConfirmationModal = ({
@@ -21,9 +24,21 @@ export const ConfirmationModal = ({
   confirmVariant = 'primary',
   highlightedText,
   onConfirm,
-  onClose
+  onClose,
+  isOpen
 }: ConfirmationModalProps) => {
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        setTimeout(() => {
+          document.body.style.overflow = '';
+        }, 300);
+      };
+    }
+  }, [isOpen]);
 
   const handleConfirm = () => {
     onConfirm();
@@ -31,62 +46,82 @@ export const ConfirmationModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm pointer-events-auto"
-        onClick={onClose}
-      />
-      <div
-        className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 mx-4 max-w-md w-full border border-gray-200 dark:border-gray-800 pointer-events-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
-              <AlertTriangle size={20} className="text-orange-600 dark:text-orange-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {title}
-            </h3>
-          </div>
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          key="modal-container"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <motion.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          />
+          <motion.div
+            key="modal-content"
+            initial={{ scale: 0.95, y: 20, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.9, y: 30, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-700 z-10"
+            onClick={(e) => e.stopPropagation()}
           >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
-        </div>
+            <div className="flex flex-col text-center">
+              <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle
+                  size={24}
+                  className="text-orange-600 dark:text-orange-400"
+                />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                {title}
+              </h3>
 
-        <div className="mb-8">
-          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-            {message}
-          </p>
-          {highlightedText && (
-            <div className="mt-4 text-center">
-              <span className="inline-block px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-200 font-bold text-lg">
-                {highlightedText}
-              </span>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">
+                {message}
+              </p>
+              {highlightedText && (
+                <div className="mb-6">
+                  <span className="inline-block px-3 py-1 bg-red-100 dark:bg-red-900/30 rounded-full text-red-800 dark:text-red-200 font-medium text-sm">
+                    {highlightedText}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        <div className="flex gap-3">
-          <Button
-            onClick={onClose}
-            variant="outline"
-            className="flex-1"
-          >
-            {cancelText || t('common.cancel')}
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            variant={confirmVariant}
-            className="flex-1"
-          >
-            {confirmText || t('common.confirm')}
-          </Button>
-        </div>
-      </div>
-    </div>
+            <div className="flex flex-col-reverse sm:flex-row gap-3">
+              <Button
+                onClick={onClose}
+                variant="outline"
+                className="flex-1"
+              >
+                {cancelText || t('common.cancel')}
+              </Button>
+              <Button
+                onClick={handleConfirm}
+                variant={confirmVariant}
+                className="flex-1"
+              >
+                {confirmText || t('common.confirm')}
+              </Button>
+            </div>
+            <button
+              onClick={onClose}
+              className="absolute top-3 right-3 p-2 rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

@@ -534,6 +534,7 @@
     "noParticipants": "Sin participantes",
     "joinChatToSend": "Unirse al Chat",
     "leave": "Salir del chat",
+    "leaveConfirmation": "¿Estás seguro de que quieres salir de este chat?",
     "types": {
       "PUBLIC": "General",
       "PRIVATE": "Participantes",

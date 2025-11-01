@@ -527,6 +527,7 @@
     "noParticipants": "No participants",
     "joinChatToSend": "Join Chat",
     "leave": "Leave chat",
+    "leaveConfirmation": "Are you sure you want to leave this chat?",
     "types": {
       "PUBLIC": "General",
       "PRIVATE": "Participants",
