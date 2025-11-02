@@ -293,6 +293,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
         hasFixedTeams: hasFixedTeams,
         name: gameName || undefined,
         description: comments,
+        participants: participants.filter((id): id is string => id !== null) as any,
       });
 
       if (invitedPlayerIds.length > 0 && gameResponse.data.id) {
@@ -330,6 +331,9 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
     setMaxParticipants(num);
     if (participants.length > num) {
       setParticipants(participants.slice(0, num));
+    }
+    if (num === 2) {
+      setHasFixedTeams(false);
     }
   };
 
@@ -398,6 +402,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
           resultsByAnyone={resultsByAnyone}
           afterGameGoToBar={afterGameGoToBar}
           hasFixedTeams={hasFixedTeams}
+          maxParticipants={maxParticipants}
           entityType={entityType}
           onPublicChange={setIsPublic}
           onRatingGameChange={setIsRatingGame}

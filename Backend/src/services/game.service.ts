@@ -106,6 +106,14 @@ export class GameService {
       }
     }
     
+    const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams || false);
+    
+    const participantsList: string[] = Array.isArray(data.participants) 
+      ? data.participants.filter((id: string | null): id is string => id !== null)
+      : [];
+    
+    const ownerIsPlaying = participantsList.includes(userId);
+    
     const createdGame = await prisma.game.create({
       data: {
         entityType: entityType,
@@ -126,12 +134,13 @@ export class GameService {
         resultsByAnyone: data.resultsByAnyone || false,
         hasBookedCourt: data.hasBookedCourt || false,
         afterGameGoToBar: data.afterGameGoToBar || false,
-        hasFixedTeams: data.hasFixedTeams || false,
+        hasFixedTeams: hasFixedTeams,
         metadata: data.metadata,
         participants: {
           create: {
             userId,
             role: 'OWNER',
+            isPlaying: ownerIsPlaying,
           },
         },
       },
@@ -519,7 +528,12 @@ export class GameService {
           },
         },
         participants: {
-          where: { isPlaying: true },
+          where: {
+            OR: [
+              { isPlaying: true },
+              { role: { in: ['OWNER', 'ADMIN'] } },
+            ],
+          },
           include: {
             user: {
               select: USER_SELECT_FIELDS,
@@ -544,7 +558,7 @@ export class GameService {
     // Calculate readiness for each game
     const gamesWithReadiness = games.map(game => {
       // Calculate participantsReady: check if we have exactly maxParticipants playing participants
-      const playingParticipantsCount = game.participants.length;
+      const playingParticipantsCount = game.participants.filter((p: any) => p.isPlaying).length;
       const participantsReady = playingParticipantsCount === game.maxParticipants;
 
       // Calculate teamsReady: check if hasFixedTeams and all teams have players
@@ -584,9 +598,28 @@ export class GameService {
       throw new ApiError(403, 'Only owners and admins can update the game');
     }
 
+    const game = await prisma.game.findUnique({
+      where: { id },
+      select: { maxParticipants: true, hasFixedTeams: true },
+    });
+
+    if (!game) {
+      throw new ApiError(404, 'Game not found');
+    }
+
+    const maxParticipants = data.maxParticipants !== undefined ? data.maxParticipants : game.maxParticipants;
+    const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams !== undefined ? data.hasFixedTeams : game.hasFixedTeams || false);
+
+    const updateData = { ...data };
+    if (maxParticipants === 2) {
+      updateData.hasFixedTeams = false;
+    } else if (data.hasFixedTeams !== undefined) {
+      updateData.hasFixedTeams = hasFixedTeams;
+    }
+
     await prisma.game.update({
       where: { id },
-      data,
+      data: updateData,
       include: {
         participants: {
           include: {
@@ -629,14 +662,33 @@ export class GameService {
       throw new ApiError(403, 'Only the owner can delete the game');
     }
 
-    // Get the game with mediaUrls before deleting
+    // Get the game with mediaUrls and startTime before deleting
     const game = await prisma.game.findUnique({
       where: { id },
-      select: { mediaUrls: true }
+      select: { 
+        mediaUrls: true,
+        startTime: true,
+        status: true,
+        hasResults: true
+      }
     });
 
     if (!game) {
       throw new ApiError(404, 'Game not found');
+    }
+
+    // Check if game has started (hasResults or status is 'started' or 'finished')
+    if (game.hasResults || game.status === 'started' || game.status === 'finished') {
+      throw new ApiError(400, 'Cannot delete a game that has already started');
+    }
+
+    // Check if game can be deleted (must be at least 2 hours before start)
+    const now = new Date();
+    const startTime = new Date(game.startTime);
+    const twoHoursBeforeStart = new Date(startTime.getTime() - 2 * 60 * 60 * 1000);
+
+    if (now >= twoHoursBeforeStart) {
+      throw new ApiError(400, 'Game can only be deleted until 2 hours before start time');
     }
 
     // Delete media files if they exist

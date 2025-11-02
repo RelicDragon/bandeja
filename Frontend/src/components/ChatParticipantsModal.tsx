@@ -42,7 +42,7 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
 
   const allParticipants = [
     ...game.participants.filter(p => p.isPlaying).map(p => ({ ...p.user, isParticipant: true, isInvited: false, isGuest: false, role: p.role })),
-    ...game.participants.filter(p => !p.isPlaying).map(p => ({ ...p.user, isParticipant: false, isInvited: false, isGuest: true, role: p.role })),
+    ...game.participants.filter(p => !p.isPlaying).map(p => ({ ...p.user, isParticipant: false, isInvited: false, isGuest: p.role !== 'OWNER' && p.role !== 'ADMIN', role: p.role })),
     ...(game.invites || []).map(invite => ({ ...invite.receiver, isParticipant: false, isInvited: true, isGuest: false, role: 'PARTICIPANT' as const }))
   ];
 
@@ -62,7 +62,7 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
     return true;
   };
 
-  const isCurrentUserGuest = game.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying) ?? false;
+  const isCurrentUserGuest = game.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying && participant.role !== 'OWNER' && participant.role !== 'ADMIN') ?? false;
 
   const handleLeaveAsGuest = async () => {
     if (!game.id || isLeaving) return;
@@ -164,7 +164,23 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
                       </p>
                     </div>
                     <div className="flex items-center gap-1 mt-0.5">
-                      {participant.isParticipant ? (
+                      {participant.role === 'OWNER' ? (
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                          isVisibleForChat 
+                            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400'
+                            : 'bg-gray-100 dark:bg-gray-700/30 text-gray-500 dark:text-gray-500'
+                        }`}>
+                          {t('games.owner')}
+                        </span>
+                      ) : participant.role === 'ADMIN' ? (
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                          isVisibleForChat 
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
+                            : 'bg-gray-100 dark:bg-gray-700/30 text-gray-500 dark:text-gray-500'
+                        }`}>
+                          {t('games.admin')}
+                        </span>
+                      ) : participant.isParticipant ? (
                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
                           isVisibleForChat 
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'

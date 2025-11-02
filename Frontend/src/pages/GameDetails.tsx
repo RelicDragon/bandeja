@@ -11,7 +11,8 @@ import {
   GameInfo,
   GameResults,
   GameParticipants,
-  GameSettings
+  GameSettings,
+  ConfirmationModal
 } from '@/components';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
@@ -41,6 +42,8 @@ export const GameDetailsContent = () => {
   const [isClosingEditMode, setIsClosingEditMode] = useState(false);
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editFormData, setEditFormData] = useState({
     clubId: '',
     courtId: '',
@@ -139,7 +142,7 @@ export const GameDetailsContent = () => {
         resultsByAnyone: game.resultsByAnyone || false,
         hasBookedCourt: game.hasBookedCourt || false,
         afterGameGoToBar: game.afterGameGoToBar || false,
-        hasFixedTeams: game.hasFixedTeams || false,
+        hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
         description: game.description || '',
       });
     }
@@ -222,7 +225,7 @@ export const GameDetailsContent = () => {
 
   const isParticipant = game?.participants.some((p) => p.userId === user?.id) || false;
   const hasPendingInvite = myInvites.length > 0;
-  const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying) || false;
+  const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') || false;
   const canAccessChat = isParticipant || hasPendingInvite || isGuest || game?.isPublic || false;
   const isOwner = game?.participants.some(
     (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
@@ -340,7 +343,7 @@ export const GameDetailsContent = () => {
           resultsByAnyone: game.resultsByAnyone || false,
           hasBookedCourt: game.hasBookedCourt || false,
           afterGameGoToBar: game.afterGameGoToBar || false,
-          hasFixedTeams: game.hasFixedTeams || false,
+          hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
           description: game.description || '',
         });
       }
@@ -368,7 +371,7 @@ export const GameDetailsContent = () => {
         resultsByAnyone: editFormData.resultsByAnyone,
         hasBookedCourt: editFormData.hasBookedCourt,
         afterGameGoToBar: editFormData.afterGameGoToBar,
-        hasFixedTeams: editFormData.hasFixedTeams,
+        hasFixedTeams: game?.maxParticipants === 2 ? false : editFormData.hasFixedTeams,
         description: editFormData.description,
       };
 
@@ -391,6 +394,43 @@ export const GameDetailsContent = () => {
 
   const handleFormDataChange = (data: Partial<typeof editFormData>) => {
     setEditFormData({...editFormData, ...data});
+  };
+
+  const canDeleteGame = () => {
+    if (!game || !user) return false;
+    
+    const isOwner = game.participants.some(
+      (p) => p.userId === user.id && p.role === 'OWNER'
+    );
+    
+    if (!isOwner) return false;
+    
+    if (game.status === 'STARTED' || game.status === 'FINISHED') {
+      return false;
+    }
+    
+    const now = new Date();
+    const startTime = new Date(game.startTime);
+    const twoHoursBeforeStart = new Date(startTime.getTime() - 2 * 60 * 60 * 1000);
+    
+    return now < twoHoursBeforeStart;
+  };
+
+  const handleDeleteGame = async () => {
+    if (!id || isDeleting) return;
+    
+    setIsDeleting(true);
+    try {
+      await gamesApi.delete(id);
+      toast.success(t('gameDetails.gameDeleted'));
+      navigate('/');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirmation(false);
+    }
   };
 
   if (loading) {
@@ -532,6 +572,38 @@ export const GameDetailsContent = () => {
               }
             }
           }}
+        />
+      )}
+
+      {canDeleteGame() && (
+        <Card>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {t('gameDetails.deleteGame')}
+              </h2>
+            </div>
+            <button
+              onClick={() => setShowDeleteConfirmation(true)}
+              disabled={isDeleting}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {t('common.delete')}
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {showDeleteConfirmation && (
+        <ConfirmationModal
+          isOpen={showDeleteConfirmation}
+          title={t('gameDetails.deleteGame')}
+          message={t('gameDetails.deleteGameConfirmation')}
+          confirmText={t('common.delete')}
+          cancelText={t('common.cancel')}
+          confirmVariant="danger"
+          onConfirm={handleDeleteGame}
+          onClose={() => setShowDeleteConfirmation(false)}
         />
       )}
     </div>

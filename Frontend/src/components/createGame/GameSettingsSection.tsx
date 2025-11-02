@@ -9,6 +9,7 @@ interface GameSettingsSectionProps {
   resultsByAnyone: boolean;
   afterGameGoToBar: boolean;
   hasFixedTeams: boolean;
+  maxParticipants: number;
   entityType: EntityType;
   onPublicChange: (checked: boolean) => void;
   onRatingGameChange: (checked: boolean) => void;
@@ -25,6 +26,7 @@ export const GameSettingsSection = ({
   resultsByAnyone,
   afterGameGoToBar,
   hasFixedTeams,
+  maxParticipants,
   entityType,
   onPublicChange,
   onRatingGameChange,
@@ -83,14 +85,16 @@ export const GameSettingsSection = ({
             </div>
           </div>
         )}
-        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-            {t('games.fixedTeams')}
-          </span>
-          <div className="flex-shrink-0">
-            <ToggleSwitch checked={hasFixedTeams} onChange={onHasFixedTeamsChange} />
+        {maxParticipants !== 2 && (
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+              {t('games.fixedTeams')}
+            </span>
+            <div className="flex-shrink-0">
+              <ToggleSwitch checked={hasFixedTeams} onChange={onHasFixedTeamsChange} />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

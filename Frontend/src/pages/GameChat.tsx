@@ -40,10 +40,10 @@ export const GameChat: React.FC = () => {
   const isPlayingParticipant = userParticipant?.isPlaying ?? false;
   const isAdminOrOwner = userParticipant?.role === 'ADMIN' || userParticipant?.role === 'OWNER';
   const hasPendingInvite = game?.invites?.some(invite => invite.receiverId === user?.id) ?? false;
-  const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying) ?? false;
+  const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') ?? false;
   const canAccessChat = isParticipant || hasPendingInvite || isGuest;
   const canViewPublicChat = canAccessChat || game?.isPublic;
-  const isCurrentUserGuest = game?.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying) ?? false;
+  const isCurrentUserGuest = game?.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying && participant.role !== 'OWNER' && participant.role !== 'ADMIN') ?? false;
 
   const loadGame = useCallback(async () => {
     if (!gameId) return null;

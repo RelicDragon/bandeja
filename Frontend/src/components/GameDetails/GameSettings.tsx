@@ -245,18 +245,20 @@ export const GameSettings = ({
               </div>
             </div>
           )}
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('games.fixedTeams')}
-            </span>
-            <div className="flex-shrink-0">
-              <ToggleSwitch
-                checked={isEditMode ? editFormData.hasFixedTeams : game?.hasFixedTeams || false}
-                onChange={(checked) => onFormDataChange({hasFixedTeams: checked})}
-                disabled={!isEditMode}
-              />
+          {game?.maxParticipants !== 2 && (
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('games.fixedTeams')}
+              </span>
+              <div className="flex-shrink-0">
+                <ToggleSwitch
+                  checked={isEditMode ? editFormData.hasFixedTeams : game?.hasFixedTeams || false}
+                  onChange={(checked) => onFormDataChange({hasFixedTeams: checked})}
+                  disabled={!isEditMode}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Name - only show if in edit mode */}

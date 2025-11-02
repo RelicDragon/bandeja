@@ -59,7 +59,7 @@ export const GameCard = ({
 
   const isParticipant = game.participants.some(p => p.userId === user?.id && p.isPlaying);
   const hasPendingInvite = game.invites?.some(invite => invite.receiverId === user?.id);
-  const isGuest = game.participants.some(p => p.userId === user?.id && !p.isPlaying);
+  const isGuest = game.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN');
   const canAccessChat = isParticipant || hasPendingInvite || isGuest || game.isPublic;
   const resultStatus = getGameResultStatus(game, user);
 
