@@ -3,8 +3,8 @@ import { config } from './config/env';
 import prisma from './config/database';
 import { initializeLogManager } from './controllers/logs.controller';
 import SocketService from './services/socket.service';
-import telegramBotService from './services/telegramBot.service';
-import telegramNotificationService from './services/telegramNotification.service';
+import telegramBotService from './services/telegram/bot.service';
+import telegramNotificationService from './services/telegram/notification.service';
 import { GameStatusScheduler } from './services/gameStatusScheduler.service';
 import { createServer } from 'http';
 
@@ -16,8 +16,7 @@ const startServer = async () => {
     await prisma.$connect();
     console.log('✅ Database connected successfully');
 
-    telegramBotService.initialize();
-    telegramNotificationService.initialize(telegramBotService.getBot());
+    await telegramBotService.initialize();
 
     const gameStatusScheduler = new GameStatusScheduler();
     gameStatusScheduler.start();

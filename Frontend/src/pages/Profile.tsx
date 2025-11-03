@@ -29,6 +29,8 @@ interface ProfileContentProps {
   setPreferredCourtSideRight: (value: boolean) => void;
   sendTelegramMessages: boolean;
   setSendTelegramMessages: (value: boolean) => void;
+  sendTelegramInvites: boolean;
+  setSendTelegramInvites: (value: boolean) => void;
   isEditMode?: boolean;
 }
 
@@ -51,6 +53,8 @@ export const ProfileContent = ({
   setPreferredCourtSideRight,
   sendTelegramMessages,
   setSendTelegramMessages,
+  sendTelegramInvites,
+  setSendTelegramInvites,
   isEditMode = false
 }: ProfileContentProps) => {
   const { t, i18n } = useTranslation();
@@ -294,6 +298,32 @@ export const ProfileContent = ({
                         }`}
                       />
                     </button>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {t('profile.sendTelegramInvites')}
+                        </label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {t('profile.sendTelegramInvitesDescription')}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => !isEditMode || setSendTelegramInvites(!sendTelegramInvites)}
+                        disabled={!isEditMode}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+                          sendTelegramInvites ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
+                        } ${!isEditMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            sendTelegramInvites ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </>

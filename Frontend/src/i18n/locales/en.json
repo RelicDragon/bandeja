@@ -296,6 +296,8 @@
     "telegramNotLinked": "Not linked",
     "sendTelegramMessages": "Receive notifications from chats in Telegram",
     "sendTelegramMessagesDescription": "Get notified in Telegram when someone sends a message in your game chats or bug reports",
+    "sendTelegramInvites": "Receive invite notifications in Telegram",
+    "sendTelegramInvitesDescription": "Get notified in Telegram when someone invites you to a game",
     "gender": "Gender",
     "male": "Male",
     "female": "Female",

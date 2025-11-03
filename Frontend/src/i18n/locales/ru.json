@@ -298,6 +298,8 @@
     "telegramNotLinked": "Не привязан",
     "sendTelegramMessages": "Получать уведомления чатов в Telegram",
     "sendTelegramMessagesDescription": "Получайте уведомления в Telegram когда кто-то отправляет сообщение в ваших игровых чатах или отчётах об ошибках",
+    "sendTelegramInvites": "Получать уведомления о приглашениях в Telegram",
+    "sendTelegramInvitesDescription": "Получайте уведомления в Telegram когда кто-то приглашает вас на игру",
     "gender": "Пол",
     "male": "Мужской",
     "female": "Женский",

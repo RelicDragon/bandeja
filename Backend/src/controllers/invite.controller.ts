@@ -3,10 +3,12 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
-import { InviteStatus, ParticipantRole } from '@prisma/client';
+import { InviteStatus } from '@prisma/client';
 import { createSystemMessage } from './chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { USER_SELECT_FIELDS } from '../utils/constants';
+import telegramNotificationService from '../services/telegram/notification.service';
+import { InviteService } from '../services/invite.service';
 
 export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { receiverId, gameId, message, expiresAt } = req.body;
@@ -138,6 +140,13 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
     (global as any).socketService.emitNewInvite(receiverId, invite);
   }
 
+  // Send Telegram notification if enabled
+  if (invite.game) {
+    telegramNotificationService.sendInviteNotification(invite).catch(error => {
+      console.error('Failed to send Telegram invite notification:', error);
+    });
+  }
+
   res.status(201).json({
     success: true,
     data: invite,
@@ -254,148 +263,34 @@ export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response)
 export const acceptInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
-  const invite = await prisma.invite.findUnique({
-    where: { id },
-    include: {
-      sender: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
-      receiver: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
-      game: {
-        include: {
-          participants: true,
-        },
-      },
-    },
-  });
+  const result = await InviteService.acceptInvite(id, req.userId!);
 
-  if (!invite) {
-    throw new ApiError(404, 'errors.invites.notFound');
-  }
-
-  if (invite.receiverId !== req.userId) {
-    throw new ApiError(403, 'errors.invites.notAuthorizedToAccept');
-  }
-
-  if (invite.status !== InviteStatus.PENDING) {
-    throw new ApiError(400, 'errors.invites.alreadyProcessed');
-  }
-
-  if (invite.expiresAt && new Date() > invite.expiresAt) {
-    await prisma.invite.update({
-      where: { id },
-      data: { status: InviteStatus.DECLINED },
-    });
-    throw new ApiError(400, 'errors.invites.expired');
-  }
-
-  if (invite.gameId && invite.game) {
-    if (invite.game.participants.length >= invite.game.maxParticipants) {
-      throw new ApiError(400, 'errors.invites.gameFull');
-    }
-
-    const existingParticipant = invite.game.participants.find(
-      (p: any) => p.userId === req.userId
-    );
-
-    if (!existingParticipant) {
-      await prisma.gameParticipant.create({
-        data: {
-          gameId: invite.gameId,
-          userId: req.userId!,
-          role: ParticipantRole.PARTICIPANT,
-        },
-      });
-    }
-  }
-
-  await prisma.invite.update({
-    where: { id },
-    data: { status: InviteStatus.ACCEPTED },
-  });
-
-  // Send system message to game chat if it's a game invite
-  if (invite.gameId && invite.receiver) {
-    const receiverName = getUserDisplayName(invite.receiver.firstName, invite.receiver.lastName);
-    
-    try {
-      await createSystemMessage(invite.gameId, {
-        type: SystemMessageType.USER_ACCEPTED_INVITE,
-        variables: { userName: receiverName }
-      });
-    } catch (error) {
-      console.error('Failed to create system message for invite acceptance:', error);
-      // Don't fail the invite acceptance if system message fails
-    }
+  if (!result.success) {
+    const statusCode = result.message === 'errors.invites.notFound' ? 404 :
+                      result.message === 'errors.invites.notAuthorizedToAccept' ? 403 : 400;
+    throw new ApiError(statusCode, result.message);
   }
 
   res.json({
     success: true,
-    message: 'Invite accepted successfully',
+    message: result.message,
   });
 });
 
 export const declineInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
-  const invite = await prisma.invite.findUnique({
-    where: { id },
-    include: {
-      receiver: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
-    },
-  });
+  const result = await InviteService.declineInvite(id, req.userId!);
 
-  if (!invite) {
-    throw new ApiError(404, 'errors.invites.notFound');
-  }
-
-  if (invite.receiverId !== req.userId) {
-    throw new ApiError(403, 'errors.invites.notAuthorizedToDecline');
-  }
-
-  if (invite.status !== InviteStatus.PENDING) {
-    throw new ApiError(400, 'errors.invites.alreadyProcessed');
-  }
-
-  await prisma.invite.update({
-    where: { id },
-    data: { status: InviteStatus.DECLINED },
-  });
-
-  // Send system message to game chat if it's a game invite
-  if (invite.gameId && invite.receiver) {
-    const receiverName = getUserDisplayName(invite.receiver.firstName, invite.receiver.lastName);
-    
-    try {
-      await createSystemMessage(invite.gameId, {
-        type: SystemMessageType.USER_DECLINED_INVITE,
-        variables: { userName: receiverName }
-      });
-    } catch (error) {
-      console.error('Failed to create system message for invite decline:', error);
-      // Don't fail the invite decline if system message fails
-    }
+  if (!result.success) {
+    const statusCode = result.message === 'errors.invites.notFound' ? 404 :
+                      result.message === 'errors.invites.notAuthorizedToDecline' ? 403 : 400;
+    throw new ApiError(statusCode, result.message);
   }
 
   res.json({
     success: true,
-    message: 'Invite declined successfully',
+    message: result.message,
   });
 });
 

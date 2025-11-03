@@ -4,7 +4,7 @@ import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import { generateToken } from '../utils/jwt';
 import { AuthProvider } from '@prisma/client';
-import telegramBotService from '../services/telegramBot.service';
+import telegramBotService from '../services/telegram/bot.service';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 
 export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response) => {

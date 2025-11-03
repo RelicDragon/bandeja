@@ -300,6 +300,8 @@
     "telegramNotLinked": "No vinculado",
     "sendTelegramMessages": "Recibir notificaciones de chats en Telegram",
     "sendTelegramMessagesDescription": "Recibe notificaciones en Telegram cuando alguien envía un mensaje en tus chats de juego o informes de errores",
+    "sendTelegramInvites": "Recibir notificaciones de invitaciones en Telegram",
+    "sendTelegramInvitesDescription": "Recibe notificaciones en Telegram cuando alguien te invita a un juego",
     "gender": "Género",
     "male": "Masculino",
     "female": "Femenino",

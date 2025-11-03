@@ -2,7 +2,7 @@ import prisma from '../../config/database';
 import { MessageState, ChatType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
-import telegramNotificationService from '../telegramNotification.service';
+import telegramNotificationService from '../telegram/notification.service';
 
 export class BugMessageService {
   static async validateBugAccess(bugId: string, userId: string) {

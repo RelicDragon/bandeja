@@ -203,9 +203,9 @@ export const useHomeGames = (
       setInvites(prevInvites => prevInvites.filter(invite => invite.id !== data.inviteId));
     };
 
-    const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game }) => {
+    const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game; forceUpdate?: boolean }) => {
       console.log('handleGameUpdated', data);
-      if (data.senderId === user?.id) return; // Don't update if current user made the change
+      if (!data.forceUpdate && data.senderId === user?.id) return; // Don't update if current user made the change (unless forced)
       
       const updatedGame = data.game;
       

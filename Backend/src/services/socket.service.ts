@@ -2,6 +2,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/database';
+import { GameReadService } from './game/read.service';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -269,37 +270,32 @@ class SocketService {
   }
 
   // Emit game update to all users who have access to the game
-  public async emitGameUpdate(gameId: string, senderId: string, game: any) {
+  public async emitGameUpdate(gameId: string, senderId: string, game?: any, forceUpdate: boolean = false) {
     try {
       console.log(`[SocketService] emitGameUpdate called for gameId: ${gameId}, senderId: ${senderId}`);
       
-      const gameData = await prisma.game.findUnique({
-        where: { id: gameId },
-        include: {
-          participants: {
-            select: { userId: true }
-          },
-          invites: {
-            where: { status: 'PENDING' },
-            select: { receiverId: true }
-          }
+      let gameToEmit = game;
+      if (!gameToEmit) {
+        gameToEmit = await GameReadService.getGameById(gameId, senderId);
+        if (!gameToEmit) {
+          console.log(`[SocketService] Game ${gameId} not found`);
+          return;
         }
-      });
-
-      if (!gameData) {
-        console.log(`[SocketService] Game ${gameId} not found`);
-        return;
       }
 
       const userIds = new Set<string>();
       
       // Add all participants
-      gameData.participants.forEach(p => userIds.add(p.userId));
+      if (gameToEmit.participants) {
+        gameToEmit.participants.forEach((p: any) => userIds.add(p.userId || p.user?.id));
+      }
       
       // Add all users with pending invites
-      gameData.invites.forEach(invite => userIds.add(invite.receiverId));
+      if (gameToEmit.invites) {
+        gameToEmit.invites.forEach((invite: any) => userIds.add(invite.receiverId || invite.receiver?.id));
+      }
       
-      console.log(`[SocketService] Game ${gameId} - isPublic: ${gameData.isPublic}, participant/userIds:`, Array.from(userIds));
+      console.log(`[SocketService] Game ${gameId} - isPublic: ${gameToEmit.isPublic}, participant/userIds:`, Array.from(userIds));
       console.log(`[SocketService] Connected users count: ${this.connectedUsers.size}`);
       
       // Get users in the game room to avoid duplicates
@@ -335,7 +331,7 @@ class SocketService {
           userSockets.forEach(socketId => {
             const socket = this.io.sockets.sockets.get(socketId);
             if (socket) {
-              socket.emit('game-updated', { gameId, senderId, game });
+              socket.emit('game-updated', { gameId, senderId, game: gameToEmit, forceUpdate });
               directEmittedCount++;
             }
           });
@@ -352,7 +348,8 @@ class SocketService {
         this.io.to(roomName).emit('game-updated', { 
           gameId, 
           senderId, 
-          game 
+          game: gameToEmit,
+          forceUpdate 
         });
       }
       

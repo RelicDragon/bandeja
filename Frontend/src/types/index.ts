@@ -38,6 +38,7 @@ export interface User {
   preferredCourtSideLeft?: boolean;
   preferredCourtSideRight?: boolean;
   sendTelegramMessages?: boolean;
+  sendTelegramInvites?: boolean;
 }
 
 export interface City {

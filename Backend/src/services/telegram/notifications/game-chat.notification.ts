@@ -1,0 +1,86 @@
+import { Api } from 'grammy';
+import prisma from '../../../config/database';
+import { ChatType } from '@prisma/client';
+import { getDateLabel, formatDate, t } from '../../../utils/translations';
+import { escapeMarkdown, formatDuration } from '../utils';
+
+export async function sendGameChatNotification(
+  api: Api,
+  message: any,
+  game: any,
+  sender: any
+) {
+  const place = game.court?.club?.name || game.club?.name || 'Unknown location';
+  const senderName = `${sender.firstName || ''} ${sender.lastName || ''}`.trim() || 'Unknown';
+  const messageContent = message.content || '[Media]';
+
+  const chatType = message.chatType as ChatType;
+  const participants = await prisma.gameParticipant.findMany({
+    where: { gameId: game.id },
+    include: {
+      user: {
+        select: {
+          id: true,
+          telegramId: true,
+          sendTelegramMessages: true,
+          language: true,
+        }
+      }
+    }
+  });
+
+  for (const participant of participants) {
+    const user = participant.user;
+    
+    if (!user.telegramId || !user.sendTelegramMessages || user.id === sender.id) {
+      continue;
+    }
+
+    let canSeeMessage = false;
+    
+    if (chatType === ChatType.PUBLIC) {
+      canSeeMessage = true;
+    } else if (chatType === ChatType.PRIVATE) {
+      canSeeMessage = participant.isPlaying;
+    } else if (chatType === ChatType.ADMINS) {
+      canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
+    }
+
+    if (canSeeMessage) {
+      try {
+        const lang = user.language || 'en';
+        const shortDate = getDateLabel(game.startTime, lang, false);
+        const startTime = formatDate(game.startTime, 'HH:mm', lang);
+        const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
+        
+        const formattedMessage = `📍 ${escapeMarkdown(place)} ${shortDate} ${startTime}, ${duration}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
+        
+        const showGameButton = t('telegram.showGame', lang);
+        const replyButton = t('telegram.reply', lang);
+        
+        const chatTypeChar = chatType === 'PUBLIC' ? 'P' : chatType === 'PRIVATE' ? 'V' : 'A';
+        const showGameData = `sg:${game.id}:${user.id}`;
+        const replyData = `rm:${message.id}:${game.id}:${chatTypeChar}`;
+        
+        await api.sendMessage(user.telegramId, formattedMessage, { 
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [[
+              {
+                text: showGameButton,
+                callback_data: showGameData
+              },
+              {
+                text: replyButton,
+                callback_data: replyData
+              }
+            ]]
+          }
+        });
+      } catch (error) {
+        console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
+      }
+    }
+  }
+}
+

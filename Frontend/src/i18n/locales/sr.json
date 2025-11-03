@@ -301,6 +301,8 @@
     "telegramNotLinked": "Није повезан",
     "sendTelegramMessages": "Примај обавештења ћаскања у Телеграму",
     "sendTelegramMessagesDescription": "Добијај обавештења у Телеграму када неко пошаље поруку у твојим игарским ћаскањима или извештајима о грешкама",
+    "sendTelegramInvites": "Примај обавештења о позивима у Телеграму",
+    "sendTelegramInvitesDescription": "Добијај обавештења у Телеграму када неко позове вас на игру",
     "gender": "Пол",
     "male": "Мушки",
     "female": "Женски",
