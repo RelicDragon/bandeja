@@ -301,31 +301,41 @@ interface LundaGetCaptchaRequest extends AuthRequest {
 }
 
 export const lundaGetCaptcha = asyncHandler(async (req: LundaGetCaptchaRequest, res: ExpressResponse) => {
-  const { countryCode, phone } = req.body;
+  try {
+    const { countryCode, phone } = req.body;
 
-  const response = await fetch(`${WORKER_PROXY_BASE_URL}/player/captcha`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      parameters: {
-        countryCode,
-        phone,
+    console.log("countryCode", countryCode);
+    console.log("phone", phone);
+    
+    const response = await fetch(`${WORKER_PROXY_BASE_URL}/player/captcha`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    }),
-  } as RequestInit);
+      body: JSON.stringify({
+        parameters: {
+          countryCode,
+          phone,
+        },
+      }),
+    } as RequestInit);
 
-  if (!response.ok) {
-    throw new ApiError(response.status, `Lunda API error: ${response.status}`);
+    if (!response.ok) {
+      throw new ApiError(response.status, `Lunda API error: ${response.status}`);
+    }
+
+    const data = (await response.json()) as { result: any };
+
+    console.log("data", data);
+
+    res.json({
+      success: true,
+      result: data.result,
+    });
+  } catch (error) {
+    console.error('Error in lundaGetCaptcha:', error);
+    throw error;
   }
-
-  const data = (await response.json()) as { result: any };
-
-  res.json({
-    success: true,
-    result: data.result,
-  });
 });
 
 interface LundaSendCodeRequest extends AuthRequest {
