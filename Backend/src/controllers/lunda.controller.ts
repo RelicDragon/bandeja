@@ -11,7 +11,7 @@ import prisma from '../config/database';
 
 // Point this to your Worker (no trailing slash), e.g. "https://your-worker.workers.dev"
 const WORKER_PROXY_BASE_URL =
-  process.env.LUNDA_WORKER_URL ?? 'https://your-worker.workers.dev/api/lunda';
+  process.env.LUNDA_WORKER_URL ?? 'https://reroute-worker.relic-ilya.workers.dev/api/lunda';
 
 // ---- helpers ----
 
