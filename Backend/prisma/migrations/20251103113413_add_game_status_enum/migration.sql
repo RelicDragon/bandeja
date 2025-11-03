@@ -1,6 +1,9 @@
 -- CreateEnum
 CREATE TYPE "GameStatus" AS ENUM ('ANNOUNCED', 'STARTED', 'FINISHED', 'ARCHIVED');
 
+-- Drop existing default (if any)
+ALTER TABLE "Game" ALTER COLUMN "status" DROP DEFAULT;
+
 -- AlterTable: Convert existing status values to enum
 -- Map old string values to new enum values
 ALTER TABLE "Game" ALTER COLUMN "status" TYPE "GameStatus" 
@@ -14,7 +17,7 @@ USING CASE
 END;
 
 -- Set default
-ALTER TABLE "Game" ALTER COLUMN "status" SET DEFAULT 'ANNOUNCED';
+ALTER TABLE "Game" ALTER COLUMN "status" SET DEFAULT 'ANNOUNCED'::"GameStatus";
 
 -- CreateIndex (if not exists)
 CREATE INDEX IF NOT EXISTS "Game_status_idx" ON "Game"("status");
