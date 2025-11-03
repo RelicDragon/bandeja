@@ -24,7 +24,7 @@ export class AdminStatsService {
       }),
       prisma.game.count({
         where: {
-          status: 'scheduled',
+          status: { not: 'ARCHIVED' },
           ...(cityId && {
             court: {
               club: {

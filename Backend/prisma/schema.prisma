@@ -161,7 +161,7 @@ model Game {
   genderTeams     GenderTeam        @default(ANY)
   teamsReady      Boolean           @default(false)
   participantsReady Boolean         @default(false)
-  status          String            @default("scheduled")
+  status          GameStatus        @default(ANNOUNCED)
   hasResults      Boolean           @default(false)
   mediaUrls       String[]
   parentId        String?
@@ -646,4 +646,11 @@ enum BugType {
   CRITICAL
   SUGGESTION
   QUESTION
+}
+
+enum GameStatus {
+  ANNOUNCED
+  STARTED
+  FINISHED
+  ARCHIVED
 }

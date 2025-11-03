@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
-import { GameService } from '../services/game.service';
+import { GameService } from '../services/game/game.service';
 import { GameParticipantService } from '../services/gameParticipant.service';
 
 export const createGame = asyncHandler(async (req: AuthRequest, res: Response) => {

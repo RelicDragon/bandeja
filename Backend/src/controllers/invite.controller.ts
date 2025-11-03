@@ -496,11 +496,10 @@ export const cancelInvite = asyncHandler(async (req: AuthRequest, res: Response)
 });
 
 export const deleteInvitesForStartedGame = async (gameId: string) => {
-  const now = new Date();
-  
   const game = await prisma.game.findUnique({
     where: { id: gameId },
-    include: {
+    select: {
+      status: true,
       invites: {
         where: {
           status: InviteStatus.PENDING,
@@ -514,13 +513,7 @@ export const deleteInvitesForStartedGame = async (gameId: string) => {
     },
   });
 
-  if (!game) {
-    return;
-  }
-
-  const isGameStarted = new Date(game.startTime) <= now && new Date(game.endTime) > now;
-
-  if (!isGameStarted) {
+  if (!game || game.status !== 'STARTED') {
     return;
   }
 

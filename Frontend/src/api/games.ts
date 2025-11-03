@@ -1,6 +1,5 @@
 import api from './axios';
 import { ApiResponse, Game, GameTeam, GameTeamData } from '@/types';
-import { calculateGameStatus } from '@/utils/gameStatus';
 
 export const gamesApi = {
   getAll: async (params?: {
@@ -15,27 +14,11 @@ export const gamesApi = {
     offset?: number;
   }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games', { params });
-    
-    if (response.data.serverTime) {
-      response.data.data = response.data.data.map(game => ({
-        ...game,
-        status: calculateGameStatus(game, response.data.serverTime!)
-      }));
-    }
-    
     return response.data;
   },
 
   getById: async (id: string) => {
     const response = await api.get<ApiResponse<Game>>(`/games/${id}`);
-    
-    if (response.data.serverTime) {
-      response.data.data = {
-        ...response.data.data,
-        status: calculateGameStatus(response.data.data, response.data.serverTime)
-      };
-    }
-    
     return response.data;
   },
 

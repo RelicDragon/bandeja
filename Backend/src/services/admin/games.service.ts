@@ -53,7 +53,7 @@ export class AdminGamesService {
             },
           }),
           status: {
-            not: 'archived',
+            not: 'ARCHIVED',
           },
         },
       },

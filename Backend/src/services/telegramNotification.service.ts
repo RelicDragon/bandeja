@@ -235,9 +235,6 @@ class TelegramNotificationService {
     };
 
     let statusKey = game.status.toLowerCase();
-    if (statusKey === 'scheduled') {
-      statusKey = 'announced';
-    }
     const statusText = t(`games.status.${statusKey}`, lang);
     const statusDisplay = `${statusEmoji[game.status] || statusEmoji[statusKey] || '📅'} ${this.escapeMarkdown(statusText)}`;
 

@@ -4,7 +4,6 @@ import { chatApi } from '@/api/chat';
 import { Game } from '@/types';
 import { useHeaderStore } from '@/store/headerStore';
 import { socketService } from '@/services/socketService';
-import { calculateGameStatus } from '@/utils/gameStatus';
 
 export const usePastGames = (user: any) => {
   const [pastGames, setPastGames] = useState<Game[]>([]);
@@ -167,11 +166,7 @@ export const usePastGames = (user: any) => {
     const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game }) => {
       if (data.senderId === user?.id) return; // Don't update if current user made the change
       
-      // Calculate status using current client time
-      const updatedGame = {
-        ...data.game,
-        status: calculateGameStatus(data.game, new Date().toISOString())
-      };
+      const updatedGame = data.game;
       
       setPastGames(prevPastGames => {
         const gameIndex = prevPastGames.findIndex(g => g.id === data.gameId);

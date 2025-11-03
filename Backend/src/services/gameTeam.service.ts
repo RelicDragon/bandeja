@@ -1,7 +1,7 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { ParticipantRole } from '@prisma/client';
-import { GameService } from './game.service';
+import { GameService } from './game/game.service';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 
 interface GameTeamData {

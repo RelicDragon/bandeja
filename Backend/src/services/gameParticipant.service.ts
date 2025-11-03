@@ -3,7 +3,7 @@ import { ParticipantRole, EntityType } from '@prisma/client';
 import { ApiError } from '../utils/ApiError';
 import { createSystemMessage } from '../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
-import { GameService } from './game.service';
+import { GameService } from './game/game.service';
 
 export class GameParticipantService {
   static async joinGame(gameId: string, userId: string) {

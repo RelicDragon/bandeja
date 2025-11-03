@@ -5,6 +5,7 @@ import { initializeLogManager } from './controllers/logs.controller';
 import SocketService from './services/socket.service';
 import telegramBotService from './services/telegramBot.service';
 import telegramNotificationService from './services/telegramNotification.service';
+import { GameStatusScheduler } from './services/gameStatusScheduler.service';
 import { createServer } from 'http';
 
 const startServer = async () => {
@@ -17,6 +18,9 @@ const startServer = async () => {
 
     telegramBotService.initialize();
     telegramNotificationService.initialize(telegramBotService.getBot());
+
+    const gameStatusScheduler = new GameStatusScheduler();
+    gameStatusScheduler.start();
 
     // Create HTTP server
     const httpServer = createServer(app);
@@ -41,6 +45,7 @@ const startServer = async () => {
       server.close(async () => {
         console.log('HTTP server closed');
         
+        gameStatusScheduler.stop();
         telegramBotService.stop();
         
         await prisma.$disconnect();

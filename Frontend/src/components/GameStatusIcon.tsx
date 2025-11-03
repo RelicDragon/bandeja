@@ -1,4 +1,4 @@
-import { Megaphone, Check, Play, Medal, Archive } from 'lucide-react';
+import { Megaphone, Play, Medal, Archive } from 'lucide-react';
 import { GameStatus } from '@/types';
 
 interface GameStatusIconProps {
@@ -11,8 +11,6 @@ export const GameStatusIcon = ({ status, className = '' }: GameStatusIconProps) 
     switch (status) {
       case 'ANNOUNCED':
         return <Megaphone size={16} />;
-      case 'READY':
-        return <Check size={16} />;
       case 'STARTED':
         return <Play size={16} />;
       case 'FINISHED':
@@ -28,8 +26,6 @@ export const GameStatusIcon = ({ status, className = '' }: GameStatusIconProps) 
     switch (status) {
       case 'ANNOUNCED':
         return 'text-blue-600 dark:text-blue-400';
-      case 'READY':
-        return 'text-green-600 dark:text-green-400';
       case 'STARTED':
         return 'text-orange-600 dark:text-orange-400';
       case 'FINISHED':

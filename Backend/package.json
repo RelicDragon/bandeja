@@ -35,6 +35,7 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
+    "node-cron": "^4.2.1",
     "node-telegram-bot-api": "^0.66.0",
     "sharp": "^0.34.4",
     "socket.io": "^4.8.1"
@@ -47,6 +48,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.5.5",
+    "@types/node-cron": "^3.0.11",
     "@types/node-telegram-bot-api": "^0.64.12",
     "@typescript-eslint/eslint-plugin": "^8.6.0",
     "@typescript-eslint/parser": "^8.6.0",

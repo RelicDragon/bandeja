@@ -327,13 +327,25 @@ export async function saveGameResults(
         }
       }
 
-      await tx.game.update({
+      const updatedGame = await tx.game.findUnique({
         where: { id: gameId },
-        data: {
-          hasResults: true,
-          status: 'completed',
-        },
+        select: { startTime: true, endTime: true },
       });
+      
+      if (updatedGame) {
+        const { calculateGameStatus } = await import('../utils/gameStatus');
+        await tx.game.update({
+          where: { id: gameId },
+          data: {
+            hasResults: true,
+            status: calculateGameStatus({
+              startTime: updatedGame.startTime,
+              endTime: updatedGame.endTime,
+              hasResults: true,
+            }),
+          },
+        });
+      }
     }
 
     return await tx.game.findUnique({
@@ -587,13 +599,25 @@ export async function deleteGameResults(gameId: string, requestUserId: string) {
       where: { gameId },
     });
 
-    await tx.game.update({
+    const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
-      data: {
-        hasResults: false,
-        status: 'scheduled',
-      },
+      select: { startTime: true, endTime: true },
     });
+    
+    if (updatedGame) {
+      const { calculateGameStatus } = await import('../utils/gameStatus');
+      await tx.game.update({
+        where: { id: gameId },
+        data: {
+          hasResults: false,
+          status: calculateGameStatus({
+            startTime: updatedGame.startTime,
+            endTime: updatedGame.endTime,
+            hasResults: false,
+          }),
+        },
+      });
+    }
   });
 }
 

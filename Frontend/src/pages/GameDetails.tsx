@@ -22,7 +22,6 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { Game, Invite, Court, Club, GenderTeam } from '@/types';
 import { canUserEditResults } from '@/utils/gameResults';
 import { socketService } from '@/services/socketService';
-import { calculateGameStatus } from '@/utils/gameStatus';
 
 export const GameDetailsContent = () => {
   const { id } = useParams<{ id: string }>();
@@ -97,11 +96,7 @@ export const GameDetailsContent = () => {
 
     const handleGameUpdated = (data: { gameId: string; senderId: string; game: any }) => {
       if (data.gameId === id && data.senderId !== user?.id) {
-        // Calculate status using current client time
-        const updatedGame = {
-          ...data.game,
-          status: calculateGameStatus(data.game, new Date().toISOString())
-        };
+        const updatedGame = data.game;
         setGame(updatedGame);
       }
     };
