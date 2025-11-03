@@ -353,6 +353,13 @@
     "resultsByAnyone": "Results by anyone",
     "afterGameGoToBar": "Go to bar after game",
     "hasFixedTeams": "Fixed teams",
+    "genderTeams": {
+      "label": "Participants by gender",
+      "any": "Any",
+      "men": "Men",
+      "women": "Women",
+      "mixPairs": "Mixed pairs"
+    },
     "gameName": "Game Name",
     "gameNamePlaceholder": "Enter game name (optional)",
     "comments": "Comments",

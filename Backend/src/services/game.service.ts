@@ -107,6 +107,17 @@ export class GameService {
     }
     
     const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams || false);
+    const genderTeams = data.genderTeams || 'ANY';
+    
+    if (genderTeams === 'MIX_PAIRS' && !(maxParticipants >= 4 && maxParticipants % 2 === 0)) {
+      throw new ApiError(400, 'MIX_PAIRS can only be set for even number of participants (at least 4)');
+    }
+    
+    if (entityType !== EntityType.GAME && entityType !== EntityType.TOURNAMENT && entityType !== EntityType.LEAGUE) {
+      if (genderTeams !== 'ANY') {
+        throw new ApiError(400, 'Gender teams can only be set for GAME, TOURNAMENT, or LEAGUE entity types');
+      }
+    }
     
     const participantsList: string[] = Array.isArray(data.participants) 
       ? data.participants.filter((id: string | null): id is string => id !== null)
@@ -135,6 +146,7 @@ export class GameService {
         hasBookedCourt: data.hasBookedCourt || false,
         afterGameGoToBar: data.afterGameGoToBar || false,
         hasFixedTeams: hasFixedTeams,
+        genderTeams: data.genderTeams || 'ANY',
         metadata: data.metadata,
         participants: {
           create: {
@@ -600,7 +612,7 @@ export class GameService {
 
     const game = await prisma.game.findUnique({
       where: { id },
-      select: { maxParticipants: true, hasFixedTeams: true },
+      select: { maxParticipants: true, hasFixedTeams: true, entityType: true, genderTeams: true },
     });
 
     if (!game) {
@@ -615,6 +627,16 @@ export class GameService {
       updateData.hasFixedTeams = false;
     } else if (data.hasFixedTeams !== undefined) {
       updateData.hasFixedTeams = hasFixedTeams;
+    }
+
+    if (data.genderTeams !== undefined) {
+      if (game.entityType !== 'GAME' && game.entityType !== 'TOURNAMENT' && game.entityType !== 'LEAGUE') {
+        throw new ApiError(400, 'Gender teams can only be set for GAME, TOURNAMENT, or LEAGUE entity types');
+      }
+      if (data.genderTeams === 'MIX_PAIRS' && !(maxParticipants >= 4 && maxParticipants % 2 === 0)) {
+        throw new ApiError(400, 'MIX_PAIRS can only be set for even number of participants (at least 4)');
+      }
+      updateData.genderTeams = data.genderTeams;
     }
 
     await prisma.game.update({
@@ -635,7 +657,7 @@ export class GameService {
     await this.updateGameReadiness(id);
 
     // Return the game with updated readiness status
-    return await prisma.game.findUnique({
+    const updatedGame = await prisma.game.findUnique({
       where: { id },
       include: {
         participants: {
@@ -647,6 +669,23 @@ export class GameService {
         },
       },
     });
+
+    // Emit game update via socket
+    try {
+      const socketService = (global as any).socketService;
+      console.log(`[GameService] updateGame - socketService exists: ${!!socketService}, updatedGame exists: ${!!updatedGame}`);
+      if (socketService && updatedGame) {
+        const fullGame = await this.getGameById(id, userId);
+        console.log(`[GameService] updateGame - fullGame fetched: ${!!fullGame}`);
+        if (fullGame) {
+          await socketService.emitGameUpdate(id, userId, fullGame);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to emit game update:', error);
+    }
+
+    return updatedGame;
   }
 
   static async deleteGame(id: string, userId: string) {

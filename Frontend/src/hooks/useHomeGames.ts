@@ -4,6 +4,7 @@ import { chatApi } from '@/api/chat';
 import { Game, Invite } from '@/types';
 import { socketService } from '@/services/socketService';
 import { useHeaderStore } from '@/store/headerStore';
+import { calculateGameStatus } from '@/utils/gameStatus';
 
 export const useHomeGames = (
   user: any,
@@ -203,14 +204,74 @@ export const useHomeGames = (
       setInvites(prevInvites => prevInvites.filter(invite => invite.id !== data.inviteId));
     };
 
+    const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game }) => {
+      console.log('handleGameUpdated', data);
+      if (data.senderId === user?.id) return; // Don't update if current user made the change
+      
+      // Calculate status using current client time
+      const updatedGame = {
+        ...data.game,
+        status: calculateGameStatus(data.game, new Date().toISOString())
+      };
+      
+      setGames(prevGames => {
+        const gameIndex = prevGames.findIndex(g => g.id === data.gameId);
+        if (gameIndex === -1) {
+          // Game not in list, check if it should be added
+          const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+          if (isParticipant) {
+            const newGames = [...prevGames, updatedGame];
+            return sortGames(newGames);
+          }
+          return prevGames;
+        }
+        
+        const updatedGames = [...prevGames];
+        updatedGames[gameIndex] = updatedGame;
+        return sortGames(updatedGames);
+      });
+      
+      setAvailableGames(prevAvailableGames => {
+        const gameIndex = prevAvailableGames.findIndex(g => g.id === data.gameId);
+        if (gameIndex === -1) {
+          // Check if game should be in available games
+          const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+          const isFull = updatedGame.participants.length >= updatedGame.maxParticipants;
+          const isFuture = new Date(updatedGame.startTime) > new Date();
+          
+          if (!isParticipant && !isFull && isFuture) {
+            return sortGames([...prevAvailableGames, updatedGame]);
+          }
+          return prevAvailableGames;
+        }
+        
+        // Check if game should still be in available games
+        const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+        const isFull = updatedGame.participants.length >= updatedGame.maxParticipants;
+        const isFuture = new Date(updatedGame.startTime) > new Date();
+        
+        if (isParticipant || isFull || !isFuture) {
+          // Remove from available games
+          return prevAvailableGames.filter(g => g.id !== data.gameId);
+        }
+        
+        // Update game
+        const updatedGames = [...prevAvailableGames];
+        updatedGames[gameIndex] = updatedGame;
+        return sortGames(updatedGames);
+      });
+    };
+
     socketService.on('new-invite', handleNewInvite);
     socketService.on('invite-deleted', handleInviteDeleted);
+    socketService.on('game-updated', handleGameUpdated);
 
     return () => {
       socketService.off('new-invite', handleNewInvite);
       socketService.off('invite-deleted', handleInviteDeleted);
+      socketService.off('game-updated', handleGameUpdated);
     };
-  }, []);
+  }, [user?.id]);
 
   return {
     games,

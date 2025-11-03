@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { ToggleSwitch } from '../ToggleSwitch';
-import { EntityType } from '@/types';
+import { Select } from '../Select';
+import { EntityType, GenderTeam } from '@/types';
 
 interface GameSettingsSectionProps {
   isPublic: boolean;
@@ -9,6 +10,7 @@ interface GameSettingsSectionProps {
   resultsByAnyone: boolean;
   afterGameGoToBar: boolean;
   hasFixedTeams: boolean;
+  genderTeams: GenderTeam;
   maxParticipants: number;
   entityType: EntityType;
   onPublicChange: (checked: boolean) => void;
@@ -17,6 +19,7 @@ interface GameSettingsSectionProps {
   onResultsByAnyoneChange: (checked: boolean) => void;
   onAfterGameGoToBarChange: (checked: boolean) => void;
   onHasFixedTeamsChange: (checked: boolean) => void;
+  onGenderTeamsChange: (value: GenderTeam) => void;
 }
 
 export const GameSettingsSection = ({
@@ -26,6 +29,7 @@ export const GameSettingsSection = ({
   resultsByAnyone,
   afterGameGoToBar,
   hasFixedTeams,
+  genderTeams,
   maxParticipants,
   entityType,
   onPublicChange,
@@ -34,6 +38,7 @@ export const GameSettingsSection = ({
   onResultsByAnyoneChange,
   onAfterGameGoToBarChange,
   onHasFixedTeamsChange,
+  onGenderTeamsChange,
 }: GameSettingsSectionProps) => {
   const { t } = useTranslation();
 
@@ -91,7 +96,32 @@ export const GameSettingsSection = ({
               {t('games.fixedTeams')}
             </span>
             <div className="flex-shrink-0">
-              <ToggleSwitch checked={hasFixedTeams} onChange={onHasFixedTeamsChange} />
+              <ToggleSwitch 
+                checked={hasFixedTeams} 
+                onChange={onHasFixedTeamsChange}
+                disabled={!(maxParticipants >= 4 && maxParticipants % 2 === 0)}
+              />
+            </div>
+          </div>
+        )}
+        {(entityType === 'GAME' || entityType === 'TOURNAMENT' || entityType === 'LEAGUE') && (
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+              {t('createGame.genderTeams.label')}
+            </span>
+            <div className="flex-shrink-0 w-32">
+              <Select
+                options={[
+                  { value: 'ANY', label: t('createGame.genderTeams.any') },
+                  { value: 'MEN', label: t('createGame.genderTeams.men') },
+                  { value: 'WOMEN', label: t('createGame.genderTeams.women') },
+                  ...(maxParticipants >= 4 && maxParticipants % 2 === 0
+                    ? [{ value: 'MIX_PAIRS', label: t('createGame.genderTeams.mixPairs') }]
+                    : []),
+                ]}
+                value={genderTeams}
+                onChange={(value) => onGenderTeamsChange(value as GenderTeam)}
+              />
             </div>
           </div>
         )}

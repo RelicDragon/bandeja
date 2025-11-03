@@ -1,5 +1,5 @@
-import { Card } from '@/components';
-import { Game, Club } from '@/types';
+import { Card, Select } from '@/components';
+import { Game, Club, GenderTeam } from '@/types';
 import { Settings, Edit3, Save, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +21,7 @@ interface GameSettingsProps {
     hasBookedCourt: boolean;
     afterGameGoToBar: boolean;
     hasFixedTeams: boolean;
+    genderTeams: GenderTeam;
     description: string;
   };
   onEditModeToggle: () => void;
@@ -254,6 +255,28 @@ export const GameSettings = ({
                 <ToggleSwitch
                   checked={isEditMode ? editFormData.hasFixedTeams : game?.hasFixedTeams || false}
                   onChange={(checked) => onFormDataChange({hasFixedTeams: checked})}
+                  disabled={!isEditMode || !(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0)}
+                />
+              </div>
+            </div>
+          )}
+          {(game?.entityType === 'GAME' || game?.entityType === 'TOURNAMENT' || game?.entityType === 'LEAGUE') && (
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('createGame.genderTeams.label')}
+              </span>
+              <div className="flex-shrink-0 w-32">
+                <Select
+                  options={[
+                    { value: 'ANY', label: t('createGame.genderTeams.any') },
+                    { value: 'MEN', label: t('createGame.genderTeams.men') },
+                    { value: 'WOMEN', label: t('createGame.genderTeams.women') },
+                    ...(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0
+                      ? [{ value: 'MIX_PAIRS', label: t('createGame.genderTeams.mixPairs') }]
+                      : []),
+                  ]}
+                  value={isEditMode ? editFormData.genderTeams : (game?.genderTeams || 'ANY')}
+                  onChange={(value) => onFormDataChange({genderTeams: value as GenderTeam})}
                   disabled={!isEditMode}
                 />
               </div>

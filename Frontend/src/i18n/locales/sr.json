@@ -357,6 +357,13 @@
     "ratingGame": "Рејтинг игра",
     "resultsByAnyone": "Резултате може унети било ко",
     "afterGameGoToBar": "Иди у бар после игре",
+    "genderTeams": {
+      "label": "Учесници по полу",
+      "any": "Било који",
+      "men": "Мушкарци",
+      "women": "Жене",
+      "mixPairs": "Мешовити парови"
+    },
     "gameName": "Назив игре",
     "gameNamePlaceholder": "Унесите назив игре (опционално)",
     "comments": "Коментари",

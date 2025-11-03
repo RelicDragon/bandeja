@@ -18,6 +18,7 @@ export interface SocketEvents {
   'left-game-room': (data: { gameId: string }) => void;
   'joined-bug-room': (data: { bugId: string }) => void;
   'left-bug-room': (data: { bugId: string }) => void;
+  'game-updated': (data: { gameId: string; senderId: string; game: any }) => void;
   'error': (error: { message: string }) => void;
 }
 
@@ -90,7 +91,7 @@ class SocketService {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      console.log('Socket.IO connected');
+      console.log('[SocketService] Socket.IO connected, socket ID:', this.socket?.id);
       this.isConnecting = false;
       this.reconnectAttempts = 0;
     });
@@ -112,7 +113,12 @@ class SocketService {
     });
 
     this.socket.on('error', (error) => {
-      console.error('Socket.IO error:', error);
+      console.error('[SocketService] Socket.IO error:', error);
+    });
+
+    // Add listener for game-updated events to debug
+    this.socket.on('game-updated', (data: any) => {
+      console.log('[SocketService] Received game-updated event:', data);
     });
   }
 
@@ -227,7 +233,11 @@ class SocketService {
   // Listen to events
   public on<K extends keyof SocketEvents>(event: K, callback: SocketEvents[K]) {
     this.ensureConnection();
-    if (!this.socket) return;
+    if (!this.socket) {
+      console.warn(`[SocketService] Cannot listen to ${event}: socket not initialized`);
+      return;
+    }
+    console.log(`[SocketService] Adding listener for event: ${event}`);
     this.socket.on(event, callback as any);
   }
 

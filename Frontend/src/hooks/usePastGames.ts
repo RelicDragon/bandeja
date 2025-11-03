@@ -3,6 +3,8 @@ import { gamesApi } from '@/api';
 import { chatApi } from '@/api/chat';
 import { Game } from '@/types';
 import { useHeaderStore } from '@/store/headerStore';
+import { socketService } from '@/services/socketService';
+import { calculateGameStatus } from '@/utils/gameStatus';
 
 export const usePastGames = (user: any) => {
   const [pastGames, setPastGames] = useState<Game[]>([]);
@@ -160,6 +162,41 @@ export const usePastGames = (user: any) => {
       loadPastGames();
     }
   }, [showPastGames, pastGames.length, loadPastGames]);
+
+  useEffect(() => {
+    const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game }) => {
+      if (data.senderId === user?.id) return; // Don't update if current user made the change
+      
+      // Calculate status using current client time
+      const updatedGame = {
+        ...data.game,
+        status: calculateGameStatus(data.game, new Date().toISOString())
+      };
+      
+      setPastGames(prevPastGames => {
+        const gameIndex = prevPastGames.findIndex(g => g.id === data.gameId);
+        if (gameIndex === -1) {
+          // Game not in list, check if it should be added
+          const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+          if (isParticipant) {
+            const newGames = [...prevPastGames, updatedGame];
+            return sortGames(newGames);
+          }
+          return prevPastGames;
+        }
+        
+        const updatedGames = [...prevPastGames];
+        updatedGames[gameIndex] = updatedGame;
+        return sortGames(updatedGames);
+      });
+    };
+
+    socketService.on('game-updated', handleGameUpdated);
+
+    return () => {
+      socketService.off('game-updated', handleGameUpdated);
+    };
+  }, [user?.id]);
 
   return {
     pastGames,

@@ -9,6 +9,7 @@ import { formatDate } from '@/utils/dateFormat';
 import { getGameResultStatus } from '@/utils/gameResults';
 import { useNavigationStore } from '@/store/navigationStore';
 import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award } from 'lucide-react';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
   game: Game;
@@ -134,6 +135,24 @@ export const GameCard = ({
         </h3>
         <div className="flex items-center gap-2 mb-1">
           <GameStatusIcon status={game.status} />
+          {game.genderTeams && game.genderTeams !== 'ANY' && (
+            <div className="flex items-center gap-1">
+              {game.genderTeams === 'MIX_PAIRS' ? (
+                <div className="h-6 px-2 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 dark:from-blue-600 dark:to-pink-600 flex items-center justify-center gap-1">
+                  <i className="bi bi-gender-male text-white text-[10px]"></i>
+                  <i className="bi bi-gender-female -ml-1 text-white text-[10px]"></i>
+                </div>
+              ) : (
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                  game.genderTeams === 'MEN' 
+                    ? 'bg-blue-500 dark:bg-blue-600' 
+                    : 'bg-pink-500 dark:bg-pink-600'
+                }`}>
+                  <i className={`bi ${game.genderTeams === 'MEN' ? 'bi-gender-male' : 'bi-gender-female'} text-white text-xs`}></i>
+                </div>
+              )}
+            </div>
+          )}
           {game.participants.some(
             (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
           ) && (

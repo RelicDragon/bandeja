@@ -268,6 +268,100 @@ class SocketService {
     });
   }
 
+  // Emit game update to all users who have access to the game
+  public async emitGameUpdate(gameId: string, senderId: string, game: any) {
+    try {
+      console.log(`[SocketService] emitGameUpdate called for gameId: ${gameId}, senderId: ${senderId}`);
+      
+      const gameData = await prisma.game.findUnique({
+        where: { id: gameId },
+        include: {
+          participants: {
+            select: { userId: true }
+          },
+          invites: {
+            where: { status: 'PENDING' },
+            select: { receiverId: true }
+          }
+        }
+      });
+
+      if (!gameData) {
+        console.log(`[SocketService] Game ${gameId} not found`);
+        return;
+      }
+
+      const userIds = new Set<string>();
+      
+      // Add all participants
+      gameData.participants.forEach(p => userIds.add(p.userId));
+      
+      // Add all users with pending invites
+      gameData.invites.forEach(invite => userIds.add(invite.receiverId));
+      
+      console.log(`[SocketService] Game ${gameId} - isPublic: ${gameData.isPublic}, participant/userIds:`, Array.from(userIds));
+      console.log(`[SocketService] Connected users count: ${this.connectedUsers.size}`);
+      
+      // Get users in the game room to avoid duplicates
+      const roomName = `game-${gameId}`;
+      const socketsInRoom = await this.io.in(roomName).fetchSockets();
+      const userIdsInRoom = new Set<string>();
+      
+      // Check which users have sockets in this room by checking all connected sockets
+      for (const [userId, socketIds] of this.connectedUsers) {
+        for (const socketId of socketIds) {
+          const socket = this.io.sockets.sockets.get(socketId) as AuthenticatedSocket | undefined;
+          if (socket && socket.gameRooms?.has(gameId)) {
+            userIdsInRoom.add(userId);
+            break; // User found, no need to check other sockets for this user
+          }
+        }
+      }
+      
+      console.log(`[SocketService] Users in room ${roomName}:`, Array.from(userIdsInRoom), `(${socketsInRoom.length} total sockets)`);
+      
+      // Emit directly to participants and users with pending invites who are NOT in the room
+      let directEmittedCount = 0;
+      userIds.forEach(userId => {
+        // Skip if user is already in the room (will get it via room broadcast)
+        if (userIdsInRoom.has(userId)) {
+          console.log(`[SocketService] User ${userId} is in room, skipping direct emit`);
+          return;
+        }
+        
+        const userSockets = this.connectedUsers.get(userId);
+        if (userSockets) {
+          console.log(`[SocketService] User ${userId} has ${userSockets.size} socket(s), emitting directly`);
+          userSockets.forEach(socketId => {
+            const socket = this.io.sockets.sockets.get(socketId);
+            if (socket) {
+              socket.emit('game-updated', { gameId, senderId, game });
+              directEmittedCount++;
+            }
+          });
+        } else {
+          console.log(`[SocketService] User ${userId} is not connected`);
+        }
+      });
+      
+      // For public games, emit to all users in the game room (includes participants and non-participants)
+      // For private games, also emit to room (participants who joined chat will get it)
+      const roomEmitCount = socketsInRoom.length;
+      if (roomEmitCount > 0) {
+        console.log(`[SocketService] Emitting to game room ${roomName}, sockets in room: ${roomEmitCount}`);
+        this.io.to(roomName).emit('game-updated', { 
+          gameId, 
+          senderId, 
+          game 
+        });
+      }
+      
+      console.log(`[SocketService] Emitted game-updated event: ${directEmittedCount} direct socket(s) + ${roomEmitCount} via room broadcast`);
+    } catch (error) {
+      console.error('Error emitting game update:', error);
+    }
+  }
+
   // Check if user is online
   public isUserOnline(userId: string): boolean {
     return this.connectedUsers.has(userId) && this.connectedUsers.get(userId)!.size > 0;

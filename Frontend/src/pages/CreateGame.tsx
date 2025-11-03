@@ -32,6 +32,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
   const [resultsByAnyone, setResultsByAnyone] = useState<boolean>(false);
   const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(false);
   const [hasFixedTeams, setHasFixedTeams] = useState<boolean>(false);
+  const [genderTeams, setGenderTeams] = useState<'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'>('ANY');
   const [gameName, setGameName] = useState<string>('');
   const [comments, setComments] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -291,6 +292,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
         hasBookedCourt: hasBookedCourt,
         afterGameGoToBar: afterGameGoToBar,
         hasFixedTeams: hasFixedTeams,
+        genderTeams: genderTeams,
         name: gameName || undefined,
         description: comments,
         participants: participants.filter((id): id is string => id !== null) as any,
@@ -402,6 +404,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
           resultsByAnyone={resultsByAnyone}
           afterGameGoToBar={afterGameGoToBar}
           hasFixedTeams={hasFixedTeams}
+          genderTeams={genderTeams}
           maxParticipants={maxParticipants}
           entityType={entityType}
           onPublicChange={setIsPublic}
@@ -410,6 +413,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
           onResultsByAnyoneChange={setResultsByAnyone}
           onAfterGameGoToBarChange={setAfterGameGoToBar}
           onHasFixedTeamsChange={setHasFixedTeams}
+          onGenderTeamsChange={setGenderTeams}
         />
 
         <GameNameSection

@@ -63,6 +63,7 @@ export class GameParticipantService {
 
     await this.sendJoinMessage(gameId, userId);
     await GameService.updateGameReadiness(gameId);
+    await this.emitGameUpdate(gameId, userId);
     return 'Successfully joined the game';
   }
 
@@ -100,6 +101,7 @@ export class GameParticipantService {
 
       await this.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_GAME);
       await GameService.updateGameReadiness(gameId);
+      await this.emitGameUpdate(gameId, userId);
       return 'Successfully left the game';
     } else {
       // If not playing (guest), remove from game entirely
@@ -109,6 +111,7 @@ export class GameParticipantService {
 
       await this.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_CHAT);
       await GameService.updateGameReadiness(gameId);
+      await this.emitGameUpdate(gameId, userId);
       return 'Successfully left the chat';
     }
   }
@@ -152,6 +155,7 @@ export class GameParticipantService {
 
     await this.sendJoinMessage(gameId, userId, SystemMessageType.USER_JOINED_CHAT);
     await GameService.updateGameReadiness(gameId);
+    await this.emitGameUpdate(gameId, userId);
     return 'Successfully joined the chat as a guest';
   }
 
@@ -214,6 +218,7 @@ export class GameParticipantService {
     }
 
     await GameService.updateGameReadiness(gameId);
+    await this.emitGameUpdate(gameId, userId);
     return `Successfully ${isPlaying ? 'joined' : 'left'} the game`;
   }
 
@@ -256,6 +261,7 @@ export class GameParticipantService {
     });
 
     await this.sendPromotionMessage(gameId, participant.user, SystemMessageType.USER_PROMOTED_TO_ADMIN);
+    await this.emitGameUpdate(gameId, ownerId);
     return 'Admin added successfully';
   }
 
@@ -299,6 +305,7 @@ export class GameParticipantService {
     });
 
     await this.sendPromotionMessage(gameId, participant.user, SystemMessageType.USER_REVOKED_ADMIN);
+    await this.emitGameUpdate(gameId, ownerId);
     return 'Admin privileges revoked successfully';
   }
 
@@ -347,6 +354,7 @@ export class GameParticipantService {
 
     await this.sendKickMessage(gameId, targetParticipant.user);
     await GameService.updateGameReadiness(gameId);
+    await this.emitGameUpdate(gameId, currentUserId);
     return 'User kicked successfully';
   }
 
@@ -400,6 +408,7 @@ export class GameParticipantService {
 
     await this.sendOwnershipTransferMessage(gameId, newOwnerParticipant.user);
     await GameService.updateGameReadiness(gameId);
+    await this.emitGameUpdate(gameId, currentOwnerId);
     return 'Ownership transferred successfully';
   }
 
@@ -484,6 +493,20 @@ export class GameParticipantService {
       } catch (error) {
         console.error('Failed to create system message for ownership transfer:', error);
       }
+    }
+  }
+
+  private static async emitGameUpdate(gameId: string, senderId: string) {
+    try {
+      const socketService = (global as any).socketService;
+      if (socketService) {
+        const game = await GameService.getGameById(gameId, senderId);
+        if (game) {
+          await socketService.emitGameUpdate(gameId, senderId, game);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to emit game update:', error);
     }
   }
 }

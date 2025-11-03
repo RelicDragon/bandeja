@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameInfoProps {
   game: Game;
@@ -124,6 +125,24 @@ export const GameInfo = ({
         <div className="pr-20 flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <GameStatusIcon status={game.status} className="p-1" />
+            {game.genderTeams && game.genderTeams !== 'ANY' && (
+              <div className="flex items-center gap-1">
+                {game.genderTeams === 'MIX_PAIRS' ? (
+                  <div className="h-6 px-2 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 dark:from-blue-600 dark:to-pink-600 flex items-center justify-center gap-1">
+                    <i className="bi bi-gender-male text-white text-[10px]"></i>
+                    <i className="bi bi-gender-female -ml-1 text-white text-[10px]"></i>
+                  </div>
+                ) : (
+                  <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                    game.genderTeams === 'MEN' 
+                      ? 'bg-blue-500 dark:bg-blue-600' 
+                      : 'bg-pink-500 dark:bg-pink-600'
+                  }`}>
+                    <i className={`bi ${game.genderTeams === 'MEN' ? 'bi-gender-male' : 'bi-gender-female'} text-white text-[10px]`}></i>
+                  </div>
+                )}
+              </div>
+            )}
             {isOwner && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
                 <Crown size={14} />

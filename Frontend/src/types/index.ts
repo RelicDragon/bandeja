@@ -2,6 +2,7 @@ export type AuthProvider = 'PHONE' | 'TELEGRAM';
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'WINNER_COURT';
 export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'BAR' | 'TRAINING';
+export type GenderTeam = 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
 export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
 export type Gender = 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
 export type GameStatus = 'ANNOUNCED' | 'READY' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
@@ -144,6 +145,7 @@ export interface Game {
   hasBookedCourt?: boolean;
   afterGameGoToBar?: boolean;
   hasFixedTeams?: boolean;
+  genderTeams?: GenderTeam;
   teamsReady?: boolean;
   participantsReady?: boolean;
   status: GameStatus;

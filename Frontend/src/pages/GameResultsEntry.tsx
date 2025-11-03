@@ -52,8 +52,9 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
   const [testHorizontalLayout, setTestHorizontalLayout] = useState(false);
 
   // Use test values if set, otherwise use props
-  const effectiveShowCourts = testShowCourts || showCourts;
-  const effectiveHorizontalLayout = testHorizontalLayout || horizontalLayout;
+  const isTournament = game?.entityType === 'TOURNAMENT';
+  const effectiveShowCourts = isTournament ? (testShowCourts || showCourts) : false;
+  const effectiveHorizontalLayout = isTournament ? (testHorizontalLayout || horizontalLayout) : false;
 
   const players = useMemo(() => (game?.participants.map(p => p.user) || []) as User[], [game?.participants]);
 
@@ -63,11 +64,12 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
     canEditResults: canEdit,
   });
 
+  const isTournamentForRounds = game?.entityType === 'TOURNAMENT';
   const roundManagement = useRoundManagement({
     players,
     hasResults: game?.hasResults || false,
     canEditResults: canEdit,
-    multiRounds: true,
+    multiRounds: isTournamentForRounds && multiRounds,
   });
 
   const {
@@ -83,7 +85,7 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
     updateSetResult,
     removeSet,
     canEnterResults,
-  } = multiRounds ? {
+  } = (multiRounds && isTournamentForRounds) ? {
     matches: roundManagement.rounds.flatMap(r => r.matches),
     setMatches: (newMatches: any) => {
       if (roundManagement.rounds.length > 0) {
@@ -198,6 +200,13 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
           showClock
         });
         
+        const isTournament = response.data.entityType === 'TOURNAMENT';
+        if (!isTournament) {
+          setMultiRounds(false);
+          setTestHorizontalLayout(false);
+          setTestShowCourts(false);
+        }
+        
         if (response.data.hasResults) {
           try {
             const resultsResponse = await gamesApi.getResults(id);
@@ -255,6 +264,14 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
       setEditingMatchId(null);
     }
   }, [isPresetGame, canEdit, setEditingMatchId]);
+
+  useEffect(() => {
+    if (game && game.entityType !== 'TOURNAMENT') {
+      setMultiRounds(false);
+      setTestHorizontalLayout(false);
+      setTestShowCourts(false);
+    }
+  }, [game]);
 
   const handlePlayerSelect = (playerId: string) => {
     if (!selectedMatchTeam || !canEdit) return;
@@ -389,7 +406,7 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
             <ArrowLeft size={20} />
             {t('common.back')}
           </button>
-          {canEdit && !game?.hasResults && (
+          {canEdit && !game?.hasResults && game?.entityType === 'TOURNAMENT' && (
             <button
               onClick={() => setMultiRounds(!multiRounds)}
               className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
@@ -401,7 +418,7 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
               Multi-Round
             </button>
           )}
-          {canEdit && (
+          {canEdit && game?.entityType === 'TOURNAMENT' && (
             <button
               onClick={() => setTestShowCourts(!testShowCourts)}
               className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
@@ -413,7 +430,7 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
               Courts
             </button>
           )}
-          {canEdit && (
+          {canEdit && game?.entityType === 'TOURNAMENT' && (
             <button
               onClick={() => setTestHorizontalLayout(!testHorizontalLayout)}
               className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
@@ -442,7 +459,7 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
           onDragOver={dragAndDrop.handleDragOver}
           onClick={handleContainerClick}
         >
-          {multiRounds ? (
+          {(multiRounds && isTournamentForRounds) ? (
             <div className="space-y-1 pt-4 pb-4">
               {roundManagement.rounds.map((round) => (
                 <RoundCard

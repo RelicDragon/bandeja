@@ -158,6 +158,7 @@ model Game {
   hasBookedCourt  Boolean           @default(false)
   afterGameGoToBar Boolean          @default(false)
   hasFixedTeams   Boolean           @default(false)
+  genderTeams     GenderTeam        @default(ANY)
   teamsReady      Boolean           @default(false)
   participantsReady Boolean         @default(false)
   status          String            @default("scheduled")
@@ -530,6 +531,13 @@ enum EntityType {
   LEAGUE
   BAR
   TRAINING
+}
+
+enum GenderTeam {
+  ANY
+  MEN
+  WOMEN
+  MIX_PAIRS
 }
 
 enum ParticipantRole {

@@ -356,6 +356,13 @@
     "ratingGame": "Juego de puntuación",
     "resultsByAnyone": "Resultados por cualquiera",
     "afterGameGoToBar": "Ir al bar después del juego",
+    "genderTeams": {
+      "label": "Participantes por género",
+      "any": "Cualquiera",
+      "men": "Hombres",
+      "women": "Mujeres",
+      "mixPairs": "Parejas mixtas"
+    },
     "gameName": "Nombre del juego",
     "gameNamePlaceholder": "Ingrese el nombre del juego (opcional)",
     "comments": "Comentarios",

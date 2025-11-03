@@ -19,9 +19,10 @@ import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
-import { Game, Invite, Court, Club } from '@/types';
+import { Game, Invite, Court, Club, GenderTeam } from '@/types';
 import { canUserEditResults } from '@/utils/gameResults';
 import { socketService } from '@/services/socketService';
+import { calculateGameStatus } from '@/utils/gameStatus';
 
 export const GameDetailsContent = () => {
   const { id } = useParams<{ id: string }>();
@@ -55,6 +56,7 @@ export const GameDetailsContent = () => {
     hasBookedCourt: false,
     afterGameGoToBar: false,
     hasFixedTeams: false,
+    genderTeams: 'ANY' as GenderTeam,
     description: '',
   });
 
@@ -93,12 +95,25 @@ export const GameDetailsContent = () => {
       }
     };
 
+    const handleGameUpdated = (data: { gameId: string; senderId: string; game: any }) => {
+      if (data.gameId === id && data.senderId !== user?.id) {
+        // Calculate status using current client time
+        const updatedGame = {
+          ...data.game,
+          status: calculateGameStatus(data.game, new Date().toISOString())
+        };
+        setGame(updatedGame);
+      }
+    };
+
     socketService.on('invite-deleted', handleInviteDeleted);
+    socketService.on('game-updated', handleGameUpdated);
 
     return () => {
       socketService.off('invite-deleted', handleInviteDeleted);
+      socketService.off('game-updated', handleGameUpdated);
     };
-  }, [id]);
+  }, [id, user?.id]);
 
   useEffect(() => {
     const fetchCourts = async () => {
@@ -143,6 +158,7 @@ export const GameDetailsContent = () => {
         hasBookedCourt: game.hasBookedCourt || false,
         afterGameGoToBar: game.afterGameGoToBar || false,
         hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
+        genderTeams: (game.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS',
         description: game.description || '',
       });
     }
@@ -344,6 +360,7 @@ export const GameDetailsContent = () => {
           hasBookedCourt: game.hasBookedCourt || false,
           afterGameGoToBar: game.afterGameGoToBar || false,
           hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
+          genderTeams: (game.genderTeams || 'ANY') as GenderTeam,
           description: game.description || '',
         });
       }
@@ -372,6 +389,7 @@ export const GameDetailsContent = () => {
         hasBookedCourt: editFormData.hasBookedCourt,
         afterGameGoToBar: editFormData.afterGameGoToBar,
         hasFixedTeams: game?.maxParticipants === 2 ? false : editFormData.hasFixedTeams,
+        genderTeams: editFormData.genderTeams,
         description: editFormData.description,
       };
 
