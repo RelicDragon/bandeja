@@ -45,7 +45,16 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
 
   // Game is more than 24 hours past end time - archived
   const hoursSinceEnd = (now.getTime() - endTime.getTime()) / (1000 * 60 * 60);
-  if (hoursSinceEnd > 24) {
+  const isArchived = hoursSinceEnd > 24 || game.status === 'ARCHIVED';
+  
+  if (isArchived) {
+    // For archived games, allow viewing if results exist, but never allow editing
+    if (game.resultsStatus !== 'NONE') {
+      return {
+        message: 'games.results.positive.canViewResults',
+        canModify: false
+      };
+    }
     return {
       message: 'games.results.problems.gameArchived',
       canModify: false

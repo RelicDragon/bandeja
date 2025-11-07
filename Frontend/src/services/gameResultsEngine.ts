@@ -831,14 +831,18 @@ class GameResultsEngineClass {
           round.matches.forEach((match: any, matchIndex: number) => {
           const teamA: string[] = [];
           const teamB: string[] = [];
+          let teamAId: string | undefined;
+          let teamBId: string | undefined;
           
           if (match.teams && Array.isArray(match.teams)) {
             match.teams.forEach((team: any) => {
               const playerIds = team.playerIds || (team.players || []).map((p: any) => p.userId || p.user?.id).filter(Boolean);
               if (team.teamNumber === 1 && playerIds.length > 0) {
                 teamA.push(...playerIds);
+                teamAId = team.id;
               } else if (team.teamNumber === 2 && playerIds.length > 0) {
                 teamB.push(...playerIds);
+                teamBId = team.id;
               }
             });
           }
@@ -847,11 +851,21 @@ class GameResultsEngineClass {
               ? match.sets.map((s: any) => ({ teamA: s.teamAScore || 0, teamB: s.teamBScore || 0 }))
               : [{ teamA: 0, teamB: 0 }];
             
+            let winnerTeam: 'teamA' | 'teamB' | null = null;
+            if (match.winnerId) {
+              if (match.winnerId === teamAId) {
+                winnerTeam = 'teamA';
+              } else if (match.winnerId === teamBId) {
+                winnerTeam = 'teamB';
+              }
+            }
+            
             matches.push({
               id: `match-${matchIndex + 1}`,
               teamA,
               teamB,
               sets,
+              winnerId: winnerTeam,
             });
           });
         }
@@ -898,6 +912,16 @@ class GameResultsEngineClass {
     }
 
     if (game.status === 'ARCHIVED') {
+      // Allow viewing results for archived games if results exist
+      if (game.resultsStatus !== 'NONE') {
+        return {
+          type: 'HAS_RESULTS',
+          message: 'games.results.positive.canViewResults',
+          canEdit: false,
+          showInputs: false,
+          showClock: false,
+        };
+      }
       return {
         type: 'GAME_ARCHIVED',
         message: 'games.results.problems.gameArchived',

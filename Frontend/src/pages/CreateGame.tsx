@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameSetupSection, GameSetupModal } from '@/components';
+import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameSetupSection, GameSetupModal, MultipleCourtsSelector } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
 import { usersApi } from '@/api/users';
@@ -59,6 +59,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
     winnerOfRound?: any;
     winnerOfMatch?: any;
   }>({});
+  const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>([]);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const clubSectionRef = useRef<HTMLDivElement>(null);
   const timeSectionRef = useRef<HTMLDivElement>(null);
@@ -333,6 +334,15 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
         }
       }
 
+      if (selectedCourtIds.length > 0 && gameResponse.data.id) {
+        try {
+          const { gameCourtsApi } = await import('@/api/gameCourts');
+          await gameCourtsApi.setGameCourts(gameResponse.data.id, selectedCourtIds);
+        } catch (courtError) {
+          console.error('Failed to set game courts:', courtError);
+        }
+      }
+
       navigate('/');
     } catch (error) {
       console.error('Failed to create game:', error);
@@ -378,6 +388,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
     winnerOfGame: any;
     winnerOfRound: any;
     winnerOfMatch: any;
+    matchGenerationType: any;
   }) => {
     setGameSetup(params);
   };
@@ -464,6 +475,16 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
           onOpenSetup={() => setIsGameSetupModalOpen(true)}
           hasSetup={hasGameSetup}
         />
+
+        {maxParticipants > 4 && (
+          <MultipleCourtsSelector
+            courts={courts}
+            selectedClub={selectedClub}
+            entityType={entityType}
+            isEditing={true}
+            onCourtsChange={setSelectedCourtIds}
+          />
+        )}
 
         <GameNameSection
           name={gameName}

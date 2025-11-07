@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, TrendingUp, TrendingDown, Beer, Star, ArrowLeft } from 'lucide-react';
+import { X, Beer, Star, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
@@ -276,7 +276,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.3, ease: 'easeOut' }}
                   >
-                    <LevelHistoryView stats={stats} onBack={() => setShowLevelView(false)} />
+                    <LevelHistoryView stats={stats} />
                   </motion.div>
                 ) : (
                   <motion.div

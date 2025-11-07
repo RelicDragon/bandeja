@@ -20,10 +20,9 @@ const TennisBallIcon = () => (
 
 interface LevelHistoryViewProps {
   stats: UserStats;
-  onBack: () => void;
 }
 
-export const LevelHistoryView = ({ stats, onBack }: LevelHistoryViewProps) => {
+export const LevelHistoryView = ({ stats }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const { user, levelHistory, socialLevelHistory } = stats;
   const [showSocialLevel, setShowSocialLevel] = useState(false);

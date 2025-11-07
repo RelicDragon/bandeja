@@ -408,6 +408,7 @@ export const GameResultsEntry = ({ showCourts = false }: GameResultsEntryProps) 
     winnerOfGame: WinnerOfGame;
     winnerOfRound: WinnerOfRound;
     winnerOfMatch: WinnerOfMatch;
+    matchGenerationType: any;
   }) => {
     if (!id || !user?.id) return;
     
@@ -419,6 +420,7 @@ export const GameResultsEntry = ({ showCourts = false }: GameResultsEntryProps) 
         winnerOfGame: params.winnerOfGame,
         winnerOfRound: params.winnerOfRound,
         winnerOfMatch: params.winnerOfMatch,
+        matchGenerationType: params.matchGenerationType,
       });
       
       const response = await gamesApi.getById(id);
@@ -943,6 +945,7 @@ export const GameResultsEntry = ({ showCourts = false }: GameResultsEntryProps) 
                 winnerOfGame: game.winnerOfGame,
                 winnerOfRound: game.winnerOfRound,
                 winnerOfMatch: game.winnerOfMatch,
+                matchGenerationType: game.matchGenerationType,
               }}
               onClose={() => setShowSetupModal(false)}
               onConfirm={handleSetupConfirm}

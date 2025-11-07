@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
-import { EntityType, WinnerOfGame, WinnerOfRound, WinnerOfMatch } from '@/types';
+import { EntityType, WinnerOfGame, WinnerOfRound, WinnerOfMatch, MatchGenerationType } from '@/types';
 
 interface GameSetupModalProps {
   isOpen: boolean;
@@ -17,6 +17,7 @@ interface GameSetupModalProps {
     winnerOfGame?: WinnerOfGame;
     winnerOfRound?: WinnerOfRound;
     winnerOfMatch?: WinnerOfMatch;
+    matchGenerationType?: MatchGenerationType;
   };
   onClose: () => void;
   onConfirm: (params: {
@@ -26,6 +27,7 @@ interface GameSetupModalProps {
     winnerOfGame: WinnerOfGame;
     winnerOfRound: WinnerOfRound;
     winnerOfMatch: WinnerOfMatch;
+    matchGenerationType: MatchGenerationType;
   }) => void;
 }
 
@@ -40,7 +42,7 @@ export const GameSetupModal = ({
   onConfirm 
 }: GameSetupModalProps) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'general' | 'winner'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'winner' | 'matches'>('general');
   const [fixedNumberOfSets, setFixedNumberOfSets] = useState(initialValues?.fixedNumberOfSets ?? 0);
   const [maxTotalPointsPerSet, setMaxTotalPointsPerSet] = useState(initialValues?.maxTotalPointsPerSet ?? 0);
   const [maxPointsPerTeam, setMaxPointsPerTeam] = useState(initialValues?.maxPointsPerTeam ?? 0);
@@ -54,6 +56,9 @@ export const GameSetupModal = ({
   );
   const [winnerOfMatch, setWinnerOfMatch] = useState<WinnerOfMatch>(
     initialValues?.winnerOfMatch ?? 'BY_SCORES'
+  );
+  const [matchGenerationType, setMatchGenerationType] = useState<MatchGenerationType>(
+    initialValues?.matchGenerationType ?? 'HANDMADE'
   );
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -88,6 +93,7 @@ export const GameSetupModal = ({
       winnerOfGame,
       winnerOfRound,
       winnerOfMatch,
+      matchGenerationType,
     });
     handleClose();
   };
@@ -191,6 +197,16 @@ export const GameSetupModal = ({
                 }`}
               >
                 {t('gameResults.winner')}
+              </button>
+              <button
+                onClick={() => setActiveTab('matches')}
+                className={`px-3 py-1.5 text-sm font-medium transition-all duration-200 border-b-2 ${
+                  activeTab === 'matches'
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                {t('gameResults.matches')}
               </button>
             </div>
           </div>
@@ -341,88 +357,82 @@ export const GameSetupModal = ({
 
             {activeTab === 'winner' && (
               <>
-                {fixedNumberOfSets !== 1 && (
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      {t('gameResults.winnerOfMatch')}
-                    </label>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setWinnerOfMatch('BY_SCORES')}
-                        disabled={!isEditing}
-                        className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                          winnerOfMatch === 'BY_SCORES'
-                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                        } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      >
-                        {t('gameResults.byScores')}
-                      </button>
-                      <button
-                        onClick={() => setWinnerOfMatch('BY_SETS')}
-                        disabled={!isEditing}
-                        className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                          winnerOfMatch === 'BY_SETS'
-                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                        } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      >
-                        {t('gameResults.bySets')}
-                      </button>
-                    </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    {t('gameResults.winnerOfMatch')}
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setWinnerOfMatch('BY_SCORES')}
+                      disabled={!isEditing}
+                      className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        winnerOfMatch === 'BY_SCORES'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.byScores')}
+                    </button>
+                    <button
+                      onClick={() => setWinnerOfMatch('BY_SETS')}
+                      disabled={!isEditing}
+                      className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        winnerOfMatch === 'BY_SETS'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.bySets')}
+                    </button>
                   </div>
-                )}
+                </div>
 
-                {hasMultiRounds && (
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      {t('gameResults.winnerOfRound')}
-                    </label>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setWinnerOfRound('BY_MATCHES_WON')}
-                        disabled={!isEditing}
-                        className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                          winnerOfRound === 'BY_MATCHES_WON'
-                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                        } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      >
-                        {t('gameResults.byMatchesWon')}
-                      </button>
-                      <button
-                        onClick={() => setWinnerOfRound('BY_SCORES_DELTA')}
-                        disabled={!isEditing}
-                        className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                          winnerOfRound === 'BY_SCORES_DELTA'
-                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                        } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      >
-                        {t('gameResults.byScoresDelta')}
-                      </button>
-                    </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    {t('gameResults.winnerOfRound')}
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setWinnerOfRound('BY_MATCHES_WON')}
+                      disabled={!isEditing}
+                      className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        winnerOfRound === 'BY_MATCHES_WON'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.byMatchesWon')}
+                    </button>
+                    <button
+                      onClick={() => setWinnerOfRound('BY_SCORES_DELTA')}
+                      disabled={!isEditing}
+                      className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        winnerOfRound === 'BY_SCORES_DELTA'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.byScoresDelta')}
+                    </button>
                   </div>
-                )}
+                </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     {t('gameResults.winnerOfGame')}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {hasMultiRounds && (
-                      <button
-                        onClick={() => setWinnerOfGame('BY_ROUNDS_WON')}
-                        disabled={!isEditing}
-                        className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                          winnerOfGame === 'BY_ROUNDS_WON'
-                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                        } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      >
-                        {t('gameResults.byRoundsWon')}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setWinnerOfGame('BY_ROUNDS_WON')}
+                      disabled={!isEditing}
+                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        winnerOfGame === 'BY_ROUNDS_WON'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.byRoundsWon')}
+                    </button>
                     <button
                       onClick={() => setWinnerOfGame('BY_MATCHES_WON')}
                       disabled={!isEditing}
@@ -444,6 +454,84 @@ export const GameSetupModal = ({
                       } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
                     >
                       {t('gameResults.byScoresDelta')}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeTab === 'matches' && (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    {t('gameResults.matchGenerationType')}
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setMatchGenerationType('HANDMADE')}
+                      disabled={!isEditing}
+                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        matchGenerationType === 'HANDMADE'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.matchGenerationTypeHandmade')}
+                    </button>
+                    <button
+                      onClick={() => setMatchGenerationType('FIXED')}
+                      disabled={!isEditing}
+                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        matchGenerationType === 'FIXED'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.matchGenerationTypeFixed')}
+                    </button>
+                    <button
+                      onClick={() => setMatchGenerationType('RANDOM')}
+                      disabled={!isEditing}
+                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        matchGenerationType === 'RANDOM'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.matchGenerationTypeRandom')}
+                    </button>
+                    <button
+                      onClick={() => setMatchGenerationType('ROUND_ROBIN')}
+                      disabled={!isEditing}
+                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        matchGenerationType === 'ROUND_ROBIN'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.matchGenerationTypeRoundRobin')}
+                    </button>
+                    <button
+                      onClick={() => setMatchGenerationType('ESCALERA')}
+                      disabled={!isEditing}
+                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        matchGenerationType === 'ESCALERA'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.matchGenerationTypeEscalera')}
+                    </button>
+                    <button
+                      onClick={() => setMatchGenerationType('RATING')}
+                      disabled={!isEditing}
+                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        matchGenerationType === 'RATING'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.matchGenerationTypeRating')}
                     </button>
                   </div>
                 </div>

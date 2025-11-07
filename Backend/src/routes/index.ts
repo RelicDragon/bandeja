@@ -18,6 +18,7 @@ import favoritesRoutes from './favorites.routes';
 import bugRoutes from './bug.routes';
 import bugChatRoutes from './bugChat.routes';
 import lundaRoutes from './lunda.routes';
+import gameCourtRoutes from './gameCourt.routes';
 
 const router = Router();
 
@@ -40,6 +41,7 @@ router.use('/favorites', favoritesRoutes);
 router.use('/bugs', bugRoutes);
 router.use('/bug-chat', bugChatRoutes);
 router.use('/lunda', lundaRoutes);
+router.use('/game-courts', gameCourtRoutes);
 
 export default router;
 

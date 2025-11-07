@@ -188,7 +188,7 @@ export const GameCard = ({
               <span className="hidden sm:inline">{t('games.fixedTeams')}</span>
             </span>
           )}
-          {(game.status === 'STARTED' || game.status === 'FINISHED') && game.resultsStatus === 'FINAL' && (
+          {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && game.resultsStatus === 'FINAL' && (
             <span className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
               <Award size={12} />
               {t('games.resultsAvailable')}
@@ -333,7 +333,7 @@ export const GameCard = ({
           </div>
         </div>
 
-        {(game.status === 'STARTED' || game.status === 'FINISHED') && resultStatus && (
+        {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && resultStatus && (
           <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
             <div className={`text-sm px-3 py-2 rounded-lg ${
               resultStatus.message === 'games.results.problems.accessDenied'

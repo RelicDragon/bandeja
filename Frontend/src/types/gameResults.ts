@@ -8,6 +8,7 @@ export interface Match {
   teamA: string[];
   teamB: string[];
   sets: SetResult[];
+  winnerId?: 'teamA' | 'teamB' | null;
 }
 
 export interface Round {

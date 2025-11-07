@@ -64,18 +64,21 @@ export const HorizontalMatchCard = ({
   const renderTeam = (team: 'teamA' | 'teamB') => {
     const teamPlayers = match[team];
     const maxPlayersPerTeam = players.length === 2 ? 1 : 2;
+    const isWinner = match.winnerId === team;
     
     return (
       <div
         data-drop-zone
         data-match-id={match.id}
         data-team={team}
-        className={`min-h-[40px] p-2 w-full flex items-center justify-center ${
+        className={`min-h-[40px] p-2 w-full flex items-center justify-center relative ${
           isPresetGame 
             ? ''
             : (isEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''
         } ${
           !isPresetGame && canEditResults && draggedPlayer ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' : ''
+        } ${
+          isWinner ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-lg' : ''
         }`}
         onDragOver={!isPresetGame && canEditResults ? onDragOver : undefined}
         onDrop={!isPresetGame && canEditResults ? (e) => onDrop(e, team) : undefined}

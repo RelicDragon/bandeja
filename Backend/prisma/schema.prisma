@@ -121,18 +121,19 @@ model Club {
 }
 
 model Court {
-  id           String   @id @default(cuid())
+  id           String      @id @default(cuid())
   name         String
   clubId       String
   courtType    String?
-  isIndoor     Boolean  @default(false)
+  isIndoor     Boolean     @default(false)
   surfaceType  String?
   pricePerHour Float?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  club         Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  club         Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
   games        Game[]
+  gameCourts   GameCourt[]
 
   @@index([clubId])
   @@index([isActive])
@@ -172,6 +173,7 @@ model Game {
   winnerOfGame    WinnerOfGame      @default(BY_ROUNDS_WON)
   winnerOfRound   WinnerOfRound     @default(BY_MATCHES_WON)
   winnerOfMatch   WinnerOfMatch     @default(BY_SCORES)
+  matchGenerationType MatchGenerationType @default(HANDMADE)
   mediaUrls       String[]
   parentId        String?
   metadata        Json?
@@ -187,6 +189,7 @@ model Game {
   rounds          Round[]
   outcomes        GameOutcome[]
   fixedTeams      GameTeam[]
+  gameCourts      GameCourt[]
 
   @@index([clubId])
   @@index([courtId])
@@ -687,4 +690,29 @@ enum WinnerOfRound {
 enum WinnerOfMatch {
   BY_SETS
   BY_SCORES
+}
+
+enum MatchGenerationType {
+  HANDMADE
+  FIXED
+  RANDOM
+  ROUND_ROBIN
+  ESCALERA
+  RATING
+}
+
+model GameCourt {
+  id        String   @id @default(cuid())
+  gameId    String
+  courtId   String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  court     Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, courtId])
+  @@unique([gameId, order])
+  @@index([gameId])
+  @@index([courtId])
 }

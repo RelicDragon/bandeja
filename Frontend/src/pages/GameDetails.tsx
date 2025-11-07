@@ -13,7 +13,8 @@ import {
   GameParticipants,
   GameSettings,
   ConfirmationModal,
-  GameSetupModal
+  GameSetupModal,
+  MultipleCourtsSelector
 } from '@/components';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { GameSetup } from '@/components/GameDetails/GameSetup';
@@ -257,6 +258,10 @@ export const GameDetailsContent = () => {
 
   const canEnterResults = () => {
     if (!game || !user) return false;
+    // Allow viewing results for archived games if results exist
+    if (game.status === 'ARCHIVED' && game.resultsStatus !== 'NONE') {
+      return true;
+    }
     return canUserEditResults(game, user);
   };
 
@@ -427,6 +432,7 @@ export const GameDetailsContent = () => {
     winnerOfGame: any;
     winnerOfRound: any;
     winnerOfMatch: any;
+    matchGenerationType: any;
   }) => {
     if (!id) return;
 
@@ -557,6 +563,23 @@ export const GameDetailsContent = () => {
         canEdit={canEdit}
       />
 
+      {game.maxParticipants > 4 && (
+        <MultipleCourtsSelector
+          gameId={game.id}
+          courts={courts}
+          selectedClub={game.clubId || ''}
+          entityType={game.entityType}
+          isEditing={canEdit}
+          initialGameCourts={game.gameCourts || []}
+          onSave={async () => {
+            if (id) {
+              const response = await gamesApi.getById(id);
+              setGame(response.data);
+            }
+          }}
+        />
+      )}
+
       {game.hasFixedTeams && (
         <FixedTeamsManagement
           key={`fixed-teams-${game.id}`}
@@ -671,6 +694,7 @@ export const GameDetailsContent = () => {
             winnerOfGame: game.winnerOfGame,
             winnerOfRound: game.winnerOfRound,
             winnerOfMatch: game.winnerOfMatch,
+            matchGenerationType: game.matchGenerationType,
           }}
           onClose={() => setIsGameSetupModalOpen(false)}
           onConfirm={handleGameSetupConfirm}

@@ -80,6 +80,22 @@ const getGameInclude = () => ({
     },
     orderBy: { teamNumber: 'asc' },
   },
+  gameCourts: {
+    include: {
+      court: {
+        include: {
+          club: {
+            select: {
+              id: true,
+              name: true,
+              address: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { order: 'asc' },
+  },
 });
 
 export class GameReadService {

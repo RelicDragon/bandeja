@@ -77,6 +77,7 @@ export class GameCreateService {
         maxTotalPointsPerSet: data.maxTotalPointsPerSet ?? 0,
         maxPointsPerTeam: data.maxPointsPerTeam ?? 0,
         hasMultiRounds: data.hasMultiRounds ?? false,
+        matchGenerationType: data.matchGenerationType ?? 'HANDMADE',
         metadata: data.metadata,
         status: calculateGameStatus({
           startTime,
@@ -171,6 +172,22 @@ export class GameCreateService {
             },
           },
           orderBy: { teamNumber: 'asc' },
+        },
+        gameCourts: {
+          include: {
+            court: {
+              include: {
+                club: {
+                  select: {
+                    id: true,
+                    name: true,
+                    address: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { order: 'asc' },
         },
       },
     });
