@@ -1,10 +1,11 @@
-import { GameType, WinnerOfMatch, WinnerOfRound, WinnerOfGame } from '@/types';
+import { GameType, WinnerOfMatch, WinnerOfRound, WinnerOfGame, MatchGenerationType } from '@/types';
 import gameTypeTemplatesData from '@/config/gameTypeTemplates.json';
 
 export interface GameTypeTemplate {
   winnerOfMatch: WinnerOfMatch;
   winnerOfRound: WinnerOfRound;
   winnerOfGame: WinnerOfGame;
+  matchGenerationType: MatchGenerationType;
 }
 
 type GameTypeTemplates = Record<GameType, GameTypeTemplate>;

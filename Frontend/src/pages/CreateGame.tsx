@@ -221,6 +221,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
       winnerOfMatch: template.winnerOfMatch,
       winnerOfRound: template.winnerOfRound,
       winnerOfGame: template.winnerOfGame,
+      matchGenerationType: template.matchGenerationType,
     }));
   }, [gameType]);
 

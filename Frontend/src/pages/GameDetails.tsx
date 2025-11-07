@@ -25,6 +25,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
 import { canUserEditResults } from '@/utils/gameResults';
 import { socketService } from '@/services/socketService';
+import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 
 export const GameDetailsContent = () => {
   const { id } = useParams<{ id: string }>();
@@ -115,6 +116,16 @@ export const GameDetailsContent = () => {
       socketService.off('game-updated', handleGameUpdated);
     };
   }, [id, user?.id]);
+
+  useEffect(() => {
+    if (!id || !isEditMode || !game) return;
+    if (editFormData.gameType === game.gameType) return;
+    
+    const template = applyGameTypeTemplate(editFormData.gameType);
+    gamesApi.update(id, { matchGenerationType: template.matchGenerationType }).catch(error => {
+      console.error('Failed to update matchGenerationType:', error);
+    });
+  }, [editFormData.gameType, isEditMode, id, game?.gameType]);
 
   useEffect(() => {
     const fetchCourts = async () => {
