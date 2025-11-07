@@ -4,16 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { SetResultModal } from '@/components/SetResultModal';
 import { CourtModal } from '@/components/CourtModal';
-import { TeamPlayerSelector } from '@/components';
+import { TeamPlayerSelector, ConfirmationModal, SyncStatusIcon, GameSetupModal, OutcomesDisplay } from '@/components';
 import { gamesApi } from '@/api';
-import { Game, User } from '@/types';
+import { resultsApi } from '@/api/results';
+import { User, WinnerOfGame, WinnerOfRound, WinnerOfMatch } from '@/types';
 import toast from 'react-hot-toast';
-import { canUserEditResults, canUserSeeGame, getGameResultStatus } from '@/utils/gameResults';
 import { useAuthStore } from '@/store/authStore';
-import { GameState } from '@/types/gameResults';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
-import { useMatchManagement } from '@/hooks/useMatchManagement';
-import { useRoundManagement } from '@/hooks/useRoundManagement';
+import { useGameResultsEngine } from '@/hooks/useGameResultsEngine';
+import { GameResultsEngine } from '@/services/gameResultsEngine';
 import { 
   GameStatusDisplay, 
   MatchCard,
@@ -25,114 +24,145 @@ import {
 
 interface GameResultsEntryProps {
   showCourts?: boolean;
-  horizontalLayout?: boolean;
 }
 
-export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false }: GameResultsEntryProps) => {
+export const GameResultsEntry = ({ showCourts = false }: GameResultsEntryProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   
-  const [game, setGame] = useState<Game | null>(null);
+  const engine = useGameResultsEngine({
+    gameId: id,
+    userId: user?.id,
+  });
+
   const [showSetModal, setShowSetModal] = useState<{ roundId?: string; matchId: string; setIndex: number } | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showPlayerSelector, setShowPlayerSelector] = useState(false);
   const [selectedMatchTeam, setSelectedMatchTeam] = useState<{ roundId?: string; matchId: string; team: 'teamA' | 'teamB' } | null>(null);
-  const [canEdit, setCanEdit] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [gameState, setGameState] = useState<GameState | null>(null);
   const [multiRounds, setMultiRounds] = useState(false);
   const [courtAssignments, setCourtAssignments] = useState<Record<string, string>>({});
   const [showCourtModal, setShowCourtModal] = useState(false);
   const [selectedCourtMatchId, setSelectedCourtMatchId] = useState<string | null>(null);
+  const [showRestartConfirmation, setShowRestartConfirmation] = useState(false);
+  const [showFinishConfirmation, setShowFinishConfirmation] = useState(false);
+  const [showEditConfirmation, setShowEditConfirmation] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isResultsEntryMode, setIsResultsEntryMode] = useState(false);
+  const [isEditingResults, setIsEditingResults] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [showSetupModal, setShowSetupModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'scores' | 'results'>('scores');
 
-  // Test switches for development
   const [testShowCourts, setTestShowCourts] = useState(false);
-  const [testHorizontalLayout, setTestHorizontalLayout] = useState(false);
 
-  // Use test values if set, otherwise use props
-  const isTournament = game?.entityType === 'TOURNAMENT';
-  const effectiveShowCourts = isTournament ? (testShowCourts || showCourts) : false;
-  const effectiveHorizontalLayout = isTournament ? (testHorizontalLayout || horizontalLayout) : false;
+  const game = engine.game;
+  const rounds = engine.rounds;
+  const canEdit = engine.canEdit;
+  const gameState = engine.gameState;
+  const loading = engine.loading;
+  const expandedRoundId = engine.expandedRoundId;
+  const editingMatchId = engine.editingMatchId;
+  const hasChanges = engine.pendingOpsCount > 0;
+  const syncStatus = engine.syncStatus;
 
   const players = useMemo(() => (game?.participants.map(p => p.user) || []) as User[], [game?.participants]);
 
-  const matchManagement = useMatchManagement({
-    players,
-    hasResults: game?.hasResults || false,
-    canEditResults: canEdit,
-  });
+  const needsGameSetup = game?.resultsStatus === 'NONE';
 
-  const isTournamentForRounds = game?.entityType === 'TOURNAMENT';
-  const roundManagement = useRoundManagement({
-    players,
-    hasResults: game?.hasResults || false,
-    canEditResults: canEdit,
-    multiRounds: isTournamentForRounds && multiRounds,
-  });
+  const isTournament = game?.entityType === 'TOURNAMENT';
+  const effectiveShowCourts = isTournament ? (testShowCourts || showCourts) : false;
+  const effectiveHorizontalLayout = game?.fixedNumberOfSets === 1;
 
-  const {
-    matches,
-    setMatches,
-    editingMatchId,
-    setEditingMatchId,
-    isPresetGame,
-    addMatch,
-    removeMatch,
-    removePlayerFromTeam,
-    handleDrop: handleMatchDrop,
-    updateSetResult,
-    removeSet,
-    canEnterResults,
-  } = (multiRounds && isTournamentForRounds) ? {
-    matches: roundManagement.rounds.flatMap(r => r.matches),
-    setMatches: (newMatches: any) => {
-      if (roundManagement.rounds.length > 0) {
-        const updatedRounds = roundManagement.rounds.map((r, idx) => ({
-          ...r,
-          matches: newMatches.slice(idx, idx + 1)
-        }));
-        roundManagement.setRounds(updatedRounds);
-      }
-    },
-    editingMatchId: roundManagement.editingMatchId,
-    setEditingMatchId: roundManagement.setEditingMatchId,
-    isPresetGame: roundManagement.isPresetGame,
-    addMatch: () => {
-      if (roundManagement.expandedRoundId) {
-        roundManagement.addMatch(roundManagement.expandedRoundId);
-      }
-    },
-    removeMatch: (matchId: string) => {
-      if (roundManagement.expandedRoundId) {
-        roundManagement.removeMatch(roundManagement.expandedRoundId, matchId);
-      }
-    },
-    removePlayerFromTeam: (matchId: string, team: 'teamA' | 'teamB', playerId: string) => {
-      if (roundManagement.expandedRoundId) {
-        roundManagement.removePlayerFromTeam(roundManagement.expandedRoundId, matchId, team, playerId);
-      }
-    },
-    handleDrop: (matchId: string, team: 'teamA' | 'teamB', draggedPlayer: string) => {
-      if (roundManagement.expandedRoundId) {
-        roundManagement.handleDrop(roundManagement.expandedRoundId, matchId, team, draggedPlayer);
-      }
-    },
-    updateSetResult: (matchId: string, setIndex: number, teamAScore: number, teamBScore: number) => {
-      if (roundManagement.expandedRoundId) {
-        roundManagement.updateSetResult(roundManagement.expandedRoundId, matchId, setIndex, teamAScore, teamBScore);
-      }
-    },
-    removeSet: (matchId: string, setIndex: number) => {
-      if (roundManagement.expandedRoundId) {
-        roundManagement.removeSet(roundManagement.expandedRoundId, matchId, setIndex);
-      }
-    },
-    canEnterResults: roundManagement.canEnterResults,
-  } : matchManagement;
+  const matches = useMemo(() => 
+    Array.isArray(rounds) && rounds.length > 0
+      ? rounds[0].matches || []
+      : []
+  , [rounds]);
+  
+  const isPresetGame = players.length === 2 || players.length === 4;
 
-  const dragAndDrop = useDragAndDrop(canEdit);
+  const canEnterResults = (match: { teamA: string[]; teamB: string[] }) => {
+    return match.teamA.length > 0 && match.teamB.length > 0;
+  };
+
+  const hasMatchesWithTeamsReady = useMemo(() => {
+    if (rounds.length === 0) return false;
+    return rounds.some(round => 
+      round.matches.some(match => 
+        match.teamA.length > 0 && match.teamB.length > 0
+      )
+    );
+  }, [rounds]);
+
+  const effectiveCanEdit = canEdit && isEditingResults;
+  const isFinalStatus = game?.resultsStatus === 'FINAL';
+  const showFinishButton = canEdit && isEditingResults && isResultsEntryMode && rounds.length > 0 && rounds.some(r => r.matches.length > 0) && hasMatchesWithTeamsReady;
+  const showEditButton = canEdit && !isEditingResults && isFinalStatus && isResultsEntryMode;
+  const finishButtonPanelHeight = (showFinishButton || showEditButton) ? 80 : 0;
+
+  const handleMatchDrop = async (matchId: string, team: 'teamA' | 'teamB', draggedPlayer: string) => {
+    const roundId = multiRounds && expandedRoundId ? expandedRoundId : 'round-1';
+    await engine.addPlayerToTeam(roundId, matchId, team, draggedPlayer);
+  };
+
+  const updateSetResult = async (matchId: string, setIndex: number, teamAScore: number, teamBScore: number) => {
+    const roundId = multiRounds && expandedRoundId ? expandedRoundId : 'round-1';
+    const round = rounds.find(r => r.id === roundId);
+    const match = round?.matches.find(m => m.id === matchId);
+    
+    if (!match) return;
+    
+    const fixedNumberOfSets = game?.fixedNumberOfSets || 0;
+    
+    if (fixedNumberOfSets === 0) {
+      if (setIndex >= match.sets.length) {
+        await engine.addSet(roundId, matchId);
+      }
+      await engine.updateSetScore(roundId, matchId, setIndex, teamAScore, teamBScore);
+      
+      if (setIndex === match.sets.length - 1 && (teamAScore > 0 || teamBScore > 0)) {
+        const updatedRound = rounds.find(r => r.id === roundId);
+        const updatedMatch = updatedRound?.matches.find(m => m.id === matchId);
+        if (updatedMatch && updatedMatch.sets.length === setIndex + 1) {
+          await engine.addSet(roundId, matchId);
+        }
+      }
+    } else {
+      while (match.sets.length <= setIndex) {
+        await engine.addSet(roundId, matchId);
+        const updatedRound = rounds.find(r => r.id === roundId);
+        const updatedMatch = updatedRound?.matches.find(m => m.id === matchId);
+        if (!updatedMatch) return;
+        Object.assign(match, updatedMatch);
+      }
+      await engine.updateSetScore(roundId, matchId, setIndex, teamAScore, teamBScore);
+    }
+  };
+
+  const removeSet = async (matchId: string, setIndex: number) => {
+    const roundId = multiRounds && expandedRoundId ? expandedRoundId : 'round-1';
+    await engine.removeSet(roundId, matchId, setIndex);
+  };
+
+  const addMatch = async () => {
+    const roundId = multiRounds && expandedRoundId ? expandedRoundId : 'round-1';
+    await engine.addMatch(roundId);
+  };
+
+  const removeMatch = async (matchId: string) => {
+    const roundId = multiRounds && expandedRoundId ? expandedRoundId : 'round-1';
+    await engine.removeMatch(roundId, matchId);
+  };
+
+  const removePlayerFromTeam = async (matchId: string, team: 'teamA' | 'teamB', playerId: string) => {
+    const roundId = multiRounds && expandedRoundId ? expandedRoundId : 'round-1';
+    await engine.removePlayerFromTeam(roundId, matchId, team, playerId);
+  };
+
+  const dragAndDrop = useDragAndDrop(effectiveCanEdit);
 
   const handleDrop = (e: React.DragEvent | null, matchId: string, team: 'teamA' | 'teamB') => {
     if (e) e.preventDefault();
@@ -145,195 +175,211 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
     dragAndDrop.handleTouchEnd(e, handleMatchDrop);
   };
 
-  useEffect(() => {
-    const fetchGame = async () => {
-      if (!id) return;
-
-      try {
-        const response = await gamesApi.getById(id);
-        setGame(response.data);
-        
-        // Check if user can see the game
-        if (!canUserSeeGame(response.data, user)) {
-          toast.error(t('errors.accessDenied'));
-          navigate(`/games/${id}`);
-          return;
-        }
-        
-        const canEditRes = canUserEditResults(response.data, user);
-        setCanEdit(canEditRes);
-        
-        const resultStatus = getGameResultStatus(response.data, user);
-        const now = new Date();
-        const startTime = new Date(response.data.startTime);
-        const endTime = new Date(response.data.endTime);
-        const hoursSinceEnd = (now.getTime() - endTime.getTime()) / (1000 * 60 * 60);
-        
-        let gameStateType: GameState['type'];
-        let showInputs = false;
-        let showClock = false;
-        
-        if (resultStatus?.message === 'games.results.problems.accessDenied') {
-          gameStateType = 'ACCESS_DENIED';
-        } else if (resultStatus?.message === 'games.results.problems.gameArchived') {
-          gameStateType = 'GAME_ARCHIVED';
-        } else if (resultStatus?.message === 'games.results.problems.gameNotStarted') {
-          gameStateType = 'GAME_NOT_STARTED';
-          showClock = canEditRes;
-        } else if (resultStatus?.message === 'games.results.problems.insufficientPlayers') {
-          gameStateType = 'INSUFFICIENT_PLAYERS';
-          showClock = canEditRes;
-        } else if (response.data.hasResults) {
-          gameStateType = 'HAS_RESULTS';
-          showInputs = true;
-        } else {
-          gameStateType = 'NO_RESULTS';
-          showInputs = canEditRes && now >= startTime && hoursSinceEnd <= 24;
-          showClock = canEditRes && now >= startTime && hoursSinceEnd <= 24;
-        }
-        
-        setGameState({
-          type: gameStateType,
-          message: resultStatus?.message || 'games.results.positive.noResultsYet',
-          canEdit: canEditRes,
-          showInputs,
-          showClock
-        });
-        
-        const isTournament = response.data.entityType === 'TOURNAMENT';
-        if (!isTournament) {
-          setMultiRounds(false);
-          setTestHorizontalLayout(false);
-          setTestShowCourts(false);
-        }
-        
-        if (response.data.hasResults) {
-          try {
-            const resultsResponse = await gamesApi.getResults(id);
-            const apiResults = resultsResponse.data;
-            const convertedMatches = apiResults.map((result: any, index: number) => ({
-              id: `match-${index + 1}`,
-              teamA: result.team1 || [],
-              teamB: result.team2 || [],
-              sets: result.sets || [{ teamA: 0, teamB: 0 }]
-            }));
-            
-            if (multiRounds) {
-              const initialRound = {
-                id: 'round-1',
-                name: `${t('gameResults.round')} 1`,
-                matches: convertedMatches
-              };
-              roundManagement.setRounds([initialRound]);
-              roundManagement.setExpandedRoundId(initialRound.id);
-            } else {
-              matchManagement.setMatches(convertedMatches);
-            }
-          } catch (error) {
-            console.error('Failed to fetch results:', error);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch game:', error);
-        toast.error(t('errors.generic'));
-        navigate(`/games/${id}`);
-      } finally {
-        setLoading(false);
-        setTimeout(() => {
-          setMounted(true);
-        }, 300);
-      }
-    };
-
-    fetchGame();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, navigate, t, user, multiRounds]);
 
   useEffect(() => {
     if (matches.length === 1 && !editingMatchId 
       && !isPresetGame 
-      && canEdit 
+      && effectiveCanEdit 
       && matches[0].teamA.length === 0 
       && matches[0].teamB.length === 0 && !mounted) {
-      setEditingMatchId(matches[0].id);
+      engine.setEditingMatchId(matches[0].id);
     }
-  }, [matches, editingMatchId, isPresetGame, canEdit, mounted, setEditingMatchId]);
+  }, [matches, editingMatchId, isPresetGame, effectiveCanEdit, mounted, engine]);
 
   useEffect(() => {
-    if (isPresetGame || !canEdit) {
-      setEditingMatchId(null);
+    if (isPresetGame || !effectiveCanEdit) {
+      engine.setEditingMatchId(null);
     }
-  }, [isPresetGame, canEdit, setEditingMatchId]);
+  }, [isPresetGame, effectiveCanEdit, engine]);
 
   useEffect(() => {
     if (game && game.entityType !== 'TOURNAMENT') {
       setMultiRounds(false);
-      setTestHorizontalLayout(false);
       setTestShowCourts(false);
     }
   }, [game]);
 
-  const handlePlayerSelect = (playerId: string) => {
-    if (!selectedMatchTeam || !canEdit) return;
+  useEffect(() => {
+    if (engine.initialized && !mounted) {
+      setTimeout(() => setMounted(true), 300);
+    }
+  }, [engine.initialized, mounted]);
+
+  useEffect(() => {
+    if (engine.initialized && rounds.length > 0 && !isResultsEntryMode) {
+      const hasResultsOrPendingOps = game?.resultsStatus !== 'NONE' || hasChanges;
+      if (hasResultsOrPendingOps) {
+        setIsResultsEntryMode(true);
+        // Auto-enable editing for non-FINAL statuses
+        if (game?.resultsStatus !== 'FINAL') {
+          setIsEditingResults(true);
+        }
+      }
+    }
+  }, [engine.initialized, rounds.length, isResultsEntryMode, game?.resultsStatus, hasChanges]);
+
+  const handleFinish = async () => {
+    if (!id) return;
+    
+    setIsSaving(true);
+    try {
+      await engine.forceSync();
+
+      if (engine.pendingOpsCount === 0) {
+        await resultsApi.recalculateOutcomes(id);
+        toast.success(t('common.saved') || 'Results saved successfully');
+        const response = await gamesApi.getById(id);
+        if (response?.data) {
+          window.location.reload();
+        }
+      } else {
+        toast.error(t('errors.syncPending') || 'Please wait for sync to complete');
+      }
+    } catch (error: any) {
+      console.error('Failed to save results:', error);
+      toast.error(error?.response?.data?.message || t('errors.generic'));
+    } finally {
+      setIsSaving(false);
+      setShowFinishConfirmation(false);
+    }
+  };
+
+  const handleRestart = async () => {
+    if (!id || !user?.id) return;
+    
+    setIsRestarting(true);
+    try {
+      await engine.resetGame();
+      
+      if (engine.pendingOpsCount === 0) {
+        const response = await gamesApi.getById(id);
+        if (response?.data) {
+          const updatedGame = { ...response.data, resultsStatus: 'NONE' };
+          engine.updateGame(updatedGame);
+          setIsResultsEntryMode(false);
+        }
+        toast.success(t('common.restarted') || 'Game restarted successfully');
+      } else {
+        toast.error(t('errors.syncPending') || 'Please wait for sync to complete');
+      }
+    } catch (error: any) {
+      console.error('Failed to restart game:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || t('errors.generic');
+      
+      if (error?.response?.status === 409) {
+        toast.error(errorMessage);
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      setIsRestarting(false);
+      setShowRestartConfirmation(false);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!id || !user?.id) return;
+    
+    setIsEditing(true);
+    try {
+      const state = GameResultsEngine.getState();
+      const baseVersion = state.shadow?.version;
+      
+      await resultsApi.editGameResults(id, baseVersion);
+      
+      const response = await gamesApi.getById(id);
+      if (response?.data) {
+        const updatedGame = response.data;
+        engine.updateGame(updatedGame);
+        setIsEditingResults(true);
+      }
+      toast.success(t('common.saved') || 'Results ready for editing');
+    } catch (error: any) {
+      console.error('Failed to edit results:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || t('errors.generic');
+      
+      if (error?.response?.status === 409) {
+        toast.error(errorMessage);
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      setIsEditing(false);
+      setShowEditConfirmation(false);
+    }
+  };
+
+  const getRestartText = () => {
+    if (!game) return t('gameResults.restartGame');
+    const entityType = game.entityType.toLowerCase();
+    if (entityType === 'tournament') return t('gameResults.restartTournament');
+    if (entityType === 'bar') return t('gameResults.restartBar');
+    if (entityType === 'training') return t('gameResults.restartTraining');
+    return t('gameResults.restartGame');
+  };
+
+  const getFinishText = () => {
+    if (!game) return t('gameResults.finishGame');
+    const entityType = game.entityType.toLowerCase();
+    if (entityType === 'tournament') return t('gameResults.finishTournament');
+    if (entityType === 'bar') return t('gameResults.finishBar');
+    if (entityType === 'training') return t('gameResults.finishTraining');
+    return t('gameResults.finishGame');
+  };
+
+  const getRestartTitle = () => {
+    if (!game) return t('gameResults.restartGameTitle');
+    const entityType = game.entityType.toLowerCase();
+    if (entityType === 'tournament') return t('gameResults.restartTournamentTitle');
+    if (entityType === 'bar') return t('gameResults.restartBarTitle');
+    if (entityType === 'training') return t('gameResults.restartTrainingTitle');
+    return t('gameResults.restartGameTitle');
+  };
+
+  const getFinishTitle = () => {
+    if (!game) return t('gameResults.finishGameTitle');
+    const entityType = game.entityType.toLowerCase();
+    if (entityType === 'tournament') return t('gameResults.finishTournamentTitle');
+    if (entityType === 'bar') return t('gameResults.finishBarTitle');
+    if (entityType === 'training') return t('gameResults.finishTrainingTitle');
+    return t('gameResults.finishGameTitle');
+  };
+
+  const getEditTitle = () => {
+    if (!game) return t('gameResults.editGameTitle');
+    const entityType = game.entityType.toLowerCase();
+    if (entityType === 'tournament') return t('gameResults.editTournamentTitle');
+    if (entityType === 'bar') return t('gameResults.editBarTitle');
+    if (entityType === 'training') return t('gameResults.editTrainingTitle');
+    return t('gameResults.editGameTitle');
+  };
+
+  const handlePlayerSelect = async (playerId: string) => {
+    if (!selectedMatchTeam || !effectiveCanEdit) return;
 
     const { roundId, matchId, team } = selectedMatchTeam;
     
-    if (multiRounds && roundId) {
-      const round = roundManagement.rounds.find(r => r.id === roundId);
-      if (!round) return;
-      
-      const match = round.matches.find(m => m.id === matchId);
-      if (!match) return;
+    const actualRoundId = roundId || (multiRounds && expandedRoundId ? expandedRoundId : 'round-1');
+    const round = rounds.find(r => r.id === actualRoundId);
+    if (!round) return;
+    
+    const match = round.matches.find(m => m.id === matchId);
+    if (!match) return;
 
-      const otherTeam = team === 'teamA' ? 'teamB' : 'teamA';
-      const otherTeamPlayers = match[otherTeam];
+    const otherTeam = team === 'teamA' ? 'teamB' : 'teamA';
+    const otherTeamPlayers = match[otherTeam];
 
-      if (otherTeamPlayers.includes(playerId) || match[team].includes(playerId)) {
-        return;
-      }
-
-      const updatedRounds = roundManagement.rounds.map(r => {
-        if (r.id === roundId) {
-          const updatedMatches = r.matches.map(m => {
-            if (m.id === matchId) {
-              const currentTeam = [...m[team]];
-              if (!currentTeam.includes(playerId)) {
-                currentTeam.push(playerId);
-              }
-              return { ...m, [team]: currentTeam };
-            }
-            return m;
-          });
-          return { ...r, matches: updatedMatches };
-        }
-        return r;
-      });
-
-      roundManagement.setRounds(updatedRounds);
-    } else {
-      const match = matches.find(m => m.id === matchId);
-      if (!match) return;
-
-      const otherTeam = team === 'teamA' ? 'teamB' : 'teamA';
-      const otherTeamPlayers = match[otherTeam];
-
-      if (otherTeamPlayers.includes(playerId) || match[team].includes(playerId)) {
-        return;
-      }
-
-      const updatedMatches = matches.map(m => {
-        if (m.id === matchId) {
-          const currentTeam = [...m[team]];
-          if (!currentTeam.includes(playerId)) {
-            currentTeam.push(playerId);
-          }
-          return { ...m, [team]: currentTeam };
-        }
-        return m;
-      });
-
-      setMatches(updatedMatches);
+    if (otherTeamPlayers.includes(playerId) || match[team].includes(playerId)) {
+      return;
     }
+
+    await engine.addPlayerToTeam(actualRoundId, matchId, team, playerId);
     
     setShowPlayerSelector(false);
     setSelectedMatchTeam(null);
@@ -355,20 +401,61 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
     setShowCourtModal(true);
   };
 
+  const handleSetupConfirm = async (params: {
+    fixedNumberOfSets: number;
+    maxTotalPointsPerSet: number;
+    maxPointsPerTeam: number;
+    winnerOfGame: WinnerOfGame;
+    winnerOfRound: WinnerOfRound;
+    winnerOfMatch: WinnerOfMatch;
+  }) => {
+    if (!id || !user?.id) return;
+    
+    try {
+      await gamesApi.update(id, {
+        fixedNumberOfSets: params.fixedNumberOfSets,
+        maxTotalPointsPerSet: params.maxTotalPointsPerSet,
+        maxPointsPerTeam: params.maxPointsPerTeam,
+        winnerOfGame: params.winnerOfGame,
+        winnerOfRound: params.winnerOfRound,
+        winnerOfMatch: params.winnerOfMatch,
+      });
+      
+      const response = await gamesApi.getById(id);
+      if (response?.data) {
+        const updatedGame = response.data;
+        engine.updateGame(updatedGame);
+        
+        setShowSetupModal(false);
+        
+        if (isPresetGame) {
+          await engine.initializePresetMatches();
+        } else {
+          await engine.initializeDefaultRound();
+        }
+        
+        setIsResultsEntryMode(true);
+      }
+    } catch (error: any) {
+      console.error('Failed to update game parameters:', error);
+      toast.error(error?.response?.data?.message || t('errors.generic'));
+    }
+  };
+
 
   const handleContainerClick = (e: React.MouseEvent) => {
-    if (!isPresetGame && editingMatchId && canEdit) {
+    if (!isPresetGame && editingMatchId && effectiveCanEdit) {
       const target = e.target as HTMLElement;
       const isClickInsideMatch = target.closest('[data-match-container]');
       if (!isClickInsideMatch) {
-        setEditingMatchId(null);
+        engine.setEditingMatchId(null);
       }
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">{t('app.loading')}</p>
@@ -379,7 +466,7 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
 
   if (!game) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
+      <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400">{t('errors.notFound')}</p>
         </div>
@@ -398,59 +485,141 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
       >
       {/* Simple header with back button */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 fixed top-0 right-0 left-0 z-40 shadow-lg">
-        <div className="h-full px-4 flex items-center justify-between">
-          <button
-            onClick={() => navigate(`/games/${id}`)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-110 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            <ArrowLeft size={20} />
-            {t('common.back')}
-          </button>
-          {canEdit && !game?.hasResults && game?.entityType === 'TOURNAMENT' && (
+        <div className="h-full px-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setMultiRounds(!multiRounds)}
-              className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                multiRounds
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
+              onClick={() => navigate(`/games/${id}`)}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-110 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              Multi-Round
+              <ArrowLeft size={20} />
+              {t('common.back')}
             </button>
-          )}
-          {canEdit && game?.entityType === 'TOURNAMENT' && (
-            <button
-              onClick={() => setTestShowCourts(!testShowCourts)}
-              className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                testShowCourts
-                  ? 'bg-green-500 text-white hover:bg-green-600'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-            >
-              Courts
-            </button>
-          )}
-          {canEdit && game?.entityType === 'TOURNAMENT' && (
-            <button
-              onClick={() => setTestHorizontalLayout(!testHorizontalLayout)}
-              className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                testHorizontalLayout
-                  ? 'bg-yellow-500 text-white hover:bg-yellow-600'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-            >
-              Horizontal
-            </button>
-          )}
-          <div className="w-24"></div>
+            {isEditingResults && (
+              <div className="p-2">
+                <SyncStatusIcon 
+                  status={syncStatus} 
+                  onStatusChange={(status) => engine.setSyncStatus(status)}
+                />
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2 flex-1 justify-end">
+            {canEdit && game?.resultsStatus === 'NONE' && game?.entityType === 'TOURNAMENT' && (
+              <button
+                onClick={() => setMultiRounds(!multiRounds)}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                  multiRounds
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                Multi-Round
+              </button>
+            )}
+            {canEdit && game?.entityType === 'TOURNAMENT' && (
+              <button
+                onClick={() => setTestShowCourts(!testShowCourts)}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                  testShowCourts
+                    ? 'bg-green-500 text-white hover:bg-green-600'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                Courts
+              </button>
+            )}
+            {canEdit && isResultsEntryMode && isEditingResults && (
+              <button
+                onClick={() => setShowRestartConfirmation(true)}
+                disabled={isRestarting}
+                className="px-4 py-2 text-sm rounded-lg font-medium transition-colors bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isRestarting ? t('common.loading') : getRestartText()}
+              </button>
+            )}
+          </div>
         </div>
       </header>
+
+      {/* Tab Selector - Show when game is FINAL */}
+      {game?.resultsStatus === 'FINAL' && (
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed top-16 left-0 right-0 z-30">
+          <div className="container mx-auto">
+            <div className="flex justify-center space-x-1 py-2 px-4">
+              <button
+                onClick={() => setActiveTab('scores')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'scores'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                {t('gameResults.scores')}
+              </button>
+              <button
+                onClick={() => setActiveTab('results')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'results'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                {t('gameResults.results')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
-      <main className="pt-16 pb-6 overflow-x-hidden">
+      <main className={`overflow-x-hidden ${game?.resultsStatus === 'FINAL' ? 'pt-28 pb-24' : 'pt-16 pb-24'}`}>
         <div className="container mx-auto px-4 py-6 overflow-x-hidden">
           <div className="overflow-x-hidden">
-      {!gameState?.showInputs ? (
-        <GameStatusDisplay gameState={gameState} />
+      {game?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
+        <OutcomesDisplay outcomes={game.outcomes || []} affectsRating={game.affectsRating} gameId={game.id} />
+      ) : !isResultsEntryMode ? (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+          <GameStatusDisplay gameState={gameState} />
+          {canEdit && gameState?.canEdit && (
+            <button
+              onClick={async () => {
+                if (needsGameSetup) {
+                  setShowSetupModal(true);
+                } else {
+                  if (rounds.length === 0) {
+                    if (isPresetGame) {
+                      await engine.initializePresetMatches();
+                    } else {
+                      await engine.initializeDefaultRound();
+                    }
+                  }
+                  setIsResultsEntryMode(true);
+                  // Enable editing for all statuses when entering manually
+                  const resultsStatus = game?.resultsStatus || 'NONE';
+                  if (resultsStatus === 'FINAL') {
+                    setIsEditingResults(false); // Show read-only first for FINAL
+                  } else {
+                    setIsEditingResults(true);
+                  }
+                }
+              }}
+              className="group relative px-8 py-4 text-lg rounded-xl font-semibold transition-all duration-300 bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                {(() => {
+                  const resultsStatus = game?.resultsStatus || 'NONE';
+                  if (resultsStatus === 'FINAL') {
+                    return t('gameResults.viewResults');
+                  } else if (resultsStatus === 'IN_PROGRESS') {
+                    return t('gameResults.continueResultsEntry');
+                  } else {
+                    return t('gameResults.startResultsEntry');
+                  }
+                })()}
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+            </button>
+          )}
+        </div>
       ) : (
         <div 
           className={`space-y-1 h-[calc(100vh-12rem)] w-full scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-gray-300 dark:hover:scrollbar-thumb-gray-600 ${
@@ -459,43 +628,42 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
           onDragOver={dragAndDrop.handleDragOver}
           onClick={handleContainerClick}
         >
-          {(multiRounds && isTournamentForRounds) ? (
+          {(multiRounds && isTournament) ? (
             <div className="space-y-1 pt-4 pb-4">
-              {roundManagement.rounds.map((round) => (
+              {rounds.map((round) => (
                 <RoundCard
                   key={round.id}
                   round={round}
                   players={players}
                   isPresetGame={isPresetGame}
-                  isExpanded={roundManagement.expandedRoundId === round.id}
-                  canEditResults={canEdit}
+                  isExpanded={expandedRoundId === round.id}
+                  canEditResults={effectiveCanEdit && isResultsEntryMode}
                   editingMatchId={editingMatchId}
                   draggedPlayer={dragAndDrop.draggedPlayer}
-                  showDeleteButton={roundManagement.rounds.length > 1 && canEdit}
-                  onRemoveRound={() => roundManagement.removeRound(round.id)}
+                  showDeleteButton={rounds.length > 1 && effectiveCanEdit}
+                  onRemoveRound={() => engine.removeRound(round.id)}
                   onToggleExpand={() => {
-                    if (roundManagement.expandedRoundId === round.id) {
-                      roundManagement.setExpandedRoundId(null);
-                      setEditingMatchId(null);
+                    if (expandedRoundId === round.id) {
+                      engine.setExpandedRoundId(null);
+                      engine.setEditingMatchId(null);
                     } else {
-                      roundManagement.setExpandedRoundId(round.id);
+                      engine.setExpandedRoundId(round.id);
                     }
                   }}
-                  onAddMatch={() => roundManagement.addMatch(round.id)}
-                  onRemoveMatch={(matchId) => roundManagement.removeMatch(round.id, matchId)}
-                  horizontalLayout={effectiveHorizontalLayout}
+                  onAddMatch={() => engine.addMatch(round.id)}
+                  onRemoveMatch={(matchId) => engine.removeMatch(round.id, matchId)}
                   onMatchClick={(matchId) => {
                     if (editingMatchId !== matchId) {
-                      setEditingMatchId(matchId);
+                      engine.setEditingMatchId(matchId);
                     }
                   }}
                   onSetClick={(matchId, setIndex) => setShowSetModal({ roundId: round.id, matchId, setIndex })}
-                  onRemovePlayer={(matchId, team, playerId) => roundManagement.removePlayerFromTeam(round.id, matchId, team, playerId)}
+                  onRemovePlayer={(matchId, team, playerId) => engine.removePlayerFromTeam(round.id, matchId, team, playerId)}
                   onDragOver={dragAndDrop.handleDragOver}
                   onDrop={(e, matchId, team) => {
                     if (e) e.preventDefault();
                     if (!dragAndDrop.draggedPlayer) return;
-                    roundManagement.handleDrop(round.id, matchId, team, dragAndDrop.draggedPlayer);
+                    engine.addPlayerToTeam(round.id, matchId, team, dragAndDrop.draggedPlayer);
                     dragAndDrop.handleDragEnd();
                   }}
                   onPlayerPlaceholderClick={(matchId, team) => {
@@ -504,19 +672,20 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
                   }}
                   canEnterResults={(matchId) => {
                     const match = round.matches.find(m => m.id === matchId);
-                    return match ? roundManagement.canEnterResults(match) : false;
+                    return match ? canEnterResults(match) : false;
                   }}
                   showCourtLabel={effectiveShowCourts}
                   courtAssignments={courtAssignments}
                   courts={game?.club?.courts || []}
                   onCourtClick={handleCourtClick}
+                  fixedNumberOfSets={game?.fixedNumberOfSets}
                 />
               ))}
               
-              {canEdit && (
+              {effectiveCanEdit && (
                 <div className="flex justify-center">
                   <button
-                    onClick={roundManagement.addRound}
+                    onClick={() => engine.addRound()}
                     className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors shadow-lg flex items-center gap-2"
                   >
                     <Plus size={20} />
@@ -525,11 +694,11 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
                 </div>
               )}
 
-              {!isPresetGame && editingMatchId && canEdit && roundManagement.expandedRoundId && (
+              {!isPresetGame && editingMatchId && effectiveCanEdit && expandedRoundId && (
                 <AvailablePlayersFooter
                   players={players}
                   editingMatch={(() => {
-                    const expandedRound = roundManagement.rounds.find(r => r.id === roundManagement.expandedRoundId);
+                    const expandedRound = rounds.find(r => r.id === expandedRoundId);
                     return expandedRound?.matches.find(m => m.id === editingMatchId);
                   })()}
                   draggedPlayer={dragAndDrop.draggedPlayer}
@@ -538,6 +707,7 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
                   onTouchStart={dragAndDrop.handleTouchStart}
                   onTouchMove={dragAndDrop.handleTouchMove}
                   onTouchEnd={handleTouchEndWrapper}
+                  bottomOffset={finishButtonPanelHeight}
                 />
               )}
             </div>
@@ -552,13 +722,13 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
                   players={players}
                   isPresetGame={isPresetGame}
                   isEditing={editingMatchId === match.id}
-                  canEditResults={canEdit}
+                  canEditResults={effectiveCanEdit && isResultsEntryMode}
                   draggedPlayer={dragAndDrop.draggedPlayer}
-                  showDeleteButton={matches.length > 1 && !isPresetGame && editingMatchId === match.id && canEdit}
+                  showDeleteButton={matches.length > 1 && !isPresetGame && editingMatchId === match.id && effectiveCanEdit}
                   onRemoveMatch={() => removeMatch(match.id)}
                   onMatchClick={() => {
                     if (editingMatchId !== match.id) {
-                      setEditingMatchId(match.id);
+                      engine.setEditingMatchId(match.id);
                     }
                   }}
                   onSetClick={(setIndex: number) => setShowSetModal({ matchId: match.id, setIndex })}
@@ -574,6 +744,7 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
                   selectedCourt={game?.club?.courts?.find(c => c.id === courtAssignments[match.id]) || null}
                   courts={game?.club?.courts || []}
                   onCourtClick={() => handleCourtClick(match.id)}
+                  fixedNumberOfSets={game?.fixedNumberOfSets}
                 />
               ) : (
                 <MatchCard
@@ -583,13 +754,13 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
                   players={players}
                   isPresetGame={isPresetGame}
                   isEditing={editingMatchId === match.id}
-                  canEditResults={canEdit}
+                  canEditResults={effectiveCanEdit && isResultsEntryMode}
                   draggedPlayer={dragAndDrop.draggedPlayer}
-                  showDeleteButton={matches.length > 1 && !isPresetGame && editingMatchId === match.id && canEdit}
+                  showDeleteButton={matches.length > 1 && !isPresetGame && editingMatchId === match.id && effectiveCanEdit}
                   onRemoveMatch={() => removeMatch(match.id)}
                   onMatchClick={() => {
                     if (editingMatchId !== match.id) {
-                      setEditingMatchId(match.id);
+                      engine.setEditingMatchId(match.id);
                     }
                   }}
                   onSetClick={(setIndex) => setShowSetModal({ matchId: match.id, setIndex })}
@@ -605,16 +776,17 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
                   selectedCourt={game?.club?.courts?.find(c => c.id === courtAssignments[match.id]) || null}
                   courts={game?.club?.courts || []}
                   onCourtClick={() => handleCourtClick(match.id)}
+                  fixedNumberOfSets={game?.fixedNumberOfSets}
                 />
               )
             ))}
             
-            {!isPresetGame && editingMatchId && canEdit && (
+            {!isPresetGame && editingMatchId && effectiveCanEdit && (
               <div 
                 className="flex justify-center mt-4"
                 onClick={(e) => {
                   if (e.target === e.currentTarget) {
-                    setEditingMatchId(null);
+                    engine.setEditingMatchId(null);
                   }
                 }}
               >
@@ -630,7 +802,7 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
               </div>
             )}
 
-            {!isPresetGame && editingMatchId && canEdit && (
+            {!isPresetGame && editingMatchId && effectiveCanEdit && (
               <AvailablePlayersFooter
                 players={players}
                 editingMatch={matches.find(m => m.id === editingMatchId)}
@@ -640,6 +812,7 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
                 onTouchStart={dragAndDrop.handleTouchStart}
                 onTouchMove={dragAndDrop.handleTouchMove}
                 onTouchEnd={handleTouchEndWrapper}
+                bottomOffset={finishButtonPanelHeight}
               />
             )}
           </div>
@@ -652,38 +825,25 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
               matchId={showSetModal.matchId}
               setIndex={showSetModal.setIndex}
               set={(() => {
-                if (multiRounds && showSetModal.roundId) {
-                  const round = roundManagement.rounds.find(r => r.id === showSetModal.roundId);
-                  const match = round?.matches.find(m => m.id === showSetModal.matchId);
-                  return match?.sets[showSetModal.setIndex] || { teamA: 0, teamB: 0 };
-                }
-                return matches.find(m => m.id === showSetModal.matchId)?.sets[showSetModal.setIndex] || { teamA: 0, teamB: 0 };
+                const roundId = showSetModal.roundId || 'round-1';
+                const round = rounds.find(r => r.id === roundId);
+                const match = round?.matches.find(m => m.id === showSetModal.matchId);
+                return match?.sets[showSetModal.setIndex] || { teamA: 0, teamB: 0 };
               })()}
               onSave={(matchId, setIndex, teamAScore, teamBScore) => {
-                if (multiRounds && showSetModal.roundId) {
-                  roundManagement.updateSetResult(showSetModal.roundId, matchId, setIndex, teamAScore, teamBScore);
-                } else {
-                  updateSetResult(matchId, setIndex, teamAScore, teamBScore);
-                }
+                updateSetResult(matchId, setIndex, teamAScore, teamBScore);
               }}
               onRemove={(matchId, setIndex) => {
-                if (multiRounds && showSetModal.roundId) {
-                  roundManagement.removeSet(showSetModal.roundId, matchId, setIndex);
-                } else {
-                  removeSet(matchId, setIndex);
-                }
+                removeSet(matchId, setIndex);
               }}
               onClose={() => setShowSetModal(null)}
               canRemove={(() => {
-                let match;
-                if (multiRounds && showSetModal.roundId) {
-                  const round = roundManagement.rounds.find(r => r.id === showSetModal.roundId);
-                  match = round?.matches.find(m => m.id === showSetModal.matchId);
-                } else {
-                  match = matches.find(m => m.id === showSetModal.matchId);
-                }
+                const roundId = showSetModal.roundId || 'round-1';
+                const round = rounds.find(r => r.id === roundId);
+                const match = round?.matches.find(m => m.id === showSetModal.matchId);
                 if (!match) return false;
                 const currentSet = match.sets[showSetModal.setIndex];
+                if (!currentSet) return false;
                 const isLastSet = showSetModal.setIndex === match.sets.length - 1;
                 const isZeroZero = currentSet.teamA === 0 && currentSet.teamB === 0;
                 return match.sets.length > 1 && !(isLastSet && isZeroZero);
@@ -700,13 +860,9 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
               }}
               onConfirm={handlePlayerSelect}
               selectedPlayerIds={(() => {
-                if (multiRounds && selectedMatchTeam.roundId) {
-                  const round = roundManagement.rounds.find(r => r.id === selectedMatchTeam.roundId);
-                  const match = round?.matches.find(m => m.id === selectedMatchTeam.matchId);
-                  if (!match) return [];
-                  return [...match.teamA, ...match.teamB];
-                }
-                const match = matches.find(m => m.id === selectedMatchTeam.matchId);
+                const roundId = selectedMatchTeam.roundId || (multiRounds && expandedRoundId ? expandedRoundId : 'round-1');
+                const round = rounds.find(r => r.id === roundId);
+                const match = round?.matches.find(m => m.id === selectedMatchTeam.matchId);
                 if (!match) return [];
                 return [...match.teamA, ...match.teamB];
               })()}
@@ -735,9 +891,94 @@ export const GameResultsEntry = ({ showCourts = false, horizontalLayout = false 
               position={dragAndDrop.dragPosition}
             />
           )}
+
+          {showRestartConfirmation && (
+            <ConfirmationModal
+              isOpen={showRestartConfirmation}
+              title={getRestartTitle()}
+              message={t('gameResults.restartConfirmationMessage')}
+              confirmText={t('common.confirm')}
+              cancelText={t('common.cancel')}
+              confirmVariant="danger"
+              onConfirm={handleRestart}
+              onClose={() => setShowRestartConfirmation(false)}
+            />
+          )}
+
+          {showFinishConfirmation && (
+            <ConfirmationModal
+              isOpen={showFinishConfirmation}
+              title={getFinishTitle()}
+              message={t('gameResults.finishConfirmationMessage')}
+              confirmText={t('common.confirm')}
+              cancelText={t('common.cancel')}
+              confirmVariant="primary"
+              onConfirm={handleFinish}
+              onClose={() => setShowFinishConfirmation(false)}
+            />
+          )}
+
+          {showEditConfirmation && (
+            <ConfirmationModal
+              isOpen={showEditConfirmation}
+              title={getEditTitle()}
+              message={t('gameResults.editConfirmationMessage')}
+              confirmText={t('common.confirm')}
+              cancelText={t('common.cancel')}
+              confirmVariant="danger"
+              onConfirm={handleEdit}
+              onClose={() => setShowEditConfirmation(false)}
+            />
+          )}
+
+          {showSetupModal && game && (
+            <GameSetupModal
+              isOpen={showSetupModal}
+              entityType={game.entityType}
+              hasMultiRounds={game.hasMultiRounds}
+              initialValues={{
+                fixedNumberOfSets: game.fixedNumberOfSets,
+                maxTotalPointsPerSet: game.maxTotalPointsPerSet,
+                maxPointsPerTeam: game.maxPointsPerTeam,
+                winnerOfGame: game.winnerOfGame,
+                winnerOfRound: game.winnerOfRound,
+                winnerOfMatch: game.winnerOfMatch,
+              }}
+              onClose={() => setShowSetupModal(false)}
+              onConfirm={handleSetupConfirm}
+            />
+          )}
           </div>
         </div>
       </main>
+
+      {/* Fixed bottom bar with finish/edit button */}
+      {showFinishButton && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 z-40 shadow-lg">
+          <div className="container mx-auto flex justify-center">
+            <button
+              onClick={() => setShowFinishConfirmation(true)}
+              disabled={isSaving}
+              className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            >
+              {isSaving ? t('common.loading') : getFinishText()}
+            </button>
+          </div>
+        </div>
+      )}
+      {showEditButton && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 z-40 shadow-lg">
+          <div className="container mx-auto flex justify-center">
+            <button
+              onClick={() => setShowEditConfirmation(true)}
+              disabled={isEditing}
+              className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-blue-500 hover:bg-blue-600 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isEditing ? t('common.loading') : t('gameResults.editResults')}
+            </button>
+          </div>
+        </div>
+      )}
       </div>
     </>
   );

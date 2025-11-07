@@ -21,7 +21,7 @@ export class GameDeleteService {
         mediaUrls: true,
         startTime: true,
         status: true,
-        hasResults: true
+        resultsStatus: true
       }
     });
 
@@ -29,7 +29,7 @@ export class GameDeleteService {
       throw new ApiError(404, 'Game not found');
     }
 
-    if (game.hasResults || game.status === 'STARTED' || game.status === 'FINISHED') {
+    if (game.resultsStatus !== 'NONE' || game.status === 'STARTED' || game.status === 'FINISHED') {
       throw new ApiError(400, 'Cannot delete a game that has already started');
     }
 

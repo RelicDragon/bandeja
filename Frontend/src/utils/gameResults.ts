@@ -84,7 +84,7 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
   }
 
   // No problems - user can modify if they have permission
-  if (game.hasResults) {
+  if (game.resultsStatus !== 'NONE') {
     return {
       message: hasEditPermission ? 'games.results.positive.canModifyResults' : 'games.results.positive.canViewResults',
       canModify: hasEditPermission

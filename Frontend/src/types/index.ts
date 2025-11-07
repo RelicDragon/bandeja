@@ -1,14 +1,18 @@
 export type AuthProvider = 'PHONE' | 'TELEGRAM';
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
-export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'WINNER_COURT';
+export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'WINNER_COURT' | 'CUSTOM';
 export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'BAR' | 'TRAINING';
 export type GenderTeam = 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
 export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
 export type Gender = 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
 export type GameStatus = 'ANNOUNCED' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
+export type ResultsStatus = 'NONE' | 'IN_PROGRESS' | 'FINAL';
 export type ChatType = 'PUBLIC' | 'PRIVATE' | 'ADMINS';
 export type BugStatus = 'CREATED' | 'CONFIRMED' | 'IN_PROGRESS' | 'TEST' | 'FINISHED' | 'ARCHIVED';
 export type BugType = 'BUG' | 'CRITICAL' | 'SUGGESTION' | 'QUESTION';
+export type WinnerOfGame = 'BY_ROUNDS_WON' | 'BY_MATCHES_WON' | 'BY_POINTS' | 'BY_SCORES_DELTA' | 'PLAYOFF_FINALS';
+export type WinnerOfRound = 'BY_MATCHES_WON' | 'BY_SCORES_DELTA';
+export type WinnerOfMatch = 'BY_SETS' | 'BY_SCORES';
 
 export interface User {
   id: string;
@@ -123,6 +127,29 @@ export interface GameTeamData {
   playerIds: string[];
 }
 
+export interface GameOutcome {
+  id: string;
+  gameId: string;
+  userId: string;
+  levelBefore: number;
+  levelAfter: number;
+  levelChange: number;
+  reliabilityBefore: number;
+  reliabilityAfter: number;
+  reliabilityChange: number;
+  pointsEarned: number;
+  position?: number;
+  isWinner: boolean;
+  user: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+    level: number;
+    reliability: number;
+  };
+}
+
 export interface Game {
   id: string;
   entityType: EntityType;
@@ -150,11 +177,19 @@ export interface Game {
   teamsReady?: boolean;
   participantsReady?: boolean;
   status: GameStatus;
-  hasResults: boolean;
+  resultsStatus: 'NONE' | 'IN_PROGRESS' | 'FINAL';
+  fixedNumberOfSets?: number;
+  maxTotalPointsPerSet?: number;
+  maxPointsPerTeam?: number;
+  hasMultiRounds?: boolean;
+  winnerOfGame?: WinnerOfGame;
+  winnerOfRound?: WinnerOfRound;
+  winnerOfMatch?: WinnerOfMatch;
   isClubFavorite?: boolean;
   participants: GameParticipant[];
   invites?: Invite[];
   fixedTeams?: GameTeam[];
+  outcomes?: GameOutcome[];
   parentId?: string;
   children?: Game[];
   metadata?: Record<string, any>;

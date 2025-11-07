@@ -31,6 +31,10 @@ export const GameResults = ({
 
   // Check if this is an access denied message
   const isAccessDenied = resultStatus.message === 'games.results.problems.accessDenied';
+  
+  // Show view button even if user can't edit but results exist
+  const hasResults = game.resultsStatus === 'FINAL' || game.resultsStatus === 'IN_PROGRESS';
+  const showButton = !isAccessDenied && (canEnterResults || hasResults);
 
   return (
     <Card>
@@ -39,7 +43,9 @@ export const GameResults = ({
           ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
           : resultStatus.canModify 
             ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
-            : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700'
+            : hasResults
+              ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+              : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700'
       }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -48,25 +54,38 @@ export const GameResults = ({
                 ? 'text-red-600 dark:text-red-400'
                 : resultStatus.canModify 
                   ? 'text-blue-600 dark:text-blue-400'
-                  : 'text-gray-500 dark:text-gray-400'
+                  : hasResults
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-gray-500 dark:text-gray-400'
             } />
             <span className={`text-sm font-medium ${
               isAccessDenied
                 ? 'text-red-800 dark:text-red-200'
                 : resultStatus.canModify
                   ? 'text-blue-800 dark:text-blue-200'
-                  : 'text-gray-600 dark:text-gray-400'
+                  : hasResults
+                    ? 'text-green-800 dark:text-green-200'
+                    : 'text-gray-600 dark:text-gray-400'
             }`}>
               {resultStatus.message.split(' • ').map(key => t(key)).join(' • ')}
             </span>
           </div>
-          {!isAccessDenied && canEnterResults && (
+          {showButton && (
             <Button
               onClick={onEnterResults}
               size="sm"
-              variant={game.hasResults ? "outline" : "primary"}
+              variant={game.resultsStatus !== 'NONE' ? "outline" : "primary"}
             >
-              {game.hasResults ? t('gameResults.changeResults') : t('gameResults.enterResults')}
+              {(() => {
+                const resultsStatus = game.resultsStatus || 'NONE';
+                if (resultsStatus === 'FINAL') {
+                  return t('gameResults.viewResults');
+                } else if (resultsStatus === 'IN_PROGRESS') {
+                  return canEnterResults ? t('gameResults.continueResultsEntry') : t('gameResults.viewResults');
+                } else {
+                  return t('gameResults.startResultsEntry');
+                }
+              })()}
             </Button>
           )}
         </div>

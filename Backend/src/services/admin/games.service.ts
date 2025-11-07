@@ -1,6 +1,7 @@
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { GameService } from '../game/game.service';
 
 export class AdminGamesService {
   static async getAllGames(cityId?: string) {
@@ -136,8 +137,10 @@ export class AdminGamesService {
             gameId: invite.gameId,
             userId: invite.receiverId,
             role: 'PARTICIPANT',
+            isPlaying: true,
           },
         });
+        await GameService.updateGameReadiness(invite.gameId);
       }
     }
 

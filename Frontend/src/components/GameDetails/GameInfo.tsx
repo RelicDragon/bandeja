@@ -16,6 +16,7 @@ import {
   Ban,
   Users,
   ExternalLink,
+  Award,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -173,9 +174,17 @@ export const GameInfo = ({
             )}
             {game.hasFixedTeams && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1">
-                <Users size={14} />
-                <Users size={14} />
+                <div className="flex items-center">
+                  <Users size={14} />
+                  <Users size={14} />
+                </div>
                 {t('games.fixedTeams')}
+              </span>
+            )}
+            {(game.status === 'STARTED' || game.status === 'FINISHED') && game.resultsStatus === 'FINAL' && (
+              <span className="px-3 py-1 text-sm font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+                <Award size={14} />
+                {t('games.resultsAvailable')}
               </span>
             )}
           </div>

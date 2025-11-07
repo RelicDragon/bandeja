@@ -73,11 +73,15 @@ export class GameCreateService {
         afterGameGoToBar: data.afterGameGoToBar || false,
         hasFixedTeams: hasFixedTeams,
         genderTeams: data.genderTeams || 'ANY',
+        fixedNumberOfSets: data.fixedNumberOfSets ?? 0,
+        maxTotalPointsPerSet: data.maxTotalPointsPerSet ?? 0,
+        maxPointsPerTeam: data.maxPointsPerTeam ?? 0,
+        hasMultiRounds: data.hasMultiRounds ?? false,
         metadata: data.metadata,
         status: calculateGameStatus({
           startTime,
           endTime,
-          hasResults: false,
+          resultsStatus: 'NONE',
         }),
         participants: {
           create: {

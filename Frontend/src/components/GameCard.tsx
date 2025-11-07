@@ -181,9 +181,17 @@ export const GameCard = ({
           )}
           {game.hasFixedTeams && (
             <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1">
-              <Users size={12} />
-              <Users size={12} />
+              <div className="flex items-center">
+                <Users size={12} />
+                <Users size={12} />
+              </div>
               <span className="hidden sm:inline">{t('games.fixedTeams')}</span>
+            </span>
+          )}
+          {(game.status === 'STARTED' || game.status === 'FINISHED') && game.resultsStatus === 'FINAL' && (
+            <span className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+              <Award size={12} />
+              {t('games.resultsAvailable')}
             </span>
           )}
         </div>

@@ -4,4 +4,5 @@ export * from './GameResults';
 export * from './GameParticipants';
 export * from './GameSettings';
 export * from './FixedTeamsManagement';
+export * from './GameSetup';
 export * from './TeamPlayerSelector';

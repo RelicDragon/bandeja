@@ -50,7 +50,7 @@ export class GameUpdateService {
 
     const currentGame = await prisma.game.findUnique({
       where: { id },
-      select: { startTime: true, endTime: true, hasResults: true },
+      select: { startTime: true, endTime: true, resultsStatus: true },
     });
 
     if (currentGame && (data.startTime !== undefined || data.endTime !== undefined)) {
@@ -59,7 +59,7 @@ export class GameUpdateService {
       updateData.status = calculateGameStatus({
         startTime: newStartTime,
         endTime: newEndTime,
-        hasResults: currentGame.hasResults,
+        resultsStatus: currentGame.resultsStatus,
       });
       if (data.startTime !== undefined) {
         updateData.startTime = newStartTime;

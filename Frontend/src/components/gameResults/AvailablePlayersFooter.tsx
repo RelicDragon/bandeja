@@ -11,6 +11,7 @@ interface AvailablePlayersFooterProps {
   onTouchStart: (e: TouchEvent, playerId: string) => void;
   onTouchMove: (e: TouchEvent) => void;
   onTouchEnd: (e: TouchEvent) => void;
+  bottomOffset?: number;
 }
 
 export const AvailablePlayersFooter = ({
@@ -22,6 +23,7 @@ export const AvailablePlayersFooter = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
+  bottomOffset = 0,
 }: AvailablePlayersFooterProps) => {
   const availablePlayers = players.filter(player => {
     if (!editingMatch) return true;
@@ -37,9 +39,10 @@ export const AvailablePlayersFooter = ({
 
   return (
     <div 
-      className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t-2 border-blue-400 dark:border-blue-600 shadow-lg z-30 transition-transform duration-300 ease-in-out ${
+      className={`fixed left-0 right-0 bg-white dark:bg-gray-800 border-t-2 border-blue-400 dark:border-blue-600 shadow-lg z-30 transition-transform duration-300 ease-in-out ${
         shouldShow ? 'translate-y-0' : 'translate-y-full'
       }`}
+      style={{ bottom: `${bottomOffset}px` }}
     >
       <div className="px-4 py-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
         <div className="flex gap-2 w-max">

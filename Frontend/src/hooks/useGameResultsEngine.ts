@@ -1,0 +1,154 @@
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
+import { socketService } from '@/services/socketService';
+
+interface UseGameResultsEngineProps {
+  gameId: string | undefined;
+  userId: string | undefined;
+}
+
+export function useGameResultsEngine({ gameId, userId }: UseGameResultsEngineProps) {
+  const { t } = useTranslation();
+  const [error, setError] = useState<string | null>(null);
+
+  const game = useGameResultsStore((state) => state.game);
+  const rounds = useGameResultsStore((state) => state.rounds);
+  const loading = useGameResultsStore((state) => state.loading);
+  const initialized = useGameResultsStore((state) => state.initialized);
+  const canEdit = useGameResultsStore((state) => state.canEdit);
+  const gameState = useGameResultsStore((state) => state.gameState);
+  const pendingOpsCount = useGameResultsStore((state) => state.pendingOpsCount);
+  const expandedRoundId = useGameResultsStore((state) => state.expandedRoundId);
+  const editingMatchId = useGameResultsStore((state) => state.editingMatchId);
+  const syncStatus = useGameResultsStore((state) => state.syncStatus);
+
+  useEffect(() => {
+    if (!gameId || !userId) return;
+    
+    const currentGameId = gameId;
+    const currentUserId = userId;
+    
+    const state = GameResultsEngine.getState();
+    const needsInit = !state.initialized || state.gameId !== gameId || state.userId !== userId;
+    
+    if (needsInit) {
+      GameResultsEngine.initialize(gameId, userId, t).catch((err) => {
+        console.error('Failed to initialize GameResultsEngine:', err);
+        setError(err.message || 'Failed to initialize');
+      });
+    }
+
+    socketService.joinGameRoom(gameId).then(() => {
+      console.log(`[GameResultsEngine] Joined game room for game ${gameId}`);
+    }).catch((err) => {
+      console.error(`[GameResultsEngine] Failed to join game room for game ${gameId}:`, err);
+    });
+
+    const handleResultsUpdated = (data: { gameId: string }) => {
+      if (data.gameId === gameId) {
+        console.log(`[GameResultsEngine] Received results-updated notification for game ${gameId}`);
+        GameResultsEngine.reloadResults(t);
+      }
+    };
+
+    socketService.on('game-results-updated', handleResultsUpdated);
+    console.log(`[GameResultsEngine] Connected to results stream for game ${gameId}`);
+
+    return () => {
+      console.log(`[GameResultsEngine] Disconnecting from results stream for game ${gameId}`);
+      socketService.off('game-results-updated', handleResultsUpdated);
+      socketService.leaveGameRoom(gameId);
+      const state = GameResultsEngine.getState();
+      if (state.initialized && state.gameId === currentGameId && state.userId === currentUserId) {
+        GameResultsEngine.cleanup();
+      }
+    };
+  }, [gameId, userId, t]);
+
+  const addRound = useCallback((name?: string) => GameResultsEngine.addRound(name, t), [t]);
+  const removeRound = useCallback((roundId: string) => GameResultsEngine.removeRound(roundId), []);
+  const addMatch = useCallback((roundId: string, matchId?: string) => GameResultsEngine.addMatch(roundId, matchId), []);
+  const removeMatch = useCallback((roundId: string, matchId: string) => GameResultsEngine.removeMatch(roundId, matchId), []);
+  const addPlayerToTeam = useCallback((roundId: string, matchId: string, team: 'teamA' | 'teamB', playerId: string) =>
+    GameResultsEngine.addPlayerToTeam(roundId, matchId, team, playerId), []);
+  const removePlayerFromTeam = useCallback((roundId: string, matchId: string, team: 'teamA' | 'teamB', playerId: string) =>
+    GameResultsEngine.removePlayerFromTeam(roundId, matchId, team, playerId), []);
+  const updateSetScore = useCallback((roundId: string, matchId: string, setIndex: number, teamAScore: number, teamBScore: number) =>
+    GameResultsEngine.updateSetScore(roundId, matchId, setIndex, teamAScore, teamBScore), []);
+  const addSet = useCallback((roundId: string, matchId: string) => GameResultsEngine.addSet(roundId, matchId), []);
+  const removeSet = useCallback((roundId: string, matchId: string, setIndex: number) =>
+    GameResultsEngine.removeSet(roundId, matchId, setIndex), []);
+  const setExpandedRoundId = useCallback((roundId: string | null) => GameResultsEngine.setExpandedRoundId(roundId), []);
+  const setEditingMatchId = useCallback((matchId: string | null) => GameResultsEngine.setEditingMatchId(matchId), []);
+  const setSyncStatus = useCallback((status: 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED') => GameResultsEngine.setSyncStatus(status), []);
+  const forceSync = useCallback(() => GameResultsEngine.forceSync(), []);
+  const getGameResults = useCallback(() => GameResultsEngine.getGameResults(), []);
+  const initializePresetMatches = useCallback(() => GameResultsEngine.initializePresetMatches(t), [t]);
+  const initializeDefaultRound = useCallback(() => GameResultsEngine.initializeDefaultRound(t), [t]);
+  const resetGame = useCallback(() => GameResultsEngine.resetGame(), []);
+  const updateGame = useCallback((game: any) => GameResultsEngine.updateGame(game), []);
+
+  return useMemo(() => ({
+    game,
+    rounds,
+    loading,
+    initialized,
+    canEdit,
+    gameState,
+    pendingOpsCount,
+    expandedRoundId,
+    editingMatchId,
+    syncStatus,
+    error,
+    addRound,
+    removeRound,
+    addMatch,
+    removeMatch,
+    addPlayerToTeam,
+    removePlayerFromTeam,
+    updateSetScore,
+    addSet,
+    removeSet,
+    setExpandedRoundId,
+    setEditingMatchId,
+    setSyncStatus,
+    forceSync,
+    getGameResults,
+    initializePresetMatches,
+    initializeDefaultRound,
+    resetGame,
+    updateGame,
+  }), [
+    game,
+    rounds,
+    loading,
+    initialized,
+    canEdit,
+    gameState,
+    pendingOpsCount,
+    expandedRoundId,
+    editingMatchId,
+    syncStatus,
+    error,
+    addRound,
+    removeRound,
+    addMatch,
+    removeMatch,
+    addPlayerToTeam,
+    removePlayerFromTeam,
+    updateSetScore,
+    addSet,
+    removeSet,
+    setExpandedRoundId,
+    setEditingMatchId,
+    setSyncStatus,
+    forceSync,
+    getGameResults,
+    initializePresetMatches,
+    initializeDefaultRound,
+    resetGame,
+    updateGame,
+  ]);
+}
+

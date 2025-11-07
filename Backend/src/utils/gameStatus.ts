@@ -4,7 +4,7 @@ export const calculateGameStatus = (
   game: {
     startTime: Date;
     endTime: Date;
-    hasResults: boolean;
+    resultsStatus: string;
   }
 ): GameStatus => {
   const now = new Date();
@@ -18,7 +18,7 @@ export const calculateGameStatus = (
     return 'ARCHIVED';
   }
   
-  if (game.hasResults) {
+  if (game.resultsStatus !== 'NONE') {
     return 'FINISHED';
   }
   
@@ -26,7 +26,7 @@ export const calculateGameStatus = (
     return 'STARTED';
   }
   
-  if (hoursSinceEnd >= 0 && !game.hasResults) {
+  if (hoursSinceEnd >= 0 && game.resultsStatus === 'NONE') {
     return 'FINISHED';
   }
   

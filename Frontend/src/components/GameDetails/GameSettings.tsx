@@ -1,5 +1,5 @@
 import { Card, Select } from '@/components';
-import { Game, Club, GenderTeam } from '@/types';
+import { Game, Club, GenderTeam, GameType } from '@/types';
 import { Settings, Edit3, Save, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,7 +21,9 @@ interface GameSettingsProps {
     hasBookedCourt: boolean;
     afterGameGoToBar: boolean;
     hasFixedTeams: boolean;
+    hasMultiRounds: boolean;
     genderTeams: GenderTeam;
+    gameType: GameType;
     description: string;
   };
   onEditModeToggle: () => void;
@@ -74,6 +76,8 @@ export const GameSettings = ({
     return null;
   }
 
+  const canShowEdit = game.resultsStatus !== 'FINAL' && game.status !== 'ARCHIVED';
+
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">
@@ -83,7 +87,7 @@ export const GameSettings = ({
             {t('createGame.settings')}
           </h2>
         </div>
-        {canEdit && (
+        {canEdit && canShowEdit && (
           <div className="flex items-center gap-2">
             <button
               onClick={onEditModeToggle}
@@ -182,8 +186,52 @@ export const GameSettings = ({
           </div>
         )}
 
+        {/* Game Type Selector */}
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+            {t('createGame.gameType')}
+          </span>
+          <div className="flex-shrink-0 w-40">
+            <Select
+              options={
+                game?.entityType === 'GAME'
+                  ? [
+                      { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                      { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                      { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                    ]
+                  : [
+                      { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                      { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                      { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
+                      { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
+                      { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
+                      { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                    ]
+              }
+              value={isEditMode ? editFormData.gameType : (game?.gameType || 'CLASSIC')}
+              onChange={(value) => onFormDataChange({gameType: value as GameType})}
+              disabled={!isEditMode}
+            />
+          </div>
+        </div>
+
         {/* Boolean Settings */}
         <div className="space-y-2">
+          {game?.entityType === 'GAME' && game?.maxParticipants > 4 && (
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('createGame.tournament')}
+              </span>
+              <div className="flex-shrink-0">
+                <ToggleSwitch
+                  checked={isEditMode ? editFormData.hasMultiRounds : game?.hasMultiRounds || false}
+                  onChange={(checked) => onFormDataChange({hasMultiRounds: checked})}
+                  disabled={!isEditMode}
+                />
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
               {t('createGame.publicGame')}

@@ -2,6 +2,7 @@ import prisma from '../config/database';
 import { InviteStatus, ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from '../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
+import { GameService } from './game/game.service';
 
 export interface InviteActionResult {
   success: boolean;
@@ -86,8 +87,10 @@ export class InviteService {
             gameId: invite.gameId,
             userId: userId,
             role: ParticipantRole.PARTICIPANT,
+            isPlaying: true,
           },
         });
+        await GameService.updateGameReadiness(invite.gameId);
       }
     }
 

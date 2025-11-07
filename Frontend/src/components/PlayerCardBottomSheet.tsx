@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, TrendingUp, TrendingDown, Beer, Star } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, Beer, Star, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
@@ -8,6 +8,7 @@ import { Loading } from './Loading';
 import { CachedImage } from './CachedImage';
 import { UrlConstructor } from '@/utils/urlConstructor';
 import { PlayerAvatarView } from './PlayerAvatarView';
+import { LevelHistoryView } from './LevelHistoryView';
 import { GenderIndicator } from './GenderIndicator';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
@@ -27,6 +28,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [isClosing, setIsClosing] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [showAvatarView, setShowAvatarView] = useState(false);
+  const [showLevelView, setShowLevelView] = useState(false);
   const isCurrentUser = playerId === user?.id;
 
   // Disable background scrolling and interactions when modal is open
@@ -63,6 +65,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     setDragY(0);
     setIsClosing(false);
     setShowAvatarView(false);
+    setShowLevelView(false);
 
     const fetchStats = async () => {
       try {
@@ -200,7 +203,29 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         >
           <div className="h-8 w-full cursor-grab active:cursor-grabbing" />
           
-          <div className="absolute top-4 right-4 flex gap-2 z-10">
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+            {showLevelView ? (
+              <>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setShowLevelView(false)}
+                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
+                  </button>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    {t('playerCard.levelHistory')}
+                  </h2>
+                </div>
+                <button
+                  onClick={handleClose}
+                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <X size={20} className="text-gray-600 dark:text-gray-300" />
+                </button>
+              </>
+            ) : (
+              <div className="flex gap-2 ml-auto">
             {stats && !isCurrentUser && (
               <button
                 onClick={handleToggleFavorite}
@@ -222,6 +247,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
             >
               <X size={20} className="text-gray-600 dark:text-gray-300" />
             </button>
+              </div>
+            )}
           </div>
 
           <div className="overflow-y-auto max-h-[calc(95vh-20px)]">
@@ -241,6 +268,16 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                   >
                     <PlayerAvatarView stats={stats} onBack={() => setShowAvatarView(false)} />
                   </motion.div>
+                ) : showLevelView ? (
+                  <motion.div
+                    key="level-view"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                  >
+                    <LevelHistoryView stats={stats} onBack={() => setShowLevelView(false)} />
+                  </motion.div>
                 ) : (
                   <motion.div
                     key="player-card"
@@ -258,6 +295,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                           setShowAvatarView(true);
                         }
                       }}
+                      onLevelClick={() => setShowLevelView(true)}
                     />
                   </motion.div>
                 )}
@@ -274,17 +312,14 @@ interface PlayerCardContentProps {
   stats: UserStats;
   t: (key: string) => string;
   onAvatarClick: () => void;
+  onLevelClick: () => void;
 }
 
-const PlayerCardContent = ({ stats, t, onAvatarClick }: PlayerCardContentProps) => {
-  const { user, levelHistory, gamesLast30Days } = stats;
+const PlayerCardContent = ({ stats, t, onAvatarClick, onLevelClick }: PlayerCardContentProps) => {
+  const { user, gamesLast30Days } = stats;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const winRate = user.gamesPlayed > 0 ? ((user.gamesWon / user.gamesPlayed) * 100).toFixed(1) : '0';
-
-  const maxLevel = Math.max(...levelHistory.map(h => h.levelAfter), user.level);
-  const minLevel = Math.min(...levelHistory.map(h => h.levelAfter), user.level);
-  const levelRange = maxLevel - minLevel || 1;
 
   return (
     <motion.div
@@ -339,8 +374,11 @@ const PlayerCardContent = ({ stats, t, onAvatarClick }: PlayerCardContentProps) 
             )}
           </div>
         </div>
-        <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1">
-          <span>{user.level.toFixed(1)}</span>
+        <button
+          onClick={onLevelClick}
+          className="absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors cursor-pointer"
+        >
+          <span>{user.level.toFixed(2)}</span>
           <span>•</span>
           <div className="relative flex items-center">
             <Beer
@@ -354,8 +392,8 @@ const PlayerCardContent = ({ stats, t, onAvatarClick }: PlayerCardContentProps) 
               strokeWidth={1.5}
             />
           </div>
-          <span>{user.socialLevel?.toFixed(1) || '1.0'}</span>
-        </div>
+          <span>{user.socialLevel?.toFixed(2) || '1.00'}</span>
+        </button>
         {user.isTrainer && (
           <div className="absolute top-3 left-3 bg-green-500 dark:bg-green-600 text-white px-3 py-1 rounded-full font-semibold text-sm shadow-lg">
             {t('playerCard.isTrainer')}
@@ -416,90 +454,6 @@ const PlayerCardContent = ({ stats, t, onAvatarClick }: PlayerCardContentProps) 
           </div>
         </div>
       </div>
-
-      {levelHistory.length > 0 && (
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            {t('playerCard.levelHistory')}
-          </h3>
-          <div className="relative h-40">
-            <svg className="w-full h-full" viewBox="0 0 300 120" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="levelGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0.05" />
-                </linearGradient>
-              </defs>
-
-              <polyline
-                fill="url(#levelGradient)"
-                stroke="none"
-                points={levelHistory.map((item, index) => {
-                  const x = (index / (levelHistory.length - 1 || 1)) * 300;
-                  const normalizedLevel = ((item.levelAfter - minLevel) / levelRange);
-                  const y = 120 - (normalizedLevel * 100 + 10);
-                  return `${x},${y}`;
-                }).join(' ') + ` 300,120 0,120`}
-              />
-
-              <polyline
-                fill="none"
-                stroke="rgb(59, 130, 246)"
-                strokeWidth="2"
-                points={levelHistory.map((item, index) => {
-                  const x = (index / (levelHistory.length - 1 || 1)) * 300;
-                  const normalizedLevel = ((item.levelAfter - minLevel) / levelRange);
-                  const y = 120 - (normalizedLevel * 100 + 10);
-                  return `${x},${y}`;
-                }).join(' ')}
-              />
-
-              {levelHistory.map((item, index) => {
-                const x = (index / (levelHistory.length - 1 || 1)) * 300;
-                const normalizedLevel = ((item.levelAfter - minLevel) / levelRange);
-                const y = 120 - (normalizedLevel * 100 + 10);
-                return (
-                  <circle
-                    key={item.id}
-                    cx={x}
-                    cy={y}
-                    r="3"
-                    fill="rgb(59, 130, 246)"
-                  />
-                );
-              })}
-            </svg>
-            
-            <div className="absolute top-0 left-0 text-xs text-gray-500 dark:text-gray-400">
-              {maxLevel.toFixed(1)}
-            </div>
-            <div className="absolute bottom-0 left-0 text-xs text-gray-500 dark:text-gray-400">
-              {minLevel.toFixed(1)}
-            </div>
-          </div>
-
-          <div className="mt-4 space-y-2">
-            {levelHistory.slice(-3).reverse().map((item) => (
-              <div key={item.id} className="flex items-center justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">
-                  {new Date(item.createdAt).toLocaleDateString()}
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">
-                    {item.levelBefore.toFixed(1)} → {item.levelAfter.toFixed(1)}
-                  </span>
-                  <div className={`flex items-center ${item.levelChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {item.levelChange >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                    <span className="font-semibold ml-1">
-                      {item.levelChange >= 0 ? '+' : ''}{item.levelChange.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </motion.div>
   );
 };

@@ -292,8 +292,8 @@ function renderGamesTable(games) {
                 <td>${game.participants.length}</td>
                 <td><span class="badge badge-warning">${game.status}</span></td>
                 <td>
-                    <span class="badge ${game.hasResults ? 'badge-success' : 'badge-danger'}">
-                        ${game.hasResults ? 'Yes' : 'No'}
+                    <span class="badge ${game.resultsStatus !== 'NONE' ? 'badge-success' : 'badge-danger'}">
+                        ${game.resultsStatus !== 'NONE' ? 'Yes' : 'No'}
                     </span>
                 </td>
                 <td>
@@ -650,7 +650,7 @@ function viewGameModal(game) {
     
     // Game Settings
     document.getElementById('gameStatus').textContent = game.status || '-';
-    document.getElementById('gameHasResults').textContent = game.hasResults ? 'Yes' : 'No';
+    document.getElementById('gameHasResults').textContent = game.resultsStatus !== 'NONE' ? 'Yes' : 'No';
     document.getElementById('gameIsPublic').textContent = game.isPublic ? 'Yes' : 'No';
     document.getElementById('gameAffectsRating').textContent = game.affectsRating ? 'Yes' : 'No';
     document.getElementById('gameAnyoneCanInvite').textContent = game.anyoneCanInvite ? 'Yes' : 'No';

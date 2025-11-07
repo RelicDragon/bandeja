@@ -1,0 +1,33 @@
+{
+  "CLASSIC": {
+    "winnerOfMatch": "BY_SETS",
+    "winnerOfRound": "BY_MATCHES_WON",
+    "winnerOfGame": "BY_ROUNDS_WON"
+  },
+  "AMERICANO": {
+    "winnerOfMatch": "BY_SCORES",
+    "winnerOfRound": "BY_SCORES_DELTA",
+    "winnerOfGame": "BY_SCORES_DELTA"
+  },
+  "MEXICANO": {
+    "winnerOfMatch": "BY_SCORES",
+    "winnerOfRound": "BY_SCORES_DELTA",
+    "winnerOfGame": "BY_SCORES_DELTA"
+  },
+  "ROUND_ROBIN": {
+    "winnerOfMatch": "BY_SETS",
+    "winnerOfRound": "BY_MATCHES_WON",
+    "winnerOfGame": "BY_MATCHES_WON"
+  },
+  "WINNER_COURT": {
+    "winnerOfMatch": "BY_SCORES",
+    "winnerOfRound": "BY_MATCHES_WON",
+    "winnerOfGame": "BY_MATCHES_WON"
+  },
+  "CUSTOM": {
+    "winnerOfMatch": "BY_SCORES",
+    "winnerOfRound": "BY_MATCHES_WON",
+    "winnerOfGame": "BY_ROUNDS_WON"
+  }
+}
+

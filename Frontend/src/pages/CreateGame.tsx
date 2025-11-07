@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection } from '@/components';
+import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameSetupSection, GameSetupModal } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
 import { usersApi } from '@/api/users';
-import { Club, Court, EntityType } from '@/types';
+import { Club, Court, EntityType, GameType } from '@/types';
 import { InvitablePlayer } from '@/api/users';
 import { addHours } from 'date-fns';
+import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -32,7 +33,9 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
   const [resultsByAnyone, setResultsByAnyone] = useState<boolean>(false);
   const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(false);
   const [hasFixedTeams, setHasFixedTeams] = useState<boolean>(false);
+  const [hasMultiRounds, setHasMultiRounds] = useState<boolean>(false);
   const [genderTeams, setGenderTeams] = useState<'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'>('ANY');
+  const [gameType, setGameType] = useState<GameType>('CLASSIC');
   const [gameName, setGameName] = useState<string>('');
   const [comments, setComments] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -47,6 +50,15 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
   const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>([]);
   const [invitedPlayers, setInvitedPlayers] = useState<InvitablePlayer[]>([]);
   const [showPastTimes, setShowPastTimes] = useState<boolean>(false);
+  const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
+  const [gameSetup, setGameSetup] = useState<{
+    fixedNumberOfSets?: number;
+    maxTotalPointsPerSet?: number;
+    maxPointsPerTeam?: number;
+    winnerOfGame?: any;
+    winnerOfRound?: any;
+    winnerOfMatch?: any;
+  }>({});
   const dateInputRef = useRef<HTMLInputElement>(null);
   const clubSectionRef = useRef<HTMLDivElement>(null);
   const timeSectionRef = useRef<HTMLDivElement>(null);
@@ -201,6 +213,16 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
     }
   }, [duration, selectedTime, canAccommodateDuration, generateTimeOptions, getTimeSlotsForDuration]);
 
+  useEffect(() => {
+    const template = applyGameTypeTemplate(gameType);
+    setGameSetup(prevSetup => ({
+      ...prevSetup,
+      winnerOfMatch: template.winnerOfMatch,
+      winnerOfRound: template.winnerOfRound,
+      winnerOfGame: template.winnerOfGame,
+    }));
+  }, [gameType]);
+
   const isSlotHighlighted = (time: string) => {
     if (!selectedTime) return false;
     const requiredSlots = getTimeSlotsForDuration(selectedTime, duration);
@@ -276,7 +298,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
 
       const gameResponse = await gamesApi.create({
         entityType: entityType,
-        gameType: 'CLASSIC',
+        gameType: gameType,
         clubId: selectedClub || undefined,
         courtId: selectedCourt !== 'notBooked' ? selectedCourt : undefined,
         startTime: startTime.toISOString(),
@@ -292,10 +314,12 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
         hasBookedCourt: hasBookedCourt,
         afterGameGoToBar: afterGameGoToBar,
         hasFixedTeams: hasFixedTeams,
+        hasMultiRounds: hasMultiRounds,
         genderTeams: genderTeams,
         name: gameName || undefined,
         description: comments,
         participants: participants.filter((id): id is string => id !== null) as any,
+        ...gameSetup,
       });
 
       if (invitedPlayerIds.length > 0 && gameResponse.data.id) {
@@ -337,12 +361,28 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
     if (num === 2) {
       setHasFixedTeams(false);
     }
+    if (num <= 4) {
+      setHasMultiRounds(false);
+    }
   };
 
   const handleRemoveInvitedPlayer = (playerId: string) => {
     setInvitedPlayerIds(invitedPlayerIds.filter(id => id !== playerId));
     setInvitedPlayers(invitedPlayers.filter(p => p.id !== playerId));
   };
+
+  const handleGameSetupConfirm = (params: {
+    fixedNumberOfSets: number;
+    maxTotalPointsPerSet: number;
+    maxPointsPerTeam: number;
+    winnerOfGame: any;
+    winnerOfRound: any;
+    winnerOfMatch: any;
+  }) => {
+    setGameSetup(params);
+  };
+
+  const hasGameSetup = Object.keys(gameSetup).length > 0;
 
 
   return (
@@ -404,7 +444,9 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
           resultsByAnyone={resultsByAnyone}
           afterGameGoToBar={afterGameGoToBar}
           hasFixedTeams={hasFixedTeams}
+          hasMultiRounds={hasMultiRounds}
           genderTeams={genderTeams}
+          gameType={gameType}
           maxParticipants={maxParticipants}
           entityType={entityType}
           onPublicChange={setIsPublic}
@@ -413,7 +455,14 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
           onResultsByAnyoneChange={setResultsByAnyone}
           onAfterGameGoToBarChange={setAfterGameGoToBar}
           onHasFixedTeamsChange={setHasFixedTeams}
+          onHasMultiRoundsChange={setHasMultiRounds}
           onGenderTeamsChange={setGenderTeams}
+          onGameTypeChange={setGameType}
+        />
+
+        <GameSetupSection
+          onOpenSetup={() => setIsGameSetupModalOpen(true)}
+          hasSetup={hasGameSetup}
         />
 
         <GameNameSection
@@ -489,6 +538,19 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
             }
           }}
           preSelectedIds={invitedPlayerIds}
+        />
+      )}
+
+      {isGameSetupModalOpen && (
+        <GameSetupModal
+          isOpen={isGameSetupModalOpen}
+          entityType={entityType}
+          hasMultiRounds={hasMultiRounds}
+          isEditing={true}
+          confirmButtonText={t('common.save')}
+          initialValues={gameSetup}
+          onClose={() => setIsGameSetupModalOpen(false)}
+          onConfirm={handleGameSetupConfirm}
         />
       )}
     </div>

@@ -46,3 +46,5 @@ export * from './gameResults';
 export * from './ConfirmationModal';
 export * from './LundaAccountModal';
 export * from './GameModeToggle';
+export * from './SyncStatusIcon';
+export * from './GameSetupModal';

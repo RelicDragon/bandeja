@@ -102,6 +102,7 @@ class SocketService {
           });
 
           if (!game) {
+            console.log(`[SocketService] User ${socket.userId} tried to join non-existent game room ${gameId}`);
             socket.emit('error', { message: 'Game not found' });
             return;
           }
@@ -111,6 +112,7 @@ class SocketService {
           const isPublicGame = game.isPublic;
 
           if (!isParticipant && !hasPendingInvite && !isPublicGame) {
+            console.log(`[SocketService] User ${socket.userId} denied access to game room ${gameId}`);
             socket.emit('error', { message: 'Access denied to game chat' });
             return;
           }
@@ -118,10 +120,11 @@ class SocketService {
           socket.join(`game-${gameId}`);
           socket.gameRooms?.add(gameId);
           
-          console.log(`User ${socket.userId} joined game room ${gameId}`);
+          const socketsInRoom = await this.io.in(`game-${gameId}`).fetchSockets();
+          console.log(`[SocketService] User ${socket.userId} joined game room ${gameId} (${socketsInRoom.length} total socket(s) in room)`);
           socket.emit('joined-game-room', { gameId });
         } catch (error) {
-          console.error('Error joining game room:', error);
+          console.error('[SocketService] Error joining game room:', error);
           socket.emit('error', { message: 'Failed to join game room' });
         }
       });
@@ -356,6 +359,32 @@ class SocketService {
       console.log(`[SocketService] Emitted game-updated event: ${directEmittedCount} direct socket(s) + ${roomEmitCount} via room broadcast`);
     } catch (error) {
       console.error('Error emitting game update:', error);
+    }
+  }
+
+  public emitGameResultsUpdated(gameId: string, senderId: string) {
+    const roomName = `game-${gameId}`;
+    let recipientCount = 0;
+    const recipientUserIds: string[] = [];
+    
+    this.connectedUsers.forEach((socketIds, userId) => {
+      if (userId === senderId) return;
+      
+      socketIds.forEach(socketId => {
+        const socket = this.io.sockets.sockets.get(socketId) as AuthenticatedSocket;
+        if (socket && socket.gameRooms?.has(gameId)) {
+          socket.emit('game-results-updated', { gameId });
+          recipientCount++;
+          if (!recipientUserIds.includes(userId)) {
+            recipientUserIds.push(userId);
+          }
+        }
+      });
+    });
+    
+    console.log(`[SocketService] Emitted game-results-updated for game ${gameId} from user ${senderId} to ${recipientCount} socket(s) (${recipientUserIds.length} unique user(s))`);
+    if (recipientUserIds.length > 0) {
+      console.log(`[SocketService] Recipients: ${recipientUserIds.join(', ')}`);
     }
   }
 

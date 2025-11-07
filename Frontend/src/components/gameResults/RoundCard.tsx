@@ -31,7 +31,7 @@ interface RoundCardProps {
   courtAssignments?: Record<string, string>;
   courts?: Court[];
   onCourtClick?: (matchId: string) => void;
-  horizontalLayout?: boolean;
+  fixedNumberOfSets?: number;
 }
 
 export const RoundCard = ({
@@ -58,7 +58,7 @@ export const RoundCard = ({
   courtAssignments = {},
   courts = [],
   onCourtClick,
-  horizontalLayout = false,
+  fixedNumberOfSets,
 }: RoundCardProps) => {
   const { t } = useTranslation();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -100,7 +100,7 @@ export const RoundCard = ({
           <div className="border-t border-gray-200 dark:border-gray-700">
             <div className="p-2">
               {round.matches.map((match, matchIndex) => (
-                horizontalLayout ? (
+                fixedNumberOfSets === 1 ? (
                   <HorizontalMatchCard
                     key={match.id}
                     match={match}
@@ -123,6 +123,7 @@ export const RoundCard = ({
                     selectedCourt={courts.find(c => c.id === courtAssignments[match.id]) || null}
                     courts={courts}
                     onCourtClick={() => onCourtClick && onCourtClick(match.id)}
+                    fixedNumberOfSets={fixedNumberOfSets}
                   />
                 ) : (
                   <MatchCard
@@ -147,6 +148,7 @@ export const RoundCard = ({
                     selectedCourt={courts.find(c => c.id === courtAssignments[match.id]) || null}
                     courts={courts}
                     onCourtClick={() => onCourtClick && onCourtClick(match.id)}
+                    fixedNumberOfSets={fixedNumberOfSets}
                   />
                 )
               ))}

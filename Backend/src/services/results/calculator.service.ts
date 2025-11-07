@@ -10,13 +10,20 @@ interface PlayerData {
 
 interface TeamScore {
   teamId: string;
+  teamNumber: number;
   score: number;
   playerIds: string[];
+}
+
+interface SetScore {
+  teamAScore: number;
+  teamBScore: number;
 }
 
 interface MatchResultData {
   teams: TeamScore[];
   winnerId?: string | null;
+  sets?: SetScore[];
 }
 
 interface RoundResultData {
@@ -66,7 +73,8 @@ export function calculateClassicGameOutcomes(
     for (const match of roundResult.matches) {
       if (match.teams.length !== 2) continue;
 
-      const [teamA, teamB] = match.teams;
+      const teamA = match.teams.find(t => t.teamNumber === 1) || match.teams[0];
+      const teamB = match.teams.find(t => t.teamNumber === 2) || match.teams[1];
       const teamAWins = match.winnerId === teamA.teamId;
       const teamBWins = match.winnerId === teamB.teamId;
 
@@ -86,6 +94,7 @@ export function calculateClassicGameOutcomes(
           {
             isWinner: teamAWins,
             opponentsLevel: teamBAvgLevel,
+            setScores: match.sets,
           }
         );
 
@@ -105,6 +114,7 @@ export function calculateClassicGameOutcomes(
           {
             isWinner: teamBWins,
             opponentsLevel: teamAAvgLevel,
+            setScores: match.sets?.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore })),
           }
         );
 

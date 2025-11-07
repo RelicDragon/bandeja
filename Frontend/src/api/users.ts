@@ -12,6 +12,7 @@ export interface LevelHistoryItem {
 export interface UserStats {
   user: User & { isFavorite?: boolean };
   levelHistory: LevelHistoryItem[];
+  socialLevelHistory?: LevelHistoryItem[];
   gamesLast30Days: number;
 }
 

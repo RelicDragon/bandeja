@@ -7,30 +7,42 @@ import * as resultsController from '../controllers/results.controller';
 const router = Router();
 
 router.get('/game/:gameId', optionalAuth, resultsController.getGameResults);
-router.get('/game/:gameId/generate', authenticate, resultsController.generateOutcomes);
 router.get('/round/:roundId', optionalAuth, resultsController.getRoundResults);
 router.get('/match/:matchId', optionalAuth, resultsController.getMatchResults);
+router.get('/game/:gameId/outcome/:userId/explanation', optionalAuth, resultsController.getOutcomeExplanation);
 
+router.post('/game/:gameId/recalculate', authenticate, resultsController.recalculateOutcomes);
 router.post(
-  '/game/:gameId',
-  authenticate,
+  '/game/:gameId/edit', 
+  authenticate, 
   validate([
-    body('rounds').isArray().withMessage('Rounds must be an array'),
-    body('rounds.*.roundNumber').isInt().withMessage('Round number is required'),
-    body('rounds.*.matches').isArray().withMessage('Matches must be an array'),
-    body('rounds.*.matches.*.matchNumber').isInt().withMessage('Match number is required'),
-    body('rounds.*.matches.*.teams').isArray().withMessage('Teams must be an array'),
-    body('rounds.*.matches.*.teams.*.teamNumber').isInt().withMessage('Team number is required'),
-    body('rounds.*.matches.*.teams.*.playerIds').isArray().withMessage('Player IDs must be an array'),
-    body('rounds.*.matches.*.sets').isArray().withMessage('Sets must be an array'),
-    body('rounds.*.matches.*.sets.*.setNumber').isInt().withMessage('Set number is required'),
-    body('rounds.*.matches.*.sets.*.teamAScore').isInt({ min: 0, max: 100 }).withMessage('Team A score must be 0-100'),
-    body('rounds.*.matches.*.sets.*.teamBScore').isInt({ min: 0, max: 100 }).withMessage('Team B score must be 0-100'),
+    body('baseVersion').optional().isInt({ min: 0 }).withMessage('Base version must be a non-negative integer'),
   ]),
-  resultsController.saveGameResults
+  resultsController.editGameResults
 );
 
-router.delete('/game/:gameId', authenticate, resultsController.deleteGameResults);
+router.delete(
+  '/game/:gameId', 
+  authenticate,
+  validate([
+    body('baseVersion').optional().isInt({ min: 0 }).withMessage('Base version must be a non-negative integer'),
+  ]),
+  resultsController.deleteGameResults
+);
+
+router.post(
+  '/game/:gameId/ops:batch',
+  authenticate,
+  validate([
+    body('ops').isArray().withMessage('Ops must be an array'),
+    body('ops.*.id').isString().withMessage('Op ID is required'),
+    body('ops.*.base_version').isInt({ min: 0 }).withMessage('Base version must be a non-negative integer'),
+    body('ops.*.op').isIn(['replace', 'add', 'remove']).withMessage('Op type must be replace, add, or remove'),
+    body('ops.*.path').isString().withMessage('Path is required'),
+    body('ops.*.actor.userId').isString().withMessage('Actor user ID is required'),
+  ]),
+  resultsController.batchOps
+);
 
 export default router;
 

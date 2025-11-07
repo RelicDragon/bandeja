@@ -84,7 +84,7 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
           teamsReady: true,
           participantsReady: true,
           status: true,
-          hasResults: true,
+          resultsStatus: true,
           entityType: true,
           court: {
             select: {
@@ -189,7 +189,7 @@ export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response)
           teamsReady: true,
           participantsReady: true,
           status: true,
-          hasResults: true,
+          resultsStatus: true,
           entityType: true,
           court: {
             select: {

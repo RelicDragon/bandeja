@@ -32,7 +32,7 @@ export class GameStatusScheduler {
           id: true,
           startTime: true,
           endTime: true,
-          hasResults: true,
+          resultsStatus: true,
           status: true,
         },
       });

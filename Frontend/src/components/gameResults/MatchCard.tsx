@@ -24,6 +24,7 @@ interface MatchCardProps {
   selectedCourt?: Court | null;
   courts?: Court[];
   onCourtClick?: () => void;
+  fixedNumberOfSets?: number;
 }
 
 export const MatchCard = ({
@@ -46,7 +47,45 @@ export const MatchCard = ({
   showCourtLabel = false,
   selectedCourt,
   onCourtClick,
+  fixedNumberOfSets,
 }: MatchCardProps) => {
+  const canEnterScores = isEditing || (isPresetGame && canEditResults);
+  
+  const displaySets = fixedNumberOfSets && fixedNumberOfSets > 0
+    ? Array.from({ length: fixedNumberOfSets }, (_, i) => match.sets[i] || { teamA: 0, teamB: 0 })
+    : (() => {
+        const sets = [...match.sets];
+        
+        if (canEnterScores) {
+          // When we can enter scores, always ensure there's a trailing 0:0 set for adding scores
+          if (sets.length === 0) {
+            sets.push({ teamA: 0, teamB: 0 });
+          } else {
+            const lastSet = sets[sets.length - 1];
+            if (lastSet.teamA > 0 || lastSet.teamB > 0) {
+              sets.push({ teamA: 0, teamB: 0 });
+            }
+          }
+        } else {
+          // When not entering scores, only add trailing 0:0 if last set has scores
+          if (sets.length > 0) {
+            const lastSet = sets[sets.length - 1];
+            if (lastSet.teamA > 0 || lastSet.teamB > 0) {
+              sets.push({ teamA: 0, teamB: 0 });
+            }
+          }
+        }
+        
+        return sets;
+      })();
+
+  const hasNonZeroScore = match.sets.some(set => set.teamA > 0 || set.teamB > 0);
+  const shouldHideCard = !canEnterScores && !hasNonZeroScore;
+
+  if (shouldHideCard) {
+    return null;
+  }
+
   const renderTeam = (team: 'teamA' | 'teamB') => {
     const teamPlayers = match[team];
     const maxPlayersPerTeam = players.length === 2 ? 1 : 2;
@@ -151,28 +190,33 @@ export const MatchCard = ({
         {canEnterResults ? (
           <div className="overflow-x-auto w-full">
             <div className="grid gap-2 min-w-max" style={{
-              gridTemplateColumns: `max-content repeat(${match.sets.length}, 40px)`,
+              gridTemplateColumns: `max-content repeat(${displaySets.length}, 40px)`,
               gridTemplateRows: 'auto auto'
             }}>
               <div className="flex items-center justify-center" style={{ gridColumn: '1', gridRow: '1' }}>
                 {renderTeam('teamA')}
               </div>
               
-              {match.sets.map((_, setIndex) => (
+              {displaySets.map((_, setIndex) => (
                 <div key={`teamA-${setIndex}`} className="flex items-center justify-center" style={{
                   gridColumn: `${setIndex + 2}`,
                   gridRow: '1',
                   transform: 'translateY(-15%)'
                 }}>
                   <button
-                    onClick={() => onSetClick(setIndex)}
+                    onClick={(isPresetGame || (!isPresetGame && isEditing)) && canEditResults ? () => onSetClick(setIndex) : undefined}
                     className={`text-2xl font-bold transition-colors ${
                       (isPresetGame || (!isPresetGame && isEditing)) && canEditResults
                         ? 'text-orange-500 hover:text-orange-600 cursor-pointer'
                         : 'text-gray-400 dark:text-gray-600 cursor-default'
                     }`}
                   >
-                    {match.sets[setIndex].teamA !== 0 || match.sets[setIndex].teamB !== 0 || isPresetGame || isEditing ? match.sets[setIndex].teamA : ''}
+                    {(() => {
+                      const set = displaySets[setIndex];
+                      const isZeroZero = set.teamA === 0 && set.teamB === 0;
+                      if (!canEnterScores && isZeroZero) return '';
+                      return set.teamA !== 0 || set.teamB !== 0 || canEnterScores || (fixedNumberOfSets && fixedNumberOfSets > 0) ? set.teamA : '';
+                    })()}
                   </button>
                 </div>
               ))}
@@ -181,21 +225,26 @@ export const MatchCard = ({
                 {renderTeam('teamB')}
               </div>
               
-              {match.sets.map((_, setIndex) => (
+              {displaySets.map((_, setIndex) => (
                 <div key={`teamB-${setIndex}`} className="flex items-center justify-center" style={{
                   gridColumn: `${setIndex + 2}`,
                   gridRow: '2',
                   transform: 'translateY(-15%)'
                 }}>
                   <button
-                    onClick={() => onSetClick(setIndex)}
+                    onClick={(isPresetGame || (!isPresetGame && isEditing)) && canEditResults ? () => onSetClick(setIndex) : undefined}
                     className={`text-2xl font-bold transition-colors ${
                       (isPresetGame || (!isPresetGame && isEditing)) && canEditResults
                         ? 'text-orange-500 hover:text-orange-600 cursor-pointer'
                         : 'text-gray-400 dark:text-gray-600 cursor-default'
                     }`}
                   >
-                    {match.sets[setIndex].teamA !== 0 || match.sets[setIndex].teamB !== 0 || isPresetGame || isEditing ? match.sets[setIndex].teamB : ''}
+                    {(() => {
+                      const set = displaySets[setIndex];
+                      const isZeroZero = set.teamA === 0 && set.teamB === 0;
+                      if (!canEnterScores && isZeroZero) return '';
+                      return set.teamA !== 0 || set.teamB !== 0 || canEnterScores || (fixedNumberOfSets && fixedNumberOfSets > 0) ? set.teamB : '';
+                    })()}
                   </button>
                 </div>
               ))}

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { ToggleSwitch } from '../ToggleSwitch';
 import { Select } from '../Select';
-import { EntityType, GenderTeam } from '@/types';
+import { EntityType, GenderTeam, GameType } from '@/types';
 
 interface GameSettingsSectionProps {
   isPublic: boolean;
@@ -10,7 +10,9 @@ interface GameSettingsSectionProps {
   resultsByAnyone: boolean;
   afterGameGoToBar: boolean;
   hasFixedTeams: boolean;
+  hasMultiRounds: boolean;
   genderTeams: GenderTeam;
+  gameType: GameType;
   maxParticipants: number;
   entityType: EntityType;
   onPublicChange: (checked: boolean) => void;
@@ -19,7 +21,9 @@ interface GameSettingsSectionProps {
   onResultsByAnyoneChange: (checked: boolean) => void;
   onAfterGameGoToBarChange: (checked: boolean) => void;
   onHasFixedTeamsChange: (checked: boolean) => void;
+  onHasMultiRoundsChange: (checked: boolean) => void;
   onGenderTeamsChange: (value: GenderTeam) => void;
+  onGameTypeChange: (value: GameType) => void;
 }
 
 export const GameSettingsSection = ({
@@ -29,7 +33,9 @@ export const GameSettingsSection = ({
   resultsByAnyone,
   afterGameGoToBar,
   hasFixedTeams,
+  hasMultiRounds,
   genderTeams,
+  gameType,
   maxParticipants,
   entityType,
   onPublicChange,
@@ -38,7 +44,9 @@ export const GameSettingsSection = ({
   onResultsByAnyoneChange,
   onAfterGameGoToBarChange,
   onHasFixedTeamsChange,
+  onHasMultiRoundsChange,
   onGenderTeamsChange,
+  onGameTypeChange,
 }: GameSettingsSectionProps) => {
   const { t } = useTranslation();
 
@@ -48,6 +56,46 @@ export const GameSettingsSection = ({
         {t('createGame.settings')}
       </h2>
       <div className="space-y-2">
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+            {t('createGame.gameType')}
+          </span>
+          <div className="flex-shrink-0 w-40">
+            <Select
+              options={
+                entityType === 'GAME'
+                  ? [
+                      { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                      { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                      { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                    ]
+                  : [
+                      { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                      { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                      { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
+                      { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
+                      { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
+                      { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                    ]
+              }
+              value={gameType}
+              onChange={(value) => onGameTypeChange(value as GameType)}
+            />
+          </div>
+        </div>
+        {entityType === 'GAME' && maxParticipants > 4 && (
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+              {t('createGame.tournament')}
+            </span>
+            <div className="flex-shrink-0">
+              <ToggleSwitch 
+                checked={hasMultiRounds} 
+                onChange={onHasMultiRoundsChange}
+              />
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
             {t('createGame.publicGame')}

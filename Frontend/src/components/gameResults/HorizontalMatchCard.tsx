@@ -24,6 +24,7 @@ interface HorizontalMatchCardProps {
   selectedCourt?: Court | null;
   courts?: Court[];
   onCourtClick?: () => void;
+  fixedNumberOfSets?: number;
 }
 
 export const HorizontalMatchCard = ({
@@ -46,7 +47,20 @@ export const HorizontalMatchCard = ({
   showCourtLabel = false,
   selectedCourt,
   onCourtClick,
+  fixedNumberOfSets,
 }: HorizontalMatchCardProps) => {
+  const displaySets = fixedNumberOfSets && fixedNumberOfSets > 0
+    ? Array.from({ length: fixedNumberOfSets }, (_, i) => match.sets[i] || { teamA: 0, teamB: 0 })
+    : (() => {
+        const sets = [...match.sets];
+        if (sets.length > 0) {
+          const lastSet = sets[sets.length - 1];
+          if (lastSet.teamA > 0 || lastSet.teamB > 0) {
+            sets.push({ teamA: 0, teamB: 0 });
+          }
+        }
+        return sets;
+      })();
   const renderTeam = (team: 'teamA' | 'teamB') => {
     const teamPlayers = match[team];
     const maxPlayersPerTeam = players.length === 2 ? 1 : 2;
@@ -154,22 +168,25 @@ export const HorizontalMatchCard = ({
           </div>
           
           {canEnterResults && (
-            <div className="flex items-center justify-center">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSetClick(0);
-                }}
-                className={`text-2xl font-bold transition-colors ${
-                  (isPresetGame || (!isPresetGame && isEditing)) && canEditResults
-                    ? 'text-orange-500 hover:text-orange-600 cursor-pointer'
-                    : 'text-gray-400 dark:text-gray-600 cursor-default'
-                }`}
-              >
-                {match.sets[0].teamA !== 0 || match.sets[0].teamB !== 0 || isPresetGame || isEditing 
-                  ? `${match.sets[0].teamA}:${match.sets[0].teamB}` 
-                  : ''}
-              </button>
+            <div className="flex items-center gap-2">
+              {displaySets.map((set, setIndex) => (
+                <button
+                  key={setIndex}
+                  onClick={(isPresetGame || (!isPresetGame && isEditing)) && canEditResults ? (e) => {
+                    e.stopPropagation();
+                    onSetClick(setIndex);
+                  } : undefined}
+                  className={`text-2xl font-bold transition-colors ${
+                    (isPresetGame || (!isPresetGame && isEditing)) && canEditResults
+                      ? 'text-orange-500 hover:text-orange-600 cursor-pointer'
+                      : 'text-gray-400 dark:text-gray-600 cursor-default'
+                  }`}
+                >
+                  {set.teamA !== 0 || set.teamB !== 0 || isPresetGame || isEditing || (fixedNumberOfSets && fixedNumberOfSets > 0)
+                    ? `${set.teamA} : ${set.teamB}` 
+                    : ''}
+                </button>
+              ))}
             </div>
           )}
           

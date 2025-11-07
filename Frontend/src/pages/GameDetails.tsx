@@ -12,14 +12,16 @@ import {
   GameResults,
   GameParticipants,
   GameSettings,
-  ConfirmationModal
+  ConfirmationModal,
+  GameSetupModal
 } from '@/components';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
+import { GameSetup } from '@/components/GameDetails/GameSetup';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
-import { Game, Invite, Court, Club, GenderTeam } from '@/types';
+import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
 import { canUserEditResults } from '@/utils/gameResults';
 import { socketService } from '@/services/socketService';
 
@@ -44,6 +46,7 @@ export const GameDetailsContent = () => {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     clubId: '',
     courtId: '',
@@ -55,7 +58,9 @@ export const GameDetailsContent = () => {
     hasBookedCourt: false,
     afterGameGoToBar: false,
     hasFixedTeams: false,
+    hasMultiRounds: false,
     genderTeams: 'ANY' as GenderTeam,
+    gameType: 'CLASSIC' as GameType,
     description: '',
   });
 
@@ -153,7 +158,9 @@ export const GameDetailsContent = () => {
         hasBookedCourt: game.hasBookedCourt || false,
         afterGameGoToBar: game.afterGameGoToBar || false,
         hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
+        hasMultiRounds: game.maxParticipants <= 4 ? false : (game.hasMultiRounds || false),
         genderTeams: (game.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS',
+        gameType: (game.gameType || 'CLASSIC') as GameType,
         description: game.description || '',
       });
     }
@@ -355,7 +362,9 @@ export const GameDetailsContent = () => {
           hasBookedCourt: game.hasBookedCourt || false,
           afterGameGoToBar: game.afterGameGoToBar || false,
           hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
+          hasMultiRounds: game.maxParticipants <= 4 ? false : (game.hasMultiRounds || false),
           genderTeams: (game.genderTeams || 'ANY') as GenderTeam,
+          gameType: (game.gameType || 'CLASSIC') as GameType,
           description: game.description || '',
         });
       }
@@ -384,7 +393,9 @@ export const GameDetailsContent = () => {
         hasBookedCourt: editFormData.hasBookedCourt,
         afterGameGoToBar: editFormData.afterGameGoToBar,
         hasFixedTeams: game?.maxParticipants === 2 ? false : editFormData.hasFixedTeams,
+        hasMultiRounds: (game?.maxParticipants ?? 0) <= 4 ? false : editFormData.hasMultiRounds,
         genderTeams: editFormData.genderTeams,
+        gameType: editFormData.gameType,
         description: editFormData.description,
       };
 
@@ -407,6 +418,27 @@ export const GameDetailsContent = () => {
 
   const handleFormDataChange = (data: Partial<typeof editFormData>) => {
     setEditFormData({...editFormData, ...data});
+  };
+
+  const handleGameSetupConfirm = async (params: {
+    fixedNumberOfSets: number;
+    maxTotalPointsPerSet: number;
+    maxPointsPerTeam: number;
+    winnerOfGame: any;
+    winnerOfRound: any;
+    winnerOfMatch: any;
+  }) => {
+    if (!id) return;
+
+    try {
+      await gamesApi.update(id, params);
+      const response = await gamesApi.getById(id);
+      setGame(response.data);
+      toast.success(t('gameResults.setupUpdated'));
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
   };
 
   const canDeleteGame = () => {
@@ -520,6 +552,11 @@ export const GameDetailsContent = () => {
         onOpenCourtModal={() => setIsCourtModalOpen(true)}
       />
 
+      <GameSetup
+        onOpenSetup={() => setIsGameSetupModalOpen(true)}
+        canEdit={canEdit}
+      />
+
       {game.hasFixedTeams && (
         <FixedTeamsManagement
           key={`fixed-teams-${game.id}`}
@@ -617,6 +654,26 @@ export const GameDetailsContent = () => {
           confirmVariant="danger"
           onConfirm={handleDeleteGame}
           onClose={() => setShowDeleteConfirmation(false)}
+        />
+      )}
+
+      {isGameSetupModalOpen && (
+        <GameSetupModal
+          isOpen={isGameSetupModalOpen}
+          entityType={game.entityType}
+          hasMultiRounds={game.hasMultiRounds || false}
+          isEditing={canEdit}
+          confirmButtonText={canEdit ? t('common.save') : undefined}
+          initialValues={{
+            fixedNumberOfSets: game.fixedNumberOfSets,
+            maxTotalPointsPerSet: game.maxTotalPointsPerSet,
+            maxPointsPerTeam: game.maxPointsPerTeam,
+            winnerOfGame: game.winnerOfGame,
+            winnerOfRound: game.winnerOfRound,
+            winnerOfMatch: game.winnerOfMatch,
+          }}
+          onClose={() => setIsGameSetupModalOpen(false)}
+          onConfirm={handleGameSetupConfirm}
         />
       )}
     </div>

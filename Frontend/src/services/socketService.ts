@@ -19,6 +19,7 @@ export interface SocketEvents {
   'joined-bug-room': (data: { bugId: string }) => void;
   'left-bug-room': (data: { bugId: string }) => void;
   'game-updated': (data: { gameId: string; senderId: string; game: any }) => void;
+  'game-results-updated': (data: { gameId: string }) => void;
   'error': (error: { message: string }) => void;
 }
 

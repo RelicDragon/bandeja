@@ -163,7 +163,15 @@ model Game {
   teamsReady      Boolean           @default(false)
   participantsReady Boolean         @default(false)
   status          GameStatus        @default(ANNOUNCED)
-  hasResults      Boolean           @default(false)
+  resultsStatus   ResultsStatus     @default(NONE)
+  resultsMeta     Json?
+  fixedNumberOfSets Int             @default(0)
+  maxTotalPointsPerSet Int          @default(0)
+  maxPointsPerTeam Int              @default(0)
+  hasMultiRounds  Boolean           @default(false)
+  winnerOfGame    WinnerOfGame      @default(BY_ROUNDS_WON)
+  winnerOfRound   WinnerOfRound     @default(BY_MATCHES_WON)
+  winnerOfMatch   WinnerOfMatch     @default(BY_SCORES)
   mediaUrls       String[]
   parentId        String?
   metadata        Json?
@@ -187,7 +195,7 @@ model Game {
   @@index([entityType])
   @@index([parentId])
   @@index([affectsRating])
-  @@index([hasResults])
+  @@index([resultsStatus])
   @@index([hasFixedTeams])
 }
 
@@ -524,6 +532,7 @@ enum GameType {
   MEXICANO
   ROUND_ROBIN
   WINNER_COURT
+  CUSTOM
 }
 
 enum EntityType {
@@ -654,4 +663,28 @@ enum GameStatus {
   STARTED
   FINISHED
   ARCHIVED
+}
+
+enum ResultsStatus {
+  NONE
+  IN_PROGRESS
+  FINAL
+}
+
+enum WinnerOfGame {
+  BY_ROUNDS_WON
+  BY_MATCHES_WON
+  BY_POINTS
+  BY_SCORES_DELTA
+  PLAYOFF_FINALS
+}
+
+enum WinnerOfRound {
+  BY_MATCHES_WON
+  BY_SCORES_DELTA
+}
+
+enum WinnerOfMatch {
+  BY_SETS
+  BY_SCORES
 }

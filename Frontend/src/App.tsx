@@ -19,6 +19,7 @@ import { PlayerCardModalManager } from './components/PlayerCardModalManager';
 import { ToastProvider } from './components/ToastProvider';
 import { headerService } from './services/headerService';
 import { socketService } from './services/socketService';
+import { resultsSyncService } from './services/resultsSync';
 import { useHeaderStore } from './store/headerStore';
 import './i18n/config';
 
@@ -30,6 +31,7 @@ function App() {
   useEffect(() => {
     if (isAuthenticated) {
       headerService.startPolling();
+      resultsSyncService.start();
       fetchFavorites();
 
       // Set up socket listener for new invites
@@ -56,22 +58,26 @@ function App() {
         socketService.off('new-invite', handleNewInvite);
         socketService.off('invite-deleted', handleInviteDeleted);
         headerService.stopPolling();
+        resultsSyncService.stop();
       };
     } else {
       headerService.stopPolling();
+      resultsSyncService.stop();
     }
 
     return () => {
       headerService.stopPolling();
+      resultsSyncService.stop();
     };
   }, [isAuthenticated, fetchFavorites]);
 
 
   return (
-    <ToastProvider>
-      <PlayerCardModalManager>
-        <BrowserRouter>
-        <Routes>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <ToastProvider>
+        <PlayerCardModalManager>
+          <BrowserRouter>
+          <Routes>
         <Route
           path="/login"
           element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
@@ -219,10 +225,11 @@ function App() {
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
-    </PlayerCardModalManager>
-    </ToastProvider>
+          </Routes>
+          </BrowserRouter>
+        </PlayerCardModalManager>
+      </ToastProvider>
+    </div>
   );
 }
 
