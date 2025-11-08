@@ -6,6 +6,7 @@ export interface GameTypeTemplate {
   winnerOfRound: WinnerOfRound;
   winnerOfGame: WinnerOfGame;
   matchGenerationType: MatchGenerationType;
+  prohibitMatchesEditing?: boolean;
 }
 
 type GameTypeTemplates = Record<GameType, GameTypeTemplate>;

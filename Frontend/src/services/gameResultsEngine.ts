@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 import { Game, User } from '@/types';
 import { Round, Match, GameState } from '@/types/gameResults';
@@ -8,8 +7,12 @@ import { resultsSyncService } from './resultsSync';
 import { resultsApi } from '@/api/results';
 import { gamesApi } from '@/api';
 import { createOneOnOneMatches, createTwoOnTwoMatches } from './predefinedResults';
+import { RoundGenerator } from './roundGenerator';
+import { OpCreator } from './opCreators';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
+
+export type ConflictCallback = (conflicts: any[]) => void;
 
 interface GameResultsState {
   gameId: string | null;
@@ -50,7 +53,7 @@ const useGameResultsStore = create<GameResultsStore>((set) => ({
 
 class GameResultsEngineClass {
   private syncUnsubscribe: (() => void) | null = null;
-  private opCreatorCache: Map<string, OpCreatorInstance> = new Map();
+  private conflictCallback: ConflictCallback | null = null;
 
   getState() {
     return useGameResultsStore.getState();
@@ -58,6 +61,16 @@ class GameResultsEngineClass {
 
   subscribe(callback: (state: GameResultsState) => void) {
     return useGameResultsStore.subscribe(callback);
+  }
+
+  setConflictCallback(callback: ConflictCallback | null) {
+    this.conflictCallback = callback;
+  }
+
+  notifyConflicts(conflicts: any[]) {
+    if (this.conflictCallback && conflicts.length > 0) {
+      this.conflictCallback(conflicts);
+    }
   }
 
   async initialize(gameId: string, userId: string, t: (key: string) => string): Promise<void> {
@@ -91,7 +104,6 @@ class GameResultsEngineClass {
       if (resultsStatus === 'NONE' && canEdit) {
         // Clear any stale data
         await ResultsStorage.clearOutbox(gameId);
-        await ResultsStorage.clearConflicts(gameId);
         const emptyData = { rounds: [] };
         const newShadow = {
           gameId,
@@ -284,7 +296,7 @@ class GameResultsEngineClass {
 
   async initializeDefaultRound(t: (key: string) => string): Promise<void> {
     const state = this.getState();
-    if (!state.gameId || !state.userId || !state.canEdit) return;
+    if (!state.gameId || !state.userId || !state.canEdit || !state.game) return;
 
     const shadow = await ResultsStorage.getGame(state.gameId);
     const outbox = await ResultsStorage.getOutbox(state.gameId);
@@ -298,20 +310,17 @@ class GameResultsEngineClass {
     if (hasRound && hasMatches) return;
     if (outbox.length > 0) return;
 
-    const ops: Op[] = [];
-    const roundId = 'round-1';
-    const roundName = `${t('gameResults.round')} 1`;
+    const opCreator = this.createOpCreator(shadow);
+    const roundGenerator = new RoundGenerator({
+      opCreator,
+      rounds: existingRounds,
+      game: state.game,
+      roundNumber: 1,
+      roundName: `${t('gameResults.round')} 1`,
+      fixedNumberOfSets: state.game.fixedNumberOfSets,
+    });
 
-    if (!hasRound) {
-      const roundOp = await this.createOp((creator) => creator.addRound(roundId, roundName));
-      ops.push(roundOp);
-    }
-
-    if (!hasMatches) {
-      const fixedNumberOfSets = state.game?.fixedNumberOfSets;
-      const matchOp = await this.createOp((creator) => creator.addMatch('match-1', roundId, fixedNumberOfSets));
-      ops.push(matchOp);
-    }
+    const ops = roundGenerator.generateRound();
 
     if (ops.length > 0) {
       for (const op of ops) {
@@ -427,7 +436,6 @@ class GameResultsEngineClass {
       this.syncUnsubscribe();
       this.syncUnsubscribe = null;
     }
-    this.opCreatorCache.clear();
     useGameResultsStore.setState({
       gameId: null,
       userId: null,
@@ -452,14 +460,30 @@ class GameResultsEngineClass {
 
   async addRound(name?: string, t?: (key: string) => string): Promise<void> {
     const state = this.getState();
-    if (!state.gameId || !state.userId || !state.canEdit) return;
+    if (!state.gameId || !state.userId || !state.canEdit || !state.game) return;
+
+    const shadow = await ResultsStorage.getGame(state.gameId);
+    if (!shadow) return;
 
     const roundNumber = state.rounds.length + 1;
     const roundId = `round-${roundNumber}`;
     const roundName = name || (t ? `${t('gameResults.round')} ${roundNumber}` : `Round ${roundNumber}`);
 
-    const op = await this.createOp((creator) => creator.addRound(roundId, roundName));
-    await this.applyOp(op);
+    const opCreator = this.createOpCreator(shadow);
+    const roundGenerator = new RoundGenerator({
+      opCreator,
+      rounds: state.rounds,
+      game: state.game,
+      roundNumber,
+      roundName,
+      fixedNumberOfSets: state.game.fixedNumberOfSets,
+    });
+
+    const ops = roundGenerator.generateRound();
+
+    for (const op of ops) {
+      await this.applyOp(op);
+    }
     
     useGameResultsStore.setState({ expandedRoundId: roundId, syncStatus: 'SYNCING' });
     resultsSyncService.debouncedSync(state.gameId);
@@ -551,39 +575,22 @@ class GameResultsEngineClass {
     resultsSyncService.debouncedSync(state.gameId);
   }
 
-  async updateSetScore(roundId: string, matchId: string, setIndex: number, teamAScore: number, teamBScore: number): Promise<void> {
+  async updateMatch(roundId: string, matchId: string, match: { teamA: string[]; teamB: string[]; sets: Array<{ teamA: number; teamB: number }>; courtId?: string }): Promise<void> {
     const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit) return;
 
-    const op = await this.createOp((creator) => creator.updateSetScore(matchId, setIndex, teamAScore, teamBScore, roundId));
+    const op = await this.createOp((creator) => creator.updateMatch(matchId, match, roundId));
     await this.applyOp(op);
 
     useGameResultsStore.setState({ syncStatus: 'SYNCING' });
     resultsSyncService.debouncedSync(state.gameId);
   }
 
-  async addSet(roundId: string, matchId: string): Promise<void> {
+  async setMatchCourt(roundId: string, matchId: string, courtId: string): Promise<void> {
     const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit) return;
 
-    const op = await this.createOp((creator) => creator.addSet(matchId, roundId));
-    await this.applyOp(op);
-
-    useGameResultsStore.setState({ syncStatus: 'SYNCING' });
-    resultsSyncService.debouncedSync(state.gameId);
-  }
-
-  async removeSet(roundId: string, matchId: string, setIndex: number): Promise<void> {
-    const state = this.getState();
-    if (!state.gameId || !state.userId || !state.canEdit) return;
-
-    const round = state.rounds.find(r => r.id === roundId);
-    if (!round) return;
-
-    const match = round.matches.find(m => m.id === matchId);
-    if (!match || match.sets.length <= 1) return;
-
-    const op = await this.createOp((creator) => creator.removeSet(matchId, setIndex, roundId));
+    const op = await this.createOp((creator) => creator.setMatchCourt(matchId, courtId, roundId));
     await this.applyOp(op);
 
     useGameResultsStore.setState({ syncStatus: 'SYNCING' });
@@ -649,8 +656,6 @@ class GameResultsEngineClass {
       await ResultsStorage.saveGame(shadow);
     }
 
-    await ResultsStorage.clearConflicts(state.gameId);
-
     useGameResultsStore.setState({ 
       rounds: [],
       syncStatus: 'SYNCING',
@@ -659,14 +664,11 @@ class GameResultsEngineClass {
     await this.forceSync();
   }
 
-  private async createOp(opFactory: (creator: OpCreatorInstance) => Op): Promise<Op> {
+  private createOpCreator(shadow: GameShadow): OpCreator {
     const state = this.getState();
     if (!state.gameId || !state.userId) throw new Error('Not initialized');
 
-    const shadow = await ResultsStorage.getGame(state.gameId);
-    if (!shadow) throw new Error('Shadow not found');
-
-    const creator = new OpCreatorInstance(state.gameId, state.userId, shadow.version);
+    const creator = new OpCreator(state.gameId, state.userId, shadow.version);
     
     if (shadow.data?.rounds && Array.isArray(shadow.data.rounds)) {
       creator.setRoundIndexMap(shadow.data.rounds);
@@ -679,9 +681,20 @@ class GameResultsEngineClass {
           });
         }
       });
-      creator.setMatchIndexMapWithRounds(allMatches);
+      
+      if (allMatches.length > 0) {
+        creator.setMatchIndexMap(allMatches);
+      }
     }
 
+    return creator;
+  }
+
+  private async createOp(opFactory: (creator: OpCreator) => Op): Promise<Op> {
+    const shadow = await ResultsStorage.getGame(this.getState().gameId!);
+    if (!shadow) throw new Error('Shadow not found');
+
+    const creator = this.createOpCreator(shadow);
     return opFactory(creator);
   }
 
@@ -866,6 +879,7 @@ class GameResultsEngineClass {
               teamB,
               sets,
               winnerId: winnerTeam,
+              courtId: match.courtId,
             });
           });
         }
@@ -1008,135 +1022,85 @@ class GameResultsEngineClass {
       });
     }
   }
-}
 
-class OpCreatorInstance {
-  private gameId: string;
-  private userId: string;
-  private baseVersion: number;
-  private roundIndexMap: Map<string, number> = new Map();
-  private matchIndexMap: Map<string, number> = new Map();
+  async resolveConflictsAcceptServer(): Promise<void> {
+    const state = this.getState();
+    if (!state.gameId) return;
 
-  constructor(gameId: string, userId: string, baseVersion: number) {
-    this.gameId = gameId;
-    this.userId = userId;
-    this.baseVersion = baseVersion;
-  }
+    console.log('[GameResultsEngine] Resolving conflicts: accepting server state');
 
-  private getRoundIndex(roundId: string): number {
-    if (this.roundIndexMap.has(roundId)) {
-      return this.roundIndexMap.get(roundId)!;
+    const outbox = await ResultsStorage.getOutbox(state.gameId);
+    const conflictedOps = outbox.filter(op => op.status === 'conflict');
+    await ResultsStorage.removeOutboxOps(state.gameId, conflictedOps.map(op => op.id));
+
+    const gameResponse = await gamesApi.getById(state.gameId);
+    if (gameResponse?.data) {
+      const game = gameResponse.data;
+      const serverResultsData = await resultsApi.getGameResults(state.gameId);
+      
+      if (serverResultsData.data) {
+        const t = (key: string) => key;
+        const stateData = this.convertServerResultsToState(serverResultsData.data, t);
+        const serverVersion = (game.resultsMeta?.version || 0);
+
+        await ResultsStorage.saveGame({
+          gameId: state.gameId,
+          data: stateData,
+          version: serverVersion,
+          lastSyncedAt: Date.now(),
+        });
+
+        useGameResultsStore.setState({
+          game,
+          rounds: stateData.rounds,
+          shadow: {
+            gameId: state.gameId,
+            data: stateData,
+            version: serverVersion,
+            lastSyncedAt: Date.now(),
+          },
+          syncStatus: 'SUCCESS',
+        });
+
+        console.log('[GameResultsEngine] Conflicts resolved: server state accepted');
+      }
     }
-    const match = roundId.match(/round-(\d+)/);
-    return match ? parseInt(match[1]) - 1 : 0;
   }
 
-  private getMatchIndex(matchId: string): number {
-    if (this.matchIndexMap.has(matchId)) {
-      return this.matchIndexMap.get(matchId)!;
-    }
-    const match = matchId.match(/match-(\d+)/);
-    return match ? parseInt(match[1]) - 1 : 0;
-  }
+  async resolveConflictsForceClient(): Promise<void> {
+    const state = this.getState();
+    if (!state.gameId) return;
 
-  setRoundIndexMap(rounds: Array<{ id: string }>): void {
-    this.roundIndexMap.clear();
-    if (Array.isArray(rounds)) {
-      rounds.forEach((round, index) => {
-        this.roundIndexMap.set(round.id, index);
+    console.log('[GameResultsEngine] Resolving conflicts: forcing client state');
+
+    const gameResponse = await gamesApi.getById(state.gameId);
+    if (!gameResponse?.data) return;
+
+    const game = gameResponse.data;
+    const serverVersion = (game.resultsMeta?.version || 0);
+
+    const outbox = await ResultsStorage.getOutbox(state.gameId);
+    const conflictedOps = outbox.filter(op => op.status === 'conflict');
+
+    for (const op of conflictedOps) {
+      await ResultsStorage.updateOutboxOp(state.gameId, op.id, {
+        status: 'pending',
+        baseVersion: serverVersion,
+        lastError: undefined,
       });
     }
-  }
 
-  setMatchIndexMap(matches: Array<{ id: string }>): void {
-    this.matchIndexMap.clear();
-    if (Array.isArray(matches)) {
-      matches.forEach((match, index) => {
-        this.matchIndexMap.set(match.id, index);
-      });
+    const shadow = await ResultsStorage.getGame(state.gameId);
+    if (shadow) {
+      shadow.version = serverVersion;
+      await ResultsStorage.saveGame(shadow);
     }
-  }
 
-  setMatchIndexMapWithRounds(matches: Array<{ id: string; roundIndex: number; matchIndex: number }>): void {
-    this.matchIndexMap.clear();
-    if (Array.isArray(matches)) {
-      matches.forEach(({ id, matchIndex }) => {
-        this.matchIndexMap.set(id, matchIndex);
-      });
-    }
-  }
+    useGameResultsStore.setState({ syncStatus: 'SYNCING' });
+    
+    await this.forceSync();
 
-  private createOp(path: string, type: Op['type'], value?: any): Op {
-    return {
-      id: nanoid(),
-      gameId: this.gameId,
-      baseVersion: this.baseVersion,
-      path,
-      type,
-      value,
-      ts: Date.now(),
-      actor: { userId: this.userId },
-    };
-  }
-
-  updateSetScore(matchId: string, setIndex: number, teamAScore: number, teamBScore: number, roundId: string): Op {
-    const roundIndex = this.getRoundIndex(roundId);
-    const matchIndex = this.getMatchIndex(matchId);
-    return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}/sets/${setIndex}`, 'set', {
-      teamA: teamAScore,
-      teamB: teamBScore,
-    });
-  }
-
-  addSet(matchId: string, roundId: string): Op {
-    const roundIndex = this.getRoundIndex(roundId);
-    const matchIndex = this.getMatchIndex(matchId);
-    return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}/sets`, 'add', { teamA: 0, teamB: 0 });
-  }
-
-  removeSet(matchId: string, setIndex: number, roundId: string): Op {
-    const roundIndex = this.getRoundIndex(roundId);
-    const matchIndex = this.getMatchIndex(matchId);
-    return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}/sets/${setIndex}`, 'remove');
-  }
-
-  addPlayerToTeam(matchId: string, team: 'teamA' | 'teamB', playerId: string, roundId: string): Op {
-    const roundIndex = this.getRoundIndex(roundId);
-    const matchIndex = this.getMatchIndex(matchId);
-    return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}/${team}`, 'add', playerId);
-  }
-
-  removePlayerFromTeam(matchId: string, team: 'teamA' | 'teamB', playerId: string, roundId: string): Op {
-    const roundIndex = this.getRoundIndex(roundId);
-    const matchIndex = this.getMatchIndex(matchId);
-    return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}/${team}/${playerId}`, 'remove');
-  }
-
-  addMatch(matchId: string, roundId: string, fixedNumberOfSets?: number): Op {
-    const roundIndex = this.getRoundIndex(roundId);
-    const initialSets = fixedNumberOfSets && fixedNumberOfSets > 0
-      ? Array.from({ length: fixedNumberOfSets }, () => ({ teamA: 0, teamB: 0 }))
-      : [{ teamA: 0, teamB: 0 }];
-    return this.createOp(`/rounds/${roundIndex}/matches`, 'add', { id: matchId, teamA: [], teamB: [], sets: initialSets });
-  }
-
-  removeMatch(matchId: string, roundId: string): Op {
-    const roundIndex = this.getRoundIndex(roundId);
-    const matchIndex = this.getMatchIndex(matchId);
-    return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}`, 'remove');
-  }
-
-  addRound(roundId: string, name: string): Op {
-    return this.createOp(`/rounds`, 'add', { id: roundId, name, matches: [] });
-  }
-
-  removeRound(roundId: string): Op {
-    const roundIndex = this.getRoundIndex(roundId);
-    return this.createOp(`/rounds/${roundIndex}`, 'remove');
-  }
-
-  resetGame(): Op {
-    return this.createOp('/reset', 'set', {});
+    console.log('[GameResultsEngine] Conflicts resolved: client state forced');
   }
 }
 

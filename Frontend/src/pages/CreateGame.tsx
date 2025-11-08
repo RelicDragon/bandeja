@@ -5,6 +5,7 @@ import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, Locat
 import { useAuthStore } from '@/store/authStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
 import { usersApi } from '@/api/users';
+import { gameCourtsApi } from '@/api/gameCourts';
 import { Club, Court, EntityType, GameType } from '@/types';
 import { InvitablePlayer } from '@/api/users';
 import { addHours } from 'date-fns';
@@ -222,6 +223,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
       winnerOfRound: template.winnerOfRound,
       winnerOfGame: template.winnerOfGame,
       matchGenerationType: template.matchGenerationType,
+      prohibitMatchesEditing: template.prohibitMatchesEditing ?? false,
     }));
   }, [gameType]);
 
@@ -337,7 +339,6 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
 
       if (selectedCourtIds.length > 0 && gameResponse.data.id) {
         try {
-          const { gameCourtsApi } = await import('@/api/gameCourts');
           await gameCourtsApi.setGameCourts(gameResponse.data.id, selectedCourtIds);
         } catch (courtError) {
           console.error('Failed to set game courts:', courtError);
@@ -390,6 +391,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
     winnerOfRound: any;
     winnerOfMatch: any;
     matchGenerationType: any;
+    prohibitMatchesEditing?: boolean;
   }) => {
     setGameSetup(params);
   };

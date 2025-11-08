@@ -28,10 +28,10 @@ interface RoundCardProps {
   onPlayerPlaceholderClick: (matchId: string, team: 'teamA' | 'teamB') => void;
   canEnterResults: (matchId: string) => boolean;
   showCourtLabel?: boolean;
-  courtAssignments?: Record<string, string>;
   courts?: Court[];
   onCourtClick?: (matchId: string) => void;
   fixedNumberOfSets?: number;
+  prohibitMatchesEditing?: boolean;
 }
 
 export const RoundCard = ({
@@ -55,10 +55,10 @@ export const RoundCard = ({
   onPlayerPlaceholderClick,
   canEnterResults,
   showCourtLabel = false,
-  courtAssignments = {},
   courts = [],
   onCourtClick,
   fixedNumberOfSets,
+  prohibitMatchesEditing = false,
 }: RoundCardProps) => {
   const { t } = useTranslation();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -110,7 +110,7 @@ export const RoundCard = ({
                     isEditing={editingMatchId === match.id}
                     canEditResults={canEditResults}
                     draggedPlayer={draggedPlayer}
-                    showDeleteButton={round.matches.length > 1 && !isPresetGame && editingMatchId === match.id && canEditResults}
+                    showDeleteButton={round.matches.length > 1 && !isPresetGame && editingMatchId === match.id && canEditResults && !prohibitMatchesEditing}
                     onRemoveMatch={() => onRemoveMatch(match.id)}
                     onMatchClick={() => onMatchClick(match.id)}
                     onSetClick={(setIndex) => onSetClick(match.id, setIndex)}
@@ -120,10 +120,11 @@ export const RoundCard = ({
                     onPlayerPlaceholderClick={(team) => onPlayerPlaceholderClick(match.id, team)}
                     canEnterResults={canEnterResults(match.id)}
                     showCourtLabel={showCourtLabel}
-                    selectedCourt={courts.find(c => c.id === courtAssignments[match.id]) || null}
+                    selectedCourt={courts?.find(c => c.id === match.courtId) || null}
                     courts={courts}
                     onCourtClick={() => onCourtClick && onCourtClick(match.id)}
                     fixedNumberOfSets={fixedNumberOfSets}
+                    prohibitMatchesEditing={prohibitMatchesEditing}
                   />
                 ) : (
                   <MatchCard
@@ -135,7 +136,7 @@ export const RoundCard = ({
                     isEditing={editingMatchId === match.id}
                     canEditResults={canEditResults}
                     draggedPlayer={draggedPlayer}
-                    showDeleteButton={round.matches.length > 1 && !isPresetGame && editingMatchId === match.id && canEditResults}
+                    showDeleteButton={round.matches.length > 1 && !isPresetGame && editingMatchId === match.id && canEditResults && !prohibitMatchesEditing}
                     onRemoveMatch={() => onRemoveMatch(match.id)}
                     onMatchClick={() => onMatchClick(match.id)}
                     onSetClick={(setIndex) => onSetClick(match.id, setIndex)}
@@ -145,15 +146,16 @@ export const RoundCard = ({
                     onPlayerPlaceholderClick={(team) => onPlayerPlaceholderClick(match.id, team)}
                     canEnterResults={canEnterResults(match.id)}
                     showCourtLabel={showCourtLabel}
-                    selectedCourt={courts.find(c => c.id === courtAssignments[match.id]) || null}
+                    selectedCourt={courts?.find(c => c.id === match.courtId) || null}
                     courts={courts}
                     onCourtClick={() => onCourtClick && onCourtClick(match.id)}
                     fixedNumberOfSets={fixedNumberOfSets}
+                    prohibitMatchesEditing={prohibitMatchesEditing}
                   />
                 )
               ))}
 
-              {!isPresetGame && editingMatchId && canEditResults && (
+              {!isPresetGame && !prohibitMatchesEditing && editingMatchId && canEditResults && (
                 <div className="flex justify-center mt-4">
                   <button
                     onClick={(e) => {

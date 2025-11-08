@@ -299,7 +299,7 @@ async function applyOpToDatabase(
         });
       }
       return true;
-    } else if (op.path.includes('/sets/') && !op.path.includes('/teamA') && !op.path.includes('/teamB')) {
+    } else if (op.path.includes('/courtId') && op.path.includes('/matches/')) {
       const round = await tx.round.findFirst({
         where: { gameId },
         orderBy: { roundNumber: 'asc' },
@@ -316,58 +316,82 @@ async function applyOpToDatabase(
 
       if (!match) return false;
 
-      if (op.op === 'add' && op.value) {
-        await tx.set.create({
+      if (op.op === 'replace') {
+        await tx.match.update({
+          where: { id: match.id },
           data: {
-            matchId: match.id,
-            setNumber: await tx.set.count({ where: { matchId: match.id } }) + 1,
-            teamAScore: op.value.teamA || 0,
-            teamBScore: op.value.teamB || 0,
+            courtId: op.value || null,
           },
         });
-        return true;
       }
-
-      const set = await tx.set.findFirst({
-        where: { matchId: match.id },
-        orderBy: { setNumber: 'asc' },
-        skip: pathInfo.setIndex || 0,
+      return true;
+    } else if (op.path.match(/\/matches\/\d+$/) && op.op === 'replace' && op.value) {
+      const round = await tx.round.findFirst({
+        where: { gameId },
+        orderBy: { roundNumber: 'asc' },
+        skip: pathInfo.roundIndex || 0,
       });
 
-      if (op.op === 'replace' && op.value) {
-        if (set) {
-          await tx.set.update({
-            where: { id: set.id },
-            data: {
-              teamAScore: op.value.teamA || set.teamAScore,
-              teamBScore: op.value.teamB || set.teamBScore,
-            },
-          });
-        } else {
+      if (!round) return false;
+
+      const match = await tx.match.findFirst({
+        where: { roundId: round.id },
+        orderBy: { matchNumber: 'asc' },
+        skip: pathInfo.matchIndex || 0,
+      });
+
+      if (!match) return false;
+
+      if (op.value.courtId !== undefined) {
+        await tx.match.update({
+          where: { id: match.id },
+          data: { courtId: op.value.courtId || null },
+        });
+      }
+
+      if (op.value.teamA && Array.isArray(op.value.teamA)) {
+        const teamA = await tx.team.findFirst({
+          where: { matchId: match.id, teamNumber: 1 },
+        });
+        if (teamA) {
+          await tx.teamPlayer.deleteMany({ where: { teamId: teamA.id } });
+          for (const playerId of op.value.teamA) {
+            await tx.teamPlayer.create({
+              data: { teamId: teamA.id, userId: playerId },
+            });
+          }
+        }
+      }
+
+      if (op.value.teamB && Array.isArray(op.value.teamB)) {
+        const teamB = await tx.team.findFirst({
+          where: { matchId: match.id, teamNumber: 2 },
+        });
+        if (teamB) {
+          await tx.teamPlayer.deleteMany({ where: { teamId: teamB.id } });
+          for (const playerId of op.value.teamB) {
+            await tx.teamPlayer.create({
+              data: { teamId: teamB.id, userId: playerId },
+            });
+          }
+        }
+      }
+
+      if (op.value.sets && Array.isArray(op.value.sets)) {
+        await tx.set.deleteMany({ where: { matchId: match.id } });
+        for (let i = 0; i < op.value.sets.length; i++) {
+          const set = op.value.sets[i];
           await tx.set.create({
             data: {
               matchId: match.id,
-              setNumber: (pathInfo.setIndex || 0) + 1,
-              teamAScore: op.value.teamA || 0,
-              teamBScore: op.value.teamB || 0,
+              setNumber: i + 1,
+              teamAScore: set.teamA || 0,
+              teamBScore: set.teamB || 0,
             },
           });
         }
-      } else if (op.op === 'remove' && set) {
-        const deletedSetNumber = set.setNumber;
-        await tx.set.delete({ where: { id: set.id } });
-        
-        // Renumber subsequent sets in the same match
-        await tx.set.updateMany({
-          where: {
-            matchId: match.id,
-            setNumber: { gt: deletedSetNumber }
-          },
-          data: {
-            setNumber: { decrement: 1 }
-          }
-        });
       }
+
       return true;
     } else if ((op.path.includes('/teamA') || op.path.includes('/teamB')) && op.path.includes('/matches/')) {
       const round = await tx.round.findFirst({

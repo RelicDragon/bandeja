@@ -272,6 +272,9 @@
     "matchGenerationTypeRoundRobin": "Round Robin",
     "matchGenerationTypeEscalera": "Escalera (Ladder)",
     "matchGenerationTypeRating": "Rating (Mexicano)",
+    "prohibitMatchesEditing": "Prohibit Matches Editing",
+    "allow": "Allow",
+    "prohibit": "Prohibit",
     "fixedNumberOfSets": "Fixed Number of Sets",
     "maxTotalPointsPerSet": "Max Total Points Per Set",
     "maxPointsPerTeam": "Max Points Per Team",
@@ -546,6 +549,20 @@
     "restarted": "Game restarted successfully",
     "saved": "Results saved successfully",
     "submitting": "Submitting..."
+  },
+  "conflicts": {
+    "title": "Conflict Detected",
+    "subtitle": "Changes have been made by another user",
+    "description": "The game results have been modified by another user while you were making changes. Please choose how to resolve this conflict.",
+    "conflictCount": "{{count}} conflict(s) detected",
+    "yourChanges": "Your Changes",
+    "serverChanges": "Server Changes",
+    "acceptServer": "Use Server Version",
+    "forceClient": "Use My Changes",
+    "warning": "Warning",
+    "warningMessage": "This action cannot be undone. Make sure you understand which changes you're keeping.",
+    "serverAccepted": "Server changes accepted successfully",
+    "clientForced": "Your changes have been applied successfully"
   },
   "errors": {
     "generic": "Something went wrong",

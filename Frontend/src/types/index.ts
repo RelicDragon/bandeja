@@ -187,6 +187,7 @@ export interface Game {
   winnerOfRound?: WinnerOfRound;
   winnerOfMatch?: WinnerOfMatch;
   matchGenerationType?: MatchGenerationType;
+  prohibitMatchesEditing?: boolean;
   isClubFavorite?: boolean;
   participants: GameParticipant[];
   invites?: Invite[];
@@ -204,6 +205,12 @@ export interface Game {
   parentId?: string;
   children?: Game[];
   metadata?: Record<string, any>;
+  resultsMeta?: {
+    version?: number;
+    lastBatchTime?: string;
+    lastBatchId?: string;
+    processedOps?: string[];
+  };
   createdAt: string;
   updatedAt: string;
 }

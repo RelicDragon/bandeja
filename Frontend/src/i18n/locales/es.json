@@ -276,6 +276,9 @@
     "matchGenerationTypeRoundRobin": "Round Robin",
     "matchGenerationTypeEscalera": "Escalera",
     "matchGenerationTypeRating": "Rating (Mexicano)",
+    "prohibitMatchesEditing": "Prohibir Edición de Partidos",
+    "allow": "Permitir",
+    "prohibit": "Prohibir",
     "fixedNumberOfSets": "Número Fijo de Sets",
     "maxTotalPointsPerSet": "Puntos Totales Máximos por Set",
     "maxPointsPerTeam": "Puntos Máximos por Equipo",
@@ -543,6 +546,20 @@
     "restarted": "Juego reiniciado exitosamente",
     "saved": "Resultados guardados exitosamente",
     "submitting": "Enviando..."
+  },
+  "conflicts": {
+    "title": "Conflicto detectado",
+    "subtitle": "Otro usuario ha realizado cambios",
+    "description": "Los resultados del juego han sido modificados por otro usuario mientras realizabas cambios. Por favor, elige cómo resolver este conflicto.",
+    "conflictCount": "{{count}} conflicto(s) detectado(s)",
+    "yourChanges": "Tus cambios",
+    "serverChanges": "Cambios del servidor",
+    "acceptServer": "Usar versión del servidor",
+    "forceClient": "Usar mis cambios",
+    "warning": "Advertencia",
+    "warningMessage": "Esta acción no se puede deshacer. Asegúrate de entender qué cambios estás conservando.",
+    "serverAccepted": "Cambios del servidor aceptados exitosamente",
+    "clientForced": "Tus cambios han sido aplicados exitosamente"
   },
   "errors": {
     "generic": "Algo salió mal",

@@ -74,11 +74,10 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     GameResultsEngine.addPlayerToTeam(roundId, matchId, team, playerId), []);
   const removePlayerFromTeam = useCallback((roundId: string, matchId: string, team: 'teamA' | 'teamB', playerId: string) =>
     GameResultsEngine.removePlayerFromTeam(roundId, matchId, team, playerId), []);
-  const updateSetScore = useCallback((roundId: string, matchId: string, setIndex: number, teamAScore: number, teamBScore: number) =>
-    GameResultsEngine.updateSetScore(roundId, matchId, setIndex, teamAScore, teamBScore), []);
-  const addSet = useCallback((roundId: string, matchId: string) => GameResultsEngine.addSet(roundId, matchId), []);
-  const removeSet = useCallback((roundId: string, matchId: string, setIndex: number) =>
-    GameResultsEngine.removeSet(roundId, matchId, setIndex), []);
+  const updateMatch = useCallback((roundId: string, matchId: string, match: { teamA: string[]; teamB: string[]; sets: Array<{ teamA: number; teamB: number }>; courtId?: string }) =>
+    GameResultsEngine.updateMatch(roundId, matchId, match), []);
+  const setMatchCourt = useCallback((roundId: string, matchId: string, courtId: string) =>
+    GameResultsEngine.setMatchCourt(roundId, matchId, courtId), []);
   const setExpandedRoundId = useCallback((roundId: string | null) => GameResultsEngine.setExpandedRoundId(roundId), []);
   const setEditingMatchId = useCallback((matchId: string | null) => GameResultsEngine.setEditingMatchId(matchId), []);
   const setSyncStatus = useCallback((status: 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED') => GameResultsEngine.setSyncStatus(status), []);
@@ -107,9 +106,8 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     removeMatch,
     addPlayerToTeam,
     removePlayerFromTeam,
-    updateSetScore,
-    addSet,
-    removeSet,
+    updateMatch,
+    setMatchCourt,
     setExpandedRoundId,
     setEditingMatchId,
     setSyncStatus,
@@ -137,9 +135,8 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     removeMatch,
     addPlayerToTeam,
     removePlayerFromTeam,
-    updateSetScore,
-    addSet,
-    removeSet,
+    updateMatch,
+    setMatchCourt,
     setExpandedRoundId,
     setEditingMatchId,
     setSyncStatus,

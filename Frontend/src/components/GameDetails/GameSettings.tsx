@@ -76,7 +76,7 @@ export const GameSettings = ({
     return null;
   }
 
-  const canShowEdit = game.resultsStatus !== 'FINAL' && game.status !== 'ARCHIVED';
+  const canShowEdit = game.resultsStatus === 'NONE' && game.status !== 'ARCHIVED';
 
   return (
     <Card>

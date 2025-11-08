@@ -5,4 +5,5 @@ export { AvailablePlayersFooter } from './AvailablePlayersFooter';
 export { FloatingDraggedPlayer } from './FloatingDraggedPlayer';
 export { RoundCard } from './RoundCard';
 export { OutcomesDisplay } from './OutcomesDisplay';
+export { ConflictResolutionModal } from './ConflictResolutionModal';
 

@@ -134,6 +134,7 @@ model Court {
   club         Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
   games        Game[]
   gameCourts   GameCourt[]
+  matches      Match[]
 
   @@index([clubId])
   @@index([isActive])
@@ -174,6 +175,7 @@ model Game {
   winnerOfRound   WinnerOfRound     @default(BY_MATCHES_WON)
   winnerOfMatch   WinnerOfMatch     @default(BY_SCORES)
   matchGenerationType MatchGenerationType @default(HANDMADE)
+  prohibitMatchesEditing Boolean   @default(false)
   mediaUrls       String[]
   parentId        String?
   metadata        Json?
@@ -265,17 +267,20 @@ model Match {
   matchNumber Int
   status      MatchStatus @default(IN_PROGRESS)
   winnerId    String?
+  courtId     String?
   metadata    Json?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   round       Round       @relation(fields: [roundId], references: [id], onDelete: Cascade)
   winner      Team?       @relation("MatchWinner", fields: [winnerId], references: [id])
+  court       Court?      @relation(fields: [courtId], references: [id])
   teams       Team[]
   sets        Set[]
 
   @@index([roundId])
   @@index([status])
   @@index([winnerId])
+  @@index([courtId])
 }
 
 model Team {

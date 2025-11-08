@@ -122,8 +122,11 @@ export const GameDetailsContent = () => {
     if (editFormData.gameType === game.gameType) return;
     
     const template = applyGameTypeTemplate(editFormData.gameType);
-    gamesApi.update(id, { matchGenerationType: template.matchGenerationType }).catch(error => {
-      console.error('Failed to update matchGenerationType:', error);
+    gamesApi.update(id, { 
+      matchGenerationType: template.matchGenerationType,
+      prohibitMatchesEditing: template.prohibitMatchesEditing ?? false
+    }).catch(error => {
+      console.error('Failed to update game template settings:', error);
     });
   }, [editFormData.gameType, isEditMode, id, game?.gameType]);
 
@@ -444,6 +447,7 @@ export const GameDetailsContent = () => {
     winnerOfRound: any;
     winnerOfMatch: any;
     matchGenerationType: any;
+    prohibitMatchesEditing?: boolean;
   }) => {
     if (!id) return;
 
@@ -569,10 +573,12 @@ export const GameDetailsContent = () => {
         onOpenCourtModal={() => setIsCourtModalOpen(true)}
       />
 
-      <GameSetup
-        onOpenSetup={() => setIsGameSetupModalOpen(true)}
-        canEdit={canEdit}
-      />
+      {game.resultsStatus === 'NONE' && (
+        <GameSetup
+          onOpenSetup={() => setIsGameSetupModalOpen(true)}
+          canEdit={canEdit}
+        />
+      )}
 
       {game.maxParticipants > 4 && (
         <MultipleCourtsSelector
@@ -706,6 +712,7 @@ export const GameDetailsContent = () => {
             winnerOfRound: game.winnerOfRound,
             winnerOfMatch: game.winnerOfMatch,
             matchGenerationType: game.matchGenerationType,
+            prohibitMatchesEditing: game.prohibitMatchesEditing,
           }}
           onClose={() => setIsGameSetupModalOpen(false)}
           onConfirm={handleGameSetupConfirm}

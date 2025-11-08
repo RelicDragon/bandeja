@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 import { ResultsStorage } from './resultsStorage';
 import { resultsApi } from '@/api/results';
+import { GameResultsEngine } from './gameResultsEngine';
 
 const SYNC_INTERVAL = 5000;
 const MAX_RETRIES = 5;
@@ -67,14 +68,14 @@ export class ResultsSyncService {
         }
 
         if (result.conflicts.length > 0) {
-          await ResultsStorage.saveConflicts(gameId, result.conflicts);
-          
           for (const conflict of result.conflicts) {
             await ResultsStorage.updateOutboxOp(gameId, conflict.opId, { 
               status: 'conflict',
               lastError: conflict.reason,
             });
           }
+
+          GameResultsEngine.notifyConflicts(result.conflicts);
         }
 
         for (const op of pendingOps) {
@@ -104,6 +105,17 @@ export class ResultsSyncService {
               lastError: 'Version conflict',
             });
           }
+
+          GameResultsEngine.notifyConflicts([{
+            opId: pendingOps[0]?.id || 'unknown',
+            reason: 'Version conflict detected',
+            serverPatch: [],
+            clientPatch: pendingOps.map(op => ({
+              op: op.type,
+              path: op.path,
+              value: op.value,
+            })),
+          }]);
           return;
         }
 

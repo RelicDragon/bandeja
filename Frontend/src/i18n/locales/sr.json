@@ -276,6 +276,9 @@
     "matchGenerationTypeRoundRobin": "Роунд Робин",
     "matchGenerationTypeEscalera": "Ескалера (Лествица)",
     "matchGenerationTypeRating": "Рејтинг (Мексикано)",
+    "prohibitMatchesEditing": "Забранити Уређивање Мечева",
+    "allow": "Дозволити",
+    "prohibit": "Забранити",
     "fixedNumberOfSets": "Фиксни Број Сетова",
     "maxTotalPointsPerSet": "Максимални Укупно Поена по Сету",
     "maxPointsPerTeam": "Максимални Поени по Тиму",
@@ -545,6 +548,20 @@
     "restarted": "Игра је успешно рестартована",
     "saved": "Резултати су успешно сачувани",
     "submitting": "Шаљем..."
+  },
+  "conflicts": {
+    "title": "Откривен конфликт",
+    "subtitle": "Промене је направио други корисник",
+    "description": "Резултате игре је изменио други корисник док сте ви правили промене. Молимо изаберите како решити овај конфликт.",
+    "conflictCount": "{{count}} конфликт(а) откривено",
+    "yourChanges": "Ваше промене",
+    "serverChanges": "Промене на серверу",
+    "acceptServer": "Користи верзију са сервера",
+    "forceClient": "Користи моје промене",
+    "warning": "Упозорење",
+    "warningMessage": "Ова акција се не може опозвати. Уверите се да разумете које промене задржавате.",
+    "serverAccepted": "Промене са сервера су успешно прихваћене",
+    "clientForced": "Ваше промене су успешно примењене"
   },
   "errors": {
     "generic": "Нешто је пошло наопако",

@@ -3,37 +3,43 @@
     "winnerOfMatch": "BY_SETS",
     "winnerOfRound": "BY_MATCHES_WON",
     "winnerOfGame": "BY_ROUNDS_WON",
-    "matchGenerationType": "HANDMADE"
+    "matchGenerationType": "HANDMADE",
+    "prohibitMatchesEditing": false
   },
   "AMERICANO": {
     "winnerOfMatch": "BY_SCORES",
     "winnerOfRound": "BY_SCORES_DELTA",
     "winnerOfGame": "BY_SCORES_DELTA",
-    "matchGenerationType": "RANDOM"
+    "matchGenerationType": "RANDOM",
+    "prohibitMatchesEditing": true
   },
   "MEXICANO": {
     "winnerOfMatch": "BY_SCORES",
     "winnerOfRound": "BY_SCORES_DELTA",
     "winnerOfGame": "BY_SCORES_DELTA",
-    "matchGenerationType": "RATING"
+    "matchGenerationType": "RATING",
+    "prohibitMatchesEditing": true
   },
   "ROUND_ROBIN": {
     "winnerOfMatch": "BY_SETS",
     "winnerOfRound": "BY_MATCHES_WON",
     "winnerOfGame": "BY_MATCHES_WON",
-    "matchGenerationType": "ROUND_ROBIN"
+    "matchGenerationType": "ROUND_ROBIN",
+    "prohibitMatchesEditing": true
   },
   "WINNER_COURT": {
     "winnerOfMatch": "BY_SCORES",
     "winnerOfRound": "BY_MATCHES_WON",
     "winnerOfGame": "BY_MATCHES_WON",
-    "matchGenerationType": "ESCALERA"
+    "matchGenerationType": "ESCALERA",
+    "prohibitMatchesEditing": true
   },
   "CUSTOM": {
     "winnerOfMatch": "BY_SCORES",
     "winnerOfRound": "BY_MATCHES_WON",
     "winnerOfGame": "BY_ROUNDS_WON",
-    "matchGenerationType": "HANDMADE"
+    "matchGenerationType": "HANDMADE",
+    "prohibitMatchesEditing": false
   }
 }
 

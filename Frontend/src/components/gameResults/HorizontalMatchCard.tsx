@@ -25,6 +25,7 @@ interface HorizontalMatchCardProps {
   courts?: Court[];
   onCourtClick?: () => void;
   fixedNumberOfSets?: number;
+  prohibitMatchesEditing?: boolean;
 }
 
 export const HorizontalMatchCard = ({
@@ -48,7 +49,10 @@ export const HorizontalMatchCard = ({
   selectedCourt,
   onCourtClick,
   fixedNumberOfSets,
+  prohibitMatchesEditing = false,
 }: HorizontalMatchCardProps) => {
+  const effectiveIsPresetGame = isPresetGame || prohibitMatchesEditing;
+  const effectiveIsEditing = prohibitMatchesEditing ? false : isEditing;
   const displaySets = fixedNumberOfSets && fixedNumberOfSets > 0
     ? Array.from({ length: fixedNumberOfSets }, (_, i) => match.sets[i] || { teamA: 0, teamB: 0 })
     : (() => {
@@ -72,16 +76,16 @@ export const HorizontalMatchCard = ({
         data-match-id={match.id}
         data-team={team}
         className={`min-h-[40px] p-2 w-full flex items-center justify-center relative ${
-          isPresetGame 
+          effectiveIsPresetGame 
             ? ''
-            : (isEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''
+            : (effectiveIsEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''
         } ${
-          !isPresetGame && canEditResults && draggedPlayer ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' : ''
+          !effectiveIsPresetGame && canEditResults && draggedPlayer ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' : ''
         } ${
           isWinner ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-lg' : ''
         }`}
-        onDragOver={!isPresetGame && canEditResults ? onDragOver : undefined}
-        onDrop={!isPresetGame && canEditResults ? (e) => onDrop(e, team) : undefined}
+        onDragOver={!effectiveIsPresetGame && canEditResults ? onDragOver : undefined}
+        onDrop={!effectiveIsPresetGame && canEditResults ? (e) => onDrop(e, team) : undefined}
       >
         <div className="flex gap-1 justify-center">
           {teamPlayers.map(playerId => {
@@ -93,8 +97,8 @@ export const HorizontalMatchCard = ({
                   draggable={false}
                   showName={true}
                   extrasmall={true}
-                  removable={!isPresetGame && isEditing && canEditResults}
-                  onRemoveClick={!isPresetGame && isEditing && canEditResults ? () => onRemovePlayer(team, playerId) : undefined}
+                  removable={!effectiveIsPresetGame && effectiveIsEditing && canEditResults}
+                  onRemoveClick={!effectiveIsPresetGame && effectiveIsEditing && canEditResults ? () => onRemovePlayer(team, playerId) : undefined}
                 />
               </div>
             ) : null;
@@ -103,12 +107,12 @@ export const HorizontalMatchCard = ({
             <div key={`placeholder-${index}`}>
               <div
                 onClick={() => {
-                  if (!isPresetGame && isEditing && canEditResults) {
+                  if (!effectiveIsPresetGame && effectiveIsEditing && canEditResults) {
                     onPlayerPlaceholderClick(team);
                   }
                 }}
                 className={`${
-                  !isPresetGame && isEditing && canEditResults ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
+                  !effectiveIsPresetGame && effectiveIsEditing && canEditResults ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
                 }`}
               >
                 <PlayerAvatar
@@ -139,7 +143,7 @@ export const HorizontalMatchCard = ({
               onCourtClick();
             }
           }}
-          className="absolute -top-1 left-1 z-50 flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
+          className="absolute -top-1 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
         >
           <MapPin size={10} />
           <span>{selectedCourt?.name || 'Court'}</span>
@@ -159,8 +163,8 @@ export const HorizontalMatchCard = ({
       )}
 
       <div 
-        className={`${!isPresetGame && isEditing && canEditResults ? 'ring-2 ring-green-400 dark:ring-green-500 rounded-lg p-4 bg-green-50 dark:bg-green-900/20 w-full' : 'w-full'} ${!isPresetGame && canEditResults ? 'cursor-pointer' : ''}`}
-        onClick={!isPresetGame && canEditResults ? (e) => {
+        className={`${!effectiveIsPresetGame && effectiveIsEditing && canEditResults ? 'ring-2 ring-green-400 dark:ring-green-500 rounded-lg p-4 bg-green-50 dark:bg-green-900/20 w-full' : 'w-full'} ${!effectiveIsPresetGame && canEditResults ? 'cursor-pointer' : ''}`}
+        onClick={!effectiveIsPresetGame && canEditResults ? (e) => {
           e.stopPropagation();
           onMatchClick();
         } : undefined}
@@ -175,17 +179,17 @@ export const HorizontalMatchCard = ({
               {displaySets.map((set, setIndex) => (
                 <button
                   key={setIndex}
-                  onClick={(isPresetGame || (!isPresetGame && isEditing)) && canEditResults ? (e) => {
+                  onClick={(effectiveIsPresetGame || (!effectiveIsPresetGame && effectiveIsEditing)) && canEditResults ? (e) => {
                     e.stopPropagation();
                     onSetClick(setIndex);
                   } : undefined}
                   className={`text-2xl font-bold transition-colors ${
-                    (isPresetGame || (!isPresetGame && isEditing)) && canEditResults
+                    (effectiveIsPresetGame || (!effectiveIsPresetGame && effectiveIsEditing)) && canEditResults
                       ? 'text-orange-500 hover:text-orange-600 cursor-pointer'
                       : 'text-gray-400 dark:text-gray-600 cursor-default'
                   }`}
                 >
-                  {set.teamA !== 0 || set.teamB !== 0 || isPresetGame || isEditing || (fixedNumberOfSets && fixedNumberOfSets > 0)
+                  {set.teamA !== 0 || set.teamB !== 0 || effectiveIsPresetGame || effectiveIsEditing || (fixedNumberOfSets && fixedNumberOfSets > 0)
                     ? `${set.teamA} : ${set.teamB}` 
                     : ''}
                 </button>

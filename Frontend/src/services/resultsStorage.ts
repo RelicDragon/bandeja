@@ -1,10 +1,9 @@
 import { get, set, del, keys } from 'idb-keyval';
-import { OutboxOp, GameShadow, ConflictOp } from '@/types/ops';
+import { OutboxOp, GameShadow } from '@/types/ops';
 
 const DB_PREFIX = 'padelpulse-results';
 const GAMES_KEY = `${DB_PREFIX}:games`;
 const OUTBOX_KEY = `${DB_PREFIX}:outbox`;
-const CONFLICTS_KEY = `${DB_PREFIX}:conflicts`;
 
 export class ResultsStorage {
   private static gamesCache = new Map<string, GameShadow>();
@@ -102,21 +101,6 @@ export class ResultsStorage {
     }
     
     return map;
-  }
-
-  static async getConflicts(gameId: string): Promise<ConflictOp[]> {
-    const key = `${CONFLICTS_KEY}:${gameId}`;
-    return (await get<ConflictOp[]>(key)) || [];
-  }
-
-  static async saveConflicts(gameId: string, conflicts: ConflictOp[]): Promise<void> {
-    const key = `${CONFLICTS_KEY}:${gameId}`;
-    await set(key, conflicts);
-  }
-
-  static async clearConflicts(gameId: string): Promise<void> {
-    const key = `${CONFLICTS_KEY}:${gameId}`;
-    await del(key);
   }
 
   static async clearOutbox(gameId: string): Promise<void> {

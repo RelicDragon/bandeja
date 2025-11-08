@@ -117,43 +117,45 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        <div className="flex flex-wrap gap-3">
-          {game.participants.filter(p => p.isPlaying).map((participant) => (
-            <PlayerAvatar
-              key={participant.userId}
-              player={{
-                id: participant.userId,
-                firstName: participant.user.firstName,
-                lastName: participant.user.lastName,
-                avatar: participant.user.avatar,
-                level: participant.user.level,
-                gender: participant.user.gender,
-              }}
-              isCurrentUser={participant.userId === userId}
-              removable={participant.userId === userId && !isOwner}
-              onRemoveClick={participant.userId === userId ? onLeave : undefined}
-              role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
-              smallLayout={true}
-            />
-          ))}
-          {game.entityType !== 'BAR' && Array.from({ length: game.maxParticipants - game.participants.filter(p => p.isPlaying).length }).map((_, i) => (
-            canInvitePlayers ? (
-              <button
-                key={`empty-${i}`}
-                onClick={onShowPlayerList}
-                className="flex flex-col items-center"
-              >
-                <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
-                  <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-                </div>
-              </button>
-            ) : (
+        <div className="overflow-x-auto overflow-y-hidden -mx-4 px-4">
+          <div className="flex gap-3 min-w-max pt-1 pb-1">
+            {game.participants.filter(p => p.isPlaying).map((participant) => (
               <PlayerAvatar
-                key={`empty-${i}`}
-                player={null}
+                key={participant.userId}
+                player={{
+                  id: participant.userId,
+                  firstName: participant.user.firstName,
+                  lastName: participant.user.lastName,
+                  avatar: participant.user.avatar,
+                  level: participant.user.level,
+                  gender: participant.user.gender,
+                }}
+                isCurrentUser={participant.userId === userId}
+                removable={participant.userId === userId && !isOwner}
+                onRemoveClick={participant.userId === userId ? onLeave : undefined}
+                role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
+                smallLayout={true}
               />
-            )
-          ))}
+            ))}
+            {game.entityType !== 'BAR' && Array.from({ length: game.maxParticipants - game.participants.filter(p => p.isPlaying).length }).map((_, i) => (
+              canInvitePlayers ? (
+                <button
+                  key={`empty-${i}`}
+                  onClick={onShowPlayerList}
+                  className="flex flex-col items-center flex-shrink-0"
+                >
+                  <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
+                    <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                  </div>
+                </button>
+              ) : (
+                <PlayerAvatar
+                  key={`empty-${i}`}
+                  player={null}
+                />
+              )
+            ))}
+          </div>
         </div>
         {(() => {
           const showInviteButton = (isOwner || (game.anyoneCanInvite && isParticipant)) && !isFull;

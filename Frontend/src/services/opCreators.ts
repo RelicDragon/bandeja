@@ -41,13 +41,17 @@ export class OpCreator {
     }
   }
 
-  setMatchIndexMap(matches: Array<{ id: string }>): void {
+  setMatchIndexMap(matches: Array<{ id: string; matchIndex: number }>): void {
     this.matchIndexMap.clear();
     if (Array.isArray(matches)) {
-      matches.forEach((match, index) => {
-        this.matchIndexMap.set(match.id, index);
+      matches.forEach(({ id, matchIndex }) => {
+        this.matchIndexMap.set(id, matchIndex);
       });
     }
+  }
+
+  registerMatchIndex(matchId: string, matchIndex: number): void {
+    this.matchIndexMap.set(matchId, matchIndex);
   }
 
   private createOp(path: string, type: Op['type'], value?: any): Op {
@@ -63,25 +67,13 @@ export class OpCreator {
     };
   }
 
-  updateSetScore(matchId: string, setIndex: number, teamAScore: number, teamBScore: number, roundId: string): Op {
+  updateMatch(matchId: string, match: { teamA: string[]; teamB: string[]; sets: Array<{ teamA: number; teamB: number }>; courtId?: string }, roundId: string): Op {
     const roundIndex = this.getRoundIndex(roundId);
     const matchIndex = this.getMatchIndex(matchId);
-    return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}/sets/${setIndex}`, 'set', {
-      teamA: teamAScore,
-      teamB: teamBScore,
+    return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}`, 'set', {
+      id: matchId,
+      ...match,
     });
-  }
-
-  addSet(matchId: string, roundId: string): Op {
-    const roundIndex = this.getRoundIndex(roundId);
-    const matchIndex = this.getMatchIndex(matchId);
-    return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}/sets`, 'add', { teamA: 0, teamB: 0 });
-  }
-
-  removeSet(matchId: string, setIndex: number, roundId: string): Op {
-    const roundIndex = this.getRoundIndex(roundId);
-    const matchIndex = this.getMatchIndex(matchId);
-    return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}/sets/${setIndex}`, 'remove');
   }
 
   addPlayerToTeam(matchId: string, team: 'teamA' | 'teamB', playerId: string, roundId: string): Op {
@@ -96,9 +88,12 @@ export class OpCreator {
     return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}/${team}/${playerId}`, 'remove');
   }
 
-  addMatch(matchId: string, roundId: string): Op {
+  addMatch(matchId: string, roundId: string, fixedNumberOfSets?: number): Op {
     const roundIndex = this.getRoundIndex(roundId);
-    return this.createOp(`/rounds/${roundIndex}/matches`, 'add', { id: matchId, teamA: [], teamB: [], sets: [{ teamA: 0, teamB: 0 }] });
+    const initialSets = fixedNumberOfSets && fixedNumberOfSets > 0
+      ? Array.from({ length: fixedNumberOfSets }, () => ({ teamA: 0, teamB: 0 }))
+      : [{ teamA: 0, teamB: 0 }];
+    return this.createOp(`/rounds/${roundIndex}/matches`, 'add', { id: matchId, teamA: [], teamB: [], sets: initialSets });
   }
 
   removeMatch(matchId: string, roundId: string): Op {
@@ -118,6 +113,12 @@ export class OpCreator {
 
   resetGame(): Op {
     return this.createOp(`/reset`, 'set', {});
+  }
+
+  setMatchCourt(matchId: string, courtId: string, roundId: string): Op {
+    const roundIndex = this.getRoundIndex(roundId);
+    const matchIndex = this.getMatchIndex(matchId);
+    return this.createOp(`/rounds/${roundIndex}/matches/${matchIndex}/courtId`, 'set', courtId);
   }
 }
 

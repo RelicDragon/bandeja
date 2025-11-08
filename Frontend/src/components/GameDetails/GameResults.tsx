@@ -1,7 +1,6 @@
 import { Card, Button } from '@/components';
 import { Game, User } from '@/types';
 import { getGameResultStatus } from '@/utils/gameResults';
-import { Award } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface GameResultsProps {
@@ -48,16 +47,7 @@ export const GameResults = ({
               : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700'
       }`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Award size={20} className={
-              isAccessDenied
-                ? 'text-red-600 dark:text-red-400'
-                : resultStatus.canModify 
-                  ? 'text-blue-600 dark:text-blue-400'
-                  : hasResults
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-gray-500 dark:text-gray-400'
-            } />
+          <div className="flex items-center gap-2">            
             <span className={`text-sm font-medium ${
               isAccessDenied
                 ? 'text-red-800 dark:text-red-200'

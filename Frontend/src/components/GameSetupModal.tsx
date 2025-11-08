@@ -18,6 +18,7 @@ interface GameSetupModalProps {
     winnerOfRound?: WinnerOfRound;
     winnerOfMatch?: WinnerOfMatch;
     matchGenerationType?: MatchGenerationType;
+    prohibitMatchesEditing?: boolean;
   };
   onClose: () => void;
   onConfirm: (params: {
@@ -28,6 +29,7 @@ interface GameSetupModalProps {
     winnerOfRound: WinnerOfRound;
     winnerOfMatch: WinnerOfMatch;
     matchGenerationType: MatchGenerationType;
+    prohibitMatchesEditing?: boolean;
   }) => void;
 }
 
@@ -60,6 +62,9 @@ export const GameSetupModal = ({
   const [matchGenerationType, setMatchGenerationType] = useState<MatchGenerationType>(
     initialValues?.matchGenerationType ?? 'HANDMADE'
   );
+  const [prohibitMatchesEditing, setProhibitMatchesEditing] = useState<boolean>(
+    initialValues?.prohibitMatchesEditing ?? false
+  );
   const [isAnimating, setIsAnimating] = useState(false);
 
   const SET_PRESETS = [16, 21, 24, 32];
@@ -78,6 +83,12 @@ export const GameSetupModal = ({
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (matchGenerationType === 'HANDMADE' || matchGenerationType === 'FIXED') {
+      setProhibitMatchesEditing(false);
+    }
+  }, [matchGenerationType]);
+
   const handleClose = () => {
     setIsAnimating(false);
     setTimeout(() => {
@@ -94,6 +105,7 @@ export const GameSetupModal = ({
       winnerOfRound,
       winnerOfMatch,
       matchGenerationType,
+      prohibitMatchesEditing: matchGenerationType !== 'HANDMADE' && matchGenerationType !== 'FIXED' ? prohibitMatchesEditing : false,
     });
     handleClose();
   };
@@ -468,7 +480,10 @@ export const GameSetupModal = ({
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
-                      onClick={() => setMatchGenerationType('HANDMADE')}
+                      onClick={() => {
+                        setMatchGenerationType('HANDMADE');
+                        setProhibitMatchesEditing(false);
+                      }}
                       disabled={!isEditing}
                       className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
                         matchGenerationType === 'HANDMADE'
@@ -479,7 +494,10 @@ export const GameSetupModal = ({
                       {t('gameResults.matchGenerationTypeHandmade')}
                     </button>
                     <button
-                      onClick={() => setMatchGenerationType('FIXED')}
+                      onClick={() => {
+                        setMatchGenerationType('FIXED');
+                        setProhibitMatchesEditing(false);
+                      }}
                       disabled={!isEditing}
                       className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
                         matchGenerationType === 'FIXED'
@@ -535,11 +553,43 @@ export const GameSetupModal = ({
                     </button>
                   </div>
                 </div>
+
+                {matchGenerationType !== 'HANDMADE' && matchGenerationType !== 'FIXED' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      {t('gameResults.prohibitMatchesEditing')}
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setProhibitMatchesEditing(false)}
+                        disabled={!isEditing}
+                        className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                          !prohibitMatchesEditing
+                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                        } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        {t('gameResults.allow')}
+                      </button>
+                      <button
+                        onClick={() => setProhibitMatchesEditing(true)}
+                        disabled={!isEditing}
+                        className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                          prohibitMatchesEditing
+                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                        } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        {t('gameResults.prohibit')}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
 
-          <div className="mt-6 flex gap-3">
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex gap-3">
             <button
               onClick={handleClose}
               className="flex-1 px-4 py-2.5 text-sm rounded-lg font-semibold transition-all duration-200 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105"
