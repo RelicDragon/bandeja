@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
-import { EntityType, WinnerOfGame, WinnerOfRound, WinnerOfMatch, MatchGenerationType } from '@/types';
+import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@/types';
 
 interface GameSetupModalProps {
   isOpen: boolean;
@@ -15,10 +15,12 @@ interface GameSetupModalProps {
     maxTotalPointsPerSet?: number;
     maxPointsPerTeam?: number;
     winnerOfGame?: WinnerOfGame;
-    winnerOfRound?: WinnerOfRound;
     winnerOfMatch?: WinnerOfMatch;
     matchGenerationType?: MatchGenerationType;
     prohibitMatchesEditing?: boolean;
+    pointsPerWin?: number;
+    pointsPerLoose?: number;
+    pointsPerTie?: number;
   };
   onClose: () => void;
   onConfirm: (params: {
@@ -26,17 +28,19 @@ interface GameSetupModalProps {
     maxTotalPointsPerSet: number;
     maxPointsPerTeam: number;
     winnerOfGame: WinnerOfGame;
-    winnerOfRound: WinnerOfRound;
     winnerOfMatch: WinnerOfMatch;
     matchGenerationType: MatchGenerationType;
     prohibitMatchesEditing?: boolean;
+    pointsPerWin: number;
+    pointsPerLoose: number;
+    pointsPerTie: number;
   }) => void;
 }
 
 export const GameSetupModal = ({ 
   isOpen, 
   entityType, 
-  hasMultiRounds = true, 
+  hasMultiRounds: _hasMultiRounds = true, 
   isEditing = true,
   confirmButtonText,
   initialValues,
@@ -51,10 +55,7 @@ export const GameSetupModal = ({
   const [customSetPoints, setCustomSetPoints] = useState('');
   const [customTeamPoints, setCustomTeamPoints] = useState('');
   const [winnerOfGame, setWinnerOfGame] = useState<WinnerOfGame>(
-    initialValues?.winnerOfGame ?? (hasMultiRounds ? 'BY_ROUNDS_WON' : 'BY_MATCHES_WON')
-  );
-  const [winnerOfRound, setWinnerOfRound] = useState<WinnerOfRound>(
-    initialValues?.winnerOfRound ?? 'BY_MATCHES_WON'
+    initialValues?.winnerOfGame ?? 'BY_MATCHES_WON'
   );
   const [winnerOfMatch, setWinnerOfMatch] = useState<WinnerOfMatch>(
     initialValues?.winnerOfMatch ?? 'BY_SCORES'
@@ -65,6 +66,9 @@ export const GameSetupModal = ({
   const [prohibitMatchesEditing, setProhibitMatchesEditing] = useState<boolean>(
     initialValues?.prohibitMatchesEditing ?? false
   );
+  const [pointsPerWin, setPointsPerWin] = useState(initialValues?.pointsPerWin ?? 0);
+  const [pointsPerLoose, setPointsPerLoose] = useState(initialValues?.pointsPerLoose ?? 0);
+  const [pointsPerTie, setPointsPerTie] = useState(initialValues?.pointsPerTie ?? 0);
   const [isAnimating, setIsAnimating] = useState(false);
 
   const SET_PRESETS = [16, 21, 24, 32];
@@ -102,10 +106,12 @@ export const GameSetupModal = ({
       maxTotalPointsPerSet,
       maxPointsPerTeam,
       winnerOfGame,
-      winnerOfRound,
       winnerOfMatch,
       matchGenerationType,
       prohibitMatchesEditing: matchGenerationType !== 'HANDMADE' && matchGenerationType !== 'FIXED' ? prohibitMatchesEditing : false,
+      pointsPerWin,
+      pointsPerLoose,
+      pointsPerTie,
     });
     handleClose();
   };
@@ -399,52 +405,12 @@ export const GameSetupModal = ({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    {t('gameResults.winnerOfRound')}
-                  </label>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setWinnerOfRound('BY_MATCHES_WON')}
-                      disabled={!isEditing}
-                      className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                        winnerOfRound === 'BY_MATCHES_WON'
-                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    >
-                      {t('gameResults.byMatchesWon')}
-                    </button>
-                    <button
-                      onClick={() => setWinnerOfRound('BY_SCORES_DELTA')}
-                      disabled={!isEditing}
-                      className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                        winnerOfRound === 'BY_SCORES_DELTA'
-                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    >
-                      {t('gameResults.byScoresDelta')}
-                    </button>
-                  </div>
-                </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     {t('gameResults.winnerOfGame')}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setWinnerOfGame('BY_ROUNDS_WON')}
-                      disabled={!isEditing}
-                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                        winnerOfGame === 'BY_ROUNDS_WON'
-                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    >
-                      {t('gameResults.byRoundsWon')}
-                    </button>
                     <button
                       onClick={() => setWinnerOfGame('BY_MATCHES_WON')}
                       disabled={!isEditing}
@@ -467,6 +433,59 @@ export const GameSetupModal = ({
                     >
                       {t('gameResults.byScoresDelta')}
                     </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    {t('gameResults.points')}
+                  </label>
+                  <div className="grid gap-2" style={{ gridTemplateColumns: 'auto repeat(4, minmax(0, 1fr))' }}>
+                    <span className="px-2 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300">{t('gameResults.win')}</span>
+                    {[0, 1, 2, 3].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => setPointsPerWin(num)}
+                        disabled={!isEditing}
+                        className={`px-2 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 ${
+                          pointsPerWin === num
+                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                        } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                    <span className="px-2 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300">{t('gameResults.tie')}</span>
+                    {[0, 1, 2, 3].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => setPointsPerTie(num)}
+                        disabled={!isEditing}
+                        className={`px-2 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 ${
+                          pointsPerTie === num
+                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                        } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                    <span className="px-2 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300">{t('gameResults.loose')}</span>
+                    {[0, 1, 2, 3].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => setPointsPerLoose(num)}
+                        disabled={!isEditing}
+                        className={`px-2 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 ${
+                          pointsPerLoose === num
+                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                        } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        {num}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </>
@@ -552,6 +571,17 @@ export const GameSetupModal = ({
                       {t('gameResults.matchGenerationTypeRating')}
                     </button>
                   </div>
+                </div>
+
+                <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {matchGenerationType === 'HANDMADE' && t('gameResults.matchGenerationTypeHandmadeNote')}
+                    {matchGenerationType === 'FIXED' && t('gameResults.matchGenerationTypeFixedNote')}
+                    {matchGenerationType === 'RANDOM' && t('gameResults.matchGenerationTypeRandomNote')}
+                    {matchGenerationType === 'ROUND_ROBIN' && t('gameResults.matchGenerationTypeRoundRobinNote')}
+                    {matchGenerationType === 'ESCALERA' && t('gameResults.matchGenerationTypeEscaleraNote')}
+                    {matchGenerationType === 'RATING' && t('gameResults.matchGenerationTypeRatingNote')}
+                  </p>
                 </div>
 
                 {matchGenerationType !== 'HANDMADE' && matchGenerationType !== 'FIXED' && (

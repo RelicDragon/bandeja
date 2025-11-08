@@ -947,8 +947,6 @@ class GameResultsEngineClass {
 
     const now = new Date();
     const startTime = new Date(game.startTime);
-    const endTime = new Date(game.endTime);
-    const hoursSinceEnd = (now.getTime() - endTime.getTime()) / (1000 * 60 * 60);
 
     if (now < startTime) {
       return {
@@ -986,7 +984,7 @@ class GameResultsEngineClass {
       message: 'games.results.positive.noResultsYet',
       canEdit,
       showInputs: false,
-      showClock: canEdit && now >= startTime && hoursSinceEnd <= 24,
+      showClock: canEdit && now >= startTime,
     };
   }
 

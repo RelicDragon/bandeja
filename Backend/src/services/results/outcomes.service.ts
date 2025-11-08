@@ -1,9 +1,8 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { GameType, Prisma } from '@prisma/client';
-import { calculateClassicGameOutcomes, calculateAmericanoGameOutcomes } from './calculator.service';
+import { WinnerOfGame, Prisma } from '@prisma/client';
+import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes } from './calculator.service';
 import { updateMatchWinners } from './matchWinner.service';
-import { updateRoundOutcomes } from './roundWinner.service';
 import { updateGameOutcomes } from './gameWinner.service';
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
@@ -82,10 +81,22 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
 
   let result;
   
-  if (game.gameType === GameType.AMERICANO || game.gameType === GameType.MEXICANO) {
-    result = calculateAmericanoGameOutcomes(players, roundResults);
+  if (game.winnerOfGame === WinnerOfGame.BY_SCORES_DELTA || game.winnerOfGame === WinnerOfGame.BY_POINTS) {
+    result = calculateByScoresDeltaOutcomes(
+      players, 
+      roundResults,
+      game.pointsPerWin || 0,
+      game.pointsPerTie || 0,
+      game.pointsPerLoose || 0
+    );
   } else {
-    result = calculateClassicGameOutcomes(players, roundResults, game.gameType);
+    result = calculateByMatchesWonOutcomes(
+      players, 
+      roundResults,
+      game.pointsPerWin || 0,
+      game.pointsPerTie || 0,
+      game.pointsPerLoose || 0
+    );
   }
 
   return {
@@ -123,13 +134,6 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
     where: { gameId },
   });
 
-  await tx.roundOutcome.deleteMany({
-    where: {
-      round: {
-        gameId,
-      },
-    },
-  });
 }
 
 export async function applyGameOutcomes(
@@ -141,6 +145,11 @@ export async function applyGameOutcomes(
     pointsEarned: number;
     position?: number;
     isWinner?: boolean;
+    wins?: number;
+    ties?: number;
+    losses?: number;
+    scoresMade?: number;
+    scoresLost?: number;
   }>,
   roundOutcomes: Record<number, Array<{
     userId: string;
@@ -164,37 +173,9 @@ export async function applyGameOutcomes(
   console.log(`[APPLY GAME OUTCOMES] Step 1: Updating match winners for game ${gameId}`);
   await updateMatchWinners(gameId, tx);
   
-  console.log(`[APPLY GAME OUTCOMES] Step 2: Updating round outcomes for game ${gameId} (${game.rounds.length} rounds)`);
-  for (const round of game.rounds) {
-    await updateRoundOutcomes(gameId, round.id, game.winnerOfRound, tx);
-  }
-  
-  console.log(`[APPLY GAME OUTCOMES] Step 3: Updating game outcomes for game ${gameId}`);
+  console.log(`[APPLY GAME OUTCOMES] Step 2: Updating game outcomes for game ${gameId}`);
   await updateGameOutcomes(gameId, game.winnerOfGame, tx);
 
-  for (const [roundIndex, outcomes] of Object.entries(roundOutcomes)) {
-    const round = game.rounds[parseInt(roundIndex)];
-    if (!round) continue;
-
-    for (const outcome of outcomes) {
-      await tx.roundOutcome.upsert({
-        where: {
-          roundId_userId: {
-            roundId: round.id,
-            userId: outcome.userId,
-          },
-        },
-        create: {
-          roundId: round.id,
-          userId: outcome.userId,
-          levelChange: outcome.levelChange,
-        },
-        update: {
-          levelChange: outcome.levelChange,
-        },
-      });
-    }
-  }
 
   for (const outcome of finalOutcomes) {
     const user = await tx.user.findUnique({
@@ -227,6 +208,11 @@ export async function applyGameOutcomes(
         pointsEarned: outcome.pointsEarned,
         position: outcome.position,
         isWinner: outcome.isWinner || false,
+        wins: outcome.wins || 0,
+        ties: outcome.ties || 0,
+        losses: outcome.losses || 0,
+        scoresMade: outcome.scoresMade || 0,
+        scoresLost: outcome.scoresLost || 0,
       },
       update: {
         levelBefore,
@@ -236,6 +222,11 @@ export async function applyGameOutcomes(
         reliabilityAfter,
         reliabilityChange: outcome.reliabilityChange,
         pointsEarned: outcome.pointsEarned,
+        wins: outcome.wins || 0,
+        ties: outcome.ties || 0,
+        losses: outcome.losses || 0,
+        scoresMade: outcome.scoresMade || 0,
+        scoresLost: outcome.scoresLost || 0,
       },
     });
 
@@ -271,6 +262,13 @@ export async function applyGameOutcomes(
         }),
       },
     });
+    
+    setImmediate(async () => {
+      const telegramResultsSenderService = await import('../telegram/resultsSender.service');
+      telegramResultsSenderService.default.sendGameFinished(gameId).catch((error: any) => {
+        console.error(`Failed to send game finished notifications for game ${gameId}:`, error);
+      });
+    });
   }
 }
 
@@ -297,7 +295,7 @@ export async function recalculateGameOutcomes(gameId: string, requestUserId: str
     throw new ApiError(403, 'Only game owners/admins can recalculate outcomes');
   }
 
-  console.log(`[RECALCULATE GAME OUTCOMES] Game ${gameId} configuration: winnerOfMatch=${game.winnerOfMatch}, winnerOfRound=${game.winnerOfRound}, winnerOfGame=${game.winnerOfGame}`);
+  console.log(`[RECALCULATE GAME OUTCOMES] Game ${gameId} configuration: winnerOfMatch=${game.winnerOfMatch}, winnerOfGame=${game.winnerOfGame}`);
 
   return await prisma.$transaction(async (tx) => {
     console.log(`[RECALCULATE GAME OUTCOMES] Step 1: Undoing existing outcomes`);

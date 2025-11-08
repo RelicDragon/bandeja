@@ -10,10 +10,6 @@ import { Game, User } from '@/types';
 export const getGameResultStatus = (game: Game, user: User | null): { message: string; canModify: boolean } | null => {
   if (!game || !user) return null;
 
-  const now = new Date();
-  const startTime = new Date(game.startTime);
-  const endTime = new Date(game.endTime);
-  
   // First check if user can see the game at all
   if (!canUserSeeGame(game, user)) {
     return {
@@ -43,11 +39,8 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
     }
   }
 
-  // Game is more than 24 hours past end time - archived
-  const hoursSinceEnd = (now.getTime() - endTime.getTime()) / (1000 * 60 * 60);
-  const isArchived = hoursSinceEnd > 24 || game.status === 'ARCHIVED';
-  
-  if (isArchived) {
+  // Check if game is archived
+  if (game.status === 'ARCHIVED') {
     // For archived games, allow viewing if results exist, but never allow editing
     if (game.resultsStatus !== 'NONE') {
       return {
@@ -65,7 +58,7 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
   const problems: string[] = [];
 
   // Problem: Game hasn't started yet
-  if (now < startTime) {
+  if (game.status === 'ANNOUNCED') {
     problems.push('games.results.problems.gameNotStarted');
   }
 
@@ -80,7 +73,7 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
   }
 
   // Problem: User doesn't have permission to edit
-  if (!hasEditPermission && now >= startTime && hoursSinceEnd <= 24) {
+  if (!hasEditPermission && game.status !== 'ANNOUNCED') {
     problems.push('games.results.problems.noEditAccess');
   }
 

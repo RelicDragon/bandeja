@@ -57,8 +57,12 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
     maxTotalPointsPerSet?: number;
     maxPointsPerTeam?: number;
     winnerOfGame?: any;
-    winnerOfRound?: any;
     winnerOfMatch?: any;
+    matchGenerationType?: any;
+    prohibitMatchesEditing?: boolean;
+    pointsPerWin?: number;
+    pointsPerLoose?: number;
+    pointsPerTie?: number;
   }>({});
   const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>([]);
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -220,10 +224,12 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
     setGameSetup(prevSetup => ({
       ...prevSetup,
       winnerOfMatch: template.winnerOfMatch,
-      winnerOfRound: template.winnerOfRound,
       winnerOfGame: template.winnerOfGame,
       matchGenerationType: template.matchGenerationType,
       prohibitMatchesEditing: template.prohibitMatchesEditing ?? false,
+      pointsPerWin: template.pointsPerWin ?? 0,
+      pointsPerLoose: template.pointsPerLoose ?? 0,
+      pointsPerTie: template.pointsPerTie ?? 0,
     }));
   }, [gameType]);
 
@@ -388,10 +394,12 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
     maxTotalPointsPerSet: number;
     maxPointsPerTeam: number;
     winnerOfGame: any;
-    winnerOfRound: any;
     winnerOfMatch: any;
     matchGenerationType: any;
     prohibitMatchesEditing?: boolean;
+    pointsPerWin: number;
+    pointsPerLoose: number;
+    pointsPerTie: number;
   }) => {
     setGameSetup(params);
   };

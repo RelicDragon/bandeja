@@ -37,6 +37,11 @@ export interface GameOutcomeData {
   pointsEarned: number;
   position?: number;
   isWinner?: boolean;
+  wins?: number;
+  ties?: number;
+  losses?: number;
+  scoresMade?: number;
+  scoresLost?: number;
 }
 
 export interface GameResultsPayload {

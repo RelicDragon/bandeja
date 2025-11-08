@@ -7,7 +7,7 @@ import { CourtModal } from '@/components/CourtModal';
 import { TeamPlayerSelector, ConfirmationModal, SyncStatusIcon, GameSetupModal, OutcomesDisplay } from '@/components';
 import { gamesApi } from '@/api';
 import { resultsApi } from '@/api/results';
-import { User, WinnerOfGame, WinnerOfRound, WinnerOfMatch } from '@/types';
+import { User, WinnerOfGame, WinnerOfMatch } from '@/types';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
@@ -20,7 +20,8 @@ import {
   RoundCard,
   AvailablePlayersFooter, 
   FloatingDraggedPlayer,
-  ConflictResolutionModal
+  ConflictResolutionModal,
+  PlayerStatsPanel
 } from '@/components/gameResults';
 
 export const GameResultsEntry = () => {
@@ -49,7 +50,7 @@ export const GameResultsEntry = () => {
   const [isEditingResults, setIsEditingResults] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [showSetupModal, setShowSetupModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'scores' | 'results'>('scores');
+  const [activeTab, setActiveTab] = useState<'scores' | 'results' | 'stats'>('scores');
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [conflicts, setConflicts] = useState<any[]>([]);
   const [isResolvingConflict, setIsResolvingConflict] = useState(false);
@@ -228,6 +229,12 @@ export const GameResultsEntry = () => {
       GameResultsEngine.setConflictCallback(null);
     };
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'results' && game?.resultsStatus !== 'FINAL') {
+      setActiveTab('scores');
+    }
+  }, [game?.resultsStatus, activeTab]);
 
   const handleFinish = async () => {
     if (!id) return;
@@ -414,10 +421,12 @@ export const GameResultsEntry = () => {
     maxTotalPointsPerSet: number;
     maxPointsPerTeam: number;
     winnerOfGame: WinnerOfGame;
-    winnerOfRound: WinnerOfRound;
     winnerOfMatch: WinnerOfMatch;
     matchGenerationType: any;
     prohibitMatchesEditing?: boolean;
+    pointsPerWin: number;
+    pointsPerLoose: number;
+    pointsPerTie: number;
   }) => {
     if (!id || !user?.id) return;
     
@@ -427,10 +436,12 @@ export const GameResultsEntry = () => {
         maxTotalPointsPerSet: params.maxTotalPointsPerSet,
         maxPointsPerTeam: params.maxPointsPerTeam,
         winnerOfGame: params.winnerOfGame,
-        winnerOfRound: params.winnerOfRound,
         winnerOfMatch: params.winnerOfMatch,
         matchGenerationType: params.matchGenerationType,
         prohibitMatchesEditing: params.prohibitMatchesEditing,
+        pointsPerWin: params.pointsPerWin,
+        pointsPerLoose: params.pointsPerLoose,
+        pointsPerTie: params.pointsPerTie,
       });
       
       const response = await gamesApi.getById(id);
@@ -519,15 +530,16 @@ export const GameResultsEntry = () => {
   return (
     <>
       <div 
-        className="fixed top-0 bottom-0 w-full bg-gray-50 dark:bg-gray-900 z-50"
+        className="fixed top-0 bottom-0 w-full bg-gray-50 dark:bg-gray-900 z-50 flex flex-col"
         style={{ 
           left: mounted ? '0' : '100%',
           transition: 'left 300ms ease-out'
         }}
       >
-      {/* Simple header with back button */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 fixed top-0 right-0 left-0 z-40 shadow-lg">
-        <div className="h-full px-4 flex items-center justify-between gap-2">
+      {/* Header Section */}
+      <header className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg">
+        {/* Header Part 1: Main header */}
+        <div className="h-16 px-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate(`/games/${id}`)}
@@ -557,11 +569,9 @@ export const GameResultsEntry = () => {
             )}
           </div>
         </div>
-      </header>
-
-      {/* Tab Selector - Show when game is FINAL */}
-      {game?.resultsStatus === 'FINAL' && (
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed top-16 left-0 right-0 z-30">
+        
+        {/* Header Part 2: Tab Controller */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="container mx-auto">
             <div className="flex justify-center space-x-1 py-2 px-4">
               <button
@@ -574,26 +584,41 @@ export const GameResultsEntry = () => {
               >
                 {t('gameResults.scores')}
               </button>
+              {game?.resultsStatus === 'FINAL' && (
+                <button
+                  onClick={() => setActiveTab('results')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    activeTab === 'results'
+                      ? 'bg-blue-500 text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {t('gameResults.results')}
+                </button>
+              )}
               <button
-                onClick={() => setActiveTab('results')}
+                onClick={() => setActiveTab('stats')}
                 className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  activeTab === 'results'
+                  activeTab === 'stats'
                     ? 'bg-blue-500 text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
-                {t('gameResults.results')}
+                {t('gameResults.stats') || 'Stats'}
               </button>
             </div>
           </div>
         </div>
-      )}
+      </header>
       
-      <main className={`overflow-x-hidden ${game?.resultsStatus === 'FINAL' ? 'pt-28 pb-24' : 'pt-16 pb-24'}`}>
-        <div className="container mx-auto px-4 py-6 overflow-x-hidden">
-          <div className="overflow-x-hidden">
+      {/* Main Section - Scrollable */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+        <div className="container mx-auto px-4 py-6">
+          <div>
       {game?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
         <OutcomesDisplay outcomes={game.outcomes || []} affectsRating={game.affectsRating} gameId={game.id} />
+      ) : game?.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
+        <PlayerStatsPanel game={game} rounds={rounds} />
       ) : !isResultsEntryMode ? (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
           <GameStatusDisplay gameState={gameState} />
@@ -640,8 +665,8 @@ export const GameResultsEntry = () => {
         </div>
       ) : (
         <div 
-          className={`space-y-1 h-[calc(100vh-12rem)] w-full scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-gray-300 dark:hover:scrollbar-thumb-gray-600 ${
-            dragAndDrop.isDragging ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'
+          className={`space-y-1 w-full scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-gray-300 dark:hover:scrollbar-thumb-gray-600 ${
+            dragAndDrop.isDragging ? 'overflow-hidden' : ''
           } pb-4`}
           onDragOver={dragAndDrop.handleDragOver}
           onClick={handleContainerClick}
@@ -965,9 +990,11 @@ export const GameResultsEntry = () => {
                 maxTotalPointsPerSet: game.maxTotalPointsPerSet,
                 maxPointsPerTeam: game.maxPointsPerTeam,
                 winnerOfGame: game.winnerOfGame,
-                winnerOfRound: game.winnerOfRound,
                 winnerOfMatch: game.winnerOfMatch,
                 matchGenerationType: game.matchGenerationType,
+                pointsPerWin: game.pointsPerWin,
+                pointsPerLoose: game.pointsPerLoose,
+                pointsPerTie: game.pointsPerTie,
               }}
               onClose={() => setShowSetupModal(false)}
               onConfirm={handleSetupConfirm}
@@ -988,33 +1015,35 @@ export const GameResultsEntry = () => {
         </div>
       </main>
 
-      {/* Fixed bottom bar with finish/edit button */}
-      {showFinishButton && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 z-40 shadow-lg">
-          <div className="container mx-auto flex justify-center">
-            <button
-              onClick={() => setShowFinishConfirmation(true)}
-              disabled={isSaving}
-              className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-            >
-              {isSaving ? t('common.loading') : getFinishText()}
-            </button>
+      {/* Footer Section */}
+      <footer className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+        {showFinishButton && (
+          <div className="p-4">
+            <div className="container mx-auto flex justify-center">
+              <button
+                onClick={() => setShowFinishConfirmation(true)}
+                disabled={isSaving}
+                className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              >
+                {isSaving ? t('common.loading') : getFinishText()}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-      {showEditButton && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 z-40 shadow-lg">
-          <div className="container mx-auto flex justify-center">
-            <button
-              onClick={() => setShowEditConfirmation(true)}
-              disabled={isEditing}
-              className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-blue-500 hover:bg-blue-600 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isEditing ? t('common.loading') : t('gameResults.editResults')}
-            </button>
+        )}
+        {showEditButton && (
+          <div className="p-4">
+            <div className="container mx-auto flex justify-center">
+              <button
+                onClick={() => setShowEditConfirmation(true)}
+                disabled={isEditing}
+                className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-blue-500 hover:bg-blue-600 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isEditing ? t('common.loading') : t('gameResults.editResults')}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </footer>
       </div>
     </>
   );

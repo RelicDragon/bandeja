@@ -124,7 +124,10 @@ export const GameDetailsContent = () => {
     const template = applyGameTypeTemplate(editFormData.gameType);
     gamesApi.update(id, { 
       matchGenerationType: template.matchGenerationType,
-      prohibitMatchesEditing: template.prohibitMatchesEditing ?? false
+      prohibitMatchesEditing: template.prohibitMatchesEditing ?? false,
+      pointsPerWin: template.pointsPerWin ?? 0,
+      pointsPerLoose: template.pointsPerLoose ?? 0,
+      pointsPerTie: template.pointsPerTie ?? 0
     }).catch(error => {
       console.error('Failed to update game template settings:', error);
     });
@@ -272,10 +275,12 @@ export const GameDetailsContent = () => {
 
   const canEnterResults = () => {
     if (!game || !user) return false;
+    
     // Allow viewing results for archived games if results exist
     if (game.status === 'ARCHIVED' && game.resultsStatus !== 'NONE') {
       return true;
     }
+    
     return canUserEditResults(game, user);
   };
 
@@ -444,10 +449,12 @@ export const GameDetailsContent = () => {
     maxTotalPointsPerSet: number;
     maxPointsPerTeam: number;
     winnerOfGame: any;
-    winnerOfRound: any;
     winnerOfMatch: any;
     matchGenerationType: any;
     prohibitMatchesEditing?: boolean;
+    pointsPerWin: number;
+    pointsPerLoose: number;
+    pointsPerTie: number;
   }) => {
     if (!id) return;
 
@@ -709,10 +716,12 @@ export const GameDetailsContent = () => {
             maxTotalPointsPerSet: game.maxTotalPointsPerSet,
             maxPointsPerTeam: game.maxPointsPerTeam,
             winnerOfGame: game.winnerOfGame,
-            winnerOfRound: game.winnerOfRound,
             winnerOfMatch: game.winnerOfMatch,
             matchGenerationType: game.matchGenerationType,
             prohibitMatchesEditing: game.prohibitMatchesEditing,
+            pointsPerWin: game.pointsPerWin,
+            pointsPerLoose: game.pointsPerLoose,
+            pointsPerTie: game.pointsPerTie,
           }}
           onClose={() => setIsGameSetupModalOpen(false)}
           onConfirm={handleGameSetupConfirm}

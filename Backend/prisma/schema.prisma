@@ -171,11 +171,13 @@ model Game {
   maxTotalPointsPerSet Int          @default(0)
   maxPointsPerTeam Int              @default(0)
   hasMultiRounds  Boolean           @default(false)
-  winnerOfGame    WinnerOfGame      @default(BY_ROUNDS_WON)
-  winnerOfRound   WinnerOfRound     @default(BY_MATCHES_WON)
+  winnerOfGame    WinnerOfGame      @default(BY_MATCHES_WON)
   winnerOfMatch   WinnerOfMatch     @default(BY_SCORES)
   matchGenerationType MatchGenerationType @default(HANDMADE)
   prohibitMatchesEditing Boolean   @default(false)
+  pointsPerWin   Int              @default(0)
+  pointsPerLoose Int              @default(0)
+  pointsPerTie   Int              @default(0)
   mediaUrls       String[]
   parentId        String?
   metadata        Json?
@@ -354,6 +356,11 @@ model GameOutcome {
   pointsEarned      Int      @default(0)
   position          Int?
   isWinner          Boolean  @default(false)
+  wins              Int      @default(0)
+  ties              Int      @default(0)
+  losses            Int      @default(0)
+  scoresMade        Int      @default(0)
+  scoresLost        Int      @default(0)
   metadata          Json?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -680,16 +687,10 @@ enum ResultsStatus {
 }
 
 enum WinnerOfGame {
-  BY_ROUNDS_WON
   BY_MATCHES_WON
   BY_POINTS
   BY_SCORES_DELTA
   PLAYOFF_FINALS
-}
-
-enum WinnerOfRound {
-  BY_MATCHES_WON
-  BY_SCORES_DELTA
 }
 
 enum WinnerOfMatch {

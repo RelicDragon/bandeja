@@ -1,5 +1,4 @@
 import { calculateRatingUpdate, calculateAmericanoRating } from './rating.service';
-import { GameType } from '@prisma/client';
 
 interface PlayerData {
   userId: string;
@@ -37,6 +36,11 @@ export interface GameOutcomeResult {
   pointsEarned: number;
   isWinner: boolean;
   position?: number;
+  wins: number;
+  ties: number;
+  losses: number;
+  scoresMade: number;
+  scoresLost: number;
 }
 
 export interface RoundOutcomeResult {
@@ -44,24 +48,95 @@ export interface RoundOutcomeResult {
   levelChange: number;
 }
 
-export function calculateClassicGameOutcomes(
+interface PlayerChanges {
+  levelChange: number;
+  reliabilityChange: number;
+  wins: number;
+  ties: number;
+  losses: number;
+  scoresMade: number;
+  scoresLost: number;
+  totalScore?: number;
+}
+
+function initializePlayerChanges(players: PlayerData[], includeTotal: boolean = false): Record<string, PlayerChanges> {
+  const changes: Record<string, PlayerChanges> = {};
+  for (const player of players) {
+    changes[player.userId] = {
+      levelChange: 0,
+      reliabilityChange: 0,
+      wins: 0,
+      ties: 0,
+      losses: 0,
+      scoresMade: 0,
+      scoresLost: 0,
+    };
+    if (includeTotal) {
+      changes[player.userId].totalScore = 0;
+    }
+  }
+  return changes;
+}
+
+function updateWinLossTie(
+  playerChanges: PlayerChanges,
+  isWin: boolean,
+  isLoss: boolean,
+  isTie: boolean
+): void {
+  if (isWin) {
+    playerChanges.wins++;
+  } else if (isLoss) {
+    playerChanges.losses++;
+  } else if (isTie) {
+    playerChanges.ties++;
+  }
+}
+
+function calculatePointsEarned(
+  changes: PlayerChanges,
+  pointsPerWin: number,
+  pointsPerTie: number,
+  pointsPerLoose: number
+): number {
+  return changes.wins * pointsPerWin + changes.ties * pointsPerTie + changes.losses * pointsPerLoose;
+}
+
+function buildGameOutcome(
+  userId: string,
+  changes: PlayerChanges,
+  index: number,
+  pointsPerWin: number,
+  pointsPerTie: number,
+  pointsPerLoose: number
+): GameOutcomeResult {
+  return {
+    userId,
+    levelChange: changes.levelChange,
+    reliabilityChange: changes.reliabilityChange,
+    pointsEarned: calculatePointsEarned(changes, pointsPerWin, pointsPerTie, pointsPerLoose),
+    isWinner: index === 0,
+    position: index + 1,
+    wins: changes.wins,
+    ties: changes.ties,
+    losses: changes.losses,
+    scoresMade: changes.scoresMade,
+    scoresLost: changes.scoresLost,
+  };
+}
+
+export function calculateByMatchesWonOutcomes(
   players: PlayerData[],
   roundResults: RoundResultData[],
-  _gameType: GameType
+  pointsPerWin: number = 0,
+  pointsPerTie: number = 0,
+  pointsPerLoose: number = 0
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
 } {
   const roundOutcomes: Record<number, RoundOutcomeResult[]> = {};
-  const playerTotalChanges: Record<string, { levelChange: number; reliabilityChange: number; pointsEarned: number }> = {};
-
-  for (const player of players) {
-    playerTotalChanges[player.userId] = {
-      levelChange: 0,
-      reliabilityChange: 0,
-      pointsEarned: 0,
-    };
-  }
+  const playerTotalChanges = initializePlayerChanges(players);
 
   roundResults.forEach((roundResult, roundIndex) => {
     const roundPlayerOutcomes: Record<string, number> = {};
@@ -77,6 +152,10 @@ export function calculateClassicGameOutcomes(
       const teamB = match.teams.find(t => t.teamNumber === 2) || match.teams[1];
       const teamAWins = match.winnerId === teamA.teamId;
       const teamBWins = match.winnerId === teamB.teamId;
+      const isTie = !teamAWins && !teamBWins;
+
+      const teamAScore = match.sets?.reduce((sum, set) => sum + set.teamAScore, 0) || teamA.score || 0;
+      const teamBScore = match.sets?.reduce((sum, set) => sum + set.teamBScore, 0) || teamB.score || 0;
 
       const teamAPlayers = players.filter(p => teamA.playerIds.includes(p.userId));
       const teamBPlayers = players.filter(p => teamB.playerIds.includes(p.userId));
@@ -101,7 +180,9 @@ export function calculateClassicGameOutcomes(
         roundPlayerOutcomes[player.userId] += update.levelChange;
         playerTotalChanges[player.userId].levelChange += update.levelChange;
         playerTotalChanges[player.userId].reliabilityChange += update.reliabilityChange;
-        playerTotalChanges[player.userId].pointsEarned += update.pointsEarned;
+        playerTotalChanges[player.userId].scoresMade += teamAScore;
+        playerTotalChanges[player.userId].scoresLost += teamBScore;
+        updateWinLossTie(playerTotalChanges[player.userId], teamAWins, teamBWins, isTie);
       }
 
       for (const player of teamBPlayers) {
@@ -121,7 +202,9 @@ export function calculateClassicGameOutcomes(
         roundPlayerOutcomes[player.userId] += update.levelChange;
         playerTotalChanges[player.userId].levelChange += update.levelChange;
         playerTotalChanges[player.userId].reliabilityChange += update.reliabilityChange;
-        playerTotalChanges[player.userId].pointsEarned += update.pointsEarned;
+        playerTotalChanges[player.userId].scoresMade += teamBScore;
+        playerTotalChanges[player.userId].scoresLost += teamAScore;
+        updateWinLossTie(playerTotalChanges[player.userId], teamBWins, teamAWins, isTie);
       }
     }
 
@@ -138,36 +221,25 @@ export function calculateClassicGameOutcomes(
     }))
     .sort((a, b) => b.totalChange - a.totalChange);
 
-  const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) => ({
-    userId: player.userId,
-    levelChange: playerTotalChanges[player.userId].levelChange,
-    reliabilityChange: playerTotalChanges[player.userId].reliabilityChange,
-    pointsEarned: playerTotalChanges[player.userId].pointsEarned,
-    isWinner: index === 0,
-    position: index + 1,
-  }));
+  const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) => 
+    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose)
+  );
 
   return { gameOutcomes, roundOutcomes };
 }
 
-export function calculateAmericanoGameOutcomes(
+export function calculateByScoresDeltaOutcomes(
   players: PlayerData[],
-  roundResults: RoundResultData[]
+  roundResults: RoundResultData[],
+  pointsPerWin: number = 0,
+  pointsPerTie: number = 0,
+  pointsPerLoose: number = 0
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
 } {
   const roundOutcomes: Record<number, RoundOutcomeResult[]> = {};
-  const playerTotalChanges: Record<string, { levelChange: number; reliabilityChange: number; pointsEarned: number; totalScore: number }> = {};
-
-  for (const player of players) {
-    playerTotalChanges[player.userId] = {
-      levelChange: 0,
-      reliabilityChange: 0,
-      pointsEarned: 0,
-      totalScore: 0,
-    };
-  }
+  const playerTotalChanges = initializePlayerChanges(players, true);
 
   roundResults.forEach((roundResult, roundIndex) => {
     const roundPlayerOutcomes: Record<string, number> = {};
@@ -182,6 +254,9 @@ export function calculateAmericanoGameOutcomes(
       const [teamA, teamB] = match.teams;
       const scoreDeltaA = teamA.score - teamB.score;
       const scoreDeltaB = -scoreDeltaA;
+      const teamAWins = match.winnerId === teamA.teamId;
+      const teamBWins = match.winnerId === teamB.teamId;
+      const isTie = !teamAWins && !teamBWins;
 
       const allOpponents = [...teamA.playerIds, ...teamB.playerIds];
       const avgOpponentLevel = allOpponents
@@ -205,8 +280,10 @@ export function calculateAmericanoGameOutcomes(
         roundPlayerOutcomes[playerId] += update.levelChange;
         playerTotalChanges[playerId].levelChange += update.levelChange;
         playerTotalChanges[playerId].reliabilityChange += update.reliabilityChange;
-        playerTotalChanges[playerId].pointsEarned += update.pointsEarned;
-        playerTotalChanges[playerId].totalScore += teamA.score;
+        playerTotalChanges[playerId].totalScore! += teamA.score;
+        playerTotalChanges[playerId].scoresMade += teamA.score;
+        playerTotalChanges[playerId].scoresLost += teamB.score;
+        updateWinLossTie(playerTotalChanges[playerId], teamAWins, teamBWins, isTie);
       }
 
       for (const playerId of teamB.playerIds) {
@@ -226,8 +303,10 @@ export function calculateAmericanoGameOutcomes(
         roundPlayerOutcomes[playerId] += update.levelChange;
         playerTotalChanges[playerId].levelChange += update.levelChange;
         playerTotalChanges[playerId].reliabilityChange += update.reliabilityChange;
-        playerTotalChanges[playerId].pointsEarned += update.pointsEarned;
-        playerTotalChanges[playerId].totalScore += teamB.score;
+        playerTotalChanges[playerId].totalScore! += teamB.score;
+        playerTotalChanges[playerId].scoresMade += teamB.score;
+        playerTotalChanges[playerId].scoresLost += teamA.score;
+        updateWinLossTie(playerTotalChanges[playerId], teamBWins, teamAWins, isTie);
       }
     }
 
@@ -241,21 +320,16 @@ export function calculateAmericanoGameOutcomes(
     .map(p => ({
       ...p,
       totalChange: playerTotalChanges[p.userId].levelChange,
-      totalScore: playerTotalChanges[p.userId].totalScore,
+      totalScore: playerTotalChanges[p.userId].totalScore!,
     }))
     .sort((a, b) => {
       if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
       return b.totalChange - a.totalChange;
     });
 
-  const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) => ({
-    userId: player.userId,
-    levelChange: playerTotalChanges[player.userId].levelChange,
-    reliabilityChange: playerTotalChanges[player.userId].reliabilityChange,
-    pointsEarned: playerTotalChanges[player.userId].pointsEarned,
-    isWinner: index === 0,
-    position: index + 1,
-  }));
+  const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) =>
+    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose)
+  );
 
   return { gameOutcomes, roundOutcomes };
 }

@@ -10,6 +10,7 @@ import { createCallbackHandler } from './handlers/callback.handler';
 import { startCleanupInterval } from './cleanup.service';
 import { verifyCode } from './otp.service';
 import telegramNotificationService from './notification.service';
+import telegramResultsSenderService from './resultsSender.service';
 
 class TelegramBotService {
   private bot: Bot | null = null;
@@ -51,6 +52,7 @@ class TelegramBotService {
     });
 
     telegramNotificationService.initialize(this.bot);
+    telegramResultsSenderService.initialize(this.bot);
 
     try {
       console.log('Starting bot');

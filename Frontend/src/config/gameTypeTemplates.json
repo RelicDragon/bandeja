@@ -1,45 +1,57 @@
 {
   "CLASSIC": {
     "winnerOfMatch": "BY_SETS",
-    "winnerOfRound": "BY_MATCHES_WON",
-    "winnerOfGame": "BY_ROUNDS_WON",
+    "winnerOfGame": "BY_MATCHES_WON",
     "matchGenerationType": "HANDMADE",
-    "prohibitMatchesEditing": false
+    "prohibitMatchesEditing": false,
+    "pointsPerWin": 0,
+    "pointsPerLoose": 0,
+    "pointsPerTie": 0
   },
   "AMERICANO": {
     "winnerOfMatch": "BY_SCORES",
-    "winnerOfRound": "BY_SCORES_DELTA",
     "winnerOfGame": "BY_SCORES_DELTA",
     "matchGenerationType": "RANDOM",
-    "prohibitMatchesEditing": true
+    "prohibitMatchesEditing": true,
+    "pointsPerWin": 0,
+    "pointsPerLoose": 0,
+    "pointsPerTie": 0
   },
   "MEXICANO": {
     "winnerOfMatch": "BY_SCORES",
-    "winnerOfRound": "BY_SCORES_DELTA",
     "winnerOfGame": "BY_SCORES_DELTA",
     "matchGenerationType": "RATING",
-    "prohibitMatchesEditing": true
+    "prohibitMatchesEditing": true,
+    "pointsPerWin": 0,
+    "pointsPerLoose": 0,
+    "pointsPerTie": 0
   },
   "ROUND_ROBIN": {
     "winnerOfMatch": "BY_SETS",
-    "winnerOfRound": "BY_MATCHES_WON",
     "winnerOfGame": "BY_MATCHES_WON",
     "matchGenerationType": "ROUND_ROBIN",
-    "prohibitMatchesEditing": true
+    "prohibitMatchesEditing": true,
+    "pointsPerWin": 0,
+    "pointsPerLoose": 0,
+    "pointsPerTie": 0
   },
   "WINNER_COURT": {
     "winnerOfMatch": "BY_SCORES",
-    "winnerOfRound": "BY_MATCHES_WON",
     "winnerOfGame": "BY_MATCHES_WON",
     "matchGenerationType": "ESCALERA",
-    "prohibitMatchesEditing": true
+    "prohibitMatchesEditing": true,
+    "pointsPerWin": 0,
+    "pointsPerLoose": 0,
+    "pointsPerTie": 0
   },
   "CUSTOM": {
     "winnerOfMatch": "BY_SCORES",
-    "winnerOfRound": "BY_MATCHES_WON",
-    "winnerOfGame": "BY_ROUNDS_WON",
+    "winnerOfGame": "BY_MATCHES_WON",
     "matchGenerationType": "HANDMADE",
-    "prohibitMatchesEditing": false
+    "prohibitMatchesEditing": false,
+    "pointsPerWin": 0,
+    "pointsPerLoose": 0,
+    "pointsPerTie": 0
   }
 }
 
