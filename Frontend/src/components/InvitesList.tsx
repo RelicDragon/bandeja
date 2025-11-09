@@ -44,7 +44,7 @@ export const InvitesList = ({ invites, onCancelInvite, canCancel }: InvitesListP
                   <PlayerAvatar 
                     player={invite.receiver || null}
                     showName={false}
-                    smallLayout={true}
+                    extrasmall={true}
                   />
                 </div>
 

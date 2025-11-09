@@ -43,10 +43,72 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
         receiverId,
         status: InviteStatus.PENDING,
       },
+      include: {
+        sender: {
+          select: USER_SELECT_FIELDS,
+        },
+        receiver: {
+          select: USER_SELECT_FIELDS,
+        },
+        game: {
+          select: {
+            id: true,
+            name: true,
+            gameType: true,
+            startTime: true,
+            endTime: true,
+            maxParticipants: true,
+            minParticipants: true,
+            minLevel: true,
+            maxLevel: true,
+            isPublic: true,
+            affectsRating: true,
+            hasBookedCourt: true,
+            afterGameGoToBar: true,
+            hasFixedTeams: true,
+            teamsReady: true,
+            participantsReady: true,
+            status: true,
+            resultsStatus: true,
+            entityType: true,
+            court: {
+              select: {
+                id: true,
+                name: true,
+                club: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+            club: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            participants: {
+              select: {
+                userId: true,
+                isPlaying: true,
+                role: true,
+                user: {
+                  select: USER_SELECT_FIELDS,
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (existingInvite) {
-      throw new ApiError(400, 'errors.invites.alreadySent');
+      return res.status(200).json({
+        success: true,
+        data: existingInvite,
+      });
     }
   }
 

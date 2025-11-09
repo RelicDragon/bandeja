@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Trash2, Minus, Plus } from 'lucide-react';
+import { X, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { User } from '@/types';
 
-interface SetResultModalProps {
+interface HorizontalScoreEntryModalProps {
   match: Match;
   setIndex: number;
   players: User[];
@@ -20,7 +20,7 @@ interface SetResultModalProps {
   canRemove?: boolean;
 }
 
-export const SetResultModal = ({
+export const HorizontalScoreEntryModal = ({
   match,
   setIndex,
   players,
@@ -31,7 +31,7 @@ export const SetResultModal = ({
   onRemove,
   onClose,
   canRemove = false,
-}: SetResultModalProps) => {
+}: HorizontalScoreEntryModalProps) => {
   const { t } = useTranslation();
   const currentSet = match.sets[setIndex] || { teamA: 0, teamB: 0 };
   const [teamAScore, setTeamAScore] = useState(currentSet.teamA);
@@ -121,7 +121,7 @@ export const SetResultModal = ({
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.9, y: 30, opacity: 0 }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className="relative bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 md:p-5 mx-2 sm:mx-4 max-w-2xl w-full border border-gray-200/50 dark:border-gray-700/50"
+        className="relative bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 md:p-8 mx-2 sm:mx-4 max-w-2xl w-full border border-gray-200/50 dark:border-gray-700/50 max-h-[95vh] overflow-y-auto"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-600/5 rounded-2xl sm:rounded-3xl pointer-events-none" />
         
@@ -142,9 +142,9 @@ export const SetResultModal = ({
           
           <div className="relative mb-3 sm:mb-5 md:mb-8">
             <div className={`transition-all duration-500 ${!isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
-              <div className="flex flex-col items-center gap-4 sm:gap-6 md:gap-8">
-                <div className="w-full flex flex-row items-center gap-3 sm:gap-4 md:gap-6">
-                  <div className="flex-1 relative">
+              <div className="flex flex-row items-center gap-3 sm:gap-6 md:gap-8">
+                <div className="flex-1 flex flex-col items-center gap-4 sm:gap-5 md:gap-6 w-full">
+                  <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-primary-600/10 rounded-xl sm:rounded-2xl blur-lg sm:blur-xl" />
                     <div className={`relative flex flex-wrap justify-center gap-1.5 sm:gap-2 md:gap-3 p-2 sm:p-3 md:p-4 backdrop-blur-sm rounded-xl sm:rounded-2xl border transition-colors duration-200 ${
                       isTeamAWinning 
@@ -162,12 +162,13 @@ export const SetResultModal = ({
                       ))}
                     </div>
                   </div>
-                  <div className="flex flex-row items-center gap-2 sm:gap-3">
+                  <div className="flex flex-col items-center gap-1.5 sm:gap-2">
                     <button
-                      onClick={() => handleTeamAScoreChange(Math.max(0, teamAScore - 1))}
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95"
+                      onClick={() => handleTeamAScoreChange(teamAScore + 1)}
+                      disabled={!!(maxTotalPointsPerSet && maxTotalPointsPerSet > 0 && teamAScore >= maxTotalPointsPerSet)}
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
-                      <Minus className="w-5 h-5 sm:w-6 sm:h-6" />
+                      <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                     <button
                       onClick={() => setNumberPickerTeam('teamA')}
@@ -181,25 +182,24 @@ export const SetResultModal = ({
                       </div>
                     </button>
                     <button
-                      onClick={() => handleTeamAScoreChange(teamAScore + 1)}
-                      disabled={!!(maxTotalPointsPerSet && maxTotalPointsPerSet > 0 && teamAScore >= maxTotalPointsPerSet)}
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      onClick={() => handleTeamAScoreChange(Math.max(0, teamAScore - 1))}
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95"
                     >
-                      <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
+                      <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                   </div>
                 </div>
 
-                <div className="relative flex items-center justify-center flex-shrink-0 w-full">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary-500/20 via-transparent to-primary-500/20 blur-sm" />
-                  <div className="relative w-full h-0.5 bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent" />
+                <div className="relative flex items-center justify-center flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-b from-primary-500/20 via-transparent to-primary-500/20 blur-sm" />
+                  <div className="relative w-0.5 h-full min-h-[200px] sm:min-h-[240px] md:min-h-[280px] bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent" />
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white flex items-center justify-center text-[10px] sm:text-xs font-bold shadow-lg">
                     VS
                   </div>
                 </div>
 
-                <div className="w-full flex flex-row items-center gap-3 sm:gap-4 md:gap-6">
-                  <div className="flex-1 relative">
+                <div className="flex-1 flex flex-col items-center gap-4 sm:gap-5 md:gap-6 w-full">
+                  <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-primary-500/10 rounded-xl sm:rounded-2xl blur-lg sm:blur-xl" />
                     <div className={`relative flex flex-wrap justify-center gap-1.5 sm:gap-2 md:gap-3 p-2 sm:p-3 md:p-4 backdrop-blur-sm rounded-xl sm:rounded-2xl border transition-colors duration-200 ${
                       isTeamBWinning 
@@ -217,12 +217,13 @@ export const SetResultModal = ({
                       ))}
                     </div>
                   </div>
-                  <div className="flex flex-row items-center gap-2 sm:gap-3">
+                  <div className="flex flex-col items-center gap-1.5 sm:gap-2">
                     <button
-                      onClick={() => handleTeamBScoreChange(Math.max(0, teamBScore - 1))}
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95"
+                      onClick={() => handleTeamBScoreChange(teamBScore + 1)}
+                      disabled={!!(maxTotalPointsPerSet && maxTotalPointsPerSet > 0 && teamBScore >= maxTotalPointsPerSet)}
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
-                      <Minus className="w-5 h-5 sm:w-6 sm:h-6" />
+                      <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                     <button
                       onClick={() => setNumberPickerTeam('teamB')}
@@ -236,11 +237,10 @@ export const SetResultModal = ({
                       </div>
                     </button>
                     <button
-                      onClick={() => handleTeamBScoreChange(teamBScore + 1)}
-                      disabled={!!(maxTotalPointsPerSet && maxTotalPointsPerSet > 0 && teamBScore >= maxTotalPointsPerSet)}
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      onClick={() => handleTeamBScoreChange(Math.max(0, teamBScore - 1))}
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95"
                     >
-                      <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
+                      <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                   </div>
                 </div>
@@ -311,3 +311,4 @@ export const SetResultModal = ({
     </motion.div>
   );
 };
+

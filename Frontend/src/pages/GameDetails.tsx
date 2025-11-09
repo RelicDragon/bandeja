@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { Trash2 } from 'lucide-react';
 import {
   Card,
   PlayerListModal,
@@ -12,10 +13,10 @@ import {
   GameResults,
   GameParticipants,
   GameSettings,
-  ConfirmationModal,
   GameSetupModal,
   MultipleCourtsSelector
 } from '@/components';
+import { DeleteGameConfirmationModal } from '@/components/DeleteGameConfirmationModal';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { GameSetup } from '@/components/GameDetails/GameSetup';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
@@ -676,7 +677,8 @@ export const GameDetailsContent = () => {
         <Card>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <Trash2 size={18} className="text-gray-500 dark:text-gray-400" />
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {t('gameDetails.deleteGame')}
               </h2>
             </div>
@@ -691,18 +693,12 @@ export const GameDetailsContent = () => {
         </Card>
       )}
 
-      {showDeleteConfirmation && (
-        <ConfirmationModal
-          isOpen={showDeleteConfirmation}
-          title={t('gameDetails.deleteGame')}
-          message={t('gameDetails.deleteGameConfirmation')}
-          confirmText={t('common.delete')}
-          cancelText={t('common.cancel')}
-          confirmVariant="danger"
-          onConfirm={handleDeleteGame}
-          onClose={() => setShowDeleteConfirmation(false)}
-        />
-      )}
+      <DeleteGameConfirmationModal
+        isOpen={showDeleteConfirmation}
+        onConfirm={handleDeleteGame}
+        onClose={() => setShowDeleteConfirmation(false)}
+        isDeleting={isDeleting}
+      />
 
       {isGameSetupModalOpen && (
         <GameSetupModal

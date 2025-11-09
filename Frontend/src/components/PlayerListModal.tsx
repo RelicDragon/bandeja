@@ -223,7 +223,8 @@ export const PlayerListModal = ({
                           gender: player.gender,
                         }}
                         showName={false}
-                        smallLayout={true}
+                        smallLayout={false}
+                        extrasmall={true}
                       />
                     </div>
 

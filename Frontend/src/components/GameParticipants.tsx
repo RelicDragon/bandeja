@@ -128,6 +128,7 @@ export const GameParticipants = ({
             <PlayerAvatar
               key={`empty-${i}`}
               player={null}
+              smallLayout={true}
             />
           ))}
         </div>

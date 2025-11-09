@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { SetResultModal } from '@/components/SetResultModal';
 import { CourtModal } from '@/components/CourtModal';
@@ -17,6 +18,7 @@ import {
   GameStatusDisplay, 
   MatchCard,
   HorizontalMatchCard,
+  HorizontalScoreEntryModal,
   RoundCard,
   AvailablePlayersFooter, 
   FloatingDraggedPlayer,
@@ -458,6 +460,7 @@ export const GameResultsEntry = () => {
         }
         
         setIsResultsEntryMode(true);
+        setIsEditingResults(true);
       }
     } catch (error: any) {
       console.error('Failed to update game parameters:', error);
@@ -623,11 +626,17 @@ export const GameResultsEntry = () => {
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
           <GameStatusDisplay gameState={gameState} />
           {canEdit && gameState?.canEdit && (
-            <button
-              onClick={async () => {
-                if (needsGameSetup) {
-                  setShowSetupModal(true);
-                } else {
+            <div className="flex flex-col items-center gap-4">
+              {needsGameSetup && (
+                <button
+                  onClick={() => setShowSetupModal(true)}
+                  className="px-6 py-3 text-base rounded-xl font-semibold transition-all duration-300 bg-gray-600 hover:bg-gray-700 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                >
+                  {t('gameResults.setupGame')}
+                </button>
+              )}
+              <button
+                onClick={async () => {
                   if (rounds.length === 0) {
                     if (isPresetGame) {
                       await engine.initializePresetMatches();
@@ -643,24 +652,24 @@ export const GameResultsEntry = () => {
                   } else {
                     setIsEditingResults(true);
                   }
-                }
-              }}
-              className="group relative px-8 py-4 text-lg rounded-xl font-semibold transition-all duration-300 bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                {(() => {
-                  const resultsStatus = game?.resultsStatus || 'NONE';
-                  if (resultsStatus === 'FINAL') {
-                    return t('gameResults.viewResults');
-                  } else if (resultsStatus === 'IN_PROGRESS') {
-                    return t('gameResults.continueResultsEntry');
-                  } else {
-                    return t('gameResults.startResultsEntry');
-                  }
-                })()}
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-            </button>
+                }}
+                className="group relative px-8 py-4 text-lg rounded-xl font-semibold transition-all duration-300 bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  {(() => {
+                    const resultsStatus = game?.resultsStatus || 'NONE';
+                    if (resultsStatus === 'FINAL') {
+                      return t('gameResults.viewResults');
+                    } else if (resultsStatus === 'IN_PROGRESS') {
+                      return t('gameResults.continueResultsEntry');
+                    } else {
+                      return t('gameResults.startResultsEntry');
+                    }
+                  })()}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+              </button>
+            </div>
           )}
         </div>
       ) : (
@@ -865,36 +874,63 @@ export const GameResultsEntry = () => {
         </div>
       )}
 
-          {showSetModal && (
-            <SetResultModal
-              matchId={showSetModal.matchId}
-              setIndex={showSetModal.setIndex}
-              set={(() => {
-                const roundId = showSetModal.roundId || 'round-1';
-                const round = rounds.find(r => r.id === roundId);
-                const match = round?.matches.find(m => m.id === showSetModal.matchId);
-                return match?.sets[showSetModal.setIndex] || { teamA: 0, teamB: 0 };
-              })()}
-              onSave={(matchId, setIndex, teamAScore, teamBScore) => {
-                updateSetResult(matchId, setIndex, teamAScore, teamBScore);
-              }}
-              onRemove={(matchId, setIndex) => {
-                removeSet(matchId, setIndex);
-              }}
-              onClose={() => setShowSetModal(null)}
-              canRemove={(() => {
-                const roundId = showSetModal.roundId || 'round-1';
-                const round = rounds.find(r => r.id === roundId);
-                const match = round?.matches.find(m => m.id === showSetModal.matchId);
-                if (!match) return false;
+          <AnimatePresence>
+            {showSetModal && (() => {
+              const roundId = showSetModal.roundId || 'round-1';
+              const round = rounds.find(r => r.id === roundId);
+              const match = round?.matches.find(m => m.id === showSetModal.matchId);
+              if (!match) return null;
+
+              const canRemove = (() => {
                 const currentSet = match.sets[showSetModal.setIndex];
                 if (!currentSet) return false;
                 const isLastSet = showSetModal.setIndex === match.sets.length - 1;
                 const isZeroZero = currentSet.teamA === 0 && currentSet.teamB === 0;
                 return match.sets.length > 1 && !(isLastSet && isZeroZero);
-              })()}
-            />
-          )}
+              })();
+
+              if (effectiveHorizontalLayout) {
+                return (
+                  <HorizontalScoreEntryModal
+                    key={`horizontal-${showSetModal.matchId}-${showSetModal.setIndex}`}
+                    match={match}
+                    setIndex={showSetModal.setIndex}
+                    players={players}
+                    maxTotalPointsPerSet={game?.maxTotalPointsPerSet}
+                    maxPointsPerTeam={game?.maxPointsPerTeam}
+                    fixedNumberOfSets={game?.fixedNumberOfSets}
+                    onSave={(matchId, setIndex, teamAScore, teamBScore) => {
+                      updateSetResult(matchId, setIndex, teamAScore, teamBScore);
+                    }}
+                    onRemove={(matchId, setIndex) => {
+                      removeSet(matchId, setIndex);
+                    }}
+                    onClose={() => setShowSetModal(null)}
+                    canRemove={canRemove}
+                  />
+                );
+              }
+
+              return (
+                <SetResultModal
+                  match={match}
+                  setIndex={showSetModal.setIndex}
+                  players={players}
+                  maxTotalPointsPerSet={game?.maxTotalPointsPerSet}
+                  maxPointsPerTeam={game?.maxPointsPerTeam}
+                  fixedNumberOfSets={game?.fixedNumberOfSets}
+                  onSave={(matchId, setIndex, teamAScore, teamBScore) => {
+                    updateSetResult(matchId, setIndex, teamAScore, teamBScore);
+                  }}
+                  onRemove={(matchId, setIndex) => {
+                    removeSet(matchId, setIndex);
+                  }}
+                  onClose={() => setShowSetModal(null)}
+                  canRemove={canRemove}
+                />
+              );
+            })()}
+          </AnimatePresence>
 
           {showPlayerSelector && selectedMatchTeam && (
             <TeamPlayerSelector

@@ -86,16 +86,7 @@ export const GameStatusDisplay = ({ gameState }: GameStatusDisplayProps) => {
         {/* Icon container with animation */}
         <div className={`mb-8 inline-flex p-6 rounded-full ${styling.iconBg} ${styling.glowColor} shadow-2xl animate-bounce-slow`}>
           <Icon size={72} className={`${styling.iconColor} animate-pulse-slow`} strokeWidth={1.5} />
-        </div>
-        
-        {/* Title */}
-        <h3 className={`text-3xl font-bold ${styling.titleColor} mb-3 tracking-tight`}>
-          {type === 'ACCESS_DENIED' 
-            ? t('errors.accessDenied') 
-            : type === 'HAS_RESULTS' 
-            ? t('gameResults.hasResultsTitle') 
-            : t('gameResults.noResultsTitle')}
-        </h3>
+        </div>        
         
         {/* Message */}
         <p className={`${styling.textColor} text-lg mb-6 max-w-md leading-relaxed`}>
@@ -111,8 +102,6 @@ export const GameStatusDisplay = ({ gameState }: GameStatusDisplayProps) => {
         )}
       </div>
 
-      {/* Bottom decorative line */}
-      <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${styling.bgGradient} opacity-50`}></div>
     </div>
   );
 };

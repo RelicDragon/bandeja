@@ -221,6 +221,7 @@
     "match": "Match {{number}}",
     "sets": "Sets",
     "setResult": "Set Result",
+    "matchResult": "Match Result",
     "addMatch": "Add Match",
     "availablePlayers": "Available Players",
     "enterResults": "Enter Results",

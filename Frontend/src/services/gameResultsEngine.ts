@@ -646,6 +646,9 @@ class GameResultsEngineClass {
     const state = this.getState();
     if (!state.gameId || !state.userId) return;
 
+    // Clear all pending ops before creating reset op
+    await ResultsStorage.clearOutbox(state.gameId);
+
     const op = await this.createOp((creator) => creator.resetGame());
     await this.applyOp(op);
 
@@ -653,11 +656,13 @@ class GameResultsEngineClass {
     const shadow = await ResultsStorage.getGame(state.gameId);
     if (shadow) {
       shadow.data = emptyData;
+      shadow.version = 0;
       await ResultsStorage.saveGame(shadow);
     }
 
     useGameResultsStore.setState({ 
       rounds: [],
+      shadow: shadow || null,
       syncStatus: 'SYNCING',
     });
 

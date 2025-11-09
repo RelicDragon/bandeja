@@ -600,12 +600,15 @@ export async function batchOps(
     throw new ApiError(403, 'Only game owners/admins can modify results');
   }
 
+  // When resultsStatus is NONE, version must be 0 (fresh start or after reset)
   const resultsMeta: ResultsMeta = ((game.resultsMeta as any) as ResultsMeta) || { version: 0 };
-  const currentVersion = resultsMeta.version || 0;
+  let currentVersion = game.resultsStatus === 'NONE' ? 0 : (resultsMeta.version || 0);
   const applied: string[] = [];
   const conflicts: ConflictOp[] = [];
+  let resetOpProcessed = false;
 
-  const processedOpIds = new Set(resultsMeta.processedOps || []);
+  // When resultsStatus is NONE, start with empty processedOps (fresh start)
+  const processedOpIds = game.resultsStatus === 'NONE' ? new Set<string>() : new Set(resultsMeta.processedOps || []);
 
   for (const op of ops) {
     if (processedOpIds.has(op.id)) {
@@ -613,10 +616,36 @@ export async function batchOps(
       continue;
     }
 
-    if (op.base_version < currentVersion) {
+    // Check if this is a reset op
+    const isResetOp = op.path === '/reset' && op.op === 'replace';
+    
+    if (isResetOp) {
+      // Reset ops are always accepted if base_version matches current or if we're already at NONE
+      if (op.base_version === currentVersion || game.resultsStatus === 'NONE') {
+        applied.push(op.id);
+        // After a reset op in the batch, subsequent ops should be checked against version 0
+        currentVersion = 0;
+        resetOpProcessed = true;
+      } else {
+        conflicts.push({
+          opId: op.id,
+          reason: 'VersionMismatch',
+          serverPatch: [],
+          clientPatch: [{ op: op.op, path: op.path, value: op.value }],
+        });
+      }
+    } else if (op.base_version < currentVersion) {
       conflicts.push({
         opId: op.id,
         reason: 'VersionMismatch',
+        serverPatch: [],
+        clientPatch: [{ op: op.op, path: op.path, value: op.value }],
+      });
+    } else if (resetOpProcessed && op.base_version !== 0) {
+      // If a reset was processed in this batch, subsequent ops must have baseVersion 0
+      conflicts.push({
+        opId: op.id,
+        reason: 'StaleOpAfterReset',
         serverPatch: [],
         clientPatch: [{ op: op.op, path: op.path, value: op.value }],
       });
@@ -628,12 +657,12 @@ export async function batchOps(
   const headVersion = applied.length > 0 ? currentVersion + 1 : currentVersion;
   const serverTime = new Date().toISOString();
 
+  // Check if there's a reset operation being applied
+  const hasResetOp = applied.length > 0 && ops.some(op => applied.includes(op.id) && !processedOpIds.has(op.id) && op.path === '/reset' && op.op === 'replace');
+
   if (applied.length > 0) {
     await prisma.$transaction(async (tx) => {
       let isResetOp = false;
-      
-      // Check if there's a reset operation and revert user stats if needed
-      const hasResetOp = ops.some(op => applied.includes(op.id) && !processedOpIds.has(op.id) && op.path === '/reset' && op.op === 'replace');
       
       if (hasResetOp && game.affectsRating) {
         const outcomes = await tx.gameOutcome.findMany({
@@ -682,12 +711,20 @@ export async function batchOps(
         }
       }
 
-      const newResultsMeta: ResultsMeta = {
-        version: headVersion,
-        lastBatchTime: serverTime,
-        lastBatchId: idempotencyKey,
-        processedOps: [...(resultsMeta.processedOps || []), ...applied.filter(id => !processedOpIds.has(id))],
-      };
+      // Reset version and processedOps when resetting game
+      const newResultsMeta: ResultsMeta = isResetOp 
+        ? {
+            version: 0,
+            lastBatchTime: serverTime,
+            lastBatchId: idempotencyKey,
+            processedOps: [],
+          }
+        : {
+            version: headVersion,
+            lastBatchTime: serverTime,
+            lastBatchId: idempotencyKey,
+            processedOps: [...(resultsMeta.processedOps || []), ...applied.filter(id => !processedOpIds.has(id))],
+          };
 
       const updateData: any = {
         resultsMeta: newResultsMeta as any,
@@ -714,9 +751,12 @@ export async function batchOps(
     });
   }
 
+  // Return correct version: 0 for reset ops, headVersion otherwise
+  const finalVersion = hasResetOp ? 0 : headVersion;
+
   const result: BatchOpsResult = {
     applied,
-    headVersion,
+    headVersion: finalVersion,
     serverTime,
     conflicts,
   };
