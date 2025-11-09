@@ -67,6 +67,7 @@ export const GameSettingsSection = ({
                   ? [
                       { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
                       { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                      { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
                       { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
                     ]
                   : [
