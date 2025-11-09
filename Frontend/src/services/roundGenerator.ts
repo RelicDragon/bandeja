@@ -2,6 +2,7 @@ import { Op } from '@/types/ops';
 import { Round } from '@/types/gameResults';
 import { Game } from '@/types';
 import { OpCreator } from './opCreators';
+import { calculateGameStandings } from './gameStandings';
 
 export interface RoundGeneratorOptions {
   opCreator: OpCreator;
@@ -35,9 +36,10 @@ export class RoundGenerator {
         return this.generateFixedRound();
       case 'RANDOM':
         return this.generateRandomRound();
+      case 'RATING':
+        return this.generateRatingRound();
       case 'ROUND_ROBIN':
       case 'ESCALERA':
-      case 'RATING':
         return [];
       default:
         return this.generateHandmadeRound();
@@ -320,6 +322,67 @@ export class RoundGenerator {
       [result[i], result[j]] = [result[j], result[i]];
     }
     return result;
+  }
+
+  private generateRatingRound(): Op[] {
+    const ops: Op[] = [];
+    const { game, rounds, roundNumber, roundName, fixedNumberOfSets } = this.options;
+    const roundId = `round-${roundNumber}`;
+
+    ops.push(this.opCreator.addRound(roundId, roundName));
+    
+    const playingParticipants = game.participants.filter(p => p.isPlaying);
+    const numPlayers = playingParticipants.length;
+    
+    if (numPlayers < 4) {
+      return ops;
+    }
+    
+    const numCourts = game.gameCourts?.length || 1;
+    const numMatches = Math.min(numCourts, Math.floor(numPlayers / 4));
+    
+    const sortedCourts = game.gameCourts 
+      ? [...game.gameCourts].sort((a, b) => a.order - b.order)
+      : [];
+    
+    let playerIds: string[];
+    
+    if (rounds.length === 0) {
+      playerIds = this.shuffleArray(playingParticipants.map(p => p.userId));
+    } else {
+      const standings = calculateGameStandings(game, rounds, game.winnerOfGame || 'BY_MATCHES_WON');
+      playerIds = standings.map(s => s.user.id);
+    }
+    
+    const actualMatches = Math.min(numMatches, Math.floor(playerIds.length / 4));
+    
+    for (let i = 0; i < actualMatches; i++) {
+      const matchId = this.getNextMatchId(i);
+      this.opCreator.registerMatchIndex(matchId, i);
+      ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
+      
+      if (sortedCourts[i]?.courtId) {
+        ops.push(this.opCreator.setMatchCourt(matchId, sortedCourts[i].courtId, roundId));
+      }
+      
+      const baseIndex = i * 4;
+      const player1 = playerIds[baseIndex];
+      const player2 = playerIds[baseIndex + 1];
+      const player3 = playerIds[baseIndex + 2];
+      const player4 = playerIds[baseIndex + 3];
+      
+      if (player1 && player3) {
+        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', player1, roundId));
+        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', player3, roundId));
+      }
+      
+      if (player2 && player4) {
+        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', player2, roundId));
+        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', player4, roundId));
+      }
+    }
+    
+    return ops;
   }
 
   private getNextMatchId(currentRoundMatchIndex: number = 0): string {

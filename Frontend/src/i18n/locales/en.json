@@ -278,7 +278,7 @@
     "matchGenerationTypeRandomNote": "Americano format - everyone will be randomly assigned and we will avoid putting the same players in one team twice as much as possible.",
     "matchGenerationTypeRoundRobinNote": "Coming Soon - Round-robin format - everyone must play against everyone.",
     "matchGenerationTypeEscaleraNote": "Coming Soon - Escalera (Ladder) format.",
-    "matchGenerationTypeRatingNote": "Coming Soon - Mexicano format.",
+    "matchGenerationTypeRatingNote": "Mexicano format - First round is random. From second round onwards, matches are based on current standings: 1&3 vs 2&4, 5&7 vs 6&8, etc. Players can face each other multiple times.",
     "prohibitMatchesEditing": "Prohibit Matches Editing",
     "allow": "Allow",
     "prohibit": "Prohibit",
