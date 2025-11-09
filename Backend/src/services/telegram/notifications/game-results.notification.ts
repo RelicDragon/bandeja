@@ -1,8 +1,8 @@
 import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { config } from '../../../config/env';
-import { t } from '../../../utils/translations';
-import { escapeMarkdown, escapeHTML, convertMarkdownMessageToHTML } from '../utils';
+import { t, formatDate, getDateLabel } from '../../../utils/translations';
+import { escapeMarkdown, escapeHTML, convertMarkdownMessageToHTML, formatDuration } from '../utils';
 
 interface PlayerStats {
   wins: number;
@@ -96,6 +96,12 @@ export async function sendGameFinishedNotification(
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
+      court: {
+        include: {
+          club: true,
+        },
+      },
+      club: true,
       participants: {
         where: { isPlaying: true },
         include: {
@@ -161,18 +167,33 @@ export async function sendGameFinishedNotification(
   const stats = calculatePlayerStats(userId, game.rounds);
   const metadata = userOutcome.metadata as any || {};
   
-  const userName = `${participant.user.firstName || ''} ${participant.user.lastName || ''}`.trim() || 'Player';
-  const gameName = game.name || t(`games.gameTypes.${game.gameType}`, lang);
+  const gameName = game.name ? game.name : t(`games.gameTypes.${game.gameType}`, lang);
+  const clubName = game.court?.club?.name || game.club?.name;
   
   let message = `🏁 *${escapeMarkdown(t('telegram.gameFinished', lang))}*\n\n`;
-  message += `🎮 ${escapeMarkdown(gameName)}\n\n`;
-  message += `👤 ${escapeMarkdown(userName)}\n\n`;
+  message += `🎮 ${escapeMarkdown(gameName)}\n`;
   
-  message += `📊 *${escapeMarkdown(t('telegram.yourResults', lang))}*\n\n`;
+  if (clubName) {
+    message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
+  }
+  
+  const dateLabel = getDateLabel(game.startTime, lang, false);
+  const timeStr = formatDate(game.startTime, 'HH:mm', lang);
+  message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${dateLabel} ${timeStr}\n`;
+  
+  if (game.entityType !== 'BAR') {
+    const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
+    message += `⏱️ ${escapeMarkdown(t('telegram.duration', lang))}: ${duration}\n`;
+  }
+  
+  message += `\n📊 *${escapeMarkdown(t('telegram.yourResults', lang))}*\n\n`;
   
   if (userOutcome.position) {
     message += `🏆 ${escapeMarkdown(t('telegram.finalPlace', lang))}: ${userOutcome.position}\n`;
   }
+  
+  message += `📉 ${escapeMarkdown(t('telegram.levelBefore', lang))}: ${userOutcome.levelBefore.toFixed(2)}\n`;
+  message += `📈 ${escapeMarkdown(t('telegram.levelAfter', lang))}: ${userOutcome.levelAfter.toFixed(2)}\n`;
   
   if (userOutcome.levelChange !== 0) {
     const levelChangeStr = userOutcome.levelChange > 0 
