@@ -1,8 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { WinnerOfGame, Prisma } from '@prisma/client';
-import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes } from './calculator.service';
-import { updateMatchWinners } from './matchWinner.service';
+import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
@@ -81,8 +80,16 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
 
   let result;
   
-  if (game.winnerOfGame === WinnerOfGame.BY_SCORES_DELTA || game.winnerOfGame === WinnerOfGame.BY_POINTS) {
+  if (game.winnerOfGame === WinnerOfGame.BY_SCORES_DELTA) {
     result = calculateByScoresDeltaOutcomes(
+      players, 
+      roundResults,
+      game.pointsPerWin || 0,
+      game.pointsPerTie || 0,
+      game.pointsPerLoose || 0
+    );
+  } else if (game.winnerOfGame === WinnerOfGame.BY_POINTS) {
+    result = calculateByPointsOutcomes(
       players, 
       roundResults,
       game.pointsPerWin || 0,
@@ -170,13 +177,10 @@ export async function applyGameOutcomes(
     throw new ApiError(404, 'Game not found');
   }
 
-  console.log(`[APPLY GAME OUTCOMES] Step 1: Updating match winners for game ${gameId}`);
-  await updateMatchWinners(gameId, tx);
-  
-  console.log(`[APPLY GAME OUTCOMES] Step 2: Updating game outcomes for game ${gameId}`);
+  console.log(`[APPLY GAME OUTCOMES] Updating game outcomes (position, isWinner) for game ${gameId}`);
   await updateGameOutcomes(gameId, game.winnerOfGame, tx);
 
-
+  console.log(`[APPLY GAME OUTCOMES] Applying level/reliability changes and updating player stats for game ${gameId}`);
   for (const outcome of finalOutcomes) {
     const user = await tx.user.findUnique({
       where: { id: outcome.userId },
@@ -301,10 +305,14 @@ export async function recalculateGameOutcomes(gameId: string, requestUserId: str
     console.log(`[RECALCULATE GAME OUTCOMES] Step 1: Undoing existing outcomes`);
     await undoGameOutcomes(gameId, tx);
 
-    console.log(`[RECALCULATE GAME OUTCOMES] Step 2: Generating new outcomes`);
+    console.log(`[RECALCULATE GAME OUTCOMES] Step 2: Updating match winners based on set scores`);
+    const { updateMatchWinners } = await import('./matchWinner.service');
+    await updateMatchWinners(gameId, tx);
+
+    console.log(`[RECALCULATE GAME OUTCOMES] Step 3: Generating new outcomes`);
     const outcomeData = await generateGameOutcomes(gameId, tx);
 
-    console.log(`[RECALCULATE GAME OUTCOMES] Step 3: Applying outcomes (${outcomeData.finalOutcomes.length} final outcomes, ${Object.keys(outcomeData.roundOutcomes).length} rounds)`);
+    console.log(`[RECALCULATE GAME OUTCOMES] Step 4: Applying outcomes (${outcomeData.finalOutcomes.length} final outcomes, ${Object.keys(outcomeData.roundOutcomes).length} rounds)`);
     await applyGameOutcomes(
       gameId,
       outcomeData.finalOutcomes,

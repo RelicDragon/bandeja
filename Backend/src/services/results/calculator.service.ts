@@ -217,11 +217,123 @@ export function calculateByMatchesWonOutcomes(
   const sortedPlayers = players
     .map(p => ({
       ...p,
-      totalChange: playerTotalChanges[p.userId].levelChange,
+      matchesWon: playerTotalChanges[p.userId].wins,
+      scoresDelta: playerTotalChanges[p.userId].scoresMade - playerTotalChanges[p.userId].scoresLost,
     }))
-    .sort((a, b) => b.totalChange - a.totalChange);
+    .sort((a, b) => {
+      const matchesDiff = b.matchesWon - a.matchesWon;
+      if (matchesDiff !== 0) return matchesDiff;
+      return b.scoresDelta - a.scoresDelta;
+    });
 
   const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) => 
+    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose)
+  );
+
+  return { gameOutcomes, roundOutcomes };
+}
+
+export function calculateByPointsOutcomes(
+  players: PlayerData[],
+  roundResults: RoundResultData[],
+  pointsPerWin: number = 0,
+  pointsPerTie: number = 0,
+  pointsPerLoose: number = 0
+): {
+  gameOutcomes: GameOutcomeResult[];
+  roundOutcomes: Record<number, RoundOutcomeResult[]>;
+} {
+  const roundOutcomes: Record<number, RoundOutcomeResult[]> = {};
+  const playerTotalChanges = initializePlayerChanges(players, true);
+
+  roundResults.forEach((roundResult, roundIndex) => {
+    const roundPlayerOutcomes: Record<string, number> = {};
+
+    for (const player of players) {
+      roundPlayerOutcomes[player.userId] = 0;
+    }
+
+    for (const match of roundResult.matches) {
+      if (match.teams.length !== 2) continue;
+
+      const [teamA, teamB] = match.teams;
+      const scoreDeltaA = teamA.score - teamB.score;
+      const scoreDeltaB = -scoreDeltaA;
+      const teamAWins = match.winnerId === teamA.teamId;
+      const teamBWins = match.winnerId === teamB.teamId;
+      const isTie = !teamAWins && !teamBWins;
+
+      const allOpponents = [...teamA.playerIds, ...teamB.playerIds];
+      const avgOpponentLevel = allOpponents
+        .map(id => players.find(p => p.userId === id)?.level || 1)
+        .reduce((sum, level) => sum + level, 0) / allOpponents.length;
+
+      for (const playerId of teamA.playerIds) {
+        const player = players.find(p => p.userId === playerId);
+        if (!player) continue;
+
+        const update = calculateAmericanoRating(
+          {
+            level: player.level + playerTotalChanges[playerId].levelChange,
+            reliability: player.reliability + playerTotalChanges[playerId].reliabilityChange,
+            gamesPlayed: player.gamesPlayed,
+          },
+          scoreDeltaA,
+          avgOpponentLevel
+        );
+
+        roundPlayerOutcomes[playerId] += update.levelChange;
+        playerTotalChanges[playerId].levelChange += update.levelChange;
+        playerTotalChanges[playerId].reliabilityChange += update.reliabilityChange;
+        playerTotalChanges[playerId].totalScore! += teamA.score;
+        playerTotalChanges[playerId].scoresMade += teamA.score;
+        playerTotalChanges[playerId].scoresLost += teamB.score;
+        updateWinLossTie(playerTotalChanges[playerId], teamAWins, teamBWins, isTie);
+      }
+
+      for (const playerId of teamB.playerIds) {
+        const player = players.find(p => p.userId === playerId);
+        if (!player) continue;
+
+        const update = calculateAmericanoRating(
+          {
+            level: player.level + playerTotalChanges[playerId].levelChange,
+            reliability: player.reliability + playerTotalChanges[playerId].reliabilityChange,
+            gamesPlayed: player.gamesPlayed,
+          },
+          scoreDeltaB,
+          avgOpponentLevel
+        );
+
+        roundPlayerOutcomes[playerId] += update.levelChange;
+        playerTotalChanges[playerId].levelChange += update.levelChange;
+        playerTotalChanges[playerId].reliabilityChange += update.reliabilityChange;
+        playerTotalChanges[playerId].totalScore! += teamB.score;
+        playerTotalChanges[playerId].scoresMade += teamB.score;
+        playerTotalChanges[playerId].scoresLost += teamA.score;
+        updateWinLossTie(playerTotalChanges[playerId], teamBWins, teamAWins, isTie);
+      }
+    }
+
+    roundOutcomes[roundIndex] = Object.entries(roundPlayerOutcomes).map(([userId, levelChange]) => ({
+      userId,
+      levelChange,
+    }));
+  });
+
+  const sortedPlayers = players
+    .map(p => ({
+      ...p,
+      pointsEarned: calculatePointsEarned(playerTotalChanges[p.userId], pointsPerWin, pointsPerTie, pointsPerLoose),
+      scoresDelta: playerTotalChanges[p.userId].scoresMade - playerTotalChanges[p.userId].scoresLost,
+    }))
+    .sort((a, b) => {
+      const pointsDiff = b.pointsEarned - a.pointsEarned;
+      if (pointsDiff !== 0) return pointsDiff;
+      return b.scoresDelta - a.scoresDelta;
+    });
+
+  const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) =>
     buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose)
   );
 
@@ -319,12 +431,13 @@ export function calculateByScoresDeltaOutcomes(
   const sortedPlayers = players
     .map(p => ({
       ...p,
-      totalChange: playerTotalChanges[p.userId].levelChange,
-      totalScore: playerTotalChanges[p.userId].totalScore!,
+      matchesWon: playerTotalChanges[p.userId].wins,
+      scoresDelta: playerTotalChanges[p.userId].scoresMade - playerTotalChanges[p.userId].scoresLost,
     }))
     .sort((a, b) => {
-      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
-      return b.totalChange - a.totalChange;
+      const deltasDiff = b.scoresDelta - a.scoresDelta;
+      if (deltasDiff !== 0) return deltasDiff;
+      return b.matchesWon - a.matchesWon;
     });
 
   const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) =>

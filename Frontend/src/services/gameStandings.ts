@@ -180,18 +180,44 @@ export function calculateGameStandings(
   }
 
   standings.sort((a, b) => {
-    const aValue = getSortValue(playerStatsMap.get(a.user.id)!, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
-    const bValue = getSortValue(playerStatsMap.get(b.user.id)!, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
-    return bValue - aValue;
+    const aStats = playerStatsMap.get(a.user.id)!;
+    const bStats = playerStatsMap.get(b.user.id)!;
+    
+    const aValue = getSortValue(aStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
+    const bValue = getSortValue(bStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
+    
+    const primaryDiff = bValue - aValue;
+    if (primaryDiff !== 0) return primaryDiff;
+    
+    if (winnerOfGame === 'BY_MATCHES_WON' || winnerOfGame === 'BY_POINTS') {
+      return bStats.scoresDelta - aStats.scoresDelta;
+    } else if (winnerOfGame === 'BY_SCORES_DELTA') {
+      return bStats.matchesWon - aStats.matchesWon;
+    }
+    
+    return 0;
   });
 
   let currentPlace = 1;
   for (let i = 0; i < standings.length; i++) {
     if (i > 0) {
-      const prevValue = getSortValue(playerStatsMap.get(standings[i - 1].user.id)!, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
-      const currentValue = getSortValue(playerStatsMap.get(standings[i].user.id)!, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
+      const prevStats = playerStatsMap.get(standings[i - 1].user.id)!;
+      const currentStats = playerStatsMap.get(standings[i].user.id)!;
       
-      if (prevValue !== currentValue) {
+      const prevValue = getSortValue(prevStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
+      const currentValue = getSortValue(currentStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
+      
+      let isDifferent = prevValue !== currentValue;
+      
+      if (!isDifferent) {
+        if (winnerOfGame === 'BY_MATCHES_WON' || winnerOfGame === 'BY_POINTS') {
+          isDifferent = prevStats.scoresDelta !== currentStats.scoresDelta;
+        } else if (winnerOfGame === 'BY_SCORES_DELTA') {
+          isDifferent = prevStats.matchesWon !== currentStats.matchesWon;
+        }
+      }
+      
+      if (isDifferent) {
         currentPlace = i + 1;
       }
     }
