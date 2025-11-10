@@ -137,6 +137,9 @@ export async function getOutcomeExplanation(
 
   for (const round of game.rounds) {
     for (const match of round.matches) {
+      const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+      if (validSets.length === 0) continue;
+
       const userTeam = match.teams.find(t => t.players.some(p => p.userId === userId));
       if (!userTeam) continue;
 
@@ -214,7 +217,6 @@ export async function getOutcomeExplanation(
         const isTie = match.winnerId === null;
         isWinner = match.winnerId === userTeam.id;
 
-        const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
         const setScores = validSets.map(set => {
           if (userTeam.teamNumber === 1) {
             return { teamAScore: set.teamAScore, teamBScore: set.teamBScore };
