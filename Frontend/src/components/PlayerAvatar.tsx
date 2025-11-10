@@ -2,7 +2,7 @@ import { X, User, Crown, Beer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { User as UserType } from '@/types';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { CachedImage } from './CachedImage';
 import { UrlConstructor } from '@/utils/urlConstructor';
 import { GenderIndicator } from './GenderIndicator';
@@ -41,6 +41,15 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
   const { mode: appMode } = useAppModeStore();
   const isFavorite = useFavoritesStore((state) => player ? state.isFavorite(player.id) : false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   const getSizeClasses = () => {
     if (extrasmall) return { avatar: 'w-8 h-8', text: 'text-xs', name: 'mt-0.5 text-[10px] h-8 max-w-12 leading-tight', level: 'w-4 h-4 text-[8px]', crown: 'w-4 h-4', crownIcon: 8, remove: 'w-4 h-4', removeIcon: 8 };
@@ -49,6 +58,54 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
   };
 
   const sizeClasses = getSizeClasses();
+
+  const interpolateColor = (start: [number, number, number], end: [number, number, number], t: number): [number, number, number] => {
+    return [
+      Math.round(start[0] + (end[0] - start[0]) * t),
+      Math.round(start[1] + (end[1] - start[1]) * t),
+      Math.round(start[2] + (end[2] - start[2]) * t),
+    ];
+  };
+
+  const getLevelColor = (level: number | undefined, isDark: boolean = false): { backgroundColor: string } => {
+    const levelValue = Math.max(0, Math.min(7, level ?? 0));
+    
+    const colorStops: Array<{ level: number; rgb: [number, number, number] }> = [
+      { level: 0, rgb: [59, 130, 246] },   // blue-500
+      { level: 2, rgb: [34, 197, 94] },    // green-500
+      { level: 3, rgb: [234, 179, 8] },    // yellow-500
+      { level: 4, rgb: [249, 115, 22] },  // orange-500
+      { level: 5, rgb: [239, 68, 68] },    // red-500
+      { level: 6, rgb: [245, 158, 11] },   // amber-500
+      { level: 7, rgb: [168, 85, 247] },   // purple-500
+    ];
+
+    const darkMultiplier = isDark ? 0.85 : 1;
+
+    if (levelValue <= colorStops[0].level) {
+      const [r, g, b] = colorStops[0].rgb;
+      return { backgroundColor: `rgb(${Math.round(r * darkMultiplier)}, ${Math.round(g * darkMultiplier)}, ${Math.round(b * darkMultiplier)})` };
+    }
+
+    if (levelValue >= colorStops[colorStops.length - 1].level) {
+      const [r, g, b] = colorStops[colorStops.length - 1].rgb;
+      return { backgroundColor: `rgb(${Math.round(r * darkMultiplier)}, ${Math.round(g * darkMultiplier)}, ${Math.round(b * darkMultiplier)})` };
+    }
+
+    for (let i = 0; i < colorStops.length - 1; i++) {
+      const currentStop = colorStops[i];
+      const nextStop = colorStops[i + 1];
+
+      if (levelValue >= currentStop.level && levelValue <= nextStop.level) {
+        const t = (levelValue - currentStop.level) / (nextStop.level - currentStop.level);
+        const [r, g, b] = interpolateColor(currentStop.rgb, nextStop.rgb, t);
+        return { backgroundColor: `rgb(${Math.round(r * darkMultiplier)}, ${Math.round(g * darkMultiplier)}, ${Math.round(b * darkMultiplier)})` };
+      }
+    }
+
+    const [r, g, b] = colorStops[0].rgb;
+    return { backgroundColor: `rgb(${Math.round(r * darkMultiplier)}, ${Math.round(g * darkMultiplier)}, ${Math.round(b * darkMultiplier)})` };
+  };
 
   useEffect(() => {
     const button = buttonRef.current;
@@ -136,7 +193,10 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
           )}
           {!extrasmall && <GenderIndicator gender={player.gender} layout={smallLayout ? 'small' : 'normal'} position="bottom-left" />}
           {appMode === 'PADEL' ? (
-            <div className={`absolute -bottom-1 -right-1 ${sizeClasses.level} rounded-full bg-yellow-500 dark:bg-yellow-600 flex items-center justify-center text-white ${sizeClasses.level.includes('w-4') ? 'text-[8px]' : sizeClasses.level.includes('w-5') ? 'text-[10px]' : 'text-xs font-bold border-2'} border-white dark:border-gray-900`}>
+            <div 
+              className={`absolute -bottom-1 -right-1 ${sizeClasses.level} rounded-full flex items-center justify-center text-white ${sizeClasses.level.includes('w-4') ? 'text-[8px]' : sizeClasses.level.includes('w-5') ? 'text-[10px]' : 'text-xs font-bold border-2'} border-white dark:border-gray-900`}
+              style={getLevelColor(player.level, isDark)}
+            >
               {player.level?.toFixed(1) || '0.0'}
             </div>
           ) : (
