@@ -1,4 +1,4 @@
-let API_URL = localStorage.getItem('apiUrl') || '/api';
+let API_URL = localStorage.getItem('apiUrl') || 'http://localhost:9000/api';
 let authToken = null;
 let selectedCityId = '';
 

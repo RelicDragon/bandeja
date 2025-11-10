@@ -17,7 +17,8 @@
                 <div class="form-group">
                     <label for="apiUrl">API URL</label>
                     <select id="apiUrl" name="apiUrl">
-                        <option value="/api" selected>Production (/api)</option>
+                        <option value="http://localhost:9000/api" selected>Production via SSH Tunnel (localhost:9000)</option>
+                        <option value="/api">Production Direct (/api)</option>
                         <option value="http://localhost:3000/api">Development (localhost:3000)</option>
                     </select>
                 </div>

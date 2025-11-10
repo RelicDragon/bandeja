@@ -188,7 +188,11 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
         </Card>
       ) : (
         <div className="space-y-3">
-          {bugs.map((bug) => (
+          {[...bugs].sort((a, b) => {
+            if (a.status === 'ARCHIVED' && b.status !== 'ARCHIVED') return 1;
+            if (a.status !== 'ARCHIVED' && b.status === 'ARCHIVED') return -1;
+            return 0;
+          }).map((bug) => (
             <BugCard
               key={bug.id}
               bug={bug}
