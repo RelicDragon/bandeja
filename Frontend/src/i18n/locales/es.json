@@ -676,6 +676,8 @@
       "USER_INVITES_USER": "{{senderName}} invita a {{receiverName}}",
       "USER_ACCEPTED_INVITE": "{{userName}} se unió al juego",
       "USER_DECLINED_INVITE": "{{userName}} rechazó la invitación",
+      "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} se unió al juego",
+      "USER_DECLINED_JOIN_QUEUE": "{{userName}} solicitud de unión fue rechazada",
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
       "BUG_STATUS_CHANGED": "Estado del error cambiado a {{status}}",
       "BUG_TYPE_CHANGED": "Tipo del error cambiado a {{type}}",

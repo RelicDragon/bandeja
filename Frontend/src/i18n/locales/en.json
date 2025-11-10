@@ -684,6 +684,8 @@
       "USER_INVITES_USER": "{{senderName}} invites {{receiverName}}",
       "USER_ACCEPTED_INVITE": "{{userName}} joined the game",
       "USER_DECLINED_INVITE": "{{userName}} declined the invite",
+      "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} joined the game",
+      "USER_DECLINED_JOIN_QUEUE": "{{userName}} join request was declined",
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
       "BUG_STATUS_CHANGED": "Bug status changed to {{status}}",
       "BUG_TYPE_CHANGED": "Bug type changed to {{type}}",

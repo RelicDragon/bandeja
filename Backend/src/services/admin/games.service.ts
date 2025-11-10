@@ -2,6 +2,8 @@ import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { GameService } from '../game/game.service';
+import { createSystemMessage } from '../../controllers/chat.controller';
+import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 
 export class AdminGamesService {
   static async getAllGames(cityId?: string) {
@@ -106,6 +108,13 @@ export class AdminGamesService {
     const invite = await prisma.invite.findUnique({
       where: { id: inviteId },
       include: {
+        receiver: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
         game: {
           include: {
             participants: true,
@@ -144,9 +153,21 @@ export class AdminGamesService {
       }
     }
 
-    await prisma.invite.update({
+    if (invite.gameId && invite.receiver) {
+      const receiverName = getUserDisplayName(invite.receiver.firstName, invite.receiver.lastName);
+      
+      try {
+        await createSystemMessage(invite.gameId, {
+          type: SystemMessageType.USER_ACCEPTED_INVITE,
+          variables: { userName: receiverName }
+        });
+      } catch (error) {
+        console.error('Failed to create system message for invite acceptance:', error);
+      }
+    }
+
+    await prisma.invite.delete({
       where: { id: inviteId },
-      data: { status: 'ACCEPTED' },
     });
 
     return { message: 'Invite accepted successfully' };
@@ -155,6 +176,15 @@ export class AdminGamesService {
   static async declineInvite(inviteId: string) {
     const invite = await prisma.invite.findUnique({
       where: { id: inviteId },
+      include: {
+        receiver: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
     });
 
     if (!invite) {
@@ -165,9 +195,21 @@ export class AdminGamesService {
       throw new ApiError(400, 'Invite has already been processed');
     }
 
-    await prisma.invite.update({
+    if (invite.gameId && invite.receiver) {
+      const receiverName = getUserDisplayName(invite.receiver.firstName, invite.receiver.lastName);
+      
+      try {
+        await createSystemMessage(invite.gameId, {
+          type: SystemMessageType.USER_DECLINED_INVITE,
+          variables: { userName: receiverName }
+        });
+      } catch (error) {
+        console.error('Failed to create system message for invite decline:', error);
+      }
+    }
+
+    await prisma.invite.delete({
       where: { id: inviteId },
-      data: { status: 'DECLINED' },
     });
 
     return { message: 'Invite declined successfully' };

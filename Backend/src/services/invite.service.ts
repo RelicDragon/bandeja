@@ -59,9 +59,8 @@ export class InviteService {
     }
 
     if (invite.expiresAt && new Date() > invite.expiresAt) {
-      await prisma.invite.update({
+      await prisma.invite.delete({
         where: { id: inviteId },
-        data: { status: InviteStatus.DECLINED },
       });
       return {
         success: false,
@@ -94,32 +93,6 @@ export class InviteService {
       }
     }
 
-    const updatedInvite = await prisma.invite.update({
-      where: { id: inviteId },
-      data: { status: InviteStatus.ACCEPTED },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        receiver: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        game: {
-          include: {
-            participants: true,
-          },
-        },
-      },
-    });
-
     if (invite.gameId && invite.receiver) {
       const receiverName = getUserDisplayName(invite.receiver.firstName, invite.receiver.lastName);
       
@@ -134,19 +107,22 @@ export class InviteService {
     }
 
     if ((global as any).socketService) {
-      (global as any).socketService.emitInviteDeleted(updatedInvite.receiverId, updatedInvite.id, updatedInvite.gameId || undefined);
-      if (updatedInvite.senderId) {
-        (global as any).socketService.emitInviteDeleted(updatedInvite.senderId, updatedInvite.id, updatedInvite.gameId || undefined);
+      (global as any).socketService.emitInviteDeleted(invite.receiverId, invite.id, invite.gameId || undefined);
+      if (invite.senderId) {
+        (global as any).socketService.emitInviteDeleted(invite.senderId, invite.id, invite.gameId || undefined);
       }
-      if (updatedInvite.gameId) {
-        (global as any).socketService.emitGameUpdate(updatedInvite.gameId, userId, undefined, forceUpdate);
+      if (invite.gameId) {
+        (global as any).socketService.emitGameUpdate(invite.gameId, userId, undefined, forceUpdate);
       }
     }
+
+    await prisma.invite.delete({
+      where: { id: inviteId },
+    });
 
     return {
       success: true,
       message: 'Invite accepted successfully',
-      invite: updatedInvite,
     };
   }
 
@@ -185,32 +161,6 @@ export class InviteService {
       };
     }
 
-    const updatedInvite = await prisma.invite.update({
-      where: { id: inviteId },
-      data: { status: InviteStatus.DECLINED },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        receiver: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        game: {
-          include: {
-            participants: true,
-          },
-        },
-      },
-    });
-
     if (invite.gameId && invite.receiver) {
       const receiverName = getUserDisplayName(invite.receiver.firstName, invite.receiver.lastName);
       
@@ -225,16 +175,19 @@ export class InviteService {
     }
 
     if ((global as any).socketService) {
-      (global as any).socketService.emitInviteDeleted(updatedInvite.receiverId, updatedInvite.id, updatedInvite.gameId || undefined);
-      if (updatedInvite.senderId) {
-        (global as any).socketService.emitInviteDeleted(updatedInvite.senderId, updatedInvite.id, updatedInvite.gameId || undefined);
+      (global as any).socketService.emitInviteDeleted(invite.receiverId, invite.id, invite.gameId || undefined);
+      if (invite.senderId) {
+        (global as any).socketService.emitInviteDeleted(invite.senderId, invite.id, invite.gameId || undefined);
       }
     }
+
+    await prisma.invite.delete({
+      where: { id: inviteId },
+    });
 
     return {
       success: true,
       message: 'Invite declined successfully',
-      invite: updatedInvite,
     };
   }
 }

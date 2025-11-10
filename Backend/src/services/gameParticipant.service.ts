@@ -68,14 +68,6 @@ export class GameParticipantService {
         if (existingQueue.status === 'PENDING') {
           throw new ApiError(400, 'games.alreadyInJoinQueue');
         }
-        if (existingQueue.status === 'DECLINED') {
-          throw new ApiError(400, 'games.joinRequestWasDeclined');
-        }
-        if (existingQueue.status === 'ACCEPTED') {
-          // If accepted, user should already be a participant (checked earlier)
-          // But if they're not, something went wrong - don't proceed
-          throw new ApiError(400, 'games.joinRequestAlreadyAccepted');
-        }
       } else {
         await prisma.joinQueue.create({
           data: {
@@ -585,6 +577,16 @@ export class GameParticipantService {
       throw new ApiError(404, 'games.joinQueueRequestNotFound');
     }
 
+    // Get user information for system message
+    const queueUser = await prisma.user.findUnique({
+      where: { id: queueUserId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+
     // Check if user is already a participant
     const existingParticipant = await prisma.gameParticipant.findFirst({
       where: {
@@ -595,18 +597,16 @@ export class GameParticipantService {
 
     if (existingParticipant && existingParticipant.isPlaying) {
       // Remove from queue if already playing
-      await prisma.joinQueue.update({
+      await prisma.joinQueue.delete({
         where: { id: joinQueue.id },
-        data: { status: 'ACCEPTED' },
       });
       throw new ApiError(400, 'User is already a participant');
     }
 
-    // Update queue status and add user as participant
+    // Delete queue entry and add user as participant
     await prisma.$transaction(async (tx: any) => {
-      await tx.joinQueue.update({
+      await tx.joinQueue.delete({
         where: { id: joinQueue.id },
-        data: { status: 'ACCEPTED' },
       });
 
       if (existingParticipant) {
@@ -625,6 +625,18 @@ export class GameParticipantService {
         });
       }
     });
+
+    if (queueUser) {
+      const userName = getUserDisplayName(queueUser.firstName, queueUser.lastName);
+      try {
+        await createSystemMessage(gameId, {
+          type: SystemMessageType.USER_ACCEPTED_JOIN_QUEUE,
+          variables: { userName }
+        });
+      } catch (error) {
+        console.error('Failed to create system message for join queue acceptance:', error);
+      }
+    }
 
     await this.sendJoinMessage(gameId, queueUserId);
     await GameService.updateGameReadiness(gameId);
@@ -673,11 +685,32 @@ export class GameParticipantService {
       throw new ApiError(404, 'games.joinQueueRequestNotFound');
     }
 
-    // Update queue status to declined
-    await prisma.joinQueue.update({
-      where: { id: joinQueue.id },
-      data: { status: 'DECLINED' },
+    // Get user information for system message
+    const queueUser = await prisma.user.findUnique({
+      where: { id: queueUserId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+      },
     });
+
+    // Delete queue entry
+    await prisma.joinQueue.delete({
+      where: { id: joinQueue.id },
+    });
+
+    if (queueUser) {
+      const userName = getUserDisplayName(queueUser.firstName, queueUser.lastName);
+      try {
+        await createSystemMessage(gameId, {
+          type: SystemMessageType.USER_DECLINED_JOIN_QUEUE,
+          variables: { userName }
+        });
+      } catch (error) {
+        console.error('Failed to create system message for join queue decline:', error);
+      }
+    }
 
     // Emit to participants, invited users, and join-queued users
     await this.emitGameUpdate(gameId, currentUserId);
