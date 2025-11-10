@@ -1,4 +1,4 @@
-import { Card, Select } from '@/components';
+import { Card, Select, Divider } from '@/components';
 import { Game, Club, GenderTeam, GameType } from '@/types';
 import { Settings, Edit3, Save, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -181,7 +181,7 @@ export const GameSettings = ({
                     />
                   </div>
                 </div>
-                <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+                <Divider />
               </>
             )}
           </div>
@@ -281,7 +281,7 @@ export const GameSettings = ({
             </div>
           </div>
           
-          <div className="border-t border-gray-200 dark:border-gray-700 p-2"></div>
+          <Divider />
           
           <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
