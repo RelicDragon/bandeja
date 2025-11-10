@@ -8,6 +8,19 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 
 export class AdminService {
   static async addAdmin(gameId: string, ownerId: string, userId: string) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { resultsStatus: true, status: true },
+    });
+
+    if (!game) {
+      throw new ApiError(404, 'Game not found');
+    }
+
+    if (game.resultsStatus !== 'NONE' || game.status === 'ARCHIVED') {
+      throw new ApiError(400, 'Cannot modify game participants when results have been entered or game is archived');
+    }
+
     const owner = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
@@ -63,6 +76,19 @@ export class AdminService {
   }
 
   static async revokeAdmin(gameId: string, ownerId: string, userId: string) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { resultsStatus: true, status: true },
+    });
+
+    if (!game) {
+      throw new ApiError(404, 'Game not found');
+    }
+
+    if (game.resultsStatus !== 'NONE' || game.status === 'ARCHIVED') {
+      throw new ApiError(400, 'Cannot modify game participants when results have been entered or game is archived');
+    }
+
     const owner = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
@@ -119,6 +145,19 @@ export class AdminService {
   }
 
   static async kickUser(gameId: string, currentUserId: string, targetUserId: string) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { resultsStatus: true, status: true },
+    });
+
+    if (!game) {
+      throw new ApiError(404, 'Game not found');
+    }
+
+    if (game.resultsStatus !== 'NONE' || game.status === 'ARCHIVED') {
+      throw new ApiError(400, 'Cannot modify game participants when results have been entered or game is archived');
+    }
+
     const currentUserParticipant = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
