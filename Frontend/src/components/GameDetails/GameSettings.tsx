@@ -181,42 +181,11 @@ export const GameSettings = ({
                     />
                   </div>
                 </div>
-                <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
               </>
             )}
           </div>
         )}
-
-        {/* Game Type Selector */}
-        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-            {t('createGame.gameType')}
-          </span>
-          <div className="flex-shrink-0 w-40">
-            <Select
-              options={
-                game?.entityType === 'GAME'
-                  ? [
-                      { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                      { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                      { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                      { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                    ]
-                  : [
-                      { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                      { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                      { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                      { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
-                      { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
-                      { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                    ]
-              }
-              value={isEditMode ? editFormData.gameType : (game?.gameType || 'CLASSIC')}
-              onChange={(value) => onFormDataChange({gameType: value as GameType})}
-              disabled={!isEditMode}
-            />
-          </div>
-        </div>
 
         {/* Boolean Settings */}
         <div className="space-y-2">
@@ -236,16 +205,69 @@ export const GameSettings = ({
           )}
           <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.publicGame')}
+              {t('createGame.gameType')}
             </span>
-            <div className="flex-shrink-0">
-              <ToggleSwitch 
-                checked={isEditMode ? editFormData.isPublic : game?.isPublic || false} 
-                onChange={(checked) => onFormDataChange({isPublic: checked})}
+            <div className="flex-shrink-0 w-40">
+              <Select
+                options={
+                  game?.entityType === 'GAME'
+                    ? [
+                        { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                        { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                        { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
+                        { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                      ]
+                    : [
+                        { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                        { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                        { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
+                        { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
+                        { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
+                        { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                      ]
+                }
+                value={isEditMode ? editFormData.gameType : (game?.gameType || 'CLASSIC')}
+                onChange={(value) => onFormDataChange({gameType: value as GameType})}
                 disabled={!isEditMode}
               />
             </div>
           </div>
+          {(game?.entityType === 'GAME' || game?.entityType === 'TOURNAMENT' || game?.entityType === 'LEAGUE') && (
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('createGame.genderTeams.label')}
+              </span>
+              <div className="flex-shrink-0 w-32">
+                <Select
+                  options={[
+                    { value: 'ANY', label: t('createGame.genderTeams.any') },
+                    { value: 'MEN', label: t('createGame.genderTeams.men') },
+                    { value: 'WOMEN', label: t('createGame.genderTeams.women') },
+                    ...(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0
+                      ? [{ value: 'MIX_PAIRS', label: t('createGame.genderTeams.mixPairs') }]
+                      : []),
+                  ]}
+                  value={isEditMode ? editFormData.genderTeams : (game?.genderTeams || 'ANY')}
+                  onChange={(value) => onFormDataChange({genderTeams: value as GenderTeam})}
+                  disabled={!isEditMode}
+                />
+              </div>
+            </div>
+          )}
+          {game?.maxParticipants !== 2 && (
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('games.fixedTeams')}
+              </span>
+              <div className="flex-shrink-0">
+                <ToggleSwitch
+                  checked={isEditMode ? editFormData.hasFixedTeams : game?.hasFixedTeams || false}
+                  onChange={(checked) => onFormDataChange({hasFixedTeams: checked})}
+                  disabled={!isEditMode || !(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0)}
+                />
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
               {t('createGame.ratingGame')}
@@ -254,6 +276,21 @@ export const GameSettings = ({
               <ToggleSwitch 
                 checked={isEditMode ? editFormData.affectsRating : game?.affectsRating || false} 
                 onChange={(checked) => onFormDataChange({affectsRating: checked})}
+                disabled={!isEditMode}
+              />
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-200 dark:border-gray-700 p-2"></div>
+          
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+              {t('createGame.publicGame')}
+            </span>
+            <div className="flex-shrink-0">
+              <ToggleSwitch 
+                checked={isEditMode ? editFormData.isPublic : game?.isPublic || false} 
+                onChange={(checked) => onFormDataChange({isPublic: checked})}
                 disabled={!isEditMode}
               />
             </div>
@@ -303,42 +340,6 @@ export const GameSettings = ({
                 <ToggleSwitch
                   checked={isEditMode ? editFormData.afterGameGoToBar : game?.afterGameGoToBar || false}
                   onChange={(checked) => onFormDataChange({afterGameGoToBar: checked})}
-                  disabled={!isEditMode}
-                />
-              </div>
-            </div>
-          )}
-          {game?.maxParticipants !== 2 && (
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('games.fixedTeams')}
-              </span>
-              <div className="flex-shrink-0">
-                <ToggleSwitch
-                  checked={isEditMode ? editFormData.hasFixedTeams : game?.hasFixedTeams || false}
-                  onChange={(checked) => onFormDataChange({hasFixedTeams: checked})}
-                  disabled={!isEditMode || !(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0)}
-                />
-              </div>
-            </div>
-          )}
-          {(game?.entityType === 'GAME' || game?.entityType === 'TOURNAMENT' || game?.entityType === 'LEAGUE') && (
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.genderTeams.label')}
-              </span>
-              <div className="flex-shrink-0 w-32">
-                <Select
-                  options={[
-                    { value: 'ANY', label: t('createGame.genderTeams.any') },
-                    { value: 'MEN', label: t('createGame.genderTeams.men') },
-                    { value: 'WOMEN', label: t('createGame.genderTeams.women') },
-                    ...(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0
-                      ? [{ value: 'MIX_PAIRS', label: t('createGame.genderTeams.mixPairs') }]
-                      : []),
-                  ]}
-                  value={isEditMode ? editFormData.genderTeams : (game?.genderTeams || 'ANY')}
-                  onChange={(value) => onFormDataChange({genderTeams: value as GenderTeam})}
                   disabled={!isEditMode}
                 />
               </div>

@@ -60,6 +60,19 @@ export const GameSettingsSection = ({
         {t('createGame.settings')}
       </h2>
       <div className="space-y-2">
+        {entityType === 'GAME' && maxParticipants > 4 && (
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+              {t('createGame.tournament')}
+            </span>
+            <div className="flex-shrink-0">
+              <ToggleSwitch 
+                checked={hasMultiRounds} 
+                onChange={onHasMultiRoundsChange}
+              />
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
             {t('createGame.gameType')}
@@ -88,33 +101,58 @@ export const GameSettingsSection = ({
             />
           </div>
         </div>
-        {entityType === 'GAME' && maxParticipants > 4 && (
+        {(entityType === 'GAME' || entityType === 'TOURNAMENT' || entityType === 'LEAGUE') && (
           <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.tournament')}
+              {t('createGame.genderTeams.label')}
+            </span>
+            <div className="flex-shrink-0 w-32">
+              <Select
+                options={[
+                  { value: 'ANY', label: t('createGame.genderTeams.any') },
+                  { value: 'MEN', label: t('createGame.genderTeams.men') },
+                  { value: 'WOMEN', label: t('createGame.genderTeams.women') },
+                  ...(maxParticipants >= 4 && maxParticipants % 2 === 0
+                    ? [{ value: 'MIX_PAIRS', label: t('createGame.genderTeams.mixPairs') }]
+                    : []),
+                ]}
+                value={genderTeams}
+                onChange={(value) => onGenderTeamsChange(value as GenderTeam)}
+              />
+            </div>
+          </div>
+        )}
+        {maxParticipants !== 2 && (
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+              {t('games.fixedTeams')}
             </span>
             <div className="flex-shrink-0">
               <ToggleSwitch 
-                checked={hasMultiRounds} 
-                onChange={onHasMultiRoundsChange}
+                checked={hasFixedTeams} 
+                onChange={onHasFixedTeamsChange}
+                disabled={!(maxParticipants >= 4 && maxParticipants % 2 === 0)}
               />
             </div>
           </div>
         )}
         <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-            {t('createGame.publicGame')}
-          </span>
-          <div className="flex-shrink-0">
-            <ToggleSwitch checked={isPublic} onChange={onPublicChange} />
-          </div>
-        </div>
-        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
             {t('createGame.ratingGame')}
           </span>
           <div className="flex-shrink-0">
             <ToggleSwitch checked={isRatingGame} onChange={onRatingGameChange} />
+          </div>
+        </div>
+        
+        <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+        
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+            {t('createGame.publicGame')}
+          </span>
+          <div className="flex-shrink-0">
+            <ToggleSwitch checked={isPublic} onChange={onPublicChange} />
           </div>
         </div>
         <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
@@ -148,41 +186,6 @@ export const GameSettingsSection = ({
             </span>
             <div className="flex-shrink-0">
               <ToggleSwitch checked={afterGameGoToBar} onChange={onAfterGameGoToBarChange} />
-            </div>
-          </div>
-        )}
-        {maxParticipants !== 2 && (
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('games.fixedTeams')}
-            </span>
-            <div className="flex-shrink-0">
-              <ToggleSwitch 
-                checked={hasFixedTeams} 
-                onChange={onHasFixedTeamsChange}
-                disabled={!(maxParticipants >= 4 && maxParticipants % 2 === 0)}
-              />
-            </div>
-          </div>
-        )}
-        {(entityType === 'GAME' || entityType === 'TOURNAMENT' || entityType === 'LEAGUE') && (
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.genderTeams.label')}
-            </span>
-            <div className="flex-shrink-0 w-32">
-              <Select
-                options={[
-                  { value: 'ANY', label: t('createGame.genderTeams.any') },
-                  { value: 'MEN', label: t('createGame.genderTeams.men') },
-                  { value: 'WOMEN', label: t('createGame.genderTeams.women') },
-                  ...(maxParticipants >= 4 && maxParticipants % 2 === 0
-                    ? [{ value: 'MIX_PAIRS', label: t('createGame.genderTeams.mixPairs') }]
-                    : []),
-                ]}
-                value={genderTeams}
-                onChange={(value) => onGenderTeamsChange(value as GenderTeam)}
-              />
             </div>
           </div>
         )}
