@@ -211,6 +211,7 @@ export async function getOutcomeExplanation(
           opponents,
         });
       } else {
+        const isTie = match.winnerId === null;
         isWinner = match.winnerId === userTeam.id;
 
         const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
@@ -241,7 +242,8 @@ export async function getOutcomeExplanation(
         totalLevelChange += update.levelChange;
         totalReliabilityChange += update.reliabilityChange;
 
-        if (isWinner) wins++;
+        if (isTie) draws++;
+        else if (isWinner) wins++;
         else losses++;
 
         matches.push({
