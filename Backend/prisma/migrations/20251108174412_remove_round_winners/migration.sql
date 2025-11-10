@@ -7,7 +7,7 @@
 */
 -- AlterEnum
 BEGIN;
-update padelpulse."Game" set "winnerOfGame"='BY_MATCHES_WON' where "winnerOfGame"='BY_ROUNDS_WON'
+update padelpulse."Game" set "winnerOfGame"='BY_MATCHES_WON' where "winnerOfGame"='BY_ROUNDS_WON';
 CREATE TYPE "padelpulse"."WinnerOfGame_new" AS ENUM ('BY_MATCHES_WON', 'BY_POINTS', 'BY_SCORES_DELTA', 'PLAYOFF_FINALS');
 ALTER TABLE "padelpulse"."Game" ALTER COLUMN "winnerOfGame" DROP DEFAULT;
 ALTER TABLE "padelpulse"."Game" ALTER COLUMN "winnerOfGame" TYPE "WinnerOfGame_new" USING ("winnerOfGame"::text::"WinnerOfGame_new");

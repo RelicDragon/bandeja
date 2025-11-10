@@ -570,6 +570,17 @@ export const GameSetupModal = ({
                     >
                       {t('gameResults.matchGenerationTypeRating')}
                     </button>
+                    <button
+                      onClick={() => setMatchGenerationType('WINNERS_COURT')}
+                      disabled={!isEditing}
+                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                        matchGenerationType === 'WINNERS_COURT'
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {t('gameResults.matchGenerationTypeWinnersCourt')}
+                    </button>
                   </div>
                 </div>
 
@@ -581,6 +592,7 @@ export const GameSetupModal = ({
                     {matchGenerationType === 'ROUND_ROBIN' && t('gameResults.matchGenerationTypeRoundRobinNote')}
                     {matchGenerationType === 'ESCALERA' && t('gameResults.matchGenerationTypeEscaleraNote')}
                     {matchGenerationType === 'RATING' && t('gameResults.matchGenerationTypeRatingNote')}
+                    {matchGenerationType === 'WINNERS_COURT' && t('gameResults.matchGenerationTypeWinnersCourtNote')}
                   </p>
                 </div>
 

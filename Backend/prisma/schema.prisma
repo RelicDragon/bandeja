@@ -705,6 +705,7 @@ enum MatchGenerationType {
   ROUND_ROBIN
   ESCALERA
   RATING
+  WINNERS_COURT
 }
 
 model GameCourt {

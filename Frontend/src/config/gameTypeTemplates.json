@@ -38,7 +38,7 @@
   "WINNER_COURT": {
     "winnerOfMatch": "BY_SCORES",
     "winnerOfGame": "BY_MATCHES_WON",
-    "matchGenerationType": "ESCALERA",
+    "matchGenerationType": "WINNERS_COURT",
     "prohibitMatchesEditing": true,
     "pointsPerWin": 0,
     "pointsPerLoose": 0,
