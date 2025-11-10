@@ -273,6 +273,7 @@ export const GameDetailsContent = () => {
     (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
   ) || false;
   const canEdit = isOwner || user?.isAdmin || false;
+  const canViewSettings = game?.resultsStatus === 'NONE' && canEdit && game.status !== 'ARCHIVED';
   const isFull = game ? game.entityType !== 'BAR' && game.participants.filter(p => p.isPlaying).length >= game.maxParticipants : false;
 
   useEffect(() => {
@@ -597,6 +598,7 @@ export const GameDetailsContent = () => {
         isInJoinQueue={isInJoinQueue}
         canInvitePlayers={canInvitePlayers}
         canManageJoinQueue={canManageJoinQueue}
+        canViewSettings={canViewSettings}
         onJoin={handleJoin}
         onAddToGame={handleAddToGame}
         onLeave={handleLeave}
@@ -609,7 +611,7 @@ export const GameDetailsContent = () => {
         onShowManageUsers={() => setShowManageUsers(true)}
       />
 
-      {game.resultsStatus === 'NONE' && canEdit && game.status !== 'ARCHIVED' && (
+      {canViewSettings && (
         <GameSettings
           game={game}
           clubs={clubs}
@@ -626,7 +628,7 @@ export const GameDetailsContent = () => {
         />
       )}
 
-      {game.resultsStatus === 'NONE' && canEdit && game.status !== 'ARCHIVED' && (
+      {canViewSettings && (
         <GameSetup
           onOpenSetup={() => setIsGameSetupModalOpen(true)}
           canEdit={canEdit}

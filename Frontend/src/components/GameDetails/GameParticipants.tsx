@@ -16,6 +16,7 @@ interface GameParticipantsProps {
   isInJoinQueue?: boolean;
   canInvitePlayers: boolean;
   canManageJoinQueue: boolean;
+  canViewSettings: boolean;
   onJoin: () => void;
   onAddToGame: () => void;
   onLeave: () => void;
@@ -41,6 +42,7 @@ export const GameParticipants = ({
   isInJoinQueue = false,
   canInvitePlayers,
   canManageJoinQueue,
+  canViewSettings,
   onJoin,
   onAddToGame,
   onLeave,
@@ -185,7 +187,7 @@ export const GameParticipants = ({
         </div>
         {(() => {
           const showInviteButton = (isOwner || (game.anyoneCanInvite && isParticipant)) && !isFull;
-          const showManageButton = isOwner;
+          const showManageButton = isOwner && canViewSettings;
           const buttonCount = (showInviteButton ? 1 : 0) + (showManageButton ? 1 : 0);
           
           if (buttonCount === 0) return null;
