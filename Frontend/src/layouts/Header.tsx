@@ -209,7 +209,7 @@ export const Header = ({
           </div>
         </div>
       </header>
-      <GameModeToggle />
+      {currentPage !== 'profile' && <GameModeToggle />}
     </>
   );
 };

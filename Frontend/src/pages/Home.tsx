@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
-import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection } from '@/components/home';
+import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController } from '@/components/home';
 import { Divider, Button } from '@/components';
 import { invitesApi } from '@/api';
 import { chatApi } from '@/api/chat';
@@ -36,16 +36,16 @@ export const HomeContent = () => {
     hideSkeletonsAnimated: skeletonAnimation.hideSkeletonsAnimated,
   });
 
+  const [activeTab, setActiveTab] = useState<'my-games' | 'past-games'>('my-games');
+
   const {
     pastGames,
     loadingPastGames,
-    showPastGames,
     hasMorePastGames,
     pastGamesUnreadCounts,
     loadPastGames,
-    togglePastGames,
     loadAllPastGamesWithUnread,
-  } = usePastGames(user);
+  } = usePastGames(user, activeTab === 'past-games');
 
   const mergedGames = useMemo(() => {
     if (!showChatFilter) return games;
@@ -213,29 +213,65 @@ export const HomeContent = () => {
         />
       </div>
 
-      <MyGamesSection
-        games={mergedGames}
-        user={user}
-        loading={loading}
-        showSkeleton={skeletonAnimation.showSkeleton}
-        skeletonStates={skeletonAnimation.skeletonStates}
-        showChatFilter={showChatFilter}
-        gamesUnreadCounts={mergedUnreadCounts}
-        onShowAllGames={() => setShowChatFilter(false)}
-      />
-
-      {!loading && !showChatFilter && (
-        <PastGamesSection
-          pastGames={pastGames}
-          showPastGames={showPastGames}
-          loadingPastGames={loadingPastGames}
-          hasMorePastGames={hasMorePastGames}
-          user={user}
-          pastGamesUnreadCounts={pastGamesUnreadCounts}
-          onToggle={togglePastGames}
-          onLoadMore={loadPastGames}
+      {!showChatFilter && (
+        <GamesTabController
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
         />
       )}
+
+      <div className="relative min-h-[200px]">
+        {showChatFilter ? (
+          <MyGamesSection
+            games={mergedGames}
+            user={user}
+            loading={loading}
+            showSkeleton={skeletonAnimation.showSkeleton}
+            skeletonStates={skeletonAnimation.skeletonStates}
+            showChatFilter={showChatFilter}
+            gamesUnreadCounts={mergedUnreadCounts}
+            onShowAllGames={() => setShowChatFilter(false)}
+          />
+        ) : (
+          <>
+            <div
+              className={`transition-all duration-300 ease-in-out ${
+                activeTab === 'my-games'
+                  ? 'opacity-100 translate-x-0'
+                  : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none'
+              }`}
+            >
+              <MyGamesSection
+                games={mergedGames}
+                user={user}
+                loading={loading}
+                showSkeleton={skeletonAnimation.showSkeleton}
+                skeletonStates={skeletonAnimation.skeletonStates}
+                showChatFilter={showChatFilter}
+                gamesUnreadCounts={mergedUnreadCounts}
+                onShowAllGames={() => setShowChatFilter(false)}
+              />
+            </div>
+
+            <div
+              className={`transition-all duration-300 ease-in-out ${
+                activeTab === 'past-games'
+                  ? 'opacity-100 translate-x-0'
+                  : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none'
+              }`}
+            >
+              <PastGamesSection
+                pastGames={pastGames}
+                loadingPastGames={loadingPastGames}
+                hasMorePastGames={hasMorePastGames}
+                user={user}
+                pastGamesUnreadCounts={pastGamesUnreadCounts}
+                onLoadMore={loadPastGames}
+              />
+            </div>
+          </>
+        )}
+      </div>
 
       <div
         className={`transition-all duration-500 ease-in-out overflow-hidden ${

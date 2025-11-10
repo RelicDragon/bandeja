@@ -28,9 +28,6 @@ export const MyGamesSection = ({
   if (loading && showSkeleton) {
     return (
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-          {t('home.myGames')}
-        </h2>
         <div className="space-y-4">
           {[0, 1, 2].map((skeletonIndex) => {
             const state = skeletonStates[skeletonIndex];
@@ -60,9 +57,6 @@ export const MyGamesSection = ({
   if (games.length === 0) {
     return (
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-          {t('home.myGames')}
-        </h2>
         <Card className="text-center py-12">
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {showChatFilter ? t('chat.noUnreadMessages') : t('home.noGames')}
@@ -84,9 +78,6 @@ export const MyGamesSection = ({
   if (showChatFilter && games.filter(game => (gamesUnreadCounts[game.id] || 0) > 0).length === 0) {
     return (
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-          {t('home.myGames')}
-        </h2>
         <Card className="text-center py-12">
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {t('chat.noUnreadMessages')}
@@ -113,11 +104,6 @@ export const MyGamesSection = ({
   if (displayGames.length === 0) {
     return (
       <div>
-        {!showChatFilter && (
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            {t('home.myGames')}
-          </h2>
-        )}
         <Card className="text-center py-12">
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {showChatFilter ? t('chat.noUnreadMessages') : t('home.noGames')}
@@ -138,11 +124,6 @@ export const MyGamesSection = ({
 
   return (
     <div>
-      {!showChatFilter && (
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-          {t('home.myGames')}
-        </h2>
-      )}
       <div>
         <div className="space-y-4">
           {displayGames.map((game, index) => (

@@ -5,10 +5,9 @@ import { Game } from '@/types';
 import { useHeaderStore } from '@/store/headerStore';
 import { socketService } from '@/services/socketService';
 
-export const usePastGames = (user: any) => {
+export const usePastGames = (user: any, shouldLoad: boolean = false) => {
   const [pastGames, setPastGames] = useState<Game[]>([]);
   const [loadingPastGames, setLoadingPastGames] = useState(false);
-  const [showPastGames, setShowPastGames] = useState(false);
   const [pastGamesOffset, setPastGamesOffset] = useState(0);
   const [hasMorePastGames, setHasMorePastGames] = useState(true);
   const [pastGamesUnreadCounts, setPastGamesUnreadCounts] = useState<Record<string, number>>({});
@@ -149,12 +148,11 @@ export const usePastGames = (user: any) => {
     }
   }, [showChatFilter, user?.id, loadAllPastGamesWithUnread]);
 
-  const togglePastGames = useCallback(() => {
-    setShowPastGames(!showPastGames);
-    if (!showPastGames && pastGames.length === 0) {
+  useEffect(() => {
+    if (shouldLoad && pastGames.length === 0 && !loadingPastGames && user?.currentCity?.id) {
       loadPastGames();
     }
-  }, [showPastGames, pastGames.length, loadPastGames]);
+  }, [shouldLoad, pastGames.length, loadingPastGames, user?.currentCity?.id, loadPastGames]);
 
   useEffect(() => {
     const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game }) => {
@@ -198,11 +196,9 @@ export const usePastGames = (user: any) => {
   return {
     pastGames,
     loadingPastGames,
-    showPastGames,
     hasMorePastGames,
     pastGamesUnreadCounts,
     loadPastGames,
-    togglePastGames,
     loadAllPastGamesWithUnread,
   };
 };

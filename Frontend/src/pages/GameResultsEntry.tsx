@@ -99,7 +99,7 @@ export const GameResultsEntry = () => {
   const effectiveCanEdit = canEdit && isEditingResults;
   const isFinalStatus = game?.resultsStatus === 'FINAL';
   const showFinishButton = canEdit && isEditingResults && isResultsEntryMode && rounds.length > 0 && rounds.some(r => r.matches.length > 0) && hasMatchesWithTeamsReady;
-  const showEditButton = canEdit && !isEditingResults && isFinalStatus && isResultsEntryMode;
+  const showEditButton = canEdit && !isEditingResults && isFinalStatus && isResultsEntryMode && game?.status !== 'ARCHIVED';
   const finishButtonPanelHeight = (showFinishButton || showEditButton) ? 80 : 0;
 
   const handleMatchDrop = async (matchId: string, team: 'teamA' | 'teamB', draggedPlayer: string) => {

@@ -20,9 +20,7 @@ export const Divider = ({ className = '' }: DividerProps) => {
   return (
     <div className={`flex items-center justify-center py-6 ${className}`}>
       <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
-      <div className="mx-4 flex items-center justify-center">
-        <TennisBallIcon />
-      </div>
+
       <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
     </div>
   );
