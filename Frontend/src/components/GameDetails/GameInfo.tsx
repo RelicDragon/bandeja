@@ -4,6 +4,7 @@ import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { GameStatusIcon } from '@/components';
 import { ShareModal } from '@/components/ShareModal';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
 import {
   Calendar,
   MapPin,
@@ -43,6 +44,9 @@ export const GameInfo = ({
   const { t } = useTranslation();
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState({ url: '', title: '', text: '' });
+
+  const ownerParticipant = game.participants?.find(p => p.role === 'OWNER');
+  const owner = ownerParticipant?.user;
 
   const handleNavigate = () => {
     const club = game.court?.club || game.club;
@@ -206,7 +210,7 @@ export const GameInfo = ({
         </div>
       </div>
 
-      <div className="space-y-3 mb-6">
+      <div className="space-y-3 mb-0">
         <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
           <Calendar size={20} className="text-primary-600 dark:text-primary-400" />
           <span>{formatDate(game.startTime, 'PPP')}</span>
@@ -269,6 +273,19 @@ export const GameInfo = ({
                 />
               </button>
             </div>
+          </div>
+        )}
+        {!isOwner && owner && (
+          <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+            <Crown size={20} className="text-primary-600 dark:text-primary-400" />
+            <PlayerAvatar
+              player={owner}
+              extrasmall={true}
+              showName={false}
+            />
+            <span className="text-sm">
+              {[owner.firstName, owner.lastName].filter(name => name && name.trim()).join(' ')}
+            </span>
           </div>
         )}
         

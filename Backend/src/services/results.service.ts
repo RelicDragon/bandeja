@@ -193,7 +193,7 @@ export async function deleteGameResults(gameId: string, requestUserId: string, b
             reliability: outcome.reliabilityBefore,
             totalPoints: { decrement: outcome.pointsEarned },
             gamesPlayed: { decrement: 1 },
-            gamesWon: { decrement: outcome.isWinner ? 1 : 0 },
+            gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
           },
         });
       }
@@ -282,7 +282,7 @@ export async function editGameResults(gameId: string, requestUserId: string, bas
             reliability: outcome.reliabilityBefore,
             totalPoints: { decrement: outcome.pointsEarned },
             gamesPlayed: { decrement: 1 },
-            gamesWon: { decrement: outcome.isWinner ? 1 : 0 },
+            gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
           },
         });
       }

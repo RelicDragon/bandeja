@@ -44,6 +44,11 @@ export const GameParticipants = ({
 }: GameParticipantsProps) => {
   const { t } = useTranslation();
 
+  const playingOwnersAndAdmins = game.participants.filter(
+    p => p.isPlaying && (p.role === 'OWNER' || p.role === 'ADMIN')
+  );
+  const shouldShowCrowns = playingOwnersAndAdmins.length > 1;
+
   return (
     <Card>
       <div className="flex items-center gap-2 mb-4">
@@ -133,7 +138,7 @@ export const GameParticipants = ({
                 isCurrentUser={participant.userId === userId}
                 removable={participant.userId === userId && !isOwner}
                 onRemoveClick={participant.userId === userId ? onLeave : undefined}
-                role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
+                role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
                 smallLayout={true}
               />
             ))}

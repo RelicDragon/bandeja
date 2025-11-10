@@ -132,7 +132,7 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
         reliability: outcome.reliabilityBefore,
         totalPoints: { decrement: outcome.pointsEarned },
         gamesPlayed: { decrement: 1 },
-        gamesWon: { decrement: outcome.isWinner ? 1 : 0 },
+        gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
       },
     });
   }
@@ -242,7 +242,7 @@ export async function applyGameOutcomes(
           reliability: reliabilityAfter,
           totalPoints: { increment: outcome.pointsEarned },
           gamesPlayed: { increment: 1 },
-          gamesWon: { increment: outcome.isWinner ? 1 : 0 },
+          gamesWon: outcome.isWinner ? { increment: 1 } : undefined,
         },
       });
     }

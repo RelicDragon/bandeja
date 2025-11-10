@@ -678,7 +678,7 @@ export async function batchOps(
                 reliability: outcome.reliabilityBefore,
                 totalPoints: { decrement: outcome.pointsEarned },
                 gamesPlayed: { decrement: 1 },
-                gamesWon: { decrement: outcome.isWinner ? 1 : 0 },
+                gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
               },
             });
           }
