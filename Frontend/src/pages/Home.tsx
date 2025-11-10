@@ -224,13 +224,7 @@ export const HomeContent = () => {
         onShowAllGames={() => setShowChatFilter(false)}
       />
 
-      <div
-        className={`transition-all duration-500 ease-in-out overflow-hidden ${
-          !loading && !showChatFilter
-            ? 'max-h-[2000px] opacity-100 translate-y-0'
-            : 'max-h-0 opacity-0 -translate-y-4'
-        }`}
-      >
+      {!loading && !showChatFilter && (
         <PastGamesSection
           pastGames={pastGames}
           showPastGames={showPastGames}
@@ -241,7 +235,7 @@ export const HomeContent = () => {
           onToggle={togglePastGames}
           onLoadMore={loadPastGames}
         />
-      </div>
+      )}
 
       <div
         className={`transition-all duration-500 ease-in-out overflow-hidden ${

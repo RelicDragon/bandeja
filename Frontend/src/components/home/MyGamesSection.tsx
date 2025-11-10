@@ -13,14 +13,6 @@ interface MyGamesSectionProps {
   onShowAllGames: () => void;
 }
 
-const isTodayOrLater = (date: Date | string) => {
-  const gameDate = typeof date === 'string' ? new Date(date) : date;
-  const today = new Date();
-  const gameDateOnly = new Date(gameDate.getFullYear(), gameDate.getMonth(), gameDate.getDate());
-  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  return gameDateOnly.getTime() >= todayOnly.getTime();
-};
-
 export const MyGamesSection = ({
   games,
   user,
@@ -116,9 +108,7 @@ export const MyGamesSection = ({
     return (gamesUnreadCounts[game.id] || 0) > 0;
   });
 
-  const displayGames = showChatFilter 
-    ? filteredGames 
-    : filteredGames.filter(game => isTodayOrLater(game.startTime));
+  const displayGames = filteredGames;
 
   if (displayGames.length === 0) {
     return (

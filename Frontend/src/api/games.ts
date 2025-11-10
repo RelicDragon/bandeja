@@ -10,6 +10,7 @@ export const gamesApi = {
     maxLevel?: number;
     gameType?: string;
     isPublic?: boolean;
+    status?: string;
     limit?: number;
     offset?: number;
   }) => {

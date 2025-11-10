@@ -23,8 +23,6 @@ export const useHomeGames = (
 
   const sortGames = (games: Game[]) => {
     return games.sort((a, b) => {
-      if (a.status === 'ARCHIVED' && b.status !== 'ARCHIVED') return 1;
-      if (a.status !== 'ARCHIVED' && b.status === 'ARCHIVED') return -1;
       return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
     });
   };
@@ -87,6 +85,7 @@ export const useHomeGames = (
       ]);
       
       const myGames = gamesResponse.data.filter((game) =>
+        game.status !== 'ARCHIVED' &&
         game.participants.some((p) => p.userId === user?.id)
       );
       
@@ -140,6 +139,7 @@ export const useHomeGames = (
       yesterday.setHours(0, 0, 0, 0);
 
       const upcomingChatGames = allChatGames.filter(game => {
+        if (game.status === 'ARCHIVED') return false;
         const gameDate = new Date(game.startTime);
         return gameDate >= yesterday;
       });
@@ -209,22 +209,30 @@ export const useHomeGames = (
       
       const updatedGame = data.game;
       
-      setGames(prevGames => {
-        const gameIndex = prevGames.findIndex(g => g.id === data.gameId);
-        if (gameIndex === -1) {
-          // Game not in list, check if it should be added
-          const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
-          if (isParticipant) {
-            const newGames = [...prevGames, updatedGame];
-            return sortGames(newGames);
+        setGames(prevGames => {
+          const gameIndex = prevGames.findIndex(g => g.id === data.gameId);
+          if (gameIndex === -1) {
+            // Game not in list, check if it should be added
+            const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+            const isArchived = updatedGame.status === 'ARCHIVED';
+            if (isParticipant && !isArchived) {
+              const newGames = [...prevGames, updatedGame];
+              return sortGames(newGames);
+            }
+            return prevGames;
           }
-          return prevGames;
-        }
-        
-        const updatedGames = [...prevGames];
-        updatedGames[gameIndex] = updatedGame;
-        return sortGames(updatedGames);
-      });
+          
+          // Check if game should be removed (archived or no longer participant)
+          const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+          const isArchived = updatedGame.status === 'ARCHIVED';
+          if (!isParticipant || isArchived) {
+            return prevGames.filter(g => g.id !== data.gameId);
+          }
+          
+          const updatedGames = [...prevGames];
+          updatedGames[gameIndex] = updatedGame;
+          return sortGames(updatedGames);
+        });
       
       setAvailableGames(prevAvailableGames => {
         const gameIndex = prevAvailableGames.findIndex(g => g.id === data.gameId);

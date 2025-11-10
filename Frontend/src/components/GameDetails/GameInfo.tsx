@@ -17,6 +17,7 @@ import {
   Users,
   ExternalLink,
   Award,
+  Lock,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -126,6 +127,12 @@ export const GameInfo = ({
         <div className="pr-20 flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <GameStatusIcon status={game.status} className="p-1" />
+            {!game.isPublic && (
+              <span className="px-3 py-1 text-sm font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
+                <Lock size={14} />
+                {t('games.private')}
+              </span>
+            )}
             {game.genderTeams && game.genderTeams !== 'ANY' && (
               <div className="flex items-center gap-1">
                 {game.genderTeams === 'MIX_PAIRS' ? (

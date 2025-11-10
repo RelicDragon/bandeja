@@ -163,6 +163,10 @@ export class GameReadService {
       where.entityType = filters.entityType;
     }
 
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
     if (filters.cityId) {
       where.OR = [
         {
@@ -212,12 +216,6 @@ export class GameReadService {
           },
         },
         participants: {
-          where: {
-            OR: [
-              { isPlaying: true },
-              { role: { in: ['OWNER', 'ADMIN'] } },
-            ],
-          },
           include: {
             user: {
               select: USER_SELECT_FIELDS,

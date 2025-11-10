@@ -566,20 +566,22 @@ export const GameDetailsContent = () => {
         onShowManageUsers={() => setShowManageUsers(true)}
       />
 
-      <GameSettings
-        game={game}
-        clubs={clubs}
-        courts={courts}
-        isEditMode={isEditMode}
-        isClosingEditMode={isClosingEditMode}
-        canEdit={canEdit}
-        editFormData={editFormData}
-        onEditModeToggle={handleEditModeToggle}
-        onSaveChanges={handleSaveChanges}
-        onFormDataChange={handleFormDataChange}
-        onOpenClubModal={() => setIsClubModalOpen(true)}
-        onOpenCourtModal={() => setIsCourtModalOpen(true)}
-      />
+      {game.resultsStatus === 'NONE' && canEdit && (
+        <GameSettings
+          game={game}
+          clubs={clubs}
+          courts={courts}
+          isEditMode={isEditMode}
+          isClosingEditMode={isClosingEditMode}
+          canEdit={canEdit}
+          editFormData={editFormData}
+          onEditModeToggle={handleEditModeToggle}
+          onSaveChanges={handleSaveChanges}
+          onFormDataChange={handleFormDataChange}
+          onOpenClubModal={() => setIsClubModalOpen(true)}
+          onOpenCourtModal={() => setIsCourtModalOpen(true)}
+        />
+      )}
 
       {game.resultsStatus === 'NONE' && (
         <GameSetup

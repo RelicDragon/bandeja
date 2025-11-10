@@ -13,7 +13,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
-import { MessageCircle, ArrowLeft, MapPin, LogOut } from 'lucide-react';
+import { MessageCircle, ArrowLeft, MapPin, LogOut, ArrowDown } from 'lucide-react';
 
 export const GameChat: React.FC = () => {
   const { t } = useTranslation();
@@ -544,13 +544,14 @@ export const GameChat: React.FC = () => {
 
         {/* Load More Button */}
         {hasMoreMessages && (
-          <div className="flex-shrink-0 px-4 py-2 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex-shrink-0 px-4 py-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-center">
             <button
               onClick={loadMoreMessages}
               disabled={isLoadingMore}
-              className="w-full py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="py-3 px-6 rounded-xl font-medium text-sm text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-600/60 transition-all duration-300 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              {isLoadingMore ? t('common.loading') : t('chat.messages.loadMore')}
+              <span>{isLoadingMore ? t('common.loading') : t('chat.messages.loadMore')}</span>
+              {!isLoadingMore && <ArrowDown size={16} className="animate-bounce" />}
             </button>
           </div>
         )}

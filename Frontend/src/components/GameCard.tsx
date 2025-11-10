@@ -8,7 +8,7 @@ import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { getGameResultStatus } from '@/utils/gameResults';
 import { useNavigationStore } from '@/store/navigationStore';
-import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award } from 'lucide-react';
+import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award, Lock } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
@@ -135,6 +135,12 @@ export const GameCard = ({
         </h3>
         <div className="flex items-center gap-2 mb-1">
           <GameStatusIcon status={game.status} />
+          {!game.isPublic && (
+            <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
+              <Lock size={12} />
+              <span className="hidden sm:inline">{t('games.private')}</span>
+            </span>
+          )}
           {game.genderTeams && game.genderTeams !== 'ANY' && (
             <div className="flex items-center gap-1">
               {game.genderTeams === 'MIX_PAIRS' ? (

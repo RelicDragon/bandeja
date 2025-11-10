@@ -21,8 +21,6 @@ export const usePastGames = (user: any) => {
 
   const sortGames = (games: Game[]) => {
     return games.sort((a, b) => {
-      if (a.status === 'ARCHIVED' && b.status !== 'ARCHIVED') return 1;
-      if (a.status !== 'ARCHIVED' && b.status === 'ARCHIVED') return -1;
       return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
     });
   };
@@ -65,22 +63,22 @@ export const usePastGames = (user: any) => {
 
     setLoadingPastGames(true);
     try {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(23, 59, 59, 999);
-
       const response = await gamesApi.getAll({
         cityId: user.currentCity.id,
-        endDate: yesterday.toISOString(),
-        limit: 20,
+        status: 'ARCHIVED',
+        limit: 10,
         offset: pastGamesOffset,
       });
       
+      const allGames = response.data || [];
       const newPastGames = sortGames(
-        response.data.filter((game) => game.participants.some((p) => p.userId === user?.id))
+        allGames.filter((game) => 
+          game.status === 'ARCHIVED' &&
+          game.participants.some((p) => p.userId === user?.id)
+        )
       );
       
-      if (newPastGames.length < 20) {
+      if (allGames.length < 10) {
         setHasMorePastGames(false);
       }
       
@@ -88,7 +86,7 @@ export const usePastGames = (user: any) => {
       
       setPastGames(prev => [...prev, ...newPastGames]);
       setPastGamesUnreadCounts(prev => ({ ...prev, ...unreadCounts }));
-      setPastGamesOffset(pastGamesOffset + 20);
+      setPastGamesOffset(pastGamesOffset + 10);
     } catch (error) {
       console.error('Failed to load past games:', error);
     } finally {
@@ -110,29 +108,25 @@ export const usePastGames = (user: any) => {
         return;
       }
 
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(23, 59, 59, 999);
+      const archivedChatGames = allChatGames.filter(game => 
+        game.status === 'ARCHIVED' &&
+        game.participants.some((p: any) => p.userId === user.id)
+      );
 
-      const pastChatGames = allChatGames.filter(game => {
-        const gameDate = new Date(game.startTime);
-        return gameDate <= yesterday;
-      });
-
-      if (pastChatGames.length === 0) {
+      if (archivedChatGames.length === 0) {
         isLoadingUnreadPastGamesRef.current = false;
         return;
       }
 
-      const gameIds = pastChatGames.map(game => game.id);
+      const gameIds = archivedChatGames.map(game => game.id);
       const unreadCounts = await chatApi.getGamesUnreadCounts(gameIds);
       
-      const pastGamesWithUnread = pastChatGames.filter(game => (unreadCounts.data[game.id] || 0) > 0);
+      const archivedGamesWithUnread = archivedChatGames.filter(game => (unreadCounts.data[game.id] || 0) > 0);
       
-      if (pastGamesWithUnread.length > 0) {
+      if (archivedGamesWithUnread.length > 0) {
         setPastGames(prevGames => {
           const existingGameIds = new Set(prevGames.map(g => g.id));
-          const newGames = pastGamesWithUnread.filter(game => !existingGameIds.has(game.id));
+          const newGames = archivedGamesWithUnread.filter(game => !existingGameIds.has(game.id));
           
           if (newGames.length === 0) return prevGames;
           
@@ -171,13 +165,21 @@ export const usePastGames = (user: any) => {
       setPastGames(prevPastGames => {
         const gameIndex = prevPastGames.findIndex(g => g.id === data.gameId);
         if (gameIndex === -1) {
-          // Game not in list, check if it should be added
+          // Game not in list, check if it should be added (must be ARCHIVED and user must be participant)
           const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
-          if (isParticipant) {
+          const isArchived = updatedGame.status === 'ARCHIVED';
+          if (isParticipant && isArchived) {
             const newGames = [...prevPastGames, updatedGame];
             return sortGames(newGames);
           }
           return prevPastGames;
+        }
+        
+        // Check if game should be removed (no longer archived or no longer participant)
+        const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+        const isArchived = updatedGame.status === 'ARCHIVED';
+        if (!isParticipant || !isArchived) {
+          return prevPastGames.filter(g => g.id !== data.gameId);
         }
         
         const updatedGames = [...prevPastGames];
