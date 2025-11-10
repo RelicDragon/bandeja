@@ -36,7 +36,8 @@ const BLOWOUT_THRESHOLD = 15;
 function calculateDifferentialMultiplier(setScores: Array<{ teamAScore: number; teamBScore: number }>): { multiplier: number; totalPointDifferential: number } {
   let totalPointDifferential = 0;
   
-  for (const set of setScores) {
+  const validSets = setScores.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+  for (const set of validSets) {
     const diff = set.teamAScore - set.teamBScore;
     totalPointDifferential += diff;
   }

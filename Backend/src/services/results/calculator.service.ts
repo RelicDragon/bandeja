@@ -154,8 +154,9 @@ export function calculateByMatchesWonOutcomes(
       const teamBWins = match.winnerId === teamB.teamId;
       const isTie = !teamAWins && !teamBWins;
 
-      const teamAScore = match.sets?.reduce((sum, set) => sum + set.teamAScore, 0) || teamA.score || 0;
-      const teamBScore = match.sets?.reduce((sum, set) => sum + set.teamBScore, 0) || teamB.score || 0;
+      const validSets = match.sets?.filter(set => set.teamAScore > 0 || set.teamBScore > 0) || [];
+      const teamAScore = validSets.reduce((sum, set) => sum + set.teamAScore, 0) || teamA.score || 0;
+      const teamBScore = validSets.reduce((sum, set) => sum + set.teamBScore, 0) || teamB.score || 0;
 
       const teamAPlayers = players.filter(p => teamA.playerIds.includes(p.userId));
       const teamBPlayers = players.filter(p => teamB.playerIds.includes(p.userId));
@@ -173,7 +174,7 @@ export function calculateByMatchesWonOutcomes(
           {
             isWinner: teamAWins,
             opponentsLevel: teamBAvgLevel,
-            setScores: match.sets,
+            setScores: validSets,
           }
         );
 
@@ -195,7 +196,7 @@ export function calculateByMatchesWonOutcomes(
           {
             isWinner: teamBWins,
             opponentsLevel: teamAAvgLevel,
-            setScores: match.sets?.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore })),
+            setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore })),
           }
         );
 

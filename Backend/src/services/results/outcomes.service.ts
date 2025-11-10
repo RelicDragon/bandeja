@@ -50,8 +50,9 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
 
   const roundResults = game.rounds.map(round => ({
     matches: round.matches.map(match => {
+      const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
       const teams = match.teams.map(team => {
-        const totalScore = match.sets.reduce((sum, set) => {
+        const totalScore = validSets.reduce((sum, set) => {
           if (team.teamNumber === 1) return sum + set.teamAScore;
           if (team.teamNumber === 2) return sum + set.teamBScore;
           return sum;
@@ -65,7 +66,7 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
         };
       });
 
-      const sets = match.sets.map(set => ({
+      const sets = validSets.map(set => ({
         teamAScore: set.teamAScore,
         teamBScore: set.teamBScore,
       }));

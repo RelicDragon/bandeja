@@ -453,8 +453,9 @@ export class RoundGenerator {
       for (let i = 0; i < previousRound.matches.length; i++) {
         const match = previousRound.matches[i];
         
-        const teamAScore = match.sets.reduce((sum, set) => sum + set.teamA, 0);
-        const teamBScore = match.sets.reduce((sum, set) => sum + set.teamB, 0);
+        const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
+        const teamAScore = validSets.reduce((sum, set) => sum + set.teamA, 0);
+        const teamBScore = validSets.reduce((sum, set) => sum + set.teamB, 0);
         
         let winners: string[] = [];
         let losers: string[] = [];

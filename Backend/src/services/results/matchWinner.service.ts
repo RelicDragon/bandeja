@@ -16,8 +16,9 @@ function calculateMatchWinnerByScores(match: MatchWithTeamsAndSets): string | nu
   console.log(`[MATCH WINNER BY SCORES] Starting calculation for match ${match.id}`);
   console.log(`[MATCH WINNER BY SCORES] Match has ${match.sets.length} sets`);
   
-  if (match.sets.length === 0) {
-    console.log(`[MATCH WINNER BY SCORES] No sets found, returning null`);
+  const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+  if (validSets.length === 0) {
+    console.log(`[MATCH WINNER BY SCORES] No valid sets found, returning null`);
     return null;
   }
 
@@ -31,8 +32,8 @@ function calculateMatchWinnerByScores(match: MatchWithTeamsAndSets): string | nu
 
   console.log(`[MATCH WINNER BY SCORES] Team A: ${teamA.id}, Team B: ${teamB.id}`);
 
-  const teamAScore = match.sets.reduce((sum, set) => sum + set.teamAScore, 0);
-  const teamBScore = match.sets.reduce((sum, set) => sum + set.teamBScore, 0);
+  const teamAScore = validSets.reduce((sum, set) => sum + set.teamAScore, 0);
+  const teamBScore = validSets.reduce((sum, set) => sum + set.teamBScore, 0);
 
   console.log(`[MATCH WINNER BY SCORES] Set scores:`, match.sets.map((s, i) => `Set ${i + 1}: A=${s.teamAScore}, B=${s.teamBScore}`).join(', '));
   console.log(`[MATCH WINNER BY SCORES] Total scores - Team A: ${teamAScore}, Team B: ${teamBScore}`);
@@ -53,8 +54,9 @@ function calculateMatchWinnerBySets(match: MatchWithTeamsAndSets): string | null
   console.log(`[MATCH WINNER BY SETS] Starting calculation for match ${match.id}`);
   console.log(`[MATCH WINNER BY SETS] Match has ${match.sets.length} sets`);
   
-  if (match.sets.length === 0) {
-    console.log(`[MATCH WINNER BY SETS] No sets found, returning null`);
+  const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+  if (validSets.length === 0) {
+    console.log(`[MATCH WINNER BY SETS] No valid sets found, returning null`);
     return null;
   }
 
@@ -70,9 +72,8 @@ function calculateMatchWinnerBySets(match: MatchWithTeamsAndSets): string | null
 
   let teamASetsWon = 0;
   let teamBSetsWon = 0;
-
-  for (let i = 0; i < match.sets.length; i++) {
-    const set = match.sets[i];
+  for (let i = 0; i < validSets.length; i++) {
+    const set = validSets[i];
     console.log(`[MATCH WINNER BY SETS] Set ${i + 1}: A=${set.teamAScore}, B=${set.teamBScore}`);
     if (set.teamAScore > set.teamBScore) {
       teamASetsWon++;

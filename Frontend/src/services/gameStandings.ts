@@ -36,8 +36,9 @@ function calculateMatchWinner(match: Match): 'teamA' | 'teamB' | 'tie' | null {
     return match.winnerId;
   }
 
-  const totalScoreA = match.sets.reduce((sum, set) => sum + set.teamA, 0);
-  const totalScoreB = match.sets.reduce((sum, set) => sum + set.teamB, 0);
+  const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
+  const totalScoreA = validSets.reduce((sum, set) => sum + set.teamA, 0);
+  const totalScoreB = validSets.reduce((sum, set) => sum + set.teamB, 0);
 
   if (totalScoreA > totalScoreB) return 'teamA';
   if (totalScoreB > totalScoreA) return 'teamB';
@@ -72,8 +73,9 @@ function calculatePlayerStats(
       if (!isInTeamA && !isInTeamB) continue;
 
       const matchWinner = calculateMatchWinner(match);
-      const totalScoreA = match.sets.reduce((sum, set) => sum + set.teamA, 0);
-      const totalScoreB = match.sets.reduce((sum, set) => sum + set.teamB, 0);
+      const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
+      const totalScoreA = validSets.reduce((sum, set) => sum + set.teamA, 0);
+      const totalScoreB = validSets.reduce((sum, set) => sum + set.teamB, 0);
 
       if (isInTeamA) {
         stats.scoresMade += totalScoreA;

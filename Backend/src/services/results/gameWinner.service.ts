@@ -111,8 +111,9 @@ async function getPlayerGameScores(
         }
       }
 
-      const teamAScore = match.sets.reduce((sum, set) => sum + set.teamAScore, 0);
-      const teamBScore = match.sets.reduce((sum, set) => sum + set.teamBScore, 0);
+      const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+      const teamAScore = validSets.reduce((sum, set) => sum + set.teamAScore, 0);
+      const teamBScore = validSets.reduce((sum, set) => sum + set.teamBScore, 0);
 
       console.log(`[GAME PLAYER SCORES] Match ${match.id}: Team A scored ${teamAScore}, Team B scored ${teamBScore}, winnerId: ${match.winnerId || 'null'}`);
 

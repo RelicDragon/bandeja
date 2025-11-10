@@ -213,7 +213,8 @@ export async function getOutcomeExplanation(
       } else {
         isWinner = match.winnerId === userTeam.id;
 
-        const setScores = match.sets.map(set => {
+        const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+        const setScores = validSets.map(set => {
           if (userTeam.teamNumber === 1) {
             return { teamAScore: set.teamAScore, teamBScore: set.teamBScore };
           } else {
