@@ -49,34 +49,38 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
   }));
 
   const roundResults = game.rounds.map(round => ({
-    matches: round.matches.map(match => {
-      const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
-      const teams = match.teams.map(team => {
-        const totalScore = validSets.reduce((sum, set) => {
-          if (team.teamNumber === 1) return sum + set.teamAScore;
-          if (team.teamNumber === 2) return sum + set.teamBScore;
-          return sum;
-        }, 0);
+    matches: round.matches
+      .map(match => {
+        const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+        if (validSets.length === 0) return null;
+        
+        const teams = match.teams.map(team => {
+          const totalScore = validSets.reduce((sum, set) => {
+            if (team.teamNumber === 1) return sum + set.teamAScore;
+            if (team.teamNumber === 2) return sum + set.teamBScore;
+            return sum;
+          }, 0);
+
+          return {
+            teamId: team.id,
+            teamNumber: team.teamNumber,
+            score: totalScore,
+            playerIds: team.players.map(p => p.userId),
+          };
+        });
+
+        const sets = validSets.map(set => ({
+          teamAScore: set.teamAScore,
+          teamBScore: set.teamBScore,
+        }));
 
         return {
-          teamId: team.id,
-          teamNumber: team.teamNumber,
-          score: totalScore,
-          playerIds: team.players.map(p => p.userId),
+          teams,
+          winnerId: match.winnerId,
+          sets,
         };
-      });
-
-      const sets = validSets.map(set => ({
-        teamAScore: set.teamAScore,
-        teamBScore: set.teamBScore,
-      }));
-
-      return {
-        teams,
-        winnerId: match.winnerId,
-        sets,
-      };
-    }),
+      })
+      .filter((match): match is NonNullable<typeof match> => match !== null),
   }));
 
   let result;

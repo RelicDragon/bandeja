@@ -48,6 +48,9 @@ function calculatePlayerStats(
     if (!round.matches || round.matches.length === 0) continue;
 
     for (const match of round.matches) {
+      const validSets = match.sets.filter((set: any) => set.teamAScore > 0 || set.teamBScore > 0);
+      if (validSets.length === 0) continue;
+
       const teamA = match.teams.find((t: any) => t.teamNumber === 1);
       const teamB = match.teams.find((t: any) => t.teamNumber === 2);
       
@@ -59,7 +62,6 @@ function calculatePlayerStats(
       if (!isInTeamA && !isInTeamB) continue;
 
       const matchWinner = calculateMatchWinner(match);
-      const validSets = match.sets.filter((set: any) => set.teamAScore > 0 || set.teamBScore > 0);
       const totalScoreA = validSets.reduce((sum: number, set: any) => sum + set.teamAScore, 0);
       const totalScoreB = validSets.reduce((sum: number, set: any) => sum + set.teamBScore, 0);
 

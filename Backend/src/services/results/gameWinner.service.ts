@@ -112,6 +112,11 @@ async function getPlayerGameScores(
       }
 
       const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+      if (validSets.length === 0) {
+        console.log(`[GAME PLAYER SCORES] Skipping match ${match.id} - no valid sets (all sets are 0:0)`);
+        continue;
+      }
+      
       const teamAScore = validSets.reduce((sum, set) => sum + set.teamAScore, 0);
       const teamBScore = validSets.reduce((sum, set) => sum + set.teamBScore, 0);
 

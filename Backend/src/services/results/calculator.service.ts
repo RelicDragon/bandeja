@@ -148,13 +148,14 @@ export function calculateByMatchesWonOutcomes(
     for (const match of roundResult.matches) {
       if (match.teams.length !== 2) continue;
 
+      const validSets = match.sets?.filter(set => set.teamAScore > 0 || set.teamBScore > 0) || [];
+      if (validSets.length === 0) continue;
+
       const teamA = match.teams.find(t => t.teamNumber === 1) || match.teams[0];
       const teamB = match.teams.find(t => t.teamNumber === 2) || match.teams[1];
       const teamAWins = match.winnerId === teamA.teamId;
       const teamBWins = match.winnerId === teamB.teamId;
       const isTie = !teamAWins && !teamBWins;
-
-      const validSets = match.sets?.filter(set => set.teamAScore > 0 || set.teamBScore > 0) || [];
       const teamAScore = validSets.reduce((sum, set) => sum + set.teamAScore, 0) || teamA.score || 0;
       const teamBScore = validSets.reduce((sum, set) => sum + set.teamBScore, 0) || teamB.score || 0;
 
@@ -256,6 +257,9 @@ export function calculateByPointsOutcomes(
 
     for (const match of roundResult.matches) {
       if (match.teams.length !== 2) continue;
+
+      const validSets = match.sets?.filter(set => set.teamAScore > 0 || set.teamBScore > 0) || [];
+      if (validSets.length === 0) continue;
 
       const [teamA, teamB] = match.teams;
       const scoreDeltaA = teamA.score - teamB.score;
@@ -363,6 +367,9 @@ export function calculateByScoresDeltaOutcomes(
 
     for (const match of roundResult.matches) {
       if (match.teams.length !== 2) continue;
+
+      const validSets = match.sets?.filter(set => set.teamAScore > 0 || set.teamBScore > 0) || [];
+      if (validSets.length === 0) continue;
 
       const [teamA, teamB] = match.teams;
       const scoreDeltaA = teamA.score - teamB.score;
