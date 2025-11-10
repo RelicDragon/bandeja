@@ -380,3 +380,33 @@ html {
   animation: fade-in 0.5s ease-out;
 }
 
+@keyframes bugs-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes bugs-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-bugs-slide-out {
+  animation: bugs-slide-out 0.5s ease-in-out forwards;
+}
+
+.animate-bugs-slide-in {
+  animation: bugs-slide-in 0.5s ease-in-out forwards;
+}
+

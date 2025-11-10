@@ -39,6 +39,9 @@
   "bug": {
     "bugTracker": "Bug Tracker",
     "addBug": "Add Bug",
+    "addSuggestion": "Add Suggestion",
+    "addQuestion": "Add Question",
+    "addProblem": "Add Problem",
     "description": "Report bugs, suggestions, and questions to help improve the app",
     "type": "Type",
     "descriptionPlaceholder": "Describe the bug, suggestion, or question...",

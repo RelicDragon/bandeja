@@ -26,6 +26,30 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     status?: BugStatus;
     myBugsOnly?: boolean;
   }>({});
+  const [animatedTextIndex, setAnimatedTextIndex] = useState(0);
+  const [nextIndex, setNextIndex] = useState(1);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const animatedTexts = useMemo(() => [
+    t('bug.addBug'),
+    t('bug.addSuggestion'),
+    t('bug.addQuestion'),
+    t('bug.addProblem')
+  ], [t]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      const newIndex = (animatedTextIndex + 1) % animatedTexts.length;
+      setNextIndex(newIndex);
+      
+      setTimeout(() => {
+        setAnimatedTextIndex(newIndex);
+        setIsAnimating(false);
+      }, 500);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [animatedTextIndex, animatedTexts.length]);
 
   const loadBugs = useCallback(async () => {
     try {
@@ -128,22 +152,79 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     >
       <div className="flex items-center justify-center text-gray-500 hover:text-blue-600">
         <Plus className="w-6 h-6 mr-2" />
-        <span className="text-lg font-medium">{t('bug.addBug')}</span>
+        <div className="relative h-7 overflow-hidden min-w-[240px]">
+          <span 
+            className={`text-lg font-medium absolute inset-0 flex items-center justify-center ${
+              isAnimating ? 'animate-bugs-slide-out' : ''
+            }`}
+          >
+            {animatedTexts[animatedTextIndex]}
+          </span>
+          {isAnimating && (
+            <span 
+              className="text-lg font-medium absolute inset-0 flex items-center justify-center animate-bugs-slide-in"
+            >
+              {animatedTexts[nextIndex]}
+            </span>
+          )}
+        </div>
       </div>
     </Card>
   );
 
-  const FilterSection = () => {
-    const statusOptions = [
-      { value: '', label: t('bug.allStatuses') },
-      ...BUG_STATUS_VALUES.map((status) => ({
-        value: status,
-        label: t(`bug.statuses.${status}`)
-      }))
-    ];
+  const statusOptions = [
+    { value: '', label: t('bug.allStatuses') },
+    ...BUG_STATUS_VALUES.map((status) => ({
+      value: status,
+      label: t(`bug.statuses.${status}`)
+    }))
+  ];
 
+  if (!isVisible) {
+    return null;
+  }
+
+  if (loading && allBugs.length === 0) {
     return (
-      <div className="mb-4 space-y-2">
+      <div className="flex justify-center items-center py-8">
+        <Loading />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <p className="text-xs text-gray-500 mb-6">{t('bug.description')}</p>
+
+      <div className="mb-4">
+        <div className="flex flex-wrap gap-2 items-center mb-4">
+          <Select
+            options={statusOptions}
+            value={filters.status || ''}
+            onChange={(value) => setFilters(prev => ({
+              ...prev,
+              status: value as BugStatus || undefined
+            }))}
+            placeholder={t('bug.allStatuses')}
+            className="min-w-32"
+          />
+          
+          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              {t('bug.myBugsOnly')}
+            </span>
+            <ToggleSwitch
+              checked={filters.myBugsOnly || false}
+              onChange={(checked) => setFilters(prev => ({
+                ...prev,
+                myBugsOnly: checked
+              }))}
+            />
+          </div>
+        </div>
+
+        <AddBugCard />
+
         {availableTypes.length > 0 && (
           <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex gap-2 overflow-x-auto">
@@ -163,55 +244,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
             </div>
           </div>
         )}
-
-        <div className="flex flex-wrap gap-2 items-center">
-          <Select
-            options={statusOptions}
-            value={filters.status || ''}
-            onChange={(value) => setFilters(prev => ({
-              ...prev,
-              status: value as BugStatus || undefined
-            }))}
-            placeholder={t('bug.allStatuses')}
-            className="min-w-32"
-          />
-        </div>
-
-        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors">
-          <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-            {t('bug.myBugsOnly')}
-          </span>
-          <ToggleSwitch
-            checked={filters.myBugsOnly || false}
-            onChange={(checked) => setFilters(prev => ({
-              ...prev,
-              myBugsOnly: checked
-            }))}
-          />
-        </div>
       </div>
-    );
-  };
-
-  if (!isVisible) {
-    return null;
-  }
-
-  if (loading && allBugs.length === 0) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <Loading />
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      <p className="text-xs text-gray-500 mb-6">{t('bug.description')}</p>
-
-      <FilterSection />
-
-      <AddBugCard />
 
       {filteredBugs.length === 0 ? (
         <Card className="p-8 text-center">

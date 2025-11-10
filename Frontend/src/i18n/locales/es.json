@@ -43,6 +43,9 @@
   "bug": {
     "bugTracker": "Rastreador de Errores",
     "addBug": "Agregar Error",
+    "addSuggestion": "Agregar Sugerencia",
+    "addQuestion": "Agregar Pregunta",
+    "addProblem": "Agregar Problema",
     "description": "Reporta errores, sugerencias y preguntas para ayudar a mejorar la app",
     "type": "Tipo",
     "descriptionPlaceholder": "Describe el error, sugerencia o pregunta...",
