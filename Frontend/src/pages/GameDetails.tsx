@@ -609,7 +609,7 @@ export const GameDetailsContent = () => {
         onShowManageUsers={() => setShowManageUsers(true)}
       />
 
-      {game.resultsStatus === 'NONE' && canEdit && (
+      {game.resultsStatus === 'NONE' && canEdit && game.status !== 'ARCHIVED' && (
         <GameSettings
           game={game}
           clubs={clubs}
@@ -626,7 +626,7 @@ export const GameDetailsContent = () => {
         />
       )}
 
-      {game.resultsStatus === 'NONE' && (
+      {game.resultsStatus === 'NONE' && canEdit && game.status !== 'ARCHIVED' && (
         <GameSetup
           onOpenSetup={() => setIsGameSetupModalOpen(true)}
           canEdit={canEdit}
