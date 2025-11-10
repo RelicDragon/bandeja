@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Loading, ToggleSwitch, Select } from '@/components';
 import { BugCard } from './BugCard';
 import { Bug, BugStatus, BugType } from '@/types';
 
-const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION'];
 const BUG_STATUS_VALUES: BugStatus[] = ['CREATED', 'CONFIRMED', 'IN_PROGRESS', 'TEST', 'FINISHED', 'ARCHIVED'];
 import { bugsApi } from '@/api';
 import { bugChatApi } from '@/api/bugChat';
@@ -18,13 +17,13 @@ interface BugListProps {
 
 export const BugList = ({ isVisible = true }: BugListProps) => {
   const { t } = useTranslation();
-  const [bugs, setBugs] = useState<Bug[]>([]);
+  const [allBugs, setAllBugs] = useState<Bug[]>([]);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<BugType | null>(null);
   const [filters, setFilters] = useState<{
     status?: BugStatus;
-    bugType?: BugType;
     myBugsOnly?: boolean;
   }>({});
 
@@ -32,7 +31,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     try {
       setLoading(true);
       const response = await bugsApi.getBugs(filters);
-      setBugs(response.data.bugs);
+      setAllBugs(response.data.bugs);
 
       // Fetch unread counts for all bugs
       if (response.data.bugs.length > 0) {
@@ -49,9 +48,9 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   }, [filters, t]);
 
   const refreshUnreadCounts = useCallback(async () => {
-    if (bugs.length > 0) {
+    if (allBugs.length > 0) {
       try {
-        const bugIds = bugs.map(bug => bug.id);
+        const bugIds = allBugs.map(bug => bug.id);
         const unreadResponse = await bugChatApi.getBugsUnreadCounts(bugIds);
         setUnreadCounts(unreadResponse.data);
       } catch (error: any) {
@@ -59,24 +58,55 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
         toast.error(t(errorMessage, { defaultValue: errorMessage }));
       }
     }
-  }, [bugs, t]);
+  }, [allBugs, t]);
 
   useEffect(() => {
     if (isVisible) {
       loadBugs();
     } else {
       // Clear bugs when not visible to free up memory
-      setBugs([]);
+      setAllBugs([]);
       setUnreadCounts({});
     }
   }, [filters, isVisible, loadBugs]);
 
   // Refresh unread counts when component becomes visible (e.g., when navigating back from chat)
   useEffect(() => {
-    if (isVisible && bugs.length > 0) {
+    if (isVisible && allBugs.length > 0) {
       refreshUnreadCounts();
     }
-  }, [isVisible, refreshUnreadCounts, bugs.length]);
+  }, [isVisible, refreshUnreadCounts, allBugs.length]);
+
+  const availableTypes = useMemo(() => {
+    const types = new Set<BugType>();
+    allBugs.forEach(bug => {
+      types.add(bug.bugType);
+    });
+    return Array.from(types).sort((a, b) => {
+      const order = ['CRITICAL', 'BUG', 'SUGGESTION', 'QUESTION'];
+      return order.indexOf(a) - order.indexOf(b);
+    });
+  }, [allBugs]);
+
+  useEffect(() => {
+    if (availableTypes.length > 0) {
+      if (!activeTab || !availableTypes.includes(activeTab)) {
+        setActiveTab(availableTypes[0]);
+      }
+    } else {
+      setActiveTab(null);
+    }
+  }, [availableTypes, activeTab]);
+
+  const filteredBugs = useMemo(() => {
+    let filtered = allBugs;
+    
+    if (activeTab) {
+      filtered = filtered.filter(bug => bug.bugType === activeTab);
+    }
+    
+    return filtered;
+  }, [allBugs, activeTab]);
 
   const handleBugCreated = () => {
     setShowAddModal(false);
@@ -88,7 +118,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   };
 
   const handleBugDeleted = (bugId: string) => {
-    setBugs(prev => prev.filter(bug => bug.id !== bugId));
+    setAllBugs(prev => prev.filter(bug => bug.id !== bugId));
   };
 
   const AddBugCard = () => (
@@ -104,14 +134,6 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   );
 
   const FilterSection = () => {
-    const bugTypeOptions = [
-      { value: '', label: t('bug.allTypes') },
-      ...BUG_TYPE_VALUES.map((type) => ({
-        value: type,
-        label: t(`bug.types.${type}`)
-      }))
-    ];
-
     const statusOptions = [
       { value: '', label: t('bug.allStatuses') },
       ...BUG_STATUS_VALUES.map((status) => ({
@@ -122,18 +144,27 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
 
     return (
       <div className="mb-4 space-y-2">
-        <div className="flex flex-wrap gap-2 items-center">
-          <Select
-            options={bugTypeOptions}
-            value={filters.bugType || ''}
-            onChange={(value) => setFilters(prev => ({
-              ...prev,
-              bugType: value as BugType || undefined
-            }))}
-            placeholder={t('bug.allTypes')}
-            className="min-w-32"
-          />
+        {availableTypes.length > 0 && (
+          <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex gap-2 overflow-x-auto">
+              {availableTypes.map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setActiveTab(type)}
+                  className={`px-3 py-1.5 text-sm font-medium transition-all duration-200 border-b-2 whitespace-nowrap ${
+                    activeTab === type
+                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  {t(`bug.types.${type}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
+        <div className="flex flex-wrap gap-2 items-center">
           <Select
             options={statusOptions}
             value={filters.status || ''}
@@ -166,7 +197,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     return null;
   }
 
-  if (loading && bugs.length === 0) {
+  if (loading && allBugs.length === 0) {
     return (
       <div className="flex justify-center items-center py-8">
         <Loading />
@@ -182,13 +213,13 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
 
       <AddBugCard />
 
-      {bugs.length === 0 ? (
+      {filteredBugs.length === 0 ? (
         <Card className="p-8 text-center">
           <p className="text-gray-500">{t('bug.noBugs')}</p>
         </Card>
       ) : (
         <div className="space-y-3">
-          {[...bugs].sort((a, b) => {
+          {[...filteredBugs].sort((a, b) => {
             if (a.status === 'ARCHIVED' && b.status !== 'ARCHIVED') return 1;
             if (a.status !== 'ARCHIVED' && b.status === 'ARCHIVED') return -1;
             return 0;

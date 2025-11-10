@@ -127,9 +127,10 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
   };
 
   const canModify = user?.isAdmin || bug.senderId === user?.id;
+  const isArchived = bug.status === 'ARCHIVED';
 
   return (
-    <Card className="p-4 mb-3 relative">
+    <Card className={`p-4 mb-3 relative ${isArchived ? 'opacity-60 bg-gray-50 dark:bg-gray-800/30' : ''}`}>
       <div className="flex items-start">
         <div className="flex-1 ">
           <div className="flex items-center gap-2 mb-1">
@@ -138,24 +139,24 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
               extrasmall
               showName={false}
             />
-            <span className="text-sm font-medium">
+            <span className={`text-sm font-medium ${isArchived ? 'text-gray-500' : ''}`}>
               {bug.sender.firstName} {bug.sender.lastName}
             </span>
           </div>
 
           <div className="flex items-center gap-2 mb-2">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(bug.bugType)}`}>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(bug.bugType)} ${isArchived ? 'opacity-70' : ''}`}>
               {t(`bug.types.${bug.bugType}`)}
             </span>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bug.status)}`}>
               {t(`bug.statuses.${bug.status}`)}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className={`text-xs ${isArchived ? 'text-gray-400' : 'text-gray-500'}`}>
               {formatRelativeTime(bug.createdAt)}
             </span>
           </div>
 
-          <div className="text-sm text-gray-700 mb-2 w-full">
+          <div className={`text-sm mb-2 w-full ${isArchived ? 'text-gray-500' : 'text-gray-700'}`}>
             {isExpanded ? bug.text : `${bug.text.substring(0, 100)}${bug.text.length > 100 ? '...' : ''}`}
           </div>
 
@@ -164,7 +165,7 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-0 h-auto text-xs text-blue-600 hover:text-blue-800"
+              className={`p-0 h-auto text-xs ${isArchived ? 'text-gray-400 hover:text-gray-500' : 'text-blue-600 hover:text-blue-800'}`}
             >
               {isExpanded ? (
                 <>
@@ -186,7 +187,7 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
             variant="ghost"
             size="sm"
             onClick={handleOpenChat}
-            className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 relative"
+            className={`p-1 relative ${isArchived ? 'text-gray-400 hover:text-gray-500 hover:bg-gray-100' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'}`}
             title={t('bug.openChat')}
           >
             <MessageCircle className="w-4 h-4" />
@@ -204,7 +205,7 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
                 size="sm"
                 onClick={() => setShowMenu(!showMenu)}
                 disabled={isUpdating}
-                className="p-1"
+                className={`p-1 ${isArchived ? 'text-gray-400' : ''}`}
               >
                 <MoreVertical className="w-4 h-4" />
               </Button>
