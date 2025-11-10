@@ -187,6 +187,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     take: 10,
     select: {
       id: true,
+      gameId: true,
       levelBefore: true,
       levelAfter: true,
       levelChange: true,

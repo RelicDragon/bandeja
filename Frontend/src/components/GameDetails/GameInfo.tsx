@@ -152,7 +152,7 @@ export const GameInfo = ({
               </div>
             )}
             {isOwner && (
-              <span className="px-3 py-1 text-sm font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+              <span className="px-3 py-1 text-sm font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1">
                 <Crown size={14} />
                 {t('games.organizerFull')}
               </span>

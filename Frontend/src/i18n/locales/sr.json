@@ -393,7 +393,8 @@
     "noLevelHistory": "Историја нивоа није доступна",
     "noSocialLevelHistory": "Историја социјалног нивоа није доступна",
     "switchToLevel": "Пребаци на ниво",
-    "switchToSocialLevel": "Пребаци на социјални ниво"
+    "switchToSocialLevel": "Пребаци на социјални ниво",
+    "gameIsPrivate": "Ова игра је приватна"
   },
   "profile": {
     "title": "Профил",

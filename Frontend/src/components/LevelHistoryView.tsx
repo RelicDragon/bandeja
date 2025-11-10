@@ -1,8 +1,12 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, Beer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { UserStats } from '@/api/users';
+import { gamesApi } from '@/api/games';
+import { canUserSeeGame } from '@/utils/gameResults';
+import { useAuthStore } from '@/store/authStore';
+import { useNavigationStore } from '@/store/navigationStore';
 
 const TennisBallIcon = () => (
   <svg
@@ -24,14 +28,42 @@ interface LevelHistoryViewProps {
 
 export const LevelHistoryView = ({ stats }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
+  const currentUser = useAuthStore((state) => state.user);
+  const { setCurrentPage, setIsAnimating } = useNavigationStore();
   const { user, levelHistory, socialLevelHistory } = stats;
   const [showSocialLevel, setShowSocialLevel] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isToggleAnimating, setIsToggleAnimating] = useState(false);
+  const [showingPrivateMessage, setShowingPrivateMessage] = useState<string | null>(null);
 
   const handleToggle = () => {
-    setIsAnimating(true);
+    setIsToggleAnimating(true);
     setShowSocialLevel(!showSocialLevel);
-    setTimeout(() => setIsAnimating(false), 200);
+    setTimeout(() => setIsToggleAnimating(false), 200);
+  };
+
+  const handleRatingChangeClick = async (item: { id: string; gameId: string }) => {
+    if (!item.gameId) return;
+
+    try {
+      const response = await gamesApi.getById(item.gameId);
+      const game = response.data;
+
+      if (canUserSeeGame(game, currentUser)) {
+        setIsAnimating(true);
+        setCurrentPage('gameDetails');
+        window.location.href = `/games/${item.gameId}`;
+      } else {
+        setShowingPrivateMessage(item.id);
+        setTimeout(() => {
+          setShowingPrivateMessage(null);
+        }, 2000);
+      }
+    } catch (error) {
+      setShowingPrivateMessage(item.id);
+      setTimeout(() => {
+        setShowingPrivateMessage(null);
+      }, 2000);
+    }
   };
 
   const currentHistory = showSocialLevel ? (socialLevelHistory || []) : levelHistory;
@@ -59,7 +91,7 @@ export const LevelHistoryView = ({ stats }: LevelHistoryViewProps) => {
         <button
           onClick={handleToggle}
           className="absolute top-4 right-4 w-8 h-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-md hover:shadow-lg transition-transform duration-200 flex items-center justify-center"
-          style={{ transform: isAnimating ? 'scale(1.3)' : 'scale(1)' }}
+          style={{ transform: isToggleAnimating ? 'scale(1.3)' : 'scale(1)' }}
           title={showSocialLevel ? t('playerCard.switchToLevel') : t('playerCard.switchToSocialLevel')}
         >
           {showSocialLevel ? (
@@ -146,24 +178,49 @@ export const LevelHistoryView = ({ stats }: LevelHistoryViewProps) => {
                 key={item.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4"
+                className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+                onClick={() => handleRatingChangeClick(item)}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {new Date(item.createdAt).toLocaleDateString()}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">
-                      {item.levelBefore.toFixed(2)} → {item.levelAfter.toFixed(2)}
-                    </span>
-                    <div className={`flex items-center ${item.levelChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                      {item.levelChange >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
-                      <span className="font-semibold ml-1">
-                        {item.levelChange >= 0 ? '+' : ''}{item.levelChange.toFixed(2)}
+                <AnimatePresence mode="wait">
+                  {showingPrivateMessage === item.id ? (
+                    <motion.div
+                      key="private-message"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex items-center justify-center h-full absolute inset-0"
+                    >
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t('playerCard.gameIsPrivate')}
                       </span>
-                    </div>
-                  </div>
-                </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="rating-change"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {new Date(item.createdAt).toLocaleDateString()}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-700 dark:text-gray-300 font-medium">
+                          {item.levelBefore.toFixed(2)} → {item.levelAfter.toFixed(2)}
+                        </span>
+                        <div className={`flex items-center ${item.levelChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {item.levelChange >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
+                          <span className="font-semibold ml-1">
+                            {item.levelChange >= 0 ? '+' : ''}{item.levelChange.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             ))}
           </div>

@@ -3,6 +3,7 @@ import { ApiResponse, User, Gender } from '@/types';
 
 export interface LevelHistoryItem {
   id: string;
+  gameId: string;
   levelBefore: number;
   levelAfter: number;
   levelChange: number;

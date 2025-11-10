@@ -395,7 +395,8 @@
     "noLevelHistory": "No level history available",
     "noSocialLevelHistory": "No social level history available",
     "switchToLevel": "Switch to level",
-    "switchToSocialLevel": "Switch to social level"
+    "switchToSocialLevel": "Switch to social level",
+    "gameIsPrivate": "This game is private"
   },
   "profile": {
     "title": "Profile",

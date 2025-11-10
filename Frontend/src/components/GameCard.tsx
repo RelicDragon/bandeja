@@ -162,7 +162,7 @@ export const GameCard = ({
           {game.participants.some(
             (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
           ) && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+            <span className="px-2 py-1 text-xs font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
               {t('games.owner')}
             </span>
           )}

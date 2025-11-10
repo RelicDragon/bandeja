@@ -397,7 +397,8 @@
     "noLevelHistory": "История уровня недоступна",
     "noSocialLevelHistory": "История социального уровня недоступна",
     "switchToLevel": "Переключить на уровень",
-    "switchToSocialLevel": "Переключить на социальный уровень"
+    "switchToSocialLevel": "Переключить на социальный уровень",
+    "gameIsPrivate": "Эта игра приватная"
   },
   "profile": {
     "title": "Профиль",

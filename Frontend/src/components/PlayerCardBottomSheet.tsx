@@ -402,22 +402,34 @@ const PlayerCardContent = ({ stats, t, onAvatarClick, onLevelClick }: PlayerCard
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center">
+        <button
+          onClick={onLevelClick}
+          className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+        >
           <div className="text-2xl font-bold text-gray-900 dark:text-white">{user.gamesPlayed}</div>
           <div className="text-sm text-gray-600 dark:text-gray-400">{t('playerCard.totalGames')}</div>
-        </div>
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center">
+        </button>
+        <button
+          onClick={onLevelClick}
+          className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+        >
           <div className="text-2xl font-bold text-gray-900 dark:text-white">{gamesLast30Days}</div>
           <div className="text-sm text-gray-600 dark:text-gray-400">{t('playerCard.gamesLast30Days')}</div>
-        </div>
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center">
+        </button>
+        <button
+          onClick={onLevelClick}
+          className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+        >
           <div className="text-2xl font-bold text-gray-900 dark:text-white">{user.gamesWon}</div>
           <div className="text-sm text-gray-600 dark:text-gray-400">{t('playerCard.gamesWon')}</div>
-        </div>
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center">
+        </button>
+        <button
+          onClick={onLevelClick}
+          className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+        >
           <div className="text-2xl font-bold text-gray-900 dark:text-white">{winRate}%</div>
           <div className="text-sm text-gray-600 dark:text-gray-400">{t('playerCard.winRate')}</div>
-        </div>
+        </button>
       </div>
 
       <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
