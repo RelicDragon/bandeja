@@ -5,33 +5,11 @@ import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessage
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { createSystemMessage } from '../../controllers/chat.controller';
+import { ParticipantValidationService } from './participantValidation.service';
 
 export class OwnershipService {
   static async transferOwnership(gameId: string, currentOwnerId: string, newOwnerId: string) {
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      select: { resultsStatus: true, status: true },
-    });
-
-    if (!game) {
-      throw new ApiError(404, 'Game not found');
-    }
-
-    if (game.resultsStatus !== 'NONE' || game.status === 'ARCHIVED') {
-      throw new ApiError(400, 'Cannot modify game participants when results have been entered or game is archived');
-    }
-
-    const owner = await prisma.gameParticipant.findFirst({
-      where: {
-        gameId,
-        userId: currentOwnerId,
-        role: 'OWNER',
-      },
-    });
-
-    if (!owner) {
-      throw new ApiError(403, 'Only the owner can transfer ownership');
-    }
+    const owner = await ParticipantValidationService.validateCanModifyParticipants(gameId, currentOwnerId, ['OWNER']);
 
     const newOwnerParticipant = await prisma.gameParticipant.findFirst({
       where: {
