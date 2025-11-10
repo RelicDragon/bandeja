@@ -486,19 +486,68 @@
     "iWillPlay": "Yo jugaré",
     "settings": "Configuración",
     "gameType": "Tipo de Juego",
-    "anyoneCanInvite": "Cualquiera puede invitar a otros jugadores",
-    "publicGame": "Juego público",
-    "ratingGame": "Juego de puntuación",
-    "resultsByAnyone": "Resultados por cualquiera",
-    "allowDirectJoin": "Entrar sin confirmación",
-    "afterGameGoToBar": "Cerveza después del juego",
+    "gameTypeNote": "Puedes cambiar la configuración detallada del juego en la sección Configurar Juego.",
+    "anyoneCanInvite": {
+      "title": "Cualquiera puede invitar a otros jugadores",
+      "note": {
+        "false": "Solo los organizadores pueden invitar jugadores.",
+        "true": "Cualquier participante puede invitar a otros jugadores."
+      }
+    },
+    "publicGame": {
+      "title": "Juego público",
+      "note": {
+        "false": "Será privado y solo visible para los participantes invitados.",
+        "true": "Será visible para todos los jugadores y se puede encontrar en la búsqueda."
+      }
+    },
+    "resultsByAnyone": {
+      "title": "Resultados por cualquiera",
+      "note": {
+        "false": "Solo los organizadores pueden ingresar y modificar los resultados.",
+        "true": "Cualquier participante puede ingresar y modificar los resultados."
+      }
+    },
+    "allowDirectJoin": {
+      "title": "Entrar sin confirmación",
+      "note": {
+        "false": "Los jugadores necesitan aprobación de los organizadores antes de unirse.",
+        "true": "Los jugadores pueden unirse directamente sin esperar aprobación."
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "Cerveza después del juego",
+      "note": {
+        "false": "No incluye una reunión social después del partido.",
+        "true": "Incluye una reunión social después del partido."
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "El marcador es individual. Los jugadores jugarán con cualquiera según las reglas.",
+        "true": "El marcador es por equipos. Podrás fijar jugadores en equipos que competirán entre sí. Los jugadores de los equipos no podrán ser reemplazados después de que comience."
+      }
+    },
+    "ratingGame": {
+      "title": "Juego de puntuación",
+      "note": {
+        "false": "Los resultados no afectarán los niveles de los participantes.",
+        "true": "Los resultados afectarán los niveles de los participantes."
+      }
+    },
     "tournament": "Torneo",
     "genderTeams": {
       "label": "Participantes por género",
       "any": "Cualquiera",
       "men": "Hombres",
       "women": "Mujeres",
-      "mixPairs": "Parejas mixtas"
+      "mixPairs": "Parejas mixtas",
+      "note": {
+        "any": "Cualquier género es bienvenido",
+        "men": "Solo se permiten hombres",
+        "women": "Solo se permiten mujeres",
+        "mixPairs": "Solo para juego en equipo, cada equipo consistirá en 1 hombre y 1 mujer, se permitirá un número igual de hombres/mujeres para unirse."
+      }
     },
     "gameName": "Nombre del juego",
     "gameNamePlaceholder": "Ingrese el nombre del juego (opcional)",
@@ -580,7 +629,9 @@
     "showLess": "Mostrar menos",
     "restarted": "Juego reiniciado exitosamente",
     "saved": "Resultados guardados exitosamente",
-    "submitting": "Enviando..."
+    "submitting": "Enviando...",
+    "showNotes": "Mostrar notas",
+    "hideNotes": "Ocultar notas"
   },
   "conflicts": {
     "title": "Conflicto detectado",

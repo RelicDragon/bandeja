@@ -493,20 +493,68 @@
     "iWillPlay": "I will play too",
     "settings": "Settings",
     "gameType": "Game Type",
-    "anyoneCanInvite": "Anyone can invite other players",
-    "publicGame": "Public game",
-    "ratingGame": "Rating game",
-    "resultsByAnyone": "Results by anyone",
-    "allowDirectJoin": "Enter without confirmation",
-    "afterGameGoToBar": "Beer after the game",
-    "hasFixedTeams": "Fixed teams",
+    "gameTypeNote": "You can change detailed game settings in the Game Setup section.",
+    "anyoneCanInvite": {
+      "title": "Anyone can invite other players",
+      "note": {
+        "false": "Only organizers can invite players.",
+        "true": "Any participant can invite other players."
+      }
+    },
+    "publicGame": {
+      "title": "Public game",
+      "note": {
+        "false": "Will be private and only visible to invited participants.",
+        "true": "Will be visible to all players and can be found in the search."
+      }
+    },
+    "resultsByAnyone": {
+      "title": "Results by anyone",
+      "note": {
+        "false": "Only organizers can enter and modify results.",
+        "true": "Any participant can enter and modify results."
+      }
+    },
+    "allowDirectJoin": {
+      "title": "Enter without confirmation",
+      "note": {
+        "false": "Players need approval from organizers before joining.",
+        "true": "Players can join directly without waiting for approval."
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "Beer after the game",
+      "note": {
+        "false": "Does not include a social gathering after the match.",
+        "true": "Includes a social gathering after the match."
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "Scoreboard is individual. Players will play with anyone based on rules.",
+        "true": "Scoreboard is team-based. You can fix players in teams that will compete against each other. Team players cannot be replaced after it starts."
+      }
+    },
+    "ratingGame": {
+      "title": "Rating game",
+      "note": {
+        "false": "Results will not affect participants' levels.",
+        "true": "Results will affect participants' levels."
+      }
+    },
     "tournament": "Tournament",
     "genderTeams": {
       "label": "Participants by gender",
       "any": "Any",
       "men": "Men",
       "women": "Women",
-      "mixPairs": "Mixed pairs"
+      "mixPairs": "Mixed pairs",
+      "note": {
+        "any": "Any gender is welcome",
+        "men": "Only males are allowed",
+        "women": "Only females are allowed",
+        "mixPairs": "Only for team playing, each team will consist of 1 man, 1 woman, equal number of man/woman will be allowed to join."
+      }
     },
     "gameName": "Game Name",
     "gameNamePlaceholder": "Enter game name (optional)",
@@ -588,7 +636,9 @@
     "showLess": "Show Less",
     "restarted": "Game restarted successfully",
     "saved": "Results saved successfully",
-    "submitting": "Submitting..."
+    "submitting": "Submitting...",
+    "showNotes": "Show notes",
+    "hideNotes": "Hide notes"
   },
   "conflicts": {
     "title": "Conflict Detected",

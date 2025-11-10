@@ -1,7 +1,8 @@
 import { Card, Select, Divider } from '@/components';
 import { Game, Club, GenderTeam, GameType } from '@/types';
-import { Settings, Edit3, Save, X } from 'lucide-react';
+import { Settings, Edit3, Save, X, HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
 
 interface GameSettingsProps {
   game: Game;
@@ -72,6 +73,7 @@ export const GameSettings = ({
   onOpenCourtModal,
 }: GameSettingsProps) => {
   const { t } = useTranslation();
+  const { showNotes, toggleShowNotes } = useShowSettingsNotes();
 
   if (!canEdit) {
     return null;
@@ -87,6 +89,17 @@ export const GameSettings = ({
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {t('createGame.settings')}
           </h2>
+          <button
+            onClick={toggleShowNotes}
+            className={`p-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md ${
+              showNotes
+                ? 'bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20'
+                : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'
+            }`}
+            title={showNotes ? t('common.hideNotes') : t('common.showNotes')}
+          >
+            <HelpCircle size={18} className={showNotes ? 'text-white' : 'text-gray-600 dark:text-gray-300'} />
+          </button>
         </div>
         {canEdit && canShowEdit && (
           <div className="flex items-center gap-2">
@@ -203,146 +216,251 @@ export const GameSettings = ({
               </div>
             </div>
           )}
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.gameType')}
-            </span>
-            <div className="flex-shrink-0 w-40">
-              <Select
-                options={
-                  game?.entityType === 'GAME'
-                    ? [
-                        { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                        { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                        { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                        { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                      ]
-                    : [
-                        { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                        { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                        { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                        { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
-                        { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
-                        { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                      ]
-                }
-                value={isEditMode ? editFormData.gameType : (game?.gameType || 'CLASSIC')}
-                onChange={(value) => onFormDataChange({gameType: value as GameType})}
-                disabled={!isEditMode}
-              />
-            </div>
-          </div>
-          {(game?.entityType === 'GAME' || game?.entityType === 'TOURNAMENT' || game?.entityType === 'LEAGUE') && (
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.genderTeams.label')}
+                {t('createGame.gameType')}
               </span>
-              <div className="flex-shrink-0 w-32">
+              <div className="flex-shrink-0 w-40">
                 <Select
-                  options={[
-                    { value: 'ANY', label: t('createGame.genderTeams.any') },
-                    { value: 'MEN', label: t('createGame.genderTeams.men') },
-                    { value: 'WOMEN', label: t('createGame.genderTeams.women') },
-                    ...(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0
-                      ? [{ value: 'MIX_PAIRS', label: t('createGame.genderTeams.mixPairs') }]
-                      : []),
-                  ]}
-                  value={isEditMode ? editFormData.genderTeams : (game?.genderTeams || 'ANY')}
-                  onChange={(value) => onFormDataChange({genderTeams: value as GenderTeam})}
+                  options={
+                    game?.entityType === 'GAME'
+                      ? [
+                          { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                          { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                          { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
+                          { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                        ]
+                      : [
+                          { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                          { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                          { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
+                          { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
+                          { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
+                          { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                        ]
+                  }
+                  value={isEditMode ? editFormData.gameType : (game?.gameType || 'CLASSIC')}
+                  onChange={(value) => onFormDataChange({gameType: value as GameType})}
                   disabled={!isEditMode}
                 />
               </div>
             </div>
+            {showNotes && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('createGame.gameTypeNote')}
+              </p>
+            )}
+          </div>
+          {(game?.entityType === 'GAME' || game?.entityType === 'TOURNAMENT' || game?.entityType === 'LEAGUE') && (
+            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                  {t('createGame.genderTeams.label')}
+                </span>
+                <div className="flex-shrink-0 w-32">
+                  <Select
+                    options={[
+                      { value: 'ANY', label: t('createGame.genderTeams.any') },
+                      { value: 'MEN', label: t('createGame.genderTeams.men') },
+                      { value: 'WOMEN', label: t('createGame.genderTeams.women') },
+                      ...(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0
+                        ? [{ value: 'MIX_PAIRS', label: t('createGame.genderTeams.mixPairs') }]
+                        : []),
+                    ]}
+                    value={isEditMode ? editFormData.genderTeams : (game?.genderTeams || 'ANY')}
+                    onChange={(value) => onFormDataChange({genderTeams: value as GenderTeam})}
+                    disabled={!isEditMode}
+                  />
+                </div>
+              </div>
+              {showNotes && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {(() => {
+                    const selectedGender = isEditMode ? editFormData.genderTeams : (game?.genderTeams || 'ANY');
+                    if (selectedGender === 'ANY') return t('createGame.genderTeams.note.any');
+                    if (selectedGender === 'MEN') return t('createGame.genderTeams.note.men');
+                    if (selectedGender === 'WOMEN') return t('createGame.genderTeams.note.women');
+                    if (selectedGender === 'MIX_PAIRS') return t('createGame.genderTeams.note.mixPairs');
+                    return '';
+                  })()}
+                </p>
+              )}
+            </div>
           )}
           {game?.maxParticipants !== 2 && (
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                  {t('games.fixedTeams')}
+                </span>
+                <div className="flex-shrink-0">
+                  <ToggleSwitch
+                    checked={isEditMode ? editFormData.hasFixedTeams : game?.hasFixedTeams || false}
+                    onChange={(checked) => onFormDataChange({hasFixedTeams: checked})}
+                    disabled={!isEditMode || !(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0)}
+                  />
+                </div>
+              </div>
+              {showNotes && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {(() => {
+                    const hasFixedTeams = isEditMode ? editFormData.hasFixedTeams : (game?.hasFixedTeams || false);
+                    return hasFixedTeams 
+                      ? t('createGame.hasFixedTeams.note.true')
+                      : t('createGame.hasFixedTeams.note.false');
+                  })()}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('games.fixedTeams')}
+                {t('createGame.ratingGame.title')}
               </span>
               <div className="flex-shrink-0">
-                <ToggleSwitch
-                  checked={isEditMode ? editFormData.hasFixedTeams : game?.hasFixedTeams || false}
-                  onChange={(checked) => onFormDataChange({hasFixedTeams: checked})}
-                  disabled={!isEditMode || !(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0)}
+                <ToggleSwitch 
+                  checked={isEditMode ? editFormData.affectsRating : game?.affectsRating || false} 
+                  onChange={(checked) => onFormDataChange({affectsRating: checked})}
+                  disabled={!isEditMode}
                 />
               </div>
             </div>
-          )}
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.ratingGame')}
-            </span>
-            <div className="flex-shrink-0">
-              <ToggleSwitch 
-                checked={isEditMode ? editFormData.affectsRating : game?.affectsRating || false} 
-                onChange={(checked) => onFormDataChange({affectsRating: checked})}
-                disabled={!isEditMode}
-              />
-            </div>
+            {showNotes && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {(() => {
+                  const affectsRating = isEditMode ? editFormData.affectsRating : (game?.affectsRating || false);
+                  return affectsRating 
+                    ? t('createGame.ratingGame.note.true')
+                    : t('createGame.ratingGame.note.false');
+                })()}
+              </p>
+            )}
           </div>
           
           <Divider />
           
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.publicGame')}
-            </span>
-            <div className="flex-shrink-0">
-              <ToggleSwitch 
-                checked={isEditMode ? editFormData.isPublic : game?.isPublic || false} 
-                onChange={(checked) => onFormDataChange({isPublic: checked})}
-                disabled={!isEditMode}
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.anyoneCanInvite')}
-            </span>
-            <div className="flex-shrink-0">
-              <ToggleSwitch 
-                checked={isEditMode ? editFormData.anyoneCanInvite : game?.anyoneCanInvite || false} 
-                onChange={(checked) => onFormDataChange({anyoneCanInvite: checked})}
-                disabled={!isEditMode}
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.resultsByAnyone')}
-            </span>
-            <div className="flex-shrink-0">
-              <ToggleSwitch 
-                checked={isEditMode ? editFormData.resultsByAnyone : game?.resultsByAnyone || false} 
-                onChange={(checked) => onFormDataChange({resultsByAnyone: checked})}
-                disabled={!isEditMode}
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.allowDirectJoin')}
-            </span>
-            <div className="flex-shrink-0">
-              <ToggleSwitch 
-                checked={isEditMode ? editFormData.allowDirectJoin : (game?.allowDirectJoin ?? false)} 
-                onChange={(checked) => onFormDataChange({allowDirectJoin: checked})}
-                disabled={!isEditMode}
-              />
-            </div>
-          </div>
-          {game?.entityType !== 'BAR' && (
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.afterGameGoToBar')}
+                {t('createGame.publicGame.title')}
               </span>
               <div className="flex-shrink-0">
-                <ToggleSwitch
-                  checked={isEditMode ? editFormData.afterGameGoToBar : game?.afterGameGoToBar || false}
-                  onChange={(checked) => onFormDataChange({afterGameGoToBar: checked})}
+                <ToggleSwitch 
+                  checked={isEditMode ? editFormData.isPublic : game?.isPublic || false} 
+                  onChange={(checked) => onFormDataChange({isPublic: checked})}
                   disabled={!isEditMode}
                 />
               </div>
+            </div>
+            {showNotes && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {(() => {
+                  const isPublic = isEditMode ? editFormData.isPublic : (game?.isPublic || false);
+                  return isPublic 
+                    ? t('createGame.publicGame.note.true')
+                    : t('createGame.publicGame.note.false');
+                })()}
+              </p>
+            )}
+          </div>
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('createGame.anyoneCanInvite.title')}
+              </span>
+              <div className="flex-shrink-0">
+                <ToggleSwitch 
+                  checked={isEditMode ? editFormData.anyoneCanInvite : game?.anyoneCanInvite || false} 
+                  onChange={(checked) => onFormDataChange({anyoneCanInvite: checked})}
+                  disabled={!isEditMode}
+                />
+              </div>
+            </div>
+            {showNotes && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {(() => {
+                  const anyoneCanInvite = isEditMode ? editFormData.anyoneCanInvite : (game?.anyoneCanInvite || false);
+                  return anyoneCanInvite 
+                    ? t('createGame.anyoneCanInvite.note.true')
+                    : t('createGame.anyoneCanInvite.note.false');
+                })()}
+              </p>
+            )}
+          </div>
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('createGame.resultsByAnyone.title')}
+              </span>
+              <div className="flex-shrink-0">
+                <ToggleSwitch 
+                  checked={isEditMode ? editFormData.resultsByAnyone : game?.resultsByAnyone || false} 
+                  onChange={(checked) => onFormDataChange({resultsByAnyone: checked})}
+                  disabled={!isEditMode}
+                />
+              </div>
+            </div>
+            {showNotes && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {(() => {
+                  const resultsByAnyone = isEditMode ? editFormData.resultsByAnyone : (game?.resultsByAnyone || false);
+                  return resultsByAnyone 
+                    ? t('createGame.resultsByAnyone.note.true')
+                    : t('createGame.resultsByAnyone.note.false');
+                })()}
+              </p>
+            )}
+          </div>
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('createGame.allowDirectJoin.title')}
+              </span>
+              <div className="flex-shrink-0">
+                <ToggleSwitch 
+                  checked={isEditMode ? editFormData.allowDirectJoin : (game?.allowDirectJoin ?? false)} 
+                  onChange={(checked) => onFormDataChange({allowDirectJoin: checked})}
+                  disabled={!isEditMode}
+                />
+              </div>
+            </div>
+            {showNotes && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {(() => {
+                  const allowDirectJoin = isEditMode ? editFormData.allowDirectJoin : (game?.allowDirectJoin ?? false);
+                  return allowDirectJoin 
+                    ? t('createGame.allowDirectJoin.note.true')
+                    : t('createGame.allowDirectJoin.note.false');
+                })()}
+              </p>
+            )}
+          </div>
+          {game?.entityType !== 'BAR' && (
+            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                  {t('createGame.afterGameGoToBar.title')}
+                </span>
+                <div className="flex-shrink-0">
+                  <ToggleSwitch
+                    checked={isEditMode ? editFormData.afterGameGoToBar : game?.afterGameGoToBar || false}
+                    onChange={(checked) => onFormDataChange({afterGameGoToBar: checked})}
+                    disabled={!isEditMode}
+                  />
+                </div>
+              </div>
+              {showNotes && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {(() => {
+                    const afterGameGoToBar = isEditMode ? editFormData.afterGameGoToBar : (game?.afterGameGoToBar || false);
+                    return afterGameGoToBar 
+                      ? t('createGame.afterGameGoToBar.note.true')
+                      : t('createGame.afterGameGoToBar.note.false');
+                  })()}
+                </p>
+              )}
             </div>
           )}
         </div>
