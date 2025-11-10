@@ -3,6 +3,10 @@ export { GameCreateService } from './create.service';
 export { GameReadService } from './read.service';
 export { GameUpdateService } from './update.service';
 export { GameDeleteService } from './delete.service';
+export { ParticipantService } from './participant.service';
+export { JoinQueueService } from './joinQueue.service';
+export { AdminService } from './admin.service';
+export { OwnershipService } from './ownership.service';
 
 import { GameReadinessService } from './readiness.service';
 import { GameCreateService } from './create.service';

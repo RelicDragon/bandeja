@@ -2,7 +2,10 @@ import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import { GameService } from '../services/game/game.service';
-import { GameParticipantService } from '../services/gameParticipant.service';
+import { ParticipantService } from '../services/game/participant.service';
+import { JoinQueueService } from '../services/game/joinQueue.service';
+import { AdminService } from '../services/game/admin.service';
+import { OwnershipService } from '../services/game/ownership.service';
 
 export const createGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const game = await GameService.createGame(req.body, req.userId!);
@@ -56,7 +59,7 @@ export const deleteGame = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const joinGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const message = await GameParticipantService.joinGame(id, req.userId!);
+  const message = await ParticipantService.joinGame(id, req.userId!);
 
   res.json({
     success: true,
@@ -66,7 +69,7 @@ export const joinGame = asyncHandler(async (req: AuthRequest, res: Response) => 
 
 export const leaveGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const message = await GameParticipantService.leaveGame(id, req.userId!);
+  const message = await ParticipantService.leaveGame(id, req.userId!);
 
   res.json({
     success: true,
@@ -76,7 +79,7 @@ export const leaveGame = asyncHandler(async (req: AuthRequest, res: Response) =>
 
 export const joinAsGuest = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const message = await GameParticipantService.joinAsGuest(id, req.userId!);
+  const message = await ParticipantService.joinAsGuest(id, req.userId!);
 
   res.json({
     success: true,
@@ -87,7 +90,7 @@ export const joinAsGuest = asyncHandler(async (req: AuthRequest, res: Response) 
 export const togglePlayingStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { isPlaying } = req.body;
-  const message = await GameParticipantService.togglePlayingStatus(id, req.userId!, isPlaying);
+  const message = await ParticipantService.togglePlayingStatus(id, req.userId!, isPlaying);
 
   res.json({
     success: true,
@@ -98,7 +101,7 @@ export const togglePlayingStatus = asyncHandler(async (req: AuthRequest, res: Re
 export const addAdmin = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { userId } = req.body;
-  const message = await GameParticipantService.addAdmin(id, req.userId!, userId);
+  const message = await AdminService.addAdmin(id, req.userId!, userId);
 
   res.json({
     success: true,
@@ -109,7 +112,7 @@ export const addAdmin = asyncHandler(async (req: AuthRequest, res: Response) => 
 export const revokeAdmin = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { userId } = req.body;
-  const message = await GameParticipantService.revokeAdmin(id, req.userId!, userId);
+  const message = await AdminService.revokeAdmin(id, req.userId!, userId);
 
   res.json({
     success: true,
@@ -120,7 +123,7 @@ export const revokeAdmin = asyncHandler(async (req: AuthRequest, res: Response) 
 export const kickUser = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { userId } = req.body;
-  const message = await GameParticipantService.kickUser(id, req.userId!, userId);
+  const message = await AdminService.kickUser(id, req.userId!, userId);
 
   res.json({
     success: true,
@@ -131,7 +134,7 @@ export const kickUser = asyncHandler(async (req: AuthRequest, res: Response) => 
 export const transferOwnership = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { userId } = req.body;
-  const message = await GameParticipantService.transferOwnership(id, req.userId!, userId);
+  const message = await OwnershipService.transferOwnership(id, req.userId!, userId);
 
   res.json({
     success: true,
@@ -142,7 +145,7 @@ export const transferOwnership = asyncHandler(async (req: AuthRequest, res: Resp
 export const acceptJoinQueue = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { userId } = req.body;
-  const message = await GameParticipantService.acceptJoinQueue(id, req.userId!, userId);
+  const message = await JoinQueueService.acceptJoinQueue(id, req.userId!, userId);
 
   res.json({
     success: true,
@@ -153,7 +156,7 @@ export const acceptJoinQueue = asyncHandler(async (req: AuthRequest, res: Respon
 export const declineJoinQueue = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { userId } = req.body;
-  const message = await GameParticipantService.declineJoinQueue(id, req.userId!, userId);
+  const message = await JoinQueueService.declineJoinQueue(id, req.userId!, userId);
 
   res.json({
     success: true,
