@@ -107,6 +107,16 @@ export const gamesApi = {
   deleteFixedTeams: async (id: string) => {
     const response = await api.delete<ApiResponse<void>>(`/game-teams/game/${id}/teams`);
     return response.data;
+  },
+
+  acceptJoinQueue: async (id: string, userId: string) => {
+    const response = await api.post<ApiResponse<void>>(`/games/${id}/accept-join-queue`, { userId });
+    return response.data;
+  },
+
+  declineJoinQueue: async (id: string, userId: string) => {
+    const response = await api.post<ApiResponse<void>>(`/games/${id}/decline-join-queue`, { userId });
+    return response.data;
   }
 };
 

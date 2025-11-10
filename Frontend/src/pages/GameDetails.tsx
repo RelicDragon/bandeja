@@ -58,6 +58,7 @@ export const GameDetailsContent = () => {
     affectsRating: true,
     anyoneCanInvite: false,
     resultsByAnyone: false,
+    allowDirectJoin: false,
     hasBookedCourt: false,
     afterGameGoToBar: false,
     hasFixedTeams: false,
@@ -174,6 +175,7 @@ export const GameDetailsContent = () => {
         affectsRating: game.affectsRating,
         anyoneCanInvite: game.anyoneCanInvite || false,
         resultsByAnyone: game.resultsByAnyone || false,
+        allowDirectJoin: game.allowDirectJoin,
         hasBookedCourt: game.hasBookedCourt || false,
         afterGameGoToBar: game.afterGameGoToBar || false,
         hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
@@ -189,9 +191,11 @@ export const GameDetailsContent = () => {
     if (!id) return;
 
     try {
-      await gamesApi.join(id);
-      const response = await gamesApi.getById(id);
-      setGame(response.data);
+      const response = await gamesApi.join(id);
+      const message = (response as any).message || 'Successfully joined the game';
+      toast.success(t(message, { defaultValue: message }));
+      const gameResponse = await gamesApi.getById(id);
+      setGame(gameResponse.data);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
@@ -263,6 +267,7 @@ export const GameDetailsContent = () => {
   const isParticipant = game?.participants.some((p) => p.userId === user?.id) || false;
   const hasPendingInvite = myInvites.length > 0;
   const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') || false;
+  const isInJoinQueue = game?.joinQueues?.some(q => q.userId === user?.id && q.status === 'PENDING') || false;
   const canAccessChat = isParticipant || hasPendingInvite || isGuest || game?.isPublic || false;
   const isOwner = game?.participants.some(
     (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
@@ -286,6 +291,37 @@ export const GameDetailsContent = () => {
   };
 
   const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && !isFull);
+  const canManageJoinQueue = Boolean(
+    isOwner || 
+    (game?.participants.some(p => p.userId === user?.id && p.role === 'ADMIN')) ||
+    (game?.anyoneCanInvite && game?.participants.some(p => p.userId === user?.id && p.isPlaying))
+  );
+
+  const handleAcceptJoinQueue = async (queueUserId: string) => {
+    if (!id) return;
+
+    try {
+      await gamesApi.acceptJoinQueue(id, queueUserId);
+      const response = await gamesApi.getById(id);
+      setGame(response.data);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
+  };
+
+  const handleDeclineJoinQueue = async (queueUserId: string) => {
+    if (!id) return;
+
+    try {
+      await gamesApi.declineJoinQueue(id, queueUserId);
+      const response = await gamesApi.getById(id);
+      setGame(response.data);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
+  };
 
   const handleEnterResults = () => {
     setIsAnimating(true);
@@ -384,6 +420,7 @@ export const GameDetailsContent = () => {
           affectsRating: game.affectsRating,
           anyoneCanInvite: game.anyoneCanInvite || false,
           resultsByAnyone: game.resultsByAnyone || false,
+          allowDirectJoin: game.allowDirectJoin,
           hasBookedCourt: game.hasBookedCourt || false,
           afterGameGoToBar: game.afterGameGoToBar || false,
           hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
@@ -415,6 +452,7 @@ export const GameDetailsContent = () => {
         affectsRating: editFormData.affectsRating,
         anyoneCanInvite: editFormData.anyoneCanInvite,
         resultsByAnyone: editFormData.resultsByAnyone,
+        allowDirectJoin: editFormData.allowDirectJoin,
         hasBookedCourt: editFormData.hasBookedCourt,
         afterGameGoToBar: editFormData.afterGameGoToBar,
         hasFixedTeams: game?.maxParticipants === 2 ? false : editFormData.hasFixedTeams,
@@ -550,18 +588,23 @@ export const GameDetailsContent = () => {
         game={game}
         myInvites={myInvites}
         gameInvites={gameInvites}
+        joinQueues={game.joinQueues}
         isParticipant={isParticipant}
         isGuest={isGuest}
         isFull={isFull}
         isOwner={isOwner}
         userId={user?.id}
+        isInJoinQueue={isInJoinQueue}
         canInvitePlayers={canInvitePlayers}
+        canManageJoinQueue={canManageJoinQueue}
         onJoin={handleJoin}
         onAddToGame={handleAddToGame}
         onLeave={handleLeave}
         onAcceptInvite={handleAcceptInvite}
         onDeclineInvite={handleDeclineInvite}
         onCancelInvite={handleCancelInvite}
+        onAcceptJoinQueue={handleAcceptJoinQueue}
+        onDeclineJoinQueue={handleDeclineJoinQueue}
         onShowPlayerList={() => setShowPlayerList(true)}
         onShowManageUsers={() => setShowManageUsers(true)}
       />

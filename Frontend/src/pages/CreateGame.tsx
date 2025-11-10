@@ -32,6 +32,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
   const [isPublic, setIsPublic] = useState<boolean>(true);
   const [isRatingGame, setIsRatingGame] = useState<boolean>(true);
   const [resultsByAnyone, setResultsByAnyone] = useState<boolean>(false);
+  const [allowDirectJoin, setAllowDirectJoin] = useState<boolean>(false);
   const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(false);
   const [hasFixedTeams, setHasFixedTeams] = useState<boolean>(false);
   const [hasMultiRounds, setHasMultiRounds] = useState<boolean>(false);
@@ -321,6 +322,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
         affectsRating: isRatingGame,
         anyoneCanInvite,
         resultsByAnyone,
+        allowDirectJoin,
         hasBookedCourt: hasBookedCourt,
         afterGameGoToBar: afterGameGoToBar,
         hasFixedTeams: hasFixedTeams,
@@ -464,6 +466,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
           isRatingGame={isRatingGame}
           anyoneCanInvite={anyoneCanInvite}
           resultsByAnyone={resultsByAnyone}
+          allowDirectJoin={allowDirectJoin}
           afterGameGoToBar={afterGameGoToBar}
           hasFixedTeams={hasFixedTeams}
           hasMultiRounds={hasMultiRounds}
@@ -475,6 +478,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
           onRatingGameChange={setIsRatingGame}
           onAnyoneCanInviteChange={setAnyoneCanInvite}
           onResultsByAnyoneChange={setResultsByAnyone}
+          onAllowDirectJoinChange={setAllowDirectJoin}
           onAfterGameGoToBarChange={setAfterGameGoToBar}
           onHasFixedTeamsChange={setHasFixedTeams}
           onHasMultiRoundsChange={setHasMultiRounds}

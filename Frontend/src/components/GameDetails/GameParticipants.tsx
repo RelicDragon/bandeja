@@ -1,5 +1,5 @@
 import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
-import { Game, Invite } from '@/types';
+import { Game, Invite, JoinQueue } from '@/types';
 import { Users, UserPlus, Sliders, CheckCircle, XCircle, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,18 +7,23 @@ interface GameParticipantsProps {
   game: Game;
   myInvites: Invite[];
   gameInvites: Invite[];
+  joinQueues?: JoinQueue[];
   isParticipant: boolean;
   isGuest: boolean;
   isFull: boolean;
   isOwner: boolean;
   userId?: string;
+  isInJoinQueue?: boolean;
   canInvitePlayers: boolean;
+  canManageJoinQueue: boolean;
   onJoin: () => void;
   onAddToGame: () => void;
   onLeave: () => void;
   onAcceptInvite: (inviteId: string) => void;
   onDeclineInvite: (inviteId: string) => void;
   onCancelInvite: (inviteId: string) => void;
+  onAcceptJoinQueue: (userId: string) => void;
+  onDeclineJoinQueue: (userId: string) => void;
   onShowPlayerList: () => void;
   onShowManageUsers: () => void;
 }
@@ -27,18 +32,23 @@ export const GameParticipants = ({
   game,
   myInvites,
   gameInvites,
+  joinQueues = [],
   isParticipant,
   isGuest,
   isFull,
   isOwner,
   userId,
+  isInJoinQueue = false,
   canInvitePlayers,
+  canManageJoinQueue,
   onJoin,
   onAddToGame,
   onLeave,
   onAcceptInvite,
   onDeclineInvite,
   onCancelInvite,
+  onAcceptJoinQueue,
+  onDeclineJoinQueue,
   onShowPlayerList,
   onShowManageUsers,
 }: GameParticipantsProps) => {
@@ -48,6 +58,9 @@ export const GameParticipants = ({
     p => p.isPlaying && (p.role === 'OWNER' || p.role === 'ADMIN')
   );
   const shouldShowCrowns = playingOwnersAndAdmins.length > 1;
+  
+  const playingCount = game.participants.filter(p => p.isPlaying).length;
+  const hasUnoccupiedSlots = game.entityType === 'BAR' || playingCount < game.maxParticipants;
 
   return (
     <Card>
@@ -102,7 +115,7 @@ export const GameParticipants = ({
             ))}
           </div>
         )}
-        {!isParticipant && !isFull && game.isPublic && myInvites.length === 0 && (
+        {!isParticipant && hasUnoccupiedSlots && game.isPublic && myInvites.length === 0 && !isInJoinQueue && (
           <Button
             onClick={onJoin}
             size="lg"
@@ -112,7 +125,14 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        {isGuest && !isFull && (
+        {isInJoinQueue && (
+          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {t('games.inQueue', { defaultValue: 'You are in the waiting list. Waiting for approval...' })}
+            </p>
+          </div>
+        )}
+        {isGuest && hasUnoccupiedSlots && (
           <Button
             onClick={onAddToGame}
             size="lg"
@@ -209,6 +229,55 @@ export const GameParticipants = ({
               onCancelInvite={isOwner ? onCancelInvite : undefined}
               canCancel={isOwner}
             />
+          </div>
+        )}
+        {isParticipant && joinQueues.length > 0 && (
+          <div className="mt-4">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('games.joinQueue', { defaultValue: 'Join Queue' })}
+            </h3>
+            <div className="space-y-2">
+              {joinQueues.map((queue) => (
+                <div
+                  key={queue.id}
+                  className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                >
+                  <div className="flex-shrink-0">
+                    <PlayerAvatar 
+                      player={queue.user || null}
+                      showName={false}
+                      extrasmall={true}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {queue.user?.firstName} {queue.user?.lastName}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {t('games.wantsToJoin', { defaultValue: 'Wants to join' })}
+                    </p>
+                  </div>
+                  {canManageJoinQueue && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onAcceptJoinQueue(queue.userId)}
+                        className="p-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                        title={t('invites.accept', { defaultValue: 'Accept' })}
+                      >
+                        <CheckCircle size={18} className="text-green-600 dark:text-green-400" />
+                      </button>
+                      <button
+                        onClick={() => onDeclineJoinQueue(queue.userId)}
+                        className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                        title={t('invites.decline', { defaultValue: 'Decline' })}
+                      >
+                        <XCircle size={18} className="text-red-600 dark:text-red-400" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

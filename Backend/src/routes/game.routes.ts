@@ -78,5 +78,23 @@ router.post(
   gameController.transferOwnership
 );
 
+router.post(
+  '/:id/accept-join-queue',
+  authenticate,
+  validate([
+    body('userId').notEmpty().withMessage('User ID is required'),
+  ]),
+  gameController.acceptJoinQueue
+);
+
+router.post(
+  '/:id/decline-join-queue',
+  authenticate,
+  validate([
+    body('userId').notEmpty().withMessage('User ID is required'),
+  ]),
+  gameController.declineJoinQueue
+);
+
 export default router;
 

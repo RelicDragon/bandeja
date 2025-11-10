@@ -18,6 +18,7 @@ interface GameSettingsProps {
     affectsRating: boolean;
     anyoneCanInvite: boolean;
     resultsByAnyone: boolean;
+    allowDirectJoin: boolean;
     hasBookedCourt: boolean;
     afterGameGoToBar: boolean;
     hasFixedTeams: boolean;
@@ -277,6 +278,18 @@ export const GameSettings = ({
               <ToggleSwitch 
                 checked={isEditMode ? editFormData.resultsByAnyone : game?.resultsByAnyone || false} 
                 onChange={(checked) => onFormDataChange({resultsByAnyone: checked})}
+                disabled={!isEditMode}
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+              {t('createGame.allowDirectJoin')}
+            </span>
+            <div className="flex-shrink-0">
+              <ToggleSwitch 
+                checked={isEditMode ? editFormData.allowDirectJoin : (game?.allowDirectJoin ?? false)} 
+                onChange={(checked) => onFormDataChange({allowDirectJoin: checked})}
                 disabled={!isEditMode}
               />
             </div>

@@ -36,6 +36,17 @@ const getGameInclude = () => ({
       },
     },
   },
+  joinQueues: {
+    where: {
+      status: InviteStatus.PENDING,
+    },
+    include: {
+      user: {
+        select: USER_SELECT_FIELDS,
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  },
   outcomes: {
     include: {
       user: {

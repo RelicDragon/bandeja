@@ -106,7 +106,7 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <span className="font-semibold text-gray-900 dark:text-gray-100">
-                      {t('gameResults.match')} #{match.matchNumber}
+                      {t('gameResults.matchLabel')} #{match.matchNumber}
                     </span>
                     <span className="text-xs text-gray-600 dark:text-gray-400 ml-2">
                       ({t('gameResults.round')} {match.roundNumber})

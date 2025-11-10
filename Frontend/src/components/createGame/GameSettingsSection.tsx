@@ -8,6 +8,7 @@ interface GameSettingsSectionProps {
   isRatingGame: boolean;
   anyoneCanInvite: boolean;
   resultsByAnyone: boolean;
+  allowDirectJoin: boolean;
   afterGameGoToBar: boolean;
   hasFixedTeams: boolean;
   hasMultiRounds: boolean;
@@ -19,6 +20,7 @@ interface GameSettingsSectionProps {
   onRatingGameChange: (checked: boolean) => void;
   onAnyoneCanInviteChange: (checked: boolean) => void;
   onResultsByAnyoneChange: (checked: boolean) => void;
+  onAllowDirectJoinChange: (checked: boolean) => void;
   onAfterGameGoToBarChange: (checked: boolean) => void;
   onHasFixedTeamsChange: (checked: boolean) => void;
   onHasMultiRoundsChange: (checked: boolean) => void;
@@ -31,6 +33,7 @@ export const GameSettingsSection = ({
   isRatingGame,
   anyoneCanInvite,
   resultsByAnyone,
+  allowDirectJoin,
   afterGameGoToBar,
   hasFixedTeams,
   hasMultiRounds,
@@ -42,6 +45,7 @@ export const GameSettingsSection = ({
   onRatingGameChange,
   onAnyoneCanInviteChange,
   onResultsByAnyoneChange,
+  onAllowDirectJoinChange,
   onAfterGameGoToBarChange,
   onHasFixedTeamsChange,
   onHasMultiRoundsChange,
@@ -127,6 +131,14 @@ export const GameSettingsSection = ({
           </span>
           <div className="flex-shrink-0">
             <ToggleSwitch checked={resultsByAnyone} onChange={onResultsByAnyoneChange} />
+          </div>
+        </div>
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+            {t('createGame.allowDirectJoin')}
+          </span>
+          <div className="flex-shrink-0">
+            <ToggleSwitch checked={allowDirectJoin} onChange={onAllowDirectJoinChange} />
           </div>
         </div>
         {entityType !== 'BAR' && (

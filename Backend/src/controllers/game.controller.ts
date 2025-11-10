@@ -139,3 +139,25 @@ export const transferOwnership = asyncHandler(async (req: AuthRequest, res: Resp
   });
 });
 
+export const acceptJoinQueue = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { userId } = req.body;
+  const message = await GameParticipantService.acceptJoinQueue(id, req.userId!, userId);
+
+  res.json({
+    success: true,
+    message,
+  });
+});
+
+export const declineJoinQueue = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { userId } = req.body;
+  const message = await GameParticipantService.declineJoinQueue(id, req.userId!, userId);
+
+  res.json({
+    success: true,
+    message,
+  });
+});
+

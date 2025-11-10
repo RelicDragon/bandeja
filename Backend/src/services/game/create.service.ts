@@ -69,6 +69,7 @@ export class GameCreateService {
         affectsRating: data.affectsRating !== undefined ? data.affectsRating : true,
         anyoneCanInvite: data.anyoneCanInvite || false,
         resultsByAnyone: data.resultsByAnyone || false,
+        allowDirectJoin: data.allowDirectJoin || false,
         hasBookedCourt: data.hasBookedCourt || false,
         afterGameGoToBar: data.afterGameGoToBar || false,
         hasFixedTeams: hasFixedTeams,

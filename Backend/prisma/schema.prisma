@@ -44,6 +44,7 @@ model User {
   participateInGames      GameParticipant[]    @relation("ParticipantUser")
   receivedInvites         Invite[]             @relation("InviteReceiver")
   sentInvites             Invite[]             @relation("InviteSender")
+  joinQueues              JoinQueue[]          @relation("JoinQueueUser")
   messageReactions        MessageReaction[]
   messageReadReceipts     MessageReadReceipt[]
   bugMessageReactions     BugMessageReaction[]
@@ -158,6 +159,7 @@ model Game {
   affectsRating   Boolean           @default(true)
   anyoneCanInvite Boolean           @default(false)
   resultsByAnyone Boolean           @default(false)
+  allowDirectJoin Boolean           @default(false)
   hasBookedCourt  Boolean           @default(false)
   afterGameGoToBar Boolean          @default(false)
   hasFixedTeams   Boolean           @default(false)
@@ -190,6 +192,7 @@ model Game {
   children        Game[]            @relation("GameHierarchy")
   participants    GameParticipant[]
   invites         Invite[]
+  joinQueues      JoinQueue[]
   rounds          Round[]
   outcomes        GameOutcome[]
   fixedTeams      GameTeam[]
@@ -244,6 +247,22 @@ model Invite {
   @@index([gameId])
   @@index([status])
   @@index([expiresAt])
+}
+
+model JoinQueue {
+  id         String       @id @default(cuid())
+  userId     String
+  gameId     String
+  status     InviteStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  game       Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user       User         @relation("JoinQueueUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+  @@index([userId])
+  @@index([gameId])
+  @@index([status])
 }
 
 model Round {

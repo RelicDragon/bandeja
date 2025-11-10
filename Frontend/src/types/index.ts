@@ -175,6 +175,7 @@ export interface Game {
   affectsRating: boolean;
   anyoneCanInvite?: boolean;
   resultsByAnyone?: boolean;
+  allowDirectJoin: boolean;
   hasBookedCourt?: boolean;
   afterGameGoToBar?: boolean;
   hasFixedTeams?: boolean;
@@ -197,6 +198,7 @@ export interface Game {
   isClubFavorite?: boolean;
   participants: GameParticipant[];
   invites?: Invite[];
+  joinQueues?: JoinQueue[];
   fixedTeams?: GameTeam[];
   outcomes?: GameOutcome[];
   gameCourts?: Array<{
@@ -248,6 +250,22 @@ export interface Invite {
     gender: Gender;
   };
   game?: Game;
+}
+
+export interface JoinQueue {
+  id: string;
+  userId: string;
+  gameId: string;
+  status: InviteStatus;
+  createdAt: string;
+  user: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+    level: number;
+    gender: Gender;
+  };
 }
 
 export interface Bug {

@@ -298,6 +298,11 @@ class SocketService {
         gameToEmit.invites.forEach((invite: any) => userIds.add(invite.receiverId || invite.receiver?.id));
       }
       
+      // Add all users in join queue (so they get notified of status changes)
+      if (gameToEmit.joinQueues) {
+        gameToEmit.joinQueues.forEach((queue: any) => userIds.add(queue.userId || queue.user?.id));
+      }
+      
       console.log(`[SocketService] Game ${gameId} - isPublic: ${gameToEmit.isPublic}, participant/userIds:`, Array.from(userIds));
       console.log(`[SocketService] Connected users count: ${this.connectedUsers.size}`);
       

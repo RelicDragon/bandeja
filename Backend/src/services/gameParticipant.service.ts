@@ -52,6 +52,44 @@ export class GameParticipantService {
       throw new ApiError(400, 'Game is full');
     }
 
+    // Check if allowDirectJoin is false, add to queue instead
+    if (!game.allowDirectJoin) {
+      // Check if already in queue
+      const existingQueue = await prisma.joinQueue.findUnique({
+        where: {
+          userId_gameId: {
+            userId,
+            gameId,
+          },
+        },
+      });
+
+      if (existingQueue) {
+        if (existingQueue.status === 'PENDING') {
+          throw new ApiError(400, 'games.alreadyInJoinQueue');
+        }
+        if (existingQueue.status === 'DECLINED') {
+          throw new ApiError(400, 'games.joinRequestWasDeclined');
+        }
+        if (existingQueue.status === 'ACCEPTED') {
+          // If accepted, user should already be a participant (checked earlier)
+          // But if they're not, something went wrong - don't proceed
+          throw new ApiError(400, 'games.joinRequestAlreadyAccepted');
+        }
+      } else {
+        await prisma.joinQueue.create({
+          data: {
+            userId,
+            gameId,
+            status: 'PENDING',
+          },
+        });
+
+        await this.emitGameUpdate(gameId, userId);
+        return 'games.addedToJoinQueue';
+      }
+    }
+
     await prisma.gameParticipant.create({
       data: {
         gameId,
@@ -496,6 +534,158 @@ export class GameParticipantService {
     }
   }
 
+  static async acceptJoinQueue(gameId: string, currentUserId: string, queueUserId: string) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: {
+        participants: {
+          where: { isPlaying: true }
+        },
+      },
+    });
+
+    if (!game) {
+      throw new ApiError(404, 'Game not found');
+    }
+
+    // Check permissions: owner, admin, or (anyoneCanInvite && isPlaying participant)
+    const currentParticipant = await prisma.gameParticipant.findFirst({
+      where: {
+        gameId,
+        userId: currentUserId,
+      },
+    });
+
+    const canAccept = currentParticipant && (
+      currentParticipant.role === 'OWNER' ||
+      currentParticipant.role === 'ADMIN' ||
+      (game.anyoneCanInvite && currentParticipant.isPlaying)
+    );
+
+    if (!canAccept) {
+      throw new ApiError(403, 'games.notAuthorizedToAcceptJoinQueue');
+    }
+
+    // Check if game is full
+    if (game.entityType !== EntityType.BAR && game.participants.length >= game.maxParticipants) {
+      throw new ApiError(400, 'Game is full');
+    }
+
+    // Find the join queue entry
+    const joinQueue = await prisma.joinQueue.findUnique({
+      where: {
+        userId_gameId: {
+          userId: queueUserId,
+          gameId,
+        },
+      },
+    });
+
+    if (!joinQueue || joinQueue.status !== 'PENDING') {
+      throw new ApiError(404, 'games.joinQueueRequestNotFound');
+    }
+
+    // Check if user is already a participant
+    const existingParticipant = await prisma.gameParticipant.findFirst({
+      where: {
+        gameId,
+        userId: queueUserId,
+      },
+    });
+
+    if (existingParticipant && existingParticipant.isPlaying) {
+      // Remove from queue if already playing
+      await prisma.joinQueue.update({
+        where: { id: joinQueue.id },
+        data: { status: 'ACCEPTED' },
+      });
+      throw new ApiError(400, 'User is already a participant');
+    }
+
+    // Update queue status and add user as participant
+    await prisma.$transaction(async (tx: any) => {
+      await tx.joinQueue.update({
+        where: { id: joinQueue.id },
+        data: { status: 'ACCEPTED' },
+      });
+
+      if (existingParticipant) {
+        await tx.gameParticipant.update({
+          where: { id: existingParticipant.id },
+          data: { isPlaying: true },
+        });
+      } else {
+        await tx.gameParticipant.create({
+          data: {
+            gameId,
+            userId: queueUserId,
+            role: 'PARTICIPANT',
+            isPlaying: true,
+          },
+        });
+      }
+    });
+
+    await this.sendJoinMessage(gameId, queueUserId);
+    await GameService.updateGameReadiness(gameId);
+    await this.emitGameUpdate(gameId, currentUserId);
+    return 'games.joinRequestAccepted';
+  }
+
+  static async declineJoinQueue(gameId: string, currentUserId: string, queueUserId: string) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+    });
+
+    if (!game) {
+      throw new ApiError(404, 'Game not found');
+    }
+
+    // Check permissions: owner, admin, or (anyoneCanInvite && isPlaying participant)
+    const currentParticipant = await prisma.gameParticipant.findFirst({
+      where: {
+        gameId,
+        userId: currentUserId,
+      },
+    });
+
+    const canDecline = currentParticipant && (
+      currentParticipant.role === 'OWNER' ||
+      currentParticipant.role === 'ADMIN' ||
+      (game.anyoneCanInvite && currentParticipant.isPlaying)
+    );
+
+    if (!canDecline) {
+      throw new ApiError(403, 'games.notAuthorizedToDeclineJoinQueue');
+    }
+
+    // Find the join queue entry
+    const joinQueue = await prisma.joinQueue.findUnique({
+      where: {
+        userId_gameId: {
+          userId: queueUserId,
+          gameId,
+        },
+      },
+    });
+
+    if (!joinQueue || joinQueue.status !== 'PENDING') {
+      throw new ApiError(404, 'games.joinQueueRequestNotFound');
+    }
+
+    // Update queue status to declined
+    await prisma.joinQueue.update({
+      where: { id: joinQueue.id },
+      data: { status: 'DECLINED' },
+    });
+
+    // Emit to participants, invited users, and join-queued users
+    await this.emitGameUpdate(gameId, currentUserId);
+    // Also emit to the declined user (they're no longer in pending join queue)
+    await this.emitGameUpdateToUser(gameId, queueUserId);
+    return 'games.joinRequestDeclined';
+  }
+
   private static async emitGameUpdate(gameId: string, senderId: string) {
     try {
       const socketService = (global as any).socketService;
@@ -507,6 +697,20 @@ export class GameParticipantService {
       }
     } catch (error) {
       console.error('Failed to emit game update:', error);
+    }
+  }
+
+  private static async emitGameUpdateToUser(gameId: string, userId: string) {
+    try {
+      const socketService = (global as any).socketService;
+      if (socketService) {
+        const game = await GameService.getGameById(gameId, userId);
+        if (game) {
+          await socketService.emitGameUpdate(gameId, userId, game);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to emit game update to user:', error);
     }
   }
 }
