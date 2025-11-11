@@ -14,6 +14,11 @@ class HeaderService {
     if (!isAuthenticated) return;
 
     const fetchData = async () => {
+      if (!navigator.onLine) {
+        console.log('Skipping header data fetch - offline');
+        return;
+      }
+      
       try {
         const [invitesResponse, messagesResponse] = await Promise.all([
           invitesApi.getMyInvites('PENDING'),
@@ -28,8 +33,10 @@ class HeaderService {
       }
     };
 
-    // Fetch immediately
-    fetchData();
+    // Fetch immediately only if online
+    if (navigator.onLine) {
+      fetchData();
+    }
 
     // Then poll every 30 seconds
     this.intervalId = setInterval(fetchData, 30000);

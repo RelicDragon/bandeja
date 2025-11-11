@@ -17,12 +17,14 @@ import { useFavoritesStore } from './store/favoritesStore';
 import { isProfileComplete, hasValidUsername } from './utils/userValidation';
 import { PlayerCardModalManager } from './components/PlayerCardModalManager';
 import { ToastProvider } from './components/ToastProvider';
+import { OfflineBanner } from './components/OfflineBanner';
 import { headerService } from './services/headerService';
 import { socketService } from './services/socketService';
 import { resultsSyncService } from './services/resultsSync';
 import { useHeaderStore } from './store/headerStore';
 import { isCapacitor, isIOS, isAndroid } from './utils/capacitor';
 import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerUtils';
+import { initNetworkListener } from './utils/networkStatus';
 import './i18n/config';
 
 function App() {
@@ -40,15 +42,26 @@ function App() {
         document.body.classList.add('capacitor-android');
       }
     }
+    
+    const cleanup = initNetworkListener();
+    return cleanup;
   }, []);
 
   useEffect(() => {
     const checkServiceWorker = async () => {
-      if ('serviceWorker' in navigator) {
+      if ('serviceWorker' in navigator && navigator.onLine) {
         try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 3000);
+          
           const registration = await navigator.serviceWorker.getRegistration();
           if (registration) {
-            const response = await fetch('/sw.js', { cache: 'no-cache' });
+            const response = await fetch('/sw.js', { 
+              cache: 'no-cache',
+              signal: controller.signal 
+            });
+            clearTimeout(timeout);
+            
             if (!response.ok) {
               console.warn('Service worker file not found, clearing...');
               await unregisterServiceWorkers();
@@ -57,7 +70,11 @@ function App() {
             }
           }
         } catch (error) {
-          console.error('Service worker check failed:', error);
+          if (error instanceof Error && error.name === 'AbortError') {
+            console.warn('Service worker check timed out');
+          } else {
+            console.error('Service worker check failed:', error);
+          }
         }
       }
     };
@@ -111,6 +128,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <OfflineBanner />
       <ToastProvider>
         <PlayerCardModalManager>
           <BrowserRouter>

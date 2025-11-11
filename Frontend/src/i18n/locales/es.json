@@ -36,6 +36,9 @@
     "profile": "Perfil",
     "chat": "Chat"
   },
+  "offline": {
+    "working_offline": "Trabajando sin conexión - Algunas funciones pueden estar limitadas"
+  },
   "bug": {
     "bugTracker": "Rastreador de Errores",
     "addBug": "Agregar Error",

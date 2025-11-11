@@ -48,3 +48,4 @@ export * from './LundaAccountModal';
 export * from './GameModeToggle';
 export * from './SyncStatusIcon';
 export * from './GameSetupModal';
+export * from './OfflineBanner';

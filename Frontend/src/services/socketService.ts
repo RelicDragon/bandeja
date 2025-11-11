@@ -60,6 +60,11 @@ class SocketService {
       return;
     }
 
+    if (!navigator.onLine) {
+      console.log('Skipping socket connection - offline');
+      return;
+    }
+
     this.isConnecting = true;
 
     // Clean up existing socket if any
@@ -79,10 +84,10 @@ class SocketService {
       transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 3,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      timeout: 20000
+      timeout: 5000
     });
 
     this.setupEventListeners();

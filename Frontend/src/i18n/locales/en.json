@@ -36,6 +36,9 @@
     "profile": "Profile",
     "chat": "Chat"
   },
+  "offline": {
+    "working_offline": "Working Offline - Some features may be limited"
+  },
   "bug": {
     "bugTracker": "Bug Tracker",
     "addBug": "Add Bug",
