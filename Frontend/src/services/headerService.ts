@@ -35,7 +35,7 @@ class HeaderService {
 
     // Fetch immediately only if online
     if (navigator.onLine) {
-      fetchData();
+    fetchData();
     }
 
     // Then poll every 30 seconds
