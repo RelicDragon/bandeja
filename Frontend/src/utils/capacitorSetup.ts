@@ -2,20 +2,40 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { isCapacitor, isIOS, isAndroid } from './capacitor';
 
+const updateStatusBarStyle = async () => {
+  if (!isCapacitor()) return;
+  
+  try {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const style = isDarkMode ? Style.Light : Style.Dark;
+    
+    await StatusBar.setStyle({ style });
+    
+    if (isAndroid()) {
+      const bgColor = isDarkMode ? '#111827' : '#f9fafb'; // gray-900 : gray-50
+      await StatusBar.setBackgroundColor({ color: bgColor });
+    }
+  } catch (error) {
+    console.error('Error updating status bar style:', error);
+  }
+};
+
 export const setupCapacitor = async () => {
   if (!isCapacitor()) return;
 
   try {
-    if (isIOS()) {
-      await StatusBar.setStyle({ style: Style.Light });
+    // Initial setup
+    if (isIOS() || isAndroid()) {
       await StatusBar.setOverlaysWebView({ overlay: true });
     }
 
-    if (isAndroid()) {
-      await StatusBar.setStyle({ style: Style.Light });
-      await StatusBar.setOverlaysWebView({ overlay: true });
-      await StatusBar.setBackgroundColor({ color: '#000000' });
-    }
+    // Set initial status bar style
+    await updateStatusBarStyle();
+
+    // Listen for dark mode changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      updateStatusBarStyle();
+    });
 
     await Keyboard.setResizeMode({ mode: KeyboardResize.Native });
     

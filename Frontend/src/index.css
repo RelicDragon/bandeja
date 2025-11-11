@@ -456,15 +456,65 @@ body {
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
+  background-color: #f9fafb;
 }
 
-/* Fix for iOS - prevent pull-to-refresh but allow content scrolling */
+.capacitor-app.dark,
+.dark .capacitor-app {
+  background-color: #111827;
+}
+
+/* Fix for iOS bounce/overscroll */
+.capacitor-app html {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #f9fafb;
+}
+
+.capacitor-app.dark html,
+.dark .capacitor-app html {
+  background-color: #111827;
+}
+
+.capacitor-app body {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background-color: #f9fafb;
+}
+
+.capacitor-app.dark body,
+.dark .capacitor-app body {
+  background-color: #111827;
+}
+
+.capacitor-app #root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  background-color: #f9fafb;
+}
+
+.capacitor-app.dark #root,
+.dark .capacitor-app #root {
+  background-color: #111827;
+}
+
 .capacitor-ios {
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
 }
 
-.capacitor-ios body {
-  overscroll-behavior-y: none;
+.capacitor-ios #root {
+  overscroll-behavior: none;
 }
 
 .capacitor-android {
@@ -492,6 +542,14 @@ body.keyboard-visible #root {
   -webkit-transform: translateZ(0);
 }
 
+/* Prevent pull-to-refresh on iOS */
+.capacitor-ios body {
+  overscroll-behavior-y: none;
+}
+
+.capacitor-ios html {
+  overscroll-behavior-y: none;
+}
 
 /* Specific safe area utilities */
 .safe-area-pt {
