@@ -7,7 +7,9 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     iosScheme: 'https',
-    url: 'https://bandeja.me',
+    // Note: url is commented out to use bundled local files
+    // This allows the app to work offline on initial launch
+    // For development with live reload, uncomment: url: 'https://bandeja.me'
     cleartext: false
   },
   ios: {
@@ -18,11 +20,6 @@ const config: CapacitorConfig = {
     allowMixedContent: false
   },
   plugins: {
-    Keyboard: {
-      resize: 'native',
-      style: 'dark',
-      resizeOnFullScreen: true
-    },
     StatusBar: {
       style: 'light',
       overlaysWebView: true

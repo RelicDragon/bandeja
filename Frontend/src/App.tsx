@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { ProtectedRoute } from './components';
+import { ProtectedRoute, AppLoadingScreen } from './components';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { SelectCity } from './pages/SelectCity';
@@ -47,10 +47,11 @@ function App() {
     
     const cleanup = initNetworkListener();
     
-    // Mark initialization as complete after a short delay to prevent hanging
+    // Mark initialization as complete
+    // Even if offline, we want the app to finish initializing and show the UI
     const timer = setTimeout(() => {
       finishInitializing();
-    }, 100);
+    }, 500);
     
     return () => {
       cleanup();
@@ -149,6 +150,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <AppLoadingScreen isInitializing={isInitializing} />
       <OfflineBanner />
       <ToastProvider>
         <PlayerCardModalManager>

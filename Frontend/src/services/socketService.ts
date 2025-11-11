@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/authStore';
+import { isCapacitor } from '@/utils/capacitor';
 
 export interface SocketEvents {
   'new-message': (message: any) => void;
@@ -74,7 +75,9 @@ class SocketService {
       this.socket = null;
     }
 
-    const serverUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+    const serverUrl = isCapacitor() 
+      ? 'https://bandeja.me'
+      : (import.meta.env.VITE_SOCKET_URL || window.location.origin);
     
     this.socket = io(serverUrl, {
       auth: {
