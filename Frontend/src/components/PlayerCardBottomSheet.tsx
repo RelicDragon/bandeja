@@ -198,7 +198,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
-          className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl max-h-[95vh] overflow-hidden"
+          className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl max-h-[95vh] overflow-hidden safe-area-bottom"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="h-8 w-full cursor-grab active:cursor-grabbing" />

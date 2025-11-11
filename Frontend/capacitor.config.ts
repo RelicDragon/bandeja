@@ -11,10 +11,23 @@ const config: CapacitorConfig = {
     cleartext: false
   },
   ios: {
-    contentInset: 'automatic'
+    contentInset: 'always',
+    preferredContentMode: 'mobile'
   },
   android: {
     allowMixedContent: false
+  },
+  plugins: {
+    Keyboard: {
+      resize: 'native',
+      style: 'dark',
+      resizeOnFullScreen: true
+    },
+    StatusBar: {
+      style: 'light',
+      backgroundColor: '#000000',
+      overlaysWebView: true
+    }
   }
 };
 

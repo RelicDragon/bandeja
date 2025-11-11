@@ -10,8 +10,8 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4">
-      <div className="fixed top-4 right-4 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4 safe-area-all">
+      <div className="fixed safe-area-inset-top safe-area-inset-right z-10" style={{ top: 'max(1rem, env(safe-area-inset-top))', right: 'max(1rem, env(safe-area-inset-right))' }}>
         <LanguageSelector />
       </div>
       <div className="w-full max-w-md">

@@ -21,12 +21,25 @@ import { headerService } from './services/headerService';
 import { socketService } from './services/socketService';
 import { resultsSyncService } from './services/resultsSync';
 import { useHeaderStore } from './store/headerStore';
+import { isCapacitor, isIOS, isAndroid } from './utils/capacitor';
 import './i18n/config';
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
+
+  useEffect(() => {
+    if (isCapacitor()) {
+      document.body.classList.add('capacitor-app');
+      if (isIOS()) {
+        document.body.classList.add('capacitor-ios');
+      }
+      if (isAndroid()) {
+        document.body.classList.add('capacitor-android');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -73,7 +86,7 @@ function App() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <ToastProvider>
         <PlayerCardModalManager>
           <BrowserRouter>

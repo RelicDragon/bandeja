@@ -133,7 +133,7 @@ export const GameDetailsContent = () => {
     }).catch(error => {
       console.error('Failed to update game template settings:', error);
     });
-  }, [editFormData.gameType, isEditMode, id, game?.gameType]);
+  }, [editFormData.gameType, isEditMode, id, game]);
 
   useEffect(() => {
     const fetchCourts = async () => {

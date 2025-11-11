@@ -165,7 +165,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 safe-area-bottom">
       {replyTo && (
         <ReplyPreview
           replyTo={replyTo.replyTo || {
