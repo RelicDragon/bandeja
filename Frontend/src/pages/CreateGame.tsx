@@ -411,10 +411,10 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
 
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-950 flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <CreateGameHeader onBack={() => navigate('/')} entityType={entityType} />
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="overflow-y-auto" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-6">
 
         <div ref={clubSectionRef}>
