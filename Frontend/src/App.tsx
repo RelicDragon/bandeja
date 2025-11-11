@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { ProtectedRoute, AppLoadingScreen } from './components';
+import { ProtectedRoute, AppLoadingScreen, NoInternetScreen } from './components';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { SelectCity } from './pages/SelectCity';
@@ -24,7 +24,7 @@ import { resultsSyncService } from './services/resultsSync';
 import { useHeaderStore } from './store/headerStore';
 import { isCapacitor, isIOS, isAndroid } from './utils/capacitor';
 import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerUtils';
-import { initNetworkListener } from './utils/networkStatus';
+import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
 import './i18n/config';
 
 function App() {
@@ -33,6 +33,7 @@ function App() {
   const isInitializing = useAuthStore((state) => state.isInitializing);
   const finishInitializing = useAuthStore((state) => state.finishInitializing);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
+  const isOnline = useNetworkStore((state) => state.isOnline);
 
   useEffect(() => {
     if (isCapacitor()) {
@@ -148,9 +149,16 @@ function App() {
   }, [isAuthenticated, isInitializing]);
 
 
+  if (isInitializing) {
+    return <AppLoadingScreen isInitializing={isInitializing} />;
+  }
+
+  if (!isOnline) {
+    return <NoInternetScreen />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <AppLoadingScreen isInitializing={isInitializing} />
       <OfflineBanner />
       <ToastProvider>
         <PlayerCardModalManager>

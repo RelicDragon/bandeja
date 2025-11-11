@@ -50,3 +50,4 @@ export * from './SyncStatusIcon';
 export * from './GameSetupModal';
 export * from './OfflineBanner';
 export * from './AppLoadingScreen';
+export * from './NoInternetScreen';
