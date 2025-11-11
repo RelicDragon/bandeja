@@ -411,7 +411,7 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
 
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-950 flex flex-col safe-area-all">
+    <div className="h-screen bg-gray-50 dark:bg-gray-950 flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <CreateGameHeader onBack={() => navigate('/')} entityType={entityType} />
 
       <div className="flex-1 overflow-y-auto">

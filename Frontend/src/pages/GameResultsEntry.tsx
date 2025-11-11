@@ -535,14 +535,16 @@ export const GameResultsEntry = () => {
   return (
     <>
       <div 
-        className="fixed top-0 bottom-0 w-full bg-gray-50 dark:bg-gray-900 z-50 flex flex-col safe-area-all"
+        className="fixed top-0 bottom-0 w-full bg-gray-50 dark:bg-gray-900 z-50 flex flex-col"
         style={{ 
           left: mounted ? '0' : '100%',
-          transition: 'left 300ms ease-out'
+          transition: 'left 300ms ease-out',
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)'
         }}
       >
       {/* Header Section */}
-      <header className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg safe-area-top">
+      <header className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg">
         {/* Header Part 1: Main header */}
         <div className="h-16 px-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">

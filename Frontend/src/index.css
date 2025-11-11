@@ -50,7 +50,6 @@ body {
   overflow-x: visible;
   height: 100%;
   position: relative;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 #root {
@@ -496,11 +495,20 @@ body.keyboard-visible #root {
   overscroll-behavior-y: none;
 }
 
-/* Android safe area insets for status/nav bars */
-@supports (padding: max(0px)) {
-  .capacitor-android body {
-    padding-top: max(0px, env(safe-area-inset-top));
-    padding-bottom: max(0px, env(safe-area-inset-bottom));
-  }
+/* Specific safe area utilities */
+.safe-area-pt {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+
+.safe-area-pb {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+.safe-area-pl {
+  padding-left: max(env(safe-area-inset-left), 0px);
+}
+
+.safe-area-pr {
+  padding-right: max(env(safe-area-inset-right), 0px);
 }
 

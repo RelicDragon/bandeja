@@ -24,8 +24,8 @@ export const MainLayout = ({
   const { showGameTypeModal } = useHeaderStore();
   
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      <div className="relative z-50 safe-area-top">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="relative z-50">
         <Header 
           showChatFilter={showChatFilter}
           onChatFilterToggle={onChatFilterToggle}
@@ -35,7 +35,7 @@ export const MainLayout = ({
           profileSaveDisabled={profileSaveDisabled}
         />
       </div>
-      <main className={`flex-1 pt-16 pb-6 safe-area-bottom transition-all duration-300 ${showGameTypeModal ? 'blur-sm' : ''}`}>
+      <main className={`transition-all duration-300 ${showGameTypeModal ? 'blur-sm' : ''}`} style={{ paddingTop: 'calc(4rem + env(safe-area-inset-top))', paddingBottom: '1.5rem' }}>
         <div className="container mx-auto px-4 py-6">{children}</div>
       </main>
     </div>
