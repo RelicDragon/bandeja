@@ -535,7 +535,7 @@ export const GameResultsEntry = () => {
   return (
     <>
       <div 
-        className="fixed top-0 bottom-0 w-full bg-gray-50 dark:bg-gray-900 z-50 flex flex-col"
+        className="fixed inset-0 bg-gray-50 dark:bg-gray-900 z-50 flex flex-col"
         style={{ 
           left: mounted ? '0' : '100%',
           transition: 'left 300ms ease-out',

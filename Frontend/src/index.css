@@ -49,14 +49,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: visible;
   height: 100%;
-  position: relative;
 }
 
 #root {
   min-height: 100vh;
   min-height: -webkit-fill-available;
-  display: flex;
-  flex-direction: column;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -461,7 +458,38 @@ body {
   -webkit-touch-callout: none;
 }
 
+/* Fix for iOS bounce/overscroll */
+.capacitor-app html {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.capacitor-app body {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.capacitor-app #root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
 .capacitor-ios {
+  overscroll-behavior: none;
+}
+
+.capacitor-ios #root {
   overscroll-behavior: none;
 }
 
@@ -492,6 +520,10 @@ body.keyboard-visible #root {
 
 /* Prevent pull-to-refresh on iOS */
 .capacitor-ios body {
+  overscroll-behavior-y: none;
+}
+
+.capacitor-ios html {
   overscroll-behavior-y: none;
 }
 
