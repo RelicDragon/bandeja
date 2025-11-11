@@ -11,7 +11,7 @@ const config: CapacitorConfig = {
     cleartext: false
   },
   ios: {
-    contentInset: 'always',
+    contentInset: 'never',
     preferredContentMode: 'mobile'
   },
   android: {
@@ -24,8 +24,6 @@ const config: CapacitorConfig = {
       resizeOnFullScreen: true
     },
     StatusBar: {
-      style: 'light',
-      backgroundColor: '#000000',
       overlaysWebView: true
     }
   }

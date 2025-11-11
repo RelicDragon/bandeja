@@ -39,6 +39,7 @@
 html {
   overflow-x: visible;
   height: 100%;
+  width: 100%;
 }
 
 body {
@@ -49,11 +50,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: visible;
   height: 100%;
+  width: 100%;
 }
 
 #root {
   min-height: 100vh;
   min-height: -webkit-fill-available;
+  width: 100%;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
