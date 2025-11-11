@@ -12,11 +12,12 @@ export const updateStatusBarStyle = async () => {
     
     console.log('Updating status bar - isDarkMode:', isDarkMode);
     
-    // In dark mode (dark background), use light text (white)
-    // In light mode (light background), use dark text (black)
-    const style = isDarkMode ? Style.Light : Style.Dark;
+    // Capacitor naming is counterintuitive:
+    // Style.Light = dark/black text (for LIGHT backgrounds)
+    // Style.Dark = light/white text (for DARK backgrounds)
+    const style = isDarkMode ? Style.Dark : Style.Light;
     
-    console.log('Setting status bar style to:', style);
+    console.log('Setting status bar style to:', style, isDarkMode ? '(white text for dark bg)' : '(black text for light bg)');
     
     await StatusBar.setStyle({ style });
     
@@ -51,16 +52,16 @@ export const setupCapacitor = async () => {
       console.log('StatusBar overlay enabled');
     }
 
-    // Set initial status bar style - force dark text for light backgrounds
+    // Set initial status bar style - Style.Light = black text for light backgrounds
     if (isIOS()) {
-      await StatusBar.setStyle({ style: Style.Dark });
-      console.log('iOS StatusBar set to Dark style (black text)');
+      await StatusBar.setStyle({ style: Style.Light });
+      console.log('iOS StatusBar set to Light style (black text)');
     }
     
     if (isAndroid()) {
-      await StatusBar.setStyle({ style: Style.Dark });
+      await StatusBar.setStyle({ style: Style.Light });
       await StatusBar.setBackgroundColor({ color: '#f9fafb' });
-      console.log('Android StatusBar set to Dark style with light background');
+      console.log('Android StatusBar set to Light style with light background');
     }
 
     // Then update based on actual theme with a delay
