@@ -576,44 +576,46 @@ export const GameResultsEntry = () => {
         </div>
         
         {/* Header Part 2: Tab Controller */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="container mx-auto">
-            <div className="flex justify-center space-x-1 py-2 px-4">
-              <button
-                onClick={() => setActiveTab('scores')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  activeTab === 'scores'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                {t('gameResults.scores')}
-              </button>
-              {game?.resultsStatus === 'FINAL' && (
+        {isResultsEntryMode && (
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div className="container mx-auto">
+              <div className="flex justify-center space-x-1 py-2 px-4">
                 <button
-                  onClick={() => setActiveTab('results')}
+                  onClick={() => setActiveTab('scores')}
                   className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                    activeTab === 'results'
+                    activeTab === 'scores'
                       ? 'bg-blue-500 text-white'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
-                  {t('gameResults.results')}
+                  {t('gameResults.scores')}
                 </button>
-              )}
-              <button
-                onClick={() => setActiveTab('stats')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  activeTab === 'stats'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                {t('gameResults.stats') || 'Stats'}
-              </button>
+                {game?.resultsStatus === 'FINAL' && (
+                  <button
+                    onClick={() => setActiveTab('results')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      activeTab === 'results'
+                        ? 'bg-blue-500 text-white'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {t('gameResults.results')}
+                  </button>
+                )}
+                <button
+                  onClick={() => setActiveTab('stats')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    activeTab === 'stats'
+                      ? 'bg-blue-500 text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {t('gameResults.stats') || 'Stats'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </header>
       
       {/* Main Section - Scrollable */}

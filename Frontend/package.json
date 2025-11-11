@@ -9,6 +9,9 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/ios": "^7.4.4",
     "axios": "^1.6.2",
     "bootstrap-icons": "^1.13.1",
     "date-fns": "^3.0.0",

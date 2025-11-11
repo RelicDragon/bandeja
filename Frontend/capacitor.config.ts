@@ -5,7 +5,16 @@ const config: CapacitorConfig = {
   appName: 'Bandeja',
   webDir: 'dist',
   server: {
-    url: 'http://localhost:3001',
+    androidScheme: 'https',
+    iosScheme: 'https',
+    url: 'https://bandeja.me',
+    cleartext: false
+  },
+  ios: {
+    contentInset: 'automatic'
+  },
+  android: {
+    allowMixedContent: false
   }
 };
 
