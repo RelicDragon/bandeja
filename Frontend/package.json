@@ -13,6 +13,7 @@
     "@capacitor/core": "^7.4.4",
     "@capacitor/ios": "^7.4.4",
     "@capacitor/keyboard": "^7.0.3",
+    "@capacitor/network": "^7.0.3",
     "@capacitor/status-bar": "^7.0.3",
     "axios": "^1.6.2",
     "bootstrap-icons": "^1.13.1",

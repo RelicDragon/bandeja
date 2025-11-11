@@ -2,10 +2,12 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import { setupCapacitor } from './utils/capacitorSetup';
+import { isCapacitor } from './utils/capacitor';
 
 setupCapacitor();
 
-if ('serviceWorker' in navigator) {
+// Only use service worker in web browsers, not in Capacitor apps
+if ('serviceWorker' in navigator && !isCapacitor()) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {

@@ -30,6 +30,8 @@ import './i18n/config';
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
+  const isInitializing = useAuthStore((state) => state.isInitializing);
+  const finishInitializing = useAuthStore((state) => state.finishInitializing);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
 
   useEffect(() => {
@@ -44,8 +46,17 @@ function App() {
     }
     
     const cleanup = initNetworkListener();
-    return cleanup;
-  }, []);
+    
+    // Mark initialization as complete after a short delay to prevent hanging
+    const timer = setTimeout(() => {
+      finishInitializing();
+    }, 100);
+    
+    return () => {
+      cleanup();
+      clearTimeout(timer);
+    };
+  }, [finishInitializing]);
 
   useEffect(() => {
     const checkServiceWorker = async () => {
@@ -83,11 +94,28 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      headerService.startPolling();
-      resultsSyncService.start();
-      fetchFavorites();
+    if (isAuthenticated && !isInitializing) {
+      // Delay starting services to avoid blocking initial render
+      const timer = setTimeout(() => {
+        headerService.startPolling();
+        resultsSyncService.start();
+        
+        // Only fetch favorites if online
+        if (navigator.onLine) {
+          fetchFavorites().catch((error) => {
+            console.error('Failed to fetch favorites:', error);
+          });
+        }
+      }, 300);
 
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [isAuthenticated, isInitializing, fetchFavorites]);
+
+  useEffect(() => {
+    if (isAuthenticated && !isInitializing) {
       // Set up socket listener for new invites
       const handleNewInvite = () => {
         const { setPendingInvites, triggerNewInviteAnimation } = useHeaderStore.getState();
@@ -105,25 +133,18 @@ function App() {
         setPendingInvites(Math.max(0, currentCount - 1));
       };
 
-      socketService.on('new-invite', handleNewInvite);
-      socketService.on('invite-deleted', handleInviteDeleted);
+      const timer = setTimeout(() => {
+        socketService.on('new-invite', handleNewInvite);
+        socketService.on('invite-deleted', handleInviteDeleted);
+      }, 500);
 
       return () => {
+        clearTimeout(timer);
         socketService.off('new-invite', handleNewInvite);
         socketService.off('invite-deleted', handleInviteDeleted);
-        headerService.stopPolling();
-        resultsSyncService.stop();
       };
-    } else {
-      headerService.stopPolling();
-      resultsSyncService.stop();
     }
-
-    return () => {
-      headerService.stopPolling();
-      resultsSyncService.stop();
-    };
-  }, [isAuthenticated, fetchFavorites]);
+  }, [isAuthenticated, isInitializing]);
 
 
   return (

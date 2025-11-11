@@ -1,6 +1,7 @@
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { isCapacitor, isIOS, isAndroid } from './capacitor';
+import { setupCapacitorNetwork } from './capacitorNetwork';
 
 export const updateStatusBarStyle = async () => {
   if (!isCapacitor()) return;
@@ -37,6 +38,9 @@ export const setupCapacitor = async () => {
 
   try {
     console.log('Setting up Capacitor...');
+    
+    // Setup network monitoring first
+    await setupCapacitorNetwork();
     
     // Show status bar first
     try {
