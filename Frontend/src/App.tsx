@@ -22,6 +22,7 @@ import { socketService } from './services/socketService';
 import { resultsSyncService } from './services/resultsSync';
 import { useHeaderStore } from './store/headerStore';
 import { isCapacitor, isIOS, isAndroid } from './utils/capacitor';
+import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerUtils';
 import './i18n/config';
 
 function App() {
@@ -39,6 +40,29 @@ function App() {
         document.body.classList.add('capacitor-android');
       }
     }
+  }, []);
+
+  useEffect(() => {
+    const checkServiceWorker = async () => {
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration) {
+            const response = await fetch('/sw.js', { cache: 'no-cache' });
+            if (!response.ok) {
+              console.warn('Service worker file not found, clearing...');
+              await unregisterServiceWorkers();
+              await clearAllCaches();
+              window.location.reload();
+            }
+          }
+        } catch (error) {
+          console.error('Service worker check failed:', error);
+        }
+      }
+    };
+
+    checkServiceWorker();
   }, []);
 
   useEffect(() => {
