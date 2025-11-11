@@ -166,6 +166,23 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                       </span>
                     </div>
                   )}
+                  {match.sets && match.sets.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
+                      <span className="text-gray-600 dark:text-gray-400 text-xs font-semibold">{t('gameResults.sets')}:</span>
+                      <div className="mt-1 space-y-1">
+                        {match.sets.map((set, setIndex) => (
+                          <div key={setIndex} className="flex items-center justify-between text-xs">
+                            <span className="text-gray-700 dark:text-gray-300">
+                              {t('gameResults.set')} {set.setNumber}: {set.isWinner ? t('gameResults.win') : t('gameResults.loss')}
+                            </span>
+                            <span className={`font-semibold ${getLevelChangeColor(set.levelChange)}`}>
+                              {formatChange(set.levelChange)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

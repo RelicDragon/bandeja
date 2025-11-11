@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { GameType } from '@prisma/client';
+import { GameType, ParticipantLevelUpMode } from '@prisma/client';
 import { calculateRatingUpdate, calculateAmericanoRating } from './rating.service';
 
 interface ExplanationData {
@@ -19,6 +19,12 @@ interface ExplanationData {
   };
 }
 
+interface SetExplanation {
+  setNumber: number;
+  isWinner: boolean;
+  levelChange: number;
+}
+
 interface MatchExplanation {
   matchNumber: number;
   roundNumber: number;
@@ -33,6 +39,7 @@ interface MatchExplanation {
   totalPointDifferential?: number;
   teammates: Array<{ firstName: string | null; lastName: string | null; level: number }>;
   opponents: Array<{ firstName: string | null; lastName: string | null; level: number }>;
+  sets?: SetExplanation[];
 }
 
 export async function getOutcomeExplanation(
@@ -97,6 +104,8 @@ export async function getOutcomeExplanation(
 
   const participant = game.participants.find(p => p.userId === userId);
   if (!participant) return null;
+
+  const participantLevelUpMode = game.participantLevelUpMode || ParticipantLevelUpMode.BY_MATCHES;
 
   const existingOutcome = await prisma.gameOutcome.findUnique({
     where: {
@@ -225,24 +234,129 @@ export async function getOutcomeExplanation(
           }
         });
 
-        const update = calculateRatingUpdate(
-          {
-            level: currentLevel,
-            reliability: currentReliability,
-            gamesPlayed: user.gamesPlayed,
-          },
-          {
-            isWinner,
-            opponentsLevel: opponentLevel,
-            setScores,
+        let matchLevelChange = 0;
+        let matchReliabilityChange = 0;
+        let matchPointsEarned = 0;
+        let matchMultiplier: number | undefined = undefined;
+        let matchTotalPointDifferential: number | undefined = undefined;
+        const setExplanations: SetExplanation[] = [];
+
+        if (participantLevelUpMode === ParticipantLevelUpMode.BY_SETS) {
+          let setNumber = 0;
+          for (const set of validSets) {
+            setNumber++;
+            const setAWins = set.teamAScore > set.teamBScore;
+            const setBWins = set.teamBScore > set.teamAScore;
+            const setIsWinner = userTeam.teamNumber === 1 ? setAWins : setBWins;
+
+            const setUpdate = calculateRatingUpdate(
+              {
+                level: currentLevel,
+                reliability: currentReliability,
+                gamesPlayed: user.gamesPlayed,
+              },
+              {
+                isWinner: setIsWinner,
+                opponentsLevel: opponentLevel,
+                setScores: [{
+                  teamAScore: userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore,
+                  teamBScore: userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore,
+                }],
+              }
+            );
+
+            const setLevelChange = setUpdate.levelChange * 0.33;
+            matchLevelChange += setLevelChange;
+            if (setNumber === 1) {
+              matchReliabilityChange = setUpdate.reliabilityChange;
+            }
+            matchPointsEarned += setUpdate.pointsEarned;
+
+            setExplanations.push({
+              setNumber,
+              isWinner: setIsWinner,
+              levelChange: setLevelChange,
+            });
           }
-        );
+        } else if (participantLevelUpMode === ParticipantLevelUpMode.COMBINED) {
+          const matchUpdate = calculateRatingUpdate(
+            {
+              level: currentLevel,
+              reliability: currentReliability,
+              gamesPlayed: user.gamesPlayed,
+            },
+            {
+              isWinner,
+              opponentsLevel: opponentLevel,
+              setScores,
+            }
+          );
 
-        currentLevel += update.levelChange;
-        currentReliability += update.reliabilityChange;
+          let setNumber = 0;
+          let setsLevelChange = 0;
+          for (const set of validSets) {
+            setNumber++;
+            const setAWins = set.teamAScore > set.teamBScore;
+            const setBWins = set.teamBScore > set.teamAScore;
+            const setIsWinner = userTeam.teamNumber === 1 ? setAWins : setBWins;
 
-        totalLevelChange += update.levelChange;
-        totalReliabilityChange += update.reliabilityChange;
+            const setUpdate = calculateRatingUpdate(
+              {
+                level: currentLevel,
+                reliability: currentReliability,
+                gamesPlayed: user.gamesPlayed,
+              },
+              {
+                isWinner: setIsWinner,
+                opponentsLevel: opponentLevel,
+                setScores: [{
+                  teamAScore: userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore,
+                  teamBScore: userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore,
+                }],
+              }
+            );
+
+            const setLevelChange = setUpdate.levelChange * 0.33;
+            setsLevelChange += setLevelChange;
+
+            setExplanations.push({
+              setNumber,
+              isWinner: setIsWinner,
+              levelChange: setLevelChange,
+            });
+          }
+
+          matchLevelChange = matchUpdate.levelChange * 0.5 + setsLevelChange * 0.5;
+          matchReliabilityChange = matchUpdate.reliabilityChange * 0.5;
+          matchPointsEarned = matchUpdate.pointsEarned;
+          matchMultiplier = matchUpdate.multiplier;
+          matchTotalPointDifferential = matchUpdate.totalPointDifferential;
+        } else {
+          const update = calculateRatingUpdate(
+            {
+              level: currentLevel,
+              reliability: currentReliability,
+              gamesPlayed: user.gamesPlayed,
+            },
+            {
+              isWinner,
+              opponentsLevel: opponentLevel,
+              setScores,
+            }
+          );
+
+          matchLevelChange = update.levelChange;
+          matchReliabilityChange = update.reliabilityChange;
+          matchPointsEarned = update.pointsEarned;
+          matchMultiplier = update.multiplier;
+          matchTotalPointDifferential = update.totalPointDifferential;
+        }
+
+        currentLevel += matchLevelChange;
+        currentReliability += matchReliabilityChange;
+
+        totalLevelChange += matchLevelChange;
+        totalReliabilityChange += matchReliabilityChange;
 
         if (isTie) draws++;
         else if (isWinner) wins++;
@@ -254,13 +368,14 @@ export async function getOutcomeExplanation(
           isWinner,
           opponentLevel,
           levelDifference,
-          levelChange: update.levelChange,
-          reliabilityChange: update.reliabilityChange,
-          pointsEarned: update.pointsEarned,
-          multiplier: update.multiplier,
-          totalPointDifferential: update.totalPointDifferential,
+          levelChange: matchLevelChange,
+          reliabilityChange: matchReliabilityChange,
+          pointsEarned: matchPointsEarned,
+          multiplier: matchMultiplier,
+          totalPointDifferential: matchTotalPointDifferential,
           teammates,
           opponents,
+          sets: setExplanations.length > 0 ? setExplanations : undefined,
         });
       }
     }

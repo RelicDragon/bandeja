@@ -109,6 +109,12 @@ export interface OutcomeExplanation {
   };
 }
 
+export interface SetExplanation {
+  setNumber: number;
+  isWinner: boolean;
+  levelChange: number;
+}
+
 export interface MatchExplanation {
   matchNumber: number;
   roundNumber: number;
@@ -123,6 +129,7 @@ export interface MatchExplanation {
   totalPointDifferential?: number;
   teammates: Array<{ firstName?: string; lastName?: string; level: number }>;
   opponents: Array<{ firstName?: string; lastName?: string; level: number }>;
+  sets?: SetExplanation[];
 }
 
 export const getOutcomeExplanation = async (gameId: string, userId: string): Promise<OutcomeExplanation> => {

@@ -13,6 +13,7 @@ export type BugType = 'BUG' | 'CRITICAL' | 'SUGGESTION' | 'QUESTION';
 export type WinnerOfGame = 'BY_MATCHES_WON' | 'BY_POINTS' | 'BY_SCORES_DELTA' | 'PLAYOFF_FINALS';
 export type WinnerOfMatch = 'BY_SETS' | 'BY_SCORES';
 export type MatchGenerationType = 'HANDMADE' | 'FIXED' | 'RANDOM' | 'ROUND_ROBIN' | 'ESCALERA' | 'RATING' | 'WINNERS_COURT';
+export type ParticipantLevelUpMode = 'BY_MATCHES' | 'BY_SETS' | 'COMBINED';
 
 export interface User {
   id: string;
@@ -190,6 +191,7 @@ export interface Game {
   hasMultiRounds?: boolean;
   winnerOfGame?: WinnerOfGame;
   winnerOfMatch?: WinnerOfMatch;
+  participantLevelUpMode?: ParticipantLevelUpMode;
   matchGenerationType?: MatchGenerationType;
   prohibitMatchesEditing?: boolean;
   pointsPerWin?: number;
