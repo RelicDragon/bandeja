@@ -37,16 +37,36 @@ export const setupCapacitor = async () => {
   try {
     console.log('Setting up Capacitor...');
     
+    // Show status bar first
+    try {
+      await StatusBar.show();
+      console.log('StatusBar shown');
+    } catch (e) {
+      console.log('StatusBar.show() not available or failed:', e);
+    }
+    
     // Initial setup
     if (isIOS() || isAndroid()) {
       await StatusBar.setOverlaysWebView({ overlay: true });
       console.log('StatusBar overlay enabled');
     }
 
-    // Set initial status bar style with a delay to ensure DOM is ready
+    // Set initial status bar style - force dark text for light backgrounds
+    if (isIOS()) {
+      await StatusBar.setStyle({ style: Style.Dark });
+      console.log('iOS StatusBar set to Dark style (black text)');
+    }
+    
+    if (isAndroid()) {
+      await StatusBar.setStyle({ style: Style.Dark });
+      await StatusBar.setBackgroundColor({ color: '#f9fafb' });
+      console.log('Android StatusBar set to Dark style with light background');
+    }
+
+    // Then update based on actual theme with a delay
     setTimeout(async () => {
       await updateStatusBarStyle();
-    }, 100);
+    }, 200);
 
     // Observe dark mode changes on the document
     const observer = new MutationObserver(() => {
