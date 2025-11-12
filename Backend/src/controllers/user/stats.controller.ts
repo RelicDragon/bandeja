@@ -114,6 +114,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
   const gamesTogether = await prisma.gameParticipant.findMany({
     where: {
       userId: currentUserId,
+      isPlaying: true,
       game: {
         participants: {
           some: {
@@ -300,7 +301,15 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
     }
 
     if (playedAgainst) {
-      gamesAgainstEachOther.push({
+      const currentUserParticipant = game.participants.find(
+        (p: any) => p.userId === currentUserId && p.isPlaying === true
+      );
+      const otherUserParticipant = game.participants.find(
+        (p: any) => p.userId === otherUserId && p.isPlaying === true
+      );
+
+      if (currentUserParticipant && otherUserParticipant) {
+        gamesAgainstEachOther.push({
         id: game.id,
         name: game.name,
         gameType: game.gameType,
@@ -355,6 +364,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
         createdAt: game.createdAt,
         updatedAt: game.updatedAt,
       });
+      }
     }
   }
 

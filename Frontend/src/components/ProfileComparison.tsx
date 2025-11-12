@@ -214,35 +214,20 @@ export const ProfileComparison = () => {
 
           {activeTab === 'games' && (
             <div className="space-y-4">
-              {(() => {
-                const filteredGames = comparison.gamesAgainstEachOther?.filter((game) => {
-                  const currentUserParticipant = game.participants.find(
-                    (p) => p.userId === currentUser?.id
-                  );
-                  const otherUserParticipant = game.participants.find(
-                    (p) => p.userId === selectedPlayer?.id
-                  );
-                  return (
-                    currentUserParticipant?.isPlaying === true &&
-                    otherUserParticipant?.isPlaying === true
-                  );
-                });
-
-                return filteredGames && filteredGames.length > 0 ? (
-                  filteredGames.map((game) => (
-                    <GameCard
-                      key={game.id}
-                      game={game as unknown as Game}
-                      user={currentUser}
-                      isInitiallyCollapsed={true}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                    {t('profile.noGamesAgainstEachOther') || 'No games where both players participated against each other'}
-                  </div>
-                );
-              })()}
+              {comparison.gamesAgainstEachOther && comparison.gamesAgainstEachOther.length > 0 ? (
+                comparison.gamesAgainstEachOther.map((game) => (
+                  <GameCard
+                    key={game.id}
+                    game={game as unknown as Game}
+                    user={currentUser}
+                    isInitiallyCollapsed={true}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  {t('profile.noGamesAgainstEachOther') || 'No games where both players participated against each other'}
+                </div>
+              )}
             </div>
           )}
 
