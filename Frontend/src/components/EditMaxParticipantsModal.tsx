@@ -45,7 +45,7 @@ export const EditMaxParticipantsModal = ({
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen, game.maxParticipants]);
+  }, [isOpen, game.maxParticipants, game.participants]);
 
   const handleClose = () => {
     setIsClosing(true);

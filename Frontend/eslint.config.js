@@ -45,6 +45,15 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  {
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: {
+        ...globals.node,
+      },
+    },
   }
 );
 
