@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse, User, Gender } from '@/types';
+import { ApiResponse, User, Gender, EntityType, GameType, GameStatus, ParticipantRole } from '@/types';
 
 export interface LevelHistoryItem {
   id: string;
@@ -36,6 +36,75 @@ export interface PlayerComparison {
     wins: number;
     losses: number;
     winRate: string;
+  };
+  gamesAgainstEachOther?: Array<{
+    id: string;
+    name?: string;
+    gameType: GameType;
+    startTime: string;
+    endTime: string;
+    status: GameStatus;
+    resultsStatus: 'NONE' | 'IN_PROGRESS' | 'FINAL';
+    entityType: EntityType;
+    maxParticipants: number;
+    minParticipants: number;
+    isPublic: boolean;
+    affectsRating: boolean;
+    allowDirectJoin: boolean;
+    hasFixedTeams?: boolean;
+    genderTeams?: string;
+    photosCount?: number;
+    participants: Array<{
+      id: string;
+      userId: string;
+      role: ParticipantRole;
+      isPlaying: boolean;
+      joinedAt: string;
+      stats?: any;
+      user: {
+        id: string;
+        firstName?: string;
+        lastName?: string;
+        avatar?: string;
+        level: number;
+      } | null;
+    }>;
+    club?: {
+      id: string;
+      name: string;
+      city?: {
+        id: string;
+        name: string;
+      } | null;
+    } | null;
+    court?: {
+      id: string;
+      name: string;
+      club?: {
+        id: string;
+        name: string;
+        city?: {
+          id: string;
+          name: string;
+        } | null;
+      } | null;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  currentUserStats?: {
+    totalGames: number;
+    totalMatches: number;
+    gamesLast30Days: number;
+    totalWins: number;
+    winsPercentage: string;
+  };
+  otherUserStats?: {
+    totalGames: number;
+    totalMatches: number;
+    gamesLast30Days: number;
+    totalWins: number;
+    winsPercentage: string;
   };
 }
 

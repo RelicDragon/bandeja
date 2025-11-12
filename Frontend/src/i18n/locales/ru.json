@@ -481,7 +481,15 @@
     "selectPlayerToCompare": "Выберите игрока для сравнения",
     "gamesTogether": "Матчи вместе",
     "gamesAgainst": "Матчи против",
-    "noComparisonData": "Нет данных для сравнения"
+    "noComparisonData": "Нет данных для сравнения",
+    "stats": "Статистика",
+    "matches": "Матчи",
+    "games": "Игры",
+    "more": "Больше",
+    "total": "Всего",
+    "totalGames": "Всего игр",
+    "totalMatches": "Всего матчей",
+    "noGamesAgainstEachOther": "Нет игр, где оба игрока играли друг против друга"
   },
   "createGame": {
     "title": "Создать игру",

@@ -473,7 +473,15 @@
     "selectPlayerToCompare": "Seleccionar jugador para comparar",
     "gamesTogether": "Partidos Juntos",
     "gamesAgainst": "Partidos Contra",
-    "noComparisonData": "No hay datos de comparación disponibles"
+    "noComparisonData": "No hay datos de comparación disponibles",
+    "stats": "Estadísticas",
+    "matches": "Partidos",
+    "games": "Juegos",
+    "more": "Más",
+    "total": "Total",
+    "totalGames": "Total de Juegos",
+    "totalMatches": "Total de Partidos",
+    "noGamesAgainstEachOther": "No hay juegos donde ambos jugadores jugaron uno contra el otro"
   },
   "createGame": {
     "title": "Crear juego",

@@ -391,6 +391,43 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
     include: {
       game: {
         include: {
+          participants: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  avatar: true,
+                  level: true,
+                },
+              },
+            },
+          },
+          club: {
+            include: {
+              city: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+          court: {
+            include: {
+              club: {
+                include: {
+                  city: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
           fixedTeams: {
             include: {
               players: {
@@ -428,10 +465,12 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
   let lossesTogether = 0;
   let winsAgainst = 0;
   let lossesAgainst = 0;
+  const gamesAgainstEachOther: any[] = [];
 
   for (const participant of gamesTogether) {
     const game = participant.game;
     const hasFixedTeams = game.hasFixedTeams;
+    let playedAgainst = false;
 
     if (hasFixedTeams && game.fixedTeams.length > 0) {
       const currentUserTeam = game.fixedTeams.find((team) =>
@@ -480,6 +519,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
 
             if (currentUserTeamInMatch && otherUserTeamInMatch && currentUserTeamInMatch.id !== otherUserTeamInMatch.id) {
               matchesAgainstCount++;
+              playedAgainst = true;
               if (match.winnerId === currentUserTeamInMatch.id) {
                 winsAgainst++;
               } else if (match.winnerId === otherUserTeamInMatch.id) {
@@ -512,6 +552,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
             }
           } else {
             matchesAgainstCount++;
+            playedAgainst = true;
             if (match.winnerId === currentUserTeam.id) {
               winsAgainst++;
             } else if (match.winnerId === otherUserTeam.id) {
@@ -521,7 +562,148 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
         }
       }
     }
+
+    if (playedAgainst) {
+      gamesAgainstEachOther.push({
+        id: game.id,
+        name: game.name,
+        gameType: game.gameType,
+        startTime: game.startTime,
+        endTime: game.endTime,
+        status: game.status,
+        resultsStatus: game.resultsStatus,
+        entityType: game.entityType,
+        maxParticipants: game.maxParticipants,
+        minParticipants: game.minParticipants,
+        isPublic: game.isPublic,
+        affectsRating: game.affectsRating,
+        allowDirectJoin: game.allowDirectJoin,
+        hasFixedTeams: game.hasFixedTeams,
+        genderTeams: game.genderTeams,
+        photosCount: game.photosCount || 0,
+        participants: game.participants.map((p: any) => ({
+          id: p.id,
+          userId: p.userId,
+          role: p.role,
+          isPlaying: p.isPlaying,
+          joinedAt: p.joinedAt,
+          stats: p.stats,
+          user: p.user ? {
+            id: p.user.id,
+            firstName: p.user.firstName,
+            lastName: p.user.lastName,
+            avatar: p.user.avatar,
+            level: p.user.level,
+          } : null,
+        })),
+        club: game.club ? {
+          id: game.club.id,
+          name: game.club.name,
+          city: game.club.city ? {
+            id: game.club.city.id,
+            name: game.club.city.name,
+          } : null,
+        } : null,
+        court: game.court ? {
+          id: game.court.id,
+          name: game.court.name,
+          club: game.court.club ? {
+            id: game.court.club.id,
+            name: game.court.club.name,
+            city: game.court.club.city ? {
+              id: game.court.club.city.id,
+              name: game.court.club.city.name,
+            } : null,
+          } : null,
+        } : null,
+        createdAt: game.createdAt,
+        updatedAt: game.updatedAt,
+      });
+    }
   }
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const currentUserStats = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: {
+      gamesPlayed: true,
+      gamesWon: true,
+    },
+  });
+
+  const otherUserStats = await prisma.user.findUnique({
+    where: { id: otherUserId },
+    select: {
+      gamesPlayed: true,
+      gamesWon: true,
+    },
+  });
+
+  const currentUserGamesLast30Days = await prisma.gameOutcome.count({
+    where: {
+      userId: currentUserId,
+      createdAt: { gte: thirtyDaysAgo },
+    },
+  });
+
+  const otherUserGamesLast30Days = await prisma.gameOutcome.count({
+    where: {
+      userId: otherUserId,
+      createdAt: { gte: thirtyDaysAgo },
+    },
+  });
+
+  const currentUserTotalMatches = await prisma.match.count({
+    where: {
+      round: {
+        game: {
+          participants: {
+            some: {
+              userId: currentUserId,
+              isPlaying: true,
+            },
+          },
+          resultsStatus: 'FINAL',
+        },
+      },
+      teams: {
+        some: {
+          players: {
+            some: {
+              userId: currentUserId,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const otherUserTotalMatches = await prisma.match.count({
+    where: {
+      round: {
+        game: {
+          participants: {
+            some: {
+              userId: otherUserId,
+              isPlaying: true,
+            },
+          },
+          resultsStatus: 'FINAL',
+        },
+      },
+      teams: {
+        some: {
+          players: {
+            some: {
+              userId: otherUserId,
+            },
+          },
+        },
+      },
+    },
+  });
 
   res.json({
     success: true,
@@ -538,6 +720,25 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
         wins: winsAgainst,
         losses: lossesAgainst,
         winRate: matchesAgainstCount > 0 ? ((winsAgainst / matchesAgainstCount) * 100).toFixed(1) : '0',
+      },
+      gamesAgainstEachOther: gamesAgainstEachOther.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()),
+      currentUserStats: {
+        totalGames: currentUserStats?.gamesPlayed || 0,
+        totalMatches: currentUserTotalMatches,
+        gamesLast30Days: currentUserGamesLast30Days,
+        totalWins: currentUserStats?.gamesWon || 0,
+        winsPercentage: currentUserStats?.gamesPlayed && currentUserStats.gamesPlayed > 0
+          ? ((currentUserStats.gamesWon / currentUserStats.gamesPlayed) * 100).toFixed(1)
+          : '0',
+      },
+      otherUserStats: {
+        totalGames: otherUserStats?.gamesPlayed || 0,
+        totalMatches: otherUserTotalMatches,
+        gamesLast30Days: otherUserGamesLast30Days,
+        totalWins: otherUserStats?.gamesWon || 0,
+        winsPercentage: otherUserStats?.gamesPlayed && otherUserStats.gamesPlayed > 0
+          ? ((otherUserStats.gamesWon / otherUserStats.gamesPlayed) * 100).toFixed(1)
+          : '0',
       },
     },
   });

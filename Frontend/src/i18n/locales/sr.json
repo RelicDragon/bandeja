@@ -475,7 +475,15 @@
     "selectPlayerToCompare": "Изаберите играча за поређење",
     "gamesTogether": "Мечеви заједно",
     "gamesAgainst": "Мечеви против",
-    "noComparisonData": "Нема података за поређење"
+    "noComparisonData": "Нема података за поређење",
+    "stats": "Статистика",
+    "matches": "Мечеви",
+    "games": "Игре",
+    "more": "Више",
+    "total": "Укупно",
+    "totalGames": "Укупно игара",
+    "totalMatches": "Укупно мечева",
+    "noGamesAgainstEachOther": "Нема игара где су оба играча играла један против другог"
   },
   "createGame": {
     "title": "Креирај игру",

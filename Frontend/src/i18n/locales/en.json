@@ -480,7 +480,15 @@
     "selectPlayerToCompare": "Select player to compare",
     "gamesTogether": "Matches Together",
     "gamesAgainst": "Matches Against",
-    "noComparisonData": "No comparison data available"
+    "noComparisonData": "No comparison data available",
+    "stats": "Stats",
+    "matches": "Matches",
+    "games": "Games",
+    "more": "More",
+    "total": "Total",
+    "totalGames": "Total Games",
+    "totalMatches": "Total Matches",
+    "noGamesAgainstEachOther": "No games where both players played against each other"
   },
   "createGame": {
     "title": "Create Game",

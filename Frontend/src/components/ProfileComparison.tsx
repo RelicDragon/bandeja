@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Search, Users } from 'lucide-react';
+import { Search, Users, Swords } from 'lucide-react';
 import { usersApi, PlayerComparison } from '@/api/users';
+import { Game } from '@/types';
 import { Loading } from './Loading';
 import { PlayerListModal } from './PlayerListModal';
 import { CachedImage } from './CachedImage';
+import { ComparisonTabController } from './ComparisonTabController';
+import { GameCard } from './GameCard';
 import { UrlConstructor } from '@/utils/urlConstructor';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
@@ -17,6 +20,7 @@ export const ProfileComparison = () => {
   const [showPlayerModal, setShowPlayerModal] = useState(false);
   const [comparison, setComparison] = useState<PlayerComparison | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'stats' | 'games' | 'more'>('stats');
 
   const handlePlayerSelect = async (playerIds: string[]) => {
     if (playerIds.length === 0) return;
@@ -69,7 +73,7 @@ export const ProfileComparison = () => {
           transition={{ duration: 0.3 }}
           className="space-y-6"
         >
-          <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-6">
+          <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-6 pb-2">
             <div className="flex items-center justify-center gap-6 mb-4">
               <div className="text-center">
                 <div className="mb-2">
@@ -116,93 +120,270 @@ export const ProfileComparison = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Users size={20} className="text-primary-600 dark:text-primary-400" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {t('profile.gamesTogether') || 'Games Together'}
-                </h3>
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {t('playerCard.totalGames')}
-                  </span>
-                  <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {comparison.gamesTogether.total}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {t('playerCard.gamesWon')}
-                  </span>
-                  <span className="text-xl font-semibold text-green-600 dark:text-green-400">
-                    {comparison.gamesTogether.wins}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {t('playerCard.gamesLost') || 'Losses'}
-                  </span>
-                  <span className="text-xl font-semibold text-red-600 dark:text-red-400">
-                    {comparison.gamesTogether.losses}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-600">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {t('playerCard.winRate')}
-                  </span>
-                  <span className="text-xl font-bold text-gray-900 dark:text-white">
-                    {comparison.gamesTogether.winRate}%
-                  </span>
-                </div>
-              </div>
-            </div>
+          <ComparisonTabController activeTab={activeTab} onTabChange={setActiveTab} />
 
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Users size={20} className="text-primary-600 dark:text-primary-400 rotate-180" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {t('profile.gamesAgainst') || 'Games Against'}
-                </h3>
+          {activeTab === 'stats' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Users size={20} className="text-primary-600 dark:text-primary-400" />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {t('profile.gamesTogether') || 'Games Together'}
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('profile.total')}
+                    </span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {comparison.gamesTogether.total}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('playerCard.gamesWon')}
+                    </span>
+                    <span className="text-xl font-semibold text-green-600 dark:text-green-400">
+                      {comparison.gamesTogether.wins}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('playerCard.gamesLost') || 'Losses'}
+                    </span>
+                    <span className="text-xl font-semibold text-red-600 dark:text-red-400">
+                      {comparison.gamesTogether.losses}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('playerCard.winRate')}
+                    </span>
+                    <span className="text-xl font-bold text-gray-900 dark:text-white">
+                      {comparison.gamesTogether.winRate}%
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {t('playerCard.totalGames')}
-                  </span>
-                  <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {comparison.gamesAgainst.total}
-                  </span>
+
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Swords size={20} className="text-primary-600 dark:text-primary-400" />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {t('profile.gamesAgainst') || 'Games Against'}
+                  </h3>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {t('playerCard.gamesWon')}
-                  </span>
-                  <span className="text-xl font-semibold text-green-600 dark:text-green-400">
-                    {comparison.gamesAgainst.wins}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {t('playerCard.gamesLost') || 'Losses'}
-                  </span>
-                  <span className="text-xl font-semibold text-red-600 dark:text-red-400">
-                    {comparison.gamesAgainst.losses}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-600">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {t('playerCard.winRate')}
-                  </span>
-                  <span className="text-xl font-bold text-gray-900 dark:text-white">
-                    {comparison.gamesAgainst.winRate}%
-                  </span>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('profile.total')}
+                    </span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {comparison.gamesAgainst.total}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('playerCard.gamesWon')}
+                    </span>
+                    <span className="text-xl font-semibold text-green-600 dark:text-green-400">
+                      {comparison.gamesAgainst.wins}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('playerCard.gamesLost') || 'Losses'}
+                    </span>
+                    <span className="text-xl font-semibold text-red-600 dark:text-red-400">
+                      {comparison.gamesAgainst.losses}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('playerCard.winRate')}
+                    </span>
+                    <span className="text-xl font-bold text-gray-900 dark:text-white">
+                      {comparison.gamesAgainst.winRate}%
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {activeTab === 'games' && (
+            <div className="space-y-4">
+              {comparison.gamesAgainstEachOther && comparison.gamesAgainstEachOther.length > 0 ? (
+                comparison.gamesAgainstEachOther.map((game) => (
+                  <GameCard
+                    key={game.id}
+                    game={game as unknown as Game}
+                    user={currentUser}
+                    isInitiallyCollapsed={true}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  {t('profile.noGamesAgainstEachOther') || 'No games where both players played against each other'}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'more' && comparison.currentUserStats && comparison.otherUserStats && (
+            <div className="space-y-6">
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-6 py-3">
+                <div className="grid grid-cols-3 gap-4 items-center">
+                  <div className="text-right">
+                    <div className={`text-2xl font-bold ${
+                      comparison.currentUserStats.totalGames > comparison.otherUserStats.totalGames
+                        ? 'text-green-600 dark:text-green-400'
+                        : comparison.currentUserStats.totalGames < comparison.otherUserStats.totalGames
+                        ? 'text-gray-500 dark:text-gray-500'
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {comparison.currentUserStats.totalGames}
+                    </div>
+                  </div>
+                  <div className="text-center text-sm font-semibold text-gray-600 dark:text-gray-400">
+                    {t('profile.totalGames')}
+                  </div>
+                  <div className="text-left">
+                    <div className={`text-2xl font-bold ${
+                      comparison.otherUserStats.totalGames > comparison.currentUserStats.totalGames
+                        ? 'text-green-600 dark:text-green-400'
+                        : comparison.otherUserStats.totalGames < comparison.currentUserStats.totalGames
+                        ? 'text-gray-500 dark:text-gray-500'
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {comparison.otherUserStats.totalGames}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-6 py-3">
+                <div className="grid grid-cols-3 gap-4 items-center">
+                  <div className="text-right">
+                    <div className={`text-2xl font-bold ${
+                      comparison.currentUserStats.totalMatches > comparison.otherUserStats.totalMatches
+                        ? 'text-green-600 dark:text-green-400'
+                        : comparison.currentUserStats.totalMatches < comparison.otherUserStats.totalMatches
+                        ? 'text-gray-500 dark:text-gray-500'
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {comparison.currentUserStats.totalMatches}
+                    </div>
+                  </div>
+                  <div className="text-center text-sm font-semibold text-gray-600 dark:text-gray-400">
+                    {t('profile.totalMatches') || 'Total Matches'}
+                  </div>
+                  <div className="text-left">
+                    <div className={`text-2xl font-bold ${
+                      comparison.otherUserStats.totalMatches > comparison.currentUserStats.totalMatches
+                        ? 'text-green-600 dark:text-green-400'
+                        : comparison.otherUserStats.totalMatches < comparison.currentUserStats.totalMatches
+                        ? 'text-gray-500 dark:text-gray-500'
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {comparison.otherUserStats.totalMatches}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-6 py-3">
+                <div className="grid grid-cols-3 gap-4 items-center">
+                  <div className="text-right">
+                    <div className={`text-2xl font-bold ${
+                      comparison.currentUserStats.gamesLast30Days > comparison.otherUserStats.gamesLast30Days
+                        ? 'text-green-600 dark:text-green-400'
+                        : comparison.currentUserStats.gamesLast30Days < comparison.otherUserStats.gamesLast30Days
+                        ? 'text-gray-500 dark:text-gray-500'
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {comparison.currentUserStats.gamesLast30Days}
+                    </div>
+                  </div>
+                  <div className="text-center text-sm font-semibold text-gray-600 dark:text-gray-400">
+                    {t('playerCard.gamesLast30Days')}
+                  </div>
+                  <div className="text-left">
+                    <div className={`text-2xl font-bold ${
+                      comparison.otherUserStats.gamesLast30Days > comparison.currentUserStats.gamesLast30Days
+                        ? 'text-green-600 dark:text-green-400'
+                        : comparison.otherUserStats.gamesLast30Days < comparison.currentUserStats.gamesLast30Days
+                        ? 'text-gray-500 dark:text-gray-500'
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {comparison.otherUserStats.gamesLast30Days}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-6 py-3">
+                <div className="grid grid-cols-3 gap-4 items-center">
+                  <div className="text-right">
+                    <div className={`text-2xl font-bold ${
+                      comparison.currentUserStats.totalWins > comparison.otherUserStats.totalWins
+                        ? 'text-green-600 dark:text-green-400'
+                        : comparison.currentUserStats.totalWins < comparison.otherUserStats.totalWins
+                        ? 'text-gray-500 dark:text-gray-500'
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {comparison.currentUserStats.totalWins}
+                    </div>
+                  </div>
+                  <div className="text-center text-sm font-semibold text-gray-600 dark:text-gray-400">
+                    {t('playerCard.gamesWon')}
+                  </div>
+                  <div className="text-left">
+                    <div className={`text-2xl font-bold ${
+                      comparison.otherUserStats.totalWins > comparison.currentUserStats.totalWins
+                        ? 'text-green-600 dark:text-green-400'
+                        : comparison.otherUserStats.totalWins < comparison.currentUserStats.totalWins
+                        ? 'text-gray-500 dark:text-gray-500'
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {comparison.otherUserStats.totalWins}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-6 py-3">
+                <div className="grid grid-cols-3 gap-4 items-center">
+                  <div className="text-right">
+                    <div className={`text-2xl font-bold ${
+                      parseFloat(comparison.currentUserStats.winsPercentage) > parseFloat(comparison.otherUserStats.winsPercentage)
+                        ? 'text-green-600 dark:text-green-400'
+                        : parseFloat(comparison.currentUserStats.winsPercentage) < parseFloat(comparison.otherUserStats.winsPercentage)
+                        ? 'text-gray-500 dark:text-gray-500'
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {comparison.currentUserStats.winsPercentage}%
+                    </div>
+                  </div>
+                  <div className="text-center text-sm font-semibold text-gray-600 dark:text-gray-400">
+                    {t('playerCard.winRate')}
+                  </div>
+                  <div className="text-left">
+                    <div className={`text-2xl font-bold ${
+                      parseFloat(comparison.otherUserStats.winsPercentage) > parseFloat(comparison.currentUserStats.winsPercentage)
+                        ? 'text-green-600 dark:text-green-400'
+                        : parseFloat(comparison.otherUserStats.winsPercentage) < parseFloat(comparison.currentUserStats.winsPercentage)
+                        ? 'text-gray-500 dark:text-gray-500'
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {comparison.otherUserStats.winsPercentage}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
 
