@@ -489,7 +489,7 @@
     "total": "Всего",
     "totalGames": "Всего игр",
     "totalMatches": "Всего матчей",
-    "noGamesAgainstEachOther": "Нет игр, где оба игрока участвовали друг против друга"
+    "noGamesAgainstEachOther": "Нет игр, где оба игрока участвовали"
   },
   "createGame": {
     "title": "Создать игру",

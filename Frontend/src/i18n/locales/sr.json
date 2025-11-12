@@ -483,7 +483,7 @@
     "total": "Укупно",
     "totalGames": "Укупно игара",
     "totalMatches": "Укупно мечева",
-    "noGamesAgainstEachOther": "Нема игара где су оба играча учествовала један против другог"
+    "noGamesAgainstEachOther": "Нема игара где су оба играча учествовала"
   },
   "createGame": {
     "title": "Креирај игру",

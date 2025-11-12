@@ -225,7 +225,7 @@ export const ProfileComparison = () => {
                 ))
               ) : (
                 <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                  {t('profile.noGamesAgainstEachOther') || 'No games where both players participated against each other'}
+                  {t('profile.noGamesAgainstEachOther') || 'No games where both players participated'}
                 </div>
               )}
             </div>
