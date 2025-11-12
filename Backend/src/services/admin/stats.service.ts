@@ -2,7 +2,7 @@ import prisma from '../../config/database';
 
 export class AdminStatsService {
   static async getStats(cityId?: string) {
-    const [totalUsers, totalGames, totalCities, totalClubs, activeGames] = await Promise.all([
+    const [totalUsers, totalGames, totalCities, totalClubs, activeGames, totalInvites] = await Promise.all([
       prisma.user.count({
         where: cityId ? { currentCityId: cityId } : undefined,
       }),
@@ -34,6 +34,20 @@ export class AdminStatsService {
           }),
         },
       }),
+      prisma.invite.count({
+        where: {
+          status: 'PENDING',
+          ...(cityId && {
+            game: {
+              court: {
+                club: {
+                  cityId: cityId,
+                },
+              },
+            },
+          }),
+        },
+      }),
     ]);
 
     return {
@@ -42,6 +56,7 @@ export class AdminStatsService {
       totalCities,
       totalClubs,
       activeGames,
+      totalInvites,
     };
   }
 }

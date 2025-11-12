@@ -1,6 +1,7 @@
 let API_URL = localStorage.getItem('apiUrl') || 'http://localhost:9000/api';
 let authToken = null;
 let selectedCityId = '';
+let currentInvites = [];
 
 const elements = {
     loginPage: document.getElementById('loginPage'),
@@ -153,6 +154,7 @@ async function loadStats() {
             document.getElementById('totalCities').textContent = stats.totalCities;
             document.getElementById('totalClubs').textContent = stats.totalClubs;
             document.getElementById('activeGames').textContent = stats.activeGames;
+            document.getElementById('totalInvites').textContent = stats.totalInvites || 0;
         }
     } catch (error) {
         console.error('Failed to load stats:', error);
@@ -689,7 +691,8 @@ async function loadInvites() {
         const queryParams = selectedCityId ? `?cityId=${selectedCityId}` : '';
         const response = await apiRequest(`/admin/invites${queryParams}`);
         if (response.success) {
-            renderInvitesTable(response.data);
+            currentInvites = response.data;
+            renderInvitesTable(currentInvites);
         }
     } catch (error) {
         console.error('Failed to load invites:', error);
@@ -786,6 +789,54 @@ function refreshInvites() {
     loadInvites();
 }
 
+async function acceptAllInvites() {
+    const pendingInvites = currentInvites.filter(invite => invite.status === 'PENDING');
+
+    if (pendingInvites.length === 0) {
+        alert('No pending invites to accept.');
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to accept all ${pendingInvites.length} pending invite(s)?`)) {
+        return;
+    }
+
+    const acceptBtn = document.querySelector('.btn-accept-all');
+    if (acceptBtn) {
+        acceptBtn.disabled = true;
+        acceptBtn.textContent = 'Accepting...';
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const invite of pendingInvites) {
+        try {
+            await apiRequest(`/admin/invites/${invite.id}/accept`, {
+                method: 'POST',
+            });
+            successCount++;
+        } catch (error) {
+            console.error(`Failed to accept invite ${invite.id}:`, error);
+            failCount++;
+        }
+    }
+
+    if (acceptBtn) {
+        acceptBtn.disabled = false;
+        acceptBtn.textContent = 'Accept ALL';
+    }
+
+    if (failCount > 0) {
+        alert(`Accepted ${successCount} invite(s). Failed to accept ${failCount} invite(s).`);
+    } else {
+        alert(`Successfully accepted ${successCount} invite(s).`);
+    }
+
+    loadInvites();
+    loadStats();
+}
+
 window.toggleUserStatus = toggleUserStatus;
 window.loadCities = loadCities;
 window.loadClubs = loadClubs;
@@ -799,6 +850,7 @@ window.viewGameModal = viewGameModal;
 window.acceptInvite = acceptInvite;
 window.declineInvite = declineInvite;
 window.refreshInvites = refreshInvites;
+window.acceptAllInvites = acceptAllInvites;
 
 document.addEventListener('DOMContentLoaded', () => {
     const savedToken = localStorage.getItem('adminToken');

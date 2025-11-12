@@ -1,6 +1,6 @@
 import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
 import { Game, Invite, JoinQueue } from '@/types';
-import { Users, UserPlus, Sliders, CheckCircle, XCircle, Plus } from 'lucide-react';
+import { Users, UserPlus, Sliders, CheckCircle, XCircle, Plus, Edit3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface GameParticipantsProps {
@@ -27,6 +27,7 @@ interface GameParticipantsProps {
   onDeclineJoinQueue: (userId: string) => void;
   onShowPlayerList: () => void;
   onShowManageUsers: () => void;
+  onEditMaxParticipants?: () => void;
 }
 
 export const GameParticipants = ({
@@ -53,6 +54,7 @@ export const GameParticipants = ({
   onDeclineJoinQueue,
   onShowPlayerList,
   onShowManageUsers,
+  onEditMaxParticipants,
 }: GameParticipantsProps) => {
   const { t } = useTranslation();
 
@@ -71,12 +73,24 @@ export const GameParticipants = ({
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           {game.minLevel !== undefined && game.maxLevel !== undefined && game.entityType !== 'BAR' ? `${t('games.level')} ${game.minLevel.toFixed(1)}-${game.maxLevel.toFixed(1)}` : t('games.participants')}
         </h2>
-        <span className="ml-auto text-gray-600 dark:text-gray-400">
-          {game.entityType === 'BAR' 
-            ? game.participants.filter(p => p.isPlaying).length
-            : `${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`
-          }
-        </span>
+        {canViewSettings && game.entityType !== 'BAR' && onEditMaxParticipants ? (
+          <Button
+            onClick={onEditMaxParticipants}
+            variant="primary"
+            size="sm"
+            className="ml-auto flex items-center gap-2"
+          >
+            <Edit3 size={16} />
+            {`${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`}
+          </Button>
+        ) : (
+          <span className="ml-auto text-gray-600 dark:text-gray-400">
+            {game.entityType === 'BAR' 
+              ? game.participants.filter(p => p.isPlaying).length
+              : `${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`
+            }
+          </span>
+        )}
       </div>
       <div className="space-y-4">
         {myInvites.length > 0 && (

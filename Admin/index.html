@@ -102,6 +102,13 @@
                             <p class="stat-value" id="activeGames">-</p>
                         </div>
                     </div>
+                    <div class="stat-card clickable" data-page="invites">
+                        <div class="stat-icon">📨</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Invites</p>
+                            <p class="stat-value" id="totalInvites">-</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -158,6 +165,7 @@
                 <div class="page-header">
                     <h1>Pending Invites</h1>
                     <div class="invites-controls">
+                        <button class="btn-primary btn-accept-all" onclick="acceptAllInvites()">✓ Accept ALL</button>
                         <button class="btn-secondary" onclick="refreshInvites()">Refresh</button>
                     </div>
                 </div>

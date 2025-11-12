@@ -19,6 +19,7 @@ import {
 import { DeleteGameConfirmationModal } from '@/components/DeleteGameConfirmationModal';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { GameSetup } from '@/components/GameDetails/GameSetup';
+import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { useAuthStore } from '@/store/authStore';
@@ -50,6 +51,7 @@ export const GameDetailsContent = () => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
+  const [isEditMaxParticipantsModalOpen, setIsEditMaxParticipantsModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     clubId: '',
     courtId: '',
@@ -606,6 +608,7 @@ export const GameDetailsContent = () => {
         onDeclineJoinQueue={handleDeclineJoinQueue}
         onShowPlayerList={() => setShowPlayerList(true)}
         onShowManageUsers={() => setShowManageUsers(true)}
+        onEditMaxParticipants={() => setIsEditMaxParticipantsModalOpen(true)}
       />
 
       {canViewSettings && (
@@ -765,6 +768,19 @@ export const GameDetailsContent = () => {
           }}
           onClose={() => setIsGameSetupModalOpen(false)}
           onConfirm={handleGameSetupConfirm}
+        />
+      )}
+
+      {isEditMaxParticipantsModalOpen && game && (
+        <EditMaxParticipantsModal
+          isOpen={isEditMaxParticipantsModalOpen}
+          game={game}
+          onClose={() => setIsEditMaxParticipantsModalOpen(false)}
+          onUpdate={(updatedGame) => setGame(updatedGame)}
+          onKickUser={async (userId) => {
+            if (!id) return;
+            await gamesApi.kickUser(id, userId);
+          }}
         />
       )}
     </div>

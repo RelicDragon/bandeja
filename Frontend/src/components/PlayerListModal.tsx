@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { X, MessageCircle, Check, Search } from 'lucide-react';
 import { usersApi, InvitablePlayer } from '@/api/users';
 import { invitesApi } from '@/api';
+import { gamesApi } from '@/api/games';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
 import { useFavoritesStore } from '@/store/favoritesStore';
@@ -46,8 +47,39 @@ export const PlayerListModal = ({
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        const response = await usersApi.getInvitablePlayers(gameId);
-        setPlayers(response.data);
+        const [playersResponse, gameResponse, invitesResponse] = await Promise.allSettled([
+          usersApi.getInvitablePlayers(gameId),
+          gameId ? gamesApi.getById(gameId) : Promise.resolve(null),
+          gameId ? invitesApi.getGameInvites(gameId).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+        ]);
+
+        if (playersResponse.status === 'fulfilled') {
+          setPlayers(playersResponse.value.data);
+        }
+
+        const participantIds = new Set<string>();
+        const invitedUserIds = new Set<string>();
+
+        if (gameResponse.status === 'fulfilled' && gameResponse.value?.data) {
+          gameResponse.value.data.participants.forEach((p: any) => {
+            participantIds.add(p.userId);
+          });
+        }
+
+        if (invitesResponse.status === 'fulfilled' && invitesResponse.value?.data) {
+          invitesResponse.value.data.forEach((invite: any) => {
+            if (invite.status === 'PENDING') {
+              invitedUserIds.add(invite.receiverId);
+            }
+          });
+        }
+
+        if (playersResponse.status === 'fulfilled') {
+          const filtered = playersResponse.value.data.filter((player) => {
+            return !participantIds.has(player.id) && !invitedUserIds.has(player.id);
+          });
+          setPlayers(filtered);
+        }
       } catch (error) {
         console.error('Failed to fetch players:', error);
       } finally {
