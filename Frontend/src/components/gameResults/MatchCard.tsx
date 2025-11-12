@@ -198,7 +198,7 @@ export const MatchCard = ({
           <div className="overflow-x-auto w-full">
             <div className="grid gap-2 min-w-max" style={{
               gridTemplateColumns: `max-content repeat(${displaySets.length}, 40px)`,
-              gridTemplateRows: 'auto auto'
+              gridTemplateRows: 'auto 4px auto'
             }}>
               <div className="flex items-center justify-center" style={{ gridColumn: '1', gridRow: '1' }}>
                 {renderTeam('teamA')}
@@ -216,13 +216,13 @@ export const MatchCard = ({
                 const shouldShowScore = set.teamA !== 0 || set.teamB !== 0 || canEnterScores;
 
                 return (
-                  <div key={`teamA-${setIndex}`} className="flex items-center justify-center" style={{
-                    gridColumn: `${setIndex + 2}`,
-                    gridRow: '1',
-                    transform: 'translateY(-15%)'
-                  }}>
+                <div key={`teamA-${setIndex}`} className="flex items-center justify-center" style={{
+                  gridColumn: `${setIndex + 2}`,
+                  gridRow: '1',
+                  transform: 'translateY(-15%)'
+                }}>
                     {shouldShowScore && (
-                      <button
+                  <button
                         onClick={isEditable ? () => onSetClick(setIndex) : undefined}
                         className="relative group"
                       >
@@ -250,13 +250,37 @@ export const MatchCard = ({
                             {set.teamA}
                           </span>
                         </div>
-                      </button>
+                  </button>
+                    )}
+                </div>
+                );
+              })}
+              
+              {displaySets.map((_, setIndex) => {
+                const set = displaySets[setIndex];
+                const shouldShowScore = set.teamA !== 0 || set.teamB !== 0 || canEnterScores;
+                const hasNonZeroScore = set.teamA !== 0 || set.teamB !== 0;
+                return (
+                  <div
+                    key={`dot-${setIndex}`}
+                    className="flex items-center justify-center"
+                    style={{
+                      gridColumn: `${setIndex + 2}`,
+                      gridRow: '2'
+                    }}
+                  >
+                    {shouldShowScore && (
+                      <div className={`mb-6 rounded-full ${
+                        hasNonZeroScore 
+                          ? 'w-1 h-1 bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 dark:from-yellow-400 dark:via-yellow-500 dark:to-yellow-700 ring-2 ring-yellow-500/50 dark:ring-yellow-400/50 shadow-[0_0_8px_rgba(234,179,8,0.6)] dark:shadow-[0_0_8px_rgba(250,204,21,0.6)]' 
+                          : 'w-1 h-1 bg-gray-400 dark:bg-gray-500'
+                      }`} />
                     )}
                   </div>
                 );
               })}
               
-              <div className="flex items-center justify-center" style={{ gridColumn: '1', gridRow: '2' }}>
+              <div className="flex items-center justify-center" style={{ gridColumn: '1', gridRow: '3' }}>
                 {renderTeam('teamB')}
               </div>
               
@@ -272,13 +296,13 @@ export const MatchCard = ({
                 const shouldShowScore = set.teamA !== 0 || set.teamB !== 0 || canEnterScores;
 
                 return (
-                  <div key={`teamB-${setIndex}`} className="flex items-center justify-center" style={{
-                    gridColumn: `${setIndex + 2}`,
-                    gridRow: '2',
-                    transform: 'translateY(-15%)'
-                  }}>
+                <div key={`teamB-${setIndex}`} className="flex items-center justify-center" style={{
+                  gridColumn: `${setIndex + 2}`,
+                  gridRow: '3',
+                  transform: 'translateY(-15%)'
+                }}>
                     {shouldShowScore && (
-                      <button
+                  <button
                         onClick={isEditable ? () => onSetClick(setIndex) : undefined}
                         className="relative group"
                       >
@@ -306,9 +330,9 @@ export const MatchCard = ({
                             {set.teamB}
                           </span>
                         </div>
-                      </button>
+                  </button>
                     )}
-                  </div>
+                </div>
                 );
               })}
             </div>
