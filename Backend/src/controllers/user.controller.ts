@@ -348,3 +348,198 @@ export const trackUserInteraction = asyncHandler(async (req: AuthRequest, res: R
   });
 });
 
+export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { otherUserId } = req.params as { otherUserId: string };
+  const currentUserId = req.userId!;
+
+  if (!otherUserId) {
+    throw new ApiError(400, 'Other user ID is required');
+  }
+
+  if (otherUserId === currentUserId) {
+    throw new ApiError(400, 'Cannot compare with yourself');
+  }
+
+  const otherUser = await prisma.user.findUnique({
+    where: { id: otherUserId },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      avatar: true,
+      level: true,
+    },
+  });
+
+  if (!otherUser) {
+    throw new ApiError(404, 'Other user not found');
+  }
+
+  const gamesTogether = await prisma.gameParticipant.findMany({
+    where: {
+      userId: currentUserId,
+      game: {
+        participants: {
+          some: {
+            userId: otherUserId,
+            isPlaying: true,
+          },
+        },
+        resultsStatus: 'FINAL',
+      },
+    },
+    include: {
+      game: {
+        include: {
+          fixedTeams: {
+            include: {
+              players: {
+                select: {
+                  userId: true,
+                },
+              },
+            },
+          },
+          rounds: {
+            include: {
+              matches: {
+                include: {
+                  teams: {
+                    include: {
+                      players: {
+                        select: {
+                          userId: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  let matchesTogetherCount = 0;
+  let matchesAgainstCount = 0;
+  let winsTogether = 0;
+  let lossesTogether = 0;
+  let winsAgainst = 0;
+  let lossesAgainst = 0;
+
+  for (const participant of gamesTogether) {
+    const game = participant.game;
+    const hasFixedTeams = game.hasFixedTeams;
+
+    if (hasFixedTeams && game.fixedTeams.length > 0) {
+      const currentUserTeam = game.fixedTeams.find((team) =>
+        team.players.some((p) => p.userId === currentUserId)
+      );
+      const otherUserTeam = game.fixedTeams.find((team) =>
+        team.players.some((p) => p.userId === otherUserId)
+      );
+
+      if (!currentUserTeam || !otherUserTeam) {
+        continue;
+      }
+
+      const sameFixedTeam = currentUserTeam.id === otherUserTeam.id;
+
+      for (const round of game.rounds) {
+        for (const match of round.matches) {
+          const currentUserInMatch = match.teams.some((team) =>
+            team.players.some((p) => p.userId === currentUserId)
+          );
+          const otherUserInMatch = match.teams.some((team) =>
+            team.players.some((p) => p.userId === otherUserId)
+          );
+
+          if (!currentUserInMatch || !otherUserInMatch) {
+            continue;
+          }
+
+          if (sameFixedTeam) {
+            matchesTogetherCount++;
+            const currentUserTeamInMatch = match.teams.find((team) =>
+              team.players.some((p) => p.userId === currentUserId)
+            );
+            if (currentUserTeamInMatch && match.winnerId === currentUserTeamInMatch.id) {
+              winsTogether++;
+            } else if (match.winnerId) {
+              lossesTogether++;
+            }
+          } else {
+            const currentUserTeamInMatch = match.teams.find((team) =>
+              team.players.some((p) => p.userId === currentUserId)
+            );
+            const otherUserTeamInMatch = match.teams.find((team) =>
+              team.players.some((p) => p.userId === otherUserId)
+            );
+
+            if (currentUserTeamInMatch && otherUserTeamInMatch && currentUserTeamInMatch.id !== otherUserTeamInMatch.id) {
+              matchesAgainstCount++;
+              if (match.winnerId === currentUserTeamInMatch.id) {
+                winsAgainst++;
+              } else if (match.winnerId === otherUserTeamInMatch.id) {
+                lossesAgainst++;
+              }
+            }
+          }
+        }
+      }
+    } else {
+      for (const round of game.rounds) {
+        for (const match of round.matches) {
+          const currentUserTeam = match.teams.find((team) =>
+            team.players.some((p) => p.userId === currentUserId)
+          );
+          const otherUserTeam = match.teams.find((team) =>
+            team.players.some((p) => p.userId === otherUserId)
+          );
+
+          if (!currentUserTeam || !otherUserTeam) {
+            continue;
+          }
+
+          if (currentUserTeam.id === otherUserTeam.id) {
+            matchesTogetherCount++;
+            if (match.winnerId === currentUserTeam.id) {
+              winsTogether++;
+            } else if (match.winnerId) {
+              lossesTogether++;
+            }
+          } else {
+            matchesAgainstCount++;
+            if (match.winnerId === currentUserTeam.id) {
+              winsAgainst++;
+            } else if (match.winnerId === otherUserTeam.id) {
+              lossesAgainst++;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  res.json({
+    success: true,
+    data: {
+      otherUser,
+      gamesTogether: {
+        total: matchesTogetherCount,
+        wins: winsTogether,
+        losses: lossesTogether,
+        winRate: matchesTogetherCount > 0 ? ((winsTogether / matchesTogetherCount) * 100).toFixed(1) : '0',
+      },
+      gamesAgainst: {
+        total: matchesAgainstCount,
+        wins: winsAgainst,
+        losses: lossesAgainst,
+        winRate: matchesAgainstCount > 0 ? ((winsAgainst / matchesAgainstCount) * 100).toFixed(1) : '0',
+      },
+    },
+  });
+});
+

@@ -409,6 +409,7 @@
     "totalGames": "Всего игр",
     "gamesLast30Days": "За 30 дней",
     "gamesWon": "Выиграно",
+    "gamesLost": "Проиграно",
     "winRate": "Процент побед",
     "levelHistory": "История уровня",
     "isTrainer": "Тренер",
@@ -473,7 +474,14 @@
       "preferNotToSay": "-"
     },
     "viewOriginalAvatar": "Посмотреть оригинальный аватар",
-    "removeAvatar": "Удалить аватар"
+    "removeAvatar": "Удалить аватар",
+    "general": "Общее",
+    "statistics": "Статистика",
+    "comparison": "Сравнение",
+    "selectPlayerToCompare": "Выберите игрока для сравнения",
+    "gamesTogether": "Матчи вместе",
+    "gamesAgainst": "Матчи против",
+    "noComparisonData": "Нет данных для сравнения"
   },
   "createGame": {
     "title": "Создать игру",

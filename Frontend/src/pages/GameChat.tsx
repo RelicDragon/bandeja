@@ -13,7 +13,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
-import { MessageCircle, ArrowLeft, MapPin, LogOut, ArrowDown } from 'lucide-react';
+import { MessageCircle, ArrowLeft, MapPin, LogOut, ArrowDown, Camera } from 'lucide-react';
 
 export const GameChat: React.FC = () => {
   const { t } = useTranslation();
@@ -554,7 +554,11 @@ export const GameChat: React.FC = () => {
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                   } ${isSwitchingChatType ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {t(`chat.types.${chatType}`)}
+                  {chatType === 'PHOTOS' ? (
+                    <Camera size={18} />
+                  ) : (
+                    t(`chat.types.${chatType}`)
+                  )}
                 </button>
               ))}
             </div>

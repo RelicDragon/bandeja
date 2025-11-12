@@ -35,6 +35,8 @@ router.post(
   userController.setInitialLevel
 );
 
+router.get('/compare/:otherUserId', authenticate, userController.getPlayerComparison);
+
 router.get('/:userId/stats', authenticate, userController.getUserStats);
 
 router.get('/invitable-players', authenticate, userController.getInvitablePlayers);

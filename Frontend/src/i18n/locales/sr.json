@@ -403,6 +403,7 @@
     "totalGames": "Укупно игара",
     "gamesLast30Days": "Последњих 30 дана",
     "gamesWon": "Победа",
+    "gamesLost": "Пораза",
     "winRate": "Проценат победа",
     "levelHistory": "Историја нивоа",
     "isTrainer": "Тренер",
@@ -467,7 +468,14 @@
       "preferNotToSay": "-"
     },
     "viewOriginalAvatar": "Погледај оригинални аватар",
-    "removeAvatar": "Уклони аватар"
+    "removeAvatar": "Уклони аватар",
+    "general": "Опште",
+    "statistics": "Статистика",
+    "comparison": "Поређење",
+    "selectPlayerToCompare": "Изаберите играча за поређење",
+    "gamesTogether": "Мечеви заједно",
+    "gamesAgainst": "Мечеви против",
+    "noComparisonData": "Нема података за поређење"
   },
   "createGame": {
     "title": "Креирај игру",

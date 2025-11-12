@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal } from '@/components';
+import { ProfileStatistics } from '@/components/ProfileStatistics';
+import { ProfileComparison } from '@/components/ProfileComparison';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
@@ -15,6 +17,7 @@ export const ProfileContent = () => {
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
+  const [activeTab, setActiveTab] = useState<'general' | 'statistics' | 'comparison'>('general');
 
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
@@ -237,7 +240,44 @@ export const ProfileContent = () => {
 
   return (
     <>
-      <div className="space-y-6 pt-5">
+      <div className="space-y-6 pt-0">
+        <div className="mb-4">
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => setActiveTab('general')}
+              className={`px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 ${
+                activeTab === 'general'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              {t('profile.general') || 'General'}
+            </button>
+            <button
+              onClick={() => setActiveTab('statistics')}
+              className={`px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 ${
+                activeTab === 'statistics'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              {t('profile.statistics') || 'Statistics'}
+            </button>
+            <button
+              onClick={() => setActiveTab('comparison')}
+              className={`px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 ${
+                activeTab === 'comparison'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              {t('profile.comparison') || 'Comparison'}
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'general' && (
+          <>
         <div className="flex justify-center">
           <div className="relative">
             <AvatarUpload
@@ -577,6 +617,20 @@ export const ProfileContent = () => {
             </Button>
           </div>
         </Card>
+          </>
+        )}
+
+        {activeTab === 'statistics' && (
+          <Card>
+            <ProfileStatistics />
+          </Card>
+        )}
+
+        {activeTab === 'comparison' && (
+          <Card>
+            <ProfileComparison />
+          </Card>
+        )}
       </div>
 
       {showCityModal && (

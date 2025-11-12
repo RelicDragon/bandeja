@@ -311,7 +311,7 @@ export const PlayerListModal = ({
                       </div>
                     ) : (
                       <>
-                        {t('common.confirm')} {selectedIds.length > 0 && `(${selectedIds.length})`}
+                        {t('common.confirm')} {multiSelect && selectedIds.length > 0 && `(${selectedIds.length})`}
                       </>
                     )}
                   </Button>

@@ -17,6 +17,28 @@ export interface UserStats {
   gamesLast30Days: number;
 }
 
+export interface PlayerComparison {
+  otherUser: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+    level: number;
+  };
+  gamesTogether: {
+    total: number;
+    wins: number;
+    losses: number;
+    winRate: string;
+  };
+  gamesAgainst: {
+    total: number;
+    wins: number;
+    losses: number;
+    winRate: string;
+  };
+}
+
 export interface InvitablePlayer {
   id: string;
   firstName?: string;
@@ -60,6 +82,11 @@ export const usersApi = {
     const response = await api.post<ApiResponse<any>>('/users/track-interaction', {
       targetUserId,
     });
+    return response.data;
+  },
+
+  getPlayerComparison: async (otherUserId: string) => {
+    const response = await api.get<ApiResponse<PlayerComparison>>(`/users/compare/${otherUserId}`);
     return response.data;
   },
 };

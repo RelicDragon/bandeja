@@ -401,6 +401,7 @@
     "totalGames": "Juegos totales",
     "gamesLast30Days": "Últimos 30 días",
     "gamesWon": "Ganados",
+    "gamesLost": "Perdidos",
     "winRate": "Tasa de victorias",
     "levelHistory": "Historial de nivel",
     "isTrainer": "Entrenador",
@@ -465,7 +466,14 @@
       "preferNotToSay": "-"
     },
     "viewOriginalAvatar": "Ver avatar original",
-    "removeAvatar": "Eliminar avatar"
+    "removeAvatar": "Eliminar avatar",
+    "general": "General",
+    "statistics": "Estadísticas",
+    "comparison": "Comparación",
+    "selectPlayerToCompare": "Seleccionar jugador para comparar",
+    "gamesTogether": "Partidos Juntos",
+    "gamesAgainst": "Partidos Contra",
+    "noComparisonData": "No hay datos de comparación disponibles"
   },
   "createGame": {
     "title": "Crear juego",

@@ -24,9 +24,10 @@ const TennisBallIcon = () => (
 
 interface LevelHistoryViewProps {
   stats: UserStats;
+  padding?: 'p-6' | 'p-0';
 }
 
-export const LevelHistoryView = ({ stats }: LevelHistoryViewProps) => {
+export const LevelHistoryView = ({ stats, padding = 'p-6' }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const currentUser = useAuthStore((state) => state.user);
   const { setCurrentPage, setIsAnimating } = useNavigationStore();
@@ -78,7 +79,7 @@ export const LevelHistoryView = ({ stats }: LevelHistoryViewProps) => {
   const levelRange = maxLevel - minLevel || 1;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className={`${padding} space-y-6`}>
       <div className="relative">
         <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-6 text-center">
           <div className="text-white text-sm mb-2">

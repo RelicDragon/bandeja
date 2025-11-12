@@ -408,6 +408,7 @@
     "totalGames": "Total Games",
     "gamesLast30Days": "Last 30 Days",
     "gamesWon": "Won",
+    "gamesLost": "Lost",
     "winRate": "Win Rate",
     "levelHistory": "Level History",
     "isTrainer": "Trainer",
@@ -472,7 +473,14 @@
       "preferNotToSay": "-"
     },
     "viewOriginalAvatar": "View original avatar",
-    "removeAvatar": "Remove avatar"
+    "removeAvatar": "Remove avatar",
+    "general": "General",
+    "statistics": "Statistics",
+    "comparison": "Comparison",
+    "selectPlayerToCompare": "Select player to compare",
+    "gamesTogether": "Matches Together",
+    "gamesAgainst": "Matches Against",
+    "noComparisonData": "No comparison data available"
   },
   "createGame": {
     "title": "Create Game",

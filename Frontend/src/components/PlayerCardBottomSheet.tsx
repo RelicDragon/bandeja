@@ -277,7 +277,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.3, ease: 'easeOut' }}
                   >
-                    <LevelHistoryView stats={stats} />
+                    <LevelHistoryView stats={stats} padding="p-6" />
                   </motion.div>
                 ) : (
                   <motion.div
