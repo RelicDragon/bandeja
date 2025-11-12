@@ -488,7 +488,7 @@
     "total": "Total",
     "totalGames": "Total Games",
     "totalMatches": "Total Matches",
-    "noGamesAgainstEachOther": "No games where both players played against each other"
+    "noGamesAgainstEachOther": "No games where both players participated against each other"
   },
   "createGame": {
     "title": "Create Game",
