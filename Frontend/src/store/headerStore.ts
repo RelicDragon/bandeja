@@ -9,12 +9,14 @@ interface HeaderState {
   isNewInviteAnimating: boolean;
   showChatFilter: boolean;
   syncStatus: SyncStatus;
+  selectedDateForCreateGame: Date | null;
   setPendingInvites: (count: number) => void;
   setUnreadMessages: (count: number) => void;
   setShowGameTypeModal: (show: boolean) => void;
   setShowChatFilter: (show: boolean) => void;
   triggerNewInviteAnimation: () => void;
   setSyncStatus: (status: SyncStatus) => void;
+  setSelectedDateForCreateGame: (date: Date | null) => void;
 }
 
 export const useHeaderStore = create<HeaderState>((set) => ({
@@ -24,6 +26,7 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   isNewInviteAnimating: false,
   showChatFilter: false,
   syncStatus: 'IDLE',
+  selectedDateForCreateGame: null,
   setPendingInvites: (count) => set({ pendingInvites: count }),
   setUnreadMessages: (count) => set({ unreadMessages: count }),
   setShowGameTypeModal: (show) => set({ showGameTypeModal: show }),
@@ -34,4 +37,5 @@ export const useHeaderStore = create<HeaderState>((set) => ({
     setTimeout(() => set({ isNewInviteAnimating: false }), 1000);
   },
   setSyncStatus: (status) => set({ syncStatus: status }),
+  setSelectedDateForCreateGame: (date) => set({ selectedDateForCreateGame: date }),
 }));

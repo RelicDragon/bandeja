@@ -95,6 +95,7 @@ export const GameStartSection = ({
                 showCalendarAsSelected={showDatePicker || !isSelectedDateInFixedRange}
                 hideTodayIfNoSlots={!showPastTimes}
                 hasTimeSlotsForToday={generateTimeOptionsForDate(new Date()).length > 0}
+                hideCurrentDateIndicator={true}
               />
             </div>
             {showDatePicker && (

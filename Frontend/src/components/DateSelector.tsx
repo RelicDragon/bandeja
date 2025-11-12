@@ -11,6 +11,7 @@ interface DateSelectorProps {
   showCalendarAsSelected?: boolean;
   hideTodayIfNoSlots?: boolean;
   hasTimeSlotsForToday?: boolean;
+  hideCurrentDateIndicator?: boolean;
 }
 
 const localeMap = {
@@ -27,7 +28,7 @@ const dateFormatMap: Record<string, string> = {
   sr: 'dd.MM.yyyy',
 };
 
-export const DateSelector = ({ selectedDate, onDateSelect, onCalendarClick, showCalendarAsSelected, hideTodayIfNoSlots = false, hasTimeSlotsForToday = true }: DateSelectorProps) => {
+export const DateSelector = ({ selectedDate, onDateSelect, onCalendarClick, showCalendarAsSelected, hideTodayIfNoSlots = false, hasTimeSlotsForToday = true, hideCurrentDateIndicator = false }: DateSelectorProps) => {
   const { t, i18n } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -63,6 +64,9 @@ export const DateSelector = ({ selectedDate, onDateSelect, onCalendarClick, show
   };
 
   const isDateEmphasized = (date: Date) => {
+    if (hideCurrentDateIndicator) {
+      return false;
+    }
     // Emphasize today if it's available, otherwise emphasize the first date
     if (isToday(date) && hasTimeSlotsForToday && !hideTodayIfNoSlots) {
       return true;

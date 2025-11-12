@@ -8,11 +8,12 @@ import { useNavigate } from 'react-router-dom';
 export const HomeHeaderContent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { showGameTypeModal, setShowGameTypeModal } = useHeaderStore();
+  const { showGameTypeModal, setShowGameTypeModal, selectedDateForCreateGame } = useHeaderStore();
 
   const handleSelectEntityType = (entityType: EntityType) => {
+    console.log('HomeHeaderContent - navigating with date:', selectedDateForCreateGame);
     setShowGameTypeModal(false);
-    navigate('/create-game', { state: { entityType } });
+    navigate('/create-game', { state: { entityType, initialDate: selectedDateForCreateGame } });
   };
 
   return (

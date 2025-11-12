@@ -13,12 +13,15 @@ import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 
 interface CreateGameProps {
   entityType: EntityType;
+  initialDate?: Date | null;
 }
 
-export const CreateGame = ({ entityType }: CreateGameProps) => {
+export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+
+  console.log('CreateGame - initialDate received:', initialDate, typeof initialDate);
 
   const [clubs, setClubs] = useState<Club[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
@@ -40,7 +43,21 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
   const [gameType, setGameType] = useState<GameType>('CLASSIC');
   const [gameName, setGameName] = useState<string>('');
   const [comments, setComments] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [storedInitialDate] = useState<Date>(() => {
+    if (initialDate) {
+      const date = initialDate instanceof Date ? initialDate : new Date(initialDate);
+      console.log('CreateGame - storedInitialDate set to:', date);
+      return date;
+    }
+    console.log('CreateGame - no initialDate, using current date');
+    return new Date();
+  });
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    if (initialDate) {
+      return initialDate instanceof Date ? initialDate : new Date(initialDate);
+    }
+    return new Date();
+  });
   const [selectedTime, setSelectedTime] = useState<string>('18:00');
   const [duration, setDuration] = useState<number>(2);
   const [loading, setLoading] = useState(false);
@@ -170,23 +187,33 @@ export const CreateGame = ({ entityType }: CreateGameProps) => {
           setSelectedCourt('notBooked');
         }
         
-        // Auto-select today's date if time slots are available, otherwise select tomorrow
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        const todayTimeSlots = generateTimeOptionsForDate(today);
-        if (todayTimeSlots.length > 0) {
-          setSelectedDate(today);
+        // Reset to stored initial date or auto-select based on time slots
+        console.log('CreateGame - club changed, resetting to storedInitialDate:', storedInitialDate);
+        const initialDateTimeSlots = generateTimeOptionsForDate(storedInitialDate);
+        console.log('CreateGame - time slots for stored date:', initialDateTimeSlots.length);
+        if (initialDateTimeSlots.length > 0) {
+          setSelectedDate(storedInitialDate);
+          console.log('CreateGame - date set to storedInitialDate');
         } else {
-          setSelectedDate(tomorrow);
+          // If initial date has no time slots, check tomorrow
+          const tomorrow = new Date(storedInitialDate);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrowTimeSlots = generateTimeOptionsForDate(tomorrow);
+          console.log('CreateGame - time slots for tomorrow:', tomorrowTimeSlots.length);
+          if (tomorrowTimeSlots.length > 0) {
+            setSelectedDate(tomorrow);
+            console.log('CreateGame - date set to tomorrow');
+          } else {
+            setSelectedDate(storedInitialDate);
+            console.log('CreateGame - date set to storedInitialDate (fallback)');
+          }
         }
       } catch (error) {
         console.error('Failed to fetch courts:', error);
       }
     };
     fetchCourts();
-  }, [selectedClub, generateTimeOptionsForDate]);
+  }, [selectedClub, generateTimeOptionsForDate, storedInitialDate]);
 
   useEffect(() => {
     if (selectedCourt === 'notBooked') {

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Card, GameCard, DateSelectorWithCount } from '@/components';
 import { Game } from '@/types';
 import { MapPin } from 'lucide-react';
 import { format, startOfDay, addDays } from 'date-fns';
+import { useHeaderStore } from '@/store/headerStore';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
@@ -23,6 +24,12 @@ export const AvailableGamesSection = ({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [filterByLevel, setFilterByLevel] = useState(true);
+  const setSelectedDateForCreateGame = useHeaderStore((state) => state.setSelectedDateForCreateGame);
+
+  useEffect(() => {
+    console.log('AvailableGamesSection - storing date for create game:', selectedDate);
+    setSelectedDateForCreateGame(selectedDate);
+  }, [selectedDate, setSelectedDateForCreateGame]);
 
   // Check if selected date is within the fixed date range (next 7 days)
   const fixedDates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
