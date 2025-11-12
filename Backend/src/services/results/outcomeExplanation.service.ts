@@ -23,6 +23,8 @@ interface SetExplanation {
   setNumber: number;
   isWinner: boolean;
   levelChange: number;
+  userScore: number;
+  opponentScore: number;
 }
 
 interface MatchExplanation {
@@ -276,6 +278,8 @@ export async function getOutcomeExplanation(
               setNumber,
               isWinner: setIsWinner,
               levelChange: setLevelChange,
+              userScore: userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore,
+              opponentScore: userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore,
             });
           }
         } else if (participantLevelUpMode === ParticipantLevelUpMode.COMBINED) {
@@ -323,6 +327,8 @@ export async function getOutcomeExplanation(
               setNumber,
               isWinner: setIsWinner,
               levelChange: setLevelChange,
+              userScore: userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore,
+              opponentScore: userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore,
             });
           }
 
@@ -350,6 +356,22 @@ export async function getOutcomeExplanation(
           matchPointsEarned = update.pointsEarned;
           matchMultiplier = update.multiplier;
           matchTotalPointDifferential = update.totalPointDifferential;
+
+          let setNumber = 0;
+          for (const set of validSets) {
+            setNumber++;
+            const setAWins = set.teamAScore > set.teamBScore;
+            const setBWins = set.teamBScore > set.teamAScore;
+            const setIsWinner = userTeam.teamNumber === 1 ? setAWins : setBWins;
+
+            setExplanations.push({
+              setNumber,
+              isWinner: setIsWinner,
+              levelChange: 0,
+              userScore: userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore,
+              opponentScore: userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore,
+            });
+          }
         }
 
         currentLevel += matchLevelChange;

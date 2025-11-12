@@ -113,6 +113,8 @@ export interface SetExplanation {
   setNumber: number;
   isWinner: boolean;
   levelChange: number;
+  userScore: number;
+  opponentScore: number;
 }
 
 export interface MatchExplanation {

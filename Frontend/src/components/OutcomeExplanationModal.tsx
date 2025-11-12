@@ -32,6 +32,16 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
     return players.map(p => `${p.firstName || ''} ${p.lastName || ''}`).join(', ');
   };
 
+  const groupedMatches = explanation.matches.reduce((acc, match) => {
+    if (!acc[match.roundNumber]) {
+      acc[match.roundNumber] = [];
+    }
+    acc[match.roundNumber].push(match);
+    return acc;
+  }, {} as Record<number, typeof explanation.matches>);
+
+  const sortedRounds = Object.keys(groupedMatches).map(Number).sort((a, b) => a - b);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fadeIn">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
@@ -93,30 +103,50 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
           <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
             {t('gameResults.matchByMatch')}
           </h3>
-          <div className="space-y-3">
-            {explanation.matches.map((match, index) => (
-              <div
-                key={index}
-                className={`p-3 rounded-lg border ${
-                  match.isWinner
-                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                }`}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">
-                      {t('gameResults.matchLabel')} #{match.matchNumber}
-                    </span>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 ml-2">
-                      ({t('gameResults.round')} {match.roundNumber})
-                    </span>
-                  </div>
-                  <div className={`flex items-center gap-1 font-semibold ${getLevelChangeColor(match.levelChange)}`}>
-                    {getLevelChangeIcon(match.levelChange)}
-                    {formatChange(match.levelChange)}
-                  </div>
-                </div>
+          <div className="space-y-6">
+            {sortedRounds.map((roundNumber) => (
+              <div key={roundNumber} className="space-y-3">
+                {sortedRounds.length > 1 && (
+                  <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 border-b border-gray-300 dark:border-gray-600 pb-1">
+                    {t('gameResults.round')} {roundNumber}
+                  </h4>
+                )}
+                {groupedMatches[roundNumber].map((match, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-lg border ${
+                      match.isWinner
+                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">
+                          {t('gameResults.matchLabel')} #{match.matchNumber}
+                        </span>
+                        {match.sets && match.sets.length > 0 && (
+                          <div className="flex gap-1.5">
+                            {match.sets.map((set, setIndex) => (
+                              <span
+                                key={setIndex}
+                                className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                                  set.isWinner
+                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                    : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                }`}
+                              >
+                                {set.userScore}-{set.opponentScore}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className={`flex items-center gap-1 font-semibold ${getLevelChangeColor(match.levelChange)}`}>
+                        {getLevelChangeIcon(match.levelChange)}
+                        {formatChange(match.levelChange)}
+                      </div>
+                    </div>
 
                 <div className="text-xs space-y-1 text-gray-700 dark:text-gray-300">
                   {match.teammates.length > 0 && (
@@ -166,15 +196,20 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                       </span>
                     </div>
                   )}
-                  {match.sets && match.sets.length > 0 && (
+                  {match.sets && match.sets.length > 0 && match.sets.some(s => s.levelChange !== 0) && (
                     <div className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
                       <span className="text-gray-600 dark:text-gray-400 text-xs font-semibold">{t('gameResults.sets')}:</span>
                       <div className="mt-1 space-y-1">
                         {match.sets.map((set, setIndex) => (
                           <div key={setIndex} className="flex items-center justify-between text-xs">
-                            <span className="text-gray-700 dark:text-gray-300">
-                              {t('gameResults.set')} {set.setNumber}: {set.isWinner ? t('gameResults.win') : t('gameResults.loss')}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-700 dark:text-gray-300">
+                                {t('gameResults.set')} {set.setNumber}:
+                              </span>
+                              <span className={`font-semibold ${set.isWinner ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                {set.userScore} - {set.opponentScore}
+                              </span>
+                            </div>
                             <span className={`font-semibold ${getLevelChangeColor(set.levelChange)}`}>
                               {formatChange(set.levelChange)}
                             </span>
@@ -184,6 +219,8 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                     </div>
                   )}
                 </div>
+              </div>
+                ))}
               </div>
             ))}
           </div>
