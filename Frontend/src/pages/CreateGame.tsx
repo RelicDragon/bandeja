@@ -38,7 +38,6 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
   const [allowDirectJoin, setAllowDirectJoin] = useState<boolean>(false);
   const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(false);
   const [hasFixedTeams, setHasFixedTeams] = useState<boolean>(false);
-  const [hasMultiRounds, setHasMultiRounds] = useState<boolean>(false);
   const [genderTeams, setGenderTeams] = useState<'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'>('ANY');
   const [gameType, setGameType] = useState<GameType>('CLASSIC');
   const [gameName, setGameName] = useState<string>('');
@@ -353,7 +352,6 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
         hasBookedCourt: hasBookedCourt,
         afterGameGoToBar: afterGameGoToBar,
         hasFixedTeams: hasFixedTeams,
-        hasMultiRounds: hasMultiRounds,
         genderTeams: genderTeams,
         name: gameName || undefined,
         description: comments,
@@ -407,9 +405,6 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
     }
     if (num === 2) {
       setHasFixedTeams(false);
-    }
-    if (num <= 4) {
-      setHasMultiRounds(false);
     }
   };
 
@@ -497,7 +492,6 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
           allowDirectJoin={allowDirectJoin}
           afterGameGoToBar={afterGameGoToBar}
           hasFixedTeams={hasFixedTeams}
-          hasMultiRounds={hasMultiRounds}
           genderTeams={genderTeams}
           gameType={gameType}
           maxParticipants={maxParticipants}
@@ -509,7 +503,6 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
           onAllowDirectJoinChange={setAllowDirectJoin}
           onAfterGameGoToBarChange={setAfterGameGoToBar}
           onHasFixedTeamsChange={setHasFixedTeams}
-          onHasMultiRoundsChange={setHasMultiRounds}
           onGenderTeamsChange={setGenderTeams}
           onGameTypeChange={setGameType}
         />
@@ -609,7 +602,6 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
         <GameSetupModal
           isOpen={isGameSetupModalOpen}
           entityType={entityType}
-          hasMultiRounds={hasMultiRounds}
           isEditing={true}
           confirmButtonText={t('common.save')}
           initialValues={gameSetup}

@@ -67,8 +67,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       Promise.race([
         fetch(event.request).then((response) => {
-          // Cache successful API responses for offline access
-          if (response && response.status === 200) {
+          // Cache successful GET API responses for offline access
+          if (response && response.status === 200 && event.request.method === 'GET') {
             const responseClone = response.clone();
             caches.open(RUNTIME_CACHE).then((cache) => {
               cache.put(event.request, responseClone);

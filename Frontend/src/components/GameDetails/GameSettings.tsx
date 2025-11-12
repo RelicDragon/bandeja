@@ -23,7 +23,6 @@ interface GameSettingsProps {
     hasBookedCourt: boolean;
     afterGameGoToBar: boolean;
     hasFixedTeams: boolean;
-    hasMultiRounds: boolean;
     genderTeams: GenderTeam;
     gameType: GameType;
     description: string;
@@ -202,20 +201,6 @@ export const GameSettings = ({
 
         {/* Boolean Settings */}
         <div className="space-y-2">
-          {game?.entityType === 'GAME' && game?.maxParticipants > 4 && (
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.tournament')}
-              </span>
-              <div className="flex-shrink-0">
-                <ToggleSwitch
-                  checked={isEditMode ? editFormData.hasMultiRounds : game?.hasMultiRounds || false}
-                  onChange={(checked) => onFormDataChange({hasMultiRounds: checked})}
-                  disabled={!isEditMode}
-                />
-              </div>
-            </div>
-          )}
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">

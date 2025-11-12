@@ -62,7 +62,6 @@ export const GameDetailsContent = () => {
     hasBookedCourt: false,
     afterGameGoToBar: false,
     hasFixedTeams: false,
-    hasMultiRounds: false,
     genderTeams: 'ANY' as GenderTeam,
     gameType: 'CLASSIC' as GameType,
     description: '',
@@ -179,7 +178,6 @@ export const GameDetailsContent = () => {
         hasBookedCourt: game.hasBookedCourt || false,
         afterGameGoToBar: game.afterGameGoToBar || false,
         hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
-        hasMultiRounds: game.maxParticipants <= 4 ? false : (game.hasMultiRounds || false),
         genderTeams: (game.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS',
         gameType: (game.gameType || 'CLASSIC') as GameType,
         description: game.description || '',
@@ -425,7 +423,6 @@ export const GameDetailsContent = () => {
           hasBookedCourt: game.hasBookedCourt || false,
           afterGameGoToBar: game.afterGameGoToBar || false,
           hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
-          hasMultiRounds: game.maxParticipants <= 4 ? false : (game.hasMultiRounds || false),
           genderTeams: (game.genderTeams || 'ANY') as GenderTeam,
           gameType: (game.gameType || 'CLASSIC') as GameType,
           description: game.description || '',
@@ -457,7 +454,6 @@ export const GameDetailsContent = () => {
         hasBookedCourt: editFormData.hasBookedCourt,
         afterGameGoToBar: editFormData.afterGameGoToBar,
         hasFixedTeams: game?.maxParticipants === 2 ? false : editFormData.hasFixedTeams,
-        hasMultiRounds: (game?.maxParticipants ?? 0) <= 4 ? false : editFormData.hasMultiRounds,
         genderTeams: editFormData.genderTeams,
         gameType: editFormData.gameType,
         description: editFormData.description,
@@ -752,7 +748,6 @@ export const GameDetailsContent = () => {
         <GameSetupModal
           isOpen={isGameSetupModalOpen}
           entityType={game.entityType}
-          hasMultiRounds={game.hasMultiRounds || false}
           isEditing={canEdit}
           confirmButtonText={canEdit ? t('common.save') : undefined}
           initialValues={{

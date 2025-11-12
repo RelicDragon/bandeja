@@ -16,8 +16,6 @@ import { useGameResultsEngine } from '@/hooks/useGameResultsEngine';
 import { GameResultsEngine } from '@/services/gameResultsEngine';
 import { 
   GameStatusDisplay, 
-  MatchCard,
-  HorizontalMatchCard,
   HorizontalScoreEntryModal,
   RoundCard,
   AvailablePlayersFooter, 
@@ -71,7 +69,6 @@ export const GameResultsEntry = () => {
 
   const needsGameSetup = game?.resultsStatus === 'NONE';
 
-  const hasMultiRounds = game?.hasMultiRounds || false;
   const effectiveShowCourts = (game?.gameCourts?.length || 0) > 0;
   const effectiveHorizontalLayout = game?.fixedNumberOfSets === 1;
 
@@ -103,12 +100,12 @@ export const GameResultsEntry = () => {
   const finishButtonPanelHeight = (showFinishButton || showEditButton) ? 80 : 0;
 
   const handleMatchDrop = async (matchId: string, team: 'teamA' | 'teamB', draggedPlayer: string) => {
-    const roundId = hasMultiRounds && expandedRoundId ? expandedRoundId : 'round-1';
+    const roundId = expandedRoundId || 'round-1';
     await engine.addPlayerToTeam(roundId, matchId, team, draggedPlayer);
   };
 
   const updateSetResult = async (matchId: string, setIndex: number, teamAScore: number, teamBScore: number) => {
-    const roundId = hasMultiRounds && expandedRoundId ? expandedRoundId : 'round-1';
+    const roundId = expandedRoundId || 'round-1';
     const round = rounds.find(r => r.id === roundId);
     const match = round?.matches.find(m => m.id === matchId);
     
@@ -136,7 +133,7 @@ export const GameResultsEntry = () => {
   };
 
   const removeSet = async (matchId: string, setIndex: number) => {
-    const roundId = hasMultiRounds && expandedRoundId ? expandedRoundId : 'round-1';
+    const roundId = expandedRoundId || 'round-1';
     const round = rounds.find(r => r.id === roundId);
     const match = round?.matches.find(m => m.id === matchId);
     
@@ -153,30 +150,7 @@ export const GameResultsEntry = () => {
     });
   };
 
-  const addMatch = async () => {
-    console.log('addMatch', hasMultiRounds, expandedRoundId);
-    const roundId = hasMultiRounds && expandedRoundId ? expandedRoundId : 'round-1';
-    await engine.addMatch(roundId);
-  };
-
-  const removeMatch = async (matchId: string) => {
-    const roundId = hasMultiRounds && expandedRoundId ? expandedRoundId : 'round-1';
-    await engine.removeMatch(roundId, matchId);
-  };
-
-  const removePlayerFromTeam = async (matchId: string, team: 'teamA' | 'teamB', playerId: string) => {
-    const roundId = hasMultiRounds && expandedRoundId ? expandedRoundId : 'round-1';
-    await engine.removePlayerFromTeam(roundId, matchId, team, playerId);
-  };
-
   const dragAndDrop = useDragAndDrop(effectiveCanEdit);
-
-  const handleDrop = (e: React.DragEvent | null, matchId: string, team: 'teamA' | 'teamB') => {
-    if (e) e.preventDefault();
-    if (!dragAndDrop.draggedPlayer) return;
-    handleMatchDrop(matchId, team, dragAndDrop.draggedPlayer);
-    dragAndDrop.handleDragEnd();
-  };
 
   const handleTouchEndWrapper = (e: TouchEvent) => {
     dragAndDrop.handleTouchEnd(e, handleMatchDrop);
@@ -385,7 +359,7 @@ export const GameResultsEntry = () => {
 
     const { roundId, matchId, team } = selectedMatchTeam;
     
-    const actualRoundId = roundId || (hasMultiRounds && expandedRoundId ? expandedRoundId : 'round-1');
+    const actualRoundId = roundId || expandedRoundId || 'round-1';
     const round = rounds.find(r => r.id === actualRoundId);
     if (!round) return;
     
@@ -622,7 +596,7 @@ export const GameResultsEntry = () => {
       
       {/* Main Section - Scrollable */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-2">
           <div>
       {game?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
         <OutcomesDisplay outcomes={game.outcomes || []} affectsRating={game.affectsRating} gameId={game.id} />
@@ -686,8 +660,7 @@ export const GameResultsEntry = () => {
           onDragOver={dragAndDrop.handleDragOver}
           onClick={handleContainerClick}
         >
-          {(hasMultiRounds) ? (
-            <div className="space-y-1 pt-4 pb-4">
+          <div className="space-y-1 pt-0 pb-2">
               {rounds.map((round) => (
                 <RoundCard
                   key={round.id}
@@ -699,6 +672,7 @@ export const GameResultsEntry = () => {
                   editingMatchId={editingMatchId}
                   draggedPlayer={dragAndDrop.draggedPlayer}
                   showDeleteButton={rounds.length > 1 && effectiveCanEdit}
+                  hideFrame={rounds.length === 1}
                   onRemoveRound={() => engine.removeRound(round.id)}
                   onToggleExpand={() => {
                     if (expandedRoundId === round.id) {
@@ -769,114 +743,6 @@ export const GameResultsEntry = () => {
                 />
               )}
             </div>
-          ) : (
-            <div className="space-y-0 pt-0 pb-0">
-            {matches.map((match, matchIndex) => (
-              effectiveHorizontalLayout ? (
-                <HorizontalMatchCard
-                  key={match.id}
-                  match={match}
-                  matchIndex={matchIndex}
-                  players={players}
-                  isPresetGame={isPresetGame}
-                  isEditing={editingMatchId === match.id}
-                  canEditResults={effectiveCanEdit && isResultsEntryMode}
-                  draggedPlayer={dragAndDrop.draggedPlayer}
-                  showDeleteButton={matches.length > 1 && !isPresetGame && editingMatchId === match.id && effectiveCanEdit && !game?.prohibitMatchesEditing}
-                  onRemoveMatch={() => removeMatch(match.id)}
-                  onMatchClick={() => {
-                    if (!game?.prohibitMatchesEditing && editingMatchId !== match.id) {
-                      engine.setEditingMatchId(match.id);
-                    }
-                  }}
-                  onSetClick={(setIndex: number) => setShowSetModal({ matchId: match.id, setIndex })}
-                  onRemovePlayer={(team: 'teamA' | 'teamB', playerId: string) => removePlayerFromTeam(match.id, team, playerId)}
-                  onDragOver={dragAndDrop.handleDragOver}
-                  onDrop={(e: React.DragEvent, team: 'teamA' | 'teamB') => handleDrop(e, match.id, team)}
-                  onPlayerPlaceholderClick={(team: 'teamA' | 'teamB') => {
-                    setSelectedMatchTeam({ matchId: match.id, team });
-                    setShowPlayerSelector(true);
-                  }}
-                  canEnterResults={canEnterResults(match)}
-                  showCourtLabel={effectiveShowCourts}
-                  selectedCourt={game?.gameCourts?.map(gc => gc.court).find(c => c.id === match.courtId) || null}
-                  courts={game?.gameCourts?.map(gc => gc.court) || []}
-                  onCourtClick={() => handleCourtClick('round-1', match.id)}
-                  fixedNumberOfSets={game?.fixedNumberOfSets}
-                  prohibitMatchesEditing={game?.prohibitMatchesEditing}
-                />
-              ) : (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  matchIndex={matchIndex}
-                  players={players}
-                  isPresetGame={isPresetGame}
-                  isEditing={editingMatchId === match.id}
-                  canEditResults={effectiveCanEdit && isResultsEntryMode}
-                  draggedPlayer={dragAndDrop.draggedPlayer}
-                  showDeleteButton={matches.length > 1 && !isPresetGame && editingMatchId === match.id && effectiveCanEdit && !game?.prohibitMatchesEditing}
-                  onRemoveMatch={() => removeMatch(match.id)}
-                  onMatchClick={() => {
-                    if (!game?.prohibitMatchesEditing && editingMatchId !== match.id) {
-                      engine.setEditingMatchId(match.id);
-                    }
-                  }}
-                  onSetClick={(setIndex) => setShowSetModal({ matchId: match.id, setIndex })}
-                  onRemovePlayer={(team, playerId) => removePlayerFromTeam(match.id, team, playerId)}
-                  onDragOver={dragAndDrop.handleDragOver}
-                  onDrop={(e, team) => handleDrop(e, match.id, team)}
-                  onPlayerPlaceholderClick={(team) => {
-                    setSelectedMatchTeam({ matchId: match.id, team });
-                    setShowPlayerSelector(true);
-                  }}
-                  canEnterResults={canEnterResults(match)}
-                  showCourtLabel={effectiveShowCourts}
-                  selectedCourt={game?.gameCourts?.map(gc => gc.court).find(c => c.id === match.courtId) || null}
-                  courts={game?.gameCourts?.map(gc => gc.court) || []}
-                  onCourtClick={() => handleCourtClick('round-1', match.id)}
-                  fixedNumberOfSets={game?.fixedNumberOfSets}
-                  prohibitMatchesEditing={game?.prohibitMatchesEditing}
-                />
-              )
-            ))}
-            
-            {!isPresetGame && !game?.prohibitMatchesEditing && editingMatchId && effectiveCanEdit && (
-              <div 
-                className="flex justify-center mt-4"
-                onClick={(e) => {
-                  if (e.target === e.currentTarget) {
-                    engine.setEditingMatchId(null);
-                  }
-                }}
-              >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addMatch();
-                  }}
-                  className="w-12 h-12 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-colors shadow-lg"
-                >
-                  <Plus size={20} />
-                </button>
-              </div>
-            )}
-
-            {!isPresetGame && !game?.prohibitMatchesEditing && editingMatchId && effectiveCanEdit && (
-              <AvailablePlayersFooter
-                players={players}
-                editingMatch={matches.find(m => m.id === editingMatchId)}
-                draggedPlayer={dragAndDrop.draggedPlayer}
-                onDragStart={dragAndDrop.handleDragStart}
-                onDragEnd={dragAndDrop.handleDragEnd}
-                onTouchStart={dragAndDrop.handleTouchStart}
-                onTouchMove={dragAndDrop.handleTouchMove}
-                onTouchEnd={handleTouchEndWrapper}
-                bottomOffset={finishButtonPanelHeight}
-              />
-            )}
-          </div>
-          )}
         </div>
       )}
 
@@ -947,7 +813,7 @@ export const GameResultsEntry = () => {
               }}
               onConfirm={handlePlayerSelect}
               selectedPlayerIds={(() => {
-                const roundId = selectedMatchTeam.roundId || (hasMultiRounds && expandedRoundId ? expandedRoundId : 'round-1');
+                const roundId = selectedMatchTeam.roundId || expandedRoundId || 'round-1';
                 const round = rounds.find(r => r.id === roundId);
                 const match = round?.matches.find(m => m.id === selectedMatchTeam.matchId);
                 if (!match) return [];
@@ -1026,7 +892,6 @@ export const GameResultsEntry = () => {
             <GameSetupModal
               isOpen={showSetupModal}
               entityType={game.entityType}
-              hasMultiRounds={game.hasMultiRounds}
               initialValues={{
                 fixedNumberOfSets: game.fixedNumberOfSets,
                 maxTotalPointsPerSet: game.maxTotalPointsPerSet,

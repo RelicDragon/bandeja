@@ -7,7 +7,6 @@ import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType, Participa
 interface GameSetupModalProps {
   isOpen: boolean;
   entityType: EntityType;
-  hasMultiRounds?: boolean;
   isEditing?: boolean;
   confirmButtonText?: string;
   initialValues?: {
@@ -42,7 +41,6 @@ interface GameSetupModalProps {
 export const GameSetupModal = ({ 
   isOpen, 
   entityType, 
-  hasMultiRounds: _hasMultiRounds = true, 
   isEditing = true,
   confirmButtonText,
   initialValues,
@@ -62,9 +60,7 @@ export const GameSetupModal = ({
   const [winnerOfMatch, setWinnerOfMatch] = useState<WinnerOfMatch>(
     initialValues?.winnerOfMatch ?? 'BY_SCORES'
   );
-  const [participantLevelUpMode, setParticipantLevelUpMode] = useState<ParticipantLevelUpMode>(
-    initialValues?.participantLevelUpMode ?? 'BY_MATCHES'
-  );
+  const participantLevelUpMode: ParticipantLevelUpMode = 'BY_MATCHES';
   const [matchGenerationType, setMatchGenerationType] = useState<MatchGenerationType>(
     initialValues?.matchGenerationType ?? 'HANDMADE'
   );
@@ -321,47 +317,6 @@ export const GameSetupModal = ({
                     max: 100
                   </span>
                 </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                {t('gameResults.participantLevelUpMode')}
-              </label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setParticipantLevelUpMode('BY_MATCHES')}
-                  disabled={!isEditing}
-                  className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                    participantLevelUpMode === 'BY_MATCHES'
-                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                  } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                >
-                  {t('gameResults.byMatches')}
-                </button>
-                <button
-                  onClick={() => setParticipantLevelUpMode('BY_SETS')}
-                  disabled={!isEditing}
-                  className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                    participantLevelUpMode === 'BY_SETS'
-                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                  } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                >
-                  {t('gameResults.bySetsLevelUp')}
-                </button>
-                <button
-                  onClick={() => setParticipantLevelUpMode('COMBINED')}
-                  disabled={!isEditing}
-                  className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                    participantLevelUpMode === 'COMBINED'
-                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                  } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                >
-                  {t('gameResults.combined')}
-                </button>
               </div>
             </div>
 

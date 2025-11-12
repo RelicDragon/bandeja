@@ -14,7 +14,6 @@ interface GameSettingsSectionProps {
   allowDirectJoin: boolean;
   afterGameGoToBar: boolean;
   hasFixedTeams: boolean;
-  hasMultiRounds: boolean;
   genderTeams: GenderTeam;
   gameType: GameType;
   maxParticipants: number;
@@ -26,7 +25,6 @@ interface GameSettingsSectionProps {
   onAllowDirectJoinChange: (checked: boolean) => void;
   onAfterGameGoToBarChange: (checked: boolean) => void;
   onHasFixedTeamsChange: (checked: boolean) => void;
-  onHasMultiRoundsChange: (checked: boolean) => void;
   onGenderTeamsChange: (value: GenderTeam) => void;
   onGameTypeChange: (value: GameType) => void;
 }
@@ -39,7 +37,6 @@ export const GameSettingsSection = ({
   allowDirectJoin,
   afterGameGoToBar,
   hasFixedTeams,
-  hasMultiRounds,
   genderTeams,
   gameType,
   maxParticipants,
@@ -51,7 +48,6 @@ export const GameSettingsSection = ({
   onAllowDirectJoinChange,
   onAfterGameGoToBarChange,
   onHasFixedTeamsChange,
-  onHasMultiRoundsChange,
   onGenderTeamsChange,
   onGameTypeChange,
 }: GameSettingsSectionProps) => {
@@ -77,19 +73,6 @@ export const GameSettingsSection = ({
         </button>
       </div>
       <div className="space-y-2">
-        {entityType === 'GAME' && maxParticipants > 4 && (
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.tournament')}
-            </span>
-            <div className="flex-shrink-0">
-              <ToggleSwitch 
-                checked={hasMultiRounds} 
-                onChange={onHasMultiRoundsChange}
-              />
-            </div>
-          </div>
-        )}
         <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">

@@ -188,7 +188,6 @@ export interface Game {
   fixedNumberOfSets?: number;
   maxTotalPointsPerSet?: number;
   maxPointsPerTeam?: number;
-  hasMultiRounds?: boolean;
   winnerOfGame?: WinnerOfGame;
   winnerOfMatch?: WinnerOfMatch;
   participantLevelUpMode?: ParticipantLevelUpMode;

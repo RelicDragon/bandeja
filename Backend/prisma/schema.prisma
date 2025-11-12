@@ -172,7 +172,6 @@ model Game {
   fixedNumberOfSets Int             @default(0)
   maxTotalPointsPerSet Int          @default(0)
   maxPointsPerTeam Int              @default(0)
-  hasMultiRounds  Boolean           @default(false)
   winnerOfGame    WinnerOfGame      @default(BY_MATCHES_WON)
   winnerOfMatch   WinnerOfMatch     @default(BY_SCORES)
   participantLevelUpMode ParticipantLevelUpMode @default(BY_MATCHES)

@@ -77,7 +77,6 @@ export class GameCreateService {
         fixedNumberOfSets: data.fixedNumberOfSets ?? 0,
         maxTotalPointsPerSet: data.maxTotalPointsPerSet ?? 0,
         maxPointsPerTeam: data.maxPointsPerTeam ?? 0,
-        hasMultiRounds: data.hasMultiRounds ?? false,
         winnerOfGame: data.winnerOfGame ?? 'BY_MATCHES_WON',
         winnerOfMatch: data.winnerOfMatch ?? 'BY_SCORES',
         matchGenerationType: data.matchGenerationType ?? 'HANDMADE',

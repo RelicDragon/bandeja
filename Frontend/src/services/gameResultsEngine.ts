@@ -1,12 +1,11 @@
 import { create } from 'zustand';
-import { Game, User } from '@/types';
+import { Game } from '@/types';
 import { Round, Match, GameState } from '@/types/gameResults';
 import { Op, OutboxOp, GameShadow } from '@/types/ops';
 import { ResultsStorage } from './resultsStorage';
 import { resultsSyncService } from './resultsSync';
 import { resultsApi } from '@/api/results';
 import { gamesApi } from '@/api';
-import { createOneOnOneMatches, createTwoOnTwoMatches } from './predefinedResults';
 import { RoundGenerator } from './roundGenerator';
 import { OpCreator } from './opCreators';
 
@@ -344,15 +343,16 @@ class GameResultsEngineClass {
     const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit || !state.game) return;
 
-    const players = (state.game.participants?.map(p => p.user) || []) as User[];
-    if (players.length !== 2 && players.length !== 4) return;
+    const playingParticipants = state.game.participants.filter(p => p.isPlaying);
+    if (playingParticipants.length !== 2 && playingParticipants.length !== 4) return;
 
     const shadow = await ResultsStorage.getGame(state.gameId);
     const outbox = await ResultsStorage.getOutbox(state.gameId);
 
-    if (!shadow || !shadow.data || !shadow.data.rounds) return;
+    if (!shadow || !shadow.data) return;
 
-    const hasPlayers = shadow.data.rounds.some((round: any) =>
+    const existingRounds = shadow.data.rounds || [];
+    const hasPlayers = existingRounds.some((round: any) =>
       round.matches?.some((match: any) =>
         (match.teamA?.length > 0) || (match.teamB?.length > 0)
       )
@@ -360,58 +360,17 @@ class GameResultsEngineClass {
 
     if (hasPlayers || outbox.length > 0) return;
 
-    const roundId = 'round-1';
-    const roundName = `${t('gameResults.round')} 1`;
-    const existingRounds = shadow.data.rounds || [];
-    const hasRound = existingRounds.length > 0;
-    const existingMatches = hasRound ? (existingRounds[0].matches || []) : [];
-    const existingMatchIds = existingMatches.map((m: any) => m.id);
+    const opCreator = this.createOpCreator(shadow);
+    const roundGenerator = new RoundGenerator({
+      opCreator,
+      rounds: existingRounds,
+      game: state.game,
+      roundNumber: 1,
+      roundName: `${t('gameResults.round')} 1`,
+      fixedNumberOfSets: state.game.fixedNumberOfSets,
+    });
 
-    const ops: Op[] = [];
-
-    if (!hasRound) {
-      const roundOp = await this.createOp((creator) => creator.addRound(roundId, roundName));
-      ops.push(roundOp);
-    }
-
-    if (players.length === 2) {
-      const matchSetup = createOneOnOneMatches(players);
-      const matchId = matchSetup[0].matchId;
-
-      if (!existingMatchIds.includes(matchId)) {
-        const fixedNumberOfSets = state.game?.fixedNumberOfSets;
-        const matchOp = await this.createOp((creator) => creator.addMatch(matchId, roundId, fixedNumberOfSets));
-        ops.push(matchOp);
-      }
-
-      for (const playerId of matchSetup[0].teamA) {
-        const op = await this.createOp((creator) => creator.addPlayerToTeam(matchId, 'teamA', playerId, roundId));
-        ops.push(op);
-      }
-      for (const playerId of matchSetup[0].teamB) {
-        const op = await this.createOp((creator) => creator.addPlayerToTeam(matchId, 'teamB', playerId, roundId));
-        ops.push(op);
-      }
-    } else if (players.length === 4) {
-      const matchSetup = createTwoOnTwoMatches(players);
-
-      for (const match of matchSetup) {
-        if (!existingMatchIds.includes(match.matchId)) {
-          const fixedNumberOfSets = state.game?.fixedNumberOfSets;
-          const matchOp = await this.createOp((creator) => creator.addMatch(match.matchId, roundId, fixedNumberOfSets));
-          ops.push(matchOp);
-        }
-
-        for (const playerId of match.teamA) {
-          const op = await this.createOp((creator) => creator.addPlayerToTeam(match.matchId, 'teamA', playerId, roundId));
-          ops.push(op);
-        }
-        for (const playerId of match.teamB) {
-          const op = await this.createOp((creator) => creator.addPlayerToTeam(match.matchId, 'teamB', playerId, roundId));
-          ops.push(op);
-        }
-      }
-    }
+    const ops = roundGenerator.generateRound();
 
     if (ops.length > 0) {
       for (const op of ops) {

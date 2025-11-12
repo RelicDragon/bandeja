@@ -1,8 +1,9 @@
 import { Op } from '@/types/ops';
 import { Round } from '@/types/gameResults';
-import { Game } from '@/types';
+import { Game, User } from '@/types';
 import { OpCreator } from './opCreators';
 import { calculateGameStandings } from './gameStandings';
+import { createOneOnOneMatches, createTwoOnTwoMatches } from './predefinedResults';
 
 export interface RoundGeneratorOptions {
   opCreator: OpCreator;
@@ -50,13 +51,49 @@ export class RoundGenerator {
 
   private generateHandmadeRound(): Op[] {
     const ops: Op[] = [];
-    const { roundNumber, roundName, fixedNumberOfSets } = this.options;
+    const { game, roundNumber, roundName, fixedNumberOfSets } = this.options;
     const roundId = `round-${roundNumber}`;
     
     ops.push(this.opCreator.addRound(roundId, roundName));
     
+    const playingParticipants = game.participants.filter(p => p.isPlaying);
+    const numPlayers = playingParticipants.length;
+    const players = playingParticipants.map(p => p.user) as User[];
+    
+    if (numPlayers === 4) {
+      const matchSetups = createTwoOnTwoMatches(players);
+      let matchIndex = 0;
+      for (const setup of matchSetups) {
+        const matchId = this.getNextMatchId(matchIndex);
+        this.opCreator.registerMatchIndex(matchId, matchIndex);
+        matchIndex++;
+        
+        ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
+        
+        for (const playerId of setup.teamA) {
+          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', playerId, roundId));
+        }
+        for (const playerId of setup.teamB) {
+          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', playerId, roundId));
+        }
+      }
+    } else if (numPlayers === 2) {
+      const matchSetups = createOneOnOneMatches(players);
+      const matchId = this.getNextMatchId(0);
+      this.opCreator.registerMatchIndex(matchId, 0);
+      
+      ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
+      
+      for (const playerId of matchSetups[0].teamA) {
+        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', playerId, roundId));
+      }
+      for (const playerId of matchSetups[0].teamB) {
+        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', playerId, roundId));
+      }
+    } else {
     const matchId = this.getNextMatchId();
     ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
+    }
     
     return ops;
   }
