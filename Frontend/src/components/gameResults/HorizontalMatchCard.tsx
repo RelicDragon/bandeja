@@ -176,24 +176,90 @@ export const HorizontalMatchCard = ({
           
           {canEnterResults && (
             <div className="flex items-center gap-2">
-              {displaySets.map((set, setIndex) => (
-                <button
-                  key={setIndex}
-                  onClick={(effectiveIsPresetGame || (!effectiveIsPresetGame && effectiveIsEditing)) && canEditResults ? (e) => {
-                    e.stopPropagation();
-                    onSetClick(setIndex);
-                  } : undefined}
-                  className={`text-2xl font-bold transition-colors ${
-                    (effectiveIsPresetGame || (!effectiveIsPresetGame && effectiveIsEditing)) && canEditResults
-                      ? 'text-orange-500 hover:text-orange-600 cursor-pointer'
-                      : 'text-gray-400 dark:text-gray-600 cursor-default'
-                  }`}
-                >
-                  {set.teamA !== 0 || set.teamB !== 0 || effectiveIsPresetGame || effectiveIsEditing || (fixedNumberOfSets && fixedNumberOfSets > 0)
-                    ? `${set.teamA} : ${set.teamB}` 
-                    : ''}
-                </button>
-              ))}
+              {displaySets.map((set, setIndex) => {
+                const teamAScore = set.teamA;
+                const teamBScore = set.teamB;
+                const isEditable = (effectiveIsPresetGame || (!effectiveIsPresetGame && effectiveIsEditing)) && canEditResults;
+                const teamAIsWinning = teamAScore > teamBScore && teamAScore > 0 && teamBScore >= 0;
+                const teamAIsLosing = teamAScore < teamBScore && teamAScore >= 0 && teamBScore > 0;
+                const teamAIsTie = teamAScore === teamBScore && teamAScore > 0 && teamBScore > 0;
+                const teamBIsWinning = teamBScore > teamAScore && teamBScore > 0 && teamAScore >= 0;
+                const teamBIsLosing = teamBScore < teamAScore && teamBScore >= 0 && teamAScore > 0;
+                const teamBIsTie = teamAScore === teamBScore && teamAScore > 0 && teamBScore > 0;
+                const shouldShowScore = set.teamA !== 0 || set.teamB !== 0 || effectiveIsPresetGame || effectiveIsEditing || (fixedNumberOfSets && fixedNumberOfSets > 0);
+
+                if (!shouldShowScore) return null;
+
+                return (
+                  <div key={setIndex} className="flex items-center gap-1">
+                    <button
+                      onClick={isEditable ? (e) => {
+                        e.stopPropagation();
+                        onSetClick(setIndex);
+                      } : undefined}
+                      className="relative group"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-200 blur-lg" />
+                      <div className={`relative w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center rounded-xl border-2 transition-all duration-200 shadow-lg group-hover:shadow-xl group-hover:scale-105 active:scale-95 ${
+                        teamAIsWinning
+                          ? 'bg-gradient-to-br from-green-100/90 to-green-200/80 dark:from-green-900/40 dark:to-green-800/30 border-green-300/70 dark:border-green-700/50 shadow-green-500/30'
+                          : teamAIsLosing
+                            ? 'bg-gradient-to-br from-red-50/60 to-red-100/40 dark:from-red-900/30 dark:to-red-800/20 border-red-200/50 dark:border-red-700/40 shadow-red-500/20'
+                            : teamAIsTie
+                              ? 'bg-gradient-to-br from-yellow-100/90 to-yellow-200/80 dark:from-yellow-900/40 dark:to-yellow-800/30 border-yellow-300/70 dark:border-yellow-700/50 shadow-yellow-500/30'
+                              : isEditable
+                                ? 'bg-gradient-to-br from-blue-50/80 to-blue-100/60 dark:from-blue-900/30 dark:to-blue-800/20 border-blue-300/70 dark:border-blue-600/50 cursor-pointer'
+                                : 'bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border-gray-200 dark:border-gray-700 cursor-default'
+                      }`}>
+                        <span className={`font-bold bg-gradient-to-br bg-clip-text text-transparent ${
+                          teamAIsWinning
+                            ? 'from-green-700 to-green-600 dark:from-green-300 dark:to-green-400'
+                            : teamAIsLosing
+                              ? 'from-red-700 to-red-600 dark:from-red-300 dark:to-red-400'
+                              : teamAIsTie
+                                ? 'from-yellow-700 to-yellow-600 dark:from-yellow-300 dark:to-yellow-400'
+                                : 'from-gray-900 to-gray-700 dark:from-white dark:to-gray-300'
+                        } text-xl sm:text-2xl md:text-3xl`}>
+                          {teamAScore}
+                        </span>
+                      </div>
+                    </button>
+                    <span className="text-gray-400 dark:text-gray-600 text-xl sm:text-2xl md:text-3xl font-bold">:</span>
+                    <button
+                      onClick={isEditable ? (e) => {
+                        e.stopPropagation();
+                        onSetClick(setIndex);
+                      } : undefined}
+                      className="relative group"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-200 blur-lg" />
+                      <div className={`relative w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center rounded-xl border-2 transition-all duration-200 shadow-lg group-hover:shadow-xl group-hover:scale-105 active:scale-95 ${
+                        teamBIsWinning
+                          ? 'bg-gradient-to-br from-green-100/90 to-green-200/80 dark:from-green-900/40 dark:to-green-800/30 border-green-300/70 dark:border-green-700/50 shadow-green-500/30'
+                          : teamBIsLosing
+                            ? 'bg-gradient-to-br from-red-50/60 to-red-100/40 dark:from-red-900/30 dark:to-red-800/20 border-red-200/50 dark:border-red-700/40 shadow-red-500/20'
+                            : teamBIsTie
+                              ? 'bg-gradient-to-br from-yellow-100/90 to-yellow-200/80 dark:from-yellow-900/40 dark:to-yellow-800/30 border-yellow-300/70 dark:border-yellow-700/50 shadow-yellow-500/30'
+                              : isEditable
+                                ? 'bg-gradient-to-br from-blue-50/80 to-blue-100/60 dark:from-blue-900/30 dark:to-blue-800/20 border-blue-300/70 dark:border-blue-600/50 cursor-pointer'
+                                : 'bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border-gray-200 dark:border-gray-700 cursor-default'
+                      }`}>
+                        <span className={`font-bold bg-gradient-to-br bg-clip-text text-transparent ${
+                          teamBIsWinning
+                            ? 'from-green-700 to-green-600 dark:from-green-300 dark:to-green-400'
+                            : teamBIsLosing
+                              ? 'from-red-700 to-red-600 dark:from-red-300 dark:to-red-400'
+                              : teamBIsTie
+                                ? 'from-yellow-700 to-yellow-600 dark:from-yellow-300 dark:to-yellow-400'
+                                : 'from-gray-900 to-gray-700 dark:from-white dark:to-gray-300'
+                        } text-xl sm:text-2xl md:text-3xl`}>
+                          {teamBScore}
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
           
