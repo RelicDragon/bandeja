@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   HeaderContentWrapper,
   HomeHeaderContent,
-  ProfileHeaderContent,
   GameDetailsHeaderContent,
   BugHeaderContent,
   GameModeToggle
@@ -16,20 +15,11 @@ import {
 interface HeaderProps {
   showChatFilter?: boolean;
   onChatFilterToggle?: () => void;
-  // Profile page props
-  profileEditMode?: boolean;
-  onProfileEditModeToggle?: () => void;
-  onProfileSaveChanges?: () => void;
-  profileSaveDisabled?: boolean;
 }
 
 export const Header = ({ 
   showChatFilter = false, 
-  onChatFilterToggle,
-  profileEditMode = false,
-  onProfileEditModeToggle,
-  onProfileSaveChanges,
-  profileSaveDisabled = false
+  onChatFilterToggle
 }: HeaderProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -188,15 +178,6 @@ export const Header = ({
             {/* Content wrappers for different pages */}
             <HeaderContentWrapper page="home">
               <HomeHeaderContent />
-            </HeaderContentWrapper>
-
-            <HeaderContentWrapper page="profile">
-              <ProfileHeaderContent
-                isEditMode={profileEditMode}
-                onEditModeToggle={onProfileEditModeToggle || (() => {})}
-                onSaveChanges={onProfileSaveChanges || (() => {})}
-                disabled={profileSaveDisabled}
-              />
             </HeaderContentWrapper>
 
             <HeaderContentWrapper page="gameDetails">

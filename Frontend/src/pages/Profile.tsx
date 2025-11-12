@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -6,61 +6,26 @@ import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImage
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
-import { City, Gender } from '@/types';
+import { City, Gender, User } from '@/types';
 import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer } from 'lucide-react';
 import { UrlConstructor } from '@/utils/urlConstructor';
 
-interface ProfileContentProps {
-  firstName: string;
-  setFirstName: (value: string) => void;
-  lastName: string;
-  setLastName: (value: string) => void;
-  email: string;
-  setEmail: (value: string) => void;
-  gender: string;
-  setGender: (value: Gender) => void;
-  preferredHandLeft: boolean;
-  setPreferredHandLeft: (value: boolean) => void;
-  preferredHandRight: boolean;
-  setPreferredHandRight: (value: boolean) => void;
-  preferredCourtSideLeft: boolean;
-  setPreferredCourtSideLeft: (value: boolean) => void;
-  preferredCourtSideRight: boolean;
-  setPreferredCourtSideRight: (value: boolean) => void;
-  sendTelegramMessages: boolean;
-  setSendTelegramMessages: (value: boolean) => void;
-  sendTelegramInvites: boolean;
-  setSendTelegramInvites: (value: boolean) => void;
-  isEditMode?: boolean;
-}
-
-export const ProfileContent = ({
-  firstName,
-  setFirstName,
-  lastName,
-  setLastName,
-  email,
-  setEmail,
-  gender,
-  setGender,
-  preferredHandLeft,
-  setPreferredHandLeft,
-  preferredHandRight,
-  setPreferredHandRight,
-  preferredCourtSideLeft,
-  setPreferredCourtSideLeft,
-  preferredCourtSideRight,
-  setPreferredCourtSideRight,
-  sendTelegramMessages,
-  setSendTelegramMessages,
-  sendTelegramInvites,
-  setSendTelegramInvites,
-  isEditMode = false
-}: ProfileContentProps) => {
+export const ProfileContent = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
+
+  const [firstName, setFirstName] = useState(user?.firstName || '');
+  const [lastName, setLastName] = useState(user?.lastName || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [gender, setGender] = useState<Gender>(user?.gender || 'PREFER_NOT_TO_SAY');
+  const [preferredHandLeft, setPreferredHandLeft] = useState(user?.preferredHandLeft || false);
+  const [preferredHandRight, setPreferredHandRight] = useState(user?.preferredHandRight || false);
+  const [preferredCourtSideLeft, setPreferredCourtSideLeft] = useState(user?.preferredCourtSideLeft || false);
+  const [preferredCourtSideRight, setPreferredCourtSideRight] = useState(user?.preferredCourtSideRight || false);
+  const [sendTelegramMessages, setSendTelegramMessages] = useState(user?.sendTelegramMessages ?? true);
+  const [sendTelegramInvites, setSendTelegramInvites] = useState(user?.sendTelegramInvites ?? true);
 
   const [cities, setCities] = useState<City[]>([]);
   const [showCityModal, setShowCityModal] = useState(false);
@@ -74,6 +39,29 @@ export const ProfileContent = ({
   } | null>(null);
   const [isLoadingLundaStatus, setIsLoadingLundaStatus] = useState(true);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const updateProfile = useCallback(async (updates: Partial<User>) => {
+    try {
+      const response = await usersApi.updateProfile({
+        ...updates,
+        language: updates.language ?? i18n.language,
+      });
+      updateUser(response.data);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || t('errors.generic'));
+    }
+  }, [i18n.language, updateUser, t]);
+
+  const debouncedUpdate = useCallback((updates: Partial<User>) => {
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+    updateTimeoutRef.current = setTimeout(() => {
+      updateProfile(updates);
+    }, 500);
+  }, [updateProfile]);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -112,9 +100,75 @@ export const ProfileContent = ({
     fetchLundaStatus();
   }, [updateUser]);
 
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || '');
+      setLastName(user.lastName || '');
+      setEmail(user.email || '');
+      setGender(user.gender || 'PREFER_NOT_TO_SAY');
+      setPreferredHandLeft(user.preferredHandLeft || false);
+      setPreferredHandRight(user.preferredHandRight || false);
+      setPreferredCourtSideLeft(user.preferredCourtSideLeft || false);
+      setPreferredCourtSideRight(user.preferredCourtSideRight || false);
+      setSendTelegramMessages(user.sendTelegramMessages ?? true);
+      setSendTelegramInvites(user.sendTelegramInvites ?? true);
+    }
+  }, [user]);
+
+  const handleFirstNameChange = (value: string) => {
+    setFirstName(value);
+    debouncedUpdate({ firstName: value });
+  };
+
+  const handleLastNameChange = (value: string) => {
+    setLastName(value);
+    debouncedUpdate({ lastName: value });
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    debouncedUpdate({ email: value || undefined });
+  };
+
+  const handleGenderChange = (value: Gender) => {
+    setGender(value);
+    updateProfile({ gender: value });
+  };
+
+  const handlePreferredHandLeftChange = (value: boolean) => {
+    setPreferredHandLeft(value);
+    updateProfile({ preferredHandLeft: value });
+  };
+
+  const handlePreferredHandRightChange = (value: boolean) => {
+    setPreferredHandRight(value);
+    updateProfile({ preferredHandRight: value });
+  };
+
+  const handlePreferredCourtSideLeftChange = (value: boolean) => {
+    setPreferredCourtSideLeft(value);
+    updateProfile({ preferredCourtSideLeft: value });
+  };
+
+  const handlePreferredCourtSideRightChange = (value: boolean) => {
+    setPreferredCourtSideRight(value);
+    updateProfile({ preferredCourtSideRight: value });
+  };
+
+  const handleSendTelegramMessagesChange = (value: boolean) => {
+    setSendTelegramMessages(value);
+    updateProfile({ sendTelegramMessages: value });
+  };
+
+  const handleSendTelegramInvitesChange = (value: boolean) => {
+    setSendTelegramInvites(value);
+    updateProfile({ sendTelegramInvites: value });
+  };
+
   const handleChangeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
     localStorage.setItem('language', lang);
+    updateProfile({ language: lang });
   };
 
   const handleChangeCity = async (cityId: string) => {
@@ -150,7 +204,6 @@ export const ProfileContent = ({
   const handleAvatarRemove = async () => {
     try {
       await usersApi.updateProfile({ avatar: null, originalAvatar: null });
-      // Refetch the profile to get updated data
       const response = await usersApi.getProfile();
       updateUser(response.data);
       toast.success(t('profile.avatarRemoved'));
@@ -158,6 +211,14 @@ export const ProfileContent = ({
       toast.error(error.response?.data?.message || t('errors.generic'));
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (isLoadingProfile) {
     return (
@@ -176,7 +237,6 @@ export const ProfileContent = ({
 
   return (
     <>
-
       <div className="space-y-6 pt-5">
         <div className="flex justify-center">
           <div className="relative">
@@ -225,14 +285,12 @@ export const ProfileContent = ({
             <Input
               label={t('auth.firstName')}
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              disabled={!isEditMode}
+              onChange={(e) => handleFirstNameChange(e.target.value)}
             />
             <Input
               label={t('auth.lastName')}
               value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              disabled={!isEditMode}
+              onChange={(e) => handleLastNameChange(e.target.value)}
             />
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {t('profile.nameRequirement')}
@@ -241,8 +299,7 @@ export const ProfileContent = ({
               label={t('auth.email')}
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={!isEditMode}
+              onChange={(e) => handleEmailChange(e.target.value)}
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -255,8 +312,7 @@ export const ProfileContent = ({
                   { value: 'PREFER_NOT_TO_SAY', label: t('profile.preferNotToSay') },
                 ]}
                 value={gender}
-                onChange={(value) => setGender(value as Gender)}
-                disabled={!isEditMode}
+                onChange={(value) => handleGenderChange(value as Gender)}
               />
             </div>
           </div>
@@ -286,11 +342,10 @@ export const ProfileContent = ({
                     </div>
                     <button
                       type="button"
-                      onClick={() => !isEditMode || setSendTelegramMessages(!sendTelegramMessages)}
-                      disabled={!isEditMode}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+                      onClick={() => handleSendTelegramMessagesChange(!sendTelegramMessages)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 cursor-pointer ${
                         sendTelegramMessages ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
-                      } ${!isEditMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      }`}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -311,11 +366,10 @@ export const ProfileContent = ({
                       </div>
                       <button
                         type="button"
-                        onClick={() => !isEditMode || setSendTelegramInvites(!sendTelegramInvites)}
-                        disabled={!isEditMode}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+                        onClick={() => handleSendTelegramInvitesChange(!sendTelegramInvites)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 cursor-pointer ${
                           sendTelegramInvites ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
-                        } ${!isEditMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                        }`}
                       >
                         <span
                           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -426,16 +480,15 @@ export const ProfileContent = ({
                   value: 'left',
                   label: t('profile.left'),
                   checked: preferredHandLeft,
-                  onChange: setPreferredHandLeft,
+                  onChange: handlePreferredHandLeftChange,
                 },
                 {
                   value: 'right',
                   label: t('profile.right'),
                   checked: preferredHandRight,
-                  onChange: setPreferredHandRight,
+                  onChange: handlePreferredHandRightChange,
                 },
               ]}
-              disabled={!isEditMode}
             />
             <ToggleGroup
               label={t('profile.preferredCourtSide')}
@@ -444,16 +497,15 @@ export const ProfileContent = ({
                   value: 'left',
                   label: t('profile.left'),
                   checked: preferredCourtSideLeft,
-                  onChange: setPreferredCourtSideLeft,
+                  onChange: handlePreferredCourtSideLeftChange,
                 },
                 {
                   value: 'right',
                   label: t('profile.right'),
                   checked: preferredCourtSideRight,
-                  onChange: setPreferredCourtSideRight,
+                  onChange: handlePreferredCourtSideRightChange,
                 },
               ]}
-              disabled={!isEditMode}
             />
           </div>
         </Card>
@@ -491,7 +543,6 @@ export const ProfileContent = ({
                 ]}
                 value={i18n.language}
                 onChange={handleChangeLanguage}
-                disabled={!isEditMode}
               />
             </div>
           </div>
@@ -508,7 +559,7 @@ export const ProfileContent = ({
                 {user?.currentCity?.name}
               </span>
             </div>
-            <Button variant="secondary" onClick={() => setShowCityModal(true)} disabled={!isEditMode}>
+            <Button variant="secondary" onClick={() => setShowCityModal(true)}>
               {t('profile.changeCity')}
             </Button>
           </div>
@@ -577,7 +628,6 @@ export const ProfileContent = ({
           onClose={() => setShowLundaModal(false)}
           onSuccess={async () => {
             setShowLundaModal(false);
-            // Refresh user profile and Lunda status after successful sync
             try {
               const response = await usersApi.getProfile();
               updateUser(response.data);

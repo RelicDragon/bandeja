@@ -6,20 +6,12 @@ interface MainLayoutProps {
   children: ReactNode;
   showChatFilter?: boolean;
   onChatFilterToggle?: () => void;
-  profileEditMode?: boolean;
-  onProfileEditModeToggle?: () => void;
-  onProfileSaveChanges?: () => void;
-  profileSaveDisabled?: boolean;
 }
 
 export const MainLayout = ({ 
   children, 
   showChatFilter, 
-  onChatFilterToggle,
-  profileEditMode,
-  onProfileEditModeToggle,
-  onProfileSaveChanges,
-  profileSaveDisabled
+  onChatFilterToggle
 }: MainLayoutProps) => {
   const { showGameTypeModal } = useHeaderStore();
   
@@ -29,10 +21,6 @@ export const MainLayout = ({
         <Header 
           showChatFilter={showChatFilter}
           onChatFilterToggle={onChatFilterToggle}
-          profileEditMode={profileEditMode}
-          onProfileEditModeToggle={onProfileEditModeToggle}
-          onProfileSaveChanges={onProfileSaveChanges}
-          profileSaveDisabled={profileSaveDisabled}
         />
       </div>
       <main className={`transition-all duration-300 ${showGameTypeModal ? 'blur-sm' : ''}`} style={{ paddingTop: 'calc(4rem + env(safe-area-inset-top))', paddingBottom: '1.5rem' }}>

@@ -338,40 +338,101 @@ export const GameCard = ({
 
       {/* Collapsed view - Single row */}
       {isCollapsed && (
-        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10">
-          <div className="flex items-center gap-1">
-            {showDate && <Calendar size={14} />}
-            <span>
-              {showDate && `${getDateLabel(game.startTime, false)} `}
-              {formatDate(game.startTime, 'HH:mm')}
-              {game.entityType !== 'BAR' ? `, ${(() => {
-                const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                if (durationHours === Math.floor(durationHours)) {
-                  return `${durationHours}${t('common.h')}`;
-                } else {
-                  const hours = Math.floor(durationHours);
-                  const minutes = Math.round((durationHours % 1) * 60);
-                  return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                }
-              })()}` : ''}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Users size={14} />
-            <span>
-              {game.entityType === 'BAR' 
-                ? game.participants.filter(p => p.isPlaying).length
-                : `${game.participants.filter(p => p.isPlaying).length}/${game.maxParticipants}`
-              }
-            </span>
-          </div>
-          {(game.court?.club || game.club) && (
-            <div className="flex items-center gap-1">
-              <MapPin size={14} />
-              <span className="truncate max-w-32">
-                {game.court?.club?.name || game.club?.name}
-              </span>
-            </div>
+        <div className={`text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 ${game.entityType === 'TRAINING' ? 'flex gap-4' : 'flex items-center gap-4'}`}>
+          {game.entityType === 'TRAINING' ? (
+            <>
+              <div className="flex-shrink-0">
+                {(() => {
+                  const owner = game.participants.find(p => p.role === 'OWNER');
+                  return owner ? (
+                    <PlayerAvatar
+                      player={{
+                        id: owner.userId,
+                        firstName: owner.user.firstName,
+                        lastName: owner.user.lastName,
+                        avatar: owner.user.avatar,
+                        level: owner.user.level,
+                        gender: owner.user.gender,
+                      }}
+                      smallLayout={true}
+                      showName={false}
+                    />
+                  ) : null;
+                })()}
+              </div>
+              <div className="flex flex-col gap-2 flex-1">
+                <div className="flex items-center gap-1">
+                  {showDate && <Calendar size={14} />}
+                  <span>
+                    {showDate && `${getDateLabel(game.startTime, false)} `}
+                    {formatDate(game.startTime, 'HH:mm')}
+                    {`, ${(() => {
+                      const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                      if (durationHours === Math.floor(durationHours)) {
+                        return `${durationHours}${t('common.h')}`;
+                      } else {
+                        const hours = Math.floor(durationHours);
+                        const minutes = Math.round((durationHours % 1) * 60);
+                        return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                      }
+                    })()}`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  {(game.court?.club || game.club) && (
+                    <div className="flex items-center gap-1">
+                      <MapPin size={14} />
+                      <span className="truncate max-w-32">
+                        {game.court?.club?.name || game.club?.name}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1">
+                    <Users size={14} />
+                    <span>
+                      {`${game.participants.filter(p => p.isPlaying).length}/${game.maxParticipants}`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-1">
+                {showDate && <Calendar size={14} />}
+                <span>
+                  {showDate && `${getDateLabel(game.startTime, false)} `}
+                  {formatDate(game.startTime, 'HH:mm')}
+                  {game.entityType !== 'BAR' ? `, ${(() => {
+                    const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                    if (durationHours === Math.floor(durationHours)) {
+                      return `${durationHours}${t('common.h')}`;
+                    } else {
+                      const hours = Math.floor(durationHours);
+                      const minutes = Math.round((durationHours % 1) * 60);
+                      return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                    }
+                  })()}` : ''}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Users size={14} />
+                <span>
+                  {game.entityType === 'BAR' 
+                    ? game.participants.filter(p => p.isPlaying).length
+                    : `${game.participants.filter(p => p.isPlaying).length}/${game.maxParticipants}`
+                  }
+                </span>
+              </div>
+              {(game.court?.club || game.club) && (
+                <div className="flex items-center gap-1">
+                  <MapPin size={14} />
+                  <span className="truncate max-w-32">
+                    {game.court?.club?.name || game.club?.name}
+                  </span>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -386,13 +447,13 @@ export const GameCard = ({
         }`}
       >
         <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-          <div className="flex items-center gap-2">
-            <Calendar size={16} />
-            <span>
-              {getDateLabel(game.startTime)} {formatDate(game.startTime, 'HH:mm')}
-              {game.entityType !== 'BAR' ? ` - ${formatDate(game.endTime, 'HH:mm')}` : ''}
-            </span>
-          </div>
+            <div className="flex items-center gap-2">
+              <Calendar size={16} />
+              <span>
+                {getDateLabel(game.startTime)} {formatDate(game.startTime, 'HH:mm')}
+                {game.entityType !== 'BAR' ? ` - ${formatDate(game.endTime, 'HH:mm')}` : ''}
+              </span>
+            </div>
           {(game.court?.club || game.club) && (
             <div className="flex items-center gap-2">
               <MapPin size={16} />
@@ -425,38 +486,38 @@ export const GameCard = ({
               )}
             </div>
           )}
-          <div className="flex items-center gap-2">
-            <div className="relative -mx-0 flex-1 w-full">
-              <div 
-                ref={carouselRef}
-                className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth flex-nowrap px-2 py-2"
-              >
-                {game.participants.filter(p => p.isPlaying).map((participant) => (
-                  <div key={participant.userId} className="flex-shrink-0">
-                    <PlayerAvatar
-                      player={{
-                        id: participant.userId,
-                        firstName: participant.user.firstName,
-                        lastName: participant.user.lastName,
-                        avatar: participant.user.avatar,
-                        level: participant.user.level,
-                        gender: participant.user.gender,
-                      }}
-                      smallLayout={true}
-                      showName={false}
-                      role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
-                    />
-                  </div>
-                ))}
+            <div className="flex items-center gap-2">
+              <div className="relative -mx-0 flex-1 w-full">
+                <div 
+                  ref={carouselRef}
+                  className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth flex-nowrap px-2 py-2"
+                >
+                  {game.participants.filter(p => p.isPlaying).map((participant) => (
+                    <div key={participant.userId} className="flex-shrink-0">
+                      <PlayerAvatar
+                        player={{
+                          id: participant.userId,
+                          firstName: participant.user.firstName,
+                          lastName: participant.user.lastName,
+                          avatar: participant.user.avatar,
+                          level: participant.user.level,
+                          gender: participant.user.gender,
+                        }}
+                        smallLayout={true}
+                        showName={false}
+                        role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
+                      />
+                    </div>
+                  ))}
+                </div>
+                {showLeftFade && (
+                  <div className={`absolute -left-1 top-0 bottom-0 w-8 ${getFadeGradient('left')} pointer-events-none z-10`} />
+                )}
+                {showRightFade && (
+                  <div className={`absolute -right-1 top-0 bottom-0 w-8 ${getFadeGradient('right')} pointer-events-none z-10`} />
+                )}
               </div>
-              {showLeftFade && (
-                <div className={`absolute -left-1 top-0 bottom-0 w-8 ${getFadeGradient('left')} pointer-events-none z-10`} />
-              )}
-              {showRightFade && (
-                <div className={`absolute -right-1 top-0 bottom-0 w-8 ${getFadeGradient('right')} pointer-events-none z-10`} />
-              )}
             </div>
-          </div>
         </div>
 
         {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && resultStatus && (

@@ -159,9 +159,9 @@ export const PhotosSection = ({ game }: PhotosSectionProps) => {
   return (
     <>
       <Card>
-        <div className="p-2">
-          <div className="overflow-x-auto -mx-2 px-2">
-            <div className="flex gap-3 pb-2">
+        <div className="p-0">
+          <div className="overflow-x-auto -mx-0.5 px-0.5">
+            <div className="flex gap-3 pb-0.5">
               {photos.map((message, messageIndex) => 
                 message.mediaUrls?.map((mediaUrl, mediaIndex) => {
                   const thumbnailUrl = getThumbnailUrl(message, mediaIndex);

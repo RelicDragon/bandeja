@@ -817,7 +817,7 @@
       "PUBLIC": "General",
       "PRIVATE": "Participants",
       "ADMINS": "Organizers",
-      "PHOTOS": "Photos"
+      "PHOTOS": "Photo"
     }
   },
   "calendar": {
