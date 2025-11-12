@@ -38,6 +38,8 @@ export interface User {
   gender: Gender;
   isAdmin?: boolean;
   isTrainer?: boolean;
+  canCreateTournament?: boolean;
+  canCreateLeague?: boolean;
   preferredHandLeft?: boolean;
   preferredHandRight?: boolean;
   preferredCourtSideLeft?: boolean;

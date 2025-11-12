@@ -21,7 +21,9 @@ export const CreateGameHeader = ({ onBack, entityType }: CreateGameHeaderProps) 
         </button>
         <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
           {entityType === 'BAR' ? t('createGame.createBar') : 
-           entityType === 'TRAINING' ? t('createGame.createTraining') : 
+           entityType === 'TRAINING' ? t('createGame.createTraining') :
+           entityType === 'TOURNAMENT' ? t('createGame.createTournament') :
+           entityType === 'LEAGUE' ? t('createGame.createLeague') :
            t('createGame.title')}
         </h1>
       </div>

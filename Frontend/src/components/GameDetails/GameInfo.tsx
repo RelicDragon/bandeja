@@ -19,6 +19,9 @@ import {
   ExternalLink,
   Award,
   Lock,
+  Swords,
+  Trophy,
+  GraduationCap,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -106,8 +109,40 @@ export const GameInfo = ({
     setShowShareModal(true);
   };
 
+  const getEntityGradient = () => {
+    switch (game.entityType) {
+      case 'TOURNAMENT':
+        return 'bg-gradient-to-br from-red-50/60 via-orange-50/40 to-red-50/60 dark:from-red-950/25 dark:via-orange-950/15 dark:to-red-950/25 border-l-2 border-red-300 dark:border-red-800 shadow-[0_0_8px_rgba(239,68,68,0.15)] dark:shadow-[0_0_8px_rgba(239,68,68,0.2)]';
+      case 'LEAGUE':
+        return 'bg-gradient-to-br from-blue-50/60 via-purple-50/40 to-blue-50/60 dark:from-blue-950/25 dark:via-purple-950/15 dark:to-blue-950/25 border-l-2 border-blue-300 dark:border-blue-800 shadow-[0_0_8px_rgba(59,130,246,0.15)] dark:shadow-[0_0_8px_rgba(59,130,246,0.2)]';
+      case 'TRAINING':
+        return 'bg-gradient-to-br from-green-50/60 via-teal-50/40 to-green-50/60 dark:from-green-950/25 dark:via-teal-950/15 dark:to-green-950/25 border-l-2 border-green-300 dark:border-green-800 shadow-[0_0_8px_rgba(34,197,94,0.15)] dark:shadow-[0_0_8px_rgba(34,197,94,0.2)]';
+      case 'BAR':
+        return 'bg-gradient-to-br from-yellow-50/60 via-amber-50/40 to-yellow-50/60 dark:from-yellow-950/25 dark:via-amber-950/15 dark:to-yellow-950/25 border-l-2 border-yellow-300 dark:border-yellow-800 shadow-[0_0_8px_rgba(234,179,8,0.15)] dark:shadow-[0_0_8px_rgba(234,179,8,0.2)]';
+      default:
+        return '';
+    }
+  };
+
+  const getEntityIcon = () => {
+    if (game.entityType === 'GAME') return null;
+    
+    switch (game.entityType) {
+      case 'TOURNAMENT':
+        return <Swords size={40} className="text-red-500 dark:text-red-400 opacity-15 dark:opacity-15" />;
+      case 'LEAGUE':
+        return <Trophy size={40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
+      case 'TRAINING':
+        return <GraduationCap size={48} className="text-green-500 dark:text-green-400 opacity-15 dark:opacity-15" />;
+      case 'BAR':
+        return <Beer size={40} className="text-yellow-500 dark:text-yellow-400 opacity-15 dark:opacity-15" />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <Card className="relative">
+    <Card className={`relative ${getEntityGradient()}`}>
       <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
         <button
           onClick={handleShare}
@@ -127,6 +162,11 @@ export const GameInfo = ({
           </svg>
         </button>
       </div>
+      {game.entityType !== 'GAME' && (
+        <div className="absolute top-28 right-4 z-0 pointer-events-none">
+          {getEntityIcon()}
+        </div>
+      )}
       <div className="flex items-start justify-between mb-4">
         <div className="pr-20 flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -163,6 +203,9 @@ export const GameInfo = ({
             )}
             {game.entityType !== 'GAME' && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
+                {game.entityType === 'TOURNAMENT' && <Swords size={14} />}
+                {game.entityType === 'LEAGUE' && <Trophy size={14} />}
+                {game.entityType === 'TRAINING' && <GraduationCap size={14} />}
                 {game.entityType === 'BAR' && <Beer size={14} />}
                 {t(`games.entityTypes.${game.entityType}`)}
               </span>

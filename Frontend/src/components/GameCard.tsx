@@ -8,7 +8,7 @@ import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { getGameResultStatus } from '@/utils/gameResults';
 import { useNavigationStore } from '@/store/navigationStore';
-import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award, Lock } from 'lucide-react';
+import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award, Lock, Swords, Trophy } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
@@ -117,13 +117,50 @@ export const GameCard = ({
     }
   };
 
+  const getEntityGradient = () => {
+    switch (game.entityType) {
+      case 'TOURNAMENT':
+        return 'bg-gradient-to-br from-red-50/60 via-orange-50/40 to-red-50/60 dark:from-red-950/25 dark:via-orange-950/15 dark:to-red-950/25 border-l-2 border-red-300 dark:border-red-800 shadow-[0_0_8px_rgba(239,68,68,0.15)] dark:shadow-[0_0_8px_rgba(239,68,68,0.2)]';
+      case 'LEAGUE':
+        return 'bg-gradient-to-br from-blue-50/60 via-purple-50/40 to-blue-50/60 dark:from-blue-950/25 dark:via-purple-950/15 dark:to-blue-950/25 border-l-2 border-blue-300 dark:border-blue-800 shadow-[0_0_8px_rgba(59,130,246,0.15)] dark:shadow-[0_0_8px_rgba(59,130,246,0.2)]';
+      case 'TRAINING':
+        return 'bg-gradient-to-br from-green-50/60 via-teal-50/40 to-green-50/60 dark:from-green-950/25 dark:via-teal-950/15 dark:to-green-950/25 border-l-2 border-green-300 dark:border-green-800 shadow-[0_0_8px_rgba(34,197,94,0.15)] dark:shadow-[0_0_8px_rgba(34,197,94,0.2)]';
+      case 'BAR':
+        return 'bg-gradient-to-br from-yellow-50/60 via-amber-50/40 to-yellow-50/60 dark:from-yellow-950/25 dark:via-amber-950/15 dark:to-yellow-950/25 border-l-2 border-yellow-300 dark:border-yellow-800 shadow-[0_0_8px_rgba(234,179,8,0.15)] dark:shadow-[0_0_8px_rgba(234,179,8,0.2)]';
+      default:
+        return '';
+    }
+  };
+
+  const getEntityIcon = () => {
+    if (game.entityType === 'GAME') return null;
+    
+    switch (game.entityType) {
+      case 'TOURNAMENT':
+        return <Swords size={40} className="text-red-500 dark:text-red-400 opacity-15 dark:opacity-15" />;
+      case 'LEAGUE':
+        return <Trophy size={40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
+      case 'TRAINING':
+        return <GraduationCap size={48} className="text-green-500 dark:text-green-400 opacity-15 dark:opacity-15" />;
+      case 'BAR':
+        return <Beer size={40} className="text-yellow-500 dark:text-yellow-400 opacity-15 dark:opacity-15" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card
-      className="hover:shadow-md hover:scale-[1.02] active:scale-[1.05] transition-all duration-300 ease-in-out cursor-pointer overflow-hidden"
+      className={`hover:shadow-md hover:scale-[1.02] active:scale-[1.05] transition-all duration-300 ease-in-out cursor-pointer relative ${getEntityGradient()}`}
       onClick={handleCardClick}
     >
+      {game.entityType !== 'GAME' && (
+        <div className="absolute bottom-2 right-2 z-0 pointer-events-none">
+          {getEntityIcon()}
+        </div>
+      )}
       {/* Header - Always visible */}
-      <div className="mb-3 relative">
+      <div className="mb-3 relative z-10">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-20">
           {game.name}
           {game.name && game.gameType !== 'CLASSIC' && (
@@ -168,8 +205,10 @@ export const GameCard = ({
           )}
           {game.entityType !== 'GAME' && (
             <span className="px-2 py-1 text-xs font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
-              {game.entityType === 'BAR' && <Beer size={12} />}
+              {game.entityType === 'TOURNAMENT' && <Swords size={12} />}
+              {game.entityType === 'LEAGUE' && <Trophy size={12} />}
               {game.entityType === 'TRAINING' && <GraduationCap size={12} />}
+              {game.entityType === 'BAR' && <Beer size={12} />}
               {t(`games.entityTypes.${game.entityType}`)}
             </span>
           )}
@@ -201,7 +240,7 @@ export const GameCard = ({
             </span>
           )}
         </div>
-        <div className="absolute top-0 right-0 flex items-center gap-0">
+        <div className="absolute -top-1 -right-1 flex items-center gap-0 z-20">
           {canAccessChat && showChatIndicator && (
             <button
               onClick={handleChatClick}
@@ -230,7 +269,7 @@ export const GameCard = ({
 
       {/* Collapsed view - Single row */}
       {isCollapsed && (
-        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300">
+        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10">
           <div className="flex items-center gap-1">
             {showDate && <Calendar size={14} />}
             <span>
@@ -271,10 +310,10 @@ export const GameCard = ({
       {/* Expanded content */}
       <div 
         ref={expandedContentRef}
-        className={`transition-all duration-300 ease-in-out ${
+        className={`transition-all duration-300 ease-in-out relative z-10 ${
           isCollapsed 
             ? 'max-h-0 opacity-0 overflow-hidden' 
-            : 'max-h-96 opacity-100'
+            : 'opacity-100'
         }`}
       >
         <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">

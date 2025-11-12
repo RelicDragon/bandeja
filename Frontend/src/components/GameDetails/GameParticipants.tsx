@@ -164,7 +164,7 @@ export const GameParticipants = ({
                 smallLayout={true}
               />
             ))}
-            {game.entityType !== 'BAR' && Array.from({ length: game.maxParticipants - game.participants.filter(p => p.isPlaying).length }).map((_, i) => (
+            {game.entityType !== 'BAR' && game.entityType !== 'TOURNAMENT' && game.entityType !== 'LEAGUE' && Array.from({ length: game.maxParticipants - game.participants.filter(p => p.isPlaying).length }).map((_, i) => (
               canInvitePlayers ? (
                 <button
                   key={`empty-${i}`}

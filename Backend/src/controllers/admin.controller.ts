@@ -372,6 +372,9 @@ export const createUser = asyncHandler(async (req: AuthRequest, res: Response) =
     currentCityId,
     isActive,
     isAdmin,
+    isTrainer,
+    canCreateTournament,
+    canCreateLeague,
   } = req.body;
 
   const user = await AdminUsersService.createUser({
@@ -384,6 +387,9 @@ export const createUser = asyncHandler(async (req: AuthRequest, res: Response) =
     currentCityId,
     isActive,
     isAdmin,
+    isTrainer,
+    canCreateTournament,
+    canCreateLeague,
   });
 
   res.status(201).json({
@@ -405,6 +411,8 @@ export const updateUser = asyncHandler(async (req: AuthRequest, res: Response) =
     isActive,
     isAdmin,
     isTrainer,
+    canCreateTournament,
+    canCreateLeague,
   } = req.body;
 
   const user = await AdminUsersService.updateUser(userId, {
@@ -418,6 +426,8 @@ export const updateUser = asyncHandler(async (req: AuthRequest, res: Response) =
     isActive,
     isAdmin,
     isTrainer,
+    canCreateTournament,
+    canCreateLeague,
   });
 
   res.json({

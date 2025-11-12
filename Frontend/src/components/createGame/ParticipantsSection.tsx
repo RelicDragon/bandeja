@@ -68,7 +68,7 @@ export const ParticipantsSection = ({
         );
       }
     }
-    if (entityType !== 'BAR') {
+    if (entityType !== 'BAR' && entityType !== 'TOURNAMENT' && entityType !== 'LEAGUE') {
       for (let i = participants.length; i < maxParticipants; i++) {
         if (canInvitePlayers) {
           result.push(
@@ -104,29 +104,49 @@ export const ParticipantsSection = ({
       <div className="flex items-center gap-2 mb-3">
         <UsersIcon size={18} className="text-gray-500 dark:text-gray-400" />
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-          {t('createGame.participants')}
+          {entityType === 'TOURNAMENT' ? t('createGame.participantsTournament') :
+           entityType === 'LEAGUE' ? t('createGame.participantsLeague') :
+           t('createGame.participants')}
         </h2>
       </div>
       <div className="space-y-4">
         {entityType !== 'BAR' && (
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-              {t('createGame.numberOfParticipants')}
+              {entityType === 'TOURNAMENT' ? t('createGame.numberOfParticipantsTournament') :
+               entityType === 'LEAGUE' ? t('createGame.numberOfParticipantsLeague') :
+               t('createGame.numberOfParticipants')}
             </label>
-            <div className="grid grid-cols-7 gap-2">
-              {[2, 3, 4, 5, 6, 7, 8].map((num) => (
-                <button
-                  key={num}
-                  onClick={() => onMaxParticipantsChange(num)}
-                  className={`h-10 rounded-lg font-semibold text-sm transition-all ${
-                    maxParticipants === num
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
+            <div className={`grid gap-2 ${entityType === 'TOURNAMENT' ? 'grid-cols-7' : 'grid-cols-7'}`}>
+              {entityType === 'TOURNAMENT' ? (
+                Array.from({ length: 13 }, (_, i) => 8 + i * 2).map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => onMaxParticipantsChange(num)}
+                    className={`h-10 rounded-lg font-semibold text-sm transition-all ${
+                      maxParticipants === num
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))
+              ) : (
+                [2, 3, 4, 5, 6, 7, 8].map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => onMaxParticipantsChange(num)}
+                    className={`h-10 rounded-lg font-semibold text-sm transition-all ${
+                      maxParticipants === num
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         )}

@@ -36,6 +36,8 @@ model User {
   updatedAt               DateTime             @updatedAt
   isAdmin                 Boolean              @default(false)
   isTrainer               Boolean              @default(false)
+  canCreateTournament     Boolean              @default(false)
+  canCreateLeague         Boolean              @default(false)
   gender                  Gender               @default(PREFER_NOT_TO_SAY)
   sendTelegramMessages    Boolean              @default(true)
   sendTelegramInvites     Boolean              @default(true)

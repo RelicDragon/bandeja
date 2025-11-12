@@ -74,7 +74,9 @@ export const GameStartSection = ({
       <div className="flex items-center gap-2 mb-3">
         <CalendarIcon size={18} className="text-gray-500 dark:text-gray-400" />
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-          {t('createGame.gameStart')}
+          {entityType === 'TOURNAMENT' ? t('createGame.gameStartTournament') :
+           entityType === 'LEAGUE' ? t('createGame.gameStartLeague') :
+           t('createGame.gameStart')}
         </h2>
       </div>
       <div className="space-y-4">

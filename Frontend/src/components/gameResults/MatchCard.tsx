@@ -100,7 +100,7 @@ export const MatchCard = ({
         data-drop-zone
         data-match-id={match.id}
         data-team={team}
-        className={`min-h-[40px] p-2 w-full flex items-center justify-center relative ${
+        className={`min-h-[32px] p-1 w-full flex items-center justify-center relative ${
           effectiveIsPresetGame 
             ? ''
             : (effectiveIsEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''
@@ -196,9 +196,9 @@ export const MatchCard = ({
       >
         {canEnterResults ? (
           <div className="overflow-x-auto w-full">
-            <div className="grid gap-2 min-w-max" style={{
+            <div className="grid gap-1 min-w-max" style={{
               gridTemplateColumns: `max-content repeat(${displaySets.length}, 40px)`,
-              gridTemplateRows: 'auto 4px auto'
+              gridTemplateRows: 'auto 2px auto'
             }}>
               <div className="flex items-center justify-center" style={{ gridColumn: '1', gridRow: '1' }}>
                 {renderTeam('teamA')}
@@ -270,7 +270,7 @@ export const MatchCard = ({
                     }}
                   >
                     {shouldShowScore && (
-                      <div className={`mb-6 rounded-full ${
+                      <div className={`mb-5 rounded-full ${
                         hasNonZeroScore 
                           ? 'w-1 h-1 bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 dark:from-yellow-400 dark:via-yellow-500 dark:to-yellow-700 ring-2 ring-yellow-500/50 dark:ring-yellow-400/50 shadow-[0_0_8px_rgba(234,179,8,0.6)] dark:shadow-[0_0_8px_rgba(250,204,21,0.6)]' 
                           : 'w-1 h-1 bg-gray-400 dark:bg-gray-500'
@@ -339,7 +339,7 @@ export const MatchCard = ({
           </div>
         ) : (
           <div className="overflow-x-auto w-full">
-            <div className="grid gap-2 min-w-max" style={{
+            <div className="grid gap-1 min-w-max" style={{
               gridTemplateColumns: `max-content`,
               gridTemplateRows: 'auto auto'
             }}>

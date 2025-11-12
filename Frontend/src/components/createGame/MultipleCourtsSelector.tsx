@@ -43,15 +43,27 @@ export const MultipleCourtsSelector = ({
   const previousOrderRef = useRef<string[]>([]);
   const isAnimatingRef = useRef(false);
 
+  const initialGameCourtsIdsRef = useRef<string>('');
+  const gameIdRef = useRef<string | undefined>(gameId);
+
   useEffect(() => {
-    if (gameId && initialGameCourts.length === 0) {
+    const gameIdChanged = gameIdRef.current !== gameId;
+    gameIdRef.current = gameId;
+    
+    if (gameId && initialGameCourts.length === 0 && gameIdChanged) {
       gameCourtsApi.getByGameId(gameId).then((response) => {
         setGameCourts(response.data);
       }).catch((error) => {
         console.error('Failed to fetch game courts:', error);
       });
-    } else {
-      setGameCourts(initialGameCourts);
+    } else if (initialGameCourts.length > 0) {
+      const currentIds = initialGameCourts.map(gc => gc.id).join(',');
+      const previousIds = initialGameCourtsIdsRef.current;
+      
+      if (currentIds !== previousIds) {
+        initialGameCourtsIdsRef.current = currentIds;
+        setGameCourts(initialGameCourts);
+      }
     }
   }, [gameId, initialGameCourts]);
 

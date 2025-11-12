@@ -181,7 +181,7 @@ export const MainPage = () => {
       onProfileSaveChanges={handleProfileSaveChanges}
       profileSaveDisabled={profileSaving}
     >
-      <div className="relative overflow-hidden">
+      <div className="relative px-2 overflow-hidden">
         {/* Home Page */}
         <div className={`transition-all duration-300 ease-in-out ${
           currentPage === 'home' 

@@ -48,6 +48,8 @@ export class AdminUsersService {
     isActive?: boolean;
     isAdmin?: boolean;
     isTrainer?: boolean;
+    canCreateTournament?: boolean;
+    canCreateLeague?: boolean;
   }) {
     const {
       phone,
@@ -60,6 +62,8 @@ export class AdminUsersService {
       isActive,
       isAdmin,
       isTrainer,
+      canCreateTournament,
+      canCreateLeague,
     } = data;
 
     if (!phone) {
@@ -107,6 +111,8 @@ export class AdminUsersService {
         isActive: isActive !== undefined ? isActive : true,
         isAdmin: isAdmin !== undefined ? isAdmin : false,
         isTrainer: isTrainer !== undefined ? isTrainer : false,
+        canCreateTournament: canCreateTournament !== undefined ? canCreateTournament : false,
+        canCreateLeague: canCreateLeague !== undefined ? canCreateLeague : false,
       },
       select: PROFILE_SELECT_FIELDS,
     });
@@ -125,6 +131,8 @@ export class AdminUsersService {
     isActive?: boolean;
     isAdmin?: boolean;
     isTrainer?: boolean;
+    canCreateTournament?: boolean;
+    canCreateLeague?: boolean;
   }) {
     const {
       phone,
@@ -137,6 +145,8 @@ export class AdminUsersService {
       isActive,
       isAdmin,
       isTrainer,
+      canCreateTournament,
+      canCreateLeague,
     } = data;
 
     const existingUser = await prisma.user.findUnique({
@@ -189,6 +199,8 @@ export class AdminUsersService {
         ...(isActive !== undefined && { isActive }),
         ...(isAdmin !== undefined && { isAdmin }),
         ...(isTrainer !== undefined && { isTrainer }),
+        ...(canCreateTournament !== undefined && { canCreateTournament }),
+        ...(canCreateLeague !== undefined && { canCreateLeague }),
       },
       select: PROFILE_SELECT_FIELDS,
     });

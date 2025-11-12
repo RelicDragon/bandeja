@@ -64,7 +64,9 @@ export const LocationSection = ({
         <div className="flex items-center gap-2 mb-3">
           <MapPin size={18} className="text-gray-500 dark:text-gray-400" />
           <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-            {t('createGame.location')}
+            {entityType === 'TOURNAMENT' ? t('createGame.locationTournament') :
+             entityType === 'LEAGUE' ? t('createGame.locationLeague') :
+             t('createGame.location')}
           </h2>
         </div>
         <div className="space-y-3">

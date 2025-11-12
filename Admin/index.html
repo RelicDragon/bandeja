@@ -468,7 +468,7 @@
                     </div>
                     <div class="form-group">
                         <label for="userLevel">Level (0-7)</label>
-                        <input type="number" id="userLevel" step="0.5" min="0" max="7" value="3.5">
+                        <input type="number" id="userLevel" step="any" min="0" max="7" value="3.5">
                     </div>
                 </div>
                 <div class="form-row">
@@ -490,6 +490,14 @@
                 <div class="form-group-checkbox">
                     <input type="checkbox" id="userIsTrainer">
                     <label for="userIsTrainer">Trainer</label>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="userCanCreateTournament">
+                    <label for="userCanCreateTournament">Can Create Tournament</label>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="userCanCreateLeague">
+                    <label for="userCanCreateLeague">Can Create League</label>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal('userModal')">Cancel</button>

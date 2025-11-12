@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Plus } from 'lucide-react';
 import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameSetupSection, GameSetupModal, MultipleCourtsSelector } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
@@ -28,7 +29,9 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
   const [selectedClub, setSelectedClub] = useState<string>('');
   const [selectedCourt, setSelectedCourt] = useState<string>('notBooked');
   const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>([1.0, 7.0]);
-  const [maxParticipants, setMaxParticipants] = useState<number>(4);
+  const [maxParticipants, setMaxParticipants] = useState<number>(() => {
+    return entityType === 'TOURNAMENT' ? 8 : 4;
+  });
   const [participants, setParticipants] = useState<Array<string | null>>([user?.id || null]);
   const [anyoneCanInvite, setAnyoneCanInvite] = useState<boolean>(false);
   const [hasBookedCourt, setHasBookedCourt] = useState<boolean>(false);
@@ -245,6 +248,27 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
       }
     }
   }, [duration, selectedTime, canAccommodateDuration, generateTimeOptions, getTimeSlotsForDuration]);
+
+  useEffect(() => {
+    if (entityType === 'TOURNAMENT') {
+      setMaxParticipants(prev => {
+        if (prev < 8) {
+          setParticipants(p => p.length > 8 ? p.slice(0, 8) : p);
+          return 8;
+        }
+        if (prev > 32) {
+          setParticipants(p => p.length > 32 ? p.slice(0, 32) : p);
+          return 32;
+        }
+        if (prev % 2 !== 0) {
+          const evenValue = Math.ceil(prev / 2) * 2;
+          setParticipants(p => p.length > evenValue ? p.slice(0, evenValue) : p);
+          return evenValue;
+        }
+        return prev;
+      });
+    }
+  }, [entityType]);
 
   useEffect(() => {
     const template = applyGameTypeTemplate(gameType);
@@ -466,6 +490,7 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
           <PlayerLevelSection
             playerLevelRange={playerLevelRange}
             onPlayerLevelRangeChange={setPlayerLevelRange}
+            entityType={entityType}
           />
         )}
 
@@ -525,11 +550,13 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
         <GameNameSection
           name={gameName}
           onNameChange={setGameName}
+          entityType={entityType}
         />
 
         <CommentsSection
           comments={comments}
           onCommentsChange={setComments}
+          entityType={entityType}
         />
 
         <div ref={timeSectionRef}>
@@ -565,10 +592,21 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
         <Button
           onClick={handleCreateGame}
           disabled={loading}
-          className="w-full py-3 text-base font-semibold mt-4"
+          className="w-full py-3 text-base font-semibold mt-4 flex items-center justify-center gap-2"
           size="lg"
         >
-          {loading ? t('common.loading') : t('createGame.createButton')}
+          {loading ? (
+            t('common.loading')
+          ) : (
+            <>
+              <Plus size={20} />
+              {entityType === 'TOURNAMENT' ? t('createGame.createButtonTournament') :
+               entityType === 'LEAGUE' ? t('createGame.createButtonLeague') :
+               entityType === 'BAR' ? t('createGame.createButtonBar') :
+               entityType === 'TRAINING' ? t('createGame.createButtonTraining') :
+               t('createGame.createButton')}
+            </>
+          )}
         </Button>
         </div>
       </div>

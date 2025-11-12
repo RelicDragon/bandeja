@@ -141,6 +141,8 @@ export const PROFILE_SELECT_FIELDS = {
   reliability: true,
   isAdmin: true,
   isTrainer: true,
+  canCreateTournament: true,
+  canCreateLeague: true,
   preferredHandLeft: true,
   preferredHandRight: true,
   preferredCourtSideLeft: true,

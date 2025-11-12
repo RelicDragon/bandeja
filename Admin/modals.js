@@ -306,11 +306,14 @@ function editUserModal(user) {
     document.getElementById('userLastName').value = user.lastName || '';
     document.getElementById('userEmail').value = user.email || '';
     document.getElementById('userGender').value = user.gender || 'PREFER_NOT_TO_SAY';
-    document.getElementById('userLevel').value = user.level || 3.5;
+    const levelValue = typeof user.level === 'number' ? user.level : (user.level || 3.5);
+    document.getElementById('userLevel').value = levelValue.toString().replace(',', '.');
     document.getElementById('userCityId').value = user.currentCity?.id || '';
     document.getElementById('userIsActive').checked = user.isActive;
     document.getElementById('userIsAdmin').checked = user.isAdmin;
     document.getElementById('userIsTrainer').checked = user.isTrainer || false;
+    document.getElementById('userCanCreateTournament').checked = user.canCreateTournament || false;
+    document.getElementById('userCanCreateLeague').checked = user.canCreateLeague || false;
     document.getElementById('userForm').dataset.mode = 'edit';
     document.getElementById('userForm').dataset.userId = user.id;
     loadUserCityOptions();
@@ -349,6 +352,15 @@ async function handleUserSubmit(e) {
 
     const levelValue = document.getElementById('userLevel').value;
     const cityId = document.getElementById('userCityId').value;
+    
+    let parsedLevel = 3.5;
+    if (levelValue) {
+        const cleanedLevel = levelValue.toString().replace(/,/g, '.');
+        parsedLevel = parseFloat(cleanedLevel);
+        if (isNaN(parsedLevel)) {
+            parsedLevel = 3.5;
+        }
+    }
 
     const data = {
         phone: document.getElementById('userPhone').value,
@@ -356,11 +368,13 @@ async function handleUserSubmit(e) {
         lastName: lastName || null,
         email: document.getElementById('userEmail').value || null,
         gender: document.getElementById('userGender').value,
-        level: levelValue ? parseFloat(levelValue) : 3.5,
+        level: parsedLevel,
         currentCityId: cityId || null,
         isActive: document.getElementById('userIsActive').checked,
         isAdmin: document.getElementById('userIsAdmin').checked,
         isTrainer: document.getElementById('userIsTrainer').checked,
+        canCreateTournament: document.getElementById('userCanCreateTournament').checked,
+        canCreateLeague: document.getElementById('userCanCreateLeague').checked,
     };
 
     try {

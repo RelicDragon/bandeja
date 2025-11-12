@@ -926,7 +926,7 @@ export const GameResultsEntry = () => {
       {/* Footer Section */}
       <footer className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
         {showFinishButton && (
-          <div className="p-4">
+          <div className="p-2">
             <div className="container mx-auto flex justify-center">
               <button
                 onClick={() => setShowFinishConfirmation(true)}
