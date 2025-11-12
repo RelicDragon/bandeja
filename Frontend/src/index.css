@@ -40,6 +40,11 @@ html {
   overflow-x: visible;
   height: 100%;
   width: 100%;
+  background-color: #f9fafb;
+}
+
+html.dark {
+  background-color: #111827;
 }
 
 body {
@@ -51,12 +56,22 @@ body {
   overflow-x: visible;
   height: 100%;
   width: 100%;
+  background-color: #f9fafb;
+}
+
+.dark body {
+  background-color: #111827;
 }
 
 #root {
   min-height: 100vh;
   min-height: -webkit-fill-available;
   width: 100%;
+  background-color: #f9fafb;
+}
+
+.dark #root {
+  background-color: #111827;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
