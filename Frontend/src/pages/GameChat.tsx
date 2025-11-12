@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { chatApi, ChatMessage } from '@/api/chat';
 import { gamesApi } from '@/api/games';
@@ -19,7 +19,11 @@ export const GameChat: React.FC = () => {
   const { t } = useTranslation();
   const { id: gameId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuthStore();
+  
+  const locationState = location.state as { initialChatType?: ChatType } | null;
+  const initialChatType = locationState?.initialChatType;
   
   const [game, setGame] = useState<Game | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -30,7 +34,7 @@ export const GameChat: React.FC = () => {
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
   const [isJoiningAsGuest, setIsJoiningAsGuest] = useState(false);
-  const [currentChatType, setCurrentChatType] = useState<ChatType>('PUBLIC');
+  const [currentChatType, setCurrentChatType] = useState<ChatType>(initialChatType || 'PUBLIC');
   const [isLoadingGame, setIsLoadingGame] = useState(true);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [isLeavingChat, setIsLeavingChat] = useState(false);
@@ -256,11 +260,26 @@ export const GameChat: React.FC = () => {
 
   // Determine which chat types the user can access
   const getAvailableChatTypes = useCallback((): ChatType[] => {
-    if (!isParticipant) return ['PUBLIC'];
-    if (!isPlayingParticipant) return ['PUBLIC'];
-    if (!isAdminOrOwner) return ['PUBLIC', 'PRIVATE'];
-    return ['PUBLIC', 'PRIVATE', 'ADMINS'];
-  }, [isParticipant, isPlayingParticipant, isAdminOrOwner]);
+    const availableTypes: ChatType[] = [];
+    
+    // Add PHOTOS first if game status != ANNOUNCED (available for everyone like PUBLIC)
+    if (game?.status && game.status !== 'ANNOUNCED') {
+      availableTypes.push('PHOTOS');
+    }
+    
+    availableTypes.push('PUBLIC');
+    
+    if (!isParticipant) return availableTypes;
+    if (!isPlayingParticipant) return availableTypes;
+    
+    availableTypes.push('PRIVATE');
+    
+    if (isAdminOrOwner) {
+      availableTypes.push('ADMINS');
+    }
+    
+    return availableTypes;
+  }, [isParticipant, isPlayingParticipant, isAdminOrOwner, game?.status]);
 
   // Socket.IO event handlers
   const handleNewMessage = useCallback((message: ChatMessage) => {
@@ -346,7 +365,18 @@ export const GameChat: React.FC = () => {
       if (!gameId || !user?.id) return;
       
       const loadedGame = await loadGame();
-      await loadMessages();
+      
+      if (initialChatType && initialChatType !== 'PUBLIC') {
+        // If we have an initial chat type, switch to it (this will load messages)
+        if (currentChatType !== initialChatType) {
+          await handleChatTypeChange(initialChatType);
+        } else {
+          // Already on the correct type, just load messages
+          await loadMessages();
+        }
+      } else {
+        await loadMessages();
+      }
       
       if (!loadedGame) return;
       
@@ -357,9 +387,12 @@ export const GameChat: React.FC = () => {
       const loadedHasPendingInvite = loadedGame.invites?.some(invite => invite.receiverId === user.id) ?? false;
       const loadedIsGuest = loadedGame.participants.some(p => p.userId === user.id && !p.isPlaying) ?? false;
       
-      if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
+          if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
         try {
           const availableChatTypes: ChatType[] = [];
+          if (loadedGame.status && loadedGame.status !== 'ANNOUNCED') {
+            availableChatTypes.push('PHOTOS');
+          }
           availableChatTypes.push('PUBLIC');
           if (loadedIsParticipant && loadedIsPlayingParticipant) {
             availableChatTypes.push('PRIVATE');
@@ -383,7 +416,7 @@ export const GameChat: React.FC = () => {
     };
     
     loadData();
-  }, [loadGame, loadMessages, gameId, user?.id]);
+  }, [loadGame, loadMessages, gameId, user?.id, initialChatType, currentChatType, handleChatTypeChange]);
 
   // Note: Messages are now loaded directly in handleChatTypeChange to avoid double loading
 
@@ -506,7 +539,7 @@ export const GameChat: React.FC = () => {
       </div>
 
       {/* Chat Type Selector */}
-      {isParticipant && isPlayingParticipant && (
+      {((isParticipant && isPlayingParticipant) || (game?.status && game.status !== 'ANNOUNCED')) && (
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="max-w-2xl mx-auto px-4">
             <div className="flex justify-center space-x-1 py-2">

@@ -6,3 +6,4 @@ export * from './GameSettings';
 export * from './FixedTeamsManagement';
 export * from './GameSetup';
 export * from './TeamPlayerSelector';
+export * from './PhotosSection';

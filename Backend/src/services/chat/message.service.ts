@@ -3,6 +3,7 @@ import { MessageState, ChatType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import telegramNotificationService from '../telegram/notification.service';
+import { GameReadService } from '../game/read.service';
 
 export class MessageService {
   static async validateGameAccess(gameId: string, userId: string) {
@@ -37,13 +38,17 @@ export class MessageService {
     return { game, isParticipant, hasPendingInvite, isPublicGame, participant };
   }
 
-  static async validateChatTypeAccess(participant: any, chatType: ChatType) {
+  static async validateChatTypeAccess(participant: any, chatType: ChatType, game: any) {
     if (chatType === ChatType.PRIVATE && (!participant || !participant.isPlaying)) {
       throw new ApiError(403, 'Only playing participants can access private chat');
     }
 
     if (chatType === ChatType.ADMINS && (!participant || (participant.role !== 'OWNER' && participant.role !== 'ADMIN'))) {
       throw new ApiError(403, 'Only game owners and admins can access admin chat');
+    }
+
+    if (chatType === ChatType.PHOTOS && game.status === 'ANNOUNCED') {
+      throw new ApiError(403, 'Photos chat is only available when game has started');
     }
   }
 
@@ -129,8 +134,8 @@ export class MessageService {
   }) {
     const { gameId, senderId, content, mediaUrls, replyToId, chatType } = data;
 
-    const { participant } = await this.validateGameAccess(gameId, senderId);
-    await this.validateChatTypeAccess(participant, chatType);
+    const { participant, game } = await this.validateGameAccess(gameId, senderId);
+    await this.validateChatTypeAccess(participant, chatType, game);
 
     if (replyToId) {
       const replyToMessage = await prisma.chatMessage.findFirst({
@@ -161,7 +166,31 @@ export class MessageService {
       include: this.getMessageInclude()
     });
 
-    const game = await prisma.game.findUnique({
+    if (chatType === ChatType.PHOTOS && mediaUrls.length > 0) {
+      await prisma.game.update({
+        where: { id: gameId },
+        data: {
+          photosCount: {
+            increment: mediaUrls.length
+          }
+        }
+      });
+
+      // Emit game update to refresh photosCount
+      try {
+        const socketService = (global as any).socketService;
+        if (socketService) {
+          const fullGame = await GameReadService.getGameById(gameId, senderId);
+          if (fullGame) {
+            await socketService.emitGameUpdate(gameId, senderId, fullGame);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to emit game update after photo upload:', error);
+      }
+    }
+
+    const gameWithDetails = await prisma.game.findUnique({
       where: { id: gameId },
       include: {
         court: {
@@ -173,8 +202,8 @@ export class MessageService {
       }
     });
 
-    if (game && message.sender) {
-      telegramNotificationService.sendGameChatNotification(message, game, message.sender).catch(error => {
+    if (gameWithDetails && message.sender) {
+      telegramNotificationService.sendGameChatNotification(message, gameWithDetails, message.sender).catch(error => {
         console.error('Failed to send Telegram notification:', error);
       });
     }
@@ -207,8 +236,8 @@ export class MessageService {
   }) {
     const { page = 1, limit = 50, chatType = ChatType.PUBLIC } = options;
 
-    const { participant } = await this.validateGameAccess(gameId, userId);
-    await this.validateChatTypeAccess(participant, chatType);
+    const { participant, game } = await this.validateGameAccess(gameId, userId);
+    await this.validateChatTypeAccess(participant, chatType, game);
 
     const skip = (Number(page) - 1) * Number(limit);
 
@@ -339,6 +368,30 @@ export class MessageService {
     await prisma.chatMessage.delete({
       where: { id: messageId }
     });
+
+    if (message.chatType === ChatType.PHOTOS && message.mediaUrls.length > 0) {
+      await prisma.game.update({
+        where: { id: message.gameId },
+        data: {
+          photosCount: {
+            decrement: message.mediaUrls.length
+          }
+        }
+      });
+
+      // Emit game update to refresh photosCount
+      try {
+        const socketService = (global as any).socketService;
+        if (socketService) {
+          const fullGame = await GameReadService.getGameById(message.gameId, userId);
+          if (fullGame) {
+            await socketService.emitGameUpdate(message.gameId, userId, fullGame);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to emit game update after photo deletion:', error);
+      }
+    }
 
     return message;
   }

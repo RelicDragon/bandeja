@@ -64,8 +64,15 @@ export const HomeContent = () => {
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
 
   const getAvailableChatTypes = (game: any): ChatType[] => {
-    const availableChatTypes: ChatType[] = ['PUBLIC'];
+    const availableChatTypes: ChatType[] = [];
     const participant = game.participants?.find((p: any) => p.userId === user?.id);
+    
+    // Add PHOTOS first if game status != ANNOUNCED (available for everyone like PUBLIC)
+    if (game.status && game.status !== 'ANNOUNCED') {
+      availableChatTypes.push('PHOTOS');
+    }
+    
+    availableChatTypes.push('PUBLIC');
     
     if (participant?.isPlaying) {
       availableChatTypes.push('PRIVATE');

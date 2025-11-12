@@ -16,6 +16,7 @@ import {
   GameSetupModal,
   MultipleCourtsSelector
 } from '@/components';
+import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { DeleteGameConfirmationModal } from '@/components/DeleteGameConfirmationModal';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { GameSetup } from '@/components/GameDetails/GameSetup';
@@ -576,6 +577,8 @@ export const GameDetailsContent = () => {
         onToggleFavorite={handleToggleFavorite}
         onEditCourt={() => setIsCourtModalOpen(true)}
       />
+
+      <PhotosSection game={game} />
 
       <GameResults
         game={game}

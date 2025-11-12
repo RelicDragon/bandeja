@@ -7,7 +7,7 @@ export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
 export type Gender = 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
 export type GameStatus = 'ANNOUNCED' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
 export type ResultsStatus = 'NONE' | 'IN_PROGRESS' | 'FINAL';
-export type ChatType = 'PUBLIC' | 'PRIVATE' | 'ADMINS';
+export type ChatType = 'PUBLIC' | 'PRIVATE' | 'ADMINS' | 'PHOTOS';
 export type BugStatus = 'CREATED' | 'CONFIRMED' | 'IN_PROGRESS' | 'TEST' | 'FINISHED' | 'ARCHIVED';
 export type BugType = 'BUG' | 'CRITICAL' | 'SUGGESTION' | 'QUESTION';
 export type WinnerOfGame = 'BY_MATCHES_WON' | 'BY_POINTS' | 'BY_SCORES_DELTA' | 'PLAYOFF_FINALS';
@@ -198,6 +198,7 @@ export interface Game {
   pointsPerWin?: number;
   pointsPerLoose?: number;
   pointsPerTie?: number;
+  photosCount?: number;
   isClubFavorite?: boolean;
   participants: GameParticipant[];
   invites?: Invite[];

@@ -641,7 +641,12 @@
     "selectPlayersToRemove": "Seleccionar jugadores a eliminar",
     "maxParticipantsUpdated": "Máximo de participantes actualizado exitosamente",
     "playerRemoved": "Jugador eliminado exitosamente",
-    "markForRemoval": "Marcar para eliminar"
+    "markForRemoval": "Marcar para eliminar",
+    "addPhoto": "Añadir Foto",
+    "photoAdded": "Foto añadida al chat del juego",
+    "photoUploadFailed": "Error al subir la foto",
+    "photos": "Fotos",
+    "noPhotosYet": "Aún no hay fotos del juego"
   },
   "common": {
     "yes": "Sí",
@@ -804,7 +809,8 @@
     "types": {
       "PUBLIC": "General",
       "PRIVATE": "Participantes",
-      "ADMINS": "Organizadores"
+      "ADMINS": "Organizadores",
+      "PHOTOS": "Fotos"
     }
   }
 }

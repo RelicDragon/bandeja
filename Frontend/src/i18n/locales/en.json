@@ -648,7 +648,12 @@
     "selectPlayersToRemove": "Select players to remove",
     "maxParticipantsUpdated": "Max participants updated successfully",
     "playerRemoved": "Player removed successfully",
-    "markForRemoval": "Mark for removal"
+    "markForRemoval": "Mark for removal",
+    "addPhoto": "Add Photo",
+    "photoAdded": "Photo added to game chat",
+    "photoUploadFailed": "Failed to upload photo",
+    "photos": "Photos",
+    "noPhotosYet": "No photos from game yet"
   },
   "common": {
     "yes": "Yes",
@@ -811,7 +816,8 @@
     "types": {
       "PUBLIC": "General",
       "PRIVATE": "Participants",
-      "ADMINS": "Organizers"
+      "ADMINS": "Organizers",
+      "PHOTOS": "Photos"
     }
   },
   "calendar": {

@@ -8,7 +8,7 @@ import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { getGameResultStatus } from '@/utils/gameResults';
 import { useNavigationStore } from '@/store/navigationStore';
-import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award, Lock, Swords, Trophy } from 'lucide-react';
+import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award, Lock, Swords, Trophy, Camera } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
@@ -43,6 +43,9 @@ export const GameCard = ({
   const [isCollapsing, setIsCollapsing] = useState(false);
   const expandedContentRef = useRef<HTMLDivElement>(null);
   const previousForceCollapsedRef = useRef<boolean | undefined>(undefined);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [showLeftFade, setShowLeftFade] = useState(false);
+  const [showRightFade, setShowRightFade] = useState(false);
 
   useEffect(() => {
     const previousForceCollapsed = previousForceCollapsedRef.current;
@@ -57,6 +60,34 @@ export const GameCard = ({
       }, 300);
     }
   }, [forceCollapsed, isCollapsed, isCollapsing]);
+
+  const checkScrollPosition = () => {
+    const container = carouselRef.current;
+    if (!container) return;
+    
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setShowLeftFade(scrollLeft > 0);
+    setShowRightFade(scrollLeft < scrollWidth - clientWidth - 1);
+  };
+
+  useEffect(() => {
+    const container = carouselRef.current;
+    if (!container) return;
+
+    checkScrollPosition();
+    
+    container.addEventListener('scroll', checkScrollPosition);
+    
+    const resizeObserver = new ResizeObserver(() => {
+      checkScrollPosition();
+    });
+    resizeObserver.observe(container);
+    
+    return () => {
+      container.removeEventListener('scroll', checkScrollPosition);
+      resizeObserver.disconnect();
+    };
+  }, [game.participants, isCollapsed]);
 
   const isParticipant = game.participants.some(p => p.userId === user?.id && p.isPlaying);
   const hasPendingInvite = game.invites?.some(invite => invite.receiverId === user?.id);
@@ -132,6 +163,32 @@ export const GameCard = ({
     }
   };
 
+  const getFadeGradient = (direction: 'left' | 'right') => {
+    const isLeft = direction === 'left';
+    switch (game.entityType) {
+      case 'TOURNAMENT':
+        return isLeft 
+          ? 'bg-gradient-to-r from-red-50/60 via-red-50/60 to-transparent dark:from-red-950/25 dark:via-red-950/25'
+          : 'bg-gradient-to-l from-red-50/60 via-red-50/60 to-transparent dark:from-red-950/25 dark:via-red-950/25';
+      case 'LEAGUE':
+        return isLeft
+          ? 'bg-gradient-to-r from-blue-50/60 via-blue-50/60 to-transparent dark:from-blue-950/25 dark:via-blue-950/25'
+          : 'bg-gradient-to-l from-blue-50/60 via-blue-50/60 to-transparent dark:from-blue-950/25 dark:via-blue-950/25';
+      case 'TRAINING':
+        return isLeft
+          ? 'bg-gradient-to-r from-green-50/60 via-green-50/60 to-transparent dark:from-green-950/25 dark:via-green-950/25'
+          : 'bg-gradient-to-l from-green-50/60 via-green-50/60 to-transparent dark:from-green-950/25 dark:via-green-950/25';
+      case 'BAR':
+        return isLeft
+          ? 'bg-gradient-to-r from-yellow-50/60 via-yellow-50/60 to-transparent dark:from-yellow-950/25 dark:via-yellow-950/25'
+          : 'bg-gradient-to-l from-yellow-50/60 via-yellow-50/60 to-transparent dark:from-yellow-950/25 dark:via-yellow-950/25';
+      default:
+        return isLeft
+          ? 'bg-gradient-to-r from-white via-white/80 to-transparent dark:from-gray-900 dark:via-gray-900/80'
+          : 'bg-gradient-to-l from-white via-white/80 to-transparent dark:from-gray-900 dark:via-gray-900/80';
+    }
+  };
+
   const getEntityIcon = () => {
     if (game.entityType === 'GAME') return null;
     
@@ -172,6 +229,18 @@ export const GameCard = ({
         </h3>
         <div className="flex items-center gap-2 mb-1">
           <GameStatusIcon status={game.status} />
+          {(game.photosCount ?? 0) > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/games/${game.id}/chat`, { state: { initialChatType: 'PHOTOS' } });
+              }}
+              className="px-3 py-1.5 text-sm font-semibold rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1.5 shadow-[0_0_8px_rgba(168,85,247,0.4)] dark:shadow-[0_0_8px_rgba(168,85,247,0.5)] hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.6)] dark:hover:shadow-[0_0_12px_rgba(168,85,247,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+            >
+              <Camera size={16} />
+              {game.photosCount}
+            </button>
+          )}
           {!game.isPublic && (
             <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
               <Lock size={12} />
@@ -357,29 +426,42 @@ export const GameCard = ({
             </div>
           )}
           <div className="flex items-center gap-2">
-            <div className="flex gap-2">
-              {game.participants.filter(p => p.isPlaying).map((participant) => (
-                <PlayerAvatar
-                  key={participant.userId}
-                  player={{
-                    id: participant.userId,
-                    firstName: participant.user.firstName,
-                    lastName: participant.user.lastName,
-                    avatar: participant.user.avatar,
-                    level: participant.user.level,
-                    gender: participant.user.gender,
-                  }}
-                  smallLayout={true}
-                  showName={false}
-                  role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
-                />
-              ))}
+            <div className="relative -mx-0 flex-1 w-full">
+              <div 
+                ref={carouselRef}
+                className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth flex-nowrap px-2 py-2"
+              >
+                {game.participants.filter(p => p.isPlaying).map((participant) => (
+                  <div key={participant.userId} className="flex-shrink-0">
+                    <PlayerAvatar
+                      player={{
+                        id: participant.userId,
+                        firstName: participant.user.firstName,
+                        lastName: participant.user.lastName,
+                        avatar: participant.user.avatar,
+                        level: participant.user.level,
+                        gender: participant.user.gender,
+                      }}
+                      smallLayout={true}
+                      showName={false}
+                      role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
+                    />
+                  </div>
+                ))}
+              </div>
+              {showLeftFade && (
+                <div className={`absolute -left-1 top-0 bottom-0 w-8 ${getFadeGradient('left')} pointer-events-none z-10`} />
+              )}
+              {showRightFade && (
+                <div className={`absolute -right-1 top-0 bottom-0 w-8 ${getFadeGradient('right')} pointer-events-none z-10`} />
+              )}
             </div>
           </div>
         </div>
 
         {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && resultStatus && (
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <div className={`mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 ${
+            game.entityType !== 'GAME' ? 'pr-10' : ''}`}>
             <div className={`text-sm px-3 py-2 rounded-lg ${
               resultStatus.message === 'games.results.problems.accessDenied'
                 ? 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'

@@ -102,6 +102,11 @@ export class ReadReceiptService {
         chatTypeFilter.push('ADMINS');
       }
 
+      // Add PHOTOS if game status != ANNOUNCED (available for everyone like PUBLIC)
+      if (game.status !== 'ANNOUNCED') {
+        chatTypeFilter.push('PHOTOS');
+      }
+
       const gameUnreadCount = await prisma.chatMessage.count({
         where: {
           gameId: game.id,
@@ -126,7 +131,7 @@ export class ReadReceiptService {
   }
 
   static async getGameUnreadCount(gameId: string, userId: string) {
-    const { participant } = await MessageService.validateGameAccess(gameId, userId);
+    const { participant, game } = await MessageService.validateGameAccess(gameId, userId);
 
     // Build chat type filter based on user access
     const chatTypeFilter: any[] = ['PUBLIC'];
@@ -139,6 +144,11 @@ export class ReadReceiptService {
     // Add ADMINS if user is owner or admin
     if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) {
       chatTypeFilter.push('ADMINS');
+    }
+
+    // Add PHOTOS if game status != ANNOUNCED (available for everyone like PUBLIC)
+    if (game.status !== 'ANNOUNCED') {
+      chatTypeFilter.push('PHOTOS');
     }
 
     const unreadCount = await prisma.chatMessage.count({
@@ -203,6 +213,11 @@ export class ReadReceiptService {
       // Add ADMINS if user is owner or admin
       if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) {
         chatTypeFilter.push('ADMINS');
+      }
+
+      // Add PHOTOS if game status != ANNOUNCED (available for everyone like PUBLIC)
+      if (game.status !== 'ANNOUNCED') {
+        chatTypeFilter.push('PHOTOS');
       }
 
       const gameUnreadCount = await prisma.chatMessage.count({

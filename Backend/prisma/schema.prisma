@@ -183,6 +183,7 @@ model Game {
   pointsPerLoose Int              @default(0)
   pointsPerTie   Int              @default(0)
   mediaUrls       String[]
+  photosCount     Int              @default(0)
   parentId        String?
   metadata        Json?
   createdAt       DateTime          @default(now())
@@ -602,6 +603,7 @@ enum ChatType {
   PUBLIC
   PRIVATE
   ADMINS
+  PHOTOS
 }
 
 enum RoundStatus {

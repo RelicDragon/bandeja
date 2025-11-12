@@ -653,7 +653,12 @@
     "selectPlayersToRemove": "Выберите игроков для удаления",
     "maxParticipantsUpdated": "Максимальное количество участников успешно обновлено",
     "playerRemoved": "Игрок успешно удален",
-    "markForRemoval": "Отметить для удаления"
+    "markForRemoval": "Отметить для удаления",
+    "addPhoto": "Добавить фото",
+    "photoAdded": "Фото добавлено в чат игры",
+    "photoUploadFailed": "Не удалось загрузить фото",
+    "photos": "Фото",
+    "noPhotosYet": "Пока нет фотографий с игры"
   },
   "common": {
     "yes": "Да",
@@ -816,7 +821,8 @@
     "types": {
       "PUBLIC": "Общий",
       "PRIVATE": "Участники",
-      "ADMINS": "Организаторы"
+      "ADMINS": "Организаторы",
+      "PHOTOS": "Фотографии"
     }
   }
 }
