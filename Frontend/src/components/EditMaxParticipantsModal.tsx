@@ -6,7 +6,7 @@ import { X, Trash2, RotateCw } from 'lucide-react';
 import { gamesApi } from '@/api/games';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
-import { Game, GameParticipant } from '@/types';
+import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 
 interface EditMaxParticipantsModalProps {
