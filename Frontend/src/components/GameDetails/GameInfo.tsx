@@ -163,7 +163,7 @@ export const GameInfo = ({
         </button>
       </div>
       {game.entityType !== 'GAME' && (
-        <div className="absolute top-28 right-4 z-0 pointer-events-none">
+        <div className="absolute bottom-2 right-2 z-0 pointer-events-none">
           {getEntityIcon()}
         </div>
       )}
@@ -271,7 +271,22 @@ export const GameInfo = ({
           <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
             <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
             <div className="flex-1">
-              <p className="font-medium">{game.court?.club?.name || game.club?.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-medium">{game.court?.club?.name || game.club?.name}</p>
+                <button
+                  onClick={onToggleFavorite}
+                  className="p-2 pb-0 pt-0 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  title={game.isClubFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
+                >
+                  <Star
+                    size={20}
+                    className={game.isClubFavorite
+                      ? 'text-yellow-500 fill-yellow-500'
+                      : 'text-gray-400 hover:text-yellow-500'
+                    }
+                  />
+                </button>
+              </div>
               {game.court && !(game.entityType === 'BAR' && courts.length === 1) && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {game.court.name}
@@ -302,19 +317,6 @@ export const GameInfo = ({
                   <Edit3 size={20} className="text-gray-400 hover:text-primary-600" />
                 </button>
               )}
-              <button
-                onClick={onToggleFavorite}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                title={game.isClubFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
-              >
-                <Star
-                  size={20}
-                  className={game.isClubFavorite
-                    ? 'text-yellow-500 fill-yellow-500'
-                    : 'text-gray-400 hover:text-yellow-500'
-                  }
-                />
-              </button>
             </div>
           </div>
         )}
