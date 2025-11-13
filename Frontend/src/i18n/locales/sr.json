@@ -483,7 +483,8 @@
     "total": "Укупно",
     "totalGames": "Укупно игара",
     "totalMatches": "Укупно мечева",
-    "noGamesAgainstEachOther": "Нема игара где су оба играча учествовала"
+    "noGamesAgainstEachOther": "Нема игара где су оба играча учествовала",
+    "coins": "новчића"
   },
   "createGame": {
     "title": "Креирај игру",
@@ -691,6 +692,7 @@
     "error": "Грешка",
     "success": "Успешно",
     "loading": "Учитавање...",
+    "unknown": "Непознато",
     "noResults": "Резултати нису пронађени",
     "remove": "Уклони",
     "unmark": "Уклони ознаку",
@@ -833,5 +835,25 @@
       "ADMINS": "Организатори",
       "PHOTOS": "Фото"
     }
+  },
+  "wallet": {
+    "title": "Новчаник",
+    "balance": "Стање",
+    "sendCoins": "Пошаљи Новчиће",
+    "selectPlayer": "Изаберите Играча",
+    "transactions": "Трансакције",
+    "noTransactions": "Још нема трансакција",
+    "amount": "Износ",
+    "selectedAmount": "Изабрано",
+    "message": "Порука (опционално)",
+    "messagePlaceholder": "Додај поруку...",
+    "yourBalance": "Ваше стање",
+    "transfer": "Пребаци",
+    "transferSuccess": "Трансфер успешан",
+    "invalidAmount": "Молимо изаберите износ",
+    "insufficientFunds": "Недовољно средстава",
+    "transferTo": "За {{name}}",
+    "transferFrom": "Од {{name}}",
+    "walletEmpty": "Ваш новчаник је празан"
   }
 }

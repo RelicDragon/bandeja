@@ -2,14 +2,15 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal } from '@/components';
+import { AnimatePresence } from 'framer-motion';
+import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal, WalletModal } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
 import { City, Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet } from 'lucide-react';
 import { UrlConstructor } from '@/utils/urlConstructor';
 
 export const ProfileContent = () => {
@@ -34,6 +35,7 @@ export const ProfileContent = () => {
   const [showCityModal, setShowCityModal] = useState(false);
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showLundaModal, setShowLundaModal] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [lundaStatus, setLundaStatus] = useState<{
     hasCookie: boolean;
@@ -286,6 +288,15 @@ export const ProfileContent = () => {
               onRemove={handleAvatarRemove}
               disabled={false}
             />
+            {!isLoadingProfile && user?.wallet !== undefined && (
+              <button
+                onClick={() => setShowWalletModal(true)}
+                className="absolute -top-1 -left-10 bg-primary-600 dark:bg-primary-500 text-white px-2 py-1 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 z-10 hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors cursor-pointer"
+              >
+                <Wallet size={14} className="text-white" />
+                <span>{user.wallet}</span>
+              </button>
+            )}
             {!isLoadingProfile && user?.originalAvatar && (
               <button
                 onClick={() => setShowFullscreenAvatar(true)}
@@ -296,7 +307,7 @@ export const ProfileContent = () => {
               </button>
             )}
             {!isLoadingProfile && user?.level && (
-              <div className="absolute -bottom-1 -right-8 bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1">
+              <div className="absolute -bottom-1 -right-20 bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1">
                 <span>{user.level.toFixed(1)}</span>
                 <span>•</span>
                 <div className="relative flex items-center">
@@ -694,6 +705,14 @@ export const ProfileContent = () => {
           }}
         />
       )}
+
+      <AnimatePresence>
+        {showWalletModal && (
+          <WalletModal
+            onClose={() => setShowWalletModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 };

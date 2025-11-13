@@ -10,5 +10,6 @@ export * from './media';
 export * from './favorites';
 export * from './bugs';
 export * from './lunda';
+export * from './transactions';
 export { default as api } from './axios';
 

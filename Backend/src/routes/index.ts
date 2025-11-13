@@ -19,6 +19,8 @@ import bugRoutes from './bug.routes';
 import bugChatRoutes from './bugChat.routes';
 import lundaRoutes from './lunda.routes';
 import gameCourtRoutes from './gameCourt.routes';
+import transactionRoutes from './transaction.routes';
+import goodsRoutes from './goods.routes';
 
 const router = Router();
 
@@ -42,6 +44,8 @@ router.use('/bugs', bugRoutes);
 router.use('/bug-chat', bugChatRoutes);
 router.use('/lunda', lundaRoutes);
 router.use('/game-courts', gameCourtRoutes);
+router.use('/transactions', transactionRoutes);
+router.use('/goods', goodsRoutes);
 
 export default router;
 

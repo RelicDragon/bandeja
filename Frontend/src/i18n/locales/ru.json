@@ -489,7 +489,8 @@
     "total": "Всего",
     "totalGames": "Всего игр",
     "totalMatches": "Всего матчей",
-    "noGamesAgainstEachOther": "Нет игр, где оба игрока участвовали"
+    "noGamesAgainstEachOther": "Нет игр, где оба игрока участвовали",
+    "coins": "монет"
   },
   "createGame": {
     "title": "Создать игру",
@@ -693,6 +694,7 @@
     "confirm": "Подтвердить",
     "copy": "Копировать",
     "copied": "Скопировано!",
+    "unknown": "Неизвестно",
     "sending": "Отправка...",
     "saving": "Сохранение...",
     "error": "Ошибка",
@@ -840,6 +842,26 @@
       "ADMINS": "Организаторы",
       "PHOTOS": "Фото"
     }
+  },
+  "wallet": {
+    "title": "Кошелек",
+    "balance": "Баланс",
+    "sendCoins": "Отправить Монеты",
+    "selectPlayer": "Выбрать Игрока",
+    "transactions": "Транзакции",
+    "noTransactions": "Пока нет транзакций",
+    "amount": "Сумма",
+    "selectedAmount": "Выбрано",
+    "message": "Сообщение (необязательно)",
+    "messagePlaceholder": "Добавить сообщение...",
+    "yourBalance": "Ваш баланс",
+    "transfer": "Перевести",
+    "transferSuccess": "Перевод выполнен успешно",
+    "invalidAmount": "Пожалуйста, выберите сумму",
+    "insufficientFunds": "Недостаточно средств",
+    "transferTo": "К {{name}}",
+    "transferFrom": "От {{name}}",
+    "walletEmpty": "Ваш кошелек пуст"
   }
 }
 

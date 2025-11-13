@@ -393,6 +393,30 @@ class SocketService {
     }
   }
 
+  public async emitWalletUpdate(userId: string, wallet: number, bandejaBankId?: string | null) {
+    if (!userId || userId === bandejaBankId) {
+      return;
+    }
+
+    const userSockets = this.connectedUsers.get(userId);
+    if (!userSockets || userSockets.size === 0) {
+      return;
+    }
+
+    let emittedCount = 0;
+    userSockets.forEach(socketId => {
+      const socket = this.io.sockets.sockets.get(socketId);
+      if (socket) {
+        socket.emit('wallet-update', { wallet });
+        emittedCount++;
+      }
+    });
+
+    if (emittedCount > 0) {
+      console.log(`[SocketService] Emitted wallet-update to user ${userId} (${emittedCount} socket(s))`);
+    }
+  }
+
   // Check if user is online
   public isUserOnline(userId: string): boolean {
     return this.connectedUsers.has(userId) && this.connectedUsers.get(userId)!.size > 0;

@@ -27,6 +27,7 @@ import {
   adminDeclineInvite,
   cleanupOldFiles,
   getStorageStats,
+  emitCoins,
 } from '../controllers/admin.controller';
 
 const router = Router();
@@ -64,5 +65,7 @@ router.post('/invites/:inviteId/decline', requireAdmin, adminDeclineInvite);
 
 router.post('/media/cleanup', requireAdmin, cleanupOldFiles);
 router.get('/media/stats', requireAdmin, getStorageStats);
+
+router.post('/users/:userId/emit-coins', requireAdmin, emitCoins);
 
 export default router;

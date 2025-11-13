@@ -51,3 +51,5 @@ export * from './GameSetupModal';
 export * from './OfflineBanner';
 export * from './AppLoadingScreen';
 export * from './NoInternetScreen';
+export * from './WalletModal';
+export * from './SendMoneyToUserModal';

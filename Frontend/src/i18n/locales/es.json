@@ -481,7 +481,8 @@
     "total": "Total",
     "totalGames": "Total de Juegos",
     "totalMatches": "Total de Partidos",
-    "noGamesAgainstEachOther": "No hay juegos donde ambos jugadores participaron"
+    "noGamesAgainstEachOther": "No hay juegos donde ambos jugadores participaron",
+    "coins": "monedas"
   },
   "createGame": {
     "title": "Crear juego",
@@ -686,6 +687,7 @@
     "error": "Error",
     "success": "Éxito",
     "loading": "Cargando...",
+    "unknown": "Desconocido",
     "noResults": "No se encontraron resultados",
     "remove": "Eliminar",
     "unmark": "Desmarcar",
@@ -828,5 +830,25 @@
       "ADMINS": "Organizadores",
       "PHOTOS": "Foto"
     }
+  },
+  "wallet": {
+    "title": "Billetera",
+    "balance": "Saldo",
+    "sendCoins": "Enviar Monedas",
+    "selectPlayer": "Seleccionar Jugador",
+    "transactions": "Transacciones",
+    "noTransactions": "Aún no hay transacciones",
+    "amount": "Cantidad",
+    "selectedAmount": "Seleccionado",
+    "message": "Mensaje (opcional)",
+    "messagePlaceholder": "Agregar un mensaje...",
+    "yourBalance": "Tu saldo",
+    "transfer": "Transferir",
+    "transferSuccess": "Transferencia exitosa",
+    "invalidAmount": "Por favor selecciona una cantidad",
+    "insufficientFunds": "Fondos insuficientes",
+    "transferTo": "A {{name}}",
+    "transferFrom": "De {{name}}",
+    "walletEmpty": "Tu billetera está vacía"
   }
 }

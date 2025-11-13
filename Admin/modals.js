@@ -433,6 +433,39 @@ async function handleResetPasswordSubmit(e) {
     }
 }
 
+function emitCoinsModal(userId, userName) {
+    showModal('emitCoinsModal');
+    document.getElementById('emitCoinsUserName').textContent = userName;
+    document.getElementById('emitCoinsForm').dataset.userId = userId;
+    document.getElementById('coinAmount').value = '';
+    document.getElementById('coinDescription').value = '';
+}
+
+async function handleEmitCoinsSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const userId = form.dataset.userId;
+    const amount = parseInt(document.getElementById('coinAmount').value);
+    const description = document.getElementById('coinDescription').value;
+
+    if (!amount || amount <= 0) {
+        alert('Error: Amount must be a positive integer');
+        return;
+    }
+
+    try {
+        await apiRequest(`/admin/users/${userId}/emit-coins`, {
+            method: 'POST',
+            body: JSON.stringify({ amount, description: description || undefined }),
+        });
+        closeModal('emitCoinsModal');
+        alert(`Successfully emitted ${amount} coins to user`);
+        loadUsers();
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
 window.closeModal = closeModal;
 window.createCityModal = createCityModal;
 window.editCityModal = editCityModal;
@@ -451,4 +484,6 @@ window.editUserModal = editUserModal;
 window.handleUserSubmit = handleUserSubmit;
 window.resetPasswordModal = resetPasswordModal;
 window.handleResetPasswordSubmit = handleResetPasswordSubmit;
+window.emitCoinsModal = emitCoinsModal;
+window.handleEmitCoinsSubmit = handleEmitCoinsSubmit;
 

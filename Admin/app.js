@@ -246,6 +246,7 @@ function renderUsersTable(users) {
                         ${user.isActive ? 'Deactivate' : 'Activate'}
                     </button>
                     <button class="btn-small btn-warning" onclick='resetPasswordModal("${user.id}", "${(user.firstName || '') + ' ' + (user.lastName || '')}".trim() || "${user.phone}")'>Reset Password</button>
+                    <button class="btn-small btn-success" onclick='emitCoinsModal("${user.id}", "${(user.firstName || '') + ' ' + (user.lastName || '')}".trim() || "${user.phone}")'>Emit Coins</button>
                 </div>
             </td>
         </tr>

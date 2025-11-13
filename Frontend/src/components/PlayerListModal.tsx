@@ -18,6 +18,7 @@ interface PlayerListModalProps {
   onConfirm?: (playerIds: string[]) => void;
   preSelectedIds?: string[];
   filterPlayerIds?: string[];
+  title?: string;
 }
 
 export const PlayerListModal = ({
@@ -27,7 +28,8 @@ export const PlayerListModal = ({
   multiSelect = false,
   onConfirm,
   preSelectedIds = [],
-  filterPlayerIds = []
+  filterPlayerIds = [],
+  title
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
@@ -191,7 +193,7 @@ export const PlayerListModal = ({
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {multiSelect ? t('games.invitePlayers') : t('games.invitePlayer')}
+            {title || (multiSelect ? t('games.invitePlayers') : t('games.invitePlayer'))}
           </h2>
           <button
             onClick={onClose}

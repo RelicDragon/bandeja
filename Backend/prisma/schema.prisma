@@ -26,6 +26,7 @@ model User {
   totalPoints             Int                  @default(0)
   gamesPlayed             Int                  @default(0)
   gamesWon                Int                  @default(0)
+  wallet                  Int                  @default(0)
   currentCityId           String?
   language                String?
   preferredHandLeft       Boolean              @default(false)
@@ -63,6 +64,8 @@ model User {
   gameTeamPlayers         GameTeamPlayer[]
   bugs                    Bug[]
   lundaProfile            LundaProfile?
+  transactionsFrom        Transaction[]        @relation("TransactionFromUser")
+  transactionsTo          Transaction[]        @relation("TransactionToUser")
 
   @@index([phone])
   @@index([telegramId])
@@ -751,4 +754,56 @@ model GameCourt {
   @@unique([gameId, order])
   @@index([gameId])
   @@index([courtId])
+}
+
+model Goods {
+  id        String           @id @default(cuid())
+  name      String
+  price     Int
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  transactionRows TransactionRow[]
+
+  @@index([name])
+}
+
+model Transaction {
+  id              String            @id @default(cuid())
+  type            TransactionType
+  total           Int
+  fromUserId      String?
+  toUserId        String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  fromUser        User?             @relation("TransactionFromUser", fields: [fromUserId], references: [id], onDelete: SetNull)
+  toUser          User?             @relation("TransactionToUser", fields: [toUserId], references: [id], onDelete: SetNull)
+  transactionRows TransactionRow[]
+
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model TransactionRow {
+  id            String      @id @default(cuid())
+  transactionId String
+  goodsId       String?
+  name          String
+  price         Int
+  qty           Int
+  total         Int
+  createdAt     DateTime    @default(now())
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  goods         Goods?      @relation(fields: [goodsId], references: [id], onDelete: SetNull)
+
+  @@index([transactionId])
+  @@index([goodsId])
+}
+
+enum TransactionType {
+  NEW_COIN
+  TRANSFER
+  PURCHASE
+  REFUND
 }

@@ -21,6 +21,7 @@ export interface SocketEvents {
   'left-bug-room': (data: { bugId: string }) => void;
   'game-updated': (data: { gameId: string; senderId: string; game: any }) => void;
   'game-results-updated': (data: { gameId: string }) => void;
+  'wallet-update': (data: { wallet: number }) => void;
   'error': (error: { message: string }) => void;
 }
 
@@ -128,6 +129,14 @@ class SocketService {
     // Add listener for game-updated events to debug
     this.socket.on('game-updated', (data: any) => {
       console.log('[SocketService] Received game-updated event:', data);
+    });
+
+    // Handle wallet-update events
+    this.socket.on('wallet-update', (data: { wallet: number }) => {
+      const { user, updateUser } = useAuthStore.getState();
+      if (user) {
+        updateUser({ ...user, wallet: data.wallet });
+      }
     });
   }
 

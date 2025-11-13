@@ -152,6 +152,7 @@ export const PROFILE_SELECT_FIELDS = {
   language: true,
   sendTelegramMessages: true,
   sendTelegramInvites: true,
+  wallet: true,
   currentCity: {
     select: {
       id: true,

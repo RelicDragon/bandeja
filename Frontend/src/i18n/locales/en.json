@@ -488,7 +488,8 @@
     "total": "Total",
     "totalGames": "Total Games",
     "totalMatches": "Total Matches",
-    "noGamesAgainstEachOther": "No games where both players participated"
+    "noGamesAgainstEachOther": "No games where both players participated",
+    "coins": "coins"
   },
   "createGame": {
     "title": "Create Game",
@@ -693,6 +694,7 @@
     "error": "Error",
     "success": "Success",
     "loading": "Loading...",
+    "unknown": "Unknown",
     "noResults": "No results found",
     "remove": "Remove",
     "unmark": "Unmark",
@@ -846,6 +848,26 @@
       "fr": "Fr",
       "sa": "Sa"
     }
+  },
+  "wallet": {
+    "title": "Wallet",
+    "balance": "Balance",
+    "sendCoins": "Send Coins",
+    "selectPlayer": "Select Player",
+    "transactions": "Transactions",
+    "noTransactions": "No transactions yet",
+    "amount": "Amount",
+    "selectedAmount": "Selected",
+    "message": "Message (optional)",
+    "messagePlaceholder": "Add a message...",
+    "yourBalance": "Your balance",
+    "transfer": "Transfer",
+    "transferSuccess": "Transfer successful",
+    "invalidAmount": "Please select an amount",
+    "insufficientFunds": "Insufficient funds",
+    "transferTo": "To {{name}}",
+    "transferFrom": "From {{name}}",
+    "walletEmpty": "Your wallet is empty"
   }
 }
 

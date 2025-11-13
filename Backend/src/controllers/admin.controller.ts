@@ -7,6 +7,8 @@ import { AdminLocationsService } from '../services/admin/locations.service';
 import { AdminMediaService } from '../services/admin/media.service';
 import { AdminStatsService } from '../services/admin/stats.service';
 import { AdminUsersService } from '../services/admin/users.service';
+import { TransactionService } from '../services/transaction.service';
+import { TransactionType } from '@prisma/client';
 
 // Auth endpoints
 export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
@@ -456,5 +458,41 @@ export const deleteUser = asyncHandler(async (req: AuthRequest, res: Response) =
   res.json({
     success: true,
     message: result.message,
+  });
+});
+
+export const emitCoins = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { userId } = req.params;
+  const { amount, description } = req.body;
+
+  if (!amount) {
+    return res.status(400).json({
+      success: false,
+      message: 'Amount is required',
+    });
+  }
+
+  if (amount <= 0 || !Number.isInteger(amount)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Amount must be a positive integer',
+    });
+  }
+
+  const transaction = await TransactionService.createTransaction({
+    type: TransactionType.NEW_COIN,
+    toUserId: userId,
+    transactionRows: [
+      {
+        name: description || 'Admin coin emission',
+        price: amount,
+        qty: 1,
+      },
+    ],
+  });
+
+  res.status(201).json({
+    success: true,
+    data: transaction,
   });
 });

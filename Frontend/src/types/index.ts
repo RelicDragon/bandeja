@@ -46,6 +46,7 @@ export interface User {
   preferredCourtSideRight?: boolean;
   sendTelegramMessages?: boolean;
   sendTelegramInvites?: boolean;
+  wallet?: number;
 }
 
 export interface City {

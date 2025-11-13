@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, Beer, Star, ArrowLeft } from 'lucide-react';
+import { X, Beer, Star, ArrowLeft, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
@@ -10,8 +10,10 @@ import { UrlConstructor } from '@/utils/urlConstructor';
 import { PlayerAvatarView } from './PlayerAvatarView';
 import { LevelHistoryView } from './LevelHistoryView';
 import { GenderIndicator } from './GenderIndicator';
+import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
+import { transactionsApi } from '@/api/transactions';
 import toast from 'react-hot-toast';
 
 interface PlayerCardBottomSheetProps {
@@ -29,6 +31,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [dragY, setDragY] = useState(0);
   const [showAvatarView, setShowAvatarView] = useState(false);
   const [showLevelView, setShowLevelView] = useState(false);
+  const [showSendMoneyModal, setShowSendMoneyModal] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
   const isCurrentUser = playerId === user?.id;
 
   // Disable background scrolling and interactions when modal is open
@@ -66,14 +70,19 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     setIsClosing(false);
     setShowAvatarView(false);
     setShowLevelView(false);
+    setShowSendMoneyModal(false);
 
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const response = await usersApi.getUserStats(playerId);
-        console.log('User stats loaded:', response.data);
-        console.log('User originalAvatar:', response.data.user.originalAvatar);
-        setStats(response.data);
+        const [statsResponse, walletResponse] = await Promise.all([
+          usersApi.getUserStats(playerId),
+          transactionsApi.getWallet(),
+        ]);
+        console.log('User stats loaded:', statsResponse.data);
+        console.log('User originalAvatar:', statsResponse.data.user.originalAvatar);
+        setStats(statsResponse.data);
+        setWalletBalance(walletResponse.data.wallet || 0);
       } catch (error) {
         console.error('Failed to fetch user stats:', error);
       } finally {
@@ -139,22 +148,23 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[99999]"
-        onClick={handleClose}
-        style={{ 
-          pointerEvents: 'auto',
-          touchAction: 'none',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          MozUserSelect: 'none',
-          msUserSelect: 'none'
-        }}
-      >
+      {!showSendMoneyModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[99999]"
+          onClick={handleClose}
+          style={{ 
+            pointerEvents: 'auto',
+            touchAction: 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none'
+          }}
+        >
         <motion.div
           initial={{ backdropFilter: 'blur(0px)' }}
           animate={{ backdropFilter: isClosing ? 'blur(0px)' : `blur(${blurValue}px)` }}
@@ -290,6 +300,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                     <PlayerCardContent 
                       stats={stats} 
                       t={t} 
+                      isCurrentUser={isCurrentUser}
+                      walletBalance={walletBalance}
                       onAvatarClick={() => {
                         console.log('Avatar clicked!', stats.user.originalAvatar);
                         if (stats.user.originalAvatar) {
@@ -297,6 +309,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                         }
                       }}
                       onLevelClick={() => setShowLevelView(true)}
+                      onSendMoneyClick={() => setShowSendMoneyModal(true)}
                     />
                   </motion.div>
                 )}
@@ -305,6 +318,17 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           </div>
         </motion.div>
       </motion.div>
+      )}
+
+      {showSendMoneyModal && playerId && (
+        <SendMoneyToUserModal
+          toUserId={playerId}
+          onClose={() => {
+            setShowSendMoneyModal(false);
+            onClose();
+          }}
+        />
+      )}
     </AnimatePresence>
   );
 };
@@ -312,11 +336,14 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
 interface PlayerCardContentProps {
   stats: UserStats;
   t: (key: string) => string;
+  isCurrentUser: boolean;
+  walletBalance: number;
   onAvatarClick: () => void;
   onLevelClick: () => void;
+  onSendMoneyClick: () => void;
 }
 
-const PlayerCardContent = ({ stats, t, onAvatarClick, onLevelClick }: PlayerCardContentProps) => {
+const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, onAvatarClick, onLevelClick, onSendMoneyClick }: PlayerCardContentProps) => {
   const { user, gamesLast30Days } = stats;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
@@ -467,6 +494,19 @@ const PlayerCardContent = ({ stats, t, onAvatarClick, onLevelClick }: PlayerCard
           </div>
         </div>
       </div>
+
+      {!isCurrentUser && (
+        <div className="mt-6">
+          <button
+            onClick={onSendMoneyClick}
+            disabled={walletBalance === 0}
+            className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+          >
+            <Send size={20} />
+            {t('wallet.sendCoins') || 'Send Coins'}
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };
