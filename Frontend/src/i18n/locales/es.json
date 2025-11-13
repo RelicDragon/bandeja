@@ -411,7 +411,8 @@
     "noSocialLevelHistory": "No hay historial de nivel social disponible",
     "switchToLevel": "Cambiar a nivel",
     "switchToSocialLevel": "Cambiar a nivel social",
-    "gameIsPrivate": "Este juego es privado"
+    "gameIsPrivate": "Este juego es privado",
+    "openTelegramChat": "Abrir chat de Telegram"
   },
   "profile": {
     "title": "Perfil",

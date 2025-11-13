@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, Beer, Star, ArrowLeft, Send } from 'lucide-react';
+import { X, Beer, Star, ArrowLeft, Send, Wallet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
@@ -349,6 +349,22 @@ const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, onAvatarCli
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const winRate = user.gamesPlayed > 0 ? ((user.gamesWon / user.gamesPlayed) * 100).toFixed(1) : '0';
 
+  const getTelegramUrl = () => {
+    if (user.telegramUsername) {
+      return `https://t.me/${user.telegramUsername.replace('@', '')}`;
+    }
+    if (user.telegramId) {
+      return `tg://user?id=${user.telegramId}`;
+    }
+    return null;
+  };
+
+  const telegramUrl = getTelegramUrl();
+  const hasTelegram = !!(user.telegramId || user.telegramUsername);
+  console.log('user', user);
+  console.log('hasTelegram', hasTelegram);
+  console.log('telegramUrl', telegramUrl);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -496,13 +512,22 @@ const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, onAvatarCli
       </div>
 
       {!isCurrentUser && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-3">
+          {hasTelegram && telegramUrl && (
+            <button
+              onClick={() => window.open(telegramUrl, '_blank')}
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+            >
+              <Send size={20} />
+              {t('playerCard.openTelegramChat')}
+            </button>
+          )}
           <button
             onClick={onSendMoneyClick}
             disabled={walletBalance === 0}
             className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
           >
-            <Send size={20} />
+            <Wallet size={20} />
             {t('wallet.sendCoins') || 'Send Coins'}
           </button>
         </div>

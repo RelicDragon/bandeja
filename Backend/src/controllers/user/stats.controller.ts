@@ -29,6 +29,8 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
       preferredHandRight: true,
       preferredCourtSideLeft: true,
       preferredCourtSideRight: true,
+      telegramId: true,
+      telegramUsername: true,
     },
   });
 

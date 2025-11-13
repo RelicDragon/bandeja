@@ -413,7 +413,8 @@
     "noSocialLevelHistory": "Историја социјалног нивоа није доступна",
     "switchToLevel": "Пребаци на ниво",
     "switchToSocialLevel": "Пребаци на социјални ниво",
-    "gameIsPrivate": "Ова игра је приватна"
+    "gameIsPrivate": "Ова игра је приватна",
+    "openTelegramChat": "Отвори Telegram чат"
   },
   "profile": {
     "title": "Профил",
