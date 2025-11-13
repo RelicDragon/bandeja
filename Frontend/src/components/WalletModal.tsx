@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { Button } from './Button';
 import { PlayerListModal } from './PlayerListModal';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
+import { PlayerCardBottomSheet } from './PlayerCardBottomSheet';
 
 interface WalletModalProps {
   onClose: () => void;
@@ -22,6 +23,7 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
   const [loading, setLoading] = useState(true);
   const [showPlayerList, setShowPlayerList] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [viewPlayerId, setViewPlayerId] = useState<string | null>(null);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -116,6 +118,17 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
     return transaction.fromUserId === userId;
   };
 
+  const handleTransactionClick = (transaction: Transaction) => {
+    if (transaction.type === 'TRANSFER') {
+      const otherUserId = isOutgoing(transaction) 
+        ? transaction.toUserId 
+        : transaction.fromUserId;
+      if (otherUserId) {
+        setViewPlayerId(otherUserId);
+      }
+    }
+  };
+
   return createPortal(
     <>
       <motion.div
@@ -177,8 +190,8 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
           ) : (
             <>
               <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
+                <div className="flex items-center justify-between mb-0">
+                  <div className="pl-2">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
                       {t('wallet.balance') || 'Balance'}
                     </p>
@@ -213,10 +226,15 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
                       const outgoing = isOutgoing(transaction);
                       const amount = Math.abs(transaction.total);
                       const message = getTransactionMessage(transaction);
+                      const isTransfer = transaction.type === 'TRANSFER';
+                      const isClickable = isTransfer && (isOutgoing(transaction) ? transaction.toUserId : transaction.fromUserId);
                       return (
                         <div
                           key={transaction.id}
-                          className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                          onClick={() => handleTransactionClick(transaction)}
+                          className={`flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg ${
+                            isClickable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors' : ''
+                          }`}
                         >
                           <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
                             outgoing
@@ -276,6 +294,13 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
           toUserId={selectedPlayerId}
           onClose={() => setSelectedPlayerId(null)}
           onTransferComplete={handleTransferComplete}
+        />
+      )}
+
+      {viewPlayerId && (
+        <PlayerCardBottomSheet
+          playerId={viewPlayerId}
+          onClose={() => setViewPlayerId(null)}
         />
       )}
     </>,

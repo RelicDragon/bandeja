@@ -668,7 +668,12 @@
     "photoAdded": "Фотографија је додата у чат игре",
     "photoUploadFailed": "Није успело отпремање фотографије",
     "photos": "Фотографије",
-    "noPhotosYet": "Још нема фотографија са игре"
+    "noPhotosYet": "Још нема фотографија",
+    "noPhotosYetFromGame": "Још нема фотографија са игре",
+    "noPhotosYetFromTournament": "Још нема фотографија са турнира",
+    "noPhotosYetFromLeague": "Још нема фотографија из лиге",
+    "noPhotosYetFromBar": "Још нема фотографија из бара",
+    "noPhotosYetFromTraining": "Још нема фотографија са тренинга"
   },
   "common": {
     "yes": "Да",

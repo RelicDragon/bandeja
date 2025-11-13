@@ -135,12 +135,29 @@ export const PhotosSection = ({ game }: PhotosSectionProps) => {
   }
 
   if (photos.length === 0) {
+    const getNoPhotosKey = () => {
+      switch (game.entityType) {
+        case 'GAME':
+          return 'gameDetails.noPhotosYetFromGame';
+        case 'TOURNAMENT':
+          return 'gameDetails.noPhotosYetFromTournament';
+        case 'LEAGUE':
+          return 'gameDetails.noPhotosYetFromLeague';
+        case 'BAR':
+          return 'gameDetails.noPhotosYetFromBar';
+        case 'TRAINING':
+          return 'gameDetails.noPhotosYetFromTraining';
+        default:
+          return 'gameDetails.noPhotosYet';
+      }
+    };
+    
     return (
       <Card>
         <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              {t('gameDetails.noPhotosYet')}
+              {t(getNoPhotosKey())}
             </span>
             <button
               onClick={handlePhotoCapture}

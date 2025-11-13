@@ -675,7 +675,12 @@
     "photoAdded": "Фото добавлено в чат игры",
     "photoUploadFailed": "Не удалось загрузить фото",
     "photos": "Фото",
-    "noPhotosYet": "Пока нет фотографий с игры"
+    "noPhotosYet": "Пока нет фотографий",
+    "noPhotosYetFromGame": "Пока нет фотографий с игры",
+    "noPhotosYetFromTournament": "Пока нет фотографий с турнира",
+    "noPhotosYetFromLeague": "Пока нет фотографий из лиги",
+    "noPhotosYetFromBar": "Пока нет фотографий из бара",
+    "noPhotosYetFromTraining": "Пока нет фотографий с тренировки"
   },
   "common": {
     "yes": "Да",

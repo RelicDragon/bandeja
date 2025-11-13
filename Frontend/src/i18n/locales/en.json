@@ -670,7 +670,12 @@
     "photoAdded": "Photo added to game chat",
     "photoUploadFailed": "Failed to upload photo",
     "photos": "Photos",
-    "noPhotosYet": "No photos from game yet"
+    "noPhotosYet": "No photos yet",
+    "noPhotosYetFromGame": "No photos from game yet",
+    "noPhotosYetFromTournament": "No photos from tournament yet",
+    "noPhotosYetFromLeague": "No photos from league yet",
+    "noPhotosYetFromBar": "No photos from bar yet",
+    "noPhotosYetFromTraining": "No photos from training yet"
   },
   "common": {
     "yes": "Yes",

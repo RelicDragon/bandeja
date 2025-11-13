@@ -663,7 +663,12 @@
     "photoAdded": "Foto añadida al chat del juego",
     "photoUploadFailed": "Error al subir la foto",
     "photos": "Fotos",
-    "noPhotosYet": "Aún no hay fotos del juego"
+    "noPhotosYet": "Aún no hay fotos",
+    "noPhotosYetFromGame": "Aún no hay fotos del juego",
+    "noPhotosYetFromTournament": "Aún no hay fotos del torneo",
+    "noPhotosYetFromLeague": "Aún no hay fotos de la liga",
+    "noPhotosYetFromBar": "Aún no hay fotos del bar",
+    "noPhotosYetFromTraining": "Aún no hay fotos del entrenamiento"
   },
   "common": {
     "yes": "Sí",
