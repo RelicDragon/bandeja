@@ -355,10 +355,10 @@ export const Contacts = () => {
             <Search size={20} className="text-gray-600 dark:text-gray-400" />
           </div>
         </div>
-        <div className="relative flex-1">
+        <div className="relative flex-1 overflow-hidden">
           <div 
             ref={carouselRef}
-            className="flex items-center gap-2 overflow-x-auto pb-2 pl-1 pt-2 scrollbar-hide"
+            className="flex items-center gap-2 overflow-x-auto pb-2 pl-1 pr-2 pt-2 scrollbar-hide"
           >
             {filteredContacts.map((contact, index) => {
           if (!contact.user) return null;
@@ -387,7 +387,7 @@ export const Contacts = () => {
         })}
           </div>
           {showLeftFade && (
-            <div className="absolute left-0 -top-2 bottom-0 w-8 bg-gradient-to-r from-gray-50 via-gray-50/80 to-transparent dark:from-gray-900 dark:via-gray-900/80 pointer-events-none z-10" />
+            <div className="absolute -left-1 -top-2 bottom-0 w-8 bg-gradient-to-r from-gray-50 via-gray-50/80 to-transparent dark:from-gray-900 dark:via-gray-900/80 pointer-events-none z-10" />
           )}
           {showRightFade && (
             <div className="absolute right-0 -top-2 bottom-0 w-8 bg-gradient-to-l from-gray-50 via-gray-50/80 to-transparent dark:from-gray-900 dark:via-gray-900/80 pointer-events-none z-10" />
