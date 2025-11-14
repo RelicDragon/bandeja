@@ -326,7 +326,6 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                       walletBalance={walletBalance}
                       startingChat={startingChat}
                       onAvatarClick={() => {
-                        console.log('Avatar clicked!', stats.user.originalAvatar);
                         if (stats.user.originalAvatar) {
                           setShowAvatarView(true);
                         }
@@ -387,9 +386,6 @@ const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, startingCha
 
   const telegramUrl = getTelegramUrl();
   const hasTelegram = !!(user.telegramId || user.telegramUsername);
-  console.log('user', user);
-  console.log('hasTelegram', hasTelegram);
-  console.log('telegramUrl', telegramUrl);
 
   return (
     <motion.div

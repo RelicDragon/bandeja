@@ -8,6 +8,7 @@ import { canUserSeeGame } from '@/utils/gameResults';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { LevelHistoryTabController } from './LevelHistoryTabController';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Dot } from 'recharts';
 
 const TennisBallIcon = () => (
   <svg
@@ -116,7 +117,15 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
   const minLevel = currentHistory.length > 0
     ? Math.min(...currentHistory.map(h => h.levelAfter), currentValue)
     : currentValue;
-  const levelRange = maxLevel - minLevel || 1;
+
+  const chartData = useMemo(() => {
+    return currentHistory.map((item, index) => ({
+      index,
+      level: item.levelAfter,
+      date: new Date(item.createdAt).toLocaleDateString(),
+      fullDate: item.createdAt,
+    }));
+  }, [currentHistory]);
 
   return (
     <div className={`${padding} space-y-3`}>
@@ -147,60 +156,97 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
         <>
           <LevelHistoryTabController activeTab={activeTab} onTabChange={setActiveTab} darkBgClass={tabDarkBgClass} />
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
-            <div className="relative h-48">
-              <svg className="w-full h-full" viewBox="0 0 300 150" preserveAspectRatio="none">
-                <defs>
-                  {showSocialLevel ? (
-                    <linearGradient id="socialLevelGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="rgb(251, 191, 36)" stopOpacity="0.3" />
-                      <stop offset="100%" stopColor="rgb(251, 191, 36)" stopOpacity="0.05" />
+            <div className="relative h-48 select-none" style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
+              <style>{`
+                .recharts-wrapper,
+                .recharts-wrapper *,
+                .recharts-wrapper svg,
+                .recharts-wrapper svg *,
+                .recharts-surface,
+                .recharts-surface * {
+                  user-select: none !important;
+                  -webkit-user-select: none !important;
+                  -moz-user-select: none !important;
+                  -ms-user-select: none !important;
+                  outline: none !important;
+                  -webkit-tap-highlight-color: transparent !important;
+                }
+                .recharts-wrapper:focus,
+                .recharts-wrapper *:focus,
+                .recharts-wrapper svg:focus,
+                .recharts-wrapper svg *:focus,
+                .recharts-surface:focus,
+                .recharts-surface *:focus,
+                .recharts-wrapper:active,
+                .recharts-wrapper *:active {
+                  outline: none !important;
+                  box-shadow: none !important;
+                  border: none !important;
+                }
+              `}</style>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={chartData}
+                  margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                  style={{ outline: 'none' }}
+                  tabIndex={-1}
+                >
+                  <defs>
+                    <linearGradient id="levelGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity={0.05} />
                     </linearGradient>
-                  ) : (
-                    <linearGradient id="levelGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.3" />
-                      <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0.05" />
+                    <linearGradient id="socialLevelGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="rgb(251, 191, 36)" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="rgb(251, 191, 36)" stopOpacity={0.05} />
                     </linearGradient>
-                  )}
-                </defs>
-
-                <polyline
-                  fill={showSocialLevel ? "url(#socialLevelGradient)" : "url(#levelGradient)"}
-                  stroke="none"
-                  points={currentHistory.map((item, index) => {
-                    const x = (index / (currentHistory.length - 1 || 1)) * 300;
-                    const normalizedLevel = ((item.levelAfter - minLevel) / levelRange);
-                    const y = 150 - (normalizedLevel * 130 + 10);
-                    return `${x},${y}`;
-                  }).join(' ') + ` 300,150 0,150`}
-                />
-
-                <polyline
-                  fill="none"
-                  stroke={showSocialLevel ? "rgb(251, 191, 36)" : "rgb(59, 130, 246)"}
-                  strokeWidth="2"
-                  points={currentHistory.map((item, index) => {
-                    const x = (index / (currentHistory.length - 1 || 1)) * 300;
-                    const normalizedLevel = ((item.levelAfter - minLevel) / levelRange);
-                    const y = 150 - (normalizedLevel * 130 + 10);
-                    return `${x},${y}`;
-                  }).join(' ')}
-                />
-
-                {currentHistory.map((item, index) => {
-                  const x = (index / (currentHistory.length - 1 || 1)) * 300;
-                  const normalizedLevel = ((item.levelAfter - minLevel) / levelRange);
-                  const y = 150 - (normalizedLevel * 130 + 10);
-                  return (
-                    <circle
-                      key={item.id}
-                      cx={x}
-                      cy={y}
-                      r="4"
-                      fill={showSocialLevel ? "rgb(251, 191, 36)" : "rgb(59, 130, 246)"}
-                    />
-                  );
-                })}
-              </svg>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0, 0, 0, 0.1)" className="dark:stroke-gray-600" />
+                  <XAxis 
+                    dataKey="index" 
+                    hide 
+                    domain={['dataMin', 'dataMax']}
+                  />
+                  <YAxis 
+                    domain={[minLevel, maxLevel]}
+                    hide
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 shadow-lg">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {payload[0].payload.date}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                              {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}: {payload[0].value?.toFixed(2)}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="level"
+                    stroke={showSocialLevel ? "rgb(251, 191, 36)" : "rgb(59, 130, 246)"}
+                    strokeWidth={2}
+                    fill={showSocialLevel ? "url(#socialLevelGradient)" : "url(#levelGradient)"}
+                    dot={({ cx, cy }) => (
+                      <Dot
+                        cx={cx}
+                        cy={cy}
+                        r={4}
+                        fill={showSocialLevel ? "rgb(251, 191, 36)" : "rgb(59, 130, 246)"}
+                        stroke="none"
+                      />
+                    )}
+                    activeDot={{ r: 6 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
               
               <div className="absolute top-0 left-0 text-xs text-gray-500 dark:text-gray-400">
                 {maxLevel.toFixed(2)}
