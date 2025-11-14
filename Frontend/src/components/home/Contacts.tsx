@@ -387,7 +387,7 @@ export const Contacts = () => {
         })}
           </div>
           {showLeftFade && (
-            <div className="absolute -left-1 -top-2 bottom-0 w-8 bg-gradient-to-r from-gray-50 via-gray-50/80 to-transparent dark:from-gray-900 dark:via-gray-900/80 pointer-events-none z-10" />
+            <div className="absolute left-0 -top-2 bottom-0 w-8 bg-gradient-to-r from-gray-50 via-gray-50/80 to-transparent dark:from-gray-900 dark:via-gray-900/80 pointer-events-none z-10" />
           )}
           {showRightFade && (
             <div className="absolute right-0 -top-2 bottom-0 w-8 bg-gradient-to-l from-gray-50 via-gray-50/80 to-transparent dark:from-gray-900 dark:via-gray-900/80 pointer-events-none z-10" />
