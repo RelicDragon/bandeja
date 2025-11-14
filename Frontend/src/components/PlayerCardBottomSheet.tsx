@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, Beer, Star, ArrowLeft, Send, Wallet } from 'lucide-react';
+import { X, Beer, Star, ArrowLeft, Send, Wallet, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
+import { chatApi } from '@/api/chat';
 import { Loading } from './Loading';
 import { CachedImage } from './CachedImage';
 import { UrlConstructor } from '@/utils/urlConstructor';
@@ -23,6 +25,7 @@ interface PlayerCardBottomSheetProps {
 
 export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomSheetProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const { addFavorite, removeFavorite } = useFavoritesStore();
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -33,6 +36,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [showLevelView, setShowLevelView] = useState(false);
   const [showSendMoneyModal, setShowSendMoneyModal] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [startingChat, setStartingChat] = useState(false);
   const isCurrentUser = playerId === user?.id;
 
   // Disable background scrolling and interactions when modal is open
@@ -136,6 +140,26 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
+  };
+
+  const handleStartChat = async () => {
+    if (!playerId || startingChat) return;
+
+    setStartingChat(true);
+    try {
+      const response = await chatApi.getOrCreateChatWithUser(playerId);
+      const chat = response.data;
+      
+      if (chat) {
+        onClose();
+        navigate(`/user-chat/${chat.id}`, { state: { chat, contextType: 'USER' } });
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setStartingChat(false);
     }
   };
 
@@ -302,6 +326,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                       t={t} 
                       isCurrentUser={isCurrentUser}
                       walletBalance={walletBalance}
+                      startingChat={startingChat}
                       onAvatarClick={() => {
                         console.log('Avatar clicked!', stats.user.originalAvatar);
                         if (stats.user.originalAvatar) {
@@ -310,6 +335,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                       }}
                       onLevelClick={() => setShowLevelView(true)}
                       onSendMoneyClick={() => setShowSendMoneyModal(true)}
+                      onStartChat={handleStartChat}
                     />
                   </motion.div>
                 )}
@@ -338,12 +364,14 @@ interface PlayerCardContentProps {
   t: (key: string) => string;
   isCurrentUser: boolean;
   walletBalance: number;
+  startingChat: boolean;
   onAvatarClick: () => void;
   onLevelClick: () => void;
   onSendMoneyClick: () => void;
+  onStartChat: () => void;
 }
 
-const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, onAvatarClick, onLevelClick, onSendMoneyClick }: PlayerCardContentProps) => {
+const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, startingChat, onAvatarClick, onLevelClick, onSendMoneyClick, onStartChat }: PlayerCardContentProps) => {
   const { user, gamesLast30Days } = stats;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
@@ -513,6 +541,14 @@ const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, onAvatarCli
 
       {!isCurrentUser && (
         <div className="mt-6 space-y-3">
+          <button
+            onClick={onStartChat}
+            disabled={startingChat}
+            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+          >
+            <MessageCircle size={20} />
+            {startingChat ? t('common.loading') : t('playerCard.openChat')}
+          </button>
           {hasTelegram && telegramUrl && (
             <button
               onClick={() => window.open(telegramUrl, '_blank')}

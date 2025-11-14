@@ -33,7 +33,8 @@ export function createMessageHandler(
       
       try {
         await MessageService.createMessageWithEvent({
-          gameId: pendingReply.gameId,
+          chatContextType: 'GAME',
+          contextId: pendingReply.gameId,
           senderId: pendingReply.userId,
           content: msg.text.trim(),
           mediaUrls: [],

@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { chatApi, CreateMessageRequest, ChatMessage } from '@/api/chat';
-import { bugChatApi, CreateBugMessageRequest, BugMessage } from '@/api/bugChat';
 import { mediaApi } from '@/api/media';
 import { ChatType } from '@/types';
 import { ReplyPreview } from './ReplyPreview';
@@ -11,9 +10,10 @@ import { Image, X } from 'lucide-react';
 interface MessageInputProps {
   gameId?: string;
   bugId?: string;
+  userChatId?: string;
   onMessageSent: () => void;
   disabled?: boolean;
-  replyTo?: ChatMessage | BugMessage | null;
+  replyTo?: ChatMessage | null;
   onCancelReply?: () => void;
   onScrollToMessage?: (messageId: string) => void;
   chatType?: ChatType;
@@ -22,6 +22,7 @@ interface MessageInputProps {
 export const MessageInput: React.FC<MessageInputProps> = ({
   gameId,
   bugId,
+  userChatId,
   onMessageSent,
   disabled = false,
   replyTo,
@@ -89,7 +90,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const uploadImages = async (): Promise<{ originalUrls: string[]; thumbnailUrls: string[] }> => {
     if (selectedImages.length === 0) return { originalUrls: [], thumbnailUrls: [] };
 
-    const targetId = gameId || bugId;
+    const targetId = gameId || bugId || userChatId;
     if (!targetId) return { originalUrls: [], thumbnailUrls: [] };
 
     const uploadPromises = selectedImages.map(async (file) => {
@@ -122,29 +123,18 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
       const trimmedContent = message.trim();
 
-      if (gameId) {
-        const messageData: CreateMessageRequest = {
-          gameId,
-          content: trimmedContent || undefined,
-          mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
-          thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
-          replyToId: replyTo?.id,
-          chatType,
-        };
+      const messageData: CreateMessageRequest = {
+        chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : 'USER',
+        contextId: gameId || bugId || userChatId,
+        gameId: gameId, // Keep for backward compatibility
+        content: trimmedContent || undefined,
+        mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
+        thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+        replyToId: replyTo?.id,
+        chatType: userChatId ? 'PUBLIC' : chatType,
+      };
 
-        await chatApi.createMessage(messageData);
-      } else if (bugId) {
-        const messageData: CreateBugMessageRequest = {
-          bugId,
-          content: trimmedContent || undefined,
-          mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
-          thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
-          replyToId: replyTo?.id,
-          chatType,
-        };
-
-        await bugChatApi.createMessage(messageData);
-      }
+      await chatApi.createMessage(messageData);
 
       setMessage('');
       setSelectedImages([]);

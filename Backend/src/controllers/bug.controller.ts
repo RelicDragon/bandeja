@@ -3,9 +3,9 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import { BugService } from '../services/bug.service';
-import { BugSystemMessageService } from '../services/bug/bugSystemMessage.service';
 import { SystemMessageType } from '../utils/systemMessages';
 import { BugStatus, BugType, ChatType } from '@prisma/client';
+import { createBugSystemMessage } from './chat.controller';
 
 export const createBug = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { text, bugType } = req.body;
@@ -84,7 +84,7 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
 
   // Send system messages for status/type changes
   if (status && status !== existingBug.status) {
-    await BugSystemMessageService.createSystemMessage(
+    await createBugSystemMessage(
       id,
       {
         type: SystemMessageType.BUG_STATUS_CHANGED,
@@ -95,7 +95,7 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
   }
 
   if (bugType && bugType !== existingBug.bugType) {
-    await BugSystemMessageService.createSystemMessage(
+    await createBugSystemMessage(
       id,
       {
         type: SystemMessageType.BUG_TYPE_CHANGED,

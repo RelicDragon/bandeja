@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BugMessage } from '@/api/bugChat';
+import { ChatMessage } from '@/api/chat';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
 import { REACTION_EMOJIS, formatFullDateTime, getUserDisplayName, getUserInitials } from '@/utils/messageMenuUtils';
 
 interface BugUnifiedMessageMenuProps {
-  message: BugMessage;
+  message: ChatMessage;
   isOwnMessage: boolean;
   currentReaction?: string;
-  onReply: (message: BugMessage) => void;
-  onCopy: (message: BugMessage) => void;
+  onReply: (message: ChatMessage) => void;
+  onCopy: (message: ChatMessage) => void;
   onDelete: (messageId: string) => void;
   onReactionSelect: (messageId: string, emoji: string) => void;
   onReactionRemove: (messageId: string) => void;

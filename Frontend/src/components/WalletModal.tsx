@@ -51,7 +51,7 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
     };
 
     fetchData();
-  }, []);
+  }, [t]);
 
   const handleSendClick = () => {
     setShowPlayerList(true);

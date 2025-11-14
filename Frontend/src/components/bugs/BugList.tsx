@@ -6,7 +6,7 @@ import { Bug, BugStatus, BugType } from '@/types';
 
 const BUG_STATUS_VALUES: BugStatus[] = ['CREATED', 'CONFIRMED', 'IN_PROGRESS', 'TEST', 'FINISHED', 'ARCHIVED'];
 import { bugsApi } from '@/api';
-import { bugChatApi } from '@/api/bugChat';
+import { chatApi } from '@/api/chat';
 import { toast } from 'react-hot-toast';
 import { Plus } from 'lucide-react';
 import { BugModal } from './BugModal';
@@ -60,7 +60,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
       // Fetch unread counts for all bugs
       if (response.data.bugs.length > 0) {
         const bugIds = response.data.bugs.map(bug => bug.id);
-        const unreadResponse = await bugChatApi.getBugsUnreadCounts(bugIds);
+        const unreadResponse = await chatApi.getBugsUnreadCounts(bugIds);
         setUnreadCounts(unreadResponse.data);
       }
     } catch (error: any) {
@@ -75,7 +75,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     if (allBugs.length > 0) {
       try {
         const bugIds = allBugs.map(bug => bug.id);
-        const unreadResponse = await bugChatApi.getBugsUnreadCounts(bugIds);
+        const unreadResponse = await chatApi.getBugsUnreadCounts(bugIds);
         setUnreadCounts(unreadResponse.data);
       } catch (error: any) {
         const errorMessage = error.response?.data?.message || 'bug.loadError';

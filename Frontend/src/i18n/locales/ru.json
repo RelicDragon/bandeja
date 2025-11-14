@@ -420,7 +420,11 @@
     "switchToLevel": "Переключить на уровень",
     "switchToSocialLevel": "Переключить на социальный уровень",
     "gameIsPrivate": "Эта игра приватная",
-    "openTelegramChat": "Открыть чат в Telegram"
+    "openTelegramChat": "Открыть чат в Telegram",
+    "openChat": "Открыть чат"
+  },
+  "contacts": {
+    "searchPlaceholder": "Поиск контактов..."
   },
   "profile": {
     "title": "Профиль",

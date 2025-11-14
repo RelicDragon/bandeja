@@ -414,7 +414,11 @@
     "switchToLevel": "Пребаци на ниво",
     "switchToSocialLevel": "Пребаци на социјални ниво",
     "gameIsPrivate": "Ова игра је приватна",
-    "openTelegramChat": "Отвори Telegram чат"
+    "openTelegramChat": "Отвори Telegram чат",
+    "openChat": "Отвори ћаскање"
+  },
+  "contacts": {
+    "searchPlaceholder": "Претражи контакте..."
   },
   "profile": {
     "title": "Профил",

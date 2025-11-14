@@ -43,15 +43,15 @@ model User {
   sendTelegramMessages    Boolean              @default(true)
   sendTelegramInvites     Boolean              @default(true)
   chatMessages            ChatMessage[]
-  bugMessages             BugMessage[]
   participateInGames      GameParticipant[]    @relation("ParticipantUser")
+  userChats1              UserChat[]           @relation("UserChat1")
+  userChats2              UserChat[]           @relation("UserChat2")
+  pinnedUserChats         PinnedUserChat[]
   receivedInvites         Invite[]             @relation("InviteReceiver")
   sentInvites             Invite[]             @relation("InviteSender")
   joinQueues              JoinQueue[]          @relation("JoinQueueUser")
   messageReactions        MessageReaction[]
   messageReadReceipts     MessageReadReceipt[]
-  bugMessageReactions     BugMessageReaction[]
-  bugMessageReadReceipts  BugMessageReadReceipt[]
   currentCity             City?                @relation("UserCurrentCity", fields: [currentCityId], references: [id])
   favoriteClubs           UserFavoriteClub[]
   favoriteUsers           UserFavoriteUser[]   @relation("UserFavorites")
@@ -191,7 +191,6 @@ model Game {
   metadata        Json?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
-  chatMessages    ChatMessage[]
   club            Club?             @relation(fields: [clubId], references: [id])
   court           Court?            @relation(fields: [courtId], references: [id])
   parent          Game?             @relation("GameHierarchy", fields: [parentId], references: [id])
@@ -442,31 +441,63 @@ model UserInteraction {
   @@index([count])
 }
 
-model ChatMessage {
-  id            String               @id @default(cuid())
-  gameId        String
-  senderId      String?
-  content       String?
-  mediaUrls     String[]
-  thumbnailUrls String[]
-  state         MessageState         @default(SENT)
-  chatType      ChatType             @default(PUBLIC)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  replyToId     String?
-  game          Game                 @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  replyTo       ChatMessage?         @relation("MessageReply", fields: [replyToId], references: [id])
-  replies       ChatMessage[]        @relation("MessageReply")
-  sender        User?                @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  reactions     MessageReaction[]
-  readReceipts  MessageReadReceipt[]
+model UserChat {
+  id           String            @id @default(cuid())
+  user1Id      String
+  user2Id      String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  user1        User              @relation("UserChat1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2        User              @relation("UserChat2", fields: [user2Id], references: [id], onDelete: Cascade)
+  pinnedByUsers PinnedUserChat[]
 
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+  @@index([updatedAt])
+}
+
+model PinnedUserChat {
+  id         String   @id @default(cuid())
+  userId     String
+  userChatId String
+  pinnedAt   DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userChat   UserChat @relation(fields: [userChatId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, userChatId])
+  @@index([userId])
+  @@index([userChatId])
+}
+
+model ChatMessage {
+  id              String               @id @default(cuid())
+  chatContextType ChatContextType      @default(GAME)
+  contextId       String               @default("")
+  gameId          String?
+  senderId        String?
+  content         String?
+  mediaUrls       String[]
+  thumbnailUrls   String[]
+  state           MessageState         @default(SENT)
+  chatType        ChatType             @default(PUBLIC)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  replyToId       String?
+  replyTo         ChatMessage?         @relation("MessageReply", fields: [replyToId], references: [id])
+  replies         ChatMessage[]        @relation("MessageReply")
+  sender          User?                @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reactions       MessageReaction[]
+  readReceipts    MessageReadReceipt[]
+
+  @@index([chatContextType, contextId])
   @@index([gameId])
   @@index([senderId])
   @@index([createdAt])
   @@index([state])
   @@index([replyToId])
   @@index([chatType])
+  @@index([contextId])
 }
 
 model MessageReaction {
@@ -483,20 +514,6 @@ model MessageReaction {
   @@index([userId])
 }
 
-model BugMessageReaction {
-  id        String     @id @default(cuid())
-  messageId String
-  userId    String
-  emoji     String
-  createdAt DateTime   @default(now())
-  message   BugMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([messageId, userId])
-  @@index([messageId])
-  @@index([userId])
-}
-
 model MessageReadReceipt {
   id        String      @id @default(cuid())
   messageId String
@@ -504,19 +521,6 @@ model MessageReadReceipt {
   readAt    DateTime    @default(now())
   message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([messageId, userId])
-  @@index([messageId])
-  @@index([userId])
-}
-
-model BugMessageReadReceipt {
-  id        String     @id @default(cuid())
-  messageId String
-  userId    String
-  readAt    DateTime   @default(now())
-  message   BugMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId])
   @@index([messageId])
@@ -609,6 +613,12 @@ enum ChatType {
   PHOTOS
 }
 
+enum ChatContextType {
+  GAME
+  BUG
+  USER
+}
+
 enum RoundStatus {
   IN_PROGRESS
   COMPLETED
@@ -649,38 +659,10 @@ model Bug {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   sender    User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  bugMessages BugMessage[]
 
   @@index([senderId])
   @@index([status])
   @@index([bugType])
-}
-
-model BugMessage {
-  id            String                  @id @default(cuid())
-  bugId         String
-  senderId      String?
-  content       String?
-  mediaUrls     String[]
-  thumbnailUrls String[]
-  state         MessageState            @default(SENT)
-  chatType      ChatType                @default(PUBLIC)
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  replyToId     String?
-  bug           Bug                     @relation(fields: [bugId], references: [id], onDelete: Cascade)
-  replyTo       BugMessage?             @relation("BugMessageReply", fields: [replyToId], references: [id])
-  replies       BugMessage[]            @relation("BugMessageReply")
-  sender        User?                   @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  reactions     BugMessageReaction[]
-  readReceipts  BugMessageReadReceipt[]
-
-  @@index([bugId])
-  @@index([senderId])
-  @@index([createdAt])
-  @@index([state])
-  @@index([replyToId])
-  @@index([chatType])
 }
 
 enum BugStatus {

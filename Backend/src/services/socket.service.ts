@@ -8,6 +8,7 @@ interface AuthenticatedSocket extends Socket {
   userId?: string;
   gameRooms?: Set<string>;
   bugRooms?: Set<string>;
+  userChatRooms?: Set<string>;
 }
 
 class SocketService {
@@ -76,9 +77,10 @@ class SocketService {
         this.connectedUsers.get(socket.userId)!.add(socket.id);
       }
 
-      // Initialize game rooms tracking
+      // Initialize rooms tracking
       socket.gameRooms = new Set();
       socket.bugRooms = new Set();
+      socket.userChatRooms = new Set();
 
       // Handle joining game chat rooms
       socket.on('join-game-room', async (gameId: string) => {
@@ -188,6 +190,46 @@ class SocketService {
         socket.emit('left-bug-room', { bugId });
       });
 
+      // Handle joining user chat rooms
+      socket.on('join-user-chat-room', async (chatId: string) => {
+        try {
+          if (!socket.userId) return;
+
+          // Verify user has access to this chat
+          const chat = await prisma.userChat.findUnique({
+            where: { id: chatId }
+          });
+
+          if (!chat) {
+            socket.emit('error', { message: 'Chat not found' });
+            return;
+          }
+
+          // Check if user is one of the participants
+          if (chat.user1Id !== socket.userId && chat.user2Id !== socket.userId) {
+            socket.emit('error', { message: 'Access denied to user chat' });
+            return;
+          }
+
+          socket.join(`user-chat-${chatId}`);
+          socket.userChatRooms?.add(chatId);
+
+          console.log(`User ${socket.userId} joined user chat room ${chatId}`);
+          socket.emit('joined-user-chat-room', { chatId });
+        } catch (error) {
+          console.error('Error joining user chat room:', error);
+          socket.emit('error', { message: 'Failed to join user chat room' });
+        }
+      });
+
+      // Handle leaving user chat rooms
+      socket.on('leave-user-chat-room', (chatId: string) => {
+        socket.leave(`user-chat-${chatId}`);
+        socket.userChatRooms?.delete(chatId);
+        console.log(`User ${socket.userId} left user chat room ${chatId}`);
+        socket.emit('left-user-chat-room', { chatId });
+      });
+
       // Handle disconnect
       socket.on('disconnect', () => {
         console.log(`User ${socket.userId} disconnected`);
@@ -243,6 +285,26 @@ class SocketService {
   // Emit bug message deletion to all users in a bug room
   public emitBugMessageDeleted(bugId: string, messageId: string) {
     this.io.to(`bug-${bugId}`).emit('bug-message-deleted', { messageId });
+  }
+
+  // Emit new user chat message to all users in a user chat room
+  public emitNewUserMessage(chatId: string, message: any) {
+    this.io.to(`user-chat-${chatId}`).emit('new-user-chat-message', message);
+  }
+
+  // Emit user chat message reaction to all users in a user chat room
+  public emitUserMessageReaction(chatId: string, reaction: any) {
+    this.io.to(`user-chat-${chatId}`).emit('user-chat-message-reaction', reaction);
+  }
+
+  // Emit user chat message read receipt to all users in a user chat room
+  public emitUserReadReceipt(chatId: string, readReceipt: any) {
+    this.io.to(`user-chat-${chatId}`).emit('user-chat-read-receipt', readReceipt);
+  }
+
+  // Emit user chat message deletion to all users in a user chat room
+  public emitUserMessageDeleted(chatId: string, messageId: string) {
+    this.io.to(`user-chat-${chatId}`).emit('user-chat-message-deleted', { messageId });
   }
 
   // Emit typing indicator

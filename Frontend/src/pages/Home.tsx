@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
-import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController } from '@/components/home';
+import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController, Contacts } from '@/components/home';
 import { Divider, Button } from '@/components';
 import { invitesApi } from '@/api';
 import { chatApi } from '@/api/chat';
@@ -16,6 +17,7 @@ import { ChatType } from '@/types';
 
 export const HomeContent = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const { showChatFilter, setShowChatFilter } = useHeaderStore();
 
@@ -186,6 +188,8 @@ export const HomeContent = () => {
 
   return (
     <>
+      <Contacts />
+
       <div
         className={`transition-all duration-500 ease-in-out overflow-hidden ${
           showChatFilter && hasUnreadMessages

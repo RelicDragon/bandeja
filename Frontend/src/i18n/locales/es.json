@@ -412,7 +412,11 @@
     "switchToLevel": "Cambiar a nivel",
     "switchToSocialLevel": "Cambiar a nivel social",
     "gameIsPrivate": "Este juego es privado",
-    "openTelegramChat": "Abrir chat de Telegram"
+    "openTelegramChat": "Abrir chat de Telegram",
+    "openChat": "Abrir Chat"
+  },
+  "contacts": {
+    "searchPlaceholder": "Buscar contactos..."
   },
   "profile": {
     "title": "Perfil",

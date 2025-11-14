@@ -55,7 +55,7 @@ export const SendMoneyToUserModal = ({
     };
 
     fetchData();
-  }, [toUserId]);
+  }, [toUserId, t]);
 
   const handleAmountSelect = (selectedAmount: number) => {
     const clampedAmount = Math.max(1, Math.min(selectedAmount, wallet));

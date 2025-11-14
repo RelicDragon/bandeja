@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { BugMessage } from '@/api/bugChat';
+import { ChatMessage } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { BugUnifiedMessageMenu } from './BugUnifiedMessageMenu';
 import { ReplyPreview } from './ReplyPreview';
@@ -19,15 +19,15 @@ interface ContextMenuState {
 }
 
 interface BugMessageItemProps {
-  message: BugMessage;
+  message: ChatMessage;
   onAddReaction: (messageId: string, emoji: string) => void;
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
-  onReplyMessage: (message: BugMessage) => void;
+  onReplyMessage: (message: ChatMessage) => void;
   contextMenuState: ContextMenuState;
   onOpenContextMenu: (messageId: string, position: { x: number; y: number }) => void;
   onCloseContextMenu: () => void;
-  allMessages?: BugMessage[];
+  allMessages?: ChatMessage[];
   onScrollToMessage?: (messageId: string) => void;
 }
 
@@ -98,7 +98,7 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
   };
 
 
-  const handleCopyMessage = (message: BugMessage) => {
+  const handleCopyMessage = (message: ChatMessage) => {
     navigator.clipboard.writeText(message.content);
   };
 

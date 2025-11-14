@@ -5,29 +5,21 @@ import { MessageService } from './message.service';
 export class ReadReceiptService {
   static async markMessageAsRead(messageId: string, userId: string) {
     const message = await prisma.chatMessage.findUnique({
-      where: { id: messageId },
-      include: {
-        game: {
-          include: {
-            participants: {
-              where: { userId }
-            },
-            invites: {
-              where: { 
-                receiverId: userId,
-                status: 'PENDING'
-              }
-            }
-          }
-        }
-      }
+      where: { id: messageId }
     });
 
     if (!message) {
       throw new ApiError(404, 'Message not found');
     }
 
-    await MessageService.validateGameAccess(message.gameId, userId);
+    // Validate access based on context type
+    if (message.chatContextType === 'GAME') {
+      await MessageService.validateGameAccess(message.contextId, userId);
+    } else if (message.chatContextType === 'BUG') {
+      await MessageService.validateBugAccess(message.contextId, userId);
+    } else if (message.chatContextType === 'USER') {
+      await MessageService.validateUserChatAccess(message.contextId, userId);
+    }
 
     await prisma.messageReadReceipt.upsert({
       where: {
@@ -54,6 +46,9 @@ export class ReadReceiptService {
   }
 
   static async getUnreadCount(userId: string) {
+    let totalUnreadCount = 0;
+
+    // 1. Count unread messages from GAME chats
     const userGames = await prisma.game.findMany({
       where: {
         OR: [
@@ -78,13 +73,6 @@ export class ReadReceiptService {
         }
       }
     });
-
-    if (userGames.length === 0) {
-      return { count: 0 };
-    }
-
-    // Calculate unread count for each game based on user's access level
-    let totalUnreadCount = 0;
     
     for (const game of userGames) {
       const participant = game.participants[0];
@@ -109,7 +97,8 @@ export class ReadReceiptService {
 
       const gameUnreadCount = await prisma.chatMessage.count({
         where: {
-          gameId: game.id,
+          chatContextType: 'GAME',
+          contextId: game.id,
           chatType: {
             in: chatTypeFilter
           },
@@ -125,6 +114,73 @@ export class ReadReceiptService {
       });
 
       totalUnreadCount += gameUnreadCount;
+    }
+
+    // 2. Count unread messages from USER chats
+    const userChats = await prisma.userChat.findMany({
+      where: {
+        OR: [
+          { user1Id: userId },
+          { user2Id: userId }
+        ]
+      }
+    });
+
+    for (const chat of userChats) {
+      const userChatUnreadCount = await prisma.chatMessage.count({
+        where: {
+          chatContextType: 'USER',
+          contextId: chat.id,
+          senderId: { not: userId },
+          readReceipts: {
+            none: { userId }
+          }
+        }
+      });
+
+      totalUnreadCount += userChatUnreadCount;
+    }
+
+    // 3. Count unread messages from BUG chats
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true, isTrainer: true }
+    });
+
+    if (user && (user.isAdmin || user.isTrainer)) {
+      // Admin/Trainer can see all bug chats
+      const bugUnreadCount = await prisma.chatMessage.count({
+        where: {
+          chatContextType: 'BUG',
+          senderId: { not: userId },
+          readReceipts: {
+            none: { userId }
+          }
+        }
+      });
+
+      totalUnreadCount += bugUnreadCount;
+    } else {
+      // Regular users can only see bugs they created
+      const userBugs = await prisma.bug.findMany({
+        where: { senderId: userId },
+        select: { id: true }
+      });
+
+      for (const bug of userBugs) {
+        const bugUnreadCount = await prisma.chatMessage.count({
+          where: {
+            chatContextType: 'BUG',
+            contextId: bug.id,
+            senderId: { not: userId },
+            readReceipts: {
+              none: { userId }
+            }
+          }
+        });
+
+        totalUnreadCount += bugUnreadCount;
+      }
     }
 
     return { count: totalUnreadCount };
@@ -153,7 +209,8 @@ export class ReadReceiptService {
 
     const unreadCount = await prisma.chatMessage.count({
       where: {
-        gameId,
+        chatContextType: 'GAME',
+        contextId: gameId,
         chatType: {
           in: chatTypeFilter
         },
@@ -222,7 +279,8 @@ export class ReadReceiptService {
 
       const gameUnreadCount = await prisma.chatMessage.count({
         where: {
-          gameId: game.id,
+          chatContextType: 'GAME',
+          contextId: game.id,
           chatType: {
             in: chatTypeFilter
           },
@@ -238,6 +296,54 @@ export class ReadReceiptService {
       });
 
       unreadCounts[game.id] = gameUnreadCount;
+    }
+
+    return unreadCounts;
+  }
+
+  static async getUserChatUnreadCount(chatId: string, userId: string) {
+    await MessageService.validateUserChatAccess(chatId, userId);
+
+    const unreadCount = await prisma.chatMessage.count({
+      where: {
+        chatContextType: 'USER',
+        contextId: chatId,
+        senderId: { not: userId },
+        readReceipts: {
+          none: { userId }
+        }
+      }
+    });
+
+    return { count: unreadCount };
+  }
+
+  static async getUserChatsUnreadCounts(chatIds: string[], userId: string) {
+    if (chatIds.length === 0) {
+      return {};
+    }
+
+    const unreadCounts: Record<string, number> = {};
+
+    for (const chatId of chatIds) {
+      try {
+        await MessageService.validateUserChatAccess(chatId, userId);
+        
+        const unreadCount = await prisma.chatMessage.count({
+          where: {
+            chatContextType: 'USER',
+            contextId: chatId,
+            senderId: { not: userId },
+            readReceipts: {
+              none: { userId }
+            }
+          }
+        });
+
+        unreadCounts[chatId] = unreadCount;
+      } catch (error) {
+        unreadCounts[chatId] = 0;
+      }
     }
 
     return unreadCounts;
@@ -262,7 +368,8 @@ export class ReadReceiptService {
     // Get all unread messages for this game and chat types
     const unreadMessages = await prisma.chatMessage.findMany({
       where: {
-        gameId,
+        chatContextType: 'GAME',
+        contextId: gameId,
         chatType: {
           in: chatTypeFilter
         },
@@ -298,5 +405,93 @@ export class ReadReceiptService {
     });
 
     return { count: unreadMessages.length };
+  }
+
+  static async markUserChatAsRead(chatId: string, userId: string) {
+    await MessageService.validateUserChatAccess(chatId, userId);
+
+    const unreadMessages = await prisma.chatMessage.findMany({
+      where: {
+        chatContextType: 'USER',
+        contextId: chatId,
+        senderId: { not: userId },
+        readReceipts: {
+          none: { userId }
+        }
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (unreadMessages.length === 0) {
+      return { count: 0 };
+    }
+
+    const readAt = new Date();
+    const readReceipts = unreadMessages.map(message => ({
+      messageId: message.id,
+      userId,
+      readAt
+    }));
+
+    await prisma.messageReadReceipt.createMany({
+      data: readReceipts,
+      skipDuplicates: true
+    });
+
+    return { count: unreadMessages.length };
+  }
+
+  static async getBugUnreadCount(bugId: string, userId: string) {
+    await MessageService.validateBugAccess(bugId, userId);
+
+    const unreadCount = await prisma.chatMessage.count({
+      where: {
+        chatContextType: 'BUG',
+        contextId: bugId,
+        senderId: { not: userId },
+        readReceipts: {
+          none: {
+            userId
+          }
+        }
+      }
+    });
+
+    return { count: unreadCount };
+  }
+
+  static async getBugsUnreadCounts(bugIds: string[], userId: string) {
+    if (bugIds.length === 0) {
+      return {};
+    }
+
+    const unreadCounts: Record<string, number> = {};
+
+    for (const bugId of bugIds) {
+      try {
+        await MessageService.validateBugAccess(bugId, userId);
+        
+        const unreadCount = await prisma.chatMessage.count({
+          where: {
+            chatContextType: 'BUG',
+            contextId: bugId,
+            senderId: { not: userId },
+            readReceipts: {
+              none: {
+                userId
+              }
+            }
+          }
+        });
+
+        unreadCounts[bugId] = unreadCount;
+      } catch (error) {
+        unreadCounts[bugId] = 0;
+      }
+    }
+
+    return unreadCounts;
   }
 }

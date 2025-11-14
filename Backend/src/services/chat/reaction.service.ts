@@ -6,29 +6,21 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 export class ReactionService {
   static async addReaction(messageId: string, userId: string, emoji: string) {
     const message = await prisma.chatMessage.findUnique({
-      where: { id: messageId },
-      include: {
-        game: {
-          include: {
-            participants: {
-              where: { userId }
-            },
-            invites: {
-              where: { 
-                receiverId: userId,
-                status: 'PENDING'
-              }
-            }
-          }
-        }
-      }
+      where: { id: messageId }
     });
 
     if (!message) {
       throw new ApiError(404, 'Message not found');
     }
 
-    await MessageService.validateGameAccess(message.gameId, userId);
+    // Validate access based on context type
+    if (message.chatContextType === 'GAME') {
+      await MessageService.validateGameAccess(message.contextId, userId);
+    } else if (message.chatContextType === 'BUG') {
+      await MessageService.validateBugAccess(message.contextId, userId);
+    } else if (message.chatContextType === 'USER') {
+      await MessageService.validateUserChatAccess(message.contextId, userId);
+    }
 
     let reaction;
     try {
@@ -84,29 +76,21 @@ export class ReactionService {
 
   static async removeReaction(messageId: string, userId: string) {
     const message = await prisma.chatMessage.findUnique({
-      where: { id: messageId },
-      include: {
-        game: {
-          include: {
-            participants: {
-              where: { userId }
-            },
-            invites: {
-              where: { 
-                receiverId: userId,
-                status: 'PENDING'
-              }
-            }
-          }
-        }
-      }
+      where: { id: messageId }
     });
 
     if (!message) {
       throw new ApiError(404, 'Message not found');
     }
 
-    await MessageService.validateGameAccess(message.gameId, userId);
+    // Validate access based on context type
+    if (message.chatContextType === 'GAME') {
+      await MessageService.validateGameAccess(message.contextId, userId);
+    } else if (message.chatContextType === 'BUG') {
+      await MessageService.validateBugAccess(message.contextId, userId);
+    } else if (message.chatContextType === 'USER') {
+      await MessageService.validateUserChatAccess(message.contextId, userId);
+    }
 
     await prisma.messageReaction.deleteMany({
       where: {

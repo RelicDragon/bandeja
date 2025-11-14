@@ -11,7 +11,6 @@ import { CreateGameWrapper } from './pages/CreateGameWrapper';
 import { GameChat } from './pages/GameChat';
 import { ChatList } from './pages/ChatList';
 import { GameResultsEntry } from './pages/GameResultsEntry';
-import { BugChat } from './pages/BugChat';
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
 import { isProfileComplete, hasValidUsername } from './utils/userValidation';
@@ -161,8 +160,8 @@ function App() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <OfflineBanner />
       <ToastProvider>
-        <PlayerCardModalManager>
-          <BrowserRouter>
+        <BrowserRouter>
+          <PlayerCardModalManager>
           <Routes>
         <Route
           path="/login"
@@ -305,15 +304,27 @@ function App() {
               {!isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <BugChat />
+                <GameChat />
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user-chat/:id"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <GameChat />
               )}
             </ProtectedRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          </BrowserRouter>
-        </PlayerCardModalManager>
+          </PlayerCardModalManager>
+        </BrowserRouter>
       </ToastProvider>
     </div>
   );

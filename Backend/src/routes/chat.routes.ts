@@ -13,7 +13,18 @@ import {
   getUserChatGames,
   getGameUnreadCount,
   getGamesUnreadCounts,
-  markAllMessagesAsRead
+  markAllMessagesAsRead,
+  getUserChats,
+  getOrCreateChatWithUser,
+  getUserChatMessages,
+  getUserChatUnreadCount,
+  getUserChatsUnreadCounts,
+  markUserChatAsRead,
+  pinUserChat,
+  unpinUserChat,
+  getBugMessages,
+  getBugUnreadCount,
+  getBugsUnreadCounts
 } from '../controllers/chat.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -25,7 +36,9 @@ router.use(authenticate);
 router.post(
   '/messages',
   validate([
-    body('gameId').notEmpty().withMessage('Game ID is required'),
+    body('contextId').optional().isString().withMessage('Context ID must be a string'),
+    body('gameId').optional().isString().withMessage('Game ID must be a string'),
+    body('chatContextType').optional().isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid chat context type'),
     body('content').optional().isString().withMessage('Message content must be a string'),
     body('mediaUrls').optional().isArray().withMessage('Media URLs must be an array'),
     body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type')
@@ -69,5 +82,34 @@ router.post(
 
 router.delete('/messages/:messageId/reactions', removeReaction);
 router.delete('/messages/:messageId', deleteMessage);
+
+// User Chat Routes
+router.get('/user-chats', getUserChats);
+router.get('/user-chats/with/:userId', getOrCreateChatWithUser);
+router.get('/user-chats/:chatId/messages', getUserChatMessages);
+router.get('/user-chats/:chatId/unread-count', getUserChatUnreadCount);
+router.post('/user-chats/:chatId/mark-all-read', markUserChatAsRead);
+router.post('/user-chats/:chatId/pin', pinUserChat);
+router.delete('/user-chats/:chatId/pin', unpinUserChat);
+router.post(
+  '/user-chats/unread-counts',
+  validate([
+    body('chatIds').isArray().withMessage('Chat IDs must be an array'),
+    body('chatIds.*').notEmpty().withMessage('Chat ID cannot be empty')
+  ]),
+  getUserChatsUnreadCounts
+);
+
+// Bug Chat Routes
+router.get('/bugs/:bugId/messages', getBugMessages);
+router.get('/bugs/:bugId/unread-count', getBugUnreadCount);
+router.post(
+  '/bugs/unread-counts',
+  validate([
+    body('bugIds').isArray().withMessage('Bug IDs must be an array'),
+    body('bugIds.*').notEmpty().withMessage('Bug ID cannot be empty')
+  ]),
+  getBugsUnreadCounts
+);
 
 export default router;

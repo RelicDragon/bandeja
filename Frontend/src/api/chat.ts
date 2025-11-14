@@ -2,10 +2,13 @@ import api from './axios';
 import { ApiResponse, Game, ChatType } from '@/types';
 
 export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
+export type ChatContextType = 'GAME' | 'BUG' | 'USER';
 
 export interface ChatMessage {
   id: string;
-  gameId: string;
+  chatContextType: ChatContextType;
+  contextId: string;
+  gameId?: string | null; // Deprecated, kept for backward compatibility
   senderId: string | null;
   content: string;
   mediaUrls: string[];
@@ -68,7 +71,9 @@ export interface MessageReadReceipt {
 }
 
 export interface CreateMessageRequest {
-  gameId: string;
+  chatContextType?: ChatContextType;
+  contextId?: string;
+  gameId?: string; // Deprecated, kept for backward compatibility
   content?: string;
   mediaUrls?: string[];
   thumbnailUrls?: string[];
@@ -82,6 +87,32 @@ export interface UpdateMessageStateRequest {
 
 export interface AddReactionRequest {
   emoji: string;
+}
+
+export interface UserChat {
+  id: string;
+  user1Id: string;
+  user2Id: string;
+  createdAt: string;
+  updatedAt: string;
+  user1: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+    level: number;
+    gender: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
+  };
+  user2: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+    level: number;
+    gender: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
+  };
+  lastMessage?: ChatMessage;
+  isPinned?: boolean;
 }
 
 export const chatApi = {
@@ -147,5 +178,78 @@ export const chatApi = {
       chatTypes: chatTypes || [] 
     });
     return response.data;
+  },
+
+  // User Chat Methods
+  getUserChats: async () => {
+    const response = await api.get<ApiResponse<UserChat[]>>('/chat/user-chats');
+    return response.data;
+  },
+
+  getOrCreateChatWithUser: async (userId: string) => {
+    const response = await api.get<ApiResponse<UserChat>>(`/chat/user-chats/with/${userId}`);
+    return response.data;
+  },
+
+  getUserChatMessages: async (chatId: string, page = 1, limit = 50) => {
+    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/user-chats/${chatId}/messages`, {
+      params: { page, limit }
+    });
+    return response.data.data;
+  },
+
+  getUserChatUnreadCount: async (chatId: string) => {
+    const response = await api.get<ApiResponse<{ count: number }>>(`/chat/user-chats/${chatId}/unread-count`);
+    return response.data;
+  },
+
+  getUserChatsUnreadCounts: async (chatIds: string[]) => {
+    const response = await api.post<ApiResponse<Record<string, number>>>(`/chat/user-chats/unread-counts`, { chatIds });
+    return response.data;
+  },
+
+  markUserChatAsRead: async (chatId: string) => {
+    const response = await api.post<ApiResponse<{ count: number }>>(`/chat/user-chats/${chatId}/mark-all-read`);
+    return response.data;
+  },
+
+  pinUserChat: async (chatId: string) => {
+    const response = await api.post<ApiResponse<any>>(`/chat/user-chats/${chatId}/pin`);
+    return response.data;
+  },
+
+  unpinUserChat: async (chatId: string) => {
+    const response = await api.delete<ApiResponse<{ success: boolean }>>(`/chat/user-chats/${chatId}/pin`);
+    return response.data;
+  },
+
+  // Bug Chat Methods
+  getBugMessages: async (bugId: string, page = 1, limit = 50, chatType: ChatType = 'PUBLIC') => {
+    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/bugs/${bugId}/messages`, {
+      params: { page, limit, chatType }
+    });
+    return response.data.data;
+  },
+
+  getBugUnreadCount: async (bugId: string) => {
+    const response = await api.get<ApiResponse<{ count: number }>>(`/chat/bugs/${bugId}/unread-count`);
+    return response.data;
+  },
+
+  getBugsUnreadCounts: async (bugIds: string[]) => {
+    const response = await api.post<ApiResponse<Record<string, number>>>(`/chat/bugs/unread-counts`, { bugIds });
+    return response.data;
+  },
+
+  // Generic method for any context type
+  getMessages: async (chatContextType: ChatContextType, contextId: string, page = 1, limit = 50, chatType: ChatType = 'PUBLIC') => {
+    if (chatContextType === 'GAME') {
+      return chatApi.getGameMessages(contextId, page, limit, chatType);
+    } else if (chatContextType === 'USER') {
+      return chatApi.getUserChatMessages(contextId, page, limit);
+    } else if (chatContextType === 'BUG') {
+      return chatApi.getBugMessages(contextId, page, limit, chatType);
+    }
+    throw new Error(`Unsupported chat context type: ${chatContextType}`);
   },
 };

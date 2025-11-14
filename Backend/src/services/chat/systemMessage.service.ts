@@ -1,13 +1,14 @@
 import prisma from '../../config/database';
-import { MessageState, ChatType } from '@prisma/client';
+import { MessageState, ChatType, ChatContextType } from '@prisma/client';
 import { SystemMessageType, createSystemMessageContent } from '../../utils/systemMessages';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class SystemMessageService {
   static async createSystemMessage(
-    gameId: string, 
+    contextId: string, 
     messageData: { type: SystemMessageType; variables: Record<string, string> }, 
-    chatType: ChatType = ChatType.PUBLIC
+    chatType: ChatType = ChatType.PUBLIC,
+    chatContextType: ChatContextType = ChatContextType.GAME
   ) {
     const content = JSON.stringify({
       type: messageData.type,
@@ -17,7 +18,9 @@ export class SystemMessageService {
     
     const message = await prisma.chatMessage.create({
       data: {
-        gameId,
+        chatContextType,
+        contextId,
+        gameId: chatContextType === 'GAME' ? contextId : null,
         senderId: null,
         content,
         mediaUrls: [],
