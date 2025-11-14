@@ -575,10 +575,14 @@ export const GameChat: React.FC = () => {
     return null;
   };
 
+  const headerHeight = contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || (game?.status && game.status !== 'ANNOUNCED')) 
+    ? 'calc(7rem + env(safe-area-inset-top))' 
+    : 'calc(4rem + env(safe-area-inset-top))';
+
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-10 shadow-lg">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 fixed top-0 right-0 left-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)', height: headerHeight }}>
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
@@ -617,36 +621,36 @@ export const GameChat: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
 
-      {contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || (game?.status && game.status !== 'ANNOUNCED')) && (
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="max-w-2xl mx-auto px-4">
-            <div className="flex justify-center space-x-1 py-2">
-              {getAvailableChatTypes().map((chatType) => (
-                <button
-                  key={chatType}
-                  onClick={() => handleChatTypeChange(chatType)}
-                  disabled={isSwitchingChatType}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                    currentChatType === chatType
-                      ? 'bg-blue-500 text-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  } ${isSwitchingChatType ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {chatType === 'PHOTOS' ? (
-                    <Camera size={18} />
-                  ) : (
-                    t(`chat.types.${chatType}`)
-                  )}
-                </button>
-              ))}
+        {contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || (game?.status && game.status !== 'ANNOUNCED')) && (
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div className="max-w-2xl mx-auto px-4" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+              <div className="flex justify-center space-x-1 py-2">
+                {getAvailableChatTypes().map((chatType) => (
+                  <button
+                    key={chatType}
+                    onClick={() => handleChatTypeChange(chatType)}
+                    disabled={isSwitchingChatType}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      currentChatType === chatType
+                        ? 'bg-blue-500 text-white'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    } ${isSwitchingChatType ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {chatType === 'PHOTOS' ? (
+                      <Camera size={18} />
+                    ) : (
+                      t(`chat.types.${chatType}`)
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </header>
 
-      <div className="flex-1 flex flex-col min-h-0">
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ paddingTop: headerHeight, paddingBottom: '3.5rem' }}>
         <MessageList
           messages={messages}
           onAddReaction={handleAddReaction}
@@ -670,9 +674,9 @@ export const GameChat: React.FC = () => {
             </button>
           </div>
         )}
-      </div>
+      </main>
 
-      <div className="flex-shrink-0">
+      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 fixed bottom-0 right-0 left-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {canAccessChat ? (
           <div className="animate-in slide-in-from-bottom-4 duration-300">
             <MessageInput
@@ -688,7 +692,7 @@ export const GameChat: React.FC = () => {
             />
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3 animate-in slide-in-from-bottom-4 duration-300">
+          <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
             <div className="flex items-center justify-center">
               <button
                 onClick={handleJoinAsGuest}
@@ -701,7 +705,7 @@ export const GameChat: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
+      </footer>
 
       {contextType === 'GAME' && showParticipantsModal && game && (
         <ChatParticipantsModal
