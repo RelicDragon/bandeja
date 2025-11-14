@@ -307,7 +307,7 @@ export const Contacts = () => {
   }
 
   return (
-    <div className="mb-4 px-4">
+    <div className="mb-1">
       <div 
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
           showSearch ? 'max-h-20 opacity-100 mb-3' : 'max-h-0 opacity-0'
