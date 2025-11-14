@@ -344,7 +344,7 @@ export const Contacts = () => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="relative flex items-center gap-2">
         <div
           onClick={handleSearchClick}
           className={`flex-shrink-0 cursor-pointer hover:opacity-80 transition-all duration-300 ease-in-out overflow-hidden ${
@@ -386,13 +386,15 @@ export const Contacts = () => {
           );
         })}
           </div>
-          {showLeftFade && (
-            <div className="absolute left-0 -top-2 bottom-0 w-8 bg-gradient-to-r from-gray-50 via-gray-50/80 to-transparent dark:from-gray-900 dark:via-gray-900/80 pointer-events-none z-10" />
-          )}
-          {showRightFade && (
-            <div className="absolute right-0 -top-2 bottom-0 w-8 bg-gradient-to-l from-gray-50 via-gray-50/80 to-transparent dark:from-gray-900 dark:via-gray-900/80 pointer-events-none z-10" />
-          )}
         </div>
+        {showLeftFade && (
+          <div className={`absolute top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 from-0% via-gray-50/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10 ${
+            showSearch || (showChatFilter && hasUnreadContacts) ? 'left-2' : 'left-12'
+          }`} />
+        )}
+        {showRightFade && (
+          <div className="absolute -right-1 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 from-0% via-gray-50/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10" />
+        )}
       </div>
     </div>
   );
