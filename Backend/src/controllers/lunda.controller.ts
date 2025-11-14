@@ -272,6 +272,11 @@ export const lundaGetProfile = asyncHandler(async (req: AuthRequest, res: Expres
     },
   });
 
+  const lundaProfileId = playerData?.identity?.uid;
+  if (lundaProfileId) {
+    await getLevelChanges(lundaProfileId, userId, lundaProfile.cookie);
+  }
+
   res.json({
     success: true,
     data: playerData,
@@ -379,3 +384,54 @@ export const lundaSendCode = asyncHandler(async (req: LundaSendCodeRequest, res:
     result: data.result,
   });
 });
+
+async function getLevelChanges(lundaProfileId: string, userId: string, cookie: string): Promise<void> {
+  const response = await fetch(`${WORKER_PROXY_BASE_URL}/player/load-rating-graph`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Cookie: cookie,
+    } as any,
+    body: JSON.stringify({
+      parameters: {
+        profileUid: lundaProfileId,
+      },
+    }),
+    redirect: 'manual',
+  } as RequestInit);
+
+  if (!response.ok) {
+    throw new ApiError(response.status, `Lunda API error: ${response.status}`);
+  }
+
+  const data = (await response.json()) as {
+    result: {
+      infos: Array<{
+        ratingBeforeEvent: number;
+        ratingAfterEvent: number;
+        timestamp: string;
+      }>;
+    };
+  };
+
+  if (data.result?.infos && Array.isArray(data.result.infos)) {
+    await prisma.levelChangeEvent.deleteMany({
+      where: {
+        userId,
+        eventType: 'LUNDA',
+      },
+    });
+
+    if (data.result.infos.length > 0) {
+      await prisma.levelChangeEvent.createMany({
+        data: data.result.infos.map((info) => ({
+          userId,
+          levelBefore: info.ratingBeforeEvent / 1000,
+          levelAfter: info.ratingAfterEvent / 1000,
+          eventType: 'LUNDA',
+          createdAt: new Date(info.timestamp),
+        })),
+      });
+    }
+  }
+}

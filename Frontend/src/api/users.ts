@@ -8,6 +8,7 @@ export interface LevelHistoryItem {
   levelAfter: number;
   levelChange: number;
   createdAt: string;
+  eventType?: 'GAME' | 'LUNDA' | 'SET' | 'OTHER';
 }
 
 export interface UserStats {
@@ -156,6 +157,13 @@ export const usersApi = {
 
   getPlayerComparison: async (otherUserId: string) => {
     const response = await api.get<ApiResponse<PlayerComparison>>(`/users/compare/${otherUserId}`);
+    return response.data;
+  },
+
+  getUserLevelChanges: async (userId: string, limit?: number) => {
+    const response = await api.get<ApiResponse<LevelHistoryItem[]>>(`/level-changes/${userId}`, {
+      params: limit ? { limit } : {},
+    });
     return response.data;
   },
 };

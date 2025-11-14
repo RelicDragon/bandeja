@@ -415,7 +415,19 @@
     "switchToSocialLevel": "Пребаци на социјални ниво",
     "gameIsPrivate": "Ова игра је приватна",
     "openTelegramChat": "Отвори Telegram чат",
-    "openChat": "Отвори ћаскање"
+    "openChat": "Отвори ћаскање",
+    "eventType": {
+      "GAME": "Игра",
+      "LUNDA": "Лунда",
+      "SET": "Сет",
+      "OTHER": "Остало"
+    },
+    "last10Events": "10 догађаја",
+    "last30Events": "30 догађаја",
+    "allEvents": "СВЕ",
+    "last10EventsTitle": "Последњих 10 догађаја",
+    "last30EventsTitle": "Последњих 30 догађаја",
+    "allEventsTitle": "Сви догађаји"
   },
   "contacts": {
     "searchPlaceholder": "Претражи контакте...",

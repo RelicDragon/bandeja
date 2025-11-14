@@ -83,8 +83,6 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           usersApi.getUserStats(playerId),
           transactionsApi.getWallet(),
         ]);
-        console.log('User stats loaded:', statsResponse.data);
-        console.log('User originalAvatar:', statsResponse.data.user.originalAvatar);
         setStats(statsResponse.data);
         setWalletBalance(walletResponse.data.wallet || 0);
       } catch (error) {
@@ -311,7 +309,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.3, ease: 'easeOut' }}
                   >
-                    <LevelHistoryView stats={stats} padding="p-6" />
+                    <LevelHistoryView stats={stats} padding="p-6" tabDarkBgClass="dark:bg-gray-700/50" />
                   </motion.div>
                 ) : (
                   <motion.div

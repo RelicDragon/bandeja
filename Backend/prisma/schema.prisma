@@ -67,6 +67,7 @@ model User {
   lundaProfile            LundaProfile?
   transactionsFrom        Transaction[]        @relation("TransactionFromUser")
   transactionsTo          Transaction[]        @relation("TransactionToUser")
+  levelChangeEvents       LevelChangeEvent[]
 
   @@index([phone])
   @@index([telegramId])
@@ -203,6 +204,7 @@ model Game {
   outcomes        GameOutcome[]
   fixedTeams      GameTeam[]
   gameCourts      GameCourt[]
+  levelChangeEvents LevelChangeEvent[]
 
   @@index([clubId])
   @@index([courtId])
@@ -789,4 +791,29 @@ enum TransactionType {
   TRANSFER
   PURCHASE
   REFUND
+}
+
+model LevelChangeEvent {
+  id            String      @id @default(cuid())
+  userId        String
+  levelBefore   Float
+  levelAfter    Float
+  eventType     LevelChangeEventType
+  gameId        String?
+  linkEntityType EntityType?
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game          Game?       @relation(fields: [gameId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([gameId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+enum LevelChangeEventType {
+  GAME
+  LUNDA
+  SET
+  OTHER
 }

@@ -420,7 +420,19 @@
     "switchToSocialLevel": "Switch to social level",
     "gameIsPrivate": "This game is private",
     "openTelegramChat": "Open Telegram Chat",
-    "openChat": "Open Chat"
+    "openChat": "Open Chat",
+    "eventType": {
+      "GAME": "Game",
+      "LUNDA": "Lunda",
+      "SET": "Set",
+      "OTHER": "Other"
+    },
+    "last10Events": "10 events",
+    "last30Events": "30 events",
+    "allEvents": "ALL",
+    "last10EventsTitle": "Last 10 events",
+    "last30EventsTitle": "Last 30 events",
+    "allEventsTitle": "All events"
   },
   "contacts": {
     "searchPlaceholder": "Search contacts...",

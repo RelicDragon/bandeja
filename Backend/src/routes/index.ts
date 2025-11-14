@@ -20,6 +20,7 @@ import lundaRoutes from './lunda.routes';
 import gameCourtRoutes from './gameCourt.routes';
 import transactionRoutes from './transaction.routes';
 import goodsRoutes from './goods.routes';
+import levelChangeRoutes from './levelChange.routes';
 
 const router = Router();
 
@@ -44,6 +45,7 @@ router.use('/lunda', lundaRoutes);
 router.use('/game-courts', gameCourtRoutes);
 router.use('/transactions', transactionRoutes);
 router.use('/goods', goodsRoutes);
+router.use('/level-changes', levelChangeRoutes);
 
 export default router;
 

@@ -1,12 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, Beer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
-import { UserStats } from '@/api/users';
+import { useState, useEffect, useMemo } from 'react';
+import { UserStats, usersApi, LevelHistoryItem } from '@/api/users';
 import { gamesApi } from '@/api/games';
 import { canUserSeeGame } from '@/utils/gameResults';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
+import { LevelHistoryTabController } from './LevelHistoryTabController';
 
 const TennisBallIcon = () => (
   <svg
@@ -25,9 +26,10 @@ const TennisBallIcon = () => (
 interface LevelHistoryViewProps {
   stats: UserStats;
   padding?: 'p-6' | 'p-0';
+  tabDarkBgClass?: string;
 }
 
-export const LevelHistoryView = ({ stats, padding = 'p-6' }: LevelHistoryViewProps) => {
+export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const currentUser = useAuthStore((state) => state.user);
   const { setCurrentPage, setIsAnimating } = useNavigationStore();
@@ -35,6 +37,21 @@ export const LevelHistoryView = ({ stats, padding = 'p-6' }: LevelHistoryViewPro
   const [showSocialLevel, setShowSocialLevel] = useState(false);
   const [isToggleAnimating, setIsToggleAnimating] = useState(false);
   const [showingPrivateMessage, setShowingPrivateMessage] = useState<string | null>(null);
+  const [levelChangeEvents, setLevelChangeEvents] = useState<LevelHistoryItem[]>([]);
+  const [activeTab, setActiveTab] = useState<'10' | '30' | 'all'>('10');
+
+  useEffect(() => {
+    const fetchLevelChanges = async () => {
+      try {
+        const response = await usersApi.getUserLevelChanges(user.id);
+        setLevelChangeEvents(response.data);
+      } catch (error) {
+        console.error('Failed to fetch level changes:', error);
+      }
+    };
+
+    fetchLevelChanges();
+  }, [user.id]);
 
   const handleToggle = () => {
     setIsToggleAnimating(true);
@@ -67,7 +84,30 @@ export const LevelHistoryView = ({ stats, padding = 'p-6' }: LevelHistoryViewPro
     }
   };
 
-  const currentHistory = showSocialLevel ? (socialLevelHistory || []) : levelHistory;
+  const baseHistory = showSocialLevel ? (socialLevelHistory || []) : levelHistory;
+  
+  const allMergedHistory = useMemo(() => {
+    const merged = [...baseHistory, ...levelChangeEvents]
+      .map(item => ({
+        ...item,
+        createdAt: new Date(item.createdAt).toISOString(),
+      }))
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    
+    const unique = merged.filter((item, index, self) => 
+      index === self.findIndex(t => t.id === item.id)
+    );
+    
+    return unique;
+  }, [baseHistory, levelChangeEvents]);
+
+  const currentHistory = useMemo(() => {
+    if (activeTab === 'all') {
+      return allMergedHistory;
+    }
+    const limit = activeTab === '10' ? 10 : 30;
+    return allMergedHistory.slice(-limit);
+  }, [allMergedHistory, activeTab]);
   const currentValue = showSocialLevel ? (user.socialLevel || 1.0) : user.level;
   
   const maxLevel = currentHistory.length > 0 
@@ -79,10 +119,10 @@ export const LevelHistoryView = ({ stats, padding = 'p-6' }: LevelHistoryViewPro
   const levelRange = maxLevel - minLevel || 1;
 
   return (
-    <div className={`${padding} space-y-6`}>
+    <div className={`${padding} space-y-3`}>
       <div className="relative">
-        <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-6 text-center">
-          <div className="text-white text-sm mb-2">
+        <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-4 text-center">
+          <div className="text-white text-sm mb-1">
             {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}
           </div>
           <div className="text-white text-6xl font-bold">
@@ -91,7 +131,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6' }: LevelHistoryViewPro
         </div>
         <button
           onClick={handleToggle}
-          className="absolute top-4 right-4 w-8 h-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-md hover:shadow-lg transition-transform duration-200 flex items-center justify-center"
+          className="absolute top-3 right-3 w-8 h-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-md hover:shadow-lg transition-transform duration-200 flex items-center justify-center"
           style={{ transform: isToggleAnimating ? 'scale(1.3)' : 'scale(1)' }}
           title={showSocialLevel ? t('playerCard.switchToLevel') : t('playerCard.switchToSocialLevel')}
         >
@@ -105,7 +145,8 @@ export const LevelHistoryView = ({ stats, padding = 'p-6' }: LevelHistoryViewPro
 
       {currentHistory.length > 0 ? (
         <>
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+          <LevelHistoryTabController activeTab={activeTab} onTabChange={setActiveTab} darkBgClass={tabDarkBgClass} />
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
             <div className="relative h-48">
               <svg className="w-full h-full" viewBox="0 0 300 150" preserveAspectRatio="none">
                 <defs>
@@ -171,15 +212,17 @@ export const LevelHistoryView = ({ stats, padding = 'p-6' }: LevelHistoryViewPro
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              {t('playerCard.recentChanges')}
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              {activeTab === '10' ? t('playerCard.last10EventsTitle') : 
+               activeTab === '30' ? t('playerCard.last30EventsTitle') : 
+               t('playerCard.allEventsTitle')}
             </h3>
             {currentHistory.slice().reverse().map((item) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+                className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
                 onClick={() => handleRatingChangeClick(item)}
               >
                 <AnimatePresence mode="wait">
@@ -205,9 +248,16 @@ export const LevelHistoryView = ({ stats, padding = 'p-6' }: LevelHistoryViewPro
                       transition={{ duration: 0.3 }}
                       className="flex items-center justify-between"
                     >
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {new Date(item.createdAt).toLocaleDateString()}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {new Date(item.createdAt).toLocaleDateString()}
+                        </span>
+                        {item.eventType && (
+                          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                            {t(`playerCard.eventType.${item.eventType}`)}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-3">
                         <span className="text-gray-700 dark:text-gray-300 font-medium">
                           {item.levelBefore.toFixed(2)} → {item.levelAfter.toFixed(2)}

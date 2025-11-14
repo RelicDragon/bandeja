@@ -421,7 +421,19 @@
     "switchToSocialLevel": "Переключить на социальный уровень",
     "gameIsPrivate": "Эта игра приватная",
     "openTelegramChat": "Открыть чат в Telegram",
-    "openChat": "Открыть чат"
+    "openChat": "Открыть чат",
+    "eventType": {
+      "GAME": "Игра",
+      "LUNDA": "Лунда",
+      "SET": "Сет",
+      "OTHER": "Другое"
+    },
+    "last10Events": "10 событий",
+    "last30Events": "30 событий",
+    "allEvents": "ВСЕ",
+    "last10EventsTitle": "Последние 10 событий",
+    "last30EventsTitle": "Последние 30 событий",
+    "allEventsTitle": "Все события"
   },
   "contacts": {
     "searchPlaceholder": "Поиск контактов...",
