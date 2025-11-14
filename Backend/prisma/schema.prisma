@@ -473,7 +473,7 @@ model PinnedUserChat {
 model ChatMessage {
   id              String               @id @default(cuid())
   chatContextType ChatContextType      @default(GAME)
-  contextId       String               @default("")
+  contextId       String
   gameId          String?
   senderId        String?
   content         String?
