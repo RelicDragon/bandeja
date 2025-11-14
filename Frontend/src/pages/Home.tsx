@@ -1,6 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
 import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController, Contacts } from '@/components/home';
@@ -17,7 +16,6 @@ import { ChatType } from '@/types';
 
 export const HomeContent = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const { showChatFilter, setShowChatFilter } = useHeaderStore();
 
