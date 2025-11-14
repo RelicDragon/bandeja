@@ -42,6 +42,7 @@ model User {
   gender                  Gender               @default(PREFER_NOT_TO_SAY)
   sendTelegramMessages    Boolean              @default(true)
   sendTelegramInvites     Boolean              @default(true)
+  sendTelegramDirectMessages Boolean           @default(true)
   chatMessages            ChatMessage[]
   participateInGames      GameParticipant[]    @relation("ParticipantUser")
   userChats1              UserChat[]           @relation("UserChat1")

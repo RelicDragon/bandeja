@@ -1,6 +1,7 @@
 import { Bot } from 'grammy';
 import { sendGameChatNotification } from './notifications/game-chat.notification';
 import { sendBugChatNotification } from './notifications/bug-chat.notification';
+import { sendUserChatNotification } from './notifications/user-chat.notification';
 import { sendInviteNotification } from './notifications/invite.notification';
 import { sendGameCard } from './notifications/game-card.notification';
 
@@ -19,6 +20,11 @@ class TelegramNotificationService {
   async sendBugChatNotification(message: any, bug: any, sender: any) {
     if (!this.bot) return;
     await sendBugChatNotification(this.bot.api, message, bug, sender);
+  }
+
+  async sendUserChatNotification(message: any, userChat: any, sender: any) {
+    if (!this.bot) return;
+    await sendUserChatNotification(this.bot.api, message, userChat, sender);
   }
 
   async sendInviteNotification(invite: any) {

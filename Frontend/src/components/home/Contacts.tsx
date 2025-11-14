@@ -273,6 +273,9 @@ export const Contacts = () => {
     setShowSearch(false);
     setSearchTerm('');
     setDebouncedSearchTerm('');
+    if (searchInputRef.current) {
+      searchInputRef.current.blur();
+    }
   };
 
 
@@ -355,46 +358,57 @@ export const Contacts = () => {
             <Search size={20} className="text-gray-600 dark:text-gray-400" />
           </div>
         </div>
-        <div className="relative flex-1 overflow-hidden">
-          <div 
-            ref={carouselRef}
-            className="flex items-center gap-2 overflow-x-auto pb-2 pl-1 pr-2 pt-2 scrollbar-hide"
-          >
-            {filteredContacts.map((contact, index) => {
-          if (!contact.user) return null;
-          const showName = (isMobile && isScrolling) || showSearch;
 
-          return (
-            <div
-              key={contact.userId || index}
-              onClick={() => handleUserClick(contact)}
-              className="relative flex-shrink-0 cursor-pointer group"
-            >
-              <PlayerAvatar
-                player={contact.user}
-                showName={showName}
-                smallLayout={true}
-              />
-              {(contact.unreadCount ?? 0) > 0 && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center border-2 border-white dark:border-gray-900">
-                  <span className="text-[10px] font-bold text-white">
-                    {(contact.unreadCount ?? 0) > 9 ? '9+' : (contact.unreadCount ?? 0)}
-                  </span>
-                </div>
-              )}
+        <div className="relative flex-1 overflow-hidden">
+          {debouncedSearchTerm && filteredContacts.length === 0 ? (
+            <div className="w-full pb-3">
+              <div className="text-sm px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 text-center">
+                {t('contacts.noPlayersFound')}
+              </div>
             </div>
-          );
-        })}
-          </div>
+          ) : (
+            <div 
+              ref={carouselRef}
+              className="flex items-center gap-2 overflow-x-auto pb-2 pl-1 pr-2 pt-2 scrollbar-hide"
+            >
+              {filteredContacts.map((contact, index) => {
+                if (!contact.user) return null;
+                const showName = (isMobile && isScrolling) || showSearch;
+
+                return (
+                  <div
+                    key={contact.userId || index}
+                    onClick={() => handleUserClick(contact)}
+                    className="relative flex-shrink-0 cursor-pointer group"
+                  >
+                    <PlayerAvatar
+                      player={contact.user}
+                      showName={showName}
+                      smallLayout={true}
+                    />
+                    {(contact.unreadCount ?? 0) > 0 && (
+                      <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center border-2 border-white dark:border-gray-900">
+                        <span className="text-[10px] font-bold text-white">
+                          {(contact.unreadCount ?? 0) > 9 ? '9+' : (contact.unreadCount ?? 0)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            
+          )}
         </div>
+
         {showLeftFade && (
-          <div className={`absolute top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 from-0% via-gray-50/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10 ${
-            showSearch || (showChatFilter && hasUnreadContacts) ? 'left-2' : 'left-12'
-          }`} />
-        )}
-        {showRightFade && (
-          <div className="absolute -right-1 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 from-0% via-gray-50/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10" />
-        )}
+            <div className={`absolute top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 from-0% via-gray-50/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10 ${
+              showSearch || (showChatFilter && hasUnreadContacts) ? 'left-2' : 'left-12'
+            }`} />
+          )}
+          {showRightFade && (
+            <div className="absolute -right-1 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 from-0% via-gray-50/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10" />
+          )}
       </div>
     </div>
   );

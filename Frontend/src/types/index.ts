@@ -46,6 +46,7 @@ export interface User {
   preferredCourtSideRight?: boolean;
   sendTelegramMessages?: boolean;
   sendTelegramInvites?: boolean;
+  sendTelegramDirectMessages?: boolean;
   wallet?: number;
 }
 

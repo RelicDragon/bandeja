@@ -3,9 +3,11 @@ import { ChatType } from '@prisma/client';
 
 export interface PendingReply {
   messageId: string;
-  gameId: string;
+  gameId?: string;
+  userChatId?: string;
   userId: string;
   chatType: ChatType;
+  chatContextType: 'GAME' | 'USER';
   lang: string;
 }
 

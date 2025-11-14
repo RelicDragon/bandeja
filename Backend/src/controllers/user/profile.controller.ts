@@ -28,7 +28,7 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, gender, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, gender, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages } = req.body;
 
   if (email) {
     const existingEmail = await prisma.user.findUnique({
@@ -67,6 +67,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
       ...(preferredCourtSideRight !== undefined && { preferredCourtSideRight }),
       ...(sendTelegramMessages !== undefined && { sendTelegramMessages }),
       ...(sendTelegramInvites !== undefined && { sendTelegramInvites }),
+      ...(sendTelegramDirectMessages !== undefined && { sendTelegramDirectMessages }),
     },
     select: PROFILE_SELECT_FIELDS,
   });

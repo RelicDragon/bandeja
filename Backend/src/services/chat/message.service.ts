@@ -280,8 +280,40 @@ export class MessageService {
       telegramNotificationService.sendBugChatNotification(message, bug, message.sender).catch(error => {
         console.error('Failed to send Telegram notification:', error);
       });
-    } else if (chatContextType === 'USER' && userChat) {
+    } else if (chatContextType === 'USER' && userChat && message.sender) {
       await UserChatService.updateChatTimestamp(contextId);
+      
+      const userChatWithUsers = await prisma.userChat.findUnique({
+        where: { id: contextId },
+        include: {
+          user1: {
+            select: {
+              id: true,
+              telegramId: true,
+              sendTelegramDirectMessages: true,
+              language: true,
+              firstName: true,
+              lastName: true,
+            }
+          },
+          user2: {
+            select: {
+              id: true,
+              telegramId: true,
+              sendTelegramDirectMessages: true,
+              language: true,
+              firstName: true,
+              lastName: true,
+            }
+          }
+        }
+      });
+
+      if (userChatWithUsers) {
+        telegramNotificationService.sendUserChatNotification(message, userChatWithUsers, message.sender).catch(error => {
+          console.error('Failed to send Telegram notification:', error);
+        });
+      }
     }
 
     return message;

@@ -32,9 +32,13 @@ export function createMessageHandler(
       }
       
       try {
+        const contextId = pendingReply.chatContextType === 'USER' 
+          ? pendingReply.userChatId! 
+          : pendingReply.gameId!;
+        
         await MessageService.createMessageWithEvent({
-          chatContextType: 'GAME',
-          contextId: pendingReply.gameId,
+          chatContextType: pendingReply.chatContextType,
+          contextId,
           senderId: pendingReply.userId,
           content: msg.text.trim(),
           mediaUrls: [],

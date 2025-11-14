@@ -196,6 +196,53 @@ export function createCallbackHandler(
             gameId,
             userId: user.id,
             chatType,
+            chatContextType: 'GAME',
+            lang
+          });
+          
+          if (query.message && 'chat' in query.message && query.message.chat) {
+            const chat = query.message.chat;
+            if ('id' in chat && typeof chat.id === 'number') {
+              await ctx.api.sendMessage(
+                chat.id,
+                t('telegram.replyPrompt', lang)
+              );
+            }
+          }
+        } else {
+          await ctx.answerCallbackQuery({
+            text: 'Unauthorized',
+            show_alert: true
+          });
+        }
+      } else if (query.data.startsWith('rum:')) {
+        const parts = query.data.split(':');
+        if (parts.length !== 3) {
+          await ctx.answerCallbackQuery({ text: 'Invalid request', show_alert: true });
+          return;
+        }
+
+        const [, messageId, userChatId] = parts;
+        const telegramId = ctx.telegramId;
+
+        await ctx.answerCallbackQuery();
+
+        const user = await prisma.user.findUnique({
+          where: { telegramId },
+          select: {
+            id: true,
+            language: true,
+          }
+        });
+
+        if (user) {
+          const lang = user.language || 'en';
+          pendingReplies.set(telegramId, {
+            messageId,
+            userChatId,
+            userId: user.id,
+            chatType: 'PUBLIC',
+            chatContextType: 'USER',
             lang
           });
           

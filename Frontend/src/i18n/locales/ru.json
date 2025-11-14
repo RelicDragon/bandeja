@@ -424,7 +424,8 @@
     "openChat": "Открыть чат"
   },
   "contacts": {
-    "searchPlaceholder": "Поиск контактов..."
+    "searchPlaceholder": "Поиск контактов...",
+    "noPlayersFound": "Игроки не найдены"
   },
   "profile": {
     "title": "Профиль",
@@ -457,6 +458,8 @@
     "sendTelegramMessagesDescription": "Получайте уведомления в Telegram когда кто-то отправляет сообщение в ваших игровых чатах или отчётах об ошибках",
     "sendTelegramInvites": "Получать уведомления о приглашениях в Telegram",
     "sendTelegramInvitesDescription": "Получайте уведомления в Telegram когда кто-то приглашает вас на игру",
+    "sendTelegramDirectMessages": "Получать прямые сообщения в Telegram",
+    "sendTelegramDirectMessagesDescription": "Получайте уведомления в Telegram когда кто-то отправляет вам прямое сообщение",
     "gender": "Пол",
     "male": "Мужской",
     "female": "Женский",

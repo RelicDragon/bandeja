@@ -418,7 +418,8 @@
     "openChat": "Отвори ћаскање"
   },
   "contacts": {
-    "searchPlaceholder": "Претражи контакте..."
+    "searchPlaceholder": "Претражи контакте...",
+    "noPlayersFound": "Нема пронађених играча"
   },
   "profile": {
     "title": "Профил",
@@ -451,6 +452,8 @@
     "sendTelegramMessagesDescription": "Добијај обавештења у Телеграму када неко пошаље поруку у твојим игарским ћаскањима или извештајима о грешкама",
     "sendTelegramInvites": "Примај обавештења о позивима у Телеграму",
     "sendTelegramInvitesDescription": "Добијај обавештења у Телеграму када неко позове вас на игру",
+    "sendTelegramDirectMessages": "Примај директне поруке у Телеграму",
+    "sendTelegramDirectMessagesDescription": "Добијај обавештења у Телеграму када неко пошаље директну поруку",
     "gender": "Пол",
     "male": "Мушки",
     "female": "Женски",

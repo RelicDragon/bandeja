@@ -416,7 +416,8 @@
     "openChat": "Abrir Chat"
   },
   "contacts": {
-    "searchPlaceholder": "Buscar contactos..."
+    "searchPlaceholder": "Buscar contactos...",
+    "noPlayersFound": "No se encontraron jugadores"
   },
   "profile": {
     "title": "Perfil",
@@ -449,6 +450,8 @@
     "sendTelegramMessagesDescription": "Recibe notificaciones en Telegram cuando alguien envía un mensaje en tus chats de juego o informes de errores",
     "sendTelegramInvites": "Recibir notificaciones de invitaciones en Telegram",
     "sendTelegramInvitesDescription": "Recibe notificaciones en Telegram cuando alguien te invita a un juego",
+    "sendTelegramDirectMessages": "Recibir mensajes directos en Telegram",
+    "sendTelegramDirectMessagesDescription": "Recibe notificaciones en Telegram cuando alguien te envía un mensaje directo",
     "gender": "Género",
     "male": "Masculino",
     "female": "Femenino",
