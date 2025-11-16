@@ -264,7 +264,6 @@ export const HomeContent = () => {
               <BugsSection
                 bugs={bugsWithUnread}
                 bugsUnreadCounts={bugsUnreadCounts}
-                onShowAllGames={() => setShowChatFilter(false)}
               />
             )}
           </>
