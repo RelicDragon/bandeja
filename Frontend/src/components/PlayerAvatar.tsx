@@ -166,18 +166,20 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
             e.stopPropagation();
             openPlayerCard(player.id);
           }}
-          className={`${draggable ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 transition-opacity`}
+          className={`relative ${sizeClasses.avatar} rounded-full ${draggable ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 transition-opacity flex-shrink-0 p-0 border-0 ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
         >
           {player.avatar ? (
-            <CachedImage
-              src={UrlConstructor.constructImageUrl(player.avatar)}
-              alt={`${player.firstName} ${player.lastName}`}
-              className={`${sizeClasses.avatar} rounded-full object-cover ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
-              showLoadingSpinner={true}
-              loadingClassName="rounded-full"
-            />
+            <div className="w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
+              <CachedImage
+                src={UrlConstructor.constructImageUrl(player.avatar)}
+                alt={`${player.firstName} ${player.lastName}`}
+                className="w-full h-full object-cover"
+                showLoadingSpinner={true}
+                loadingClassName="rounded-full"
+              />
+            </div>
           ) : (
-            <div className={`${sizeClasses.avatar} rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text} ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>
+            <div className={`w-full h-full rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text}`}>
               {initials}
             </div>
           )}

@@ -518,15 +518,7 @@ export const GameDetailsContent = () => {
     
     if (!isOwner) return false;
     
-    if (game.status === 'STARTED' || game.status === 'FINISHED') {
-      return false;
-    }
-    
-    const now = new Date();
-    const startTime = new Date(game.startTime);
-    const twoHoursBeforeStart = new Date(startTime.getTime() - 2 * 60 * 60 * 1000);
-    
-    return now < twoHoursBeforeStart;
+    return game.resultsStatus === 'NONE';
   };
 
   const handleDeleteGame = async () => {

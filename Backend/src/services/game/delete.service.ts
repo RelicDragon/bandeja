@@ -29,16 +29,9 @@ export class GameDeleteService {
       throw new ApiError(404, 'Game not found');
     }
 
-    if (game.resultsStatus !== 'NONE' || game.status === 'STARTED' || game.status === 'FINISHED') {
-      throw new ApiError(400, 'Cannot delete a game that has already started');
-    }
 
-    const now = new Date();
-    const startTime = new Date(game.startTime);
-    const twoHoursBeforeStart = new Date(startTime.getTime() - 2 * 60 * 60 * 1000);
-
-    if (now >= twoHoursBeforeStart) {
-      throw new ApiError(400, 'Game can only be deleted until 2 hours before start time');
+    if (game.resultsStatus !== 'NONE') {
+      throw new ApiError(400, 'Cannot delete a game that has results');
     }
 
     if (game.mediaUrls && game.mediaUrls.length > 0) {
