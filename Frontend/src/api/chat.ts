@@ -241,6 +241,11 @@ export const chatApi = {
     return response.data;
   },
 
+  markAllBugMessagesAsRead: async (bugId: string) => {
+    const response = await api.post<ApiResponse<{ count: number }>>(`/chat/bugs/${bugId}/mark-all-read`);
+    return response.data;
+  },
+
   // Generic method for any context type
   getMessages: async (chatContextType: ChatContextType, contextId: string, page = 1, limit = 50, chatType: ChatType = 'PUBLIC') => {
     if (chatContextType === 'GAME') {

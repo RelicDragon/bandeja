@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import { BugService } from '../services/bug.service';
+import { BugParticipantService } from '../services/bug/participant.service';
 import { SystemMessageType } from '../utils/systemMessages';
 import { BugStatus, BugType, ChatType } from '@prisma/client';
 import { createBugSystemMessage } from './chat.controller';
@@ -111,6 +112,21 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
   });
 });
 
+export const getBugById = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  const bug = await BugService.getBugById(id);
+
+  if (!bug) {
+    throw new ApiError(404, 'errors.bugs.notFound');
+  }
+
+  res.json({
+    success: true,
+    data: bug,
+  });
+});
+
 export const deleteBug = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
@@ -125,5 +141,27 @@ export const deleteBug = asyncHandler(async (req: AuthRequest, res: Response) =>
   res.json({
     success: true,
     message: 'Bug deleted successfully',
+  });
+});
+
+export const joinBugChat = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  const message = await BugParticipantService.joinBugChat(id, req.userId!);
+
+  res.json({
+    success: true,
+    message,
+  });
+});
+
+export const leaveBugChat = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  const message = await BugParticipantService.leaveBugChat(id, req.userId!);
+
+  res.json({
+    success: true,
+    message,
   });
 });

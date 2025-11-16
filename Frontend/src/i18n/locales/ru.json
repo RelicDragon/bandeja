@@ -472,6 +472,8 @@
     "sendTelegramInvitesDescription": "Получайте уведомления в Telegram когда кто-то приглашает вас на игру",
     "sendTelegramDirectMessages": "Получать прямые сообщения в Telegram",
     "sendTelegramDirectMessagesDescription": "Получайте уведомления в Telegram когда кто-то отправляет вам прямое сообщение",
+    "sendTelegramReminders": "Получать напоминания в Telegram",
+    "sendTelegramRemindersDescription": "Получайте уведомления в Telegram за 2 часа до начала ваших игр, турниров или тренировок",
     "gender": "Пол",
     "male": "Мужской",
     "female": "Женский",

@@ -144,30 +144,13 @@ class SocketService {
         try {
           if (!socket.userId) return;
 
-          // Verify user has access to this bug
+          // Verify bug exists (everyone can view bug chats)
           const bug = await prisma.bug.findUnique({
-            where: { id: bugId },
-            include: {
-              sender: true
-            }
+            where: { id: bugId }
           });
 
           if (!bug) {
             socket.emit('error', { message: 'Bug not found' });
-            return;
-          }
-
-          // Check if user is the bug sender or an admin
-          const user = await prisma.user.findUnique({
-            where: { id: socket.userId },
-            select: { isAdmin: true, isTrainer: true }
-          });
-
-          const isSender = bug.senderId === socket.userId;
-          const isAdmin = user?.isAdmin || user?.isTrainer;
-
-          if (!isSender && !isAdmin) {
-            socket.emit('error', { message: 'Access denied to bug chat' });
             return;
           }
 

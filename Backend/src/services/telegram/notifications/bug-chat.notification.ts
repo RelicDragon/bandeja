@@ -33,10 +33,7 @@ export async function sendBugChatNotification(
 
   const admins = await prisma.user.findMany({
     where: {
-      OR: [
-        { isAdmin: true },
-        { isTrainer: true }
-      ],
+      isAdmin: true,
       NOT: { id: sender.id },
       telegramId: { not: null },
       sendTelegramMessages: true,

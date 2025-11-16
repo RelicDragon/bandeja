@@ -28,6 +28,11 @@ export const bugsApi = {
     return response.data;
   },
 
+  getBugById: async (id: string) => {
+    const response = await api.get<ApiResponse<Bug>>(`/bugs/${id}`);
+    return response.data;
+  },
+
   updateBug: async (id: string, data: UpdateBugData) => {
     const response = await api.put<ApiResponse<Bug>>(`/bugs/${id}`, data);
     return response.data;
@@ -35,6 +40,16 @@ export const bugsApi = {
 
   deleteBug: async (id: string) => {
     const response = await api.delete<ApiResponse<{ message: string }>>(`/bugs/${id}`);
+    return response.data;
+  },
+
+  joinChat: async (id: string) => {
+    const response = await api.post<ApiResponse<{ message: string }>>(`/bugs/${id}/join-chat`);
+    return response.data;
+  },
+
+  leaveChat: async (id: string) => {
+    const response = await api.post<ApiResponse<{ message: string }>>(`/bugs/${id}/leave-chat`);
     return response.data;
   },
 };

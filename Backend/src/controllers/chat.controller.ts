@@ -515,3 +515,28 @@ export const getBugsUnreadCounts = asyncHandler(async (req: AuthRequest, res: Re
     data: result
   });
 });
+
+export const markAllBugMessagesAsRead = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { bugId } = req.params;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!bugId) {
+    throw new ApiError(400, 'Bug ID is required');
+  }
+
+  const result = await ReadReceiptService.markAllBugMessagesAsRead(bugId, userId);
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    socketService.emitBugReadReceipt(bugId, { userId, readAt: new Date() });
+  }
+
+  res.json({
+    success: true,
+    data: result
+  });
+});

@@ -466,6 +466,8 @@
     "sendTelegramInvitesDescription": "Добијај обавештења у Телеграму када неко позове вас на игру",
     "sendTelegramDirectMessages": "Примај директне поруке у Телеграму",
     "sendTelegramDirectMessagesDescription": "Добијај обавештења у Телеграму када неко пошаље директну поруку",
+    "sendTelegramReminders": "Примај подсетнике у Телеграму",
+    "sendTelegramRemindersDescription": "Добијај обавештења у Телеграму 2 сата пре почетка ваших игара, турнира или тренинга",
     "gender": "Пол",
     "male": "Мушки",
     "female": "Женски",

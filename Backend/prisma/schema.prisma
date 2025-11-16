@@ -43,6 +43,7 @@ model User {
   sendTelegramMessages    Boolean              @default(true)
   sendTelegramInvites     Boolean              @default(true)
   sendTelegramDirectMessages Boolean           @default(true)
+  sendTelegramReminders   Boolean              @default(true)
   chatMessages            ChatMessage[]
   participateInGames      GameParticipant[]    @relation("ParticipantUser")
   userChats1              UserChat[]           @relation("UserChat1")
@@ -64,6 +65,7 @@ model User {
   gameOutcomes            GameOutcome[]
   gameTeamPlayers         GameTeamPlayer[]
   bugs                    Bug[]
+  bugParticipants         BugParticipant[]
   lundaProfile            LundaProfile?
   transactionsFrom        Transaction[]        @relation("TransactionFromUser")
   transactionsTo          Transaction[]        @relation("TransactionToUser")
@@ -654,18 +656,32 @@ model TelegramOtp {
 }
 
 model Bug {
-  id        String       @id @default(cuid())
+  id        String            @id @default(cuid())
   text      String
   senderId  String
-  status    BugStatus    @default(CREATED)
-  bugType   BugType      @default(BUG)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  sender    User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  status    BugStatus         @default(CREATED)
+  bugType   BugType           @default(BUG)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  sender    User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  participants BugParticipant[]
 
   @@index([senderId])
   @@index([status])
   @@index([bugType])
+}
+
+model BugParticipant {
+  id        String   @id @default(cuid())
+  bugId     String
+  userId    String
+  joinedAt  DateTime @default(now())
+  bug       Bug      @relation(fields: [bugId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bugId, userId])
+  @@index([bugId])
+  @@index([userId])
 }
 
 enum BugStatus {

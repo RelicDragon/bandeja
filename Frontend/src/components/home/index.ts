@@ -4,4 +4,5 @@ export { PastGamesSection } from './PastGamesSection';
 export { AvailableGamesSection } from './AvailableGamesSection';
 export { GamesTabController } from './GamesTabController';
 export { Contacts } from './Contacts';
+export { BugsSection } from './BugsSection';
 

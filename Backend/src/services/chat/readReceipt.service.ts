@@ -144,11 +144,11 @@ export class ReadReceiptService {
     // 3. Count unread messages from BUG chats
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { isAdmin: true, isTrainer: true }
+      select: { isAdmin: true }
     });
 
-    if (user && (user.isAdmin || user.isTrainer)) {
-      // Admin/Trainer can see all bug chats
+    if (user && user.isAdmin) {
+      // Admin can see all bug chats
       const bugUnreadCount = await prisma.chatMessage.count({
         where: {
           chatContextType: 'BUG',
@@ -161,17 +161,27 @@ export class ReadReceiptService {
 
       totalUnreadCount += bugUnreadCount;
     } else {
-      // Regular users can only see bugs they created
+      // Regular users can see bugs they created or bugs they joined as participants
       const userBugs = await prisma.bug.findMany({
         where: { senderId: userId },
         select: { id: true }
       });
 
-      for (const bug of userBugs) {
+      const userBugParticipants = await prisma.bugParticipant.findMany({
+        where: { userId },
+        select: { bugId: true }
+      });
+
+      const allBugIds = new Set([
+        ...userBugs.map(bug => bug.id),
+        ...userBugParticipants.map(p => p.bugId)
+      ]);
+
+      for (const bugId of allBugIds) {
         const bugUnreadCount = await prisma.chatMessage.count({
           where: {
             chatContextType: 'BUG',
-            contextId: bug.id,
+            contextId: bugId,
             senderId: { not: userId },
             readReceipts: {
               none: { userId }
@@ -444,7 +454,11 @@ export class ReadReceiptService {
   }
 
   static async getBugUnreadCount(bugId: string, userId: string) {
-    await MessageService.validateBugAccess(bugId, userId);
+    const { isSender, isAdmin, isParticipant } = await MessageService.validateBugAccess(bugId, userId, false);
+
+    if (!isSender && !isAdmin && !isParticipant) {
+      return { count: 0 };
+    }
 
     const unreadCount = await prisma.chatMessage.count({
       where: {
@@ -471,7 +485,12 @@ export class ReadReceiptService {
 
     for (const bugId of bugIds) {
       try {
-        await MessageService.validateBugAccess(bugId, userId);
+        const { isSender, isAdmin, isParticipant } = await MessageService.validateBugAccess(bugId, userId, false);
+        
+        if (!isSender && !isAdmin && !isParticipant) {
+          unreadCounts[bugId] = 0;
+          continue;
+        }
         
         const unreadCount = await prisma.chatMessage.count({
           where: {
@@ -493,5 +512,41 @@ export class ReadReceiptService {
     }
 
     return unreadCounts;
+  }
+
+  static async markAllBugMessagesAsRead(bugId: string, userId: string) {
+    await MessageService.validateBugAccess(bugId, userId);
+
+    const unreadMessages = await prisma.chatMessage.findMany({
+      where: {
+        chatContextType: 'BUG',
+        contextId: bugId,
+        senderId: { not: userId },
+        readReceipts: {
+          none: { userId }
+        }
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (unreadMessages.length === 0) {
+      return { count: 0 };
+    }
+
+    const readAt = new Date();
+    const readReceipts = unreadMessages.map(message => ({
+      messageId: message.id,
+      userId,
+      readAt
+    }));
+
+    await prisma.messageReadReceipt.createMany({
+      data: readReceipts,
+      skipDuplicates: true
+    });
+
+    return { count: unreadMessages.length };
   }
 }

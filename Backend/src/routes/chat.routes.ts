@@ -24,7 +24,8 @@ import {
   unpinUserChat,
   getBugMessages,
   getBugUnreadCount,
-  getBugsUnreadCounts
+  getBugsUnreadCounts,
+  markAllBugMessagesAsRead
 } from '../controllers/chat.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -103,6 +104,7 @@ router.post(
 // Bug Chat Routes
 router.get('/bugs/:bugId/messages', getBugMessages);
 router.get('/bugs/:bugId/unread-count', getBugUnreadCount);
+router.post('/bugs/:bugId/mark-all-read', markAllBugMessagesAsRead);
 router.post(
   '/bugs/unread-counts',
   validate([

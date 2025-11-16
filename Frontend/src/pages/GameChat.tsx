@@ -59,7 +59,13 @@ export const GameChat: React.FC = () => {
   const isAdminOrOwner = userParticipant?.role === 'ADMIN' || userParticipant?.role === 'OWNER';
   const hasPendingInvite = game?.invites?.some(invite => invite.receiverId === user?.id) ?? false;
   const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') ?? false;
-  const canAccessChat = contextType === 'USER' || contextType === 'BUG' || isParticipant || hasPendingInvite || isGuest;
+  
+  const isBugCreator = bug?.senderId === user?.id;
+  const isBugAdmin = user?.isAdmin;
+  const isBugParticipant = bug?.participants?.some(p => p.userId === user?.id) ?? false;
+  const canWriteBugChat = contextType === 'BUG' && (isBugCreator || isBugAdmin || isBugParticipant);
+  
+  const canAccessChat = contextType === 'USER' || (contextType === 'BUG' && canWriteBugChat) || isParticipant || hasPendingInvite || isGuest;
   const canViewPublicChat = contextType === 'USER' || contextType === 'BUG' || canAccessChat || game?.isPublic;
   const isCurrentUserGuest = game?.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying && participant.role !== 'OWNER' && participant.role !== 'ADMIN') ?? false;
 
@@ -72,11 +78,9 @@ export const GameChat: React.FC = () => {
         setGame(response.data);
         return response.data;
       } else if (contextType === 'BUG') {
-        const response = await bugsApi.getBugs({ page: 1, limit: 100 });
-        const foundBug = response.data.bugs.find((b: Bug) => b.id === id);
-        if (!foundBug) throw new Error('Bug not found');
-        setBug(foundBug);
-        return foundBug;
+        const response = await bugsApi.getBugById(id);
+        setBug(response.data);
+        return response.data;
       } else if (contextType === 'USER') {
         if (!userChat) {
           const response = await chatApi.getUserChats();
@@ -201,16 +205,28 @@ export const GameChat: React.FC = () => {
   }, []);
 
   const handleJoinAsGuest = useCallback(async () => {
-    if (!id || contextType !== 'GAME') return;
+    if (!id) return;
     
-    setIsJoiningAsGuest(true);
-    try {
-      await gamesApi.joinAsGuest(id);
-      await loadContext();
-    } catch (error) {
-      console.error('Failed to join as guest:', error);
-    } finally {
-      setIsJoiningAsGuest(false);
+    if (contextType === 'GAME') {
+      setIsJoiningAsGuest(true);
+      try {
+        await gamesApi.joinAsGuest(id);
+        await loadContext();
+      } catch (error) {
+        console.error('Failed to join as guest:', error);
+      } finally {
+        setIsJoiningAsGuest(false);
+      }
+    } else if (contextType === 'BUG') {
+      setIsJoiningAsGuest(true);
+      try {
+        await bugsApi.joinChat(id);
+        await loadContext();
+      } catch (error) {
+        console.error('Failed to join bug chat:', error);
+      } finally {
+        setIsJoiningAsGuest(false);
+      }
     }
   }, [id, contextType, loadContext]);
 
@@ -219,13 +235,18 @@ export const GameChat: React.FC = () => {
   }, [loadContext]);
 
   const handleLeaveChat = useCallback(async () => {
-    if (!id || isLeavingChat || contextType !== 'GAME') return;
+    if (!id || isLeavingChat) return;
     
     setIsLeavingChat(true);
     try {
-      await gamesApi.leave(id);
-      await loadContext();
-      navigate(-1);
+      if (contextType === 'GAME') {
+        await gamesApi.leave(id);
+        await loadContext();
+        navigate(-1);
+      } else if (contextType === 'BUG') {
+        await bugsApi.leaveChat(id);
+        await loadContext();
+      }
     } catch (error) {
       console.error('Failed to leave chat:', error);
     } finally {
@@ -620,6 +641,19 @@ export const GameChat: React.FC = () => {
               />
             </div>
           )}
+          {contextType === 'BUG' && bug && (isBugParticipant || isBugCreator || isBugAdmin) && (
+            <div className="flex items-center gap-2">
+              {!isBugCreator && (
+                <button
+                  onClick={() => setShowLeaveConfirmation(true)}
+                  className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
+                  title={t('chat.leave')}
+                >
+                  <LogOut size={20} className="text-red-600 dark:text-red-400" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || (game?.status && game.status !== 'ANNOUNCED')) && (
@@ -716,7 +750,7 @@ export const GameChat: React.FC = () => {
         />
       )}
 
-      {contextType === 'GAME' && (
+      {(contextType === 'GAME' || contextType === 'BUG') && (
         <ConfirmationModal
           isOpen={showLeaveConfirmation}
           title={t('chat.leave')}

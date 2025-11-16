@@ -47,6 +47,7 @@ export interface User {
   sendTelegramMessages?: boolean;
   sendTelegramInvites?: boolean;
   sendTelegramDirectMessages?: boolean;
+  sendTelegramReminders?: boolean;
   wallet?: number;
 }
 
@@ -291,6 +292,17 @@ export interface Bug {
     gender?: Gender;
     isAdmin?: boolean;
   };
+  participants?: Array<{
+    id: string;
+    userId: string;
+    joinedAt: string;
+    user: {
+      id: string;
+      firstName?: string;
+      lastName?: string;
+      avatar?: string;
+    };
+  }>;
 }
 
 export interface BugsResponse {

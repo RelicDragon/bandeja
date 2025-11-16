@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
-import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController, Contacts } from '@/components/home';
+import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController, Contacts, BugsSection } from '@/components/home';
 import { Divider, Button } from '@/components';
 import { invitesApi } from '@/api';
 import { chatApi } from '@/api/chat';
@@ -12,6 +12,7 @@ import { useHeaderStore } from '@/store/headerStore';
 import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
 import { useHomeGames } from '@/hooks/useHomeGames';
 import { usePastGames } from '@/hooks/usePastGames';
+import { useBugsWithUnread } from '@/hooks/useBugsWithUnread';
 import { ChatType } from '@/types';
 
 export const HomeContent = () => {
@@ -46,6 +47,12 @@ export const HomeContent = () => {
     loadPastGames,
     loadAllPastGamesWithUnread,
   } = usePastGames(user, activeTab === 'past-games');
+
+  const {
+    bugsWithUnread,
+    bugsUnreadCounts,
+    loadAllBugsWithUnread,
+  } = useBugsWithUnread(user);
 
   const mergedGames = useMemo(() => {
     if (!showChatFilter) return games;
@@ -103,7 +110,9 @@ export const HomeContent = () => {
       
       const gamesWithUnread = allChatGames.filter(game => (unreadCounts.data[game.id] || 0) > 0);
       
-      if (gamesWithUnread.length === 0) {
+      const bugsWithUnreadMessages = bugsWithUnread.filter(bug => (bugsUnreadCounts[bug.id] || 0) > 0);
+      
+      if (gamesWithUnread.length === 0 && bugsWithUnreadMessages.length === 0) {
         setIsMarkingAllAsRead(false);
         return;
       }
@@ -113,7 +122,11 @@ export const HomeContent = () => {
         return chatApi.markAllMessagesAsRead(game.id, chatTypes);
       });
 
-      await Promise.all(markPromises);
+      const bugMarkPromises = bugsWithUnreadMessages.map(bug => 
+        chatApi.markAllBugMessagesAsRead(bug.id)
+      );
+
+      await Promise.all([...markPromises, ...bugMarkPromises]);
 
       const { setUnreadMessages } = useHeaderStore.getState();
       setUnreadMessages(0);
@@ -123,7 +136,8 @@ export const HomeContent = () => {
       if (showChatFilter) {
         await Promise.all([
           loadAllGamesWithUnread?.(),
-          loadAllPastGamesWithUnread?.()
+          loadAllPastGamesWithUnread?.(),
+          loadAllBugsWithUnread?.()
         ]);
       }
 
@@ -182,7 +196,11 @@ export const HomeContent = () => {
     }
   };
 
-  const hasUnreadMessages = Object.values(mergedUnreadCounts).some(count => count > 0);
+  const hasUnreadMessages = useMemo(() => {
+    const gamesHaveUnread = Object.values(mergedUnreadCounts).some(count => count > 0);
+    const bugsHaveUnread = Object.values(bugsUnreadCounts).some(count => count > 0);
+    return gamesHaveUnread || bugsHaveUnread;
+  }, [mergedUnreadCounts, bugsUnreadCounts]);
 
   return (
     <>
@@ -231,16 +249,25 @@ export const HomeContent = () => {
 
       <div className="relative min-h-[200px]">
         {showChatFilter ? (
-          <MyGamesSection
-            games={mergedGames}
-            user={user}
-            loading={loading}
-            showSkeleton={skeletonAnimation.showSkeleton}
-            skeletonStates={skeletonAnimation.skeletonStates}
-            showChatFilter={showChatFilter}
-            gamesUnreadCounts={mergedUnreadCounts}
-            onShowAllGames={() => setShowChatFilter(false)}
-          />
+          <>
+            <MyGamesSection
+              games={mergedGames}
+              user={user}
+              loading={loading}
+              showSkeleton={skeletonAnimation.showSkeleton}
+              skeletonStates={skeletonAnimation.skeletonStates}
+              showChatFilter={showChatFilter}
+              gamesUnreadCounts={mergedUnreadCounts}
+              onShowAllGames={() => setShowChatFilter(false)}
+            />
+            {bugsWithUnread.length > 0 && (
+              <BugsSection
+                bugs={bugsWithUnread}
+                bugsUnreadCounts={bugsUnreadCounts}
+                onShowAllGames={() => setShowChatFilter(false)}
+              />
+            )}
+          </>
         ) : (
           <>
             <div

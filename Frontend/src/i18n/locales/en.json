@@ -471,6 +471,8 @@
     "sendTelegramInvitesDescription": "Get notified in Telegram when someone invites you to a game",
     "sendTelegramDirectMessages": "Receive direct messages in Telegram",
     "sendTelegramDirectMessagesDescription": "Get notified in Telegram when someone sends you a direct message",
+    "sendTelegramReminders": "Receive reminders in Telegram",
+    "sendTelegramRemindersDescription": "Get notified in Telegram 2 hours before your games, tournaments, or training bars start",
     "gender": "Gender",
     "male": "Male",
     "female": "Female",

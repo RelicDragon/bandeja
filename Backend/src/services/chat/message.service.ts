@@ -39,11 +39,14 @@ export class MessageService {
     return { game, isParticipant, hasPendingInvite, isPublicGame, participant };
   }
 
-  static async validateBugAccess(bugId: string, userId: string) {
+  static async validateBugAccess(bugId: string, userId: string, requireWriteAccess: boolean = false) {
     const bug = await prisma.bug.findUnique({
       where: { id: bugId },
       include: {
-        sender: true
+        sender: true,
+        participants: {
+          where: { userId }
+        }
       }
     });
 
@@ -54,7 +57,7 @@ export class MessageService {
     // Check if user is the bug sender or an admin
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { isAdmin: true, isTrainer: true }
+      select: { isAdmin: true }
     });
 
     if (!user) {
@@ -62,13 +65,16 @@ export class MessageService {
     }
 
     const isSender = bug.senderId === userId;
-    const isAdmin = user.isAdmin || user.isTrainer;
+    const isAdmin = user.isAdmin;
+    const isParticipant = bug.participants.length > 0;
 
-    if (!isSender && !isAdmin) {
-      throw new ApiError(403, 'You can only access your own bugs or must be an admin');
+    // For viewing: everyone can view bug chats
+    // For writing: must be sender, admin, or participant
+    if (requireWriteAccess && !isSender && !isAdmin && !isParticipant) {
+      throw new ApiError(403, 'You must join the chat to send messages');
     }
 
-    return { bug, isSender, isAdmin };
+    return { bug, isSender, isAdmin, isParticipant };
   }
 
   static async validateUserChatAccess(userChatId: string, userId: string) {
@@ -194,7 +200,7 @@ export class MessageService {
       participant = result.participant;
       await this.validateChatTypeAccess(participant, chatType, game);
     } else if (chatContextType === 'BUG') {
-      const result = await this.validateBugAccess(contextId, senderId);
+      const result = await this.validateBugAccess(contextId, senderId, true);
       bug = result.bug;
     } else if (chatContextType === 'USER') {
       const result = await this.validateUserChatAccess(contextId, senderId);
@@ -396,7 +402,7 @@ export class MessageService {
     if (message.chatContextType === 'GAME') {
       await this.validateGameAccess(message.contextId, userId);
     } else if (message.chatContextType === 'BUG') {
-      await this.validateBugAccess(message.contextId, userId);
+      await this.validateBugAccess(message.contextId, userId, true);
     } else if (message.chatContextType === 'USER') {
       await this.validateUserChatAccess(message.contextId, userId);
     }
@@ -450,7 +456,7 @@ export class MessageService {
     if (message.chatContextType === 'GAME') {
       await this.validateGameAccess(message.contextId, userId);
     } else if (message.chatContextType === 'BUG') {
-      await this.validateBugAccess(message.contextId, userId);
+      await this.validateBugAccess(message.contextId, userId, true);
     } else if (message.chatContextType === 'USER') {
       await this.validateUserChatAccess(message.contextId, userId);
     }

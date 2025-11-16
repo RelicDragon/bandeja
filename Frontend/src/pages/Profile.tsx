@@ -31,6 +31,7 @@ export const ProfileContent = () => {
   const [sendTelegramMessages, setSendTelegramMessages] = useState(user?.sendTelegramMessages ?? true);
   const [sendTelegramInvites, setSendTelegramInvites] = useState(user?.sendTelegramInvites ?? true);
   const [sendTelegramDirectMessages, setSendTelegramDirectMessages] = useState(user?.sendTelegramDirectMessages ?? true);
+  const [sendTelegramReminders, setSendTelegramReminders] = useState(user?.sendTelegramReminders ?? true);
 
   const [cities, setCities] = useState<City[]>([]);
   const [showCityModal, setShowCityModal] = useState(false);
@@ -119,6 +120,7 @@ export const ProfileContent = () => {
       setSendTelegramMessages(user.sendTelegramMessages ?? true);
       setSendTelegramInvites(user.sendTelegramInvites ?? true);
       setSendTelegramDirectMessages(user.sendTelegramDirectMessages ?? true);
+      setSendTelegramReminders(user.sendTelegramReminders ?? true);
     }
   }, [user]);
 
@@ -175,6 +177,11 @@ export const ProfileContent = () => {
   const handleSendTelegramDirectMessagesChange = (value: boolean) => {
     setSendTelegramDirectMessages(value);
     updateProfile({ sendTelegramDirectMessages: value });
+  };
+
+  const handleSendTelegramRemindersChange = (value: boolean) => {
+    setSendTelegramReminders(value);
+    updateProfile({ sendTelegramReminders: value });
   };
 
   const handleChangeLanguage = (lang: string) => {
@@ -455,6 +462,29 @@ export const ProfileContent = () => {
                         <span
                           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                             sendTelegramDirectMessages ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {t('profile.sendTelegramReminders')}
+                        </label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {t('profile.sendTelegramRemindersDescription')}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleSendTelegramRemindersChange(!sendTelegramReminders)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 cursor-pointer ${
+                          sendTelegramReminders ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            sendTelegramReminders ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
                       </button>

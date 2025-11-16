@@ -50,13 +50,15 @@ export class BugService {
         include: {
           sender: {
             select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-              level: true,
-              gender: true,
+              ...USER_SELECT_FIELDS,
               isAdmin: true,
+            },
+          },
+          participants: {
+            include: {
+              user: {
+                select: USER_SELECT_FIELDS,
+              },
             },
           },
         },
@@ -122,6 +124,13 @@ export class BugService {
           select: {
             ...USER_SELECT_FIELDS,
             isAdmin: true,
+          },
+        },
+        participants: {
+          include: {
+            user: {
+              select: USER_SELECT_FIELDS,
+            },
           },
         },
       },
