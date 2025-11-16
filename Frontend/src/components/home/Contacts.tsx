@@ -46,7 +46,9 @@ export const Contacts = () => {
   const [showRightFade, setShowRightFade] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -262,6 +264,9 @@ export const Contacts = () => {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
+      if (pressTimeoutRef.current) {
+        clearTimeout(pressTimeoutRef.current);
+      }
     };
   }, [filteredContacts, isMobile]);
 
@@ -276,6 +281,23 @@ export const Contacts = () => {
     if (searchInputRef.current) {
       searchInputRef.current.blur();
     }
+  };
+
+  const handlePressStart = () => {
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+    }
+    pressTimeoutRef.current = setTimeout(() => {
+      setIsPressed(true);
+    }, 300);
+  };
+
+  const handlePressEnd = () => {
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+      pressTimeoutRef.current = null;
+    }
+    setIsPressed(false);
   };
 
 
@@ -370,10 +392,16 @@ export const Contacts = () => {
             <div 
               ref={carouselRef}
               className="flex items-center gap-2 overflow-x-auto pb-2 pl-1 pr-2 pt-2 scrollbar-hide"
+              onMouseDown={handlePressStart}
+              onMouseUp={handlePressEnd}
+              onMouseLeave={handlePressEnd}
+              onTouchStart={handlePressStart}
+              onTouchEnd={handlePressEnd}
+              onTouchCancel={handlePressEnd}
             >
               {filteredContacts.map((contact, index) => {
                 if (!contact.user) return null;
-                const showName = (isMobile && isScrolling) || showSearch;
+                const showName = (isMobile && isScrolling) || showSearch || isPressed;
 
                 return (
                   <div

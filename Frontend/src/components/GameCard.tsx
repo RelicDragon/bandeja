@@ -46,6 +46,11 @@ export const GameCard = ({
   const carouselRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
   const [showRightFade, setShowRightFade] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const previousForceCollapsed = previousForceCollapsedRef.current;
@@ -71,12 +76,41 @@ export const GameCard = ({
   };
 
   useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  useEffect(() => {
     const container = carouselRef.current;
     if (!container) return;
 
     checkScrollPosition();
     
-    container.addEventListener('scroll', checkScrollPosition);
+    const handleScroll = () => {
+      checkScrollPosition();
+      
+      if (isMobile) {
+        setIsScrolling(true);
+        
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+        
+        scrollTimeoutRef.current = setTimeout(() => {
+          setIsScrolling(false);
+        }, 500);
+      }
+    };
+    
+    container.addEventListener('scroll', handleScroll);
     
     const resizeObserver = new ResizeObserver(() => {
       checkScrollPosition();
@@ -84,10 +118,16 @@ export const GameCard = ({
     resizeObserver.observe(container);
     
     return () => {
-      container.removeEventListener('scroll', checkScrollPosition);
+      container.removeEventListener('scroll', handleScroll);
       resizeObserver.disconnect();
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      if (pressTimeoutRef.current) {
+        clearTimeout(pressTimeoutRef.current);
+      }
     };
-  }, [game.participants, isCollapsed]);
+  }, [game.participants, isCollapsed, isMobile]);
 
   const isParticipant = game.participants.some(p => p.userId === user?.id && p.isPlaying);
   const hasPendingInvite = game.invites?.some(invite => invite.receiverId === user?.id);
@@ -121,6 +161,23 @@ export const GameCard = ({
       navigate(`/games/${game.id}`);
       setTimeout(() => setIsAnimating(false), 300);
     }
+  };
+
+  const handlePressStart = () => {
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+    }
+    pressTimeoutRef.current = setTimeout(() => {
+      setIsPressed(true);
+    }, 300);
+  };
+
+  const handlePressEnd = () => {
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+      pressTimeoutRef.current = null;
+    }
+    setIsPressed(false);
   };
 
   const getDateLabel = (date: Date | string, includeComma = true) => {
@@ -491,24 +548,33 @@ export const GameCard = ({
                 <div 
                   ref={carouselRef}
                   className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth flex-nowrap px-2 py-2"
+                  onMouseDown={handlePressStart}
+                  onMouseUp={handlePressEnd}
+                  onMouseLeave={handlePressEnd}
+                  onTouchStart={handlePressStart}
+                  onTouchEnd={handlePressEnd}
+                  onTouchCancel={handlePressEnd}
                 >
-                  {game.participants.filter(p => p.isPlaying).map((participant) => (
-                    <div key={participant.userId} className="flex-shrink-0">
-                      <PlayerAvatar
-                        player={{
-                          id: participant.userId,
-                          firstName: participant.user.firstName,
-                          lastName: participant.user.lastName,
-                          avatar: participant.user.avatar,
-                          level: participant.user.level,
-                          gender: participant.user.gender,
-                        }}
-                        smallLayout={true}
-                        showName={false}
-                        role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
-                      />
-                    </div>
-                  ))}
+                  {game.participants.filter(p => p.isPlaying).map((participant) => {
+                    const showName = (isMobile && isScrolling) || isPressed;
+                    return (
+                      <div key={participant.userId} className="flex-shrink-0">
+                        <PlayerAvatar
+                          player={{
+                            id: participant.userId,
+                            firstName: participant.user.firstName,
+                            lastName: participant.user.lastName,
+                            avatar: participant.user.avatar,
+                            level: participant.user.level,
+                            gender: participant.user.gender,
+                          }}
+                          smallLayout={true}
+                          showName={showName}
+                          role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
                 {showLeftFade && (
                   <div className={`absolute -left-1 top-0 bottom-0 w-8 ${getFadeGradient('left')} pointer-events-none z-10`} />
