@@ -1,8 +1,9 @@
 import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { ChatType } from '@prisma/client';
-import { getDateLabel, formatDate, t } from '../../../utils/translations';
+import { t } from '../../../utils/translations';
 import { escapeMarkdown, formatDuration } from '../utils';
+import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
 
 export async function sendGameChatNotification(
   api: Api,
@@ -24,6 +25,7 @@ export async function sendGameChatNotification(
           telegramId: true,
           sendTelegramMessages: true,
           language: true,
+          currentCityId: true,
         }
       }
     }
@@ -49,8 +51,9 @@ export async function sendGameChatNotification(
     if (canSeeMessage) {
       try {
         const lang = user.language || 'en';
-        const shortDate = getDateLabel(game.startTime, lang, false);
-        const startTime = formatDate(game.startTime, 'HH:mm', lang);
+        const timezone = await getUserTimezoneFromCityId(user.currentCityId);
+        const shortDate = await getDateLabelInTimezone(game.startTime, timezone, lang, false);
+        const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang);
         const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
         
         const formattedMessage = `📍 ${escapeMarkdown(place)} ${shortDate} ${startTime}, ${duration}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;

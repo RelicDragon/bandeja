@@ -3,8 +3,9 @@ import { BotContext } from '../types';
 import { escapeMarkdown } from '../utils';
 import prisma from '../../../config/database';
 import { config } from '../../../config/env';
-import { t, getDateLabel, formatDate } from '../../../utils/translations';
+import { t } from '../../../utils/translations';
 import { GameReadService } from '../../game/read.service';
+import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
 
 export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
   if (!ctx.from || !ctx.lang || !ctx.telegramId) return;
@@ -34,6 +35,8 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
       return;
     }
 
+    const timezone = await getUserTimezoneFromCityId(user.currentCityId);
+
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);
@@ -62,8 +65,8 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
     let message = `*${escapeMarkdown(t('telegram.myGames', userLang) || 'My Games')}*\n\n`;
 
     for (const game of myGames.slice(0, 10)) {
-      const shortDate = getDateLabel(game.startTime, userLang, false);
-      const startTime = formatDate(game.startTime, 'HH:mm', userLang);
+      const shortDate = await getDateLabelInTimezone(game.startTime, timezone, userLang, false);
+      const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, userLang);
       const statusKey = game.status.toLowerCase();
       const statusText = t(`games.status.${statusKey}`, userLang);
       const statusDisplay = `${statusEmoji[game.status] || '📅'} ${escapeMarkdown(statusText)}`;

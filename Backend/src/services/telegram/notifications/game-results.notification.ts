@@ -1,8 +1,9 @@
 import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { config } from '../../../config/env';
-import { t, formatDate, getDateLabel } from '../../../utils/translations';
+import { t } from '../../../utils/translations';
 import { escapeMarkdown, escapeHTML, convertMarkdownMessageToHTML, formatDuration } from '../utils';
+import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
 
 interface PlayerStats {
   wins: number;
@@ -117,6 +118,7 @@ export async function sendGameFinishedNotification(
               language: true,
               firstName: true,
               lastName: true,
+              currentCityId: true,
             },
           },
         },
@@ -174,6 +176,8 @@ export async function sendGameFinishedNotification(
   const gameName = game.name ? game.name : t(`games.gameTypes.${game.gameType}`, lang);
   const clubName = game.court?.club?.name || game.club?.name;
   
+  const timezone = await getUserTimezoneFromCityId(participant.user.currentCityId);
+  
   let message = `🏁 *${escapeMarkdown(t('telegram.gameFinished', lang))}*\n\n`;
   message += `🎮 ${escapeMarkdown(gameName)}\n`;
   
@@ -181,8 +185,8 @@ export async function sendGameFinishedNotification(
     message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
   }
   
-  const dateLabel = getDateLabel(game.startTime, lang, false);
-  const timeStr = formatDate(game.startTime, 'HH:mm', lang);
+  const dateLabel = await getDateLabelInTimezone(game.startTime, timezone, lang, false);
+  const timeStr = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang);
   message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${dateLabel} ${timeStr}\n`;
   
   if (game.entityType !== 'BAR') {

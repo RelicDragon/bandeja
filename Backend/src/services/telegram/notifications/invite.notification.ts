@@ -1,8 +1,9 @@
 import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { config } from '../../../config/env';
-import { getDateLabel, formatDate, t } from '../../../utils/translations';
+import { t } from '../../../utils/translations';
 import { escapeMarkdown, escapeHTML, convertMarkdownMessageToHTML, formatDuration } from '../utils';
+import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
 
 export async function sendInviteNotification(
   api: Api,
@@ -15,6 +16,7 @@ export async function sendInviteNotification(
       telegramId: true,
       sendTelegramInvites: true,
       language: true,
+      currentCityId: true,
     }
   });
 
@@ -34,8 +36,9 @@ export async function sendInviteNotification(
 
   const game = invite.game;
   const place = game.court?.club?.name || game.club?.name || 'Unknown location';
-  const shortDate = getDateLabel(game.startTime, lang, false);
-  const startTime = formatDate(game.startTime, 'HH:mm', lang);
+  const timezone = await getUserTimezoneFromCityId(receiver.currentCityId);
+  const shortDate = await getDateLabelInTimezone(game.startTime, timezone, lang, false);
+  const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang);
   const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
 
   let message = `🎯 ${escapeMarkdown(t('telegram.inviteReceived', lang))}\n\n`;
