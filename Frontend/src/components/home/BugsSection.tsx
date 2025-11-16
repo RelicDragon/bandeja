@@ -1,18 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import { Card } from '@/components';
 import { BugCard } from '@/components/bugs/BugCard';
 import { Bug } from '@/types';
 
 interface BugsSectionProps {
   bugs: Bug[];
   bugsUnreadCounts: Record<string, number>;
-  onShowAllGames: () => void;
 }
 
 export const BugsSection = ({
   bugs,
   bugsUnreadCounts,
-  onShowAllGames,
 }: BugsSectionProps) => {
   const { t } = useTranslation();
 
