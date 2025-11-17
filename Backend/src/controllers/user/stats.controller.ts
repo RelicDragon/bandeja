@@ -41,6 +41,9 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
   const levelHistory = await prisma.gameOutcome.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
@@ -71,17 +74,104 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     },
   }) : null;
 
+  const followersCount = await prisma.userFavoriteUser.count({
+    where: {
+      favoriteUserId: userId,
+    },
+  });
+
+  const followingCount = await prisma.userFavoriteUser.count({
+    where: {
+      userId: userId,
+    },
+  });
+
+  const [gamesStats30Days, gamesStats90Days, gamesStatsTotal] = await Promise.all([
+    prisma.gameOutcome.aggregate({
+      where: {
+        userId,
+        createdAt: { gte: thirtyDaysAgo },
+      },
+      _sum: {
+        wins: true,
+        ties: true,
+        losses: true,
+      },
+    }),
+    prisma.gameOutcome.aggregate({
+      where: {
+        userId,
+        createdAt: { gte: ninetyDaysAgo },
+      },
+      _sum: {
+        wins: true,
+        ties: true,
+        losses: true,
+      },
+    }),
+    prisma.gameOutcome.aggregate({
+      where: {
+        userId,
+      },
+      _sum: {
+        wins: true,
+        ties: true,
+        losses: true,
+      },
+    }),
+  ]);
+
+  const wins30Days = gamesStats30Days._sum.wins || 0;
+  const ties30Days = gamesStats30Days._sum.ties || 0;
+  const losses30Days = gamesStats30Days._sum.losses || 0;
+  const totalMatches30Days = wins30Days + ties30Days + losses30Days;
+
+  const wins90Days = gamesStats90Days._sum.wins || 0;
+  const ties90Days = gamesStats90Days._sum.ties || 0;
+  const losses90Days = gamesStats90Days._sum.losses || 0;
+  const totalMatches90Days = wins90Days + ties90Days + losses90Days;
+
+  const winsTotal = gamesStatsTotal._sum.wins || 0;
+  const tiesTotal = gamesStatsTotal._sum.ties || 0;
+  const lossesTotal = gamesStatsTotal._sum.losses || 0;
+  const totalMatchesTotal = winsTotal + tiesTotal + lossesTotal;
+
+  const gamesStats = [
+    {
+      type: '30' as const,
+      wins: wins30Days,
+      ties: ties30Days,
+      losses: losses30Days,
+      totalMatches: totalMatches30Days,
+    },
+    {
+      type: '90' as const,
+      wins: wins90Days,
+      ties: ties90Days,
+      losses: losses90Days,
+      totalMatches: totalMatches90Days,
+    },
+    {
+      type: 'all' as const,
+      wins: winsTotal,
+      ties: tiesTotal,
+      losses: lossesTotal,
+      totalMatches: totalMatchesTotal,
+    },
+  ];
+
   res.json({
     success: true,
     data: {
       user: {
         ...user,
         isFavorite: !!isFavorite,
-        //avatar: user.avatar ? UrlConstructor.constructImageUrl(user.avatar) : user.avatar,
-        //originalAvatar: user.originalAvatar ? UrlConstructor.constructImageUrl(user.originalAvatar) : user.originalAvatar,
       },
       levelHistory: levelHistory.reverse(),
       gamesLast30Days,
+      followersCount,
+      followingCount,
+      gamesStats,
     },
   });
 });

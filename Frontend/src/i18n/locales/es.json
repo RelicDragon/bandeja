@@ -403,6 +403,11 @@
     "gamesWon": "Ganados",
     "gamesLost": "Perdidos",
     "winRate": "Tasa de victorias",
+    "winsShort": "G",
+    "tiesShort": "E",
+    "lossesShort": "P",
+    "followers": "Seguidores",
+    "following": "Siguiendo",
     "levelHistory": "Historial de nivel",
     "isTrainer": "Entrenador",
     "currentLevel": "Nivel Actual",
@@ -425,7 +430,11 @@
     "allEvents": "TODOS",
     "last10EventsTitle": "Últimos 10 eventos",
     "last30EventsTitle": "Últimos 30 eventos",
-    "allEventsTitle": "Todos los eventos"
+    "allEventsTitle": "Todos los eventos",
+    "last30Days": "30 Días",
+    "last90Days": "90 Días",
+    "allGames": "TODOS",
+    "gamesLast90Days": "Últimos 90 Días"
   },
   "contacts": {
     "searchPlaceholder": "Buscar contactos...",

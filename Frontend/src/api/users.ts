@@ -11,11 +11,24 @@ export interface LevelHistoryItem {
   eventType?: 'GAME' | 'LUNDA' | 'SET' | 'OTHER';
 }
 
+export type GamesStatType = '30' | '90' | 'all';
+
+export interface GamesStat {
+  type: GamesStatType;
+  wins: number;
+  ties: number;
+  losses: number;
+  totalMatches: number;
+}
+
 export interface UserStats {
   user: User & { isFavorite?: boolean };
   levelHistory: LevelHistoryItem[];
   socialLevelHistory?: LevelHistoryItem[];
   gamesLast30Days: number;
+  followersCount: number;
+  followingCount: number;
+  gamesStats: GamesStat[];
 }
 
 export interface PlayerComparison {

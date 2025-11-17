@@ -13,6 +13,7 @@ import { PlayerAvatarView } from './PlayerAvatarView';
 import { LevelHistoryView } from './LevelHistoryView';
 import { GenderIndicator } from './GenderIndicator';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
+import { GamesStatsSection } from './GamesStatsSection';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { transactionsApi } from '@/api/transactions';
@@ -37,6 +38,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [showSendMoneyModal, setShowSendMoneyModal] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [startingChat, setStartingChat] = useState(false);
+  const [gamesStatsTab, setGamesStatsTab] = useState<'30' | '90' | 'all'>('30');
   const isCurrentUser = playerId === user?.id;
 
   // Disable background scrolling and interactions when modal is open
@@ -126,12 +128,20 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     try {
       if (stats.user.isFavorite) {
         await favoritesApi.removeUserFromFavorites(playerId);
-        setStats({ ...stats, user: { ...stats.user, isFavorite: false } });
+        setStats({ 
+          ...stats, 
+          user: { ...stats.user, isFavorite: false },
+          followersCount: Math.max(0, stats.followersCount - 1)
+        });
         removeFavorite(playerId);
         toast.success(t('favorites.userRemovedFromFavorites'));
       } else {
         await favoritesApi.addUserToFavorites(playerId);
-        setStats({ ...stats, user: { ...stats.user, isFavorite: true } });
+        setStats({ 
+          ...stats, 
+          user: { ...stats.user, isFavorite: true },
+          followersCount: stats.followersCount + 1
+        });
         addFavorite(playerId);
         toast.success(t('favorites.userAddedToFavorites'));
       }
@@ -333,6 +343,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                       onLevelClick={() => setShowLevelView(true)}
                       onSendMoneyClick={() => setShowSendMoneyModal(true)}
                       onStartChat={handleStartChat}
+                      gamesStatsTab={gamesStatsTab}
+                      onGamesStatsTabChange={setGamesStatsTab}
                     />
                   </motion.div>
                 )}
@@ -366,13 +378,14 @@ interface PlayerCardContentProps {
   onLevelClick: () => void;
   onSendMoneyClick: () => void;
   onStartChat: () => void;
+  gamesStatsTab: '30' | '90' | 'all';
+  onGamesStatsTabChange: (tab: '30' | '90' | 'all') => void;
 }
 
-const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, startingChat, onAvatarClick, onLevelClick, onSendMoneyClick, onStartChat }: PlayerCardContentProps) => {
-  const { user, gamesLast30Days } = stats;
+const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, startingChat, onAvatarClick, onLevelClick, onSendMoneyClick, onStartChat, gamesStatsTab, onGamesStatsTabChange }: PlayerCardContentProps) => {
+  const { user } = stats;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
-  const winRate = user.gamesPlayed > 0 ? ((user.gamesWon / user.gamesPlayed) * 100).toFixed(1) : '0';
 
   const getTelegramUrl = () => {
     if (user.telegramUsername) {
@@ -472,31 +485,25 @@ const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, startingCha
           onClick={onLevelClick}
           className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
         >
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{user.gamesPlayed}</div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">{t('playerCard.totalGames')}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.followersCount}</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">{t('playerCard.followers') || 'Followers'}</div>
         </button>
         <button
           onClick={onLevelClick}
           className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
         >
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{gamesLast30Days}</div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">{t('playerCard.gamesLast30Days')}</div>
-        </button>
-        <button
-          onClick={onLevelClick}
-          className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-        >
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{user.gamesWon}</div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">{t('playerCard.gamesWon')}</div>
-        </button>
-        <button
-          onClick={onLevelClick}
-          className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-        >
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{winRate}%</div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">{t('playerCard.winRate')}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.followingCount}</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">{t('playerCard.following') || 'Following'}</div>
         </button>
       </div>
+
+      <GamesStatsSection
+        stats={stats.gamesStats}
+        activeTab={gamesStatsTab}
+        onTabChange={onGamesStatsTabChange}
+        onLevelClick={onLevelClick}
+        darkBgClass="dark:bg-gray-700/50"
+      />
 
       <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
         <div className="grid grid-cols-2 gap-4">

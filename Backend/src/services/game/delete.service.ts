@@ -29,7 +29,6 @@ export class GameDeleteService {
       throw new ApiError(404, 'Game not found');
     }
 
-
     if (game.resultsStatus !== 'NONE') {
       throw new ApiError(400, 'Cannot delete a game that has results');
     }

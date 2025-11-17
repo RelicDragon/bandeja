@@ -411,6 +411,11 @@
     "gamesWon": "Выиграно",
     "gamesLost": "Проиграно",
     "winRate": "Процент побед",
+    "winsShort": "В",
+    "tiesShort": "Н",
+    "lossesShort": "П",
+    "followers": "Подписчики",
+    "following": "Подписки",
     "levelHistory": "История уровня",
     "isTrainer": "Тренер",
     "currentLevel": "Текущий Уровень",
@@ -433,7 +438,11 @@
     "allEvents": "ВСЕ",
     "last10EventsTitle": "Последние 10 событий",
     "last30EventsTitle": "Последние 30 событий",
-    "allEventsTitle": "Все события"
+    "allEventsTitle": "Все события",
+    "last30Days": "30 Дней",
+    "last90Days": "90 Дней",
+    "allGames": "ВСЕ",
+    "gamesLast90Days": "За 90 дней"
   },
   "contacts": {
     "searchPlaceholder": "Поиск контактов...",

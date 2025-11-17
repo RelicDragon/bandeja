@@ -405,6 +405,11 @@
     "gamesWon": "Победа",
     "gamesLost": "Пораза",
     "winRate": "Проценат победа",
+    "winsShort": "П",
+    "tiesShort": "Н",
+    "lossesShort": "И",
+    "followers": "Пратиоци",
+    "following": "Прати",
     "levelHistory": "Историја нивоа",
     "isTrainer": "Тренер",
     "currentLevel": "Тренутни Ниво",
@@ -427,7 +432,11 @@
     "allEvents": "СВЕ",
     "last10EventsTitle": "Последњих 10 догађаја",
     "last30EventsTitle": "Последњих 30 догађаја",
-    "allEventsTitle": "Сви догађаји"
+    "allEventsTitle": "Сви догађаји",
+    "last30Days": "30 Дана",
+    "last90Days": "90 Дана",
+    "allGames": "СВЕ",
+    "gamesLast90Days": "Последњих 90 Дана"
   },
   "contacts": {
     "searchPlaceholder": "Претражи контакте...",
