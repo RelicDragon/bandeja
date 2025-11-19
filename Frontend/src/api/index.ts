@@ -4,6 +4,7 @@ export * from './cities';
 export * from './clubs';
 export * from './courts';
 export * from './games';
+export * from './leagues';
 export * from './invites';
 export * from './chat';
 export * from './media';

@@ -274,11 +274,13 @@ export async function applyGameOutcomes(
 
   const updatedGame = await tx.game.findUnique({
     where: { id: gameId },
-    select: { startTime: true, endTime: true },
+    select: { startTime: true, endTime: true, resultsStatus: true },
   });
 
   if (updatedGame) {
     const { calculateGameStatus } = await import('../../utils/gameStatus');
+    const previousResultsStatus = updatedGame.resultsStatus;
+    
     await tx.game.update({
       where: { id: gameId },
       data: {
@@ -290,6 +292,32 @@ export async function applyGameOutcomes(
         }),
       },
     });
+
+    if (previousResultsStatus !== 'FINAL' && game.affectsRating) {
+      for (const outcome of finalOutcomes) {
+        const gameOutcome = await tx.gameOutcome.findUnique({
+          where: {
+            gameId_userId: {
+              gameId,
+              userId: outcome.userId,
+            },
+          },
+        });
+
+        if (gameOutcome && gameOutcome.levelChange !== 0) {
+          await tx.levelChangeEvent.create({
+            data: {
+              userId: outcome.userId,
+              levelBefore: gameOutcome.levelBefore,
+              levelAfter: gameOutcome.levelAfter,
+              eventType: 'GAME',
+              linkEntityType: 'GAME',
+              gameId: gameId,
+            },
+          });
+        }
+      }
+    }
     
     setImmediate(async () => {
       const telegramResultsSenderService = await import('../telegram/resultsSender.service');

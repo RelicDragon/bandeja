@@ -1,8 +1,11 @@
-import { Card, Select, Divider } from '@/components';
+import { Card, Select, Divider, AvatarUpload } from '@/components';
 import { Game, Club, GenderTeam, GameType } from '@/types';
 import { Settings, Edit3, Save, X, HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
+import { mediaApi } from '@/api/media';
+import { gamesApi } from '@/api';
+import toast from 'react-hot-toast';
 
 interface GameSettingsProps {
   game: Game;
@@ -32,6 +35,7 @@ interface GameSettingsProps {
   onFormDataChange: (data: Partial<GameSettingsProps['editFormData']>) => void;
   onOpenClubModal: () => void;
   onOpenCourtModal: () => void;
+  onGameUpdate?: (game: Game) => void;
 }
 
 const ToggleSwitch = ({ checked, onChange, disabled }: { checked: boolean; onChange: (checked: boolean) => void; disabled?: boolean }) => (
@@ -70,6 +74,7 @@ export const GameSettings = ({
   onFormDataChange,
   onOpenClubModal,
   onOpenCourtModal,
+  onGameUpdate,
 }: GameSettingsProps) => {
   const { t } = useTranslation();
   const { showNotes, toggleShowNotes } = useShowSettingsNotes();
@@ -148,6 +153,53 @@ export const GameSettings = ({
       </div>
 
       <div className="space-y-3">
+        {/* Avatar Upload - Only show in edit mode */}
+        {(isEditMode || isClosingEditMode) && (
+          <div className={`${isClosingEditMode ? 'animate-bounce-out' : 'animate-bounce-in'}`}>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              {t('gameDetails.gameAvatar')}
+            </label>
+            <div className="flex justify-center">
+              <AvatarUpload
+                currentAvatar={game.avatar || undefined}
+                isGameAvatar={true}
+                onUpload={async (avatarFile: File, originalFile: File) => {
+                  if (!game.id) return;
+                  try {
+                    await mediaApi.uploadGameAvatar(game.id, avatarFile, originalFile);
+                    const response = await gamesApi.getById(game.id);
+                    if (onGameUpdate) {
+                      onGameUpdate(response.data);
+                    }
+                    toast.success(t('gameDetails.avatarUpdated'));
+                  } catch (error: any) {
+                    const errorMessage = error.response?.data?.message || 'errors.generic';
+                    toast.error(t(errorMessage, { defaultValue: errorMessage }));
+                    throw error;
+                  }
+                }}
+                onRemove={async () => {
+                  if (!game.id) return;
+                  try {
+                    await gamesApi.update(game.id, { avatar: null, originalAvatar: null });
+                    const response = await gamesApi.getById(game.id);
+                    if (onGameUpdate) {
+                      onGameUpdate(response.data);
+                    }
+                    toast.success(t('gameDetails.avatarRemoved'));
+                  } catch (error: any) {
+                    const errorMessage = error.response?.data?.message || 'errors.generic';
+                    toast.error(t(errorMessage, { defaultValue: errorMessage }));
+                    throw error;
+                  }
+                }}
+                disabled={!isEditMode}
+              />
+            </div>
+            <Divider />
+          </div>
+        )}
+
         {/* Location Settings - Only show in edit mode */}
         {(isEditMode || isClosingEditMode) && (
           <div className={`space-y-3 ${isClosingEditMode ? 'animate-bounce-out' : 'animate-bounce-in'}`}>

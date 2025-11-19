@@ -10,10 +10,14 @@ export class GameCreateService {
     const entityType = data.entityType || EntityType.GAME;
     const maxParticipants = entityType === EntityType.BAR ? 999 : (data.maxParticipants || 4);
     
-    if (data.clubId) {
+    let cityId: string | null = null;
+
+    if (data.cityId) {
+      cityId = data.cityId;
+    } else if (data.clubId) {
       const club = await prisma.club.findUnique({
         where: { id: data.clubId },
-        select: { id: true, isBar: true, isForPlaying: true }
+        select: { id: true, isBar: true, isForPlaying: true, cityId: true }
       });
 
       if (!club) {
@@ -27,6 +31,28 @@ export class GameCreateService {
       if (entityType !== EntityType.BAR && !club.isForPlaying) {
         throw new ApiError(400, 'This club is not available for playing games');
       }
+
+      cityId = club.cityId;
+    } else if (data.courtId) {
+      const court = await prisma.court.findUnique({
+        where: { id: data.courtId },
+        select: { 
+          id: true,
+          club: {
+            select: { cityId: true }
+          }
+        }
+      });
+
+      if (!court) {
+        throw new ApiError(404, 'Court not found');
+      }
+
+      cityId = court.club.cityId;
+    }
+
+    if (!cityId) {
+      throw new ApiError(400, 'City ID is required. Provide cityId directly or through clubId/courtId');
     }
     
     const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams || false);
@@ -57,8 +83,11 @@ export class GameCreateService {
         gameType: data.gameType,
         name: data.name,
         description: data.description,
+        avatar: data.avatar,
+        originalAvatar: data.originalAvatar,
         clubId: data.clubId,
         courtId: data.courtId,
+        cityId: cityId as string,
         startTime: startTime,
         endTime: endTime,
         maxParticipants: maxParticipants,

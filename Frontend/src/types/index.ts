@@ -1,7 +1,7 @@
 export type AuthProvider = 'PHONE' | 'TELEGRAM';
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'WINNER_COURT' | 'CUSTOM';
-export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'BAR' | 'TRAINING';
+export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'BAR' | 'TRAINING';
 export type GenderTeam = 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
 export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
 export type Gender = 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
@@ -167,6 +167,8 @@ export interface Game {
   gameType: GameType;
   name?: string;
   description?: string;
+  avatar?: string | null;
+  originalAvatar?: string | null;
   clubId?: string;
   club?: Club;
   courtId?: string;
@@ -219,6 +221,14 @@ export interface Game {
   }>;
   parentId?: string;
   children?: Game[];
+  leagueSeason?: {
+    id: string;
+    leagueId: string;
+    league: {
+      id: string;
+      name: string;
+    };
+  };
   metadata?: Record<string, any>;
   resultsMeta?: {
     version?: number;

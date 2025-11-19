@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/components';
 import { GameStatusIcon } from '@/components/GameStatusIcon';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { GameAvatar } from '@/components/GameAvatar';
 import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { getGameResultStatus } from '@/utils/gameResults';
@@ -210,6 +211,7 @@ export const GameCard = ({
       case 'TOURNAMENT':
         return 'bg-gradient-to-br from-red-50/60 via-orange-50/40 to-red-50/60 dark:from-red-950/25 dark:via-orange-950/15 dark:to-red-950/25 border-l-2 border-red-300 dark:border-red-800 shadow-[0_0_8px_rgba(239,68,68,0.15)] dark:shadow-[0_0_8px_rgba(239,68,68,0.2)]';
       case 'LEAGUE':
+      case 'LEAGUE_SEASON':
         return 'bg-gradient-to-br from-blue-50/60 via-purple-50/40 to-blue-50/60 dark:from-blue-950/25 dark:via-purple-950/15 dark:to-blue-950/25 border-l-2 border-blue-300 dark:border-blue-800 shadow-[0_0_8px_rgba(59,130,246,0.15)] dark:shadow-[0_0_8px_rgba(59,130,246,0.2)]';
       case 'TRAINING':
         return 'bg-gradient-to-br from-green-50/60 via-teal-50/40 to-green-50/60 dark:from-green-950/25 dark:via-teal-950/15 dark:to-green-950/25 border-l-2 border-green-300 dark:border-green-800 shadow-[0_0_8px_rgba(34,197,94,0.15)] dark:shadow-[0_0_8px_rgba(34,197,94,0.2)]';
@@ -228,6 +230,7 @@ export const GameCard = ({
           ? 'bg-gradient-to-r from-red-50/60 via-red-50/60 to-transparent dark:from-red-950/25 dark:via-red-950/25'
           : 'bg-gradient-to-l from-red-50/60 via-red-50/60 to-transparent dark:from-red-950/25 dark:via-red-950/25';
       case 'LEAGUE':
+      case 'LEAGUE_SEASON':
         return isLeft
           ? 'bg-gradient-to-r from-blue-50/60 via-blue-50/60 to-transparent dark:from-blue-950/25 dark:via-blue-950/25'
           : 'bg-gradient-to-l from-blue-50/60 via-blue-50/60 to-transparent dark:from-blue-950/25 dark:via-blue-950/25';
@@ -253,6 +256,7 @@ export const GameCard = ({
       case 'TOURNAMENT':
         return <Swords size={40} className="text-red-500 dark:text-red-400 opacity-15 dark:opacity-15" />;
       case 'LEAGUE':
+      case 'LEAGUE_SEASON':
         return <Trophy size={40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
       case 'TRAINING':
         return <GraduationCap size={48} className="text-green-500 dark:text-green-400 opacity-15 dark:opacity-15" />;
@@ -276,7 +280,9 @@ export const GameCard = ({
       {/* Header - Always visible */}
       <div className="mb-3 relative z-10">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-20">
-          {game.name}
+          {game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name
+            ? game.leagueSeason.league.name
+            : game.name}
           {game.name && game.gameType !== 'CLASSIC' && (
             <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
               ({t(`games.gameTypes.${game.gameType}`)})
@@ -332,10 +338,15 @@ export const GameCard = ({
           {game.entityType !== 'GAME' && (
             <span className="px-2 py-1 text-xs font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
               {game.entityType === 'TOURNAMENT' && <Swords size={12} />}
-              {game.entityType === 'LEAGUE' && <Trophy size={12} />}
+              {(game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && <Trophy size={12} />}
               {game.entityType === 'TRAINING' && <GraduationCap size={12} />}
               {game.entityType === 'BAR' && <Beer size={12} />}
               {t(`games.entityTypes.${game.entityType}`)}
+            </span>
+          )}
+          {game.entityType === 'LEAGUE_SEASON' && game.name && (
+            <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+              {game.name}
             </span>
           )}
           {isGuest && (
@@ -395,7 +406,7 @@ export const GameCard = ({
 
       {/* Collapsed view - Single row */}
       {isCollapsed && (
-        <div className={`text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 ${game.entityType === 'TRAINING' ? 'flex gap-4' : 'flex items-center gap-4'}`}>
+        <div className={`text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 ${game.entityType === 'TRAINING' ? 'flex gap-4' : game.avatar ? 'flex gap-4' : 'flex items-center gap-4'}`}>
           {game.entityType === 'TRAINING' ? (
             <>
               <div className="flex-shrink-0">
@@ -421,18 +432,22 @@ export const GameCard = ({
                 <div className="flex items-center gap-1">
                   {showDate && <Calendar size={14} />}
                   <span>
-                    {showDate && `${getDateLabel(game.startTime, false)} `}
-                    {formatDate(game.startTime, 'HH:mm')}
-                    {`, ${(() => {
-                      const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                      if (durationHours === Math.floor(durationHours)) {
-                        return `${durationHours}${t('common.h')}`;
-                      } else {
-                        const hours = Math.floor(durationHours);
-                        const minutes = Math.round((durationHours % 1) * 60);
-                        return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                      }
-                    })()}`}
+                    {showDate && getDateLabel(game.startTime, false)}
+                    {game.entityType !== 'LEAGUE_SEASON' && (
+                      <>
+                        {` ${formatDate(game.startTime, 'HH:mm')}`}
+                        {`, ${(() => {
+                          const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                          if (durationHours === Math.floor(durationHours)) {
+                            return `${durationHours}${t('common.h')}`;
+                          } else {
+                            const hours = Math.floor(durationHours);
+                            const minutes = Math.round((durationHours % 1) * 60);
+                            return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                          }
+                        })()}`}
+                      </>
+                    )}
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
@@ -453,23 +468,75 @@ export const GameCard = ({
                 </div>
               </div>
             </>
+          ) : game.avatar ? (
+            <>
+              <div className="flex-shrink-0">
+                <GameAvatar avatar={game.avatar} small alt={game.name || t('gameDetails.gameAvatar')} />
+              </div>
+              <div className="flex flex-col gap-2 flex-1">
+                <div className="flex items-center gap-1">
+                  {showDate && <Calendar size={14} />}
+                  <span>
+                    {showDate && getDateLabel(game.startTime, false)}
+                    {game.entityType !== 'LEAGUE_SEASON' && (
+                      <>
+                        {` ${formatDate(game.startTime, 'HH:mm')}`}
+                        {game.entityType !== 'BAR' ? `, ${(() => {
+                          const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                          if (durationHours === Math.floor(durationHours)) {
+                            return `${durationHours}${t('common.h')}`;
+                          } else {
+                            const hours = Math.floor(durationHours);
+                            const minutes = Math.round((durationHours % 1) * 60);
+                            return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                          }
+                        })()}` : ''}
+                      </>
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1">
+                    <Users size={14} />
+                    <span>
+                      {game.entityType === 'BAR' 
+                        ? game.participants.filter(p => p.isPlaying).length
+                        : `${game.participants.filter(p => p.isPlaying).length}/${game.maxParticipants}`
+                      }
+                    </span>
+                  </div>
+                  {(game.court?.club || game.club) && (
+                    <div className="flex items-center gap-1">
+                      <MapPin size={14} />
+                      <span className="truncate max-w-32">
+                        {game.court?.club?.name || game.club?.name}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           ) : (
             <>
               <div className="flex items-center gap-1">
                 {showDate && <Calendar size={14} />}
                 <span>
-                  {showDate && `${getDateLabel(game.startTime, false)} `}
-                  {formatDate(game.startTime, 'HH:mm')}
-                  {game.entityType !== 'BAR' ? `, ${(() => {
-                    const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                    if (durationHours === Math.floor(durationHours)) {
-                      return `${durationHours}${t('common.h')}`;
-                    } else {
-                      const hours = Math.floor(durationHours);
-                      const minutes = Math.round((durationHours % 1) * 60);
-                      return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                    }
-                  })()}` : ''}
+                  {showDate && getDateLabel(game.startTime, false)}
+                  {game.entityType !== 'LEAGUE_SEASON' && (
+                    <>
+                      {` ${formatDate(game.startTime, 'HH:mm')}`}
+                      {game.entityType !== 'BAR' ? `, ${(() => {
+                        const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                        if (durationHours === Math.floor(durationHours)) {
+                          return `${durationHours}${t('common.h')}`;
+                        } else {
+                          const hours = Math.floor(durationHours);
+                          const minutes = Math.round((durationHours % 1) * 60);
+                          return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                        }
+                      })()}` : ''}
+                    </>
+                  )}
                 </span>
               </div>
               <div className="flex items-center gap-1">
@@ -507,8 +574,13 @@ export const GameCard = ({
             <div className="flex items-center gap-2">
               <Calendar size={16} />
               <span>
-                {getDateLabel(game.startTime)} {formatDate(game.startTime, 'HH:mm')}
-                {game.entityType !== 'BAR' ? ` - ${formatDate(game.endTime, 'HH:mm')}` : ''}
+                {getDateLabel(game.startTime)}
+                {game.entityType !== 'LEAGUE_SEASON' && (
+                  <>
+                    {` ${formatDate(game.startTime, 'HH:mm')}`}
+                    {game.entityType !== 'BAR' ? ` - ${formatDate(game.endTime, 'HH:mm')}` : ''}
+                  </>
+                )}
               </span>
             </div>
           {(game.court?.club || game.club) && (

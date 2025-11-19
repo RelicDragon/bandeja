@@ -28,7 +28,7 @@ export const getGameById = asyncHandler(async (req: AuthRequest, res: Response) 
 });
 
 export const getGames = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const games = await GameService.getGames(req.query);
+  const games = await GameService.getGames(req.query, req.userId, req.user?.currentCityId);
 
   res.json({
     success: true,

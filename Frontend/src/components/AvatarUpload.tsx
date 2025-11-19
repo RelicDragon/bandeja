@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Upload, User, X } from 'lucide-react';
+import { Upload, User, X, Camera } from 'lucide-react';
 import { AvatarCropModal } from './AvatarCropModal';
 import { CachedImage } from './CachedImage';
 import { UrlConstructor } from '@/utils/urlConstructor';
@@ -12,6 +12,7 @@ interface AvatarUploadProps {
   onUpload: (avatarFile: File, originalFile: File) => Promise<void>;
   onRemove?: () => Promise<void>;
   disabled?: boolean;
+  isGameAvatar?: boolean;
 }
 
 export const AvatarUpload: React.FC<AvatarUploadProps> = ({
@@ -19,6 +20,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   onUpload,
   onRemove,
   disabled = false,
+  isGameAvatar = false,
 }) => {
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
@@ -142,7 +144,11 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
             />
           ) : (
             <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-              <User size={48} className="text-gray-400 dark:text-gray-500" />
+              {isGameAvatar ? (
+                <Camera size={48} className="text-gray-400 dark:text-gray-500" />
+              ) : (
+                <User size={48} className="text-gray-400 dark:text-gray-500" />
+              )}
             </div>
           )}
 

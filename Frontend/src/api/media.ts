@@ -40,6 +40,21 @@ export const mediaApi = {
     return response.data.data;
   },
 
+  uploadGameAvatar: async (gameId: string, avatarFile: File, originalFile: File): Promise<MediaUploadResponse> => {
+    const formData = new FormData();
+    formData.append('avatar', avatarFile);
+    formData.append('original', originalFile);
+    formData.append('gameId', gameId);
+
+    const response = await api.post<ApiResponse<MediaUploadResponse>>('/media/upload/game/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    return response.data.data;
+  },
+
   uploadChatImage: async (imageFile: File, gameId: string): Promise<ChatImageUploadResponse> => {
     const formData = new FormData();
     formData.append('image', imageFile);

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Gamepad2, Trophy, Swords, GraduationCap, Beer } from 'lucide-react';
 import { EntityType } from '@/types';
 import { useAuthStore } from '@/store/authStore';
@@ -12,6 +13,7 @@ interface GameTypeDropdownProps {
 
 export const GameTypeDropdown = ({ isOpen, onClose, onSelectType }: GameTypeDropdownProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
@@ -71,8 +73,13 @@ export const GameTypeDropdown = ({ isOpen, onClose, onSelectType }: GameTypeDrop
   const handleSelectType = (type: EntityType) => {
     setIsExiting(true);
     setTimeout(() => {
-      onSelectType(type);
-      onClose();
+      if (type === 'LEAGUE') {
+        navigate('/create-league');
+        onClose();
+      } else {
+        onSelectType(type);
+        onClose();
+      }
     }, 400);
   };
 

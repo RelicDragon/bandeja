@@ -34,7 +34,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
   const { t } = useTranslation();
   const currentUser = useAuthStore((state) => state.user);
   const { setCurrentPage, setIsAnimating } = useNavigationStore();
-  const { user, levelHistory, socialLevelHistory } = stats;
+  const { user } = stats;
   const [showSocialLevel, setShowSocialLevel] = useState(false);
   const [isToggleAnimating, setIsToggleAnimating] = useState(false);
   const [showingPrivateMessage, setShowingPrivateMessage] = useState<string | null>(null);
@@ -85,22 +85,18 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
     }
   };
 
-  const baseHistory = showSocialLevel ? (socialLevelHistory || []) : levelHistory;
-  
   const allMergedHistory = useMemo(() => {
-    const merged = [...baseHistory, ...levelChangeEvents]
+    if (showSocialLevel) {
+      return [];
+    }
+    
+    return levelChangeEvents
       .map(item => ({
         ...item,
         createdAt: new Date(item.createdAt).toISOString(),
       }))
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    
-    const unique = merged.filter((item, index, self) => 
-      index === self.findIndex(t => t.id === item.id)
-    );
-    
-    return unique;
-  }, [baseHistory, levelChangeEvents]);
+  }, [showSocialLevel, levelChangeEvents]);
 
   const currentHistory = useMemo(() => {
     if (activeTab === 'all') {

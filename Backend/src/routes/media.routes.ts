@@ -4,6 +4,7 @@ import { validate } from '../middleware/validate';
 import { body } from 'express-validator';
 import { 
   uploadAvatar, 
+  uploadGameAvatar,
   uploadChatImage, 
   uploadChatDocument, 
   uploadGameMedia, 
@@ -20,6 +21,15 @@ router.post(
   '/upload/avatar',
   uploadAvatarFiles,
   uploadAvatar
+);
+
+router.post(
+  '/upload/game/avatar',
+  uploadAvatarFiles,
+  validate([
+    body('gameId').notEmpty().withMessage('Game ID is required')
+  ]),
+  uploadGameAvatar
 );
 
 router.post(

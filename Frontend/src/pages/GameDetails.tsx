@@ -14,7 +14,9 @@ import {
   GameParticipants,
   GameSettings,
   GameSetupModal,
-  MultipleCourtsSelector
+  MultipleCourtsSelector,
+  LeagueScheduleTab,
+  LeagueStandingsTab
 } from '@/components';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { DeleteGameConfirmationModal } from '@/components/DeleteGameConfirmationModal';
@@ -53,6 +55,7 @@ export const GameDetailsContent = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
   const [isEditMaxParticipantsModalOpen, setIsEditMaxParticipantsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'standings'>('general');
   const [editFormData, setEditFormData] = useState({
     clubId: '',
     courtId: '',
@@ -559,104 +562,163 @@ export const GameDetailsContent = () => {
     );
   }
 
+  const isLeagueSeason = game.entityType === 'LEAGUE_SEASON';
+
+  const renderTabContent = () => {
+    if (!isLeagueSeason || activeTab === 'general') {
+      return (
+        <>
+          <GameInfo
+            game={game}
+            isOwner={isOwner}
+            isGuest={isGuest}
+            courts={courts}
+            onToggleFavorite={handleToggleFavorite}
+            onEditCourt={() => setIsCourtModalOpen(true)}
+          />
+
+          <PhotosSection game={game} />
+
+          <GameResults
+            game={game}
+            user={user}
+            canEnterResults={canEnterResults()}
+            onEnterResults={handleEnterResults}
+          />
+
+          <GameParticipants
+            game={game}
+            myInvites={myInvites}
+            gameInvites={gameInvites}
+            joinQueues={game.joinQueues}
+            isParticipant={isParticipant}
+            isGuest={isGuest}
+            isFull={isFull}
+            isOwner={isOwner}
+            userId={user?.id}
+            isInJoinQueue={isInJoinQueue}
+            canInvitePlayers={canInvitePlayers}
+            canManageJoinQueue={canManageJoinQueue}
+            canViewSettings={canViewSettings}
+            onJoin={handleJoin}
+            onAddToGame={handleAddToGame}
+            onLeave={handleLeave}
+            onAcceptInvite={handleAcceptInvite}
+            onDeclineInvite={handleDeclineInvite}
+            onCancelInvite={handleCancelInvite}
+            onAcceptJoinQueue={handleAcceptJoinQueue}
+            onDeclineJoinQueue={handleDeclineJoinQueue}
+            onShowPlayerList={() => setShowPlayerList(true)}
+            onShowManageUsers={() => setShowManageUsers(true)}
+            onEditMaxParticipants={() => setIsEditMaxParticipantsModalOpen(true)}
+          />
+
+          {canViewSettings && (
+            <GameSettings
+              game={game}
+              clubs={clubs}
+              courts={courts}
+              isEditMode={isEditMode}
+              isClosingEditMode={isClosingEditMode}
+              canEdit={canEdit}
+              editFormData={editFormData}
+              onEditModeToggle={handleEditModeToggle}
+              onSaveChanges={handleSaveChanges}
+              onFormDataChange={handleFormDataChange}
+              onOpenClubModal={() => setIsClubModalOpen(true)}
+              onOpenCourtModal={() => setIsCourtModalOpen(true)}
+              onGameUpdate={(updatedGame) => setGame(updatedGame)}
+            />
+          )}
+
+          {canViewSettings && (
+            <GameSetup
+              onOpenSetup={() => setIsGameSetupModalOpen(true)}
+              canEdit={canEdit}
+            />
+          )}
+
+          {game.maxParticipants > 4 && (
+            <MultipleCourtsSelector
+              gameId={game.id}
+              courts={courts}
+              selectedClub={game.clubId || ''}
+              entityType={game.entityType}
+              isEditing={canEdit}
+              initialGameCourts={game.gameCourts || []}
+              onSave={async () => {
+                if (id) {
+                  const response = await gamesApi.getById(id);
+                  setGame(response.data);
+                }
+              }}
+            />
+          )}
+
+          {game.hasFixedTeams && (
+            <FixedTeamsManagement
+              key={`fixed-teams-${game.id}`}
+              game={game}
+              onGameUpdate={(updatedGame) => {
+                setGame(prevGame => prevGame ? { ...prevGame, ...updatedGame } : updatedGame);
+              }}
+            />
+          )}
+        </>
+      );
+    }
+
+    if (activeTab === 'schedule') {
+      return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} />;
+    }
+
+    if (activeTab === 'standings') {
+      return <LeagueStandingsTab leagueSeasonId={game.id} hasFixedTeams={game.hasFixedTeams || false} />;
+    }
+
+    return null;
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-4">
-      <GameInfo
-        game={game}
-        isOwner={isOwner}
-        isGuest={isGuest}
-        courts={courts}
-        onToggleFavorite={handleToggleFavorite}
-        onEditCourt={() => setIsCourtModalOpen(true)}
-      />
-
-      <PhotosSection game={game} />
-
-      <GameResults
-        game={game}
-        user={user}
-        canEnterResults={canEnterResults()}
-        onEnterResults={handleEnterResults}
-      />
-
-      <GameParticipants
-        game={game}
-        myInvites={myInvites}
-        gameInvites={gameInvites}
-        joinQueues={game.joinQueues}
-        isParticipant={isParticipant}
-        isGuest={isGuest}
-        isFull={isFull}
-        isOwner={isOwner}
-        userId={user?.id}
-        isInJoinQueue={isInJoinQueue}
-        canInvitePlayers={canInvitePlayers}
-        canManageJoinQueue={canManageJoinQueue}
-        canViewSettings={canViewSettings}
-        onJoin={handleJoin}
-        onAddToGame={handleAddToGame}
-        onLeave={handleLeave}
-        onAcceptInvite={handleAcceptInvite}
-        onDeclineInvite={handleDeclineInvite}
-        onCancelInvite={handleCancelInvite}
-        onAcceptJoinQueue={handleAcceptJoinQueue}
-        onDeclineJoinQueue={handleDeclineJoinQueue}
-        onShowPlayerList={() => setShowPlayerList(true)}
-        onShowManageUsers={() => setShowManageUsers(true)}
-        onEditMaxParticipants={() => setIsEditMaxParticipantsModalOpen(true)}
-      />
-
-      {canViewSettings && (
-        <GameSettings
-          game={game}
-          clubs={clubs}
-          courts={courts}
-          isEditMode={isEditMode}
-          isClosingEditMode={isClosingEditMode}
-          canEdit={canEdit}
-          editFormData={editFormData}
-          onEditModeToggle={handleEditModeToggle}
-          onSaveChanges={handleSaveChanges}
-          onFormDataChange={handleFormDataChange}
-          onOpenClubModal={() => setIsClubModalOpen(true)}
-          onOpenCourtModal={() => setIsCourtModalOpen(true)}
-        />
+      {isLeagueSeason && (
+        <Card>
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setActiveTab('general')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'general'
+                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              {t('gameDetails.general')}
+            </button>
+            <button
+              onClick={() => setActiveTab('schedule')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'schedule'
+                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              {t('gameDetails.schedule')}
+            </button>
+            <button
+              onClick={() => setActiveTab('standings')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'standings'
+                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              {t('gameDetails.standings')}
+            </button>
+          </div>
+        </Card>
       )}
 
-      {canViewSettings && (
-        <GameSetup
-          onOpenSetup={() => setIsGameSetupModalOpen(true)}
-          canEdit={canEdit}
-        />
-      )}
-
-      {game.maxParticipants > 4 && (
-        <MultipleCourtsSelector
-          gameId={game.id}
-          courts={courts}
-          selectedClub={game.clubId || ''}
-          entityType={game.entityType}
-          isEditing={canEdit}
-          initialGameCourts={game.gameCourts || []}
-          onSave={async () => {
-            if (id) {
-              const response = await gamesApi.getById(id);
-              setGame(response.data);
-            }
-          }}
-        />
-      )}
-
-      {game.hasFixedTeams && (
-        <FixedTeamsManagement
-          key={`fixed-teams-${game.id}`}
-          game={game}
-          onGameUpdate={(updatedGame) => {
-            // Merge the updated game data instead of replacing entirely
-            setGame(prevGame => prevGame ? { ...prevGame, ...updatedGame } : updatedGame);
-          }}
-        />
-      )}
+      {renderTabContent()}
 
       {showPlayerList && id && (
         <PlayerListModal

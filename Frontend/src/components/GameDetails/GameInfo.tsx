@@ -5,6 +5,9 @@ import { formatDate } from '@/utils/dateFormat';
 import { GameStatusIcon } from '@/components';
 import { ShareModal } from '@/components/ShareModal';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { GameAvatar } from '@/components/GameAvatar';
+import { UrlConstructor } from '@/utils/urlConstructor';
+import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import {
   Calendar,
   MapPin,
@@ -22,6 +25,7 @@ import {
   Swords,
   Trophy,
   GraduationCap,
+  Eye,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -47,6 +51,7 @@ export const GameInfo = ({
   const { t } = useTranslation();
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState({ url: '', title: '', text: '' });
+  const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
 
   const ownerParticipant = game.participants?.find(p => p.role === 'OWNER');
   const owner = ownerParticipant?.user;
@@ -167,6 +172,18 @@ export const GameInfo = ({
           {getEntityIcon()}
         </div>
       )}
+      {game.avatar && (
+        <div className="mb-4 flex justify-center">
+          <div className="relative">
+            <button
+              onClick={() => setShowFullscreenAvatar(true)}
+              className="relative transition-all duration-200 hover:opacity-90 cursor-pointer"
+            >
+              <GameAvatar avatar={game.avatar} extralarge={true} alt={game.name || t('gameDetails.gameAvatar')} />
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-start justify-between mb-4">
         <div className="pr-20 flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -204,7 +221,7 @@ export const GameInfo = ({
             {game.entityType !== 'GAME' && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
                 {game.entityType === 'TOURNAMENT' && <Swords size={14} />}
-                {game.entityType === 'LEAGUE' && <Trophy size={14} />}
+                {(game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && <Trophy size={14} />}
                 {game.entityType === 'TRAINING' && <GraduationCap size={14} />}
                 {game.entityType === 'BAR' && <Beer size={14} />}
                 {t(`games.entityTypes.${game.entityType}`)}
@@ -242,14 +259,29 @@ export const GameInfo = ({
               </span>
             )}
           </div>
-          {game.name && game.name.trim() !== '' && game.gameType !== 'CLASSIC' && (
-            <p className="text-gray-700 dark:text-gray-300 mb-2">
-              {game.name}
-            </p>
+          {game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name ? (
+            <>
+              {game.name && game.name.trim() !== '' && (
+                <p className="text-gray-700 dark:text-gray-300 mb-2">
+                  {game.name}
+                </p>
+              )}
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                {game.leagueSeason.league.name}
+              </h1>
+            </>
+          ) : (
+            <>
+              {game.name && game.name.trim() !== '' && game.gameType !== 'CLASSIC' && (
+                <p className="text-gray-700 dark:text-gray-300 mb-2">
+                  {game.name}
+                </p>
+              )}
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                {game.gameType === 'CLASSIC' ? game.name : (game.name || t(`games.gameTypes.${game.gameType}`))}
+              </h1>
+            </>
           )}
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {game.gameType === 'CLASSIC' ? game.name : (game.name || t(`games.gameTypes.${game.gameType}`))}
-          </h1>
         </div>
       </div>
 
@@ -258,15 +290,17 @@ export const GameInfo = ({
           <Calendar size={20} className="text-primary-600 dark:text-primary-400" />
           <span>{formatDate(game.startTime, 'PPP')}</span>
         </div>
-        <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-          <Clock size={20} className="text-primary-600 dark:text-primary-400" />
-          <span>
-            {game.entityType === 'BAR' 
-              ? formatDate(game.startTime, 'p')
-              : `${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`
-            }
-          </span>
-        </div>
+        {game.entityType !== 'LEAGUE_SEASON' && (
+          <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+            <Clock size={20} className="text-primary-600 dark:text-primary-400" />
+            <span>
+              {game.entityType === 'BAR' 
+                ? formatDate(game.startTime, 'p')
+                : `${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`
+              }
+            </span>
+          </div>
+        )}
         {(game.court?.club || game.club) && (
           <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
             <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
@@ -348,6 +382,12 @@ export const GameInfo = ({
         shareUrl={shareData.url}
         shareText={shareData.text}
       />
+      {showFullscreenAvatar && game.originalAvatar && (
+        <FullscreenImageViewer
+          imageUrl={UrlConstructor.constructImageUrl(game.originalAvatar)}
+          onClose={() => setShowFullscreenAvatar(false)}
+        />
+      )}
     </Card>
   );
 };

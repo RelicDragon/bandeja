@@ -31,11 +31,30 @@ export class GameUpdateService {
     const maxParticipants = data.maxParticipants !== undefined ? data.maxParticipants : game.maxParticipants;
     const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams !== undefined ? data.hasFixedTeams : game.hasFixedTeams || false);
 
-    const updateData = { ...data };
+    const updateData: any = { ...data };
     if (maxParticipants === 2) {
       updateData.hasFixedTeams = false;
     } else if (data.hasFixedTeams !== undefined) {
       updateData.hasFixedTeams = hasFixedTeams;
+    }
+
+    // Handle avatar deletion
+    if (data.avatar === null || data.originalAvatar === null) {
+      const currentGame = await prisma.game.findUnique({
+        where: { id },
+        select: { avatar: true, originalAvatar: true }
+      });
+
+      if (data.avatar === null && currentGame?.avatar) {
+        const ImageProcessor = (await import('../../utils/imageProcessor')).ImageProcessor;
+        await ImageProcessor.deleteFile(currentGame.avatar);
+        updateData.avatar = null;
+      }
+      if (data.originalAvatar === null && currentGame?.originalAvatar) {
+        const ImageProcessor = (await import('../../utils/imageProcessor')).ImageProcessor;
+        await ImageProcessor.deleteFile(currentGame.originalAvatar);
+        updateData.originalAvatar = null;
+      }
     }
 
     if (data.genderTeams !== undefined) {
@@ -50,8 +69,50 @@ export class GameUpdateService {
 
     const currentGame = await prisma.game.findUnique({
       where: { id },
-      select: { startTime: true, endTime: true, resultsStatus: true },
+      select: { startTime: true, endTime: true, resultsStatus: true, clubId: true, courtId: true },
     });
+
+    if (data.clubId !== undefined || data.courtId !== undefined) {
+      let cityId: string | null = null;
+
+      if (data.clubId !== undefined) {
+        if (data.clubId) {
+          const club = await prisma.club.findUnique({
+            where: { id: data.clubId },
+            select: { cityId: true }
+          });
+
+          if (!club) {
+            throw new ApiError(404, 'Club not found');
+          }
+
+          cityId = club.cityId;
+        } else {
+          cityId = null;
+        }
+      } else if (data.courtId !== undefined) {
+        if (data.courtId) {
+          const court = await prisma.court.findUnique({
+            where: { id: data.courtId },
+            select: { 
+              club: {
+                select: { cityId: true }
+              }
+            }
+          });
+
+          if (!court) {
+            throw new ApiError(404, 'Court not found');
+          }
+
+          cityId = court.club.cityId;
+        } else {
+          cityId = null;
+        }
+      }
+
+      updateData.cityId = cityId;
+    }
 
     if (currentGame && (data.startTime !== undefined || data.endTime !== undefined)) {
       const newStartTime = data.startTime ? new Date(data.startTime) : currentGame.startTime;

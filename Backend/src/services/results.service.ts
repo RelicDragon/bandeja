@@ -207,6 +207,12 @@ export async function deleteGameResults(gameId: string, requestUserId: string, b
       where: { gameId },
     });
 
+    await tx.levelChangeEvent.deleteMany({
+      where: {
+        gameId: gameId,
+      },
+    });
+
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
       select: { startTime: true, endTime: true },
@@ -297,6 +303,12 @@ export async function editGameResults(gameId: string, requestUserId: string, bas
         round: {
           gameId,
         },
+      },
+    });
+
+    await tx.levelChangeEvent.deleteMany({
+      where: {
+        gameId: gameId,
       },
     });
 

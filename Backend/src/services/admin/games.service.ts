@@ -9,11 +9,7 @@ export class AdminGamesService {
   static async getAllGames(cityId?: string) {
     const games = await prisma.game.findMany({
       where: cityId ? {
-        court: {
-          club: {
-            cityId: cityId,
-          },
-        },
+        cityId: cityId,
       } : undefined,
       include: {
         court: {

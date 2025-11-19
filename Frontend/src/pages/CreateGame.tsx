@@ -2,11 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
-import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameSetupSection, GameSetupModal, MultipleCourtsSelector } from '@/components';
+import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameSetupSection, GameSetupModal, MultipleCourtsSelector, AvatarUpload } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
 import { usersApi } from '@/api/users';
 import { gameCourtsApi } from '@/api/gameCourts';
+import { mediaApi } from '@/api/media';
 import { Club, Court, EntityType, GameType } from '@/types';
 import { InvitablePlayer } from '@/api/users';
 import { addHours } from 'date-fns';
@@ -85,6 +86,8 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
     pointsPerTie?: number;
   }>({});
   const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>([]);
+  const [pendingAvatarFiles, setPendingAvatarFiles] = useState<{ avatar: File; original: File } | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | undefined>(undefined);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const clubSectionRef = useRef<HTMLDivElement>(null);
   const timeSectionRef = useRef<HTMLDivElement>(null);
@@ -284,6 +287,19 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
     }));
   }, [gameType]);
 
+  useEffect(() => {
+    if (pendingAvatarFiles) {
+      const url = URL.createObjectURL(pendingAvatarFiles.avatar);
+      setAvatarPreviewUrl(url);
+      
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setAvatarPreviewUrl(undefined);
+    }
+  }, [pendingAvatarFiles]);
+
   const isSlotHighlighted = (time: string) => {
     if (!selectedTime) return false;
     const requiredSlots = getTimeSlotsForDuration(selectedTime, duration);
@@ -383,6 +399,14 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
         ...gameSetup,
       });
 
+      if (pendingAvatarFiles && gameResponse.data.id) {
+        try {
+          await mediaApi.uploadGameAvatar(gameResponse.data.id, pendingAvatarFiles.avatar, pendingAvatarFiles.original);
+        } catch (avatarError) {
+          console.error('Failed to upload game avatar:', avatarError);
+        }
+      }
+
       if (invitedPlayerIds.length > 0 && gameResponse.data.id) {
         try {
           await invitesApi.sendMultiple({
@@ -455,6 +479,13 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
 
   const hasGameSetup = Object.keys(gameSetup).length > 0;
 
+  const handleAvatarUpload = async (avatarFile: File, originalFile: File) => {
+    setPendingAvatarFiles({ avatar: avatarFile, original: originalFile });
+  };
+
+  const handleAvatarRemove = async () => {
+    setPendingAvatarFiles(null);
+  };
 
   return (
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
@@ -462,6 +493,15 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-6">
+        <div className="flex justify-center">
+          <AvatarUpload
+            currentAvatar={avatarPreviewUrl}
+            onUpload={handleAvatarUpload}
+            onRemove={handleAvatarRemove}
+            disabled={loading}
+            isGameAvatar={true}
+          />
+        </div>
 
         <div ref={clubSectionRef}>
           <LocationSection

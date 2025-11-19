@@ -107,6 +107,16 @@ const getGameInclude = () => ({
     },
     orderBy: { order: 'asc' },
   },
+  leagueSeason: {
+    include: {
+      league: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  },
 });
 
 export class GameReadService {
@@ -118,6 +128,22 @@ export class GameReadService {
 
     if (!game) {
       throw new ApiError(404, 'Game not found');
+    }
+
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { currentCityId: true, isAdmin: true }
+      });
+
+      if (user && !user.isAdmin) {
+        if (game.cityId === null) {
+          throw new ApiError(403, 'Access denied: System games are not accessible');
+        }
+        if (user.currentCityId && game.cityId !== user.currentCityId) {
+          throw new ApiError(403, 'Access denied: Game is not in your city');
+        }
+      }
     }
 
     let isClubFavorite = false;
@@ -143,7 +169,7 @@ export class GameReadService {
     };
   }
 
-  static async getGames(filters: any) {
+  static async getGames(filters: any, userId?: string, userCityId?: string) {
     const where: any = {};
 
     if (filters.startDate) {
@@ -178,21 +204,17 @@ export class GameReadService {
       where.status = filters.status;
     }
 
-    if (filters.cityId) {
-      where.OR = [
-        {
-          court: {
-            club: {
-              cityId: filters.cityId,
-            },
-          },
-        },
-        {
-          club: {
-            cityId: filters.cityId,
-          },
-        },
-      ];
+    const cityIdToFilter = filters.cityId || userCityId;
+    if (cityIdToFilter) {
+      where.cityId = cityIdToFilter;
+    } else if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { currentCityId: true, isAdmin: true }
+      });
+      if (user && user.currentCityId && !user.isAdmin) {
+        where.cityId = user.currentCityId;
+      }
     }
 
     const limit = filters.limit ? parseInt(filters.limit) : undefined;
@@ -238,6 +260,16 @@ export class GameReadService {
             players: {
               include: {
                 user: true,
+              },
+            },
+          },
+        },
+        leagueSeason: {
+          include: {
+            league: {
+              select: {
+                id: true,
+                name: true,
               },
             },
           },

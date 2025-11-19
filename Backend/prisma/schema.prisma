@@ -70,6 +70,8 @@ model User {
   transactionsFrom        Transaction[]        @relation("TransactionFromUser")
   transactionsTo          Transaction[]        @relation("TransactionToUser")
   levelChangeEvents       LevelChangeEvent[]
+  leagueParticipants      LeagueParticipant[]
+  leagueTeamPlayers       LeagueTeamPlayer[]
 
   @@index([phone])
   @@index([telegramId])
@@ -98,6 +100,8 @@ model City {
   updatedAt DateTime @updatedAt
   clubs     Club[]
   users     User[]   @relation("UserCurrentCity")
+  leagues   League[]
+  games     Game[]
 
   @@index([isActive])
 }
@@ -125,6 +129,7 @@ model Club {
   courts      Court[]
   games       Game[]
   favoritedBy UserFavoriteClub[]
+  leagues     League[]
 
   @@index([cityId])
   @@index([isActive])
@@ -156,8 +161,11 @@ model Game {
   gameType        GameType
   name            String?
   description     String?
+  avatar          String?
+  originalAvatar  String?
   clubId          String?
   courtId         String?
+  cityId          String
   startTime       DateTime
   endTime         DateTime
   maxParticipants Int               @default(4)
@@ -192,13 +200,16 @@ model Game {
   mediaUrls       String[]
   photosCount     Int              @default(0)
   parentId        String?
+  leagueRoundId   String?
   metadata        Json?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   club            Club?             @relation(fields: [clubId], references: [id])
   court           Court?            @relation(fields: [courtId], references: [id])
+  city            City              @relation(fields: [cityId], references: [id], onDelete: Cascade)
   parent          Game?             @relation("GameHierarchy", fields: [parentId], references: [id])
   children        Game[]            @relation("GameHierarchy")
+  leagueRound     LeagueRound?      @relation(fields: [leagueRoundId], references: [id], onDelete: SetNull)
   participants    GameParticipant[]
   invites         Invite[]
   joinQueues      JoinQueue[]
@@ -207,13 +218,16 @@ model Game {
   fixedTeams      GameTeam[]
   gameCourts      GameCourt[]
   levelChangeEvents LevelChangeEvent[]
+  leagueSeason               LeagueSeason?  @relation("GameLeagueSeason")
 
   @@index([clubId])
   @@index([courtId])
+  @@index([cityId])
   @@index([startTime])
   @@index([status])
   @@index([entityType])
   @@index([parentId])
+  @@index([leagueRoundId])
   @@index([affectsRating])
   @@index([resultsStatus])
   @@index([hasFixedTeams])
@@ -588,6 +602,7 @@ enum EntityType {
   GAME
   TOURNAMENT
   LEAGUE
+  LEAGUE_SEASON
   BAR
   TRAINING
 }
@@ -832,4 +847,127 @@ enum LevelChangeEventType {
   LUNDA
   SET
   OTHER
+}
+
+model League {
+  id            String            @id @default(cuid())
+  name          String
+  description   String?
+  hasFixedTeams Boolean           @default(false)
+  cityId        String
+  clubId        String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  city          City              @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  club          Club?             @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  seasons       LeagueSeason[]
+  participants  LeagueParticipant[]
+
+  @@index([cityId])
+  @@index([clubId])
+}
+
+model LeagueSeason {
+  id                String            @id
+  leagueId          String
+  orderIndex        Int
+  movePlayersRule   Json?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  league            League            @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  game              Game?             @relation("GameLeagueSeason", fields: [id], references: [id], onDelete: Cascade)
+  groups            LeagueGroup[]
+  participants      LeagueParticipant[]
+  rounds            LeagueRound[]
+
+  @@index([leagueId])
+  @@index([orderIndex])
+}
+
+model LeagueGroup {
+  id              String            @id @default(cuid())
+  leagueSeasonId  String
+  name            String
+  betterGroupId   String?
+  worseGroupId    String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  leagueSeason    LeagueSeason      @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  betterGroup     LeagueGroup?      @relation("LeagueGroupBetter", fields: [betterGroupId], references: [id], onDelete: SetNull)
+  worseGroup      LeagueGroup?      @relation("LeagueGroupWorse", fields: [worseGroupId], references: [id], onDelete: SetNull)
+  betterGroups    LeagueGroup[]     @relation("LeagueGroupBetter")
+  worseGroups     LeagueGroup[]     @relation("LeagueGroupWorse")
+  participants    LeagueParticipant[]
+
+  @@index([leagueSeasonId])
+}
+
+model LeagueTeam {
+  id         String            @id @default(cuid())
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  players    LeagueTeamPlayer[]
+  participants LeagueParticipant[]
+
+  @@index([id])
+}
+
+model LeagueTeamPlayer {
+  id          String      @id @default(cuid())
+  leagueTeamId String
+  userId      String
+  createdAt   DateTime    @default(now())
+  leagueTeam  LeagueTeam  @relation(fields: [leagueTeamId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([leagueTeamId, userId])
+  @@index([leagueTeamId])
+  @@index([userId])
+}
+
+model LeagueParticipant {
+  id                    String                @id @default(cuid())
+  leagueId              String
+  leagueSeasonId        String
+  participantType       LeagueParticipantType
+  userId                String?
+  leagueTeamId          String?
+  currentGroupId        String?
+  points                Int                   @default(0)
+  wins                  Int                   @default(0)
+  ties                  Int                   @default(0)
+  losses                Int                   @default(0)
+  scoreDelta            Int                   @default(0)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  league                League                @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  leagueSeason          LeagueSeason          @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  user                  User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leagueTeam            LeagueTeam?           @relation(fields: [leagueTeamId], references: [id], onDelete: Cascade)
+  currentGroup          LeagueGroup?          @relation(fields: [currentGroupId], references: [id], onDelete: SetNull)
+
+  @@index([leagueId])
+  @@index([leagueSeasonId])
+  @@index([userId])
+  @@index([leagueTeamId])
+  @@index([currentGroupId])
+  @@index([participantType])
+}
+
+model LeagueRound {
+  id            String   @id @default(cuid())
+  leagueSeasonId String
+  orderIndex    Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  leagueSeason  LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  games         Game[]
+
+  @@index([leagueSeasonId])
+  @@index([orderIndex])
+}
+
+enum LeagueParticipantType {
+  USER
+  TEAM
 }

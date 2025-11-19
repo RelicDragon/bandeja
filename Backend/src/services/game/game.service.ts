@@ -31,8 +31,8 @@ export class GameService {
     return GameReadService.getGameById(id, userId);
   }
 
-  static async getGames(filters: any) {
-    return GameReadService.getGames(filters);
+  static async getGames(filters: any, userId?: string, userCityId?: string) {
+    return GameReadService.getGames(filters, userId, userCityId);
   }
 
   static async updateGame(id: string, data: any, userId: string) {

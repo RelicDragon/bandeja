@@ -7,6 +7,7 @@ import { SelectCity } from './pages/SelectCity';
 import { CompleteProfile } from './pages/CompleteProfile';
 import { MainPage } from './pages/MainPage';
 import { CreateGameWrapper } from './pages/CreateGameWrapper';
+import { CreateLeague } from './pages/CreateLeague';
 // import { Rating } from './pages/Rating';
 import { GameChat } from './pages/GameChat';
 import { ChatList } from './pages/ChatList';
@@ -233,6 +234,18 @@ function App() {
                 <Navigate to="/" replace />
               ) : (
                 <CreateGameWrapper />
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create-league"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <CreateLeague />
               )}
             </ProtectedRoute>
           }

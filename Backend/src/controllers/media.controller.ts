@@ -127,6 +127,80 @@ export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response)
   });
 });
 
+export const uploadGameAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.files || !(req.files as any).avatar || !(req.files as any).original) {
+    throw new ApiError(400, 'Both avatar and original image files are required');
+  }
+
+  const userId = req.userId;
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const { gameId } = req.body;
+  if (!gameId) {
+    throw new ApiError(400, 'Game ID is required');
+  }
+
+  // Verify user has permission to update game
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: {
+      id: true,
+      avatar: true,
+      originalAvatar: true,
+      participants: {
+        where: {
+          userId: userId,
+          role: { in: ['OWNER', 'ADMIN'] }
+        }
+      }
+    }
+  });
+
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+
+  if (game.participants.length === 0) {
+    throw new ApiError(403, 'Only owners and admins can update game avatar');
+  }
+
+  // Delete old avatars if exist
+  if (game.avatar) {
+    await ImageProcessor.deleteFile(game.avatar);
+  }
+  if (game.originalAvatar) {
+    await ImageProcessor.deleteFile(game.originalAvatar);
+  }
+
+  const avatarFile = Array.isArray((req.files as any).avatar) ? (req.files as any).avatar[0] : (req.files as any).avatar;
+  const originalFile = Array.isArray((req.files as any).original) ? (req.files as any).original[0] : (req.files as any).original;
+
+  // Process avatar using ImageProcessor
+  const result = await ImageProcessor.processAvatar(originalFile.buffer, originalFile.originalname);
+
+  // Update game avatars in database
+  await prisma.game.update({
+    where: { id: gameId },
+    data: { 
+      avatar: result.avatarPath,
+      originalAvatar: result.originalPath
+    }
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Game avatar uploaded successfully',
+    data: {
+      avatarUrl: result.avatarPath,
+      originalAvatarUrl: result.originalPath,
+      avatarSize: result.avatarSize,
+      originalSize: result.originalSize
+    }
+  });
+});
+
 export const uploadChatImage = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.file) {
     throw new ApiError(400, 'No image file provided');
