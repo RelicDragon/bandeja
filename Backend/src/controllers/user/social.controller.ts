@@ -22,7 +22,9 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
   if (gameId) {
     const game = await prisma.game.findUnique({
       where: { id: gameId as string },
-      include: {
+      select: {
+        id: true,
+        cityId: true,
         participants: {
           select: {
             userId: true,
@@ -39,12 +41,14 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
     if (!game) {
       throw new ApiError(404, 'Game not found');
     }
-    if (game.club?.cityId !== cityId) {
+    const gameCityId = game.club?.cityId ?? game.cityId;
+
+    if (gameCityId !== cityId) {
       throw new ApiError(400, 'Game is not in your city');
     }
 
     participantIds = game.participants.map((p: { userId: string }) => p.userId);
-    cityId = game.club?.cityId || currentUser?.currentCityId;
+    cityId = gameCityId || currentUser?.currentCityId;
   }
 
   const interactions = await prisma.userInteraction.findMany({

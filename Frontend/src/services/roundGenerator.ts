@@ -61,20 +61,39 @@ export class RoundGenerator {
     const players = playingParticipants.map(p => p.user) as User[];
     
     if (numPlayers === 4) {
-      const matchSetups = createTwoOnTwoMatches(players);
-      let matchIndex = 0;
-      for (const setup of matchSetups) {
-        const matchId = this.getNextMatchId(matchIndex);
-        this.opCreator.registerMatchIndex(matchId, matchIndex);
-        matchIndex++;
+      if (game.hasFixedTeams && game.fixedTeams && game.fixedTeams.length >= 2) {
+        const team1 = game.fixedTeams.find(t => t.teamNumber === 1);
+        const team2 = game.fixedTeams.find(t => t.teamNumber === 2);
         
-        ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
-        
-        for (const playerId of setup.teamA) {
-          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', playerId, roundId));
+        if (team1 && team2 && team1.players.length > 0 && team2.players.length > 0) {
+          const matchId = this.getNextMatchId(0);
+          this.opCreator.registerMatchIndex(matchId, 0);
+          
+          ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
+          
+          for (const player of team1.players) {
+            ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', player.userId, roundId));
+          }
+          for (const player of team2.players) {
+            ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', player.userId, roundId));
+          }
         }
-        for (const playerId of setup.teamB) {
-          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', playerId, roundId));
+      } else {
+        const matchSetups = createTwoOnTwoMatches(players);
+        let matchIndex = 0;
+        for (const setup of matchSetups) {
+          const matchId = this.getNextMatchId(matchIndex);
+          this.opCreator.registerMatchIndex(matchId, matchIndex);
+          matchIndex++;
+          
+          ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
+          
+          for (const playerId of setup.teamA) {
+            ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', playerId, roundId));
+          }
+          for (const playerId of setup.teamB) {
+            ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', playerId, roundId));
+          }
         }
       }
     } else if (numPlayers === 2) {

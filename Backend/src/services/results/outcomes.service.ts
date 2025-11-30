@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import { WinnerOfGame, ParticipantLevelUpMode, Prisma } from '@prisma/client';
 import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes, calculateBySetsWonOutcomes, calculateCombinedOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
+import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
   const prismaClient = tx || prisma;
@@ -148,6 +149,9 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
     return;
   }
 
+  const { LeagueGameResultsService } = await import('../league/gameResults.service');
+  await LeagueGameResultsService.unsyncGameResults(gameId, tx);
+
   for (const outcome of game.outcomes) {
     await tx.user.update({
       where: { id: outcome.userId },
@@ -187,7 +191,7 @@ export async function applyGameOutcomes(
     levelChange: number;
   }>>,
   tx: Prisma.TransactionClient
-) {
+): Promise<{ wasEdited: boolean }> {
   const game = await tx.game.findUnique({
     where: { id: gameId },
     include: {
@@ -318,14 +322,15 @@ export async function applyGameOutcomes(
         }
       }
     }
+
+    const { LeagueGameResultsService } = await import('../league/gameResults.service');
+    await LeagueGameResultsService.syncGameResults(gameId, tx);
     
-    setImmediate(async () => {
-      const telegramResultsSenderService = await import('../telegram/resultsSender.service');
-      telegramResultsSenderService.default.sendGameFinished(gameId).catch((error: any) => {
-        console.error(`Failed to send game finished notifications for game ${gameId}:`, error);
-      });
-    });
+    const isEdited = previousResultsStatus === 'FINAL' || previousResultsStatus === 'IN_PROGRESS';
+    return { wasEdited: isEdited };
   }
+  
+  return { wasEdited: false };
 }
 
 export async function recalculateGameOutcomes(gameId: string, requestUserId: string) {
@@ -342,18 +347,18 @@ export async function recalculateGameOutcomes(gameId: string, requestUserId: str
     throw new ApiError(404, 'Game not found');
   }
 
-  const userParticipant = game.participants.find(
-    (p) => p.userId === requestUserId && (p.role === 'OWNER' || p.role === 'ADMIN')
-  );
+  const hasPermission = await hasParentGamePermission(gameId, requestUserId);
 
-  if (!userParticipant && !game.resultsByAnyone) {
+  if (!hasPermission && !game.resultsByAnyone) {
     console.log(`[RECALCULATE GAME OUTCOMES] User ${requestUserId} not authorized to recalculate outcomes for game ${gameId}`);
     throw new ApiError(403, 'Only game owners/admins can recalculate outcomes');
   }
 
   console.log(`[RECALCULATE GAME OUTCOMES] Game ${gameId} configuration: winnerOfMatch=${game.winnerOfMatch}, winnerOfGame=${game.winnerOfGame}`);
 
-  return await prisma.$transaction(async (tx) => {
+  let wasEdited = false;
+  
+  const result = await prisma.$transaction(async (tx) => {
     console.log(`[RECALCULATE GAME OUTCOMES] Step 1: Undoing existing outcomes`);
     await undoGameOutcomes(gameId, tx);
 
@@ -365,12 +370,14 @@ export async function recalculateGameOutcomes(gameId: string, requestUserId: str
     const outcomeData = await generateGameOutcomes(gameId, tx);
 
     console.log(`[RECALCULATE GAME OUTCOMES] Step 4: Applying outcomes (${outcomeData.finalOutcomes.length} final outcomes, ${Object.keys(outcomeData.roundOutcomes).length} rounds)`);
-    await applyGameOutcomes(
+    const applyResult = await applyGameOutcomes(
       gameId,
       outcomeData.finalOutcomes,
       outcomeData.roundOutcomes,
       tx
     );
+    
+    wasEdited = applyResult.wasEdited;
 
     return await tx.game.findUnique({
       where: { id: gameId },
@@ -435,5 +442,18 @@ export async function recalculateGameOutcomes(gameId: string, requestUserId: str
       },
     });
   });
+  
+  console.log(`[RECALCULATE GAME OUTCOMES] Transaction completed, wasEdited: ${wasEdited}`);
+  console.log(`[TELEGRAM NOTIFICATION] Preparing to send notifications for game ${gameId}`);
+  
+  setImmediate(async () => {
+    const telegramResultsSenderService = await import('../telegram/resultsSender.service');
+    console.log(`[TELEGRAM NOTIFICATION] Calling sendGameFinished for game ${gameId}, isEdited: ${wasEdited}`);
+    telegramResultsSenderService.default.sendGameFinished(gameId, wasEdited).catch((error: any) => {
+      console.error(`Failed to send game finished notifications for game ${gameId}:`, error);
+    });
+  });
+  
+  return result;
 }
 

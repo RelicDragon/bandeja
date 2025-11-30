@@ -115,6 +115,56 @@ const getGameInclude = () => ({
           name: true,
         },
       },
+      game: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
+          originalAvatar: true,
+        },
+      },
+    },
+  },
+  leagueGroup: {
+    select: {
+      id: true,
+      name: true,
+      color: true,
+    },
+  },
+  leagueRound: {
+    select: {
+      id: true,
+      orderIndex: true,
+    },
+  },
+  parent: {
+    include: {
+      participants: {
+        include: {
+          user: {
+            select: USER_SELECT_FIELDS,
+          },
+        },
+      },
+      leagueSeason: {
+        include: {
+          league: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          game: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+              originalAvatar: true,
+            },
+          },
+        },
+      },
     },
   },
 });
@@ -270,6 +320,49 @@ export class GameReadService {
               select: {
                 id: true,
                 name: true,
+              },
+            },
+            game: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+                originalAvatar: true,
+              },
+            },
+          },
+        },
+        leagueGroup: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+        leagueRound: {
+          select: {
+            id: true,
+            orderIndex: true,
+          },
+        },
+        parent: {
+          include: {
+            leagueSeason: {
+              include: {
+                league: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+                game: {
+                  select: {
+                    id: true,
+                    name: true,
+                    avatar: true,
+                    originalAvatar: true,
+                  },
+                },
               },
             },
           },

@@ -380,6 +380,7 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
         courtId: selectedCourt !== 'notBooked' ? selectedCourt : undefined,
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
+        timeIsSet: true,
         maxParticipants,
         minParticipants: 2,
         minLevel: playerLevelRange[0],

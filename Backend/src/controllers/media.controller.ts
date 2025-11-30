@@ -9,6 +9,8 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import { hasParentGamePermission } from '../utils/parentGamePermissions';
+import { ParticipantRole } from '@prisma/client';
 
 const storage = multer.memoryStorage();
 
@@ -149,12 +151,6 @@ export const uploadGameAvatar = asyncHandler(async (req: AuthRequest, res: Respo
       id: true,
       avatar: true,
       originalAvatar: true,
-      participants: {
-        where: {
-          userId: userId,
-          role: { in: ['OWNER', 'ADMIN'] }
-        }
-      }
     }
   });
 
@@ -162,7 +158,13 @@ export const uploadGameAvatar = asyncHandler(async (req: AuthRequest, res: Respo
     throw new ApiError(404, 'Game not found');
   }
 
-  if (game.participants.length === 0) {
+  const hasPermission = await hasParentGamePermission(
+    gameId,
+    userId,
+    [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+  );
+
+  if (!hasPermission) {
     throw new ApiError(403, 'Only owners and admins can update game avatar');
   }
 
@@ -221,9 +223,6 @@ export const uploadChatImage = asyncHandler(async (req: AuthRequest, res: Respon
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
-      participants: {
-        where: { userId: senderId }
-      },
       invites: {
         where: { 
           receiverId: senderId,
@@ -237,10 +236,14 @@ export const uploadChatImage = asyncHandler(async (req: AuthRequest, res: Respon
     throw new ApiError(404, 'Game not found');
   }
 
-  const isParticipant = game.participants.length > 0;
+  const hasPermission = await hasParentGamePermission(
+    gameId,
+    senderId,
+    [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
+  );
   const hasPendingInvite = game.invites.length > 0;
 
-  if (!isParticipant && !hasPendingInvite) {
+  if (!hasPermission && !hasPendingInvite) {
     throw new ApiError(403, 'You are not a participant or invited to this game');
   }
 
@@ -279,9 +282,6 @@ export const uploadChatDocument = asyncHandler(async (req: AuthRequest, res: Res
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
-      participants: {
-        where: { userId: senderId }
-      },
       invites: {
         where: { 
           receiverId: senderId,
@@ -295,10 +295,14 @@ export const uploadChatDocument = asyncHandler(async (req: AuthRequest, res: Res
     throw new ApiError(404, 'Game not found');
   }
 
-  const isParticipant = game.participants.length > 0;
+  const hasPermission = await hasParentGamePermission(
+    gameId,
+    senderId,
+    [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
+  );
   const hasPendingInvite = game.invites.length > 0;
 
-  if (!isParticipant && !hasPendingInvite) {
+  if (!hasPermission && !hasPendingInvite) {
     throw new ApiError(403, 'You are not a participant or invited to this game');
   }
 
@@ -337,20 +341,19 @@ export const uploadGameMedia = asyncHandler(async (req: AuthRequest, res: Respon
   // Verify user has access to this game
   const game = await prisma.game.findUnique({
     where: { id: gameId },
-    include: {
-      participants: {
-        where: { userId: userId }
-      }
-    }
   });
 
   if (!game) {
     throw new ApiError(404, 'Game not found');
   }
 
-  const isParticipant = game.participants.length > 0;
+  const hasPermission = await hasParentGamePermission(
+    gameId,
+    userId,
+    [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
+  );
 
-  if (!isParticipant) {
+  if (!hasPermission) {
     throw new ApiError(403, 'You are not a participant of this game');
   }
 

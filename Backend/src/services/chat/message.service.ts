@@ -1,10 +1,11 @@
 import prisma from '../../config/database';
-import { MessageState, ChatType, ChatContextType } from '@prisma/client';
+import { MessageState, ChatType, ChatContextType, ParticipantRole } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import telegramNotificationService from '../telegram/notification.service';
 import { GameReadService } from '../game/read.service';
 import { UserChatService } from './userChat.service';
+import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 
 export class MessageService {
   static async validateGameAccess(gameId: string, userId: string) {
@@ -27,16 +28,21 @@ export class MessageService {
       throw new ApiError(404, 'Game not found');
     }
 
-    const isParticipant = game.participants.length > 0;
+    const isDirectParticipant = game.participants.length > 0;
+    const hasPermission = isDirectParticipant || await hasParentGamePermission(
+      gameId,
+      userId,
+      [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
+    );
     const hasPendingInvite = game.invites.length > 0;
     const isPublicGame = game.isPublic;
     const participant = game.participants[0];
 
-    if (!isParticipant && !hasPendingInvite && !isPublicGame) {
+    if (!hasPermission && !hasPendingInvite && !isPublicGame) {
       throw new ApiError(403, 'You are not a participant or invited in this game');
     }
 
-    return { game, isParticipant, hasPendingInvite, isPublicGame, participant };
+    return { game, isParticipant: hasPermission, hasPendingInvite, isPublicGame, participant };
   }
 
   static async validateBugAccess(bugId: string, userId: string, requireWriteAccess: boolean = false) {
@@ -562,7 +568,56 @@ export class MessageService {
               }
             }
           }
-        }
+        },
+        leagueSeason: {
+          include: {
+            league: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            game: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        leagueGroup: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+        leagueRound: {
+          select: {
+            id: true,
+            orderIndex: true,
+          },
+        },
+        parent: {
+          include: {
+            leagueSeason: {
+              include: {
+                league: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+                game: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
         startTime: 'desc'

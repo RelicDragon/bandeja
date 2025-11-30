@@ -111,6 +111,7 @@ export class GameCreateService {
         matchGenerationType: data.matchGenerationType ?? 'HANDMADE',
         prohibitMatchesEditing: data.prohibitMatchesEditing ?? false,
         metadata: data.metadata,
+        timeIsSet: data.timeIsSet ?? false,
         status: calculateGameStatus({
           startTime,
           endTime,

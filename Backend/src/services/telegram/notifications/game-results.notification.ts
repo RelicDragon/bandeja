@@ -96,8 +96,11 @@ function calculatePlayerStats(
 export async function sendGameFinishedNotification(
   api: Api,
   gameId: string,
-  userId: string
+  userId: string,
+  isEdited: boolean = false
 ) {
+  console.log(`[GAME RESULTS NOTIFICATION] Starting notification for user ${userId}, game ${gameId}, isEdited: ${isEdited}`);
+  
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
@@ -156,18 +159,24 @@ export async function sendGameFinishedNotification(
   });
 
   if (!game || !game.outcomes || game.outcomes.length === 0) {
+    console.log(`[GAME RESULTS NOTIFICATION] Game ${gameId} not found or has no outcomes`);
     return;
   }
 
   const userOutcome = game.outcomes.find((o: any) => o.userId === userId);
   if (!userOutcome) {
+    console.log(`[GAME RESULTS NOTIFICATION] No outcome found for user ${userId} in game ${gameId}`);
     return;
   }
 
   const participant = game.participants.find((p: any) => p.userId === userId);
   if (!participant || !participant.user.telegramId || !participant.user.sendTelegramMessages) {
+    console.log(`[GAME RESULTS NOTIFICATION] User ${userId} not eligible: telegramId=${participant?.user.telegramId}, sendMessages=${participant?.user.sendTelegramMessages}`);
     return;
   }
+  
+  console.log(`[GAME RESULTS NOTIFICATION] User ${userId} is eligible, preparing message`);
+  console.log(`[GAME RESULTS NOTIFICATION] Telegram ID: ${participant.user.telegramId}`);
 
   const lang = participant.user.language || 'en';
   const stats = calculatePlayerStats(userId, game.rounds);
@@ -178,7 +187,8 @@ export async function sendGameFinishedNotification(
   
   const timezone = await getUserTimezoneFromCityId(participant.user.currentCityId);
   
-  let message = `🏁 *${escapeMarkdown(t('telegram.gameFinished', lang))}*\n\n`;
+  const titleKey = isEdited ? 'telegram.gameResultsChanged' : 'telegram.gameFinished';
+  let message = `🏁 *${escapeMarkdown(t(titleKey, lang))}*\n\n`;
   message += `🎮 ${escapeMarkdown(gameName)}\n`;
   
   if (clubName) {
@@ -200,15 +210,10 @@ export async function sendGameFinishedNotification(
     message += `🏆 ${escapeMarkdown(t('telegram.finalPlace', lang))}: ${userOutcome.position}\n`;
   }
   
-  message += `📉 ${escapeMarkdown(t('telegram.levelBefore', lang))}: ${userOutcome.levelBefore.toFixed(2)}\n`;
-  message += `📈 ${escapeMarkdown(t('telegram.levelAfter', lang))}: ${userOutcome.levelAfter.toFixed(2)}\n`;
-  
-  if (userOutcome.levelChange !== 0) {
-    const levelChangeStr = userOutcome.levelChange > 0 
-      ? `+${userOutcome.levelChange.toFixed(2)}`
-      : userOutcome.levelChange.toFixed(2);
-    message += `⭐ ${escapeMarkdown(t('telegram.ratingChange', lang))}: ${levelChangeStr}\n`;
-  }
+  const levelChangeStr = userOutcome.levelChange > 0 
+    ? `+${userOutcome.levelChange.toFixed(2)}`
+    : userOutcome.levelChange.toFixed(2);
+  message += `📊 ${escapeMarkdown(t('games.level', lang))}: ${userOutcome.levelBefore.toFixed(2)} -> ${userOutcome.levelAfter.toFixed(2)} (${levelChangeStr})\n`;
   
   if (userOutcome.reliabilityChange !== 0) {
     const reliabilityChangeStr = userOutcome.reliabilityChange > 0 
@@ -261,12 +266,14 @@ export async function sendGameFinishedNotification(
   }
 
   try {
+    console.log(`[GAME RESULTS NOTIFICATION] Sending message to telegram ID ${participant.user.telegramId}`);
     await api.sendMessage(participant.user.telegramId, message, {
       parse_mode: parseMode,
       ...(Object.keys(replyMarkup).length > 0 ? { reply_markup: replyMarkup } : {})
     });
+    console.log(`[GAME RESULTS NOTIFICATION] Message sent successfully to user ${userId}`);
   } catch (error) {
-    console.error(`Failed to send Telegram game results notification to user ${userId}:`, error);
+    console.error(`[GAME RESULTS NOTIFICATION] Failed to send Telegram game results notification to user ${userId}:`, error);
   }
 }
 

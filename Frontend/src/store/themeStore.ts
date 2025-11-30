@@ -21,7 +21,7 @@ const applyTheme = (theme: 'light' | 'dark' | 'system') => {
 
 export const useThemeStore = create<ThemeState>((set) => {
   const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
-  const initialTheme = savedTheme || 'system';
+  const initialTheme = savedTheme || 'light';
 
   applyTheme(initialTheme);
 

@@ -15,6 +15,9 @@ import { usePastGames } from '@/hooks/usePastGames';
 import { useBugsWithUnread } from '@/hooks/useBugsWithUnread';
 import { ChatType } from '@/types';
 
+const filterGamesByTime = <T extends { timeIsSet?: boolean }>(list: T[] = []) =>
+  list.filter((game) => game.timeIsSet !== false);
+
 export const HomeContent = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
@@ -67,6 +70,10 @@ export const HomeContent = () => {
   const mergedUnreadCounts = useMemo(() => {
     return { ...gamesUnreadCounts, ...pastGamesUnreadCounts };
   }, [gamesUnreadCounts, pastGamesUnreadCounts]);
+
+  const filteredMyGames = useMemo(() => filterGamesByTime(mergedGames), [mergedGames]);
+  const filteredPastGames = useMemo(() => filterGamesByTime(pastGames), [pastGames]);
+  const filteredAvailableGames = useMemo(() => filterGamesByTime(availableGames), [availableGames]);
 
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
 
@@ -251,7 +258,7 @@ export const HomeContent = () => {
         {showChatFilter ? (
           <>
             <MyGamesSection
-              games={mergedGames}
+              games={filteredMyGames}
               user={user}
               loading={loading}
               showSkeleton={skeletonAnimation.showSkeleton}
@@ -277,7 +284,7 @@ export const HomeContent = () => {
               }`}
             >
               <MyGamesSection
-                games={mergedGames}
+                games={filteredMyGames}
                 user={user}
                 loading={loading}
                 showSkeleton={skeletonAnimation.showSkeleton}
@@ -296,7 +303,7 @@ export const HomeContent = () => {
               }`}
             >
               <PastGamesSection
-                pastGames={pastGames}
+                pastGames={filteredPastGames}
                 loadingPastGames={loadingPastGames}
                 hasMorePastGames={hasMorePastGames}
                 user={user}
@@ -326,7 +333,7 @@ export const HomeContent = () => {
         }`}
       >
         <AvailableGamesSection
-          availableGames={availableGames}
+          availableGames={filteredAvailableGames}
           user={user}
           loading={loading}
           onJoin={handleJoinGame}

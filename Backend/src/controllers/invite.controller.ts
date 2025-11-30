@@ -3,12 +3,13 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
-import { InviteStatus } from '@prisma/client';
+import { InviteStatus, ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from './chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import telegramNotificationService from '../services/telegram/notification.service';
 import { InviteService } from '../services/invite.service';
+import { hasParentGamePermission } from '../utils/parentGamePermissions';
 
 export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { receiverId, gameId, message, expiresAt } = req.body;
@@ -26,15 +27,37 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
   }
 
   if (gameId) {
-    const participant = await prisma.gameParticipant.findFirst({
-      where: {
-        gameId,
-        userId: req.userId,
-      },
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { anyoneCanInvite: true },
     });
 
-    if (!participant) {
-      throw new ApiError(403, 'errors.invites.onlyParticipantsCanSend');
+    if (!game) {
+      throw new ApiError(404, 'errors.invites.gameNotFound');
+    }
+
+    // Check if user is ADMIN/OWNER
+    const isAdminOrOwner = await hasParentGamePermission(
+      gameId,
+      req.userId!,
+      [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+    );
+
+    if (!isAdminOrOwner) {
+      // If not admin/owner, check if anyoneCanInvite is enabled and user is a participant
+      if (!game.anyoneCanInvite) {
+        throw new ApiError(403, 'errors.invites.onlyParticipantsCanSend');
+      }
+
+      const isParticipant = await hasParentGamePermission(
+        gameId,
+        req.userId!,
+        [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
+      );
+
+      if (!isParticipant) {
+        throw new ApiError(403, 'errors.invites.onlyParticipantsCanSend');
+      }
     }
 
     const existingInvite = await prisma.invite.findFirst({
@@ -387,17 +410,19 @@ export const getGameInvites = asyncHandler(async (req: AuthRequest, res: Respons
 
   const game = await prisma.game.findUnique({
     where: { id: gameId },
-    include: {
-      participants: true,
-    },
   });
 
   if (!game) {
     throw new ApiError(404, 'errors.invites.gameNotFound');
   }
 
-  const isParticipant = game.participants.some((p: any) => p.userId === req.userId);
-  if (!isParticipant) {
+  const hasPermission = await hasParentGamePermission(
+    gameId,
+    req.userId!,
+    [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
+  );
+
+  if (!hasPermission) {
     throw new ApiError(403, 'errors.invites.onlyParticipantsCanView');
   }
 

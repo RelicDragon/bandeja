@@ -61,6 +61,53 @@ export class LeagueReadService {
                     name: true,
                   },
                 },
+                game: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+            leagueGroup: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+              },
+            },
+            leagueRound: {
+              select: {
+                id: true,
+                orderIndex: true,
+              },
+            },
+            outcomes: {
+              include: {
+                user: {
+                  select: USER_SELECT_FIELDS,
+                },
+              },
+              orderBy: { position: 'asc' },
+            },
+            parent: {
+              include: {
+                leagueSeason: {
+                  include: {
+                    league: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                    game: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -89,6 +136,15 @@ export class LeagueReadService {
                 },
               },
             },
+          },
+        },
+        currentGroup: {
+          select: {
+            id: true,
+            name: true,
+            betterGroupId: true,
+            worseGroupId: true,
+            color: true,
           },
         },
       },

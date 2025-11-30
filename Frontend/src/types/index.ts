@@ -220,7 +220,37 @@ export interface Game {
     updatedAt: string;
   }>;
   parentId?: string;
+  parent?: {
+    id: string;
+    participants?: GameParticipant[];
+    leagueSeason?: {
+      id: string;
+      leagueId: string;
+      league: {
+        id: string;
+        name: string;
+      };
+      game?: {
+        id: string;
+        name?: string;
+        avatar?: string | null;
+        originalAvatar?: string | null;
+      } | null;
+    };
+  } | null;
   children?: Game[];
+  timeIsSet?: boolean;
+  leagueGroupId?: string;
+  leagueGroup?: {
+    id: string;
+    name: string;
+    color?: string | null;
+  } | null;
+  leagueRoundId?: string;
+  leagueRound?: {
+    id: string;
+    orderIndex: number;
+  } | null;
   leagueSeason?: {
     id: string;
     leagueId: string;
@@ -228,6 +258,12 @@ export interface Game {
       id: string;
       name: string;
     };
+    game?: {
+      id: string;
+      name?: string;
+      avatar?: string | null;
+      originalAvatar?: string | null;
+    } | null;
   };
   metadata?: Record<string, any>;
   resultsMeta?: {

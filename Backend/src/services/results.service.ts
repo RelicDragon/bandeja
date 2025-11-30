@@ -1,7 +1,7 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
-import { ParticipantRole } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../utils/constants';
+import { hasParentGamePermission } from '../utils/parentGamePermissions';
 
 
 export async function getGameResults(gameId: string) {
@@ -165,11 +165,9 @@ export async function deleteGameResults(gameId: string, requestUserId: string, b
     throw new ApiError(404, 'Game not found');
   }
 
-  const userParticipant = game.participants.find(
-    (p) => p.userId === requestUserId && (p.role === ParticipantRole.OWNER || p.role === ParticipantRole.ADMIN)
-  );
+  const hasPermission = await hasParentGamePermission(gameId, requestUserId);
 
-  if (!userParticipant) {
+  if (!hasPermission) {
     throw new ApiError(403, 'Only game owners/admins can delete results');
   }
 
@@ -185,6 +183,9 @@ export async function deleteGameResults(gameId: string, requestUserId: string, b
 
   await prisma.$transaction(async (tx) => {
     if (game.affectsRating && game.outcomes.length > 0) {
+      const { LeagueGameResultsService } = await import('./league/gameResults.service');
+      await LeagueGameResultsService.unsyncGameResults(gameId, tx);
+
       for (const outcome of game.outcomes) {
         await tx.user.update({
           where: { id: outcome.userId },
@@ -256,11 +257,9 @@ export async function editGameResults(gameId: string, requestUserId: string, bas
     throw new ApiError(404, 'Game not found');
   }
 
-  const userParticipant = game.participants.find(
-    (p) => p.userId === requestUserId && (p.role === ParticipantRole.OWNER || p.role === ParticipantRole.ADMIN)
-  );
+  const hasPermission = await hasParentGamePermission(gameId, requestUserId);
 
-  if (!userParticipant) {
+  if (!hasPermission) {
     throw new ApiError(403, 'Only game owners/admins can edit results');
   }
 
@@ -280,6 +279,9 @@ export async function editGameResults(gameId: string, requestUserId: string, bas
 
   await prisma.$transaction(async (tx) => {
     if (game.affectsRating && game.outcomes.length > 0) {
+      const { LeagueGameResultsService } = await import('./league/gameResults.service');
+      await LeagueGameResultsService.unsyncGameResults(gameId, tx);
+
       for (const outcome of game.outcomes) {
         await tx.user.update({
           where: { id: outcome.userId },

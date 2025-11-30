@@ -24,6 +24,7 @@ interface PlayerAvatarProps {
   onRemoveClick?: () => void;
   removable?: boolean;
   showName?: boolean;
+  fullHideName?: boolean;
   draggable?: boolean;
   smallLayout?: boolean;
   extrasmall?: boolean;
@@ -35,7 +36,7 @@ interface PlayerAvatarProps {
   onTouchEnd?: (e: TouchEvent) => void;
 }
 
-export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, showName = true, draggable = false, smallLayout = false, extrasmall = false, role, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
+export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, role, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
   const { t } = useTranslation();
   const { openPlayerCard } = usePlayerCardModal();
   const { mode: appMode } = useAppModeStore();
@@ -232,22 +233,24 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
           </button>
         )}
       </div>
-      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-        showName ? 'max-h-20 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-2'
-      }`}>
-        <div className={`${sizeClasses.name} text-gray-700 dark:text-gray-300 break-words text-center leading-tight flex flex-col items-center justify-center`}>
-          {extrasmall && !isCurrentUser ? (
-            <>
-              <span className="text-center">{player.firstName}</span>
-              <span className="text-center">{player.lastName}</span>
-            </>
-          ) : (
-            <span className={`${extrasmall ? 'max-w-12' : 'max-w-20'}`}>
-              {isCurrentUser ? t('createGame.you') : [player.firstName, player.lastName].filter(name => name && name.trim()).join(' ')}
-            </span>
-          )}
+      {!fullHideName && (
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          showName ? 'max-h-20 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-2'
+        }`}>
+          <div className={`${sizeClasses.name} text-gray-700 dark:text-gray-300 break-words text-center leading-tight flex flex-col items-center justify-center`}>
+            {extrasmall && !isCurrentUser ? (
+              <>
+                <span className="text-center">{player.firstName}</span>
+                <span className="text-center">{player.lastName}</span>
+              </>
+            ) : (
+              <span className={`${extrasmall ? 'max-w-12' : 'max-w-20'}`}>
+                {isCurrentUser ? t('createGame.you') : [player.firstName, player.lastName].filter(name => name && name.trim()).join(' ')}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

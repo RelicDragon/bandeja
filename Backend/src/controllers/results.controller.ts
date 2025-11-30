@@ -7,8 +7,12 @@ import * as outcomeExplanationService from '../services/results/outcomeExplanati
 
 export const recalculateOutcomes = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
+  
+  console.log(`[RECALCULATE CONTROLLER] Endpoint hit for game ${gameId} by user ${req.userId}`);
 
   const result = await outcomesService.recalculateGameOutcomes(gameId, req.userId!);
+  
+  console.log(`[RECALCULATE CONTROLLER] Recalculation completed successfully for game ${gameId}`);
 
   const socketService = (global as any).socketService;
   if (socketService) {
@@ -69,8 +73,12 @@ export const deleteGameResults = asyncHandler(async (req: AuthRequest, res: Resp
 export const editGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
   const { baseVersion } = req.body;
+  
+  console.log(`[EDIT GAME RESULTS CONTROLLER] Endpoint hit for game ${gameId} by user ${req.userId}`);
 
   await resultsService.editGameResults(gameId, req.userId!, baseVersion);
+  
+  console.log(`[EDIT GAME RESULTS CONTROLLER] Results edited successfully for game ${gameId}`);
 
   const socketService = (global as any).socketService;
   if (socketService) {

@@ -9,8 +9,13 @@ class TelegramResultsSenderService {
     this.bot = bot;
   }
 
-  async sendGameFinished(gameId: string) {
-    if (!this.bot) return;
+  async sendGameFinished(gameId: string, isEdited: boolean = false) {
+    console.log(`[TELEGRAM SENDER SERVICE] sendGameFinished called for game ${gameId}, isEdited: ${isEdited}`);
+    
+    if (!this.bot) {
+      console.log(`[TELEGRAM SENDER SERVICE] Bot not initialized, cannot send notifications`);
+      return;
+    }
 
     try {
       const game = await prisma.game.findUnique({
@@ -36,7 +41,13 @@ class TelegramResultsSenderService {
         },
       });
 
-      if (!game || !game.outcomes || game.outcomes.length === 0) {
+      if (!game) {
+        console.log(`[TELEGRAM SENDER SERVICE] Game ${gameId} not found`);
+        return;
+      }
+      
+      if (!game.outcomes || game.outcomes.length === 0) {
+        console.log(`[TELEGRAM SENDER SERVICE] Game ${gameId} has no outcomes`);
         return;
       }
 
@@ -44,18 +55,26 @@ class TelegramResultsSenderService {
         (p) => p.user.telegramId && p.user.sendTelegramMessages
       );
 
+      console.log(`[TELEGRAM SENDER SERVICE] Found ${readyParticipants.length} ready participants for game ${gameId}`);
+
       for (const participant of readyParticipants) {
         const hasOutcome = game.outcomes.some((o) => o.userId === participant.user.id);
         if (hasOutcome) {
+          console.log(`[TELEGRAM SENDER SERVICE] Sending notification to user ${participant.user.id} for game ${gameId}`);
           await sendGameFinishedNotification(
             this.bot.api,
             gameId,
-            participant.user.id
+            participant.user.id,
+            isEdited
           );
+        } else {
+          console.log(`[TELEGRAM SENDER SERVICE] User ${participant.user.id} has no outcome for game ${gameId}`);
         }
       }
+      
+      console.log(`[TELEGRAM SENDER SERVICE] Finished sending notifications for game ${gameId}`);
     } catch (error) {
-      console.error(`Failed to send game finished notifications for game ${gameId}:`, error);
+      console.error(`[TELEGRAM SENDER SERVICE] Failed to send game finished notifications for game ${gameId}:`, error);
     }
   }
 }

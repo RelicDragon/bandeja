@@ -5,6 +5,7 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
+import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 
 export class JoinQueueService {
   static async addToQueue(gameId: string, userId: string) {
@@ -56,11 +57,15 @@ export class JoinQueueService {
       },
     });
 
-    const canAccept = currentParticipant && (
+    let canAccept = currentParticipant && (
       currentParticipant.role === 'OWNER' ||
       currentParticipant.role === 'ADMIN' ||
       (game.anyoneCanInvite && currentParticipant.isPlaying)
     );
+
+    if (!canAccept) {
+      canAccept = await hasParentGamePermission(gameId, currentUserId);
+    }
 
     if (!canAccept) {
       throw new ApiError(403, 'games.notAuthorizedToAcceptJoinQueue');
@@ -162,11 +167,15 @@ export class JoinQueueService {
       },
     });
 
-    const canDecline = currentParticipant && (
+    let canDecline = currentParticipant && (
       currentParticipant.role === 'OWNER' ||
       currentParticipant.role === 'ADMIN' ||
       (game.anyoneCanInvite && currentParticipant.isPlaying)
     );
+
+    if (!canDecline) {
+      canDecline = await hasParentGamePermission(gameId, currentUserId);
+    }
 
     if (!canDecline) {
       throw new ApiError(403, 'games.notAuthorizedToDeclineJoinQueue');

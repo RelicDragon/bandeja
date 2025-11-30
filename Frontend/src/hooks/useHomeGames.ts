@@ -76,20 +76,28 @@ export const useHomeGames = (
       yesterday.setDate(yesterday.getDate() - 1);
       yesterday.setHours(0, 0, 0, 0);
 
-      const [gamesResponse, invitesResponse] = await Promise.all([
+      const [archivedGamesResponse, nonArchivedGamesResponse, invitesResponse] = await Promise.all([
         gamesApi.getAll({
           cityId: user.currentCity.id,
           startDate: yesterday.toISOString(),
+          status: 'ARCHIVED',
+        }),
+        gamesApi.getAll({
+          cityId: user.currentCity.id,
         }),
         invitesApi.getMyInvites('PENDING')
       ]);
       
-      const myGames = gamesResponse.data.filter((game) =>
-        game.status !== 'ARCHIVED' &&
+      const allGames = [
+        ...archivedGamesResponse.data,
+        ...nonArchivedGamesResponse.data.filter((game) => game.status !== 'ARCHIVED')
+      ];
+      
+      const myGames = allGames.filter((game) =>
         game.participants.some((p) => p.userId === user?.id)
       );
       
-      const availableGamesFiltered = gamesResponse.data.filter(
+      const availableGamesFiltered = allGames.filter(
         (game) =>
           !game.participants.some((p) => p.userId === user?.id) &&
           game.participants.length < game.maxParticipants &&

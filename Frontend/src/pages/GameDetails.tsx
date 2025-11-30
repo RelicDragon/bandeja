@@ -21,6 +21,7 @@ import {
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { DeleteGameConfirmationModal } from '@/components/DeleteGameConfirmationModal';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
+import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
 import { GameSetup } from '@/components/GameDetails/GameSetup';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
@@ -28,7 +29,7 @@ import { favoritesApi } from '@/api/favorites';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
-import { canUserEditResults } from '@/utils/gameResults';
+import { canUserEditResults, isUserGameAdminOrOwner } from '@/utils/gameResults';
 import { socketService } from '@/services/socketService';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 
@@ -71,6 +72,9 @@ export const GameDetailsContent = () => {
     genderTeams: 'ANY' as GenderTeam,
     gameType: 'CLASSIC' as GameType,
     description: '',
+    pointsPerWin: 0,
+    pointsPerLoose: 0,
+    pointsPerTie: 0,
   });
 
   useEffect(() => {
@@ -187,6 +191,9 @@ export const GameDetailsContent = () => {
         genderTeams: (game.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS',
         gameType: (game.gameType || 'CLASSIC') as GameType,
         description: game.description || '',
+        pointsPerWin: game.pointsPerWin ?? 0,
+        pointsPerLoose: game.pointsPerLoose ?? 0,
+        pointsPerTie: game.pointsPerTie ?? 0,
       });
     }
   }, [game]);
@@ -273,9 +280,8 @@ export const GameDetailsContent = () => {
   const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') || false;
   const isInJoinQueue = game?.joinQueues?.some(q => q.userId === user?.id && q.status === 'PENDING') || false;
   const canAccessChat = isParticipant || hasPendingInvite || isGuest || game?.isPublic || false;
-  const isOwner = game?.participants.some(
-    (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
-  ) || false;
+  
+  const isOwner = game && user ? isUserGameAdminOrOwner(game, user.id) : false;
   const canEdit = isOwner || user?.isAdmin || false;
   const canViewSettings = game?.resultsStatus === 'NONE' && canEdit && game.status !== 'ARCHIVED';
   const isFull = game ? game.entityType !== 'BAR' && game.participants.filter(p => p.isPlaying).length >= game.maxParticipants : false;
@@ -432,6 +438,9 @@ export const GameDetailsContent = () => {
           genderTeams: (game.genderTeams || 'ANY') as GenderTeam,
           gameType: (game.gameType || 'CLASSIC') as GameType,
           description: game.description || '',
+          pointsPerWin: game.pointsPerWin ?? 0,
+          pointsPerLoose: game.pointsPerLoose ?? 0,
+          pointsPerTie: game.pointsPerTie ?? 0,
         });
       }
       setIsClosingEditMode(true);
@@ -463,6 +472,9 @@ export const GameDetailsContent = () => {
         genderTeams: editFormData.genderTeams,
         gameType: editFormData.gameType,
         description: editFormData.description,
+        pointsPerWin: editFormData.pointsPerWin,
+        pointsPerLoose: editFormData.pointsPerLoose,
+        pointsPerTie: editFormData.pointsPerTie,
       };
 
       await gamesApi.update(id, updateData);
@@ -562,12 +574,17 @@ export const GameDetailsContent = () => {
     );
   }
 
+  const isLeague = game.entityType === 'LEAGUE';
   const isLeagueSeason = game.entityType === 'LEAGUE_SEASON';
 
   const renderTabContent = () => {
     if (!isLeagueSeason || activeTab === 'general') {
       return (
         <>
+          {isLeague && game.hasFixedTeams && (
+            <LeagueFixedTeamsSection game={game} />
+          )}
+
           <GameInfo
             game={game}
             isOwner={isOwner}
@@ -579,41 +596,45 @@ export const GameDetailsContent = () => {
 
           <PhotosSection game={game} />
 
-          <GameResults
-            game={game}
-            user={user}
-            canEnterResults={canEnterResults()}
-            onEnterResults={handleEnterResults}
-          />
+          {!isLeagueSeason && (
+            <GameResults
+              game={game}
+              user={user}
+              canEnterResults={canEnterResults()}
+              onEnterResults={handleEnterResults}
+            />
+          )}
 
-          <GameParticipants
-            game={game}
-            myInvites={myInvites}
-            gameInvites={gameInvites}
-            joinQueues={game.joinQueues}
-            isParticipant={isParticipant}
-            isGuest={isGuest}
-            isFull={isFull}
-            isOwner={isOwner}
-            userId={user?.id}
-            isInJoinQueue={isInJoinQueue}
-            canInvitePlayers={canInvitePlayers}
-            canManageJoinQueue={canManageJoinQueue}
-            canViewSettings={canViewSettings}
-            onJoin={handleJoin}
-            onAddToGame={handleAddToGame}
-            onLeave={handleLeave}
-            onAcceptInvite={handleAcceptInvite}
-            onDeclineInvite={handleDeclineInvite}
-            onCancelInvite={handleCancelInvite}
-            onAcceptJoinQueue={handleAcceptJoinQueue}
-            onDeclineJoinQueue={handleDeclineJoinQueue}
-            onShowPlayerList={() => setShowPlayerList(true)}
-            onShowManageUsers={() => setShowManageUsers(true)}
-            onEditMaxParticipants={() => setIsEditMaxParticipantsModalOpen(true)}
-          />
+          {!isLeague && (
+            <GameParticipants
+              game={game}
+              myInvites={myInvites}
+              gameInvites={gameInvites}
+              joinQueues={game.joinQueues}
+              isParticipant={isParticipant}
+              isGuest={isGuest}
+              isFull={isFull}
+              isOwner={isOwner}
+              userId={user?.id}
+              isInJoinQueue={isInJoinQueue}
+              canInvitePlayers={canInvitePlayers}
+              canManageJoinQueue={canManageJoinQueue}
+              canViewSettings={canViewSettings}
+              onJoin={handleJoin}
+              onAddToGame={handleAddToGame}
+              onLeave={handleLeave}
+              onAcceptInvite={handleAcceptInvite}
+              onDeclineInvite={handleDeclineInvite}
+              onCancelInvite={handleCancelInvite}
+              onAcceptJoinQueue={handleAcceptJoinQueue}
+              onDeclineJoinQueue={handleDeclineJoinQueue}
+              onShowPlayerList={() => setShowPlayerList(true)}
+              onShowManageUsers={() => setShowManageUsers(true)}
+              onEditMaxParticipants={() => setIsEditMaxParticipantsModalOpen(true)}
+            />
+          )}
 
-          {canViewSettings && (
+          {!isLeague && canViewSettings && (
             <GameSettings
               game={game}
               clubs={clubs}
@@ -631,7 +652,7 @@ export const GameDetailsContent = () => {
             />
           )}
 
-          {canViewSettings && (
+          {!isLeague && canViewSettings && (
             <GameSetup
               onOpenSetup={() => setIsGameSetupModalOpen(true)}
               canEdit={canEdit}
@@ -655,7 +676,7 @@ export const GameDetailsContent = () => {
             />
           )}
 
-          {game.hasFixedTeams && (
+          {!isLeague && game.hasFixedTeams && (
             <FixedTeamsManagement
               key={`fixed-teams-${game.id}`}
               game={game}
@@ -664,12 +685,32 @@ export const GameDetailsContent = () => {
               }}
             />
           )}
+
+          {canDeleteGame() && (
+            <Card>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Trash2 size={18} className="text-gray-500 dark:text-gray-400" />
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    {t(isLeagueSeason ? 'gameDetails.deleteLeague' : 'gameDetails.deleteGame')}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowDeleteConfirmation(true)}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {t('common.delete')}
+                </button>
+              </div>
+            </Card>
+          )}
         </>
       );
     }
 
     if (activeTab === 'schedule') {
-      return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} />;
+      return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} />;
     }
 
     if (activeTab === 'standings') {
@@ -682,40 +723,38 @@ export const GameDetailsContent = () => {
   return (
     <div className="max-w-2xl mx-auto space-y-4">
       {isLeagueSeason && (
-        <Card>
-          <div className="flex border-b border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => setActiveTab('general')}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'general'
-                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {t('gameDetails.general')}
-            </button>
-            <button
-              onClick={() => setActiveTab('schedule')}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'schedule'
-                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {t('gameDetails.schedule')}
-            </button>
-            <button
-              onClick={() => setActiveTab('standings')}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'standings'
-                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {t('gameDetails.standings')}
-            </button>
-          </div>
-        </Card>
+        <div className="flex border-b border-gray-200 dark:border-gray-700 rounded-xl">
+          <button
+            onClick={() => setActiveTab('general')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'general'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            {t('gameDetails.general')}
+          </button>
+          <button
+            onClick={() => setActiveTab('schedule')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'schedule'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            {t('gameDetails.schedule')}
+          </button>
+          <button
+            onClick={() => setActiveTab('standings')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'standings'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            {t('gameDetails.standings')}
+          </button>
+        </div>
       )}
 
       {renderTabContent()}
@@ -775,26 +814,6 @@ export const GameDetailsContent = () => {
             }
           }}
         />
-      )}
-
-      {canDeleteGame() && (
-        <Card>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Trash2 size={18} className="text-gray-500 dark:text-gray-400" />
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {t('gameDetails.deleteGame')}
-              </h2>
-            </div>
-            <button
-              onClick={() => setShowDeleteConfirmation(true)}
-              disabled={isDeleting}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {t('common.delete')}
-            </button>
-          </div>
-        </Card>
       )}
 
       <DeleteGameConfirmationModal

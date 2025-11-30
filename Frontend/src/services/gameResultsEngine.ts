@@ -8,6 +8,7 @@ import { resultsApi } from '@/api/results';
 import { gamesApi } from '@/api';
 import { RoundGenerator } from './roundGenerator';
 import { OpCreator } from './opCreators';
+import { isUserGameAdminOrOwner, isUserGameParticipant } from '@/utils/gameResults';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 
@@ -868,18 +869,25 @@ class GameResultsEngineClass {
   }
 
   private canUserEditResults(game: Game, userId: string): boolean {
-    const participant = game.participants?.find((p) => p.userId === userId);
-    if (!participant) return false;
-    if (participant.role === 'OWNER' || participant.role === 'ADMIN') return true;
-    if (game.resultsByAnyone) return true;
+    // Check if user is admin/owner of current or parent game
+    if (isUserGameAdminOrOwner(game, userId)) {
+      return true;
+    }
+    
+    // Check if resultsByAnyone is enabled and user is a participant
+    if (game.resultsByAnyone) {
+      const participant = game.participants?.find((p) => p.userId === userId);
+      return !!participant;
+    }
+    
     return false;
   }
 
   private getGameState(game: Game, userId: string): GameState {
     const canEdit = this.canUserEditResults(game, userId);
-    const participant = game.participants?.find((p) => p.userId === userId);
     
-    if (!participant) {
+    // Check if user has access (participant or parent admin/owner)
+    if (!isUserGameParticipant(game, userId)) {
       return {
         type: 'ACCESS_DENIED',
         message: 'games.results.problems.accessDenied',

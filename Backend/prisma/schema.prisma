@@ -201,6 +201,8 @@ model Game {
   photosCount     Int              @default(0)
   parentId        String?
   leagueRoundId   String?
+  leagueGroupId   String?
+  timeIsSet       Boolean          @default(false)
   metadata        Json?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
@@ -210,6 +212,7 @@ model Game {
   parent          Game?             @relation("GameHierarchy", fields: [parentId], references: [id])
   children        Game[]            @relation("GameHierarchy")
   leagueRound     LeagueRound?      @relation(fields: [leagueRoundId], references: [id], onDelete: SetNull)
+  leagueGroup     LeagueGroup?      @relation(fields: [leagueGroupId], references: [id], onDelete: SetNull)
   participants    GameParticipant[]
   invites         Invite[]
   joinQueues      JoinQueue[]
@@ -228,6 +231,7 @@ model Game {
   @@index([entityType])
   @@index([parentId])
   @@index([leagueRoundId])
+  @@index([leagueGroupId])
   @@index([affectsRating])
   @@index([resultsStatus])
   @@index([hasFixedTeams])
@@ -888,6 +892,7 @@ model LeagueGroup {
   id              String            @id @default(cuid())
   leagueSeasonId  String
   name            String
+  color           String?
   betterGroupId   String?
   worseGroupId    String?
   createdAt       DateTime          @default(now())
@@ -898,6 +903,7 @@ model LeagueGroup {
   betterGroups    LeagueGroup[]     @relation("LeagueGroupBetter")
   worseGroups     LeagueGroup[]     @relation("LeagueGroupWorse")
   participants    LeagueParticipant[]
+  games           Game[]
 
   @@index([leagueSeasonId])
 }

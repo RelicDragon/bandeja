@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ParticipantRole, GameParticipant } from '@prisma/client';
+import { getParentGameParticipant } from '../../utils/parentGamePermissions';
 
 export class ParticipantValidationService {
   static async validateCanModifyParticipants(
@@ -22,20 +23,14 @@ export class ParticipantValidationService {
     }
 
     if (allowedRoles.length > 0) {
-      const userParticipant = await prisma.gameParticipant.findFirst({
-        where: {
-          gameId,
-          userId,
-          role: { in: allowedRoles },
-        },
-      });
+      const result = await getParentGameParticipant(gameId, userId, allowedRoles);
 
-      if (!userParticipant) {
+      if (!result) {
         const roleNames = allowedRoles.join(' or ');
         throw new ApiError(403, `Only ${roleNames} can perform this action`);
       }
 
-      return userParticipant;
+      return result.participant;
     }
 
     const userParticipant = await prisma.gameParticipant.findFirst({

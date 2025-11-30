@@ -38,5 +38,81 @@ router.post(
   leagueController.createLeagueRound
 );
 
+router.post(
+  '/rounds/:leagueRoundId/games',
+  authenticate,
+  leagueController.createGameForRound
+);
+
+router.delete(
+  '/rounds/:leagueRoundId',
+  authenticate,
+  leagueController.deleteLeagueRound
+);
+
+router.post(
+  '/:leagueSeasonId/sync-participants',
+  authenticate,
+  leagueController.syncLeagueParticipants
+);
+
+router.get(
+  '/:leagueSeasonId/groups',
+  authenticate,
+  leagueController.getLeagueGroups
+);
+
+router.post(
+  '/:leagueSeasonId/groups',
+  authenticate,
+  validate([
+    body('numberOfGroups').notEmpty().withMessage('Number of groups is required').isInt({ min: 1 }).withMessage('Number of groups must be at least 1'),
+  ]),
+  leagueController.createLeagueGroups
+);
+
+router.post(
+  '/:leagueSeasonId/groups/manual',
+  authenticate,
+  validate([body('name').notEmpty().withMessage('Group name is required')]),
+  leagueController.createManualLeagueGroup
+);
+
+router.patch(
+  '/groups/:groupId',
+  authenticate,
+  validate([body('name').notEmpty().withMessage('Group name is required')]),
+  leagueController.renameLeagueGroup
+);
+
+router.delete(
+  '/groups/:groupId',
+  authenticate,
+  leagueController.deleteLeagueGroup
+);
+
+router.post(
+  '/groups/:groupId/participants',
+  authenticate,
+  validate([body('participantId').notEmpty().withMessage('Participant ID is required')]),
+  leagueController.addParticipantToLeagueGroup
+);
+
+router.delete(
+  '/groups/:groupId/participants/:participantId',
+  authenticate,
+  leagueController.removeParticipantFromLeagueGroup
+);
+
+router.put(
+  '/:leagueSeasonId/groups/reorder',
+  authenticate,
+  validate([
+    body('groupIds').isArray({ min: 1 }).withMessage('Group IDs must be an array'),
+    body('groupIds.*').isString().withMessage('Each group ID must be a string'),
+  ]),
+  leagueController.reorderLeagueGroups
+);
+
 export default router;
 

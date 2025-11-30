@@ -1,0 +1,246 @@
+import { Edit2, ExternalLink, Award, MapPin, Calendar } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { PlayerAvatar } from '@/components';
+import { Game } from '@/types';
+import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
+import { formatDate } from '@/utils/dateFormat';
+
+interface LeagueGameCardProps {
+  game: Game;
+  onEdit?: () => void;
+  onOpen?: () => void;
+  showGroupTag?: boolean;
+}
+
+export const LeagueGameCard = ({
+  game,
+  onEdit,
+  onOpen,
+  showGroupTag = true,
+}: LeagueGameCardProps) => {
+  const { t } = useTranslation();
+
+  const getTeamPlayers = (teamIndex: number) => {
+    if (game.fixedTeams && game.fixedTeams.length > teamIndex) {
+      return game.fixedTeams[teamIndex].players
+        .filter(tp => tp.user)
+        .map(tp => ({
+          id: tp.userId,
+          firstName: tp.user!.firstName,
+          lastName: tp.user!.lastName,
+          avatar: tp.user!.avatar,
+          level: tp.user!.level,
+          gender: tp.user!.gender,
+        }));
+    }
+    return [];
+  };
+
+  const teamAPlayers = getTeamPlayers(0);
+  const teamBPlayers = getTeamPlayers(1);
+
+  const teamAPlayerIds = teamAPlayers.map(p => p.id);
+  const teamBPlayerIds = teamBPlayers.map(p => p.id);
+
+  const isFinal = game.resultsStatus === 'FINAL';
+  const canEdit = game.resultsStatus === 'NONE' && onEdit;
+  const groupColor = game.leagueGroup ? getLeagueGroupColor(game.leagueGroup.color) : null;
+  const groupSoftColor = game.leagueGroup ? getLeagueGroupSoftColor(game.leagueGroup.color) : null;
+
+  let winner: 'teamA' | 'teamB' | null = null;
+  let isTie = false;
+  
+  if (isFinal && game.outcomes && game.outcomes.length > 0) {
+    const teamAOutcomes = game.outcomes.filter(o => teamAPlayerIds.includes(o.user?.id));
+    const teamBOutcomes = game.outcomes.filter(o => teamBPlayerIds.includes(o.user?.id));
+    
+    const teamAWins = teamAOutcomes.reduce((sum, o) => sum + (o.wins || 0), 0);
+    const teamBWins = teamBOutcomes.reduce((sum, o) => sum + (o.wins || 0), 0);
+    
+    if (teamAWins > teamBWins) {
+      winner = 'teamA';
+    } else if (teamBWins > teamAWins) {
+      winner = 'teamB';
+    } else {
+      isTie = true;
+    }
+  }
+
+  const getDurationLabel = () => {
+    if (!game.startTime || !game.endTime) return '';
+
+    const durationHours =
+      (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) /
+      (1000 * 60 * 60);
+
+    if (durationHours <= 0) return '';
+
+    const hLabel = t('common.h');
+    const mLabel = t('common.m');
+
+    if (durationHours === Math.floor(durationHours)) {
+      return `${durationHours}${hLabel}`;
+    }
+
+    const hours = Math.floor(durationHours);
+    const minutes = Math.round((durationHours % 1) * 60);
+
+    if (hours === 0) {
+      return `${minutes}${mLabel}`;
+    }
+
+    return minutes > 0 ? `${hours}${hLabel}${minutes}${mLabel}` : `${hours}${hLabel}`;
+  };
+
+  const getDateTimeLabel = () => {
+    if (!game.startTime) return '';
+
+    const datePart = formatDate(game.startTime, 'MMM d');
+    const timePart = formatDate(game.startTime, 'HH:mm');
+    const durationPart = getDurationLabel();
+
+    return `${datePart} ${timePart}${durationPart ? `, ${durationPart}` : ''}`;
+  };
+
+  return (
+    <div className="relative pr-12 pl-2 pt-2 pb-2 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+      {game.leagueGroup && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1"
+          style={{
+            backgroundColor: groupColor ?? '#4F46E5',
+          }}
+        />
+      )}
+      {game.leagueGroup && showGroupTag && (
+        <div
+          className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs font-semibold border"
+          style={{
+            backgroundColor: groupSoftColor ?? '#EEF2FF',
+            color: groupColor ?? '#4F46E5',
+            borderColor: groupColor ?? '#4F46E5',
+          }}
+        >
+          {game.leagueGroup.name}
+        </div>
+      )}
+      <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
+        {onOpen && (
+          <button
+            onClick={onOpen}
+            className="w-8 h-8 rounded-full border-2 border-emerald-500 hover:border-emerald-600 bg-white dark:bg-gray-800 text-emerald-500 hover:text-emerald-600 flex items-center justify-center transition-colors shadow-lg"
+          >
+            <ExternalLink size={16} />
+          </button>
+        )}
+        {canEdit && (
+          <button
+            onClick={onEdit}
+            className="w-8 h-8 rounded-full border-2 border-blue-500 hover:border-blue-600 bg-white dark:bg-gray-800 text-blue-500 hover:text-blue-600 flex items-center justify-center transition-colors shadow-lg"
+          >
+            <Edit2 size={16} />
+          </button>
+        )}
+      </div>
+
+      <div className="flex items-center justify-start w-full gap-3">
+        <div className="flex justify-start relative">
+          <div
+            className={`min-h-[40px] p-2 flex items-center justify-center ${
+              winner === 'teamA' 
+                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-500 rounded-lg' 
+                : isTie 
+                ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-400 dark:border-blue-500 rounded-lg' 
+                : ''
+            }`}
+          >
+            <div className="flex gap-1 justify-center">
+              {teamAPlayers.map(player => (
+                <div key={player.id}>
+                  <PlayerAvatar
+                    player={player}
+                    draggable={false}
+                    showName={true}
+                    extrasmall={true}
+                    removable={false}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          {isFinal && winner === 'teamA' && (
+            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-yellow-400 dark:bg-yellow-500 border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-lg">
+              <Award size={14} className="text-white" fill="white" />
+            </div>
+          )}
+          {isFinal && isTie && (
+            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-blue-400 dark:bg-blue-500 border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-lg">
+              <Award size={14} className="text-white" fill="white" />
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center">
+          <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+            VS
+          </div>
+        </div>
+
+        <div className="flex justify-start relative">
+          <div
+            className={`min-h-[40px] p-2 flex items-center justify-center ${
+              winner === 'teamB' 
+                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-500 rounded-lg' 
+                : isTie 
+                ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-400 dark:border-blue-500 rounded-lg' 
+                : ''
+            }`}
+          >
+            <div className="flex gap-1 justify-center">
+              {teamBPlayers.map(player => (
+                <div key={player.id}>
+                  <PlayerAvatar
+                    player={player}
+                    draggable={false}
+                    showName={true}
+                    extrasmall={true}
+                    removable={false}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          {isFinal && winner === 'teamB' && (
+            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-yellow-400 dark:bg-yellow-500 border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-lg">
+              <Award size={14} className="text-white" fill="white" />
+            </div>
+          )}
+          {isFinal && isTie && (
+            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-blue-400 dark:bg-blue-500 border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-lg">
+              <Award size={14} className="text-white" fill="white" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {(game.club?.name || (game.timeIsSet && game.startTime)) && (
+        <div className="mt-2 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 flex items-center gap-1">
+          {game.club?.name && (
+            <>
+              <MapPin size={10} />
+              <span>{game.club.name}</span>
+            </>
+          )}
+          {game.timeIsSet && game.startTime && (
+            <>
+              {game.club?.name && <span className="text-gray-500 dark:text-gray-600">•</span>}
+              <Calendar size={10} />
+              <span>{getDateTimeLabel()}</span>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+

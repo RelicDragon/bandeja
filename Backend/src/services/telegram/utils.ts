@@ -14,22 +14,7 @@ export function escapeMarkdown(text: string): string {
     .replace(/\\/g, '\\\\')
     .replace(/_/g, '\\_')
     .replace(/\*/g, '\\*')
-    .replace(/\[/g, '\\[')
-    .replace(/\]/g, '\\]')
-    .replace(/\(/g, '\\(')
-    .replace(/\)/g, '\\)')
-    .replace(/~/g, '\\~')
-    .replace(/`/g, '\\`')
-    .replace(/>/g, '\\>')
-    .replace(/#/g, '\\#')
-    .replace(/\+/g, '\\+')
-    .replace(/-/g, '\\-')
-    .replace(/=/g, '\\=')
-    .replace(/\|/g, '\\|')
-    .replace(/\{/g, '\\{')
-    .replace(/\}/g, '\\}')
-    .replace(/\./g, '\\.')
-    .replace(/!/g, '\\!');
+    .replace(/\[/g, '\\[');
 }
 
 export function escapeHTML(text: string): string {
@@ -51,9 +36,6 @@ export function convertMarkdownMessageToHTML(markdownMessage: string): string {
   html = html.replace(/\\\*/g, '*');
   html = html.replace(/\\_/g, '_');
   html = html.replace(/\\\[/g, '[');
-  html = html.replace(/\\\]/g, ']');
-  html = html.replace(/\\\(/g, '(');
-  html = html.replace(/\\\)/g, ')');
   html = html.replace(/\x00BACKSLASH\x00/g, '\\');
   
   html = html.replace(/\*([^*]+)\*/g, '<b>$1</b>');

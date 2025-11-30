@@ -4,18 +4,13 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { GameReadService } from './read.service';
+import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 
 export class GameUpdateService {
   static async updateGame(id: string, data: any, userId: string) {
-    const participant = await prisma.gameParticipant.findFirst({
-      where: {
-        gameId: id,
-        userId,
-        role: { in: ['OWNER', 'ADMIN'] },
-      },
-    });
+    const hasPermission = await hasParentGamePermission(id, userId);
 
-    if (!participant) {
+    if (!hasPermission) {
       throw new ApiError(403, 'Only owners and admins can update the game');
     }
 

@@ -25,7 +25,6 @@ import {
   Swords,
   Trophy,
   GraduationCap,
-  Eye,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -49,6 +48,7 @@ export const GameInfo = ({
   onEditCourt
 }: GameInfoProps) => {
   const { t } = useTranslation();
+  const showTags = game.entityType !== 'LEAGUE';
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState({ url: '', title: '', text: '' });
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
@@ -188,13 +188,13 @@ export const GameInfo = ({
         <div className="pr-20 flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <GameStatusIcon status={game.status} className="p-1" />
-            {!game.isPublic && (
+            {showTags && !game.isPublic && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
                 <Lock size={14} />
                 {t('games.private')}
               </span>
             )}
-            {game.genderTeams && game.genderTeams !== 'ANY' && (
+            {showTags && game.genderTeams && game.genderTeams !== 'ANY' && (
               <div className="flex items-center gap-1">
                 {game.genderTeams === 'MIX_PAIRS' ? (
                   <div className="h-6 px-2 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 dark:from-blue-600 dark:to-pink-600 flex items-center justify-center gap-1">
@@ -212,38 +212,38 @@ export const GameInfo = ({
                 )}
               </div>
             )}
-            {isOwner && (
+            {showTags && isOwner && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1">
                 <Crown size={14} />
                 {t('games.organizerFull')}
               </span>
             )}
-            {game.entityType !== 'GAME' && (
+            {showTags && game.entityType !== 'GAME' && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
                 {game.entityType === 'TOURNAMENT' && <Swords size={14} />}
-                {(game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && <Trophy size={14} />}
+                {game.entityType === 'LEAGUE_SEASON' && <Trophy size={14} />}
                 {game.entityType === 'TRAINING' && <GraduationCap size={14} />}
                 {game.entityType === 'BAR' && <Beer size={14} />}
                 {t(`games.entityTypes.${game.entityType}`)}
               </span>
             )}
-            {game.gameType !== 'CLASSIC' && (
+            {showTags && game.gameType !== 'CLASSIC' && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                 {t(`games.gameTypes.${game.gameType}`)}
               </span>
             )}
-            {isGuest && (
+            {showTags && isGuest && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                 {t('chat.guest')}
               </span>
             )}
-            {!game.affectsRating && (
+            {showTags && !game.affectsRating && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
                 <Ban size={14} />
                 {t('games.noRating')}
               </span>
             )}
-            {game.hasFixedTeams && (
+            {showTags && game.hasFixedTeams && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1">
                 <div className="flex items-center">
                   <Users size={14} />
@@ -252,23 +252,45 @@ export const GameInfo = ({
                 {t('games.fixedTeams')}
               </span>
             )}
-            {(game.status === 'STARTED' || game.status === 'FINISHED') && game.resultsStatus === 'FINAL' && (
+            {showTags && (game.status === 'STARTED' || game.status === 'FINISHED') && game.resultsStatus === 'FINAL' && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
                 <Award size={14} />
                 {t('games.resultsAvailable')}
               </span>
             )}
           </div>
-          {game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name ? (
+          {game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name ? (
             <>
+              <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                {game.parent.leagueSeason.league.name}
+              </h1>
+              {game.parent.leagueSeason.game?.name && (
+                <p className="text-2xl font-semibold text-purple-600 dark:text-purple-400 mt-2">
+                  {game.parent.leagueSeason.game.name}
+                </p>
+              )}
+              <p className="text-xl font-medium mt-2 flex items-center gap-2 flex-wrap">
+                {game.leagueGroup?.name && (
+                  <span 
+                    className="px-3 py-1 text-sm font-medium rounded text-white"
+                    style={{ backgroundColor: game.leagueGroup.color || '#6b7280' }}
+                  >
+                    {game.leagueGroup.name}
+                  </span>
+                )}
+                <span className="text-gray-600 dark:text-gray-400">{t('gameDetails.round')} {game.leagueRound.orderIndex + 1}</span>
+              </p>
+            </>
+          ) : game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name ? (
+            <>
+              <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                {game.leagueSeason.league.name}
+              </h1>
               {game.name && game.name.trim() !== '' && (
-                <p className="text-gray-700 dark:text-gray-300 mb-2">
+                <p className="text-2xl font-semibold text-purple-600 dark:text-purple-400 mt-2">
                   {game.name}
                 </p>
               )}
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                {game.leagueSeason.league.name}
-              </h1>
             </>
           ) : (
             <>

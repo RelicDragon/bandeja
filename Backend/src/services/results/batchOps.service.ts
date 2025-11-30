@@ -1,6 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { ParticipantRole } from '@prisma/client';
+import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 
 interface Op {
   id: string;
@@ -592,11 +592,10 @@ export async function batchOps(
     throw new ApiError(404, 'Game not found');
   }
 
-  const userParticipant = game.participants.find(
-    (p: { userId: string; role: ParticipantRole }) => p.userId === requestUserId && (p.role === ParticipantRole.OWNER || p.role === ParticipantRole.ADMIN)
-  );
+  // Check if user has permission (current game or parent game)
+  const hasPermission = await hasParentGamePermission(gameId, requestUserId);
 
-  if (!userParticipant && !game.resultsByAnyone) {
+  if (!hasPermission && !game.resultsByAnyone) {
     throw new ApiError(403, 'Only game owners/admins can modify results');
   }
 

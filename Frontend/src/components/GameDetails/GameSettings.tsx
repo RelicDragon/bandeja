@@ -29,6 +29,9 @@ interface GameSettingsProps {
     genderTeams: GenderTeam;
     gameType: GameType;
     description: string;
+    pointsPerWin: number;
+    pointsPerLoose: number;
+    pointsPerTie: number;
   };
   onEditModeToggle: () => void;
   onSaveChanges: () => void;
@@ -78,6 +81,26 @@ export const GameSettings = ({
 }: GameSettingsProps) => {
   const { t } = useTranslation();
   const { showNotes, toggleShowNotes } = useShowSettingsNotes();
+  const isLeagueSeason = game?.entityType === 'LEAGUE_SEASON';
+  const settingsTitle = t(isLeagueSeason ? 'createGame.settingsLeague' : 'createGame.settings');
+  const avatarLabel = t(isLeagueSeason ? 'createLeague.seasonAvatar' : 'gameDetails.gameAvatar');
+  const locationLabel = t(isLeagueSeason ? 'createGame.locationLeague' : 'createGame.location');
+  const gameTypeLabel = t(isLeagueSeason ? 'createGame.gameTypeLeague' : 'createGame.gameType');
+  const gameTypeNote = t(isLeagueSeason ? 'createGame.gameTypeNoteLeague' : 'createGame.gameTypeNote');
+  const nameLabel = t(isLeagueSeason ? 'createGame.gameNameLeague' : 'createGame.gameName');
+  const namePlaceholder = t(isLeagueSeason ? 'createGame.gameNamePlaceholderLeague' : 'createGame.gameNamePlaceholder');
+  const commentsLabel = t(isLeagueSeason ? 'createGame.commentsLeague' : 'createGame.comments');
+  const commentsPlaceholder = t(isLeagueSeason ? 'createGame.commentsPlaceholderLeague' : 'createGame.commentsPlaceholder');
+  const pointValues = [0, 1, 2, 3];
+  const resolvedPoints = {
+    win: isEditMode ? editFormData.pointsPerWin : (game?.pointsPerWin ?? 0),
+    loose: isEditMode ? editFormData.pointsPerLoose : (game?.pointsPerLoose ?? 0),
+    tie: isEditMode ? editFormData.pointsPerTie : (game?.pointsPerTie ?? 0),
+  };
+  const handlePointsSelect = (field: 'pointsPerWin' | 'pointsPerLoose' | 'pointsPerTie', value: number) => {
+    if (!isEditMode) return;
+    onFormDataChange({ [field]: value } as Partial<GameSettingsProps['editFormData']>);
+  };
 
   if (!canEdit) {
     return null;
@@ -91,7 +114,7 @@ export const GameSettings = ({
         <div className="flex items-center gap-2">
           <Settings size={18} className="text-gray-500 dark:text-gray-400" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {t('createGame.settings')}
+            {settingsTitle}
           </h2>
           <button
             onClick={toggleShowNotes}
@@ -157,7 +180,7 @@ export const GameSettings = ({
         {(isEditMode || isClosingEditMode) && (
           <div className={`${isClosingEditMode ? 'animate-bounce-out' : 'animate-bounce-in'}`}>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-              {t('gameDetails.gameAvatar')}
+              {avatarLabel}
             </label>
             <div className="flex justify-center">
               <AvatarUpload
@@ -205,7 +228,7 @@ export const GameSettings = ({
           <div className={`space-y-3 ${isClosingEditMode ? 'animate-bounce-out' : 'animate-bounce-in'}`}>
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-                {t('createGame.location')}
+                {locationLabel}
               </label>
               <div className="space-y-2">
                 <button
@@ -256,7 +279,7 @@ export const GameSettings = ({
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.gameType')}
+                {gameTypeLabel}
               </span>
               <div className="flex-shrink-0 w-40">
                 <Select
@@ -285,10 +308,45 @@ export const GameSettings = ({
             </div>
             {showNotes && (
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {t('createGame.gameTypeNote')}
+                {gameTypeNote}
               </p>
             )}
           </div>
+          {isLeagueSeason && (
+            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 block mb-2">
+                {t('gameResults.points')}
+              </span>
+              <div className="space-y-3">
+                {[
+                  { label: t('gameResults.win'), field: 'pointsPerWin' as const, value: resolvedPoints.win },
+                  { label: t('gameResults.tie'), field: 'pointsPerTie' as const, value: resolvedPoints.tie },
+                  { label: t('gameResults.loose'), field: 'pointsPerLoose' as const, value: resolvedPoints.loose },
+                ].map(({ label, field, value }) => (
+                  <div key={field}>
+                    <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{label}</span>
+                    <div className="flex gap-2">
+                      {pointValues.map((num) => (
+                        <button
+                          key={`${field}-${num}`}
+                          type="button"
+                          disabled={!isEditMode}
+                          onClick={() => handlePointsSelect(field, num)}
+                          className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                            value === num
+                              ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                          } ${!isEditMode ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {(game?.entityType === 'GAME' || game?.entityType === 'TOURNAMENT' || game?.entityType === 'LEAGUE') && (
             <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <div className="flex items-center justify-between mb-1">
@@ -351,57 +409,61 @@ export const GameSettings = ({
               )}
             </div>
           )}
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.ratingGame.title')}
-              </span>
-              <div className="flex-shrink-0">
-                <ToggleSwitch 
-                  checked={isEditMode ? editFormData.affectsRating : game?.affectsRating || false} 
-                  onChange={(checked) => onFormDataChange({affectsRating: checked})}
-                  disabled={!isEditMode}
-                />
+          {!isLeagueSeason && (
+            <>
+              <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                    {t('createGame.ratingGame.title')}
+                  </span>
+                  <div className="flex-shrink-0">
+                    <ToggleSwitch 
+                      checked={isEditMode ? editFormData.affectsRating : game?.affectsRating || false} 
+                      onChange={(checked) => onFormDataChange({affectsRating: checked})}
+                      disabled={!isEditMode}
+                    />
+                  </div>
+                </div>
+                {showNotes && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {(() => {
+                      const affectsRating = isEditMode ? editFormData.affectsRating : (game?.affectsRating || false);
+                      return affectsRating 
+                        ? t('createGame.ratingGame.note.true')
+                        : t('createGame.ratingGame.note.false');
+                    })()}
+                  </p>
+                )}
               </div>
-            </div>
-            {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {(() => {
-                  const affectsRating = isEditMode ? editFormData.affectsRating : (game?.affectsRating || false);
-                  return affectsRating 
-                    ? t('createGame.ratingGame.note.true')
-                    : t('createGame.ratingGame.note.false');
-                })()}
-              </p>
-            )}
-          </div>
-          
-          <Divider />
-          
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.publicGame.title')}
-              </span>
-              <div className="flex-shrink-0">
-                <ToggleSwitch 
-                  checked={isEditMode ? editFormData.isPublic : game?.isPublic || false} 
-                  onChange={(checked) => onFormDataChange({isPublic: checked})}
-                  disabled={!isEditMode}
-                />
+              
+              <Divider />
+              
+              <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                    {t('createGame.publicGame.title')}
+                  </span>
+                  <div className="flex-shrink-0">
+                    <ToggleSwitch 
+                      checked={isEditMode ? editFormData.isPublic : game?.isPublic || false} 
+                      onChange={(checked) => onFormDataChange({isPublic: checked})}
+                      disabled={!isEditMode}
+                    />
+                  </div>
+                </div>
+                {showNotes && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {(() => {
+                      const isPublic = isEditMode ? editFormData.isPublic : (game?.isPublic || false);
+                      return isPublic 
+                        ? t('createGame.publicGame.note.true')
+                        : t('createGame.publicGame.note.false');
+                    })()}
+                  </p>
+                )}
               </div>
-            </div>
-            {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {(() => {
-                  const isPublic = isEditMode ? editFormData.isPublic : (game?.isPublic || false);
-                  return isPublic 
-                    ? t('createGame.publicGame.note.true')
-                    : t('createGame.publicGame.note.false');
-                })()}
-              </p>
-            )}
-          </div>
+            </>
+          )}
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
@@ -426,30 +488,32 @@ export const GameSettings = ({
               </p>
             )}
           </div>
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.resultsByAnyone.title')}
-              </span>
-              <div className="flex-shrink-0">
-                <ToggleSwitch 
-                  checked={isEditMode ? editFormData.resultsByAnyone : game?.resultsByAnyone || false} 
-                  onChange={(checked) => onFormDataChange({resultsByAnyone: checked})}
-                  disabled={!isEditMode}
-                />
+          {!isLeagueSeason && (
+            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                  {t('createGame.resultsByAnyone.title')}
+                </span>
+                <div className="flex-shrink-0">
+                  <ToggleSwitch 
+                    checked={isEditMode ? editFormData.resultsByAnyone : game?.resultsByAnyone || false} 
+                    onChange={(checked) => onFormDataChange({resultsByAnyone: checked})}
+                    disabled={!isEditMode}
+                  />
+                </div>
               </div>
+              {showNotes && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {(() => {
+                    const resultsByAnyone = isEditMode ? editFormData.resultsByAnyone : (game?.resultsByAnyone || false);
+                    return resultsByAnyone 
+                      ? t('createGame.resultsByAnyone.note.true')
+                      : t('createGame.resultsByAnyone.note.false');
+                  })()}
+                </p>
+              )}
             </div>
-            {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {(() => {
-                  const resultsByAnyone = isEditMode ? editFormData.resultsByAnyone : (game?.resultsByAnyone || false);
-                  return resultsByAnyone 
-                    ? t('createGame.resultsByAnyone.note.true')
-                    : t('createGame.resultsByAnyone.note.false');
-                })()}
-              </p>
-            )}
-          </div>
+          )}
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
@@ -506,14 +570,14 @@ export const GameSettings = ({
         {(isEditMode || isClosingEditMode) && (
           <div className={`${(isEditMode || isClosingEditMode) && (!game?.name || game.name.trim() === '') ? (isClosingEditMode ? 'animate-bounce-out' : 'animate-bounce-in') : ''}`}>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-              {t('createGame.gameName')}
+              {nameLabel}
             </label>
             {(isEditMode || isClosingEditMode) ? (
               <input
                 type="text"
                 value={editFormData.name}
                 onChange={(e) => onFormDataChange({name: e.target.value})}
-                placeholder={t('createGame.gameNamePlaceholder')}
+                placeholder={namePlaceholder}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
               />
             ) : (
@@ -528,13 +592,13 @@ export const GameSettings = ({
         {(isEditMode || isClosingEditMode) && (
           <div className={`${(isEditMode || isClosingEditMode) && (!game?.description || game.description.trim() === '') ? (isClosingEditMode ? 'animate-bounce-out' : 'animate-bounce-in') : ''}`}>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-              {t('createGame.comments')}
+              {commentsLabel}
             </label>
             {(isEditMode || isClosingEditMode) ? (
               <textarea
                 value={editFormData.description}
                 onChange={(e) => onFormDataChange({description: e.target.value})}
-                placeholder={t('createGame.commentsPlaceholder')}
+                placeholder={commentsPlaceholder}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
                 rows={3}
               />

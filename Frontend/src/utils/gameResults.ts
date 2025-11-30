@@ -1,6 +1,46 @@
 import { Game, User } from '@/types';
 
 /**
+ * Checks if a user is admin or owner of a game (including parent game)
+ * 
+ * @param game - The game object
+ * @param userId - The user ID to check
+ * @returns boolean indicating if the user has admin/owner permissions
+ */
+export const isUserGameAdminOrOwner = (game: Game, userId: string): boolean => {
+  // Check current game
+  const isCurrentGameAdminOrOwner = game.participants?.some(
+    (p) => p.userId === userId && ['OWNER', 'ADMIN'].includes(p.role)
+  );
+
+  if (isCurrentGameAdminOrOwner) return true;
+
+  // Check parent game
+  const isParentGameAdminOrOwner = game.parent?.participants?.some(
+    (p) => p.userId === userId && ['OWNER', 'ADMIN'].includes(p.role)
+  );
+
+  return isParentGameAdminOrOwner || false;
+};
+
+/**
+ * Checks if a user is a participant in a game (including having access through parent game)
+ * 
+ * @param game - The game object
+ * @param userId - The user ID to check
+ * @returns boolean indicating if the user is a participant or has parent access
+ */
+export const isUserGameParticipant = (game: Game, userId: string): boolean => {
+  // Check if user is a participant in current game
+  const isCurrentParticipant = game.participants?.some((p) => p.userId === userId);
+  
+  if (isCurrentParticipant) return true;
+
+  // Check if user is admin/owner of parent game (grants access)
+  return isUserGameAdminOrOwner(game, userId);
+};
+
+/**
  * Gets the game result status information - shows only problems or simple positive message
  * 
  * @param game - The game object
@@ -20,23 +60,17 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
 
   // Check if user has permission to modify results (user permissions only)
   let hasEditPermission = false;
+  
   if (user.isAdmin) {
     hasEditPermission = true;
-  } else {
-    // Check if user is admin or owner of the game
-    const isAdminOrOwner = game.participants.some(
-      (p) => p.userId === user.id && ['OWNER', 'ADMIN'].includes(p.role)
+  } else if (isUserGameAdminOrOwner(game, user.id)) {
+    hasEditPermission = true;
+  } else if (game.resultsByAnyone) {
+    // Check if user is a playing participant and resultsByAnyone is true
+    const isPlayingParticipant = game.participants.some(
+      (p) => p.userId === user.id && p.isPlaying
     );
-
-    if (isAdminOrOwner) {
-      hasEditPermission = true;
-    } else {
-      // Check if user is a playing participant and resultsByAnyone is true
-      const isPlayingParticipant = game.participants.some(
-        (p) => p.userId === user.id && p.isPlaying
-      );
-      hasEditPermission = isPlayingParticipant && (game.resultsByAnyone || false);
-    }
+    hasEditPermission = isPlayingParticipant;
   }
 
   // Check if game is archived
@@ -130,10 +164,6 @@ export const canUserSeeGame = (game: Game, user: User | null): boolean => {
   // Admin users can see all games
   if (user.isAdmin) return true;
 
-  // Check if user is a participant in the game
-  const isParticipant = game.participants.some(
-    (p) => p.userId === user.id
-  );
-
-  return isParticipant;
+  // Check if user is a participant or has parent access
+  return isUserGameParticipant(game, user.id);
 };

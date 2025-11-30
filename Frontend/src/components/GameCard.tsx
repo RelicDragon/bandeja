@@ -135,6 +135,8 @@ export const GameCard = ({
   const isGuest = game.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN');
   const canAccessChat = isParticipant || hasPendingInvite || isGuest || game.isPublic;
   const resultStatus = getGameResultStatus(game, user);
+  const isLeagueSeasonGame = game.entityType === 'LEAGUE_SEASON';
+  const shouldShowTiming = !isLeagueSeasonGame;
 
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -280,15 +282,50 @@ export const GameCard = ({
       {/* Header - Always visible */}
       <div className="mb-3 relative z-10">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-20">
-          {game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name
-            ? game.leagueSeason.league.name
-            : game.name}
-          {game.name && game.gameType !== 'CLASSIC' && (
+          {game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name
+            ? (
+              <>
+                <span className="text-blue-600 dark:text-blue-400">
+                  {game.parent.leagueSeason.league.name}
+                </span>
+                {game.parent.leagueSeason.game?.name && (
+                  <span className="text-purple-600 dark:text-purple-400"> {game.parent.leagueSeason.game.name}</span>
+                )}
+                {(game.leagueGroup?.name || game.leagueRound) && (
+                  <div className="mt-1 flex items-center gap-2 flex-wrap">
+                    {game.leagueGroup?.name && (
+                      <span
+                        className="px-2 py-0.5 text-xs font-medium rounded text-white"
+                        style={{ backgroundColor: game.leagueGroup.color || '#6b7280' }}
+                      >
+                        {game.leagueGroup.name}
+                      </span>
+                    )}
+                    {game.leagueRound && (
+                      <span className="text-gray-600 dark:text-gray-400">
+                        {t('gameDetails.round')} {game.leagueRound.orderIndex + 1}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </>
+            )
+            : game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name
+              ? (
+                <>
+                  <span className="text-blue-600 dark:text-blue-400">{game.leagueSeason.league.name}</span>
+                  {game.name && (
+                    <span className="text-purple-600 dark:text-purple-400"> {game.name}</span>
+                  )}
+                </>
+              )
+              : game.name}
+          {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.name && game.gameType !== 'CLASSIC' && (
             <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
               ({t(`games.gameTypes.${game.gameType}`)})
             </span>
           )}
-          {!game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
+          {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
         </h3>
         <div className="flex items-center gap-2 mb-1">
           <GameStatusIcon status={game.status} />
@@ -342,11 +379,6 @@ export const GameCard = ({
               {game.entityType === 'TRAINING' && <GraduationCap size={12} />}
               {game.entityType === 'BAR' && <Beer size={12} />}
               {t(`games.entityTypes.${game.entityType}`)}
-            </span>
-          )}
-          {game.entityType === 'LEAGUE_SEASON' && game.name && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-              {game.name}
             </span>
           )}
           {isGuest && (
@@ -406,7 +438,7 @@ export const GameCard = ({
 
       {/* Collapsed view - Single row */}
       {isCollapsed && (
-        <div className={`text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 ${game.entityType === 'TRAINING' ? 'flex gap-4' : game.avatar ? 'flex gap-4' : 'flex items-center gap-4'}`}>
+        <div className={`text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 ${game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : 'flex items-center gap-4'}`}>
           {game.entityType === 'TRAINING' ? (
             <>
               <div className="flex-shrink-0">
@@ -433,7 +465,7 @@ export const GameCard = ({
                   {showDate && <Calendar size={14} />}
                   <span>
                     {showDate && getDateLabel(game.startTime, false)}
-                    {game.entityType !== 'LEAGUE_SEASON' && (
+                    {shouldShowTiming && (
                       <>
                         {` ${formatDate(game.startTime, 'HH:mm')}`}
                         {`, ${(() => {
@@ -468,17 +500,17 @@ export const GameCard = ({
                 </div>
               </div>
             </>
-          ) : game.avatar ? (
+          ) : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? (
             <>
               <div className="flex-shrink-0">
-                <GameAvatar avatar={game.avatar} small alt={game.name || t('gameDetails.gameAvatar')} />
+                <GameAvatar avatar={game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar} small alt={game.name || t('gameDetails.gameAvatar')} />
               </div>
               <div className="flex flex-col gap-2 flex-1">
                 <div className="flex items-center gap-1">
                   {showDate && <Calendar size={14} />}
                   <span>
                     {showDate && getDateLabel(game.startTime, false)}
-                    {game.entityType !== 'LEAGUE_SEASON' && (
+                    {shouldShowTiming && (
                       <>
                         {` ${formatDate(game.startTime, 'HH:mm')}`}
                         {game.entityType !== 'BAR' ? `, ${(() => {
@@ -522,7 +554,7 @@ export const GameCard = ({
                 {showDate && <Calendar size={14} />}
                 <span>
                   {showDate && getDateLabel(game.startTime, false)}
-                  {game.entityType !== 'LEAGUE_SEASON' && (
+                  {shouldShowTiming && (
                     <>
                       {` ${formatDate(game.startTime, 'HH:mm')}`}
                       {game.entityType !== 'BAR' ? `, ${(() => {
@@ -575,7 +607,7 @@ export const GameCard = ({
               <Calendar size={16} />
               <span>
                 {getDateLabel(game.startTime)}
-                {game.entityType !== 'LEAGUE_SEASON' && (
+                {shouldShowTiming && (
                   <>
                     {` ${formatDate(game.startTime, 'HH:mm')}`}
                     {game.entityType !== 'BAR' ? ` - ${formatDate(game.endTime, 'HH:mm')}` : ''}

@@ -1,8 +1,8 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
-import { ParticipantRole } from '@prisma/client';
 import { GameService } from './game/game.service';
 import { USER_SELECT_FIELDS } from '../utils/constants';
+import { hasParentGamePermission } from '../utils/parentGamePermissions';
 
 interface GameTeamData {
   teamNumber: number;
@@ -24,11 +24,9 @@ export class GameTeamService {
       throw new ApiError(404, 'Game not found');
     }
 
-    const participant = game.participants.find(
-      (p) => p.userId === userId && (p.role === ParticipantRole.OWNER || p.role === ParticipantRole.ADMIN)
-    );
+    const hasPermission = await hasParentGamePermission(gameId, userId);
 
-    if (!participant) {
+    if (!hasPermission) {
       throw new ApiError(403, 'Only game owners/admins can set fixed teams');
     }
 
@@ -50,73 +48,67 @@ export class GameTeamService {
       }
     }
 
-    return await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       await tx.gameTeam.deleteMany({
         where: { gameId },
       });
 
       for (const teamData of teams) {
-        const team = await tx.gameTeam.create({
+        await tx.gameTeam.create({
           data: {
             gameId,
             teamNumber: teamData.teamNumber,
             name: teamData.name,
+            players: {
+              create: teamData.playerIds.map(userId => ({ userId })),
+            },
           },
         });
-
-        for (const playerId of teamData.playerIds) {
-          await tx.gameTeamPlayer.create({
-            data: {
-              gameTeamId: team.id,
-              userId: playerId,
-            },
-          });
-        }
       }
 
       await tx.game.update({
         where: { id: gameId },
         data: { hasFixedTeams: true },
       });
+    });
 
-      const game = await tx.game.findUnique({
-        where: { id: gameId },
-        include: {
-          participants: {
-            include: {
-              user: {
-                  select: USER_SELECT_FIELDS,
-              },
+    await GameService.updateGameReadiness(gameId);
+
+    const updatedGame = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: {
+        participants: {
+          include: {
+            user: {
+                select: USER_SELECT_FIELDS,
             },
           },
-          club: true,
-          court: true,
-          fixedTeams: {
-            include: {
-              players: {
-                include: {
-                  user: {
-                    select: {
-                      id: true,
-                      firstName: true,
-                      lastName: true,
-                      avatar: true,
-                      level: true,
-                      gender: true,
-                    },
+        },
+        club: true,
+        court: true,
+        fixedTeams: {
+          include: {
+            players: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    avatar: true,
+                    level: true,
+                    gender: true,
                   },
                 },
               },
             },
-            orderBy: { teamNumber: 'asc' },
           },
+          orderBy: { teamNumber: 'asc' },
         },
-      });
-
-      await GameService.updateGameReadiness(gameId);
-
-      return game;
+      },
     });
+
+    return updatedGame;
   }
 
   static async getGameTeams(gameId: string) {
@@ -167,11 +159,9 @@ export class GameTeamService {
       throw new ApiError(404, 'Game not found');
     }
 
-    const participant = game.participants.find(
-      (p) => p.userId === userId && (p.role === ParticipantRole.OWNER || p.role === ParticipantRole.ADMIN)
-    );
+    const hasPermission = await hasParentGamePermission(gameId, userId);
 
-    if (!participant) {
+    if (!hasPermission) {
       throw new ApiError(403, 'Only game owners/admins can delete fixed teams');
     }
 

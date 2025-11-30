@@ -3,6 +3,7 @@ import { InviteStatus, ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from '../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { GameService } from './game/game.service';
+import { hasParentGamePermission } from '../utils/parentGamePermissions';
 
 export interface InviteActionResult {
   success: boolean;
@@ -44,7 +45,19 @@ export class InviteService {
       };
     }
 
-    if (invite.receiverId !== userId) {
+    // Check if user is the receiver or has admin/owner permissions on the game
+    const isReceiver = invite.receiverId === userId;
+    let hasAdminPermission = false;
+    
+    if (!isReceiver && invite.gameId) {
+      hasAdminPermission = await hasParentGamePermission(
+        invite.gameId,
+        userId,
+        [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+      );
+    }
+
+    if (!isReceiver && !hasAdminPermission) {
       return {
         success: false,
         message: 'errors.invites.notAuthorizedToAccept',
@@ -76,15 +89,16 @@ export class InviteService {
         };
       }
 
+      // Always add the receiver (not the person accepting) as participant
       const existingParticipant = invite.game.participants.find(
-        (p: any) => p.userId === userId
+        (p: any) => p.userId === invite.receiverId
       );
 
       if (!existingParticipant) {
         await prisma.gameParticipant.create({
           data: {
             gameId: invite.gameId,
-            userId: userId,
+            userId: invite.receiverId,
             role: ParticipantRole.PARTICIPANT,
             isPlaying: true,
           },
@@ -112,7 +126,8 @@ export class InviteService {
         (global as any).socketService.emitInviteDeleted(invite.senderId, invite.id, invite.gameId || undefined);
       }
       if (invite.gameId) {
-        (global as any).socketService.emitGameUpdate(invite.gameId, userId, undefined, forceUpdate);
+        // Emit game update for the receiver (the person joining), not the person accepting
+        (global as any).socketService.emitGameUpdate(invite.gameId, invite.receiverId, undefined, forceUpdate);
       }
     }
 
@@ -147,7 +162,19 @@ export class InviteService {
       };
     }
 
-    if (invite.receiverId !== userId) {
+    // Check if user is the receiver or has admin/owner permissions on the game
+    const isReceiver = invite.receiverId === userId;
+    let hasAdminPermission = false;
+    
+    if (!isReceiver && invite.gameId) {
+      hasAdminPermission = await hasParentGamePermission(
+        invite.gameId,
+        userId,
+        [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+      );
+    }
+
+    if (!isReceiver && !hasAdminPermission) {
       return {
         success: false,
         message: 'errors.invites.notAuthorizedToDecline',

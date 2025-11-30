@@ -65,7 +65,7 @@ export const GameResultsEntry = () => {
   const hasChanges = engine.pendingOpsCount > 0;
   const syncStatus = engine.syncStatus;
 
-  const players = useMemo(() => (game?.participants.map(p => p.user) || []) as User[], [game?.participants]);
+  const players = useMemo(() => (game?.participants.filter(p => p.isPlaying).map(p => p.user) || []) as User[], [game?.participants]);
 
   const needsGameSetup = game?.resultsStatus === 'NONE';
 

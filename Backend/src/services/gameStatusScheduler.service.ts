@@ -40,6 +40,7 @@ export class GameStatusScheduler {
           endTime: true,
           resultsStatus: true,
           status: true,
+          entityType: true,
         },
       });
 
@@ -48,6 +49,13 @@ export class GameStatusScheduler {
         const newStatus = calculateGameStatus(game);
         
         if (newStatus !== game.status) {
+          if (
+            game.entityType === EntityType.LEAGUE_SEASON &&
+            (newStatus === 'FINISHED' || newStatus === 'ARCHIVED')
+          ) {
+            continue;
+          }
+
           await prisma.game.update({
             where: { id: game.id },
             data: { status: newStatus },
