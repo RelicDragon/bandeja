@@ -651,7 +651,7 @@ export const GameCard = ({
               <div className="relative -mx-0 flex-1 w-full">
                 <div 
                   ref={carouselRef}
-                  className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth flex-nowrap px-2 py-2"
+                  className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth flex-nowrap px-2 py-2"
                   onMouseDown={handlePressStart}
                   onMouseUp={handlePressEnd}
                   onMouseLeave={handlePressEnd}
