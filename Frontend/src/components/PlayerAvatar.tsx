@@ -238,15 +238,19 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
           showName ? 'max-h-20 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-2'
         }`}>
           <div className={`${sizeClasses.name} text-gray-700 dark:text-gray-300 break-words text-center leading-tight flex flex-col items-center justify-center`}>
-            {extrasmall && !isCurrentUser ? (
-              <>
-                <span className="text-center">{player.firstName}</span>
-                <span className="text-center">{player.lastName}</span>
-              </>
-            ) : (
-              <span className={`${extrasmall ? 'max-w-20' : 'max-w-24'}`}>
-                {isCurrentUser ? t('createGame.you') : [player.firstName, player.lastName].filter(name => name && name.trim()).join(' ')}
+            {isCurrentUser ? (
+              <span className={`${extrasmall ? 'max-w-20' : 'max-w-24'} truncate`}>
+                {t('createGame.you')}
               </span>
+            ) : (
+              <>
+                <span className={`text-center truncate ${extrasmall ? 'max-w-20' : 'max-w-24'}`}>
+                  {player.firstName || ''}
+                </span>
+                <span className={`text-center truncate ${extrasmall ? 'max-w-20' : 'max-w-24'}`}>
+                  {player.lastName || ''}
+                </span>
+              </>
             )}
           </div>
         </div>

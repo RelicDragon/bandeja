@@ -651,7 +651,7 @@ export const GameCard = ({
               <div className="relative -mx-0 flex-1 w-full">
                 <div 
                   ref={carouselRef}
-                  className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth flex-nowrap px-2 py-2"
+                  className="flex overflow-x-auto scrollbar-hide scroll-smooth flex-nowrap py-0"
                   onMouseDown={handlePressStart}
                   onMouseUp={handlePressEnd}
                   onMouseLeave={handlePressEnd}
@@ -662,7 +662,7 @@ export const GameCard = ({
                   {game.participants.filter(p => p.isPlaying).map((participant) => {
                     const showName = (isMobile && isScrolling) || isPressed;
                     return (
-                      <div key={participant.userId} className="flex-shrink-0">
+                      <div key={participant.userId} className="flex-shrink-0 mx-2">
                         <PlayerAvatar
                           player={{
                             id: participant.userId,
