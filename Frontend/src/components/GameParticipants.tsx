@@ -105,7 +105,7 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        <div className="flex flex-wrap gap-6">
+        <div className="flex flex-wrap gap-2">
           {game.participants.filter(p => p.isPlaying).map((participant) => (
             <PlayerAvatar
               key={participant.userId}

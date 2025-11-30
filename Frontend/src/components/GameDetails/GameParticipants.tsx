@@ -159,43 +159,44 @@ export const GameParticipants = ({
           </Button>
         )}
         <div className="overflow-x-auto overflow-y-hidden -mx-4 px-4">
-          <div className="flex gap-3 min-w-max pt-1 pb-1">
+          <div className="flex gap-0 pt-1 pb-1">
             {game.participants.filter(p => p.isPlaying).map((participant) => (
-              <PlayerAvatar
-                key={participant.userId}
-                player={{
-                  id: participant.userId,
-                  firstName: participant.user.firstName,
-                  lastName: participant.user.lastName,
-                  avatar: participant.user.avatar,
-                  level: participant.user.level,
-                  gender: participant.user.gender,
-                }}
-                isCurrentUser={participant.userId === userId}
-                removable={participant.userId === userId && !isOwner}
-                onRemoveClick={participant.userId === userId ? onLeave : undefined}
-                role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
-                smallLayout={true}
-              />
-            ))}
-            {game.entityType !== 'BAR' && game.entityType !== 'TOURNAMENT' && game.entityType !== 'LEAGUE' && Array.from({ length: game.maxParticipants - game.participants.filter(p => p.isPlaying).length }).map((_, i) => (
-              canInvitePlayers ? (
-                <button
-                  key={`empty-${i}`}
-                  onClick={onShowPlayerList}
-                  className="flex flex-col items-center flex-shrink-0"
-                >
-                  <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
-                    <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-                  </div>
-                </button>
-              ) : (
+              <div key={participant.userId} className="flex-shrink-0 w-16">
                 <PlayerAvatar
-                  key={`empty-${i}`}
-                  player={null}
+                  player={{
+                    id: participant.userId,
+                    firstName: participant.user.firstName,
+                    lastName: participant.user.lastName,
+                    avatar: participant.user.avatar,
+                    level: participant.user.level,
+                    gender: participant.user.gender,
+                  }}
+                  isCurrentUser={participant.userId === userId}
+                  removable={participant.userId === userId && !isOwner}
+                  onRemoveClick={participant.userId === userId ? onLeave : undefined}
+                  role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
                   smallLayout={true}
                 />
-              )
+              </div>
+            ))}
+            {game.entityType !== 'BAR' && game.entityType !== 'TOURNAMENT' && game.entityType !== 'LEAGUE' && Array.from({ length: game.maxParticipants - game.participants.filter(p => p.isPlaying).length }).map((_, i) => (
+              <div key={`empty-${i}`} className="flex-shrink-0 w-16">
+                {canInvitePlayers ? (
+                  <button
+                    onClick={onShowPlayerList}
+                    className="flex flex-col items-center w-full"
+                  >
+                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
+                      <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                    </div>
+                  </button>
+                ) : (
+                  <PlayerAvatar
+                    player={null}
+                    smallLayout={true}
+                  />
+                )}
+              </div>
             ))}
           </div>
         </div>
