@@ -234,7 +234,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
         )}
       </div>
       {!fullHideName && (
-        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+        <div className={`overflow-visible transition-all duration-300 ease-in-out ${
           showName ? 'max-h-20 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-2'
         }`}>
           <div className={`${sizeClasses.name} text-gray-700 dark:text-gray-300 break-words text-center leading-tight flex flex-col items-center justify-center`}>
@@ -244,7 +244,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
                 <span className="text-center">{player.lastName}</span>
               </>
             ) : (
-              <span className={`${extrasmall ? 'max-w-12' : 'max-w-20'}`}>
+              <span className={`${extrasmall ? 'max-w-20' : 'max-w-24'}`}>
                 {isCurrentUser ? t('createGame.you') : [player.firstName, player.lastName].filter(name => name && name.trim()).join(' ')}
               </span>
             )}
