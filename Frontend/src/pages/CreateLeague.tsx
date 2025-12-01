@@ -6,7 +6,7 @@ import { Button, CreateGameHeader, LeagueLocationSection, LeagueSeasonSection, G
 import { clubsApi, citiesApi } from '@/api';
 import { leaguesApi } from '@/api/leagues';
 import { mediaApi } from '@/api/media';
-import { Club, City, WinnerOfGame, WinnerOfMatch, MatchGenerationType, ParticipantLevelUpMode } from '@/types';
+import { Club, City, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@/types';
 
 export const CreateLeague = () => {
   const { t } = useTranslation();
@@ -36,7 +36,6 @@ export const CreateLeague = () => {
     maxPointsPerTeam?: number;
     winnerOfGame?: WinnerOfGame;
     winnerOfMatch?: WinnerOfMatch;
-    participantLevelUpMode?: ParticipantLevelUpMode;
     matchGenerationType?: MatchGenerationType;
     prohibitMatchesEditing?: boolean;
     pointsPerWin?: number;
@@ -83,7 +82,6 @@ export const CreateLeague = () => {
     maxPointsPerTeam: number;
     winnerOfGame: WinnerOfGame;
     winnerOfMatch: WinnerOfMatch;
-    participantLevelUpMode: ParticipantLevelUpMode;
     matchGenerationType: MatchGenerationType;
     prohibitMatchesEditing?: boolean;
     pointsPerWin: number;
@@ -126,7 +124,6 @@ export const CreateLeague = () => {
             maxPointsPerTeam: gameSetupSeason.maxPointsPerTeam ?? 0,
             winnerOfGame: gameSetupSeason.winnerOfGame ?? 'BY_MATCHES_WON',
             winnerOfMatch: gameSetupSeason.winnerOfMatch ?? 'BY_SCORES',
-            participantLevelUpMode: gameSetupSeason.participantLevelUpMode ?? 'BY_MATCHES',
             matchGenerationType: gameSetupSeason.matchGenerationType ?? 'HANDMADE',
             prohibitMatchesEditing: gameSetupSeason.prohibitMatchesEditing ?? false,
             pointsPerWin: gameSetupSeason.pointsPerWin ?? 0,

@@ -1,5 +1,4 @@
 import prisma from '../../config/database';
-import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class LeagueReadService {

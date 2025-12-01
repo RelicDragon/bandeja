@@ -121,7 +121,7 @@ export class UserChatService {
   }
 
   static async pinUserChat(userId: string, chatId: string) {
-    const chat = await this.getChatById(chatId, userId);
+    await this.getChatById(chatId, userId);
 
     const pinnedChat = await prisma.pinnedUserChat.upsert({
       where: {
@@ -143,7 +143,7 @@ export class UserChatService {
   }
 
   static async unpinUserChat(userId: string, chatId: string) {
-    const chat = await this.getChatById(chatId, userId);
+    await this.getChatById(chatId, userId);
 
     await prisma.pinnedUserChat.delete({
       where: {

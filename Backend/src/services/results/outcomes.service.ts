@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { WinnerOfGame, ParticipantLevelUpMode, Prisma } from '@prisma/client';
-import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes, calculateBySetsWonOutcomes, calculateCombinedOutcomes } from './calculator.service';
+import { WinnerOfGame, Prisma } from '@prisma/client';
+import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
 import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 
@@ -85,7 +85,6 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
   }));
 
   let result;
-  const participantLevelUpMode = game.participantLevelUpMode || ParticipantLevelUpMode.BY_MATCHES;
   const ballsInGames = game.ballsInGames || false;
   
   if (game.winnerOfGame === WinnerOfGame.BY_SCORES_DELTA) {
@@ -107,25 +106,6 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       ballsInGames
     );
   } else {
-    if (participantLevelUpMode === ParticipantLevelUpMode.BY_SETS) {
-      result = calculateBySetsWonOutcomes(
-        players, 
-        roundResults,
-        game.pointsPerWin || 0,
-        game.pointsPerTie || 0,
-        game.pointsPerLoose || 0,
-        ballsInGames
-      );
-    } else if (participantLevelUpMode === ParticipantLevelUpMode.COMBINED) {
-      result = calculateCombinedOutcomes(
-      players, 
-      roundResults,
-      game.pointsPerWin || 0,
-      game.pointsPerTie || 0,
-      game.pointsPerLoose || 0,
-      ballsInGames
-    );
-  } else {
     result = calculateByMatchesWonOutcomes(
       players, 
       roundResults,
@@ -134,7 +114,6 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       game.pointsPerLoose || 0,
       ballsInGames
     );
-    }
   }
 
   return {

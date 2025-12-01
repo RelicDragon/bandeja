@@ -176,7 +176,6 @@ export const uploadGameAvatar = asyncHandler(async (req: AuthRequest, res: Respo
     await ImageProcessor.deleteFile(game.originalAvatar);
   }
 
-  const avatarFile = Array.isArray((req.files as any).avatar) ? (req.files as any).avatar[0] : (req.files as any).avatar;
   const originalFile = Array.isArray((req.files as any).original) ? (req.files as any).original[0] : (req.files as any).original;
 
   // Process avatar using ImageProcessor

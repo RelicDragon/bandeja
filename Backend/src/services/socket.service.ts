@@ -413,7 +413,6 @@ class SocketService {
   }
 
   public emitGameResultsUpdated(gameId: string, senderId: string) {
-    const roomName = `game-${gameId}`;
     let recipientCount = 0;
     const recipientUserIds: string[] = [];
     

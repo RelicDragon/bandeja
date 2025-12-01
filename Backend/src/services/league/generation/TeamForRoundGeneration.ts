@@ -1,6 +1,6 @@
 import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
-import { EntityType, WinnerOfGame, WinnerOfMatch, ParticipantLevelUpMode, MatchGenerationType } from '@prisma/client';
+import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@prisma/client';
 import { calculateGameStatus } from '../../../utils/gameStatus';
 import { GameService } from '../../game/game.service';
 
@@ -247,7 +247,6 @@ export class TeamForRoundGeneration {
         maxPointsPerTeam: seasonGame.maxPointsPerTeam ?? 0,
         winnerOfGame: seasonGame.winnerOfGame ?? WinnerOfGame.BY_MATCHES_WON,
         winnerOfMatch: seasonGame.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
-        participantLevelUpMode: seasonGame.participantLevelUpMode ?? ParticipantLevelUpMode.BY_MATCHES,
         matchGenerationType: seasonGame.matchGenerationType ?? MatchGenerationType.HANDMADE,
         prohibitMatchesEditing: seasonGame.prohibitMatchesEditing ?? false,
         pointsPerWin: seasonGame.pointsPerWin ?? 0,

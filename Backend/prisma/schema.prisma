@@ -191,7 +191,6 @@ model Game {
   maxPointsPerTeam Int              @default(0)
   winnerOfGame    WinnerOfGame      @default(BY_MATCHES_WON)
   winnerOfMatch   WinnerOfMatch     @default(BY_SCORES)
-  participantLevelUpMode ParticipantLevelUpMode @default(BY_MATCHES)
   matchGenerationType MatchGenerationType @default(HANDMADE)
   prohibitMatchesEditing Boolean   @default(false)
   pointsPerWin   Int              @default(0)
@@ -753,12 +752,6 @@ enum MatchGenerationType {
   ESCALERA
   RATING
   WINNERS_COURT
-}
-
-enum ParticipantLevelUpMode {
-  BY_MATCHES
-  BY_SETS
-  COMBINED
 }
 
 model GameCourt {

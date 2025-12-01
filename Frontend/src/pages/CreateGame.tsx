@@ -469,7 +469,6 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
     maxPointsPerTeam: number;
     winnerOfGame: any;
     winnerOfMatch: any;
-    participantLevelUpMode: any;
     matchGenerationType: any;
     prohibitMatchesEditing?: boolean;
     pointsPerWin: number;

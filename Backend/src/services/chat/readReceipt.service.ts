@@ -351,7 +351,7 @@ export class ReadReceiptService {
         });
 
         unreadCounts[chatId] = unreadCount;
-      } catch (error) {
+      } catch {
         unreadCounts[chatId] = 0;
       }
     }
@@ -506,7 +506,7 @@ export class ReadReceiptService {
         });
 
         unreadCounts[bugId] = unreadCount;
-      } catch (error) {
+      } catch {
         unreadCounts[bugId] = 0;
       }
     }

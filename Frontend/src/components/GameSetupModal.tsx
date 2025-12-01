@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
-import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType, ParticipantLevelUpMode } from '@/types';
+import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@/types';
 
 interface GameSetupModalProps {
   isOpen: boolean;
@@ -15,7 +15,6 @@ interface GameSetupModalProps {
     maxPointsPerTeam?: number;
     winnerOfGame?: WinnerOfGame;
     winnerOfMatch?: WinnerOfMatch;
-    participantLevelUpMode?: ParticipantLevelUpMode;
     matchGenerationType?: MatchGenerationType;
     prohibitMatchesEditing?: boolean;
     pointsPerWin?: number;
@@ -30,7 +29,6 @@ interface GameSetupModalProps {
     maxPointsPerTeam: number;
     winnerOfGame: WinnerOfGame;
     winnerOfMatch: WinnerOfMatch;
-    participantLevelUpMode: ParticipantLevelUpMode;
     matchGenerationType: MatchGenerationType;
     prohibitMatchesEditing?: boolean;
     pointsPerWin: number;
@@ -62,7 +60,6 @@ export const GameSetupModal = ({
   const [winnerOfMatch, setWinnerOfMatch] = useState<WinnerOfMatch>(
     initialValues?.winnerOfMatch ?? 'BY_SCORES'
   );
-  const participantLevelUpMode: ParticipantLevelUpMode = 'BY_MATCHES';
   const [matchGenerationType, setMatchGenerationType] = useState<MatchGenerationType>(
     initialValues?.matchGenerationType ?? 'HANDMADE'
   );
@@ -111,7 +108,6 @@ export const GameSetupModal = ({
       maxPointsPerTeam,
       winnerOfGame,
       winnerOfMatch,
-      participantLevelUpMode,
       matchGenerationType,
       prohibitMatchesEditing: matchGenerationType !== 'HANDMADE' && matchGenerationType !== 'FIXED' ? prohibitMatchesEditing : false,
       pointsPerWin,

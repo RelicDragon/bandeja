@@ -2,7 +2,6 @@ import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import { TransactionService } from '../services/transaction.service';
-import { TransactionType } from '@prisma/client';
 
 export const createTransaction = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { type, transactionRows, fromUserId, toUserId } = req.body;

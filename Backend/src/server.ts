@@ -4,7 +4,6 @@ import prisma from './config/database';
 import { initializeLogManager } from './controllers/logs.controller';
 import SocketService from './services/socket.service';
 import telegramBotService from './services/telegram/bot.service';
-import telegramNotificationService from './services/telegram/notification.service';
 import { GameStatusScheduler } from './services/gameStatusScheduler.service';
 import { createServer } from 'http';
 

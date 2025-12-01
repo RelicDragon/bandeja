@@ -398,7 +398,6 @@ export const GameResultsEntry = () => {
     maxPointsPerTeam: number;
     winnerOfGame: WinnerOfGame;
     winnerOfMatch: WinnerOfMatch;
-    participantLevelUpMode: any;
     matchGenerationType: any;
     prohibitMatchesEditing?: boolean;
     pointsPerWin: number;
@@ -415,7 +414,6 @@ export const GameResultsEntry = () => {
         maxPointsPerTeam: params.maxPointsPerTeam,
         winnerOfGame: params.winnerOfGame,
         winnerOfMatch: params.winnerOfMatch,
-        participantLevelUpMode: params.participantLevelUpMode,
         matchGenerationType: params.matchGenerationType,
         prohibitMatchesEditing: params.prohibitMatchesEditing,
         pointsPerWin: params.pointsPerWin,
@@ -900,7 +898,6 @@ export const GameResultsEntry = () => {
                 maxPointsPerTeam: game.maxPointsPerTeam,
                 winnerOfGame: game.winnerOfGame,
                 winnerOfMatch: game.winnerOfMatch,
-                participantLevelUpMode: game.participantLevelUpMode,
                 matchGenerationType: game.matchGenerationType,
                 pointsPerWin: game.pointsPerWin,
                 pointsPerLoose: game.pointsPerLoose,

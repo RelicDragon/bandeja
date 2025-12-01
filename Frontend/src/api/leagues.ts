@@ -19,7 +19,6 @@ export interface CreateLeagueRequest {
       maxPointsPerTeam: number;
       winnerOfGame: string;
       winnerOfMatch: string;
-      participantLevelUpMode: string;
       matchGenerationType: string;
       prohibitMatchesEditing?: boolean;
       pointsPerWin: number;

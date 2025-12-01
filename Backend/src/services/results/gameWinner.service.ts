@@ -10,28 +10,6 @@ interface PlayerGameScore {
   scoresDelta: number;
 }
 
-interface GameWithRounds {
-  id: string;
-  rounds: Array<{
-    id: string;
-    matches: Array<{
-      id: string;
-      winnerId: string | null;
-      teams: Array<{
-        id: string;
-        teamNumber: number;
-        players: Array<{
-          userId: string;
-        }>;
-      }>;
-      sets: Array<{
-        teamAScore: number;
-        teamBScore: number;
-      }>;
-    }>;
-  }>;
-}
-
 async function getPlayerGameScores(
   gameId: string,
   tx: Prisma.TransactionClient

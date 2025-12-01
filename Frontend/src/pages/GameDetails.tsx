@@ -505,7 +505,6 @@ export const GameDetailsContent = () => {
     maxPointsPerTeam: number;
     winnerOfGame: any;
     winnerOfMatch: any;
-    participantLevelUpMode: any;
     matchGenerationType: any;
     prohibitMatchesEditing?: boolean;
     pointsPerWin: number;
@@ -837,7 +836,6 @@ export const GameDetailsContent = () => {
             maxPointsPerTeam: game.maxPointsPerTeam,
             winnerOfGame: game.winnerOfGame,
             winnerOfMatch: game.winnerOfMatch,
-            participantLevelUpMode: game.participantLevelUpMode,
             matchGenerationType: game.matchGenerationType,
             prohibitMatchesEditing: game.prohibitMatchesEditing,
             pointsPerWin: game.pointsPerWin,

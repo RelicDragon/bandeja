@@ -1,6 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { EntityType, WinnerOfGame, WinnerOfMatch, ParticipantLevelUpMode, MatchGenerationType } from '@prisma/client';
+import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@prisma/client';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { GameTeamService } from '../gameTeam.service';
@@ -61,7 +61,6 @@ export class LeagueCreateService {
         maxPointsPerTeam: gameSeasonData.maxPointsPerTeam ?? 0,
         winnerOfGame: (gameSeasonData.winnerOfGame as WinnerOfGame) ?? WinnerOfGame.BY_MATCHES_WON,
         winnerOfMatch: (gameSeasonData.winnerOfMatch as WinnerOfMatch) ?? WinnerOfMatch.BY_SCORES,
-        participantLevelUpMode: (gameSeasonData.participantLevelUpMode as ParticipantLevelUpMode) ?? ParticipantLevelUpMode.BY_MATCHES,
         matchGenerationType: (gameSeasonData.matchGenerationType as MatchGenerationType) ?? MatchGenerationType.HANDMADE,
         prohibitMatchesEditing: gameSeasonData.prohibitMatchesEditing ?? false,
         pointsPerWin: gameSeasonData.pointsPerWin ?? 0,
@@ -544,7 +543,6 @@ export class LeagueCreateService {
         maxPointsPerTeam: seasonGame.maxPointsPerTeam ?? 0,
         winnerOfGame: seasonGame.winnerOfGame ?? WinnerOfGame.BY_MATCHES_WON,
         winnerOfMatch: seasonGame.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
-        participantLevelUpMode: seasonGame.participantLevelUpMode ?? ParticipantLevelUpMode.BY_MATCHES,
         matchGenerationType: seasonGame.matchGenerationType ?? MatchGenerationType.HANDMADE,
         prohibitMatchesEditing: seasonGame.prohibitMatchesEditing ?? false,
         pointsPerWin: seasonGame.pointsPerWin ?? 0,
@@ -798,7 +796,6 @@ export class LeagueCreateService {
     }
 
     const baseSize = Math.floor(participants.length / numberOfGroups);
-    const remainder = participants.length % numberOfGroups;
 
     let participantIndex = 0;
     for (let i = 0; i < numberOfGroups; i++) {
