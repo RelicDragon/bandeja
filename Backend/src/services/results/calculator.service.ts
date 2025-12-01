@@ -130,7 +130,8 @@ export function calculateByMatchesWonOutcomes(
   roundResults: RoundResultData[],
   pointsPerWin: number = 0,
   pointsPerTie: number = 0,
-  pointsPerLoose: number = 0
+  pointsPerLoose: number = 0,
+  ballsInGames: boolean = false
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
@@ -176,7 +177,8 @@ export function calculateByMatchesWonOutcomes(
             isWinner: teamAWins,
             opponentsLevel: teamBAvgLevel,
             setScores: validSets,
-          }
+          },
+          ballsInGames
         );
 
         roundPlayerOutcomes[player.userId] += update.levelChange;
@@ -198,7 +200,8 @@ export function calculateByMatchesWonOutcomes(
             isWinner: teamBWins,
             opponentsLevel: teamAAvgLevel,
             setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore })),
-          }
+          },
+          ballsInGames
         );
 
         roundPlayerOutcomes[player.userId] += update.levelChange;
@@ -240,7 +243,8 @@ export function calculateBySetsWonOutcomes(
   roundResults: RoundResultData[],
   pointsPerWin: number = 0,
   pointsPerTie: number = 0,
-  pointsPerLoose: number = 0
+  pointsPerLoose: number = 0,
+  ballsInGames: boolean = false
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
@@ -291,7 +295,8 @@ export function calculateBySetsWonOutcomes(
               isWinner: setAWins,
               opponentsLevel: teamBAvgLevel,
               setScores: [{ teamAScore: set.teamAScore, teamBScore: set.teamBScore }],
-            }
+            },
+            ballsInGames
           );
 
           const setLevelChange = update.levelChange * 0.33;
@@ -313,7 +318,8 @@ export function calculateBySetsWonOutcomes(
               isWinner: setBWins,
               opponentsLevel: teamAAvgLevel,
               setScores: [{ teamAScore: set.teamBScore, teamBScore: set.teamAScore }],
-            }
+            },
+            ballsInGames
           );
 
           const setLevelChange = update.levelChange * 0.33;
@@ -368,13 +374,14 @@ export function calculateCombinedOutcomes(
   roundResults: RoundResultData[],
   pointsPerWin: number = 0,
   pointsPerTie: number = 0,
-  pointsPerLoose: number = 0
+  pointsPerLoose: number = 0,
+  ballsInGames: boolean = false
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
 } {
-  const matchesResult = calculateByMatchesWonOutcomes(players, roundResults, pointsPerWin, pointsPerTie, pointsPerLoose);
-  const setsResult = calculateBySetsWonOutcomes(players, roundResults, pointsPerWin, pointsPerTie, pointsPerLoose);
+  const matchesResult = calculateByMatchesWonOutcomes(players, roundResults, pointsPerWin, pointsPerTie, pointsPerLoose, ballsInGames);
+  const setsResult = calculateBySetsWonOutcomes(players, roundResults, pointsPerWin, pointsPerTie, pointsPerLoose, ballsInGames);
 
   const combinedGameOutcomes: GameOutcomeResult[] = players.map((player, index) => {
     const matchesOutcome = matchesResult.gameOutcomes.find(o => o.userId === player.userId);
@@ -443,7 +450,8 @@ export function calculateByPointsOutcomes(
   roundResults: RoundResultData[],
   pointsPerWin: number = 0,
   pointsPerTie: number = 0,
-  pointsPerLoose: number = 0
+  pointsPerLoose: number = 0,
+  ballsInGames: boolean = false
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
@@ -553,7 +561,8 @@ export function calculateByScoresDeltaOutcomes(
   roundResults: RoundResultData[],
   pointsPerWin: number = 0,
   pointsPerTie: number = 0,
-  pointsPerLoose: number = 0
+  pointsPerLoose: number = 0,
+  ballsInGames: boolean = false
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
@@ -597,7 +606,9 @@ export function calculateByScoresDeltaOutcomes(
             gamesPlayed: player.gamesPlayed,
           },
           scoreDeltaA,
-          avgOpponentLevel
+          avgOpponentLevel,
+          validSets,
+          ballsInGames
         );
 
         roundPlayerOutcomes[playerId] += update.levelChange;
@@ -620,7 +631,9 @@ export function calculateByScoresDeltaOutcomes(
             gamesPlayed: player.gamesPlayed,
           },
           scoreDeltaB,
-          avgOpponentLevel
+          avgOpponentLevel,
+          validSets,
+          ballsInGames
         );
 
         roundPlayerOutcomes[playerId] += update.levelChange;

@@ -42,6 +42,7 @@ export const CreateLeague = () => {
     pointsPerWin?: number;
     pointsPerLoose?: number;
     pointsPerTie?: number;
+    ballsInGames?: boolean;
   }>({});
   
   const [loading, setLoading] = useState(false);
@@ -88,6 +89,7 @@ export const CreateLeague = () => {
     pointsPerWin: number;
     pointsPerLoose: number;
     pointsPerTie: number;
+    ballsInGames: boolean;
   }) => {
     setGameSetupSeason(params);
   };

@@ -31,6 +31,7 @@ interface MatchExplanation {
   matchNumber: number;
   roundNumber: number;
   isWinner: boolean;
+  isDraw: boolean;
   opponentLevel: number;
   levelDifference: number;
   scoreDelta?: number;
@@ -39,6 +40,7 @@ interface MatchExplanation {
   pointsEarned: number;
   multiplier?: number;
   totalPointDifferential?: number;
+  enduranceCoefficient?: number;
   teammates: Array<{ firstName: string | null; lastName: string | null; level: number }>;
   opponents: Array<{ firstName: string | null; lastName: string | null; level: number }>;
   sets?: SetExplanation[];
@@ -108,6 +110,7 @@ export async function getOutcomeExplanation(
   if (!participant) return null;
 
   const participantLevelUpMode = game.participantLevelUpMode || ParticipantLevelUpMode.BY_MATCHES;
+  const ballsInGames = game.ballsInGames || false;
 
   const existingOutcome = await prisma.gameOutcome.findUnique({
     where: {
@@ -184,8 +187,12 @@ export async function getOutcomeExplanation(
       let scoreDelta: number | undefined = undefined;
 
       if (game.gameType === GameType.AMERICANO) {
-        const userScore = userTeam.score;
-        const opponentScore = opponentTeam.score;
+        const userScore = validSets.reduce((sum, set) => {
+          return sum + (userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore);
+        }, 0);
+        const opponentScore = validSets.reduce((sum, set) => {
+          return sum + (userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore);
+        }, 0);
         scoreDelta = userScore - opponentScore;
 
         const allOpponentLevels = [...userTeam.players, ...opponentTeam.players].map(p => playerLevelsMap.get(p.userId) ?? p.user.level);
@@ -198,7 +205,9 @@ export async function getOutcomeExplanation(
             gamesPlayed: user.gamesPlayed,
           },
           scoreDelta,
-          avgOpponentLevel
+          avgOpponentLevel,
+          validSets,
+          ballsInGames
         );
 
         currentLevel += update.levelChange;
@@ -215,12 +224,14 @@ export async function getOutcomeExplanation(
           matchNumber,
           roundNumber: round.roundNumber,
           isWinner: scoreDelta > 0,
+          isDraw: scoreDelta === 0,
           opponentLevel,
           levelDifference,
           scoreDelta,
           levelChange: update.levelChange,
           reliabilityChange: update.reliabilityChange,
           pointsEarned: update.pointsEarned,
+          enduranceCoefficient: update.enduranceCoefficient,
           teammates,
           opponents,
         });
@@ -241,6 +252,7 @@ export async function getOutcomeExplanation(
         let matchPointsEarned = 0;
         let matchMultiplier: number | undefined = undefined;
         let matchTotalPointDifferential: number | undefined = undefined;
+        let matchEnduranceCoefficient: number | undefined = undefined;
         const setExplanations: SetExplanation[] = [];
 
         if (participantLevelUpMode === ParticipantLevelUpMode.BY_SETS) {
@@ -264,7 +276,8 @@ export async function getOutcomeExplanation(
                   teamAScore: userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore,
                   teamBScore: userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore,
                 }],
-              }
+              },
+              ballsInGames
             );
 
             const setLevelChange = setUpdate.levelChange * 0.33;
@@ -293,7 +306,8 @@ export async function getOutcomeExplanation(
               isWinner,
               opponentsLevel: opponentLevel,
               setScores,
-            }
+            },
+            ballsInGames
           );
 
           let setNumber = 0;
@@ -317,7 +331,8 @@ export async function getOutcomeExplanation(
                   teamAScore: userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore,
                   teamBScore: userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore,
                 }],
-              }
+              },
+              ballsInGames
             );
 
             const setLevelChange = setUpdate.levelChange * 0.33;
@@ -337,6 +352,7 @@ export async function getOutcomeExplanation(
           matchPointsEarned = matchUpdate.pointsEarned;
           matchMultiplier = matchUpdate.multiplier;
           matchTotalPointDifferential = matchUpdate.totalPointDifferential;
+          matchEnduranceCoefficient = matchUpdate.enduranceCoefficient;
         } else {
           const update = calculateRatingUpdate(
             {
@@ -348,7 +364,8 @@ export async function getOutcomeExplanation(
               isWinner,
               opponentsLevel: opponentLevel,
               setScores,
-            }
+            },
+            ballsInGames
           );
 
           matchLevelChange = update.levelChange;
@@ -356,6 +373,7 @@ export async function getOutcomeExplanation(
           matchPointsEarned = update.pointsEarned;
           matchMultiplier = update.multiplier;
           matchTotalPointDifferential = update.totalPointDifferential;
+          matchEnduranceCoefficient = update.enduranceCoefficient;
 
           let setNumber = 0;
           for (const set of validSets) {
@@ -388,6 +406,7 @@ export async function getOutcomeExplanation(
           matchNumber,
           roundNumber: round.roundNumber,
           isWinner,
+          isDraw: isTie,
           opponentLevel,
           levelDifference,
           levelChange: matchLevelChange,
@@ -395,6 +414,7 @@ export async function getOutcomeExplanation(
           pointsEarned: matchPointsEarned,
           multiplier: matchMultiplier,
           totalPointDifferential: matchTotalPointDifferential,
+          enduranceCoefficient: matchEnduranceCoefficient,
           teammates,
           opponents,
           sets: setExplanations.length > 0 ? setExplanations : undefined,

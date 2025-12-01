@@ -6,7 +6,8 @@
     "prohibitMatchesEditing": false,
     "pointsPerWin": 0,
     "pointsPerLoose": 0,
-    "pointsPerTie": 0
+    "pointsPerTie": 0,
+    "ballsInGames": true
   },
   "AMERICANO": {
     "winnerOfMatch": "BY_SCORES",
@@ -15,7 +16,8 @@
     "prohibitMatchesEditing": true,
     "pointsPerWin": 0,
     "pointsPerLoose": 0,
-    "pointsPerTie": 0
+    "pointsPerTie": 0,
+    "ballsInGames": false
   },
   "MEXICANO": {
     "winnerOfMatch": "BY_SCORES",
@@ -24,7 +26,8 @@
     "prohibitMatchesEditing": true,
     "pointsPerWin": 0,
     "pointsPerLoose": 0,
-    "pointsPerTie": 0
+    "pointsPerTie": 0,
+    "ballsInGames": false
   },
   "ROUND_ROBIN": {
     "winnerOfMatch": "BY_SETS",
@@ -33,7 +36,8 @@
     "prohibitMatchesEditing": true,
     "pointsPerWin": 0,
     "pointsPerLoose": 0,
-    "pointsPerTie": 0
+    "pointsPerTie": 0,
+    "ballsInGames": true
   },
   "WINNER_COURT": {
     "winnerOfMatch": "BY_SCORES",
@@ -42,7 +46,8 @@
     "prohibitMatchesEditing": true,
     "pointsPerWin": 0,
     "pointsPerLoose": 0,
-    "pointsPerTie": 0
+    "pointsPerTie": 0,
+    "ballsInGames": false
   },
   "CUSTOM": {
     "winnerOfMatch": "BY_SCORES",
@@ -51,7 +56,8 @@
     "prohibitMatchesEditing": false,
     "pointsPerWin": 0,
     "pointsPerLoose": 0,
-    "pointsPerTie": 0
+    "pointsPerTie": 0,
+    "ballsInGames": false
   }
 }
 

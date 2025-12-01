@@ -138,7 +138,8 @@ export const GameDetailsContent = () => {
       prohibitMatchesEditing: template.prohibitMatchesEditing ?? false,
       pointsPerWin: template.pointsPerWin ?? 0,
       pointsPerLoose: template.pointsPerLoose ?? 0,
-      pointsPerTie: template.pointsPerTie ?? 0
+      pointsPerTie: template.pointsPerTie ?? 0,
+      ballsInGames: template.ballsInGames ?? false
     }).catch(error => {
       console.error('Failed to update game template settings:', error);
     });
@@ -510,6 +511,7 @@ export const GameDetailsContent = () => {
     pointsPerWin: number;
     pointsPerLoose: number;
     pointsPerTie: number;
+    ballsInGames: boolean;
   }) => {
     if (!id) return;
 
@@ -841,6 +843,7 @@ export const GameDetailsContent = () => {
             pointsPerWin: game.pointsPerWin,
             pointsPerLoose: game.pointsPerLoose,
             pointsPerTie: game.pointsPerTie,
+            ballsInGames: game.ballsInGames,
           }}
           onClose={() => setIsGameSetupModalOpen(false)}
           onConfirm={handleGameSetupConfirm}

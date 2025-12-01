@@ -203,6 +203,7 @@ export interface Game {
   pointsPerWin?: number;
   pointsPerLoose?: number;
   pointsPerTie?: number;
+  ballsInGames?: boolean;
   photosCount?: number;
   isClubFavorite?: boolean;
   participants: GameParticipant[];

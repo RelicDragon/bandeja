@@ -110,6 +110,10 @@ export class GameCreateService {
         winnerOfMatch: data.winnerOfMatch ?? 'BY_SCORES',
         matchGenerationType: data.matchGenerationType ?? 'HANDMADE',
         prohibitMatchesEditing: data.prohibitMatchesEditing ?? false,
+        pointsPerWin: data.pointsPerWin ?? 0,
+        pointsPerLoose: data.pointsPerLoose ?? 0,
+        pointsPerTie: data.pointsPerTie ?? 0,
+        ballsInGames: data.ballsInGames ?? false,
         metadata: data.metadata,
         timeIsSet: data.timeIsSet ?? false,
         status: calculateGameStatus({

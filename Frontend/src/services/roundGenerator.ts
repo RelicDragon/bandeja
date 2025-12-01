@@ -228,6 +228,7 @@ export class RoundGenerator {
   ): string[][] {
     const players = participants.map(p => p.userId);
     const usedPairCounts = this.getPairUsageHistory(previousRounds);
+    const matchesPlayedCounts = this.getMatchesPlayedCounts(players, previousRounds);
     
     const isMixPairs = genderTeams === 'MIX_PAIRS';
     let malePlayers: string[] = [];
@@ -242,7 +243,12 @@ export class RoundGenerator {
         .map(p => p.userId);
     }
     
-    const shuffledPlayers = this.shuffleArray([...players]);
+    const sortedPlayers = [...players].sort((a, b) => {
+      const matchesA = matchesPlayedCounts.get(a) || 0;
+      const matchesB = matchesPlayedCounts.get(b) || 0;
+      return matchesA - matchesB;
+    });
+    
     const pairs: string[][] = [];
     const usedInThisRound = new Set<string>();
     const neededPairs = numMatches * 2;
@@ -253,7 +259,7 @@ export class RoundGenerator {
     while (pairs.length < neededPairs && attempts < maxAttempts) {
       attempts++;
       
-      const availablePlayers = shuffledPlayers.filter(p => !usedInThisRound.has(p));
+      const availablePlayers = sortedPlayers.filter(p => !usedInThisRound.has(p));
       
       if (availablePlayers.length < 2) {
         break;
@@ -262,16 +268,58 @@ export class RoundGenerator {
       let pair: string[] | null = null;
       
       if (isMixPairs) {
-        const availableMales = malePlayers.filter(p => !usedInThisRound.has(p));
-        const availableFemales = femalePlayers.filter(p => !usedInThisRound.has(p));
+        const availableMales = malePlayers
+          .filter(p => !usedInThisRound.has(p))
+          .sort((a, b) => {
+            const matchesA = matchesPlayedCounts.get(a) || 0;
+            const matchesB = matchesPlayedCounts.get(b) || 0;
+            return matchesA - matchesB;
+          });
+        const availableFemales = femalePlayers
+          .filter(p => !usedInThisRound.has(p))
+          .sort((a, b) => {
+            const matchesA = matchesPlayedCounts.get(a) || 0;
+            const matchesB = matchesPlayedCounts.get(b) || 0;
+            return matchesA - matchesB;
+          });
         
         if (availableMales.length > 0 && availableFemales.length > 0) {
-          const male = availableMales[0];
-          const female = availableFemales[0];
-          pair = [male, female];
+          let bestMale = availableMales[0];
+          let bestFemale = availableFemales[0];
+          let minMaxMatches = Math.max(
+            matchesPlayedCounts.get(bestMale) || 0,
+            matchesPlayedCounts.get(bestFemale) || 0
+          );
+          let minTotalMatches = (matchesPlayedCounts.get(bestMale) || 0) + (matchesPlayedCounts.get(bestFemale) || 0);
+          let minUsageCount = usedPairCounts.get(this.getPairKey(bestMale, bestFemale)) || 0;
+          
+          for (const male of availableMales) {
+            for (const female of availableFemales) {
+              const pairKey = this.getPairKey(male, female);
+              const usageCount = usedPairCounts.get(pairKey) || 0;
+              const matchesMale = matchesPlayedCounts.get(male) || 0;
+              const matchesFemale = matchesPlayedCounts.get(female) || 0;
+              const maxMatches = Math.max(matchesMale, matchesFemale);
+              const totalMatches = matchesMale + matchesFemale;
+              
+              if (maxMatches < minMaxMatches ||
+                  (maxMatches === minMaxMatches && totalMatches < minTotalMatches) ||
+                  (maxMatches === minMaxMatches && totalMatches === minTotalMatches && usageCount < minUsageCount)) {
+                minMaxMatches = maxMatches;
+                minTotalMatches = totalMatches;
+                minUsageCount = usageCount;
+                bestMale = male;
+                bestFemale = female;
+              }
+            }
+          }
+          
+          pair = [bestMale, bestFemale];
         }
       } else {
         let bestPair: string[] | null = null;
+        let minMaxMatches = Infinity;
+        let minTotalMatches = Infinity;
         let minUsageCount = Infinity;
         
         for (let i = 0; i < availablePlayers.length - 1; i++) {
@@ -280,8 +328,16 @@ export class RoundGenerator {
             const p2 = availablePlayers[j];
             const pairKey = this.getPairKey(p1, p2);
             const usageCount = usedPairCounts.get(pairKey) || 0;
+            const matchesP1 = matchesPlayedCounts.get(p1) || 0;
+            const matchesP2 = matchesPlayedCounts.get(p2) || 0;
+            const maxMatches = Math.max(matchesP1, matchesP2);
+            const totalMatches = matchesP1 + matchesP2;
             
-            if (usageCount < minUsageCount) {
+            if (maxMatches < minMaxMatches ||
+                (maxMatches === minMaxMatches && totalMatches < minTotalMatches) ||
+                (maxMatches === minMaxMatches && totalMatches === minTotalMatches && usageCount < minUsageCount)) {
+              minMaxMatches = maxMatches;
+              minTotalMatches = totalMatches;
               minUsageCount = usageCount;
               bestPair = [p1, p2];
             }
@@ -315,33 +371,39 @@ export class RoundGenerator {
     const teamPairs = fixedTeams.map(team => team.players.map(p => p.userId));
     
     const usedPairCounts = this.getPairUsageHistory(previousRounds);
-    
-    const sortedTeamPairs = [...teamPairs].sort(() => Math.random() - 0.5);
+    const allPlayerIds = teamPairs.flat();
+    const matchesPlayedCounts = this.getMatchesPlayedCounts(allPlayerIds, previousRounds);
     
     const selectedPairs: string[][] = [];
     const usedTeamIndices = new Set<number>();
     
-    for (let i = 0; i < Math.min(numMatches * 2, sortedTeamPairs.length); i++) {
+    for (let i = 0; i < Math.min(numMatches * 2, teamPairs.length); i++) {
       let bestIndex = -1;
+      let minTotalMatches = Infinity;
       let minUsage = Infinity;
       
-      for (let j = 0; j < sortedTeamPairs.length; j++) {
+      for (let j = 0; j < teamPairs.length; j++) {
         if (usedTeamIndices.has(j)) continue;
         
-        const pair = sortedTeamPairs[j];
+        const pair = teamPairs[j];
         if (pair.length < 2) continue;
         
         const pairKey = this.getPairKey(pair[0], pair[1]);
         const usage = usedPairCounts.get(pairKey) || 0;
+        const matchesP1 = matchesPlayedCounts.get(pair[0]) || 0;
+        const matchesP2 = matchesPlayedCounts.get(pair[1]) || 0;
+        const totalMatches = matchesP1 + matchesP2;
         
-        if (usage < minUsage) {
+        if (totalMatches < minTotalMatches || 
+            (totalMatches === minTotalMatches && usage < minUsage)) {
+          minTotalMatches = totalMatches;
           minUsage = usage;
           bestIndex = j;
         }
       }
       
       if (bestIndex !== -1) {
-        selectedPairs.push(sortedTeamPairs[bestIndex]);
+        selectedPairs.push(teamPairs[bestIndex]);
         usedTeamIndices.add(bestIndex);
       }
     }
@@ -367,6 +429,35 @@ export class RoundGenerator {
     }
     
     return pairCounts;
+  }
+
+  private getMatchesPlayedCounts(playerIds: string[], rounds: Round[]): Map<string, number> {
+    const matchCounts = new Map<string, number>();
+    
+    for (const playerId of playerIds) {
+      matchCounts.set(playerId, 0);
+    }
+    
+    for (const round of rounds) {
+      for (const match of round.matches) {
+        const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
+        if (validSets.length === 0) continue;
+        
+        for (const playerId of match.teamA) {
+          if (matchCounts.has(playerId)) {
+            matchCounts.set(playerId, (matchCounts.get(playerId) || 0) + 1);
+          }
+        }
+        
+        for (const playerId of match.teamB) {
+          if (matchCounts.has(playerId)) {
+            matchCounts.set(playerId, (matchCounts.get(playerId) || 0) + 1);
+          }
+        }
+      }
+    }
+    
+    return matchCounts;
   }
 
   private getPairKey(player1: string, player2: string): string {

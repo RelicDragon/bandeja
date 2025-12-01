@@ -24,8 +24,22 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
     return null;
   };
 
+  const getDecimals = (value: number) => {
+    if (value === 0) return 2;
+    const absValue = Math.abs(value);
+    if (absValue < 0.01) {
+      return Math.ceil(-Math.log10(absValue)) + 1;
+    }
+    return 2;
+  };
+
+  const formatNumber = (value: number) => {
+    return value.toFixed(getDecimals(value));
+  };
+
   const formatChange = (change: number) => {
-    return change > 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+    const formatted = formatNumber(change);
+    return change > 0 ? `+${formatted}` : formatted;
   };
 
   const formatPlayerNames = (players: Array<{ firstName?: string; lastName?: string }>) => {
@@ -66,7 +80,7 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
               <div className="col-span-2">
                 <span className="text-gray-600 dark:text-gray-400">{t('gameResults.level')}:</span>
                 <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
-                  {levelBefore.toFixed(2)} → {(levelBefore + explanation.levelChange).toFixed(2)}
+                  {levelBefore.toFixed(2)} → {formatNumber(levelBefore + explanation.levelChange)}
                 </span>
               </div>
               <div className="col-span-2">
@@ -88,7 +102,7 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
               <div className="col-span-2">
                 <span className="text-gray-600 dark:text-gray-400">{t('gameResults.avgOpponentLevel')}:</span>
                 <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
-                  {explanation.summary.averageOpponentLevel.toFixed(2)}
+                  {formatNumber(explanation.summary.averageOpponentLevel)}
                 </span>
               </div>
               <div className="col-span-2 mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
@@ -115,7 +129,9 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                   <div
                     key={index}
                     className={`p-3 rounded-lg border ${
-                      match.isWinner
+                      match.isDraw
+                        ? 'bg-gray-50 dark:bg-gray-700/20 border-gray-300 dark:border-gray-600'
+                        : match.isWinner
                         ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                         : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
                     }`}
@@ -161,10 +177,9 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                   </div>
                   <div>
                     <span className="text-gray-600 dark:text-gray-400">{t('gameResults.opponentLevel')}:</span>
-                    <span className="ml-1">{match.opponentLevel.toFixed(2)}</span>
+                    <span className="ml-1">{formatNumber(match.opponentLevel)}</span>
                     <span className={`ml-2 ${getLevelChangeColor(match.levelDifference)}`}>
-                      ({match.levelDifference > 0 ? '+' : ''}
-                      {match.levelDifference.toFixed(2)})
+                      ({formatChange(match.levelDifference)})
                     </span>
                   </div>
                   {match.scoreDelta !== undefined && (
@@ -189,10 +204,18 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">{t('gameResults.multiplier')}:</span>
                       <span className="ml-1 font-semibold text-purple-600 dark:text-purple-400">
-                        {match.multiplier.toFixed(2)}x
+                        {formatNumber(match.multiplier)}x
                       </span>
                       <span className="ml-1 text-gray-500 dark:text-gray-400 text-[10px]">
                         ({match.multiplier < 0.6 ? t('gameResults.veryClose') : match.multiplier < 1 ? t('gameResults.close') : match.multiplier > 2 ? t('gameResults.blowout') : t('gameResults.normal')})
+                      </span>
+                    </div>
+                  )}
+                  {match.enduranceCoefficient !== undefined && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">{t('gameResults.endurance')}:</span>
+                      <span className="ml-1 font-semibold text-orange-600 dark:text-orange-400">
+                        {formatNumber(match.enduranceCoefficient)}x
                       </span>
                     </div>
                   )}

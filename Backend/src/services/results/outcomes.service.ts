@@ -86,6 +86,7 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
 
   let result;
   const participantLevelUpMode = game.participantLevelUpMode || ParticipantLevelUpMode.BY_MATCHES;
+  const ballsInGames = game.ballsInGames || false;
   
   if (game.winnerOfGame === WinnerOfGame.BY_SCORES_DELTA) {
     result = calculateByScoresDeltaOutcomes(
@@ -93,7 +94,8 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       roundResults,
       game.pointsPerWin || 0,
       game.pointsPerTie || 0,
-      game.pointsPerLoose || 0
+      game.pointsPerLoose || 0,
+      ballsInGames
     );
   } else if (game.winnerOfGame === WinnerOfGame.BY_POINTS) {
     result = calculateByPointsOutcomes(
@@ -101,7 +103,8 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       roundResults,
       game.pointsPerWin || 0,
       game.pointsPerTie || 0,
-      game.pointsPerLoose || 0
+      game.pointsPerLoose || 0,
+      ballsInGames
     );
   } else {
     if (participantLevelUpMode === ParticipantLevelUpMode.BY_SETS) {
@@ -110,7 +113,8 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
         roundResults,
         game.pointsPerWin || 0,
         game.pointsPerTie || 0,
-        game.pointsPerLoose || 0
+        game.pointsPerLoose || 0,
+        ballsInGames
       );
     } else if (participantLevelUpMode === ParticipantLevelUpMode.COMBINED) {
       result = calculateCombinedOutcomes(
@@ -118,7 +122,8 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       roundResults,
       game.pointsPerWin || 0,
       game.pointsPerTie || 0,
-      game.pointsPerLoose || 0
+      game.pointsPerLoose || 0,
+      ballsInGames
     );
   } else {
     result = calculateByMatchesWonOutcomes(
@@ -126,7 +131,8 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       roundResults,
       game.pointsPerWin || 0,
       game.pointsPerTie || 0,
-      game.pointsPerLoose || 0
+      game.pointsPerLoose || 0,
+      ballsInGames
     );
     }
   }

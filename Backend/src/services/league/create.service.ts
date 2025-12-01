@@ -67,6 +67,7 @@ export class LeagueCreateService {
         pointsPerWin: gameSeasonData.pointsPerWin ?? 0,
         pointsPerLoose: gameSeasonData.pointsPerLoose ?? 0,
         pointsPerTie: gameSeasonData.pointsPerTie ?? 0,
+        ballsInGames: gameSeasonData.ballsInGames ?? false,
         hasFixedTeams: data.hasFixedTeams ?? false,
         cityId: data.cityId,
         clubId: data.clubId || null,

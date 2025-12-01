@@ -121,6 +121,7 @@ export interface MatchExplanation {
   matchNumber: number;
   roundNumber: number;
   isWinner: boolean;
+  isDraw: boolean;
   opponentLevel: number;
   levelDifference: number;
   scoreDelta?: number;
@@ -129,6 +130,7 @@ export interface MatchExplanation {
   pointsEarned: number;
   multiplier?: number;
   totalPointDifferential?: number;
+  enduranceCoefficient?: number;
   teammates: Array<{ firstName?: string; lastName?: string; level: number }>;
   opponents: Array<{ firstName?: string; lastName?: string; level: number }>;
   sets?: SetExplanation[];

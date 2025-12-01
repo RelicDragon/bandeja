@@ -21,6 +21,7 @@ interface RatingUpdate {
   pointsEarned: number;
   multiplier?: number;
   totalPointDifferential?: number;
+  enduranceCoefficient?: number;
 }
 
 const BASE_LEVEL_CHANGE = 0.05;
@@ -32,6 +33,25 @@ const MIN_MULTIPLIER = 0.3;
 const MAX_MULTIPLIER = 3.0;
 const CLOSE_MATCH_THRESHOLD = 3;
 const BLOWOUT_THRESHOLD = 15;
+
+export function calculateEnduranceCoefficient(
+  setScores: Array<{ teamAScore: number; teamBScore: number }> | undefined,
+  ballsInGames: boolean
+): number {
+  if (!setScores || setScores.length === 0) {
+    return 1;
+  }
+
+  const sum = setScores.reduce((total, set) => total + set.teamAScore + set.teamBScore, 0);
+  
+  let coefficient = sum / 20;
+  
+  if (ballsInGames) {
+    coefficient *= 5;
+  }
+  
+  return coefficient;
+}
 
 function calculateDifferentialMultiplier(setScores: Array<{ teamAScore: number; teamBScore: number }>): { multiplier: number; totalPointDifferential: number } {
   let totalPointDifferential = 0;
@@ -62,7 +82,8 @@ function calculateDifferentialMultiplier(setScores: Array<{ teamAScore: number; 
 
 export function calculateRatingUpdate(
   playerStats: PlayerStats,
-  matchResult: MatchResult
+  matchResult: MatchResult,
+  ballsInGames: boolean = false
 ): RatingUpdate {
   const levelBefore = playerStats.level;
   const reliabilityBefore = playerStats.reliability;
@@ -95,6 +116,9 @@ export function calculateRatingUpdate(
 
   levelChange = Math.max(-MAX_LEVEL_CHANGE, Math.min(MAX_LEVEL_CHANGE, levelChange));
 
+  const enduranceCoefficient = calculateEnduranceCoefficient(matchResult.setScores, ballsInGames);
+  levelChange = levelChange * enduranceCoefficient;
+
   const levelAfter = Math.max(0.1, levelBefore + levelChange);
 
   const reliabilityChange = RELIABILITY_INCREMENT;
@@ -112,13 +136,16 @@ export function calculateRatingUpdate(
     pointsEarned,
     multiplier,
     totalPointDifferential,
+    enduranceCoefficient,
   };
 }
 
 export function calculateAmericanoRating(
   playerStats: PlayerStats,
   scoreDelta: number,
-  avgOpponentLevel: number
+  avgOpponentLevel: number,
+  setScores?: Array<{ teamAScore: number; teamBScore: number }>,
+  ballsInGames: boolean = false
 ): RatingUpdate {
   const levelBefore = playerStats.level;
   const reliabilityBefore = playerStats.reliability;
@@ -126,13 +153,16 @@ export function calculateAmericanoRating(
   const normalizedDelta = scoreDelta / 100;
   const levelDifference = avgOpponentLevel - levelBefore;
   
-  const levelChange = Math.max(
+  let levelChange = Math.max(
     -MAX_LEVEL_CHANGE,
     Math.min(
       MAX_LEVEL_CHANGE,
       BASE_LEVEL_CHANGE * normalizedDelta * (1 + levelDifference / 20)
     )
   );
+
+  const enduranceCoefficient = calculateEnduranceCoefficient(setScores, ballsInGames);
+  levelChange = levelChange * enduranceCoefficient;
 
   const levelAfter = Math.max(0.1, levelBefore + levelChange);
 
@@ -149,6 +179,7 @@ export function calculateAmericanoRating(
     reliabilityAfter,
     reliabilityChange,
     pointsEarned,
+    enduranceCoefficient,
   };
 }
 

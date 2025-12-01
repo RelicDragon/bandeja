@@ -21,6 +21,7 @@ interface GameSetupModalProps {
     pointsPerWin?: number;
     pointsPerLoose?: number;
     pointsPerTie?: number;
+    ballsInGames?: boolean;
   };
   onClose: () => void;
   onConfirm: (params: {
@@ -35,6 +36,7 @@ interface GameSetupModalProps {
     pointsPerWin: number;
     pointsPerLoose: number;
     pointsPerTie: number;
+    ballsInGames: boolean;
   }) => void;
 }
 
@@ -70,6 +72,7 @@ export const GameSetupModal = ({
   const [pointsPerWin, setPointsPerWin] = useState(initialValues?.pointsPerWin ?? 0);
   const [pointsPerLoose, setPointsPerLoose] = useState(initialValues?.pointsPerLoose ?? 0);
   const [pointsPerTie, setPointsPerTie] = useState(initialValues?.pointsPerTie ?? 0);
+  const [ballsInGames, setBallsInGames] = useState(initialValues?.ballsInGames ?? false);
   const [isAnimating, setIsAnimating] = useState(false);
 
   const SET_PRESETS = [16, 21, 24, 32];
@@ -114,6 +117,7 @@ export const GameSetupModal = ({
       pointsPerWin,
       pointsPerLoose,
       pointsPerTie,
+      ballsInGames,
     });
     handleClose();
   };
@@ -371,6 +375,39 @@ export const GameSetupModal = ({
                   </span>
                 </div>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {t('gameResults.ballsInGames')}
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setBallsInGames(false)}
+                  disabled={!isEditing}
+                  className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                    !ballsInGames
+                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                  } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  {t('gameResults.ballsInGamesOff')}
+                </button>
+                <button
+                  onClick={() => setBallsInGames(true)}
+                  disabled={!isEditing}
+                  className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
+                    ballsInGames
+                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                  } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  {t('gameResults.ballsInGamesOn')}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {ballsInGames ? t('gameResults.ballsInGamesNoteOn') : t('gameResults.ballsInGamesNoteOff')}
+              </p>
             </div>
               </>
             )}

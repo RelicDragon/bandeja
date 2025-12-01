@@ -284,6 +284,7 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
       pointsPerWin: template.pointsPerWin ?? 0,
       pointsPerLoose: template.pointsPerLoose ?? 0,
       pointsPerTie: template.pointsPerTie ?? 0,
+      ballsInGames: template.ballsInGames ?? false,
     }));
   }, [gameType]);
 
@@ -474,6 +475,7 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
     pointsPerWin: number;
     pointsPerLoose: number;
     pointsPerTie: number;
+    ballsInGames: boolean;
   }) => {
     setGameSetup(params);
   };

@@ -197,6 +197,7 @@ model Game {
   pointsPerWin   Int              @default(0)
   pointsPerLoose Int              @default(0)
   pointsPerTie   Int              @default(0)
+  ballsInGames   Boolean          @default(false)
   mediaUrls       String[]
   photosCount     Int              @default(0)
   parentId        String?

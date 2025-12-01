@@ -404,6 +404,7 @@ export const GameResultsEntry = () => {
     pointsPerWin: number;
     pointsPerLoose: number;
     pointsPerTie: number;
+    ballsInGames: boolean;
   }) => {
     if (!id || !user?.id) return;
     
@@ -420,6 +421,7 @@ export const GameResultsEntry = () => {
         pointsPerWin: params.pointsPerWin,
         pointsPerLoose: params.pointsPerLoose,
         pointsPerTie: params.pointsPerTie,
+        ballsInGames: params.ballsInGames,
       });
       
       const response = await gamesApi.getById(id);
@@ -903,6 +905,7 @@ export const GameResultsEntry = () => {
                 pointsPerWin: game.pointsPerWin,
                 pointsPerLoose: game.pointsPerLoose,
                 pointsPerTie: game.pointsPerTie,
+                ballsInGames: game.ballsInGames,
               }}
               onClose={() => setShowSetupModal(false)}
               onConfirm={handleSetupConfirm}
