@@ -27,7 +27,7 @@ self.addEventListener('activate', (event) => {
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
+            if (cacheName !== CACHE_NAME) {
               console.log('Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
@@ -37,23 +37,6 @@ self.addEventListener('activate', (event) => {
     ])
   );
 });
-
-async function isGameResultsEntryPage() {
-  try {
-    const clients = await self.clients.matchAll({ type: 'window' });
-    return clients.some(client => {
-      const url = new URL(client.url);
-      return url.pathname.includes('/games/') && url.pathname.includes('/results');
-    });
-  } catch (error) {
-    return false;
-  }
-}
-
-function isGameResultsApi(pathname) {
-  return pathname.startsWith('/api/results/') || 
-         pathname.startsWith('/api/games/');
-}
 
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
@@ -79,65 +62,6 @@ self.addEventListener('fetch', (event) => {
     pathname === '/manifest.json';
 
   if (pathname.startsWith('/api/')) {
-    event.respondWith(
-      (async () => {
-        const isGameResultsPage = await isGameResultsEntryPage();
-        const isGameResultsEndpoint = isGameResultsApi(pathname);
-        
-        if (isGameResultsPage && isGameResultsEndpoint) {
-          try {
-            const response = await fetch(event.request);
-            if (response && response.status === 200 && event.request.method === 'GET') {
-              const responseClone = response.clone();
-              caches.open(RUNTIME_CACHE).then((cache) => {
-                cache.put(event.request, responseClone);
-              });
-            }
-            return response;
-          } catch (error) {
-            const cached = await caches.match(event.request);
-            if (cached) {
-              return cached;
-            }
-            throw error;
-          }
-        }
-        
-        try {
-          const response = await Promise.race([
-            fetch(event.request),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('timeout')), 5000)
-            )
-          ]);
-          
-          if (response && response.status === 200 && event.request.method === 'GET') {
-            const responseClone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return response;
-        } catch (error) {
-          const cached = await caches.match(event.request);
-          if (cached) {
-            console.log('Serving API from cache (offline):', pathname);
-            return cached;
-          }
-          
-          return new Response(
-            JSON.stringify({ 
-              error: 'offline', 
-              message: 'No internet connection' 
-            }), 
-            {
-              status: 503,
-              headers: { 'Content-Type': 'application/json' }
-            }
-          );
-        }
-      })()
-    );
     return;
   }
 

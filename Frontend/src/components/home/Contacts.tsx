@@ -31,7 +31,8 @@ export const Contacts = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const { showChatFilter } = useHeaderStore();
-  const isFavorite = useFavoritesStore((state) => state.isFavorite);
+  const favoriteUserIds = useFavoritesStore((state) => state.favoriteUserIds);
+  const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
 
   const [userChats, setUserChats] = useState<UserChat[]>([]);
   const [userChatsUnreadCounts, setUserChatsUnreadCounts] = useState<Record<string, number>>({});
@@ -61,15 +62,19 @@ export const Contacts = () => {
           usersApi.getInvitablePlayers()
         ]);
 
+        await fetchFavorites();
+
         const chats = chatsResponse.data || [];
-        setUserChats(chats);
+        let unreadCounts: Record<string, number> = {};
 
         if (chats.length > 0) {
           const chatIds = chats.map(chat => chat.id);
           const unreadResponse = await chatApi.getUserChatsUnreadCounts(chatIds);
-          setUserChatsUnreadCounts(unreadResponse.data || {});
+          unreadCounts = unreadResponse.data || {};
         }
 
+        setUserChats(chats);
+        setUserChatsUnreadCounts(unreadCounts);
         setAllPlayers(playersResponse.data || []);
       } catch (error) {
         console.error('Failed to load contacts:', error);
@@ -79,10 +84,10 @@ export const Contacts = () => {
     };
 
     loadData();
-  }, [user?.id]);
+  }, [user?.id, fetchFavorites]);
 
   const contacts = useMemo(() => {
-    const items: ContactItem[] = [];
+    if (loading) return [];
 
     const chatMap = new Map<string, UserChat>();
     const unreadMap = new Map<string, number>();
@@ -99,7 +104,6 @@ export const Contacts = () => {
     });
 
     const processedUserIds = new Set<string>();
-
     const unreadChats: ContactItem[] = [];
     const favoriteNoUnread: ContactItem[] = [];
     const others: ContactItem[] = [];
@@ -107,7 +111,7 @@ export const Contacts = () => {
     chatMap.forEach((chat, userId) => {
       const unreadCount = unreadMap.get(userId) || 0;
       const player = playerMap.get(userId);
-      const favorite = isFavorite(userId);
+      const favorite = favoriteUserIds.includes(userId);
 
       if (showChatFilter && unreadCount === 0) {
         return;
@@ -139,7 +143,7 @@ export const Contacts = () => {
       playerMap.forEach((player, userId) => {
         if (processedUserIds.has(userId) || userId === user?.id) return;
 
-        const favorite = isFavorite(userId);
+        const favorite = favoriteUserIds.includes(userId);
         const contact: ContactItem = {
           type: 'user',
           userId,
@@ -163,20 +167,30 @@ export const Contacts = () => {
       });
     }
 
-    const sortByInteractions = (a: ContactItem, b: ContactItem) => {
-      return (b.interactionCount || 0) - (a.interactionCount || 0);
+    const sortUnreadChats = (a: ContactItem, b: ContactItem) => {
+      const favoriteDiff = (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0);
+      if (favoriteDiff !== 0) return favoriteDiff;
+      const interactionDiff = (b.interactionCount || 0) - (a.interactionCount || 0);
+      if (interactionDiff !== 0) return interactionDiff;
+      return (a.userId || '').localeCompare(b.userId || '');
     };
 
-    unreadChats.sort(sortByInteractions);
+    const sortByInteractions = (a: ContactItem, b: ContactItem) => {
+      const interactionDiff = (b.interactionCount || 0) - (a.interactionCount || 0);
+      if (interactionDiff !== 0) return interactionDiff;
+      return (a.userId || '').localeCompare(b.userId || '');
+    };
+
+    unreadChats.sort(sortUnreadChats);
     favoriteNoUnread.sort(sortByInteractions);
     others.sort(sortByInteractions);
 
-    items.push(...unreadChats);
-    items.push(...favoriteNoUnread);
-    items.push(...others);
-
-    return items;
-  }, [userChats, userChatsUnreadCounts, allPlayers, user?.id, showChatFilter, isFavorite]);
+    return [
+      ...unreadChats,
+      ...favoriteNoUnread,
+      ...others
+    ];
+  }, [loading, userChats, userChatsUnreadCounts, allPlayers, user?.id, showChatFilter, favoriteUserIds]);
 
   const checkScrollPosition = () => {
     const container = carouselRef.current;
