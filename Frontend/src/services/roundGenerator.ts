@@ -709,8 +709,29 @@ export class RoundGenerator {
   }
 
   private getNextMatchId(currentRoundMatchIndex: number = 0): string {
-    const totalMatches = this.options.rounds.reduce((sum, r) => sum + r.matches.length, 0);
-    return `match-${totalMatches + currentRoundMatchIndex + 1}`;
+    const allMatchIds = new Set<string>();
+    this.options.rounds.forEach(r => {
+      r.matches.forEach(m => allMatchIds.add(m.id));
+    });
+
+    let maxNum = 0;
+    allMatchIds.forEach(id => {
+      const match = id.match(/^match-(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+
+    let candidateId = `match-${maxNum + currentRoundMatchIndex + 1}`;
+    while (allMatchIds.has(candidateId)) {
+      maxNum++;
+      candidateId = `match-${maxNum + currentRoundMatchIndex + 1}`;
+    }
+
+    return candidateId;
   }
 }
 

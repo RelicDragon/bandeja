@@ -474,8 +474,36 @@ class GameResultsEngineClass {
     const round = state.rounds.find(r => r.id === roundId);
     if (!round) return;
 
-    const totalMatches = state.rounds.reduce((sum, r) => sum + r.matches.length, 0);
-    const newMatchId = matchId || `match-${totalMatches + 1}`;
+    const generateUniqueMatchId = (): string => {
+      const allMatchIds = new Set<string>();
+      state.rounds.forEach(r => {
+        r.matches.forEach(m => allMatchIds.add(m.id));
+      });
+
+      let candidateId: string;
+      let maxNum = 0;
+      
+      allMatchIds.forEach(id => {
+        const match = id.match(/^match-(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxNum) {
+            maxNum = num;
+          }
+        }
+      });
+
+      candidateId = `match-${maxNum + 1}`;
+      
+      while (allMatchIds.has(candidateId)) {
+        maxNum++;
+        candidateId = `match-${maxNum + 1}`;
+      }
+
+      return candidateId;
+    };
+
+    const newMatchId = matchId || generateUniqueMatchId();
     const fixedNumberOfSets = state.game?.fixedNumberOfSets;
     const op = await this.createOp((creator) => creator.addMatch(newMatchId, roundId, fixedNumberOfSets));
     await this.applyOp(op);
@@ -800,6 +828,7 @@ class GameResultsEngineClass {
 
   private convertServerResultsToState(serverResults: any, t: (key: string) => string): { rounds: Round[] } {
     const rounds: Round[] = [];
+    let globalMatchCounter = 0;
     
     if (serverResults.rounds && Array.isArray(serverResults.rounds)) {
       serverResults.rounds.forEach((round: any, roundIndex: number) => {
@@ -838,8 +867,9 @@ class GameResultsEngineClass {
               }
             }
             
+            globalMatchCounter++;
             matches.push({
-              id: `match-${matchIndex + 1}`,
+              id: `match-${globalMatchCounter}`,
               teamA,
               teamB,
               sets,

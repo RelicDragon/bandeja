@@ -20,12 +20,15 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   const [allBugs, setAllBugs] = useState<Bug[]>([]);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState<BugType | null>(null);
   const [filters, setFilters] = useState<{
     status?: BugStatus;
     myBugsOnly?: boolean;
   }>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [animatedTextIndex, setAnimatedTextIndex] = useState(0);
   const [nextIndex, setNextIndex] = useState(1);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -51,25 +54,52 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     return () => clearInterval(interval);
   }, [animatedTextIndex, animatedTexts.length]);
 
-  const loadBugs = useCallback(async () => {
+  const loadBugs = useCallback(async (page: number = 1, append: boolean = false) => {
     try {
-      setLoading(true);
-      const response = await bugsApi.getBugs(filters);
-      setAllBugs(response.data.bugs);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      const response = await bugsApi.getBugs({
+        ...filters,
+        page,
+        limit: 30,
+      });
+      
+      if (append) {
+        setAllBugs(prev => [...prev, ...response.data.bugs]);
+      } else {
+        setAllBugs(response.data.bugs);
+      }
+
+      setCurrentPage(page);
+      setHasMore(page < response.data.pagination.pages);
 
       // Fetch unread counts for all bugs
       if (response.data.bugs.length > 0) {
         const bugIds = response.data.bugs.map(bug => bug.id);
         const unreadResponse = await chatApi.getBugsUnreadCounts(bugIds);
-        setUnreadCounts(unreadResponse.data);
+        if (append) {
+          setUnreadCounts(prev => ({ ...prev, ...unreadResponse.data }));
+        } else {
+          setUnreadCounts(unreadResponse.data);
+        }
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'bug.loadError';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [filters, t]);
+
+  const loadMore = useCallback(() => {
+    if (!loadingMore && hasMore) {
+      loadBugs(currentPage + 1, true);
+    }
+  }, [currentPage, hasMore, loadingMore, loadBugs]);
 
   const refreshUnreadCounts = useCallback(async () => {
     if (allBugs.length > 0) {
@@ -86,11 +116,14 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
 
   useEffect(() => {
     if (isVisible) {
-      loadBugs();
+      setCurrentPage(1);
+      loadBugs(1, false);
     } else {
       // Clear bugs when not visible to free up memory
       setAllBugs([]);
       setUnreadCounts({});
+      setCurrentPage(1);
+      setHasMore(false);
     }
   }, [filters, isVisible, loadBugs]);
 
@@ -134,11 +167,13 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
 
   const handleBugCreated = () => {
     setShowAddModal(false);
-    loadBugs();
+    setCurrentPage(1);
+    loadBugs(1, false);
   };
 
   const handleBugUpdated = () => {
-    loadBugs();
+    setCurrentPage(1);
+    loadBugs(1, false);
   };
 
   const handleBugDeleted = (bugId: string) => {
@@ -255,7 +290,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
           {[...filteredBugs].sort((a, b) => {
             if (a.status === 'ARCHIVED' && b.status !== 'ARCHIVED') return 1;
             if (a.status !== 'ARCHIVED' && b.status === 'ARCHIVED') return -1;
-            return 0;
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
           }).map((bug) => (
             <BugCard
               key={bug.id}
@@ -265,6 +300,17 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
               onDelete={handleBugDeleted}
             />
           ))}
+          {hasMore && (
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loadingMore ? t('common.loading') || 'Loading...' : t('home.loadMore')}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
