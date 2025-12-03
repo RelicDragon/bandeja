@@ -111,10 +111,6 @@ export class OpCreator {
     return this.createOp(`/rounds/${roundIndex}`, 'remove');
   }
 
-  resetGame(): Op {
-    return this.createOp(`/reset`, 'set', {});
-  }
-
   setMatchCourt(matchId: string, courtId: string, roundId: string): Op {
     const roundIndex = this.getRoundIndex(roundId);
     const matchIndex = this.getMatchIndex(matchId);

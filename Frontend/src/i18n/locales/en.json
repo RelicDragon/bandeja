@@ -907,7 +907,15 @@
       "alreadyInFavorites": "User is already in favorites",
       "userNotInFavorites": "User not found in favorites"
     },
-    "syncPending": "Please wait for sync to complete"
+    "syncPending": "Please wait for sync to complete",
+    "invalidSetIndex": "Invalid set index",
+    "invalidScores": "Scores cannot be negative",
+    "scoreExceedsMax": "Score cannot exceed {{max}}",
+    "totalScoreExceedsMax": "Total score cannot exceed {{max}}",
+    "roundNotFound": "Round not found",
+    "matchNotFound": "Match not found",
+    "setIndexExceedsMax": "Set index cannot exceed {{max}}",
+    "cannotRemoveLastSet": "Cannot remove the last set"
   },
   "media": {
     "resetView": "Reset View"

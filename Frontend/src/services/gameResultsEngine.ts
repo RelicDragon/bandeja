@@ -8,7 +8,7 @@ import { resultsApi } from '@/api/results';
 import { gamesApi } from '@/api';
 import { RoundGenerator } from './roundGenerator';
 import { OpCreator } from './opCreators';
-import { isUserGameAdminOrOwner, isUserGameParticipant } from '@/utils/gameResults';
+import { isUserGameAdminOrOwner, isUserGameParticipant, validateSetScores, validateSetIndexAgainstFixed } from '@/utils/gameResults';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 
@@ -565,7 +565,57 @@ class GameResultsEngineClass {
 
   async updateMatch(roundId: string, matchId: string, match: { teamA: string[]; teamB: string[]; sets: Array<{ teamA: number; teamB: number }>; courtId?: string }): Promise<void> {
     const state = this.getState();
-    if (!state.gameId || !state.userId || !state.canEdit) return;
+    if (!state.gameId || !state.userId) {
+      throw new Error('Game not initialized');
+    }
+    
+    if (!state.canEdit) {
+      throw new Error('User does not have permission to edit results');
+    }
+
+    const round = state.rounds.find(r => r.id === roundId);
+    if (!round) {
+      throw new Error(`Round not found: ${roundId}`);
+    }
+
+    const existingMatch = round.matches.find(m => m.id === matchId);
+    if (!existingMatch) {
+      throw new Error(`Match not found: ${matchId} in round: ${roundId}`);
+    }
+
+    if (!Array.isArray(match.sets) || !Array.isArray(match.teamA) || !Array.isArray(match.teamB)) {
+      throw new Error('Invalid match data structure: sets, teamA, and teamB must be arrays');
+    }
+
+    if (match.sets.some(set => typeof set.teamA !== 'number' || typeof set.teamB !== 'number' || set.teamA < 0 || set.teamB < 0)) {
+      throw new Error('Invalid set data: scores must be non-negative numbers');
+    }
+
+    // Business rule validation
+    if (state.game) {
+      const fixedNumberOfSets = state.game.fixedNumberOfSets || 0;
+
+      for (let i = 0; i < match.sets.length; i++) {
+        const set = match.sets[i];
+        
+        // Validate scores against game constraints
+        const scoreError = validateSetScores(set.teamA, set.teamB, state.game);
+        if (scoreError) {
+          throw new Error(scoreError);
+        }
+
+        // Validate set index against fixedNumberOfSets
+        const indexError = validateSetIndexAgainstFixed(i, fixedNumberOfSets);
+        if (indexError) {
+          throw new Error(indexError);
+        }
+      }
+
+      // Validate that we don't have more sets than allowed when fixedNumberOfSets > 0
+      if (fixedNumberOfSets > 0 && match.sets.length > fixedNumberOfSets) {
+        throw new Error(`Cannot have more than ${fixedNumberOfSets} sets`);
+      }
+    }
 
     const op = await this.createOp((creator) => creator.updateMatch(matchId, match, roundId));
     await this.applyOp(op);
@@ -634,27 +684,27 @@ class GameResultsEngineClass {
     const state = this.getState();
     if (!state.gameId || !state.userId) return;
 
-    // Clear all pending ops before creating reset op
+    await resultsApi.resetGameResults(state.gameId);
+
     await ResultsStorage.clearOutbox(state.gameId);
 
-    const op = await this.createOp((creator) => creator.resetGame());
-    await this.applyOp(op);
-
     const emptyData = { rounds: [] };
-    const shadow = await ResultsStorage.getGame(state.gameId);
-    if (shadow) {
-      shadow.data = emptyData;
-      shadow.version = 0;
-      await ResultsStorage.saveGame(shadow);
-    }
+    const newShadow = {
+      gameId: state.gameId,
+      data: emptyData,
+      version: 0,
+      lastSyncedAt: Date.now(),
+    };
+    await ResultsStorage.saveGame(newShadow);
 
     useGameResultsStore.setState({ 
       rounds: [],
-      shadow: shadow || null,
-      syncStatus: 'SYNCING',
+      shadow: newShadow,
+      pendingOpsCount: 0,
+      syncStatus: 'SUCCESS',
+      expandedRoundId: null,
+      editingMatchId: null,
     });
-
-    await this.forceSync();
   }
 
   private createOpCreator(shadow: GameShadow): OpCreator {

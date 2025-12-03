@@ -12,6 +12,7 @@ router.get('/match/:matchId', optionalAuth, resultsController.getMatchResults);
 router.get('/game/:gameId/outcome/:userId/explanation', optionalAuth, resultsController.getOutcomeExplanation);
 
 router.post('/game/:gameId/recalculate', authenticate, resultsController.recalculateOutcomes);
+router.post('/game/:gameId/reset', authenticate, resultsController.resetGameResults);
 router.post(
   '/game/:gameId/edit', 
   authenticate, 

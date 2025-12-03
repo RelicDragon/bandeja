@@ -244,6 +244,143 @@ export async function deleteGameResults(gameId: string, requestUserId: string, b
   });
 }
 
+export async function resetGameResults(gameId: string, requestUserId: string) {
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    include: {
+      participants: true,
+      outcomes: true,
+    },
+  });
+
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+
+  const hasPermission = await hasParentGamePermission(gameId, requestUserId);
+
+  if (!hasPermission) {
+    throw new ApiError(403, 'Only game owners/admins can reset results');
+  }
+
+  if (game.status === 'ARCHIVED') {
+    throw new ApiError(403, 'Cannot reset results for archived games');
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (game.affectsRating && game.outcomes.length > 0) {
+      const { LeagueGameResultsService } = await import('./league/gameResults.service');
+      await LeagueGameResultsService.unsyncGameResults(gameId, tx);
+
+      for (const outcome of game.outcomes) {
+        await tx.user.update({
+          where: { id: outcome.userId },
+          data: {
+            level: outcome.levelBefore,
+            reliability: outcome.reliabilityBefore,
+            totalPoints: { decrement: outcome.pointsEarned },
+            gamesPlayed: { decrement: 1 },
+            gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
+          },
+        });
+      }
+    }
+
+    await tx.roundOutcome.deleteMany({
+      where: {
+        round: {
+          gameId,
+        },
+      },
+    });
+
+    await tx.set.deleteMany({
+      where: {
+        match: {
+          round: {
+            gameId,
+          },
+        },
+      },
+    });
+    
+    await tx.teamPlayer.deleteMany({
+      where: {
+        team: {
+          match: {
+            round: {
+              gameId,
+            },
+          },
+        },
+      },
+    });
+    
+    await tx.team.deleteMany({
+      where: {
+        match: {
+          round: {
+            gameId,
+          },
+        },
+      },
+    });
+    
+    await tx.match.deleteMany({
+      where: {
+        round: {
+          gameId,
+        },
+      },
+    });
+
+    await tx.round.deleteMany({
+      where: { gameId },
+    });
+
+    await tx.gameOutcome.deleteMany({
+      where: { gameId },
+    });
+
+    await tx.levelChangeEvent.deleteMany({
+      where: {
+        gameId: gameId,
+      },
+    });
+
+    const updatedGame = await tx.game.findUnique({
+      where: { id: gameId },
+      select: { startTime: true, endTime: true },
+    });
+    
+    if (updatedGame) {
+      const { calculateGameStatus } = await import('../utils/gameStatus');
+      await tx.game.update({
+        where: { id: gameId },
+        data: {
+          resultsStatus: 'NONE',
+          fixedNumberOfSets: 0,
+          maxTotalPointsPerSet: 0,
+          maxPointsPerTeam: 0,
+          metadata: {
+            ...((game.metadata as any) || {}),
+            resultsVersion: 0,
+          },
+          resultsMeta: {
+            version: 0,
+            processedOps: [],
+          },
+          status: calculateGameStatus({
+            startTime: updatedGame.startTime,
+            endTime: updatedGame.endTime,
+            resultsStatus: 'NONE',
+          }),
+        },
+      });
+    }
+  });
+}
+
 export async function editGameResults(gameId: string, requestUserId: string, baseVersion?: number) {
   const game = await prisma.game.findUnique({
     where: { id: gameId },

@@ -14,6 +14,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import { useGameResultsEngine } from '@/hooks/useGameResultsEngine';
 import { GameResultsEngine } from '@/services/gameResultsEngine';
+import { validateSetIndex, validateSetScores, validateSetIndexAgainstFixed } from '@/utils/gameResults';
 import { 
   GameStatusDisplay, 
   HorizontalScoreEntryModal,
@@ -35,7 +36,7 @@ export const GameResultsEntry = () => {
     userId: user?.id,
   });
 
-  const [showSetModal, setShowSetModal] = useState<{ roundId?: string; matchId: string; setIndex: number } | null>(null);
+  const [showSetModal, setShowSetModal] = useState<{ roundId: string; matchId: string; setIndex: number } | null>(null);
   const [showPlayerSelector, setShowPlayerSelector] = useState(false);
   const [selectedMatchTeam, setSelectedMatchTeam] = useState<{ roundId?: string; matchId: string; team: 'teamA' | 'teamB' } | null>(null);
   const [showCourtModal, setShowCourtModal] = useState(false);
@@ -56,7 +57,7 @@ export const GameResultsEntry = () => {
   const [isResolvingConflict, setIsResolvingConflict] = useState(false);
 
   const game = engine.game;
-  const rounds = engine.rounds;
+  const getRounds = () => GameResultsEngine.getState().rounds;
   const canEdit = engine.canEdit;
   const gameState = engine.gameState;
   const loading = engine.loading;
@@ -72,11 +73,11 @@ export const GameResultsEntry = () => {
   const effectiveShowCourts = (game?.gameCourts?.length || 0) > 0;
   const effectiveHorizontalLayout = game?.fixedNumberOfSets === 1;
 
-  const matches = useMemo(() => 
-    Array.isArray(rounds) && rounds.length > 0
-      ? rounds[0].matches || []
-      : []
-  , [rounds]);
+  const matches = useMemo(() => {
+    return engine.rounds.length > 0
+      ? engine.rounds[0].matches || []
+      : [];
+  }, [engine.rounds]);
   
   const isPresetGame = players.length === 2 || players.length === 4;
 
@@ -85,17 +86,17 @@ export const GameResultsEntry = () => {
   };
 
   const hasMatchesWithTeamsReady = useMemo(() => {
-    if (rounds.length === 0) return false;
-    return rounds.some(round => 
+    if (engine.rounds.length === 0) return false;
+    return engine.rounds.some(round => 
       round.matches.some(match => 
         match.teamA.length > 0 && match.teamB.length > 0
       )
     );
-  }, [rounds]);
+  }, [engine.rounds]);
 
   const effectiveCanEdit = canEdit && isEditingResults;
   const isFinalStatus = game?.resultsStatus === 'FINAL';
-  const showFinishButton = canEdit && isEditingResults && isResultsEntryMode && rounds.length > 0 && rounds.some(r => r.matches.length > 0) && hasMatchesWithTeamsReady;
+  const showFinishButton = canEdit && isEditingResults && isResultsEntryMode && getRounds().length > 0 && getRounds().some(r => r.matches.length > 0) && hasMatchesWithTeamsReady;
   const showEditButton = canEdit && !isEditingResults && isFinalStatus && isResultsEntryMode && game?.status !== 'ARCHIVED';
   const finishButtonPanelHeight = (showFinishButton || showEditButton) ? 80 : 0;
 
@@ -104,50 +105,148 @@ export const GameResultsEntry = () => {
     await engine.addPlayerToTeam(roundId, matchId, team, draggedPlayer);
   };
 
-  const updateSetResult = async (matchId: string, setIndex: number, teamAScore: number, teamBScore: number) => {
-    const roundId = expandedRoundId || 'round-1';
-    const round = rounds.find(r => r.id === roundId);
-    const match = round?.matches.find(m => m.id === matchId);
-    
-    if (!match) return;
-    
-    const fixedNumberOfSets = game?.fixedNumberOfSets || 0;
-    const newSets = [...match.sets];
-    
-    while (newSets.length <= setIndex) {
-      newSets.push({ teamA: 0, teamB: 0 });
+  const updateSetResult = async (roundId: string, matchId: string, setIndex: number, teamAScore: number, teamBScore: number) => {
+    const setIndexError = validateSetIndex(setIndex);
+    if (setIndexError) {
+      console.error(setIndexError, setIndex);
+      toast.error(t('errors.invalidSetIndex') || 'Invalid set index');
+      return;
     }
-    
-    newSets[setIndex] = { teamA: teamAScore, teamB: teamBScore };
-    
-    if (fixedNumberOfSets === 0 && setIndex === newSets.length - 1 && (teamAScore > 0 || teamBScore > 0)) {
-      newSets.push({ teamA: 0, teamB: 0 });
+
+    const currentState = GameResultsEngine.getState();
+    const currentGame = currentState.game;
+    const currentRounds = currentState.rounds;
+
+    const scoreError = validateSetScores(teamAScore, teamBScore, currentGame);
+    if (scoreError) {
+      console.error(scoreError);
+      if (scoreError.includes('cannot exceed')) {
+        const max = scoreError.match(/\d+/)?.[0];
+        if (scoreError.includes('Total score')) {
+          toast.error(t('errors.totalScoreExceedsMax', { max }) || scoreError);
+        } else {
+          toast.error(t('errors.scoreExceedsMax', { max }) || scoreError);
+        }
+      } else {
+        toast.error(t('errors.invalidScores') || scoreError);
+      }
+      return;
     }
-    
-    await engine.updateMatch(roundId, matchId, {
-      teamA: match.teamA,
-      teamB: match.teamB,
-      sets: newSets,
-      courtId: match.courtId,
-    });
+
+    try {
+      const round = currentRounds.find(r => r.id === roundId);
+      
+      if (!round) {
+        console.error('Round not found:', roundId);
+        toast.error(t('errors.roundNotFound') || 'Round not found');
+        return;
+      }
+
+      const match = round.matches.find(m => m.id === matchId);
+      if (!match) {
+        console.error('Match not found:', matchId, 'in round:', roundId);
+        toast.error(t('errors.matchNotFound') || 'Match not found');
+        return;
+      }
+
+      const fixedNumberOfSets = currentGame?.fixedNumberOfSets || 0;
+      
+      const indexError = validateSetIndexAgainstFixed(setIndex, fixedNumberOfSets);
+      if (indexError) {
+        toast.error(t('errors.setIndexExceedsMax', { max: fixedNumberOfSets > 0 ? fixedNumberOfSets - 1 : 0 }) || indexError);
+        return;
+      }
+
+      const newSets = [...match.sets];
+      
+      if (fixedNumberOfSets > 0) {
+        while (newSets.length < fixedNumberOfSets && newSets.length <= setIndex) {
+          newSets.push({ teamA: 0, teamB: 0 });
+        }
+        if (newSets.length > fixedNumberOfSets) {
+          newSets.splice(fixedNumberOfSets);
+        }
+      } else {
+        while (newSets.length <= setIndex) {
+          newSets.push({ teamA: 0, teamB: 0 });
+        }
+      }
+      
+      newSets[setIndex] = { teamA: teamAScore, teamB: teamBScore };
+      
+      if (fixedNumberOfSets === 0 && setIndex === newSets.length - 1 && (teamAScore > 0 || teamBScore > 0)) {
+        newSets.push({ teamA: 0, teamB: 0 });
+      }
+      
+      await engine.updateMatch(roundId, matchId, {
+        teamA: match.teamA,
+        teamB: match.teamB,
+        sets: newSets,
+        courtId: match.courtId,
+      });
+    } catch (error: any) {
+      console.error('Failed to update set result:', error);
+      toast.error(error?.response?.data?.message || t('errors.generic') || 'Failed to update set result');
+    }
   };
 
-  const removeSet = async (matchId: string, setIndex: number) => {
-    const roundId = expandedRoundId || 'round-1';
-    const round = rounds.find(r => r.id === roundId);
-    const match = round?.matches.find(m => m.id === matchId);
-    
-    if (!match || match.sets.length <= 1) return;
-    
-    const newSets = [...match.sets];
-    newSets.splice(setIndex, 1);
-    
-    await engine.updateMatch(roundId, matchId, {
-      teamA: match.teamA,
-      teamB: match.teamB,
-      sets: newSets,
-      courtId: match.courtId,
-    });
+  const removeSet = async (roundId: string, matchId: string, setIndex: number) => {
+    const setIndexError = validateSetIndex(setIndex);
+    if (setIndexError) {
+      console.error(setIndexError, setIndex);
+      toast.error(t('errors.invalidSetIndex') || 'Invalid set index');
+      return;
+    }
+
+    try {
+      const currentState = GameResultsEngine.getState();
+      const currentGame = currentState.game;
+      const currentRounds = currentState.rounds;
+      const round = currentRounds.find(r => r.id === roundId);
+      
+      if (!round) {
+        console.error('Round not found:', roundId);
+        toast.error(t('errors.roundNotFound') || 'Round not found');
+        return;
+      }
+
+      const match = round.matches.find(m => m.id === matchId);
+      if (!match) {
+        console.error('Match not found:', matchId, 'in round:', roundId);
+        toast.error(t('errors.matchNotFound') || 'Match not found');
+        return;
+      }
+
+      const fixedNumberOfSets = currentGame?.fixedNumberOfSets || 0;
+      if (fixedNumberOfSets > 0) {
+        toast.error(t('errors.cannotRemoveLastSet') || 'Cannot remove sets when fixed number of sets is set');
+        return;
+      }
+      
+      if (match.sets.length <= 1) {
+        toast.error(t('errors.cannotRemoveLastSet') || 'Cannot remove the last set');
+        return;
+      }
+
+      if (setIndex >= match.sets.length) {
+        console.error('Set index out of bounds:', setIndex, 'sets length:', match.sets.length);
+        toast.error(t('errors.invalidSetIndex') || 'Invalid set index');
+        return;
+      }
+      
+      const newSets = [...match.sets];
+      newSets.splice(setIndex, 1);
+      
+      await engine.updateMatch(roundId, matchId, {
+        teamA: match.teamA,
+        teamB: match.teamB,
+        sets: newSets,
+        courtId: match.courtId,
+      });
+    } catch (error: any) {
+      console.error('Failed to remove set:', error);
+      toast.error(error?.response?.data?.message || t('errors.generic') || 'Failed to remove set');
+    }
   };
 
   const dragAndDrop = useDragAndDrop(effectiveCanEdit);
@@ -181,7 +280,8 @@ export const GameResultsEntry = () => {
   }, [engine.initialized, mounted]);
 
   useEffect(() => {
-    if (engine.initialized && rounds.length > 0 && !isResultsEntryMode) {
+    const currentRounds = getRounds();
+    if (engine.initialized && currentRounds.length > 0 && !isResultsEntryMode) {
       const hasResultsOrPendingOps = game?.resultsStatus !== 'NONE' || hasChanges;
       if (hasResultsOrPendingOps) {
         setIsResultsEntryMode(true);
@@ -191,7 +291,7 @@ export const GameResultsEntry = () => {
         }
       }
     }
-  }, [engine.initialized, rounds.length, isResultsEntryMode, game?.resultsStatus, hasChanges]);
+  }, [engine.initialized, engine.rounds.length, isResultsEntryMode, game?.resultsStatus, hasChanges]);
 
   useEffect(() => {
     const handleConflicts = (detectedConflicts: any[]) => {
@@ -245,17 +345,24 @@ export const GameResultsEntry = () => {
     try {
       await engine.resetGame();
       
-      if (engine.pendingOpsCount === 0) {
-        const response = await gamesApi.getById(id);
-        if (response?.data) {
-          const updatedGame = { ...response.data, resultsStatus: 'NONE' };
-          engine.updateGame(updatedGame);
-          setIsResultsEntryMode(false);
-        }
-        toast.success(t('common.restarted') || 'Game restarted successfully');
-      } else {
-        toast.error(t('errors.syncPending') || 'Please wait for sync to complete');
+      const response = await gamesApi.getById(id);
+      if (response?.data) {
+        const updatedGame = { ...response.data, resultsStatus: 'NONE' };
+        engine.updateGame(updatedGame);
+        setIsResultsEntryMode(false);
+        setIsEditingResults(false);
+        setShowSetModal(null);
+        setShowPlayerSelector(false);
+        setShowCourtModal(false);
+        setSelectedMatchTeam(null);
+        setSelectedCourtMatch(null);
+        setActiveTab('scores');
+        setConflicts([]);
+        setShowConflictModal(false);
+        engine.setExpandedRoundId(null);
+        engine.setEditingMatchId(null);
       }
+      toast.success(t('common.restarted') || 'Game restarted successfully');
     } catch (error: any) {
       console.error('Failed to restart game:', error);
       const errorMessage = error?.response?.data?.message || error?.message || t('errors.generic');
@@ -360,7 +467,8 @@ export const GameResultsEntry = () => {
     const { roundId, matchId, team } = selectedMatchTeam;
     
     const actualRoundId = roundId || expandedRoundId || 'round-1';
-    const round = rounds.find(r => r.id === actualRoundId);
+    const currentRounds = getRounds();
+    const round = currentRounds.find(r => r.id === actualRoundId);
     if (!round) return;
     
     const match = round.matches.find(m => m.id === matchId);
@@ -601,7 +709,7 @@ export const GameResultsEntry = () => {
       {game?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
         <OutcomesDisplay outcomes={game.outcomes || []} affectsRating={game.affectsRating} gameId={game.id} />
       ) : game?.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
-        <PlayerStatsPanel game={game} rounds={rounds} />
+        <PlayerStatsPanel game={game} rounds={getRounds()} />
       ) : !isResultsEntryMode ? (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
           <GameStatusDisplay gameState={gameState} />
@@ -617,7 +725,8 @@ export const GameResultsEntry = () => {
               )}
               <button
                 onClick={async () => {
-                  if (rounds.length === 0) {
+                  const currentRounds = getRounds();
+                  if (currentRounds.length === 0) {
                     if (isPresetGame) {
                       await engine.initializePresetMatches();
                     } else {
@@ -653,7 +762,7 @@ export const GameResultsEntry = () => {
           )}
         </div>
       ) : (
-        <div 
+          <div 
           className={`space-y-1 w-full scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-gray-300 dark:hover:scrollbar-thumb-gray-600 ${
             dragAndDrop.isDragging ? 'overflow-hidden' : ''
           } pb-4`}
@@ -661,7 +770,7 @@ export const GameResultsEntry = () => {
           onClick={handleContainerClick}
         >
           <div className="space-y-1 pt-0 pb-2">
-              {rounds.map((round) => (
+              {getRounds().map((round) => (
                 <RoundCard
                   key={round.id}
                   round={round}
@@ -671,8 +780,8 @@ export const GameResultsEntry = () => {
                   canEditResults={effectiveCanEdit && isResultsEntryMode}
                   editingMatchId={editingMatchId}
                   draggedPlayer={dragAndDrop.draggedPlayer}
-                  showDeleteButton={rounds.length > 1 && effectiveCanEdit}
-                  hideFrame={rounds.length === 1}
+                  showDeleteButton={getRounds().length > 1 && effectiveCanEdit}
+                  hideFrame={getRounds().length === 1}
                   onRemoveRound={() => engine.removeRound(round.id)}
                   onToggleExpand={() => {
                     if (expandedRoundId === round.id) {
@@ -730,7 +839,8 @@ export const GameResultsEntry = () => {
                 <AvailablePlayersFooter
                   players={players}
                   editingMatch={(() => {
-                    const expandedRound = rounds.find(r => r.id === expandedRoundId);
+                    const currentRounds = getRounds();
+                    const expandedRound = currentRounds.find(r => r.id === expandedRoundId);
                     return expandedRound?.matches.find(m => m.id === editingMatchId);
                   })()}
                   draggedPlayer={dragAndDrop.draggedPlayer}
@@ -748,10 +858,11 @@ export const GameResultsEntry = () => {
 
           <AnimatePresence>
             {showSetModal && (() => {
-              const roundId = showSetModal.roundId || 'round-1';
-              const round = rounds.find(r => r.id === roundId);
+              const currentState = GameResultsEngine.getState();
+              const currentRounds = currentState.rounds;
+              const round = currentRounds.find(r => r.id === showSetModal.roundId);
               const match = round?.matches.find(m => m.id === showSetModal.matchId);
-              if (!match) return null;
+              if (!match || !round) return null;
 
               const canRemove = (() => {
                 const currentSet = match.sets[showSetModal.setIndex];
@@ -772,10 +883,10 @@ export const GameResultsEntry = () => {
                     maxPointsPerTeam={game?.maxPointsPerTeam}
                     fixedNumberOfSets={game?.fixedNumberOfSets}
                     onSave={(matchId, setIndex, teamAScore, teamBScore) => {
-                      updateSetResult(matchId, setIndex, teamAScore, teamBScore);
+                      updateSetResult(showSetModal.roundId, matchId, setIndex, teamAScore, teamBScore);
                     }}
                     onRemove={(matchId, setIndex) => {
-                      removeSet(matchId, setIndex);
+                      removeSet(showSetModal.roundId, matchId, setIndex);
                     }}
                     onClose={() => setShowSetModal(null)}
                     canRemove={canRemove}
@@ -792,10 +903,10 @@ export const GameResultsEntry = () => {
                   maxPointsPerTeam={game?.maxPointsPerTeam}
                   fixedNumberOfSets={game?.fixedNumberOfSets}
                   onSave={(matchId, setIndex, teamAScore, teamBScore) => {
-                    updateSetResult(matchId, setIndex, teamAScore, teamBScore);
+                    updateSetResult(showSetModal.roundId, matchId, setIndex, teamAScore, teamBScore);
                   }}
                   onRemove={(matchId, setIndex) => {
-                    removeSet(matchId, setIndex);
+                    removeSet(showSetModal.roundId, matchId, setIndex);
                   }}
                   onClose={() => setShowSetModal(null)}
                   canRemove={canRemove}
@@ -814,7 +925,8 @@ export const GameResultsEntry = () => {
               onConfirm={handlePlayerSelect}
               selectedPlayerIds={(() => {
                 const roundId = selectedMatchTeam.roundId || expandedRoundId || 'round-1';
-                const round = rounds.find(r => r.id === roundId);
+                const currentRounds = getRounds();
+                const round = currentRounds.find(r => r.id === roundId);
                 const match = round?.matches.find(m => m.id === selectedMatchTeam.matchId);
                 if (!match) return [];
                 return [...match.teamA, ...match.teamB];
@@ -832,7 +944,8 @@ export const GameResultsEntry = () => {
               }}
               courts={game?.gameCourts?.map(gc => gc.court) || []}
               selectedId={(() => {
-                const round = rounds.find(r => r.id === selectedCourtMatch.roundId);
+                const currentRounds = getRounds();
+                const round = currentRounds.find(r => r.id === selectedCourtMatch.roundId);
                 const match = round?.matches.find(m => m.id === selectedCourtMatch.matchId);
                 return match?.courtId || '';
               })()}

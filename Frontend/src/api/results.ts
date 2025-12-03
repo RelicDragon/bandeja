@@ -64,6 +64,11 @@ export const resultsApi = {
     return response.data;
   },
 
+  resetGameResults: async (gameId: string) => {
+    const response = await api.post<ApiResponse<void>>(`/results/game/${gameId}/reset`);
+    return response.data;
+  },
+
   deleteGameResults: async (gameId: string, baseVersion?: number) => {
     const response = await api.delete<ApiResponse<void>>(`/results/game/${gameId}`, {
       data: {

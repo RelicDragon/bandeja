@@ -70,6 +70,26 @@ export const deleteGameResults = asyncHandler(async (req: AuthRequest, res: Resp
   });
 });
 
+export const resetGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId } = req.params;
+  
+  console.log(`[RESET GAME RESULTS CONTROLLER] Endpoint hit for game ${gameId} by user ${req.userId}`);
+
+  await resultsService.resetGameResults(gameId, req.userId!);
+  
+  console.log(`[RESET GAME RESULTS CONTROLLER] Results reset successfully for game ${gameId}`);
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    await socketService.emitGameUpdate(gameId, req.userId!);
+  }
+
+  res.json({
+    success: true,
+    message: 'Game results reset successfully',
+  });
+});
+
 export const editGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
   const { baseVersion } = req.body;

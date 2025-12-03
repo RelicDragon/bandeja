@@ -209,65 +209,7 @@ async function applyOpToDatabase(
   const pathInfo = parsePath(op.path);
 
   try {
-    if (op.path === '/reset' && op.op === 'replace') {
-      await tx.roundOutcome.deleteMany({
-        where: {
-          round: {
-            gameId,
-          },
-        },
-      });
-
-      await tx.gameOutcome.deleteMany({
-        where: { gameId },
-      });
-
-      await tx.set.deleteMany({
-        where: {
-          match: {
-            round: {
-              gameId,
-            },
-          },
-        },
-      });
-      
-      await tx.teamPlayer.deleteMany({
-        where: {
-          team: {
-            match: {
-              round: {
-                gameId,
-              },
-            },
-          },
-        },
-      });
-      
-      await tx.team.deleteMany({
-        where: {
-          match: {
-            round: {
-              gameId,
-            },
-          },
-        },
-      });
-      
-      await tx.match.deleteMany({
-        where: {
-          round: {
-            gameId,
-          },
-        },
-      });
-      
-      await tx.round.deleteMany({
-        where: { gameId },
-      });
-      
-      return true;
-    } else if (op.path === '/rounds' && op.op === 'add' && op.value) {
+    if (op.path === '/rounds' && op.op === 'add' && op.value) {
       const roundCount = await tx.round.count({ where: { gameId } });
       await tx.round.create({
         data: {
@@ -604,7 +546,6 @@ export async function batchOps(
   let currentVersion = game.resultsStatus === 'NONE' ? 0 : (resultsMeta.version || 0);
   const applied: string[] = [];
   const conflicts: ConflictOp[] = [];
-  let resetOpProcessed = false;
 
   // When resultsStatus is NONE, start with empty processedOps (fresh start)
   const processedOpIds = game.resultsStatus === 'NONE' ? new Set<string>() : new Set(resultsMeta.processedOps || []);
@@ -615,36 +556,10 @@ export async function batchOps(
       continue;
     }
 
-    // Check if this is a reset op
-    const isResetOp = op.path === '/reset' && op.op === 'replace';
-    
-    if (isResetOp) {
-      // Reset ops are always accepted if base_version matches current or if we're already at NONE
-      if (op.base_version === currentVersion || game.resultsStatus === 'NONE') {
-        applied.push(op.id);
-        // After a reset op in the batch, subsequent ops should be checked against version 0
-        currentVersion = 0;
-        resetOpProcessed = true;
-      } else {
-        conflicts.push({
-          opId: op.id,
-          reason: 'VersionMismatch',
-          serverPatch: [],
-          clientPatch: [{ op: op.op, path: op.path, value: op.value }],
-        });
-      }
-    } else if (op.base_version < currentVersion) {
+    if (op.base_version < currentVersion) {
       conflicts.push({
         opId: op.id,
         reason: 'VersionMismatch',
-        serverPatch: [],
-        clientPatch: [{ op: op.op, path: op.path, value: op.value }],
-      });
-    } else if (resetOpProcessed && op.base_version !== 0) {
-      // If a reset was processed in this batch, subsequent ops must have baseVersion 0
-      conflicts.push({
-        opId: op.id,
-        reason: 'StaleOpAfterReset',
         serverPatch: [],
         clientPatch: [{ op: op.op, path: op.path, value: op.value }],
       });
@@ -656,43 +571,12 @@ export async function batchOps(
   const headVersion = applied.length > 0 ? currentVersion + 1 : currentVersion;
   const serverTime = new Date().toISOString();
 
-  // Check if there's a reset operation being applied
-  const hasResetOp = applied.length > 0 && ops.some(op => applied.includes(op.id) && !processedOpIds.has(op.id) && op.path === '/reset' && op.op === 'replace');
-
   if (applied.length > 0) {
     await prisma.$transaction(async (tx) => {
-      let isResetOp = false;
-      
-      if (hasResetOp && game.affectsRating) {
-        const outcomes = await tx.gameOutcome.findMany({
-          where: { gameId },
-        });
-        
-        if (outcomes.length > 0) {
-          for (const outcome of outcomes) {
-            await tx.user.update({
-              where: { id: outcome.userId },
-              data: {
-                level: outcome.levelBefore,
-                reliability: outcome.reliabilityBefore,
-                totalPoints: { decrement: outcome.pointsEarned },
-                gamesPlayed: { decrement: 1 },
-                gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
-              },
-            });
-          }
-        }
-      }
-      
       for (const op of ops) {
         if (applied.includes(op.id) && !processedOpIds.has(op.id)) {
-          const isResetOperation = op.path === '/reset' && op.op === 'replace';
-          
           const success = await applyOpToDatabase(gameId, op, tx);
           if (success) {
-            if (isResetOperation) {
-              isResetOp = true;
-            }
             console.log(`Successfully applied op ${op.id} to database`, {
               path: op.path,
               op: op.op,
@@ -710,48 +594,24 @@ export async function batchOps(
         }
       }
 
-      // Reset version and processedOps when resetting game
-      const newResultsMeta: ResultsMeta = isResetOp 
-        ? {
-            version: 0,
-            lastBatchTime: serverTime,
-            lastBatchId: idempotencyKey,
-            processedOps: [],
-          }
-        : {
-            version: headVersion,
-            lastBatchTime: serverTime,
-            lastBatchId: idempotencyKey,
-            processedOps: [...(resultsMeta.processedOps || []), ...applied.filter(id => !processedOpIds.has(id))],
-          };
-
-      const updateData: any = {
-        resultsMeta: newResultsMeta as any,
-        resultsStatus: isResetOp ? 'NONE' : 'IN_PROGRESS',
+      const newResultsMeta: ResultsMeta = {
+        version: headVersion,
+        lastBatchTime: serverTime,
+        lastBatchId: idempotencyKey,
+        processedOps: [...(resultsMeta.processedOps || []), ...applied.filter(id => !processedOpIds.has(id))],
       };
-
-      if (isResetOp) {
-        updateData.fixedNumberOfSets = 0;
-        updateData.maxTotalPointsPerSet = 0;
-        updateData.maxPointsPerTeam = 0;
-        
-        const { calculateGameStatus } = await import('../../utils/gameStatus');
-        updateData.status = calculateGameStatus({
-          startTime: game.startTime,
-          endTime: game.endTime,
-          resultsStatus: 'NONE',
-        });
-      }
 
       await tx.game.update({
         where: { id: gameId },
-        data: updateData,
+        data: {
+          resultsMeta: newResultsMeta as any,
+          resultsStatus: 'IN_PROGRESS',
+        },
       });
     });
   }
 
-  // Return correct version: 0 for reset ops, headVersion otherwise
-  const finalVersion = hasResetOp ? 0 : headVersion;
+  const finalVersion = headVersion;
 
   const result: BatchOpsResult = {
     applied,

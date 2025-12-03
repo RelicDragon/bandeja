@@ -909,7 +909,15 @@
       "alreadyInFavorites": "Корисник је већ у омиљеним",
       "userNotInFavorites": "Корисник није пронађен у омиљеним"
     },
-    "syncPending": "Молимо сачекајте да се синхронизација заврши"
+    "syncPending": "Молимо сачекајте да се синхронизација заврши",
+    "invalidSetIndex": "Неважећи индекс сета",
+    "invalidScores": "Резултати не могу бити негативни",
+    "scoreExceedsMax": "Резултат не може премашити {{max}}",
+    "totalScoreExceedsMax": "Укупан резултат не може премашити {{max}}",
+    "roundNotFound": "Рунда није пронађена",
+    "matchNotFound": "Меч није пронађен",
+    "setIndexExceedsMax": "Индекс сета не може премашити {{max}}",
+    "cannotRemoveLastSet": "Не можете уклонити последњи сет"
   },
   "media": {
     "resetView": "Ресетуј приказ"

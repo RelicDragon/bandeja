@@ -900,7 +900,15 @@
       "alreadyInFavorites": "El usuario ya está en favoritos",
       "userNotInFavorites": "El usuario no está en favoritos"
     },
-    "syncPending": "Por favor espera a que se complete la sincronización"
+    "syncPending": "Por favor espera a que se complete la sincronización",
+    "invalidSetIndex": "Índice de set inválido",
+    "invalidScores": "Las puntuaciones no pueden ser negativas",
+    "scoreExceedsMax": "La puntuación no puede exceder {{max}}",
+    "totalScoreExceedsMax": "La puntuación total no puede exceder {{max}}",
+    "roundNotFound": "Ronda no encontrada",
+    "matchNotFound": "Partido no encontrado",
+    "setIndexExceedsMax": "El índice de set no puede exceder {{max}}",
+    "cannotRemoveLastSet": "No se puede eliminar el último set"
   },
   "media": {
     "resetView": "Restablecer Vista"
