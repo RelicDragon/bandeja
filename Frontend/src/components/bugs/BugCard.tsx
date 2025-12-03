@@ -155,7 +155,8 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
     return UrlConstructor.constructImageUrl(lastMessage.mediaUrls[index]);
   };
 
-  const handleImageClick = (imageUrl: string) => {
+  const handleImageClick = (e: React.MouseEvent, imageUrl: string) => {
+    e.stopPropagation();
     setFullscreenImage(UrlConstructor.constructImageUrl(imageUrl));
   };
 
@@ -193,8 +194,32 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
             {isExpanded ? bug.text : `${bug.text.substring(0, 100)}${bug.text.length > 100 ? '...' : ''}`}
           </div>
 
+          {bug.text.length > 100 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={`p-0 h-auto text-xs flex items-center ${isArchived ? 'text-gray-400 hover:text-gray-500' : 'text-blue-600 hover:text-blue-800'}`}
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="w-3 h-3 mr-1" />
+                  {t('common.showLess')}
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-3 h-3 mr-1" />
+                  {t('common.showMore')}
+                </>
+              )}
+            </Button>
+          )}
+
           {lastMessage && lastMessage.sender && (
-            <div className={`flex items-start gap-2 mb-2 p-2 rounded-md ${isArchived ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-gray-50 dark:bg-gray-800/30'}`}>
+            <div 
+              onClick={handleOpenChat}
+              className={`flex items-start gap-2 mb-2 p-2 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors ${isArchived ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-gray-50 dark:bg-gray-800/30'}`}
+            >
               <PlayerAvatar
                 player={lastMessage.sender}
                 extrasmall
@@ -217,7 +242,7 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
                     {lastMessage.mediaUrls.slice(0, 3).map((url, index) => (
                       <div
                         key={index}
-                        onClick={() => handleImageClick(url)}
+                        onClick={(e) => handleImageClick(e, url)}
                         className="cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0"
                       >
                         <CachedImage
@@ -238,27 +263,6 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
                 )}
               </div>
             </div>
-          )}
-
-          {bug.text.length > 100 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className={`p-0 h-auto text-xs ${isArchived ? 'text-gray-400 hover:text-gray-500' : 'text-blue-600 hover:text-blue-800'}`}
-            >
-              {isExpanded ? (
-                <>
-                  <ChevronUp className="w-3 h-3 mr-1" />
-                  {t('common.showLess')}
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="w-3 h-3 mr-1" />
-                  {t('common.showMore')}
-                </>
-              )}
-            </Button>
           )}
         </div>
 
