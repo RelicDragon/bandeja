@@ -84,19 +84,19 @@ export const resultsApi = {
     return response.data;
   },
 
-  deleteMatch: async (gameId: string, roundId: string, matchId: string) => {
-    const response = await api.delete<ApiResponse<void>>(`/results/game/${gameId}/rounds/${roundId}/matches/${matchId}`);
+  deleteMatch: async (gameId: string, matchId: string) => {
+    const response = await api.delete<ApiResponse<void>>(`/results/game/${gameId}/matches/${matchId}`);
     return response.data;
   },
 
-  updateMatch: async (gameId: string, roundId: string, matchId: string, match: {
+  updateMatch: async (gameId: string, matchId: string, match: {
     teamA: string[];
     teamB: string[];
     sets: Array<{ teamA: number; teamB: number }>;
     courtId?: string;
   }) => {
     const response = await api.put<ApiResponse<void>>(
-      `/results/game/${gameId}/rounds/${roundId}/matches/${matchId}`,
+      `/results/game/${gameId}/matches/${matchId}`,
       match
     );
     return response.data;

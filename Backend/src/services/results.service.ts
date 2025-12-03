@@ -717,7 +717,7 @@ export async function createMatch(gameId: string, roundId: string, matchId: stri
   });
 }
 
-export async function deleteMatch(gameId: string, roundId: string, matchId: string, requestUserId: string) {
+export async function deleteMatch(gameId: string, matchId: string, requestUserId: string) {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: { participants: true },
@@ -746,7 +746,7 @@ export async function deleteMatch(gameId: string, roundId: string, matchId: stri
 
     await tx.match.updateMany({
       where: {
-        roundId,
+        roundId: match.roundId,
         matchNumber: { gt: deletedMatchNumber },
       },
       data: {
@@ -758,7 +758,6 @@ export async function deleteMatch(gameId: string, roundId: string, matchId: stri
 
 export async function updateMatch(
   gameId: string,
-  roundId: string,
   matchId: string,
   matchData: {
     teamA: string[];

@@ -60,19 +60,18 @@ router.post(
 );
 
 router.delete(
-  '/game/:gameId/rounds/:roundId/matches/:matchId',
+  '/game/:gameId/matches/:matchId',
   authenticate,
   resultsController.deleteMatch
 );
 
 router.put(
-  '/game/:gameId/rounds/:roundId/matches/:matchId',
+  '/game/:gameId/matches/:matchId',
   authenticate,
   validate([
     body('teamA').isArray().withMessage('teamA must be an array'),
     body('teamB').isArray().withMessage('teamB must be an array'),
     body('sets').isArray().withMessage('sets must be an array'),
-    body('courtId').optional().isString(),
   ]),
   resultsController.updateMatch
 );

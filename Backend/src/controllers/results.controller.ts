@@ -162,9 +162,9 @@ export const createMatch = asyncHandler(async (req: AuthRequest, res: Response) 
 });
 
 export const deleteMatch = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { gameId, roundId, matchId } = req.params;
+  const { gameId, matchId } = req.params;
 
-  await resultsService.deleteMatch(gameId, roundId, matchId, req.userId!);
+  await resultsService.deleteMatch(gameId, matchId, req.userId!);
 
   res.json({
     success: true,
@@ -173,10 +173,10 @@ export const deleteMatch = asyncHandler(async (req: AuthRequest, res: Response) 
 });
 
 export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { gameId, roundId, matchId } = req.params;
+  const { gameId, matchId } = req.params;
   const matchData = req.body;
 
-  await resultsService.updateMatch(gameId, roundId, matchId, matchData, req.userId!);
+  await resultsService.updateMatch(gameId, matchId, matchData, req.userId!);
 
   const socketService = (global as any).socketService;
   if (socketService) {

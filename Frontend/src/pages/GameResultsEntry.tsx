@@ -279,18 +279,22 @@ export const GameResultsEntry = () => {
   }, [engine.initialized, mounted]);
 
   useEffect(() => {
-    const currentRounds = getRounds();
-    if (engine.initialized && currentRounds.length > 0 && !isResultsEntryMode) {
+    if (engine.initialized && engine.rounds.length > 0 && !isResultsEntryMode) {
       const hasResults = game?.resultsStatus !== 'NONE';
       if (hasResults) {
         setIsResultsEntryMode(true);
-        // Auto-enable editing for non-FINAL statuses
         if (game?.resultsStatus !== 'FINAL') {
           setIsEditingResults(true);
         }
       }
     }
   }, [engine.initialized, engine.rounds.length, isResultsEntryMode, game?.resultsStatus]);
+
+  useEffect(() => {
+    if (isResultsEntryMode && canEdit && !isEditingResults && game?.resultsStatus !== 'FINAL' && game?.resultsStatus !== 'NONE') {
+      setIsEditingResults(true);
+    }
+  }, [isResultsEntryMode, canEdit, isEditingResults, game?.resultsStatus]);
 
 
   useEffect(() => {

@@ -312,7 +312,7 @@ class GameResultsEngineClass {
         });
         for (const match of newRoundData.matches) {
           await resultsApi.createMatch(state.gameId!, roundId, { id: match.id });
-          await resultsApi.updateMatch(state.gameId!, roundId, match.id, {
+          await resultsApi.updateMatch(state.gameId!, match.id, {
             teamA: match.teamA,
             teamB: match.teamB,
             sets: match.sets,
@@ -377,7 +377,7 @@ class GameResultsEngineClass {
       },
       async () => {
         await resultsApi.createMatch(state.gameId!, roundId, { id: newMatchId });
-        await resultsApi.updateMatch(state.gameId!, roundId, newMatchId, {
+        await resultsApi.updateMatch(state.gameId!, newMatchId, {
           teamA: newMatch.teamA,
           teamB: newMatch.teamB,
           sets: newMatch.sets,
@@ -407,7 +407,7 @@ class GameResultsEngineClass {
         });
       },
       async () => {
-        await resultsApi.deleteMatch(state.gameId!, roundId, matchId);
+        await resultsApi.deleteMatch(state.gameId!, matchId);
       }
     );
   }
@@ -445,7 +445,7 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        await resultsApi.updateMatch(state.gameId!, roundId, matchId, {
+        await resultsApi.updateMatch(state.gameId!, matchId, {
           teamA: team === 'teamA' ? [...match.teamA, playerId] : match.teamA,
           teamB: team === 'teamB' ? [...match.teamB, playerId] : match.teamB,
           sets: match.sets,
@@ -485,7 +485,7 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        await resultsApi.updateMatch(state.gameId!, roundId, matchId, {
+        await resultsApi.updateMatch(state.gameId!, matchId, {
           teamA: team === 'teamA' ? match.teamA.filter(id => id !== playerId) : match.teamA,
           teamB: team === 'teamB' ? match.teamB.filter(id => id !== playerId) : match.teamB,
           sets: match.sets,
@@ -573,7 +573,7 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        await resultsApi.updateMatch(state.gameId!, roundId, matchId, match);
+        await resultsApi.updateMatch(state.gameId!, matchId, match);
       }
     );
   }
@@ -603,7 +603,7 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        await resultsApi.updateMatch(state.gameId!, roundId, matchId, {
+        await resultsApi.updateMatch(state.gameId!, matchId, {
           teamA: match.teamA,
           teamB: match.teamB,
           sets: match.sets,
