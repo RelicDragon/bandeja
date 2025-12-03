@@ -37,11 +37,30 @@ export const OTPInput = ({ value, onChange, length = 6, disabled = false }: OTPI
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').slice(0, length);
-    if (/^\d+$/.test(pastedData)) {
+    e.stopPropagation();
+    const pastedData = e.clipboardData.getData('text').trim().replace(/\D/g, '').slice(0, length);
+    if (pastedData.length > 0) {
       onChange(pastedData);
-      const nextIndex = Math.min(pastedData.length, length - 1);
-      inputRefs.current[nextIndex]?.focus();
+      const nextIndex = Math.min(pastedData.length - 1, length - 1);
+      setTimeout(() => {
+        inputRefs.current[nextIndex]?.focus();
+      }, 0);
+    }
+  };
+
+  const handleInput = (index: number, e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    if (input.value.length > 1) {
+      e.preventDefault();
+      const pastedData = input.value.trim().replace(/\D/g, '').slice(0, length);
+      if (pastedData.length > 0) {
+        onChange(pastedData);
+        const nextIndex = Math.min(pastedData.length - 1, length - 1);
+        setTimeout(() => {
+          inputRefs.current[nextIndex]?.focus();
+        }, 0);
+      }
+      input.value = value[index] || '';
     }
   };
 
@@ -56,6 +75,7 @@ export const OTPInput = ({ value, onChange, length = 6, disabled = false }: OTPI
           maxLength={1}
           value={value[index] || ''}
           onChange={(e) => handleChange(index, e.target.value)}
+          onInput={(e) => handleInput(index, e)}
           onKeyDown={(e) => handleKeyDown(index, e)}
           onPaste={handlePaste}
           disabled={disabled}
