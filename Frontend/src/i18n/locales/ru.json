@@ -27,7 +27,11 @@
     "openTelegramBot": "Открыть бот Telegram",
     "telegramInstructions": "Нажмите на ссылку ниже, чтобы открыть Telegram и получить код аутентификации",
     "enterCode": "Введите 6-значный код из Telegram",
-    "enterCodePlaceholder": "Введите 6-значный код"
+    "enterCodePlaceholder": "Введите 6-значный код",
+    "enterCodeRequired": "Пожалуйста, введите 6-значный код",
+    "invalidCode": "Неверный или истёкший код. Попробуйте ещё раз",
+    "codeRequired": "Код обязателен",
+    "accountInactive": "Аккаунт неактивен"
   },
   "nav": {
     "home": "Главная",
@@ -55,7 +59,7 @@
     "loadError": "Не удалось загрузить ошибки",
     "noBugs": "Ещё не было сообщений об ошибках",
     "allTypes": "Все Типы",
-    "allStatuses": "Все Статусы",
+    "allActive": "Все активные",
     "statusUpdated": "Статус ошибки обновлён",
     "statusUpdateError": "Не удалось обновить статус ошибки",
     "typeUpdated": "Тип ошибки обновлён",

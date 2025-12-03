@@ -34,6 +34,8 @@ export class BugService {
 
     if (status) {
       where.status = status;
+    } else {
+      where.status = { not: 'ARCHIVED' };
     }
 
     if (bugType) {

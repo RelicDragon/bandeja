@@ -12,6 +12,8 @@ import { TransactionType } from '@prisma/client';
 
 // Auth endpoints
 export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
   const { phone, password } = req.body;
 
   const result = await AdminAuthService.loginAdmin(phone, password);

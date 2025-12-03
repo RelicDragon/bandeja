@@ -26,7 +26,9 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   const [filters, setFilters] = useState<{
     status?: BugStatus;
     myBugsOnly?: boolean;
-  }>({});
+  }>({
+    myBugsOnly: true,
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [animatedTextIndex, setAnimatedTextIndex] = useState(0);
@@ -208,7 +210,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   );
 
   const statusOptions = [
-    { value: '', label: t('bug.allStatuses') },
+    { value: '', label: t('bug.allActive') },
     ...BUG_STATUS_VALUES.map((status) => ({
       value: status,
       label: t(`bug.statuses.${status}`)
@@ -240,7 +242,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
               ...prev,
               status: value as BugStatus || undefined
             }))}
-            placeholder={t('bug.allStatuses')}
+            placeholder={t('bug.allActive')}
             className="min-w-32"
           />
           

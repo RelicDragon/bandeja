@@ -27,7 +27,11 @@
     "openTelegramBot": "Open Telegram Bot",
     "telegramInstructions": "Click the link below to open Telegram and get your authentication code",
     "enterCode": "Enter the 6-digit code from Telegram",
-    "enterCodePlaceholder": "Enter 6-digit code"
+    "enterCodePlaceholder": "Enter 6-digit code",
+    "enterCodeRequired": "Please enter the 6-digit code",
+    "invalidCode": "Invalid or expired code. Please try again",
+    "codeRequired": "Code is required",
+    "accountInactive": "Account is inactive"
   },
   "nav": {
     "home": "Home",
@@ -55,7 +59,7 @@
     "loadError": "Failed to load bugs",
     "noBugs": "No bugs reported yet",
     "allTypes": "All Types",
-    "allStatuses": "All Statuses",
+    "allActive": "All active",
     "statusUpdated": "Bug status updated",
     "statusUpdateError": "Failed to update bug status",
     "typeUpdated": "Bug type updated",

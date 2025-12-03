@@ -27,7 +27,11 @@
     "openTelegramBot": "Abrir bot de Telegram",
     "telegramInstructions": "Haz clic en el enlace de abajo para abrir Telegram y obtener tu código de autenticación",
     "enterCode": "Ingresa el código de 6 dígitos de Telegram",
-    "enterCodePlaceholder": "Ingresa código de 6 dígitos"
+    "enterCodePlaceholder": "Ingresa código de 6 dígitos",
+    "enterCodeRequired": "Por favor ingresa el código de 6 dígitos",
+    "invalidCode": "Código inválido o expirado. Por favor intenta de nuevo",
+    "codeRequired": "El código es requerido",
+    "accountInactive": "La cuenta está inactiva"
   },
   "nav": {
     "home": "Inicio",
@@ -55,7 +59,7 @@
     "loadError": "Error al cargar los errores",
     "noBugs": "Aún no se han reportado errores",
     "allTypes": "Todos los Tipos",
-    "allStatuses": "Todos los Estados",
+    "allActive": "Todos activos",
     "statusUpdated": "Estado del error actualizado",
     "statusUpdateError": "Error al actualizar el estado del error",
     "typeUpdated": "Tipo del error actualizado",

@@ -12,6 +12,20 @@ export async function generateAuthCode(ctx: BotContext) {
   const telegramId = ctx.telegramId;
 
   try {
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+    const recentOtp = await prisma.telegramOtp.findFirst({
+      where: {
+        telegramId,
+        createdAt: {
+          gte: oneMinuteAgo,
+        },
+      },
+    });
+
+    if (recentOtp) {
+      await ctx.reply(t('telegram.rateLimitError', lang));
+      return;
+    }
     try {
       const msgId = ctx.message?.message_id;
       if (msgId) {
@@ -45,10 +59,12 @@ export async function generateAuthCode(ctx: BotContext) {
       where: { telegramId },
     });
 
+    const textMessage = await ctx.reply(t('telegram.authCodeText', lang));
+    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     const code = generateOTP();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-
-    const textMessage = await ctx.reply(t('telegram.authCodeText', lang));
     const codeMessage = await ctx.reply(code);
 
     await prisma.telegramOtp.create({

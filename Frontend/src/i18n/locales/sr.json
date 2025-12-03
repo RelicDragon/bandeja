@@ -27,7 +27,11 @@
     "openTelegramBot": "Отвори Telegram бот",
     "telegramInstructions": "Кликните на линк испод да отворите Telegram и добијете ваш код за пријаву",
     "enterCode": "Унесите 6-цифрени код из Telegram-а",
-    "enterCodePlaceholder": "Унесите 6-цифрени код"
+    "enterCodePlaceholder": "Унесите 6-цифрени код",
+    "enterCodeRequired": "Молимо унесите 6-цифрени код",
+    "invalidCode": "Неважећи или истекао код. Покушајте поново",
+    "codeRequired": "Код је обавезан",
+    "accountInactive": "Налог је неактиван"
   },
   "nav": {
     "home": "Почетна",
@@ -55,7 +59,7 @@
     "loadError": "Неуспешно учитавање грешака",
     "noBugs": "Још нема пријављених грешака",
     "allTypes": "Сви Типови",
-    "allStatuses": "Сви Статуси",
+    "allActive": "Сви активни",
     "statusUpdated": "Статус грешке ажуриран",
     "statusUpdateError": "Неуспешно ажурирање статуса грешке",
     "typeUpdated": "Тип грешке ажуриран",

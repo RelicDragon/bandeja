@@ -8,16 +8,18 @@ import telegramBotService from '../services/telegram/bot.service';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 
 export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response) => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
   const { code, language } = req.body;
 
   if (!code) {
-    throw new ApiError(400, 'Code is required');
+    throw new ApiError(400, 'auth.codeRequired');
   }
 
   const otp = await telegramBotService.verifyCode(code);
 
   if (!otp) {
-    throw new ApiError(401, 'Invalid or expired code');
+    throw new ApiError(401, 'auth.invalidCode');
   }
 
   const actualTelegramId = otp.telegramId;
@@ -31,7 +33,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
 
   if (user) {
     if (!user.isActive) {
-      throw new ApiError(403, 'Account is inactive');
+      throw new ApiError(403, 'auth.accountInactive');
     }
 
     const updateData: any = {};

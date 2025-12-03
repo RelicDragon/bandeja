@@ -6,6 +6,7 @@ import { Button, Input, OTPInput } from '@/components';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { config } from '@/config/media';
+import { Send, Phone, AlertCircle } from 'lucide-react';
 
 export const Login = () => {
   const { t } = useTranslation();
@@ -46,7 +47,7 @@ export const Login = () => {
     setError('');
 
     if (otp.length !== 6) {
-      setError('Please enter the 6-digit code');
+      setError(t('auth.enterCodeRequired'));
       setLoading(false);
       return;
     }
@@ -64,7 +65,8 @@ export const Login = () => {
         navigate('/');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || t('errors.generic'));
+      const key = err.response?.data?.message;
+      setError(key && t(key) !== key ? t(key) : t('errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -78,35 +80,53 @@ export const Login = () => {
 
   return (
     <AuthLayout>
-      <h2 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-2xl font-semibold text-center text-slate-800 dark:text-white mb-2">
         {t('auth.login')}
       </h2>
 
-      <div className="flex gap-2 mb-6">
-        <Button
-          variant={loginType === 'telegram' ? 'primary' : 'secondary'}
+      {/* Tab Switcher */}
+      <div className="relative flex p-1 mb-8 bg-slate-100 dark:bg-slate-700/50 rounded-xl">
+        <div 
+          className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-slate-600 rounded-lg shadow-sm transition-transform duration-300 ease-out"
+          style={{ transform: loginType === 'telegram' ? 'translateX(0)' : 'translateX(calc(100% + 8px))' }}
+        />
+        <button
+          type="button"
           onClick={() => setLoginType('telegram')}
-          className="flex-1"
+          className={`flex-1 relative z-10 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            loginType === 'telegram' 
+              ? 'text-slate-800 dark:text-white' 
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
         >
+          <Send size={16} />
           Telegram
-        </Button>
-        <Button
-          variant={loginType === 'phone' ? 'primary' : 'secondary'}
+        </button>
+        <button
+          type="button"
           onClick={() => setLoginType('phone')}
-          className="flex-1"
+          className={`flex-1 relative z-10 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            loginType === 'phone' 
+              ? 'text-slate-800 dark:text-white' 
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
         >
+          <Phone size={16} />
           {t('auth.phoneLogin')}
-        </Button>
+        </button>
       </div>
 
+      {/* Error Message */}
       {error && (
-        <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg">
-          {error}
+        <div className="flex items-center gap-3 mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-red-700 dark:text-red-400 rounded-xl">
+          <AlertCircle size={18} className="shrink-0" />
+          <span className="text-sm">{error}</span>
         </div>
       )}
 
-      {loginType === 'phone' ? (
-        <form onSubmit={handlePhoneLogin} className="space-y-4">
+      {/* Phone Login Form */}
+      {loginType === 'phone' && (
+        <form onSubmit={handlePhoneLogin} className="space-y-5">
           <Input
             label={t('auth.phone')}
             type="tel"
@@ -122,47 +142,97 @@ export const Login = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? t('app.loading') : t('auth.login')}
+          <Button 
+            type="submit" 
+            className="w-full h-12 text-base font-medium" 
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                {t('app.loading')}
+              </span>
+            ) : t('auth.login')}
           </Button>
         </form>
-      ) : (
-        <div className="space-y-6">
-          <div className="text-center space-y-3">
-            <p className="text-gray-700 dark:text-gray-300">
-              {t('auth.telegramInstructions')}
-            </p>
-            <Button
-              type="button"
-              onClick={handleTelegramClick}
-              className="w-full"
-              variant="secondary"
-            >
-              🔗 {t('auth.openTelegramBot')}
-            </Button>
-          </div>
-
-          <div className="space-y-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
-              {t('auth.enterCode')}
-            </label>
-            <OTPInput value={otp} onChange={setOtp} disabled={loading} />
-            <Button
-              type="button"
-              onClick={handleTelegramAuth}
-              className="w-full"
-              disabled={loading || otp.length !== 6}
-            >
-              {loading ? t('app.loading') : t('auth.login')}
-            </Button>
-          </div>
-        </div>
       )}
 
+      {/* Telegram Login */}
+      {loginType === 'telegram' && (
+        <form onSubmit={(e) => { e.preventDefault(); if (otp.length === 6) handleTelegramAuth(); }} className="space-y-6">
+          {/* Step 1: Open Bot */}
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-sm font-semibold shrink-0">
+                1
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                {t('auth.telegramInstructions')}
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={handleTelegramClick}
+                className="flex items-center justify-center gap-2 py-3 px-4 bg-[#0088cc] hover:bg-[#0077b5] text-white rounded-xl font-medium transition-colors"
+                style={{ width: 'calc(6 * 2.75rem + 5 * 0.5rem)' }}
+              >
+                <Send size={18} />
+                {t('auth.openTelegramBot')}
+              </button>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+            </div>
+          </div>
+
+          {/* Step 2: Enter Code */}
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-sm font-semibold shrink-0">
+                2
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                {t('auth.enterCode')}
+              </p>
+            </div>
+            <OTPInput value={otp} onChange={setOtp} disabled={loading} />
+          </div>
+
+          {/* Submit */}
+          <Button
+            type="submit"
+            className="w-full h-12 text-base font-medium"
+            disabled={loading || otp.length !== 6}
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                {t('app.loading')}
+              </span>
+            ) : t('auth.login')}
+          </Button>
+        </form>
+      )}
+
+      {/* Register Link */}
       {loginType === 'phone' && (
-        <p className="mt-6 text-center text-gray-600 dark:text-gray-400">
+        <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
           {t('auth.noAccount')}{' '}
-          <Link to="/register" className="text-primary-600 dark:text-primary-400 hover:underline">
+          <Link 
+            to="/register" 
+            className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+          >
             {t('auth.register')}
           </Link>
         </p>

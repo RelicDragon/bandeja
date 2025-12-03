@@ -46,6 +46,7 @@ export * from './createLeague';
 export * from './CitySelectorModal';
 export * from './OTPInput';
 export * from './LanguageSelector';
+export * from './ThemeSelector';
 export * from './GenderIndicator';
 export * from './Divider';
 export * from './gameResults';

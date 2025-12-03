@@ -56,6 +56,8 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
 });
 
 export const loginWithPhone = asyncHandler(async (req: Request, res: Response) => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
   const { phone, password, language } = req.body;
 
   let user = await prisma.user.findUnique({
@@ -149,6 +151,8 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
 });
 
 export const loginWithTelegram = asyncHandler(async (req: Request, res: Response) => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
   const { telegramId, language } = req.body;
 
   let user = await prisma.user.findUnique({
