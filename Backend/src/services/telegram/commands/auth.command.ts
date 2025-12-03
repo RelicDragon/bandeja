@@ -21,6 +21,30 @@ export async function generateAuthCode(ctx: BotContext) {
       console.log('Could not delete command message:', deleteError);
     }
 
+    const existingOtps = await prisma.telegramOtp.findMany({
+      where: { telegramId },
+    });
+
+    for (const otp of existingOtps) {
+      if (otp.chatId) {
+        const otpChatId = parseInt(otp.chatId);
+        try {
+          if (otp.textMessageId) {
+            await ctx.api.deleteMessage(otpChatId, parseInt(otp.textMessageId));
+          }
+          if (otp.codeMessageId) {
+            await ctx.api.deleteMessage(otpChatId, parseInt(otp.codeMessageId));
+          }
+        } catch (error) {
+          console.log('Could not delete OTP messages:', error);
+        }
+      }
+    }
+
+    await prisma.telegramOtp.deleteMany({
+      where: { telegramId },
+    });
+
     const code = generateOTP();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
