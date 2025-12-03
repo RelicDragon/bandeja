@@ -5,6 +5,7 @@ import { Match } from '@/types/gameResults';
 interface AvailablePlayersFooterProps {
   players: User[];
   editingMatch: Match | undefined;
+  roundMatches?: Match[];
   draggedPlayer: string | null;
   onDragStart: (e: React.DragEvent, playerId: string) => void;
   onDragEnd: () => void;
@@ -17,6 +18,7 @@ interface AvailablePlayersFooterProps {
 export const AvailablePlayersFooter = ({
   players,
   editingMatch,
+  roundMatches = [],
   draggedPlayer,
   onDragStart,
   onDragEnd,
@@ -25,7 +27,14 @@ export const AvailablePlayersFooter = ({
   onTouchEnd,
   bottomOffset = 0,
 }: AvailablePlayersFooterProps) => {
+  const playersInRound = new Set<string>();
+  roundMatches.forEach(match => {
+    match.teamA.forEach(id => playersInRound.add(id));
+    match.teamB.forEach(id => playersInRound.add(id));
+  });
+
   const availablePlayers = players.filter(player => {
+    if (playersInRound.has(player.id)) return false;
     if (!editingMatch) return true;
     return !editingMatch.teamA.includes(player.id) && !editingMatch.teamB.includes(player.id);
   });

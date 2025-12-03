@@ -802,6 +802,11 @@ export const GameResultsEntry = () => {
                     const expandedRound = currentRounds.find(r => r.id === expandedRoundId);
                     return expandedRound?.matches.find(m => m.id === editingMatchId);
                   })()}
+                  roundMatches={(() => {
+                    const currentRounds = getRounds();
+                    const expandedRound = currentRounds.find(r => r.id === expandedRoundId);
+                    return expandedRound?.matches || [];
+                  })()}
                   draggedPlayer={dragAndDrop.draggedPlayer}
                   onDragStart={dragAndDrop.handleDragStart}
                   onDragEnd={dragAndDrop.handleDragEnd}
