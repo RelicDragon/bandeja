@@ -277,6 +277,24 @@ async function loadGames() {
     }
 }
 
+async function resetGameResults(gameId) {
+    if (!confirm('Are you sure you want to reset the results for this game? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        await apiRequest(`/admin/games/${gameId}/reset-results`, {
+            method: 'POST',
+        });
+        alert('Game results reset successfully');
+        loadGames();
+        loadStats();
+    } catch (error) {
+        console.error('Failed to reset game results:', error);
+        alert('Failed to reset game results: ' + (error.message || 'Unknown error'));
+    }
+}
+
 function renderGamesTable(games) {
     const tbody = document.getElementById('gamesTableBody');
     tbody.innerHTML = games.map(game => {
@@ -302,6 +320,7 @@ function renderGamesTable(games) {
                 <td>
                     <div class="action-buttons">
                         <button class="btn-small btn-edit" onclick='viewGameModal(${JSON.stringify(game)})'>View</button>
+                        ${game.resultsStatus !== 'NONE' ? `<button class="btn-small btn-warning" onclick="resetGameResults('${game.id}')">Reset Results</button>` : ''}
                     </div>
                 </td>
             </tr>
@@ -848,6 +867,7 @@ window.loadHistoricalLogs = loadHistoricalLogs;
 window.toggleLogStream = toggleLogStream;
 window.clearLogs = clearLogs;
 window.viewGameModal = viewGameModal;
+window.resetGameResults = resetGameResults;
 window.acceptInvite = acceptInvite;
 window.declineInvite = declineInvite;
 window.refreshInvites = refreshInvites;

@@ -34,6 +34,22 @@ export const getAllGames = asyncHandler(async (req: AuthRequest, res: Response) 
   });
 });
 
+export const resetGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId } = req.params;
+
+  const result = await AdminGamesService.resetGameResults(gameId, req.userId!);
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    await socketService.emitGameUpdate(gameId, req.userId!);
+  }
+
+  res.json({
+    success: true,
+    message: result.message,
+  });
+});
+
 export const getAllInvites = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { cityId } = req.query;
 
