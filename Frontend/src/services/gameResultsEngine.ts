@@ -835,7 +835,7 @@ class GameResultsEngineClass {
         const matches: Match[] = [];
         
         if (round.matches && Array.isArray(round.matches)) {
-          round.matches.forEach((match: any, matchIndex: number) => {
+          round.matches.forEach((match: any) => {
           const teamA: string[] = [];
           const teamB: string[] = [];
           let teamAId: string | undefined;
