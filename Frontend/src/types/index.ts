@@ -172,6 +172,7 @@ export interface Game {
   club?: Club;
   courtId?: string;
   court?: Court;
+  city: City;
   startTime: string;
   endTime: string;
   maxParticipants: number;

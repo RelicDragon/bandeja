@@ -58,9 +58,7 @@ export const GameInfo = ({
 
   const handleNavigate = () => {
     const club = game.court?.club || game.club;
-    if (!club) return;
-
-    const destinationParts = [club.city?.country, club.city?.name, club.address].filter(Boolean);
+    const destinationParts = [game.city.country, game.city.name, club?.address].filter(Boolean);
     const destination = encodeURIComponent(destinationParts.join('+'));
     const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
     window.open(url, '_blank');
@@ -161,10 +159,7 @@ export const GameInfo = ({
           className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
           title={t('gameDetails.navigateToClub')}
         >
-          <svg width="24" height="24" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-            <path d="M63.3 512.2a448.5 448 0 1 0 897 0 448.5 448 0 1 0-897 0Z" fill="#ffffff" />
-            <path d="M416.09375 605.09375c1.21875 0.5625 2.15625 1.5 2.71875 2.71875l82.3125 175.6875c3.1875 6.84375 12.84375 7.03125 15.75 0.375l201.84375-465.75c3.5625-8.15625-4.78125-16.5-12.9375-12.9375L240.125 507.03125c-6.75 2.90625-6.5625 12.5625 0.375 15.75l175.59375 82.3125z" fill="#0284c7" />
-          </svg>
+          <MapPin size={24} className="text-white" />
         </button>
       </div>
       {game.entityType !== 'GAME' && (

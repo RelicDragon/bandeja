@@ -4,6 +4,13 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { InviteStatus } from '@prisma/client';
 
 const getGameInclude = () => ({
+  city: {
+    select: {
+      id: true,
+      name: true,
+      country: true,
+    },
+  },
   club: {
     include: {
       courts: true,
@@ -273,6 +280,13 @@ export class GameReadService {
     const games = await prisma.game.findMany({
       where,
       include: {
+        city: {
+          select: {
+            id: true,
+            name: true,
+            country: true,
+          },
+        },
         club: {
           include: {
             courts: true,
