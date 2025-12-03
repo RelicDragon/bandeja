@@ -4,6 +4,7 @@ import { ChatMessage } from '@/api/chat';
 import { AnimatedMessageItem } from './AnimatedMessageItem';
 import { MessageSkeletonList } from './MessageSkeleton';
 import { useContextMenuManager } from '@/hooks/useContextMenuManager';
+import { ArrowUp } from 'lucide-react';
 
 interface MessageListProps {
   messages: ChatMessage[];
@@ -12,8 +13,12 @@ interface MessageListProps {
   onDeleteMessage: (messageId: string) => void;
   onReplyMessage: (message: ChatMessage) => void;
   isLoading?: boolean;
+  isLoadingMessages?: boolean;
   isSwitchingChatType?: boolean;
   onScrollToMessage?: (messageId: string) => void;
+  hasMoreMessages?: boolean;
+  onLoadMore?: () => void;
+  isInitialLoad?: boolean;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -22,14 +27,21 @@ export const MessageList: React.FC<MessageListProps> = ({
   onRemoveReaction,
   onDeleteMessage,
   onReplyMessage,
+  isLoadingMessages = false,
   isSwitchingChatType = false,
   onScrollToMessage,
+  hasMoreMessages = false,
+  onLoadMore,
+  isInitialLoad = false,
+  isLoading = false,
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const { contextMenuState, openContextMenu, closeContextMenu, handleScrollStart } = useContextMenuManager();
+  const [isButtonVisible, setIsButtonVisible] = React.useState(true);
+  const [shouldRenderButton, setShouldRenderButton] = React.useState(true);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -58,10 +70,16 @@ export const MessageList: React.FC<MessageListProps> = ({
     };
   }, [handleScrollStart]);
 
-  if (isSwitchingChatType) {
+  useEffect(() => {
+    if (hasMoreMessages && !isInitialLoad) {
+      setIsButtonVisible(true);
+      setShouldRenderButton(true);
+    }
+  }, [hasMoreMessages, isInitialLoad]);
+
+  if (isLoadingMessages || isSwitchingChatType || isInitialLoad) {
     return <MessageSkeletonList />;
   }
-
 
   if (messages.length === 0) {
     return (
@@ -88,11 +106,37 @@ export const MessageList: React.FC<MessageListProps> = ({
     );
   }
 
+  const handleLoadMoreClick = () => {
+    if (onLoadMore && !isLoading) {
+      setIsButtonVisible(false);
+      setTimeout(() => {
+        setShouldRenderButton(false);
+        onLoadMore();
+      }, 300);
+    }
+  };
+
   return (
     <div
       ref={messagesContainerRef}
       className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4 space-y-1 min-h-0"
     >
+      {hasMoreMessages && !isInitialLoad && onLoadMore && shouldRenderButton && (
+        <div 
+          className={`flex justify-center mb-4 transition-opacity duration-300 ${
+            isButtonVisible ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <button
+            onClick={handleLoadMoreClick}
+            disabled={isLoading}
+            className="py-3 px-6 rounded-xl font-medium text-sm text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-600/60 transition-all duration-300 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          >
+            <span>{isLoading ? t('common.loading') : t('chat.messages.loadMore')}</span>
+            {!isLoading && <ArrowUp size={16} className="animate-bounce" />}
+          </button>
+        </div>
+      )}
       {messages.map((message, index) => (
         <div key={message.id} id={`message-${message.id}`}>
           <AnimatedMessageItem
@@ -112,7 +156,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       ))}
       
       
-      <div ref={messagesEndRef} />
+      <div ref={messagesEndRef} className="pb-4" />
     </div>
   );
 };

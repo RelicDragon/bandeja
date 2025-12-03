@@ -16,7 +16,7 @@ import { useHeaderStore } from '@/store/headerStore';
 import { formatDate } from '@/utils/dateFormat';
 import { UrlConstructor } from '@/utils/urlConstructor';
 import { socketService } from '@/services/socketService';
-import { MessageCircle, ArrowLeft, MapPin, LogOut, ArrowDown, Camera, Bug as BugIcon } from 'lucide-react';
+import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon } from 'lucide-react';
 
 interface LocationState {
   initialChatType?: ChatType;
@@ -43,6 +43,7 @@ export const GameChat: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSwitchingChatType, setIsSwitchingChatType] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
@@ -50,6 +51,7 @@ export const GameChat: React.FC = () => {
   const [isJoiningAsGuest, setIsJoiningAsGuest] = useState(false);
   const [currentChatType, setCurrentChatType] = useState<ChatType>(initialChatType || 'PUBLIC');
   const [isLoadingContext, setIsLoadingContext] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [isLeavingChat, setIsLeavingChat] = useState(false);
 
@@ -104,6 +106,11 @@ export const GameChat: React.FC = () => {
     if (!id) return;
     
     try {
+      if (!append) {
+        setIsLoadingMessages(true);
+        setIsInitialLoad(true);
+      }
+      
       let response: ChatMessage[];
       
       if (contextType === 'USER') {
@@ -125,8 +132,19 @@ export const GameChat: React.FC = () => {
       }
       
       setHasMoreMessages(response.length === 50);
+      
+      if (!append) {
+        setIsLoadingMessages(false);
+        setTimeout(() => {
+          setIsInitialLoad(false);
+        }, 500);
+      }
     } catch (error) {
       console.error('Failed to load messages:', error);
+      if (!append) {
+        setIsLoadingMessages(false);
+        setIsInitialLoad(false);
+      }
     }
   }, [id, contextType, currentChatType]);
 
@@ -260,6 +278,7 @@ export const GameChat: React.FC = () => {
     
     const startTime = Date.now();
     setIsSwitchingChatType(true);
+    setIsLoadingMessages(true);
     setCurrentChatType(newChatType);
     setPage(1);
     setHasMoreMessages(true);
@@ -295,6 +314,8 @@ export const GameChat: React.FC = () => {
       console.error('Failed to load messages:', error);
     } finally {
       setIsSwitchingChatType(false);
+      setIsLoadingMessages(false);
+      setIsInitialLoad(false);
     }
   }, [currentChatType, contextType, id, user?.id]);
 
@@ -403,6 +424,9 @@ export const GameChat: React.FC = () => {
     const loadData = async () => {
       if (!id || !user?.id) return;
       
+      setIsInitialLoad(true);
+      setIsLoadingMessages(true);
+      
       const loadedContext = await loadContext();
       
       if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
@@ -504,7 +528,36 @@ export const GameChat: React.FC = () => {
 
   if (isLoadingContext) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
+        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 fixed top-0 right-0 left-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)', height: 'calc(4rem + env(safe-area-inset-top))' }}>
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
+              </button>
+              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            </div>
+          </div>
+        </header>
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ paddingTop: 'calc(4rem + env(safe-area-inset-top))', paddingBottom: '3.5rem' }}>
+          <MessageList
+            messages={[]}
+            onAddReaction={handleAddReaction}
+            onRemoveReaction={handleRemoveReaction}
+            onDeleteMessage={handleDeleteMessage}
+            onReplyMessage={handleReplyMessage}
+            isLoading={false}
+            isLoadingMessages={true}
+            isSwitchingChatType={false}
+            onScrollToMessage={handleScrollToMessage}
+            hasMoreMessages={false}
+            onLoadMore={loadMoreMessages}
+            isInitialLoad={true}
+          />
+        </main>
       </div>
     );
   }
@@ -692,24 +745,16 @@ export const GameChat: React.FC = () => {
           onDeleteMessage={handleDeleteMessage}
           onReplyMessage={handleReplyMessage}
           isLoading={isLoadingMore}
+          isLoadingMessages={isLoadingMessages || isInitialLoad}
           isSwitchingChatType={isSwitchingChatType}
           onScrollToMessage={handleScrollToMessage}
+          hasMoreMessages={hasMoreMessages}
+          onLoadMore={loadMoreMessages}
+          isInitialLoad={isInitialLoad}
         />
-
-        {hasMoreMessages && (
-          <div className="flex-shrink-0 px-4 py-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-center">
-            <button
-              onClick={loadMoreMessages}
-              disabled={isLoadingMore}
-              className="py-3 px-6 rounded-xl font-medium text-sm text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-600/60 transition-all duration-300 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              <span>{isLoadingMore ? t('common.loading') : t('chat.messages.loadMore')}</span>
-              {!isLoadingMore && <ArrowDown size={16} className="animate-bounce" />}
-            </button>
-          </div>
-        )}
       </main>
 
+      {!isInitialLoad && (
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 fixed bottom-0 right-0 left-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {canAccessChat ? (
           <div className="animate-in slide-in-from-bottom-4 duration-300">
@@ -740,6 +785,7 @@ export const GameChat: React.FC = () => {
           </div>
         )}
       </footer>
+      )}
 
       {contextType === 'GAME' && showParticipantsModal && game && (
         <ChatParticipantsModal
