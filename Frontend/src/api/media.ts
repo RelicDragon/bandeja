@@ -55,10 +55,17 @@ export const mediaApi = {
     return response.data.data;
   },
 
-  uploadChatImage: async (imageFile: File, gameId: string): Promise<ChatImageUploadResponse> => {
+  uploadChatImage: async (imageFile: File, contextId: string, contextType?: 'GAME' | 'BUG' | 'USER'): Promise<ChatImageUploadResponse> => {
     const formData = new FormData();
     formData.append('image', imageFile);
-    formData.append('gameId', gameId);
+    
+    if (contextType === 'BUG') {
+      formData.append('bugId', contextId);
+    } else if (contextType === 'USER') {
+      formData.append('userChatId', contextId);
+    } else {
+      formData.append('gameId', contextId);
+    }
 
     const response = await api.post<ApiResponse<ChatImageUploadResponse>>('/media/upload/chat/image', formData, {
       headers: {

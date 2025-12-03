@@ -35,9 +35,6 @@ router.post(
 router.post(
   '/upload/chat/image',
   upload.single('image'),
-  validate([
-    body('gameId').notEmpty().withMessage('Game ID is required')
-  ]),
   uploadChatImage
 );
 

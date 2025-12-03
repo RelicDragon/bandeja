@@ -93,9 +93,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const targetId = gameId || bugId || userChatId;
     if (!targetId) return { originalUrls: [], thumbnailUrls: [] };
 
+    const contextType = gameId ? 'GAME' : bugId ? 'BUG' : 'USER';
+
     const uploadPromises = selectedImages.map(async (file) => {
       try {
-        const response = await mediaApi.uploadChatImage(file, targetId);
+        const response = await mediaApi.uploadChatImage(file, targetId, contextType);
         return {
           originalUrl: response.originalUrl,
           thumbnailUrl: response.thumbnailUrl

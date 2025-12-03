@@ -96,7 +96,7 @@ export const PhotosSection = ({ game }: PhotosSectionProps) => {
         return;
       }
 
-      const uploadResponse = await mediaApi.uploadChatImage(photoResult.file, game.id);
+      const uploadResponse = await mediaApi.uploadChatImage(photoResult.file, game.id, 'GAME');
       
       await chatApi.createMessage({
         gameId: game.id,

@@ -11,6 +11,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { ParticipantRole } from '@prisma/client';
+import { MessageService } from '../services/chat/message.service';
 
 const storage = multer.memoryStorage();
 
@@ -207,43 +208,24 @@ export const uploadChatImage = asyncHandler(async (req: AuthRequest, res: Respon
     throw new ApiError(400, 'No image file provided');
   }
 
-  const { gameId } = req.body;
+  const { gameId, bugId, userChatId } = req.body;
   const senderId = req.userId;
 
   if (!senderId) {
     throw new ApiError(401, 'Unauthorized');
   }
 
-  if (!gameId) {
-    throw new ApiError(400, 'Game ID is required');
+  if (!gameId && !bugId && !userChatId) {
+    throw new ApiError(400, 'At least one of gameId, bugId, or userChatId is required');
   }
 
-  // Verify user has access to this game
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    include: {
-      invites: {
-        where: { 
-          receiverId: senderId,
-          status: 'PENDING'
-        }
-      }
-    }
-  });
-
-  if (!game) {
-    throw new ApiError(404, 'Game not found');
-  }
-
-  const hasPermission = await hasParentGamePermission(
-    gameId,
-    senderId,
-    [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
-  );
-  const hasPendingInvite = game.invites.length > 0;
-
-  if (!hasPermission && !hasPendingInvite) {
-    throw new ApiError(403, 'You are not a participant or invited to this game');
+  // Validate access based on context type
+  if (gameId) {
+    await MessageService.validateGameAccess(gameId, senderId);
+  } else if (bugId) {
+    await MessageService.validateBugAccess(bugId, senderId, true);
+  } else if (userChatId) {
+    await MessageService.validateUserChatAccess(userChatId, senderId);
   }
 
   // Process chat image
