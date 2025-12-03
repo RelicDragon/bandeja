@@ -382,7 +382,8 @@
     "playerStats": "Player Statistics",
     "player": "Player",
     "winsTiesLosses": "W-T-L",
-    "noStatsAvailable": "No statistics available yet"
+    "noStatsAvailable": "No statistics available yet",
+    "syncToServer": "Sync to Server"
   },
   "invites": {
     "title": "Invites",
@@ -857,6 +858,7 @@
     "all": "All",
     "restarted": "Game restarted successfully",
     "saved": "Results saved successfully",
+    "synced": "Results synced to server successfully",
     "submitting": "Submitting...",
     "showNotes": "Show notes",
     "hideNotes": "Hide notes"
@@ -913,6 +915,7 @@
       "userNotInFavorites": "User not found in favorites"
     },
     "syncPending": "Please wait for sync to complete",
+    "syncRequired": "Please sync to server before finishing",
     "invalidSetIndex": "Invalid set index",
     "invalidScores": "Scores cannot be negative",
     "scoreExceedsMax": "Score cannot exceed {{max}}",

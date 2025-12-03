@@ -375,7 +375,8 @@
     "playerStats": "Estadísticas de Jugadores",
     "player": "Jugador",
     "winsTiesLosses": "V-E-D",
-    "noStatsAvailable": "Aún no hay estadísticas disponibles"
+    "noStatsAvailable": "Aún no hay estadísticas disponibles",
+    "syncToServer": "Sincronizar con el servidor"
   },
   "invites": {
     "title": "Invitaciones",
@@ -850,6 +851,7 @@
     "all": "Todos",
     "restarted": "Juego reiniciado exitosamente",
     "saved": "Resultados guardados exitosamente",
+    "synced": "Resultados sincronizados con el servidor exitosamente",
     "submitting": "Enviando...",
     "showNotes": "Mostrar notas",
     "hideNotes": "Ocultar notas"
@@ -906,6 +908,7 @@
       "userNotInFavorites": "El usuario no está en favoritos"
     },
     "syncPending": "Por favor espera a que se complete la sincronización",
+    "syncRequired": "Por favor sincroniza con el servidor antes de finalizar",
     "invalidSetIndex": "Índice de set inválido",
     "invalidScores": "Las puntuaciones no pueden ser negativas",
     "scoreExceedsMax": "La puntuación no puede exceder {{max}}",
