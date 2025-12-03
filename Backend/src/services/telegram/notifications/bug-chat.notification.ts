@@ -14,6 +14,9 @@ export async function sendBugChatNotification(
 
   const formattedMessage = `🐛 ${escapeMarkdown(bugText)}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
 
+  const notifiedUserIds = new Set<string>();
+  notifiedUserIds.add(sender.id);
+
   const bugCreator = await prisma.user.findUnique({
     where: { id: bug.senderId },
     select: {
@@ -23,11 +26,42 @@ export async function sendBugChatNotification(
     }
   });
 
-  if (bugCreator && bugCreator.telegramId && bugCreator.sendTelegramMessages && bugCreator.id !== sender.id) {
+  if (bugCreator && bugCreator.id !== sender.id) {
+    if (bugCreator.telegramId && bugCreator.sendTelegramMessages) {
+      try {
+        await api.sendMessage(bugCreator.telegramId, formattedMessage, { parse_mode: 'Markdown' });
+      } catch (error) {
+        console.error(`Failed to send Telegram notification to bug creator ${bugCreator.id}:`, error);
+      }
+    }
+    notifiedUserIds.add(bugCreator.id);
+  }
+
+  const bugParticipants = await prisma.bugParticipant.findMany({
+    where: { bugId: bug.id },
+    include: {
+      user: {
+        select: {
+          id: true,
+          telegramId: true,
+          sendTelegramMessages: true,
+        }
+      }
+    }
+  });
+
+  for (const participant of bugParticipants) {
+    const user = participant.user;
+    
+    if (!user.telegramId || !user.sendTelegramMessages || user.id === sender.id || notifiedUserIds.has(user.id)) {
+      continue;
+    }
+
+    notifiedUserIds.add(user.id);
     try {
-      await api.sendMessage(bugCreator.telegramId, formattedMessage, { parse_mode: 'Markdown' });
+      await api.sendMessage(user.telegramId, formattedMessage, { parse_mode: 'Markdown' });
     } catch (error) {
-      console.error(`Failed to send Telegram notification to bug creator ${bugCreator.id}:`, error);
+      console.error(`Failed to send Telegram notification to bug participant ${user.id}:`, error);
     }
   }
 
@@ -45,7 +79,8 @@ export async function sendBugChatNotification(
   });
 
   for (const admin of admins) {
-    if (admin.telegramId && admin.id !== bugCreator?.id) {
+    if (admin.telegramId && !notifiedUserIds.has(admin.id)) {
+      notifiedUserIds.add(admin.id);
       try {
         await api.sendMessage(admin.telegramId, formattedMessage, { parse_mode: 'Markdown' });
       } catch (error) {
