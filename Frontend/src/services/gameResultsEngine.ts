@@ -133,7 +133,7 @@ class GameResultsEngineClass {
         rounds,
         initialized: true,
         loading: false,
-        expandedRoundId: rounds.length > 0 ? rounds[0].id : null,
+        expandedRoundId: rounds.length > 0 ? rounds[rounds.length - 1].id : null,
           });
     } catch (error) {
       console.error('Failed to initialize game results:', error);
@@ -421,6 +421,8 @@ class GameResultsEngineClass {
 
     const match = round.matches.find(m => m.id === matchId);
     if (!match) return;
+
+    if (match[team].length >= 2) return;
 
     const otherTeam = team === 'teamA' ? 'teamB' : 'teamA';
     if (match[otherTeam].includes(playerId) || match[team].includes(playerId)) return;

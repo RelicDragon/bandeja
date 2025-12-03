@@ -75,7 +75,7 @@ export const HorizontalMatchCard = ({
         data-drop-zone
         data-match-id={match.id}
         data-team={team}
-        className={`min-h-[40px] p-2 w-full flex items-center justify-center relative ${
+        className={`min-h-[40px] px-0 py-2 w-full flex items-center justify-center relative ${
           effectiveIsPresetGame 
             ? ''
             : (effectiveIsEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''
@@ -87,7 +87,7 @@ export const HorizontalMatchCard = ({
         onDragOver={!effectiveIsPresetGame && canEditResults ? onDragOver : undefined}
         onDrop={!effectiveIsPresetGame && canEditResults ? (e) => onDrop(e, team) : undefined}
       >
-        <div className="flex gap-1 justify-center">
+        <div className="flex gap-5 justify-center">
           {teamPlayers.map(playerId => {
             const player = players.find(p => p.id === playerId);
             return player ? (
@@ -138,7 +138,7 @@ export const HorizontalMatchCard = ({
   };
 
   return (
-    <div className="relative pr-2 pl-2 pt-2 pb-2" data-match-container>
+    <div className="relative px-0 pt-2 pb-2" data-match-container>
       {matchIndex > 0 && (
         <div className="absolute top-0 left-0 right-0 h-px bg-gray-200 dark:bg-gray-700"></div>
       )}
@@ -172,13 +172,13 @@ export const HorizontalMatchCard = ({
       )}
 
       <div 
-        className={`${!effectiveIsPresetGame && effectiveIsEditing && canEditResults ? 'ring-2 ring-green-400 dark:ring-green-500 rounded-lg p-4 bg-green-50 dark:bg-green-900/20 w-full' : 'w-full'} ${!effectiveIsPresetGame && canEditResults ? 'cursor-pointer' : ''}`}
+        className={`${!effectiveIsPresetGame && effectiveIsEditing && canEditResults ? 'ring-2 ring-green-400 dark:ring-green-500 rounded-lg px-1 py-4 bg-green-50 dark:bg-green-900/20 w-full' : 'w-full'} ${!effectiveIsPresetGame && canEditResults ? 'cursor-pointer' : ''}`}
         onClick={!effectiveIsPresetGame && canEditResults ? (e) => {
           e.stopPropagation();
           onMatchClick();
         } : undefined}
       >
-        <div className="flex items-center justify-between w-full gap-4">
+        <div className="flex items-center justify-between w-full gap-1">
           <div className="flex-1 flex justify-start">
             {renderTeam('teamA')}
           </div>

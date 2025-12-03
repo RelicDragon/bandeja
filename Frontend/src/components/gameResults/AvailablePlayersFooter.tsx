@@ -12,7 +12,6 @@ interface AvailablePlayersFooterProps {
   onTouchStart: (e: TouchEvent, playerId: string) => void;
   onTouchMove: (e: TouchEvent) => void;
   onTouchEnd: (e: TouchEvent) => void;
-  bottomOffset?: number;
 }
 
 export const AvailablePlayersFooter = ({
@@ -25,7 +24,6 @@ export const AvailablePlayersFooter = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  bottomOffset = 0,
 }: AvailablePlayersFooterProps) => {
   const playersInRound = new Set<string>();
   roundMatches.forEach(match => {
@@ -48,12 +46,11 @@ export const AvailablePlayersFooter = ({
 
   return (
     <div 
-      className={`fixed left-0 right-0 bg-white dark:bg-gray-800 border-t-2 border-blue-400 dark:border-blue-600 shadow-lg z-30 transition-transform duration-300 ease-in-out ${
-        shouldShow ? 'translate-y-0' : 'translate-y-full'
+      className={`fixed left-0 right-0 bottom-0 bg-white dark:bg-gray-800 border-t-2 border-blue-400 dark:border-blue-600 shadow-lg z-30 transition-transform duration-300 ease-in-out ${
+        shouldShow ? 'translate-y-0' : 'translate-y-[200%]'
       }`}
-      style={{ bottom: `${bottomOffset}px` }}
     >
-      <div className="px-4 py-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+      <div className="px-4 py-3 pb-safe overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
         <div className="flex gap-2 w-max">
           {availablePlayers.map(player => (
             <div

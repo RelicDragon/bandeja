@@ -95,7 +95,6 @@ export const GameResultsEntry = () => {
   const isFinalStatus = game?.resultsStatus === 'FINAL';
   const showFinishButton = canEdit && isEditingResults && isResultsEntryMode && getRounds().length > 0 && getRounds().some(r => r.matches.length > 0) && hasMatchesWithTeamsReady;
   const showEditButton = canEdit && !isEditingResults && isFinalStatus && isResultsEntryMode && game?.status !== 'ARCHIVED';
-  const finishButtonPanelHeight = (showFinishButton || showEditButton || serverProblem) ? 80 : 0;
 
   const handleMatchDrop = async (matchId: string, team: 'teamA' | 'teamB', draggedPlayer: string) => {
     const currentRounds = getRounds();
@@ -813,7 +812,6 @@ export const GameResultsEntry = () => {
                   onTouchStart={dragAndDrop.handleTouchStart}
                   onTouchMove={dragAndDrop.handleTouchMove}
                   onTouchEnd={handleTouchEndWrapper}
-                  bottomOffset={finishButtonPanelHeight}
                 />
               )}
             </div>
