@@ -1,490 +1,113 @@
-import { Op } from '@/types/ops';
-import { Round } from '@/types/gameResults';
+import { createId } from '@paralleldrive/cuid2';
+import { Round, Match } from '@/types/gameResults';
 import { Game, User } from '@/types';
-import { OpCreator } from './opCreators';
-import { calculateGameStandings } from './gameStandings';
 import { createOneOnOneMatches, createTwoOnTwoMatches } from './predefinedResults';
+import { generateFixedRound, generateRandomRound } from './predefinedResults';
+import { calculateGameStandings } from './gameStandings';
 
 export interface RoundGeneratorOptions {
-  opCreator: OpCreator;
   rounds: Round[];
   game: Game;
   roundNumber: number;
-  roundName: string;
   fixedNumberOfSets?: number;
 }
 
 export class RoundGenerator {
-  private opCreator: OpCreator;
   private options: RoundGeneratorOptions;
 
   constructor(options: RoundGeneratorOptions) {
     this.options = options;
-    this.opCreator = options.opCreator;
   }
 
-  generateRound(): Op[] {
+  generateRound(): Match[] {
     const { matchGenerationType } = this.options.game;
+    const fixedNumberOfSets = this.options.fixedNumberOfSets || 0;
+    const initialSets = fixedNumberOfSets > 0
+      ? Array.from({ length: fixedNumberOfSets }, () => ({ teamA: 0, teamB: 0 }))
+      : [{ teamA: 0, teamB: 0 }];
     
-    if (!matchGenerationType) {
-      return this.generateHandmadeRound();
+    if (!matchGenerationType || matchGenerationType === 'HANDMADE') {
+      return this.generateHandmadeRound(initialSets);
     }
 
     switch (matchGenerationType) {
-      case 'HANDMADE':
-        return this.generateHandmadeRound();
       case 'FIXED':
-        return this.generateFixedRound();
+        return generateFixedRound(this.options.game, this.options.rounds, initialSets);
       case 'RANDOM':
-        return this.generateRandomRound();
+        return generateRandomRound(this.options.game, this.options.rounds, initialSets);
       case 'RATING':
-        return this.generateRatingRound();
+        return this.generateRatingRound(initialSets);
       case 'WINNERS_COURT':
-        return this.generateWinnersCourtRound();
+        return this.generateWinnersCourtRound(initialSets);
       case 'ROUND_ROBIN':
       case 'ESCALERA':
         return [];
       default:
-        return this.generateHandmadeRound();
+        return this.generateHandmadeRound(initialSets);
     }
   }
 
-  private generateHandmadeRound(): Op[] {
-    const ops: Op[] = [];
-    const { game, roundNumber, roundName, fixedNumberOfSets } = this.options;
-    const roundId = `round-${roundNumber}`;
-    
-    ops.push(this.opCreator.addRound(roundId, roundName));
-    
+  private generateHandmadeRound(initialSets: Array<{ teamA: number; teamB: number }>): Match[] {
+    const { game } = this.options;
     const playingParticipants = game.participants.filter(p => p.isPlaying);
     const numPlayers = playingParticipants.length;
     const players = playingParticipants.map(p => p.user) as User[];
     
+    const matches: Match[] = [];
+
     if (numPlayers === 4) {
       if (game.hasFixedTeams && game.fixedTeams && game.fixedTeams.length >= 2) {
         const team1 = game.fixedTeams.find(t => t.teamNumber === 1);
         const team2 = game.fixedTeams.find(t => t.teamNumber === 2);
         
         if (team1 && team2 && team1.players.length > 0 && team2.players.length > 0) {
-          const matchId = this.getNextMatchId(0);
-          this.opCreator.registerMatchIndex(matchId, 0);
-          
-          ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
-          
-          for (const player of team1.players) {
-            ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', player.userId, roundId));
-          }
-          for (const player of team2.players) {
-            ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', player.userId, roundId));
-          }
+          matches.push({
+            id: createId(),
+            teamA: team1.players.map(p => p.userId),
+            teamB: team2.players.map(p => p.userId),
+            sets: initialSets,
+          });
         }
       } else {
         const matchSetups = createTwoOnTwoMatches(players);
-        let matchIndex = 0;
         for (const setup of matchSetups) {
-          const matchId = this.getNextMatchId(matchIndex);
-          this.opCreator.registerMatchIndex(matchId, matchIndex);
-          matchIndex++;
-          
-          ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
-          
-          for (const playerId of setup.teamA) {
-            ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', playerId, roundId));
-          }
-          for (const playerId of setup.teamB) {
-            ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', playerId, roundId));
-          }
+          matches.push({
+            id: createId(),
+            teamA: setup.teamA,
+            teamB: setup.teamB,
+            sets: initialSets,
+          });
         }
       }
     } else if (numPlayers === 2) {
       const matchSetups = createOneOnOneMatches(players);
-      const matchId = this.getNextMatchId(0);
-      this.opCreator.registerMatchIndex(matchId, 0);
-      
-      ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
-      
-      for (const playerId of matchSetups[0].teamA) {
-        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', playerId, roundId));
-      }
-      for (const playerId of matchSetups[0].teamB) {
-        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', playerId, roundId));
+      if (matchSetups.length > 0) {
+        matches.push({
+          id: createId(),
+          teamA: matchSetups[0].teamA,
+          teamB: matchSetups[0].teamB,
+          sets: initialSets,
+        });
       }
     } else {
-    const matchId = this.getNextMatchId();
-    ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
+      matches.push({
+        id: createId(),
+        teamA: [],
+        teamB: [],
+        sets: initialSets,
+      });
     }
     
-    return ops;
+    return matches;
   }
 
-  private generateFixedRound(): Op[] {
-    const ops: Op[] = [];
-    const { rounds, roundNumber, roundName, fixedNumberOfSets } = this.options;
-    const roundId = `round-${roundNumber}`;
-    
-    if (rounds.length === 0) {
-      ops.push(this.opCreator.addRound(roundId, roundName));
-      const matchId = this.getNextMatchId(0);
-      ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
-      return ops;
-    }
-    
-    const previousRound = rounds[rounds.length - 1];
-    const firstRound = rounds[0];
-    
-    ops.push(this.opCreator.addRound(roundId, roundName));
-    
-    if (previousRound.matches && previousRound.matches.length > 0) {
-      let matchIndex = 0;
-      for (const prevMatch of previousRound.matches) {
-        const newMatchId = this.getNextMatchId(matchIndex);
-        this.opCreator.registerMatchIndex(newMatchId, matchIndex);
-        matchIndex++;
-        
-        ops.push(this.opCreator.addMatch(newMatchId, roundId, fixedNumberOfSets));
-        
-        if (firstRound.matches && firstRound.matches[matchIndex - 1]?.courtId) {
-          ops.push(this.opCreator.setMatchCourt(newMatchId, firstRound.matches[matchIndex - 1].courtId!, roundId));
-        }
-        
-        for (const playerId of prevMatch.teamA) {
-          ops.push(this.opCreator.addPlayerToTeam(newMatchId, 'teamA', playerId, roundId));
-        }
-        
-        for (const playerId of prevMatch.teamB) {
-          ops.push(this.opCreator.addPlayerToTeam(newMatchId, 'teamB', playerId, roundId));
-        }
-      }
-    } else {
-      const matchId = this.getNextMatchId(0);
-      this.opCreator.registerMatchIndex(matchId, 0);
-      ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
-    }
-    
-    return ops;
-  }
-
-  private generateRandomRound(): Op[] {
-    const ops: Op[] = [];
-    const { game, rounds, roundNumber, roundName, fixedNumberOfSets } = this.options;
-    const roundId = `round-${roundNumber}`;
-
-    ops.push(this.opCreator.addRound(roundId, roundName));
-    
+  private generateRatingRound(initialSets: Array<{ teamA: number; teamB: number }>): Match[] {
+    const { game, rounds } = this.options;
     const playingParticipants = game.participants.filter(p => p.isPlaying);
     const numPlayers = playingParticipants.length;
     
     if (numPlayers < 4) {
-      return ops;
-    }
-    
-    const numCourts = game.gameCourts?.length || 1;
-    const numMatches = Math.min(numCourts, Math.floor(numPlayers / 4));
-    
-    const sortedCourts = game.gameCourts 
-      ? [...game.gameCourts].sort((a, b) => a.order - b.order)
-      : [];
-    
-    let pairs: string[][];
-    
-    if (game.hasFixedTeams && game.fixedTeams && game.fixedTeams.length > 0) {
-      pairs = this.generateRandomRoundWithFixedTeams(game, rounds, numMatches);
-    } else {
-      pairs = this.generateRandomPairs(playingParticipants, rounds, numMatches, game.genderTeams);
-    }
-
-    const actualMatches = Math.floor(pairs.length / 2);
-    
-    for (let i = 0; i < actualMatches; i++) {
-      const matchId = this.getNextMatchId(i);
-      this.opCreator.registerMatchIndex(matchId, i);
-      ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
-      
-      if (sortedCourts[i]?.courtId) {
-        ops.push(this.opCreator.setMatchCourt(matchId, sortedCourts[i].courtId, roundId));
-      }
-      
-      if (pairs[i * 2]) {
-        for (const playerId of pairs[i * 2]) {
-          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', playerId, roundId));
-        }
-      }
-      
-      if (pairs[i * 2 + 1]) {
-        for (const playerId of pairs[i * 2 + 1]) {
-          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', playerId, roundId));
-        }
-      }
-    }
-    
-    return ops;
-  }
-
-  private generateRandomPairs(
-    participants: any[],
-    previousRounds: Round[],
-    numMatches: number,
-    genderTeams?: string
-  ): string[][] {
-    const players = participants.map(p => p.userId);
-    const usedPairCounts = this.getPairUsageHistory(previousRounds);
-    const matchesPlayedCounts = this.getMatchesPlayedCounts(players, previousRounds);
-    
-    const isMixPairs = genderTeams === 'MIX_PAIRS';
-    let malePlayers: string[] = [];
-    let femalePlayers: string[] = [];
-    
-    if (isMixPairs) {
-      malePlayers = participants
-        .filter(p => p.user.gender === 'MALE')
-        .map(p => p.userId);
-      femalePlayers = participants
-        .filter(p => p.user.gender === 'FEMALE')
-        .map(p => p.userId);
-    }
-    
-    const sortedPlayers = [...players].sort((a, b) => {
-      const matchesA = matchesPlayedCounts.get(a) || 0;
-      const matchesB = matchesPlayedCounts.get(b) || 0;
-      return matchesA - matchesB;
-    });
-    
-    const pairs: string[][] = [];
-    const usedInThisRound = new Set<string>();
-    const neededPairs = numMatches * 2;
-    
-    let attempts = 0;
-    const maxAttempts = 100;
-    
-    while (pairs.length < neededPairs && attempts < maxAttempts) {
-      attempts++;
-      
-      const availablePlayers = sortedPlayers.filter(p => !usedInThisRound.has(p));
-      
-      if (availablePlayers.length < 2) {
-        break;
-      }
-      
-      let pair: string[] | null = null;
-      
-      if (isMixPairs) {
-        const availableMales = malePlayers
-          .filter(p => !usedInThisRound.has(p))
-          .sort((a, b) => {
-            const matchesA = matchesPlayedCounts.get(a) || 0;
-            const matchesB = matchesPlayedCounts.get(b) || 0;
-            return matchesA - matchesB;
-          });
-        const availableFemales = femalePlayers
-          .filter(p => !usedInThisRound.has(p))
-          .sort((a, b) => {
-            const matchesA = matchesPlayedCounts.get(a) || 0;
-            const matchesB = matchesPlayedCounts.get(b) || 0;
-            return matchesA - matchesB;
-          });
-        
-        if (availableMales.length > 0 && availableFemales.length > 0) {
-          let bestMale = availableMales[0];
-          let bestFemale = availableFemales[0];
-          let minMaxMatches = Math.max(
-            matchesPlayedCounts.get(bestMale) || 0,
-            matchesPlayedCounts.get(bestFemale) || 0
-          );
-          let minTotalMatches = (matchesPlayedCounts.get(bestMale) || 0) + (matchesPlayedCounts.get(bestFemale) || 0);
-          let minUsageCount = usedPairCounts.get(this.getPairKey(bestMale, bestFemale)) || 0;
-          
-          for (const male of availableMales) {
-            for (const female of availableFemales) {
-              const pairKey = this.getPairKey(male, female);
-              const usageCount = usedPairCounts.get(pairKey) || 0;
-              const matchesMale = matchesPlayedCounts.get(male) || 0;
-              const matchesFemale = matchesPlayedCounts.get(female) || 0;
-              const maxMatches = Math.max(matchesMale, matchesFemale);
-              const totalMatches = matchesMale + matchesFemale;
-              
-              if (maxMatches < minMaxMatches ||
-                  (maxMatches === minMaxMatches && totalMatches < minTotalMatches) ||
-                  (maxMatches === minMaxMatches && totalMatches === minTotalMatches && usageCount < minUsageCount)) {
-                minMaxMatches = maxMatches;
-                minTotalMatches = totalMatches;
-                minUsageCount = usageCount;
-                bestMale = male;
-                bestFemale = female;
-              }
-            }
-          }
-          
-          pair = [bestMale, bestFemale];
-        }
-      } else {
-        let bestPair: string[] | null = null;
-        let minMaxMatches = Infinity;
-        let minTotalMatches = Infinity;
-        let minUsageCount = Infinity;
-        
-        for (let i = 0; i < availablePlayers.length - 1; i++) {
-          for (let j = i + 1; j < availablePlayers.length; j++) {
-            const p1 = availablePlayers[i];
-            const p2 = availablePlayers[j];
-            const pairKey = this.getPairKey(p1, p2);
-            const usageCount = usedPairCounts.get(pairKey) || 0;
-            const matchesP1 = matchesPlayedCounts.get(p1) || 0;
-            const matchesP2 = matchesPlayedCounts.get(p2) || 0;
-            const maxMatches = Math.max(matchesP1, matchesP2);
-            const totalMatches = matchesP1 + matchesP2;
-            
-            if (maxMatches < minMaxMatches ||
-                (maxMatches === minMaxMatches && totalMatches < minTotalMatches) ||
-                (maxMatches === minMaxMatches && totalMatches === minTotalMatches && usageCount < minUsageCount)) {
-              minMaxMatches = maxMatches;
-              minTotalMatches = totalMatches;
-              minUsageCount = usageCount;
-              bestPair = [p1, p2];
-            }
-          }
-        }
-        
-        pair = bestPair;
-      }
-      
-      if (pair) {
-        pairs.push(pair);
-        usedInThisRound.add(pair[0]);
-        usedInThisRound.add(pair[1]);
-        
-        const pairKey = this.getPairKey(pair[0], pair[1]);
-        usedPairCounts.set(pairKey, (usedPairCounts.get(pairKey) || 0) + 1);
-      } else {
-        break;
-      }
-    }
-    
-    return pairs;
-  }
-
-  private generateRandomRoundWithFixedTeams(
-    game: Game,
-    previousRounds: Round[],
-    numMatches: number
-  ): string[][] {
-    const fixedTeams = game.fixedTeams || [];
-    const teamPairs = fixedTeams.map(team => team.players.map(p => p.userId));
-    
-    const usedPairCounts = this.getPairUsageHistory(previousRounds);
-    const allPlayerIds = teamPairs.flat();
-    const matchesPlayedCounts = this.getMatchesPlayedCounts(allPlayerIds, previousRounds);
-    
-    const selectedPairs: string[][] = [];
-    const usedTeamIndices = new Set<number>();
-    
-    for (let i = 0; i < Math.min(numMatches * 2, teamPairs.length); i++) {
-      let bestIndex = -1;
-      let minTotalMatches = Infinity;
-      let minUsage = Infinity;
-      
-      for (let j = 0; j < teamPairs.length; j++) {
-        if (usedTeamIndices.has(j)) continue;
-        
-        const pair = teamPairs[j];
-        if (pair.length < 2) continue;
-        
-        const pairKey = this.getPairKey(pair[0], pair[1]);
-        const usage = usedPairCounts.get(pairKey) || 0;
-        const matchesP1 = matchesPlayedCounts.get(pair[0]) || 0;
-        const matchesP2 = matchesPlayedCounts.get(pair[1]) || 0;
-        const totalMatches = matchesP1 + matchesP2;
-        
-        if (totalMatches < minTotalMatches || 
-            (totalMatches === minTotalMatches && usage < minUsage)) {
-          minTotalMatches = totalMatches;
-          minUsage = usage;
-          bestIndex = j;
-        }
-      }
-      
-      if (bestIndex !== -1) {
-        selectedPairs.push(teamPairs[bestIndex]);
-        usedTeamIndices.add(bestIndex);
-      }
-    }
-    
-    return selectedPairs;
-  }
-
-  private getPairUsageHistory(rounds: Round[]): Map<string, number> {
-    const pairCounts = new Map<string, number>();
-    
-    for (const round of rounds) {
-      for (const match of round.matches) {
-        if (match.teamA.length >= 2) {
-          const pairKey = this.getPairKey(match.teamA[0], match.teamA[1]);
-          pairCounts.set(pairKey, (pairCounts.get(pairKey) || 0) + 1);
-        }
-        
-        if (match.teamB.length >= 2) {
-          const pairKey = this.getPairKey(match.teamB[0], match.teamB[1]);
-          pairCounts.set(pairKey, (pairCounts.get(pairKey) || 0) + 1);
-        }
-      }
-    }
-    
-    return pairCounts;
-  }
-
-  private getMatchesPlayedCounts(playerIds: string[], rounds: Round[]): Map<string, number> {
-    const matchCounts = new Map<string, number>();
-    
-    for (const playerId of playerIds) {
-      matchCounts.set(playerId, 0);
-    }
-    
-    for (const round of rounds) {
-      for (const match of round.matches) {
-        const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
-        if (validSets.length === 0) continue;
-        
-        for (const playerId of match.teamA) {
-          if (matchCounts.has(playerId)) {
-            matchCounts.set(playerId, (matchCounts.get(playerId) || 0) + 1);
-          }
-        }
-        
-        for (const playerId of match.teamB) {
-          if (matchCounts.has(playerId)) {
-            matchCounts.set(playerId, (matchCounts.get(playerId) || 0) + 1);
-          }
-        }
-      }
-    }
-    
-    return matchCounts;
-  }
-
-  private getPairKey(player1: string, player2: string): string {
-    return player1 < player2 ? `${player1}-${player2}` : `${player2}-${player1}`;
-  }
-
-  private shuffleArray<T>(array: T[]): T[] {
-    const result = [...array];
-    for (let i = result.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [result[i], result[j]] = [result[j], result[i]];
-    }
-    return result;
-  }
-
-  private generateRatingRound(): Op[] {
-    const ops: Op[] = [];
-    const { game, rounds, roundNumber, roundName, fixedNumberOfSets } = this.options;
-    const roundId = `round-${roundNumber}`;
-
-    ops.push(this.opCreator.addRound(roundId, roundName));
-    
-    const playingParticipants = game.participants.filter(p => p.isPlaying);
-    const numPlayers = playingParticipants.length;
-    
-    if (numPlayers < 4) {
-      return ops;
+      return [];
     }
     
     const numCourts = game.gameCourts?.length || 1;
@@ -504,48 +127,36 @@ export class RoundGenerator {
     }
     
     const actualMatches = Math.min(numMatches, Math.floor(playerIds.length / 4));
+    const matches: Match[] = [];
     
     for (let i = 0; i < actualMatches; i++) {
-      const matchId = this.getNextMatchId(i);
-      this.opCreator.registerMatchIndex(matchId, i);
-      ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
-      
-      if (sortedCourts[i]?.courtId) {
-        ops.push(this.opCreator.setMatchCourt(matchId, sortedCourts[i].courtId, roundId));
-      }
-      
       const baseIndex = i * 4;
       const player1 = playerIds[baseIndex];
       const player2 = playerIds[baseIndex + 1];
       const player3 = playerIds[baseIndex + 2];
       const player4 = playerIds[baseIndex + 3];
       
-      if (player1 && player3) {
-        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', player1, roundId));
-        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', player3, roundId));
-      }
-      
-      if (player2 && player4) {
-        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', player2, roundId));
-        ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', player4, roundId));
+      if (player1 && player2 && player3 && player4) {
+        matches.push({
+          id: createId(),
+          teamA: [player1, player3],
+          teamB: [player2, player4],
+          sets: initialSets,
+          courtId: sortedCourts[i]?.courtId,
+        });
       }
     }
     
-    return ops;
+    return matches;
   }
 
-  private generateWinnersCourtRound(): Op[] {
-    const ops: Op[] = [];
-    const { game, rounds, roundNumber, roundName, fixedNumberOfSets } = this.options;
-    const roundId = `round-${roundNumber}`;
-
-    ops.push(this.opCreator.addRound(roundId, roundName));
-    
+  private generateWinnersCourtRound(initialSets: Array<{ teamA: number; teamB: number }>): Match[] {
+    const { game, rounds } = this.options;
     const playingParticipants = game.participants.filter(p => p.isPlaying);
     const numPlayers = playingParticipants.length;
     
     if (numPlayers < 4) {
-      return ops;
+      return [];
     }
     
     const sortedCourts = game.gameCourts 
@@ -558,37 +169,32 @@ export class RoundGenerator {
     if (rounds.length === 0) {
       const sortedPlayers = [...playingParticipants].sort((a, b) => b.user.level - a.user.level);
       const playerIds = sortedPlayers.map(p => p.userId);
+      const matches: Match[] = [];
       
       for (let i = 0; i < numMatches; i++) {
-        const matchId = this.getNextMatchId(i);
-        this.opCreator.registerMatchIndex(matchId, i);
-        ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
-        
-        if (sortedCourts[i]?.courtId) {
-          ops.push(this.opCreator.setMatchCourt(matchId, sortedCourts[i].courtId, roundId));
-        }
-        
         const baseIndex = i * 4;
         const player1 = playerIds[baseIndex];
         const player2 = playerIds[baseIndex + 1];
         const player3 = playerIds[baseIndex + 2];
         const player4 = playerIds[baseIndex + 3];
         
-        if (player1 && player3) {
-          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', player1, roundId));
-          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', player3, roundId));
-        }
-        
-        if (player2 && player4) {
-          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', player2, roundId));
-          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', player4, roundId));
+        if (player1 && player2 && player3 && player4) {
+          matches.push({
+            id: createId(),
+            teamA: [player1, player3],
+            teamB: [player2, player4],
+            sets: initialSets,
+            courtId: sortedCourts[i]?.courtId,
+          });
         }
       }
+      
+      return matches;
     } else {
       const previousRound = rounds[rounds.length - 1];
       
       if (!previousRound.matches || previousRound.matches.length === 0) {
-        return ops;
+        return [];
       }
 
       const courtResults: Array<{
@@ -684,54 +290,28 @@ export class RoundGenerator {
         }
       }
 
+      const matches: Match[] = [];
       for (let i = 0; i < Math.min(newMatches.length, numMatches); i++) {
         const newMatch = newMatches[i];
-        const matchId = this.getNextMatchId(i);
-        this.opCreator.registerMatchIndex(matchId, i);
-        
-        ops.push(this.opCreator.addMatch(matchId, roundId, fixedNumberOfSets));
-        
-        if (sortedCourts[newMatch.courtIndex]?.courtId) {
-          ops.push(this.opCreator.setMatchCourt(matchId, sortedCourts[newMatch.courtIndex].courtId, roundId));
-        }
-        
-        for (const playerId of newMatch.teamA) {
-          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamA', playerId, roundId));
-        }
-        
-        for (const playerId of newMatch.teamB) {
-          ops.push(this.opCreator.addPlayerToTeam(matchId, 'teamB', playerId, roundId));
-        }
+        matches.push({
+          id: createId(),
+          teamA: newMatch.teamA,
+          teamB: newMatch.teamB,
+          sets: initialSets,
+          courtId: sortedCourts[newMatch.courtIndex]?.courtId,
+        });
       }
+      
+      return matches;
     }
-    
-    return ops;
   }
 
-  private getNextMatchId(currentRoundMatchIndex: number = 0): string {
-    const allMatchIds = new Set<string>();
-    this.options.rounds.forEach(r => {
-      r.matches.forEach(m => allMatchIds.add(m.id));
-    });
-
-    let maxNum = 0;
-    allMatchIds.forEach(id => {
-      const match = id.match(/^match-(\d+)$/);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxNum) {
-          maxNum = num;
-        }
-      }
-    });
-
-    let candidateId = `match-${maxNum + currentRoundMatchIndex + 1}`;
-    while (allMatchIds.has(candidateId)) {
-      maxNum++;
-      candidateId = `match-${maxNum + currentRoundMatchIndex + 1}`;
+  private shuffleArray<T>(array: T[]): T[] {
+    const result = [...array];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
     }
-
-    return candidateId;
+    return result;
   }
 }
-

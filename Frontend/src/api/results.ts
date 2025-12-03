@@ -1,6 +1,6 @@
 import api from './axios';
 import { ApiResponse } from '@/types';
-import { BatchOpsResponse } from '@/types/ops';
+import { Round } from '@/types/gameResults';
 
 export interface RoundData {
   roundNumber: number;
@@ -26,6 +26,7 @@ export interface MatchData {
     teamAScore: number;
     teamBScore: number;
   }>;
+  courtId?: string;
 }
 
 export interface GameResultsData {
@@ -40,27 +41,14 @@ export interface GameResultsData {
   }>;
 }
 
-export interface BatchOpsRequest {
-  ops: Array<{
-    id: string;
-    base_version: number;
-    op: 'replace' | 'add' | 'remove';
-    path: string;
-    value?: any;
-    actor: { userId: string };
-  }>;
-}
-
 export const resultsApi = {
   recalculateOutcomes: async (gameId: string) => {
     const response = await api.post<ApiResponse<any>>(`/results/game/${gameId}/recalculate`);
     return response.data;
   },
 
-  editGameResults: async (gameId: string, baseVersion?: number) => {
-    const response = await api.post<ApiResponse<void>>(`/results/game/${gameId}/edit`, {
-      baseVersion,
-    });
+  editGameResults: async (gameId: string) => {
+    const response = await api.post<ApiResponse<void>>(`/results/game/${gameId}/edit`);
     return response.data;
   },
 
@@ -69,29 +57,47 @@ export const resultsApi = {
     return response.data;
   },
 
-  deleteGameResults: async (gameId: string, baseVersion?: number) => {
-    const response = await api.delete<ApiResponse<void>>(`/results/game/${gameId}`, {
-      data: {
-        baseVersion,
-      },
-    });
-    return response.data;
-  },
-
   getGameResults: async (gameId: string) => {
     const response = await api.get<ApiResponse<any>>(`/results/game/${gameId}`);
     return response.data;
   },
 
-  batchOps: async (gameId: string, batchId: string, data: BatchOpsRequest) => {
-    const response = await api.post<ApiResponse<BatchOpsResponse>>(
-      `/results/game/${gameId}/ops:batch`,
-      data,
-      {
-        headers: {
-          'X-Idempotency-Key': batchId,
-        },
-      }
+  syncResults: async (gameId: string, rounds: Round[]) => {
+    const response = await api.post<ApiResponse<void>>(`/results/game/${gameId}/sync`, {
+      rounds,
+    });
+    return response.data;
+  },
+
+  createRound: async (gameId: string, round: { id: string }) => {
+    const response = await api.post<ApiResponse<void>>(`/results/game/${gameId}/rounds`, round);
+    return response.data;
+  },
+
+  deleteRound: async (gameId: string, roundId: string) => {
+    const response = await api.delete<ApiResponse<void>>(`/results/game/${gameId}/rounds/${roundId}`);
+    return response.data;
+  },
+
+  createMatch: async (gameId: string, roundId: string, match: { id: string }) => {
+    const response = await api.post<ApiResponse<void>>(`/results/game/${gameId}/rounds/${roundId}/matches`, match);
+    return response.data;
+  },
+
+  deleteMatch: async (gameId: string, roundId: string, matchId: string) => {
+    const response = await api.delete<ApiResponse<void>>(`/results/game/${gameId}/rounds/${roundId}/matches/${matchId}`);
+    return response.data;
+  },
+
+  updateMatch: async (gameId: string, roundId: string, matchId: string, match: {
+    teamA: string[];
+    teamB: string[];
+    sets: Array<{ teamA: number; teamB: number }>;
+    courtId?: string;
+  }) => {
+    const response = await api.put<ApiResponse<void>>(
+      `/results/game/${gameId}/rounds/${roundId}/matches/${matchId}`,
+      match
     );
     return response.data;
   },
@@ -145,4 +151,3 @@ export const getOutcomeExplanation = async (gameId: string, userId: string): Pro
   const response = await api.get<ApiResponse<OutcomeExplanation>>(`/results/game/${gameId}/outcome/${userId}/explanation`);
   return response.data.data;
 };
-

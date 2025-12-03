@@ -60,9 +60,8 @@ export const getMatchResults = asyncHandler(async (req: AuthRequest, res: Respon
 
 export const deleteGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
-  const { baseVersion } = req.body;
 
-  await resultsService.deleteGameResults(gameId, req.userId!, baseVersion);
+  await resultsService.deleteGameResults(gameId, req.userId!);
 
   res.json({
     success: true,
@@ -92,11 +91,10 @@ export const resetGameResults = asyncHandler(async (req: AuthRequest, res: Respo
 
 export const editGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
-  const { baseVersion } = req.body;
   
   console.log(`[EDIT GAME RESULTS CONTROLLER] Endpoint hit for game ${gameId} by user ${req.userId}`);
 
-  await resultsService.editGameResults(gameId, req.userId!, baseVersion);
+  await resultsService.editGameResults(gameId, req.userId!);
   
   console.log(`[EDIT GAME RESULTS CONTROLLER] Results edited successfully for game ${gameId}`);
 
@@ -111,23 +109,83 @@ export const editGameResults = asyncHandler(async (req: AuthRequest, res: Respon
   });
 });
 
-export const batchOps = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const syncResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
-  const { ops } = req.body;
-  const idempotencyKey = req.headers['x-idempotency-key'] as string;
+  const { rounds } = req.body;
 
-  const result = await resultsService.batchOps(gameId, ops, req.userId!, idempotencyKey);
+  await resultsService.syncResults(gameId, rounds || [], req.userId!);
 
-  if (result.applied.length > 0) {
-    const socketService = (global as any).socketService;
-    if (socketService) {
-      socketService.emitGameResultsUpdated(gameId, req.userId!);
-    }
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    socketService.emitGameResultsUpdated(gameId, req.userId!);
   }
 
   res.json({
     success: true,
-    data: result,
+    message: 'Results synced successfully',
+  });
+});
+
+export const createRound = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId } = req.params;
+  const { id, name } = req.body;
+
+  await resultsService.createRound(gameId, id, name, req.userId!);
+
+  res.json({
+    success: true,
+    message: 'Round created successfully',
+  });
+});
+
+export const deleteRound = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId, roundId } = req.params;
+
+  await resultsService.deleteRound(gameId, roundId, req.userId!);
+
+  res.json({
+    success: true,
+    message: 'Round deleted successfully',
+  });
+});
+
+export const createMatch = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId, roundId } = req.params;
+  const { id } = req.body;
+
+  await resultsService.createMatch(gameId, roundId, id, req.userId!);
+
+  res.json({
+    success: true,
+    message: 'Match created successfully',
+  });
+});
+
+export const deleteMatch = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId, roundId, matchId } = req.params;
+
+  await resultsService.deleteMatch(gameId, roundId, matchId, req.userId!);
+
+  res.json({
+    success: true,
+    message: 'Match deleted successfully',
+  });
+});
+
+export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId, roundId, matchId } = req.params;
+  const matchData = req.body;
+
+  await resultsService.updateMatch(gameId, roundId, matchId, matchData, req.userId!);
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    socketService.emitGameResultsUpdated(gameId, req.userId!);
+  }
+
+  res.json({
+    success: true,
+    message: 'Match updated successfully',
   });
 });
 

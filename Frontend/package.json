@@ -17,6 +17,7 @@
     "@capacitor/keyboard": "^7.0.3",
     "@capacitor/network": "^7.0.2",
     "@capacitor/status-bar": "^7.0.3",
+    "@paralleldrive/cuid2": "^3.0.4",
     "axios": "^1.6.2",
     "bootstrap-icons": "^1.13.1",
     "date-fns": "^3.0.0",

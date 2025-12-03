@@ -20,7 +20,6 @@ import { ToastProvider } from './components/ToastProvider';
 import { OfflineBanner } from './components/OfflineBanner';
 import { headerService } from './services/headerService';
 import { socketService } from './services/socketService';
-import { resultsSyncService } from './services/resultsSync';
 import { useHeaderStore } from './store/headerStore';
 import { isCapacitor, isIOS, isAndroid } from './utils/capacitor';
 import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerUtils';
@@ -100,7 +99,6 @@ function App() {
       // Delay starting services to avoid blocking initial render
       const timer = setTimeout(() => {
         headerService.startPolling();
-        resultsSyncService.start();
         
         // Only fetch favorites if online
         if (navigator.onLine) {

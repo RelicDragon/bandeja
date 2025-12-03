@@ -320,16 +320,8 @@ export class AdminGamesService {
           where: { id: gameId },
           data: {
             resultsStatus: 'NONE',
-            fixedNumberOfSets: 0,
-            maxTotalPointsPerSet: 0,
-            maxPointsPerTeam: 0,
             metadata: {
               ...((game.metadata as any) || {}),
-              resultsVersion: 0,
-            },
-            resultsMeta: {
-              version: 0,
-              processedOps: [],
             },
             status: calculateGameStatus({
               startTime: updatedGame.startTime,

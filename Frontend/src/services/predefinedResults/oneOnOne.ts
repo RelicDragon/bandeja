@@ -26,14 +26,13 @@ export function createOneOnOneOps(
   opCreator: OpCreator,
   matches: OneOnOneMatchSetup[],
   roundId: string,
-  roundName: string,
   createRound: boolean = true,
   createMatches: boolean = true
 ): Op[] {
   const ops: Op[] = [];
 
   if (createRound) {
-    ops.push(opCreator.addRound(roundId, roundName));
+    ops.push(opCreator.addRound(roundId));
   }
 
   for (const match of matches) {

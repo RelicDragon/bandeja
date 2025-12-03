@@ -5,7 +5,7 @@ import { AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { SetResultModal } from '@/components/SetResultModal';
 import { CourtModal } from '@/components/CourtModal';
-import { TeamPlayerSelector, ConfirmationModal, SyncStatusIcon, GameSetupModal, OutcomesDisplay } from '@/components';
+import { TeamPlayerSelector, ConfirmationModal, GameSetupModal, OutcomesDisplay } from '@/components';
 import { gamesApi } from '@/api';
 import { resultsApi } from '@/api/results';
 import { User, WinnerOfGame, WinnerOfMatch } from '@/types';
@@ -21,9 +21,9 @@ import {
   RoundCard,
   AvailablePlayersFooter, 
   FloatingDraggedPlayer,
-  ConflictResolutionModal,
   PlayerStatsPanel
 } from '@/components/gameResults';
+import { AlertCircle } from 'lucide-react';
 
 export const GameResultsEntry = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,9 +52,7 @@ export const GameResultsEntry = () => {
   const [mounted, setMounted] = useState(false);
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'scores' | 'results' | 'stats'>('scores');
-  const [showConflictModal, setShowConflictModal] = useState(false);
-  const [conflicts, setConflicts] = useState<any[]>([]);
-  const [isResolvingConflict, setIsResolvingConflict] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const game = engine.game;
   const getRounds = () => GameResultsEngine.getState().rounds;
@@ -63,8 +61,7 @@ export const GameResultsEntry = () => {
   const loading = engine.loading;
   const expandedRoundId = engine.expandedRoundId;
   const editingMatchId = engine.editingMatchId;
-  const hasChanges = engine.pendingOpsCount > 0;
-  const syncStatus = engine.syncStatus;
+  const serverProblem = engine.serverProblem;
 
   const players = useMemo(() => (game?.participants.filter(p => p.isPlaying).map(p => p.user) || []) as User[], [game?.participants]);
 
@@ -98,10 +95,12 @@ export const GameResultsEntry = () => {
   const isFinalStatus = game?.resultsStatus === 'FINAL';
   const showFinishButton = canEdit && isEditingResults && isResultsEntryMode && getRounds().length > 0 && getRounds().some(r => r.matches.length > 0) && hasMatchesWithTeamsReady;
   const showEditButton = canEdit && !isEditingResults && isFinalStatus && isResultsEntryMode && game?.status !== 'ARCHIVED';
-  const finishButtonPanelHeight = (showFinishButton || showEditButton) ? 80 : 0;
+  const finishButtonPanelHeight = (showFinishButton || showEditButton || serverProblem) ? 80 : 0;
 
   const handleMatchDrop = async (matchId: string, team: 'teamA' | 'teamB', draggedPlayer: string) => {
-    const roundId = expandedRoundId || 'round-1';
+    const currentRounds = getRounds();
+    const roundId = expandedRoundId || (currentRounds.length > 0 ? currentRounds[0].id : null);
+    if (!roundId) return;
     await engine.addPlayerToTeam(roundId, matchId, team, draggedPlayer);
   };
 
@@ -282,8 +281,8 @@ export const GameResultsEntry = () => {
   useEffect(() => {
     const currentRounds = getRounds();
     if (engine.initialized && currentRounds.length > 0 && !isResultsEntryMode) {
-      const hasResultsOrPendingOps = game?.resultsStatus !== 'NONE' || hasChanges;
-      if (hasResultsOrPendingOps) {
+      const hasResults = game?.resultsStatus !== 'NONE';
+      if (hasResults) {
         setIsResultsEntryMode(true);
         // Auto-enable editing for non-FINAL statuses
         if (game?.resultsStatus !== 'FINAL') {
@@ -291,20 +290,8 @@ export const GameResultsEntry = () => {
         }
       }
     }
-  }, [engine.initialized, engine.rounds.length, isResultsEntryMode, game?.resultsStatus, hasChanges]);
+  }, [engine.initialized, engine.rounds.length, isResultsEntryMode, game?.resultsStatus]);
 
-  useEffect(() => {
-    const handleConflicts = (detectedConflicts: any[]) => {
-      setConflicts(detectedConflicts);
-      setShowConflictModal(true);
-    };
-
-    GameResultsEngine.setConflictCallback(handleConflicts);
-
-    return () => {
-      GameResultsEngine.setConflictCallback(null);
-    };
-  }, []);
 
   useEffect(() => {
     if (activeTab === 'results' && game?.resultsStatus !== 'FINAL') {
@@ -317,17 +304,21 @@ export const GameResultsEntry = () => {
     
     setIsSaving(true);
     try {
-      await engine.forceSync();
-
-      if (engine.pendingOpsCount === 0) {
-        await resultsApi.recalculateOutcomes(id);
-        toast.success(t('common.saved') || 'Results saved successfully');
-        const response = await gamesApi.getById(id);
-        if (response?.data) {
-          window.location.reload();
+      if (serverProblem) {
+        try {
+          await engine.syncToServer();
+        } catch (syncError: any) {
+          console.error('Failed to sync to server:', syncError);
+          toast.error(syncError?.response?.data?.message || t('errors.syncRequired') || 'Please sync to server before finishing');
+          return;
         }
-      } else {
-        toast.error(t('errors.syncPending') || 'Please wait for sync to complete');
+      }
+
+      await resultsApi.recalculateOutcomes(id);
+      toast.success(t('common.saved') || 'Results saved successfully');
+      const response = await gamesApi.getById(id);
+      if (response?.data) {
+        window.location.reload();
       }
     } catch (error: any) {
       console.error('Failed to save results:', error);
@@ -357,8 +348,6 @@ export const GameResultsEntry = () => {
         setSelectedMatchTeam(null);
         setSelectedCourtMatch(null);
         setActiveTab('scores');
-        setConflicts([]);
-        setShowConflictModal(false);
         engine.setExpandedRoundId(null);
         engine.setEditingMatchId(null);
       }
@@ -386,10 +375,7 @@ export const GameResultsEntry = () => {
     
     setIsEditing(true);
     try {
-      const state = GameResultsEngine.getState();
-      const baseVersion = state.shadow?.version;
-      
-      await resultsApi.editGameResults(id, baseVersion);
+      await resultsApi.editGameResults(id);
       
       const response = await gamesApi.getById(id);
       if (response?.data) {
@@ -401,15 +387,7 @@ export const GameResultsEntry = () => {
     } catch (error: any) {
       console.error('Failed to edit results:', error);
       const errorMessage = error?.response?.data?.message || error?.message || t('errors.generic');
-      
-      if (error?.response?.status === 409) {
         toast.error(errorMessage);
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      } else {
-        toast.error(errorMessage);
-      }
     } finally {
       setIsEditing(false);
       setShowEditConfirmation(false);
@@ -466,8 +444,9 @@ export const GameResultsEntry = () => {
 
     const { roundId, matchId, team } = selectedMatchTeam;
     
-    const actualRoundId = roundId || expandedRoundId || 'round-1';
     const currentRounds = getRounds();
+    const actualRoundId = roundId || expandedRoundId || (currentRounds.length > 0 ? currentRounds[0].id : null);
+    if (!actualRoundId) return;
     const round = currentRounds.find(r => r.id === actualRoundId);
     if (!round) return;
     
@@ -552,33 +531,16 @@ export const GameResultsEntry = () => {
     }
   };
 
-  const handleAcceptServer = async () => {
-    setIsResolvingConflict(true);
+  const handleSyncToServer = async () => {
+    setIsSyncing(true);
     try {
-      await GameResultsEngine.resolveConflictsAcceptServer();
-      setShowConflictModal(false);
-      setConflicts([]);
-      toast.success(t('conflicts.serverAccepted') || 'Server changes accepted');
+      await engine.syncToServer();
+      toast.success(t('common.synced') || 'Results synced to server successfully');
     } catch (error: any) {
-      console.error('Failed to accept server:', error);
-      toast.error(error?.response?.data?.message || t('errors.generic'));
+      console.error('Failed to sync to server:', error);
+      toast.error(error?.response?.data?.message || t('errors.generic') || 'Failed to sync to server');
     } finally {
-      setIsResolvingConflict(false);
-    }
-  };
-
-  const handleForceClient = async () => {
-    setIsResolvingConflict(true);
-    try {
-      await GameResultsEngine.resolveConflictsForceClient();
-      setShowConflictModal(false);
-      setConflicts([]);
-      toast.success(t('conflicts.clientForced') || 'Your changes have been applied');
-    } catch (error: any) {
-      console.error('Failed to force client:', error);
-      toast.error(error?.response?.data?.message || t('errors.generic'));
-    } finally {
-      setIsResolvingConflict(false);
+      setIsSyncing(false);
     }
   };
 
@@ -593,7 +555,7 @@ export const GameResultsEntry = () => {
     }
   };
 
-  if (loading) {
+  if (loading || !engine.initialized) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
@@ -637,14 +599,6 @@ export const GameResultsEntry = () => {
               <ArrowLeft size={20} />
               {t('common.back')}
             </button>
-            {isEditingResults && (
-              <div className="p-2">
-                <SyncStatusIcon 
-                  status={syncStatus} 
-                  onStatusChange={(status) => engine.setSyncStatus(status)}
-                />
-              </div>
-            )}
           </div>
           <div className="flex items-center gap-2 flex-1 justify-end">
             {canEdit && isResultsEntryMode && isEditingResults && (
@@ -710,7 +664,7 @@ export const GameResultsEntry = () => {
         <OutcomesDisplay outcomes={game.outcomes || []} affectsRating={game.affectsRating} gameId={game.id} />
       ) : game?.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
         <PlayerStatsPanel game={game} rounds={getRounds()} />
-      ) : !isResultsEntryMode ? (
+      ) : !isResultsEntryMode && engine.initialized ? (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
           <GameStatusDisplay gameState={gameState} />
           {canEdit && gameState?.canEdit && (
@@ -770,10 +724,11 @@ export const GameResultsEntry = () => {
           onClick={handleContainerClick}
         >
           <div className="space-y-1 pt-0 pb-2">
-              {getRounds().map((round) => (
+              {getRounds().map((round, index) => (
                 <RoundCard
                   key={round.id}
                   round={round}
+                  roundIndex={index}
                   players={players}
                   isPresetGame={isPresetGame}
                   isExpanded={expandedRoundId === round.id}
@@ -924,8 +879,9 @@ export const GameResultsEntry = () => {
               }}
               onConfirm={handlePlayerSelect}
               selectedPlayerIds={(() => {
-                const roundId = selectedMatchTeam.roundId || expandedRoundId || 'round-1';
                 const currentRounds = getRounds();
+                const roundId = selectedMatchTeam.roundId || expandedRoundId || (currentRounds.length > 0 ? currentRounds[0].id : null);
+                if (!roundId) return [];
                 const round = currentRounds.find(r => r.id === roundId);
                 const match = round?.matches.find(m => m.id === selectedMatchTeam.matchId);
                 if (!match) return [];
@@ -1022,22 +978,26 @@ export const GameResultsEntry = () => {
             />
           )}
 
-          {showConflictModal && (
-            <ConflictResolutionModal
-              isOpen={showConflictModal}
-              conflicts={conflicts}
-              onForceClientWin={handleForceClient}
-              onAcceptServer={handleAcceptServer}
-              onClose={() => setShowConflictModal(false)}
-              isProcessing={isResolvingConflict}
-            />
-          )}
           </div>
         </div>
       </main>
 
       {/* Footer Section */}
       <footer className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+        {serverProblem && (
+          <div className="p-2">
+            <div className="container mx-auto flex justify-center">
+              <button
+                onClick={handleSyncToServer}
+                disabled={isSyncing}
+                className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex items-center gap-2"
+              >
+                <AlertCircle size={20} />
+                {isSyncing ? t('common.loading') : (t('gameResults.syncToServer') || 'Sync to Server')}
+              </button>
+            </div>
+          </div>
+        )}
         {showFinishButton && (
           <div className="p-2">
             <div className="container mx-auto flex justify-center">

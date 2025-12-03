@@ -16,33 +16,65 @@ router.post('/game/:gameId/reset', authenticate, resultsController.resetGameResu
 router.post(
   '/game/:gameId/edit', 
   authenticate, 
-  validate([
-    body('baseVersion').optional().isInt({ min: 0 }).withMessage('Base version must be a non-negative integer'),
-  ]),
   resultsController.editGameResults
 );
 
 router.delete(
   '/game/:gameId', 
   authenticate,
-  validate([
-    body('baseVersion').optional().isInt({ min: 0 }).withMessage('Base version must be a non-negative integer'),
-  ]),
   resultsController.deleteGameResults
 );
 
 router.post(
-  '/game/:gameId/ops:batch',
+  '/game/:gameId/sync',
   authenticate,
   validate([
-    body('ops').isArray().withMessage('Ops must be an array'),
-    body('ops.*.id').isString().withMessage('Op ID is required'),
-    body('ops.*.base_version').isInt({ min: 0 }).withMessage('Base version must be a non-negative integer'),
-    body('ops.*.op').isIn(['replace', 'add', 'remove']).withMessage('Op type must be replace, add, or remove'),
-    body('ops.*.path').isString().withMessage('Path is required'),
-    body('ops.*.actor.userId').isString().withMessage('Actor user ID is required'),
+    body('rounds').isArray().withMessage('Rounds must be an array'),
   ]),
-  resultsController.batchOps
+  resultsController.syncResults
+);
+
+router.post(
+  '/game/:gameId/rounds',
+  authenticate,
+  validate([
+    body('id').isString().withMessage('Round ID is required'),
+    body('name').optional().isString(),
+  ]),
+  resultsController.createRound
+);
+
+router.delete(
+  '/game/:gameId/rounds/:roundId',
+  authenticate,
+  resultsController.deleteRound
+);
+
+router.post(
+  '/game/:gameId/rounds/:roundId/matches',
+  authenticate,
+  validate([
+    body('id').isString().withMessage('Match ID is required'),
+  ]),
+  resultsController.createMatch
+);
+
+router.delete(
+  '/game/:gameId/rounds/:roundId/matches/:matchId',
+  authenticate,
+  resultsController.deleteMatch
+);
+
+router.put(
+  '/game/:gameId/rounds/:roundId/matches/:matchId',
+  authenticate,
+  validate([
+    body('teamA').isArray().withMessage('teamA must be an array'),
+    body('teamB').isArray().withMessage('teamB must be an array'),
+    body('sets').isArray().withMessage('sets must be an array'),
+    body('courtId').optional().isString(),
+  ]),
+  resultsController.updateMatch
 );
 
 export default router;

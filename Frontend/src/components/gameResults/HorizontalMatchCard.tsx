@@ -143,7 +143,7 @@ export const HorizontalMatchCard = ({
               onCourtClick();
             }
           }}
-          className="absolute -top-1 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
+          className="absolute -top-1 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
         >
           <MapPin size={10} />
           <span>{selectedCourt?.name || 'Court'}</span>

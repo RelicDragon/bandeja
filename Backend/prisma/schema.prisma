@@ -297,7 +297,6 @@ model Round {
   id          String         @id @default(cuid())
   gameId      String
   roundNumber Int
-  status      RoundStatus    @default(IN_PROGRESS)
   metadata    Json?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -307,14 +306,12 @@ model Round {
 
   @@unique([gameId, roundNumber])
   @@index([gameId])
-  @@index([status])
 }
 
 model Match {
   id          String      @id @default(cuid())
   roundId     String
   matchNumber Int
-  status      MatchStatus @default(IN_PROGRESS)
   winnerId    String?
   courtId     String?
   metadata    Json?
@@ -327,7 +324,6 @@ model Match {
   sets        Set[]
 
   @@index([roundId])
-  @@index([status])
   @@index([winnerId])
   @@index([courtId])
 }
@@ -643,17 +639,6 @@ enum ChatContextType {
   USER
 }
 
-enum RoundStatus {
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
-enum MatchStatus {
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
 
 model TelegramOtp {
   id              String   @id @default(cuid())

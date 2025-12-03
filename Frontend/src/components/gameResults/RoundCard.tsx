@@ -9,6 +9,7 @@ import { ConfirmationModal } from '@/components';
 
 interface RoundCardProps {
   round: Round;
+  roundIndex: number;
   players: User[];
   isPresetGame: boolean;
   isExpanded: boolean;
@@ -37,6 +38,7 @@ interface RoundCardProps {
 
 export const RoundCard = ({
   round,
+  roundIndex,
   players,
   isPresetGame,
   isExpanded,
@@ -64,6 +66,7 @@ export const RoundCard = ({
 }: RoundCardProps) => {
   const { t } = useTranslation();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const roundName = `${t('gameResults.round')} ${roundIndex + 1}`;
 
   const matchesContent = (
     <div className={hideFrame ? "" : "p-2"}>
@@ -148,7 +151,7 @@ export const RoundCard = ({
             isOpen={showDeleteConfirmation}
             title={t('gameResults.deleteRound')}
             message={t('gameResults.deleteRoundConfirmation')}
-            highlightedText={round.name}
+            highlightedText={roundName}
             confirmText={t('common.delete')}
             cancelText={t('common.cancel')}
             confirmVariant="danger"
@@ -177,7 +180,7 @@ export const RoundCard = ({
             <ChevronRight size={16} className="text-gray-600 dark:text-gray-400" />
           )}
           <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-            {round.name}
+            {roundName}
           </h3>
         </div>
 
@@ -205,7 +208,7 @@ export const RoundCard = ({
           isOpen={showDeleteConfirmation}
           title={t('gameResults.deleteRound')}
           message={t('gameResults.deleteRoundConfirmation')}
-          highlightedText={round.name}
+          highlightedText={roundName}
           confirmText={t('common.delete')}
           cancelText={t('common.cancel')}
           confirmVariant="danger"

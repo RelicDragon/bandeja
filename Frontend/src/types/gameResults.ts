@@ -1,4 +1,5 @@
 export interface SetResult {
+  id?: string;
   teamA: number;
   teamB: number;
 }
@@ -14,7 +15,6 @@ export interface Match {
 
 export interface Round {
   id: string;
-  name: string;
   matches: Match[];
 }
 

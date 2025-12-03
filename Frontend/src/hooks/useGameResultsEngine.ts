@@ -18,10 +18,10 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
   const initialized = useGameResultsStore((state) => state.initialized);
   const canEdit = useGameResultsStore((state) => state.canEdit);
   const gameState = useGameResultsStore((state) => state.gameState);
-  const pendingOpsCount = useGameResultsStore((state) => state.pendingOpsCount);
   const expandedRoundId = useGameResultsStore((state) => state.expandedRoundId);
   const editingMatchId = useGameResultsStore((state) => state.editingMatchId);
   const syncStatus = useGameResultsStore((state) => state.syncStatus);
+  const serverProblem = useGameResultsStore((state) => state.serverProblem);
 
   useEffect(() => {
     if (!gameId || !userId) return;
@@ -48,7 +48,9 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     const handleResultsUpdated = (data: { gameId: string }) => {
       if (data.gameId === gameId) {
         console.log(`[GameResultsEngine] Received results-updated notification for game ${gameId}`);
-        GameResultsEngine.reloadResults(t);
+        GameResultsEngine.initialize(gameId, userId, t).catch((err) => {
+          console.error('Failed to reload results:', err);
+        });
       }
     };
 
@@ -66,8 +68,8 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     };
   }, [gameId, userId, t]);
 
-  const addRound = useCallback((name?: string) => GameResultsEngine.addRound(name, t), [t]);
-  const removeRound = useCallback((roundId: string) => GameResultsEngine.removeRound(roundId), []);
+  const addRound = useCallback(() => GameResultsEngine.addRound(), []);
+  const removeRound = useCallback((roundId: string) => GameResultsEngine.removeRound(roundId, t), [t]);
   const addMatch = useCallback((roundId: string, matchId?: string) => GameResultsEngine.addMatch(roundId, matchId), []);
   const removeMatch = useCallback((roundId: string, matchId: string) => GameResultsEngine.removeMatch(roundId, matchId), []);
   const addPlayerToTeam = useCallback((roundId: string, matchId: string, team: 'teamA' | 'teamB', playerId: string) =>
@@ -80,11 +82,10 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     GameResultsEngine.setMatchCourt(roundId, matchId, courtId), []);
   const setExpandedRoundId = useCallback((roundId: string | null) => GameResultsEngine.setExpandedRoundId(roundId), []);
   const setEditingMatchId = useCallback((matchId: string | null) => GameResultsEngine.setEditingMatchId(matchId), []);
-  const setSyncStatus = useCallback((status: 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED') => GameResultsEngine.setSyncStatus(status), []);
-  const forceSync = useCallback(() => GameResultsEngine.forceSync(), []);
+  const syncToServer = useCallback(() => GameResultsEngine.syncToServer(), []);
   const getGameResults = useCallback(() => GameResultsEngine.getGameResults(), []);
-  const initializePresetMatches = useCallback(() => GameResultsEngine.initializePresetMatches(t), [t]);
-  const initializeDefaultRound = useCallback(() => GameResultsEngine.initializeDefaultRound(t), [t]);
+  const initializePresetMatches = useCallback(() => GameResultsEngine.initializePresetMatches(), []);
+  const initializeDefaultRound = useCallback(() => GameResultsEngine.initializeDefaultRound(), []);
   const resetGame = useCallback(() => GameResultsEngine.resetGame(), []);
   const updateGame = useCallback((game: any) => GameResultsEngine.updateGame(game), []);
 
@@ -95,10 +96,10 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     initialized,
     canEdit,
     gameState,
-    pendingOpsCount,
     expandedRoundId,
     editingMatchId,
     syncStatus,
+    serverProblem,
     error,
     addRound,
     removeRound,
@@ -110,8 +111,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     setMatchCourt,
     setExpandedRoundId,
     setEditingMatchId,
-    setSyncStatus,
-    forceSync,
+    syncToServer,
     getGameResults,
     initializePresetMatches,
     initializeDefaultRound,
@@ -124,10 +124,10 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     initialized,
     canEdit,
     gameState,
-    pendingOpsCount,
     expandedRoundId,
     editingMatchId,
     syncStatus,
+    serverProblem,
     error,
     addRound,
     removeRound,
@@ -139,8 +139,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     setMatchCourt,
     setExpandedRoundId,
     setEditingMatchId,
-    setSyncStatus,
-    forceSync,
+    syncToServer,
     getGameResults,
     initializePresetMatches,
     initializeDefaultRound,
