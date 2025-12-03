@@ -116,15 +116,24 @@ export const MatchCard = ({
           {teamPlayers.map(playerId => {
             const player = players.find(p => p.id === playerId);
             return player ? (
-              <div key={playerId}>
+              <div key={playerId} className="flex flex-col items-center">
                 <PlayerAvatar
                   player={player}
                   draggable={false}
                   showName={true}
                   extrasmall={true}
-                  removable={!effectiveIsPresetGame && effectiveIsEditing && canEditResults}
-                  onRemoveClick={!effectiveIsPresetGame && effectiveIsEditing && canEditResults ? () => onRemovePlayer(team, playerId) : undefined}
                 />
+                {!effectiveIsPresetGame && effectiveIsEditing && canEditResults && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemovePlayer(team, playerId);
+                    }}
+                    className="mt-1 w-7 h-7 rounded-full bg-red-500 dark:bg-red-600 hover:bg-red-600 dark:hover:bg-red-700 flex items-center justify-center transition-colors border-2 border-white dark:border-gray-900"
+                  >
+                    <Trash2 size={14} className="text-white" />
+                  </button>
+                )}
               </div>
             ) : null;
           })}

@@ -170,7 +170,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
           className={`relative ${sizeClasses.avatar} rounded-full ${draggable ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 transition-opacity flex-shrink-0 p-0 border-0 ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
         >
           {player.avatar ? (
-            <div className="w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
+            <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
               <CachedImage
                 src={UrlConstructor.constructImageUrl(player.avatar)}
                 alt={`${player.firstName} ${player.lastName}`}
@@ -180,7 +180,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
               />
             </div>
           ) : (
-            <div className={`w-full h-full rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text}`}>
+            <div className={`absolute inset-0 w-full h-full rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text}`}>
               {initials}
             </div>
           )}
@@ -237,17 +237,17 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
         <div className={`overflow-visible transition-all duration-300 ease-in-out ${
           showName ? 'max-h-20 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-2'
         }`}>
-          <div className={`${sizeClasses.name} text-gray-700 dark:text-gray-300 break-words text-center leading-tight flex flex-col items-center justify-center`}>
+          <div className={`${sizeClasses.name} text-gray-700 dark:text-gray-300 break-words text-center leading-tight flex flex-col items-center justify-start`}>
             {isCurrentUser ? (
-              <span className={`${extrasmall ? 'max-w-20' : 'max-w-24'} truncate`}>
+              <span className={`${extrasmall ? 'max-w-20' : 'max-w-24'} truncate leading-none`}>
                 {t('createGame.you')}
               </span>
             ) : (
               <>
-                <span className={`text-center truncate ${extrasmall ? 'max-w-20' : 'max-w-24'}`}>
+                <span className={`text-center truncate leading-none ${extrasmall ? 'max-w-20' : 'max-w-24'}`}>
                   {player.firstName || ''}
                 </span>
-                <span className={`text-center truncate ${extrasmall ? 'max-w-20' : 'max-w-24'}`}>
+                <span className={`text-center truncate leading-none ${extrasmall ? 'max-w-20' : 'max-w-24'}`}>
                   {player.lastName || ''}
                 </span>
               </>
