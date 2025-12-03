@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, AlertTriangle } from 'lucide-react';
 import { SetResultModal } from '@/components/SetResultModal';
 import { CourtModal } from '@/components/CourtModal';
 import { TeamPlayerSelector, ConfirmationModal, GameSetupModal, OutcomesDisplay } from '@/components';
@@ -605,13 +605,20 @@ export const GameResultsEntry = () => {
           </div>
           <div className="flex items-center gap-2 flex-1 justify-end">
             {canEdit && isResultsEntryMode && isEditingResults && (
-              <button
-                onClick={() => setShowRestartConfirmation(true)}
-                disabled={isRestarting}
-                className="px-4 py-2 text-sm rounded-lg font-medium transition-colors bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isRestarting ? t('common.loading') : getRestartText()}
-              </button>
+              serverProblem ? (
+                <div className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-700">
+                  <AlertTriangle size={18} />
+                  <span>{t('offline.youAreInOfflineMode')}</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowRestartConfirmation(true)}
+                  disabled={isRestarting}
+                  className="px-4 py-2 text-sm rounded-lg font-medium transition-colors bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isRestarting ? t('common.loading') : getRestartText()}
+                </button>
+              )
             )}
           </div>
         </div>
@@ -793,27 +800,60 @@ export const GameResultsEntry = () => {
                 </div>
               )}
 
-              {!isPresetGame && !game?.prohibitMatchesEditing && editingMatchId && effectiveCanEdit && expandedRoundId && (
-                <AvailablePlayersFooter
-                  players={players}
-                  editingMatch={(() => {
-                    const currentRounds = getRounds();
-                    const expandedRound = currentRounds.find(r => r.id === expandedRoundId);
-                    return expandedRound?.matches.find(m => m.id === editingMatchId);
-                  })()}
-                  roundMatches={(() => {
-                    const currentRounds = getRounds();
-                    const expandedRound = currentRounds.find(r => r.id === expandedRoundId);
-                    return expandedRound?.matches || [];
-                  })()}
-                  draggedPlayer={dragAndDrop.draggedPlayer}
-                  onDragStart={dragAndDrop.handleDragStart}
-                  onDragEnd={dragAndDrop.handleDragEnd}
-                  onTouchStart={dragAndDrop.handleTouchStart}
-                  onTouchMove={dragAndDrop.handleTouchMove}
-                  onTouchEnd={handleTouchEndWrapper}
-                />
-              )}
+              {!isPresetGame && !game?.prohibitMatchesEditing && editingMatchId && effectiveCanEdit && expandedRoundId && (() => {
+                const currentRounds = getRounds();
+                const expandedRound = currentRounds.find(r => r.id === expandedRoundId);
+                const editingMatch = expandedRound?.matches.find(m => m.id === editingMatchId);
+                const roundMatches = expandedRound?.matches || [];
+                
+                const playersInRound = new Set<string>();
+                roundMatches.forEach(match => {
+                  match.teamA.forEach(id => playersInRound.add(id));
+                  match.teamB.forEach(id => playersInRound.add(id));
+                });
+
+                const availablePlayers = players.filter(player => {
+                  if (playersInRound.has(player.id)) return false;
+                  if (!editingMatch) return true;
+                  return !editingMatch.teamA.includes(player.id) && !editingMatch.teamB.includes(player.id);
+                });
+
+                const maxPlayersPerTeam = players.length === 2 ? 1 : 2;
+                const teamsAreFull = editingMatch &&
+                  editingMatch.teamA.length >= maxPlayersPerTeam &&
+                  editingMatch.teamB.length >= maxPlayersPerTeam;
+
+                const shouldShowFooter = availablePlayers.length > 0 && !teamsAreFull;
+                const shouldShowSyncAbove = serverProblem && shouldShowFooter;
+
+                return (
+                  <>
+                    {shouldShowSyncAbove && (
+                      <div className="fixed left-1/2 -translate-x-1/2 bottom-[120px] z-30">
+                        <button
+                          onClick={handleSyncToServer}
+                          disabled={isSyncing}
+                          className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex items-center gap-2"
+                        >
+                          <AlertCircle size={20} />
+                          {isSyncing ? t('common.loading') : (t('gameResults.syncToServer') || 'Sync to Server')}
+                        </button>
+                      </div>
+                    )}
+                    <AvailablePlayersFooter
+                      players={players}
+                      editingMatch={editingMatch}
+                      roundMatches={roundMatches}
+                      draggedPlayer={dragAndDrop.draggedPlayer}
+                      onDragStart={dragAndDrop.handleDragStart}
+                      onDragEnd={dragAndDrop.handleDragEnd}
+                      onTouchStart={dragAndDrop.handleTouchStart}
+                      onTouchMove={dragAndDrop.handleTouchMove}
+                      onTouchEnd={handleTouchEndWrapper}
+                    />
+                  </>
+                );
+              })()}
             </div>
         </div>
       )}
@@ -991,30 +1031,68 @@ export const GameResultsEntry = () => {
 
       {/* Footer Section */}
       <footer className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
-        {serverProblem && (
-          <div className="p-2">
-            <div className="container mx-auto flex justify-center">
-              <button
-                onClick={handleSyncToServer}
-                disabled={isSyncing}
-                className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex items-center gap-2"
-              >
-                <AlertCircle size={20} />
-                {isSyncing ? t('common.loading') : (t('gameResults.syncToServer') || 'Sync to Server')}
-              </button>
+        {serverProblem && (() => {
+          const shouldShowFooter = !isPresetGame && !game?.prohibitMatchesEditing && editingMatchId && effectiveCanEdit && expandedRoundId;
+          if (shouldShowFooter) {
+            const currentRounds = getRounds();
+            const expandedRound = currentRounds.find(r => r.id === expandedRoundId);
+            const editingMatch = expandedRound?.matches.find(m => m.id === editingMatchId);
+            const roundMatches = expandedRound?.matches || [];
+            
+            const playersInRound = new Set<string>();
+            roundMatches.forEach(match => {
+              match.teamA.forEach(id => playersInRound.add(id));
+              match.teamB.forEach(id => playersInRound.add(id));
+            });
+
+            const availablePlayers = players.filter(player => {
+              if (playersInRound.has(player.id)) return false;
+              if (!editingMatch) return true;
+              return !editingMatch.teamA.includes(player.id) && !editingMatch.teamB.includes(player.id);
+            });
+
+            const maxPlayersPerTeam = players.length === 2 ? 1 : 2;
+            const teamsAreFull = editingMatch &&
+              editingMatch.teamA.length >= maxPlayersPerTeam &&
+              editingMatch.teamB.length >= maxPlayersPerTeam;
+
+            const shouldShowAvailableFooter = availablePlayers.length > 0 && !teamsAreFull;
+            if (shouldShowAvailableFooter) {
+              return null;
+            }
+          }
+          return (
+            <div className="p-2">
+              <div className="container mx-auto flex justify-center">
+                <button
+                  onClick={handleSyncToServer}
+                  disabled={isSyncing}
+                  className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex items-center gap-2"
+                >
+                  <AlertCircle size={20} />
+                  {isSyncing ? t('common.loading') : (t('gameResults.syncToServer') || 'Sync to Server')}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
         {showFinishButton && (
           <div className="p-2">
             <div className="container mx-auto flex justify-center">
-              <button
-                onClick={() => setShowFinishConfirmation(true)}
-                disabled={isSaving}
-                className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-              >
-                {isSaving ? t('common.loading') : getFinishText()}
-              </button>
+              {serverProblem ? (
+                <div className="flex items-center gap-2 px-8 py-3 text-base rounded-lg font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-700 shadow-lg">
+                  <AlertTriangle size={20} />
+                  <span>{t('offline.youAreInOfflineMode')}</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowFinishConfirmation(true)}
+                  disabled={isSaving}
+                  className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                >
+                  {isSaving ? t('common.loading') : getFinishText()}
+                </button>
+              )}
             </div>
           </div>
         )}

@@ -166,6 +166,7 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId }: OutcomesDis
                   player={outcome.user}
                   smallLayout={true}
                   showName={false}
+                  fullHideName={true}
                 />
               </div>
 

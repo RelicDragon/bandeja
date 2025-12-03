@@ -41,7 +41,8 @@
     "chat": "Chat"
   },
   "offline": {
-    "working_offline": "Trabajando sin conexión - Algunas funciones pueden estar limitadas"
+    "working_offline": "Trabajando sin conexión - Algunas funciones pueden estar limitadas",
+    "youAreInOfflineMode": "Estás en modo sin conexión"
   },
   "bug": {
     "bugTracker": "Rastreador de Errores",
@@ -622,7 +623,7 @@
       "any": "Cualquiera",
       "men": "Hombres",
       "women": "Mujeres",
-      "mixPairs": "Parejas mixtas",
+      "mixPairs": "Mix",
       "note": {
         "any": "Cualquier género es bienvenido",
         "men": "Solo se permiten hombres",

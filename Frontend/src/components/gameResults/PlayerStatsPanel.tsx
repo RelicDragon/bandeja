@@ -86,7 +86,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
               {standing.place}
             </div>
             <div>
-              <PlayerAvatar player={standing.user} extrasmall showName={false} />
+              <PlayerAvatar player={standing.user} extrasmall showName={false} fullHideName={true} />
             </div>
             <div className="text-sm font-small text-gray-900 dark:text-gray-100 break-words line-clamp-2">
               {[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ') || '-'}

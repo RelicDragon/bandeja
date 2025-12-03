@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { ProtectedRoute, AppLoadingScreen, NoInternetScreen } from './components';
 import { Login } from './pages/Login';
@@ -26,13 +26,16 @@ import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerU
 import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
 import './i18n/config';
 
-function App() {
+function AppContent() {
+  const location = useLocation();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const isInitializing = useAuthStore((state) => state.isInitializing);
   const finishInitializing = useAuthStore((state) => state.finishInitializing);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const isOnline = useNetworkStore((state) => state.isOnline);
+  
+  const isResultsEntryPage = location.pathname.includes('/results');
 
   useEffect(() => {
     if (isCapacitor()) {
@@ -151,16 +154,15 @@ function App() {
     return <AppLoadingScreen isInitializing={isInitializing} />;
   }
 
-  if (!isOnline) {
+  if (!isOnline && !isResultsEntryPage) {
     return <NoInternetScreen />;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <OfflineBanner />
+      {!isResultsEntryPage && <OfflineBanner />}
       <ToastProvider>
-        <BrowserRouter>
-          <PlayerCardModalManager>
+        <PlayerCardModalManager>
           <Routes>
         <Route
           path="/login"
@@ -335,9 +337,16 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </PlayerCardModalManager>
-        </BrowserRouter>
       </ToastProvider>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
 
