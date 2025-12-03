@@ -38,6 +38,23 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+async function isGameResultsEntryPage() {
+  try {
+    const clients = await self.clients.matchAll({ type: 'window' });
+    return clients.some(client => {
+      const url = new URL(client.url);
+      return url.pathname.includes('/games/') && url.pathname.includes('/results');
+    });
+  } catch (error) {
+    return false;
+  }
+}
+
+function isGameResultsApi(pathname) {
+  return pathname.startsWith('/api/results/') || 
+         pathname.startsWith('/api/games/');
+}
+
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
   
@@ -48,7 +65,6 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
   const pathname = requestUrl.pathname;
   
-  // Define what should be cached
   const shouldCache = 
     pathname.endsWith('.svg') ||
     pathname.endsWith('.png') ||
@@ -62,12 +78,39 @@ self.addEventListener('fetch', (event) => {
     pathname === '/index.html' ||
     pathname === '/manifest.json';
 
-  // For API requests, use network-first strategy with timeout
   if (pathname.startsWith('/api/')) {
     event.respondWith(
-      Promise.race([
-        fetch(event.request).then((response) => {
-          // Cache successful GET API responses for offline access
+      (async () => {
+        const isGameResultsPage = await isGameResultsEntryPage();
+        const isGameResultsEndpoint = isGameResultsApi(pathname);
+        
+        if (isGameResultsPage && isGameResultsEndpoint) {
+          try {
+            const response = await fetch(event.request);
+            if (response && response.status === 200 && event.request.method === 'GET') {
+              const responseClone = response.clone();
+              caches.open(RUNTIME_CACHE).then((cache) => {
+                cache.put(event.request, responseClone);
+              });
+            }
+            return response;
+          } catch (error) {
+            const cached = await caches.match(event.request);
+            if (cached) {
+              return cached;
+            }
+            throw error;
+          }
+        }
+        
+        try {
+          const response = await Promise.race([
+            fetch(event.request),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('timeout')), 5000)
+            )
+          ]);
+          
           if (response && response.status === 200 && event.request.method === 'GET') {
             const responseClone = response.clone();
             caches.open(RUNTIME_CACHE).then((cache) => {
@@ -75,18 +118,13 @@ self.addEventListener('fetch', (event) => {
             });
           }
           return response;
-        }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('timeout')), 5000)
-        )
-      ]).catch(() => {
-        // If network fails, try cache
-        return caches.match(event.request).then((cached) => {
+        } catch (error) {
+          const cached = await caches.match(event.request);
           if (cached) {
             console.log('Serving API from cache (offline):', pathname);
             return cached;
           }
-          // Return a custom offline response
+          
           return new Response(
             JSON.stringify({ 
               error: 'offline', 
@@ -97,13 +135,12 @@ self.addEventListener('fetch', (event) => {
               headers: { 'Content-Type': 'application/json' }
             }
           );
-        });
-      })
+        }
+      })()
     );
     return;
   }
 
-  // For other resources, use cache-first strategy
   if (!shouldCache) {
     return fetch(event.request);
   }
@@ -130,7 +167,6 @@ self.addEventListener('fetch', (event) => {
         });
       })
       .catch(() => {
-        // If both cache and network fail, return fallback
         if (event.request.destination === 'document') {
           return caches.match('/index.html');
         }
