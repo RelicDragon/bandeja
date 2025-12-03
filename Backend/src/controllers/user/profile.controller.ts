@@ -41,8 +41,19 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: { avatar: true, originalAvatar: true }
+    select: { avatar: true, originalAvatar: true, firstName: true, lastName: true }
   });
+
+  if (firstName !== undefined || lastName !== undefined) {
+    const newFirstName = firstName !== undefined ? firstName : currentUser?.firstName || '';
+    const newLastName = lastName !== undefined ? lastName : currentUser?.lastName || '';
+    const trimmedFirst = (newFirstName || '').trim();
+    const trimmedLast = (newLastName || '').trim();
+
+    if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
+      throw new ApiError(400, 'At least one name must have at least 3 characters');
+    }
+  }
 
   if (avatar === null && currentUser?.avatar) {
     await ImageProcessor.deleteFile(currentUser.avatar);

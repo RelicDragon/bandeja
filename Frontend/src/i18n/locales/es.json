@@ -449,6 +449,7 @@
     "completeProfile": "Completa Tu Perfil",
     "completeProfileDescription": "Por favor, ingresa tu nombre para continuar usando la aplicación",
     "nameRequirement": "Tu nombre y apellido deben contener al menos 3 letras alfabéticas en total",
+    "nameValidationError": "Al menos un nombre debe tener al menos 3 caracteres",
     "invalidName": "El nombre debe contener al menos 3 letras alfabéticas",
     "personalInfo": "Información personal",
     "appearance": "Apariencia",

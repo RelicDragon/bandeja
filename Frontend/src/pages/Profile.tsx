@@ -10,8 +10,9 @@ import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
 import { City, Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2 } from 'lucide-react';
 import { UrlConstructor } from '@/utils/urlConstructor';
+import { hasValidUsername } from '@/utils/userValidation';
 
 export const ProfileContent = () => {
   const { t, i18n } = useTranslation();
@@ -46,6 +47,8 @@ export const ProfileContent = () => {
   } | null>(null);
   const [isLoadingLundaStatus, setIsLoadingLundaStatus] = useState(true);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [nameError, setNameError] = useState('');
+  const [nameValidationStatus, setNameValidationStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -61,14 +64,45 @@ export const ProfileContent = () => {
     }
   }, [i18n.language, updateUser, t]);
 
-  const debouncedUpdate = useCallback((updates: Partial<User>) => {
+  const debouncedUpdate = useCallback((updates: Partial<User>, skipValidation = false) => {
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
     }
-    updateTimeoutRef.current = setTimeout(() => {
-      updateProfile(updates);
+    
+    if (!skipValidation && (updates.firstName !== undefined || updates.lastName !== undefined)) {
+      const newFirstName = updates.firstName !== undefined ? updates.firstName : firstName;
+      const newLastName = updates.lastName !== undefined ? updates.lastName : lastName;
+      
+      const testUser: User = {
+        ...user!,
+        firstName: newFirstName,
+        lastName: newLastName,
+      };
+      
+      if (!hasValidUsername(testUser)) {
+        setNameError(t('profile.nameValidationError') || 'At least one name must have at least 3 characters');
+        setNameValidationStatus('error');
+        return;
+      }
+      
+      setNameError('');
+      setNameValidationStatus('saving');
+    }
+    
+    updateTimeoutRef.current = setTimeout(async () => {
+      try {
+        await updateProfile(updates);
+        if (!skipValidation && (updates.firstName !== undefined || updates.lastName !== undefined)) {
+          setNameValidationStatus('saved');
+          setTimeout(() => setNameValidationStatus('idle'), 2000);
+        }
+      } catch (error) {
+        if (!skipValidation && (updates.firstName !== undefined || updates.lastName !== undefined)) {
+          setNameValidationStatus('error');
+        }
+      }
     }, 500);
-  }, [updateProfile]);
+  }, [updateProfile, firstName, lastName, user, t]);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -126,11 +160,19 @@ export const ProfileContent = () => {
 
   const handleFirstNameChange = (value: string) => {
     setFirstName(value);
+    if (nameError) {
+      setNameError('');
+      setNameValidationStatus('idle');
+    }
     debouncedUpdate({ firstName: value });
   };
 
   const handleLastNameChange = (value: string) => {
     setLastName(value);
+    if (nameError) {
+      setNameError('');
+      setNameValidationStatus('idle');
+    }
     debouncedUpdate({ lastName: value });
   };
 
@@ -347,16 +389,42 @@ export const ProfileContent = () => {
             {t('profile.personalInfo')}
           </h2>
           <div className="space-y-4">
-            <Input
-              label={t('auth.firstName')}
-              value={firstName}
-              onChange={(e) => handleFirstNameChange(e.target.value)}
-            />
-            <Input
-              label={t('auth.lastName')}
-              value={lastName}
-              onChange={(e) => handleLastNameChange(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                label={t('auth.firstName')}
+                value={firstName}
+                onChange={(e) => handleFirstNameChange(e.target.value)}
+                error={nameError}
+              />
+              {nameValidationStatus === 'saving' && (
+                <div className="absolute right-3 top-9">
+                  <Loader2 size={16} className="animate-spin text-primary-600 dark:text-primary-400" />
+                </div>
+              )}
+              {nameValidationStatus === 'saved' && (
+                <div className="absolute right-3 top-9">
+                  <Check size={16} className="text-green-600 dark:text-green-400" />
+                </div>
+              )}
+            </div>
+            <div className="relative">
+              <Input
+                label={t('auth.lastName')}
+                value={lastName}
+                onChange={(e) => handleLastNameChange(e.target.value)}
+                error={nameError}
+              />
+              {nameValidationStatus === 'saving' && (
+                <div className="absolute right-3 top-9">
+                  <Loader2 size={16} className="animate-spin text-primary-600 dark:text-primary-400" />
+                </div>
+              )}
+              {nameValidationStatus === 'saved' && (
+                <div className="absolute right-3 top-9">
+                  <Check size={16} className="text-green-600 dark:text-green-400" />
+                </div>
+              )}
+            </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {t('profile.nameRequirement')}
             </p>

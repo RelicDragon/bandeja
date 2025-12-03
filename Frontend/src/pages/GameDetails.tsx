@@ -139,7 +139,8 @@ export const GameDetailsContent = () => {
       pointsPerWin: template.pointsPerWin ?? 0,
       pointsPerLoose: template.pointsPerLoose ?? 0,
       pointsPerTie: template.pointsPerTie ?? 0,
-      ballsInGames: template.ballsInGames ?? false
+      ballsInGames: template.ballsInGames ?? false,
+      fixedNumberOfSets: template.fixedNumberOfSets ?? 0
     }).catch(error => {
       console.error('Failed to update game template settings:', error);
     });

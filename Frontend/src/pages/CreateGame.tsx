@@ -285,6 +285,7 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
       pointsPerLoose: template.pointsPerLoose ?? 0,
       pointsPerTie: template.pointsPerTie ?? 0,
       ballsInGames: template.ballsInGames ?? false,
+      fixedNumberOfSets: template.fixedNumberOfSets ?? 0,
     }));
   }, [gameType]);
 

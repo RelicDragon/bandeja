@@ -456,6 +456,7 @@
     "completeProfile": "Complete Your Profile",
     "completeProfileDescription": "Please enter your name to continue using the app",
     "nameRequirement": "Your first name and last name must contain at least 3 alphabetical letters in total",
+    "nameValidationError": "At least one name must have at least 3 characters",
     "invalidName": "Name must contain at least 3 alphabetical letters",
     "personalInfo": "Personal Information",
     "appearance": "Appearance",

@@ -451,6 +451,7 @@
     "completeProfile": "Završi Profil",
     "completeProfileDescription": "Molimo unesite vaše ime da nastavite sa korišćenjem aplikacije",
     "nameRequirement": "Vaše ime i prezime moraju sadržati najmanje 3 slova",
+    "nameValidationError": "Najmanje jedno ime mora imati najmanje 3 karaktera",
     "invalidName": "Ime mora sadržati najmanje 3 slova",
     "personalInfo": "Лични подаци",
     "appearance": "Изглед",

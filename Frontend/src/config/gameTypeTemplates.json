@@ -17,7 +17,8 @@
     "pointsPerWin": 0,
     "pointsPerLoose": 0,
     "pointsPerTie": 0,
-    "ballsInGames": false
+    "ballsInGames": false,
+    "fixedNumberOfSets": 1
   },
   "MEXICANO": {
     "winnerOfMatch": "BY_SCORES",

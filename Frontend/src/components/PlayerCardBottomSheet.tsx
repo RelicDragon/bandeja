@@ -240,7 +240,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
-          className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl max-h-[95vh] overflow-hidden"
+          className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl max-h-[75vh] overflow-hidden"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -294,7 +294,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
             )}
           </div>
 
-          <div className="overflow-y-auto max-h-[calc(95vh-20px)]">
+          <div className="overflow-y-auto max-h-[calc(75vh-20px)]">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Loading />

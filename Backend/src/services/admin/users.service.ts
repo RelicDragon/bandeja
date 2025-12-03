@@ -74,11 +74,11 @@ export class AdminUsersService {
       throw new ApiError(400, 'Gender is required');
     }
 
-    const combinedName = `${firstName || ''}${lastName || ''}`.trim();
-    const alphabeticChars = combinedName.replace(/[^a-zA-Z]/g, '');
+    const trimmedFirst = (firstName || '').trim();
+    const trimmedLast = (lastName || '').trim();
     
-    if (alphabeticChars.length < 3) {
-      throw new ApiError(400, 'First name and last name combined must contain at least 3 alphabetic characters');
+    if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
+      throw new ApiError(400, 'At least one name must have at least 3 characters');
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -158,13 +158,13 @@ export class AdminUsersService {
     }
 
     if (firstName !== undefined || lastName !== undefined) {
-      const newFirstName = firstName !== undefined ? firstName : existingUser.firstName;
-      const newLastName = lastName !== undefined ? lastName : existingUser.lastName;
-      const combinedName = `${newFirstName || ''}${newLastName || ''}`.trim();
-      const alphabeticChars = combinedName.replace(/[^a-zA-Z]/g, '');
+      const newFirstName = firstName !== undefined ? firstName : existingUser.firstName || '';
+      const newLastName = lastName !== undefined ? lastName : existingUser.lastName || '';
+      const trimmedFirst = (newFirstName || '').trim();
+      const trimmedLast = (newLastName || '').trim();
       
-      if (alphabeticChars.length < 3) {
-        throw new ApiError(400, 'First name and last name combined must contain at least 3 alphabetic characters');
+      if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
+        throw new ApiError(400, 'At least one name must have at least 3 characters');
       }
     }
 

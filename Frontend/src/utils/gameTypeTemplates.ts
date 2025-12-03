@@ -10,6 +10,7 @@ export interface GameTypeTemplate {
   pointsPerLoose?: number;
   pointsPerTie?: number;
   ballsInGames?: boolean;
+  fixedNumberOfSets?: number;
 }
 
 type GameTypeTemplates = Record<GameType, GameTypeTemplate>;
