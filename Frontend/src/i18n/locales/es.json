@@ -42,7 +42,8 @@
   },
   "offline": {
     "working_offline": "Trabajando sin conexión - Algunas funciones pueden estar limitadas",
-    "youAreInOfflineMode": "Estás en modo sin conexión"
+    "noInternetConnection": "Sin conexión a internet",
+    "offlineEditingMessage": "Puedes continuar editando resultados sin conexión y cuando vuelvas a estar en línea, presiona el botón Sincronizar con el servidor para sincronizar los resultados con el servidor"
   },
   "bug": {
     "bugTracker": "Rastreador de Errores",

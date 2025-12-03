@@ -42,7 +42,8 @@
   },
   "offline": {
     "working_offline": "Working Offline - Some features may be limited",
-    "youAreInOfflineMode": "You are in Offline mode"
+    "noInternetConnection": "No Internet Connection",
+    "offlineEditingMessage": "You can continue to edit results offline and when you will return online, press button Sync to Server to synchronize results with server"
   },
   "bug": {
     "bugTracker": "Bug Tracker",
