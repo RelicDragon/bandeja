@@ -42,9 +42,12 @@ export const CourtModal = ({ isOpen, onClose, courts, selectedId, onSelect, enti
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      className="fixed inset-0 z-[10000] flex items-center justify-center"
       style={{ pointerEvents: 'auto' }}
-      onClick={onClose}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
     >
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -58,7 +61,10 @@ export const CourtModal = ({ isOpen, onClose, courts, selectedId, onSelect, enti
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{selectText}</h3>
           <button
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <X size={20} className="text-gray-500 dark:text-gray-400" />
@@ -71,7 +77,10 @@ export const CourtModal = ({ isOpen, onClose, courts, selectedId, onSelect, enti
             <div className="space-y-2">
               {showNotBookedOption && (
                 <button
-                  onClick={() => handleSelect('notBooked')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelect('notBooked');
+                  }}
                   className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
                     selectedId === 'notBooked'
                       ? 'bg-primary-500 text-white'
@@ -84,7 +93,10 @@ export const CourtModal = ({ isOpen, onClose, courts, selectedId, onSelect, enti
               {courts.map((court) => (
                 <button
                   key={court.id}
-                  onClick={() => handleSelect(court.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelect(court.id);
+                  }}
                   className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
                     selectedId === court.id
                       ? 'bg-primary-500 text-white'

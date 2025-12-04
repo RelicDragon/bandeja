@@ -24,6 +24,7 @@ import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagem
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
 import { GameSetup } from '@/components/GameDetails/GameSetup';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
+import { LocationModal, TimeDurationModal } from '@/components/GameDetails';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { useAuthStore } from '@/store/authStore';
@@ -56,6 +57,8 @@ export const GameDetailsContent = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
   const [isEditMaxParticipantsModalOpen, setIsEditMaxParticipantsModalOpen] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [isTimeDurationModalOpen, setIsTimeDurationModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'standings'>('general');
   const [editFormData, setEditFormData] = useState({
     clubId: '',
@@ -398,6 +401,64 @@ export const GameDetailsContent = () => {
     }
   };
 
+  const handleLocationSave = async (data: { clubId: string; courtId: string; hasBookedCourt: boolean }) => {
+    if (!id) return;
+
+    try {
+      const updateData: Partial<Game> = {
+        clubId: data.clubId || undefined,
+        courtId: data.courtId || undefined,
+        hasBookedCourt: data.hasBookedCourt,
+      };
+
+      await gamesApi.update(id, updateData);
+      
+      if (data.clubId && data.clubId !== game?.clubId) {
+        const response = await courtsApi.getByClubId(data.clubId);
+        setCourts(response.data);
+      }
+      
+      const response = await gamesApi.getById(id);
+      setGame(response.data);
+      
+      toast.success(game?.entityType === 'BAR' ? t('gameDetails.hallUpdated') : t('gameDetails.courtUpdated'));
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+      throw error;
+    }
+  };
+
+  const handleTimeDurationSave = async (data: { startTime: Date; endTime: Date }) => {
+    if (!id) return;
+
+    try {
+      const updateData: Partial<Game> = {
+        startTime: data.startTime.toISOString(),
+        endTime: data.endTime.toISOString(),
+        timeIsSet: true,
+      };
+
+      await gamesApi.update(id, updateData);
+      
+      const response = await gamesApi.getById(id);
+      setGame(response.data);
+      
+      toast.success(t('gameDetails.timeUpdated'));
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+      throw error;
+    }
+  };
+
+  const handleScrollToSettings = () => {
+    const settingsElement = document.getElementById('game-settings');
+    if (settingsElement) {
+      settingsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const handleCourtSelect = async (courtId: string) => {
     if (!id) return;
 
@@ -592,8 +653,13 @@ export const GameDetailsContent = () => {
             isOwner={isOwner}
             isGuest={isGuest}
             courts={courts}
+            canEdit={canEdit}
+            isEditMode={isEditMode}
             onToggleFavorite={handleToggleFavorite}
             onEditCourt={() => setIsCourtModalOpen(true)}
+            onOpenLocationModal={() => setIsLocationModalOpen(true)}
+            onOpenTimeDurationModal={() => setIsTimeDurationModalOpen(true)}
+            onScrollToSettings={handleScrollToSettings}
           />
 
           <PhotosSection game={game} />
@@ -637,21 +703,23 @@ export const GameDetailsContent = () => {
           )}
 
           {!isLeague && canViewSettings && (
-            <GameSettings
-              game={game}
-              clubs={clubs}
-              courts={courts}
-              isEditMode={isEditMode}
-              isClosingEditMode={isClosingEditMode}
-              canEdit={canEdit}
-              editFormData={editFormData}
-              onEditModeToggle={handleEditModeToggle}
-              onSaveChanges={handleSaveChanges}
-              onFormDataChange={handleFormDataChange}
-              onOpenClubModal={() => setIsClubModalOpen(true)}
-              onOpenCourtModal={() => setIsCourtModalOpen(true)}
-              onGameUpdate={(updatedGame) => setGame(updatedGame)}
-            />
+            <div id="game-settings">
+              <GameSettings
+                game={game}
+                clubs={clubs}
+                courts={courts}
+                isEditMode={isEditMode}
+                isClosingEditMode={isClosingEditMode}
+                canEdit={canEdit}
+                editFormData={editFormData}
+                onEditModeToggle={handleEditModeToggle}
+                onSaveChanges={handleSaveChanges}
+                onFormDataChange={handleFormDataChange}
+                onOpenClubModal={() => setIsClubModalOpen(true)}
+                onOpenCourtModal={() => setIsCourtModalOpen(true)}
+                onGameUpdate={(updatedGame) => setGame(updatedGame)}
+              />
+            </div>
           )}
 
           {!isLeague && canViewSettings && (
@@ -815,6 +883,28 @@ export const GameDetailsContent = () => {
               }
             }
           }}
+        />
+      )}
+
+      {isLocationModalOpen && game && (
+        <LocationModal
+          isOpen={isLocationModalOpen}
+          onClose={() => setIsLocationModalOpen(false)}
+          game={game}
+          clubs={clubs}
+          courts={courts}
+          onSave={handleLocationSave}
+          onCourtsChange={(newCourts) => setCourts(newCourts)}
+        />
+      )}
+
+      {isTimeDurationModalOpen && game && (
+        <TimeDurationModal
+          isOpen={isTimeDurationModalOpen}
+          onClose={() => setIsTimeDurationModalOpen(false)}
+          game={game}
+          clubs={clubs}
+          onSave={handleTimeDurationSave}
         />
       )}
 

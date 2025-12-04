@@ -35,8 +35,13 @@ interface GameInfoProps {
   isOwner: boolean;
   isGuest: boolean;
   courts: any[];
+  canEdit: boolean;
+  isEditMode: boolean;
   onToggleFavorite: () => void;
   onEditCourt: () => void;
+  onOpenLocationModal: () => void;
+  onOpenTimeDurationModal: () => void;
+  onScrollToSettings: () => void;
 }
 
 export const GameInfo = ({
@@ -44,8 +49,13 @@ export const GameInfo = ({
   isOwner,
   isGuest,
   courts,
+  canEdit,
+  isEditMode,
   onToggleFavorite,
-  onEditCourt
+  onEditCourt,
+  onOpenLocationModal,
+  onOpenTimeDurationModal,
+  onScrollToSettings
 }: GameInfoProps) => {
   const { t } = useTranslation();
   const showTags = game.entityType !== 'LEAGUE';
@@ -310,12 +320,34 @@ export const GameInfo = ({
         {game.entityType !== 'LEAGUE_SEASON' && (
           <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
             <Clock size={20} className="text-primary-600 dark:text-primary-400" />
-            <span>
-              {game.entityType === 'BAR' 
-                ? formatDate(game.startTime, 'p')
-                : `${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`
-              }
-            </span>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                {canEdit ? (
+                  <button
+                    onClick={() => {
+                      if (isEditMode) {
+                        onScrollToSettings();
+                      } else {
+                        onOpenTimeDurationModal();
+                      }
+                    }}
+                    className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                  >
+                    {game.entityType === 'BAR' 
+                      ? formatDate(game.startTime, 'p')
+                      : `${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`
+                    }
+                  </button>
+                ) : (
+                  <span>
+                    {game.entityType === 'BAR' 
+                      ? formatDate(game.startTime, 'p')
+                      : `${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`
+                    }
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         )}
         {(game.court?.club || game.club) && (
@@ -323,7 +355,22 @@ export const GameInfo = ({
             <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-medium">{game.court?.club?.name || game.club?.name}</p>
+                {canEdit ? (
+                  <button
+                    onClick={() => {
+                      if (isEditMode) {
+                        onScrollToSettings();
+                      } else {
+                        onOpenLocationModal();
+                      }
+                    }}
+                    className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                  >
+                    {game.court?.club?.name || game.club?.name}
+                  </button>
+                ) : (
+                  <p className="font-medium">{game.court?.club?.name || game.club?.name}</p>
+                )}
                 <button
                   onClick={onToggleFavorite}
                   className="p-2 pb-0 pt-0 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

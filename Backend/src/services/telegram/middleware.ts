@@ -1,10 +1,12 @@
 import { Middleware } from 'grammy';
 import { BotContext } from './types';
 import { getLanguageCode } from './utils';
+import { t } from '../../utils/translations';
 
 export const requireUser: Middleware<BotContext> = async (ctx, next) => {
   if (!ctx.from) {
-    await ctx.reply('❌ Unable to identify your Telegram account.');
+    const lang = ctx.lang || 'en';
+    await ctx.reply(t('telegram.unableToIdentifyAccount', lang));
     return;
   }
   ctx.telegramId = ctx.from.id.toString();
@@ -14,7 +16,8 @@ export const requireUser: Middleware<BotContext> = async (ctx, next) => {
 
 export const requireChat: Middleware<BotContext> = async (ctx, next) => {
   if (!ctx.chat) {
-    await ctx.reply('❌ Unable to identify chat.');
+    const lang = ctx.lang || getLanguageCode(ctx.from?.language_code) || 'en';
+    await ctx.reply(t('telegram.unableToIdentifyChat', lang));
     return;
   }
   return next();

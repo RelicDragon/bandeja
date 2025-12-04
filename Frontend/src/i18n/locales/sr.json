@@ -659,6 +659,7 @@
     "endTime": "Време краја",
     "duration": "Трајање",
     "selectTime": "Изаберите време",
+    "clubTime": "време клуба",
     "showPastTimes": "Прикажи прошла времена",
     "multipleCourts": "Више терена",
     "noCourtsSelected": "Нема изабраних терена",
@@ -722,6 +723,7 @@
     "avatarUpdated": "Аватар игре успешно ажуриран",
     "avatarRemoved": "Аватар игре успешно уклоњен",
     "hallUpdated": "Сала успешно ажурирана",
+    "timeUpdated": "Време успешно ажурирано",
     "settingsUpdated": "Подешавања успешно ажурирана",
     "navigateToClub": "Навигација до клуба",
     "shareGame": "Подели игру",
@@ -979,6 +981,8 @@
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
       "BUG_STATUS_CHANGED": "Статус грешке промењен на {{status}}",
       "BUG_TYPE_CHANGED": "Тип грешке промењен на {{type}}",
+      "GAME_CLUB_CHANGED": "Локација игре промењена на {{clubName}}",
+      "GAME_DATE_TIME_CHANGED": "Датум/време игре промењено на {{dateTime}}",
       "actions": {
         "joined": "се придружио игри",
         "left": "напустио игру"

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
@@ -12,6 +12,7 @@ import { Club, Court, EntityType, GameType } from '@/types';
 import { InvitablePlayer } from '@/api/users';
 import { addHours } from 'date-fns';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
+import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -55,14 +56,6 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
     console.log('CreateGame - no initialDate, using current date');
     return new Date();
   });
-  const [selectedDate, setSelectedDate] = useState<Date>(() => {
-    if (initialDate) {
-      return initialDate instanceof Date ? initialDate : new Date(initialDate);
-    }
-    return new Date();
-  });
-  const [selectedTime, setSelectedTime] = useState<string>('18:00');
-  const [duration, setDuration] = useState<number>(2);
   const [loading, setLoading] = useState(false);
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
   const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
@@ -71,7 +64,28 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
   const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>([]);
   const [invitedPlayers, setInvitedPlayers] = useState<InvitablePlayer[]>([]);
-  const [showPastTimes, setShowPastTimes] = useState<boolean>(false);
+  
+  const {
+    selectedDate,
+    setSelectedDate,
+    selectedTime,
+    setSelectedTime,
+    duration,
+    setDuration,
+    showPastTimes,
+    setShowPastTimes,
+    generateTimeOptions,
+    generateTimeOptionsForDate,
+    canAccommodateDuration,
+    getAdjustedStartTime,
+    getTimeSlotsForDuration,
+    isSlotHighlighted,
+  } = useGameTimeDuration({
+    clubs,
+    selectedClub,
+    initialDate: storedInitialDate,
+    showPastTimes: false,
+  });
   const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
   const [gameSetup, setGameSetup] = useState<{
     fixedNumberOfSets?: number;
@@ -93,71 +107,6 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
   const timeSectionRef = useRef<HTMLDivElement>(null);
   const durationSectionRef = useRef<HTMLDivElement>(null);
 
-  const generateTimeOptionsForDate = useCallback((date: Date) => {
-    const times = [];
-    const selectedCenter = clubs.find(pc => pc.id === selectedClub);
-    
-    let startHour = 0;
-    let endHour = 24;
-    
-    if (selectedCenter?.openingTime && selectedCenter?.closingTime) {
-      const openingParts = selectedCenter.openingTime.split(':');
-      const closingParts = selectedCenter.closingTime.split(':');
-      startHour = parseInt(openingParts[0]);
-      endHour = parseInt(closingParts[0]);
-      if (parseInt(closingParts[1]) > 0) {
-        endHour += 1;
-      }
-    }
-    
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        
-        // Filter out past times for today (unless showPastTimes is enabled)
-        if (isToday && !showPastTimes) {
-          const timeDate = new Date(date);
-          timeDate.setHours(hour, minute, 0, 0);
-          if (timeDate <= now) {
-            continue;
-          }
-        }
-        
-        times.push(timeStr);
-      }
-    }
-    return times;
-  }, [clubs, selectedClub, showPastTimes]);
-
-  const generateTimeOptions = useCallback(() => {
-    return generateTimeOptionsForDate(selectedDate);
-  }, [generateTimeOptionsForDate, selectedDate]);
-
-  const getTimeSlotsForDuration = useCallback((startTime: string, duration: number) => {
-    const slots = [];
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const totalMinutes = duration * 60;
-    
-    for (let i = 0; i < totalMinutes; i += 30) {
-      const currentMinutes = startMinute + i;
-      const hour = startHour + Math.floor(currentMinutes / 60);
-      const minute = currentMinutes % 60;
-      const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      slots.push(timeStr);
-    }
-    
-    return slots;
-  }, []);
-
-  const canAccommodateDuration = useCallback((startTime: string, duration: number) => {
-    const allTimeSlots = generateTimeOptions();
-    const requiredSlots = getTimeSlotsForDuration(startTime, duration);
-    
-    return requiredSlots.every(slot => allTimeSlots.includes(slot));
-  }, [generateTimeOptions, getTimeSlotsForDuration]);
 
   useEffect(() => {
     const fetchClubs = async () => {
@@ -218,7 +167,7 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
       }
     };
     fetchCourts();
-  }, [selectedClub, generateTimeOptionsForDate, storedInitialDate]);
+  }, [selectedClub, generateTimeOptionsForDate, storedInitialDate, setSelectedDate]);
 
   useEffect(() => {
     if (selectedCourt === 'notBooked') {
@@ -231,26 +180,7 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
     if (selectedClub) {
       setSelectedTime('');
     }
-  }, [selectedClub]);
-
-  useEffect(() => {
-    // Auto-adjust selected time when duration changes and current selection becomes invalid
-    if (selectedTime && !canAccommodateDuration(selectedTime, duration)) {
-      const availableTimes = generateTimeOptions();
-      
-      // Find the latest valid start time that ends at or before the center's closing time
-      for (let i = availableTimes.length - 1; i >= 0; i--) {
-        const potentialStartTime = availableTimes[i];
-        const requiredSlots = getTimeSlotsForDuration(potentialStartTime, duration);
-        const lastRequiredSlot = requiredSlots[requiredSlots.length - 1];
-        
-        if (lastRequiredSlot && availableTimes.includes(lastRequiredSlot)) {
-          setSelectedTime(potentialStartTime);
-          break;
-        }
-      }
-    }
-  }, [duration, selectedTime, canAccommodateDuration, generateTimeOptions, getTimeSlotsForDuration]);
+  }, [selectedClub, setSelectedTime]);
 
   useEffect(() => {
     if (entityType === 'TOURNAMENT') {
@@ -302,34 +232,6 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
     }
   }, [pendingAvatarFiles]);
 
-  const isSlotHighlighted = (time: string) => {
-    if (!selectedTime) return false;
-    const requiredSlots = getTimeSlotsForDuration(selectedTime, duration);
-    return requiredSlots.includes(time);
-  };
-
-  const getAdjustedStartTime = (clickedTime: string, duration: number) => {
-    const allTimeSlots = generateTimeOptions();
-    
-    // Find the latest valid start time that can accommodate the duration
-    // and includes the clicked time in its range
-    for (let i = allTimeSlots.length - 1; i >= 0; i--) {
-      const potentialStartTime = allTimeSlots[i];
-      const requiredSlots = getTimeSlotsForDuration(potentialStartTime, duration);
-      
-      // Check if all required slots are available and the range includes clicked time
-      const lastRequiredSlot = requiredSlots[requiredSlots.length - 1];
-      if (lastRequiredSlot && allTimeSlots.includes(lastRequiredSlot)) {
-        // Check if this duration range includes the clicked time
-        if (requiredSlots.includes(clickedTime)) {
-          return potentialStartTime;
-        }
-      }
-    }
-    
-    return null;
-  };
-
   const getDurationLabel = (dur: number) => {
     if (dur === Math.floor(dur)) {
       return t('createGame.hours', { count: dur });
@@ -370,9 +272,9 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
 
     setLoading(true);
     try {
-      const [hours, minutes] = selectedTime.split(':');
-      const startTime = new Date(selectedDate);
-      startTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      const selectedClubData = clubs.find(c => c.id === selectedClub);
+      const { createDateFromClubTime } = await import('@/hooks/useGameTimeDuration');
+      const startTime = createDateFromClubTime(selectedDate, selectedTime, selectedClubData);
       const endTime = addHours(startTime, duration);
 
       const gameResponse = await gamesApi.create({
@@ -611,6 +513,7 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
               showPastTimes={showPastTimes}
               showDatePicker={showDatePicker}
               selectedClub={selectedClub}
+              club={clubs.find(c => c.id === selectedClub)}
               generateTimeOptions={generateTimeOptions}
               generateTimeOptionsForDate={generateTimeOptionsForDate}
               canAccommodateDuration={canAccommodateDuration}

@@ -14,7 +14,11 @@ export enum SystemMessageType {
   USER_KICKED = 'USER_KICKED',
   USER_PROMOTED_TO_ADMIN = 'USER_PROMOTED_TO_ADMIN',
   USER_REVOKED_ADMIN = 'USER_REVOKED_ADMIN',
-  OWNERSHIP_TRANSFERRED = 'OWNERSHIP_TRANSFERRED'
+  OWNERSHIP_TRANSFERRED = 'OWNERSHIP_TRANSFERRED',
+  BUG_STATUS_CHANGED = 'BUG_STATUS_CHANGED',
+  BUG_TYPE_CHANGED = 'BUG_TYPE_CHANGED',
+  GAME_CLUB_CHANGED = 'GAME_CLUB_CHANGED',
+  GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED'
 }
 
 export interface SystemMessageData {
@@ -47,7 +51,11 @@ export const useSystemMessageTranslation = () => {
         [SystemMessageType.USER_KICKED]: '{{userName}} was kicked from the game',
         [SystemMessageType.USER_PROMOTED_TO_ADMIN]: '{{userName}} was promoted to admin',
         [SystemMessageType.USER_REVOKED_ADMIN]: '{{userName}} admin privileges were revoked',
-        [SystemMessageType.OWNERSHIP_TRANSFERRED]: '{{newOwnerName}} is now the owner of the game'
+        [SystemMessageType.OWNERSHIP_TRANSFERRED]: '{{newOwnerName}} is now the owner of the game',
+        [SystemMessageType.BUG_STATUS_CHANGED]: 'Bug status changed to {{status}}',
+        [SystemMessageType.BUG_TYPE_CHANGED]: 'Bug type changed to {{type}}',
+        [SystemMessageType.GAME_CLUB_CHANGED]: 'Game location changed to {{clubName}}',
+        [SystemMessageType.GAME_DATE_TIME_CHANGED]: 'Game date/time changed to {{dateTime}}'
       };
       
       const fallbackTemplate = fallbackTemplates[type];

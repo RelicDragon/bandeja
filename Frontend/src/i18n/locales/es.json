@@ -657,6 +657,7 @@
     "endTime": "Hora de fin",
     "duration": "Duración",
     "selectTime": "Selecciona hora",
+    "clubTime": "hora del club",
     "showPastTimes": "Mostrar horarios pasados",
     "multipleCourts": "Múltiples Canchas",
     "noCourtsSelected": "No hay canchas seleccionadas",
@@ -719,6 +720,7 @@
     "avatarUpdated": "Avatar del juego actualizado exitosamente",
     "avatarRemoved": "Avatar del juego eliminado exitosamente",
     "hallUpdated": "Salón actualizado exitosamente",
+    "timeUpdated": "Hora actualizada exitosamente",
     "settingsUpdated": "Configuración actualizada exitosamente",
     "navigateToClub": "Navegar al club",
     "shareGame": "Compartir juego",
@@ -970,6 +972,8 @@
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
       "BUG_STATUS_CHANGED": "Estado del error cambiado a {{status}}",
       "BUG_TYPE_CHANGED": "Tipo del error cambiado a {{type}}",
+      "GAME_CLUB_CHANGED": "Ubicación del juego cambiada a {{clubName}}",
+      "GAME_DATE_TIME_CHANGED": "Fecha/hora del juego cambiada a {{dateTime}}",
       "actions": {
         "joined": "se unió al juego",
         "left": "abandonó el juego"

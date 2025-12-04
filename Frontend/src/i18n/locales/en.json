@@ -664,6 +664,7 @@
     "endTime": "End Time",
     "duration": "Duration",
     "selectTime": "Select Time",
+    "clubTime": "club time",
     "showPastTimes": "Show past times",
     "multipleCourts": "Multiple Courts",
     "noCourtsSelected": "No courts selected",
@@ -723,6 +724,7 @@
     "editHall": "Edit Hall",
     "courtUpdated": "Court updated successfully",
     "hallUpdated": "Hall updated successfully",
+    "timeUpdated": "Time updated successfully",
     "settingsUpdated": "Settings updated successfully",
     "gameAvatar": "Game Avatar",
     "avatarUpdated": "Game avatar updated successfully",
@@ -977,6 +979,8 @@
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
       "BUG_STATUS_CHANGED": "Bug status changed to {{status}}",
       "BUG_TYPE_CHANGED": "Bug type changed to {{type}}",
+      "GAME_CLUB_CHANGED": "Game location changed to {{clubName}}",
+      "GAME_DATE_TIME_CHANGED": "Game date/time changed to {{dateTime}}",
       "actions": {
         "joined": "joined the game",
         "left": "left the game"

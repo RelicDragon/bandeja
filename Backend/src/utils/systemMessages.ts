@@ -14,7 +14,9 @@ export enum SystemMessageType {
   USER_REVOKED_ADMIN = 'USER_REVOKED_ADMIN',
   OWNERSHIP_TRANSFERRED = 'OWNERSHIP_TRANSFERRED',
   BUG_STATUS_CHANGED = 'BUG_STATUS_CHANGED',
-  BUG_TYPE_CHANGED = 'BUG_TYPE_CHANGED'
+  BUG_TYPE_CHANGED = 'BUG_TYPE_CHANGED',
+  GAME_CLUB_CHANGED = 'GAME_CLUB_CHANGED',
+  GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED'
 }
 
 export interface SystemMessageTemplate {
@@ -103,6 +105,16 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
     type: SystemMessageType.BUG_TYPE_CHANGED,
     template: 'Bug type changed to {{type}}',
     variables: ['type']
+  },
+  [SystemMessageType.GAME_CLUB_CHANGED]: {
+    type: SystemMessageType.GAME_CLUB_CHANGED,
+    template: 'Game location changed to {{clubName}}',
+    variables: ['clubName']
+  },
+  [SystemMessageType.GAME_DATE_TIME_CHANGED]: {
+    type: SystemMessageType.GAME_DATE_TIME_CHANGED,
+    template: 'Game date/time changed to {{dateTime}}',
+    variables: ['dateTime']
   }
 };
 

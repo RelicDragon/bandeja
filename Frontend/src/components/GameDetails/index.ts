@@ -8,3 +8,5 @@ export * from './LeagueFixedTeamsSection';
 export * from './GameSetup';
 export * from './TeamPlayerSelector';
 export * from './PhotosSection';
+export * from './TimeDurationModal';
+export * from './LocationModal';

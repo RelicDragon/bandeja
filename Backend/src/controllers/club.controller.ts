@@ -22,6 +22,13 @@ export const getClubsByCity = asyncHandler(async (req: Request, res: Response) =
   const clubs = await prisma.club.findMany({
     where: whereClause,
     include: {
+      city: {
+        select: {
+          id: true,
+          name: true,
+          timezone: true,
+        },
+      },
       courts: {
         where: { isActive: true },
         select: {

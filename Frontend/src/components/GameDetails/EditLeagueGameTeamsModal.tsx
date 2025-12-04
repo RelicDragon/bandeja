@@ -1,14 +1,15 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { X, Trash2, RefreshCw, UserPlus, Check } from 'lucide-react';
-import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, DateSelector } from '@/components';
-import { CalendarComponent } from '@/components/Calendar';
-import { Game, Club, Court } from '@/types';
+import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection } from '@/components';
+import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
+import { Game, Club, Court, EntityType } from '@/types';
 import { gamesApi, leaguesApi, invitesApi, LeagueStanding, clubsApi, courtsApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
-import { format, addDays, addHours, differenceInHours } from 'date-fns';
+import { addHours, differenceInHours } from 'date-fns';
+import { createDateFromClubTime, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
 
 interface EditLeagueGameTeamsModalProps {
   isOpen: boolean;
@@ -58,12 +59,32 @@ export const EditLeagueGameTeamsModal = ({
   const [hasBookedCourt, setHasBookedCourt] = useState(false);
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
   const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedTime, setSelectedTime] = useState<string>('');
-  const [duration, setDuration] = useState<number>(2);
-  const [showPastTimes, setShowPastTimes] = useState<boolean>(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [activeTab, setActiveTab] = useState<'teams' | 'place' | 'time'>('teams');
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    selectedDate,
+    setSelectedDate,
+    selectedTime,
+    setSelectedTime,
+    duration,
+    setDuration,
+    showPastTimes,
+    setShowPastTimes,
+    generateTimeOptions,
+    generateTimeOptionsForDate,
+    canAccommodateDuration,
+    getAdjustedStartTime,
+    getTimeSlotsForDuration,
+    isSlotHighlighted,
+  } = useGameTimeDuration({
+    clubs,
+    selectedClub: selectedClubId,
+    initialDate: game.startTime ? new Date(game.startTime) : undefined,
+    showPastTimes: false,
+    disableAutoAdjust: true,
+  });
 
   const fetchStandings = useCallback(async () => {
     try {
@@ -148,14 +169,17 @@ export const EditLeagueGameTeamsModal = ({
     setSelectedCourtId(game.courtId || '');
     setHasBookedCourt(game.hasBookedCourt || false);
     
-    const startDateTime = new Date(game.startTime);
-    const endDateTime = new Date(game.endTime);
-    
-    setSelectedDate(startDateTime);
-    setSelectedTime(format(startDateTime, 'HH:mm'));
-    const hoursDiff = differenceInHours(endDateTime, startDateTime);
-    setDuration(hoursDiff || 2);
-  }, [game]);
+    if (game.startTime) {
+      const startDateTime = new Date(game.startTime);
+      const endDateTime = new Date(game.endTime);
+      
+      setSelectedDate(startDateTime);
+      const selectedClubData = clubs.find(c => c.id === game.clubId);
+      setSelectedTime(formatTimeInClubTimezone(startDateTime, selectedClubData));
+      const hoursDiff = differenceInHours(endDateTime, startDateTime);
+      setDuration(hoursDiff || 2);
+    }
+  }, [game, clubs, setSelectedDate, setSelectedTime, setDuration]);
 
   useEffect(() => {
     if (isOpen) {
@@ -198,95 +222,6 @@ export const EditLeagueGameTeamsModal = ({
     }
   }, [selectedClubId, activeTab, areTeamsFull]);
 
-  const generateTimeOptionsForDate = useCallback((date: Date) => {
-    const times = [];
-    const selectedCenter = clubs.find(pc => pc.id === selectedClubId);
-    
-    let startHour = 0;
-    let endHour = 24;
-    
-    if (selectedCenter?.openingTime && selectedCenter?.closingTime) {
-      const openingParts = selectedCenter.openingTime.split(':');
-      const closingParts = selectedCenter.closingTime.split(':');
-      startHour = parseInt(openingParts[0]);
-      endHour = parseInt(closingParts[0]);
-      if (parseInt(closingParts[1]) > 0) {
-        endHour += 1;
-      }
-    }
-    
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        
-        if (isToday && !showPastTimes) {
-          const timeDate = new Date(date);
-          timeDate.setHours(hour, minute, 0, 0);
-          if (timeDate <= now) {
-            continue;
-          }
-        }
-        
-        times.push(timeStr);
-      }
-    }
-    return times;
-  }, [clubs, selectedClubId, showPastTimes]);
-
-  const generateTimeOptions = useCallback(() => {
-    return generateTimeOptionsForDate(selectedDate);
-  }, [generateTimeOptionsForDate, selectedDate]);
-
-  const getTimeSlotsForDuration = useCallback((startTime: string, duration: number) => {
-    const slots = [];
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const totalMinutes = duration * 60;
-    
-    for (let i = 0; i < totalMinutes; i += 30) {
-      const currentMinutes = startMinute + i;
-      const hour = startHour + Math.floor(currentMinutes / 60);
-      const minute = currentMinutes % 60;
-      const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      slots.push(timeStr);
-    }
-    
-    return slots;
-  }, []);
-
-  const canAccommodateDuration = useCallback((time: string, duration: number) => {
-    const allTimeSlots = generateTimeOptions();
-    const requiredSlots = getTimeSlotsForDuration(time, duration);
-    
-    return requiredSlots.every(slot => allTimeSlots.includes(slot));
-  }, [generateTimeOptions, getTimeSlotsForDuration]);
-
-  const getAdjustedStartTime = useCallback((clickedTime: string, duration: number) => {
-    const allTimeSlots = generateTimeOptions();
-    
-    for (let i = allTimeSlots.length - 1; i >= 0; i--) {
-      const potentialStartTime = allTimeSlots[i];
-      const requiredSlots = getTimeSlotsForDuration(potentialStartTime, duration);
-      
-      const lastRequiredSlot = requiredSlots[requiredSlots.length - 1];
-      if (lastRequiredSlot && allTimeSlots.includes(lastRequiredSlot)) {
-        if (requiredSlots.includes(clickedTime)) {
-          return potentialStartTime;
-        }
-      }
-    }
-    
-    return null;
-  }, [generateTimeOptions, getTimeSlotsForDuration]);
-
-  const isSlotHighlighted = useCallback((time: string) => {
-    if (!selectedTime) return false;
-    const requiredSlots = getTimeSlotsForDuration(selectedTime, duration);
-    return requiredSlots.includes(time);
-  }, [selectedTime, duration, getTimeSlotsForDuration]);
-
   const getDurationLabel = useCallback((dur: number) => {
     if (dur === Math.floor(dur)) {
       return t('createGame.hours', { count: dur });
@@ -297,16 +232,6 @@ export const EditLeagueGameTeamsModal = ({
     }
   }, [t]);
 
-  const fixedDates = useMemo(() => {
-    const startDate = !showPastTimes && generateTimeOptionsForDate(new Date()).length === 0 ? addDays(new Date(), 1) : new Date();
-    return Array.from({ length: 8 }, (_, i) => addDays(startDate, i));
-  }, [showPastTimes, generateTimeOptionsForDate]);
-
-  const isSelectedDateInFixedRange = useMemo(() => {
-    return fixedDates.some(date =>
-      format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
-    );
-  }, [fixedDates, selectedDate]);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -477,9 +402,8 @@ export const EditLeagueGameTeamsModal = ({
       }
 
       if (selectedDate && selectedTime) {
-        const [hours, minutes] = selectedTime.split(':');
-        const newStartTime = new Date(selectedDate);
-        newStartTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        const selectedClubData = clubs.find(c => c.id === selectedClubId);
+        const newStartTime = createDateFromClubTime(selectedDate, selectedTime, selectedClubData);
         const newEndTime = addHours(newStartTime, duration);
         
         if (newStartTime.toISOString() !== game.startTime || newEndTime.toISOString() !== game.endTime) {
@@ -813,115 +737,31 @@ export const EditLeagueGameTeamsModal = ({
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {!selectedClubId ? (
-                      <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                        {t('gameDetails.selectClubFirst')}
-                      </div>
-                    ) : (
-                      <>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                            {t('createGame.selectDate')}
-                          </label>
-                          <DateSelector
-                            selectedDate={selectedDate}
-                            onDateSelect={setSelectedDate}
-                            onCalendarClick={() => setShowDatePicker(true)}
-                            showCalendarAsSelected={showDatePicker || !isSelectedDateInFixedRange}
-                            hideTodayIfNoSlots={!showPastTimes}
-                            hasTimeSlotsForToday={generateTimeOptionsForDate(new Date()).length > 0}
-                            hideCurrentDateIndicator={true}
-                          />
-                        </div>
-                        {showDatePicker && (
-                          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDatePicker(false)} />
-                            <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 mx-4 max-w-md w-full border border-gray-200 dark:border-gray-800">
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                {t('createGame.selectDate')}
-                              </h3>
-                              <CalendarComponent
-                                selectedDate={selectedDate}
-                                onDateSelect={(date: Date) => {
-                                  setSelectedDate(date);
-                                  setShowDatePicker(false);
-                                }}
-                                minDate={showPastTimes ? undefined : fixedDates[0]}
-                              />
-                            </div>
-                          </div>
-                        )}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                            {t('createGame.duration')}
-                          </label>
-                          <div className="grid grid-cols-3 gap-2">
-                            {[1, 1.5, 2].map((dur) => (
-                              <button
-                                key={dur}
-                                onClick={() => setDuration(dur)}
-                                className={`h-10 rounded-lg font-semibold text-sm transition-all ${
-                                  duration === dur
-                                    ? 'bg-primary-500 text-white'
-                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                }`}
-                              >
-                                {getDurationLabel(dur)}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                            {t('createGame.showPastTimes')}
-                          </span>
-                          <div className="flex-shrink-0">
-                            <ToggleSwitch checked={showPastTimes} onChange={setShowPastTimes} />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                            {t('createGame.selectTime')}
-                          </label>
-                          <div className="grid grid-cols-6 gap-1.5 p-1">
-                            {generateTimeOptions().map((time) => {
-                              const isSelected = selectedTime === time;
-                              const isHighlighted = isSlotHighlighted(time);
-                              const canAccommodate = canAccommodateDuration(time, duration);
-                              
-                              const handleTimeClick = () => {
-                                if (canAccommodate) {
-                                  setSelectedTime(time);
-                                } else {
-                                  const adjustedStartTime = getAdjustedStartTime(time, duration);
-                                  if (adjustedStartTime) {
-                                    setSelectedTime(adjustedStartTime);
-                                  }
-                                }
-                              };
-                              
-                              return (
-                                <button
-                                  key={time}
-                                  onClick={handleTimeClick}
-                                  className={`w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${
-                                    isSelected
-                                      ? 'bg-primary-500 text-white'
-                                      : isHighlighted
-                                      ? 'bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200 border border-primary-400 dark:border-primary-600'
-                                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                  }`}
-                                >
-                                  {time}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <GameStartSection
+                    selectedDate={selectedDate}
+                    selectedTime={selectedTime}
+                    duration={duration}
+                    showPastTimes={showPastTimes}
+                    showDatePicker={showDatePicker}
+                    selectedClub={selectedClubId}
+                    club={clubs.find(c => c.id === selectedClubId)}
+                    generateTimeOptions={generateTimeOptions}
+                    generateTimeOptionsForDate={generateTimeOptionsForDate}
+                    canAccommodateDuration={canAccommodateDuration}
+                    getAdjustedStartTime={getAdjustedStartTime}
+                    getTimeSlotsForDuration={getTimeSlotsForDuration}
+                    isSlotHighlighted={isSlotHighlighted}
+                    getDurationLabel={getDurationLabel}
+                    onDateSelect={setSelectedDate}
+                    onCalendarClick={() => setShowDatePicker(true)}
+                    onToggleShowPastTimes={setShowPastTimes}
+                    onCloseDatePicker={() => setShowDatePicker(false)}
+                    onTimeSelect={setSelectedTime}
+                    onDurationChange={setDuration}
+                    entityType={game.entityType as EntityType}
+                    dateInputRef={dateInputRef}
+                    compact={true}
+                  />
                 )}
               </div>
             </div>

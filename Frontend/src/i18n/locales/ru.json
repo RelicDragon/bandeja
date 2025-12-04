@@ -665,6 +665,7 @@
     "endTime": "Время окончания",
     "duration": "Продолжительность",
     "selectTime": "Выберите время",
+    "clubTime": "время клуба",
     "showPastTimes": "Показать прошедшее время",
     "multipleCourts": "Несколько кортов",
     "noCourtsSelected": "Корты не выбраны",
@@ -729,6 +730,7 @@
     "avatarUpdated": "Аватар игры успешно обновлен",
     "avatarRemoved": "Аватар игры успешно удален",
     "hallUpdated": "Зал успешно обновлен",
+    "timeUpdated": "Время успешно обновлено",
     "settingsUpdated": "Настройки успешно обновлены",
     "navigateToClub": "Проложить маршрут к клубу",
     "shareGame": "Поделиться игрой",
@@ -986,6 +988,8 @@
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
       "BUG_STATUS_CHANGED": "Статус ошибки изменен на {{status}}",
       "BUG_TYPE_CHANGED": "Тип ошибки изменен на {{type}}",
+      "GAME_CLUB_CHANGED": "Место игры изменено на {{clubName}}",
+      "GAME_DATE_TIME_CHANGED": "Дата/время игры изменено на {{dateTime}}",
       "actions": {
         "joined": "присоединился к игре",
         "left": "покинул игру"

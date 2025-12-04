@@ -66,8 +66,6 @@ const ToggleSwitch = ({ checked, onChange, disabled }: { checked: boolean; onCha
 
 export const GameSettings = ({
   game,
-  clubs,
-  courts,
   isEditMode,
   isClosingEditMode,
   canEdit,
@@ -75,8 +73,6 @@ export const GameSettings = ({
   onEditModeToggle,
   onSaveChanges,
   onFormDataChange,
-  onOpenClubModal,
-  onOpenCourtModal,
   onGameUpdate,
 }: GameSettingsProps) => {
   const { t } = useTranslation();
@@ -84,7 +80,6 @@ export const GameSettings = ({
   const isLeagueSeason = game?.entityType === 'LEAGUE_SEASON';
   const settingsTitle = t(isLeagueSeason ? 'createGame.settingsLeague' : 'createGame.settings');
   const avatarLabel = t(isLeagueSeason ? 'createLeague.seasonAvatar' : 'gameDetails.gameAvatar');
-  const locationLabel = t(isLeagueSeason ? 'createGame.locationLeague' : 'createGame.location');
   const gameTypeLabel = t(isLeagueSeason ? 'createGame.gameTypeLeague' : 'createGame.gameType');
   const gameTypeNote = t(isLeagueSeason ? 'createGame.gameTypeNoteLeague' : 'createGame.gameTypeNote');
   const nameLabel = t(isLeagueSeason ? 'createGame.gameNameLeague' : 'createGame.gameName');
@@ -220,57 +215,6 @@ export const GameSettings = ({
               />
             </div>
             <Divider />
-          </div>
-        )}
-
-        {/* Location Settings - Only show in edit mode */}
-        {(isEditMode || isClosingEditMode) && (
-          <div className={`space-y-3 ${isClosingEditMode ? 'animate-bounce-out' : 'animate-bounce-in'}`}>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-                {locationLabel}
-              </label>
-              <div className="space-y-2">
-                <button
-                  onClick={onOpenClubModal}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-left hover:border-primary-500 transition-colors"
-                >
-                  {editFormData.clubId
-                    ? clubs.find(c => c.id === editFormData.clubId)?.name
-                    : t('createGame.selectClub')
-                  }
-                </button>
-                {editFormData.clubId && !(game?.entityType === 'BAR' && courts.length === 1) && (
-                  <button
-                    onClick={onOpenCourtModal}
-                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-left hover:border-primary-500 transition-colors"
-                  >
-                    {editFormData.courtId === 'notBooked' || !editFormData.courtId
-                      ? t('createGame.notBookedYet')
-                      : courts.find(c => c.id === editFormData.courtId)?.name
-                    }
-                  </button>
-                )}
-              </div>
-            </div>
-            
-            {/* Booked Court/Hall Switch - Only when court is selected */}
-            {(editFormData.courtId !== 'notBooked' && editFormData.courtId) && (
-              <>
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                    {game?.entityType === 'BAR' ? t('createGame.hasBookedHall') : t('createGame.hasBookedCourt')}
-                  </span>
-                  <div className="flex-shrink-0">
-                    <ToggleSwitch 
-                      checked={editFormData.hasBookedCourt} 
-                      onChange={(checked) => onFormDataChange({hasBookedCourt: checked})}
-                    />
-                  </div>
-                </div>
-                <Divider />
-              </>
-            )}
           </div>
         )}
 

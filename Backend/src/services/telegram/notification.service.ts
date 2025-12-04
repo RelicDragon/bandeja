@@ -4,6 +4,7 @@ import { sendBugChatNotification } from './notifications/bug-chat.notification';
 import { sendUserChatNotification } from './notifications/user-chat.notification';
 import { sendInviteNotification } from './notifications/invite.notification';
 import { sendGameCard } from './notifications/game-card.notification';
+import { sendGameSystemMessageNotification } from './notifications/game-system-message.notification';
 
 class TelegramNotificationService {
   private bot: Bot | null = null;
@@ -38,6 +39,11 @@ class TelegramNotificationService {
       throw new Error('Bot API not available');
     }
     await sendGameCard(api, gameId, telegramId, lang);
+  }
+
+  async sendGameSystemMessageNotification(message: any, game: any) {
+    if (!this.bot) return;
+    await sendGameSystemMessageNotification(this.bot.api, message, game);
   }
 }
 

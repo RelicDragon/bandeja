@@ -21,13 +21,28 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-[70vh] flex flex-col">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div 
+        className="absolute inset-0 bg-black/50" 
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }} 
+      />
+      <div 
+        className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-[70vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('createGame.selectClub')}</h3>
           <button
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <X size={20} className="text-gray-500 dark:text-gray-400" />
@@ -41,7 +56,10 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
               {clubs.map((club) => (
                 <button
                   key={club.id}
-                  onClick={() => handleSelect(club.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelect(club.id);
+                  }}
                   className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
                     selectedId === club.id
                       ? 'bg-primary-500 text-white'
