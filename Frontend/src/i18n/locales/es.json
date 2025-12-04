@@ -378,7 +378,11 @@
     "player": "Jugador",
     "winsTiesLosses": "V-E-D",
     "noStatsAvailable": "Aún no hay estadísticas disponibles",
-    "syncToServer": "Sincronizar con el servidor"
+    "syncToServer": "Sincronizar con el servidor",
+    "unsyncedChangesTitle": "Cambios no sincronizados detectados",
+    "unsyncedChangesMessage": "Tienes cambios locales que no están sincronizados con el servidor. Antes de actualizar la base de datos local, por favor elige una acción:",
+    "syncToServerFirst": "Sincronizar con el servidor primero",
+    "eraseAndLoadFromServer": "Borrar cambios locales y cargar desde el servidor"
   },
   "invites": {
     "title": "Invitaciones",

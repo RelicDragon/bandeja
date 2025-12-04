@@ -13,27 +13,30 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import { useGameResultsEngine } from '@/hooks/useGameResultsEngine';
-import { GameResultsEngine } from '@/services/gameResultsEngine';
-import { validateSetIndex, validateSetScores, validateSetIndexAgainstFixed } from '@/utils/gameResults';
+import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
+import { validateSetIndex, validateSetScores, validateSetIndexAgainstFixed, isUserGameAdminOrOwner } from '@/utils/gameResults';
 import { 
   GameStatusDisplay, 
   HorizontalScoreEntryModal,
   RoundCard,
   AvailablePlayersFooter, 
   FloatingDraggedPlayer,
-  PlayerStatsPanel
+  PlayerStatsPanel,
+  SyncConflictModal
 } from '@/components/gameResults';
 import { AlertCircle } from 'lucide-react';
+import { ResultsStorage } from '@/services/resultsStorage';
 
 export const GameResultsEntry = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const [canInitialize, setCanInitialize] = useState<boolean | null>(null);
   
   const engine = useGameResultsEngine({
-    gameId: id,
-    userId: user?.id,
+    gameId: canInitialize === true ? id : undefined,
+    userId: canInitialize === true ? user?.id : undefined,
   });
 
   const [showSetModal, setShowSetModal] = useState<{ roundId: string; matchId: string; setIndex: number } | null>(null);
@@ -54,7 +57,112 @@ export const GameResultsEntry = () => {
   const [activeTab, setActiveTab] = useState<'scores' | 'results' | 'stats'>('scores');
   const [isSyncing, setIsSyncing] = useState(false);
   const [showOfflineMessage, setShowOfflineMessage] = useState(true);
+  const [showSyncConflictModal, setShowSyncConflictModal] = useState(false);
+  const [isResolvingConflict, setIsResolvingConflict] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const checkServerProblem = async () => {
+      if (!id) return;
+      
+      try {
+        const hasServerProblem = await ResultsStorage.getServerProblem(id);
+        if (hasServerProblem) {
+          setShowSyncConflictModal(true);
+          setCanInitialize(false);
+        } else {
+          setCanInitialize(true);
+        }
+      } catch (error) {
+        console.error('Failed to check server problem:', error);
+        setCanInitialize(true);
+      }
+    };
+
+    checkServerProblem();
+  }, [id]);
+
+  const handleSyncToServerFirst = async () => {
+    if (!id || !user?.id) return;
+    
+    setIsResolvingConflict(true);
+    try {
+      const localResults = await ResultsStorage.getResults(id);
+      if (localResults?.rounds && localResults.rounds.length > 0) {
+        const gameResponse = await gamesApi.getById(id);
+        if (!gameResponse?.data) {
+          throw new Error('Game not found');
+        }
+
+        const game = gameResponse.data;
+        const state = GameResultsEngine.getState();
+        
+        let canEdit = state.canEdit;
+        if (!canEdit) {
+          if (isUserGameAdminOrOwner(game, user.id)) {
+            canEdit = true;
+          } else if (game.resultsByAnyone) {
+            const participant = game.participants?.find(p => p.userId === user.id);
+            canEdit = !!participant;
+          } else {
+            canEdit = false;
+          }
+        }
+        
+        const gameState = state.gameState || {
+          type: 'NO_RESULTS',
+          message: 'games.results.positive.noResultsYet',
+          canEdit,
+          showInputs: false,
+          showClock: false,
+        };
+        
+        useGameResultsStore.setState({
+          gameId: id,
+          userId: user.id,
+          game,
+          rounds: localResults.rounds,
+          canEdit,
+          gameState,
+          initialized: true,
+          loading: false,
+        });
+
+        await GameResultsEngine.syncToServer();
+        await ResultsStorage.setServerProblem(id, false);
+        await GameResultsEngine.initialize(id, user.id, t);
+        setShowSyncConflictModal(false);
+        setCanInitialize(true);
+      } else {
+        await ResultsStorage.setServerProblem(id, false);
+        setShowSyncConflictModal(false);
+        setCanInitialize(true);
+      }
+    } catch (error: any) {
+      console.error('Failed to sync to server:', error);
+      toast.error(error?.response?.data?.message || t('errors.generic') || 'Failed to sync to server');
+      setCanInitialize(true);
+    } finally {
+      setIsResolvingConflict(false);
+    }
+  };
+
+  const handleEraseAndLoadFromServer = async () => {
+    if (!id || !user?.id) return;
+    
+    setIsResolvingConflict(true);
+    try {
+      await ResultsStorage.deleteResults(id);
+      await ResultsStorage.setServerProblem(id, false);
+      setShowSyncConflictModal(false);
+      setCanInitialize(true);
+    } catch (error: any) {
+      console.error('Failed to erase local changes:', error);
+      toast.error(t('errors.generic') || 'Failed to erase local changes');
+    } finally {
+      setIsResolvingConflict(false);
+    }
+  };
 
   const game = engine.game;
   const getRounds = () => GameResultsEngine.getState().rounds;
@@ -622,7 +730,7 @@ export const GameResultsEntry = () => {
     }
   };
 
-  if (loading || !engine.initialized) {
+  if (canInitialize === null) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
@@ -633,7 +741,41 @@ export const GameResultsEntry = () => {
     );
   }
 
-  if (!game) {
+  if ((loading || !engine.initialized) && canInitialize && !showSyncConflictModal) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">{t('app.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!canInitialize && showSyncConflictModal) {
+    return (
+      <>
+        <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">{t('app.loading')}</p>
+          </div>
+        </div>
+        {showSyncConflictModal && (
+          <SyncConflictModal
+            isOpen={showSyncConflictModal}
+            onSyncToServer={handleSyncToServerFirst}
+            onLoadFromServer={handleEraseAndLoadFromServer}
+            onClose={() => {}}
+            isSyncing={isResolvingConflict}
+            isLoading={isResolvingConflict}
+          />
+        )}
+      </>
+    );
+  }
+
+  if (!game && canInitialize) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
@@ -775,8 +917,8 @@ export const GameResultsEntry = () => {
           <div>
       {game?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
         <OutcomesDisplay outcomes={game.outcomes || []} affectsRating={game.affectsRating} gameId={game.id} />
-      ) : game?.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
-        <PlayerStatsPanel game={game} rounds={getRounds()} />
+      ) : game && game.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
+        <PlayerStatsPanel game={game as NonNullable<typeof game>} rounds={getRounds()} />
       ) : !isResultsEntryMode && engine.initialized ? (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
           <GameStatusDisplay gameState={gameState} />
@@ -1086,6 +1228,17 @@ export const GameResultsEntry = () => {
               confirmVariant="danger"
               onConfirm={handleEdit}
               onClose={() => setShowEditConfirmation(false)}
+            />
+          )}
+
+          {showSyncConflictModal && (
+            <SyncConflictModal
+              isOpen={showSyncConflictModal}
+              onSyncToServer={handleSyncToServerFirst}
+              onLoadFromServer={handleEraseAndLoadFromServer}
+              onClose={() => {}}
+              isSyncing={isResolvingConflict}
+              isLoading={isResolvingConflict}
             />
           )}
 

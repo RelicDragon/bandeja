@@ -385,7 +385,11 @@
     "player": "Player",
     "winsTiesLosses": "W-T-L",
     "noStatsAvailable": "No statistics available yet",
-    "syncToServer": "Sync to Server"
+    "syncToServer": "Sync to Server",
+    "unsyncedChangesTitle": "Unsynced Changes Detected",
+    "unsyncedChangesMessage": "You have local changes that are not synced to the server. Before updating the local database, please choose an action:",
+    "syncToServerFirst": "Sync to Server First",
+    "eraseAndLoadFromServer": "Erase Local Changes & Load from Server"
   },
   "invites": {
     "title": "Invites",
