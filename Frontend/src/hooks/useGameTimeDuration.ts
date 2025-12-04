@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Club, EntityType } from '@/types';
+import { Club } from '@/types';
 
 interface UseGameTimeDurationProps {
   clubs: Club[];
