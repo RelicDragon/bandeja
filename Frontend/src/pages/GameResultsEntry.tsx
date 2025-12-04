@@ -486,6 +486,26 @@ export const GameResultsEntry = () => {
     return t('gameResults.editGameTitle');
   };
 
+  const getAvailablePlayers = (roundId: string, matchId: string) => {
+    const currentRounds = getRounds();
+    const round = currentRounds.find(r => r.id === roundId);
+    if (!round) return [];
+
+    const playersInRound = new Set<string>();
+    round.matches.forEach(match => {
+      match.teamA.forEach(id => playersInRound.add(id));
+      match.teamB.forEach(id => playersInRound.add(id));
+    });
+
+    const match = round.matches.find(m => m.id === matchId);
+    if (!match) return [];
+
+    return players.filter(player => {
+      if (playersInRound.has(player.id)) return false;
+      return !match.teamA.includes(player.id) && !match.teamB.includes(player.id);
+    });
+  };
+
   const handlePlayerSelect = async (playerId: string) => {
     if (!selectedMatchTeam || !effectiveCanEdit) return;
 
@@ -855,9 +875,17 @@ export const GameResultsEntry = () => {
                     engine.addPlayerToTeam(round.id, matchId, team, dragAndDrop.draggedPlayer);
                     dragAndDrop.handleDragEnd();
                   }}
-                  onPlayerPlaceholderClick={(matchId, team) => {
-                    setSelectedMatchTeam({ roundId: round.id, matchId, team });
-                    setShowPlayerSelector(true);
+                  onPlayerPlaceholderClick={async (matchId, team) => {
+                    if (!effectiveCanEdit) return;
+                    
+                    const availablePlayers = getAvailablePlayers(round.id, matchId);
+                    
+                    if (availablePlayers.length === 1) {
+                      await engine.addPlayerToTeam(round.id, matchId, team, availablePlayers[0].id);
+                    } else {
+                      setSelectedMatchTeam({ roundId: round.id, matchId, team });
+                      setShowPlayerSelector(true);
+                    }
                   }}
                   canEnterResults={(matchId) => {
                     const match = round.matches.find(m => m.id === matchId);
@@ -981,9 +1009,15 @@ export const GameResultsEntry = () => {
                 const roundId = selectedMatchTeam.roundId || expandedRoundId || (currentRounds.length > 0 ? currentRounds[0].id : null);
                 if (!roundId) return [];
                 const round = currentRounds.find(r => r.id === roundId);
-                const match = round?.matches.find(m => m.id === selectedMatchTeam.matchId);
-                if (!match) return [];
-                return [...match.teamA, ...match.teamB];
+                if (!round) return [];
+                
+                const playersInRound = new Set<string>();
+                round.matches.forEach(match => {
+                  match.teamA.forEach(id => playersInRound.add(id));
+                  match.teamB.forEach(id => playersInRound.add(id));
+                });
+                
+                return Array.from(playersInRound);
               })()}
               title={t('games.addPlayer')}
             />

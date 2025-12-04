@@ -180,6 +180,9 @@ class GameResultsEngineClass {
         const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit) return;
 
+    await updateFn();
+    await this.saveLocal();
+
     if (state.serverProblem) {
       return;
     }
@@ -188,14 +191,10 @@ class GameResultsEngineClass {
       await serverCall();
       await ResultsStorage.setServerProblem(state.gameId, false);
       useGameResultsStore.setState({ serverProblem: false });
-      
-      await updateFn();
-      await this.saveLocal();
     } catch (error) {
       console.error('Server call failed:', error);
       await ResultsStorage.setServerProblem(state.gameId, true);
       useGameResultsStore.setState({ serverProblem: true });
-      throw error;
     }
   }
 
