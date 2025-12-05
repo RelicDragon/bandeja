@@ -192,9 +192,9 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
 
           <div 
             onClick={() => bug.text.length > 200 && setIsExpanded(!isExpanded)}
-            className={`text-sm mb-2 w-full whitespace-pre-line ${isArchived ? 'text-gray-500' : 'text-gray-700'} ${bug.text.length > 100 ? 'cursor-pointer hover:opacity-80' : ''}`}
+            className={`text-sm mb-2 w-full whitespace-pre-line ${isArchived ? 'text-gray-500' : 'text-gray-700'} ${bug.text.length > 200 ? 'cursor-pointer hover:opacity-80' : ''}`}
           >
-            {isExpanded ? bug.text : `${bug.text.substring(0, 100)}${bug.text.length > 100 ? '...' : ''}`}
+            {isExpanded ? bug.text : bug.text.length > 200 ? `${bug.text.substring(0, 100)}...` : bug.text}
           </div>
 
           {lastMessage && lastMessage.sender && (
