@@ -4,6 +4,7 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { GameService } from '../game/game.service';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
+import { canAddPlayerToGame } from '../../utils/participantValidation';
 
 export class AdminGamesService {
   static async getAllGames(cityId?: string) {
@@ -128,15 +129,27 @@ export class AdminGamesService {
     }
 
     if (invite.gameId && invite.game) {
-      if (invite.game.participants.length >= invite.game.maxParticipants) {
-        throw new ApiError(400, 'Game is full');
-      }
-
       const existingParticipant = invite.game.participants.find(
         p => p.userId === invite.receiverId
       );
 
-      if (!existingParticipant) {
+      if (existingParticipant) {
+        if (existingParticipant.isPlaying) {
+          // Already a playing participant, nothing to do
+        } else {
+          // Existing non-playing participant, validate and update to playing
+          await canAddPlayerToGame(invite.game, invite.receiverId);
+
+          await prisma.gameParticipant.update({
+            where: { id: existingParticipant.id },
+            data: { isPlaying: true },
+          });
+          await GameService.updateGameReadiness(invite.gameId);
+        }
+      } else {
+        // No existing participant, validate and create as playing
+        await canAddPlayerToGame(invite.game, invite.receiverId);
+
         await prisma.gameParticipant.create({
           data: {
             gameId: invite.gameId,

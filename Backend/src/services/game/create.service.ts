@@ -4,6 +4,7 @@ import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
+import { canAddPlayerToGame } from '../../utils/participantValidation';
 
 export class GameCreateService {
   static async createGame(data: any, userId: string) {
@@ -73,6 +74,17 @@ export class GameCreateService {
       : [];
     
     const ownerIsPlaying = participantsList.includes(userId);
+    
+    if (ownerIsPlaying) {
+      const tempGame = {
+        id: 'temp',
+        genderTeams: (data.genderTeams || 'ANY') as any,
+        maxParticipants: maxParticipants,
+        entityType: entityType,
+        participants: [],
+      };
+      await canAddPlayerToGame(tempGame, userId);
+    }
     
     const startTime = new Date(data.startTime);
     const endTime = new Date(data.endTime);

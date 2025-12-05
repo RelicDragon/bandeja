@@ -6,6 +6,7 @@ import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessage
 import { GameService } from './game.service';
 import { JoinQueueService } from './joinQueue.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
+import { canAddPlayerToGame } from '../../utils/participantValidation';
 
 export class ParticipantService {
   static async joinGame(gameId: string, userId: string) {
@@ -33,9 +34,7 @@ export class ParticipantService {
       if (existingParticipant.isPlaying) {
         throw new ApiError(400, 'Already joined this game as a player');
       } else {
-        if (game.entityType !== EntityType.BAR && game.participants.length >= game.maxParticipants) {
-          throw new ApiError(400, 'Game is full');
-        }
+        await canAddPlayerToGame(game, userId);
 
         await prisma.gameParticipant.update({
           where: { id: existingParticipant.id },
@@ -48,9 +47,7 @@ export class ParticipantService {
       }
     }
 
-    if (game.entityType !== EntityType.BAR && game.participants.length >= game.maxParticipants) {
-      throw new ApiError(400, 'Game is full');
-    }
+    await canAddPlayerToGame(game, userId);
 
     if (!game.allowDirectJoin) {
       return await JoinQueueService.addToQueue(gameId, userId);
@@ -187,13 +184,20 @@ export class ParticipantService {
         where: { id: gameId },
         include: {
           participants: {
-            where: { isPlaying: true }
+            where: { isPlaying: true },
+            include: {
+              user: {
+                select: {
+                  gender: true,
+                },
+              },
+            },
           },
         },
       });
 
-      if (game && game.entityType !== EntityType.BAR && game.participants.length >= game.maxParticipants) {
-        throw new ApiError(400, 'Game is full');
+      if (game) {
+        await canAddPlayerToGame(game, userId);
       }
     }
 

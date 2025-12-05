@@ -4,6 +4,7 @@ import { createSystemMessage } from '../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { GameService } from './game/game.service';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
+import { canAddPlayerToGame } from '../utils/participantValidation';
 
 export interface InviteActionResult {
   success: boolean;
@@ -82,19 +83,42 @@ export class InviteService {
     }
 
     if (invite.gameId && invite.game) {
-      if (invite.game.participants.length >= invite.game.maxParticipants) {
-        return {
-          success: false,
-          message: 'errors.invites.gameFull',
-        };
-      }
-
       // Always add the receiver (not the person accepting) as participant
       const existingParticipant = invite.game.participants.find(
         (p: any) => p.userId === invite.receiverId
       );
 
-      if (!existingParticipant) {
+      if (existingParticipant) {
+        if (existingParticipant.isPlaying) {
+          // Already a playing participant, nothing to do
+        } else {
+          // Existing non-playing participant, validate and update to playing
+          try {
+            await canAddPlayerToGame(invite.game, invite.receiverId);
+          } catch (error: any) {
+            return {
+              success: false,
+              message: error.message || 'errors.invites.gameFull',
+            };
+          }
+
+          await prisma.gameParticipant.update({
+            where: { id: existingParticipant.id },
+            data: { isPlaying: true },
+          });
+          await GameService.updateGameReadiness(invite.gameId);
+        }
+      } else {
+        // No existing participant, validate and create as playing
+        try {
+          await canAddPlayerToGame(invite.game, invite.receiverId);
+        } catch (error: any) {
+          return {
+            success: false,
+            message: error.message || 'errors.invites.gameFull',
+          };
+        }
+
         await prisma.gameParticipant.create({
           data: {
             gameId: invite.gameId,

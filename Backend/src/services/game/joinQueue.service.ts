@@ -6,6 +6,7 @@ import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessage
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { hasParentGamePermission } from '../../utils/parentGamePermissions';
+import { canAddPlayerToGame } from '../../utils/participantValidation';
 
 export class JoinQueueService {
   static async addToQueue(gameId: string, userId: string) {
@@ -41,7 +42,14 @@ export class JoinQueueService {
       where: { id: gameId },
       include: {
         participants: {
-          where: { isPlaying: true }
+          where: { isPlaying: true },
+          include: {
+            user: {
+              select: {
+                gender: true,
+              },
+            },
+          },
         },
       },
     });
@@ -71,9 +79,7 @@ export class JoinQueueService {
       throw new ApiError(403, 'games.notAuthorizedToAcceptJoinQueue');
     }
 
-    if (game.entityType !== EntityType.BAR && game.participants.length >= game.maxParticipants) {
-      throw new ApiError(400, 'Game is full');
-    }
+    await canAddPlayerToGame(game, queueUserId);
 
     const joinQueue = await prisma.joinQueue.findUnique({
       where: {
