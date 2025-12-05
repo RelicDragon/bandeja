@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Loading, ToggleSwitch, Select } from '@/components';
 import { BugCard } from './BugCard';
@@ -50,6 +50,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   const [animatedTextIndex, setAnimatedTextIndex] = useState(0);
   const [nextIndex, setNextIndex] = useState(1);
   const [isAnimating, setIsAnimating] = useState(false);
+  const hasInitializedTab = useRef(false);
 
   const animatedTexts = useMemo(() => [
     t('bug.addBug'),
@@ -177,16 +178,20 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
 
   useEffect(() => {
     if (availableTypes.length > 0) {
-      if (!activeTab || !availableTypes.includes(activeTab)) {
+      if (!hasInitializedTab.current) {
         const storedTab = localStorage.getItem(STORAGE_TAB_KEY) as BugType | null;
         if (storedTab && availableTypes.includes(storedTab)) {
           setActiveTab(storedTab);
         } else {
           setActiveTab(availableTypes[0]);
         }
+        hasInitializedTab.current = true;
+      } else if (!activeTab || !availableTypes.includes(activeTab)) {
+        setActiveTab(availableTypes[0]);
       }
     } else {
       setActiveTab(null);
+      hasInitializedTab.current = false;
     }
   }, [availableTypes, activeTab]);
 
