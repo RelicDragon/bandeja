@@ -606,7 +606,7 @@ export const GameChat: React.FC = () => {
       if (game.club) return `${game.club.name}`;
       return `${game.gameType} Game`;
     } else if (contextType === 'BUG' && bug) {
-      return bug.text.length > 25 ? `${bug.text.substring(0, 25)}...` : bug.text;
+      return bug.text.length > 25 ? `${bug.text.substring(0, 23)}...` : bug.text;
     } else if (contextType === 'USER' && userChat) {
       const otherUser = userChat.user1Id === user?.id ? userChat.user2 : userChat.user1;
       return `${otherUser.firstName} ${otherUser.lastName}`;
@@ -657,20 +657,21 @@ export const GameChat: React.FC = () => {
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 fixed top-0 right-0 left-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)', height: headerHeight }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <button
               onClick={() => navigate(-1)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
             >
               <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
             </button>
-            {getIcon()}
-            <div>
-              <h1 className={`${contextType === 'BUG' ? 'text-base' : 'text-lg'} font-semibold text-gray-900 dark:text-white flex items-center gap-2`}>
-                {getTitle()}
+            {contextType !== 'BUG' && <div className="flex-shrink-0">{getIcon()}</div>}
+            <div className="min-w-0 flex-1">
+              <h1 className={`${contextType === 'BUG' ? 'text-base' : 'text-lg'} font-semibold text-gray-900 dark:text-white flex items-center gap-2 whitespace-nowrap overflow-hidden`}>
+                {contextType === 'BUG' && <BugIcon size={16} className="text-red-500 flex-shrink-0" />}
+                <span className="truncate">{getTitle()}</span>
               </h1>
               {getSubtitle() && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {getSubtitle()}
                 </p>
               )}
