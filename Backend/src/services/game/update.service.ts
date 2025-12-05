@@ -37,6 +37,10 @@ export class GameUpdateService {
       updateData.hasFixedTeams = hasFixedTeams;
     }
 
+    if (game.entityType === 'TOURNAMENT') {
+      updateData.resultsByAnyone = false;
+    }
+
     // Handle avatar deletion
     if (data.avatar === null || data.originalAvatar === null) {
       const currentGame = await prisma.game.findUnique({

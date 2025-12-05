@@ -396,7 +396,7 @@ export const GameSettings = ({
               </p>
             )}
           </div>
-          {!isLeagueSeason && (
+          {!isLeagueSeason && game?.entityType !== 'TOURNAMENT' && (
             <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">

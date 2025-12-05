@@ -666,7 +666,7 @@ export const GameChat: React.FC = () => {
             </button>
             {getIcon()}
             <div>
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <h1 className={`${contextType === 'BUG' ? 'text-base' : 'text-lg'} font-semibold text-gray-900 dark:text-white flex items-center gap-2`}>
                 {getTitle()}
               </h1>
               {getSubtitle() && (

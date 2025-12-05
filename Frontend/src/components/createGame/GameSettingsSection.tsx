@@ -221,23 +221,25 @@ export const GameSettingsSection = ({
             </p>
           )}
         </div>
-        <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.resultsByAnyone.title')}
-            </span>
-            <div className="flex-shrink-0">
-              <ToggleSwitch checked={resultsByAnyone} onChange={onResultsByAnyoneChange} />
+        {entityType !== 'TOURNAMENT' && (
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('createGame.resultsByAnyone.title')}
+              </span>
+              <div className="flex-shrink-0">
+                <ToggleSwitch checked={resultsByAnyone} onChange={onResultsByAnyoneChange} />
+              </div>
             </div>
+            {showNotes && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {resultsByAnyone 
+                  ? t('createGame.resultsByAnyone.note.true')
+                  : t('createGame.resultsByAnyone.note.false')}
+              </p>
+            )}
           </div>
-          {showNotes && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {resultsByAnyone 
-                ? t('createGame.resultsByAnyone.note.true')
-                : t('createGame.resultsByAnyone.note.false')}
-            </p>
-          )}
-        </div>
+        )}
         <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">

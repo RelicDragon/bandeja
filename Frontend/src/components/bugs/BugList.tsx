@@ -15,6 +15,9 @@ interface BugListProps {
   isVisible?: boolean;
 }
 
+const STORAGE_KEY = 'bugs-filters';
+const STORAGE_TAB_KEY = 'bugs-active-tab';
+
 export const BugList = ({ isVisible = true }: BugListProps) => {
   const { t } = useTranslation();
   const [allBugs, setAllBugs] = useState<Bug[]>([]);
@@ -22,12 +25,25 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<BugType | null>(null);
+  
+  const [activeTab, setActiveTab] = useState<BugType | null>(() => {
+    const stored = localStorage.getItem(STORAGE_TAB_KEY);
+    return stored ? (stored as BugType) : null;
+  });
+  
   const [filters, setFilters] = useState<{
     status?: BugStatus;
     myBugsOnly?: boolean;
-  }>({
-    myBugsOnly: true,
+  }>(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return { myBugsOnly: true };
+      }
+    }
+    return { myBugsOnly: true };
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -148,9 +164,26 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   }, [allBugs]);
 
   useEffect(() => {
+    if (activeTab !== null) {
+      localStorage.setItem(STORAGE_TAB_KEY, activeTab);
+    } else {
+      localStorage.removeItem(STORAGE_TAB_KEY);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
+  }, [filters]);
+
+  useEffect(() => {
     if (availableTypes.length > 0) {
       if (!activeTab || !availableTypes.includes(activeTab)) {
-        setActiveTab(availableTypes[0]);
+        const storedTab = localStorage.getItem(STORAGE_TAB_KEY) as BugType | null;
+        if (storedTab && availableTypes.includes(storedTab)) {
+          setActiveTab(storedTab);
+        } else {
+          setActiveTab(availableTypes[0]);
+        }
       }
     } else {
       setActiveTab(null);

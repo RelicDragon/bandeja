@@ -109,7 +109,7 @@ export class GameCreateService {
         isPublic: data.isPublic !== undefined ? data.isPublic : true,
         affectsRating: data.affectsRating !== undefined ? data.affectsRating : true,
         anyoneCanInvite: data.anyoneCanInvite || false,
-        resultsByAnyone: data.resultsByAnyone || false,
+        resultsByAnyone: entityType === EntityType.TOURNAMENT ? false : (data.resultsByAnyone || false),
         allowDirectJoin: data.allowDirectJoin || false,
         hasBookedCourt: data.hasBookedCourt || false,
         afterGameGoToBar: data.afterGameGoToBar || false,

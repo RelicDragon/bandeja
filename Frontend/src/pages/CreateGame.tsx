@@ -292,7 +292,7 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
         isPublic,
         affectsRating: isRatingGame,
         anyoneCanInvite,
-        resultsByAnyone,
+        resultsByAnyone: entityType === 'TOURNAMENT' ? false : resultsByAnyone,
         allowDirectJoin,
         hasBookedCourt: hasBookedCourt,
         afterGameGoToBar: afterGameGoToBar,
