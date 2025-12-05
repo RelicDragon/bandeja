@@ -517,6 +517,26 @@ export const GameSettings = ({
             )}
           </div>
         )}
+
+        {/* Cancel/Save buttons at bottom - only show in edit mode */}
+        {isEditMode && (
+          <div className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={onEditModeToggle}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium"
+            >
+              <X size={18} />
+              {t('common.cancel')}
+            </button>
+            <button
+              onClick={onSaveChanges}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 border border-green-600 dark:border-green-600 text-white font-medium"
+            >
+              <Save size={18} />
+              {t('common.save')}
+            </button>
+          </div>
+        )}
       </div>
     </Card>
   );
