@@ -8,6 +8,7 @@ import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { GameAvatar } from '@/components/GameAvatar';
 import { UrlConstructor } from '@/utils/urlConstructor';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
+import { EditGameTextModal } from './EditGameTextModal';
 import {
   Calendar,
   MapPin,
@@ -42,6 +43,7 @@ interface GameInfoProps {
   onOpenLocationModal: () => void;
   onOpenTimeDurationModal: () => void;
   onScrollToSettings: () => void;
+  onGameUpdate?: (game: Game) => void;
 }
 
 export const GameInfo = ({
@@ -55,13 +57,15 @@ export const GameInfo = ({
   onEditCourt,
   onOpenLocationModal,
   onOpenTimeDurationModal,
-  onScrollToSettings
+  onScrollToSettings,
+  onGameUpdate
 }: GameInfoProps) => {
   const { t } = useTranslation();
   const showTags = game.entityType !== 'LEAGUE';
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState({ url: '', title: '', text: '' });
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
+  const [showEditGameTextModal, setShowEditGameTextModal] = useState(false);
 
   const ownerParticipant = game.participants?.find(p => p.role === 'OWNER');
   const owner = ownerParticipant?.user;
@@ -233,9 +237,14 @@ export const GameInfo = ({
               </span>
             )}
             {showTags && game.gameType !== 'CLASSIC' && (
-              <span className="px-3 py-1 text-sm font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+              <button
+                onClick={() => canEdit && setShowEditGameTextModal(true)}
+                className={`px-3 py-1 text-sm font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 ${
+                  canEdit ? 'hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors' : ''
+                }`}
+              >
                 {t(`games.gameTypes.${game.gameType}`)}
-              </span>
+              </button>
             )}
             {showTags && isGuest && (
               <span className="px-3 py-1 text-sm font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
@@ -292,20 +301,25 @@ export const GameInfo = ({
                 {game.leagueSeason.league.name}
               </h1>
               {game.name && game.name.trim() !== '' && (
-                <p className="text-2xl font-semibold text-purple-600 dark:text-purple-400 mt-2">
+                <button
+                  onClick={() => canEdit && setShowEditGameTextModal(true)}
+                  className={`text-2xl font-semibold text-purple-600 dark:text-purple-400 mt-2 ${
+                    canEdit ? 'hover:text-purple-700 dark:hover:text-purple-300 cursor-pointer transition-colors' : ''
+                  }`}
+                >
                   {game.name}
-                </p>
+                </button>
               )}
             </>
           ) : (
             <>
-              {game.name && game.name.trim() !== '' && game.gameType !== 'CLASSIC' && (
-                <p className="text-gray-700 dark:text-gray-300 mb-2">
-                  {game.name}
-                </p>
-              )}
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                {game.gameType === 'CLASSIC' ? game.name : (game.name || t(`games.gameTypes.${game.gameType}`))}
+              <h1 
+                onClick={() => canEdit && setShowEditGameTextModal(true)}
+                className={`text-3xl font-bold text-gray-900 dark:text-white ${
+                  canEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
+                }`}
+              >
+                {game.name && game.name.trim() !== '' ? game.name : t(`games.gameTypes.${game.gameType}`)}
               </h1>
             </>
           )}
@@ -436,7 +450,14 @@ export const GameInfo = ({
         {game.description && game.description.trim() !== '' && (
           <div className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
             <MessageCircle size={20} className="text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
-            <p className="text-gray-600 dark:text-gray-400">{game.description}</p>
+            <button
+              onClick={() => canEdit && setShowEditGameTextModal(true)}
+              className={`text-gray-600 dark:text-gray-400 text-left ${
+                canEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
+              }`}
+            >
+              {game.description}
+            </button>
           </div>
         )}
       </div>
@@ -452,6 +473,12 @@ export const GameInfo = ({
           onClose={() => setShowFullscreenAvatar(false)}
         />
       )}
+      <EditGameTextModal
+        isOpen={showEditGameTextModal}
+        onClose={() => setShowEditGameTextModal(false)}
+        game={game}
+        onGameUpdate={onGameUpdate}
+      />
     </Card>
   );
 };

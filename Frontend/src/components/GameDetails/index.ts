@@ -10,3 +10,4 @@ export * from './TeamPlayerSelector';
 export * from './PhotosSection';
 export * from './TimeDurationModal';
 export * from './LocationModal';
+export * from './EditGameTextModal';

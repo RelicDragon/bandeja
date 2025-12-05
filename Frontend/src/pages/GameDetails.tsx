@@ -660,6 +660,7 @@ export const GameDetailsContent = () => {
             onOpenLocationModal={() => setIsLocationModalOpen(true)}
             onOpenTimeDurationModal={() => setIsTimeDurationModalOpen(true)}
             onScrollToSettings={handleScrollToSettings}
+            onGameUpdate={setGame}
           />
 
           <PhotosSection game={game} />
