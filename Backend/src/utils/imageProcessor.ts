@@ -86,6 +86,7 @@ export class ImageProcessor {
     
     // Create thumbnail (512x512 max)
     const thumbnailBuffer = await sharp(imageBuffer)
+      .rotate()
       .resize(512, 512, {
         fit: 'inside',
         withoutEnlargement: true
@@ -130,6 +131,7 @@ export class ImageProcessor {
     
     // Create thumbnail (512x512 max)
     const thumbnailBuffer = await sharp(imageBuffer)
+      .rotate()
       .resize(512, 512, {
         fit: 'inside',
         withoutEnlargement: true
@@ -182,6 +184,7 @@ export class ImageProcessor {
       await fs.promises.mkdir(path.dirname(thumbnailPathFull), { recursive: true });
       
       const thumbnailBuffer = await sharp(fileBuffer)
+        .rotate()
         .resize(512, 512, {
           fit: 'inside',
           withoutEnlargement: true

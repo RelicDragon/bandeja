@@ -104,7 +104,13 @@ function generateRandomPairs(
       .map(p => p.userId);
   }
   
-  const sortedPlayers = shuffleArray([...players]).sort((a, b) => {
+  const filteredPlayers = genderTeams === 'MEN'
+    ? participants.filter(p => p.user.gender === 'MALE').map(p => p.userId)
+    : genderTeams === 'WOMEN'
+    ? participants.filter(p => p.user.gender === 'FEMALE').map(p => p.userId)
+    : players;
+  
+  const sortedPlayers = shuffleArray([...filteredPlayers]).sort((a, b) => {
     const matchesA = matchesPlayedCounts.get(a) || 0;
     const matchesB = matchesPlayedCounts.get(b) || 0;
     return matchesA - matchesB;
@@ -216,7 +222,29 @@ function generateRandomRoundWithFixedTeams(
   numMatches: number
 ): string[][] {
   const fixedTeams = game.fixedTeams || [];
-  const teamPairs = fixedTeams.map(team => team.players.map(p => p.userId));
+  let teamPairs = fixedTeams.map(team => team.players.map(p => p.userId));
+  
+  if (game.genderTeams === 'MEN') {
+    teamPairs = fixedTeams
+      .filter(team => team.players.every(p => p.user.gender === 'MALE'))
+      .map(team => team.players.map(p => p.userId));
+  } else if (game.genderTeams === 'WOMEN') {
+    teamPairs = fixedTeams
+      .filter(team => team.players.every(p => p.user.gender === 'FEMALE'))
+      .map(team => team.players.map(p => p.userId));
+  } else if (game.genderTeams === 'MIX_PAIRS') {
+    teamPairs = fixedTeams
+      .filter(team => {
+        const genders = team.players.map(p => p.user.gender);
+        return genders.includes('MALE') && genders.includes('FEMALE') &&
+               !genders.includes('PREFER_NOT_TO_SAY');
+      })
+      .map(team => team.players.map(p => p.userId));
+  } else if (game.genderTeams !== 'ANY' && game.genderTeams) {
+    teamPairs = fixedTeams
+      .filter(team => team.players.every(p => p.user.gender !== 'PREFER_NOT_TO_SAY'))
+      .map(team => team.players.map(p => p.userId));
+  }
   
   if (teamPairs.length < 2) {
     return [];
@@ -271,7 +299,24 @@ export function generateRandomRound(
   previousRounds: Round[],
   initialSets: Array<{ teamA: number; teamB: number }>
 ): Match[] {
-  const playingParticipants = game.participants.filter(p => p.isPlaying);
+  let playingParticipants = game.participants.filter(p => p.isPlaying);
+  
+  if (game.genderTeams === 'MEN') {
+    playingParticipants = playingParticipants.filter(p => p.user.gender === 'MALE');
+  } else if (game.genderTeams === 'WOMEN') {
+    playingParticipants = playingParticipants.filter(p => p.user.gender === 'FEMALE');
+  } else if (game.genderTeams === 'MIX_PAIRS') {
+    playingParticipants = playingParticipants.filter(p => 
+      p.user.gender === 'MALE' || p.user.gender === 'FEMALE'
+    );
+  } else if (game.genderTeams === 'ANY' || !game.genderTeams) {
+    playingParticipants = playingParticipants;
+  } else {
+    playingParticipants = playingParticipants.filter(p => 
+      p.user.gender !== 'PREFER_NOT_TO_SAY'
+    );
+  }
+  
   const numPlayers = playingParticipants.length;
   
   if (numPlayers < 4) {
