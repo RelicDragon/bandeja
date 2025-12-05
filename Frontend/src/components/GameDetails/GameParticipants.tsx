@@ -26,7 +26,7 @@ interface GameParticipantsProps {
   onCancelInvite: (inviteId: string) => void;
   onAcceptJoinQueue: (userId: string) => void;
   onDeclineJoinQueue: (userId: string) => void;
-  onShowPlayerList: () => void;
+  onShowPlayerList: (gender?: 'MALE' | 'FEMALE') => void;
   onShowManageUsers: () => void;
   onEditMaxParticipants?: () => void;
 }
@@ -201,7 +201,7 @@ export const GameParticipants = ({
                   <div key={`empty-${i}`} className="flex-shrink-0 w-16">
                     {canInvitePlayers ? (
                       <button
-                        onClick={onShowPlayerList}
+                        onClick={() => onShowPlayerList()}
                         className="flex flex-col items-center w-full"
                       >
                         <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
@@ -255,7 +255,7 @@ export const GameParticipants = ({
                       <div key={`empty-${i}`} className="flex-shrink-0 w-16">
                         {canInvitePlayers ? (
                           <button
-                            onClick={onShowPlayerList}
+                            onClick={() => onShowPlayerList('MALE')}
                             className="flex flex-col items-center w-full"
                           >
                             <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
@@ -311,7 +311,7 @@ export const GameParticipants = ({
                       <div key={`empty-${i}`} className="flex-shrink-0 w-16">
                         {canInvitePlayers ? (
                           <button
-                            onClick={onShowPlayerList}
+                            onClick={() => onShowPlayerList('FEMALE')}
                             className="flex flex-col items-center w-full"
                           >
                             <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
@@ -335,9 +335,9 @@ export const GameParticipants = ({
           if (game.genderTeams === 'MIX_PAIRS') {
             const maleParticipants = playingParticipants.filter(p => p.user.gender === 'MALE');
             const femaleParticipants = playingParticipants.filter(p => p.user.gender === 'FEMALE');
-            const totalEmptySlots = emptySlots;
-            const maleEmptySlots = Math.ceil(totalEmptySlots / 2);
-            const femaleEmptySlots = Math.floor(totalEmptySlots / 2);
+            const maxPerGender = Math.floor(game.maxParticipants / 2);
+            const maleEmptySlots = Math.max(0, maxPerGender - maleParticipants.length);
+            const femaleEmptySlots = Math.max(0, maxPerGender - femaleParticipants.length);
             
             return (
               <div className="space-y-4">
@@ -373,7 +373,7 @@ export const GameParticipants = ({
                         <div key={`empty-male-${i}`} className="flex-shrink-0 w-16">
                           {canInvitePlayers ? (
                             <button
-                              onClick={onShowPlayerList}
+                              onClick={() => onShowPlayerList('MALE')}
                               className="flex flex-col items-center w-full"
                             >
                               <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
@@ -423,7 +423,7 @@ export const GameParticipants = ({
                         <div key={`empty-female-${i}`} className="flex-shrink-0 w-16">
                           {canInvitePlayers ? (
                             <button
-                              onClick={onShowPlayerList}
+                              onClick={() => onShowPlayerList('FEMALE')}
                               className="flex flex-col items-center w-full"
                             >
                               <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
@@ -458,7 +458,7 @@ export const GameParticipants = ({
             <div className="mt-4 flex gap-3">
               {showInviteButton && (
                 <Button
-                  onClick={onShowPlayerList}
+                  onClick={() => onShowPlayerList()}
                   variant="outline"
                   size="md"
                   className="flex-1 h-10 rounded-xl flex items-center justify-center"

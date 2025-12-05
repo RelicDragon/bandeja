@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X, Crown, Shield, User, UserX, ArrowRightLeft } from 'lucide-react';
@@ -17,6 +17,13 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
   const user = useAuthStore((state) => state.user);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   const currentUserParticipant = game.participants.find(p => p.userId === user?.id);
   const isOwner = currentUserParticipant?.role === 'OWNER';
@@ -76,8 +83,15 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+      }}
     >
       <Card
         className="w-full max-w-md max-h-[80vh] overflow-hidden"

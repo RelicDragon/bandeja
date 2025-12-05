@@ -46,6 +46,7 @@ export const GameDetailsContent = () => {
   const [gameInvites, setGameInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPlayerList, setShowPlayerList] = useState(false);
+  const [playerListGender, setPlayerListGender] = useState<'MALE' | 'FEMALE' | undefined>(undefined);
   const [showManageUsers, setShowManageUsers] = useState(false);
   const [courts, setCourts] = useState<Court[]>([]);
   const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
@@ -697,7 +698,10 @@ export const GameDetailsContent = () => {
               onCancelInvite={handleCancelInvite}
               onAcceptJoinQueue={handleAcceptJoinQueue}
               onDeclineJoinQueue={handleDeclineJoinQueue}
-              onShowPlayerList={() => setShowPlayerList(true)}
+              onShowPlayerList={(gender) => {
+                setPlayerListGender(gender);
+                setShowPlayerList(true);
+              }}
               onShowManageUsers={() => setShowManageUsers(true)}
               onEditMaxParticipants={() => setIsEditMaxParticipantsModalOpen(true)}
             />
@@ -833,8 +837,12 @@ export const GameDetailsContent = () => {
       {showPlayerList && id && (
         <PlayerListModal
           gameId={id}
-          onClose={() => setShowPlayerList(false)}
+          onClose={() => {
+            setShowPlayerList(false);
+            setPlayerListGender(undefined);
+          }}
           multiSelect={true}
+          filterGender={playerListGender}
           onConfirm={async (playerIds) => {
             console.log(`Invited ${playerIds.length} players`);
             if (id) {

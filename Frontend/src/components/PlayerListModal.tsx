@@ -18,6 +18,7 @@ interface PlayerListModalProps {
   onConfirm?: (playerIds: string[]) => void;
   preSelectedIds?: string[];
   filterPlayerIds?: string[];
+  filterGender?: 'MALE' | 'FEMALE';
   title?: string;
 }
 
@@ -29,6 +30,7 @@ export const PlayerListModal = ({
   onConfirm,
   preSelectedIds = [],
   filterPlayerIds = [],
+  filterGender,
   title
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
@@ -95,6 +97,11 @@ export const PlayerListModal = ({
   const filteredPlayers = useMemo(() => {
     let filtered = players;
 
+    // Filter by gender if specified
+    if (filterGender) {
+      filtered = filtered.filter((player) => player.gender === filterGender);
+    }
+
     // Filter out players that are in the filterPlayerIds array
     if (filterPlayerIds.length > 0) {
       filtered = filtered.filter((player) => !filterPlayerIds.includes(player.id));
@@ -121,7 +128,7 @@ export const PlayerListModal = ({
     });
 
     return filtered.slice(0, 50);
-  }, [players, searchQuery, filterPlayerIds, isFavorite]);
+  }, [players, searchQuery, filterPlayerIds, filterGender, isFavorite]);
 
   const handlePlayerClick = (playerId: string) => {
     if (multiSelect) {

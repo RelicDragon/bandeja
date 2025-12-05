@@ -327,7 +327,7 @@ export const GameCard = ({
           )}
           {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
         </h3>
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1 pr-16">
           <GameStatusIcon status={game.status} />
           {(game.photosCount ?? 0) > 0 && (
             <button
@@ -409,7 +409,7 @@ export const GameCard = ({
             </span>
           )}
         </div>
-        <div className="absolute -top-1 -right-1 flex items-center gap-0 z-20">
+        <div className="absolute -top-2 -right-3 flex items-center gap-0 z-20">
           {canAccessChat && showChatIndicator && (
             <button
               onClick={handleChatClick}
