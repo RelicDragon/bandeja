@@ -327,7 +327,7 @@ export const GameCard = ({
           )}
           {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
         </h3>
-        <div className="flex items-center gap-2 mb-1 pr-16">
+        <div className="flex items-center gap-2 mb-1 pr-10 flex-wrap">
           <GameStatusIcon status={game.status} />
           {(game.photosCount ?? 0) > 0 && (
             <button
