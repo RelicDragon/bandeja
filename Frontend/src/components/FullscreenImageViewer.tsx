@@ -73,6 +73,10 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       onClick={handleBackdropClick}
       style={{ 
         backgroundColor: 'rgba(0, 0, 0, 0.95)',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingRight: 'env(safe-area-inset-right)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft: 'env(safe-area-inset-left)',
       }}
     >
       <div className="relative w-full h-full flex items-center justify-center">
@@ -101,7 +105,13 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           </TransformComponent>
         </TransformWrapper>
 
-        <div className="absolute top-4 right-4 z-50 flex gap-3">
+        <div 
+          className="absolute top-4 right-4 z-50 flex gap-3"
+          style={{
+            top: 'max(1rem, env(safe-area-inset-top))',
+            right: 'max(1rem, env(safe-area-inset-right))',
+          }}
+        >
           <button
             onClick={handleDownload}
             className="w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 shadow-xl backdrop-blur-sm"
@@ -118,7 +128,12 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           </button>
         </div>
 
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
+        <div 
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50"
+          style={{
+            bottom: 'max(2rem, env(safe-area-inset-bottom))',
+          }}
+        >
           <button
             onClick={resetView}
             className="px-6 py-3 rounded-xl bg-black/60 hover:bg-black/80 text-white transition-all duration-200 text-sm font-medium shadow-xl backdrop-blur-sm"
