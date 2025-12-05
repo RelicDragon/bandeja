@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
-import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameSetupSection, GameSetupModal, MultipleCourtsSelector, AvatarUpload } from '@/components';
+import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameSetupSection, GameSetupModal, MultipleCourtsSelector, AvatarUpload, PriceSection } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
 import { usersApi } from '@/api/users';
 import { gameCourtsApi } from '@/api/gameCourts';
 import { mediaApi } from '@/api/media';
-import { Club, Court, EntityType, GameType } from '@/types';
+import { Club, Court, EntityType, GameType, PriceType, PriceCurrency } from '@/types';
 import { InvitablePlayer } from '@/api/users';
 import { addHours } from 'date-fns';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
@@ -47,6 +47,9 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
   const [gameType, setGameType] = useState<GameType>('CLASSIC');
   const [gameName, setGameName] = useState<string>('');
   const [comments, setComments] = useState<string>('');
+  const [priceTotal, setPriceTotal] = useState<number | undefined>(undefined);
+  const [priceType, setPriceType] = useState<PriceType>('NOT_KNOWN');
+  const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(undefined);
   const [storedInitialDate] = useState<Date>(() => {
     if (initialDate) {
       const date = initialDate instanceof Date ? initialDate : new Date(initialDate);
@@ -301,6 +304,9 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
         name: gameName || undefined,
         description: comments,
         participants: participants.filter((id): id is string => id !== null) as any,
+        priceTotal: priceType !== 'NOT_KNOWN' ? priceTotal : undefined,
+        priceType: priceType,
+        priceCurrency: priceType !== 'NOT_KNOWN' ? priceCurrency : undefined,
         ...gameSetup,
       });
 
@@ -501,6 +507,16 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
         <CommentsSection
           comments={comments}
           onCommentsChange={setComments}
+          entityType={entityType}
+        />
+
+        <PriceSection
+          priceTotal={priceTotal}
+          priceType={priceType}
+          priceCurrency={priceCurrency}
+          onPriceTotalChange={setPriceTotal}
+          onPriceTypeChange={setPriceType}
+          onPriceCurrencyChange={setPriceCurrency}
           entityType={entityType}
         />
 

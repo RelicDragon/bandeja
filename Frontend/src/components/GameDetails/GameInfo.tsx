@@ -9,6 +9,7 @@ import { GameAvatar } from '@/components/GameAvatar';
 import { UrlConstructor } from '@/utils/urlConstructor';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { EditGameTextModal } from './EditGameTextModal';
+import { EditGamePriceModal } from './EditGamePriceModal';
 import {
   Calendar,
   MapPin,
@@ -66,6 +67,7 @@ export const GameInfo = ({
   const [shareData, setShareData] = useState({ url: '', title: '', text: '' });
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showEditGameTextModal, setShowEditGameTextModal] = useState(false);
+  const [showEditGamePriceModal, setShowEditGamePriceModal] = useState(false);
 
   const ownerParticipant = game.participants?.find(p => p.role === 'OWNER');
   const owner = ownerParticipant?.user;
@@ -446,6 +448,31 @@ export const GameInfo = ({
           </div>
         )}
         
+        {/* Game Price */}
+        {((game.priceType && game.priceType !== 'NOT_KNOWN') || canEdit) && (
+          <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+            <span className="text-primary-600 dark:text-primary-400" style={{ fontSize: '20px', lineHeight: '20px', width: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>€</span>
+            <div className="flex-1">
+              {canEdit ? (
+                <button
+                  onClick={() => setShowEditGamePriceModal(true)}
+                  className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                >
+                  {game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
+                    ? `${game.priceTotal} ${game.priceCurrency || 'EUR'} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
+                    : t('createGame.priceNotSet')}
+                </button>
+              ) : (
+                <span>
+                  {game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
+                    ? `${game.priceTotal} ${game.priceCurrency || 'EUR'} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
+                    : ''}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        
         {/* Game Description/Comments */}
         {game.description && game.description.trim() !== '' && (
           <div className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
@@ -476,6 +503,12 @@ export const GameInfo = ({
       <EditGameTextModal
         isOpen={showEditGameTextModal}
         onClose={() => setShowEditGameTextModal(false)}
+        game={game}
+        onGameUpdate={onGameUpdate}
+      />
+      <EditGamePriceModal
+        isOpen={showEditGamePriceModal}
+        onClose={() => setShowEditGamePriceModal(false)}
         game={game}
         onGameUpdate={onGameUpdate}
       />

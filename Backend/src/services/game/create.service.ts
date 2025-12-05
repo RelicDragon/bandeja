@@ -126,6 +126,9 @@ export class GameCreateService {
         pointsPerLoose: data.pointsPerLoose ?? 0,
         pointsPerTie: data.pointsPerTie ?? 0,
         ballsInGames: data.ballsInGames ?? false,
+        priceTotal: data.priceTotal,
+        priceType: data.priceType ?? 'NOT_KNOWN',
+        priceCurrency: data.priceCurrency,
         metadata: data.metadata,
         timeIsSet: data.timeIsSet ?? false,
         status: calculateGameStatus({

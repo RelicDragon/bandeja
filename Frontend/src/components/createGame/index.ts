@@ -8,4 +8,5 @@ export * from './CommentsSection';
 export * from './GameStartSection';
 export * from './GameSetupSection';
 export * from './MultipleCourtsSelector';
+export * from './PriceSection';
 

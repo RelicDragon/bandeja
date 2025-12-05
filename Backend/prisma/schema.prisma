@@ -203,6 +203,9 @@ model Game {
   leagueRoundId   String?
   leagueGroupId   String?
   timeIsSet       Boolean          @default(false)
+  priceTotal      Float?
+  priceType       PriceType        @default(NOT_KNOWN)
+  priceCurrency   PriceCurrency?
   metadata        Json?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
@@ -955,4 +958,17 @@ model LeagueRound {
 enum LeagueParticipantType {
   USER
   TEAM
+}
+
+enum PriceType {
+  PER_PERSON
+  PER_TEAM
+  TOTAL
+  NOT_KNOWN
+}
+
+enum PriceCurrency {
+  EUR
+  RSD
+  RUB
 }

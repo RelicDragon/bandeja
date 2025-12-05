@@ -108,7 +108,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         <div 
           className="absolute top-4 right-4 z-50 flex gap-3"
           style={{
-            top: 'max(1rem, env(safe-area-inset-top))',
+            top: 'calc(env(safe-area-inset-top, 0px) + 2.5rem)',
             right: 'max(1rem, env(safe-area-inset-right))',
           }}
         >
