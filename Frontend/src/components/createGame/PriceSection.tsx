@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { EntityType, PriceType, PriceCurrency } from '@/types';
+import { PriceType, PriceCurrency } from '@/types';
 import { Select } from '@/components';
 
 interface PriceSectionProps {
@@ -9,7 +9,6 @@ interface PriceSectionProps {
   onPriceTotalChange: (value: number | undefined) => void;
   onPriceTypeChange: (value: PriceType) => void;
   onPriceCurrencyChange: (value: PriceCurrency | undefined) => void;
-  entityType: EntityType;
 }
 
 export const PriceSection = ({
@@ -19,7 +18,6 @@ export const PriceSection = ({
   onPriceTotalChange,
   onPriceTypeChange,
   onPriceCurrencyChange,
-  entityType,
 }: PriceSectionProps) => {
   const { t } = useTranslation();
 

@@ -517,7 +517,6 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
           onPriceTotalChange={setPriceTotal}
           onPriceTypeChange={setPriceType}
           onPriceCurrencyChange={setPriceCurrency}
-          entityType={entityType}
         />
 
         <div ref={timeSectionRef}>
