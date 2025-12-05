@@ -267,6 +267,15 @@ export const PlayerListModal = ({
                         <p className="text-base font-medium text-gray-900 dark:text-white truncate">
                           {player.firstName} {player.lastName}
                         </p>
+                        {player.gender && player.gender !== 'PREFER_NOT_TO_SAY' && (
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${
+                            player.gender === 'MALE' 
+                              ? 'bg-blue-500 dark:bg-blue-600' 
+                              : 'bg-pink-500 dark:bg-pink-600'
+                          }`}>
+                            <i className={`bi ${player.gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'} text-white text-[8px]`}></i>
+                          </div>
+                        )}
                         {player.telegramUsername && (
                           <MessageCircle size={16} className="text-blue-500 dark:text-blue-400 flex-shrink-0" />
                         )}

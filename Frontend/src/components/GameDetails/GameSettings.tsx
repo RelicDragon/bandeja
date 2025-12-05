@@ -291,42 +291,6 @@ export const GameSettings = ({
               </div>
             </div>
           )}
-          {(game?.entityType === 'GAME' || game?.entityType === 'TOURNAMENT' || game?.entityType === 'LEAGUE') && (
-            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                  {t('createGame.genderTeams.label')}
-                </span>
-                <div className="flex-shrink-0 w-32">
-                  <Select
-                    options={[
-                      { value: 'ANY', label: t('createGame.genderTeams.any') },
-                      { value: 'MEN', label: t('createGame.genderTeams.men') },
-                      { value: 'WOMEN', label: t('createGame.genderTeams.women') },
-                      ...(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0
-                        ? [{ value: 'MIX_PAIRS', label: t('createGame.genderTeams.mixPairs') }]
-                        : []),
-                    ]}
-                    value={isEditMode ? editFormData.genderTeams : (game?.genderTeams || 'ANY')}
-                    onChange={(value) => onFormDataChange({genderTeams: value as GenderTeam})}
-                    disabled={!isEditMode}
-                  />
-                </div>
-              </div>
-              {showNotes && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {(() => {
-                    const selectedGender = isEditMode ? editFormData.genderTeams : (game?.genderTeams || 'ANY');
-                    if (selectedGender === 'ANY') return t('createGame.genderTeams.note.any');
-                    if (selectedGender === 'MEN') return t('createGame.genderTeams.note.men');
-                    if (selectedGender === 'WOMEN') return t('createGame.genderTeams.note.women');
-                    if (selectedGender === 'MIX_PAIRS') return t('createGame.genderTeams.note.mixPairs');
-                    return '';
-                  })()}
-                </p>
-              )}
-            </div>
-          )}
           {game?.maxParticipants !== 2 && (
             <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <div className="flex items-center justify-between mb-1">

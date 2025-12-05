@@ -2,6 +2,7 @@ import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
 import { Game, Invite, JoinQueue } from '@/types';
 import { Users, UserPlus, Sliders, CheckCircle, XCircle, Plus, Edit3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameParticipantsProps {
   game: Game;
@@ -158,48 +159,294 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        <div className="overflow-x-auto overflow-y-hidden -mx-4 px-4">
-          <div className="flex gap-0 pt-1 pb-1">
-            {game.participants.filter(p => p.isPlaying).map((participant) => (
-              <div key={participant.userId} className="flex-shrink-0 w-16">
-                <PlayerAvatar
-                  player={{
-                    id: participant.userId,
-                    firstName: participant.user.firstName,
-                    lastName: participant.user.lastName,
-                    avatar: participant.user.avatar,
-                    level: participant.user.level,
-                    gender: participant.user.gender,
-                  }}
-                  isCurrentUser={participant.userId === userId}
-                  removable={participant.userId === userId && !isOwner}
-                  onRemoveClick={participant.userId === userId ? onLeave : undefined}
-                  role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
-                  smallLayout={true}
-                />
+        {(() => {
+          const playingParticipants = game.participants.filter(p => p.isPlaying);
+          const emptySlots = game.entityType !== 'BAR' && game.entityType !== 'TOURNAMENT' && game.entityType !== 'LEAGUE' 
+            ? game.maxParticipants - playingParticipants.length 
+            : 0;
+
+          const renderGenderIndicator = (gender: 'MALE' | 'FEMALE') => (
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+              gender === 'MALE' 
+                ? 'bg-blue-500 dark:bg-blue-600' 
+                : 'bg-pink-500 dark:bg-pink-600'
+            }`}>
+              <i className={`bi ${gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'} text-white text-[10px]`}></i>
+            </div>
+          );
+
+          const renderParticipantList = (participants: typeof playingParticipants, showEmptySlots: boolean = false) => (
+            <div className="overflow-x-auto overflow-y-hidden -mx-4 px-4">
+              <div className="flex gap-0 pt-1 pb-1">
+                {participants.map((participant) => (
+                  <div key={participant.userId} className="flex-shrink-0 w-16">
+                    <PlayerAvatar
+                      player={{
+                        id: participant.userId,
+                        firstName: participant.user.firstName,
+                        lastName: participant.user.lastName,
+                        avatar: participant.user.avatar,
+                        level: participant.user.level,
+                        gender: participant.user.gender,
+                      }}
+                      isCurrentUser={participant.userId === userId}
+                      removable={participant.userId === userId && !isOwner}
+                      onRemoveClick={participant.userId === userId ? onLeave : undefined}
+                      role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
+                      smallLayout={true}
+                    />
+                  </div>
+                ))}
+                {showEmptySlots && Array.from({ length: emptySlots }).map((_, i) => (
+                  <div key={`empty-${i}`} className="flex-shrink-0 w-16">
+                    {canInvitePlayers ? (
+                      <button
+                        onClick={onShowPlayerList}
+                        className="flex flex-col items-center w-full"
+                      >
+                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
+                          <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                        </div>
+                      </button>
+                    ) : (
+                      <PlayerAvatar
+                        player={null}
+                        smallLayout={true}
+                      />
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-            {game.entityType !== 'BAR' && game.entityType !== 'TOURNAMENT' && game.entityType !== 'LEAGUE' && Array.from({ length: game.maxParticipants - game.participants.filter(p => p.isPlaying).length }).map((_, i) => (
-              <div key={`empty-${i}`} className="flex-shrink-0 w-16">
-                {canInvitePlayers ? (
-                  <button
-                    onClick={onShowPlayerList}
-                    className="flex flex-col items-center w-full"
-                  >
-                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
-                      <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+            </div>
+          );
+
+          if (game.genderTeams === 'MEN') {
+            const maleParticipants = playingParticipants.filter(p => p.user.gender === 'MALE');
+            return (
+              <div className="flex gap-3 -mx-4 px-4">
+                <div className="flex-shrink-0 flex flex-col items-center pt-1 pb-10">
+                  {renderGenderIndicator('MALE')}
+                  <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    {maleParticipants.length}
+                  </span>
+                </div>
+                <div className="flex-1 overflow-x-auto overflow-y-hidden">
+                  <div className="flex gap-0 pt-1 pb-1">
+                    {maleParticipants.map((participant) => (
+                      <div key={participant.userId} className="flex-shrink-0 w-16">
+                        <PlayerAvatar
+                          player={{
+                            id: participant.userId,
+                            firstName: participant.user.firstName,
+                            lastName: participant.user.lastName,
+                            avatar: participant.user.avatar,
+                            level: participant.user.level,
+                            gender: participant.user.gender,
+                          }}
+                          isCurrentUser={participant.userId === userId}
+                          removable={participant.userId === userId && !isOwner}
+                          onRemoveClick={participant.userId === userId ? onLeave : undefined}
+                          role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
+                          smallLayout={true}
+                        />
+                      </div>
+                    ))}
+                    {Array.from({ length: emptySlots }).map((_, i) => (
+                      <div key={`empty-${i}`} className="flex-shrink-0 w-16">
+                        {canInvitePlayers ? (
+                          <button
+                            onClick={onShowPlayerList}
+                            className="flex flex-col items-center w-full"
+                          >
+                            <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
+                              <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                            </div>
+                          </button>
+                        ) : (
+                          <PlayerAvatar
+                            player={null}
+                            smallLayout={true}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          if (game.genderTeams === 'WOMEN') {
+            const femaleParticipants = playingParticipants.filter(p => p.user.gender === 'FEMALE');
+            return (
+              <div className="flex gap-3 -mx-4 px-4">
+                <div className="flex-shrink-0 flex flex-col items-center pt-1 pb-10">
+                  {renderGenderIndicator('FEMALE')}
+                  <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    {femaleParticipants.length}
+                  </span>
+                </div>
+                <div className="flex-1 overflow-x-auto overflow-y-hidden">
+                  <div className="flex gap-0 pt-1 pb-1">
+                    {femaleParticipants.map((participant) => (
+                      <div key={participant.userId} className="flex-shrink-0 w-16">
+                        <PlayerAvatar
+                          player={{
+                            id: participant.userId,
+                            firstName: participant.user.firstName,
+                            lastName: participant.user.lastName,
+                            avatar: participant.user.avatar,
+                            level: participant.user.level,
+                            gender: participant.user.gender,
+                          }}
+                          isCurrentUser={participant.userId === userId}
+                          removable={participant.userId === userId && !isOwner}
+                          onRemoveClick={participant.userId === userId ? onLeave : undefined}
+                          role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
+                          smallLayout={true}
+                        />
+                      </div>
+                    ))}
+                    {Array.from({ length: emptySlots }).map((_, i) => (
+                      <div key={`empty-${i}`} className="flex-shrink-0 w-16">
+                        {canInvitePlayers ? (
+                          <button
+                            onClick={onShowPlayerList}
+                            className="flex flex-col items-center w-full"
+                          >
+                            <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
+                              <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                            </div>
+                          </button>
+                        ) : (
+                          <PlayerAvatar
+                            player={null}
+                            smallLayout={true}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          if (game.genderTeams === 'MIX_PAIRS') {
+            const maleParticipants = playingParticipants.filter(p => p.user.gender === 'MALE');
+            const femaleParticipants = playingParticipants.filter(p => p.user.gender === 'FEMALE');
+            const totalEmptySlots = emptySlots;
+            const maleEmptySlots = Math.ceil(totalEmptySlots / 2);
+            const femaleEmptySlots = Math.floor(totalEmptySlots / 2);
+            
+            return (
+              <div className="space-y-4">
+                <div className="flex gap-3 -mx-4 px-4">
+                  <div className="flex-shrink-0 flex flex-col items-center pt-4 pb-1">
+                    {renderGenderIndicator('MALE')}
+                    <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      {maleParticipants.length}
+                    </span>
+                  </div>
+                  <div className="flex-1 overflow-x-auto overflow-y-hidden">
+                    <div className="flex gap-0 pt-1 pb-1">
+                      {maleParticipants.map((participant) => (
+                        <div key={participant.userId} className="flex-shrink-0 w-16">
+                          <PlayerAvatar
+                            player={{
+                              id: participant.userId,
+                              firstName: participant.user.firstName,
+                              lastName: participant.user.lastName,
+                              avatar: participant.user.avatar,
+                              level: participant.user.level,
+                              gender: participant.user.gender,
+                            }}
+                            isCurrentUser={participant.userId === userId}
+                            removable={participant.userId === userId && !isOwner}
+                            onRemoveClick={participant.userId === userId ? onLeave : undefined}
+                            role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
+                            smallLayout={true}
+                          />
+                        </div>
+                      ))}
+                      {Array.from({ length: maleEmptySlots }).map((_, i) => (
+                        <div key={`empty-male-${i}`} className="flex-shrink-0 w-16">
+                          {canInvitePlayers ? (
+                            <button
+                              onClick={onShowPlayerList}
+                              className="flex flex-col items-center w-full"
+                            >
+                              <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
+                                <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                              </div>
+                            </button>
+                          ) : (
+                            <PlayerAvatar
+                              player={null}
+                              smallLayout={true}
+                            />
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  </button>
-                ) : (
-                  <PlayerAvatar
-                    player={null}
-                    smallLayout={true}
-                  />
-                )}
+                  </div>
+                </div>
+                <div className="flex gap-3 -mx-4 px-4">
+                  <div className="flex-shrink-0 flex flex-col items-center pt-4 pb-1">
+                    {renderGenderIndicator('FEMALE')}
+                    <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      {femaleParticipants.length}
+                    </span>
+                  </div>
+                  <div className="flex-1 overflow-x-auto overflow-y-hidden">
+                    <div className="flex gap-0 pt-1 pb-1">
+                      {femaleParticipants.map((participant) => (
+                        <div key={participant.userId} className="flex-shrink-0 w-16">
+                          <PlayerAvatar
+                            player={{
+                              id: participant.userId,
+                              firstName: participant.user.firstName,
+                              lastName: participant.user.lastName,
+                              avatar: participant.user.avatar,
+                              level: participant.user.level,
+                              gender: participant.user.gender,
+                            }}
+                            isCurrentUser={participant.userId === userId}
+                            removable={participant.userId === userId && !isOwner}
+                            onRemoveClick={participant.userId === userId ? onLeave : undefined}
+                            role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
+                            smallLayout={true}
+                          />
+                        </div>
+                      ))}
+                      {Array.from({ length: femaleEmptySlots }).map((_, i) => (
+                        <div key={`empty-female-${i}`} className="flex-shrink-0 w-16">
+                          {canInvitePlayers ? (
+                            <button
+                              onClick={onShowPlayerList}
+                              className="flex flex-col items-center w-full"
+                            >
+                              <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
+                                <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                              </div>
+                            </button>
+                          ) : (
+                            <PlayerAvatar
+                              player={null}
+                              smallLayout={true}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
+            );
+          }
+
+          return renderParticipantList(playingParticipants, true);
+        })()}
         {(() => {
           const showInviteButton = (isOwner || (game.anyoneCanInvite && isParticipant)) && !isFull;
           const showManageButton = isOwner && canViewSettings;

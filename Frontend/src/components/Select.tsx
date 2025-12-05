@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 
 interface SelectOption {
@@ -19,19 +20,68 @@ export interface SelectProps {
 export const Select = ({ options, value, onChange, placeholder, className = '', disabled = false }: SelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
 
   const selectedOption = options.find(option => option.value === value);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+  const updateDropdownPosition = useCallback(() => {
+    if (!selectRef.current) return;
+    const rect = selectRef.current.getBoundingClientRect();
+    setDropdownPosition(prev => {
+      const newPos = {
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      };
+      if (prev && 
+          Math.abs(prev.top - newPos.top) < 1 && 
+          Math.abs(prev.left - newPos.left) < 1 && 
+          Math.abs(prev.width - newPos.width) < 1) {
+        return prev;
       }
+      return newPos;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setDropdownPosition(null);
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        (selectRef.current && selectRef.current.contains(target)) ||
+        (dropdownRef.current && dropdownRef.current.contains(target))
+      ) {
+        return;
+      }
+      setIsOpen(false);
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    updateDropdownPosition();
+
+    const handleReposition = () => {
+      updateDropdownPosition();
+    };
+
+    window.addEventListener('resize', handleReposition);
+    window.addEventListener('scroll', handleReposition, true);
+
+    return () => {
+      window.removeEventListener('resize', handleReposition);
+      window.removeEventListener('scroll', handleReposition, true);
+    };
+  }, [isOpen, updateDropdownPosition]);
 
   return (
     <div className={`relative ${className}`} ref={selectRef}>
@@ -55,8 +105,17 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
         />
       </button>
 
-      {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg">
+      {isOpen && !disabled && dropdownPosition && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={dropdownRef}
+          data-select-dropdown
+          className="fixed z-[10000] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
+          style={{
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+          }}
+        >
           {options.map((option) => (
             <button
               key={option.value}
@@ -73,7 +132,8 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
               <span>{option.label}</span>
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

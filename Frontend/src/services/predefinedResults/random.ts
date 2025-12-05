@@ -309,9 +309,7 @@ export function generateRandomRound(
     playingParticipants = playingParticipants.filter(p => 
       p.user.gender === 'MALE' || p.user.gender === 'FEMALE'
     );
-  } else if (game.genderTeams === 'ANY' || !game.genderTeams) {
-    playingParticipants = playingParticipants;
-  } else {
+  } else if (game.genderTeams && game.genderTeams !== 'ANY') {
     playingParticipants = playingParticipants.filter(p => 
       p.user.gender !== 'PREFER_NOT_TO_SAY'
     );
