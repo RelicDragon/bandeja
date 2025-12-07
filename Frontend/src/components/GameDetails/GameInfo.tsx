@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components';
 import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
@@ -27,6 +27,7 @@ import {
   Swords,
   Trophy,
   GraduationCap,
+  ChevronRight,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -45,6 +46,7 @@ interface GameInfoProps {
   onOpenTimeDurationModal: () => void;
   onScrollToSettings: () => void;
   onGameUpdate?: (game: Game) => void;
+  collapsedByDefault?: boolean;
 }
 
 export const GameInfo = ({
@@ -59,7 +61,8 @@ export const GameInfo = ({
   onOpenLocationModal,
   onOpenTimeDurationModal,
   onScrollToSettings,
-  onGameUpdate
+  onGameUpdate,
+  collapsedByDefault = false
 }: GameInfoProps) => {
   const { t } = useTranslation();
   const showTags = game.entityType !== 'LEAGUE';
@@ -68,6 +71,26 @@ export const GameInfo = ({
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showEditGameTextModal, setShowEditGameTextModal] = useState(false);
   const [showEditGamePriceModal, setShowEditGamePriceModal] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(collapsedByDefault);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState(0);
+  const prevResultsStatusRef = useRef(game.resultsStatus);
+
+  useEffect(() => {
+    const prevStatus = prevResultsStatusRef.current;
+    const currentStatus = game.resultsStatus;
+
+    // When switching from NONE to not NONE, collapse
+    if (prevStatus === 'NONE' && currentStatus !== 'NONE') {
+      setIsCollapsed(true);
+    }
+    // When reset (back to NONE), expand
+    if (currentStatus === 'NONE') {
+      setIsCollapsed(false);
+    }
+
+    prevResultsStatusRef.current = currentStatus;
+  }, [game.resultsStatus]);
 
   const ownerParticipant = game.participants?.find(p => p.role === 'OWNER');
   const owner = ownerParticipant?.user;
@@ -160,333 +183,611 @@ export const GameInfo = ({
     }
   };
 
+  const getDateLabel = (date: Date | string, includeComma = true) => {
+    const gameDate = typeof date === 'string' ? new Date(date) : date;
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    const gameDateOnly = new Date(gameDate.getFullYear(), gameDate.getMonth(), gameDate.getDate());
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const tomorrowOnly = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
+    const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+
+    if (gameDateOnly.getTime() === todayOnly.getTime()) {
+      return t('createGame.today');
+    } else if (gameDateOnly.getTime() === tomorrowOnly.getTime()) {
+      return t('createGame.tomorrow');
+    } else if (gameDateOnly.getTime() === yesterdayOnly.getTime()) {
+      return t('createGame.yesterday');
+    } else {
+      return formatDate(gameDate, 'MMM d') + (includeComma ? ',' : '');
+    }
+  };
+
+  const playingParticipants = game.participants?.filter(p => p.isPlaying) ?? [];
+  const shouldShowTiming = game.entityType !== 'LEAGUE_SEASON';
+
+  const renderName = () => {
+    const titleClass = isCollapsed 
+      ? 'text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-20'
+      : 'text-2xl font-bold text-gray-900 dark:text-white mb-2';
+    const leagueNameClass = isCollapsed
+      ? 'text-blue-600 dark:text-blue-400'
+      : 'text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2';
+    const leagueSubtitleClass = isCollapsed
+      ? 'text-purple-600 dark:text-purple-400'
+      : 'text-xl font-semibold text-purple-600 dark:text-purple-400 mb-2';
+    const groupClass = isCollapsed
+      ? 'px-2 py-0.5 text-xs font-medium rounded text-white'
+      : 'px-3 py-1 text-sm font-medium rounded text-white';
+    const groupContainerClass = isCollapsed
+      ? 'mt-1 flex items-center gap-2 flex-wrap'
+      : 'text-lg font-medium mb-2 flex items-center gap-2 flex-wrap';
+    const gameTypeClass = isCollapsed
+      ? 'ml-2 text-xs text-gray-500 dark:text-gray-400'
+      : '';
+
+    const TitleTag = isCollapsed ? 'h3' : 'h1';
+
+    return (
+      <TitleTag
+        onClick={() => !isCollapsed && canEdit && setShowEditGameTextModal(true)}
+        className={`${titleClass} ${
+          !isCollapsed && canEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
+        }`}
+      >
+        {game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name
+          ? (
+            <>
+              <span className={leagueNameClass}>
+                {game.parent.leagueSeason.league.name}
+              </span>
+              {game.parent.leagueSeason.game?.name && (
+                <span className={leagueSubtitleClass}> {game.parent.leagueSeason.game.name}</span>
+              )}
+              {(game.leagueGroup?.name || game.leagueRound) && (
+                <div className={groupContainerClass}>
+                  {game.leagueGroup?.name && (
+                    <span
+                      className={groupClass}
+                      style={{ backgroundColor: game.leagueGroup.color || '#6b7280' }}
+                    >
+                      {game.leagueGroup.name}
+                    </span>
+                  )}
+                  {game.leagueRound && (
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('gameDetails.round')} {game.leagueRound.orderIndex + 1}
+                    </span>
+                  )}
+                </div>
+              )}
+            </>
+          )
+          : game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name
+            ? (
+              <>
+                <span className={leagueNameClass}>{game.leagueSeason.league.name}</span>
+                {game.name && (
+                  <span className={leagueSubtitleClass}> {game.name}</span>
+                )}
+              </>
+            )
+            : game.name}
+        {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.name && game.gameType !== 'CLASSIC' && (
+          <span className={gameTypeClass}>
+            ({t(`games.gameTypes.${game.gameType}`)})
+          </span>
+        )}
+        {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
+      </TitleTag>
+    );
+  };
+
+  const renderTags = () => {
+    if (!showTags) return null;
+
+    const tagPadding = isCollapsed ? 'px-2 py-1' : 'px-3 py-1';
+    const tagText = isCollapsed ? 'text-xs' : 'text-sm';
+    const iconSize = isCollapsed ? 12 : 14;
+    const gapClass = isCollapsed ? 'gap-2' : 'gap-2';
+    const mbClass = isCollapsed ? 'mb-1' : 'mb-2';
+    const prClass = isCollapsed ? 'pr-10' : '';
+
+    return (
+      <div className={`flex items-center ${gapClass} ${mbClass} ${prClass} flex-wrap`}>
+        <GameStatusIcon status={game.status} className={!isCollapsed ? 'p-1' : ''} />
+        {!game.isPublic && (
+          <span className={`${tagPadding} ${tagText} font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1`}>
+            <Lock size={iconSize} />
+            <span className="hidden sm:inline">{t('games.private')}</span>
+          </span>
+        )}
+        {game.genderTeams && game.genderTeams !== 'ANY' && (
+          <div className="flex items-center gap-1">
+            {game.genderTeams === 'MIX_PAIRS' ? (
+              <div className="h-6 px-2 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 dark:from-blue-600 dark:to-pink-600 flex items-center justify-center gap-1">
+                <i className="bi bi-gender-male text-white text-[10px]"></i>
+                <i className="bi bi-gender-female -ml-1 text-white text-[10px]"></i>
+              </div>
+            ) : (
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                game.genderTeams === 'MEN' 
+                  ? 'bg-blue-500 dark:bg-blue-600' 
+                  : 'bg-pink-500 dark:bg-pink-600'
+              }`}>
+                <i className={`bi ${game.genderTeams === 'MEN' ? 'bi-gender-male' : 'bi-gender-female'} text-white text-xs`}></i>
+              </div>
+            )}
+          </div>
+        )}
+        {isOwner && (
+          <span className={`${tagPadding} ${tagText} font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1`}>
+            <Crown size={iconSize} className={isCollapsed ? 'hidden' : ''} />
+            {isCollapsed ? t('games.owner') : t('games.organizerFull')}
+          </span>
+        )}
+        {game.entityType !== 'GAME' && (
+          <span className={`${tagPadding} ${tagText} font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1`}>
+            {game.entityType === 'TOURNAMENT' && <Swords size={iconSize} />}
+            {(game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && <Trophy size={iconSize} />}
+            {game.entityType === 'TRAINING' && <GraduationCap size={iconSize} />}
+            {game.entityType === 'BAR' && <Beer size={iconSize} />}
+            {t(`games.entityTypes.${game.entityType}`)}
+          </span>
+        )}
+        {game.gameType !== 'CLASSIC' && (
+          <button
+            onClick={() => !isCollapsed && canEdit && setShowEditGameTextModal(true)}
+            className={`${tagPadding} ${tagText} font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 ${
+              !isCollapsed && canEdit ? 'hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors' : ''
+            } ${isCollapsed ? 'hidden' : ''}`}
+          >
+            {t(`games.gameTypes.${game.gameType}`)}
+          </button>
+        )}
+        {isGuest && (
+          <span className={`${tagPadding} ${tagText} font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400`}>
+            {t('chat.guest')}
+          </span>
+        )}
+        {!game.affectsRating && (
+          <span className={`${tagPadding} ${tagText} font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1`}>
+            <Award size={iconSize} className={isCollapsed ? '' : 'hidden'} />
+            <Ban size={iconSize} />
+            <span className="hidden sm:inline">{t('games.noRating')}</span>
+          </span>
+        )}
+        {game.hasFixedTeams && (
+          <span className={`${tagPadding} ${tagText} font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1`}>
+            <div className="flex items-center">
+              <Users size={iconSize} />
+              <Users size={iconSize} />
+            </div>
+            <span className="hidden sm:inline">{t('games.fixedTeams')}</span>
+          </span>
+        )}
+        {game.resultsStatus === 'FINAL' && (
+          <span className={`${tagPadding} ${tagText} font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1`}>
+            <Award size={iconSize} />
+            {t('games.resultsAvailable')}
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  const renderCollapsedSummary = () => {
+    if (game.entityType === 'TRAINING') {
+      const owner = game.participants?.find(p => p.role === 'OWNER');
+      return (
+        <>
+          <div className="flex-shrink-0">
+            {owner && (
+              <PlayerAvatar
+                player={{
+                  id: owner.userId,
+                  firstName: owner.user.firstName,
+                  lastName: owner.user.lastName,
+                  avatar: owner.user.avatar,
+                  level: owner.user.level,
+                  gender: owner.user.gender,
+                }}
+                smallLayout={true}
+                showName={false}
+              />
+            )}
+          </div>
+          <div className="flex flex-col gap-2 flex-1">
+            <div className="flex items-center gap-1">
+              <Calendar size={14} />
+              <span>
+                {getDateLabel(game.startTime, false)}
+                {shouldShowTiming && (
+                  <>
+                    {` ${formatDate(game.startTime, 'HH:mm')}`}
+                    {`, ${(() => {
+                      const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                      if (durationHours === Math.floor(durationHours)) {
+                        return `${durationHours}${t('common.h')}`;
+                      } else {
+                        const hours = Math.floor(durationHours);
+                        const minutes = Math.round((durationHours % 1) * 60);
+                        return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                      }
+                    })()}`}
+                  </>
+                )}
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              {(game.court?.club || game.club) && (
+                <div className="flex items-center gap-1">
+                  <MapPin size={14} />
+                  <span className="truncate max-w-32">
+                    {game.court?.club?.name || game.club?.name}
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-1">
+                <Users size={14} />
+                <span>
+                  {`${playingParticipants.length}/${game.maxParticipants}`}
+                </span>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    const avatarToShow = game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar;
+    if (avatarToShow) {
+      return (
+        <>
+          <div className="flex-shrink-0">
+            <GameAvatar avatar={avatarToShow} small alt={game.name || t('gameDetails.gameAvatar')} />
+          </div>
+          <div className="flex flex-col gap-2 flex-1">
+            <div className="flex items-center gap-1">
+              <Calendar size={14} />
+              <span>
+                {getDateLabel(game.startTime, false)}
+                {shouldShowTiming && (
+                  <>
+                    {` ${formatDate(game.startTime, 'HH:mm')}`}
+                    {game.entityType !== 'BAR' ? `, ${(() => {
+                      const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                      if (durationHours === Math.floor(durationHours)) {
+                        return `${durationHours}${t('common.h')}`;
+                      } else {
+                        const hours = Math.floor(durationHours);
+                        const minutes = Math.round((durationHours % 1) * 60);
+                        return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                      }
+                    })()}` : ''}
+                  </>
+                )}
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <Users size={14} />
+                <span>
+                  {game.entityType === 'BAR' 
+                    ? playingParticipants.length
+                    : `${playingParticipants.length}/${game.maxParticipants}`}
+                </span>
+              </div>
+              {(game.court?.club || game.club) && (
+                <div className="flex items-center gap-1">
+                  <MapPin size={14} />
+                  <span className="truncate max-w-32">
+                    {game.court?.club?.name || game.club?.name}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <div className="flex items-center gap-1">
+          <Calendar size={14} />
+          <span>
+            {getDateLabel(game.startTime, false)}
+            {shouldShowTiming && (
+              <>
+                {` ${formatDate(game.startTime, 'HH:mm')}`}
+                {game.entityType !== 'BAR' ? `, ${(() => {
+                  const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                  if (durationHours === Math.floor(durationHours)) {
+                    return `${durationHours}${t('common.h')}`;
+                  } else {
+                    const hours = Math.floor(durationHours);
+                    const minutes = Math.round((durationHours % 1) * 60);
+                    return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                  }
+                })()}` : ''}
+              </>
+            )}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Users size={14} />
+          <span>
+            {game.entityType === 'BAR' 
+              ? playingParticipants.length
+              : `${playingParticipants.length}/${game.maxParticipants}`}
+          </span>
+        </div>
+        {(game.court?.club || game.club) && (
+          <div className="flex items-center gap-1">
+            <MapPin size={14} />
+            <span className="truncate max-w-32">
+              {game.court?.club?.name || game.club?.name}
+            </span>
+          </div>
+        )}
+      </>
+    );
+  };
+
+  useEffect(() => {
+    const element = contentRef.current;
+    if (!element) return;
+    const updateHeight = () => {
+      setContentHeight(element.scrollHeight);
+    };
+    updateHeight();
+    const resizeObserver = new ResizeObserver(updateHeight);
+    resizeObserver.observe(element);
+    return () => resizeObserver.disconnect();
+  }, [game]);
+
   return (
-    <Card className={`relative ${getEntityGradient()}`}>
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
-        <button
-          onClick={handleShare}
-          className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
-          title={t('gameDetails.shareGame')}
-        >
-          <ExternalLink size={24} className="text-white" />
-        </button>
-        <button
-          onClick={handleNavigate}
-          className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
-          title={t('gameDetails.navigateToClub')}
-        >
-          <MapPin size={24} className="text-white" />
-        </button>
+    <Card className={`relative transition-all duration-300 ease-in-out ${isCollapsed ? '-translate-y-0 z-[5] -mb-4' : 'translate-y-0 z-auto mb-2'} ${getEntityGradient()}`}>
+      <div className="absolute right-4 z-20">
+        <div className="relative flex flex-col items-end gap-2">
+          <div className={`flex flex-col gap-2 transition-all duration-300 ease-in-out ${
+            isCollapsed 
+              ? 'translate-x-8 opacity-0 pointer-events-none max-h-0 overflow-hidden' 
+              : 'translate-x-0 opacity-100 pointer-events-auto max-h-32'
+          }`}>
+            <button
+              onClick={handleShare}
+              className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
+              title={t('gameDetails.shareGame')}
+            >
+              <ExternalLink size={24} className="text-white" />
+            </button>
+            <button
+              onClick={handleNavigate}
+              className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
+              title={t('gameDetails.navigateToClub')}
+            >
+              <MapPin size={24} className="text-white" />
+            </button>
+          </div>
+          <button
+            onClick={() => setIsCollapsed(prev => !prev)}
+            className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 ease-in-out ${
+              isCollapsed ? 'absolute top-2 right-0' : 'relative'
+            }`}
+            title={isCollapsed ? t('common.expand') : t('common.collapse')}
+          >
+            <div className={`transition-transform duration-300 ${isCollapsed ? 'rotate-0' : 'rotate-90'}`}>
+              <ChevronRight size={24} className="text-gray-600 dark:text-gray-300" />
+            </div>
+          </button>
+        </div>
       </div>
       {game.entityType !== 'GAME' && (
         <div className="absolute bottom-2 right-2 z-0 pointer-events-none">
           {getEntityIcon()}
         </div>
       )}
-      {game.avatar && (
-        <div className="mb-4 flex justify-center">
-          <div className="relative">
-            <button
-              onClick={() => setShowFullscreenAvatar(true)}
-              className="relative transition-all duration-200 hover:opacity-90 cursor-pointer"
-            >
-              <GameAvatar avatar={game.avatar} extralarge={true} alt={game.name || t('gameDetails.gameAvatar')} />
-            </button>
-          </div>
+      {isCollapsed && (
+        <div className="mb-3 relative z-10">
+          {renderName()}
+          {renderTags()}
         </div>
       )}
-      <div className="flex items-start justify-between mb-4">
-        <div className="pr-20 flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <GameStatusIcon status={game.status} className="p-1" />
-            {showTags && !game.isPublic && (
-              <span className="px-3 py-1 text-sm font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
-                <Lock size={14} />
-                {t('games.private')}
-              </span>
-            )}
-            {showTags && game.genderTeams && game.genderTeams !== 'ANY' && (
-              <div className="flex items-center gap-1">
-                {game.genderTeams === 'MIX_PAIRS' ? (
-                  <div className="h-6 px-2 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 dark:from-blue-600 dark:to-pink-600 flex items-center justify-center gap-1">
-                    <i className="bi bi-gender-male text-white text-[10px]"></i>
-                    <i className="bi bi-gender-female -ml-1 text-white text-[10px]"></i>
-                  </div>
-                ) : (
-                  <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                    game.genderTeams === 'MEN' 
-                      ? 'bg-blue-500 dark:bg-blue-600' 
-                      : 'bg-pink-500 dark:bg-pink-600'
-                  }`}>
-                    <i className={`bi ${game.genderTeams === 'MEN' ? 'bi-gender-male' : 'bi-gender-female'} text-white text-[10px]`}></i>
-                  </div>
+      {isCollapsed && (
+        <div className={`text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 -mb-1 ${game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : 'flex items-center gap-4'}`}>
+          {renderCollapsedSummary()}
+        </div>
+      )}
+      <div
+        ref={contentRef}
+        className="transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden"
+        style={{ maxHeight: isCollapsed ? 0 : contentHeight || undefined, opacity: isCollapsed ? 0 : 1 }}
+      >
+        {!isCollapsed && game.avatar && (
+          <div className="mb-4 flex justify-center">
+            <div className="relative">
+              <button
+                onClick={() => setShowFullscreenAvatar(true)}
+                className="relative transition-all duration-200 hover:opacity-90 cursor-pointer"
+              >
+                <GameAvatar avatar={game.avatar} extralarge={true} alt={game.name || t('gameDetails.gameAvatar')} />
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="flex items-start justify-between mb-4">
+          <div className="pr-20 flex-1 min-w-0">
+            {renderName()}
+            {renderTags()}
+          </div>
+        </div>
+
+        <div className="space-y-3 mb-0">
+          <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+            <Calendar size={20} className="text-primary-600 dark:text-primary-400" />
+            <span>{formatDate(game.startTime, 'PPP')}</span>
+          </div>
+          {game.entityType !== 'LEAGUE_SEASON' && (
+            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+              <Clock size={20} className="text-primary-600 dark:text-primary-400" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  {canEdit ? (
+                    <button
+                      onClick={() => {
+                        if (isEditMode) {
+                          onScrollToSettings();
+                        } else {
+                          onOpenTimeDurationModal();
+                        }
+                      }}
+                      className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                    >
+                      {game.entityType === 'BAR' 
+                        ? formatDate(game.startTime, 'p')
+                        : `${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`
+                      }
+                    </button>
+                  ) : (
+                    <span>
+                      {game.entityType === 'BAR' 
+                        ? formatDate(game.startTime, 'p')
+                        : `${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`
+                      }
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          {(game.court?.club || game.club) && (
+            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+              <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  {canEdit ? (
+                    <button
+                      onClick={() => {
+                        if (isEditMode) {
+                          onScrollToSettings();
+                        } else {
+                          onOpenLocationModal();
+                        }
+                      }}
+                      className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                    >
+                      {game.court?.club?.name || game.club?.name}
+                    </button>
+                  ) : (
+                    <p className="font-medium">{game.court?.club?.name || game.club?.name}</p>
+                  )}
+                  <button
+                    onClick={onToggleFavorite}
+                    className="p-2 pb-0 pt-0 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    title={game.isClubFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
+                  >
+                    <Star
+                      size={20}
+                      className={game.isClubFavorite
+                        ? 'text-yellow-500 fill-yellow-500'
+                        : 'text-gray-400 hover:text-yellow-500'
+                      }
+                    />
+                  </button>
+                </div>
+                {game.court && !(game.entityType === 'BAR' && courts.length === 1) && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {game.court.name}
+                  </p>
+                )}
+                {!game.court && game.club && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {t('createGame.notBookedYet')}
+                  </p>
+                )}
+                {/* Show booking status */}
+                {game.court && (
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    {game.hasBookedCourt 
+                      ? (game.entityType === 'BAR' ? t('createGame.hasBookedHall') : t('createGame.hasBookedCourt'))
+                      : t('createGame.notBookedYet')
+                    }
+                  </p>
                 )}
               </div>
-            )}
-            {showTags && isOwner && (
-              <span className="px-3 py-1 text-sm font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1">
-                <Crown size={14} />
-                {t('games.organizerFull')}
-              </span>
-            )}
-            {showTags && game.entityType !== 'GAME' && (
-              <span className="px-3 py-1 text-sm font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
-                {game.entityType === 'TOURNAMENT' && <Swords size={14} />}
-                {game.entityType === 'LEAGUE_SEASON' && <Trophy size={14} />}
-                {game.entityType === 'TRAINING' && <GraduationCap size={14} />}
-                {game.entityType === 'BAR' && <Beer size={14} />}
-                {t(`games.entityTypes.${game.entityType}`)}
-              </span>
-            )}
-            {showTags && game.gameType !== 'CLASSIC' && (
-              <button
-                onClick={() => canEdit && setShowEditGameTextModal(true)}
-                className={`px-3 py-1 text-sm font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 ${
-                  canEdit ? 'hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors' : ''
-                }`}
-              >
-                {t(`games.gameTypes.${game.gameType}`)}
-              </button>
-            )}
-            {showTags && isGuest && (
-              <span className="px-3 py-1 text-sm font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                {t('chat.guest')}
-              </span>
-            )}
-            {showTags && !game.affectsRating && (
-              <span className="px-3 py-1 text-sm font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
-                <Ban size={14} />
-                {t('games.noRating')}
-              </span>
-            )}
-            {showTags && game.hasFixedTeams && (
-              <span className="px-3 py-1 text-sm font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1">
-                <div className="flex items-center">
-                  <Users size={14} />
-                  <Users size={14} />
-                </div>
-                {t('games.fixedTeams')}
-              </span>
-            )}
-            {showTags && (game.status === 'STARTED' || game.status === 'FINISHED') && game.resultsStatus === 'FINAL' && (
-              <span className="px-3 py-1 text-sm font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
-                <Award size={14} />
-                {t('games.resultsAvailable')}
-              </span>
-            )}
-          </div>
-          {game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name ? (
-            <>
-              <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                {game.parent.leagueSeason.league.name}
-              </h1>
-              {game.parent.leagueSeason.game?.name && (
-                <p className="text-2xl font-semibold text-purple-600 dark:text-purple-400 mt-2">
-                  {game.parent.leagueSeason.game.name}
-                </p>
-              )}
-              <p className="text-xl font-medium mt-2 flex items-center gap-2 flex-wrap">
-                {game.leagueGroup?.name && (
-                  <span 
-                    className="px-3 py-1 text-sm font-medium rounded text-white"
-                    style={{ backgroundColor: game.leagueGroup.color || '#6b7280' }}
-                  >
-                    {game.leagueGroup.name}
-                  </span>
-                )}
-                <span className="text-gray-600 dark:text-gray-400">{t('gameDetails.round')} {game.leagueRound.orderIndex + 1}</span>
-              </p>
-            </>
-          ) : game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name ? (
-            <>
-              <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                {game.leagueSeason.league.name}
-              </h1>
-              {game.name && game.name.trim() !== '' && (
-                <button
-                  onClick={() => canEdit && setShowEditGameTextModal(true)}
-                  className={`text-2xl font-semibold text-purple-600 dark:text-purple-400 mt-2 ${
-                    canEdit ? 'hover:text-purple-700 dark:hover:text-purple-300 cursor-pointer transition-colors' : ''
-                  }`}
-                >
-                  {game.name}
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              <h1 
-                onClick={() => canEdit && setShowEditGameTextModal(true)}
-                className={`text-3xl font-bold text-gray-900 dark:text-white ${
-                  canEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
-                }`}
-              >
-                {game.name && game.name.trim() !== '' ? game.name : t(`games.gameTypes.${game.gameType}`)}
-              </h1>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-3 mb-0">
-        <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-          <Calendar size={20} className="text-primary-600 dark:text-primary-400" />
-          <span>{formatDate(game.startTime, 'PPP')}</span>
-        </div>
-        {game.entityType !== 'LEAGUE_SEASON' && (
-          <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-            <Clock size={20} className="text-primary-600 dark:text-primary-400" />
-            <div className="flex-1">
               <div className="flex items-center gap-2">
+                {game.entityType === 'BAR' && isOwner && courts.length > 1 && (
+                  <button
+                    onClick={onEditCourt}
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    title={t('gameDetails.editHall')}
+                  >
+                    <Edit3 size={20} className="text-gray-400 hover:text-primary-600" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          {!isOwner && owner && (
+            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+              <Crown size={20} className="text-primary-600 dark:text-primary-400" />
+              <PlayerAvatar
+                player={owner}
+                extrasmall={true}
+                showName={false}
+              />
+              <span className="text-sm">
+                {[owner.firstName, owner.lastName].filter(name => name && name.trim()).join(' ')}
+              </span>
+            </div>
+          )}
+          
+          {/* Game Price */}
+          {((game.priceType && game.priceType !== 'NOT_KNOWN') || canEdit) && (
+            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-primary-600 dark:text-primary-400" style={{ fontSize: '20px', lineHeight: '20px', width: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>€</span>
+              <div className="flex-1">
                 {canEdit ? (
                   <button
-                    onClick={() => {
-                      if (isEditMode) {
-                        onScrollToSettings();
-                      } else {
-                        onOpenTimeDurationModal();
-                      }
-                    }}
+                    onClick={() => setShowEditGamePriceModal(true)}
                     className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                   >
-                    {game.entityType === 'BAR' 
-                      ? formatDate(game.startTime, 'p')
-                      : `${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`
-                    }
+                    {game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
+                      ? `${game.priceTotal} ${game.priceCurrency || 'EUR'} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
+                      : t('createGame.priceNotSet')}
                   </button>
                 ) : (
                   <span>
-                    {game.entityType === 'BAR' 
-                      ? formatDate(game.startTime, 'p')
-                      : `${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`
-                    }
+                    {game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
+                      ? `${game.priceTotal} ${game.priceCurrency || 'EUR'} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
+                      : ''}
                   </span>
                 )}
               </div>
             </div>
-          </div>
-        )}
-        {(game.court?.club || game.club) && (
-          <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-            <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                {canEdit ? (
-                  <button
-                    onClick={() => {
-                      if (isEditMode) {
-                        onScrollToSettings();
-                      } else {
-                        onOpenLocationModal();
-                      }
-                    }}
-                    className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
-                  >
-                    {game.court?.club?.name || game.club?.name}
-                  </button>
-                ) : (
-                  <p className="font-medium">{game.court?.club?.name || game.club?.name}</p>
-                )}
-                <button
-                  onClick={onToggleFavorite}
-                  className="p-2 pb-0 pt-0 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  title={game.isClubFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
-                >
-                  <Star
-                    size={20}
-                    className={game.isClubFavorite
-                      ? 'text-yellow-500 fill-yellow-500'
-                      : 'text-gray-400 hover:text-yellow-500'
-                    }
-                  />
-                </button>
-              </div>
-              {game.court && !(game.entityType === 'BAR' && courts.length === 1) && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {game.court.name}
-                </p>
-              )}
-              {!game.court && game.club && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {t('createGame.notBookedYet')}
-                </p>
-              )}
-              {/* Show booking status */}
-              {game.court && (
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  {game.hasBookedCourt 
-                    ? (game.entityType === 'BAR' ? t('createGame.hasBookedHall') : t('createGame.hasBookedCourt'))
-                    : t('createGame.notBookedYet')
-                  }
-                </p>
-              )}
+          )}
+          
+          {/* Game Description/Comments */}
+          {game.description && game.description.trim() !== '' && (
+            <div className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <MessageCircle size={20} className="text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
+              <button
+                onClick={() => canEdit && setShowEditGameTextModal(true)}
+                className={`text-gray-600 dark:text-gray-400 text-left ${
+                  canEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
+                }`}
+              >
+                {game.description}
+              </button>
             </div>
-            <div className="flex items-center gap-2">
-              {game.entityType === 'BAR' && isOwner && courts.length > 1 && (
-                <button
-                  onClick={onEditCourt}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  title={t('gameDetails.editHall')}
-                >
-                  <Edit3 size={20} className="text-gray-400 hover:text-primary-600" />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-        {!isOwner && owner && (
-          <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-            <Crown size={20} className="text-primary-600 dark:text-primary-400" />
-            <PlayerAvatar
-              player={owner}
-              extrasmall={true}
-              showName={false}
-            />
-            <span className="text-sm">
-              {[owner.firstName, owner.lastName].filter(name => name && name.trim()).join(' ')}
-            </span>
-          </div>
-        )}
-        
-        {/* Game Price */}
-        {((game.priceType && game.priceType !== 'NOT_KNOWN') || canEdit) && (
-          <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-            <span className="text-primary-600 dark:text-primary-400" style={{ fontSize: '20px', lineHeight: '20px', width: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>€</span>
-            <div className="flex-1">
-              {canEdit ? (
-                <button
-                  onClick={() => setShowEditGamePriceModal(true)}
-                  className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
-                >
-                  {game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
-                    ? `${game.priceTotal} ${game.priceCurrency || 'EUR'} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
-                    : t('createGame.priceNotSet')}
-                </button>
-              ) : (
-                <span>
-                  {game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
-                    ? `${game.priceTotal} ${game.priceCurrency || 'EUR'} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
-                    : ''}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-        
-        {/* Game Description/Comments */}
-        {game.description && game.description.trim() !== '' && (
-          <div className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
-            <MessageCircle size={20} className="text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
-            <button
-              onClick={() => canEdit && setShowEditGameTextModal(true)}
-              className={`text-gray-600 dark:text-gray-400 text-left ${
-                canEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
-              }`}
-            >
-              {game.description}
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       <ShareModal
         isOpen={showShareModal}

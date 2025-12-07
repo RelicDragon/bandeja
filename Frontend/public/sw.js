@@ -59,7 +59,8 @@ self.addEventListener('fetch', (event) => {
     pathname.endsWith('.js') ||
     pathname === '/' ||
     pathname === '/index.html' ||
-    pathname === '/manifest.json';
+    pathname === '/manifest.json' ||
+    pathname.startsWith('/games/');
 
   if (pathname.startsWith('/api/')) {
     return;

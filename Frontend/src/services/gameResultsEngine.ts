@@ -88,6 +88,8 @@ class GameResultsEngineClass {
         };
         await ResultsStorage.saveResults(emptyData);
         useGameResultsStore.setState({ 
+          gameId,
+          userId,
           rounds: [], 
           initialized: true, 
           loading: false,
@@ -96,27 +98,53 @@ class GameResultsEngineClass {
       }
 
       let rounds: Round[] = [];
+      
+      // Check if there are existing rounds in the store (from a previous operation like addRound)
+      const currentStoreState = this.getState();
+      const hasExistingRounds = currentStoreState.rounds.length > 0 && 
+                                 currentStoreState.gameId === gameId;
 
       if (resultsStatus !== 'NONE') {
         try {
           const resultsResponse = await resultsApi.getGameResults(gameId);
           if (resultsResponse?.data) {
-            rounds = this.convertServerResultsToState(resultsResponse.data, t).rounds;
-            const localData: LocalResults = {
-              gameId,
-              rounds,
-              lastSyncedAt: Date.now(),
-            };
-            await ResultsStorage.saveResults(localData);
+            const serverRounds = this.convertServerResultsToState(resultsResponse.data, t).rounds;
+            // If we have existing rounds in store for this game, prefer them over server
+            // This prevents overwriting rounds that were just added locally
+            if (hasExistingRounds) {
+              rounds = currentStoreState.rounds;
+              // Still save to local storage for consistency
+              const localData: LocalResults = {
+                gameId,
+                rounds,
+                lastSyncedAt: Date.now(),
+              };
+              await ResultsStorage.saveResults(localData);
+            } else {
+              rounds = serverRounds;
+              const localData: LocalResults = {
+                gameId,
+                rounds,
+                lastSyncedAt: Date.now(),
+              };
+              await ResultsStorage.saveResults(localData);
+            }
             await ResultsStorage.setServerProblem(gameId, false);
             useGameResultsStore.setState({ serverProblem: false });
+          } else if (hasExistingRounds) {
+            // Server returned no data but we have rounds in store, use store
+            rounds = currentStoreState.rounds;
           }
         } catch (error) {
           console.warn('Failed to load server results, using local:', error);
-          if (localResults?.rounds) {
+          if (hasExistingRounds) {
+            rounds = currentStoreState.rounds;
+          } else if (localResults?.rounds) {
             rounds = localResults.rounds;
           }
         }
+      } else if (hasExistingRounds) {
+        rounds = currentStoreState.rounds;
       } else if (localResults?.rounds) {
         rounds = localResults.rounds;
       }
@@ -130,6 +158,8 @@ class GameResultsEngineClass {
       }
 
           useGameResultsStore.setState({ 
+        gameId,
+        userId,
         rounds,
         initialized: true,
         loading: false,
@@ -710,13 +740,6 @@ class GameResultsEngineClass {
           id: round.id || createId(),
           matches,
         });
-      });
-    }
-    
-    if (rounds.length === 0) {
-      rounds.push({
-        id: createId(),
-        matches: [],
       });
     }
     

@@ -3,7 +3,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 
 interface HeaderContentWrapperProps {
   children: ReactNode;
-  page: 'home' | 'profile' | 'gameDetails' | 'gameResultsEntry' | 'bugs';
+  page: 'home' | 'profile' | 'gameDetails' | 'bugs';
 }
 
 export const HeaderContentWrapper = ({ children, page }: HeaderContentWrapperProps) => {

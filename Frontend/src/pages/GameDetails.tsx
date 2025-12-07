@@ -10,13 +10,13 @@ import {
   CourtModal,
   ClubModal,
   GameInfo,
-  GameResults,
   GameParticipants,
   GameSettings,
   GameSetupModal,
   MultipleCourtsSelector,
   LeagueScheduleTab,
-  LeagueStandingsTab
+  LeagueStandingsTab,
+  ConfirmationModal
 } from '@/components';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { DeleteGameConfirmationModal } from '@/components/DeleteGameConfirmationModal';
@@ -25,21 +25,24 @@ import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTea
 import { GameSetup } from '@/components/GameDetails/GameSetup';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { LocationModal, TimeDurationModal } from '@/components/GameDetails';
+import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
+import { resultsApi } from '@/api/results';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
-import { canUserEditResults, isUserGameAdminOrOwner } from '@/utils/gameResults';
+import { isUserGameAdminOrOwner } from '@/utils/gameResults';
 import { socketService } from '@/services/socketService';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
+import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 
 export const GameDetailsContent = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setCurrentPage, setIsAnimating, setGameDetailsCanAccessChat } = useNavigationStore();
+  const { setGameDetailsCanAccessChat } = useNavigationStore();
 
   const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
@@ -61,6 +64,8 @@ export const GameDetailsContent = () => {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isTimeDurationModalOpen, setIsTimeDurationModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'standings'>('general');
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [editFormData, setEditFormData] = useState({
     clubId: '',
     courtId: '',
@@ -131,6 +136,23 @@ export const GameDetailsContent = () => {
       socketService.off('game-updated', handleGameUpdated);
     };
   }, [id, user?.id]);
+
+  // Update GameResultsEngine when game state changes (e.g., after finishing)
+  useEffect(() => {
+    if (game && user?.id) {
+      const engineState = GameResultsEngine.getState();
+      // Only update if engine is initialized for this game
+      if (engineState.initialized && engineState.gameId === game.id && engineState.userId === user.id) {
+        // Check if game status has changed
+        const engineGame = engineState.game;
+        if (!engineGame || 
+            engineGame.resultsStatus !== game.resultsStatus ||
+            engineGame.status !== game.status) {
+          GameResultsEngine.updateGame(game);
+        }
+      }
+    }
+  }, [game?.resultsStatus, game?.status, game?.id, user?.id]);
 
   useEffect(() => {
     if (!id || !isEditMode || !game) return;
@@ -296,16 +318,6 @@ export const GameDetailsContent = () => {
     setGameDetailsCanAccessChat(canAccessChat);
   }, [canAccessChat, setGameDetailsCanAccessChat]);
 
-  const canEnterResults = () => {
-    if (!game || !user) return false;
-    
-    // Allow viewing results for archived games if results exist
-    if (game.status === 'ARCHIVED' && game.resultsStatus !== 'NONE') {
-      return true;
-    }
-    
-    return canUserEditResults(game, user);
-  };
 
   const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && !isFull);
   const canManageJoinQueue = Boolean(
@@ -340,11 +352,84 @@ export const GameDetailsContent = () => {
     }
   };
 
-  const handleEnterResults = () => {
-    setIsAnimating(true);
-    setCurrentPage('gameResultsEntry');
-    navigate(`/games/${id}/results`, { replace: true });
-    setTimeout(() => setIsAnimating(false), 300);
+
+  const handleStartResultsEntry = async () => {
+    if (!id || !canEdit || !user?.id) return;
+
+    // Scroll to top immediately
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    try {
+      console.log('handleStartResultsEntry');
+      await gamesApi.update(id, { resultsStatus: 'IN_PROGRESS' });
+      const response = await gamesApi.getById(id);
+      const updatedGame = response.data;
+      setGame(updatedGame);
+      
+      // Initialize engine if needed
+      const engineState = GameResultsEngine.getState();
+      const needsInit = !engineState.initialized || engineState.gameId !== id || engineState.userId !== user.id;
+      
+      if (needsInit) {
+        await GameResultsEngine.initialize(id, user.id, t);
+      }
+      
+      // Update engine with latest game data
+      GameResultsEngine.updateGame(updatedGame);
+      
+      // Get current state after update
+      const currentState = GameResultsEngine.getState();
+      
+      console.log('currentState', currentState);
+
+      // Ensure gameId and userId are set before calling addRound
+      if (!currentState.gameId || !currentState.userId) {
+        useGameResultsStore.setState({
+          gameId: id,
+          userId: user.id,
+        });
+      }
+
+      // If no rounds exist, add the first round (same as "Add Round" button)
+      if (currentState.rounds.length === 0 && currentState.canEdit && currentState.game) {
+        console.log('adding round');
+        await GameResultsEngine.addRound();
+        
+        // Ensure the engine is marked as initialized so the embedded component
+        // won't re-initialize and overwrite our newly added round
+        const finalState = GameResultsEngine.getState();
+        if (!finalState.initialized || finalState.gameId !== id || finalState.userId !== user.id) {
+          useGameResultsStore.setState({
+            initialized: true,
+            gameId: id,
+            userId: user.id,
+          });
+        }
+      }
+      
+      toast.success(t('gameResults.resultsEntryStarted') || 'Results entry started');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
+  };
+
+  const handleResetGame = async () => {
+    if (!id || isResetting) return;
+    
+    setIsResetting(true);
+    try {
+      await resultsApi.resetGameResults(id);
+      const response = await gamesApi.getById(id);
+      setGame(response.data);
+      toast.success(t('gameResults.gameReset') || 'Game reset successfully');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setIsResetting(false);
+      setShowResetConfirmation(false);
+    }
   };
 
   const handleUserAction = async (action: string, userId: string) => {
@@ -649,62 +734,64 @@ export const GameDetailsContent = () => {
             <LeagueFixedTeamsSection game={game} />
           )}
 
-          <GameInfo
-            game={game}
-            isOwner={isOwner}
-            isGuest={isGuest}
-            courts={courts}
-            canEdit={canEdit}
-            isEditMode={isEditMode}
-            onToggleFavorite={handleToggleFavorite}
-            onEditCourt={() => setIsCourtModalOpen(true)}
-            onOpenLocationModal={() => setIsLocationModalOpen(true)}
-            onOpenTimeDurationModal={() => setIsTimeDurationModalOpen(true)}
-            onScrollToSettings={handleScrollToSettings}
-            onGameUpdate={setGame}
-          />
-
-          <PhotosSection game={game} />
-
-          {!isLeagueSeason && (
-            <GameResults
+          <div className="overflow-visible pt-10 -mt-10">
+            <GameInfo
               game={game}
-              user={user}
-              canEnterResults={canEnterResults()}
-              onEnterResults={handleEnterResults}
+              isOwner={isOwner}
+              isGuest={isGuest}
+              courts={courts}
+              canEdit={canEdit}
+              isEditMode={isEditMode}
+              onToggleFavorite={handleToggleFavorite}
+              onEditCourt={() => setIsCourtModalOpen(true)}
+              onOpenLocationModal={() => setIsLocationModalOpen(true)}
+              onOpenTimeDurationModal={() => setIsTimeDurationModalOpen(true)}
+              onScrollToSettings={handleScrollToSettings}
+              onGameUpdate={setGame}
+              collapsedByDefault={game.resultsStatus !== 'NONE'}
             />
+          </div>
+
+          {!(canEdit && game.resultsStatus !== 'FINAL') && (
+            <PhotosSection game={game} />
           )}
 
-          {!isLeague && (
-            <GameParticipants
-              game={game}
-              myInvites={myInvites}
-              gameInvites={gameInvites}
-              joinQueues={game.joinQueues}
-              isParticipant={isParticipant}
-              isGuest={isGuest}
-              isFull={isFull}
-              isOwner={isOwner}
-              userId={user?.id}
-              isInJoinQueue={isInJoinQueue}
-              canInvitePlayers={canInvitePlayers}
-              canManageJoinQueue={canManageJoinQueue}
-              canViewSettings={canViewSettings}
-              onJoin={handleJoin}
-              onAddToGame={handleAddToGame}
-              onLeave={handleLeave}
-              onAcceptInvite={handleAcceptInvite}
-              onDeclineInvite={handleDeclineInvite}
-              onCancelInvite={handleCancelInvite}
-              onAcceptJoinQueue={handleAcceptJoinQueue}
-              onDeclineJoinQueue={handleDeclineJoinQueue}
-              onShowPlayerList={(gender) => {
-                setPlayerListGender(gender);
-                setShowPlayerList(true);
-              }}
-              onShowManageUsers={() => setShowManageUsers(true)}
-              onEditMaxParticipants={() => setIsEditMaxParticipantsModalOpen(true)}
-            />
+          {!isLeagueSeason && game.resultsStatus !== 'NONE' && (
+            <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} />
+          )}
+
+          {!isLeague && game.resultsStatus === 'NONE' && (
+            <>
+              <GameParticipants
+                game={game}
+                myInvites={myInvites}
+                gameInvites={gameInvites}
+                joinQueues={game.joinQueues}
+                isParticipant={isParticipant}
+                isGuest={isGuest}
+                isFull={isFull}
+                isOwner={isOwner}
+                userId={user?.id}
+                isInJoinQueue={isInJoinQueue}
+                canInvitePlayers={canInvitePlayers}
+                canManageJoinQueue={canManageJoinQueue}
+                canViewSettings={canViewSettings}
+                onJoin={handleJoin}
+                onAddToGame={handleAddToGame}
+                onLeave={handleLeave}
+                onAcceptInvite={handleAcceptInvite}
+                onDeclineInvite={handleDeclineInvite}
+                onCancelInvite={handleCancelInvite}
+                onAcceptJoinQueue={handleAcceptJoinQueue}
+                onDeclineJoinQueue={handleDeclineJoinQueue}
+                onShowPlayerList={(gender) => {
+                  setPlayerListGender(gender);
+                  setShowPlayerList(true);
+                }}
+                onShowManageUsers={() => setShowManageUsers(true)}
+                onEditMaxParticipants={() => setIsEditMaxParticipantsModalOpen(true)}
+              />
+            </>
           )}
 
           {!isLeague && canViewSettings && (
@@ -734,7 +821,7 @@ export const GameDetailsContent = () => {
             />
           )}
 
-          {game.maxParticipants > 4 && (
+          {game.maxParticipants > 4 && game.resultsStatus === 'NONE' && (
             <MultipleCourtsSelector
               gameId={game.id}
               courts={courts}
@@ -759,6 +846,18 @@ export const GameDetailsContent = () => {
                 setGame(prevGame => prevGame ? { ...prevGame, ...updatedGame } : updatedGame);
               }}
             />
+          )}
+
+          {!isLeague && game.resultsStatus === 'NONE' && canEdit && (
+            <Card className="overflow-hidden">
+              <button
+                onClick={handleStartResultsEntry}
+                className="w-full px-8 py-4 text-base font-semibold rounded-xl transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 active:from-green-700 active:to-emerald-800 text-white shadow-lg hover:shadow-2xl hover:shadow-green-500/50 transform hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden group"
+              >
+                <span className="relative z-10">{t('gameResults.startResultsEntry')}</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+              </button>
+            </Card>
           )}
 
           {canDeleteGame() && (
@@ -796,7 +895,7 @@ export const GameDetailsContent = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-2xl mx-auto space-y-4 overflow-visible">
       {isLeagueSeason && (
         <div className="flex border-b border-gray-200 dark:border-gray-700 rounded-xl">
           <button
@@ -923,6 +1022,19 @@ export const GameDetailsContent = () => {
         onClose={() => setShowDeleteConfirmation(false)}
         isDeleting={isDeleting}
       />
+
+      {showResetConfirmation && (
+        <ConfirmationModal
+          isOpen={showResetConfirmation}
+          title={t('gameResults.resetGameTitle') || 'Reset Game Results'}
+          message={t('gameResults.resetConfirmationMessage') || 'Are you sure you want to reset all game results? This action cannot be undone.'}
+          confirmText={t('common.confirm')}
+          cancelText={t('common.cancel')}
+          confirmVariant="danger"
+          onConfirm={handleResetGame}
+          onClose={() => setShowResetConfirmation(false)}
+        />
+      )}
 
       {isGameSetupModalOpen && (
         <GameSetupModal

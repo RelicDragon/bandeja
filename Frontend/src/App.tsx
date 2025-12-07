@@ -11,7 +11,6 @@ import { CreateLeague } from './pages/CreateLeague';
 // import { Rating } from './pages/Rating';
 import { GameChat } from './pages/GameChat';
 import { ChatList } from './pages/ChatList';
-import { GameResultsEntry } from './pages/GameResultsEntry';
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
 import { isProfileComplete, hasValidUsername } from './utils/userValidation';
@@ -34,8 +33,6 @@ function AppContent() {
   const finishInitializing = useAuthStore((state) => state.finishInitializing);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const isOnline = useNetworkStore((state) => state.isOnline);
-  
-  const isResultsEntryPage = location.pathname.includes('/results');
 
   useEffect(() => {
     if (isCapacitor()) {
@@ -154,13 +151,15 @@ function AppContent() {
     return <AppLoadingScreen isInitializing={isInitializing} />;
   }
 
-  if (!isOnline && !isResultsEntryPage) {
+  const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
+  
+  if (!isOnline && !isGameDetailsPage) {
     return <NoInternetScreen />;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {!isResultsEntryPage && <OfflineBanner />}
+      <OfflineBanner />
       <ToastProvider>
         <PlayerCardModalManager>
           <Routes>
@@ -262,18 +261,6 @@ function AppContent() {
             </ProtectedRoute>
           }
         /> */}
-        <Route
-          path="/games/:id/results"
-          element={
-            <ProtectedRoute>
-              {!isProfileComplete(user) ? (
-                <Navigate to="/" replace />
-              ) : (
-                <GameResultsEntry />
-              )}
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/games/:id/chat"
           element={
