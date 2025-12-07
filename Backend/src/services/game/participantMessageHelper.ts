@@ -18,14 +18,16 @@ export class ParticipantMessageHelper {
       const userName = getUserDisplayName(user.firstName, user.lastName);
       
       try {
-        await createSystemMessage(gameId, {
+        return await createSystemMessage(gameId, {
           type: messageType,
           variables: { userName }
         });
       } catch (error) {
         console.error('Failed to create system message for game join:', error);
+        return null;
       }
     }
+    return null;
   }
 
   static async sendLeaveMessage(gameId: string, user: any, messageType: SystemMessageType) {

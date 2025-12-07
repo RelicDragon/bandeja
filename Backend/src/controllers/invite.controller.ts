@@ -10,6 +10,7 @@ import { USER_SELECT_FIELDS } from '../utils/constants';
 import telegramNotificationService from '../services/telegram/notification.service';
 import { InviteService } from '../services/invite.service';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
+import { JoinQueueService } from '../services/game/joinQueue.service';
 
 export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { receiverId, gameId, message, expiresAt } = req.body;
@@ -132,6 +133,44 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
         success: true,
         data: existingInvite,
       });
+    }
+
+    const existingParticipant = await prisma.gameParticipant.findFirst({
+      where: {
+        gameId,
+        userId: receiverId,
+        isPlaying: true,
+      },
+    });
+
+    const existingQueue = await prisma.joinQueue.findFirst({
+      where: {
+        gameId,
+        userId: receiverId,
+        status: InviteStatus.PENDING,
+      },
+    });
+
+    if (existingParticipant) {
+      return res.status(200).json({
+        success: true,
+        message: 'User is already a participant',
+      });
+    }
+
+    if (existingQueue) {
+      try {
+        await JoinQueueService.acceptJoinQueue(gameId, req.userId!, receiverId);
+        return res.status(200).json({
+          success: true,
+          message: 'User was automatically accepted from queue',
+        });
+      } catch (error: any) {
+        if (error.statusCode === 403) {
+          throw new ApiError(403, 'errors.invites.notAuthorizedToAcceptQueue');
+        }
+        throw error;
+      }
     }
   }
 

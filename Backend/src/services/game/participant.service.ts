@@ -6,6 +6,7 @@ import { GameService } from './game.service';
 import { JoinQueueService } from './joinQueue.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
+import { InviteService } from '../invite.service';
 
 export class ParticipantService {
   static async joinGame(gameId: string, userId: string) {
@@ -40,6 +41,7 @@ export class ParticipantService {
           data: { isPlaying: true },
         });
 
+        await InviteService.deleteInvitesForUserInGame(gameId, userId);
         await ParticipantMessageHelper.sendJoinMessage(gameId, userId);
         await GameService.updateGameReadiness(gameId);
         return 'Successfully joined the game';
@@ -61,6 +63,7 @@ export class ParticipantService {
       },
     });
 
+    await InviteService.deleteInvitesForUserInGame(gameId, userId);
     await ParticipantMessageHelper.sendJoinMessage(gameId, userId);
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
@@ -204,6 +207,10 @@ export class ParticipantService {
       where: { id: participant.id },
       data: { isPlaying },
     });
+
+    if (isPlaying) {
+      await InviteService.deleteInvitesForUserInGame(gameId, userId);
+    }
 
     if (participant.user) {
       const userName = getUserDisplayName(participant.user.firstName, participant.user.lastName);

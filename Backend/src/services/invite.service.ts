@@ -13,6 +13,43 @@ export interface InviteActionResult {
 }
 
 export class InviteService {
+  static async deleteInvitesForUserInGame(gameId: string, userId: string): Promise<void> {
+    const invites = await prisma.invite.findMany({
+      where: {
+        gameId,
+        receiverId: userId,
+        status: InviteStatus.PENDING,
+      },
+      select: {
+        id: true,
+        receiverId: true,
+        senderId: true,
+        gameId: true,
+      },
+    });
+
+    if (invites.length === 0) {
+      return;
+    }
+
+    const inviteIds = invites.map(invite => invite.id);
+
+    await prisma.invite.deleteMany({
+      where: {
+        id: { in: inviteIds },
+      },
+    });
+
+    if ((global as any).socketService) {
+      invites.forEach(invite => {
+        (global as any).socketService.emitInviteDeleted(invite.receiverId, invite.id, invite.gameId || undefined);
+        if (invite.senderId) {
+          (global as any).socketService.emitInviteDeleted(invite.senderId, invite.id, invite.gameId || undefined);
+        }
+      });
+    }
+  }
+
   static async acceptInvite(inviteId: string, userId: string, forceUpdate: boolean = false): Promise<InviteActionResult> {
     const invite = await prisma.invite.findUnique({
       where: { id: inviteId },
