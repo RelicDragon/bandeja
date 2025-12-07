@@ -4,6 +4,7 @@ import { SetResultModal } from '@/components/SetResultModal';
 import { CourtModal } from '@/components/CourtModal';
 import { TeamPlayerSelector, ConfirmationModal, GameSetupModal } from '@/components';
 import { HorizontalScoreEntryModal, SyncConflictModal } from '@/components/gameResults';
+import { OutcomeExplanationModal } from '@/components/OutcomeExplanationModal';
 import { ModalType } from '@/hooks/useModalManager';
 import { Game, User, WinnerOfGame, WinnerOfMatch } from '@/types';
 import { Round } from '@/types/gameResults';
@@ -242,6 +243,18 @@ export const GameResultsModals = ({
         onClose={onClose}
         onConfirm={onSetupConfirm}
       />
+    );
+  }
+
+  if (modal.type === 'explanation' && typeof document !== 'undefined') {
+    return createPortal(
+      <OutcomeExplanationModal
+        explanation={modal.explanation}
+        playerName={modal.playerName}
+        levelBefore={modal.levelBefore}
+        onClose={onClose}
+      />,
+      document.body
     );
   }
 

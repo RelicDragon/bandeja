@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { OutcomeExplanation } from '@/api/results';
 
 export type ModalType =
   | { type: 'set'; roundId: string; matchId: string; setIndex: number }
@@ -9,6 +10,7 @@ export type ModalType =
   | { type: 'edit' }
   | { type: 'setup' }
   | { type: 'syncConflict' }
+  | { type: 'explanation'; explanation: OutcomeExplanation; playerName: string; levelBefore: number }
   | null;
 
 export const useModalManager = () => {

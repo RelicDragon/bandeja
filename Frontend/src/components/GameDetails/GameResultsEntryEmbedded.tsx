@@ -695,7 +695,14 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
 
       <div>
         {currentGame?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
-          <OutcomesDisplay outcomes={currentGame.outcomes || []} affectsRating={currentGame.affectsRating} gameId={currentGame.id} />
+          <OutcomesDisplay 
+            outcomes={currentGame.outcomes || []} 
+            affectsRating={currentGame.affectsRating} 
+            gameId={currentGame.id}
+            onExplanationClick={(explanation, playerName, levelBefore) => {
+              openModal({ type: 'explanation', explanation, playerName, levelBefore });
+            }}
+          />
         ) : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
           <PlayerStatsPanel game={currentGame as NonNullable<typeof currentGame>} rounds={rounds} />
         ) : !isResultsEntryMode && engine.initialized ? (

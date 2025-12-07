@@ -4,36 +4,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GameOutcome } from '@/types';
 import { Trophy, TrendingUp, TrendingDown, Award, HelpCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { OutcomeExplanationModal } from '@/components/OutcomeExplanationModal';
-import { getOutcomeExplanation, OutcomeExplanation } from '@/api/results';
+import { getOutcomeExplanation } from '@/api/results';
 
 interface OutcomesDisplayProps {
   outcomes: GameOutcome[];
   affectsRating: boolean;
   gameId: string;
+  onExplanationClick: (explanation: any, playerName: string, levelBefore: number) => void;
 }
 
 type DisplayMode = 'ratings' | 'stats';
 
-export const OutcomesDisplay = ({ outcomes, affectsRating, gameId }: OutcomesDisplayProps) => {
+export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanationClick }: OutcomesDisplayProps) => {
   const { t } = useTranslation();
   const [mode, setMode] = useState<DisplayMode>('ratings');
-  const [selectedExplanation, setSelectedExplanation] = useState<{
-    explanation: OutcomeExplanation;
-    playerName: string;
-    levelBefore: number;
-  } | null>(null);
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
 
   const handleExplanationClick = async (outcome: GameOutcome) => {
     setLoadingUserId(outcome.userId);
     try {
       const explanation = await getOutcomeExplanation(gameId, outcome.userId);
-      setSelectedExplanation({
-        explanation,
-        playerName: `${outcome.user.firstName} ${outcome.user.lastName}`,
-        levelBefore: outcome.levelBefore,
-      });
+      onExplanationClick(explanation, `${outcome.user.firstName} ${outcome.user.lastName}`, outcome.levelBefore);
     } catch (error) {
       console.error('Failed to load explanation:', error);
     } finally {
@@ -235,15 +226,6 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId }: OutcomesDis
           </div>
         ))}
       </div>
-
-      {selectedExplanation && (
-        <OutcomeExplanationModal
-          explanation={selectedExplanation.explanation}
-          playerName={selectedExplanation.playerName}
-          levelBefore={selectedExplanation.levelBefore}
-          onClose={() => setSelectedExplanation(null)}
-        />
-      )}
     </div>
   );
 };
