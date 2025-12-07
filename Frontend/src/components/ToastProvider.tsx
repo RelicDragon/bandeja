@@ -75,6 +75,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
             },
           },
           loading: {
+            duration: 4000,
             style: {
               background: 'rgba(59, 130, 246, 0.95)',
               backdropFilter: 'blur(12px)',
