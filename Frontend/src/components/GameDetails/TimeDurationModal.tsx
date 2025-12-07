@@ -84,7 +84,7 @@ export const TimeDurationModal = ({ isOpen, onClose, game, clubs, onSave }: Time
         document.body.style.overflow = '';
       }
     };
-  }, [isOpen, initialValues.initialDate.getTime(), initialValues.initialTime, initialValues.initialDuration, setSelectedDate, setSelectedTime, setDuration]);
+  }, [isOpen, initialValues, setSelectedDate, setSelectedTime, setDuration]);
 
   const handleClose = () => {
     setIsClosing(true);

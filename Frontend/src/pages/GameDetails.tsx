@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -152,7 +152,7 @@ export const GameDetailsContent = () => {
         }
       }
     }
-  }, [game?.resultsStatus, game?.status, game?.id, user?.id]);
+  }, [game, user?.id]);
 
   useEffect(() => {
     if (!id || !isEditMode || !game) return;
@@ -537,6 +537,10 @@ export const GameDetailsContent = () => {
       throw error;
     }
   };
+
+  const handleCourtsChange = useCallback((newCourts: Court[]) => {
+    setCourts(newCourts);
+  }, []);
 
   const handleScrollToSettings = () => {
     const settingsElement = document.getElementById('game-settings');
@@ -1002,7 +1006,7 @@ export const GameDetailsContent = () => {
           clubs={clubs}
           courts={courts}
           onSave={handleLocationSave}
-          onCourtsChange={(newCourts) => setCourts(newCourts)}
+          onCourtsChange={handleCourtsChange}
         />
       )}
 

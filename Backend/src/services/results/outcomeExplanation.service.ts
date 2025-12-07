@@ -1,5 +1,4 @@
 import prisma from '../../config/database';
-import { GameType } from '@prisma/client';
 import { calculateRatingUpdate } from './rating.service';
 
 interface ExplanationData {

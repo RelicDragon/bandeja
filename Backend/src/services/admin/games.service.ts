@@ -224,7 +224,7 @@ export class AdminGamesService {
     return { message: 'Invite declined successfully' };
   }
 
-  static async resetGameResults(gameId: string, adminUserId: string) {
+  static async resetGameResults(gameId: string, _adminUserId: string) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       include: {

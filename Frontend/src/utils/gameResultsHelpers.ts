@@ -1,4 +1,5 @@
-import { Game, User, Round } from '@/types';
+import { Game, User } from '@/types';
+import { Round, Match } from '@/types/gameResults';
 
 export const getRestartText = (game: Game | null, t: (key: string) => string) => {
   if (!game) return t('gameResults.restartGame');
@@ -55,12 +56,12 @@ export const getAvailablePlayers = (
   if (!round) return [];
 
   const playersInRound = new Set<string>();
-  round.matches.forEach(match => {
-    match.teamA.forEach(id => playersInRound.add(id));
-    match.teamB.forEach(id => playersInRound.add(id));
+  round.matches.forEach((match: Match) => {
+    match.teamA.forEach((id: string) => playersInRound.add(id));
+    match.teamB.forEach((id: string) => playersInRound.add(id));
   });
 
-  const match = round.matches.find(m => m.id === matchId);
+  const match = round.matches.find((m: Match) => m.id === matchId);
   if (!match) return [];
 
   return players.filter(player => {

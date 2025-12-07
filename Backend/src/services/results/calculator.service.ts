@@ -266,16 +266,9 @@ export function calculateByPointsOutcomes(
       if (validSets.length === 0) continue;
 
       const [teamA, teamB] = match.teams;
-      const scoreDeltaA = teamA.score - teamB.score;
-      const scoreDeltaB = -scoreDeltaA;
       const teamAWins = match.winnerId === teamA.teamId;
       const teamBWins = match.winnerId === teamB.teamId;
       const isTie = !teamAWins && !teamBWins;
-
-      const allOpponents = [...teamA.playerIds, ...teamB.playerIds];
-      const avgOpponentLevel = allOpponents
-        .map(id => players.find(p => p.userId === id)?.level || 1)
-        .reduce((sum, level) => sum + level, 0) / allOpponents.length;
 
       const teamBAvgLevel = teamB.playerIds
         .map(id => players.find(p => p.userId === id)?.level || 1)

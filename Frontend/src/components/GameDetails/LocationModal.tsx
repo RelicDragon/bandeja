@@ -47,7 +47,7 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen, game]);
+  }, [isOpen, game, courts]);
 
   useEffect(() => {
     const fetchCourts = async () => {
@@ -81,7 +81,7 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
       setModalCourts([]);
       setIsLoadingCourts(false);
     }
-  }, [clubId, isOpen, game.clubId, courts.length]);
+  }, [clubId, isOpen, game.clubId, courts, onCourtsChange]);
 
   const handleClose = () => {
     setIsClosing(true);

@@ -1,5 +1,4 @@
 import prisma from '../../config/database';
-import { EntityType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
