@@ -264,6 +264,7 @@ export const PlayerListModal = ({
                           gender: player.gender,
                         }}
                         showName={false}
+                        fullHideName={true}
                         smallLayout={false}
                         extrasmall={true}
                       />

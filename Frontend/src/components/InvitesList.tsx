@@ -45,6 +45,7 @@ export const InvitesList = ({ invites, onCancelInvite, canCancel }: InvitesListP
                     player={invite.receiver || null}
                     showName={false}
                     extrasmall={true}
+                    fullHideName={true}
                   />
                 </div>
 

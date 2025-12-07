@@ -511,6 +511,7 @@ export const GameParticipants = ({
                       player={queue.user || null}
                       showName={false}
                       extrasmall={true}
+                      fullHideName={true}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
