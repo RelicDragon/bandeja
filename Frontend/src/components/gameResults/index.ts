@@ -1,4 +1,3 @@
-export { GameStatusDisplay } from './GameStatusDisplay';
 export { MatchCard } from './MatchCard';
 export { HorizontalMatchCard } from './HorizontalMatchCard';
 export { HorizontalScoreEntryModal } from './HorizontalScoreEntryModal';

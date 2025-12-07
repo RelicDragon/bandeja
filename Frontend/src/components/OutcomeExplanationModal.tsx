@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, TrendingUp, TrendingDown } from 'lucide-react';
 import { OutcomeExplanation } from '@/api/results';
@@ -11,6 +12,13 @@ interface OutcomeExplanationModalProps {
 
 export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, onClose }: OutcomeExplanationModalProps) => {
   const { t } = useTranslation();
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   const getLevelChangeColor = (change: number) => {
     if (change > 0) return 'text-green-600 dark:text-green-400';

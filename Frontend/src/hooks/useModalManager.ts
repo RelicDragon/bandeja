@@ -8,7 +8,6 @@ export type ModalType =
   | { type: 'restart' }
   | { type: 'finish' }
   | { type: 'edit' }
-  | { type: 'setup' }
   | { type: 'syncConflict' }
   | { type: 'explanation'; explanation: OutcomeExplanation; playerName: string; levelBefore: number }
   | null;

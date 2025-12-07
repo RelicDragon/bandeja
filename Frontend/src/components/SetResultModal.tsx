@@ -43,6 +43,13 @@ export const SetResultModal = ({
     setTeamBScore(currentSet.teamB);
   }, [currentSet.teamA, currentSet.teamB]);
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   const handleTeamAScoreChange = (newScore: number) => {
     const minScore = 0;
     const maxScore = maxTotalPointsPerSet && maxTotalPointsPerSet > 0 ? maxTotalPointsPerSet : 48;

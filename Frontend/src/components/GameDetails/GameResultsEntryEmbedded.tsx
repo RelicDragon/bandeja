@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { OutcomesDisplay } from '@/components';
 import { gamesApi } from '@/api';
 import { resultsApi } from '@/api/results';
-import { User, WinnerOfGame, WinnerOfMatch, Game } from '@/types';
+import { User, Game } from '@/types';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
@@ -15,7 +15,6 @@ import { useGameResultsTabs } from '@/hooks/useGameResultsTabs';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { validateSetIndex, validateSetScores, validateSetIndexAgainstFixed, isUserGameAdminOrOwner } from '@/utils/gameResults';
 import { 
-  GameStatusDisplay, 
   RoundCard,
   AvailablePlayersFooter, 
   FloatingDraggedPlayer,
@@ -59,7 +58,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   const { activeTab, setActiveTab } = useGameResultsTabs(currentGame?.resultsStatus);
 
   const canEdit = engine.canEdit;
-  const gameState = engine.gameState;
   const engineLoading = engine.loading;
   const expandedRoundId = engine.expandedRoundId;
   const editingMatchId = engine.editingMatchId;
@@ -529,55 +527,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
     openModal({ type: 'court', match: { roundId, matchId } });
   };
 
-  const handleSetupConfirm = async (params: {
-    fixedNumberOfSets: number;
-    maxTotalPointsPerSet: number;
-    maxPointsPerTeam: number;
-    winnerOfGame: WinnerOfGame;
-    winnerOfMatch: WinnerOfMatch;
-    matchGenerationType: any;
-    prohibitMatchesEditing?: boolean;
-    pointsPerWin: number;
-    pointsPerLoose: number;
-    pointsPerTie: number;
-    ballsInGames: boolean;
-  }) => {
-    if (!user?.id) return;
-    
-    try {
-      await gamesApi.update(game.id, {
-        fixedNumberOfSets: params.fixedNumberOfSets,
-        maxTotalPointsPerSet: params.maxTotalPointsPerSet,
-        maxPointsPerTeam: params.maxPointsPerTeam,
-        winnerOfGame: params.winnerOfGame,
-        winnerOfMatch: params.winnerOfMatch,
-        matchGenerationType: params.matchGenerationType,
-        prohibitMatchesEditing: params.prohibitMatchesEditing,
-        pointsPerWin: params.pointsPerWin,
-        pointsPerLoose: params.pointsPerLoose,
-        pointsPerTie: params.pointsPerTie,
-        ballsInGames: params.ballsInGames,
-      });
-      
-      const response = await gamesApi.getById(game.id);
-      if (response?.data) {
-        const updatedGame = response.data;
-        engine.updateGame(updatedGame);
-        onGameUpdate(updatedGame);
-        
-        closeModal();
-        
-        if (isPresetGame) {
-          await engine.initializePresetMatches();
-        } else {
-          await engine.initializeDefaultRound();
-        }
-      }
-    } catch (error: any) {
-      console.error('Failed to update game parameters:', error);
-      toast.error(error?.response?.data?.message || t('errors.generic'));
-    }
-  };
 
   const handleSyncToServer = async () => {
     setLoadingState({ syncing: true });
@@ -606,7 +555,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
     }
   };
 
-  const needsGameSetup = currentGame?.resultsStatus === 'NONE';
   const effectiveShowCourts = (currentGame?.gameCourts?.length || 0) > 0;
   const effectiveHorizontalLayout = currentGame?.fixedNumberOfSets === 1;
 
@@ -658,7 +606,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
           onEdit={handleEdit}
           onSyncToServerFirst={handleSyncToServerFirst}
           onEraseAndLoadFromServer={handleEraseAndLoadFromServer}
-          onSetupConfirm={handleSetupConfirm}
           isResolvingConflict={loading.resolvingConflict}
         />
       </>
@@ -705,42 +652,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
           />
         ) : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
           <PlayerStatsPanel game={currentGame as NonNullable<typeof currentGame>} rounds={rounds} />
-        ) : !isResultsEntryMode && engine.initialized ? (
-          <div className="flex flex-col items-center justify-center min-h-[200px] gap-6">
-            <GameStatusDisplay gameState={gameState} />
-            {canEdit && gameState?.canEdit && (
-              <div className="flex flex-col items-center gap-4">
-                {needsGameSetup && (
-                  <button
-                    onClick={() => openModal({ type: 'setup' })}
-                    className="px-6 py-3 text-base rounded-xl font-semibold transition-all duration-300 bg-gray-600 hover:bg-gray-700 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
-                  >
-                    {t('gameResults.setupGame')}
-                  </button>
-                )}
-                <button
-                  onClick={async () => {
-                    await initializeRoundsIfNeeded();
-                  }}
-                  className="group relative px-8 py-4 text-lg rounded-xl font-semibold transition-all duration-300 bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
-                >
-                  <span className="relative z-10 flex items-center gap-2">
-                    {(() => {
-                      const resultsStatus = currentGame?.resultsStatus || 'NONE';
-                      if (resultsStatus === 'FINAL') {
-                        return t('gameResults.viewResults');
-                      } else if (resultsStatus === 'IN_PROGRESS') {
-                        return t('gameResults.continueResultsEntry');
-                      } else {
-                        return t('gameResults.startResultsEntry');
-                      }
-                    })()}
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                </button>
-              </div>
-            )}
-          </div>
         ) : (
           <div 
             className={`space-y-1 w-full scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-gray-300 dark:hover:scrollbar-thumb-gray-600 ${
@@ -866,7 +777,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
           onEdit={handleEdit}
           onSyncToServerFirst={handleSyncToServerFirst}
           onEraseAndLoadFromServer={handleEraseAndLoadFromServer}
-          onSetupConfirm={handleSetupConfirm}
           isResolvingConflict={loading.resolvingConflict}
         />
 

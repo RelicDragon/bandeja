@@ -2,11 +2,11 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { SetResultModal } from '@/components/SetResultModal';
 import { CourtModal } from '@/components/CourtModal';
-import { TeamPlayerSelector, ConfirmationModal, GameSetupModal } from '@/components';
+import { TeamPlayerSelector, ConfirmationModal } from '@/components';
 import { HorizontalScoreEntryModal, SyncConflictModal } from '@/components/gameResults';
 import { OutcomeExplanationModal } from '@/components/OutcomeExplanationModal';
 import { ModalType } from '@/hooks/useModalManager';
-import { Game, User, WinnerOfGame, WinnerOfMatch } from '@/types';
+import { Game, User } from '@/types';
 import { Round } from '@/types/gameResults';
 import { getRestartTitle, getFinishTitle, getEditTitle } from '@/utils/gameResultsHelpers';
 
@@ -27,19 +27,6 @@ interface GameResultsModalsProps {
   onEdit: () => Promise<void>;
   onSyncToServerFirst: () => Promise<void>;
   onEraseAndLoadFromServer: () => Promise<void>;
-  onSetupConfirm: (params: {
-    fixedNumberOfSets: number;
-    maxTotalPointsPerSet: number;
-    maxPointsPerTeam: number;
-    winnerOfGame: WinnerOfGame;
-    winnerOfMatch: WinnerOfMatch;
-    matchGenerationType: any;
-    prohibitMatchesEditing?: boolean;
-    pointsPerWin: number;
-    pointsPerLoose: number;
-    pointsPerTie: number;
-    ballsInGames: boolean;
-  }) => Promise<void>;
   isResolvingConflict: boolean;
 }
 
@@ -60,7 +47,6 @@ export const GameResultsModals = ({
   onEdit,
   onSyncToServerFirst,
   onEraseAndLoadFromServer,
-  onSetupConfirm,
   isResolvingConflict,
 }: GameResultsModalsProps) => {
   const { t } = useTranslation();
@@ -220,29 +206,6 @@ export const GameResultsModals = ({
         isLoading={isResolvingConflict}
       />,
       document.body
-    );
-  }
-
-  if (modal.type === 'setup' && currentGame) {
-    return (
-      <GameSetupModal
-        isOpen={true}
-        entityType={currentGame.entityType}
-        initialValues={{
-          fixedNumberOfSets: currentGame.fixedNumberOfSets,
-          maxTotalPointsPerSet: currentGame.maxTotalPointsPerSet,
-          maxPointsPerTeam: currentGame.maxPointsPerTeam,
-          winnerOfGame: currentGame.winnerOfGame,
-          winnerOfMatch: currentGame.winnerOfMatch,
-          matchGenerationType: currentGame.matchGenerationType,
-          pointsPerWin: currentGame.pointsPerWin,
-          pointsPerLoose: currentGame.pointsPerLoose,
-          pointsPerTie: currentGame.pointsPerTie,
-          ballsInGames: currentGame.ballsInGames,
-        }}
-        onClose={onClose}
-        onConfirm={onSetupConfirm}
-      />
     );
   }
 
