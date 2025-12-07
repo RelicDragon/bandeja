@@ -1,6 +1,6 @@
 import { Bot } from 'grammy';
 import { config } from '../../config/env';
-import { BotContext, PendingReply } from './types';
+import { PendingReply } from './types';
 import { requireUser, requireChat } from './middleware';
 import { handleStartCommand } from './commands/start.command';
 import { generateAuthCode } from './commands/auth.command';

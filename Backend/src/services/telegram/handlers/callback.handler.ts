@@ -5,7 +5,7 @@ import prisma from '../../../config/database';
 import { t } from '../../../utils/translations';
 import telegramNotificationService from '../notification.service';
 import { acceptInviteFromTelegram, declineInviteFromTelegram } from '../invite.service';
-import { escapeMarkdown, escapeHTML, convertMarkdownMessageToHTML } from '../utils';
+import { escapeMarkdown, escapeHTML } from '../utils';
 
 export function createCallbackHandler(
   pendingReplies: Map<string, PendingReply>
@@ -144,7 +144,7 @@ export function createCallbackHandler(
                 text: 'Failed to load game. Please try again.',
                 show_alert: true
               });
-            } catch (answerError) {
+            } catch {
               if (query.message && 'chat' in query.message && query.message.chat) {
                 const chat = query.message.chat;
                 if ('id' in chat && typeof chat.id === 'number') {

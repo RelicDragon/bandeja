@@ -4,7 +4,6 @@ import { ChatType } from '@prisma/client';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, formatDuration } from '../utils';
 import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
-import { SystemMessageType } from '../../../utils/systemMessages';
 
 export async function sendGameSystemMessageNotification(
   api: Api,
