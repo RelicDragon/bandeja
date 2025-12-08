@@ -18,6 +18,28 @@ import { ChatType } from '@/types';
 const filterGamesByTime = <T extends { timeIsSet?: boolean }>(list: T[] = []) =>
   list.filter((game) => game.timeIsSet !== false);
 
+const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string }>(list: T[] = []): T[] => {
+  const getStatusPriority = (status?: string): number => {
+    if (status === 'ANNOUNCED' || status === 'STARTED') return 0;
+    if (status === 'FINISHED') return 1;
+    if (status === 'ARCHIVED') return 2;
+    return 3;
+  };
+
+  return [...list].sort((a, b) => {
+    const statusPriorityA = getStatusPriority(a.status);
+    const statusPriorityB = getStatusPriority(b.status);
+    
+    if (statusPriorityA !== statusPriorityB) {
+      return statusPriorityA - statusPriorityB;
+    }
+    
+    const dateTimeA = new Date(a.startTime).getTime();
+    const dateTimeB = new Date(b.startTime).getTime();
+    return dateTimeB - dateTimeA;
+  });
+};
+
 export const HomeContent = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
@@ -71,9 +93,9 @@ export const HomeContent = () => {
     return { ...gamesUnreadCounts, ...pastGamesUnreadCounts };
   }, [gamesUnreadCounts, pastGamesUnreadCounts]);
 
-  const filteredMyGames = useMemo(() => filterGamesByTime(mergedGames), [mergedGames]);
-  const filteredPastGames = useMemo(() => filterGamesByTime(pastGames), [pastGames]);
-  const filteredAvailableGames = useMemo(() => filterGamesByTime(availableGames), [availableGames]);
+  const filteredMyGames = useMemo(() => sortGamesByStatusAndDateTime(filterGamesByTime(mergedGames)), [mergedGames]);
+  const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(filterGamesByTime(pastGames)), [pastGames]);
+  const filteredAvailableGames = useMemo(() => sortGamesByStatusAndDateTime(filterGamesByTime(availableGames)), [availableGames]);
 
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
 
