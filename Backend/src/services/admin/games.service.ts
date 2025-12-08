@@ -5,6 +5,7 @@ import { GameService } from '../game/game.service';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
+import { getUserTimezoneFromCityId } from '../user-timezone.service';
 
 export class AdminGamesService {
   static async getAllGames(cityId?: string) {
@@ -324,10 +325,11 @@ export class AdminGamesService {
 
       const updatedGame = await tx.game.findUnique({
         where: { id: gameId },
-        select: { startTime: true, endTime: true },
+        select: { startTime: true, endTime: true, cityId: true },
       });
       
       if (updatedGame) {
+        const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
         const { calculateGameStatus } = await import('../../utils/gameStatus');
         await tx.game.update({
           where: { id: gameId },
@@ -340,7 +342,7 @@ export class AdminGamesService {
               startTime: updatedGame.startTime,
               endTime: updatedGame.endTime,
               resultsStatus: 'NONE',
-            }),
+            }, cityTimezone),
           },
         });
       }

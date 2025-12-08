@@ -6,6 +6,7 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { GameTeamService } from '../gameTeam.service';
 import { GameService } from '../game/game.service';
 import { getDistinctLeagueGroupColor } from './groupColors';
+import { getUserTimezoneFromCityId } from '../user-timezone.service';
 
 export class LeagueCreateService {
   static async createLeague(data: any, userId: string) {
@@ -516,6 +517,8 @@ export class LeagueCreateService {
 
     const participantUserIds = Array.from(new Set([...team1PlayerIds, ...team2PlayerIds]));
 
+    const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
+
     const game = await prisma.game.create({
       data: {
         entityType: EntityType.LEAGUE,
@@ -555,7 +558,7 @@ export class LeagueCreateService {
           startTime,
           endTime,
           resultsStatus: 'NONE',
-        }),
+        }, cityTimezone),
         participants: {
           create: participantUserIds.map(userId => ({
             userId,

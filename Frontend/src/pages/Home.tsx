@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { Search } from 'lucide-react';
 import { MainLayout } from '@/layouts/MainLayout';
 import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController, Contacts, BugsSection } from '@/components/home';
 import { Divider, Button } from '@/components';
@@ -357,11 +358,17 @@ export const HomeContent = () => {
             : 'max-h-0 opacity-0 -translate-y-4'
         }`}
       >
-        <Divider />
+        <Divider className="mt-2" />
+        <div className="flex justify-center -mt-9">
+          <p className="text-xs text-gray-500 dark:text-gray-400 text-center px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 flex items-center gap-1.5">
+            <Search className="w-3 h-3" />
+            {t('home.findGames', { defaultValue: 'Find games' })}
+          </p>
+        </div>
       </div>
 
       <div
-        className={`transition-all duration-500 ease-in-out overflow-hidden ${
+        className={`transition-all duration-500 ease-in-out overflow-hidden -mt-5 ${
           !showChatFilter
             ? 'max-h-[5000px] opacity-100 translate-y-0'
             : 'max-h-0 opacity-0 -translate-y-4'

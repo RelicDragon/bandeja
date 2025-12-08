@@ -98,7 +98,8 @@
     "noGames": "Још увек немате игара",
     "createGame": "Креирајте игру да почнете",
     "findGamesButton": "Пронађи игре",
-    "finishedToday": "Завршене данас"
+    "finishedToday": "Завршене данас",
+    "findGames": "Пронађи игре"
   },
   "games": {
     "title": "Пронађи игре",

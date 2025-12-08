@@ -4,6 +4,7 @@ import { WinnerOfGame, Prisma } from '@prisma/client';
 import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
 import { hasParentGamePermission } from '../../utils/parentGamePermissions';
+import { getUserTimezoneFromCityId } from '../user-timezone.service';
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
   const prismaClient = tx || prisma;
@@ -263,10 +264,11 @@ export async function applyGameOutcomes(
 
   const updatedGame = await tx.game.findUnique({
     where: { id: gameId },
-    select: { startTime: true, endTime: true, resultsStatus: true },
+    select: { startTime: true, endTime: true, resultsStatus: true, cityId: true },
   });
 
   if (updatedGame) {
+    const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
     const { calculateGameStatus } = await import('../../utils/gameStatus');
     const previousResultsStatus = updatedGame.resultsStatus;
     
@@ -278,7 +280,7 @@ export async function applyGameOutcomes(
           startTime: updatedGame.startTime,
           endTime: updatedGame.endTime,
           resultsStatus: 'FINAL',
-        }),
+        }, cityTimezone),
       },
     });
 

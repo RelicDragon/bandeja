@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Check } from 'lucide-react';
 import { Button, Card, GameCard, Divider } from '@/components';
 import { Game } from '@/types';
 
@@ -166,7 +167,8 @@ export const MyGamesSection = ({
             <div>
               <Divider className="-mt-4" />
               <div className="flex justify-center -mt-9">
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 flex items-center gap-1.5">
+                  <Check className="w-3 h-3" />
                   {t('home.finishedToday', { defaultValue: 'Finished today' })}
                 </p>
               </div>

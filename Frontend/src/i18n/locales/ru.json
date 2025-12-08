@@ -98,7 +98,8 @@
     "noGames": "У вас пока нет игр",
     "createGame": "Создайте игру, чтобы начать",
     "findGamesButton": "Найти игры",
-    "finishedToday": "Завершённые сегодня"
+    "finishedToday": "Завершённые сегодня",
+    "findGames": "Найти игры"
   },
   "games": {
     "title": "Найти игры",

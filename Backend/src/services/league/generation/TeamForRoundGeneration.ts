@@ -3,6 +3,7 @@ import { ApiError } from '../../../utils/ApiError';
 import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@prisma/client';
 import { calculateGameStatus } from '../../../utils/gameStatus';
 import { GameService } from '../../game/game.service';
+import { getUserTimezoneFromCityId } from '../../user-timezone.service';
 
 interface TempTeam {
   participant1Id: string;
@@ -220,6 +221,8 @@ export class TeamForRoundGeneration {
       ])
     );
 
+    const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
+
     const game = await prisma.game.create({
       data: {
         entityType: EntityType.LEAGUE,
@@ -259,7 +262,7 @@ export class TeamForRoundGeneration {
           startTime,
           endTime,
           resultsStatus: 'NONE',
-        }),
+        }, cityTimezone),
         participants: {
           create: participantUserIds.map(userId => ({
             userId,

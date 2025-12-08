@@ -98,7 +98,8 @@
     "noGames": "You don't have any games yet",
     "createGame": "Create a game to get started",
     "findGamesButton": "Find Games",
-    "finishedToday": "Finished today"
+    "finishedToday": "Finished today",
+    "findGames": "Find games"
   },
   "games": {
     "title": "Find Games",

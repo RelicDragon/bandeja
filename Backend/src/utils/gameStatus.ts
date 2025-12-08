@@ -1,4 +1,4 @@
-import { toZonedTime } from 'date-fns-tz';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { startOfDay, addDays } from 'date-fns';
 
 type GameStatus = 'ANNOUNCED' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
@@ -21,11 +21,12 @@ export const calculateGameStatus = (
   let shouldArchive = false;
   
   if (clubTimezone) {
-    const nowInTimezone = toZonedTime(now, clubTimezone);
     const endTimeInTimezone = toZonedTime(endTime, clubTimezone);
-    const dayAfterEndInTimezone = startOfDay(addDays(endTimeInTimezone, 1));
+    const endDateInTimezone = startOfDay(endTimeInTimezone);
+    const nextDayInTimezone = addDays(endDateInTimezone, 1);
+    const archiveTimeUTC = fromZonedTime(nextDayInTimezone, clubTimezone);
     
-    shouldArchive = nowInTimezone >= dayAfterEndInTimezone;
+    shouldArchive = now >= archiveTimeUTC;
   } else {
     shouldArchive = hoursSinceEnd > 24;
   }
