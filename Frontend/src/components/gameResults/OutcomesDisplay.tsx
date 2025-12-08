@@ -52,42 +52,54 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
   };
 
   const groupedOutcomes = useMemo(() => {
-    if (!isMixPairsWithoutFixedTeams) {
-      const sortedOutcomes = sortOutcomes(outcomes);
-      return sortedOutcomes.map((outcome, index) => ({
-        place: outcome.position ?? index + 1,
-        outcomes: [outcome],
-      }));
-    }
-
-    const maleOutcomes = sortOutcomes(
-      outcomes.filter(o => o.user.gender === 'MALE')
-    );
-    
-    const femaleOutcomes = sortOutcomes(
-      outcomes.filter(o => o.user.gender === 'FEMALE')
-    );
-
-    const groups: Array<{ place: number; outcomes: GameOutcome[] }> = [];
-    const maxPairs = Math.max(maleOutcomes.length, femaleOutcomes.length);
-
-    for (let i = 0; i < maxPairs; i++) {
-      const place = i + 1;
-      const pair: GameOutcome[] = [];
+    if (isMixPairsWithoutFixedTeams) {
+      const maleOutcomes = sortOutcomes(
+        outcomes.filter(o => o.user.gender === 'MALE')
+      );
       
-      if (i < maleOutcomes.length) {
-        pair.push(maleOutcomes[i]);
-      }
-      if (i < femaleOutcomes.length) {
-        pair.push(femaleOutcomes[i]);
+      const femaleOutcomes = sortOutcomes(
+        outcomes.filter(o => o.user.gender === 'FEMALE')
+      );
+
+      const groups: Array<{ place: number; outcomes: GameOutcome[] }> = [];
+      const maxPairs = Math.max(maleOutcomes.length, femaleOutcomes.length);
+
+      for (let i = 0; i < maxPairs; i++) {
+        const place = i + 1;
+        const pair: GameOutcome[] = [];
+        
+        if (i < maleOutcomes.length) {
+          pair.push(maleOutcomes[i]);
+        }
+        if (i < femaleOutcomes.length) {
+          pair.push(femaleOutcomes[i]);
+        }
+
+        if (pair.length > 0) {
+          groups.push({ place, outcomes: pair });
+        }
       }
 
-      if (pair.length > 0) {
-        groups.push({ place, outcomes: pair });
-      }
+      return groups;
     }
 
-    return groups;
+    const sortedOutcomes = sortOutcomes(outcomes);
+    const groups: Array<{ place: number; outcomes: GameOutcome[] }> = [];
+    const placeMap = new Map<number, GameOutcome[]>();
+
+    sortedOutcomes.forEach((outcome, index) => {
+      const place = outcome.position ?? index + 1;
+      if (!placeMap.has(place)) {
+        placeMap.set(place, []);
+      }
+      placeMap.get(place)!.push(outcome);
+    });
+
+    placeMap.forEach((outcomes, place) => {
+      groups.push({ place, outcomes });
+    });
+
+    return groups.sort((a, b) => a.place - b.place);
   }, [outcomes, isMixPairsWithoutFixedTeams]);
 
   const getPositionIcon = (position?: number, isWinner?: boolean) => {
@@ -143,7 +155,7 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
         </div>
       )}
 
-      <div className={isMixPairsWithoutFixedTeams ? "space-y-4" : ""}>
+      <div className="space-y-4">
         {groupedOutcomes.map((group, groupIndex) => (
           <div key={groupIndex} className="space-y-2">
             {group.outcomes.map((outcome) => {
@@ -281,7 +293,7 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
               </div>
               );
             })}
-            {isMixPairsWithoutFixedTeams && groupIndex < groupedOutcomes.length - 1 && (
+            {groupIndex < groupedOutcomes.length - 1 && (
               <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
             )}
           </div>
