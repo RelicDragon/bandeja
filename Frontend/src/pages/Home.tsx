@@ -36,7 +36,12 @@ const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: st
     
     const dateTimeA = new Date(a.startTime).getTime();
     const dateTimeB = new Date(b.startTime).getTime();
-    return dateTimeA - dateTimeB;
+    
+    if (statusPriorityA === 0) {
+      return dateTimeA - dateTimeB;
+    }
+    
+    return dateTimeB - dateTimeA;
   });
 };
 
