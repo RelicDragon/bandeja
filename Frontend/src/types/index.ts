@@ -13,7 +13,7 @@ export type BugType = 'BUG' | 'CRITICAL' | 'SUGGESTION' | 'QUESTION';
 export type WinnerOfGame = 'BY_MATCHES_WON' | 'BY_POINTS' | 'BY_SCORES_DELTA' | 'PLAYOFF_FINALS';
 export type WinnerOfMatch = 'BY_SETS' | 'BY_SCORES';
 export type MatchGenerationType = 'HANDMADE' | 'FIXED' | 'RANDOM' | 'ROUND_ROBIN' | 'ESCALERA' | 'RATING' | 'WINNERS_COURT';
-export type PriceType = 'PER_PERSON' | 'PER_TEAM' | 'TOTAL' | 'NOT_KNOWN';
+export type PriceType = 'PER_PERSON' | 'PER_TEAM' | 'TOTAL' | 'NOT_KNOWN' | 'FREE';
 export type PriceCurrency = 'EUR' | 'RSD' | 'RUB';
 
 export interface User {
@@ -159,6 +159,7 @@ export interface GameOutcome {
     avatar?: string;
     level: number;
     reliability: number;
+    gender?: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
   };
 }
 

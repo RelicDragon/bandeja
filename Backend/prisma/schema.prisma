@@ -965,6 +965,7 @@ enum PriceType {
   PER_TEAM
   TOTAL
   NOT_KNOWN
+  FREE
 }
 
 enum PriceCurrency {

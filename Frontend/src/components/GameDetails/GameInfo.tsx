@@ -28,6 +28,7 @@ import {
   Trophy,
   GraduationCap,
   ChevronRight,
+  Banknote,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -209,6 +210,7 @@ export const GameInfo = ({
 
   const playingParticipants = game.participants?.filter(p => p.isPlaying) ?? [];
   const shouldShowTiming = game.entityType !== 'LEAGUE_SEASON';
+  const canShowEdit = game.resultsStatus === 'NONE' && game.status !== 'ARCHIVED';
 
   const renderName = () => {
     const titleClass = isCollapsed 
@@ -234,9 +236,9 @@ export const GameInfo = ({
 
     return (
       <TitleTag
-        onClick={() => !isCollapsed && canEdit && setShowEditGameTextModal(true)}
+        onClick={() => !isCollapsed && canEdit && canShowEdit && setShowEditGameTextModal(true)}
         className={`${titleClass} ${
-          !isCollapsed && canEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
+          !isCollapsed && canEdit && canShowEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
         }`}
       >
         {game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name
@@ -341,9 +343,9 @@ export const GameInfo = ({
         )}
         {game.gameType !== 'CLASSIC' && (
           <button
-            onClick={() => !isCollapsed && canEdit && setShowEditGameTextModal(true)}
+            onClick={() => !isCollapsed && canEdit && canShowEdit && setShowEditGameTextModal(true)}
             className={`${tagPadding} ${tagText} font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 ${
-              !isCollapsed && canEdit ? 'hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors' : ''
+              !isCollapsed && canEdit && canShowEdit ? 'hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors' : ''
             } ${isCollapsed ? 'hidden' : ''}`}
           >
             {t(`games.gameTypes.${game.gameType}`)}
@@ -368,12 +370,6 @@ export const GameInfo = ({
               <Users size={iconSize} />
             </div>
             <span className="hidden sm:inline">{t('games.fixedTeams')}</span>
-          </span>
-        )}
-        {game.resultsStatus === 'FINAL' && (
-          <span className={`${tagPadding} ${tagText} font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1`}>
-            <Award size={iconSize} />
-            {t('games.resultsAvailable')}
           </span>
         )}
       </div>
@@ -638,7 +634,7 @@ export const GameInfo = ({
               <Clock size={20} className="text-primary-600 dark:text-primary-400" />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  {canEdit ? (
+                  {canEdit && canShowEdit ? (
                     <button
                       onClick={() => {
                         if (isEditMode) {
@@ -671,7 +667,7 @@ export const GameInfo = ({
               <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  {canEdit ? (
+                  {canEdit && canShowEdit ? (
                     <button
                       onClick={() => {
                         if (isEditMode) {
@@ -749,22 +745,26 @@ export const GameInfo = ({
           )}
           
           {/* Game Price */}
-          {((game.priceType && game.priceType !== 'NOT_KNOWN') || canEdit) && (
+          {((game.priceType && game.priceType !== 'NOT_KNOWN') || (canEdit && canShowEdit)) && (
             <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-              <span className="text-primary-600 dark:text-primary-400" style={{ fontSize: '20px', lineHeight: '20px', width: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>€</span>
+              <Banknote size={20} className="text-primary-600 dark:text-primary-400" />
               <div className="flex-1">
-                {canEdit ? (
+                {canEdit && canShowEdit ? (
                   <button
                     onClick={() => setShowEditGamePriceModal(true)}
                     className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                   >
-                    {game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
+                    {game.priceType === 'FREE'
+                      ? t('createGame.priceTypeFree')
+                      : game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
                       ? `${game.priceTotal} ${game.priceCurrency || 'EUR'} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
                       : t('createGame.priceNotSet')}
                   </button>
                 ) : (
                   <span>
-                    {game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
+                    {game.priceType === 'FREE'
+                      ? t('createGame.priceTypeFree')
+                      : game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
                       ? `${game.priceTotal} ${game.priceCurrency || 'EUR'} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
                       : ''}
                   </span>
@@ -778,9 +778,9 @@ export const GameInfo = ({
             <div className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <MessageCircle size={20} className="text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
               <button
-                onClick={() => canEdit && setShowEditGameTextModal(true)}
+                onClick={() => canEdit && canShowEdit && setShowEditGameTextModal(true)}
                 className={`text-gray-600 dark:text-gray-400 text-left ${
-                  canEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
+                  canEdit && canShowEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
                 }`}
               >
                 {game.description}

@@ -183,6 +183,55 @@ export function calculateGameStandings(
     });
   }
 
+  const isMixPairsWithoutFixedTeams = !game.hasFixedTeams && game.genderTeams === 'MIX_PAIRS';
+
+  if (isMixPairsWithoutFixedTeams) {
+    const maleStandings = standings.filter(s => s.user.gender === 'MALE');
+    const femaleStandings = standings.filter(s => s.user.gender === 'FEMALE');
+
+    const sortStandings = (standingsToSort: PlayerStanding[]) => {
+      return standingsToSort.sort((a, b) => {
+        const aStats = playerStatsMap.get(a.user.id)!;
+        const bStats = playerStatsMap.get(b.user.id)!;
+        
+        const aValue = getSortValue(aStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
+        const bValue = getSortValue(bStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
+        
+        const primaryDiff = bValue - aValue;
+        if (primaryDiff !== 0) return primaryDiff;
+        
+        if (winnerOfGame === 'BY_MATCHES_WON' || winnerOfGame === 'BY_POINTS') {
+          return bStats.scoresDelta - aStats.scoresDelta;
+        } else if (winnerOfGame === 'BY_SCORES_DELTA') {
+          return bStats.matchesWon - aStats.matchesWon;
+        }
+        
+        return 0;
+      });
+    };
+
+    const sortedMaleStandings = sortStandings(maleStandings);
+    const sortedFemaleStandings = sortStandings(femaleStandings);
+
+    let currentPlace = 1;
+    const maxPairs = Math.max(sortedMaleStandings.length, sortedFemaleStandings.length);
+    const interleavedStandings: PlayerStanding[] = [];
+
+    for (let i = 0; i < maxPairs; i++) {
+      if (i < sortedMaleStandings.length) {
+        sortedMaleStandings[i].place = currentPlace;
+        interleavedStandings.push(sortedMaleStandings[i]);
+      }
+      if (i < sortedFemaleStandings.length) {
+        sortedFemaleStandings[i].place = currentPlace;
+        interleavedStandings.push(sortedFemaleStandings[i]);
+      }
+      currentPlace++;
+    }
+
+    return interleavedStandings;
+  }
+
   standings.sort((a, b) => {
     const aStats = playerStatsMap.get(a.user.id)!;
     const bStats = playerStatsMap.get(b.user.id)!;

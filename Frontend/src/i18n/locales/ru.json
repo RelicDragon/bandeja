@@ -666,6 +666,7 @@
     "priceTypePerPerson": "За человека",
     "priceTypePerTeam": "За команду",
     "priceTypeTotal": "Итого",
+    "priceTypeFree": "Бесплатно",
     "priceTotal": "Сумма",
     "priceTotalPlaceholder": "Введите сумму",
     "priceCurrency": "Валюта",

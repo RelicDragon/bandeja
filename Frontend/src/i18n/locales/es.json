@@ -658,6 +658,7 @@
     "priceTypePerPerson": "Por Persona",
     "priceTypePerTeam": "Por Equipo",
     "priceTypeTotal": "Total",
+    "priceTypeFree": "Gratis",
     "priceTotal": "Cantidad",
     "priceTotalPlaceholder": "Ingrese la cantidad",
     "priceCurrency": "Moneda",

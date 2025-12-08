@@ -37,6 +37,7 @@ export const PriceSection = ({
           <Select
             options={[
               { value: 'NOT_KNOWN', label: t('createGame.priceTypeNotKnown') },
+              { value: 'FREE', label: t('createGame.priceTypeFree') },
               { value: 'PER_PERSON', label: t('createGame.priceTypePerPerson') },
               { value: 'PER_TEAM', label: t('createGame.priceTypePerTeam') },
               { value: 'TOTAL', label: t('createGame.priceTypeTotal') },
@@ -46,7 +47,7 @@ export const PriceSection = ({
             disabled={false}
           />
         </div>
-        {priceType !== 'NOT_KNOWN' && (
+        {priceType !== 'NOT_KNOWN' && priceType !== 'FREE' && (
           <>
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">

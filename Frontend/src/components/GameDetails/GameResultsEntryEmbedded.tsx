@@ -646,6 +646,8 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
             outcomes={currentGame.outcomes || []} 
             affectsRating={currentGame.affectsRating} 
             gameId={currentGame.id}
+            hasFixedTeams={currentGame.hasFixedTeams || false}
+            genderTeams={(currentGame.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'}
             onExplanationClick={(explanation, playerName, levelBefore) => {
               openModal({ type: 'explanation', explanation, playerName, levelBefore });
             }}

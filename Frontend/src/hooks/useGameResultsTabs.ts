@@ -3,7 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 export type TabType = 'scores' | 'results' | 'stats';
 
 export const useGameResultsTabs = (resultsStatus?: string) => {
-  const [activeTab, setActiveTab] = useState<TabType>('scores');
+  const [activeTab, setActiveTab] = useState<TabType>(
+    resultsStatus === 'FINAL' ? 'results' : 'scores'
+  );
   const prevResultsStatusRef = useRef<string | undefined>(resultsStatus);
 
   useEffect(() => {

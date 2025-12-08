@@ -89,6 +89,19 @@ export class GameCreateService {
     const startTime = new Date(data.startTime);
     const endTime = new Date(data.endTime);
     
+    const priceType = data.priceType ?? 'NOT_KNOWN';
+    const priceTotal = data.priceTotal;
+    
+    if (priceType === 'PER_PERSON' || priceType === 'PER_TEAM' || priceType === 'TOTAL') {
+      if (priceTotal === null || priceTotal === undefined || priceTotal <= 0) {
+        throw new ApiError(400, 'Price must be greater than 0 when price type is PER_PERSON, PER_TEAM, or TOTAL');
+      }
+    } else if (priceType === 'NOT_KNOWN' || priceType === 'FREE') {
+      if (priceTotal !== null && priceTotal !== undefined && priceTotal !== 0) {
+        throw new ApiError(400, 'Price must be 0 or null when price type is NOT_KNOWN or FREE');
+      }
+    }
+    
     const createdGame = await prisma.game.create({
       data: {
         entityType: entityType,
@@ -126,9 +139,9 @@ export class GameCreateService {
         pointsPerLoose: data.pointsPerLoose ?? 0,
         pointsPerTie: data.pointsPerTie ?? 0,
         ballsInGames: data.ballsInGames ?? false,
-        priceTotal: data.priceTotal,
-        priceType: data.priceType ?? 'NOT_KNOWN',
-        priceCurrency: data.priceCurrency,
+        priceTotal: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : priceTotal,
+        priceType: priceType,
+        priceCurrency: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : data.priceCurrency,
         metadata: data.metadata,
         timeIsSet: data.timeIsSet ?? false,
         status: calculateGameStatus({

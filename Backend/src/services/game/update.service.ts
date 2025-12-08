@@ -203,6 +203,38 @@ export class GameUpdateService {
       }
     }
 
+    if (data.priceType !== undefined || data.priceTotal !== undefined) {
+      const currentGamePrice = await prisma.game.findUnique({ 
+        where: { id }, 
+        select: { priceType: true, priceTotal: true, priceCurrency: true } 
+      });
+      
+      const priceType = data.priceType !== undefined ? data.priceType : (currentGamePrice?.priceType ?? 'NOT_KNOWN');
+      const priceTotal = data.priceTotal !== undefined ? data.priceTotal : (currentGamePrice?.priceTotal ?? null);
+      
+      if (priceType === 'PER_PERSON' || priceType === 'PER_TEAM' || priceType === 'TOTAL') {
+        if (priceTotal === null || priceTotal === undefined || priceTotal <= 0) {
+          throw new ApiError(400, 'Price must be greater than 0 when price type is PER_PERSON, PER_TEAM, or TOTAL');
+        }
+        updateData.priceTotal = priceTotal;
+        if (data.priceCurrency !== undefined) {
+          updateData.priceCurrency = data.priceCurrency;
+        } else if (data.priceType !== undefined && (priceType === 'NOT_KNOWN' || priceType === 'FREE')) {
+          updateData.priceCurrency = null;
+        }
+      } else if (priceType === 'NOT_KNOWN' || priceType === 'FREE') {
+        if (priceTotal !== null && priceTotal !== undefined && priceTotal !== 0) {
+          throw new ApiError(400, 'Price must be 0 or null when price type is NOT_KNOWN or FREE');
+        }
+        updateData.priceTotal = null;
+        updateData.priceCurrency = null;
+      }
+      
+      if (data.priceType !== undefined) {
+        updateData.priceType = priceType;
+      }
+    }
+
     await prisma.game.update({
       where: { id },
       data: updateData,

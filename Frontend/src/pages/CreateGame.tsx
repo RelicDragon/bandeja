@@ -304,9 +304,9 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
         name: gameName || undefined,
         description: comments,
         participants: participants.filter((id): id is string => id !== null) as any,
-        priceTotal: priceType !== 'NOT_KNOWN' ? priceTotal : undefined,
+        priceTotal: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceTotal : undefined,
         priceType: priceType,
-        priceCurrency: priceType !== 'NOT_KNOWN' ? priceCurrency : undefined,
+        priceCurrency: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceCurrency : undefined,
         ...gameSetup,
       });
 

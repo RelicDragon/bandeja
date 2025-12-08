@@ -665,6 +665,7 @@
     "priceTypePerPerson": "Per Person",
     "priceTypePerTeam": "Per Team",
     "priceTypeTotal": "Total",
+    "priceTypeFree": "Free",
     "priceTotal": "Price Amount",
     "priceTotalPlaceholder": "Enter price amount",
     "priceCurrency": "Currency",

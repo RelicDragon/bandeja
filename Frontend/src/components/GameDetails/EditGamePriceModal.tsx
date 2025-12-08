@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Save } from 'lucide-react';
+import { X, Save, Banknote } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Game, PriceType, PriceCurrency } from '@/types';
 import { Select } from '@/components';
@@ -40,7 +40,20 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
     };
   }, [isOpen, game.priceTotal, game.priceType, game.priceCurrency]);
 
+  const validatePrice = (): boolean => {
+    if (priceType !== 'NOT_KNOWN' && priceType !== 'FREE') {
+      if (priceTotal === null || priceTotal === undefined || priceTotal === 0 || priceTotal <= 0) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleClose = () => {
+    if (!validatePrice()) {
+      toast.error(t('createGame.priceRequired', { defaultValue: 'Price must be greater than 0 for this price type' }));
+      return;
+    }
     setIsClosing(true);
     setTimeout(() => {
       setIsClosing(false);
@@ -51,12 +64,17 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
   const handleSave = async () => {
     if (!game.id) return;
 
+    if (!validatePrice()) {
+      toast.error(t('createGame.priceRequired', { defaultValue: 'Price must be greater than 0 for this price type' }));
+      return;
+    }
+
     setIsSaving(true);
     try {
       const updateData: Partial<Game> = {
-        priceTotal: priceType !== 'NOT_KNOWN' ? priceTotal : undefined,
+        priceTotal: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceTotal : undefined,
         priceType: priceType,
-        priceCurrency: priceType !== 'NOT_KNOWN' ? priceCurrency : undefined,
+        priceCurrency: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceCurrency : undefined,
       };
 
       await gamesApi.update(game.id, updateData);
@@ -94,7 +112,7 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-2">
-            <span className="text-xl font-semibold text-gray-500 dark:text-gray-400">€</span>
+            <Banknote size={24} className="text-gray-500 dark:text-gray-400" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               {t('createGame.price')}
             </h2>
@@ -115,6 +133,7 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
             <Select
               options={[
                 { value: 'NOT_KNOWN', label: t('createGame.priceTypeNotKnown') },
+                { value: 'FREE', label: t('createGame.priceTypeFree') },
                 { value: 'PER_PERSON', label: t('createGame.priceTypePerPerson') },
                 { value: 'PER_TEAM', label: t('createGame.priceTypePerTeam') },
                 { value: 'TOTAL', label: t('createGame.priceTypeTotal') },
@@ -125,7 +144,7 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
             />
           </div>
 
-          {priceType !== 'NOT_KNOWN' && (
+          {priceType !== 'NOT_KNOWN' && priceType !== 'FREE' && (
             <>
               <div>
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
