@@ -616,7 +616,7 @@
       }
     },
     "afterGameGoToBar": {
-      "title": "Beer after the game",
+      "title": "Stay at the bar after the game",
       "note": {
         "false": "Does not include a social gathering after the match.",
         "true": "Includes a social gathering after the match."

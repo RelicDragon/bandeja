@@ -609,7 +609,7 @@
       }
     },
     "afterGameGoToBar": {
-      "title": "Cerveza después del juego",
+      "title": "Quedarse en el bar después del juego",
       "note": {
         "false": "No incluye una reunión social después del partido.",
         "true": "Incluye una reunión social después del partido."
