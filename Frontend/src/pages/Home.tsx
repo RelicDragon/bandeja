@@ -98,7 +98,15 @@ export const HomeContent = () => {
     return { ...gamesUnreadCounts, ...pastGamesUnreadCounts };
   }, [gamesUnreadCounts, pastGamesUnreadCounts]);
 
-  const filteredMyGames = useMemo(() => sortGamesByStatusAndDateTime(filterGamesByTime(mergedGames)), [mergedGames]);
+  const filteredMyGames = useMemo(() => {
+    const filtered = mergedGames.filter((game) => {
+      if (game.status === 'ARCHIVED') {
+        return (mergedUnreadCounts[game.id] || 0) > 0;
+      }
+      return true;
+    });
+    return sortGamesByStatusAndDateTime(filterGamesByTime(filtered));
+  }, [mergedGames, mergedUnreadCounts]);
   const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(filterGamesByTime(pastGames)), [pastGames]);
   const filteredAvailableGames = useMemo(() => sortGamesByStatusAndDateTime(filterGamesByTime(availableGames)), [availableGames]);
 
