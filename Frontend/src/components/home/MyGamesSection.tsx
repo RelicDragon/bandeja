@@ -162,9 +162,11 @@ export const MyGamesSection = ({
           {announcedOrStartedGames.length > 0 && finishedOrArchivedGames.length > 0 && (
             <div>
               <Divider className="-mt-4" />
-              <p className="text-xs text-gray-500 dark:text-gray-400 text-center -mt-6">
-                {t('home.finishedToday', { defaultValue: 'Finished today' })}
-              </p>
+              <div className="flex justify-center -mt-9">
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                  {t('home.finishedToday', { defaultValue: 'Finished today' })}
+                </p>
+              </div>
             </div>
           )}
           
