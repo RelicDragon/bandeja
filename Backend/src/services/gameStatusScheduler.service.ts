@@ -5,6 +5,7 @@ import { deleteInvitesForStartedGame } from '../controllers/invite.controller';
 import telegramBotService from './telegram/bot.service';
 import { sendGameReminderNotification } from './telegram/notifications/game-reminder.notification';
 import { EntityType } from '@prisma/client';
+import { getUserTimezoneFromCityId } from './user-timezone.service';
 
 export class GameStatusScheduler {
   private cronJob: cron.ScheduledTask | null = null;
@@ -41,12 +42,14 @@ export class GameStatusScheduler {
           resultsStatus: true,
           status: true,
           entityType: true,
+          cityId: true,
         },
       });
 
       let updated = 0;
       for (const game of games) {
-        const newStatus = calculateGameStatus(game);
+        const cityTimezone = await getUserTimezoneFromCityId(game.cityId);
+        const newStatus = calculateGameStatus(game, cityTimezone);
         
         if (newStatus !== game.status) {
           if (

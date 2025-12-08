@@ -72,7 +72,7 @@ export class GameUpdateService {
 
     const currentGame = await prisma.game.findUnique({
       where: { id },
-      select: { startTime: true, endTime: true, resultsStatus: true, clubId: true, courtId: true },
+      select: { startTime: true, endTime: true, resultsStatus: true, clubId: true, courtId: true, cityId: true },
     });
 
     const oldClubId = currentGame?.clubId;
@@ -190,11 +190,19 @@ export class GameUpdateService {
     if (currentGame && (data.startTime !== undefined || data.endTime !== undefined)) {
       const newStartTime = data.startTime ? new Date(data.startTime) : currentGame.startTime;
       const newEndTime = data.endTime ? new Date(data.endTime) : currentGame.endTime;
+      
+      const currentGameWithCityId = await prisma.game.findUnique({
+        where: { id },
+        select: { cityId: true },
+      });
+      
+      const cityTimezone = await getUserTimezoneFromCityId(currentGameWithCityId?.cityId ?? null);
+      
       updateData.status = calculateGameStatus({
         startTime: newStartTime,
         endTime: newEndTime,
         resultsStatus: currentGame.resultsStatus,
-      });
+      }, cityTimezone);
       if (data.startTime !== undefined) {
         updateData.startTime = newStartTime;
       }

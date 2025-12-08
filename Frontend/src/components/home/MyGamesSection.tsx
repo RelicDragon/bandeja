@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Button, Card, GameCard } from '@/components';
+import { Button, Card, GameCard, Divider } from '@/components';
 import { Game } from '@/types';
 
 interface MyGamesSectionProps {
@@ -122,31 +122,55 @@ export const MyGamesSection = ({
     );
   }
 
+  const announcedOrStartedGames = displayGames.filter(
+    (game) => game.status === 'ANNOUNCED' || game.status === 'STARTED'
+  );
+  const finishedOrArchivedGames = displayGames.filter(
+    (game) => game.status === 'FINISHED' || game.status === 'ARCHIVED'
+  );
+
+  const renderGame = (game: Game, globalIndex: number) => (
+    <div
+      key={game.id}
+      className={`transition-all duration-500 ease-in-out ${
+        showChatFilter 
+          ? 'animate-in slide-in-from-top-4 fade-in' 
+          : 'animate-in slide-in-from-top-4'
+      }`}
+      style={{
+        animationDelay: showChatFilter ? `${globalIndex * 100}ms` : '0ms'
+      }}
+    >
+      <GameCard
+        game={game}
+        user={user}
+        isInitiallyCollapsed={globalIndex !== 0}
+        unreadCount={gamesUnreadCounts[game.id] || 0}
+        forceCollapsed={showChatFilter ? true : undefined}
+      />
+    </div>
+  );
+
   return (
     <div>
       <div>
         <div className="space-y-4">
-          {displayGames.map((game, index) => (
-            <div
-              key={game.id}
-              className={`transition-all duration-500 ease-in-out ${
-                showChatFilter 
-                  ? 'animate-in slide-in-from-top-4 fade-in' 
-                  : 'animate-in slide-in-from-top-4'
-              }`}
-              style={{
-                animationDelay: showChatFilter ? `${index * 100}ms` : '0ms'
-              }}
-            >
-              <GameCard
-                game={game}
-                user={user}
-                isInitiallyCollapsed={index !== 0}
-                unreadCount={gamesUnreadCounts[game.id] || 0}
-                forceCollapsed={showChatFilter ? true : undefined}
-              />
+          {announcedOrStartedGames.map((game, index) => 
+            renderGame(game, index)
+          )}
+          
+          {announcedOrStartedGames.length > 0 && finishedOrArchivedGames.length > 0 && (
+            <div>
+              <Divider className="-mt-4" />
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center -mt-6">
+                {t('home.finishedToday', { defaultValue: 'Finished today' })}
+              </p>
             </div>
-          ))}
+          )}
+          
+          {finishedOrArchivedGames.map((game, index) => 
+            renderGame(game, announcedOrStartedGames.length + index)
+          )}
         </div>
       </div>
     </div>

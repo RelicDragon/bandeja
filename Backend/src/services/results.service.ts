@@ -2,6 +2,7 @@ import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { canModifyResults, hasParentGamePermission } from '../utils/parentGamePermissions';
+import { getUserTimezoneFromCityId } from './user-timezone.service';
 
 
 export async function getGameResults(gameId: string) {
@@ -210,10 +211,12 @@ export async function deleteGameResults(gameId: string, requestUserId: string) {
 
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
-      select: { startTime: true, endTime: true },
+      select: { startTime: true, endTime: true, cityId: true },
     });
     
     if (updatedGame) {
+      const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
+      
       const { calculateGameStatus } = await import('../utils/gameStatus');
       await tx.game.update({
         where: { id: gameId },
@@ -226,7 +229,7 @@ export async function deleteGameResults(gameId: string, requestUserId: string) {
             startTime: updatedGame.startTime,
             endTime: updatedGame.endTime,
             resultsStatus: 'NONE',
-          }),
+          }, cityTimezone),
         },
       });
     }
@@ -339,10 +342,12 @@ export async function resetGameResults(gameId: string, requestUserId: string) {
 
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
-      select: { startTime: true, endTime: true },
+      select: { startTime: true, endTime: true, cityId: true },
     });
     
     if (updatedGame) {
+      const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
+      
       const { calculateGameStatus } = await import('../utils/gameStatus');
       await tx.game.update({
         where: { id: gameId },
@@ -355,7 +360,7 @@ export async function resetGameResults(gameId: string, requestUserId: string) {
             startTime: updatedGame.startTime,
             endTime: updatedGame.endTime,
             resultsStatus: 'NONE',
-          }),
+          }, cityTimezone),
         },
       });
     }
@@ -428,10 +433,12 @@ export async function editGameResults(gameId: string, requestUserId: string) {
 
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
-      select: { startTime: true, endTime: true },
+      select: { startTime: true, endTime: true, cityId: true },
     });
     
     if (updatedGame) {
+      const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
+      
       const { calculateGameStatus } = await import('../utils/gameStatus');
       await tx.game.update({
         where: { id: gameId },
@@ -441,7 +448,7 @@ export async function editGameResults(gameId: string, requestUserId: string) {
             startTime: updatedGame.startTime,
             endTime: updatedGame.endTime,
             resultsStatus: 'IN_PROGRESS',
-          }),
+          }, cityTimezone),
         },
       });
     }

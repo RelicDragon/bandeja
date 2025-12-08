@@ -97,7 +97,8 @@
     "noPastGames": "No past games",
     "noGames": "You don't have any games yet",
     "createGame": "Create a game to get started",
-    "findGamesButton": "Find Games"
+    "findGamesButton": "Find Games",
+    "finishedToday": "Finished today"
   },
   "games": {
     "title": "Find Games",

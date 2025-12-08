@@ -97,7 +97,8 @@
     "noPastGames": "Нет прошедших игр",
     "noGames": "У вас пока нет игр",
     "createGame": "Создайте игру, чтобы начать",
-    "findGamesButton": "Найти игры"
+    "findGamesButton": "Найти игры",
+    "finishedToday": "Завершённые сегодня"
   },
   "games": {
     "title": "Найти игры",

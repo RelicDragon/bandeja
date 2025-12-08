@@ -5,6 +5,7 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
+import { getUserTimezoneFromCityId } from '../user-timezone.service';
 
 export class GameCreateService {
   static async createGame(data: any, userId: string) {
@@ -96,11 +97,13 @@ export class GameCreateService {
       if (priceTotal === null || priceTotal === undefined || priceTotal <= 0) {
         throw new ApiError(400, 'Price must be greater than 0 when price type is PER_PERSON, PER_TEAM, or TOTAL');
       }
-    } else if (priceType === 'NOT_KNOWN' || priceType === 'FREE') {
+    } else     if (priceType === 'NOT_KNOWN' || priceType === 'FREE') {
       if (priceTotal !== null && priceTotal !== undefined && priceTotal !== 0) {
         throw new ApiError(400, 'Price must be 0 or null when price type is NOT_KNOWN or FREE');
       }
     }
+    
+    const cityTimezone = await getUserTimezoneFromCityId(cityId);
     
     const createdGame = await prisma.game.create({
       data: {
@@ -148,7 +151,7 @@ export class GameCreateService {
           startTime,
           endTime,
           resultsStatus: 'NONE',
-        }),
+        }, cityTimezone),
         participants: {
           create: {
             userId,

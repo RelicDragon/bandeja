@@ -97,7 +97,8 @@
     "noPastGames": "Нема прошлих игара",
     "noGames": "Још увек немате игара",
     "createGame": "Креирајте игру да почнете",
-    "findGamesButton": "Пронађи игре"
+    "findGamesButton": "Пронађи игре",
+    "finishedToday": "Завршене данас"
   },
   "games": {
     "title": "Пронађи игре",
