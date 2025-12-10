@@ -207,6 +207,7 @@ export interface Game {
   pointsPerTie?: number;
   ballsInGames?: boolean;
   photosCount?: number;
+  mainPhotoId?: string | null;
   isClubFavorite?: boolean;
   priceTotal?: number;
   priceType?: PriceType;

@@ -129,6 +129,9 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
                 </div>
                 <div className="text-center text-sm font-medium text-gray-900 dark:text-gray-100">
                   {standing.wins}-{standing.ties}-{standing.losses}
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">
+                    {standing.wins + standing.ties + standing.losses}
+                  </span>
                 </div>
                 <div className="flex items-center justify-center gap-1.5">
                   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">

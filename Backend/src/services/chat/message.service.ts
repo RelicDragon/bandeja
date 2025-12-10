@@ -248,13 +248,24 @@ export class MessageService {
     // Handle game-specific logic
     if (chatContextType === 'GAME' && game) {
       if (chatType === ChatType.PHOTOS && mediaUrls.length > 0) {
+        const currentGame = await prisma.game.findUnique({
+          where: { id: contextId },
+          select: { mainPhotoId: true }
+        });
+
+        const updateData: any = {
+          photosCount: {
+            increment: mediaUrls.length
+          }
+        };
+
+        if (!currentGame?.mainPhotoId) {
+          updateData.mainPhotoId = message.id;
+        }
+
         await prisma.game.update({
           where: { id: contextId },
-          data: {
-            photosCount: {
-              increment: mediaUrls.length
-            }
-          }
+          data: updateData
         });
 
         // Emit game update to refresh photosCount
@@ -495,13 +506,34 @@ export class MessageService {
 
     // Handle game-specific photo count update
     if (message.chatContextType === 'GAME' && message.chatType === ChatType.PHOTOS && message.mediaUrls.length > 0) {
+      const currentGame = await prisma.game.findUnique({
+        where: { id: message.contextId },
+        select: { mainPhotoId: true }
+      });
+
+      const updateData: any = {
+        photosCount: {
+          decrement: message.mediaUrls.length
+        }
+      };
+
+      if (currentGame?.mainPhotoId === messageId) {
+        const remainingPhotos = await prisma.chatMessage.findFirst({
+          where: {
+            contextId: message.contextId,
+            chatType: ChatType.PHOTOS,
+            mediaUrls: { isEmpty: false },
+            id: { not: messageId }
+          },
+          orderBy: { createdAt: 'asc' }
+        });
+
+        updateData.mainPhotoId = remainingPhotos?.id || null;
+      }
+
       await prisma.game.update({
         where: { id: message.contextId },
-        data: {
-          photosCount: {
-            decrement: message.mediaUrls.length
-          }
-        }
+        data: updateData
       });
 
       // Emit game update to refresh photosCount

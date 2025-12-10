@@ -199,6 +199,7 @@ model Game {
   ballsInGames   Boolean          @default(false)
   mediaUrls       String[]
   photosCount     Int              @default(0)
+  mainPhotoId     String?
   parentId        String?
   leagueRoundId   String?
   leagueGroupId   String?

@@ -774,6 +774,8 @@
     "addPhoto": "Añadir Foto",
     "photoAdded": "Foto añadida al chat del juego",
     "photoUploadFailed": "Error al subir la foto",
+    "mainPhotoUpdated": "Foto principal actualizada",
+    "mainPhotoUpdateFailed": "Error al actualizar la foto principal",
     "photos": "Fotos",
     "noPhotosYet": "Aún no hay fotos",
     "noPhotosYetFromGame": "Aún no hay fotos del juego",

@@ -243,6 +243,49 @@ export class GameUpdateService {
       }
     }
 
+    if (data.mainPhotoId !== undefined) {
+      if (data.mainPhotoId === null) {
+        const photoCount = await prisma.chatMessage.count({
+          where: {
+            gameId: id,
+            chatType: 'PHOTOS',
+            mediaUrls: { isEmpty: false }
+          }
+        });
+
+        if (photoCount > 0) {
+          const firstPhoto = await prisma.chatMessage.findFirst({
+            where: {
+              gameId: id,
+              chatType: 'PHOTOS',
+              mediaUrls: { isEmpty: false }
+            },
+            orderBy: { createdAt: 'asc' }
+          });
+
+          if (firstPhoto) {
+            updateData.mainPhotoId = firstPhoto.id;
+          }
+        } else {
+          updateData.mainPhotoId = null;
+        }
+      } else {
+        const photoMessage = await prisma.chatMessage.findFirst({
+          where: {
+            id: data.mainPhotoId,
+            gameId: id,
+            chatType: 'PHOTOS',
+            mediaUrls: { isEmpty: false }
+          }
+        });
+
+        if (!photoMessage) {
+          throw new ApiError(400, 'Main photo must be a valid photo message from this game');
+        }
+        updateData.mainPhotoId = data.mainPhotoId;
+      }
+    }
+
     await prisma.game.update({
       where: { id },
       data: updateData,

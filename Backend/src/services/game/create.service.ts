@@ -147,6 +147,7 @@ export class GameCreateService {
         priceCurrency: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : data.priceCurrency,
         metadata: data.metadata,
         timeIsSet: data.timeIsSet ?? false,
+        mainPhotoId: data.mainPhotoId,
         status: calculateGameStatus({
           startTime,
           endTime,

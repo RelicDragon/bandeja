@@ -786,6 +786,8 @@
     "addPhoto": "Добавить фото",
     "photoAdded": "Фото добавлено в чат игры",
     "photoUploadFailed": "Не удалось загрузить фото",
+    "mainPhotoUpdated": "Главное фото обновлено",
+    "mainPhotoUpdateFailed": "Не удалось обновить главное фото",
     "photos": "Фото",
     "noPhotosYet": "Пока нет фотографий",
     "noPhotosYetFromGame": "Пока нет фотографий с игры",

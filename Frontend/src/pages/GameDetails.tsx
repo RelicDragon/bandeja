@@ -757,7 +757,7 @@ export const GameDetailsContent = () => {
           </div>
 
           {!(canEdit && game.resultsStatus !== 'FINAL') && (
-            <PhotosSection game={game} />
+            <PhotosSection game={game} onGameUpdate={setGame} />
           )}
 
           {!isLeagueSeason && game.resultsStatus !== 'NONE' && (

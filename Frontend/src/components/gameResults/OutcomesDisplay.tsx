@@ -269,6 +269,9 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
                             <div className="flex items-center gap-2 text-sm flex-wrap">
                               <span className="text-gray-600 dark:text-gray-400">
                                 {t('gameResults.games')}: {outcome.wins}-{outcome.ties}-{outcome.losses}
+                                <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">
+                                  {outcome.wins + outcome.ties + outcome.losses}
+                                </span>
                               </span>
                               <span className="text-gray-400 dark:text-gray-500">•</span>
                               <span className="text-xs text-gray-500 dark:text-gray-400">

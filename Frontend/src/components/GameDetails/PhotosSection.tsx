@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from '@/components';
 import { Game } from '@/types';
 import { chatApi, ChatMessage } from '@/api/chat';
@@ -7,20 +7,34 @@ import { UrlConstructor } from '@/utils/urlConstructor';
 import { capturePhoto } from '@/utils/photoCapture';
 import { mediaApi } from '@/api/media';
 import { socketService } from '@/services/socketService';
+import { gamesApi } from '@/api/games';
+import { useAuthStore } from '@/store/authStore';
+import { isUserGameAdminOrOwner } from '@/utils/gameResults';
 import { Camera } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 interface PhotosSectionProps {
   game: Game;
+  onGameUpdate?: (game: Game) => void;
 }
 
-export const PhotosSection = ({ game }: PhotosSectionProps) => {
+export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
   const [photos, setPhotos] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isUpdatingMainPhoto, setIsUpdatingMainPhoto] = useState(false);
+  const [mainPhotoId, setMainPhotoId] = useState<string | null | undefined>(game.mainPhotoId);
+  const hasAttemptedSetMainPhoto = useRef(false);
+  
+  const canEditMainPhoto = user ? isUserGameAdminOrOwner(game, user.id) : false;
+
+  useEffect(() => {
+    setMainPhotoId(game.mainPhotoId);
+  }, [game.mainPhotoId]);
 
   const loadPhotos = useCallback(async () => {
     if (!game.id) return;
@@ -46,6 +60,7 @@ export const PhotosSection = ({ game }: PhotosSectionProps) => {
       }
       
       setPhotos(allMessages);
+      hasAttemptedSetMainPhoto.current = false;
     } catch (error) {
       console.error('Failed to load photos:', error);
     } finally {
@@ -119,6 +134,50 @@ export const PhotosSection = ({ game }: PhotosSectionProps) => {
     setFullscreenImage(UrlConstructor.constructImageUrl(imageUrl));
   };
 
+  const handleMainPhotoSelect = useCallback(async (messageId: string, silent = false) => {
+    if (!game.id || isUpdatingMainPhoto || !canEditMainPhoto) return;
+
+    if (mainPhotoId === messageId) {
+      return;
+    }
+    
+    setIsUpdatingMainPhoto(true);
+    try {
+      const response = await gamesApi.update(game.id, { mainPhotoId: messageId });
+      setMainPhotoId(response.data.mainPhotoId);
+      if (onGameUpdate && response.data) {
+        onGameUpdate(response.data);
+      }
+      if (!silent) {
+        toast.success(t('gameDetails.mainPhotoUpdated'));
+      }
+    } catch (error) {
+      console.error('Failed to update main photo:', error);
+      if (!silent) {
+        toast.error(t('gameDetails.mainPhotoUpdateFailed'));
+      }
+    } finally {
+      setIsUpdatingMainPhoto(false);
+    }
+  }, [game.id, mainPhotoId, isUpdatingMainPhoto, canEditMainPhoto, t, onGameUpdate]);
+
+
+  useEffect(() => {
+    if (
+      photos.length > 0 && 
+      !mainPhotoId && 
+      canEditMainPhoto && 
+      !isUpdatingMainPhoto && 
+      !hasAttemptedSetMainPhoto.current
+    ) {
+      const firstPhoto = photos[0];
+      if (firstPhoto) {
+        hasAttemptedSetMainPhoto.current = true;
+        handleMainPhotoSelect(firstPhoto.id, true);
+      }
+    }
+  }, [photos.length, mainPhotoId, canEditMainPhoto, isUpdatingMainPhoto, handleMainPhotoSelect]);
+
   const getThumbnailUrl = (message: ChatMessage, index: number): string => {
     if (message.thumbnailUrls && message.thumbnailUrls[index]) {
       return UrlConstructor.constructImageUrl(message.thumbnailUrls[index]);
@@ -185,14 +244,20 @@ export const PhotosSection = ({ game }: PhotosSectionProps) => {
                   const globalIndex = photos.slice(0, messageIndex).reduce(
                     (acc, msg) => acc + (msg.mediaUrls?.length || 0), 0
                   ) + mediaIndex;
+                  const isMainPhoto = mainPhotoId === message.id;
                   
                   return (
                     <div
                       key={`${message.id}-${mediaIndex}`}
-                      className="flex-shrink-0 cursor-pointer group"
-                      onClick={() => handleImageClick(mediaUrl)}
+                      className="flex-shrink-0"
                     >
-                      <div className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700 group-hover:border-primary-500 dark:group-hover:border-primary-400 transition-colors">
+                      <div className={`relative w-24 h-24 rounded-lg overflow-hidden border-2 transition-colors cursor-pointer group ${
+                        isMainPhoto 
+                          ? 'border-blue-500 dark:border-blue-400' 
+                          : 'border-gray-200 dark:border-gray-700 group-hover:border-primary-500 dark:group-hover:border-primary-400'
+                      }`}
+                        onClick={() => handleImageClick(mediaUrl)}
+                      >
                         <img
                           src={thumbnailUrl}
                           alt={`Photo ${globalIndex + 1}`}
@@ -200,6 +265,19 @@ export const PhotosSection = ({ game }: PhotosSectionProps) => {
                           loading="lazy"
                         />
                       </div>
+                      {canEditMainPhoto && (
+                        <div className="mt-1 flex items-center justify-center">
+                          <input
+                            type="radio"
+                            name="mainPhoto"
+                            checked={isMainPhoto}
+                            onChange={() => handleMainPhotoSelect(message.id)}
+                            disabled={isUpdatingMainPhoto || (isMainPhoto && photos.length > 0)}
+                            className="cursor-pointer disabled:opacity-50"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      )}
                     </div>
                   );
                 })

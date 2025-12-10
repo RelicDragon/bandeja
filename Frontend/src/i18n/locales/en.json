@@ -781,6 +781,8 @@
     "addPhoto": "Add Photo",
     "photoAdded": "Photo added to game chat",
     "photoUploadFailed": "Failed to upload photo",
+    "mainPhotoUpdated": "Main photo updated",
+    "mainPhotoUpdateFailed": "Failed to update main photo",
     "photos": "Photos",
     "noPhotosYet": "No photos yet",
     "noPhotosYetFromGame": "No photos from game yet",
