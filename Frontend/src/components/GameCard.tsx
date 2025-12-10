@@ -9,6 +9,8 @@ import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { getGameResultStatus } from '@/utils/gameResults';
 import { useNavigationStore } from '@/store/navigationStore';
+import { chatApi } from '@/api/chat';
+import { UrlConstructor } from '@/utils/urlConstructor';
 import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award, Lock, Swords, Trophy, Camera } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -50,6 +52,7 @@ export const GameCard = ({
   const [isScrolling, setIsScrolling] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
+  const [mainPhotoUrl, setMainPhotoUrl] = useState<string | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -129,6 +132,34 @@ export const GameCard = ({
       }
     };
   }, [game.participants, isCollapsed, isMobile]);
+
+  useEffect(() => {
+    const loadMainPhoto = async () => {
+      if (!game.mainPhotoId || !game.id || game.status === 'ANNOUNCED') {
+        setMainPhotoUrl(null);
+        return;
+      }
+
+      try {
+        const messages = await chatApi.getGameMessages(game.id, 1, 50, 'PHOTOS');
+        const mainPhotoMessage = messages.find(msg => msg.id === game.mainPhotoId);
+        
+        if (mainPhotoMessage && mainPhotoMessage.mediaUrls && mainPhotoMessage.mediaUrls.length > 0) {
+          const thumbnailUrl = mainPhotoMessage.thumbnailUrls && mainPhotoMessage.thumbnailUrls[0]
+            ? mainPhotoMessage.thumbnailUrls[0]
+            : mainPhotoMessage.mediaUrls[0];
+          setMainPhotoUrl(UrlConstructor.constructImageUrl(thumbnailUrl));
+        } else {
+          setMainPhotoUrl(null);
+        }
+      } catch (error) {
+        console.error('Failed to load main photo:', error);
+        setMainPhotoUrl(null);
+      }
+    };
+
+    loadMainPhoto();
+  }, [game.mainPhotoId, game.id, game.status]);
 
   const isParticipant = game.participants.some(p => p.userId === user?.id && p.isPlaying);
   const hasPendingInvite = game.invites?.some(invite => invite.receiverId === user?.id);
@@ -438,7 +469,7 @@ export const GameCard = ({
 
       {/* Collapsed view - Single row */}
       {isCollapsed && (
-        <div className={`text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 ${game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : 'flex items-center gap-4'}`}>
+        <div className={`text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 ${game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : mainPhotoUrl ? 'flex gap-4' : 'flex items-center gap-4'}`}>
           {game.entityType === 'TRAINING' ? (
             <>
               <div className="flex-shrink-0">
@@ -548,6 +579,61 @@ export const GameCard = ({
                 </div>
               </div>
             </>
+          ) : mainPhotoUrl ? (
+            <>
+              <div className="flex-shrink-0">
+                <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                  <img
+                    src={mainPhotoUrl}
+                    alt="Main photo"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 flex-1">
+                <div className="flex items-center gap-1">
+                  {showDate && <Calendar size={14} />}
+                  <span>
+                    {showDate && getDateLabel(game.startTime, false)}
+                    {shouldShowTiming && (
+                      <>
+                        {` ${formatDate(game.startTime, 'HH:mm')}`}
+                        {game.entityType !== 'BAR' ? `, ${(() => {
+                          const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                          if (durationHours === Math.floor(durationHours)) {
+                            return `${durationHours}${t('common.h')}`;
+                          } else {
+                            const hours = Math.floor(durationHours);
+                            const minutes = Math.round((durationHours % 1) * 60);
+                            return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                          }
+                        })()}` : ''}
+                      </>
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1">
+                    <Users size={14} />
+                    <span>
+                      {game.entityType === 'BAR' 
+                        ? game.participants.filter(p => p.isPlaying).length
+                        : `${game.participants.filter(p => p.isPlaying).length}/${game.maxParticipants}`
+                      }
+                    </span>
+                  </div>
+                  {(game.court?.club || game.club) && (
+                    <div className="flex items-center gap-1">
+                      <MapPin size={14} />
+                      <span className="truncate max-w-32">
+                        {game.court?.club?.name || game.club?.name}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           ) : (
             <>
               <div className="flex items-center gap-1">
@@ -602,7 +688,67 @@ export const GameCard = ({
             : 'opacity-100'
         }`}
       >
-        <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+        {mainPhotoUrl ? (
+          <div className="flex gap-4 mb-3">
+            <div className="flex-shrink-0">
+              <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                <img
+                  src={mainPhotoUrl}
+                  alt="Main photo"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2">
+                <Calendar size={16} />
+                <span>
+                  {getDateLabel(game.startTime)}
+                  {shouldShowTiming && (
+                    <>
+                      {` ${formatDate(game.startTime, 'HH:mm')}`}
+                      {game.entityType !== 'BAR' ? ` - ${formatDate(game.endTime, 'HH:mm')}` : ''}
+                    </>
+                  )}
+                </span>
+              </div>
+              {(game.court?.club || game.club) && (
+                <div className="flex items-center gap-2">
+                  <MapPin size={16} />
+                  <span>{game.court?.club?.name || game.club?.name}</span>
+                  {game.entityType === 'BAR' && (
+                    <>
+                      <span className="text-gray-400 dark:text-gray-500">•</span>
+                      <Users size={16} />
+                      <span>{game.participants.filter(p => p.isPlaying).length}</span>
+                    </>
+                  )}
+                </div>
+              )}
+              {game.entityType !== 'BAR' && (
+                <div className="flex items-center gap-2">
+                  <Users size={16} />
+                  <span>
+                    {`${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`}
+                  </span>
+                  {game.minLevel !== undefined && game.maxLevel !== undefined && (
+                    <>
+                      <span className="text-gray-400 dark:text-gray-500">•</span>
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        {t('games.level')}:
+                      </span>
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        {game.minLevel.toFixed(1)}-{game.maxLevel.toFixed(1)}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center gap-2">
               <Calendar size={16} />
               <span>
@@ -615,38 +761,41 @@ export const GameCard = ({
                 )}
               </span>
             </div>
-          {(game.court?.club || game.club) && (
-            <div className="flex items-center gap-2">
-              <MapPin size={16} />
-              <span>{game.court?.club?.name || game.club?.name}</span>
-              {game.entityType === 'BAR' && (
-                <>
-                  <span className="text-gray-400 dark:text-gray-500">•</span>
-                  <Users size={16} />
-                  <span>{game.participants.filter(p => p.isPlaying).length}</span>
-                </>
-              )}
-            </div>
-          )}
-          {game.entityType !== 'BAR' && (
-            <div className="flex items-center gap-2">
-              <Users size={16} />
-              <span>
-                {`${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`}
-              </span>
-              {game.minLevel !== undefined && game.maxLevel !== undefined && (
-                <>
-                  <span className="text-gray-400 dark:text-gray-500">•</span>
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    {t('games.level')}:
-                  </span>
-                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    {game.minLevel.toFixed(1)}-{game.maxLevel.toFixed(1)}
-                  </span>
-                </>
-              )}
-            </div>
-          )}
+            {(game.court?.club || game.club) && (
+              <div className="flex items-center gap-2">
+                <MapPin size={16} />
+                <span>{game.court?.club?.name || game.club?.name}</span>
+                {game.entityType === 'BAR' && (
+                  <>
+                    <span className="text-gray-400 dark:text-gray-500">•</span>
+                    <Users size={16} />
+                    <span>{game.participants.filter(p => p.isPlaying).length}</span>
+                  </>
+                )}
+              </div>
+            )}
+            {game.entityType !== 'BAR' && (
+              <div className="flex items-center gap-2">
+                <Users size={16} />
+                <span>
+                  {`${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`}
+                </span>
+                {game.minLevel !== undefined && game.maxLevel !== undefined && (
+                  <>
+                    <span className="text-gray-400 dark:text-gray-500">•</span>
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                      {t('games.level')}:
+                    </span>
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                      {game.minLevel.toFixed(1)}-{game.maxLevel.toFixed(1)}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center gap-2">
               <div className="relative -mx-0 flex-1 w-full">
                 <div 
