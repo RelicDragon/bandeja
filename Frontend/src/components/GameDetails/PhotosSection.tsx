@@ -265,7 +265,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
                           loading="lazy"
                         />
                       </div>
-                      {canEditMainPhoto && (
+                      {canEditMainPhoto && photos.length >= 2 && (
                         <div className="mt-1 flex items-center justify-center">
                           <input
                             type="radio"
