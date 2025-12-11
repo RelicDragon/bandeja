@@ -12,9 +12,7 @@ const api = axios.create({
   baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
+    'Accept': 'application/json'
   },
   timeout: 10000,
 });
@@ -25,10 +23,14 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
-    config.headers['Pragma'] = 'no-cache';
-    config.headers['Expires'] = '0';
-    config.params = { ...config.params, _t: Date.now() };
+    
+    if (!isCapacitor()) {
+      config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+      config.headers['Pragma'] = 'no-cache';
+      config.headers['Expires'] = '0';
+      config.params = { ...config.params, _t: Date.now() };
+    }
+    
     return config;
   },
   (error) => {
@@ -39,13 +41,6 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || !navigator.onLine) {
-      console.warn('Network error detected:', error.message);
-      const networkError = new Error('Network unavailable');
-      networkError.name = 'NetworkError';
-      return Promise.reject(networkError);
-    }
-    
     if (error.response?.status === 401) {
       const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
       if (!isAuthPage) {

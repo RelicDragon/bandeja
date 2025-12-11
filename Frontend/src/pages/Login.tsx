@@ -36,7 +36,28 @@ export const Login = () => {
         navigate('/');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || t('errors.generic'));
+      const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';
+      const method = err?.config?.method?.toUpperCase() || 'unknown';
+      const errorCode = err?.code || 'no code';
+      const errorMessage = err?.message || 'no message';
+      let errorMsg = '';
+      
+      if (err?.response?.data?.message) {
+        const key = err.response.data.message;
+        errorMsg = t(key) !== key ? t(key) : key;
+      } else if (err?.response?.data) {
+        errorMsg = JSON.stringify(err.response.data);
+      } else if (err?.response) {
+        errorMsg = `Error ${err.response.status}: ${err.response.statusText}`;
+      } else if (err?.code === 'ERR_NETWORK' || err?.code === 'ECONNABORTED') {
+        errorMsg = 'Network unavailable';
+      } else if (err?.message && err.message !== 'Network Error') {
+        errorMsg = err.message;
+      } else {
+        errorMsg = t('errors.generic');
+      }
+      
+      setError(`${errorMsg} | ${method} ${requestUrl} | Code: ${errorCode} | ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -65,8 +86,28 @@ export const Login = () => {
         navigate('/');
       }
     } catch (err: any) {
-      const key = err.response?.data?.message;
-      setError(key && t(key) !== key ? t(key) : t('errors.generic'));
+      const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';
+      const method = err?.config?.method?.toUpperCase() || 'unknown';
+      const errorCode = err?.code || 'no code';
+      const errorMessage = err?.message || 'no message';
+      let errorMsg = '';
+      
+      if (err?.response?.data?.message) {
+        const key = err.response.data.message;
+        errorMsg = t(key) !== key ? t(key) : key;
+      } else if (err?.response?.data) {
+        errorMsg = JSON.stringify(err.response.data);
+      } else if (err?.response) {
+        errorMsg = `Error ${err.response.status}: ${err.response.statusText}`;
+      } else if (err?.code === 'ERR_NETWORK' || err?.code === 'ECONNABORTED') {
+        errorMsg = 'Network unavailable';
+      } else if (err?.message && err.message !== 'Network Error') {
+        errorMsg = err.message;
+      } else {
+        errorMsg = t('errors.generic');
+      }
+      
+      setError(`${errorMsg} | ${method} ${requestUrl} | Code: ${errorCode} | ${errorMessage}`);
     } finally {
       setLoading(false);
     }

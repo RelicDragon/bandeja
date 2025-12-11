@@ -152,8 +152,9 @@ function AppContent() {
   }
 
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   
-  if (!isOnline && !isGameDetailsPage) {
+  if (!isOnline && !isGameDetailsPage && !isAuthPage) {
     return <NoInternetScreen />;
   }
 
