@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
-import { getLevelName } from '../utils/ratingCalculator';
+import { getLevelName } from '../utils/playerLevels';
 import { UrlConstructor } from '../utils/urlConstructor';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 

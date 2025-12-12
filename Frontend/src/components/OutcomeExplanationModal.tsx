@@ -227,6 +227,14 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                       </span>
                     </div>
                   )}
+                  {match.reliabilityCoefficient !== undefined && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">{t('gameResults.reliabilityCoefficient')}:</span>
+                      <span className="ml-1 font-semibold text-blue-600 dark:text-blue-400">
+                        {formatNumber(match.reliabilityCoefficient)}x
+                      </span>
+                    </div>
+                  )}
                   {match.sets && match.sets.length > 0 && match.sets.some(s => s.levelChange !== 0) && (
                     <div className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
                       <span className="text-gray-600 dark:text-gray-400 text-xs font-semibold">{t('gameResults.sets')}:</span>

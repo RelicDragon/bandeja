@@ -12,16 +12,13 @@ interface MatchResult {
 }
 
 interface RatingUpdate {
-  levelBefore: number;
-  levelAfter: number;
   levelChange: number;
-  reliabilityBefore: number;
-  reliabilityAfter: number;
   reliabilityChange: number;
   pointsEarned: number;
   multiplier?: number;
   totalPointDifferential?: number;
   enduranceCoefficient?: number;
+  reliabilityCoefficient?: number;
 }
 
 const BASE_LEVEL_CHANGE = 0.05;
@@ -85,10 +82,7 @@ export function calculateRatingUpdate(
   matchResult: MatchResult,
   ballsInGames: boolean = false
 ): RatingUpdate {
-  const levelBefore = playerStats.level;
-  const reliabilityBefore = playerStats.reliability;
-
-  const levelDifference = matchResult.opponentsLevel - levelBefore;
+  const levelDifference = matchResult.opponentsLevel - playerStats.level;
   
   let baseLevelChange: number;
   if (matchResult.isWinner) {
@@ -119,24 +113,20 @@ export function calculateRatingUpdate(
   const enduranceCoefficient = calculateEnduranceCoefficient(matchResult.setScores, ballsInGames);
   levelChange = levelChange * enduranceCoefficient;
 
-  const levelAfter = Math.max(0.1, levelBefore + levelChange);
+  const reliabilityCoefficient = 1.0 - (playerStats.reliability / 10.0) * 0.8;
+  levelChange = levelChange * reliabilityCoefficient;
 
   const reliabilityChange = RELIABILITY_INCREMENT;
-  const reliabilityAfter = reliabilityBefore + reliabilityChange;
-
   const pointsEarned = matchResult.isWinner ? POINTS_PER_WIN : 0;
 
   return {
-    levelBefore,
-    levelAfter,
     levelChange,
-    reliabilityBefore,
-    reliabilityAfter,
     reliabilityChange,
     pointsEarned,
     multiplier,
     totalPointDifferential,
     enduranceCoefficient,
+    reliabilityCoefficient,
   };
 }
 

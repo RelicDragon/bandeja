@@ -142,6 +142,7 @@ export interface MatchExplanation {
   multiplier?: number;
   totalPointDifferential?: number;
   enduranceCoefficient?: number;
+  reliabilityCoefficient?: number;
   teammates: Array<{ firstName?: string; lastName?: string; level: number }>;
   opponents: Array<{ firstName?: string; lastName?: string; level: number }>;
   sets?: SetExplanation[];

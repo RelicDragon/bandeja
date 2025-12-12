@@ -378,6 +378,7 @@
     "pointDifferential": "Разница в Очках",
     "multiplier": "Сложность Матча",
     "endurance": "Выносливость",
+    "reliabilityCoefficient": "Коэффициент Надежности",
     "veryClose": "очень близко",
     "close": "близкий матч",
     "normal": "нормально",

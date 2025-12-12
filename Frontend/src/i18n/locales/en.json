@@ -377,6 +377,7 @@
     "pointDifferential": "Point Differential",
     "multiplier": "Match Difficulty",
     "endurance": "Endurance",
+    "reliabilityCoefficient": "Reliability Factor",
     "veryClose": "very close",
     "close": "close match",
     "normal": "normal",

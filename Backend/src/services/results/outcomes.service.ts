@@ -142,7 +142,7 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
     await tx.user.update({
       where: { id: outcome.userId },
       data: {
-        level: outcome.levelBefore,
+        level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
         reliability: outcome.reliabilityBefore,
         totalPoints: { decrement: outcome.pointsEarned },
         gamesPlayed: { decrement: 1 },
@@ -204,8 +204,8 @@ export async function applyGameOutcomes(
 
     const levelBefore = user.level;
     const reliabilityBefore = user.reliability;
-    const levelAfter = levelBefore + outcome.levelChange;
-    const reliabilityAfter = reliabilityBefore + outcome.reliabilityChange;
+    const levelAfter = Math.max(1.0, Math.min(7.0, levelBefore + outcome.levelChange));
+    const reliabilityAfter = Math.max(0, Math.min(10, reliabilityBefore + outcome.reliabilityChange));
 
     await tx.gameOutcome.upsert({
       where: {

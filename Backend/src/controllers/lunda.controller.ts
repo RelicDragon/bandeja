@@ -104,7 +104,7 @@ export const syncLundaProfile = asyncHandler(async (req: SyncLundaProfileRequest
   const updateData: any = {};
   if (phone) updateData.phone = phone;
   if (gender) updateData.gender = gender;
-  if (level !== undefined) updateData.level = level;
+  if (level !== undefined) updateData.level = Math.max(1.0, Math.min(7.0, level));
   if (preferredCourtSideLeft !== undefined) updateData.preferredCourtSideLeft = preferredCourtSideLeft;
   if (preferredCourtSideRight !== undefined) updateData.preferredCourtSideRight = preferredCourtSideRight;
 
@@ -242,7 +242,7 @@ export const lundaGetProfile = asyncHandler(async (req: AuthRequest, res: Expres
   }
 
   if (playerData.displayRating) {
-    updateData.level = parseFloat(playerData.displayRating);
+    updateData.level = Math.max(1.0, Math.min(7.0, parseFloat(playerData.displayRating)));
   }
 
   if (playerData.leftSide !== undefined) {

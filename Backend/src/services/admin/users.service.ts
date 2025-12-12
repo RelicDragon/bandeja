@@ -194,7 +194,7 @@ export class AdminUsersService {
         ...(firstName !== undefined && { firstName }),
         ...(lastName !== undefined && { lastName }),
         ...(gender !== undefined && { gender }),
-        ...(level !== undefined && { level }),
+        ...(level !== undefined && { level: Math.max(1.0, Math.min(7.0, level)) }),
         ...(currentCityId !== undefined && { currentCityId }),
         ...(isActive !== undefined && { isActive }),
         ...(isAdmin !== undefined && { isAdmin }),

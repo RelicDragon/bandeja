@@ -31,8 +31,8 @@ export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) =
 export const setInitialLevel = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { level } = req.body;
 
-  if (typeof level !== 'number' || level < 0 || level > 7) {
-    throw new ApiError(400, 'Level must be a number between 0 and 7');
+  if (typeof level !== 'number' || level < 1.0 || level > 7.0) {
+    throw new ApiError(400, 'Level must be a number between 1.0 and 7.0');
   }
 
   const currentUser = await prisma.user.findUnique({
@@ -50,7 +50,7 @@ export const setInitialLevel = asyncHandler(async (req: AuthRequest, res: Respon
 
   const user = await prisma.user.update({
     where: { id: req.userId },
-    data: { level },
+    data: { level: Math.max(1.0, Math.min(7.0, level)) },
       select: {
       id: true,
       level: true,

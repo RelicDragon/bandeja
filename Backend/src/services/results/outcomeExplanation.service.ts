@@ -40,6 +40,7 @@ interface MatchExplanation {
   multiplier?: number;
   totalPointDifferential?: number;
   enduranceCoefficient?: number;
+  reliabilityCoefficient?: number;
   teammates: Array<{ firstName: string | null; lastName: string | null; level: number }>;
   opponents: Array<{ firstName: string | null; lastName: string | null; level: number }>;
   sets?: SetExplanation[];
@@ -198,6 +199,7 @@ export async function getOutcomeExplanation(
       let matchMultiplier: number | undefined = undefined;
       let matchTotalPointDifferential: number | undefined = undefined;
       let matchEnduranceCoefficient: number | undefined = undefined;
+      let matchReliabilityCoefficient: number | undefined = undefined;
       const setExplanations: SetExplanation[] = [];
 
       const update = calculateRatingUpdate(
@@ -220,6 +222,7 @@ export async function getOutcomeExplanation(
       matchMultiplier = update.multiplier;
       matchTotalPointDifferential = update.totalPointDifferential;
       matchEnduranceCoefficient = update.enduranceCoefficient;
+      matchReliabilityCoefficient = update.reliabilityCoefficient;
 
       let setNumber = 0;
       for (const set of validSets) {
@@ -260,6 +263,7 @@ export async function getOutcomeExplanation(
         multiplier: matchMultiplier,
         totalPointDifferential: matchTotalPointDifferential,
         enduranceCoefficient: matchEnduranceCoefficient,
+        reliabilityCoefficient: matchReliabilityCoefficient,
         teammates,
         opponents,
         sets: setExplanations.length > 0 ? setExplanations : undefined,

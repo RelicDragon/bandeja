@@ -370,6 +370,7 @@
     "pointDifferential": "Diferencial de Puntos",
     "multiplier": "Dificultad del Partido",
     "endurance": "Resistencia",
+    "reliabilityCoefficient": "Factor de Confiabilidad",
     "veryClose": "muy ajustado",
     "close": "partido ajustado",
     "normal": "normal",
