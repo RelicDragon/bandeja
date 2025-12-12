@@ -25,6 +25,10 @@ export const ProfileContent = () => {
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [gender, setGender] = useState<Gender>(user?.gender || 'PREFER_NOT_TO_SAY');
+  const [genderIsSet, setGenderIsSet] = useState(user?.genderIsSet ?? false);
+  const [preferNotToSayAcknowledged, setPreferNotToSayAcknowledged] = useState(
+    user?.gender === 'PREFER_NOT_TO_SAY' && user?.genderIsSet === true
+  );
   const [preferredHandLeft, setPreferredHandLeft] = useState(user?.preferredHandLeft || false);
   const [preferredHandRight, setPreferredHandRight] = useState(user?.preferredHandRight || false);
   const [preferredCourtSideLeft, setPreferredCourtSideLeft] = useState(user?.preferredCourtSideLeft || false);
@@ -147,6 +151,10 @@ export const ProfileContent = () => {
       setLastName(user.lastName || '');
       setEmail(user.email || '');
       setGender(user.gender || 'PREFER_NOT_TO_SAY');
+      setGenderIsSet(user.genderIsSet ?? false);
+      setPreferNotToSayAcknowledged(
+        user.gender === 'PREFER_NOT_TO_SAY' && user.genderIsSet === true
+      );
       setPreferredHandLeft(user.preferredHandLeft || false);
       setPreferredHandRight(user.preferredHandRight || false);
       setPreferredCourtSideLeft(user.preferredCourtSideLeft || false);
@@ -183,7 +191,27 @@ export const ProfileContent = () => {
 
   const handleGenderChange = (value: Gender) => {
     setGender(value);
-    updateProfile({ gender: value });
+    if (value === 'MALE' || value === 'FEMALE') {
+      setGenderIsSet(true);
+      setPreferNotToSayAcknowledged(false);
+      updateProfile({ gender: value, genderIsSet: true });
+    } else if (value === 'PREFER_NOT_TO_SAY') {
+      setPreferNotToSayAcknowledged(false);
+      if (genderIsSet) {
+        setGenderIsSet(false);
+        updateProfile({ gender: value, genderIsSet: false });
+      } else {
+        updateProfile({ gender: value });
+      }
+    }
+  };
+
+  const handlePreferNotToSayAcknowledged = (checked: boolean) => {
+    setPreferNotToSayAcknowledged(checked);
+    if (checked && gender === 'PREFER_NOT_TO_SAY') {
+      setGenderIsSet(true);
+      updateProfile({ gender: 'PREFER_NOT_TO_SAY', genderIsSet: true });
+    }
   };
 
   const handlePreferredHandLeftChange = (value: boolean) => {
@@ -434,20 +462,65 @@ export const ProfileContent = () => {
               value={email}
               onChange={(e) => handleEmailChange(e.target.value)}
             />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t('profile.gender')}
-              </label>
-              <Select
-                options={[
-                  { value: 'MALE', label: t('profile.male') },
-                  { value: 'FEMALE', label: t('profile.female') },
-                  { value: 'PREFER_NOT_TO_SAY', label: t('profile.preferNotToSay') },
-                ]}
-                value={gender}
-                onChange={(value) => handleGenderChange(value as Gender)}
-              />
-            </div>
+            {(!user?.genderIsSet || !genderIsSet) ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('profile.gender')}
+                </label>
+                <Select
+                  options={[
+                    { value: 'MALE', label: t('profile.male') },
+                    { value: 'FEMALE', label: t('profile.female') },
+                    { value: 'PREFER_NOT_TO_SAY', label: t('profile.preferNotToSay') },
+                  ]}
+                  value={gender}
+                  onChange={(value) => handleGenderChange(value as Gender)}
+                />
+                {gender === 'PREFER_NOT_TO_SAY' && (
+                  <div className="mt-3 flex items-start">
+                    <input
+                      type="checkbox"
+                      id="prefer-not-to-say-ack"
+                      checked={preferNotToSayAcknowledged}
+                      onChange={(e) => handlePreferNotToSayAcknowledged(e.target.checked)}
+                      className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="prefer-not-to-say-ack" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                      {t('profile.preferNotToSayAcknowledgment')}
+                    </label>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('profile.gender')}
+                </label>
+                <Select
+                  options={[
+                    { value: 'MALE', label: t('profile.male') },
+                    { value: 'FEMALE', label: t('profile.female') },
+                    { value: 'PREFER_NOT_TO_SAY', label: t('profile.preferNotToSay') },
+                  ]}
+                  value={gender}
+                  onChange={(value) => handleGenderChange(value as Gender)}
+                />
+                {gender === 'PREFER_NOT_TO_SAY' && (
+                  <div className="mt-3 flex items-start">
+                    <input
+                      type="checkbox"
+                      id="prefer-not-to-say-ack-set"
+                      checked={preferNotToSayAcknowledged}
+                      onChange={(e) => handlePreferNotToSayAcknowledged(e.target.checked)}
+                      className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="prefer-not-to-say-ack-set" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                      {t('profile.preferNotToSayAcknowledgment')}
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </Card>
 

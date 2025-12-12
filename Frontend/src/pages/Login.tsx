@@ -36,10 +36,6 @@ export const Login = () => {
         navigate('/');
       }
     } catch (err: any) {
-      const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';
-      const method = err?.config?.method?.toUpperCase() || 'unknown';
-      const errorCode = err?.code || 'no code';
-      const errorMessage = err?.message || 'no message';
       let errorMsg = '';
       
       if (err?.response?.data?.message) {
@@ -57,7 +53,15 @@ export const Login = () => {
         errorMsg = t('errors.generic');
       }
       
-      setError(`${errorMsg} | ${method} ${requestUrl} | Code: ${errorCode} | ${errorMessage}`);
+      if (import.meta.env.DEV) {
+        const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';
+        const method = err?.config?.method?.toUpperCase() || 'unknown';
+        const errorCode = err?.code || 'no code';
+        const errorMessage = err?.message || 'no message';
+        setError(`${errorMsg} | ${method} ${requestUrl} | Code: ${errorCode} | ${errorMessage}`);
+      } else {
+        setError(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -86,10 +90,6 @@ export const Login = () => {
         navigate('/');
       }
     } catch (err: any) {
-      const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';
-      const method = err?.config?.method?.toUpperCase() || 'unknown';
-      const errorCode = err?.code || 'no code';
-      const errorMessage = err?.message || 'no message';
       let errorMsg = '';
       
       if (err?.response?.data?.message) {
@@ -107,7 +107,15 @@ export const Login = () => {
         errorMsg = t('errors.generic');
       }
       
-      setError(`${errorMsg} | ${method} ${requestUrl} | Code: ${errorCode} | ${errorMessage}`);
+      if (import.meta.env.DEV) {
+        const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';
+        const method = err?.config?.method?.toUpperCase() || 'unknown';
+        const errorCode = err?.code || 'no code';
+        const errorMessage = err?.message || 'no message';
+        setError(`${errorMsg} | ${method} ${requestUrl} | Code: ${errorCode} | ${errorMessage}`);
+      } else {
+        setError(errorMsg);
+      }
     } finally {
       setLoading(false);
     }

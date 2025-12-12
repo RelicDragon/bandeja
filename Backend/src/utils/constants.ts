@@ -138,6 +138,7 @@ export const PROFILE_SELECT_FIELDS = {
   level: true,
   socialLevel: true,
   gender: true,
+  genderIsSet: true,
   reliability: true,
   isAdmin: true,
   isTrainer: true,

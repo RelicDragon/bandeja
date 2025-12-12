@@ -37,6 +37,7 @@ export interface User {
   gamesWon: number;
   language?: string;
   gender: Gender;
+  genderIsSet?: boolean;
   isAdmin?: boolean;
   isTrainer?: boolean;
   canCreateTournament?: boolean;

@@ -16,6 +16,7 @@ export const CompleteProfile = () => {
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [gender, setGender] = useState<Gender>(user?.gender || 'PREFER_NOT_TO_SAY');
+  const [preferNotToSayAcknowledged, setPreferNotToSayAcknowledged] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,7 +25,12 @@ export const CompleteProfile = () => {
     const trimmedLast = lastName.trim();
     const fullName = trimmedFirst + trimmedLast;
     const alphabeticChars = fullName.replace(/[^a-zA-Z]/g, '');
-    return alphabeticChars.length >= 3;
+    const nameValid = alphabeticChars.length >= 3;
+    
+    if (gender === 'PREFER_NOT_TO_SAY') {
+      return nameValid && preferNotToSayAcknowledged;
+    }
+    return nameValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,10 +45,12 @@ export const CompleteProfile = () => {
     setError('');
 
     try {
+      const genderIsSet = gender === 'MALE' || gender === 'FEMALE' || (gender === 'PREFER_NOT_TO_SAY' && preferNotToSayAcknowledged);
       const response = await usersApi.updateProfile({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         gender,
+        genderIsSet,
       });
 
       updateUser(response.data);
@@ -99,8 +107,27 @@ export const CompleteProfile = () => {
                 { value: 'PREFER_NOT_TO_SAY', label: t('profile.preferNotToSay') },
               ]}
               value={gender}
-              onChange={(value) => setGender(value as Gender)}
+              onChange={(value) => {
+                setGender(value as Gender);
+                if (value !== 'PREFER_NOT_TO_SAY') {
+                  setPreferNotToSayAcknowledged(false);
+                }
+              }}
             />
+            {gender === 'PREFER_NOT_TO_SAY' && (
+              <div className="mt-3 flex items-start">
+                <input
+                  type="checkbox"
+                  id="prefer-not-to-say-ack"
+                  checked={preferNotToSayAcknowledged}
+                  onChange={(e) => setPreferNotToSayAcknowledged(e.target.checked)}
+                  className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <label htmlFor="prefer-not-to-say-ack" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  {t('profile.preferNotToSayAcknowledgment')}
+                </label>
+              </div>
+            )}
           </div>
 
           <p className="text-sm text-gray-600 dark:text-gray-400">

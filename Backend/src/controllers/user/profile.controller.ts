@@ -28,7 +28,7 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, gender, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders } = req.body;
 
   if (email) {
     const existingEmail = await prisma.user.findUnique({
@@ -62,6 +62,15 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     await ImageProcessor.deleteFile(currentUser.originalAvatar);
   }
 
+  let finalGenderIsSet = genderIsSet;
+  if (gender !== undefined && genderIsSet === undefined) {
+    if (gender === 'MALE' || gender === 'FEMALE') {
+      finalGenderIsSet = true;
+    } else if (gender === 'PREFER_NOT_TO_SAY') {
+      finalGenderIsSet = false;
+    }
+  }
+
   const user = await prisma.user.update({
     where: { id: req.userId },
     data: {
@@ -72,6 +81,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
       ...(originalAvatar !== undefined && { originalAvatar }),
       ...(language !== undefined && { language }),
       ...(gender !== undefined && { gender }),
+      ...(finalGenderIsSet !== undefined && { genderIsSet: finalGenderIsSet }),
       ...(preferredHandLeft !== undefined && { preferredHandLeft }),
       ...(preferredHandRight !== undefined && { preferredHandRight }),
       ...(preferredCourtSideLeft !== undefined && { preferredCourtSideLeft }),
