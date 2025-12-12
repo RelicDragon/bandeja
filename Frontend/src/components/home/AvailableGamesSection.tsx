@@ -18,7 +18,6 @@ interface AvailableGamesSectionProps {
 export const AvailableGamesSection = ({
   availableGames,
   user,
-  loading,
   onJoin,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
@@ -83,12 +82,10 @@ export const AvailableGamesSection = ({
     };
   }, [showFilterModal, updateModalPosition]);
 
-  // Check if selected date is within the fixed date range (next 7 days)
   const fixedDates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
   const isSelectedDateInFixedRange = fixedDates.some(date =>
     format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
   );
-
 
   const handleCityClick = () => {
     toast(t('games.switchCityInProfile'));
@@ -96,12 +93,10 @@ export const AvailableGamesSection = ({
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
-    // Calendar button will show "Select from calendar" when date is in fixed range
   };
 
   const handleCalendarDateSelect = (date: Date) => {
     setSelectedDate(date);
-    // Calendar button will show the selected date when it's not in fixed range
   };
 
   const handleCalendarClick = () => {
@@ -117,12 +112,10 @@ export const AvailableGamesSection = ({
     const selectedDateStr = format(startOfDay(selectedDate), 'yyyy-MM-dd');
     const gameDateStr = format(gameDate, 'yyyy-MM-dd');
     
-    // Filter by date
     if (gameDateStr !== selectedDateStr) {
       return false;
     }
 
-    // Filter by level if toggle is on
     if (filterByLevel && user?.level) {
       const userLevel = user.level;
       const minLevel = game.minLevel || 0;
@@ -137,13 +130,7 @@ export const AvailableGamesSection = ({
   });
 
   return (
-    <div 
-      className={`mt-8 transition-all duration-500 ease-in-out overflow-hidden ${
-        loading
-          ? 'max-h-0 opacity-0 transform -translate-y-4'
-          : 'max-h-screen opacity-100 transform translate-y-0'
-      }`}
-    >
+    <div className="mt-8">
       <div className="mb-4">
         <div className="flex items-center justify-center mb-3 relative">
           <button 
@@ -236,4 +223,3 @@ export const AvailableGamesSection = ({
     </div>
   );
 };
-
