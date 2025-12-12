@@ -184,7 +184,7 @@ function AppContent() {
           path="/complete-profile"
           element={
             <ProtectedRoute>
-              {hasValidUsername(user) ? <Navigate to="/" replace /> : <CompleteProfile />}
+              {isProfileComplete(user) ? <Navigate to="/" replace /> : <CompleteProfile />}
             </ProtectedRoute>
           }
         />
@@ -194,7 +194,7 @@ function AppContent() {
             <ProtectedRoute>
               {!user?.currentCity ? (
                 <Navigate to="/select-city" replace />
-              ) : !hasValidUsername(user) ? (
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/complete-profile" replace />
               ) : (
                 <MainPage />

@@ -16,21 +16,30 @@ export const CompleteProfile = () => {
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [gender, setGender] = useState<Gender>(user?.gender || 'PREFER_NOT_TO_SAY');
-  const [preferNotToSayAcknowledged, setPreferNotToSayAcknowledged] = useState(false);
+  const [preferNotToSayAcknowledged, setPreferNotToSayAcknowledged] = useState(
+    user?.gender === 'PREFER_NOT_TO_SAY' && user?.genderIsSet === true
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const isValid = () => {
+  const isValidName = () => {
     const trimmedFirst = firstName.trim();
     const trimmedLast = lastName.trim();
     const fullName = trimmedFirst + trimmedLast;
     const alphabeticChars = fullName.replace(/[^a-zA-Z]/g, '');
-    const nameValid = alphabeticChars.length >= 3;
-    
+    return alphabeticChars.length >= 3;
+  };
+
+  const isValidGender = () => {
     if (gender === 'PREFER_NOT_TO_SAY') {
-      return nameValid && preferNotToSayAcknowledged;
+      const needsAcknowledgment = !user?.genderIsSet;
+      return needsAcknowledgment ? preferNotToSayAcknowledged : true;
     }
-    return nameValid;
+    return true;
+  };
+
+  const isValid = () => {
+    return isValidName() && isValidGender();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,9 +79,6 @@ export const CompleteProfile = () => {
       <h2 className="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-white">
         {t('profile.completeProfile')}
       </h2>
-      <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
-        {t('profile.completeProfileDescription')}
-      </p>
 
       {error && (
         <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg">
@@ -111,10 +117,12 @@ export const CompleteProfile = () => {
                 setGender(value as Gender);
                 if (value !== 'PREFER_NOT_TO_SAY') {
                   setPreferNotToSayAcknowledged(false);
+                } else if (value === 'PREFER_NOT_TO_SAY' && user?.genderIsSet === true) {
+                  setPreferNotToSayAcknowledged(true);
                 }
               }}
             />
-            {gender === 'PREFER_NOT_TO_SAY' && (
+            {gender === 'PREFER_NOT_TO_SAY' && !user?.genderIsSet && (
               <div className="mt-3 flex items-start">
                 <input
                   type="checkbox"
@@ -130,9 +138,11 @@ export const CompleteProfile = () => {
             )}
           </div>
 
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {t('profile.nameRequirement')}
-          </p>
+          {!isValidName() && (
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {t('profile.nameRequirement')}
+            </p>
+          )}
         </div>
 
         <Button type="submit" className="w-full" disabled={!isValid() || submitting}>

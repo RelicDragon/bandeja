@@ -12,6 +12,6 @@ export const hasValidUsername = (user: User | null): boolean => {
 export const isProfileComplete = (user: User | null): boolean => {
   if (!user) return false;
 
-  return !!user.currentCity && hasValidUsername(user);
+  return !!user.currentCity && hasValidUsername(user) && user.genderIsSet === true;
 };
 
