@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { calculateRatingUpdate } from './rating.service';
+import { calculateRatingUpdate, RELIABILITY_INCREMENT } from './rating.service';
 
 interface ExplanationData {
   userId: string;
@@ -136,11 +136,11 @@ export async function getOutcomeExplanation(
 
   const user = participant.user;
   let currentLevel = existingOutcome?.levelBefore ?? user.level;
-  let currentReliability = existingOutcome?.reliabilityBefore ?? user.reliability;
+  const startingReliability = existingOutcome?.reliabilityBefore ?? user.reliability;
 
   const matches: MatchExplanation[] = [];
   let totalLevelChange = 0;
-  let totalReliabilityChange = 0;
+  let matchesPlayed = 0;
   let wins = 0;
   let losses = 0;
   let draws = 0;
@@ -194,7 +194,6 @@ export async function getOutcomeExplanation(
       });
 
       let matchLevelChange = 0;
-      let matchReliabilityChange = 0;
       let matchPointsEarned = 0;
       let matchMultiplier: number | undefined = undefined;
       let matchTotalPointDifferential: number | undefined = undefined;
@@ -205,7 +204,7 @@ export async function getOutcomeExplanation(
       const update = calculateRatingUpdate(
         {
           level: currentLevel,
-          reliability: currentReliability,
+          reliability: startingReliability,
           gamesPlayed: user.gamesPlayed,
         },
         {
@@ -217,7 +216,6 @@ export async function getOutcomeExplanation(
       );
 
       matchLevelChange = update.levelChange;
-      matchReliabilityChange = update.reliabilityChange;
       matchPointsEarned = update.pointsEarned;
       matchMultiplier = update.multiplier;
       matchTotalPointDifferential = update.totalPointDifferential;
@@ -241,10 +239,9 @@ export async function getOutcomeExplanation(
       }
 
       currentLevel += matchLevelChange;
-      currentReliability += matchReliabilityChange;
+      matchesPlayed += 1;
 
       totalLevelChange += matchLevelChange;
-      totalReliabilityChange += matchReliabilityChange;
 
       if (isTie) draws++;
       else if (isWinner) wins++;
@@ -258,7 +255,7 @@ export async function getOutcomeExplanation(
         opponentLevel,
         levelDifference,
         levelChange: matchLevelChange,
-        reliabilityChange: matchReliabilityChange,
+        reliabilityChange: 0,
         pointsEarned: matchPointsEarned,
         multiplier: matchMultiplier,
         totalPointDifferential: matchTotalPointDifferential,
@@ -275,7 +272,7 @@ export async function getOutcomeExplanation(
     opponentLevels.length > 0 ? opponentLevels.reduce((sum: number, l: number) => sum + l, 0) / opponentLevels.length : 0;
 
   const startingLevel = existingOutcome?.levelBefore ?? user.level;
-  const startingReliability = existingOutcome?.reliabilityBefore ?? user.reliability;
+  const totalReliabilityChange = matchesPlayed * RELIABILITY_INCREMENT;
 
   return {
     userId,

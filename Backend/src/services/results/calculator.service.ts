@@ -1,4 +1,4 @@
-import { calculateRatingUpdate } from './rating.service';
+import { calculateRatingUpdate, RELIABILITY_INCREMENT } from './rating.service';
 
 interface PlayerData {
   userId: string;
@@ -50,7 +50,7 @@ export interface RoundOutcomeResult {
 
 interface PlayerChanges {
   levelChange: number;
-  reliabilityChange: number;
+  matchesPlayed: number;
   wins: number;
   ties: number;
   losses: number;
@@ -64,7 +64,7 @@ function initializePlayerChanges(players: PlayerData[], includeTotal: boolean = 
   for (const player of players) {
     changes[player.userId] = {
       levelChange: 0,
-      reliabilityChange: 0,
+      matchesPlayed: 0,
       wins: 0,
       ties: 0,
       losses: 0,
@@ -113,7 +113,7 @@ function buildGameOutcome(
   return {
     userId,
     levelChange: changes.levelChange,
-    reliabilityChange: changes.reliabilityChange,
+    reliabilityChange: changes.matchesPlayed * RELIABILITY_INCREMENT,
     pointsEarned: calculatePointsEarned(changes, pointsPerWin, pointsPerTie, pointsPerLoose),
     isWinner: index === 0,
     position: index + 1,
@@ -170,7 +170,7 @@ export function calculateByMatchesWonOutcomes(
         const update = calculateRatingUpdate(
           {
             level: player.level + playerTotalChanges[player.userId].levelChange,
-            reliability: player.reliability + playerTotalChanges[player.userId].reliabilityChange,
+            reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
           },
           {
@@ -183,7 +183,7 @@ export function calculateByMatchesWonOutcomes(
 
         roundPlayerOutcomes[player.userId] += update.levelChange;
         playerTotalChanges[player.userId].levelChange += update.levelChange;
-        playerTotalChanges[player.userId].reliabilityChange += update.reliabilityChange;
+        playerTotalChanges[player.userId].matchesPlayed += 1;
         playerTotalChanges[player.userId].scoresMade += teamAScore;
         playerTotalChanges[player.userId].scoresLost += teamBScore;
         updateWinLossTie(playerTotalChanges[player.userId], teamAWins, teamBWins, isTie);
@@ -193,7 +193,7 @@ export function calculateByMatchesWonOutcomes(
         const update = calculateRatingUpdate(
           {
             level: player.level + playerTotalChanges[player.userId].levelChange,
-            reliability: player.reliability + playerTotalChanges[player.userId].reliabilityChange,
+            reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
           },
           {
@@ -206,7 +206,7 @@ export function calculateByMatchesWonOutcomes(
 
         roundPlayerOutcomes[player.userId] += update.levelChange;
         playerTotalChanges[player.userId].levelChange += update.levelChange;
-        playerTotalChanges[player.userId].reliabilityChange += update.reliabilityChange;
+        playerTotalChanges[player.userId].matchesPlayed += 1;
         playerTotalChanges[player.userId].scoresMade += teamBScore;
         playerTotalChanges[player.userId].scoresLost += teamAScore;
         updateWinLossTie(playerTotalChanges[player.userId], teamBWins, teamAWins, isTie);
@@ -284,7 +284,7 @@ export function calculateByPointsOutcomes(
         const update = calculateRatingUpdate(
           {
             level: player.level + playerTotalChanges[playerId].levelChange,
-            reliability: player.reliability + playerTotalChanges[playerId].reliabilityChange,
+            reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
           },
           {
@@ -297,7 +297,7 @@ export function calculateByPointsOutcomes(
 
         roundPlayerOutcomes[playerId] += update.levelChange;
         playerTotalChanges[playerId].levelChange += update.levelChange;
-        playerTotalChanges[playerId].reliabilityChange += update.reliabilityChange;
+        playerTotalChanges[playerId].matchesPlayed += 1;
         playerTotalChanges[playerId].totalScore! += teamA.score;
         playerTotalChanges[playerId].scoresMade += teamA.score;
         playerTotalChanges[playerId].scoresLost += teamB.score;
@@ -311,7 +311,7 @@ export function calculateByPointsOutcomes(
         const update = calculateRatingUpdate(
           {
             level: player.level + playerTotalChanges[playerId].levelChange,
-            reliability: player.reliability + playerTotalChanges[playerId].reliabilityChange,
+            reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
           },
           {
@@ -324,7 +324,7 @@ export function calculateByPointsOutcomes(
 
         roundPlayerOutcomes[playerId] += update.levelChange;
         playerTotalChanges[playerId].levelChange += update.levelChange;
-        playerTotalChanges[playerId].reliabilityChange += update.reliabilityChange;
+        playerTotalChanges[playerId].matchesPlayed += 1;
         playerTotalChanges[playerId].totalScore! += teamB.score;
         playerTotalChanges[playerId].scoresMade += teamB.score;
         playerTotalChanges[playerId].scoresLost += teamA.score;
@@ -403,7 +403,7 @@ export function calculateByScoresDeltaOutcomes(
         const update = calculateRatingUpdate(
           {
             level: player.level + playerTotalChanges[playerId].levelChange,
-            reliability: player.reliability + playerTotalChanges[playerId].reliabilityChange,
+            reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
           },
           {
@@ -416,7 +416,7 @@ export function calculateByScoresDeltaOutcomes(
 
         roundPlayerOutcomes[playerId] += update.levelChange;
         playerTotalChanges[playerId].levelChange += update.levelChange;
-        playerTotalChanges[playerId].reliabilityChange += update.reliabilityChange;
+        playerTotalChanges[playerId].matchesPlayed += 1;
         playerTotalChanges[playerId].totalScore! += teamA.score;
         playerTotalChanges[playerId].scoresMade += teamA.score;
         playerTotalChanges[playerId].scoresLost += teamB.score;
@@ -430,7 +430,7 @@ export function calculateByScoresDeltaOutcomes(
         const update = calculateRatingUpdate(
           {
             level: player.level + playerTotalChanges[playerId].levelChange,
-            reliability: player.reliability + playerTotalChanges[playerId].reliabilityChange,
+            reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
           },
           {
@@ -443,7 +443,7 @@ export function calculateByScoresDeltaOutcomes(
 
         roundPlayerOutcomes[playerId] += update.levelChange;
         playerTotalChanges[playerId].levelChange += update.levelChange;
-        playerTotalChanges[playerId].reliabilityChange += update.reliabilityChange;
+        playerTotalChanges[playerId].matchesPlayed += 1;
         playerTotalChanges[playerId].totalScore! += teamB.score;
         playerTotalChanges[playerId].scoresMade += teamB.score;
         playerTotalChanges[playerId].scoresLost += teamA.score;

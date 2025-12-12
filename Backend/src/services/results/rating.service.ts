@@ -13,7 +13,6 @@ interface MatchResult {
 
 interface RatingUpdate {
   levelChange: number;
-  reliabilityChange: number;
   pointsEarned: number;
   multiplier?: number;
   totalPointDifferential?: number;
@@ -23,7 +22,7 @@ interface RatingUpdate {
 
 const BASE_LEVEL_CHANGE = 0.05;
 const MAX_LEVEL_CHANGE = 0.3;
-const RELIABILITY_INCREMENT = 0.1;
+export const RELIABILITY_INCREMENT = 0.1;
 const POINTS_PER_WIN = 10;
 
 const MIN_MULTIPLIER = 0.3;
@@ -116,12 +115,10 @@ export function calculateRatingUpdate(
   const reliabilityCoefficient = 1.0 - (playerStats.reliability / 10.0) * 0.8;
   levelChange = levelChange * reliabilityCoefficient;
 
-  const reliabilityChange = RELIABILITY_INCREMENT;
   const pointsEarned = matchResult.isWinner ? POINTS_PER_WIN : 0;
 
   return {
     levelChange,
-    reliabilityChange,
     pointsEarned,
     multiplier,
     totalPointDifferential,
