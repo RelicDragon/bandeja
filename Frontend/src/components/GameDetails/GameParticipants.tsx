@@ -486,7 +486,7 @@ export const GameParticipants = ({
             </div>
           );
         })()}
-        {isParticipant && gameInvites.length > 0 && (
+        {gameInvites.length > 0 && (
           <div className="mt-4">
             <InvitesList
               invites={gameInvites}
@@ -495,7 +495,7 @@ export const GameParticipants = ({
             />
           </div>
         )}
-        {isParticipant && joinQueues.length > 0 && (
+        {joinQueues.length > 0 && (
           <div className="mt-4">
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('games.joinQueue', { defaultValue: 'Join Queue' })}
