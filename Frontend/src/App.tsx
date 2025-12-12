@@ -14,6 +14,7 @@ import { ChatList } from './pages/ChatList';
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
 import { isProfileComplete } from './utils/userValidation';
+import { usersApi } from './api';
 import { PlayerCardModalManager } from './components/PlayerCardModalManager';
 import { ToastProvider } from './components/ToastProvider';
 import { OfflineBanner } from './components/OfflineBanner';
@@ -96,6 +97,17 @@ function AppContent() {
 
   useEffect(() => {
     if (isAuthenticated && !isInitializing) {
+      // Refresh user profile from backend to ensure all fields are up to date
+      if (navigator.onLine) {
+        usersApi.getProfile()
+          .then((response: { data: any }) => {
+            useAuthStore.getState().updateUser(response.data);
+          })
+          .catch((error: any) => {
+            console.error('Failed to refresh user profile:', error);
+          });
+      }
+
       // Delay starting services to avoid blocking initial render
       const timer = setTimeout(() => {
         headerService.startPolling();
