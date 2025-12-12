@@ -9,7 +9,7 @@ import { BugsContent } from './Bugs';
 
 export const MainPage = () => {
   const location = useLocation();
-  const { currentPage, setCurrentPage, isAnimating, setIsAnimating } = useNavigationStore();
+  const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
   const previousPathnameRef = useRef(location.pathname);
 
   useEffect(() => {
