@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { X, Beer, Star, ArrowLeft, Send, Wallet, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +39,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [startingChat, setStartingChat] = useState(false);
   const [gamesStatsTab, setGamesStatsTab] = useState<'30' | '90' | 'all'>('30');
+  const [isClosingViaBack, setIsClosingViaBack] = useState(false);
   const isCurrentUser = playerId === user?.id;
 
   // Disable background scrolling and interactions when modal is open
@@ -97,13 +98,48 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     fetchStats();
   }, [playerId]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsClosing(true);
     setTimeout(() => {
       onClose();
       setIsClosing(false);
     }, 300);
-  };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!playerId) {
+      setIsClosingViaBack(false);
+      return;
+    }
+
+    // Push state to history when modal opens
+    const hasHistoryState = window.history.state?.playerCardOpen;
+    if (!hasHistoryState) {
+      window.history.pushState({ playerCardOpen: true }, '');
+    }
+
+    // Handle browser back button
+    const handlePopState = () => {
+      if (playerId) {
+        setIsClosingViaBack(true);
+        handleClose();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      // Remove the history state if modal closes normally (not via back button)
+      if (window.history.state?.playerCardOpen && playerId && !isClosingViaBack) {
+        try {
+          window.history.back();
+        } catch (error) {
+          // Ignore errors if history is not available
+        }
+      }
+    };
+  }, [playerId, handleClose, isClosingViaBack]);
 
   const handleDrag = (_event: any, info: PanInfo) => {
     setDragY(info.offset.y);

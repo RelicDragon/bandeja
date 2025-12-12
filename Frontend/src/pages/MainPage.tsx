@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -9,21 +9,31 @@ import { BugsContent } from './Bugs';
 
 export const MainPage = () => {
   const location = useLocation();
-  const { currentPage, setCurrentPage, isAnimating } = useNavigationStore();
-  useEffect(() => {
-    if (isAnimating) return;
+  const { currentPage, setCurrentPage, isAnimating, setIsAnimating } = useNavigationStore();
+  const previousPathnameRef = useRef(location.pathname);
 
+  useEffect(() => {
     const path = location.pathname;
-    if (path === '/profile') {
-      setCurrentPage('profile');
-    } else if (path === '/bugs') {
-      setCurrentPage('bugs');
-    } else if (path.startsWith('/games/') && !path.includes('/chat')) {
-      setCurrentPage('gameDetails');
-    } else if (path === '/') {
-      setCurrentPage('home');
+    const previousPath = previousPathnameRef.current;
+    const isPathChanged = path !== previousPath;
+
+    if (isPathChanged) {
+      setIsAnimating(true);
+      
+      if (path === '/profile') {
+        setCurrentPage('profile');
+      } else if (path === '/bugs') {
+        setCurrentPage('bugs');
+      } else if (path.startsWith('/games/') && !path.includes('/chat')) {
+        setCurrentPage('gameDetails');
+      } else if (path === '/') {
+        setCurrentPage('home');
+      }
+
+      setTimeout(() => setIsAnimating(false), 300);
+      previousPathnameRef.current = path;
     }
-  }, [location.pathname, setCurrentPage, isAnimating]);
+  }, [location.pathname, setCurrentPage, setIsAnimating]);
 
   return (
     <MainLayout>
