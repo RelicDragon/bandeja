@@ -1,5 +1,10 @@
+import { isCapacitor } from './capacitor';
+
 export class UrlConstructor {
   private static getImageBaseUrl(): string {
+    if (isCapacitor()) {
+      return 'https://bandeja.me';
+    }
     return import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000';
   }
 

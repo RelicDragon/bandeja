@@ -4,6 +4,10 @@ set -e
 
 echo "🔨 Building Capacitor app..."
 
+# Override environment variables for Capacitor build
+export VITE_TELEGRAM_BOT_URL=https://t.me/bandeja_padel_bot
+export VITE_MEDIA_BASE_URL=https://bandeja.me
+
 # Build the frontend
 echo "📦 Building frontend..."
 npm run build
@@ -12,11 +16,5 @@ npm run build
 echo "📲 Syncing with Capacitor..."
 npx cap sync
 
-echo "✅ Build complete!"
-echo ""
-echo "📱 To run on iOS:"
-echo "   npx cap open ios"
-echo ""
-echo "🤖 To run on Android:"
-echo "   npx cap open android"
+npx cap open ios
 

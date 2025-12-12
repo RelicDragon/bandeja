@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { isCapacitor } from '@/utils/capacitor';
 
 interface CacheEntry {
   url: string;
@@ -25,9 +26,17 @@ class ImageCache {
       URL.revokeObjectURL(cached.blobUrl);
     }
 
+    // In Capacitor, skip caching and return URL directly to avoid fetch issues
+    if (isCapacitor()) {
+      return url;
+    }
+
     // Fetch and cache the image
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        mode: 'cors',
+        credentials: 'omit'
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch image: ${response.status}`);
       }
