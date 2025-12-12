@@ -13,7 +13,7 @@ import { GameChat } from './pages/GameChat';
 import { ChatList } from './pages/ChatList';
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
-import { isProfileComplete, hasValidUsername } from './utils/userValidation';
+import { isProfileComplete } from './utils/userValidation';
 import { PlayerCardModalManager } from './components/PlayerCardModalManager';
 import { ToastProvider } from './components/ToastProvider';
 import { OfflineBanner } from './components/OfflineBanner';
