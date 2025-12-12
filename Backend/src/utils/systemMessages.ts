@@ -6,6 +6,7 @@ export enum SystemMessageType {
   USER_INVITES_USER = 'USER_INVITES_USER',
   USER_ACCEPTED_INVITE = 'USER_ACCEPTED_INVITE',
   USER_DECLINED_INVITE = 'USER_DECLINED_INVITE',
+  USER_JOINED_JOIN_QUEUE = 'USER_JOINED_JOIN_QUEUE',
   USER_ACCEPTED_JOIN_QUEUE = 'USER_ACCEPTED_JOIN_QUEUE',
   USER_DECLINED_JOIN_QUEUE = 'USER_DECLINED_JOIN_QUEUE',
   USER_TOGGLE_PLAYING_STATUS = 'USER_TOGGLE_PLAYING_STATUS',
@@ -59,6 +60,11 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
   [SystemMessageType.USER_DECLINED_INVITE]: {
     type: SystemMessageType.USER_DECLINED_INVITE,
     template: '{{userName}} declined the invite',
+    variables: ['userName']
+  },
+  [SystemMessageType.USER_JOINED_JOIN_QUEUE]: {
+    type: SystemMessageType.USER_JOINED_JOIN_QUEUE,
+    template: '{{userName}} requested to join the game',
     variables: ['userName']
   },
   [SystemMessageType.USER_ACCEPTED_JOIN_QUEUE]: {

@@ -1008,6 +1008,7 @@
       "USER_INVITES_USER": "{{senderName}} invites {{receiverName}}",
       "USER_ACCEPTED_INVITE": "{{userName}} joined the game",
       "USER_DECLINED_INVITE": "{{userName}} declined the invite",
+      "USER_JOINED_JOIN_QUEUE": "{{userName}} requested to join the game",
       "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} joined the game",
       "USER_DECLINED_JOIN_QUEUE": "{{userName}} join request was declined",
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",

@@ -1010,6 +1010,7 @@
       "USER_INVITES_USER": "{{senderName}} позива {{receiverName}}",
       "USER_ACCEPTED_INVITE": "{{userName}} се придружио игри",
       "USER_DECLINED_INVITE": "{{userName}} одбио позив",
+      "USER_JOINED_JOIN_QUEUE": "{{userName}} захтевао да се придружи игри",
       "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} се придружио игри",
       "USER_DECLINED_JOIN_QUEUE": "{{userName}} захтев за придруживање је одбијен",
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",

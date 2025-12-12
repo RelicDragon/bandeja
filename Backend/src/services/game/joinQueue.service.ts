@@ -8,6 +8,7 @@ import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
 import { InviteService } from '../invite.service';
 import telegramNotificationService from '../telegram/notification.service';
+import { ChatType } from '@prisma/client';
 
 export class JoinQueueService {
   static async addToQueue(gameId: string, userId: string) {
@@ -32,6 +33,49 @@ export class JoinQueueService {
           status: 'PENDING',
         },
       });
+
+      const queueUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      });
+
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+        include: {
+          court: {
+            include: {
+              club: true
+            }
+          },
+          club: true
+        }
+      });
+
+      if (queueUser && game) {
+        const userName = getUserDisplayName(queueUser.firstName, queueUser.lastName);
+        try {
+          const systemMessage = await createSystemMessage(
+            gameId,
+            {
+              type: SystemMessageType.USER_JOINED_JOIN_QUEUE,
+              variables: { userName }
+            },
+            ChatType.ADMINS
+          );
+
+          if (systemMessage) {
+            telegramNotificationService.sendGameSystemMessageNotification(systemMessage, game).catch(error => {
+              console.error('Failed to send Telegram system message notification:', error);
+            });
+          }
+        } catch (error) {
+          console.error('Failed to create system message for join queue:', error);
+        }
+      }
 
       await InviteService.deleteInvitesForUserInGame(gameId, userId);
       await ParticipantMessageHelper.emitGameUpdate(gameId, userId);

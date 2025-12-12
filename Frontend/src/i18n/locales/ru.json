@@ -1017,6 +1017,7 @@
       "USER_INVITES_USER": "{{senderName}} приглашает {{receiverName}}",
       "USER_ACCEPTED_INVITE": "{{userName}} присоединился к игре",
       "USER_DECLINED_INVITE": "{{userName}} отклонил приглашение",
+      "USER_JOINED_JOIN_QUEUE": "{{userName}} запросил присоединение к игре",
       "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} присоединился к игре",
       "USER_DECLINED_JOIN_QUEUE": "{{userName}} запрос на присоединение был отклонен",
       "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",

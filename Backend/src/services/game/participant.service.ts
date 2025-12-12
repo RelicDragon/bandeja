@@ -7,6 +7,7 @@ import { JoinQueueService } from './joinQueue.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
 import { InviteService } from '../invite.service';
+import telegramNotificationService from '../telegram/notification.service';
 
 export class ParticipantService {
   static async joinGame(gameId: string, userId: string) {
@@ -95,13 +96,32 @@ export class ParticipantService {
       throw new ApiError(400, 'Owner cannot leave the game. Delete the game instead.');
     }
 
+    const updatedGame = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: {
+        court: {
+          include: {
+            club: true
+          }
+        },
+        club: true
+      }
+    });
+
     if (participant.isPlaying) {
       await prisma.gameParticipant.update({
         where: { id: participant.id },
         data: { isPlaying: false },
       });
 
-      await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_GAME);
+      const leaveSystemMessage = await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_GAME);
+      
+      if (leaveSystemMessage && updatedGame) {
+        telegramNotificationService.sendGameSystemMessageNotification(leaveSystemMessage, updatedGame).catch(error => {
+          console.error('Failed to send Telegram system message notification:', error);
+        });
+      }
+
       await GameService.updateGameReadiness(gameId);
       await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
       return 'Successfully left the game';
@@ -110,7 +130,14 @@ export class ParticipantService {
         where: { id: participant.id },
       });
 
-      await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_CHAT);
+      const leaveSystemMessage = await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_CHAT);
+      
+      if (leaveSystemMessage && updatedGame) {
+        telegramNotificationService.sendGameSystemMessageNotification(leaveSystemMessage, updatedGame).catch(error => {
+          console.error('Failed to send Telegram system message notification:', error);
+        });
+      }
+
       await GameService.updateGameReadiness(gameId);
       await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
       return 'Successfully left the chat';
