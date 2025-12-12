@@ -13,7 +13,6 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
   const [pastGamesUnreadCounts, setPastGamesUnreadCounts] = useState<Record<string, number>>({});
   const showChatFilter = useHeaderStore((state) => state.showChatFilter);
 
-  // Request deduplication
   const isLoadingRef = useRef(false);
   const lastFetchParamsRef = useRef<string | null>(null);
   const isLoadingUnreadPastGamesRef = useRef(false);
@@ -47,12 +46,10 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
   };
 
   const loadPastGames = useCallback(async () => {
-    if (!user?.currentCity?.id || loadingPastGames || !hasMorePastGames) return;
+    if (!user?.id || loadingPastGames || !hasMorePastGames) return;
 
-    // Create a unique key for this request to prevent duplicates
-    const fetchParams = `past-city-${user.currentCity.id}-${pastGamesOffset}`;
+    const fetchParams = `past-games-${user.id}-${pastGamesOffset}`;
 
-    // Prevent duplicate requests
     if (isLoadingRef.current || lastFetchParamsRef.current === fetchParams) {
       return;
     }
@@ -62,28 +59,24 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
 
     setLoadingPastGames(true);
     try {
-      const response = await gamesApi.getAll({
-        cityId: user.currentCity.id,
-        status: 'ARCHIVED',
+      const response = await gamesApi.getPastGames({
         limit: 10,
         offset: pastGamesOffset,
       });
       
-      const allGames = response.data || [];
-      const newPastGames = sortGames(
-        allGames.filter((game) => 
-          game.status === 'ARCHIVED' &&
-          game.participants.some((p) => p.userId === user?.id)
-        )
-      );
+      const newPastGames = response.data || [];
       
-      if (allGames.length < 10) {
+      if (newPastGames.length < 10) {
         setHasMorePastGames(false);
       }
       
-      const unreadCounts = await fetchGamesWithUnread(newPastGames, user?.id);
+      const unreadCounts = await fetchGamesWithUnread(newPastGames, user.id);
       
-      setPastGames(prev => [...prev, ...newPastGames]);
+      setPastGames(prev => {
+        const existingGameIds = new Set(prev.map(g => g.id));
+        const uniqueNewGames = newPastGames.filter(game => !existingGameIds.has(game.id));
+        return sortGames([...prev, ...uniqueNewGames]);
+      });
       setPastGamesUnreadCounts(prev => ({ ...prev, ...unreadCounts }));
       setPastGamesOffset(pastGamesOffset + 10);
     } catch (error) {
@@ -92,7 +85,7 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
       isLoadingRef.current = false;
       setLoadingPastGames(false);
     }
-  }, [user?.currentCity?.id, user?.id, loadingPastGames, hasMorePastGames, pastGamesOffset]);
+  }, [user?.id, loadingPastGames, hasMorePastGames, pastGamesOffset]);
 
   const loadAllPastGamesWithUnread = useCallback(async () => {
     if (!user?.id || isLoadingUnreadPastGamesRef.current) return;
@@ -107,10 +100,17 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
         return;
       }
 
-      const archivedChatGames = allChatGames.filter(game => 
-        game.status === 'ARCHIVED' &&
-        game.participants.some((p: any) => p.userId === user.id)
-      );
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const archivedChatGames = allChatGames.filter(game => {
+        if (game.status !== 'ARCHIVED') return false;
+        if (!game.participants.some((p: any) => p.userId === user.id)) return false;
+        
+        const gameDate = new Date(game.startTime);
+        gameDate.setHours(0, 0, 0, 0);
+        return gameDate < today;
+      });
 
       if (archivedChatGames.length === 0) {
         isLoadingUnreadPastGamesRef.current = false;
@@ -149,34 +149,47 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
   }, [showChatFilter, user?.id, loadAllPastGamesWithUnread]);
 
   useEffect(() => {
-    if (shouldLoad && pastGames.length === 0 && !loadingPastGames && user?.currentCity?.id) {
+    if (shouldLoad && pastGames.length === 0 && !loadingPastGames && user?.id) {
       loadPastGames();
     }
-  }, [shouldLoad, pastGames.length, loadingPastGames, user?.currentCity?.id, loadPastGames]);
+  }, [shouldLoad, pastGames.length, loadingPastGames, user?.id, loadPastGames]);
 
   useEffect(() => {
     const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game }) => {
-      if (data.senderId === user?.id) return; // Don't update if current user made the change
+      if (data.senderId === user?.id) return;
       
       const updatedGame = data.game;
       
       setPastGames(prevPastGames => {
         const gameIndex = prevPastGames.findIndex(g => g.id === data.gameId);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
         if (gameIndex === -1) {
-          // Game not in list, check if it should be added (must be ARCHIVED and user must be participant)
           const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
           const isArchived = updatedGame.status === 'ARCHIVED';
+          
           if (isParticipant && isArchived) {
-            const newGames = [...prevPastGames, updatedGame];
-            return sortGames(newGames);
+            const gameDate = new Date(updatedGame.startTime);
+            gameDate.setHours(0, 0, 0, 0);
+            if (gameDate < today) {
+              const newGames = [...prevPastGames, updatedGame];
+              return sortGames(newGames);
+            }
           }
           return prevPastGames;
         }
         
-        // Check if game should be removed (no longer archived or no longer participant)
         const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
         const isArchived = updatedGame.status === 'ARCHIVED';
+        
         if (!isParticipant || !isArchived) {
+          return prevPastGames.filter(g => g.id !== data.gameId);
+        }
+        
+        const gameDate = new Date(updatedGame.startTime);
+        gameDate.setHours(0, 0, 0, 0);
+        if (gameDate >= today) {
           return prevPastGames.filter(g => g.id !== data.gameId);
         }
         
@@ -202,4 +215,3 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
     loadAllPastGamesWithUnread,
   };
 };
-

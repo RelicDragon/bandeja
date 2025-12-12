@@ -1,22 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { gamesApi, invitesApi } from '@/api';
+import { invitesApi } from '@/api';
 import { chatApi } from '@/api/chat';
+import { gamesApi } from '@/api';
 import { Game, Invite } from '@/types';
 import { socketService } from '@/services/socketService';
 import { useHeaderStore } from '@/store/headerStore';
 
-export const useHomeGames = (
+export const useMyGames = (
   user: any,
   onLoading: (loading: boolean) => void,
   skeletonAnimation?: { showSkeletonsAnimated: () => void; hideSkeletonsAnimated: () => void }
 ) => {
   const [games, setGames] = useState<Game[]>([]);
-  const [availableGames, setAvailableGames] = useState<Game[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [gamesUnreadCounts, setGamesUnreadCounts] = useState<Record<string, number>>({});
   const showChatFilter = useHeaderStore((state) => state.showChatFilter);
 
-  // Request deduplication
   const isLoadingRef = useRef(false);
   const lastFetchParamsRef = useRef<string | null>(null);
   const isLoadingUnreadGamesRef = useRef(false);
@@ -28,7 +27,6 @@ export const useHomeGames = (
   };
 
   const fetchGamesWithUnread = async (myGames: Game[], userId: string): Promise<Record<string, number>> => {
-    // Filter games where user can access chat (is participant or has pending invite)
     const accessibleGameIds = myGames
       .filter(game => {
         const isParticipant = game.participants.some(p => p.userId === userId);
@@ -37,7 +35,6 @@ export const useHomeGames = (
       })
       .map(game => game.id);
 
-    // Use batch API to get unread counts for all accessible games at once
     if (accessibleGameIds.length > 0) {
       try {
         const unreadResponse = await chatApi.getGamesUnreadCounts(accessibleGameIds);
@@ -52,9 +49,9 @@ export const useHomeGames = (
   };
 
   const fetchData = useCallback(async (showLoader = true, force = false) => {
-    if (!user?.currentCity?.id) return;
+    if (!user?.id) return;
 
-    const fetchParams = `city-${user.currentCity.id}`;
+    const fetchParams = `my-games-${user.id}`;
 
     if (!force && (isLoadingRef.current || lastFetchParamsRef.current === fetchParams)) {
       return;
@@ -70,69 +67,27 @@ export const useHomeGames = (
         onLoading(true);
       }
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const [nonArchivedGamesResponse, archivedGamesResponse, invitesResponse] = await Promise.all([
-        gamesApi.getAll({
-          cityId: user.currentCity.id,
-        }),
-        gamesApi.getAll({
-          cityId: user.currentCity.id,
-          startDate: today.toISOString(),
-          status: 'ARCHIVED',
-        }),
+      const [gamesResponse, invitesResponse] = await Promise.all([
+        gamesApi.getMyGames(),
         invitesApi.getMyInvites('PENDING')
       ]);
-      
-      const nonArchivedGames = nonArchivedGamesResponse.data.filter((game) => game.status !== 'ARCHIVED');
-      const archivedGamesToday = archivedGamesResponse.data.filter((game) => {
-        const gameDate = new Date(game.startTime);
-        gameDate.setHours(0, 0, 0, 0);
-        return gameDate >= today;
-      });
-      
-      const allGames = [...nonArchivedGames, ...archivedGamesToday];
-      
-      const myGames = allGames.filter((game) => {
-        const isParticipant = game.participants.some((p) => p.userId === user?.id);
-        if (!isParticipant) return false;
-        
-        if (game.status !== 'ARCHIVED') return true;
-        
-        const gameDate = new Date(game.startTime);
-        gameDate.setHours(0, 0, 0, 0);
-        return gameDate >= today;
-      });
-      
-      const availableGamesFiltered = allGames.filter((game) => {
-        const isParticipant = game.participants.some((p) => p.userId === user?.id);
-        if (isParticipant) return false;
-        if (game.status === 'ARCHIVED') return false;
-        
-        const gameDate = new Date(game.startTime);
-        gameDate.setHours(0, 0, 0, 0);
-        if (gameDate < today) return false;
-        
-        return game.participants.length < game.maxParticipants;
-      });
-      
-      const unreadCounts = await fetchGamesWithUnread(myGames, user?.id);
-      
+
+      const myGames = gamesResponse.data || [];
+      const unreadCounts = await fetchGamesWithUnread(myGames, user.id);
+
       const sortedMyGames = sortGames(myGames);
-      
+
       const elapsedTime = Date.now() - startTime;
       const remainingTime = Math.max(0, 1000 - elapsedTime);
       if (remainingTime > 0 && showLoader) {
         await new Promise(resolve => setTimeout(resolve, remainingTime));
       }
-      
+
       setGames(sortedMyGames);
-      setAvailableGames(availableGamesFiltered);
       setInvites(invitesResponse.data);
       setGamesUnreadCounts(unreadCounts);
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Failed to fetch my games:', error);
     } finally {
       isLoadingRef.current = false;
       if (showLoader) {
@@ -140,7 +95,7 @@ export const useHomeGames = (
         onLoading(false);
       }
     }
-  }, [user?.currentCity?.id, user?.id, skeletonAnimation, onLoading]);
+  }, [user?.id, skeletonAnimation, onLoading]);
 
   const loadAllGamesWithUnread = useCallback(async () => {
     if (!user?.id || isLoadingUnreadGamesRef.current) return;
@@ -149,7 +104,7 @@ export const useHomeGames = (
     try {
       const allChatGamesResponse = await chatApi.getUserChatGames();
       const allChatGames = allChatGamesResponse.data;
-      
+
       if (allChatGames.length === 0) {
         isLoadingUnreadGamesRef.current = false;
         return;
@@ -176,20 +131,20 @@ export const useHomeGames = (
 
       const gameIds = upcomingChatGames.map(game => game.id);
       const unreadCounts = await chatApi.getGamesUnreadCounts(gameIds);
-      
+
       const gamesWithUnread = upcomingChatGames.filter(game => (unreadCounts.data[game.id] || 0) > 0);
-      
+
       if (gamesWithUnread.length > 0) {
         setGames(prevGames => {
           const existingGameIds = new Set(prevGames.map(g => g.id));
           const newGames = gamesWithUnread.filter(game => !existingGameIds.has(game.id));
-          
+
           if (newGames.length === 0) return prevGames;
-          
+
           const mergedGames = [...prevGames, ...newGames];
           return sortGames(mergedGames);
         });
-        
+
         setGamesUnreadCounts(prev => ({ ...prev, ...unreadCounts.data }));
       }
     } catch (error) {
@@ -200,10 +155,10 @@ export const useHomeGames = (
   }, [user?.id]);
 
   useEffect(() => {
-    if (user?.currentCity?.id) {
+    if (user?.id) {
       fetchData();
     }
-  }, [user?.currentCity?.id, fetchData]);
+  }, [user?.id, fetchData]);
 
   useEffect(() => {
     if (showChatFilter && user?.id) {
@@ -211,15 +166,11 @@ export const useHomeGames = (
     }
   }, [showChatFilter, user?.id, loadAllGamesWithUnread]);
 
-  // Listen for new invites and deleted invites via Socket.IO
   useEffect(() => {
     const handleNewInvite = (invite: Invite) => {
       setInvites(prevInvites => {
-        // Check if invite already exists to avoid duplicates
         const exists = prevInvites.some(existingInvite => existingInvite.id === invite.id);
         if (exists) return prevInvites;
-
-        // Add new invite at the beginning of the array (most recent first)
         return [invite, ...prevInvites];
       });
     };
@@ -229,79 +180,50 @@ export const useHomeGames = (
     };
 
     const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game; forceUpdate?: boolean }) => {
-      console.log('handleGameUpdated', data);
-      if (!data.forceUpdate && data.senderId === user?.id) return; // Don't update if current user made the change (unless forced)
-      
+      if (!data.forceUpdate && data.senderId === user?.id) return;
+
       const updatedGame = data.game;
-      
-        setGames(prevGames => {
-          const gameIndex = prevGames.findIndex(g => g.id === data.gameId);
-          const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
-          
-          if (gameIndex === -1) {
-            if (!isParticipant) return prevGames;
-            
-            const isArchived = updatedGame.status === 'ARCHIVED';
-            if (!isArchived) {
-              const newGames = [...prevGames, updatedGame];
-              return sortGames(newGames);
-            }
-            
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const gameDate = new Date(updatedGame.startTime);
-            gameDate.setHours(0, 0, 0, 0);
-            if (gameDate >= today) {
-              const newGames = [...prevGames, updatedGame];
-              return sortGames(newGames);
-            }
-            return prevGames;
+
+      setGames(prevGames => {
+        const gameIndex = prevGames.findIndex(g => g.id === data.gameId);
+        const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+
+        if (gameIndex === -1) {
+          if (!isParticipant) return prevGames;
+
+          const isArchived = updatedGame.status === 'ARCHIVED';
+          if (!isArchived) {
+            const newGames = [...prevGames, updatedGame];
+            return sortGames(newGames);
           }
-          
-          if (!isParticipant) {
+
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const gameDate = new Date(updatedGame.startTime);
+          gameDate.setHours(0, 0, 0, 0);
+          if (gameDate >= today) {
+            const newGames = [...prevGames, updatedGame];
+            return sortGames(newGames);
+          }
+          return prevGames;
+        }
+
+        if (!isParticipant) {
+          return prevGames.filter(g => g.id !== data.gameId);
+        }
+
+        const isArchived = updatedGame.status === 'ARCHIVED';
+        if (isArchived) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const gameDate = new Date(updatedGame.startTime);
+          gameDate.setHours(0, 0, 0, 0);
+          if (gameDate < today) {
             return prevGames.filter(g => g.id !== data.gameId);
           }
-          
-          const isArchived = updatedGame.status === 'ARCHIVED';
-          if (isArchived) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const gameDate = new Date(updatedGame.startTime);
-            gameDate.setHours(0, 0, 0, 0);
-            if (gameDate < today) {
-              return prevGames.filter(g => g.id !== data.gameId);
-            }
-          }
-          
-          const updatedGames = [...prevGames];
-          updatedGames[gameIndex] = updatedGame;
-          return sortGames(updatedGames);
-        });
-      
-      setAvailableGames(prevAvailableGames => {
-        const gameIndex = prevAvailableGames.findIndex(g => g.id === data.gameId);
-        const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
-        const isArchived = updatedGame.status === 'ARCHIVED';
-        const isFull = updatedGame.participants.length >= updatedGame.maxParticipants;
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const gameDate = new Date(updatedGame.startTime);
-        gameDate.setHours(0, 0, 0, 0);
-        const isTodayOrFuture = gameDate >= today;
-        
-        if (gameIndex === -1) {
-          if (!isParticipant && !isArchived && !isFull && isTodayOrFuture) {
-            return sortGames([...prevAvailableGames, updatedGame]);
-          }
-          return prevAvailableGames;
         }
-        
-        if (isParticipant || isArchived || isFull || !isTodayOrFuture) {
-          return prevAvailableGames.filter(g => g.id !== data.gameId);
-        }
-        
-        const updatedGames = [...prevAvailableGames];
+
+        const updatedGames = [...prevGames];
         updatedGames[gameIndex] = updatedGame;
         return sortGames(updatedGames);
       });
@@ -320,7 +242,6 @@ export const useHomeGames = (
 
   return {
     games,
-    availableGames,
     invites,
     gamesUnreadCounts,
     fetchData,
@@ -328,4 +249,3 @@ export const useHomeGames = (
     loadAllGamesWithUnread,
   };
 };
-

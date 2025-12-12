@@ -1,23 +1,20 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Search } from 'lucide-react';
 import { MainLayout } from '@/layouts/MainLayout';
 import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController, Contacts, BugsSection } from '@/components/home';
 import { Divider, Button } from '@/components';
-import { invitesApi } from '@/api';
+import { Search } from 'lucide-react';
 import { chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
-import { useHomeGames } from '@/hooks/useHomeGames';
+import { useMyGames } from '@/hooks/useMyGames';
 import { usePastGames } from '@/hooks/usePastGames';
+import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useBugsWithUnread } from '@/hooks/useBugsWithUnread';
 import { ChatType } from '@/types';
-
-const filterGamesByTime = <T extends { timeIsSet?: boolean }>(list: T[] = []) =>
-  list.filter((game) => game.timeIsSet !== false);
 
 const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string }>(list: T[] = []): T[] => {
   const getStatusPriority = (status?: string): number => {
@@ -57,13 +54,12 @@ export const HomeContent = () => {
   
   const {
     games,
-    availableGames,
     invites,
     gamesUnreadCounts,
     setInvites,
     fetchData,
     loadAllGamesWithUnread,
-  } = useHomeGames(user, (loadingState) => setLoading(loadingState), {
+  } = useMyGames(user, (loadingState) => setLoading(loadingState), {
     showSkeletonsAnimated: skeletonAnimation.showSkeletonsAnimated,
     hideSkeletonsAnimated: skeletonAnimation.hideSkeletonsAnimated,
   });
@@ -78,6 +74,12 @@ export const HomeContent = () => {
     loadPastGames,
     loadAllPastGamesWithUnread,
   } = usePastGames(user, activeTab === 'past-games');
+
+  const {
+    availableGames,
+    loading: loadingAvailableGames,
+    fetchData: fetchAvailableGames,
+  } = useAvailableGames(user);
 
   const {
     bugsWithUnread,
@@ -100,16 +102,16 @@ export const HomeContent = () => {
   }, [gamesUnreadCounts, pastGamesUnreadCounts]);
 
   const filteredMyGames = useMemo(() => {
-    const filtered = mergedGames.filter((game) => {
-      if (game.status === 'ARCHIVED') {
-        return (mergedUnreadCounts[game.id] || 0) > 0;
-      }
-      return true;
-    });
-    return sortGamesByStatusAndDateTime(filterGamesByTime(filtered));
-  }, [mergedGames, mergedUnreadCounts]);
-  const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(filterGamesByTime(pastGames)), [pastGames]);
-  const filteredAvailableGames = useMemo(() => sortGamesByStatusAndDateTime(filterGamesByTime(availableGames)), [availableGames]);
+    if (!showChatFilter) {
+      return sortGamesByStatusAndDateTime(mergedGames);
+    }
+    
+    const filtered = mergedGames.filter((game) => (mergedUnreadCounts[game.id] || 0) > 0);
+    return sortGamesByStatusAndDateTime(filtered);
+  }, [mergedGames, mergedUnreadCounts, showChatFilter]);
+  
+  const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(pastGames), [pastGames]);
+  const filteredAvailableGames = useMemo(() => sortGamesByStatusAndDateTime(availableGames), [availableGames]);
 
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
 
@@ -198,14 +200,16 @@ export const HomeContent = () => {
 
   const handleAcceptInvite = async (inviteId: string) => {
     try {
+      const { invitesApi } = await import('@/api');
       await invitesApi.accept(inviteId);
       setInvites(invites.filter((inv) => inv.id !== inviteId));
-      // Update header store to decrement pending invites count
       const { setPendingInvites } = useHeaderStore.getState();
       const currentCount = useHeaderStore.getState().pendingInvites;
       setPendingInvites(Math.max(0, currentCount - 1));
-      // Defer fetchData to next event loop tick to ensure backend processing is complete
-      Promise.resolve().then(() => fetchData(false, true));
+      Promise.resolve().then(() => {
+        fetchData(false, true);
+        fetchAvailableGames(true);
+      });
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
@@ -214,14 +218,16 @@ export const HomeContent = () => {
 
   const handleDeclineInvite = async (inviteId: string) => {
     try {
+      const { invitesApi } = await import('@/api');
       await invitesApi.decline(inviteId);
       setInvites(invites.filter((inv) => inv.id !== inviteId));
-      // Update header store to decrement pending invites count
       const { setPendingInvites } = useHeaderStore.getState();
       const currentCount = useHeaderStore.getState().pendingInvites;
       setPendingInvites(Math.max(0, currentCount - 1));
-      // Defer fetchData to next event loop tick to ensure backend processing is complete
-      Promise.resolve().then(() => fetchData(false, true));
+      Promise.resolve().then(() => {
+        fetchData(false, true);
+        fetchAvailableGames(true);
+      });
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
@@ -233,6 +239,8 @@ export const HomeContent = () => {
     try {
       const { gamesApi } = await import('@/api');
       await gamesApi.join(gameId);
+      fetchData(false, true);
+      fetchAvailableGames(true);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
@@ -351,36 +359,23 @@ export const HomeContent = () => {
         )}
       </div>
 
-      <div
-        className={`transition-all duration-500 ease-in-out overflow-hidden ${
-          !showChatFilter
-            ? 'max-h-[50px] opacity-100 translate-y-0'
-            : 'max-h-0 opacity-0 -translate-y-4'
-        }`}
-      >
-        <Divider className="mt-2" />
-        <div className="flex justify-center -mt-9">
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 flex items-center gap-1.5">
-            <Search className="w-3 h-3" />
-            {t('home.findGames', { defaultValue: 'Find games' })}
-          </p>
-        </div>
-      </div>
-
-      <div
-        className={`transition-all duration-500 ease-in-out overflow-hidden -mt-5 ${
-          !showChatFilter
-            ? 'max-h-[5000px] opacity-100 translate-y-0'
-            : 'max-h-0 opacity-0 -translate-y-4'
-        }`}
-      >
-        <AvailableGamesSection
-          availableGames={filteredAvailableGames}
-          user={user}
-          loading={loading}
-          onJoin={handleJoinGame}
-        />
-      </div>
+      {!showChatFilter && (
+        <>
+          <Divider className="mt-2" />
+          <div className="flex justify-center -mt-9">
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 flex items-center gap-1.5">
+              <Search className="w-3 h-3" />
+              {t('home.findGames', { defaultValue: 'Find games' })}
+            </p>
+          </div>
+          <AvailableGamesSection
+            availableGames={filteredAvailableGames}
+            user={user}
+            loading={loadingAvailableGames}
+            onJoin={handleJoinGame}
+          />
+        </>
+      )}
     </>
   );
 };

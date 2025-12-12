@@ -95,15 +95,7 @@ export const MyGamesSection = ({
     );
   }
 
-  const filteredGames = games.filter((game) => {
-    if (game.status === 'ARCHIVED') {
-      return (gamesUnreadCounts[game.id] || 0) > 0;
-    }
-    if (!showChatFilter) return true;
-    return (gamesUnreadCounts[game.id] || 0) > 0;
-  });
-
-  const displayGames = filteredGames;
+  const displayGames = games;
 
   if (displayGames.length === 0) {
     return (

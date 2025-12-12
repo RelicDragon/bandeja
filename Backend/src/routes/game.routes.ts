@@ -8,6 +8,12 @@ const router = Router();
 
 router.get('/', optionalAuth, gameController.getGames);
 
+router.get('/my-games', authenticate, gameController.getMyGames);
+
+router.get('/past-games', authenticate, gameController.getPastGames);
+
+router.get('/available', authenticate, gameController.getAvailableGames);
+
 router.get('/:id', optionalAuth, gameController.getGameById);
 
 router.post(

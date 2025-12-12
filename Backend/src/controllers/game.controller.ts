@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
+import { ApiError } from '../utils/ApiError';
 import { GameService } from '../services/game/game.service';
 import { ParticipantService } from '../services/game/participant.service';
 import { JoinQueueService } from '../services/game/joinQueue.service';
@@ -29,6 +30,51 @@ export const getGameById = asyncHandler(async (req: AuthRequest, res: Response) 
 
 export const getGames = asyncHandler(async (req: AuthRequest, res: Response) => {
   const games = await GameService.getGames(req.query, req.userId, req.user?.currentCityId);
+
+  res.json({
+    success: true,
+    data: games,
+    serverTime: new Date().toISOString(),
+  });
+});
+
+export const getMyGames = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const games = await GameService.getMyGames(req.userId, req.user?.currentCityId);
+
+  res.json({
+    success: true,
+    data: games,
+    serverTime: new Date().toISOString(),
+  });
+});
+
+export const getPastGames = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+  const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+
+  const games = await GameService.getPastGames(req.userId, req.user?.currentCityId, limit, offset);
+
+  res.json({
+    success: true,
+    data: games,
+    serverTime: new Date().toISOString(),
+  });
+});
+
+export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const games = await GameService.getAvailableGames(req.userId, req.user?.currentCityId);
 
   res.json({
     success: true,

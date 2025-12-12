@@ -5,16 +5,33 @@ export const gamesApi = {
   getAll: async (params?: {
     cityId?: string;
     startDate?: string;
+    startDateBefore?: string;
     endDate?: string;
     minLevel?: number;
     maxLevel?: number;
     gameType?: string;
     isPublic?: boolean;
     status?: string;
+    participantUserId?: string;
     limit?: number;
     offset?: number;
   }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games', { params });
+    return response.data;
+  },
+
+  getMyGames: async () => {
+    const response = await api.get<ApiResponse<Game[]>>('/games/my-games');
+    return response.data;
+  },
+
+  getPastGames: async (params?: { limit?: number; offset?: number }) => {
+    const response = await api.get<ApiResponse<Game[]>>('/games/past-games', { params });
+    return response.data;
+  },
+
+  getAvailableGames: async () => {
+    const response = await api.get<ApiResponse<Game[]>>('/games/available');
     return response.data;
   },
 

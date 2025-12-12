@@ -237,6 +237,10 @@ export class GameReadService {
       where.endTime = { lte: new Date(filters.endDate) };
     }
 
+    if (filters.startDateBefore) {
+      where.startTime = { ...where.startTime, lt: new Date(filters.startDateBefore) };
+    }
+
     if (filters.minLevel !== undefined) {
       where.minLevel = { gte: parseFloat(filters.minLevel) };
     }
@@ -259,6 +263,14 @@ export class GameReadService {
 
     if (filters.status) {
       where.status = filters.status;
+    }
+
+    if (filters.participantUserId) {
+      where.participants = {
+        some: {
+          userId: filters.participantUserId
+        }
+      };
     }
 
     const cityIdToFilter = filters.cityId || userCityId;
@@ -385,6 +397,133 @@ export class GameReadService {
       orderBy: { startTime: 'desc' },
       ...(limit && { take: limit }),
       ...(offset && { skip: offset }),
+    });
+
+    return games;
+  }
+
+  static async getMyGames(userId: string, userCityId?: string) {
+    if (!userId) {
+      throw new ApiError(401, 'Unauthorized');
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const where: any = {
+      participants: {
+        some: {
+          userId: userId
+        }
+      },
+      OR: [
+        { status: { not: 'ARCHIVED' } },
+        {
+          status: 'ARCHIVED',
+          startTime: { gte: today }
+        }
+      ]
+    };
+
+    const cityIdToFilter = userCityId;
+    if (cityIdToFilter) {
+      where.cityId = cityIdToFilter;
+    } else {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { currentCityId: true, isAdmin: true }
+      });
+      if (user && user.currentCityId && !user.isAdmin) {
+        where.cityId = user.currentCityId;
+      }
+    }
+
+    const games = await prisma.game.findMany({
+      where,
+      include: getGameInclude() as any,
+      orderBy: { startTime: 'desc' },
+    });
+
+    return games;
+  }
+
+  static async getPastGames(userId: string, userCityId?: string, limit: number = 10, offset: number = 0) {
+    if (!userId) {
+      throw new ApiError(401, 'Unauthorized');
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const where: any = {
+      participants: {
+        some: {
+          userId: userId
+        }
+      },
+      status: 'ARCHIVED',
+      startTime: { lt: today }
+    };
+
+    const cityIdToFilter = userCityId;
+    if (cityIdToFilter) {
+      where.cityId = cityIdToFilter;
+    } else {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { currentCityId: true, isAdmin: true }
+      });
+      if (user && user.currentCityId && !user.isAdmin) {
+        where.cityId = user.currentCityId;
+      }
+    }
+
+    const games = await prisma.game.findMany({
+      where,
+      include: getGameInclude() as any,
+      orderBy: { startTime: 'desc' },
+      take: limit,
+      skip: offset,
+    });
+
+    return games;
+  }
+
+  static async getAvailableGames(userId: string, userCityId?: string) {
+    if (!userId) {
+      throw new ApiError(401, 'Unauthorized');
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const where: any = {
+      status: { not: 'ARCHIVED' },
+      startTime: { gte: today },
+      participants: {
+        none: {
+          userId: userId
+        }
+      }
+    };
+
+    const cityIdToFilter = userCityId;
+    if (cityIdToFilter) {
+      where.cityId = cityIdToFilter;
+    } else {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { currentCityId: true, isAdmin: true }
+      });
+      if (user && user.currentCityId) {
+        where.cityId = user.currentCityId;
+      }
+    }
+
+    const games = await prisma.game.findMany({
+      where,
+      include: getGameInclude() as any,
+      orderBy: { startTime: 'desc' },
     });
 
     return games;
