@@ -11,14 +11,17 @@ export const MainPage = () => {
   const location = useLocation();
   const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
   const previousPathnameRef = useRef(location.pathname);
+  const isInitialMountRef = useRef(true);
 
   useEffect(() => {
     const path = location.pathname;
     const previousPath = previousPathnameRef.current;
     const isPathChanged = path !== previousPath;
 
-    if (isPathChanged) {
-      setIsAnimating(true);
+    if (isPathChanged || isInitialMountRef.current) {
+      if (isPathChanged) {
+        setIsAnimating(true);
+      }
       
       if (path === '/profile') {
         setCurrentPage('profile');
@@ -30,8 +33,12 @@ export const MainPage = () => {
         setCurrentPage('home');
       }
 
-      setTimeout(() => setIsAnimating(false), 300);
+      if (isPathChanged) {
+        setTimeout(() => setIsAnimating(false), 300);
+      }
+      
       previousPathnameRef.current = path;
+      isInitialMountRef.current = false;
     }
   }, [location.pathname, setCurrentPage, setIsAnimating]);
 
