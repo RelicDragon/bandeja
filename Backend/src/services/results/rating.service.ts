@@ -110,14 +110,14 @@ export function calculateRatingUpdate(
 
   let levelChange = baseLevelChange * multiplier;
 
-  levelChange = Math.max(-MAX_LEVEL_CHANGE, Math.min(MAX_LEVEL_CHANGE, levelChange));
-
   const enduranceCoefficient = calculateEnduranceCoefficient(matchResult.setScores, ballsInGames);
   levelChange = levelChange * enduranceCoefficient;
 
   const clampedReliability = Math.max(0.0, Math.min(100.0, playerStats.reliability));
   const reliabilityCoefficient = 1.0 - (clampedReliability / 100.0) * 0.9;
   levelChange = levelChange * reliabilityCoefficient;
+
+  levelChange = Math.max(-MAX_LEVEL_CHANGE, Math.min(MAX_LEVEL_CHANGE, levelChange));
 
   const pointsEarned = matchResult.isWinner ? POINTS_PER_WIN : 0;
 
