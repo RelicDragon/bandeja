@@ -8,6 +8,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
+import { calculateAndUpdateUserReliability } from '../services/results/rating.service';
 
 // Point this to your Worker (no trailing slash), e.g. "https://your-worker.workers.dev"
 const WORKER_PROXY_BASE_URL =
@@ -130,6 +131,8 @@ export const syncLundaProfile = asyncHandler(async (req: SyncLundaProfileRequest
       metadata,
     },
   });
+
+  await calculateAndUpdateUserReliability(userId);
 
   res.json({
     success: true,
@@ -275,6 +278,7 @@ export const lundaGetProfile = asyncHandler(async (req: AuthRequest, res: Expres
   const lundaProfileId = playerData?.identity?.uid;
   if (lundaProfileId) {
     await getLevelChanges(lundaProfileId, userId, lundaProfile.cookie);
+    await calculateAndUpdateUserReliability(userId);
   }
 
   res.json({

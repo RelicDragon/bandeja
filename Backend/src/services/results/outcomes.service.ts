@@ -205,7 +205,7 @@ export async function applyGameOutcomes(
     const levelBefore = user.level;
     const reliabilityBefore = user.reliability;
     const levelAfter = Math.max(1.0, Math.min(7.0, levelBefore + outcome.levelChange));
-    const reliabilityAfter = Math.max(0, Math.min(10, reliabilityBefore + outcome.reliabilityChange));
+    const reliabilityAfter = Math.max(0.0, Math.min(100.0, reliabilityBefore + outcome.reliabilityChange));
 
     await tx.gameOutcome.upsert({
       where: {

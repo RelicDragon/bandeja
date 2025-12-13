@@ -1,3 +1,6 @@
+import prisma from '../../config/database';
+import { Prisma } from '@prisma/client';
+
 interface PlayerStats {
   level: number;
   reliability: number;
@@ -112,7 +115,8 @@ export function calculateRatingUpdate(
   const enduranceCoefficient = calculateEnduranceCoefficient(matchResult.setScores, ballsInGames);
   levelChange = levelChange * enduranceCoefficient;
 
-  const reliabilityCoefficient = 1.0 - (playerStats.reliability / 10.0) * 0.8;
+  const clampedReliability = Math.max(0.0, Math.min(100.0, playerStats.reliability));
+  const reliabilityCoefficient = 1.0 - (clampedReliability / 100.0) * 0.9;
   levelChange = levelChange * reliabilityCoefficient;
 
   const pointsEarned = matchResult.isWinner ? POINTS_PER_WIN : 0;
@@ -125,5 +129,44 @@ export function calculateRatingUpdate(
     enduranceCoefficient,
     reliabilityCoefficient,
   };
+}
+
+export async function calculateAndUpdateUserReliability(
+  userId: string,
+  tx?: Prisma.TransactionClient
+): Promise<number> {
+  const prismaClient = tx || prisma;
+
+  const gameOutcomes = await prismaClient.gameOutcome.aggregate({
+    where: { userId },
+    _sum: {
+      wins: true,
+      ties: true,
+      losses: true,
+    },
+  });
+
+  const matchesCount = (gameOutcomes._sum.wins || 0) + 
+                       (gameOutcomes._sum.ties || 0) + 
+                       (gameOutcomes._sum.losses || 0);
+
+  const lundaEventsCount = await prismaClient.levelChangeEvent.count({
+    where: {
+      userId,
+      eventType: 'LUNDA',
+    },
+  });
+
+  const reliability = (matchesCount * RELIABILITY_INCREMENT) + 
+                      (lundaEventsCount * RELIABILITY_INCREMENT * 8);
+  
+  const clampedReliability = Math.max(0.0, Math.min(100.0, reliability));
+
+  await prismaClient.user.update({
+    where: { id: userId },
+    data: { reliability: clampedReliability },
+  });
+
+  return clampedReliability;
 }
 

@@ -11,7 +11,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "update-reliability": "ts-node update-reliability.ts"
   },
   "keywords": [
     "padel",
