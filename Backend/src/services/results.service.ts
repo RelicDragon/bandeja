@@ -268,7 +268,7 @@ export async function resetGameResults(gameId: string, requestUserId: string) {
         await tx.user.update({
           where: { id: outcome.userId },
           data: {
-            level: outcome.levelBefore,
+            level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
             reliability: outcome.reliabilityBefore,
             totalPoints: { decrement: outcome.pointsEarned },
             gamesPlayed: { decrement: 1 },
