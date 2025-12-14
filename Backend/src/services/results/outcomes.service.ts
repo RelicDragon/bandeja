@@ -206,6 +206,8 @@ export async function applyGameOutcomes(
     const reliabilityBefore = user.reliability;
     const levelAfter = Math.max(1.0, Math.min(7.0, levelBefore + outcome.levelChange));
     const reliabilityAfter = Math.max(0.0, Math.min(100.0, reliabilityBefore + outcome.reliabilityChange));
+    const actualLevelChange = levelAfter - levelBefore;
+    const actualReliabilityChange = reliabilityAfter - reliabilityBefore;
 
     await tx.gameOutcome.upsert({
       where: {
@@ -219,10 +221,10 @@ export async function applyGameOutcomes(
         userId: outcome.userId,
         levelBefore,
         levelAfter,
-        levelChange: outcome.levelChange,
+        levelChange: actualLevelChange,
         reliabilityBefore,
         reliabilityAfter,
-        reliabilityChange: outcome.reliabilityChange,
+        reliabilityChange: actualReliabilityChange,
         pointsEarned: outcome.pointsEarned,
         position: outcome.position,
         isWinner: outcome.isWinner || false,
@@ -235,10 +237,10 @@ export async function applyGameOutcomes(
       update: {
         levelBefore,
         levelAfter,
-        levelChange: outcome.levelChange,
+        levelChange: actualLevelChange,
         reliabilityBefore,
         reliabilityAfter,
-        reliabilityChange: outcome.reliabilityChange,
+        reliabilityChange: actualReliabilityChange,
         pointsEarned: outcome.pointsEarned,
         wins: outcome.wins || 0,
         ties: outcome.ties || 0,

@@ -117,6 +117,13 @@ export async function getOutcomeExplanation(
         userId,
       },
     },
+    select: {
+      levelBefore: true,
+      levelAfter: true,
+      levelChange: true,
+      reliabilityBefore: true,
+      reliabilityAfter: true,
+    },
   });
 
   // Create a map of userId to levelBefore for all players
@@ -216,7 +223,7 @@ export async function getOutcomeExplanation(
         ballsInGames
       );
 
-      matchLevelChange = update.levelChange;
+      const rawMatchLevelChange = update.levelChange;
       matchPointsEarned = update.pointsEarned;
       matchMultiplier = update.multiplier;
       matchTotalPointDifferential = update.totalPointDifferential;
@@ -238,7 +245,9 @@ export async function getOutcomeExplanation(
         });
       }
 
-      currentLevel += matchLevelChange;
+      const levelAfterMatch = Math.max(1.0, Math.min(7.0, currentLevel + rawMatchLevelChange));
+      matchLevelChange = levelAfterMatch - currentLevel;
+      currentLevel = levelAfterMatch;
       matchesPlayed += 1;
 
       totalLevelChange += matchLevelChange;
