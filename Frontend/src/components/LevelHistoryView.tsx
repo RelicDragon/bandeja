@@ -130,9 +130,14 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
           <div className="text-white text-sm mb-1">
             {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}
           </div>
-          <div className="text-white text-6xl font-bold">
+          <div className="text-white text-6xl font-bold pb-6">
             {showSocialLevel ? (user.socialLevel?.toFixed(2) || '1.00') : user.level.toFixed(2)}
           </div>
+          {!showSocialLevel && (
+            <div className="absolute bottom-3 right-3 text-white/80 text-xs">
+              {t('rating.reliability')}: {user.reliability.toFixed(0)}%
+            </div>
+          )}
         </div>
         <button
           onClick={handleToggle}
