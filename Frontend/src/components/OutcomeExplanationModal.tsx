@@ -50,8 +50,22 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
     return change > 0 ? `+${formatted}` : formatted;
   };
 
-  const formatPlayerNames = (players: Array<{ firstName?: string; lastName?: string }>) => {
-    return players.map(p => `${p.firstName || ''} ${p.lastName || ''}`).join(', ');
+  const renderPlayerNames = (players: Array<{ firstName?: string; lastName?: string; level: number }>) => {
+    return players.map((p, index) => {
+      const name = `${p.firstName || ''} ${p.lastName || ''}`.trim();
+      const levelColor = p.level > levelBefore 
+        ? 'text-green-600 dark:text-green-400' 
+        : p.level < levelBefore 
+        ? 'text-red-600 dark:text-red-400' 
+        : 'text-gray-600 dark:text-gray-400';
+      
+      return (
+        <span key={index}>
+          {name} <span className={`text-[10px] ${levelColor}`}>({formatNumber(p.level)})</span>
+          {index < players.length - 1 && ', '}
+        </span>
+      );
+    });
   };
 
   const groupedMatches = explanation.matches.reduce((acc, match) => {
@@ -122,6 +136,26 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
             </div>
           </div>
 
+          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div className="space-y-2 text-xs">
+              <div>
+                <span className="text-gray-600 dark:text-gray-400">{t('gameResults.reliability')}:</span>
+                <span className="ml-1.5 font-semibold text-gray-900 dark:text-gray-100">
+                  {formatNumber(explanation.userReliability)} → {formatNumber(explanation.userReliability + explanation.reliabilityChange)}
+                </span>
+                <span className={`ml-1.5 font-semibold ${getLevelChangeColor(explanation.reliabilityChange)}`}>
+                  ({formatChange(explanation.reliabilityChange)})
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600 dark:text-gray-400">{t('gameResults.reliabilityCoefficient')}:</span>
+                <span className="ml-1.5 font-semibold text-purple-600 dark:text-purple-400">
+                  {formatNumber(explanation.reliabilityCoefficient)}x
+                </span>
+              </div>
+            </div>
+          </div>
+
           <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
             {t('gameResults.matchByMatch')}
           </h3>
@@ -176,12 +210,12 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                   {match.teammates.length > 0 && (
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">{t('gameResults.teammates')}:</span>
-                      <span className="ml-1">{formatPlayerNames(match.teammates)}</span>
+                      <span className="ml-1">{renderPlayerNames(match.teammates)}</span>
                     </div>
                   )}
                   <div>
                     <span className="text-gray-600 dark:text-gray-400">{t('gameResults.opponents')}:</span>
-                    <span className="ml-1">{formatPlayerNames(match.opponents)}</span>
+                    <span className="ml-1">{renderPlayerNames(match.opponents)}</span>
                   </div>
                   <div>
                     <span className="text-gray-600 dark:text-gray-400">{t('gameResults.opponentLevel')}:</span>
@@ -224,14 +258,6 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                       <span className="text-gray-600 dark:text-gray-400">{t('gameResults.endurance')}:</span>
                       <span className="ml-1 font-semibold text-orange-600 dark:text-orange-400">
                         {formatNumber(match.enduranceCoefficient)}x
-                      </span>
-                    </div>
-                  )}
-                  {match.reliabilityCoefficient !== undefined && (
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">{t('gameResults.reliabilityCoefficient')}:</span>
-                      <span className="ml-1 font-semibold text-blue-600 dark:text-blue-400">
-                        {formatNumber(match.reliabilityCoefficient)}x
                       </span>
                     </div>
                   )}

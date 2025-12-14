@@ -8,6 +8,7 @@ interface ExplanationData {
   userGamesPlayed: number;
   levelChange: number;
   reliabilityChange: number;
+  reliabilityCoefficient: number;
   matches: MatchExplanation[];
   summary: {
     totalMatches: number;
@@ -35,12 +36,10 @@ interface MatchExplanation {
   levelDifference: number;
   scoreDelta?: number;
   levelChange: number;
-  reliabilityChange: number;
   pointsEarned: number;
   multiplier?: number;
   totalPointDifferential?: number;
   enduranceCoefficient?: number;
-  reliabilityCoefficient?: number;
   teammates: Array<{ firstName: string | null; lastName: string | null; level: number }>;
   opponents: Array<{ firstName: string | null; lastName: string | null; level: number }>;
   sets?: SetExplanation[];
@@ -178,9 +177,12 @@ export async function getOutcomeExplanation(
       const opponentLevel =
         opponentTeam.players.reduce((sum: number, p) => sum + (playerLevelsMap.get(p.userId) ?? p.user.level), 0) / opponentTeam.players.length;
 
+      const userTeamLevel =
+        userTeam.players.reduce((sum: number, p) => sum + (playerLevelsMap.get(p.userId) ?? p.user.level), 0) / userTeam.players.length;
+
       opponentLevels.push(opponentLevel);
 
-      const levelDifference = opponentLevel - currentLevel;
+      const levelDifference = opponentLevel - userTeamLevel;
 
       const isTie = match.winnerId === null;
       const isWinner = match.winnerId === userTeam.id;
@@ -198,7 +200,6 @@ export async function getOutcomeExplanation(
       let matchMultiplier: number | undefined = undefined;
       let matchTotalPointDifferential: number | undefined = undefined;
       let matchEnduranceCoefficient: number | undefined = undefined;
-      let matchReliabilityCoefficient: number | undefined = undefined;
       const setExplanations: SetExplanation[] = [];
 
       const update = calculateRatingUpdate(
@@ -220,7 +221,6 @@ export async function getOutcomeExplanation(
       matchMultiplier = update.multiplier;
       matchTotalPointDifferential = update.totalPointDifferential;
       matchEnduranceCoefficient = update.enduranceCoefficient;
-      matchReliabilityCoefficient = update.reliabilityCoefficient;
 
       let setNumber = 0;
       for (const set of validSets) {
@@ -255,12 +255,10 @@ export async function getOutcomeExplanation(
         opponentLevel,
         levelDifference,
         levelChange: matchLevelChange,
-        reliabilityChange: 0,
         pointsEarned: matchPointsEarned,
         multiplier: matchMultiplier,
         totalPointDifferential: matchTotalPointDifferential,
         enduranceCoefficient: matchEnduranceCoefficient,
-        reliabilityCoefficient: matchReliabilityCoefficient,
         teammates,
         opponents,
         sets: setExplanations.length > 0 ? setExplanations : undefined,
@@ -273,6 +271,9 @@ export async function getOutcomeExplanation(
 
   const startingLevel = existingOutcome?.levelBefore ?? user.level;
   const totalReliabilityChange = matchesPlayed * RELIABILITY_INCREMENT;
+  
+  const clampedReliability = Math.max(0.0, Math.min(100.0, startingReliability));
+  const reliabilityCoefficient = Math.max(0.05, Math.exp(-0.15 * Math.pow(clampedReliability, 0.68)));
 
   return {
     userId,
@@ -281,6 +282,7 @@ export async function getOutcomeExplanation(
     userGamesPlayed: user.gamesPlayed,
     levelChange: totalLevelChange,
     reliabilityChange: totalReliabilityChange,
+    reliabilityCoefficient,
     matches,
     summary: {
       totalMatches: matches.length,

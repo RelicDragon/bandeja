@@ -114,7 +114,7 @@ export function calculateRatingUpdate(
   levelChange = levelChange * enduranceCoefficient;
 
   const clampedReliability = Math.max(0.0, Math.min(100.0, playerStats.reliability));
-  const reliabilityCoefficient = Math.pow(0.95, clampedReliability);
+  const reliabilityCoefficient = Math.max(0.05, Math.exp(-0.15 * Math.pow(clampedReliability, 0.68)));
   levelChange = levelChange * reliabilityCoefficient;
 
   levelChange = Math.max(-MAX_LEVEL_CHANGE, Math.min(MAX_LEVEL_CHANGE, levelChange));

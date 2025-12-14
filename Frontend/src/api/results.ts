@@ -110,6 +110,7 @@ export interface OutcomeExplanation {
   userGamesPlayed: number;
   levelChange: number;
   reliabilityChange: number;
+  reliabilityCoefficient: number;
   matches: MatchExplanation[];
   summary: {
     totalMatches: number;
@@ -137,12 +138,10 @@ export interface MatchExplanation {
   levelDifference: number;
   scoreDelta?: number;
   levelChange: number;
-  reliabilityChange: number;
   pointsEarned: number;
   multiplier?: number;
   totalPointDifferential?: number;
   enduranceCoefficient?: number;
-  reliabilityCoefficient?: number;
   teammates: Array<{ firstName?: string; lastName?: string; level: number }>;
   opponents: Array<{ firstName?: string; lastName?: string; level: number }>;
   sets?: SetExplanation[];
