@@ -379,7 +379,7 @@ export const HomeContent = () => {
 
       <div className="flex justify-center -mt-8 -mb-8">
         <img 
-          src="/bandeja-logo-tr.png" 
+          src="/bandeja_logo2_tr_flat.png" 
           alt="Bandeja Logo" 
           className="h-32"
         />
