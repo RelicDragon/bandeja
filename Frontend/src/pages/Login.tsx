@@ -286,6 +286,23 @@ export const Login = () => {
           </Link>
         </p>
       )}
+
+      {/* EULA Link */}
+      <p className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
+        {t('auth.byContinuing') || 'By continuing, you agree to our'}{' '}
+        <a
+          href="/eula/world/eula.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors underline"
+          onClick={(e) => {
+            e.preventDefault();
+            window.open('/eula/world/eula.html', '_blank');
+          }}
+        >
+          {t('auth.eula') || 'Terms of Service'}
+        </a>
+      </p>
     </AuthLayout>
   );
 };

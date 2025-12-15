@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legal – Padel Bandeja</title>
+<meta name="description" content="Privacy Policy and User Agreement for Padel Bandeja">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f9fafb;
+    color: #111827;
+    margin: 0;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark {
+    background: #111827;
+    color: #f9fafb;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    margin-top: 24px;
+    margin-bottom: 24px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body.dark .container {
+    background: #1f2937;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+.lang-switch {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+body.dark .lang-switch {
+    border-bottom-color: #374151;
+}
+
+.lang-selector {
+    position: relative;
+}
+
+.lang-selector-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+body.dark .lang-selector-button {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: #475569;
+}
+
+.lang-selector-button:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+}
+
+body.dark .lang-selector-button:hover {
+    background: #1e293b;
+    border-color: #64748b;
+}
+
+.lang-selector-button .flag {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.lang-selector-button .label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+}
+
+body.dark .lang-selector-button .label {
+    color: #e2e8f0;
+}
+
+.lang-selector-button .chevron {
+    width: 14px;
+    height: 14px;
+    color: #94a3b8;
+    transition: transform 0.2s ease;
+}
+
+.lang-selector-button.open .chevron {
+    transform: rotate(180deg);
+}
+
+.lang-selector-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: 160px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    z-index: 50;
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px);
+    pointer-events: none;
+    transition: all 0.2s ease;
+    transform-origin: top right;
+}
+
+body.dark .lang-selector-menu {
+    background: #1e293b;
+    border-color: #475569;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+.lang-selector-menu.open {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+}
+
+.lang-selector-item {
+    width: 100%;
+    padding: 10px 12px;
+    text-align: left;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+body.dark .lang-selector-item {
+    color: #e2e8f0;
+}
+
+.lang-selector-item:hover {
+    background: #f1f5f9;
+}
+
+body.dark .lang-selector-item:hover {
+    background: rgba(51, 65, 85, 0.5);
+}
+
+.lang-selector-item.active {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+body.dark .lang-selector-item.active {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.lang-selector-item .flag {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.lang-selector-item .full-label {
+    flex: 1;
+}
+
+#eula-content-container {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+h1 {
+    color: #111827;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    line-height: 1.2;
+}
+
+body.dark h1 {
+    color: #f9fafb;
+}
+
+h2 {
+    color: #111827;
+    font-size: 24px;
+    font-weight: 600;
+    margin-top: 40px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+body.dark h2 {
+    color: #f9fafb;
+    border-bottom-color: #374151;
+}
+
+p {
+    font-size: 16px;
+    line-height: 1.7;
+    margin-bottom: 16px;
+    color: #374151;
+}
+
+body.dark p {
+    color: #d1d5db;
+}
+
+ul {
+    padding-left: 24px;
+    margin-bottom: 20px;
+}
+
+li {
+    font-size: 16px;
+    line-height: 1.7;
+    margin-bottom: 12px;
+    color: #374151;
+}
+
+body.dark li {
+    color: #d1d5db;
+}
+
+strong {
+    color: #111827;
+    font-weight: 600;
+}
+
+body.dark strong {
+    color: #f9fafb;
+}
+
+.footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+body.dark .footer {
+    border-top-color: #374151;
+    color: #9ca3af;
+}
+
+.footer a {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.footer a:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+body.dark .footer a {
+    color: #60a5fa;
+}
+
+body.dark .footer a:hover {
+    color: #93c5fd;
+}
+
+@media (max-width: 640px) {
+    .container {
+        margin: 0;
+        padding: 24px 16px;
+        border-radius: 0;
+    }
+    
+    h1 {
+        font-size: 28px;
+    }
+    
+    h2 {
+        font-size: 20px;
+    }
+    
+    .lang-switch {
+        justify-content: center;
+    }
+    
+    .lang-selector-menu {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%) scale(0.95) translateY(-8px);
+        transform-origin: top center;
+    }
+    
+    .lang-selector-menu.open {
+        transform: translateX(-50%) scale(1) translateY(0);
+    }
+}
+</style>
+
+<script>
+const languages = {
+    'en': { flag: '🇬🇧', label: 'EN', fullLabel: 'English' },
+    'ru': { flag: '🇷🇺', label: 'RU', fullLabel: 'Русский' },
+    'sr': { flag: '🇷🇸', label: 'SR', fullLabel: 'Српски' },
+    'es': { flag: '🇪🇸', label: 'ES', fullLabel: 'Español' }
+};
+
+let currentLang = 'en';
+
+function toggleLangMenu(event) {
+    event.stopPropagation();
+    const menu = document.getElementById('lang-menu');
+    const button = document.querySelector('.lang-selector-button');
+    const isOpen = menu.classList.contains('open');
+    
+    if (isOpen) {
+        menu.classList.remove('open');
+        button.classList.remove('open');
+    } else {
+        menu.classList.add('open');
+        button.classList.add('open');
+    }
+}
+
+function switchLang(lang, item) {
+    currentLang = lang;
+    const langData = languages[lang];
+    
+    const container = document.getElementById('eula-content-container');
+    if (window.EULAContent && window.EULAContent[lang]) {
+        container.innerHTML = window.EULAContent[lang];
+        container.classList.add('active');
+    }
+    
+    document.getElementById('current-flag').textContent = langData.flag;
+    document.getElementById('current-label').textContent = langData.label;
+    
+    document.querySelectorAll(".lang-selector-item").forEach(btn => btn.classList.remove("active"));
+    if (item) {
+        item.classList.add("active");
+    }
+    
+    const menu = document.getElementById('lang-menu');
+    const button = document.querySelector('.lang-selector-button');
+    menu.classList.remove('open');
+    button.classList.remove('open');
+    
+    localStorage.setItem('language', lang);
+}
+
+function initTheme() {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (prefersDark) {
+        document.body.classList.add('dark');
+    }
+}
+
+document.addEventListener('click', (e) => {
+    const selector = document.querySelector('.lang-selector');
+    if (selector && !selector.contains(e.target)) {
+        const menu = document.getElementById('lang-menu');
+        const button = document.querySelector('.lang-selector-button');
+        menu.classList.remove('open');
+        button.classList.remove('open');
+    }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    const savedLang = localStorage.getItem('language') || 'en';
+    if (languages[savedLang]) {
+        const items = document.querySelectorAll('.lang-selector-item');
+        let targetItem = null;
+        items.forEach(item => {
+            if (item.getAttribute('onclick').includes(`'${savedLang}'`)) {
+                targetItem = item;
+            }
+        });
+        if (window.EULAContent && window.EULAContent[savedLang]) {
+            switchLang(savedLang, targetItem);
+        } else {
+            setTimeout(() => {
+                if (window.EULAContent && window.EULAContent[savedLang]) {
+                    switchLang(savedLang, targetItem);
+                } else {
+                    switchLang('en', items[0]);
+                }
+            }, 100);
+        }
+    }
+});
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (e.matches) {
+        document.body.classList.add('dark');
+    } else {
+        document.body.classList.remove('dark');
+    }
+});
+</script>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="lang-switch">
+    <div class="lang-selector">
+        <button class="lang-selector-button" onclick="toggleLangMenu(event)">
+            <span class="flag" id="current-flag">🇬🇧</span>
+            <span class="label" id="current-label">EN</span>
+            <svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div class="lang-selector-menu" id="lang-menu">
+            <button class="lang-selector-item active" onclick="switchLang('en', this)">
+                <span class="flag">🇬🇧</span>
+                <span class="full-label">English</span>
+            </button>
+            <button class="lang-selector-item" onclick="switchLang('ru', this)">
+                <span class="flag">🇷🇺</span>
+                <span class="full-label">Русский</span>
+            </button>
+            <button class="lang-selector-item" onclick="switchLang('sr', this)">
+                <span class="flag">🇷🇸</span>
+                <span class="full-label">Српски</span>
+            </button>
+            <button class="lang-selector-item" onclick="switchLang('es', this)">
+                <span class="flag">🇪🇸</span>
+                <span class="full-label">Español</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="eula-content-container"></div>
+
+<script src="eula-content-en.js"></script>
+<script src="eula-content-ru.js"></script>
+<script src="eula-content-sr.js"></script>
+<script src="eula-content-es.js"></script>
+
+</div>
+</body>
+</html>

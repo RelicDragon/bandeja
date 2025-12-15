@@ -10,10 +10,11 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@capacitor/app": "^8.0.0",
     "@capacitor/camera": "^7.0.2",
-    "@capacitor/cli": "^7.4.4",
-    "@capacitor/core": "^7.4.4",
-    "@capacitor/ios": "^7.4.4",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
     "@capacitor/keyboard": "^7.0.3",
     "@capacitor/network": "^7.0.2",
     "@capacitor/status-bar": "^7.0.3",

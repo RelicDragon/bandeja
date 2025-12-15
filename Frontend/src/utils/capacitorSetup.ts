@@ -1,5 +1,6 @@
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
+import { App } from '@capacitor/app';
 import { isCapacitor, isIOS, isAndroid } from './capacitor';
 import { setupCapacitorNetwork } from './capacitorNetwork';
 
@@ -97,6 +98,32 @@ export const setupCapacitor = async () => {
 
     Keyboard.addListener('keyboardWillHide', () => {
       document.body.classList.remove('keyboard-visible');
+    });
+
+    const handleDeepLink = (urlString: string) => {
+      try {
+        const url = new URL(urlString);
+        if (url.hostname === 'bandeja.me' && url.pathname.startsWith('/games/')) {
+          const gameId = url.pathname.split('/games/')[1]?.split('/')[0];
+          if (gameId) {
+            window.location.href = `/games/${gameId}`;
+          }
+        }
+      } catch (error) {
+        console.error('Error handling deep link:', error);
+      }
+    };
+
+    App.addListener('appUrlOpen', (event) => {
+      handleDeepLink(event.url);
+    });
+
+    App.getLaunchUrl().then((result) => {
+      if (result?.url) {
+        handleDeepLink(result.url);
+      }
+    }).catch(() => {
+      // No launch URL, app was opened normally
     });
 
   } catch (error) {

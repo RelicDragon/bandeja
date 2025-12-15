@@ -914,6 +914,21 @@ export const ProfileContent = () => {
           />
         )}
       </AnimatePresence>
+
+      <div className="mt-8 text-center text-xs text-gray-500 dark:text-gray-400">
+        <a
+          href="/eula/world/eula.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors underline"
+          onClick={(e) => {
+            e.preventDefault();
+            window.open('/eula/world/eula.html', '_blank');
+          }}
+        >
+          {t('auth.eula') || 'Terms of Service'}
+        </a>
+      </div>
     </>
   );
 };
