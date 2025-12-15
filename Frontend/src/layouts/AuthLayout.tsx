@@ -44,12 +44,12 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
       {/* Main content */}
       <div className="w-full max-w-md relative z-10">
         {/* Logo/Brand */}
-        <div className="text-center mb-8">
+        <div className="text-center -mb-4 -mt-6">
           <div className="inline-flex items-center justify-center">
             <img 
-              src="/bandeja-logo1.png" 
+              src="/bandeja-logo-tr.png" 
               alt={t('app.title')} 
-              className="h-32 w-auto"
+              className="h-48 w-auto"
             />
           </div>
         </div>

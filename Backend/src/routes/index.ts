@@ -22,6 +22,7 @@ import gameCourtRoutes from './gameCourt.routes';
 import transactionRoutes from './transaction.routes';
 import goodsRoutes from './goods.routes';
 import levelChangeRoutes from './levelChange.routes';
+import pushRoutes from './push.routes';
 
 const router = Router();
 
@@ -48,6 +49,7 @@ router.use('/game-courts', gameCourtRoutes);
 router.use('/transactions', transactionRoutes);
 router.use('/goods', goodsRoutes);
 router.use('/level-changes', levelChangeRoutes);
+router.use('/push', pushRoutes);
 
 export default router;
 

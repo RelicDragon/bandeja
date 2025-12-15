@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AnimatePresence } from 'framer-motion';
-import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal, WalletModal } from '@/components';
+import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal, WalletModal, NotificationSettingsModal } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
 import { useAuthStore } from '@/store/authStore';
@@ -33,16 +33,13 @@ export const ProfileContent = () => {
   const [preferredHandRight, setPreferredHandRight] = useState(user?.preferredHandRight || false);
   const [preferredCourtSideLeft, setPreferredCourtSideLeft] = useState(user?.preferredCourtSideLeft || false);
   const [preferredCourtSideRight, setPreferredCourtSideRight] = useState(user?.preferredCourtSideRight || false);
-  const [sendTelegramMessages, setSendTelegramMessages] = useState(user?.sendTelegramMessages ?? true);
-  const [sendTelegramInvites, setSendTelegramInvites] = useState(user?.sendTelegramInvites ?? true);
-  const [sendTelegramDirectMessages, setSendTelegramDirectMessages] = useState(user?.sendTelegramDirectMessages ?? true);
-  const [sendTelegramReminders, setSendTelegramReminders] = useState(user?.sendTelegramReminders ?? true);
 
   const [cities, setCities] = useState<City[]>([]);
   const [showCityModal, setShowCityModal] = useState(false);
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showLundaModal, setShowLundaModal] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [lundaStatus, setLundaStatus] = useState<{
     hasCookie: boolean;
@@ -159,10 +156,6 @@ export const ProfileContent = () => {
       setPreferredHandRight(user.preferredHandRight || false);
       setPreferredCourtSideLeft(user.preferredCourtSideLeft || false);
       setPreferredCourtSideRight(user.preferredCourtSideRight || false);
-      setSendTelegramMessages(user.sendTelegramMessages ?? true);
-      setSendTelegramInvites(user.sendTelegramInvites ?? true);
-      setSendTelegramDirectMessages(user.sendTelegramDirectMessages ?? true);
-      setSendTelegramReminders(user.sendTelegramReminders ?? true);
     }
   }, [user]);
 
@@ -234,25 +227,6 @@ export const ProfileContent = () => {
     updateProfile({ preferredCourtSideRight: value });
   };
 
-  const handleSendTelegramMessagesChange = (value: boolean) => {
-    setSendTelegramMessages(value);
-    updateProfile({ sendTelegramMessages: value });
-  };
-
-  const handleSendTelegramInvitesChange = (value: boolean) => {
-    setSendTelegramInvites(value);
-    updateProfile({ sendTelegramInvites: value });
-  };
-
-  const handleSendTelegramDirectMessagesChange = (value: boolean) => {
-    setSendTelegramDirectMessages(value);
-    updateProfile({ sendTelegramDirectMessages: value });
-  };
-
-  const handleSendTelegramRemindersChange = (value: boolean) => {
-    setSendTelegramReminders(value);
-    updateProfile({ sendTelegramReminders: value });
-  };
 
   const handleChangeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
@@ -530,109 +504,11 @@ export const ProfileContent = () => {
           </h2>
           <div className="space-y-4">
             {user?.telegramUsername ? (
-              <>
-                <Input
-                  label={t('profile.telegramUsername')}
-                  value={`@${user.telegramUsername}`}
-                  disabled
-                />
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0 pr-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {t('profile.sendTelegramMessages')}
-                      </label>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {t('profile.sendTelegramMessagesDescription')}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleSendTelegramMessagesChange(!sendTelegramMessages)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 cursor-pointer ${
-                        sendTelegramMessages ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          sendTelegramMessages ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0 pr-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {t('profile.sendTelegramInvites')}
-                        </label>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {t('profile.sendTelegramInvitesDescription')}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleSendTelegramInvitesChange(!sendTelegramInvites)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 cursor-pointer ${
-                          sendTelegramInvites ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            sendTelegramInvites ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0 pr-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {t('profile.sendTelegramDirectMessages')}
-                        </label>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {t('profile.sendTelegramDirectMessagesDescription')}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleSendTelegramDirectMessagesChange(!sendTelegramDirectMessages)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 cursor-pointer ${
-                          sendTelegramDirectMessages ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            sendTelegramDirectMessages ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0 pr-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {t('profile.sendTelegramReminders')}
-                        </label>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {t('profile.sendTelegramRemindersDescription')}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleSendTelegramRemindersChange(!sendTelegramReminders)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 cursor-pointer ${
-                          sendTelegramReminders ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            sendTelegramReminders ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </>
+              <Input
+                label={t('profile.telegramUsername')}
+                value={`@${user.telegramUsername}`}
+                disabled
+              />
             ) : (
               <div className="flex flex-col items-center justify-center py-4">
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
@@ -645,6 +521,21 @@ export const ProfileContent = () => {
                 </Button>
               </div>
             )}
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            {t('profile.notificationSettings') || 'Notification Settings'}
+          </h2>
+          <div className="space-y-4">
+            <Button
+              variant="secondary"
+              onClick={() => setShowNotificationModal(true)}
+              className="w-full"
+            >
+              {t('profile.controlNotifications') || 'Control Notifications'}
+            </Button>
           </div>
         </Card>
 
@@ -914,6 +805,13 @@ export const ProfileContent = () => {
           />
         )}
       </AnimatePresence>
+
+      <NotificationSettingsModal
+        isOpen={showNotificationModal}
+        onClose={() => setShowNotificationModal(false)}
+        user={user}
+        onUpdate={updateUser}
+      />
 
       <div className="mt-8 text-center text-xs text-gray-500 dark:text-gray-400">
         <a

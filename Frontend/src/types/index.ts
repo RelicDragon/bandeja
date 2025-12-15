@@ -50,6 +50,10 @@ export interface User {
   sendTelegramInvites?: boolean;
   sendTelegramDirectMessages?: boolean;
   sendTelegramReminders?: boolean;
+  sendPushMessages?: boolean;
+  sendPushInvites?: boolean;
+  sendPushDirectMessages?: boolean;
+  sendPushReminders?: boolean;
   wallet?: number;
 }
 

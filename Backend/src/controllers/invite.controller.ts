@@ -7,7 +7,7 @@ import { InviteStatus, ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from './chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { USER_SELECT_FIELDS } from '../utils/constants';
-import telegramNotificationService from '../services/telegram/notification.service';
+import notificationService from '../services/notification.service';
 import { InviteService } from '../services/invite.service';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { JoinQueueService } from '../services/game/joinQueue.service';
@@ -264,10 +264,10 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
     (global as any).socketService.emitNewInvite(receiverId, invite);
   }
 
-  // Send Telegram notification if enabled
+  // Send notification if enabled
   if (invite.game) {
-    telegramNotificationService.sendInviteNotification(invite).catch(error => {
-      console.error('Failed to send Telegram invite notification:', error);
+    notificationService.sendInviteNotification(invite).catch(error => {
+      console.error('Failed to send invite notification:', error);
     });
   }
 

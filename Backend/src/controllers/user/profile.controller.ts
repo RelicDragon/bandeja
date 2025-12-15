@@ -28,7 +28,7 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders } = req.body;
 
   if (email) {
     const existingEmail = await prisma.user.findUnique({
@@ -90,6 +90,10 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
       ...(sendTelegramInvites !== undefined && { sendTelegramInvites }),
       ...(sendTelegramDirectMessages !== undefined && { sendTelegramDirectMessages }),
       ...(sendTelegramReminders !== undefined && { sendTelegramReminders }),
+      ...(sendPushMessages !== undefined && { sendPushMessages }),
+      ...(sendPushInvites !== undefined && { sendPushInvites }),
+      ...(sendPushDirectMessages !== undefined && { sendPushDirectMessages }),
+      ...(sendPushReminders !== undefined && { sendPushReminders }),
     },
     select: PROFILE_SELECT_FIELDS,
   });

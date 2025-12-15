@@ -2,7 +2,7 @@ import prisma from '../../config/database';
 import { MessageState, ChatType, ChatContextType, ParticipantRole } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
-import telegramNotificationService from '../telegram/notification.service';
+import notificationService from '../notification.service';
 import { GameReadService } from '../game/read.service';
 import { UserChatService } from './userChat.service';
 import { hasParentGamePermission } from '../../utils/parentGamePermissions';
@@ -295,13 +295,13 @@ export class MessageService {
       });
 
       if (gameWithDetails && message.sender) {
-        telegramNotificationService.sendGameChatNotification(message, gameWithDetails, message.sender).catch(error => {
-          console.error('Failed to send Telegram notification:', error);
+        notificationService.sendGameChatNotification(message, gameWithDetails, message.sender, []).catch(error => {
+          console.error('Failed to send notification:', error);
         });
       }
     } else if (chatContextType === 'BUG' && bug && message.sender) {
-      telegramNotificationService.sendBugChatNotification(message, bug, message.sender).catch(error => {
-        console.error('Failed to send Telegram notification:', error);
+      notificationService.sendBugChatNotification(message, bug, message.sender, []).catch(error => {
+        console.error('Failed to send notification:', error);
       });
     } else if (chatContextType === 'USER' && userChat && message.sender) {
       await UserChatService.updateChatTimestamp(contextId);
@@ -333,8 +333,8 @@ export class MessageService {
       });
 
       if (userChatWithUsers) {
-        telegramNotificationService.sendUserChatNotification(message, userChatWithUsers, message.sender).catch(error => {
-          console.error('Failed to send Telegram notification:', error);
+        notificationService.sendUserChatNotification(message, userChatWithUsers, message.sender).catch(error => {
+          console.error('Failed to send notification:', error);
         });
       }
     }

@@ -4,6 +4,7 @@ import prisma from './config/database';
 import { initializeLogManager } from './controllers/logs.controller';
 import SocketService from './services/socket.service';
 import telegramBotService from './services/telegram/bot.service';
+import pushNotificationService from './services/push/push-notification.service';
 import { GameStatusScheduler } from './services/gameStatusScheduler.service';
 import { createServer } from 'http';
 
@@ -16,6 +17,7 @@ const startServer = async () => {
     console.log('✅ Database connected successfully');
 
     await telegramBotService.initialize();
+    pushNotificationService.initialize();
 
     const gameStatusScheduler = new GameStatusScheduler();
     gameStatusScheduler.start();
@@ -45,6 +47,7 @@ const startServer = async () => {
         
         gameStatusScheduler.stop();
         telegramBotService.stop();
+        pushNotificationService.shutdown();
         
         await prisma.$disconnect();
         console.log('Database connection closed');

@@ -9,6 +9,7 @@ import {
   HomeHeaderContent,
   GameDetailsHeaderContent,
   BugHeaderContent,
+  ProfileHeaderContent,
   GameModeToggle
 } from '@/components';
 
@@ -186,6 +187,10 @@ export const Header = ({
 
             <HeaderContentWrapper page="bugs">
               <BugHeaderContent />
+            </HeaderContentWrapper>
+
+            <HeaderContentWrapper page="profile">
+              <ProfileHeaderContent />
             </HeaderContentWrapper>
           </div>
         </div>

@@ -73,6 +73,11 @@ model User {
   levelChangeEvents       LevelChangeEvent[]
   leagueParticipants      LeagueParticipant[]
   leagueTeamPlayers       LeagueTeamPlayer[]
+  sendPushMessages        Boolean              @default(true)
+  sendPushInvites         Boolean              @default(true)
+  sendPushDirectMessages  Boolean              @default(true)
+  sendPushReminders       Boolean              @default(true)
+  pushTokens              PushToken[]
 
   @@index([phone])
   @@index([telegramId])
@@ -974,4 +979,25 @@ enum PriceCurrency {
   EUR
   RSD
   RUB
+}
+
+model PushToken {
+  id        String       @id @default(cuid())
+  userId    String
+  token     String
+  platform  PushPlatform
+  deviceId  String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, token])
+  @@index([userId])
+  @@index([token])
+}
+
+enum PushPlatform {
+  IOS
+  ANDROID
+  WEB
 }

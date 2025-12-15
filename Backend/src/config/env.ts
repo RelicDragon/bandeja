@@ -17,5 +17,12 @@ export const config = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  apns: {
+    keyId: process.env.APNS_KEY_ID || '',
+    teamId: process.env.APNS_TEAM_ID || '',
+    bundleId: process.env.APNS_BUNDLE_ID || 'com.funified.bandeja',
+    keyPath: process.env.APNS_KEY_PATH || '',
+    production: process.env.APNS_PRODUCTION === 'true',
+  },
 };
 

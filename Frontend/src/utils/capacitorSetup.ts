@@ -3,6 +3,7 @@ import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { App } from '@capacitor/app';
 import { isCapacitor, isIOS, isAndroid } from './capacitor';
 import { setupCapacitorNetwork } from './capacitorNetwork';
+import pushNotificationService from '@/services/pushNotificationService';
 
 export const updateStatusBarStyle = async () => {
   if (!isCapacitor()) return;
@@ -42,6 +43,9 @@ export const setupCapacitor = async () => {
     
     // Setup network monitoring first
     await setupCapacitorNetwork();
+    
+    // Initialize push notifications
+    await pushNotificationService.initialize();
     
     // Show status bar first
     try {

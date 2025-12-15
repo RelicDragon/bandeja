@@ -60,3 +60,4 @@ export * from './AppLoadingScreen';
 export * from './NoInternetScreen';
 export * from './WalletModal';
 export * from './SendMoneyToUserModal';
+export * from './NotificationSettingsModal';

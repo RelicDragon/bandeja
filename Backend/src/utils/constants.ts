@@ -155,6 +155,10 @@ export const PROFILE_SELECT_FIELDS = {
   sendTelegramInvites: true,
   sendTelegramDirectMessages: true,
   sendTelegramReminders: true,
+  sendPushMessages: true,
+  sendPushInvites: true,
+  sendPushDirectMessages: true,
+  sendPushReminders: true,
   wallet: true,
   currentCity: {
     select: {
