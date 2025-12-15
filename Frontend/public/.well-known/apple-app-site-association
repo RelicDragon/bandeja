@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "N9634A623Q.com.funified.bandeja",
+        "appID": "com.funified.bandeja",
         "paths": [
           "/games/*"
         ]
