@@ -6,6 +6,7 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/tennis-ball.svg',
+  '/bandeja-blue-flat-small.png',
   '/manifest.json',
 ];
 

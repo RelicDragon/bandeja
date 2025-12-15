@@ -377,11 +377,11 @@ export const HomeContent = () => {
         </>
       )}
 
-      <div className="flex justify-center -mt-8 -mb-8">
+      <div className="flex justify-center mt-4">
         <img 
-          src="/bandeja_logo2_tr_flat.png" 
+          src="/bandeja-blue-flat-small.png" 
           alt="Bandeja Logo" 
-          className="h-32"
+          className="h-24"
         />
       </div>
     </>

@@ -2,9 +2,9 @@ export const ProfileHeaderContent = () => {
   return (
     <div className="flex items-center">
       <img 
-        src="/bandeja_logo2_tr_flat.png" 
+        src="/bandeja-blue-flat-small.png" 
         alt="Bandeja Logo" 
-        className="h-16"
+        className="h-12"
       />
     </div>
   );
