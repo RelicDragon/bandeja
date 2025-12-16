@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { gamesApi } from '@/api';
 import { Game } from '@/types';
 import { socketService } from '@/services/socketService';
+import { format } from 'date-fns';
 
-export const useAvailableGames = (user: any, month?: number, year?: number) => {
+export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) => {
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +20,9 @@ export const useAvailableGames = (user: any, month?: number, year?: number) => {
   const fetchData = useCallback(async (force = false) => {
     if (!user?.id) return;
 
-    const fetchParams = `available-games-${user.id}-${month}-${year}`;
+    const fetchParams = startDate && endDate 
+      ? `available-games-${user.id}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}`
+      : `available-games-${user.id}`;
 
     if (!force && (isLoadingRef.current || lastFetchParamsRef.current === fetchParams)) {
       return;
@@ -30,7 +33,10 @@ export const useAvailableGames = (user: any, month?: number, year?: number) => {
 
     setLoading(true);
     try {
-      const response = await gamesApi.getAvailableGames(month !== undefined && year !== undefined ? { month, year } : undefined);
+      const params = startDate && endDate 
+        ? { startDate: format(startDate, 'yyyy-MM-dd'), endDate: format(endDate, 'yyyy-MM-dd') }
+        : undefined;
+      const response = await gamesApi.getAvailableGames(params);
       const allGames = response.data || [];
 
       const availableGamesFiltered = allGames.filter((game) => {
@@ -45,13 +51,13 @@ export const useAvailableGames = (user: any, month?: number, year?: number) => {
       isLoadingRef.current = false;
       setLoading(false);
     }
-  }, [user?.id, month, year]);
+  }, [user?.id, startDate, endDate]);
 
   useEffect(() => {
     if (user?.id) {
       fetchData();
     }
-  }, [user?.id, month, year, fetchData]);
+  }, [user?.id, startDate, endDate, fetchData]);
 
   useEffect(() => {
     const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game; forceUpdate?: boolean }) => {

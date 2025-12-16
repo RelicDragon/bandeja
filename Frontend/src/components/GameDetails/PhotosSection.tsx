@@ -176,7 +176,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
         handleMainPhotoSelect(firstPhoto.id, true);
       }
     }
-  }, [photos.length, mainPhotoId, canEditMainPhoto, isUpdatingMainPhoto, handleMainPhotoSelect]);
+  }, [photos, mainPhotoId, canEditMainPhoto, isUpdatingMainPhoto, handleMainPhotoSelect]);
 
   const getThumbnailUrl = (message: ChatMessage, index: number): string => {
     if (message.thumbnailUrls && message.thumbnailUrls[index]) {

@@ -12,6 +12,7 @@ interface MonthCalendarProps {
   filterByLevel?: boolean;
   user?: any;
   onMonthChange?: (month: number, year: number) => void;
+  onDateRangeChange?: (startDate: Date, endDate: Date) => void;
 }
 
 const localeMap = {
@@ -28,6 +29,7 @@ export const MonthCalendar = ({
   filterByLevel = false,
   user,
   onMonthChange,
+  onDateRangeChange,
 }: MonthCalendarProps) => {
   const { i18n } = useTranslation();
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(selectedDate));
@@ -107,10 +109,35 @@ export const MonthCalendar = ({
     }
   };
 
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const startDate = startOfWeek(monthStart, { locale });
-  const endDate = endOfWeek(monthEnd, { locale });
+  const handleDateClick = (day: Date) => {
+    onDateSelect(day);
+    
+    if (!isSameMonth(day, currentMonth)) {
+      isNavigatingRef.current = true;
+      const newMonth = startOfMonth(day);
+      setCurrentMonth(newMonth);
+      if (onMonthChange) {
+        onMonthChange(getMonth(newMonth) + 1, getYear(newMonth));
+      }
+    }
+  };
+
+  const monthStart = useMemo(() => startOfMonth(currentMonth), [currentMonth]);
+  const monthEnd = useMemo(() => endOfMonth(currentMonth), [currentMonth]);
+  const startDate = useMemo(() => startOfWeek(monthStart, { locale }), [monthStart, locale]);
+  const endDate = useMemo(() => endOfWeek(monthEnd, { locale }), [monthEnd, locale]);
+
+  const lastRangeRef = useRef<{ start: Date; end: Date } | null>(null);
+
+  useEffect(() => {
+    if (onDateRangeChange && startDate && endDate) {
+      const lastRange = lastRangeRef.current;
+      if (!lastRange || !isSameDay(lastRange.start, startDate) || !isSameDay(lastRange.end, endDate)) {
+        lastRangeRef.current = { start: startDate, end: endDate };
+        onDateRangeChange(startDate, endDate);
+      }
+    }
+  }, [startDate, endDate, onDateRangeChange]);
 
   const calendarDays = [];
   let day = startDate;
@@ -167,12 +194,11 @@ export const MonthCalendar = ({
           return (
             <button
               key={index}
-              onClick={() => onDateSelect(day)}
-              disabled={!isCurrentMonth}
+              onClick={() => handleDateClick(day)}
               className={`
                 relative aspect-square p-2 rounded-lg text-sm transition-all
                 ${!isCurrentMonth 
-                  ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
+                  ? `text-gray-300 dark:text-gray-600 cursor-not-allowed ${hasGames ? 'border-2 border-gray-300/50 dark:border-gray-600/50' : ''}` 
                   : isSelected
                   ? 'bg-primary-500 text-white font-semibold scale-[1.1] z-10'
                   : isTodayDate
@@ -194,7 +220,9 @@ export const MonthCalendar = ({
                 <span className={`
                   absolute -top-1 -right-1 flex items-center justify-center
                   min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold
-                  ${isSelected 
+                  ${!isCurrentMonth
+                    ? 'bg-gray-400 dark:bg-gray-600 text-gray-300 dark:text-gray-400'
+                    : isSelected 
                     ? 'bg-white text-primary-500 border-2 border-primary-500'
                     : 'bg-green-500 dark:bg-green-600 text-white'
                   }
@@ -206,7 +234,9 @@ export const MonthCalendar = ({
                 <span className={`
                   absolute -bottom-1 -right-1 flex items-center justify-center
                   w-[18px] h-[18px] rounded-full
-                  ${isSelected 
+                  ${!isCurrentMonth
+                    ? 'bg-gray-400 dark:bg-gray-600'
+                    : isSelected 
                     ? 'bg-white text-primary-500 border-2 border-primary-500' 
                     : 'bg-green-500 dark:bg-green-600 text-white'
                   }
@@ -214,7 +244,9 @@ export const MonthCalendar = ({
                   <Trophy 
                     size={12} 
                     className={`
-                      ${isSelected 
+                      ${!isCurrentMonth
+                        ? 'text-gray-300 dark:text-gray-400'
+                        : isSelected 
                         ? 'text-primary-500' 
                         : 'text-white'
                       }

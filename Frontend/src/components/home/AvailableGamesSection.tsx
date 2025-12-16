@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { Card, GameCard } from '@/components';
 import { Game } from '@/types';
 import { MapPin, Filter } from 'lucide-react';
-import { format, startOfDay, getMonth, getYear } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { useHeaderStore } from '@/store/headerStore';
 import { MonthCalendar } from './MonthCalendar';
 
@@ -15,6 +15,7 @@ interface AvailableGamesSectionProps {
   loading: boolean;
   onJoin: (gameId: string, e: React.MouseEvent) => void;
   onMonthChange?: (month: number, year: number) => void;
+  onDateRangeChange?: (startDate: Date, endDate: Date) => void;
 }
 
 export const AvailableGamesSection = ({
@@ -22,6 +23,7 @@ export const AvailableGamesSection = ({
   user,
   onJoin,
   onMonthChange,
+  onDateRangeChange,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -181,6 +183,7 @@ export const AvailableGamesSection = ({
         filterByLevel={filterByLevel}
         user={user}
         onMonthChange={onMonthChange}
+        onDateRangeChange={onDateRangeChange}
       />
       
       {filteredGames.length === 0 ? (

@@ -15,7 +15,9 @@ import { usePastGames } from '@/hooks/usePastGames';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useBugsWithUnread } from '@/hooks/useBugsWithUnread';
 import { ChatType } from '@/types';
-import { getMonth, getYear } from 'date-fns';
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { enUS, ru, es, sr } from 'date-fns/locale';
+import { useTranslation as useI18nTranslation } from 'react-i18next';
 
 const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string }>(list: T[] = []): T[] => {
   const getStatusPriority = (status?: string): number => {
@@ -82,18 +84,31 @@ export const HomeContent = () => {
     loadAllPastGamesWithUnread,
   } = usePastGames(user, activeTab === 'past-games');
 
-  const [selectedMonth, setSelectedMonth] = useState<number>(getMonth(new Date()) + 1);
-  const [selectedYear, setSelectedYear] = useState<number>(getYear(new Date()));
+  const { i18n } = useI18nTranslation();
+  const localeMap = { en: enUS, ru: ru, es: es, sr: sr };
+  const locale = localeMap[i18n.language as keyof typeof localeMap] || enUS;
+
+  const [dateRange, setDateRange] = useState<{ startDate?: Date; endDate?: Date }>(() => {
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    const start = startOfWeek(monthStart, { locale });
+    const end = endOfWeek(monthEnd, { locale });
+    return { startDate: start, endDate: end };
+  });
 
   const {
     availableGames,
     loading: loadingAvailableGames,
     fetchData: fetchAvailableGames,
-  } = useAvailableGames(user, selectedMonth, selectedYear);
+  } = useAvailableGames(user, dateRange.startDate, dateRange.endDate);
 
-  const handleMonthChange = (month: number, year: number) => {
-    setSelectedMonth(month);
-    setSelectedYear(year);
+  const handleMonthChange = () => {
+    // Keep for compatibility but not used for fetching
+  };
+
+  const handleDateRangeChange = (startDate: Date, endDate: Date) => {
+    setDateRange({ startDate, endDate });
   };
 
   const {
@@ -389,6 +404,7 @@ export const HomeContent = () => {
             loading={loadingAvailableGames}
             onJoin={handleJoinGame}
             onMonthChange={handleMonthChange}
+            onDateRangeChange={handleDateRangeChange}
           />
         </>
       )}
