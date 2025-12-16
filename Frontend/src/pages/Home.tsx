@@ -49,6 +49,12 @@ export const HomeContent = () => {
   const { showChatFilter, setShowChatFilter } = useHeaderStore();
 
   const [loading, setLoading] = useState(true);
+  const [isLogoAnimating, setIsLogoAnimating] = useState(false);
+
+  const handleLogoClick = () => {
+    setIsLogoAnimating(true);
+    setTimeout(() => setIsLogoAnimating(false), 1200);
+  };
 
   const skeletonAnimation = useSkeletonAnimation();
   
@@ -378,10 +384,29 @@ export const HomeContent = () => {
       )}
 
       <div className="flex justify-center mt-4">
+        <style>{`
+          @keyframes logoBounce {
+            0% { transform: rotate(0deg) scale(1); }
+            10% { transform: rotate(15deg) scale(1.15); }
+            20% { transform: rotate(0deg) scale(1); }
+            30% { transform: rotate(10deg) scale(1.1); }
+            40% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(6deg) scale(1.06); }
+            60% { transform: rotate(0deg) scale(1); }
+            70% { transform: rotate(3deg) scale(1.03); }
+            80% { transform: rotate(0deg) scale(1); }
+            90% { transform: rotate(1deg) scale(1.01); }
+            100% { transform: rotate(0deg) scale(1); }
+          }
+          .logo-bounce {
+            animation: logoBounce 1.2s ease-out;
+          }
+        `}</style>
         <img 
           src="/bandeja-blue-flat-small.png" 
           alt="Bandeja Logo" 
-          className="h-24"
+          className={`h-24 cursor-pointer select-none ${isLogoAnimating ? 'logo-bounce' : ''}`}
+          onClick={handleLogoClick}
         />
       </div>
     </>

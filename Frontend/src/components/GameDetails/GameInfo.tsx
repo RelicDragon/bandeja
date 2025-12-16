@@ -779,7 +779,7 @@ export const GameInfo = ({
               <MessageCircle size={20} className="text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
               <button
                 onClick={() => canEdit && canShowEdit && setShowEditGameTextModal(true)}
-                className={`text-gray-600 dark:text-gray-400 text-left ${
+                className={`text-sm text-gray-600 dark:text-gray-400 text-left whitespace-pre-line ${
                   canEdit && canShowEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
                 }`}
               >
