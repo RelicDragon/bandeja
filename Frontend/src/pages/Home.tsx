@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
 import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController, Contacts, BugsSection } from '@/components/home';
 import { Divider, Button } from '@/components';
-import { Search } from 'lucide-react';
+import { Search, ChevronDown } from 'lucide-react';
 import { chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -74,6 +74,28 @@ export const HomeContent = () => {
   });
 
   const [activeTab, setActiveTab] = useState<'my-games' | 'past-games'>('my-games');
+  
+  const [isAvailableGamesExpanded, setIsAvailableGamesExpanded] = useState(false);
+  const [isButtonPressed, setIsButtonPressed] = useState(false);
+  const availableGamesSectionRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (!loading) {
+      setIsAvailableGamesExpanded(games.length === 0);
+    }
+  }, [games.length, loading]);
+
+  useEffect(() => {
+    if (isAvailableGamesExpanded && availableGamesSectionRef.current) {
+      const timeout = setTimeout(() => {
+        availableGamesSectionRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'end' 
+        });
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [isAvailableGamesExpanded]);
 
   const {
     pastGames,
@@ -392,20 +414,44 @@ export const HomeContent = () => {
       {!showChatFilter && (
         <>
           <Divider className="mt-2" />
-          <div className="flex justify-center -mt-9">
-            <p className="text-xs text-gray-500 dark:text-gray-400 text-center px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 flex items-center gap-1.5">
+          <div 
+            className="flex justify-center -mt-9 cursor-pointer"
+            onClick={() => setIsAvailableGamesExpanded(!isAvailableGamesExpanded)}
+            onMouseDown={() => setIsButtonPressed(true)}
+            onMouseUp={() => setIsButtonPressed(false)}
+            onMouseLeave={() => setIsButtonPressed(false)}
+            onTouchStart={() => setIsButtonPressed(true)}
+            onTouchEnd={() => setIsButtonPressed(false)}
+          >
+            <p className={`text-xs text-gray-500 dark:text-gray-400 text-center px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 flex items-center gap-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-transform duration-300 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] ${
+              isButtonPressed ? 'scale-[1.5]' : 'scale-100'
+            }`}>
               <Search className="w-3 h-3" />
               {t('home.findGames', { defaultValue: 'Find games' })}
+              <ChevronDown 
+                className={`w-3 h-3 transition-transform duration-300 ${
+                  isAvailableGamesExpanded ? 'rotate-180' : ''
+                }`}
+              />
             </p>
           </div>
-          <AvailableGamesSection
-            availableGames={filteredAvailableGames}
-            user={user}
-            loading={loadingAvailableGames}
-            onJoin={handleJoinGame}
-            onMonthChange={handleMonthChange}
-            onDateRangeChange={handleDateRangeChange}
-          />
+          <div
+            ref={availableGamesSectionRef}
+            className={`transition-all duration-300 ease-in-out overflow-hidden ${
+              isAvailableGamesExpanded
+                ? 'max-h-[5000px] opacity-100'
+                : 'max-h-0 opacity-0'
+            }`}
+          >
+            <AvailableGamesSection
+              availableGames={filteredAvailableGames}
+              user={user}
+              loading={loadingAvailableGames}
+              onJoin={handleJoinGame}
+              onMonthChange={handleMonthChange}
+              onDateRangeChange={handleDateRangeChange}
+            />
+          </div>
         </>
       )}
 
