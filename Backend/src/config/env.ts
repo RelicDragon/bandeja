@@ -14,7 +14,7 @@ export const config = {
     schema: process.env.DB_SCHEMA || 'public',
   },
   jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '90d',
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   apns: {
