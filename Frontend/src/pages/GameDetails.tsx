@@ -248,7 +248,7 @@ export const GameDetailsContent = () => {
     if (!id) return;
 
     try {
-      await gamesApi.leave(id);
+      await gamesApi.togglePlayingStatus(id, false);
       const response = await gamesApi.getById(id);
       setGame(response.data);
     } catch (error: any) {

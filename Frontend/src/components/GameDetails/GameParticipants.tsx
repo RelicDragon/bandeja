@@ -192,7 +192,7 @@ export const GameParticipants = ({
                         gender: participant.user.gender,
                       }}
                       isCurrentUser={participant.userId === userId}
-                      removable={participant.userId === userId && !isOwner}
+                      removable={participant.userId === userId}
                       onRemoveClick={participant.userId === userId ? onLeave : undefined}
                       role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
                       smallLayout={true}
@@ -246,7 +246,7 @@ export const GameParticipants = ({
                             gender: participant.user.gender,
                           }}
                           isCurrentUser={participant.userId === userId}
-                          removable={participant.userId === userId && !isOwner}
+                          removable={participant.userId === userId}
                           onRemoveClick={participant.userId === userId ? onLeave : undefined}
                           role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
                           smallLayout={true}
@@ -302,7 +302,7 @@ export const GameParticipants = ({
                             gender: participant.user.gender,
                           }}
                           isCurrentUser={participant.userId === userId}
-                          removable={participant.userId === userId && !isOwner}
+                          removable={participant.userId === userId}
                           onRemoveClick={participant.userId === userId ? onLeave : undefined}
                           role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
                           smallLayout={true}
@@ -364,7 +364,7 @@ export const GameParticipants = ({
                               gender: participant.user.gender,
                             }}
                             isCurrentUser={participant.userId === userId}
-                            removable={participant.userId === userId && !isOwner}
+                            removable={participant.userId === userId}
                             onRemoveClick={participant.userId === userId ? onLeave : undefined}
                             role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
                             smallLayout={true}
@@ -414,7 +414,7 @@ export const GameParticipants = ({
                               gender: participant.user.gender,
                             }}
                             isCurrentUser={participant.userId === userId}
-                            removable={participant.userId === userId && !isOwner}
+                            removable={participant.userId === userId}
                             onRemoveClick={participant.userId === userId ? onLeave : undefined}
                             role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
                             smallLayout={true}
