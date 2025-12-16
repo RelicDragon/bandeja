@@ -622,13 +622,16 @@ export const GameDetailsContent = () => {
         hasBookedCourt: editFormData.hasBookedCourt,
         afterGameGoToBar: editFormData.afterGameGoToBar,
         hasFixedTeams: game?.maxParticipants === 2 ? false : editFormData.hasFixedTeams,
-        genderTeams: editFormData.genderTeams,
         gameType: editFormData.gameType,
         description: editFormData.description,
         pointsPerWin: editFormData.pointsPerWin,
         pointsPerLoose: editFormData.pointsPerLoose,
         pointsPerTie: editFormData.pointsPerTie,
       };
+
+      if (game?.entityType !== 'LEAGUE_SEASON') {
+        updateData.genderTeams = editFormData.genderTeams;
+      }
 
       await gamesApi.update(id, updateData);
       

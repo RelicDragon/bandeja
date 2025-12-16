@@ -1,5 +1,5 @@
 import { Card, Select, Divider, AvatarUpload } from '@/components';
-import { Game, Club, GenderTeam, GameType } from '@/types';
+import { Game, Club, GameType } from '@/types';
 import { Settings, Edit3, Save, X, HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
@@ -26,7 +26,6 @@ interface GameSettingsProps {
     hasBookedCourt: boolean;
     afterGameGoToBar: boolean;
     hasFixedTeams: boolean;
-    genderTeams: GenderTeam;
     gameType: GameType;
     description: string;
     pointsPerWin: number;

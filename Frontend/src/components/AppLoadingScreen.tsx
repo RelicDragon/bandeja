@@ -1,5 +1,3 @@
-import { Loader2 } from 'lucide-react';
-
 interface AppLoadingScreenProps {
   isInitializing: boolean;
 }
@@ -8,12 +6,18 @@ export const AppLoadingScreen = ({ isInitializing }: AppLoadingScreenProps) => {
   if (!isInitializing) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 flex items-center justify-center z-50">
-      <div className="flex flex-col items-center gap-4 px-6">
-        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
-        <p className="text-gray-600 dark:text-gray-400 text-center">
-          Loading...
-        </p>
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      <img
+        src="/splash-background.jpg"
+        alt="Splash Background"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img
+          src="/bandeja-blue-flat-small.png"
+          alt="Logo"
+          className="w-[220px] h-[220px] object-contain animate-splash-logo"
+        />
       </div>
     </div>
   );

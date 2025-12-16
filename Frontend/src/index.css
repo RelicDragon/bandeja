@@ -30,6 +30,22 @@
   animation: scaleIn 0.2s ease-out;
 }
 
+@keyframes splashLogoRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(45deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-splash-logo {
+  animation: splashLogoRotate 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+
 * {
   margin: 0;
   padding: 0;
