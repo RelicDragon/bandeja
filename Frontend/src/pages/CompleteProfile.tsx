@@ -25,9 +25,7 @@ export const CompleteProfile = () => {
   const isValidName = () => {
     const trimmedFirst = firstName.trim();
     const trimmedLast = lastName.trim();
-    const fullName = trimmedFirst + trimmedLast;
-    const alphabeticChars = fullName.replace(/[^a-zA-Z]/g, '');
-    return alphabeticChars.length >= 3;
+    return trimmedFirst.length >= 3 || trimmedLast.length >= 3;
   };
 
   const isValidGender = () => {

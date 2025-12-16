@@ -12,11 +12,29 @@
         <scene sceneID="EHf-IW-A2E">
             <objects>
                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
-                    <imageView key="view" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Splash" id="snD-IY-ifK">
+                    <view key="view" contentMode="scaleToFill" id="VfZ-9s-7CG">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    </imageView>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" image="Splash" translatesAutoresizingMaskIntoConstraints="NO" id="bgF-s1-1pF">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="Logo" translatesAutoresizingMaskIntoConstraints="NO" id="l0g-0o-0o0">
+                                <rect key="frame" x="97.5" y="247.5" width="180" height="172"/>
+                            </imageView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
+                        <constraints>
+                            <constraint firstItem="bgF-s1-1pF" firstAttribute="leading" secondItem="VfZ-9s-7CG" secondAttribute="leading" id="0q3-yR-7J7"/>
+                            <constraint firstItem="bgF-s1-1pF" firstAttribute="trailing" secondItem="VfZ-9s-7CG" secondAttribute="trailing" id="2eA-SO-P5d"/>
+                            <constraint firstItem="bgF-s1-1pF" firstAttribute="top" secondItem="VfZ-9s-7CG" secondAttribute="top" id="Atw-3N-q7A"/>
+                            <constraint firstItem="bgF-s1-1pF" firstAttribute="bottom" secondItem="VfZ-9s-7CG" secondAttribute="bottom" id="F5t-6a-GgX"/>
+                            <constraint firstItem="l0g-0o-0o0" firstAttribute="centerX" secondItem="VfZ-9s-7CG" secondAttribute="centerX" id="i1L-nT-HaV"/>
+                            <constraint firstItem="l0g-0o-0o0" firstAttribute="centerY" secondItem="VfZ-9s-7CG" secondAttribute="centerY" id="m8S-XZ-M2k"/>
+                            <constraint firstItem="l0g-0o-0o0" firstAttribute="width" constant="220" id="sY4-bK-D1k"/>
+                            <constraint firstItem="l0g-0o-0o0" firstAttribute="height" constant="220" id="w9x-rn-62n"/>
+                        </constraints>
+                    </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -25,6 +43,7 @@
     </scenes>
     <resources>
         <image name="Splash" width="1366" height="1366"/>
+        <image name="Logo" width="768" height="384"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
