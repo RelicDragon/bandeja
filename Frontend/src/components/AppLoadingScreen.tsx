@@ -6,12 +6,7 @@ export const AppLoadingScreen = ({ isInitializing }: AppLoadingScreenProps) => {
   if (!isInitializing) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      <img
-        src="/splash-background.jpg"
-        alt="Splash Background"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+    <div className="fixed inset-0 z-50 overflow-hidden bg-white dark:bg-black">
       <div className="absolute inset-0 flex items-center justify-center">
         <img
           src="/bandeja-blue-flat-small.png"

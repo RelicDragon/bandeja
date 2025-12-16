@@ -61,8 +61,8 @@ export class GameUpdateService {
     }
 
     if (data.genderTeams !== undefined) {
-      if (game.entityType !== 'GAME' && game.entityType !== 'TOURNAMENT' && game.entityType !== 'LEAGUE') {
-        throw new ApiError(400, 'Gender teams can only be set for GAME, TOURNAMENT, or LEAGUE entity types');
+      if (game.entityType !== 'GAME' && game.entityType !== 'TOURNAMENT' && game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON') {
+        throw new ApiError(400, 'Gender teams can only be set for GAME, TOURNAMENT, LEAGUE, or LEAGUE_SEASON entity types');
       }
       if (data.genderTeams === 'MIX_PAIRS' && !(maxParticipants >= 4 && maxParticipants % 2 === 0)) {
         throw new ApiError(400, 'MIX_PAIRS can only be set for even number of participants (at least 4)');

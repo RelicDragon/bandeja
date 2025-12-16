@@ -1,9 +1,29 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { copyFileSync, existsSync, mkdirSync } from 'fs'
+import { join } from 'path'
+
+const ensureWellKnown = () => {
+  return {
+    name: 'ensure-well-known',
+    closeBundle() {
+      const src = join(__dirname, 'public', '.well-known', 'apple-app-site-association')
+      const dest = join(__dirname, 'dist', '.well-known', 'apple-app-site-association')
+      
+      if (existsSync(src)) {
+        const destDir = join(__dirname, 'dist', '.well-known')
+        if (!existsSync(destDir)) {
+          mkdirSync(destDir, { recursive: true })
+        }
+        copyFileSync(src, dest)
+      }
+    },
+  }
+}
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), ensureWellKnown()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -43,6 +63,8 @@ export default defineConfig({
         drop_debugger: true,
       },
     },
+    // Ensure public directory is copied
+    copyPublicDir: true,
   },
   define: {
     // Define environment variables with defaults

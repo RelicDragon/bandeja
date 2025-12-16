@@ -173,7 +173,7 @@ export const EditMaxParticipantsModal = ({
   }, [removedPlayerIds, originalParticipants]);
 
   const maxParticipants = useMemo(() => {
-    if (game.entityType === 'TOURNAMENT') {
+    if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE_SEASON') {
       return 32;
     }
     return 8;
@@ -182,7 +182,7 @@ export const EditMaxParticipantsModal = ({
   const minParticipants = 2;
 
   const validOptions = useMemo(() => {
-    if (game.entityType === 'TOURNAMENT') {
+    if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE_SEASON') {
       return Array.from({ length: 13 }, (_, i) => 8 + i * 2);
     }
     return [2, 3, 4, 5, 6, 7, 8];
@@ -341,7 +341,7 @@ export const EditMaxParticipantsModal = ({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               {t('gameDetails.newMaxParticipants', { defaultValue: 'New Max Participants' })}
             </label>
-            <div className={`grid gap-2 ${game.entityType === 'TOURNAMENT' ? 'grid-cols-7' : 'grid-cols-7'}`}>
+            <div className={`grid gap-2 ${game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE_SEASON' ? 'grid-cols-7' : 'grid-cols-7'}`}>
               {validOptions.map((num) => (
                 <button
                   key={num}
@@ -372,7 +372,7 @@ export const EditMaxParticipantsModal = ({
             />
           </div>
 
-          {(game.entityType === 'GAME' || game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE') && (
+          {(game.entityType === 'GAME' || game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && (
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t('createGame.genderTeams.label', { defaultValue: 'Gender Teams' })}

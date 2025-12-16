@@ -629,9 +629,7 @@ export const GameDetailsContent = () => {
         pointsPerTie: editFormData.pointsPerTie,
       };
 
-      if (game?.entityType !== 'LEAGUE_SEASON') {
-        updateData.genderTeams = editFormData.genderTeams;
-      }
+      updateData.genderTeams = editFormData.genderTeams;
 
       await gamesApi.update(id, updateData);
       

@@ -28,16 +28,12 @@ final class MainViewController: CAPBridgeViewController {
 
         let overlay = UIView()
         overlay.translatesAutoresizingMaskIntoConstraints = false
-
-        let background = UIImageView(image: UIImage(named: "Splash"))
-        background.translatesAutoresizingMaskIntoConstraints = false
-        background.contentMode = .scaleAspectFill
+        overlay.backgroundColor = UIColor.systemBackground
 
         let logo = UIImageView(image: UIImage(named: "Logo"))
         logo.translatesAutoresizingMaskIntoConstraints = false
         logo.contentMode = .scaleAspectFit
 
-        overlay.addSubview(background)
         overlay.addSubview(logo)
         view.addSubview(overlay)
 
@@ -46,11 +42,6 @@ final class MainViewController: CAPBridgeViewController {
             overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             overlay.topAnchor.constraint(equalTo: view.topAnchor),
             overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-
-            background.leadingAnchor.constraint(equalTo: overlay.leadingAnchor),
-            background.trailingAnchor.constraint(equalTo: overlay.trailingAnchor),
-            background.topAnchor.constraint(equalTo: overlay.topAnchor),
-            background.bottomAnchor.constraint(equalTo: overlay.bottomAnchor),
 
             logo.centerXAnchor.constraint(equalTo: overlay.centerXAnchor),
             logo.centerYAnchor.constraint(equalTo: overlay.centerYAnchor),
