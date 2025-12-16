@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { X, Trash2, RotateCw } from 'lucide-react';
+import Slider from 'rc-slider';
+import 'rc-slider/assets/index.css';
 import { gamesApi } from '@/api/games';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
@@ -173,7 +175,10 @@ export const EditMaxParticipantsModal = ({
   }, [removedPlayerIds, originalParticipants]);
 
   const maxParticipants = useMemo(() => {
-    if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE_SEASON') {
+    if (game.entityType === 'LEAGUE_SEASON') {
+      return 128;
+    }
+    if (game.entityType === 'TOURNAMENT') {
       return 32;
     }
     return 8;
@@ -341,22 +346,66 @@ export const EditMaxParticipantsModal = ({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               {t('gameDetails.newMaxParticipants', { defaultValue: 'New Max Participants' })}
             </label>
-            <div className={`grid gap-2 ${game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE_SEASON' ? 'grid-cols-7' : 'grid-cols-7'}`}>
-              {validOptions.map((num) => (
-                <button
-                  key={num}
-                  onClick={() => setNewMaxParticipants(num)}
-                  disabled={num < minParticipants || num > maxParticipants}
-                  className={`h-10 rounded-lg font-semibold text-sm transition-all ${
-                    newMaxParticipants === num
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
-            </div>
+            {game.entityType === 'LEAGUE_SEASON' ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-center px-2">
+                  <div className="inline-flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-1.5">
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      {newMaxParticipants}
+                    </span>
+                  </div>
+                </div>
+                <div className="px-2 py-2">
+                  <Slider
+                    min={8}
+                    max={128}
+                    step={1}
+                    value={newMaxParticipants}
+                    onChange={(val) => {
+                      if (typeof val === 'number') {
+                        setNewMaxParticipants(val);
+                      }
+                    }}
+                    styles={{
+                      track: {
+                        backgroundColor: 'rgb(59 130 246)',
+                        height: 6,
+                      },
+                      rail: {
+                        backgroundColor: 'rgb(229 231 235)',
+                        height: 6,
+                      },
+                      handle: {
+                        backgroundColor: 'rgb(59 130 246)',
+                        border: '3px solid white',
+                        width: 20,
+                        height: 20,
+                        marginTop: -7,
+                        opacity: 1,
+                        boxShadow: '0 2px 8px rgba(59, 130 246, 0.3)',
+                      },
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className={`grid gap-2 ${game.entityType === 'TOURNAMENT' ? 'grid-cols-7' : 'grid-cols-7'}`}>
+                {validOptions.map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => setNewMaxParticipants(num)}
+                    disabled={num < minParticipants || num > maxParticipants}
+                    className={`h-10 rounded-lg font-semibold text-sm transition-all ${
+                      newMaxParticipants === num
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -372,7 +421,7 @@ export const EditMaxParticipantsModal = ({
             />
           </div>
 
-          {(game.entityType === 'GAME' || game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && (
+          {(game.entityType === 'GAME' || game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE') && (
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t('createGame.genderTeams.label', { defaultValue: 'Gender Teams' })}
