@@ -15,6 +15,7 @@ import { usePastGames } from '@/hooks/usePastGames';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useBugsWithUnread } from '@/hooks/useBugsWithUnread';
 import { ChatType } from '@/types';
+import { getMonth, getYear } from 'date-fns';
 
 const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string }>(list: T[] = []): T[] => {
   const getStatusPriority = (status?: string): number => {
@@ -81,11 +82,19 @@ export const HomeContent = () => {
     loadAllPastGamesWithUnread,
   } = usePastGames(user, activeTab === 'past-games');
 
+  const [selectedMonth, setSelectedMonth] = useState<number>(getMonth(new Date()) + 1);
+  const [selectedYear, setSelectedYear] = useState<number>(getYear(new Date()));
+
   const {
     availableGames,
     loading: loadingAvailableGames,
     fetchData: fetchAvailableGames,
-  } = useAvailableGames(user);
+  } = useAvailableGames(user, selectedMonth, selectedYear);
+
+  const handleMonthChange = (month: number, year: number) => {
+    setSelectedMonth(month);
+    setSelectedYear(year);
+  };
 
   const {
     bugsWithUnread,
@@ -379,6 +388,7 @@ export const HomeContent = () => {
             user={user}
             loading={loadingAvailableGames}
             onJoin={handleJoinGame}
+            onMonthChange={handleMonthChange}
           />
         </>
       )}

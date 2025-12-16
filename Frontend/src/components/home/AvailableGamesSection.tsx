@@ -1,28 +1,30 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
-import { Card, GameCard, DateSelectorWithCount } from '@/components';
+import { Card, GameCard } from '@/components';
 import { Game } from '@/types';
 import { MapPin, Filter } from 'lucide-react';
-import { format, startOfDay, addDays } from 'date-fns';
+import { format, startOfDay, getMonth, getYear } from 'date-fns';
 import { useHeaderStore } from '@/store/headerStore';
+import { MonthCalendar } from './MonthCalendar';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
   user: any;
   loading: boolean;
   onJoin: (gameId: string, e: React.MouseEvent) => void;
+  onMonthChange?: (month: number, year: number) => void;
 }
 
 export const AvailableGamesSection = ({
   availableGames,
   user,
   onJoin,
+  onMonthChange,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [filterByLevel, setFilterByLevel] = useState(true);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
@@ -34,6 +36,7 @@ export const AvailableGamesSection = ({
     console.log('AvailableGamesSection - storing date for create game:', selectedDate);
     setSelectedDateForCreateGame(selectedDate);
   }, [selectedDate, setSelectedDateForCreateGame]);
+
 
   const updateModalPosition = useCallback(() => {
     if (!filterButtonRef.current) return;
@@ -82,29 +85,12 @@ export const AvailableGamesSection = ({
     };
   }, [showFilterModal, updateModalPosition]);
 
-  const fixedDates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
-  const isSelectedDateInFixedRange = fixedDates.some(date =>
-    format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
-  );
-
   const handleCityClick = () => {
     toast(t('games.switchCityInProfile'));
   };
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
-  };
-
-  const handleCalendarDateSelect = (date: Date) => {
-    setSelectedDate(date);
-  };
-
-  const handleCalendarClick = () => {
-    setShowDatePicker(true);
-  };
-
-  const handleCloseDatePicker = () => {
-    setShowDatePicker(false);
   };
 
   const filteredGames = availableGames.filter(game => {
@@ -188,17 +174,13 @@ export const AvailableGamesSection = ({
         document.body
       )}
 
-      <DateSelectorWithCount
+      <MonthCalendar
         selectedDate={selectedDate}
         onDateSelect={handleDateSelect}
-        onCalendarDateSelect={handleCalendarDateSelect}
-        onCalendarClick={handleCalendarClick}
-        showCalendarAsSelected={showDatePicker || !isSelectedDateInFixedRange}
         availableGames={availableGames}
-        showDatePicker={showDatePicker}
-        onCloseDatePicker={handleCloseDatePicker}
         filterByLevel={filterByLevel}
         user={user}
+        onMonthChange={onMonthChange}
       />
       
       {filteredGames.length === 0 ? (

@@ -30,8 +30,8 @@ export const gamesApi = {
     return response.data;
   },
 
-  getAvailableGames: async () => {
-    const response = await api.get<ApiResponse<Game[]>>('/games/available');
+  getAvailableGames: async (params?: { month?: number; year?: number }) => {
+    const response = await api.get<ApiResponse<Game[]>>('/games/available', { params });
     return response.data;
   },
 

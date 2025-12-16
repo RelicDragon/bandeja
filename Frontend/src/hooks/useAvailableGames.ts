@@ -3,7 +3,7 @@ import { gamesApi } from '@/api';
 import { Game } from '@/types';
 import { socketService } from '@/services/socketService';
 
-export const useAvailableGames = (user: any) => {
+export const useAvailableGames = (user: any, month?: number, year?: number) => {
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +19,7 @@ export const useAvailableGames = (user: any) => {
   const fetchData = useCallback(async (force = false) => {
     if (!user?.id) return;
 
-    const fetchParams = `available-games-${user.id}`;
+    const fetchParams = `available-games-${user.id}-${month}-${year}`;
 
     if (!force && (isLoadingRef.current || lastFetchParamsRef.current === fetchParams)) {
       return;
@@ -30,7 +30,7 @@ export const useAvailableGames = (user: any) => {
 
     setLoading(true);
     try {
-      const response = await gamesApi.getAvailableGames();
+      const response = await gamesApi.getAvailableGames(month !== undefined && year !== undefined ? { month, year } : undefined);
       const allGames = response.data || [];
 
       const availableGamesFiltered = allGames.filter((game) => {
@@ -45,13 +45,13 @@ export const useAvailableGames = (user: any) => {
       isLoadingRef.current = false;
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, month, year]);
 
   useEffect(() => {
     if (user?.id) {
       fetchData();
     }
-  }, [user?.id, fetchData]);
+  }, [user?.id, month, year, fetchData]);
 
   useEffect(() => {
     const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game; forceUpdate?: boolean }) => {
