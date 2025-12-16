@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Trash2 } from 'lucide-react';
+import { Trash2, LogOut } from 'lucide-react';
 import {
   Card,
   PlayerListModal,
@@ -20,6 +20,7 @@ import {
 } from '@/components';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { DeleteGameConfirmationModal } from '@/components/DeleteGameConfirmationModal';
+import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
 import { GameSetup } from '@/components/GameDetails/GameSetup';
@@ -59,6 +60,8 @@ export const GameDetailsContent = () => {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
   const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
   const [isEditMaxParticipantsModalOpen, setIsEditMaxParticipantsModalOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -304,6 +307,9 @@ export const GameDetailsContent = () => {
   };
 
   const isParticipant = game?.participants.some((p) => p.userId === user?.id) || false;
+  const userParticipant = game?.participants.find((p) => p.userId === user?.id);
+  const isUserPlaying = userParticipant?.isPlaying || false;
+  const isUserOwner = userParticipant?.role === 'OWNER';
   const hasPendingInvite = myInvites.length > 0;
   const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') || false;
   const isInJoinQueue = game?.joinQueues?.some(q => q.userId === user?.id && q.status === 'PENDING') || false;
@@ -707,6 +713,77 @@ export const GameDetailsContent = () => {
     }
   };
 
+  const getLeftGameText = (entityType: string) => {
+    const keyMap: Record<string, string> = {
+      'GAME': 'gameDetails.leftGameGame',
+      'TOURNAMENT': 'gameDetails.leftGameTournament',
+      'LEAGUE': 'gameDetails.leftGameLeague',
+      'LEAGUE_SEASON': 'gameDetails.leftGameLeagueSeason',
+      'BAR': 'gameDetails.leftGameBar',
+      'TRAINING': 'gameDetails.leftGameTraining',
+    };
+    return keyMap[entityType] || 'gameDetails.leftGame';
+  };
+
+  const getOwnerCannotLeaveText = (entityType: string) => {
+    const keyMap: Record<string, string> = {
+      'GAME': 'gameDetails.ownerCannotLeaveGame',
+      'TOURNAMENT': 'gameDetails.ownerCannotLeaveTournament',
+      'LEAGUE': 'gameDetails.ownerCannotLeaveLeague',
+      'LEAGUE_SEASON': 'gameDetails.ownerCannotLeaveLeagueSeason',
+      'BAR': 'gameDetails.ownerCannotLeaveBar',
+      'TRAINING': 'gameDetails.ownerCannotLeaveTraining',
+    };
+    return keyMap[entityType] || 'gameDetails.ownerCannotLeave';
+  };
+
+  const getNotPlayingHintText = (entityType: string) => {
+    const keyMap: Record<string, string> = {
+      'GAME': 'gameDetails.notPlayingHintGame',
+      'TOURNAMENT': 'gameDetails.notPlayingHintTournament',
+      'LEAGUE': 'gameDetails.notPlayingHintLeague',
+      'LEAGUE_SEASON': 'gameDetails.notPlayingHintLeagueSeason',
+      'BAR': 'gameDetails.notPlayingHintBar',
+      'TRAINING': 'gameDetails.notPlayingHintTraining',
+    };
+    return keyMap[entityType] || 'gameDetails.notPlayingHint';
+  };
+
+  const handleLeaveGame = async () => {
+    if (!id || isLeaving) return;
+    
+    setIsLeaving(true);
+    try {
+      await gamesApi.togglePlayingStatus(id, false);
+      const response = await gamesApi.getById(id);
+      setGame(response.data);
+      toast.success(t(getLeftGameText(game?.entityType || 'GAME')));
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setIsLeaving(false);
+      setShowLeaveConfirmation(false);
+    }
+  };
+
+  const handleLeaveChat = async () => {
+    if (!id || isLeaving) return;
+    
+    setIsLeaving(true);
+    try {
+      await gamesApi.leave(id);
+      const response = await gamesApi.getById(id);
+      setGame(response.data);
+      toast.success(t('gameDetails.leftChat'));
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-60px)]">
@@ -778,6 +855,7 @@ export const GameDetailsContent = () => {
                 isOwner={isOwner}
                 userId={user?.id}
                 isInJoinQueue={isInJoinQueue}
+                isUserPlaying={isUserPlaying}
                 canInvitePlayers={canInvitePlayers}
                 canManageJoinQueue={canManageJoinQueue}
                 canViewSettings={canViewSettings}
@@ -862,6 +940,64 @@ export const GameDetailsContent = () => {
                 <span className="relative z-10">{t('gameResults.startResultsEntry')}</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
               </button>
+            </Card>
+          )}
+
+          {isParticipant && (
+            <Card>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <LogOut size={18} className="text-gray-500 dark:text-gray-400" />
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      {t('gameDetails.leaveGame')}
+                    </h2>
+                  </div>
+                  {!isUserOwner ? (
+                    <>
+                      {isUserPlaying ? (
+                        <button
+                          onClick={() => setShowLeaveConfirmation(true)}
+                          disabled={isLeaving}
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {t('common.leave')}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleLeaveChat}
+                          disabled={isLeaving}
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {t('gameDetails.leaveChat')}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {isUserPlaying && (
+                        <button
+                          onClick={handleLeaveGame}
+                          disabled={isLeaving}
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {t('gameDetails.dontPlayInGame')}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+                {!isUserOwner && !isUserPlaying && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-pre-line">
+                    {game && t(getNotPlayingHintText(game.entityType))}
+                  </p>
+                )}
+                {isUserOwner && !isUserPlaying && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-pre-line">
+                    {game && t(getOwnerCannotLeaveText(game.entityType))}
+                  </p>
+                )}
+              </div>
             </Card>
           )}
 
@@ -1020,6 +1156,14 @@ export const GameDetailsContent = () => {
           onSave={handleTimeDurationSave}
         />
       )}
+
+      <LeaveGameConfirmationModal
+        isOpen={showLeaveConfirmation}
+        onConfirm={handleLeaveGame}
+        onClose={() => setShowLeaveConfirmation(false)}
+        isLeaving={isLeaving}
+        entityType={game?.entityType || 'GAME'}
+      />
 
       <DeleteGameConfirmationModal
         isOpen={showDeleteConfirmation}

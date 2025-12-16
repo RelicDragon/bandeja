@@ -190,8 +190,7 @@ export class ParticipantService {
     const participant = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
-        userId,
-        role: 'PARTICIPANT',
+        userId
       },
       include: {
         user: {

@@ -196,7 +196,7 @@ export const MonthCalendar = ({
               key={index}
               onClick={() => handleDateClick(day)}
               className={`
-                relative aspect-square p-2 rounded-lg text-sm transition-all
+                relative w-full aspect-square p-2 rounded-lg text-sm transition-all
                 ${!isCurrentMonth 
                   ? `text-gray-300 dark:text-gray-600 cursor-not-allowed ${hasGames ? 'border-2 border-gray-300/50 dark:border-gray-600/50' : ''}` 
                   : isSelected

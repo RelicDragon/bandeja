@@ -15,6 +15,7 @@ interface GameParticipantsProps {
   isOwner: boolean;
   userId?: string;
   isInJoinQueue?: boolean;
+  isUserPlaying?: boolean;
   canInvitePlayers: boolean;
   canManageJoinQueue: boolean;
   canViewSettings: boolean;
@@ -42,6 +43,7 @@ export const GameParticipants = ({
   isOwner,
   userId,
   isInJoinQueue = false,
+  isUserPlaying = false,
   canInvitePlayers,
   canManageJoinQueue,
   canViewSettings,
@@ -149,7 +151,7 @@ export const GameParticipants = ({
             </p>
           </div>
         )}
-        {isGuest && hasUnoccupiedSlots && (
+        {(isGuest || (isOwner && !isUserPlaying)) && hasUnoccupiedSlots && (
           <Button
             onClick={onAddToGame}
             size="lg"
