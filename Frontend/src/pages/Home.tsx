@@ -78,6 +78,7 @@ export const HomeContent = () => {
   const [isAvailableGamesExpanded, setIsAvailableGamesExpanded] = useState(false);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
   const availableGamesSectionRef = useRef<HTMLDivElement>(null);
+  const previousExpandedStateRef = useRef(false);
   
   useEffect(() => {
     if (!loading) {
@@ -86,15 +87,21 @@ export const HomeContent = () => {
   }, [games.length, loading]);
 
   useEffect(() => {
-    if (isAvailableGamesExpanded && availableGamesSectionRef.current) {
+    const wasExpanded = previousExpandedStateRef.current;
+    const isNowExpanded = isAvailableGamesExpanded;
+    
+    if (isNowExpanded && !wasExpanded && availableGamesSectionRef.current) {
       const timeout = setTimeout(() => {
         availableGamesSectionRef.current?.scrollIntoView({ 
           behavior: 'smooth', 
           block: 'end' 
         });
       }, 100);
+      previousExpandedStateRef.current = isNowExpanded;
       return () => clearTimeout(timeout);
     }
+    
+    previousExpandedStateRef.current = isNowExpanded;
   }, [isAvailableGamesExpanded]);
 
   const {
