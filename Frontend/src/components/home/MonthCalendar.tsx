@@ -228,7 +228,7 @@ export const MonthCalendar = ({
               key={index}
               onClick={() => handleDateClick(day)}
               className={`
-                relative w-full p-2 rounded-lg text-sm transition-all
+                relative w-full p-2 rounded-lg text-sm transition-all flex items-center justify-center
                 ${!isCurrentMonth 
                   ? `text-gray-300 dark:text-gray-600 cursor-not-allowed ${hasGames ? 'border-2 border-gray-300/50 dark:border-gray-600/50' : ''}` 
                   : isSelected
@@ -276,9 +276,7 @@ export const MonthCalendar = ({
                   />
                 </span>
               )}
-              <div className="flex items-center justify-center h-full w-full">
-                <span>{format(day, 'd')}</span>
-              </div>
+              <span>{format(day, 'd')}</span>
               {gameCount > 0 && (
                 <span className={`
                   absolute -top-1 -right-1 flex items-center justify-center
