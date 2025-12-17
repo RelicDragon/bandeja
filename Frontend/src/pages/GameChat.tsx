@@ -526,6 +526,12 @@ export const GameChat: React.FC = () => {
     };
   }, [id, contextType, handleNewMessage, handleMessageReaction, handleReadReceipt, handleMessageDeleted]);
 
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   if (isLoadingContext) {
     return (
       <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">

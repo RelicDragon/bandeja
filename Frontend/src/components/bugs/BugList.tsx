@@ -153,6 +153,13 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     }
   }, [isVisible, refreshUnreadCounts, allBugs.length]);
 
+  // Reset body overflow when component becomes visible (fixes scroll issue after returning from bug chat)
+  useEffect(() => {
+    if (isVisible) {
+      document.body.style.overflow = '';
+    }
+  }, [isVisible]);
+
   const availableTypes = useMemo(() => {
     const types = new Set<BugType>();
     allBugs.forEach(bug => {
