@@ -339,7 +339,7 @@ export const HomeContent = () => {
         />
       )}
 
-      <div className="relative min-h-[200px]">
+      <div className="relative min-h-[100px]">
         {showChatFilter ? (
           <>
             <MyGamesSection
