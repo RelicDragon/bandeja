@@ -55,5 +55,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to upload and share photos from your games.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to your camera to capture photos during games.</string>
 </dict>
 </plist>

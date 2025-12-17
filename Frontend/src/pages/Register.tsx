@@ -127,6 +127,7 @@ export const Register = () => {
     setError('');
 
     try {
+      const genderIsSet = gender === 'MALE' || gender === 'FEMALE' || (gender === 'PREFER_NOT_TO_SAY' && genderAcknowledged);
       const response = await authApi.registerPhone({
         phone,
         password,
@@ -134,6 +135,7 @@ export const Register = () => {
         lastName,
         email: email || undefined,
         gender,
+        genderIsSet,
         language: i18n.language,
       });
       setAuth(response.data.user, response.data.token);

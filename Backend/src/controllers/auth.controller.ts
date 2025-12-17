@@ -8,7 +8,7 @@ import { AuthProvider } from '@prisma/client';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 
 export const registerWithPhone = asyncHandler(async (req: Request, res: Response) => {
-  const { phone, password, firstName, lastName, email, language, gender, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
+  const { phone, password, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
 
   const existingUser = await prisma.user.findUnique({
     where: { phone },
@@ -38,6 +38,7 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
       email,
       language,
       gender: gender || undefined,
+      genderIsSet: genderIsSet || false,
       preferredHandLeft: preferredHandLeft || false,
       preferredHandRight: preferredHandRight || false,
       preferredCourtSideLeft: preferredCourtSideLeft || false,
@@ -105,7 +106,7 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const registerWithTelegram = asyncHandler(async (req: Request, res: Response) => {
-  const { telegramId, telegramUsername, firstName, lastName, email, language, gender, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
+  const { telegramId, telegramUsername, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
 
   const existingUser = await prisma.user.findUnique({
     where: { telegramId },
@@ -133,6 +134,7 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
       email,
       language,
       gender: gender || undefined,
+      genderIsSet: genderIsSet || false,
       preferredHandLeft: preferredHandLeft || false,
       preferredHandRight: preferredHandRight || false,
       preferredCourtSideLeft: preferredCourtSideLeft || false,

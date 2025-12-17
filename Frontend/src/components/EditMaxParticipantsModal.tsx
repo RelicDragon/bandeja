@@ -46,6 +46,8 @@ export const EditMaxParticipantsModal = ({
     type: 'NON_MALE' | 'NON_FEMALE' | 'PREFER_NOT_TO_SAY';
     count: number;
   }>({ isOpen: false, type: 'NON_MALE', count: 0 });
+  const [isEditingMaxParticipants, setIsEditingMaxParticipants] = useState(false);
+  const [tempMaxParticipants, setTempMaxParticipants] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -66,6 +68,7 @@ export const EditMaxParticipantsModal = ({
       setIsClosing(false);
       setRemovedPlayerIds(new Set());
       setOriginalParticipants(game.participants.filter(p => p.isPlaying));
+      setIsEditingMaxParticipants(false);
     }
   }, [isOpen, game]);
 
@@ -349,11 +352,58 @@ export const EditMaxParticipantsModal = ({
             {game.entityType === 'LEAGUE_SEASON' ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-center px-2">
-                  <div className="inline-flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-1.5">
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      {newMaxParticipants}
-                    </span>
-                  </div>
+                  {isEditingMaxParticipants ? (
+                    <input
+                      type="number"
+                      min={8}
+                      max={128}
+                      value={tempMaxParticipants}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setTempMaxParticipants(value);
+                        }
+                      }}
+                      onBlur={() => {
+                        const num = parseInt(tempMaxParticipants);
+                        if (!isNaN(num) && num >= 8 && num <= 128) {
+                          setNewMaxParticipants(num);
+                        } else {
+                          setTempMaxParticipants(newMaxParticipants.toString());
+                        }
+                        setIsEditingMaxParticipants(false);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const num = parseInt(tempMaxParticipants);
+                          if (!isNaN(num) && num >= 8 && num <= 128) {
+                            setNewMaxParticipants(num);
+                            setIsEditingMaxParticipants(false);
+                          } else {
+                            setTempMaxParticipants(newMaxParticipants.toString());
+                            setIsEditingMaxParticipants(false);
+                          }
+                        } else if (e.key === 'Escape') {
+                          setTempMaxParticipants(newMaxParticipants.toString());
+                          setIsEditingMaxParticipants(false);
+                        }
+                      }}
+                      autoFocus
+                      className="inline-flex items-center justify-center bg-white dark:bg-gray-700 border-2 border-primary-500 rounded-lg px-4 py-1.5 text-sm font-semibold text-gray-900 dark:text-white w-20 text-center outline-none"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setTempMaxParticipants(newMaxParticipants.toString());
+                        setIsEditingMaxParticipants(true);
+                      }}
+                      className="inline-flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                    >
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {newMaxParticipants}
+                      </span>
+                    </button>
+                  )}
                 </div>
                 <div className="px-2 py-2">
                   <Slider

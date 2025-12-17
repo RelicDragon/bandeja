@@ -10,6 +10,7 @@ export const authApi = {
     email?: string;
     language?: string;
     gender?: string;
+    genderIsSet?: boolean;
     preferredHandLeft?: boolean;
     preferredHandRight?: boolean;
     preferredCourtSideLeft?: boolean;
@@ -32,6 +33,7 @@ export const authApi = {
     email?: string;
     language?: string;
     gender?: string;
+    genderIsSet?: boolean;
     preferredHandLeft?: boolean;
     preferredHandRight?: boolean;
     preferredCourtSideLeft?: boolean;
