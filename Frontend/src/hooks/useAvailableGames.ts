@@ -4,7 +4,7 @@ import { Game } from '@/types';
 import { socketService } from '@/services/socketService';
 import { format } from 'date-fns';
 
-export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) => {
+export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, showArchived?: boolean) => {
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -21,8 +21,8 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) =
     if (!user?.id) return;
 
     const fetchParams = startDate && endDate 
-      ? `available-games-${user.id}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}`
-      : `available-games-${user.id}`;
+      ? `available-games-${user.id}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}-${showArchived ? 'archived' : 'no-archived'}`
+      : `available-games-${user.id}-${showArchived ? 'archived' : 'no-archived'}`;
 
     if (!force && (isLoadingRef.current || lastFetchParamsRef.current === fetchParams)) {
       return;
@@ -33,17 +33,18 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) =
 
     setLoading(true);
     try {
-      const params = startDate && endDate 
-        ? { startDate: format(startDate, 'yyyy-MM-dd'), endDate: format(endDate, 'yyyy-MM-dd') }
-        : undefined;
-      const response = await gamesApi.getAvailableGames(params);
+      const params: any = {};
+      if (startDate && endDate) {
+        params.startDate = format(startDate, 'yyyy-MM-dd');
+        params.endDate = format(endDate, 'yyyy-MM-dd');
+      }
+      if (showArchived !== undefined) {
+        params.showArchived = showArchived;
+      }
+      const response = await gamesApi.getAvailableGames(Object.keys(params).length > 0 ? params : undefined);
       const allGames = response.data || [];
 
-      const availableGamesFiltered = allGames.filter((game) => {
-        return game.participants.length < game.maxParticipants;
-      });
-
-      const sortedGames = sortGames(availableGamesFiltered);
+      const sortedGames = sortGames(allGames);
       setAvailableGames(sortedGames);
     } catch (error) {
       console.error('Failed to fetch available games:', error);
@@ -51,13 +52,13 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) =
       isLoadingRef.current = false;
       setLoading(false);
     }
-  }, [user?.id, startDate, endDate]);
+  }, [user?.id, startDate, endDate, showArchived]);
 
   useEffect(() => {
     if (user?.id) {
       fetchData();
     }
-  }, [user?.id, startDate, endDate, fetchData]);
+  }, [user?.id, startDate, endDate, showArchived, fetchData]);
 
   useEffect(() => {
     const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game; forceUpdate?: boolean }) => {
@@ -67,24 +68,19 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) =
 
       setAvailableGames(prevAvailableGames => {
         const gameIndex = prevAvailableGames.findIndex(g => g.id === data.gameId);
+        const isPublic = updatedGame.isPublic;
         const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
         const isArchived = updatedGame.status === 'ARCHIVED';
-        const isFull = updatedGame.participants.length >= updatedGame.maxParticipants;
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const gameDate = new Date(updatedGame.startTime);
-        gameDate.setHours(0, 0, 0, 0);
-        const isTodayOrFuture = gameDate >= today;
+        const shouldShow = isPublic || (isParticipant && !isArchived);
 
         if (gameIndex === -1) {
-          if (!isParticipant && !isArchived && !isFull && isTodayOrFuture) {
+          if (shouldShow) {
             return sortGames([...prevAvailableGames, updatedGame]);
           }
           return prevAvailableGames;
         }
 
-        if (isParticipant || isArchived || isFull || !isTodayOrFuture) {
+        if (!shouldShow) {
           return prevAvailableGames.filter(g => g.id !== data.gameId);
         }
 

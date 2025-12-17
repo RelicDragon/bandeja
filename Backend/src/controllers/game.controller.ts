@@ -74,7 +74,11 @@ export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Resp
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const games = await GameService.getAvailableGames(req.userId, req.user?.currentCityId);
+  const startDate = req.query.startDate as string | undefined;
+  const endDate = req.query.endDate as string | undefined;
+  const showArchived = req.query.showArchived === 'true';
+
+  const games = await GameService.getAvailableGames(req.userId, req.user?.currentCityId, startDate, endDate, showArchived);
 
   res.json({
     success: true,

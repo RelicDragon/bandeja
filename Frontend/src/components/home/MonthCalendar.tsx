@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear } from 'date-fns';
+import { ChevronLeft, ChevronRight, Trophy, Star } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enUS, ru, es, sr } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
@@ -10,6 +10,7 @@ interface MonthCalendarProps {
   onDateSelect: (date: Date) => void;
   availableGames: Game[];
   filterByLevel?: boolean;
+  filterByAvailableSlots?: boolean;
   user?: any;
   onMonthChange?: (month: number, year: number) => void;
   onDateRangeChange?: (startDate: Date, endDate: Date) => void;
@@ -27,6 +28,7 @@ export const MonthCalendar = ({
   onDateSelect,
   availableGames,
   filterByLevel = false,
+  filterByAvailableSlots = true,
   user,
   onMonthChange,
   onDateRangeChange,
@@ -34,6 +36,8 @@ export const MonthCalendar = ({
   const { i18n } = useTranslation();
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(selectedDate));
   const isNavigatingRef = useRef(false);
+  const [visibleDays, setVisibleDays] = useState<Set<number>>(new Set());
+  const animationTriggerRef = useRef(0);
 
   const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enUS, [i18n.language]);
 
@@ -47,12 +51,25 @@ export const MonthCalendar = ({
     isNavigatingRef.current = false;
   }, [selectedDate, currentMonth]);
 
-  const getGameCountForDate = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return availableGames.filter(game => {
-      const gameDate = format(new Date(game.startTime), 'yyyy-MM-dd');
-      if (gameDate !== dateStr) {
-        return false;
+  const monthStart = useMemo(() => startOfMonth(currentMonth), [currentMonth]);
+  const monthEnd = useMemo(() => endOfMonth(currentMonth), [currentMonth]);
+  const startDate = useMemo(() => startOfWeek(monthStart, { locale }), [monthStart, locale]);
+  const endDate = useMemo(() => endOfWeek(monthEnd, { locale }), [monthEnd, locale]);
+
+  const dateCellData = useMemo(() => {
+    const dataMap = new Map<string, { gameCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean }>();
+    
+    availableGames.forEach(game => {
+      const gameDate = format(startOfDay(new Date(game.startTime)), 'yyyy-MM-dd');
+      const isPublic = game.isPublic;
+      const isUserParticipantInGame = user?.id && game.participants.some((p: any) => p.userId === user.id);
+      
+      if (!isPublic && !isUserParticipantInGame) {
+        return;
+      }
+
+      if (filterByAvailableSlots && game.participants.length >= game.maxParticipants) {
+        return;
       }
 
       if (filterByLevel && user?.level) {
@@ -61,35 +78,27 @@ export const MonthCalendar = ({
         const maxLevel = game.maxLevel || 10;
         
         if (userLevel < minLevel || userLevel > maxLevel) {
-          return false;
+          return;
         }
       }
 
-      return true;
-    }).length;
-  };
-
-  const hasLeagueTournamentOnDate = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return availableGames.some(game => {
-      const gameDate = format(new Date(game.startTime), 'yyyy-MM-dd');
-      if (gameDate !== dateStr) {
-        return false;
+      const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false };
+      
+      existing.gameCount++;
+      
+      if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
+        existing.hasLeagueTournament = true;
       }
-
-      if (filterByLevel && user?.level) {
-        const userLevel = user.level;
-        const minLevel = game.minLevel || 0;
-        const maxLevel = game.maxLevel || 10;
-        
-        if (userLevel < minLevel || userLevel > maxLevel) {
-          return false;
-        }
+      
+      if (isUserParticipantInGame) {
+        existing.isUserParticipant = true;
       }
-
-      return game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON';
+      
+      dataMap.set(gameDate, existing);
     });
-  };
+
+    return dataMap;
+  }, [availableGames, filterByLevel, filterByAvailableSlots, user?.id, user?.level]);
 
   const handlePreviousMonth = () => {
     isNavigatingRef.current = true;
@@ -122,11 +131,6 @@ export const MonthCalendar = ({
     }
   };
 
-  const monthStart = useMemo(() => startOfMonth(currentMonth), [currentMonth]);
-  const monthEnd = useMemo(() => endOfMonth(currentMonth), [currentMonth]);
-  const startDate = useMemo(() => startOfWeek(monthStart, { locale }), [monthStart, locale]);
-  const endDate = useMemo(() => endOfWeek(monthEnd, { locale }), [monthEnd, locale]);
-
   const lastRangeRef = useRef<{ start: Date; end: Date } | null>(null);
 
   useEffect(() => {
@@ -138,6 +142,31 @@ export const MonthCalendar = ({
       }
     }
   }, [startDate, endDate, onDateRangeChange]);
+
+  useEffect(() => {
+    setVisibleDays(new Set());
+    animationTriggerRef.current++;
+    const currentTrigger = animationTriggerRef.current;
+    
+    const calendarDays = [];
+    let day = startDate;
+    while (day <= endDate) {
+      calendarDays.push(day);
+      day = addDays(day, 1);
+    }
+
+    calendarDays.forEach((_, index) => {
+      setTimeout(() => {
+        if (currentTrigger === animationTriggerRef.current) {
+          setVisibleDays(prev => new Set([...prev, index]));
+        }
+      }, index * 20);
+    });
+
+    return () => {
+      animationTriggerRef.current++;
+    };
+  }, [startDate, endDate, dateCellData]);
 
   const calendarDays = [];
   let day = startDate;
@@ -187,9 +216,12 @@ export const MonthCalendar = ({
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isSelected = isSameDay(day, selectedDate);
           const isTodayDate = isToday(day);
-          const gameCount = getGameCountForDate(day);
+          const dateStr = format(startOfDay(day), 'yyyy-MM-dd');
+          const dayData = dateCellData.get(dateStr) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false };
+          const gameCount = dayData.gameCount;
           const hasGames = gameCount > 0;
-          const hasLeagueTournament = hasLeagueTournamentOnDate(day);
+          const hasLeagueTournament = dayData.hasLeagueTournament;
+          const isParticipant = dayData.isUserParticipant;
 
           return (
             <button
@@ -213,6 +245,33 @@ export const MonthCalendar = ({
                 }
               `}
             >
+              {isParticipant && (
+                <span className={`
+                  absolute -top-1 -left-1 flex items-center justify-center
+                  w-[18px] h-[18px] rounded-full
+                  transition-all duration-300
+                  ${visibleDays.has(index) ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
+                  ${!isCurrentMonth
+                    ? 'bg-gray-400 dark:bg-gray-600'
+                    : isSelected 
+                    ? 'bg-white text-primary-500 border-2 border-primary-500' 
+                    : 'bg-yellow-500 dark:bg-yellow-600 text-white'
+                  }
+                `}>
+                  <Star 
+                    size={12} 
+                    className={`
+                      ${!isCurrentMonth
+                        ? 'text-gray-300 dark:text-gray-400'
+                        : isSelected 
+                        ? 'text-primary-500' 
+                        : 'text-white'
+                      }
+                    `}
+                    fill="currentColor"
+                  />
+                </span>
+              )}
               <div className="flex items-center justify-center h-full w-full">
                 <span>{format(day, 'd')}</span>
               </div>
@@ -220,6 +279,8 @@ export const MonthCalendar = ({
                 <span className={`
                   absolute -top-1 -right-1 flex items-center justify-center
                   min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold
+                  transition-all duration-300
+                  ${visibleDays.has(index) ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
                   ${!isCurrentMonth
                     ? 'bg-gray-400 dark:bg-gray-600 text-gray-300 dark:text-gray-400'
                     : isSelected 
@@ -234,6 +295,8 @@ export const MonthCalendar = ({
                 <span className={`
                   absolute -bottom-1 -right-1 flex items-center justify-center
                   w-[18px] h-[18px] rounded-full
+                  transition-all duration-300
+                  ${visibleDays.has(index) ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
                   ${!isCurrentMonth
                     ? 'bg-gray-400 dark:bg-gray-600'
                     : isSelected 

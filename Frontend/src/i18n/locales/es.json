@@ -159,6 +159,8 @@
     },
     "noGamesFound": "No se encontraron juegos",
     "suitableGamesForMe": "Juegos adecuados para mí",
+    "haveAvailableSlots": "Con plazas disponibles",
+    "showArchived": "Mostrar archivados",
     "switchCityInProfile": "Puedes cambiar la ciudad en tu perfil",
     "gamesCount_one": "{{count}} juego",
     "gamesCount_other": "{{count}} juegos",

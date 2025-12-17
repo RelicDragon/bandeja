@@ -30,7 +30,7 @@ export const gamesApi = {
     return response.data;
   },
 
-  getAvailableGames: async (params?: { month?: number; year?: number; startDate?: string; endDate?: string }) => {
+  getAvailableGames: async (params?: { month?: number; year?: number; startDate?: string; endDate?: string; showArchived?: boolean }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games/available', { params });
     return response.data;
   },

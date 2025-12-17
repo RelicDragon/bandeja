@@ -159,6 +159,8 @@
     },
     "noGamesFound": "Игры не найдены",
     "suitableGamesForMe": "Подходящие игры для меня",
+    "haveAvailableSlots": "С доступными местами",
+    "showArchived": "Показать архивированные",
     "switchCityInProfile": "Вы можете изменить город в своем профиле",
     "gamesCount_one": "{{count}} игра",
     "gamesCount_few": "{{count}} игры",

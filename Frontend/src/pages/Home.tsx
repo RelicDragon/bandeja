@@ -119,11 +119,13 @@ export const HomeContent = () => {
     return { startDate: start, endDate: end };
   });
 
+  const [showArchived, setShowArchived] = useState(true);
+
   const {
     availableGames,
     loading: loadingAvailableGames,
     fetchData: fetchAvailableGames,
-  } = useAvailableGames(user, dateRange.startDate, dateRange.endDate);
+  } = useAvailableGames(user, dateRange.startDate, dateRange.endDate, showArchived);
 
   const handleMonthChange = () => {
     // Keep for compatibility but not used for fetching
@@ -450,6 +452,8 @@ export const HomeContent = () => {
               onJoin={handleJoinGame}
               onMonthChange={handleMonthChange}
               onDateRangeChange={handleDateRangeChange}
+              showArchived={showArchived}
+              onShowArchivedChange={setShowArchived}
             />
           </div>
         </>

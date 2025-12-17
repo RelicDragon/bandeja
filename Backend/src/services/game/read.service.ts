@@ -489,23 +489,42 @@ export class GameReadService {
     return games;
   }
 
-  static async getAvailableGames(userId: string, userCityId?: string) {
+  static async getAvailableGames(userId: string, userCityId?: string, startDate?: string, endDate?: string, showArchived?: boolean) {
     if (!userId) {
       throw new ApiError(401, 'Unauthorized');
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const where: any = {
-      status: { not: 'ARCHIVED' },
-      startTime: { gte: today },
-      participants: {
-        none: {
-          userId: userId
+      OR: [
+        { isPublic: true },
+        {
+          isPublic: false,
+          participants: {
+            some: {
+              userId: userId
+            }
+          }
         }
-      }
+      ]
     };
+
+    if (!showArchived) {
+      where.status = { not: 'ARCHIVED' };
+    }
+
+    if (startDate || endDate) {
+      where.startTime = {};
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        where.startTime.gte = start;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.startTime.lte = end;
+      }
+    }
 
     const cityIdToFilter = userCityId;
     if (cityIdToFilter) {

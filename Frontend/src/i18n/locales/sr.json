@@ -159,6 +159,8 @@
     },
     "noGamesFound": "Игре нису пронађене",
     "suitableGamesForMe": "Погодне игре за мене",
+    "haveAvailableSlots": "Са слободним местом",
+    "showArchived": "Прикажи архивиране",
     "switchCityInProfile": "Можеш променити град у свом профилу",
     "gamesCount_one": "{{count}} игра",
     "gamesCount_few": "{{count}} игре",

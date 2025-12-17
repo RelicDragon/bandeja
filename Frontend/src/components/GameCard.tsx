@@ -11,7 +11,7 @@ import { getGameResultStatus } from '@/utils/gameResults';
 import { useNavigationStore } from '@/store/navigationStore';
 import { chatApi } from '@/api/chat';
 import { UrlConstructor } from '@/utils/urlConstructor';
-import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award, Lock, Swords, Trophy, Camera } from 'lucide-react';
+import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
@@ -162,6 +162,7 @@ export const GameCard = ({
   }, [game.mainPhotoId, game.id, game.status]);
 
   const isParticipant = game.participants.some(p => p.userId === user?.id && p.isPlaying);
+  const isUserParticipant = game.participants.some(p => p.userId === user?.id);
   const hasPendingInvite = game.invites?.some(invite => invite.receiverId === user?.id);
   const isGuest = game.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN');
   const canAccessChat = isParticipant || hasPendingInvite || isGuest || game.isPublic;
@@ -359,6 +360,15 @@ export const GameCard = ({
           {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
         </h3>
         <div className="flex items-center gap-2 mb-1 pr-10 flex-wrap">
+          {isUserParticipant && (
+            <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white">
+              <Star 
+                size={12} 
+                className="text-white"
+                fill="currentColor"
+              />
+            </span>
+          )}
           <GameStatusIcon status={game.status} />
           {(game.photosCount ?? 0) > 0 && (
             <button

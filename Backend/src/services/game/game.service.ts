@@ -43,8 +43,8 @@ export class GameService {
     return GameReadService.getPastGames(userId, userCityId, limit, offset);
   }
 
-  static async getAvailableGames(userId: string, userCityId?: string) {
-    return GameReadService.getAvailableGames(userId, userCityId);
+  static async getAvailableGames(userId: string, userCityId?: string, startDate?: string, endDate?: string, showArchived?: boolean) {
+    return GameReadService.getAvailableGames(userId, userCityId, startDate, endDate, showArchived);
   }
 
   static async updateGame(id: string, data: any, userId: string) {

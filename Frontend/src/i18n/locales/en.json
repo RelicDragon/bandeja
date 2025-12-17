@@ -159,6 +159,8 @@
     },
     "noGamesFound": "No games found",
     "suitableGamesForMe": "Suitable games for me",
+    "haveAvailableSlots": "Have available slots",
+    "showArchived": "Show archived",
     "switchCityInProfile": "You can switch city in your profile",
     "gamesCount_one": "{{count}} game",
     "gamesCount_other": "{{count}} games",
