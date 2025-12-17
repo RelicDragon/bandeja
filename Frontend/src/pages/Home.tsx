@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -77,32 +77,12 @@ export const HomeContent = () => {
   
   const [isAvailableGamesExpanded, setIsAvailableGamesExpanded] = useState(false);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
-  const availableGamesSectionRef = useRef<HTMLDivElement>(null);
-  const previousExpandedStateRef = useRef(false);
   
   useEffect(() => {
     if (!loading) {
       setIsAvailableGamesExpanded(games.length === 0);
     }
   }, [games.length, loading]);
-
-  useEffect(() => {
-    const wasExpanded = previousExpandedStateRef.current;
-    const isNowExpanded = isAvailableGamesExpanded;
-    
-    if (isNowExpanded && !wasExpanded && availableGamesSectionRef.current) {
-      const timeout = setTimeout(() => {
-        availableGamesSectionRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'end' 
-        });
-      }, 100);
-      previousExpandedStateRef.current = isNowExpanded;
-      return () => clearTimeout(timeout);
-    }
-    
-    previousExpandedStateRef.current = isNowExpanded;
-  }, [isAvailableGamesExpanded]);
 
   const {
     pastGames,
@@ -445,7 +425,6 @@ export const HomeContent = () => {
             </p>
           </div>
           <div
-            ref={availableGamesSectionRef}
             className={`transition-all duration-300 ease-in-out overflow-hidden ${
               isAvailableGamesExpanded
                 ? 'max-h-[5000px] opacity-100'
