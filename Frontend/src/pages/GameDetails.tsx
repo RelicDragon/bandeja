@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Trash2, LogOut } from 'lucide-react';
+import { Trash2, LogOut, Copy } from 'lucide-react';
 import {
   Card,
   PlayerListModal,
@@ -749,6 +749,18 @@ export const GameDetailsContent = () => {
     return keyMap[entityType] || 'gameDetails.notPlayingHint';
   };
 
+  const getDuplicateGameText = (entityType: string) => {
+    const keyMap: Record<string, string> = {
+      'GAME': 'gameDetails.duplicateGameGame',
+      'TOURNAMENT': 'gameDetails.duplicateGameTournament',
+      'LEAGUE': 'gameDetails.duplicateGameLeague',
+      'LEAGUE_SEASON': 'gameDetails.duplicateGameLeagueSeason',
+      'BAR': 'gameDetails.duplicateGameBar',
+      'TRAINING': 'gameDetails.duplicateGameTraining',
+    };
+    return keyMap[entityType] || 'gameDetails.duplicateGame';
+  };
+
   const handleLeaveGame = async () => {
     if (!id || isLeaving) return;
     
@@ -997,6 +1009,79 @@ export const GameDetailsContent = () => {
                     {game && t(getOwnerCannotLeaveText(game.entityType))}
                   </p>
                 )}
+              </div>
+            </Card>
+          )}
+
+          {canEdit && (
+            <Card>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Copy size={18} className="text-gray-500 dark:text-gray-400" />
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    {t(getDuplicateGameText(game?.entityType || 'GAME'))}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => {
+                    const gameData: Partial<Game> = {
+                      entityType: game.entityType,
+                      gameType: game.gameType,
+                      name: game.name,
+                      description: game.description,
+                      clubId: game.clubId,
+                      courtId: game.courtId,
+                      startTime: game.startTime,
+                      endTime: game.endTime,
+                      maxParticipants: game.maxParticipants,
+                      minParticipants: game.minParticipants,
+                      minLevel: game.minLevel,
+                      maxLevel: game.maxLevel,
+                      isPublic: game.isPublic,
+                      affectsRating: game.affectsRating,
+                      anyoneCanInvite: game.anyoneCanInvite,
+                      resultsByAnyone: game.resultsByAnyone,
+                      allowDirectJoin: game.allowDirectJoin,
+                      hasBookedCourt: game.hasBookedCourt,
+                      afterGameGoToBar: game.afterGameGoToBar,
+                      hasFixedTeams: game.hasFixedTeams,
+                      genderTeams: game.genderTeams,
+                      priceTotal: game.priceTotal,
+                      priceType: game.priceType,
+                      priceCurrency: game.priceCurrency,
+                      fixedNumberOfSets: game.fixedNumberOfSets,
+                      maxTotalPointsPerSet: game.maxTotalPointsPerSet,
+                      maxPointsPerTeam: game.maxPointsPerTeam,
+                      winnerOfGame: game.winnerOfGame,
+                      winnerOfMatch: game.winnerOfMatch,
+                      matchGenerationType: game.matchGenerationType,
+                      prohibitMatchesEditing: game.prohibitMatchesEditing,
+                      pointsPerWin: game.pointsPerWin,
+                      pointsPerLoose: game.pointsPerLoose,
+                      pointsPerTie: game.pointsPerTie,
+                      ballsInGames: game.ballsInGames,
+                      gameCourts: game.gameCourts,
+                    };
+                    
+                    if (game.entityType === 'LEAGUE_SEASON') {
+                      if (game.parentId) {
+                        gameData.parentId = game.parentId;
+                      } else if (game.leagueSeason?.league?.id) {
+                        gameData.parentId = game.leagueSeason?.league?.id;
+                      }
+                    }
+                    
+                    navigate('/create-game', {
+                      state: {
+                        entityType: game.entityType,
+                        initialGameData: gameData,
+                      },
+                    });
+                  }}
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                >
+                  {t('gameDetails.duplicate')}
+                </button>
               </div>
             </Card>
           )}

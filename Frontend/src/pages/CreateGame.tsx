@@ -8,49 +8,59 @@ import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
 import { usersApi } from '@/api/users';
 import { gameCourtsApi } from '@/api/gameCourts';
 import { mediaApi } from '@/api/media';
-import { Club, Court, EntityType, GameType, PriceType, PriceCurrency } from '@/types';
+import { Club, Court, EntityType, GameType, PriceType, PriceCurrency, Game } from '@/types';
 import { InvitablePlayer } from '@/api/users';
 import { addHours } from 'date-fns';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
-import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
+import { useGameTimeDuration, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
 
 interface CreateGameProps {
   entityType: EntityType;
   initialDate?: Date | null;
+  initialGameData?: Partial<Game>;
 }
 
-export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
+export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateGameProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
   console.log('CreateGame - initialDate received:', initialDate, typeof initialDate);
+  console.log('CreateGame - initialGameData received:', initialGameData);
 
   const [clubs, setClubs] = useState<Club[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
-  const [selectedClub, setSelectedClub] = useState<string>('');
-  const [selectedCourt, setSelectedCourt] = useState<string>('notBooked');
-  const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>([1.0, 7.0]);
+  const [selectedClub, setSelectedClub] = useState<string>(() => initialGameData?.clubId || '');
+  const [selectedCourt, setSelectedCourt] = useState<string>(() => initialGameData?.courtId || 'notBooked');
+  const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>(() => [
+    initialGameData?.minLevel ?? 1.0,
+    initialGameData?.maxLevel ?? 7.0
+  ]);
   const [maxParticipants, setMaxParticipants] = useState<number>(() => {
-    return entityType === 'TOURNAMENT' ? 8 : 4;
+    return initialGameData?.maxParticipants ?? (entityType === 'TOURNAMENT' ? 8 : 4);
   });
   const [participants, setParticipants] = useState<Array<string | null>>([user?.id || null]);
-  const [anyoneCanInvite, setAnyoneCanInvite] = useState<boolean>(false);
-  const [hasBookedCourt, setHasBookedCourt] = useState<boolean>(false);
-  const [isPublic, setIsPublic] = useState<boolean>(true);
-  const [isRatingGame, setIsRatingGame] = useState<boolean>(true);
-  const [resultsByAnyone, setResultsByAnyone] = useState<boolean>(false);
-  const [allowDirectJoin, setAllowDirectJoin] = useState<boolean>(false);
-  const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(false);
-  const [hasFixedTeams, setHasFixedTeams] = useState<boolean>(false);
-  const [genderTeams, setGenderTeams] = useState<'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'>('ANY');
-  const [gameType, setGameType] = useState<GameType>('CLASSIC');
-  const [gameName, setGameName] = useState<string>('');
-  const [comments, setComments] = useState<string>('');
-  const [priceTotal, setPriceTotal] = useState<number | undefined>(undefined);
-  const [priceType, setPriceType] = useState<PriceType>('NOT_KNOWN');
-  const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(undefined);
+  const [anyoneCanInvite, setAnyoneCanInvite] = useState<boolean>(initialGameData?.anyoneCanInvite ?? false);
+  const [hasBookedCourt, setHasBookedCourt] = useState<boolean>(initialGameData?.hasBookedCourt ?? false);
+  const [isPublic, setIsPublic] = useState<boolean>(initialGameData?.isPublic ?? true);
+  const [isRatingGame, setIsRatingGame] = useState<boolean>(initialGameData?.affectsRating ?? true);
+  const [resultsByAnyone, setResultsByAnyone] = useState<boolean>(initialGameData?.resultsByAnyone ?? false);
+  const [allowDirectJoin, setAllowDirectJoin] = useState<boolean>(initialGameData?.allowDirectJoin ?? false);
+  const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(initialGameData?.afterGameGoToBar ?? false);
+  const [hasFixedTeams, setHasFixedTeams] = useState<boolean>(initialGameData?.hasFixedTeams ?? false);
+  const [genderTeams, setGenderTeams] = useState<'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'>(
+    (initialGameData?.genderTeams as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS') || 'ANY'
+  );
+  const [gameType, setGameType] = useState<GameType>((initialGameData?.gameType as GameType) || 'CLASSIC');
+  const [gameName, setGameName] = useState<string>(initialGameData?.name || '');
+  const [comments, setComments] = useState<string>(initialGameData?.description || '');
+  const [priceTotal, setPriceTotal] = useState<number | undefined>(initialGameData?.priceTotal);
+  const [priceType, setPriceType] = useState<PriceType>(initialGameData?.priceType || 'NOT_KNOWN');
+  const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(initialGameData?.priceCurrency);
   const [storedInitialDate] = useState<Date>(() => {
+    if (initialGameData?.startTime) {
+      return new Date(initialGameData.startTime);
+    }
     if (initialDate) {
       const date = initialDate instanceof Date ? initialDate : new Date(initialDate);
       console.log('CreateGame - storedInitialDate set to:', date);
@@ -101,8 +111,28 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
     pointsPerWin?: number;
     pointsPerLoose?: number;
     pointsPerTie?: number;
-  }>({});
-  const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>([]);
+    ballsInGames?: boolean;
+  }>(() => {
+    if (initialGameData) {
+      return {
+        fixedNumberOfSets: initialGameData.fixedNumberOfSets,
+        maxTotalPointsPerSet: initialGameData.maxTotalPointsPerSet,
+        maxPointsPerTeam: initialGameData.maxPointsPerTeam,
+        winnerOfGame: initialGameData.winnerOfGame,
+        winnerOfMatch: initialGameData.winnerOfMatch,
+        matchGenerationType: initialGameData.matchGenerationType,
+        prohibitMatchesEditing: initialGameData.prohibitMatchesEditing,
+        pointsPerWin: initialGameData.pointsPerWin,
+        pointsPerLoose: initialGameData.pointsPerLoose,
+        pointsPerTie: initialGameData.pointsPerTie,
+        ballsInGames: initialGameData.ballsInGames,
+      };
+    }
+    return {};
+  });
+  const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => {
+    return initialGameData?.gameCourts?.map(gc => gc.courtId) || [];
+  });
   const [pendingAvatarFiles, setPendingAvatarFiles] = useState<{ avatar: File; original: File } | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | undefined>(undefined);
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -128,20 +158,28 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
     const fetchCourts = async () => {
       if (!selectedClub) {
         setCourts([]);
-        setSelectedCourt('notBooked');
-        setHasBookedCourt(false);
+        if (!initialGameData?.courtId) {
+          setSelectedCourt('notBooked');
+          setHasBookedCourt(false);
+        } else {
+          setHasBookedCourt(initialGameData?.hasBookedCourt ?? false);
+        }
         return;
       }
       try {
         const response = await courtsApi.getByClubId(selectedClub);
         setCourts(response.data);
         
-        // Auto-select court if there's only one court in the club
-        if (response.data.length === 1) {
+        // Set court from initialGameData if available
+        if (initialGameData?.courtId && response.data.some(c => c.id === initialGameData.courtId)) {
+          setSelectedCourt(initialGameData.courtId);
+          setHasBookedCourt(initialGameData.hasBookedCourt ?? false);
+        } else if (response.data.length === 1) {
           setSelectedCourt(response.data[0].id);
-          setHasBookedCourt(false); // Default to false as specified
+          setHasBookedCourt(false);
         } else {
           setSelectedCourt('notBooked');
+          setHasBookedCourt(false);
         }
         
         // Reset to stored initial date or auto-select based on time slots
@@ -170,7 +208,7 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
       }
     };
     fetchCourts();
-  }, [selectedClub, generateTimeOptionsForDate, storedInitialDate, setSelectedDate]);
+  }, [selectedClub, generateTimeOptionsForDate, storedInitialDate, setSelectedDate, initialGameData]);
 
   useEffect(() => {
     if (selectedCourt === 'notBooked') {
@@ -179,11 +217,24 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
   }, [selectedCourt]);
 
   useEffect(() => {
-    // Clear selected time when club changes to force manual selection
-    if (selectedClub) {
+    // Initialize time and duration from initialGameData
+    if (initialGameData?.startTime && initialGameData?.endTime && selectedClub && clubs.length > 0) {
+      const club = clubs.find(c => c.id === selectedClub);
+      if (club) {
+        const startDate = new Date(initialGameData.startTime);
+        const endDate = new Date(initialGameData.endTime);
+        const durationHours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
+        const timeString = formatTimeInClubTimezone(startDate, club);
+        
+        setSelectedDate(startDate);
+        setSelectedTime(timeString);
+        setDuration(durationHours);
+      }
+    } else if (selectedClub && !initialGameData) {
+      // Clear selected time when club changes to force manual selection (only if not duplicating)
       setSelectedTime('');
     }
-  }, [selectedClub, setSelectedTime]);
+  }, [selectedClub, setSelectedTime, setSelectedDate, setDuration, initialGameData, clubs]);
 
   useEffect(() => {
     if (entityType === 'TOURNAMENT') {
@@ -307,6 +358,7 @@ export const CreateGame = ({ entityType, initialDate }: CreateGameProps) => {
         priceTotal: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceTotal : undefined,
         priceType: priceType,
         priceCurrency: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceCurrency : undefined,
+        parentId: initialGameData?.parentId,
         ...gameSetup,
       });
 
