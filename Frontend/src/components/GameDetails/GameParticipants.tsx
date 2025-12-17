@@ -163,7 +163,7 @@ export const GameParticipants = ({
         )}
         {(() => {
           const playingParticipants = game.participants.filter(p => p.isPlaying);
-          const emptySlots = game.entityType !== 'BAR' && game.entityType !== 'TOURNAMENT' && game.entityType !== 'LEAGUE' 
+          const emptySlots = game.entityType !== 'BAR'
             ? game.maxParticipants - playingParticipants.length 
             : 0;
 
