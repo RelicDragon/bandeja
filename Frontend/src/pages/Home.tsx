@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
