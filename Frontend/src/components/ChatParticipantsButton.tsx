@@ -1,6 +1,4 @@
 import React from 'react';
-import { CachedImage } from '@/components/CachedImage';
-import { UrlConstructor } from '@/utils/urlConstructor';
 import { Game } from '@/types';
 
 interface ChatParticipantsButtonProps {
@@ -40,12 +38,10 @@ export const ChatParticipantsButton: React.FC<ChatParticipantsButtonProps> = ({ 
                 title={`${participant.user.firstName || ''} ${participant.user.lastName || ''}`.trim()}
               >
                 {participant.user.avatar ? (
-                  <CachedImage
-                    src={UrlConstructor.constructImageUrl(participant.user.avatar)}
+                  <img
+                    src={participant.user.avatar || ''}
                     alt=""
                     className="w-8 h-8 rounded-full object-cover"
-                    showLoadingSpinner={true}
-                    loadingClassName="rounded-full"
                   />
                 ) : (
                   (participant.user.firstName || 'U').charAt(0).toUpperCase()
@@ -59,12 +55,10 @@ export const ChatParticipantsButton: React.FC<ChatParticipantsButtonProps> = ({ 
                 title={`${guest.user.firstName || ''} ${guest.user.lastName || ''} (guest)`.trim()}
               >
                 {guest.user.avatar ? (
-                  <CachedImage
-                    src={UrlConstructor.constructImageUrl(guest.user.avatar)}
+                  <img
+                    src={guest.user.avatar || ''}
                     alt=""
                     className="w-8 h-8 rounded-full object-cover"
-                    showLoadingSpinner={true}
-                    loadingClassName="rounded-full"
                   />
                 ) : (
                   (guest.user.firstName || 'G').charAt(0).toUpperCase()

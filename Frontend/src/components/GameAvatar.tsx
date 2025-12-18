@@ -1,6 +1,4 @@
 import { Camera } from 'lucide-react';
-import { CachedImage } from './CachedImage';
-import { UrlConstructor } from '@/utils/urlConstructor';
 
 interface GameAvatarProps {
   avatar?: string | null;
@@ -31,12 +29,10 @@ export const GameAvatar = ({ avatar, extrasmall = false, small = false, extralar
   return (
     <div className={`${sizeClasses} rounded-full overflow-hidden flex-shrink-0 ${extralarge ? 'shadow-lg ring-2 ring-gray-200 dark:ring-gray-700 ring-offset-2 ring-offset-white dark:ring-offset-gray-900' : ''}`}>
       {avatar ? (
-        <CachedImage
-          src={UrlConstructor.constructImageUrl(avatar)}
+        <img
+          src={avatar || ''}
           alt={alt}
           className="w-full h-full object-cover"
-          showLoadingSpinner={true}
-          loadingClassName="rounded-full"
         />
       ) : (
         <div className={`w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center`}>

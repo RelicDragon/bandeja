@@ -4,8 +4,6 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Upload, User, X, Camera } from 'lucide-react';
 import { AvatarCropModal } from './AvatarCropModal';
-import { CachedImage } from './CachedImage';
-import { UrlConstructor } from '@/utils/urlConstructor';
 
 interface AvatarUploadProps {
   currentAvatar?: string;
@@ -135,12 +133,10 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
           onClick={handleClick}
         >
           {currentAvatar ? (
-            <CachedImage
-              src={UrlConstructor.constructImageUrl(currentAvatar)}
+            <img
+              src={currentAvatar || ''}
               alt={t('profile.avatar')}
               className="w-full h-full object-cover"
-              showLoadingSpinner={true}
-              loadingClassName="rounded-full"
             />
           ) : (
             <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">

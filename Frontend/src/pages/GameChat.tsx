@@ -10,11 +10,9 @@ import { MessageInput } from '@/components/MessageInput';
 import { ChatParticipantsModal } from '@/components/ChatParticipantsModal';
 import { ChatParticipantsButton } from '@/components/ChatParticipantsButton';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { CachedImage } from '@/components/CachedImage';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { formatDate } from '@/utils/dateFormat';
-import { UrlConstructor } from '@/utils/urlConstructor';
 import { socketService } from '@/services/socketService';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon } from 'lucide-react';
 
@@ -633,8 +631,8 @@ export const GameChat: React.FC = () => {
       return (
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
           {otherUser.avatar ? (
-            <CachedImage
-              src={UrlConstructor.constructImageUrl(otherUser.avatar)}
+            <img
+              src={otherUser.avatar || ''}
               alt={otherUser.firstName || ''}
               className="w-full h-full object-cover"
             />

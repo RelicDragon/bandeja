@@ -11,7 +11,6 @@ import { useThemeStore } from '@/store/themeStore';
 import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
 import { City, Gender, User } from '@/types';
 import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2 } from 'lucide-react';
-import { UrlConstructor } from '@/utils/urlConstructor';
 import { hasValidUsername } from '@/utils/userValidation';
 
 export const ProfileContent = () => {
@@ -775,7 +774,7 @@ export const ProfileContent = () => {
 
       {showFullscreenAvatar && user?.originalAvatar && (
         <FullscreenImageViewer
-          imageUrl={UrlConstructor.constructImageUrl(user.originalAvatar)}
+          imageUrl={user.originalAvatar || ''}
           onClose={() => setShowFullscreenAvatar(false)}
         />
       )}

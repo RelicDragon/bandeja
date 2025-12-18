@@ -3,7 +3,6 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { getLevelName } from '../utils/playerLevels';
-import { UrlConstructor } from '../utils/urlConstructor';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export const getLeaderboard = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -211,7 +210,6 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     data: {
       user: {
         ...user,
-        avatar: user.avatar ? UrlConstructor.constructImageUrl(user.avatar) : user.avatar,
         levelName: getLevelName(user.level),
         winRate: user.gamesPlayed > 0 ? ((user.gamesWon / user.gamesPlayed) * 100).toFixed(2) : '0.00',
       },

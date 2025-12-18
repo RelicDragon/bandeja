@@ -34,7 +34,6 @@ export * from './ModernFooter';
 export * from './AvatarUpload';
 export * from './AvatarCropModal';
 export * from './FullscreenImageViewer';
-export * from './UncachedImage';
 export * from './GameDetails';
 export * from './GameDetails/TeamPlayerSelector';
 export * from './GameDetails/LeagueScheduleTab';

@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { User as UserType } from '@/types';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { useRef, useEffect, useState } from 'react';
-import { CachedImage } from './CachedImage';
-import { UrlConstructor } from '@/utils/urlConstructor';
 import { GenderIndicator } from './GenderIndicator';
 import { useAppModeStore } from '@/store/appModeStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
@@ -171,12 +169,10 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
         >
           {player.avatar ? (
             <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
-              <CachedImage
-                src={UrlConstructor.constructImageUrl(player.avatar)}
+              <img
+                src={player.avatar || ''}
                 alt={`${player.firstName} ${player.lastName}`}
                 className="w-full h-full object-cover"
-                showLoadingSpinner={true}
-                loadingClassName="rounded-full"
               />
             </div>
           ) : (

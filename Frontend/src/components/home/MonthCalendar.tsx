@@ -38,6 +38,7 @@ export const MonthCalendar = ({
   const isNavigatingRef = useRef(false);
   const [visibleDays, setVisibleDays] = useState<Set<number>>(new Set());
   const animationTriggerRef = useRef(0);
+  const calendarRef = useRef<HTMLDivElement>(null);
 
   const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enUS, [i18n.language]);
 
@@ -129,6 +130,19 @@ export const MonthCalendar = ({
         onMonthChange(getMonth(newMonth) + 1, getYear(newMonth));
       }
     }
+
+    if (calendarRef.current) {
+      const rect = calendarRef.current.getBoundingClientRect();
+      const header = document.querySelector('header');
+      const headerHeight = header ? header.getBoundingClientRect().height : 0;
+      const currentScrollY = window.scrollY || window.pageYOffset;
+      const targetScrollY = currentScrollY + rect.top - headerHeight;
+      
+      window.scrollTo({
+        top: Math.max(0, targetScrollY),
+        behavior: 'smooth'
+      });
+    }
   };
 
   const lastRangeRef = useRef<{ start: Date; end: Date } | null>(null);
@@ -164,7 +178,8 @@ export const MonthCalendar = ({
     });
 
     return () => {
-      animationTriggerRef.current++;
+      const triggerValue = animationTriggerRef.current;
+      animationTriggerRef.current = triggerValue + 1;
     };
   }, [startDate, endDate, dateCellData]);
 
@@ -181,7 +196,7 @@ export const MonthCalendar = ({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 mb-4 max-w-md mx-auto">
+    <div ref={calendarRef} data-calendar="true" className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 mb-4 max-w-md mx-auto">
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={handlePreviousMonth}

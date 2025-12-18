@@ -1,8 +1,6 @@
 import React from 'react';
 import { ArrowLeft, Beer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { CachedImage } from './CachedImage';
-import { UrlConstructor } from '@/utils/urlConstructor';
 import { UserStats } from '@/api/users';
 import { GenderIndicator } from './GenderIndicator';
 
@@ -27,8 +25,8 @@ export const PlayerAvatarView: React.FC<PlayerAvatarViewProps> = ({ stats, onBac
 
       <div className="relative">
         {user.originalAvatar ? (
-          <CachedImage
-            src={UrlConstructor.constructImageUrl(user.originalAvatar)}
+          <img
+            src={user.originalAvatar || ''}
             alt={`${user.firstName} ${user.lastName}`}
             className="max-w-full max-h-[60vh] object-contain shadow-2xl border-8 border-white dark:border-gray-800 rounded-2xl"
           />

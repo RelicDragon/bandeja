@@ -5,10 +5,6 @@ import { AuthRequest } from '../middleware/auth';
 import multer, { FileFilterCallback } from 'multer';
 import { ImageProcessor } from '../utils/imageProcessor';
 import prisma from '../config/database';
-import sharp from 'sharp';
-import path from 'path';
-import fs from 'fs';
-import crypto from 'crypto';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { ParticipantRole } from '@prisma/client';
 import { MessageService } from '../services/chat/message.service';
@@ -74,41 +70,17 @@ export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response)
     await ImageProcessor.deleteFile(user.originalAvatar);
   }
 
-  const avatarFile = Array.isArray((req.files as any).avatar) ? (req.files as any).avatar[0] : (req.files as any).avatar;
   const originalFile = Array.isArray((req.files as any).original) ? (req.files as any).original[0] : (req.files as any).original;
 
-  // Save avatar file (256x256 square)
-  const uniqueId = crypto.randomUUID();
-  const avatarExt = path.extname(avatarFile.originalname);
-  const avatarName = `${uniqueId}_avatar${avatarExt}`;
-  const avatarPath = path.join(ImageProcessor['UPLOAD_DIR'], 'avatars', 'circular', avatarName);
-  
-  // Ensure directory exists
-  await fs.promises.mkdir(path.dirname(avatarPath), { recursive: true });
-  await fs.promises.writeFile(avatarPath, avatarFile.buffer);
-
-  // Save original file (downsized to 1920 max dimension)
-  const originalExt = path.extname(originalFile.originalname);
-  const originalName = `${uniqueId}_original${originalExt}`;
-  const originalPath = path.join(ImageProcessor['UPLOAD_DIR'], 'avatars', 'originals', originalName);
-  
-  // Ensure directory exists
-  await fs.promises.mkdir(path.dirname(originalPath), { recursive: true });
-  await fs.promises.writeFile(originalPath, originalFile.buffer);
-
-  // Get metadata for both files
-  const avatarMetadata = await sharp(avatarFile.buffer).metadata();
-  const originalMetadata = await sharp(originalFile.buffer).metadata();
-
-  const avatarUrl = `/uploads/avatars/circular/${avatarName}`;
-  const originalUrl = `/uploads/avatars/originals/${originalName}`;
+  // Process avatar using ImageProcessor
+  const result = await ImageProcessor.processAvatar(originalFile.buffer, originalFile.originalname);
 
   // Update user avatars in database
   await prisma.user.update({
     where: { id: userId },
     data: { 
-      avatar: avatarUrl,
-      originalAvatar: originalUrl
+      avatar: result.avatarPath,
+      originalAvatar: result.originalPath
     }
   });
 
@@ -116,16 +88,10 @@ export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response)
     success: true,
     message: 'Avatar uploaded successfully',
     data: {
-      avatarUrl: avatarUrl,
-      originalAvatarUrl: originalUrl,
-      avatarSize: {
-        width: avatarMetadata.width || 0,
-        height: avatarMetadata.height || 0
-      },
-      originalSize: {
-        width: originalMetadata.width || 0,
-        height: originalMetadata.height || 0
-      }
+      avatarUrl: result.avatarPath,
+      originalAvatarUrl: result.originalPath,
+      avatarSize: result.avatarSize,
+      originalSize: result.originalSize
     }
   });
 });

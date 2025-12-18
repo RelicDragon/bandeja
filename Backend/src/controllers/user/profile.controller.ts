@@ -3,7 +3,6 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
-import { UrlConstructor } from '../../utils/urlConstructor';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
 
@@ -21,8 +20,6 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
     success: true,
     data: {
       ...user,
-      //avatar: user.avatar ? UrlConstructor.constructImageUrl(user.avatar) : user.avatar,
-      //originalAvatar: user.originalAvatar ? UrlConstructor.constructImageUrl(user.originalAvatar) : user.originalAvatar,
     },
   });
 });
@@ -102,8 +99,6 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     success: true,
     data: {
       ...user,
-      avatar: user.avatar ? UrlConstructor.constructImageUrl(user.avatar) : user.avatar,
-      originalAvatar: user.originalAvatar ? UrlConstructor.constructImageUrl(user.originalAvatar) : user.originalAvatar,
     },
   });
 });

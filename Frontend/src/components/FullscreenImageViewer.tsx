@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { X, Download } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { useTranslation } from 'react-i18next';
-import { UncachedImage } from './UncachedImage';
 
 interface FullscreenImageViewerProps {
   imageUrl: string;
@@ -96,7 +95,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
               className="relative max-w-full max-h-full"
               onClick={(e) => e.stopPropagation()}
             >
-              <UncachedImage
+              <img
                 src={imageUrl}
                 alt="Fullscreen view"
                 className="max-w-full max-h-full object-contain"

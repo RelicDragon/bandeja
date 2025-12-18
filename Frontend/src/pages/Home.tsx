@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -75,14 +75,10 @@ export const HomeContent = () => {
 
   const [activeTab, setActiveTab] = useState<'my-games' | 'past-games'>('my-games');
   
-  const [isAvailableGamesExpanded, setIsAvailableGamesExpanded] = useState(false);
+  const [isAvailableGamesExpanded, setIsAvailableGamesExpanded] = useState(true);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
-  
-  useEffect(() => {
-    if (!loading) {
-      setIsAvailableGamesExpanded(games.length === 0);
-    }
-  }, [games.length, loading]);
+  const availableGamesSectionRef = useRef<HTMLDivElement>(null);
+
 
   const {
     pastGames,
@@ -405,7 +401,31 @@ export const HomeContent = () => {
           <Divider className="mt-2" />
           <div 
             className="flex justify-center -mt-9 cursor-pointer"
-            onClick={() => setIsAvailableGamesExpanded(!isAvailableGamesExpanded)}
+            onClick={() => {
+              const wasExpanded = isAvailableGamesExpanded;
+              setIsAvailableGamesExpanded(!isAvailableGamesExpanded);
+              
+              if (!wasExpanded) {
+                setTimeout(() => {
+                  const sectionElement = availableGamesSectionRef.current;
+                  if (sectionElement) {
+                    const calendarElement = sectionElement.querySelector('[data-calendar="true"]') as HTMLElement;
+                    if (calendarElement) {
+                      const rect = calendarElement.getBoundingClientRect();
+                      const header = document.querySelector('header');
+                      const headerHeight = header ? header.getBoundingClientRect().height : 0;
+                      const currentScrollY = window.scrollY || window.pageYOffset;
+                      const targetScrollY = currentScrollY + rect.top - headerHeight;
+                      
+                      window.scrollTo({
+                        top: Math.max(0, targetScrollY),
+                        behavior: 'smooth'
+                      });
+                    }
+                  }
+                }, 350);
+              }
+            }}
             onMouseDown={() => setIsButtonPressed(true)}
             onMouseUp={() => setIsButtonPressed(false)}
             onMouseLeave={() => setIsButtonPressed(false)}
@@ -425,6 +445,7 @@ export const HomeContent = () => {
             </p>
           </div>
           <div
+            ref={availableGamesSectionRef}
             className={`transition-all duration-300 ease-in-out overflow-hidden ${
               isAvailableGamesExpanded
                 ? 'max-h-[5000px] opacity-100'

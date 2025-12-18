@@ -10,7 +10,6 @@ import { formatDate } from '@/utils/dateFormat';
 import { getGameResultStatus } from '@/utils/gameResults';
 import { useNavigationStore } from '@/store/navigationStore';
 import { chatApi } from '@/api/chat';
-import { UrlConstructor } from '@/utils/urlConstructor';
 import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -148,7 +147,7 @@ export const GameCard = ({
           const thumbnailUrl = mainPhotoMessage.thumbnailUrls && mainPhotoMessage.thumbnailUrls[0]
             ? mainPhotoMessage.thumbnailUrls[0]
             : mainPhotoMessage.mediaUrls[0];
-          setMainPhotoUrl(UrlConstructor.constructImageUrl(thumbnailUrl));
+          setMainPhotoUrl(thumbnailUrl || '');
         } else {
           setMainPhotoUrl(null);
         }

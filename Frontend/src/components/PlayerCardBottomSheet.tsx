@@ -7,8 +7,6 @@ import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
 import { chatApi } from '@/api/chat';
 import { Loading } from './Loading';
-import { CachedImage } from './CachedImage';
-import { UrlConstructor } from '@/utils/urlConstructor';
 import { PlayerAvatarView } from './PlayerAvatarView';
 import { LevelHistoryView } from './LevelHistoryView';
 import { GenderIndicator } from './GenderIndicator';
@@ -452,8 +450,8 @@ const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, startingCha
                 className="cursor-pointer hover:opacity-90 transition-opacity"
               >
                 {user.avatar ? (
-                  <CachedImage
-                    src={UrlConstructor.constructImageUrl(user.avatar)}
+                  <img
+                    src={user.avatar || ''}
                     alt={`${user.firstName} ${user.lastName}`}
                     className={`w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
                   />
@@ -464,8 +462,8 @@ const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, startingCha
                 )}
               </button>
             ) : user.avatar ? (
-              <CachedImage
-                src={UrlConstructor.constructImageUrl(user.avatar)}
+              <img
+                src={user.avatar || ''}
                 alt={`${user.firstName} ${user.lastName}`}
                 className={`w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
               />

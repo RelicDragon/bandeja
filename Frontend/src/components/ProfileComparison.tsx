@@ -6,10 +6,8 @@ import { usersApi, PlayerComparison } from '@/api/users';
 import { Game } from '@/types';
 import { Loading } from './Loading';
 import { PlayerListModal } from './PlayerListModal';
-import { CachedImage } from './CachedImage';
 import { ComparisonTabController } from './ComparisonTabController';
 import { GameCard } from './GameCard';
-import { UrlConstructor } from '@/utils/urlConstructor';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 
@@ -78,8 +76,8 @@ export const ProfileComparison = () => {
               <div className="text-center">
                 <div className="mb-2">
                   {currentUser?.avatar ? (
-                    <CachedImage
-                      src={UrlConstructor.constructImageUrl(currentUser.avatar)}
+                    <img
+                      src={currentUser.avatar || ''}
                       alt={`${currentUser.firstName} ${currentUser.lastName}`}
                       className="w-16 h-16 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-lg mx-auto"
                     />
@@ -102,8 +100,8 @@ export const ProfileComparison = () => {
                   className="mb-2 cursor-pointer hover:opacity-90 transition-opacity"
                 >
                   {selectedPlayer.avatar ? (
-                    <CachedImage
-                      src={UrlConstructor.constructImageUrl(selectedPlayer.avatar)}
+                    <img
+                      src={selectedPlayer.avatar || ''}
                       alt={`${selectedPlayer.firstName} ${selectedPlayer.lastName}`}
                       className="w-16 h-16 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-lg mx-auto"
                     />

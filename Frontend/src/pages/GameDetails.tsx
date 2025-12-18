@@ -163,6 +163,8 @@ export const GameDetailsContent = () => {
     
     const template = applyGameTypeTemplate(editFormData.gameType);
     gamesApi.update(id, { 
+      winnerOfMatch: template.winnerOfMatch,
+      winnerOfGame: template.winnerOfGame,
       matchGenerationType: template.matchGenerationType,
       prohibitMatchesEditing: template.prohibitMatchesEditing ?? false,
       pointsPerWin: template.pointsPerWin ?? 0,

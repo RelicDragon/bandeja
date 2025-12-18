@@ -15,9 +15,7 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from 'react-hot-toast';
 import { MoreVertical, Trash2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components';
-import { CachedImage } from '@/components/CachedImage';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
-import { UrlConstructor } from '@/utils/urlConstructor';
 
 interface BugCardProps {
   bug: Bug;
@@ -150,14 +148,14 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
   const getThumbnailUrl = (index: number): string => {
     if (!lastMessage) return '';
     if (lastMessage.thumbnailUrls && lastMessage.thumbnailUrls[index]) {
-      return UrlConstructor.constructImageUrl(lastMessage.thumbnailUrls[index]);
+      return lastMessage.thumbnailUrls[index] || '';
     }
-    return UrlConstructor.constructImageUrl(lastMessage.mediaUrls[index]);
+    return lastMessage.mediaUrls[index] || '';
   };
 
   const handleImageClick = (e: React.MouseEvent, imageUrl: string) => {
     e.stopPropagation();
-    setFullscreenImage(UrlConstructor.constructImageUrl(imageUrl));
+    setFullscreenImage(imageUrl || '');
   };
 
   const canModify = user?.isAdmin || bug.senderId === user?.id;
@@ -227,12 +225,10 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
                         onClick={(e) => handleImageClick(e, url)}
                         className="cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0"
                       >
-                        <CachedImage
+                        <img
                           src={getThumbnailUrl(index)}
                           alt={`Media ${index + 1}`}
                           className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
-                          showLoadingSpinner={true}
-                          loadingClassName="rounded-lg"
                         />
                       </div>
                     ))}

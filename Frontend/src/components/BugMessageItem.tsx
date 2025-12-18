@@ -7,10 +7,8 @@ import { useMessageReadTracking } from '@/hooks/useMessageReadTracking';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
 import { PlayerCardBottomSheet } from './PlayerCardBottomSheet';
-import { CachedImage } from './CachedImage';
 import { parseSystemMessage, useSystemMessageTranslation } from '@/utils/systemMessages';
 import { FullscreenImageViewer } from './FullscreenImageViewer';
-import { UrlConstructor } from '@/utils/urlConstructor';
 
 interface ContextMenuState {
   isOpen: boolean;
@@ -74,14 +72,14 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
 
   const getThumbnailUrl = (index: number): string => {
     if (message.thumbnailUrls && message.thumbnailUrls[index]) {
-      return UrlConstructor.constructImageUrl(message.thumbnailUrls[index]);
+      return message.thumbnailUrls[index] || '';
     }
     // Fallback to original URL if thumbnail not available
-    return UrlConstructor.constructImageUrl(message.mediaUrls[index]);
+    return message.mediaUrls[index] || '';
   };
 
   const handleImageClick = (imageUrl: string) => {
-    setFullscreenImage(UrlConstructor.constructImageUrl(imageUrl));
+    setFullscreenImage(imageUrl || '');
   };
 
   const formatMessageTime = (dateString: string) => {
@@ -330,12 +328,10 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
                   className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-semibold hover:opacity-80 transition-opacity cursor-pointer"
                 >
                   {message.sender?.avatar ? (
-                    <CachedImage
-                      src={UrlConstructor.constructImageUrl(message.sender.avatar)}
+                    <img
+                      src={message.sender.avatar || ''}
                       alt={getSenderName()}
                       className="w-8 h-8 rounded-full object-cover"
-                      showLoadingSpinner={true}
-                      loadingClassName="rounded-full"
                     />
                   ) : (
                     getSenderName().charAt(0).toUpperCase()
@@ -378,12 +374,10 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
                               onClick={() => handleImageClick(url)}
                               className="cursor-pointer hover:opacity-90 transition-opacity"
                             >
-                              <CachedImage
+                              <img
                                 src={getThumbnailUrl(index)}
                                 alt={`Media ${index + 1}`}
                                 className="max-w-full h-auto rounded-lg max-h-64 object-cover"
-                                showLoadingSpinner={true}
-                                loadingClassName="rounded-lg"
                               />
                             </div>
                           </div>

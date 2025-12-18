@@ -3,7 +3,6 @@ import { Card } from '@/components';
 import { Game } from '@/types';
 import { chatApi, ChatMessage } from '@/api/chat';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
-import { UrlConstructor } from '@/utils/urlConstructor';
 import { capturePhoto } from '@/utils/photoCapture';
 import { mediaApi } from '@/api/media';
 import { socketService } from '@/services/socketService';
@@ -131,7 +130,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   };
 
   const handleImageClick = (imageUrl: string) => {
-    setFullscreenImage(UrlConstructor.constructImageUrl(imageUrl));
+    setFullscreenImage(imageUrl || '');
   };
 
   const handleMainPhotoSelect = useCallback(async (messageId: string, silent = false) => {
@@ -180,9 +179,9 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
 
   const getThumbnailUrl = (message: ChatMessage, index: number): string => {
     if (message.thumbnailUrls && message.thumbnailUrls[index]) {
-      return UrlConstructor.constructImageUrl(message.thumbnailUrls[index]);
+      return message.thumbnailUrls[index] || '';
     }
-    return UrlConstructor.constructImageUrl(message.mediaUrls[index]);
+    return message.mediaUrls[index] || '';
   };
 
   if (game.status === 'ANNOUNCED') {

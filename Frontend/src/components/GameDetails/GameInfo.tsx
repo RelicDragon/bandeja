@@ -6,7 +6,6 @@ import { GameStatusIcon } from '@/components';
 import { ShareModal } from '@/components/ShareModal';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { GameAvatar } from '@/components/GameAvatar';
-import { UrlConstructor } from '@/utils/urlConstructor';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { EditGameTextModal } from './EditGameTextModal';
 import { EditGamePriceModal } from './EditGamePriceModal';
@@ -797,7 +796,7 @@ export const GameInfo = ({
       />
       {showFullscreenAvatar && game.originalAvatar && (
         <FullscreenImageViewer
-          imageUrl={UrlConstructor.constructImageUrl(game.originalAvatar)}
+          imageUrl={game.originalAvatar || ''}
           onClose={() => setShowFullscreenAvatar(false)}
         />
       )}

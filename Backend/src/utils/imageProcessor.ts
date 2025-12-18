@@ -1,8 +1,7 @@
 import sharp from 'sharp';
 import path from 'path';
-import fs from 'fs';
 import crypto from 'crypto';
-import { URL } from 'url';
+import { S3Service } from '../services/s3.service';
 
 export interface ImageProcessingResult {
   originalPath: string;
@@ -14,20 +13,14 @@ export interface ImageProcessingResult {
 }
 
 export class ImageProcessor {
-  private static readonly UPLOAD_DIR = path.join(__dirname, '../../public/uploads');
-  
   static async processAvatar(imageBuffer: Buffer, filename: string): Promise<ImageProcessingResult> {
     const uniqueId = crypto.randomUUID();
     const ext = path.extname(filename);
     const baseName = `${uniqueId}${ext}`;
     const avatarName = `${uniqueId}_avatar.jpg`;
     
-    const originalPath = path.join(this.UPLOAD_DIR, 'avatars', 'originals', baseName);
-    const avatarPath = path.join(this.UPLOAD_DIR, 'avatars', 'circular', avatarName);
-    
-    // Ensure directories exist
-    await fs.promises.mkdir(path.dirname(originalPath), { recursive: true });
-    await fs.promises.mkdir(path.dirname(avatarPath), { recursive: true });
+    const originalS3Key = `uploads/avatars/originals/${baseName}`;
+    const avatarS3Key = `uploads/avatars/circular/${avatarName}`;
     
     // Process original image to max 1920x1920 while maintaining aspect ratio
     const originalImage = await sharp(imageBuffer)
@@ -38,8 +31,6 @@ export class ImageProcessor {
       .jpeg({ quality: 90 })
       .toBuffer();
     
-    await fs.promises.writeFile(originalPath, originalImage);
-    
     // Create square avatar 256x256 (NOT circular)
     const avatarImage = await sharp(imageBuffer)
       .resize(256, 256, {
@@ -49,14 +40,16 @@ export class ImageProcessor {
       .jpeg({ quality: 90 })
       .toBuffer();
     
-    await fs.promises.writeFile(avatarPath, avatarImage);
-    
     const originalMetadata = await sharp(originalImage).metadata();
     const avatarMetadata = await sharp(avatarImage).metadata();
     
+    // Upload to S3
+    const originalPath = await S3Service.uploadFile(originalImage, originalS3Key, 'image/jpeg');
+    const avatarPath = await S3Service.uploadFile(avatarImage, avatarS3Key, 'image/jpeg');
+    
     return {
-      originalPath: `/uploads/avatars/originals/${baseName}`,
-      avatarPath: `/uploads/avatars/circular/${avatarName}`,
+      originalPath,
+      avatarPath,
       originalSize: {
         width: originalMetadata.width || 0,
         height: originalMetadata.height || 0
@@ -74,15 +67,8 @@ export class ImageProcessor {
     const baseName = `${uniqueId}${ext}`;
     const thumbName = `${uniqueId}_thumb.jpg`;
     
-    const originalPath = path.join(this.UPLOAD_DIR, 'chat', 'originals', baseName);
-    const thumbnailPath = path.join(this.UPLOAD_DIR, 'chat', 'thumbnails', thumbName);
-    
-    // Ensure directories exist
-    await fs.promises.mkdir(path.dirname(originalPath), { recursive: true });
-    await fs.promises.mkdir(path.dirname(thumbnailPath), { recursive: true });
-    
-    // Save original image
-    await fs.promises.writeFile(originalPath, imageBuffer);
+    const originalS3Key = `uploads/chat/originals/${baseName}`;
+    const thumbnailS3Key = `uploads/chat/thumbnails/${thumbName}`;
     
     // Create thumbnail (512x512 max)
     const thumbnailBuffer = await sharp(imageBuffer)
@@ -94,14 +80,21 @@ export class ImageProcessor {
       .jpeg({ quality: 85 })
       .toBuffer();
     
-    await fs.promises.writeFile(thumbnailPath, thumbnailBuffer);
-    
     const originalMetadata = await sharp(imageBuffer).metadata();
     const thumbnailMetadata = await sharp(thumbnailBuffer).metadata();
     
+    // Determine content type for original
+    const contentType = filename.toLowerCase().endsWith('.png') ? 'image/png' : 
+                       filename.toLowerCase().endsWith('.gif') ? 'image/gif' :
+                       filename.toLowerCase().endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+    
+    // Upload to S3
+    const originalPath = await S3Service.uploadFile(imageBuffer, originalS3Key, contentType);
+    const thumbnailPath = await S3Service.uploadFile(thumbnailBuffer, thumbnailS3Key, 'image/jpeg');
+    
     return {
-      originalPath: `/uploads/chat/originals/${baseName}`,
-      thumbnailPath: `/uploads/chat/thumbnails/${thumbName}`,
+      originalPath,
+      thumbnailPath,
       originalSize: {
         width: originalMetadata.width || 0,
         height: originalMetadata.height || 0
@@ -117,17 +110,10 @@ export class ImageProcessor {
     const uniqueId = crypto.randomUUID();
     const ext = path.extname(filename);
     const baseName = `${uniqueId}${ext}`;
-    const thumbName = `${uniqueId}_thumb${ext}`;
+    const thumbName = `${uniqueId}_thumb.jpg`;
     
-    const originalPath = path.join(this.UPLOAD_DIR, 'games', 'originals', baseName);
-    const thumbnailPath = path.join(this.UPLOAD_DIR, 'games', 'thumbnails', thumbName);
-    
-    // Ensure directories exist
-    await fs.promises.mkdir(path.dirname(originalPath), { recursive: true });
-    await fs.promises.mkdir(path.dirname(thumbnailPath), { recursive: true });
-    
-    // Save original image
-    await fs.promises.writeFile(originalPath, imageBuffer);
+    const originalS3Key = `uploads/games/originals/${baseName}`;
+    const thumbnailS3Key = `uploads/games/thumbnails/${thumbName}`;
     
     // Create thumbnail (512x512 max)
     const thumbnailBuffer = await sharp(imageBuffer)
@@ -139,14 +125,21 @@ export class ImageProcessor {
       .jpeg({ quality: 85 })
       .toBuffer();
     
-    await fs.promises.writeFile(thumbnailPath, thumbnailBuffer);
-    
     const originalMetadata = await sharp(imageBuffer).metadata();
     const thumbnailMetadata = await sharp(thumbnailBuffer).metadata();
     
+    // Determine content type for original
+    const contentType = filename.toLowerCase().endsWith('.png') ? 'image/png' : 
+                       filename.toLowerCase().endsWith('.gif') ? 'image/gif' :
+                       filename.toLowerCase().endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+    
+    // Upload to S3
+    const originalPath = await S3Service.uploadFile(imageBuffer, originalS3Key, contentType);
+    const thumbnailPath = await S3Service.uploadFile(thumbnailBuffer, thumbnailS3Key, 'image/jpeg');
+    
     return {
-      originalPath: `/uploads/games/originals/${baseName}`,
-      thumbnailPath: `/uploads/games/thumbnails/${thumbName}`,
+      originalPath,
+      thumbnailPath,
       originalSize: {
         width: originalMetadata.width || 0,
         height: originalMetadata.height || 0
@@ -163,25 +156,17 @@ export class ImageProcessor {
     const ext = path.extname(filename);
     const baseName = `${uniqueId}${ext}`;
     
-    const filePath = path.join(this.UPLOAD_DIR, 'documents', baseName);
+    const fileS3Key = `uploads/documents/${baseName}`;
     
-    // Ensure directory exists
-    await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-    
-    // Save document
-    await fs.promises.writeFile(filePath, fileBuffer);
+    // Upload document to S3
+    const filePath = await S3Service.uploadFile(fileBuffer, fileS3Key, mimeType);
     
     let thumbnailPath: string | undefined;
     
-    // Create thumbnail for PDFs and images
-    if (mimeType === 'application/pdf') {
-      // For PDFs, we could use pdf-poppler or similar to extract first page as image
-      // For now, we'll skip thumbnail generation for PDFs
-    } else if (mimeType.startsWith('image/')) {
+    // Create thumbnail for images
+    if (mimeType.startsWith('image/')) {
       const thumbName = `${uniqueId}_thumb.jpg`;
-      const thumbnailPathFull = path.join(this.UPLOAD_DIR, 'documents', 'thumbnails', thumbName);
-      
-      await fs.promises.mkdir(path.dirname(thumbnailPathFull), { recursive: true });
+      const thumbnailS3Key = `uploads/documents/thumbnails/${thumbName}`;
       
       const thumbnailBuffer = await sharp(fileBuffer)
         .rotate()
@@ -192,34 +177,19 @@ export class ImageProcessor {
         .jpeg({ quality: 85 })
         .toBuffer();
       
-      await fs.promises.writeFile(thumbnailPathFull, thumbnailBuffer);
-      thumbnailPath = `/uploads/documents/thumbnails/${thumbName}`;
+      thumbnailPath = await S3Service.uploadFile(thumbnailBuffer, thumbnailS3Key, 'image/jpeg');
     }
     
     return {
-      filePath: `/uploads/documents/${baseName}`,
+      filePath,
       thumbnailPath
     };
   }
   
   static async deleteFile(filePath: string): Promise<boolean> {
     try {
-      // Extract the relative path from the URL if it's a full URL
-      let relativePath = filePath;
-      if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
-        // Extract path after the domain
-        const url = new URL(filePath);
-        relativePath = url.pathname;
-      }
-      
-      // Remove /uploads/ prefix if present
-      if (relativePath.startsWith('/uploads/')) {
-        relativePath = relativePath.substring('/uploads/'.length);
-      }
-      
-      const fullPath = path.join(this.UPLOAD_DIR, relativePath);
-      await fs.promises.unlink(fullPath);
-      return true;
+      const s3Key = S3Service.extractS3Key(filePath);
+      return await S3Service.deleteFile(s3Key);
     } catch (error) {
       console.error(`Error deleting file ${filePath}:`, error);
       return false;
