@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronRight, Trash2, Plus } from 'lucide-react';
 import { Round } from '@/types/gameResults';
 import { User, Court } from '@/types';
@@ -147,7 +146,7 @@ export const RoundCard = ({
     return (
       <>
         {matchesContent}
-        {showDeleteConfirmation && typeof document !== 'undefined' && createPortal(
+        {showDeleteConfirmation && (
           <ConfirmationModal
             isOpen={showDeleteConfirmation}
             title={t('gameResults.deleteRound')}
@@ -158,8 +157,7 @@ export const RoundCard = ({
             confirmVariant="danger"
             onConfirm={onRemoveRound}
             onClose={() => setShowDeleteConfirmation(false)}
-          />,
-          document.body
+          />
         )}
       </>
     );
@@ -205,7 +203,7 @@ export const RoundCard = ({
         </div>
       )}
 
-      {showDeleteConfirmation && typeof document !== 'undefined' && createPortal(
+      {showDeleteConfirmation && (
         <ConfirmationModal
           isOpen={showDeleteConfirmation}
           title={t('gameResults.deleteRound')}
@@ -216,8 +214,7 @@ export const RoundCard = ({
           confirmVariant="danger"
           onConfirm={onRemoveRound}
           onClose={() => setShowDeleteConfirmation(false)}
-        />,
-        document.body
+        />
       )}
     </div>
   );

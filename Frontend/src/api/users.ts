@@ -179,5 +179,10 @@ export const usersApi = {
     });
     return response.data;
   },
+
+  deleteUser: async () => {
+    const response = await api.delete<ApiResponse<{ message: string }>>('/users/profile');
+    return response.data;
+  },
 };
 

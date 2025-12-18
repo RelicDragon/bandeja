@@ -5,6 +5,7 @@ import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
+import { config } from '../../config/env';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const user = await prisma.user.findUnique({
@@ -100,6 +101,73 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     data: {
       ...user,
     },
+  });
+});
+
+export const deleteUser = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) {
+    throw new ApiError(401, 'User ID is required');
+  }
+
+  const userId = req.userId;
+  const deletedAvatarUrl = `${config.aws.cloudFrontDomain}/uploads/avatars/DeletedUser.png`;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      phone: true,
+      email: true,
+      telegramId: true,
+      telegramUsername: true,
+      firstName: true,
+      lastName: true,
+      avatar: true,
+      originalAvatar: true,
+      passwordHash: true,
+      currentCityId: true,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  await prisma.deletedUser.create({
+    data: {
+      originalUserId: userId,
+      phone: user.phone,
+      email: user.email,
+      telegramId: user.telegramId,
+      telegramUsername: user.telegramUsername,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      originalAvatar: user.originalAvatar,
+      passwordHash: user.passwordHash,
+      currentCityId: user.currentCityId,
+    },
+  });
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      phone: null,
+      email: null,
+      telegramId: null,
+      telegramUsername: null,
+      firstName: '###DELETED',
+      lastName: null,
+      passwordHash: null,
+      currentCityId: null,
+      isActive: false,
+      avatar: deletedAvatarUrl,
+      originalAvatar: deletedAvatarUrl,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: 'User deleted successfully',
   });
 });
 

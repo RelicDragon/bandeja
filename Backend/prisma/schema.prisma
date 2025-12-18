@@ -996,6 +996,25 @@ model PushToken {
   @@index([token])
 }
 
+model DeletedUser {
+  id                String       @id @default(cuid())
+  originalUserId    String
+  phone             String?
+  email             String?
+  telegramId        String?
+  telegramUsername  String?
+  firstName         String?
+  lastName          String?
+  avatar            String?
+  originalAvatar    String?
+  passwordHash      String?
+  currentCityId     String?
+  deletedAt         DateTime     @default(now())
+
+  @@index([originalUserId])
+  @@index([deletedAt])
+}
+
 enum PushPlatform {
   IOS
   ANDROID

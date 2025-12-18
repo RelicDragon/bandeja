@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AnimatePresence } from 'framer-motion';
-import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal, WalletModal, NotificationSettingsModal } from '@/components';
+import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal, WalletModal, NotificationSettingsModal, ConfirmationModal } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
 import { City, Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2 } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2 } from 'lucide-react';
 import { hasValidUsername } from '@/utils/userValidation';
 
 export const ProfileContent = () => {
@@ -39,6 +39,8 @@ export const ProfileContent = () => {
   const [showLundaModal, setShowLundaModal] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [lundaStatus, setLundaStatus] = useState<{
     hasCookie: boolean;
@@ -247,6 +249,19 @@ export const ProfileContent = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleDeleteUser = async () => {
+    try {
+      setIsDeletingUser(true);
+      await usersApi.deleteUser();
+      toast.success(t('profile.userDeleted') || 'Account deleted successfully');
+      logout();
+      navigate('/login');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || t('errors.generic'));
+      setIsDeletingUser(false);
+    }
   };
 
   const handleAvatarUpload = async (avatarFile: File, originalFile: File) => {
@@ -719,6 +734,17 @@ export const ProfileContent = () => {
             </Button>
           </div>
         </Card>
+
+        <div className="text-center pt-4">
+          <button
+            onClick={() => setShowDeleteUserModal(true)}
+            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors underline text-sm inline-flex items-center gap-1"
+            disabled={isDeletingUser}
+          >
+            <Trash2 size={14} />
+            {t('profile.deleteUser')}
+          </button>
+        </div>
           </>
         )}
 
@@ -810,6 +836,17 @@ export const ProfileContent = () => {
         onClose={() => setShowNotificationModal(false)}
         user={user}
         onUpdate={updateUser}
+      />
+
+      <ConfirmationModal
+        isOpen={showDeleteUserModal}
+        onClose={() => setShowDeleteUserModal(false)}
+        onConfirm={handleDeleteUser}
+        title={t('profile.deleteUserTitle')}
+        message={t('profile.deleteUserMessage')}
+        confirmText={t('profile.deleteUserConfirm')}
+        cancelText={t('common.cancel')}
+        confirmVariant="danger"
       />
 
       <div className="mt-8 text-center text-xs text-gray-500 dark:text-gray-400">

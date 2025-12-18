@@ -50,5 +50,7 @@ router.post(
   userController.trackUserInteraction
 );
 
+router.delete('/profile', authenticate, userController.deleteUser);
+
 export default router;
 

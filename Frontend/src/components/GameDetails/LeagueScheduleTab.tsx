@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -368,21 +367,19 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           onUpdated={fetchRounds}
         />
       )}
-      {isClient && roundPendingDeletion &&
-        createPortal(
-          <ConfirmationModal
-            isOpen={!!roundPendingDeletion}
-            title={t('gameDetails.deleteRound')}
-            message={t('gameDetails.deleteRoundConfirmation')}
-            highlightedText={`${t('gameDetails.round')} ${roundPendingDeletion.orderIndex + 1}`}
-            confirmText={t('common.delete')}
-            cancelText={t('common.cancel')}
-            confirmVariant="danger"
-            onConfirm={() => handleDeleteRound(roundPendingDeletion.id)}
-            onClose={() => setRoundPendingDeletion(null)}
-          />,
-          document.body
-        )}
+      {isClient && roundPendingDeletion && (
+        <ConfirmationModal
+          isOpen={!!roundPendingDeletion}
+          title={t('gameDetails.deleteRound')}
+          message={t('gameDetails.deleteRoundConfirmation')}
+          highlightedText={`${t('gameDetails.round')} ${roundPendingDeletion.orderIndex + 1}`}
+          confirmText={t('common.delete')}
+          cancelText={t('common.cancel')}
+          confirmVariant="danger"
+          onConfirm={() => handleDeleteRound(roundPendingDeletion.id)}
+          onClose={() => setRoundPendingDeletion(null)}
+        />
+      )}
     </div>
   );
 };

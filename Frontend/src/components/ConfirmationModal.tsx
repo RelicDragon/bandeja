@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components';
 import { X, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -45,7 +46,7 @@ export const ConfirmationModal = ({
     onClose();
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -54,7 +55,8 @@ export const ConfirmationModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          style={{ pointerEvents: 'auto' }}
         >
           <motion.div
             key="backdrop"
@@ -64,6 +66,7 @@ export const ConfirmationModal = ({
             transition={{ duration: 0.3 }}
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={onClose}
+            style={{ pointerEvents: 'auto' }}
           />
           <motion.div
             key="modal-content"
@@ -73,6 +76,7 @@ export const ConfirmationModal = ({
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-700 z-10"
             onClick={(e) => e.stopPropagation()}
+            style={{ pointerEvents: 'auto' }}
           >
             <div className="flex flex-col text-center">
               <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center mx-auto mb-4">
@@ -122,6 +126,7 @@ export const ConfirmationModal = ({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };

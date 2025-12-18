@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { isCapacitor } from '@/utils/capacitor';
+import { processDeletedUsers } from '@/utils/deletedUserHandler';
 
 const getBaseURL = () => {
   if (isCapacitor()) {
@@ -39,7 +40,12 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data) {
+      response.data = processDeletedUsers(response.data);
+    }
+    return response;
+  },
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';

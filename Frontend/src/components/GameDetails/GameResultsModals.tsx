@@ -147,8 +147,8 @@ export const GameResultsModals = ({
     );
   }
 
-  if (modal.type === 'restart' && typeof document !== 'undefined') {
-    return createPortal(
+  if (modal.type === 'restart') {
+    return (
       <ConfirmationModal
         isOpen={true}
         title={getRestartTitle(currentGame, t)}
@@ -158,13 +158,12 @@ export const GameResultsModals = ({
         confirmVariant="danger"
         onConfirm={onRestart}
         onClose={onClose}
-      />,
-      document.body
+      />
     );
   }
 
-  if (modal.type === 'finish' && typeof document !== 'undefined') {
-    return createPortal(
+  if (modal.type === 'finish') {
+    return (
       <ConfirmationModal
         isOpen={true}
         title={getFinishTitle(currentGame, t)}
@@ -174,13 +173,12 @@ export const GameResultsModals = ({
         confirmVariant="primary"
         onConfirm={onFinish}
         onClose={onClose}
-      />,
-      document.body
+      />
     );
   }
 
-  if (modal.type === 'edit' && typeof document !== 'undefined') {
-    return createPortal(
+  if (modal.type === 'edit') {
+    return (
       <ConfirmationModal
         isOpen={true}
         title={getEditTitle(currentGame, t)}
@@ -190,8 +188,7 @@ export const GameResultsModals = ({
         confirmVariant="danger"
         onConfirm={onEdit}
         onClose={onClose}
-      />,
-      document.body
+      />
     );
   }
 
