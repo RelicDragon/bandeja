@@ -64,3 +64,4 @@ export const monitorAuthPersistence = (): void => {
     backupAuth();
   });
 };
+
