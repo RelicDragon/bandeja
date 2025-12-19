@@ -1,6 +1,6 @@
-const CACHE_VERSION = Date.now();
-const CACHE_NAME = `bandeja-v${CACHE_VERSION}`;
-const RUNTIME_CACHE = `bandeja-runtime-v${CACHE_VERSION}`;
+const CACHE_VERSION = 'v2';
+const CACHE_NAME = `bandeja-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `bandeja-runtime-${CACHE_VERSION}`;
 
 const urlsToCache = [
   '/',

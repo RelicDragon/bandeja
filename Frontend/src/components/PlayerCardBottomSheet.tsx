@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, Beer, Star, ArrowLeft, Send, Wallet, MessageCircle } from 'lucide-react';
+import { X, Beer, Star, ArrowLeft, Send, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
@@ -14,7 +14,6 @@ import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { GamesStatsSection } from './GamesStatsSection';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
-import { transactionsApi } from '@/api/transactions';
 import toast from 'react-hot-toast';
 
 interface PlayerCardBottomSheetProps {
@@ -34,7 +33,6 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [showAvatarView, setShowAvatarView] = useState(false);
   const [showLevelView, setShowLevelView] = useState(false);
   const [showSendMoneyModal, setShowSendMoneyModal] = useState(false);
-  const [walletBalance, setWalletBalance] = useState<number>(0);
   const [startingChat, setStartingChat] = useState(false);
   const [gamesStatsTab, setGamesStatsTab] = useState<'30' | '90' | 'all'>('30');
   const [isClosingViaBack, setIsClosingViaBack] = useState(false);
@@ -80,12 +78,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const [statsResponse, walletResponse] = await Promise.all([
-          usersApi.getUserStats(playerId),
-          transactionsApi.getWallet(),
-        ]);
+        const statsResponse = await usersApi.getUserStats(playerId);
         setStats(statsResponse.data);
-        setWalletBalance(walletResponse.data.wallet || 0);
       } catch (error) {
         console.error('Failed to fetch user stats:', error);
       } finally {
@@ -302,7 +296,42 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                 </button>
               </>
             ) : (
-              <div className="flex gap-2 ml-auto">
+              <div className="flex gap-2 items-center ml-auto">
+            {stats && !isCurrentUser && (
+              <>
+                {(() => {
+                  const getTelegramUrl = () => {
+                    if (stats.user.telegramUsername) {
+                      return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
+                    }
+                    if (stats.user.telegramId) {
+                      return `tg://user?id=${stats.user.telegramId}`;
+                    }
+                    return null;
+                  };
+                  const telegramUrl = getTelegramUrl();
+                  const hasTelegram = !!(stats.user.telegramId || stats.user.telegramUsername);
+                  
+                  return hasTelegram && telegramUrl ? (
+                    <button
+                      onClick={() => window.open(telegramUrl, '_blank')}
+                      className="px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center gap-1.5"
+                      title={t('playerCard.openTelegramChat')}
+                    >
+                      <Send size={16} />
+                    </button>
+                  ) : null;
+                })()}
+                <button
+                  onClick={handleStartChat}
+                  disabled={startingChat}
+                  className="px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  title={t('nav.chat')}
+                >
+                  <MessageCircle size={16} />
+                </button>
+              </>
+            )}
             {stats && !isCurrentUser && (
               <button
                 onClick={handleToggleFavorite}
@@ -366,17 +395,12 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                     <PlayerCardContent 
                       stats={stats} 
                       t={t} 
-                      isCurrentUser={isCurrentUser}
-                      walletBalance={walletBalance}
-                      startingChat={startingChat}
                       onAvatarClick={() => {
                         if (stats.user.originalAvatar) {
                           setShowAvatarView(true);
                         }
                       }}
                       onLevelClick={() => setShowLevelView(true)}
-                      onSendMoneyClick={() => setShowSendMoneyModal(true)}
-                      onStartChat={handleStartChat}
                       gamesStatsTab={gamesStatsTab}
                       onGamesStatsTabChange={setGamesStatsTab}
                     />
@@ -405,34 +429,16 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
 interface PlayerCardContentProps {
   stats: UserStats;
   t: (key: string) => string;
-  isCurrentUser: boolean;
-  walletBalance: number;
-  startingChat: boolean;
   onAvatarClick: () => void;
   onLevelClick: () => void;
-  onSendMoneyClick: () => void;
-  onStartChat: () => void;
   gamesStatsTab: '30' | '90' | 'all';
   onGamesStatsTabChange: (tab: '30' | '90' | 'all') => void;
 }
 
-const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, startingChat, onAvatarClick, onLevelClick, onSendMoneyClick, onStartChat, gamesStatsTab, onGamesStatsTabChange }: PlayerCardContentProps) => {
+const PlayerCardContent = ({ stats, t, onAvatarClick, onLevelClick, gamesStatsTab, onGamesStatsTabChange }: PlayerCardContentProps) => {
   const { user } = stats;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
-
-  const getTelegramUrl = () => {
-    if (user.telegramUsername) {
-      return `https://t.me/${user.telegramUsername.replace('@', '')}`;
-    }
-    if (user.telegramId) {
-      return `tg://user?id=${user.telegramId}`;
-    }
-    return null;
-  };
-
-  const telegramUrl = getTelegramUrl();
-  const hasTelegram = !!(user.telegramId || user.telegramUsername);
 
   return (
     <motion.div
@@ -574,35 +580,6 @@ const PlayerCardContent = ({ stats, t, isCurrentUser, walletBalance, startingCha
         </div>
       </div>
 
-      {!isCurrentUser && (
-        <div className="mt-6 space-y-3">
-          <button
-            onClick={onStartChat}
-            disabled={startingChat}
-            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
-          >
-            <MessageCircle size={20} />
-            {startingChat ? t('common.loading') : t('playerCard.openChat')}
-          </button>
-          {hasTelegram && telegramUrl && (
-            <button
-              onClick={() => window.open(telegramUrl, '_blank')}
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
-            >
-              <Send size={20} />
-              {t('playerCard.openTelegramChat')}
-            </button>
-          )}
-          <button
-            onClick={onSendMoneyClick}
-            disabled={walletBalance === 0}
-            className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
-          >
-            <Wallet size={20} />
-            {t('wallet.sendCoins') || 'Send Coins'}
-          </button>
-        </div>
-      )}
     </motion.div>
   );
 };

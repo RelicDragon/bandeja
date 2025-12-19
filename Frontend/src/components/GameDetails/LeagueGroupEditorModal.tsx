@@ -468,7 +468,7 @@ export const LeagueGroupEditorModal = ({
                   </div>
 
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <div className="relative flex-1" ref={(el) => (dropdownRefs.current[group.id] = el)}>
+                    <div className="relative flex-1" ref={(el) => { dropdownRefs.current[group.id] = el; }}>
                       <button
                         type="button"
                         onClick={() => setOpenDropdown(openDropdown === group.id ? null : group.id)}

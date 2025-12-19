@@ -8,7 +8,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ['dist', 'eslint.config.js', 'ios/**', 'public/sw.js'],
+    ignores: ['dist', 'eslint.config.js', 'ios/**', 'public/sw.js', 'public/eula/**'],
   },
   {
     files: ['**/*.{ts,tsx}'],

@@ -29,7 +29,7 @@ interface GameStartSectionProps {
   onTimeSelect: (time: string) => void;
   onDurationChange: (duration: number) => void;
   entityType: EntityType;
-  dateInputRef: RefObject<HTMLInputElement>;
+  dateInputRef: RefObject<HTMLInputElement | null>;
   compact?: boolean;
 }
 

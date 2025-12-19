@@ -15,7 +15,7 @@ interface UnifiedMessageMenuProps {
   onReactionSelect: (messageId: string, emoji: string) => void;
   onReactionRemove: (messageId: string) => void;
   onClose: () => void;
-  messageElementRef: React.RefObject<HTMLDivElement>;
+  messageElementRef: React.RefObject<HTMLDivElement | null>;
   onDeleteStart?: (messageId: string) => void;
 }
 

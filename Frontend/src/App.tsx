@@ -24,6 +24,7 @@ import { useHeaderStore } from './store/headerStore';
 import { isCapacitor, isIOS, isAndroid } from './utils/capacitor';
 import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerUtils';
 import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
+import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersistence';
 import './i18n/config';
 
 function AppContent() {
@@ -36,6 +37,9 @@ function AppContent() {
   const isOnline = useNetworkStore((state) => state.isOnline);
 
   useEffect(() => {
+    restoreAuthIfNeeded();
+    monitorAuthPersistence();
+    
     if (isCapacitor()) {
       document.body.classList.add('capacitor-app');
       if (isIOS()) {
@@ -76,10 +80,9 @@ function AppContent() {
             clearTimeout(timeout);
             
             if (!response.ok) {
-              console.warn('Service worker file not found, clearing...');
+              console.warn('Service worker file not found, unregistering...');
               await unregisterServiceWorkers();
               await clearAllCaches();
-              window.location.reload();
             }
           }
         } catch (error) {

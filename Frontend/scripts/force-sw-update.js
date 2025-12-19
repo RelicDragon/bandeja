@@ -15,29 +15,12 @@ try {
   const buildTimestamp = Date.now();
   const swContent = readFileSync(swPath, 'utf-8');
   
-  let updatedContent = swContent;
-  
-  if (swContent.includes('Date.now()')) {
-    updatedContent = swContent.replace(
-      /const CACHE_VERSION\s*=\s*Date\.now\(\);?/g,
-      `const CACHE_VERSION = ${buildTimestamp};`
-    );
-    
-    if (updatedContent === swContent) {
-      updatedContent = swContent.replace(
-        /CACHE_VERSION\s*=\s*Date\.now\(\)/g,
-        `CACHE_VERSION = ${buildTimestamp}`
-      );
-    }
-  }
-  
-  if (updatedContent === swContent || !updatedContent.includes(String(buildTimestamp))) {
-    const buildComment = `\n// Build timestamp: ${buildTimestamp}`;
-    updatedContent = swContent.trimEnd() + buildComment;
-  }
+  const buildComment = `\n// Build: ${buildTimestamp}\n// Note: CACHE_VERSION is managed manually. Update it in sw.js when you need to force cache refresh.`;
+  const updatedContent = swContent.trimEnd() + buildComment;
   
   writeFileSync(swPath, updatedContent, 'utf-8');
-  console.log(`✓ Service worker updated with build timestamp: ${buildTimestamp}`);
+  console.log(`✓ Service worker build timestamp added: ${buildTimestamp}`);
+  console.log('✓ To force users to clear cache, manually increment CACHE_VERSION in sw.js (e.g., v1 -> v2)');
 } catch (error) {
   console.error('✗ Failed to update service worker:', error.message);
   process.exit(1);

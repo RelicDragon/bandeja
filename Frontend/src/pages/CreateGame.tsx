@@ -296,7 +296,7 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
     }
   };
 
-  const scrollToAndHighlightError = (ref: React.RefObject<HTMLDivElement>) => {
+  const scrollToAndHighlightError = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) {
       ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       ref.current.classList.add('error-bounce');

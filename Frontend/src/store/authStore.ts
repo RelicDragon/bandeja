@@ -20,10 +20,24 @@ export const useAuthStore = create<AuthState>((set) => {
   try {
     const userStr = localStorage.getItem('user');
     const tokenStr = localStorage.getItem('token');
-    savedUser = userStr ? JSON.parse(userStr) : null;
-    savedToken = tokenStr;
+    
+    if (tokenStr) {
+      savedToken = tokenStr;
+      console.log('Token loaded from localStorage');
+    }
+    
+    if (userStr) {
+      savedUser = JSON.parse(userStr);
+      console.log('User loaded from localStorage');
+    }
   } catch (error) {
     console.error('Error loading auth from localStorage:', error);
+    try {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+    } catch (cleanupError) {
+      console.error('Error cleaning up corrupted localStorage:', cleanupError);
+    }
   }
 
   return {
@@ -33,9 +47,19 @@ export const useAuthStore = create<AuthState>((set) => {
     isInitializing: true,
     setAuth: (user, token) => {
       try {
-        localStorage.setItem('user', JSON.stringify(user));
+        const userJson = JSON.stringify(user);
+        localStorage.setItem('user', userJson);
         localStorage.setItem('token', token);
         set({ user, token, isAuthenticated: true });
+        console.log('Auth saved to localStorage');
+        
+        setTimeout(() => {
+          const verifyUser = localStorage.getItem('user');
+          const verifyToken = localStorage.getItem('token');
+          if (!verifyUser || !verifyToken) {
+            console.error('localStorage verification failed - data not persisted');
+          }
+        }, 100);
       } catch (error) {
         console.error('Error saving auth to localStorage:', error);
       }

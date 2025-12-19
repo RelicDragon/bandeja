@@ -88,7 +88,7 @@ export const Register = () => {
 
   const scrollToFirstError = () => {
     const errorFields = ['firstName', 'lastName', 'gender', 'phone', 'password', 'passwordConfirm', 'email', 'eula'];
-    const refs: Record<string, React.RefObject<HTMLDivElement>> = {
+    const refs: Record<string, React.RefObject<HTMLDivElement | null>> = {
       firstName: firstNameRef,
       lastName: lastNameRef,
       gender: genderRef,

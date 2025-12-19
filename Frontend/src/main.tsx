@@ -4,6 +4,8 @@ import './index.css';
 import { setupCapacitor } from './utils/capacitorSetup';
 import { isCapacitor } from './utils/capacitor';
 
+const CACHE_VERSION = 'v1';
+
 setupCapacitor();
 
 // Only use service worker in web browsers, not in Capacitor apps
@@ -17,9 +19,17 @@ if ('serviceWorker' in navigator && !isCapacitor()) {
           const newWorker = registration.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('New service worker available, reloading...');
-                window.location.reload();
+              if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                console.log('New service worker activated');
+                if (caches) {
+                  caches.keys().then((names) => {
+                    names.forEach((name) => {
+                      if (!name.includes(CACHE_VERSION)) {
+                        caches.delete(name);
+                      }
+                    });
+                  });
+                }
               }
             });
           }
