@@ -1056,11 +1056,30 @@
       "copy": "Copiar",
       "details": "Detalles",
       "delete": "Eliminar",
+      "report": "Reportar",
       "copyMessage": "Copiar mensaje",
       "deleteMessage": "Eliminar mensaje",
       "replyTo": "Responder a {{name}}",
       "readBy": "Leído por",
       "back": "Atrás"
+    },
+    "report": {
+      "title": "Reportar Mensaje",
+      "description": "¿Por qué estás reportando este mensaje?",
+      "descriptionLabel": "Por favor describe el problema",
+      "descriptionPlaceholder": "Describe por qué estás reportando este mensaje...",
+      "selectReason": "Por favor selecciona una razón",
+      "descriptionRequired": "La descripción es requerida cuando se selecciona 'Otro'",
+      "submit": "Reportar",
+      "success": "Mensaje reportado exitosamente",
+      "error": "Error al reportar el mensaje",
+      "reasons": {
+        "SPAM": "Spam",
+        "HARASSMENT": "Acoso",
+        "INAPPROPRIATE_CONTENT": "Contenido Inapropiado",
+        "FAKE_INFORMATION": "Información Falsa",
+        "OTHER": "Otro"
+      }
     },
     "reply": {
       "replyingTo": "Respondiendo a {{name}}",

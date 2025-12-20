@@ -25,7 +25,8 @@ import {
   getBugMessages,
   getBugUnreadCount,
   getBugsUnreadCounts,
-  markAllBugMessagesAsRead
+  markAllBugMessagesAsRead,
+  reportMessage
 } from '../controllers/chat.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -112,6 +113,16 @@ router.post(
     body('bugIds.*').notEmpty().withMessage('Bug ID cannot be empty')
   ]),
   getBugsUnreadCounts
+);
+
+router.post(
+  '/messages/:messageId/report',
+  validate([
+    param('messageId').notEmpty().withMessage('Message ID is required'),
+    body('reason').isIn(['SPAM', 'HARASSMENT', 'INAPPROPRIATE_CONTENT', 'FAKE_INFORMATION', 'OTHER']).withMessage('Invalid reason'),
+    body('description').optional().isString().withMessage('Description must be a string')
+  ]),
+  reportMessage
 );
 
 export default router;

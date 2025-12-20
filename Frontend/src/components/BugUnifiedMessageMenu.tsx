@@ -4,6 +4,7 @@ import { ChatMessage } from '@/api/chat';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
 import { REACTION_EMOJIS, formatFullDateTime, getUserDisplayName, getUserInitials } from '@/utils/messageMenuUtils';
+import { Flag } from 'lucide-react';
 
 interface BugUnifiedMessageMenuProps {
   message: ChatMessage;
@@ -17,6 +18,7 @@ interface BugUnifiedMessageMenuProps {
   onClose: () => void;
   messageElementRef: React.RefObject<HTMLDivElement | null>;
   onDeleteStart?: (messageId: string) => void;
+  onReport?: (message: ChatMessage) => void;
 }
 
 export const BugUnifiedMessageMenu: React.FC<BugUnifiedMessageMenuProps> = ({
@@ -31,6 +33,7 @@ export const BugUnifiedMessageMenu: React.FC<BugUnifiedMessageMenuProps> = ({
   onClose,
   messageElementRef,
   onDeleteStart,
+  onReport,
 }) => {
   const { t } = useTranslation();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -113,6 +116,13 @@ export const BugUnifiedMessageMenu: React.FC<BugUnifiedMessageMenuProps> = ({
 
   const handleCopy = () => {
     onCopy(message);
+    onClose();
+  };
+
+  const handleReport = () => {
+    if (onReport) {
+      onReport(message);
+    }
     onClose();
   };
 
@@ -332,7 +342,17 @@ export const BugUnifiedMessageMenu: React.FC<BugUnifiedMessageMenuProps> = ({
               </svg>
               <span>{t('chat.contextMenu.copy')}</span>
             </button>
-
+            
+            {!isOwnMessage && onReport && (
+              <button
+                onClick={handleReport}
+                className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3"
+              >
+                <Flag className="w-4 h-4" />
+                <span>{t('chat.contextMenu.report')}</span>
+              </button>
+            )}
+            
             {isOwnMessage && (
               <button
                 onClick={handleDelete}

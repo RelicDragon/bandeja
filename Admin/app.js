@@ -182,6 +182,9 @@ async function loadPageData(page) {
             backToCenters();
             loadClubs();
             break;
+        case 'reports':
+            loadMessageReports();
+            break;
         case 'logs':
             if (!isStreamActive) {
                 if (logsData.length === 0) {
@@ -872,6 +875,110 @@ window.acceptInvite = acceptInvite;
 window.declineInvite = declineInvite;
 window.refreshInvites = refreshInvites;
 window.acceptAllInvites = acceptAllInvites;
+
+let reportStatusFilter = '';
+
+function handleReportStatusFilter() {
+    reportStatusFilter = document.getElementById('reportStatusFilter').value;
+    loadMessageReports();
+}
+
+async function loadMessageReports() {
+    try {
+        const queryParams = reportStatusFilter ? `?status=${reportStatusFilter}` : '';
+        const response = await apiRequest(`/admin/message-reports${queryParams}`);
+        if (response.success) {
+            renderReportsTable(response.data);
+        }
+    } catch (error) {
+        console.error('Failed to load message reports:', error);
+    }
+}
+
+function renderReportsTable(reports) {
+    const tbody = document.getElementById('reportsTableBody');
+    if (reports.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No reported messages found.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = reports.map(report => {
+        const reporterName = `${report.reporter?.firstName || ''} ${report.reporter?.lastName || ''}`.trim() || report.reporter?.phone || 'Unknown';
+        const senderName = report.message?.sender ? 
+            `${report.message.sender.firstName || ''} ${report.message.sender.lastName || ''}`.trim() || report.message.sender.phone || 'Unknown' :
+            'System';
+        const messageContent = report.message?.content || '[Media message]';
+        const reasonLabels = {
+            'SPAM': 'Spam',
+            'HARASSMENT': 'Harassment',
+            'INAPPROPRIATE_CONTENT': 'Inappropriate Content',
+            'FAKE_INFORMATION': 'Fake Information',
+            'OTHER': 'Other'
+        };
+        const statusLabels = {
+            'PENDING': 'Pending',
+            'REVIEWED': 'Reviewed',
+            'RESOLVED': 'Resolved',
+            'DISMISSED': 'Dismissed'
+        };
+        const statusBadges = {
+            'PENDING': 'badge-warning',
+            'REVIEWED': 'badge-info',
+            'RESOLVED': 'badge-success',
+            'DISMISSED': 'badge-secondary'
+        };
+        
+        return `
+            <tr>
+                <td>${formatDate(report.createdAt)}</td>
+                <td>${reporterName}</td>
+                <td>${senderName}</td>
+                <td class="message-cell" style="max-width: 300px; word-wrap: break-word;">${messageContent}</td>
+                <td>${reasonLabels[report.reason] || report.reason}</td>
+                <td class="message-cell" style="max-width: 200px; word-wrap: break-word;">${report.description || '-'}</td>
+                <td>
+                    <span class="badge ${statusBadges[report.status] || 'badge-secondary'}">
+                        ${statusLabels[report.status] || report.status}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        ${report.status === 'PENDING' ? `
+                            <button class="btn-small btn-success" onclick="updateReportStatus('${report.id}', 'REVIEWED')">Review</button>
+                            <button class="btn-small btn-info" onclick="updateReportStatus('${report.id}', 'RESOLVED')">Resolve</button>
+                            <button class="btn-small btn-secondary" onclick="updateReportStatus('${report.id}', 'DISMISSED')">Dismiss</button>
+                        ` : ''}
+                        ${report.status === 'REVIEWED' ? `
+                            <button class="btn-small btn-info" onclick="updateReportStatus('${report.id}', 'RESOLVED')">Resolve</button>
+                            <button class="btn-small btn-secondary" onclick="updateReportStatus('${report.id}', 'DISMISSED')">Dismiss</button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function updateReportStatus(reportId, status) {
+    if (!confirm(`Are you sure you want to update this report status to ${status}?`)) {
+        return;
+    }
+    
+    try {
+        await apiRequest(`/admin/message-reports/${reportId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+        });
+        loadMessageReports();
+    } catch (error) {
+        console.error('Failed to update report status:', error);
+        alert('Failed to update report status: ' + (error.message || 'Unknown error'));
+    }
+}
+
+window.handleReportStatusFilter = handleReportStatusFilter;
+window.loadMessageReports = loadMessageReports;
+window.updateReportStatus = updateReportStatus;
 
 document.addEventListener('DOMContentLoaded', () => {
     const savedToken = localStorage.getItem('adminToken');

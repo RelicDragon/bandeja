@@ -257,4 +257,9 @@ export const chatApi = {
     }
     throw new Error(`Unsupported chat context type: ${chatContextType}`);
   },
+
+  reportMessage: async (messageId: string, data: { reason: string; description?: string }) => {
+    const response = await api.post<ApiResponse<any>>(`/chat/messages/${messageId}/report`, data);
+    return response.data;
+  },
 };

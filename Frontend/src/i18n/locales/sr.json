@@ -1065,11 +1065,30 @@
       "copy": "Копирај",
       "details": "Детаљи",
       "delete": "Обриши",
+      "report": "Пријави",
       "copyMessage": "Копирај поруку",
       "deleteMessage": "Обриши поруку",
       "replyTo": "Одговори {{name}}",
       "readBy": "Прочитано",
       "back": "Назад"
+    },
+    "report": {
+      "title": "Пријави поруку",
+      "description": "Зашто пријављујете ову поруку?",
+      "descriptionLabel": "Молимо опишите проблем",
+      "descriptionPlaceholder": "Опишите зашто пријављујете ову поруку...",
+      "selectReason": "Молимо изаберите разлог",
+      "descriptionRequired": "Опис је обавезан када се изабере 'Остало'",
+      "submit": "Пријави",
+      "success": "Порука је успешно пријављена",
+      "error": "Грешка при пријављивању поруке",
+      "reasons": {
+        "SPAM": "Спам",
+        "HARASSMENT": "Узнемиравање",
+        "INAPPROPRIATE_CONTENT": "Неприкладан садржај",
+        "FAKE_INFORMATION": "Лажне информације",
+        "OTHER": "Остало"
+      }
     },
     "reply": {
       "replyingTo": "Одговарам {{name}}",

@@ -49,6 +49,7 @@
                 <li><a href="#" data-page="invites" class="nav-link">📨 Invites</a></li>
                 <li><a href="#" data-page="cities" class="nav-link">🌆 Cities</a></li>
                 <li><a href="#" data-page="clubs" class="nav-link">🏢 Clubs</a></li>
+                <li><a href="#" data-page="reports" class="nav-link">🚨 Reports</a></li>
                 <li><a href="#" data-page="logs" class="nav-link">📋 Logs</a></li>
             </ul>
             <button id="logoutBtn" class="btn-logout">Logout</button>
@@ -269,6 +270,40 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <div id="reportsPage" class="content-page">
+                <div class="page-header">
+                    <h1>Reported Messages</h1>
+                    <div class="reports-controls">
+                        <select id="reportStatusFilter" onchange="handleReportStatusFilter()">
+                            <option value="">All Status</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="REVIEWED">Reviewed</option>
+                            <option value="RESOLVED">Resolved</option>
+                            <option value="DISMISSED">Dismissed</option>
+                        </select>
+                        <button class="btn-secondary" onclick="loadMessageReports()">Refresh</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="reportsTable">
+                        <thead>
+                            <tr>
+                                <th>Reported At</th>
+                                <th>Reporter</th>
+                                <th>Message Sender</th>
+                                <th>Message Content</th>
+                                <th>Reason</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsTableBody">
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

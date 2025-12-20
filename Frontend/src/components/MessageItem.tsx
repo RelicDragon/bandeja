@@ -9,6 +9,7 @@ import { formatDate } from '@/utils/dateFormat';
 import { PlayerCardBottomSheet } from './PlayerCardBottomSheet';
 import { parseSystemMessage, useSystemMessageTranslation } from '@/utils/systemMessages';
 import { FullscreenImageViewer } from './FullscreenImageViewer';
+import { ReportMessageModal } from './ReportMessageModal';
 
 interface ContextMenuState {
   isOpen: boolean;
@@ -48,6 +49,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPlayerCard, setShowPlayerCard] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [reportMessage, setReportMessage] = useState<ChatMessage | null>(null);
   const isOwnMessage = message.senderId === user?.id;
   const isSystemMessage = !message.senderId;
   const { observeMessage, unobserveMessage } = useMessageReadTracking();
@@ -489,6 +491,15 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           onClose={onCloseContextMenu}
           messageElementRef={messageRef}
           onDeleteStart={handleDeleteStart}
+          onReport={(msg) => setReportMessage(msg)}
+        />
+      )}
+
+      {reportMessage && (
+        <ReportMessageModal
+          isOpen={!!reportMessage}
+          message={reportMessage}
+          onClose={() => setReportMessage(null)}
         />
       )}
       

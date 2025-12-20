@@ -78,6 +78,7 @@ model User {
   sendPushDirectMessages  Boolean              @default(true)
   sendPushReminders       Boolean              @default(true)
   pushTokens              PushToken[]
+  messageReports          MessageReport[]      @relation("MessageReportReporter")
 
   @@index([phone])
   @@index([telegramId])
@@ -518,6 +519,7 @@ model ChatMessage {
   sender          User?                @relation(fields: [senderId], references: [id], onDelete: Cascade)
   reactions       MessageReaction[]
   readReceipts    MessageReadReceipt[]
+  reports         MessageReport[]
 
   @@index([chatContextType, contextId])
   @@index([gameId])
@@ -1019,4 +1021,38 @@ enum PushPlatform {
   IOS
   ANDROID
   WEB
+}
+
+model MessageReport {
+  id          String            @id @default(cuid())
+  messageId   String
+  reporterId  String
+  reason      MessageReportReason
+  description String?
+  status      MessageReportStatus @default(PENDING)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  message     ChatMessage        @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  reporter    User               @relation("MessageReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, reporterId])
+  @@index([messageId])
+  @@index([reporterId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum MessageReportReason {
+  SPAM
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  FAKE_INFORMATION
+  OTHER
+}
+
+enum MessageReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
 }

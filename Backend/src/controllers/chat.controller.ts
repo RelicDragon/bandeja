@@ -9,6 +9,7 @@ import { ReactionService } from '../services/chat/reaction.service';
 import { ReadReceiptService } from '../services/chat/readReceipt.service';
 import { SystemMessageService } from '../services/chat/systemMessage.service';
 import { UserChatService } from '../services/chat/userChat.service';
+import { MessageReportService } from '../services/chat/messageReport.service';
 import prisma from '../config/database';
 
 export const createSystemMessage = async (contextId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC, chatContextType: ChatContextType = ChatContextType.GAME) => {
@@ -538,5 +539,35 @@ export const markAllBugMessagesAsRead = asyncHandler(async (req: AuthRequest, re
   res.json({
     success: true,
     data: result
+  });
+});
+
+export const reportMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { messageId } = req.params;
+  const { reason, description } = req.body;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!reason) {
+    throw new ApiError(400, 'Reason is required');
+  }
+
+  const validReasons = ['SPAM', 'HARASSMENT', 'INAPPROPRIATE_CONTENT', 'FAKE_INFORMATION', 'OTHER'];
+  if (!validReasons.includes(reason)) {
+    throw new ApiError(400, 'Invalid reason');
+  }
+
+  if (reason === 'OTHER' && !description?.trim()) {
+    throw new ApiError(400, 'Description is required when reason is OTHER');
+  }
+
+  const report = await MessageReportService.reportMessage(messageId, userId, reason, description);
+
+  res.status(201).json({
+    success: true,
+    data: report
   });
 });

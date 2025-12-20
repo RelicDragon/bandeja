@@ -1063,11 +1063,30 @@
       "copy": "Copy",
       "details": "Details",
       "delete": "Delete",
+      "report": "Report",
       "copyMessage": "Copy message",
       "deleteMessage": "Delete message",
       "replyTo": "Reply to {{name}}",
       "readBy": "Read by",
       "back": "Back"
+    },
+    "report": {
+      "title": "Report Message",
+      "description": "Why are you reporting this message?",
+      "descriptionLabel": "Please describe the issue",
+      "descriptionPlaceholder": "Describe why you are reporting this message...",
+      "selectReason": "Please select a reason",
+      "descriptionRequired": "Description is required when selecting 'Other'",
+      "submit": "Report",
+      "success": "Message reported successfully",
+      "error": "Failed to report message",
+      "reasons": {
+        "SPAM": "Spam",
+        "HARASSMENT": "Harassment",
+        "INAPPROPRIATE_CONTENT": "Inappropriate Content",
+        "FAKE_INFORMATION": "Fake Information",
+        "OTHER": "Other"
+      }
     },
     "reply": {
       "replyingTo": "Replying to {{name}}",

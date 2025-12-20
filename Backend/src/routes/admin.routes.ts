@@ -29,6 +29,8 @@ import {
   cleanupOldFiles,
   getStorageStats,
   emitCoins,
+  getAllMessageReports,
+  updateMessageReportStatus,
 } from '../controllers/admin.controller';
 
 const router = Router();
@@ -69,5 +71,8 @@ router.post('/media/cleanup', requireAdmin, cleanupOldFiles);
 router.get('/media/stats', requireAdmin, getStorageStats);
 
 router.post('/users/:userId/emit-coins', requireAdmin, emitCoins);
+
+router.get('/message-reports', requireAdmin, getAllMessageReports);
+router.patch('/message-reports/:reportId/status', requireAdmin, updateMessageReportStatus);
 
 export default router;

@@ -8,7 +8,8 @@ import { AdminMediaService } from '../services/admin/media.service';
 import { AdminStatsService } from '../services/admin/stats.service';
 import { AdminUsersService } from '../services/admin/users.service';
 import { TransactionService } from '../services/transaction.service';
-import { TransactionType } from '@prisma/client';
+import { TransactionType, MessageReportStatus } from '@prisma/client';
+import { AdminMessageReportsService } from '../services/admin/messageReports.service';
 
 // Auth endpoints
 export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
@@ -512,5 +513,37 @@ export const emitCoins = asyncHandler(async (req: AuthRequest, res: Response) =>
   res.status(201).json({
     success: true,
     data: transaction,
+  });
+});
+
+export const getAllMessageReports = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { status } = req.query;
+
+  const reports = await AdminMessageReportsService.getAllReports(
+    status ? (status as MessageReportStatus) : undefined
+  );
+
+  res.json({
+    success: true,
+    data: reports,
+  });
+});
+
+export const updateMessageReportStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { reportId } = req.params;
+  const { status } = req.body;
+
+  if (!status || !Object.values(MessageReportStatus).includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Valid status is required',
+    });
+  }
+
+  const report = await AdminMessageReportsService.updateReportStatus(reportId, status as MessageReportStatus);
+
+  res.json({
+    success: true,
+    data: report,
   });
 });
