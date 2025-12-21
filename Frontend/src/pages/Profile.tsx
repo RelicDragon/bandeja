@@ -680,9 +680,9 @@ export const ProfileContent = () => {
               </label>
               <Select
                 options={[
-                  { value: 'light', label: t('profile.light'), icon: <Sun size={16} /> },
-                  { value: 'dark', label: t('profile.dark'), icon: <Moon size={16} /> },
-                  { value: 'system', label: t('profile.system'), icon: <Monitor size={16} /> },
+                  { value: 'light', label: t('profile.light'), icon: <Sun size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'dark', label: t('profile.dark'), icon: <Moon size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'system', label: t('profile.system'), icon: <Monitor size={16} className="text-gray-900 dark:text-white" /> },
                 ]}
                 value={theme}
                 onChange={(value) => setTheme(value as 'light' | 'dark' | 'system')}
@@ -695,10 +695,10 @@ export const ProfileContent = () => {
               </label>
               <Select
                 options={[
-                  { value: 'en', label: 'English', icon: <Globe size={16} /> },
-                  { value: 'ru', label: 'Русский', icon: <Globe size={16} /> },
-                  { value: 'sr', label: 'Српски', icon: <Globe size={16} /> },
-                  { value: 'es', label: 'Español', icon: <Globe size={16} /> },
+                  { value: 'en', label: 'English', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'ru', label: 'Русский', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'sr', label: 'Српски', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'es', label: 'Español', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
                 ]}
                 value={i18n.language}
                 onChange={handleChangeLanguage}

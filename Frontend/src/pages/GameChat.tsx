@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { chatApi, ChatMessage, ChatContextType, UserChat as UserChatType } from '@/api/chat';
@@ -54,6 +54,9 @@ export const GameChat: React.FC = () => {
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [isLeavingChat, setIsLeavingChat] = useState(false);
   const [isBlockedByUser, setIsBlockedByUser] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const sendingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isSendingRef = useRef(false);
 
   const userParticipant = game?.participants.find(p => p.userId === user?.id);
   const isParticipant = !!userParticipant;
@@ -215,6 +218,19 @@ export const GameChat: React.FC = () => {
     setReplyTo(null);
   }, []);
 
+  const handleMessageSent = useCallback(() => {
+    if (sendingTimeoutRef.current) {
+      clearTimeout(sendingTimeoutRef.current);
+    }
+    isSendingRef.current = true;
+    setIsSendingMessage(true);
+    sendingTimeoutRef.current = setTimeout(() => {
+      isSendingRef.current = false;
+      setIsSendingMessage(false);
+      sendingTimeoutRef.current = null;
+    }, 1000);
+  }, []);
+
   const handleScrollToMessage = useCallback((messageId: string) => {
     const messageElement = document.getElementById(`message-${messageId}`);
     if (messageElement) {
@@ -366,7 +382,18 @@ export const GameChat: React.FC = () => {
 
   const handleNewMessage = useCallback((message: ChatMessage) => {
     console.log('[GameChat] New message received:', message, 'contextType:', contextType, 'currentChatType:', currentChatType);
-    if (contextType === 'USER' || message.chatType === currentChatType) {
+    
+    if (isSendingRef.current) {
+      if (sendingTimeoutRef.current) {
+        clearTimeout(sendingTimeoutRef.current);
+        sendingTimeoutRef.current = null;
+      }
+      isSendingRef.current = false;
+      setIsSendingMessage(false);
+    }
+    
+    const matchesChatType = contextType === 'USER' || message.chatType === currentChatType;
+    if (matchesChatType) {
       setMessages(prevMessages => {
         const exists = prevMessages.some(msg => msg.id === message.id);
         if (exists) {
@@ -798,18 +825,34 @@ export const GameChat: React.FC = () => {
             </div>
           </div>
         ) : canAccessChat ? (
-          <div className="animate-in slide-in-from-bottom-4 duration-300">
-            <MessageInput
-              gameId={contextType === 'GAME' ? id : undefined}
-              bugId={contextType === 'BUG' ? id : undefined}
-              userChatId={contextType === 'USER' ? id : undefined}
-              onMessageSent={() => {}}
-              disabled={false}
-              replyTo={replyTo}
-              onCancelReply={handleCancelReply}
-              onScrollToMessage={handleScrollToMessage}
-              chatType={currentChatType}
-            />
+          <div className="relative overflow-hidden">
+            <div 
+              className={`transition-transform duration-300 ease-in-out ${
+                isSendingMessage ? '-translate-y-full' : 'translate-y-0'
+              }`}
+            >
+              <MessageInput
+                gameId={contextType === 'GAME' ? id : undefined}
+                bugId={contextType === 'BUG' ? id : undefined}
+                userChatId={contextType === 'USER' ? id : undefined}
+                onMessageSent={handleMessageSent}
+                disabled={false}
+                replyTo={replyTo}
+                onCancelReply={handleCancelReply}
+                onScrollToMessage={handleScrollToMessage}
+                chatType={currentChatType}
+              />
+            </div>
+            <div 
+              className={`absolute inset-0 bg-white dark:bg-gray-800 p-4 flex items-center justify-center transition-transform duration-300 ease-in-out ${
+                isSendingMessage ? 'translate-y-0' : 'translate-y-full'
+              }`}
+            >
+              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm">{t('common.sending')}</span>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>

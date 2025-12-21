@@ -58,12 +58,15 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
   useEffect(() => {
     const fetchLastMessage = async () => {
       try {
-        const messages = await chatApi.getBugMessages(bug.id, 1, 10);
+        const messages = await chatApi.getBugMessages(bug.id, 1, 1);
         if (messages && messages.length > 0) {
-          setLastMessage(messages[messages.length - 1]);
+          setLastMessage(messages[0]);
+        } else {
+          setLastMessage(null);
         }
       } catch (error) {
-        // Silently fail if messages can't be loaded
+        console.error('Failed to fetch bug messages:', error);
+        setLastMessage(null);
       }
     };
 
@@ -195,20 +198,27 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
             {isExpanded ? bug.text : bug.text.length > 200 ? `${bug.text.substring(0, 100)}...` : bug.text}
           </div>
 
-          {lastMessage && lastMessage.sender && (
+          {lastMessage && (
             <div 
               onClick={handleOpenChat}
               className={`flex items-start gap-2 mb-2 p-2 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors ${isArchived ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-gray-50 dark:bg-gray-800/30'}`}
             >
-              <PlayerAvatar
-                player={lastMessage.sender}
-                extrasmall
-                showName={false}
-              />
+              {lastMessage.sender ? (
+                <PlayerAvatar
+                  player={lastMessage.sender}
+                  extrasmall
+                  showName={false}
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0" />
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`text-xs font-medium ${isArchived ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300'}`}>
-                    {lastMessage.sender.firstName} {lastMessage.sender.lastName}
+                    {lastMessage.sender 
+                      ? `${lastMessage.sender.firstName || ''} ${lastMessage.sender.lastName || ''}`.trim() || 'Unknown'
+                      : 'Unknown'
+                    }
                   </span>
                   <span className={`text-xs ${isArchived ? 'text-gray-400' : 'text-gray-500'}`}>
                     {formatRelativeTime(lastMessage.createdAt)}

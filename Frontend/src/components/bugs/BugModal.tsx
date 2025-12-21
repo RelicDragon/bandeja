@@ -74,10 +74,10 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
            right: 0,
            bottom: 0,
          }}>
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4"
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4"
            onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">{t('bug.addBug')}</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('bug.addBug')}</h2>
           <Button
             variant="ghost"
             size="sm"
@@ -90,13 +90,13 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
               {t('bug.type')}
             </label>
             <select
               value={bugType}
               onChange={(e) => setBugType(e.target.value as BugType)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {BUG_TYPE_VALUES.map((type) => (
                 <option key={type} value={type}>
@@ -107,18 +107,18 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
               {t('bug.description')}
             </label>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={t('bug.descriptionPlaceholder')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               rows={4}
               maxLength={1000}
             />
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {text.length}/1000
             </div>
           </div>
