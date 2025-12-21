@@ -1,17 +1,19 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, Beer, Star, ArrowLeft, Send, MessageCircle } from 'lucide-react';
+import { X, Beer, Star, ArrowLeft, Send, MessageCircle, Ban, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
 import { chatApi } from '@/api/chat';
+import { blockedUsersApi } from '@/api/blockedUsers';
 import { Loading } from './Loading';
 import { PlayerAvatarView } from './PlayerAvatarView';
 import { LevelHistoryView } from './LevelHistoryView';
 import { GenderIndicator } from './GenderIndicator';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { GamesStatsSection } from './GamesStatsSection';
+import { ConfirmationModal } from './ConfirmationModal';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import toast from 'react-hot-toast';
@@ -25,6 +27,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const updateUser = useAuthStore((state) => state.updateUser);
   const { addFavorite, removeFavorite } = useFavoritesStore();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +39,9 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [startingChat, setStartingChat] = useState(false);
   const [gamesStatsTab, setGamesStatsTab] = useState<'30' | '90' | 'all'>('30');
   const [isClosingViaBack, setIsClosingViaBack] = useState(false);
+  const [showBlockConfirmation, setShowBlockConfirmation] = useState(false);
+  const [blockingUser, setBlockingUser] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
   const isCurrentUser = playerId === user?.id;
 
   // Disable background scrolling and interactions when modal is open
@@ -80,6 +86,11 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         setLoading(true);
         const statsResponse = await usersApi.getUserStats(playerId);
         setStats(statsResponse.data);
+        
+        if (!isCurrentUser) {
+          const blocked = await blockedUsersApi.checkIfUserBlocked(playerId);
+          setIsBlocked(blocked);
+        }
       } catch (error) {
         console.error('Failed to fetch user stats:', error);
       } finally {
@@ -151,7 +162,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   };
 
   const handleToggleFavorite = async () => {
-    if (!playerId || !stats) return;
+    if (!playerId || !stats || isBlocked) return;
 
     try {
       if (stats.user.isFavorite) {
@@ -180,7 +191,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   };
 
   const handleStartChat = async () => {
-    if (!playerId || startingChat) return;
+    if (!playerId || startingChat || isBlocked) return;
 
     setStartingChat(true);
     try {
@@ -196,6 +207,37 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       setStartingChat(false);
+    }
+  };
+
+  const handleBlockUser = async () => {
+    if (!playerId || blockingUser) return;
+
+    setBlockingUser(true);
+    try {
+      if (isBlocked) {
+        await blockedUsersApi.unblockUser(playerId);
+        setIsBlocked(false);
+        toast.success(t('playerCard.userUnblocked') || 'User unblocked');
+      } else {
+        await blockedUsersApi.blockUser(playerId);
+        setIsBlocked(true);
+        toast.success(t('playerCard.userBlocked') || 'User blocked');
+        handleClose();
+      }
+      
+      try {
+        const profileResponse = await usersApi.getProfile();
+        updateUser(profileResponse.data);
+      } catch (error) {
+        console.error('Failed to refresh user profile after block/unblock:', error);
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setBlockingUser(false);
+      setShowBlockConfirmation(false);
     }
   };
 
@@ -298,6 +340,20 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
             ) : (
               <div className="flex gap-2 items-center ml-auto">
             {stats && !isCurrentUser && (
+              <button
+                onClick={isBlocked ? handleBlockUser : () => setShowBlockConfirmation(true)}
+                disabled={blockingUser}
+                className={`px-4 py-2 rounded-xl text-white transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                  isBlocked 
+                    ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' 
+                    : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
+                }`}
+                title={isBlocked ? t('playerCard.unblockUser') : t('playerCard.blockUser')}
+              >
+                {isBlocked ? <Check size={18} /> : <Ban size={18} className="scale-x-[-1]" />}
+              </button>
+            )}
+            {stats && !isCurrentUser && (
               <>
                 {(() => {
                   const getTelegramUrl = () => {
@@ -314,42 +370,56 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                   
                   return hasTelegram && telegramUrl ? (
                     <button
-                      onClick={() => window.open(telegramUrl, '_blank')}
-                      className="px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center gap-1.5"
-                      title={t('playerCard.openTelegramChat')}
+                      onClick={() => !isBlocked && window.open(telegramUrl, '_blank')}
+                      disabled={isBlocked}
+                      className={`px-4 py-2 rounded-xl text-white transition-all duration-200 flex items-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                        isBlocked
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg hover:scale-105 active:scale-95'
+                      }`}
+                      title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('playerCard.openTelegramChat')}
                     >
-                      <Send size={16} />
+                      <Send size={18} />
                     </button>
                   ) : null;
                 })()}
                 <button
                   onClick={handleStartChat}
-                  disabled={startingChat}
-                  className="px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                  title={t('nav.chat')}
+                  disabled={startingChat || isBlocked}
+                  className={`px-4 py-2 rounded-xl text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2 shadow-md ${
+                    isBlocked
+                      ? 'bg-gray-400'
+                      : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-lg hover:scale-105 active:scale-95'
+                  }`}
+                  title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('nav.chat')}
                 >
-                  <MessageCircle size={16} />
+                  <MessageCircle size={18} />
                 </button>
               </>
             )}
             {stats && !isCurrentUser && (
               <button
                 onClick={handleToggleFavorite}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                title={stats.user.isFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
+                disabled={isBlocked}
+                className={`p-2.5 rounded-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm transition-all duration-200 shadow-sm border border-gray-200/50 dark:border-gray-700/50 ${
+                  isBlocked
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'hover:bg-white dark:hover:bg-gray-800 hover:shadow-md hover:scale-105 active:scale-95'
+                }`}
+                title={isBlocked ? t('playerCard.userBlockedCannotFavorite') : (stats.user.isFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites'))}
               >
                 <Star
                   size={20}
                   className={stats.user.isFavorite
                     ? 'text-yellow-500 fill-yellow-500'
-                    : 'text-gray-400 hover:text-yellow-500'
+                    : 'text-gray-400 hover:text-yellow-500 transition-colors'
                   }
                 />
               </button>
             )}
             <button
               onClick={handleClose}
-              className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="p-2.5 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 border border-gray-200/50 dark:border-gray-700/50"
             >
               <X size={20} className="text-gray-600 dark:text-gray-300" />
             </button>
@@ -357,7 +427,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
             )}
           </div>
 
-          <div className="overflow-y-auto max-h-[calc(75vh-20px)]">
+          <div className="overflow-y-auto max-h-[calc(75vh-20px)] pt-4">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Loading />
@@ -395,6 +465,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                     <PlayerCardContent 
                       stats={stats} 
                       t={t} 
+                      isBlocked={isBlocked}
                       onAvatarClick={() => {
                         if (stats.user.originalAvatar) {
                           setShowAvatarView(true);
@@ -422,6 +493,19 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           }}
         />
       )}
+
+      {showBlockConfirmation && stats && !isBlocked && (
+        <ConfirmationModal
+          isOpen={showBlockConfirmation}
+          title={t('playerCard.blockUser')}
+          message={t('playerCard.blockUserConfirmation', { name: stats.user.firstName }) || `Are you sure you want to block ${stats.user.firstName}? You won't be able to see their messages or interact with them.`}
+          confirmText={t('playerCard.block')}
+          cancelText={t('common.cancel')}
+          confirmVariant="danger"
+          onConfirm={handleBlockUser}
+          onClose={() => setShowBlockConfirmation(false)}
+        />
+      )}
     </AnimatePresence>
   );
 };
@@ -429,13 +513,14 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
 interface PlayerCardContentProps {
   stats: UserStats;
   t: (key: string) => string;
+  isBlocked: boolean;
   onAvatarClick: () => void;
   onLevelClick: () => void;
   gamesStatsTab: '30' | '90' | 'all';
   onGamesStatsTabChange: (tab: '30' | '90' | 'all') => void;
 }
 
-const PlayerCardContent = ({ stats, t, onAvatarClick, onLevelClick, gamesStatsTab, onGamesStatsTabChange }: PlayerCardContentProps) => {
+const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, gamesStatsTab, onGamesStatsTabChange }: PlayerCardContentProps) => {
   const { user } = stats;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
@@ -447,7 +532,11 @@ const PlayerCardContent = ({ stats, t, onAvatarClick, onLevelClick, gamesStatsTa
       transition={{ delay: 0.1, duration: 0.3 }}
       className="p-6 space-y-6"
     >
-      <div className="relative h-48 bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl">
+      <div className={`relative h-48 rounded-2xl ${
+        isBlocked 
+          ? 'bg-gradient-to-br from-red-500 to-red-700 dark:from-red-600 dark:to-red-800' 
+          : 'bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800'
+      }`}>
         <div className="absolute inset-0 flex items-center justify-center gap-6">
           <div className="relative">
             {user.originalAvatar ? (
@@ -485,6 +574,11 @@ const PlayerCardContent = ({ stats, t, onAvatarClick, onLevelClick, gamesStatsTa
           <div className="text-left text-white">
             <h2 className="text-2xl font-bold">
               {user.firstName}
+              {isBlocked && (
+                <span className="ml-2 text-lg font-semibold opacity-90">
+                  ({t('playerCard.blocked') || 'Blocked'})
+                </span>
+              )}
             </h2>
             {user.lastName && (
               <h3 className="text-xl font-semibold">

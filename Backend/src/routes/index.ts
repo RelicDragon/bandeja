@@ -23,6 +23,7 @@ import transactionRoutes from './transaction.routes';
 import goodsRoutes from './goods.routes';
 import levelChangeRoutes from './levelChange.routes';
 import pushRoutes from './push.routes';
+import blockedUsersRoutes from './blockedUsers.routes';
 
 const router = Router();
 
@@ -50,6 +51,7 @@ router.use('/transactions', transactionRoutes);
 router.use('/goods', goodsRoutes);
 router.use('/level-changes', levelChangeRoutes);
 router.use('/push', pushRoutes);
+router.use('/blocked-users', blockedUsersRoutes);
 
 export default router;
 

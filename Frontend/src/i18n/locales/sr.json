@@ -477,7 +477,16 @@
     "last30Days": "30 Дана",
     "last90Days": "90 Дана",
     "allGames": "СВЕ",
-    "gamesLast90Days": "Последњих 90 Дана"
+    "gamesLast90Days": "Последњих 90 Дана",
+    "blockUser": "Блокирај корисника",
+    "blockUserConfirmation": "Да ли сте сигурни да желите да блокирате {{name}}? Нећете моћи да видите њихове поруке или да комуницирате са њима.",
+    "block": "Блокирај",
+    "blocked": "Блокиран",
+    "unblockUser": "Деблокирај корисника",
+    "userBlocked": "Корисник је блокиран",
+    "userUnblocked": "Корисник је деблокиран",
+    "userBlockedCannotChat": "Корисник је блокиран",
+    "userBlockedCannotFavorite": "Корисник је блокиран"
   },
   "contacts": {
     "searchPlaceholder": "Претражи контакте...",
@@ -499,6 +508,8 @@
     "system": "Систем",
     "city": "Тренутни град",
     "changeCity": "Промени град",
+    "blockedUsers": "Блокирани корисници",
+    "blockedOn": "Блокиран",
     "save": "Сачувај",
     "cancel": "Откажи",
     "saved": "Профил сачуван",
@@ -1141,6 +1152,7 @@
     "joinChatToSend": "Придружи се Ћаскању",
     "leave": "Напусти ћаскање",
     "leaveConfirmation": "Да ли сте сигурни да желите да напустите овај ћаскање?",
+    "blockedByUser": "Овај корисник вас је блокирао. Не можете му слати поруке.",
     "types": {
       "PUBLIC": "Општи",
       "PRIVATE": "Учесници",

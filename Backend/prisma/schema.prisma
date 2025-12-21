@@ -79,6 +79,8 @@ model User {
   sendPushReminders       Boolean              @default(true)
   pushTokens              PushToken[]
   messageReports          MessageReport[]      @relation("MessageReportReporter")
+  blockedUsers            BlockedUser[]         @relation("UserBlocked")
+  blockedBy               BlockedUser[]         @relation("UserBlockedBy")
 
   @@index([phone])
   @@index([telegramId])
@@ -582,6 +584,19 @@ model UserFavoriteUser {
   @@unique([userId, favoriteUserId])
   @@index([userId])
   @@index([favoriteUserId])
+}
+
+model BlockedUser {
+  id        String   @id @default(cuid())
+  userId    String
+  blockedUserId String
+  createdAt DateTime @default(now())
+  user      User     @relation("UserBlocked", fields: [userId], references: [id], onDelete: Cascade)
+  blockedUser User   @relation("UserBlockedBy", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, blockedUserId])
+  @@index([userId])
+  @@index([blockedUserId])
 }
 
 enum AuthProvider {

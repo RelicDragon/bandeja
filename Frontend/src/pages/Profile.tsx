@@ -6,6 +6,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal, WalletModal, NotificationSettingsModal, ConfirmationModal } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
+import { BlockedUsersSection } from '@/components/BlockedUsersSection';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
@@ -721,6 +722,10 @@ export const ProfileContent = () => {
             </Button>
           </div>
         </Card>
+
+        {user?.blockedUserIds && user.blockedUserIds.length > 0 && (
+          <BlockedUsersSection />
+        )}
 
         <Card>
           <div className="space-y-4">

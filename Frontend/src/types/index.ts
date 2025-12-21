@@ -55,6 +55,7 @@ export interface User {
   sendPushDirectMessages?: boolean;
   sendPushReminders?: boolean;
   wallet?: number;
+  blockedUserIds?: string[];
 }
 
 export interface City {

@@ -17,10 +17,20 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
     throw new ApiError(404, 'User not found');
   }
 
+  const blockedUsers = await prisma.blockedUser.findMany({
+    where: { userId: req.userId! },
+    select: {
+      blockedUserId: true,
+    },
+  });
+
+  const blockedUserIds = blockedUsers.map((block) => block.blockedUserId);
+
   res.json({
     success: true,
     data: {
       ...user,
+      blockedUserIds,
     },
   });
 });

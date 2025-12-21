@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { chatApi, ChatMessage, ChatContextType, UserChat as UserChatType } from '@/api/chat';
 import { gamesApi } from '@/api/games';
 import { bugsApi } from '@/api/bugs';
+import { blockedUsersApi } from '@/api/blockedUsers';
 import { Game, ChatType, Bug } from '@/types';
 import { MessageList } from '@/components/MessageList';
 import { MessageInput } from '@/components/MessageInput';
@@ -52,6 +53,7 @@ export const GameChat: React.FC = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [isLeavingChat, setIsLeavingChat] = useState(false);
+  const [isBlockedByUser, setIsBlockedByUser] = useState(false);
 
   const userParticipant = game?.participants.find(p => p.userId === user?.id);
   const isParticipant = !!userParticipant;
@@ -68,6 +70,7 @@ export const GameChat: React.FC = () => {
   const canAccessChat = contextType === 'USER' || (contextType === 'BUG' && canWriteBugChat) || isParticipant || hasPendingInvite || isGuest;
   const canViewPublicChat = contextType === 'USER' || contextType === 'BUG' || canAccessChat || game?.isPublic;
   const isCurrentUserGuest = game?.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying && participant.role !== 'OWNER' && participant.role !== 'ADMIN') ?? false;
+  const canWriteChat = canAccessChat && !isBlockedByUser;
 
   const loadContext = useCallback(async () => {
     if (!id) return null;
@@ -85,8 +88,30 @@ export const GameChat: React.FC = () => {
         if (!userChat) {
           const response = await chatApi.getUserChats();
           const foundChat = response.data?.find((c: UserChatType) => c.id === id);
-          if (foundChat) setUserChat(foundChat);
+          if (foundChat) {
+            setUserChat(foundChat);
+            const otherUserId = foundChat.user1Id === user?.id ? foundChat.user2Id : foundChat.user1Id;
+            if (otherUserId && user?.id) {
+              try {
+                const blockedBy = await blockedUsersApi.checkIfBlockedByUser(otherUserId);
+                setIsBlockedByUser(blockedBy);
+              } catch (error) {
+                console.error('Failed to check if blocked by user:', error);
+              }
+            }
+          }
           return foundChat;
+        }
+        if (userChat && user?.id) {
+          const otherUserId = userChat.user1Id === user.id ? userChat.user2Id : userChat.user1Id;
+          if (otherUserId) {
+            try {
+              const blockedBy = await blockedUsersApi.checkIfBlockedByUser(otherUserId);
+              setIsBlockedByUser(blockedBy);
+            } catch (error) {
+              console.error('Failed to check if blocked by user:', error);
+            }
+          }
         }
         return userChat;
       }
@@ -427,6 +452,18 @@ export const GameChat: React.FC = () => {
       
       const loadedContext = await loadContext();
       
+      if (contextType === 'USER' && userChat && user?.id) {
+        const otherUserId = userChat.user1Id === user.id ? userChat.user2Id : userChat.user1Id;
+        if (otherUserId) {
+          try {
+            const blockedBy = await blockedUsersApi.checkIfBlockedByUser(otherUserId);
+            setIsBlockedByUser(blockedBy);
+          } catch (error) {
+            console.error('Failed to check if blocked by user:', error);
+          }
+        }
+      }
+      
       if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
         if (currentChatType !== initialChatType) {
           await handleChatTypeChange(initialChatType);
@@ -755,7 +792,13 @@ export const GameChat: React.FC = () => {
 
       {!isInitialLoad && (
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 fixed bottom-0 right-0 left-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        {canAccessChat ? (
+        {isBlockedByUser && contextType === 'USER' ? (
+          <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+            <div className="text-sm text-center text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-3">
+              {t('chat.blockedByUser')}
+            </div>
+          </div>
+        ) : canAccessChat ? (
           <div className="animate-in slide-in-from-bottom-4 duration-300">
             <MessageInput
               gameId={contextType === 'GAME' ? id : undefined}

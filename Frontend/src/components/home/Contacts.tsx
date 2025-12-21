@@ -89,6 +89,8 @@ export const Contacts = () => {
   const contacts = useMemo(() => {
     if (loading) return [];
 
+    const blockedUserIds = user?.blockedUserIds || [];
+
     const chatMap = new Map<string, UserChat>();
     const unreadMap = new Map<string, number>();
     const playerMap = new Map<string, InvitablePlayer>();
@@ -109,6 +111,10 @@ export const Contacts = () => {
     const others: ContactItem[] = [];
 
     chatMap.forEach((chat, userId) => {
+      if (blockedUserIds.includes(userId)) {
+        return;
+      }
+
       const unreadCount = unreadMap.get(userId) || 0;
       const player = playerMap.get(userId);
       const favorite = favoriteUserIds.includes(userId);
@@ -141,7 +147,7 @@ export const Contacts = () => {
 
     if (!showChatFilter) {
       playerMap.forEach((player, userId) => {
-        if (processedUserIds.has(userId) || userId === user?.id) return;
+        if (processedUserIds.has(userId) || userId === user?.id || blockedUserIds.includes(userId)) return;
 
         const favorite = favoriteUserIds.includes(userId);
         const contact: ContactItem = {
@@ -190,7 +196,7 @@ export const Contacts = () => {
       ...favoriteNoUnread,
       ...others
     ];
-  }, [loading, userChats, userChatsUnreadCounts, allPlayers, user?.id, showChatFilter, favoriteUserIds]);
+  }, [loading, userChats, userChatsUnreadCounts, allPlayers, user?.id, user?.blockedUserIds, showChatFilter, favoriteUserIds]);
 
   const checkScrollPosition = () => {
     const container = carouselRef.current;

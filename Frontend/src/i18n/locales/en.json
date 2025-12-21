@@ -482,7 +482,16 @@
     "last30Days": "30 Days",
     "last90Days": "90 Days",
     "allGames": "ALL",
-    "gamesLast90Days": "Last 90 Days"
+    "gamesLast90Days": "Last 90 Days",
+    "blockUser": "Block User",
+    "blockUserConfirmation": "Are you sure you want to block {{name}}? You won't be able to see their messages or interact with them.",
+    "block": "Block",
+    "blocked": "Blocked",
+    "unblockUser": "Unblock User",
+    "userBlocked": "User blocked",
+    "userUnblocked": "User unblocked",
+    "userBlockedCannotChat": "User is blocked",
+    "userBlockedCannotFavorite": "User is blocked"
   },
   "contacts": {
     "searchPlaceholder": "Search contacts...",
@@ -504,6 +513,8 @@
     "system": "System",
     "city": "Current City",
     "changeCity": "Change City",
+    "blockedUsers": "Blocked Users",
+    "blockedOn": "Blocked on",
     "save": "Save",
     "cancel": "Cancel",
     "saved": "Profile saved",
@@ -1139,6 +1150,7 @@
     "joinChatToSend": "Join Chat",
     "leave": "Leave chat",
     "leaveConfirmation": "Are you sure you want to leave this chat?",
+    "blockedByUser": "This user has blocked you. You cannot send messages to them.",
     "types": {
       "PUBLIC": "General",
       "PRIVATE": "Participants",

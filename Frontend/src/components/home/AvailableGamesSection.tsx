@@ -109,6 +109,11 @@ export const AvailableGamesSection = ({
       return false;
     }
 
+    const gameOwner = game.participants.find((p: any) => p.role === 'OWNER');
+    if (gameOwner && user?.blockedUserIds?.includes(gameOwner.userId)) {
+      return false;
+    }
+
     const isPublic = game.isPublic;
     const isParticipant = user?.id && game.participants.some((p: any) => p.userId === user.id);
     
