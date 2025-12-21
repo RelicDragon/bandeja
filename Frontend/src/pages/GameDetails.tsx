@@ -166,7 +166,6 @@ export const GameDetailsContent = () => {
       winnerOfMatch: template.winnerOfMatch,
       winnerOfGame: template.winnerOfGame,
       matchGenerationType: template.matchGenerationType,
-      prohibitMatchesEditing: template.prohibitMatchesEditing ?? false,
       pointsPerWin: template.pointsPerWin ?? 0,
       pointsPerLoose: template.pointsPerLoose ?? 0,
       pointsPerTie: template.pointsPerTie ?? 0,

@@ -65,7 +65,6 @@ export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditG
         const template = applyGameTypeTemplate(gameType);
         updateData.winnerOfMatch = template.winnerOfMatch;
         updateData.matchGenerationType = template.matchGenerationType;
-        updateData.prohibitMatchesEditing = template.prohibitMatchesEditing ?? false;
         updateData.pointsPerWin = template.pointsPerWin ?? 0;
         updateData.pointsPerLoose = template.pointsPerLoose ?? 0;
         updateData.pointsPerTie = template.pointsPerTie ?? 0;

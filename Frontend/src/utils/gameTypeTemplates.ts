@@ -5,7 +5,6 @@ export interface GameTypeTemplate {
   winnerOfMatch: WinnerOfMatch;
   winnerOfGame: WinnerOfGame;
   matchGenerationType: MatchGenerationType;
-  prohibitMatchesEditing?: boolean;
   pointsPerWin?: number;
   pointsPerLoose?: number;
   pointsPerTie?: number;
