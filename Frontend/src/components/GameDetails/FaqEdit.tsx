@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, ConfirmationModal } from '@/components';
 import { faqApi, Faq } from '@/api/faq';
@@ -19,11 +19,7 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
   const [formData, setFormData] = useState({ question: '', answer: '' });
   const [faqToDelete, setFaqToDelete] = useState<Faq | null>(null);
 
-  useEffect(() => {
-    fetchFaqs();
-  }, [gameId]);
-
-  const fetchFaqs = async () => {
+  const fetchFaqs = useCallback(async () => {
     try {
       setLoading(true);
       const response = await faqApi.getGameFaqs(gameId);
@@ -36,7 +32,11 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [gameId, onFaqsChange, t]);
+
+  useEffect(() => {
+    fetchFaqs();
+  }, [fetchFaqs]);
 
   const handleCreate = () => {
     setIsCreating(true);

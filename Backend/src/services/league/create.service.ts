@@ -1,12 +1,8 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@prisma/client';
-import { calculateGameStatus } from '../../utils/gameStatus';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
-import { GameTeamService } from '../gameTeam.service';
-import { GameService } from '../game/game.service';
 import { getDistinctLeagueGroupColor } from './groupColors';
-import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { createLeagueGame } from './gameCreation.util';
 
 export class LeagueCreateService {

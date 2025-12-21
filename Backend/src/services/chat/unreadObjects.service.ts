@@ -281,10 +281,6 @@ export class UnreadObjectsService {
       });
 
       const participantBugIds = new Set(userBugParticipants.map(p => p.bugId));
-      const allBugIds = new Set([
-        ...userBugs.map(bug => bug.id),
-        ...participantBugIds
-      ]);
 
       const participantBugs = await prisma.bug.findMany({
         where: {

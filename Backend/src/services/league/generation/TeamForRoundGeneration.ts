@@ -272,11 +272,11 @@ export class TeamForRoundGeneration {
   private static selectTeamsForRound(
     participantIds: string[],
     availableTeams: TeamPair[],
-    playedTeammates: Set<string>
+    _playedTeammates: Set<string>
   ): TeamPair[] {
     const targetTeamCount = participantIds.length / 2;
     
-    const sortedTeams = [...availableTeams].sort((a, b) => {
+    const sortedTeams = [...availableTeams].sort((_a, _b) => {
       return Math.random() - 0.5;
     });
     

@@ -99,7 +99,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     };
 
     fetchStats();
-  }, [playerId]);
+  }, [playerId, isCurrentUser]);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);

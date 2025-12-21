@@ -141,7 +141,7 @@ export const EditLeagueGameTeamsModal = ({
 
     setTeam1Players(t1);
     setTeam2Players(t2);
-  }, [game.id, game.fixedTeams, game.participants, hasFixedTeams]);
+  }, [game.fixedTeams, game.participants, hasFixedTeams]);
 
   const fetchClubs = useCallback(async () => {
     try {
@@ -179,7 +179,7 @@ export const EditLeagueGameTeamsModal = ({
       const hoursDiff = differenceInHours(endDateTime, startDateTime);
       setDuration(hoursDiff || 2);
     }
-  }, [game.id, game.clubId, game.courtId, game.hasBookedCourt, game.startTime, game.endTime, clubs, setSelectedDate, setSelectedTime, setDuration]);
+  }, [game.clubId, game.courtId, game.hasBookedCourt, game.startTime, game.endTime, clubs, setSelectedDate, setSelectedTime, setDuration]);
 
   const gameIdRef = useRef<string | null>(null);
 

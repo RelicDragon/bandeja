@@ -126,7 +126,7 @@ export const GameChat: React.FC = () => {
     } finally {
       setIsLoadingContext(false);
     }
-  }, [id, contextType, navigate, userChat]);
+  }, [id, contextType, navigate, userChat, user?.id]);
 
   const loadMessages = useCallback(async (pageNum = 1, append = false) => {
     if (!id) return;
@@ -551,7 +551,7 @@ export const GameChat: React.FC = () => {
     };
     
     loadData();
-  }, [loadContext, loadMessages, id, user?.id, initialChatType, currentChatType, handleChatTypeChange, contextType]);
+  }, [loadContext, loadMessages, id, user?.id, initialChatType, currentChatType, handleChatTypeChange, contextType, userChat]);
 
   useEffect(() => {
     if (!id) return;

@@ -1,7 +1,7 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../utils/constants';
-import { canModifyResults, hasParentGamePermission } from '../utils/parentGamePermissions';
+import { canModifyResults } from '../utils/parentGamePermissions';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
 
 

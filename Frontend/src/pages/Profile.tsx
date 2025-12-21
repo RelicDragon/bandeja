@@ -66,7 +66,7 @@ export const ProfileContent = () => {
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
     }
-  }, [i18n.language, updateUser, t, user]);
+  }, [i18n.language, updateUser, t]);
 
   const debouncedUpdate = useCallback((updates: Partial<User>, skipValidation = false) => {
     if (updateTimeoutRef.current) {
