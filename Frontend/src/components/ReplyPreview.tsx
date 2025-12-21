@@ -42,7 +42,7 @@ export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
           <div className="text-xs text-green-600 dark:text-green-400 font-medium flex-shrink-0">
             {getSenderName()}:
           </div>
-          <div className="text-sm text-gray-700 dark:text-gray-200 break-words whitespace-pre-wrap min-w-0">
+          <div className="text-sm text-gray-700 dark:text-gray-100 break-words whitespace-pre-wrap min-w-0">
             {replyTo.content}
           </div>
         </div>

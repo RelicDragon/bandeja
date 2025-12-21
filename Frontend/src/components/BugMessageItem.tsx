@@ -366,7 +366,7 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
                         : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap break-words pr-12 pb-3">{message.content}</p>
+                    <p className={`text-sm whitespace-pre-wrap break-words pr-12 pb-3 ${isOwnMessage ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>{message.content}</p>
                     
                     {message.mediaUrls && message.mediaUrls.length > 0 && (
                       <div className="mt-2 space-y-2">
