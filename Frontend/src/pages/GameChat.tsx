@@ -57,6 +57,7 @@ export const GameChat: React.FC = () => {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const sendingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSendingRef = useRef(false);
+  const sendingStartTimeRef = useRef<number | null>(null);
 
   const userParticipant = game?.participants.find(p => p.userId === user?.id);
   const isParticipant = !!userParticipant;
@@ -223,12 +224,14 @@ export const GameChat: React.FC = () => {
       clearTimeout(sendingTimeoutRef.current);
     }
     isSendingRef.current = true;
+    sendingStartTimeRef.current = Date.now();
     setIsSendingMessage(true);
     sendingTimeoutRef.current = setTimeout(() => {
       isSendingRef.current = false;
+      sendingStartTimeRef.current = null;
       setIsSendingMessage(false);
       sendingTimeoutRef.current = null;
-    }, 1000);
+    }, 5000);
   }, []);
 
   const handleScrollToMessage = useCallback((messageId: string) => {
@@ -381,15 +384,28 @@ export const GameChat: React.FC = () => {
   }, [contextType, isParticipant, isPlayingParticipant, isAdminOrOwner, game?.status]);
 
   const handleNewMessage = useCallback((message: ChatMessage) => {
-    console.log('[GameChat] New message received:', message, 'contextType:', contextType, 'currentChatType:', currentChatType);
-    
-    if (isSendingRef.current) {
+    if (isSendingRef.current || message.senderId === user?.id) {
       if (sendingTimeoutRef.current) {
         clearTimeout(sendingTimeoutRef.current);
         sendingTimeoutRef.current = null;
       }
-      isSendingRef.current = false;
-      setIsSendingMessage(false);
+      
+      const minDisplayTime = 500;
+      const elapsedTime = sendingStartTimeRef.current ? Date.now() - sendingStartTimeRef.current : minDisplayTime;
+      const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
+      
+      if (remainingTime > 0) {
+        sendingTimeoutRef.current = setTimeout(() => {
+          isSendingRef.current = false;
+          sendingStartTimeRef.current = null;
+          setIsSendingMessage(false);
+          sendingTimeoutRef.current = null;
+        }, remainingTime);
+      } else {
+        isSendingRef.current = false;
+        sendingStartTimeRef.current = null;
+        setIsSendingMessage(false);
+      }
     }
     
     const matchesChatType = contextType === 'USER' || message.chatType === currentChatType;
@@ -397,16 +413,12 @@ export const GameChat: React.FC = () => {
       setMessages(prevMessages => {
         const exists = prevMessages.some(msg => msg.id === message.id);
         if (exists) {
-          console.log('[GameChat] Message already exists, skipping');
           return prevMessages;
         }
-        console.log('[GameChat] Adding new message to list');
         return [...prevMessages, message];
       });
-    } else {
-      console.log('[GameChat] Message not matching chat type, skipping');
     }
-  }, [contextType, currentChatType]);
+  }, [contextType, currentChatType, user?.id]);
 
   const handleMessageReaction = useCallback((reaction: any) => {
     if (reaction.action === 'removed') {

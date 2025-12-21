@@ -120,6 +120,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     if ((!message.trim() && selectedImages.length === 0) || isLoading || disabled) return;
 
     setIsLoading(true);
+    onMessageSent();
+    
     try {
       const { originalUrls, thumbnailUrls } = await uploadImages();
 
@@ -141,7 +143,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       setMessage('');
       setSelectedImages([]);
       onCancelReply?.();
-      onMessageSent();
     } catch (error) {
       console.error('Failed to send message:', error);
     } finally {
