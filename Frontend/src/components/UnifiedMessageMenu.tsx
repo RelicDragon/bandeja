@@ -58,12 +58,25 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       }
     };
 
+    const handleTouchStart = (event: TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        event.preventDefault();
+        onClose();
+      }
+    };
+
     document.addEventListener('click', handleClickOutside);
     document.addEventListener('keydown', handleEscape);
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
+    document.body.style.overflow = 'hidden';
+    document.body.style.pointerEvents = 'none';
 
     return () => {
       document.removeEventListener('click', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.body.style.overflow = '';
+      document.body.style.pointerEvents = '';
     };
   }, [onClose]);
 
@@ -211,8 +224,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     duplicate.style.position = 'fixed';
     duplicate.style.bottom = `${window.innerHeight - messageBottomPosition}px`;
     duplicate.style.left = '50%';
-    duplicate.style.transform = 'translateX(-50%) scale(0.5)';
-    duplicate.style.zIndex = '50';
+    duplicate.style.transform = 'translateX(0%) scale(0.5)';
+    duplicate.style.zIndex = '9999';
     duplicate.style.width = `${originalWidth}px`;
     duplicate.style.maxWidth = 'none';
     // Constrain height only to prevent overlap with menu - let it overflow upward if needed
@@ -266,7 +279,10 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   return (
     <>
       {/* Blur backdrop */}
-      <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" />
+      <div 
+        className="fixed inset-0 bg-black/30 backdrop-blur-md z-[9998] pointer-events-auto"
+        onClick={onClose}
+      />
 
       {/* Duplicate message overlay */}
       <div ref={duplicateRef} />
@@ -274,7 +290,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       {/* Context menu */}
       <div
         ref={menuRef}
-        className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50 min-w-[200px] max-w-[90vw] overflow-hidden"
+        className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-[9999] min-w-[200px] max-w-[90vw] overflow-hidden pointer-events-auto"
         style={{
           left: '50%',
           top: `${menuTop}px`,
