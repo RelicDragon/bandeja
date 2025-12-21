@@ -149,12 +149,17 @@ export const GameChat: React.FC = () => {
         setMessages(prev => [...response, ...prev]);
       } else {
         setMessages(response);
-        setTimeout(() => {
-          const messagesContainer = document.querySelector('.overflow-y-auto');
-          if (messagesContainer) {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-          }
-        }, 100);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const messagesContainer = document.querySelector('.overflow-y-auto');
+            if (messagesContainer) {
+              messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: 'smooth'
+              });
+            }
+          });
+        });
       }
       
       setHasMoreMessages(response.length === 50);
@@ -345,12 +350,17 @@ export const GameChat: React.FC = () => {
       setMessages(response);
       setHasMoreMessages(response.length === 50);
       
-      setTimeout(() => {
-        const messagesContainer = document.querySelector('.overflow-y-auto');
-        if (messagesContainer) {
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-      }, 100);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const messagesContainer = document.querySelector('.overflow-y-auto');
+          if (messagesContainer) {
+            messagesContainer.scrollTo({
+              top: messagesContainer.scrollHeight,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
     } catch (error) {
       console.error('Failed to load messages:', error);
     } finally {
@@ -598,6 +608,24 @@ export const GameChat: React.FC = () => {
       socketService.off(deletedEvent, handleMessageDeleted);
     };
   }, [id, contextType, handleNewMessage, handleMessageReaction, handleReadReceipt, handleMessageDeleted]);
+
+  useEffect(() => {
+    if (!isLoadingMessages && !isSwitchingChatType && !isLoadingMore && !isInitialLoad && messages.length > 0) {
+      const scrollToBottom = () => {
+        const messagesContainer = document.querySelector('.overflow-y-auto');
+        if (messagesContainer) {
+          messagesContainer.scrollTo({
+            top: messagesContainer.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      };
+      
+      requestAnimationFrame(() => {
+        requestAnimationFrame(scrollToBottom);
+      });
+    }
+  }, [isLoadingMessages, isSwitchingChatType, isLoadingMore, isInitialLoad, messages.length]);
 
   if (isLoadingContext) {
     return (

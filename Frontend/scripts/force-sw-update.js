@@ -20,7 +20,6 @@ try {
   
   writeFileSync(swPath, updatedContent, 'utf-8');
   console.log(`✓ Service worker build timestamp added: ${buildTimestamp}`);
-  console.log('✓ To force users to clear cache, manually increment CACHE_VERSION in sw.js (e.g., v1 -> v2)');
 } catch (error) {
   console.error('✗ Failed to update service worker:', error.message);
   process.exit(1);
