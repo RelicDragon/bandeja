@@ -2,19 +2,21 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Cropper from 'react-easy-crop';
 import { Button } from './Button';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { getCircularCroppedImg } from '../utils/cropUtils';
 
 interface AvatarCropModalProps {
   imageFile: File;
   onCrop: (avatarFile: File, originalFile: File) => void;
   onCancel: () => void;
+  isUploading?: boolean;
 }
 
 export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
   imageFile,
   onCrop,
   onCancel,
+  isUploading = false,
 }) => {
   const { t } = useTranslation();
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -128,10 +130,10 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
   }, [croppedAreaPixels, rotation, imageUrl, imageFile.name, onCrop]);
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && !isProcessing) {
+    if (e.target === e.currentTarget && !isProcessing && !isUploading) {
       onCancel();
     }
-  }, [isProcessing, onCancel]);
+  }, [isProcessing, isUploading, onCancel]);
 
   return (
     <div 
@@ -151,7 +153,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
         <div className="relative w-full h-full">
           <button
             onClick={onCancel}
-            disabled={isProcessing}
+            disabled={isProcessing || isUploading}
             className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={t('common.close')}
           >
@@ -187,19 +189,26 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
                 variant="secondary"
                 onClick={onCancel}
                 className="flex-1 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-sm"
-                disabled={isProcessing}
+                disabled={isProcessing || isUploading}
               >
                 {t('common.cancel')}
               </Button>
               <Button
                 onClick={handleCrop}
                 className="flex-1"
-                disabled={isProcessing || !croppedAreaPixels}
+                disabled={isProcessing || isUploading || !croppedAreaPixels}
               >
-                {isProcessing ? t('common.processing') : t('common.upload')}
+                {isProcessing ? t('common.processing') : isUploading ? t('common.uploading') : t('common.upload')}
               </Button>
             </div>
           </div>
+
+          {isUploading && (
+            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-[100] backdrop-blur-sm">
+              <Loader2 className="animate-spin h-12 w-12 text-white mb-4" />
+              <p className="text-white text-lg font-medium">{t('common.uploading') || 'Uploading avatar...'}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

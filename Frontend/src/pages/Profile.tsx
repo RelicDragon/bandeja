@@ -61,11 +61,12 @@ export const ProfileContent = () => {
         ...updates,
         language: updates.language ?? i18n.language,
       });
+      console.log(response.data);
       updateUser(response.data);
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
     }
-  }, [i18n.language, updateUser, t]);
+  }, [i18n.language, updateUser, t, user]);
 
   const debouncedUpdate = useCallback((updates: Partial<User>, skipValidation = false) => {
     if (updateTimeoutRef.current) {
