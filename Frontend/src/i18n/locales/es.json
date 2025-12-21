@@ -876,6 +876,7 @@
     "general": "General",
     "schedule": "Calendario",
     "standings": "Clasificación",
+    "faq": "FAQ",
     "round": "Ronda",
     "totalGames_one": "{{count}} partido",
     "totalGames_other": "{{count}} partidos",
@@ -1175,5 +1176,25 @@
     "transferTo": "A {{name}}",
     "transferFrom": "De {{name}}",
     "walletEmpty": "Tu billetera está vacía"
+  },
+  "faq": {
+    "noFaqs": "No hay preguntas disponibles",
+    "fetchError": "Error al cargar preguntas",
+    "fieldsRequired": "La pregunta y la respuesta son obligatorias",
+    "created": "Pregunta creada exitosamente",
+    "updated": "Pregunta actualizada exitosamente",
+    "saveError": "Error al guardar la pregunta",
+    "deleted": "Pregunta eliminada exitosamente",
+    "deleteError": "Error al eliminar la pregunta",
+    "reorderError": "Error al reordenar las preguntas",
+    "add": "Agregar Pregunta",
+    "question": "Pregunta",
+    "answer": "Respuesta",
+    "questionPlaceholder": "Ingrese la pregunta...",
+    "answerPlaceholder": "Ingrese la respuesta...",
+    "deleteTitle": "Eliminar Pregunta",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar esta pregunta?",
+    "moveUp": "Mover arriba",
+    "moveDown": "Mover abajo"
   }
 }

@@ -169,6 +169,16 @@ export interface GameOutcome {
   };
 }
 
+export interface Faq {
+  id: string;
+  gameId: string;
+  question: string;
+  answer: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Game {
   id: string;
   entityType: EntityType;
@@ -278,6 +288,7 @@ export interface Game {
       originalAvatar?: string | null;
     } | null;
   };
+  faqs?: Faq[];
   metadata?: Record<string, any>;
   resultsMeta?: {
     version?: number;

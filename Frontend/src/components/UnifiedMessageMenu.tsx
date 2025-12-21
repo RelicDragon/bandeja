@@ -42,7 +42,6 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const [showDetails, setShowDetails] = useState(false);
   const [menuHeight, setMenuHeight] = useState<number>(0);
   const [detailsHeight, setDetailsHeight] = useState<number>(0);
-  const [messageHeight, setMessageHeight] = useState<number>(0);
   const [isInitialRender, setIsInitialRender] = useState(true);
   const duplicateRef = useRef<HTMLDivElement>(null);
 
@@ -81,12 +80,6 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
         const height = detailsRef.current.scrollHeight + 10;
         if (height > 10) {
           setDetailsHeight(height);
-        }
-      }
-      if (messageElementRef.current) {
-        const height = messageElementRef.current.scrollHeight;
-        if (height > 0) {
-          setMessageHeight(height);
         }
       }
     };
@@ -186,14 +179,19 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     }
   };
 
-  // Calculate center position for both message and menu - only when we have proper measurements
-  const effectiveMessageHeight = messageHeight || 100; // Fallback height
-  const effectiveMenuHeight = showDetails ? (detailsHeight || 200) : (menuHeight || 150); // Fallback heights
+  // Calculate center position for menu - ensure it's centered and within bounds
+  const effectiveMenuHeight = showDetails ? (detailsHeight || 200) : (menuHeight || 150);
   
-  const totalHeight = effectiveMessageHeight + effectiveMenuHeight + 20; // 20px gap
-  const centerTop = (window.innerHeight - totalHeight) / 2;
-  const messageTop = Math.max(20, centerTop); // Ensure message is at least 20px from top
-  const menuTop = messageTop + effectiveMessageHeight + 10; // 10px gap between message and menu
+  // Center the menu vertically on screen
+  const menuCenterTop = (window.innerHeight - effectiveMenuHeight) / 2;
+  
+  // Position menu with bounds checking (min 20px from top, min 20px from bottom)
+  const menuTop = Math.max(20, Math.min(menuCenterTop, window.innerHeight - effectiveMenuHeight - 20));
+  
+  // Position message: sticked to top of menu + gap (message bottom = menuTop - gap)
+  const messageGap = 5;
+  // Message top will be calculated dynamically based on its actual height
+  // We'll position it so its bottom edge is at menuTop - gap
 
   // Create and mount duplicate message element
   useEffect(() => {
@@ -202,14 +200,23 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     const originalElement = messageElementRef.current;
     const duplicate = originalElement.cloneNode(true) as HTMLElement;
     
+    // Calculate message position: bottom edge should be at menuTop - gap
+    // We'll position from bottom to make this simpler
+    const messageBottomPosition = menuTop - messageGap;
+    
+    // Get the actual width of the original message element
+    const originalWidth = originalElement.offsetWidth || originalElement.getBoundingClientRect().width;
+    
     // Style the duplicate for the overlay
     duplicate.style.position = 'fixed';
-    duplicate.style.top = `${messageTop}px`;
+    duplicate.style.bottom = `${window.innerHeight - messageBottomPosition}px`;
     duplicate.style.left = '50%';
-    duplicate.style.transform = 'translateX(-50%) scale(0.8)';
+    duplicate.style.transform = 'translateX(-50%) scale(0.5)';
     duplicate.style.zIndex = '50';
-    duplicate.style.maxWidth = '85%';
-    duplicate.style.maxHeight = '60vh';
+    duplicate.style.width = `${originalWidth}px`;
+    duplicate.style.maxWidth = 'none';
+    // Constrain height only to prevent overlap with menu - let it overflow upward if needed
+    duplicate.style.maxHeight = `${messageBottomPosition}px`;
     duplicate.style.overflow = 'hidden';
     duplicate.style.transition = 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
     duplicate.style.opacity = '0';
@@ -240,7 +247,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
         duplicateElement.innerHTML = '';
       }
     };
-  }, [messageElementRef, messageTop]);
+  }, [messageElementRef, menuTop, messageGap]);
 
   // Trigger bounce animation for the menu
   useEffect(() => {
@@ -267,11 +274,12 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       {/* Context menu */}
       <div
         ref={menuRef}
-        className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50 min-w-[200px] overflow-hidden"
+        className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50 min-w-[200px] max-w-[90vw] overflow-hidden"
         style={{
           left: '50%',
           top: `${menuTop}px`,
           transform: isInitialRender ? 'translateX(-50%) scale(0.8)' : 'translateX(-50%)',
+          maxHeight: `${window.innerHeight - 40}px`,
           height: effectiveMenuHeight,
           paddingTop: '2px',
           paddingBottom: '5px',

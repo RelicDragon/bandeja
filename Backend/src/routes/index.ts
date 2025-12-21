@@ -24,6 +24,7 @@ import goodsRoutes from './goods.routes';
 import levelChangeRoutes from './levelChange.routes';
 import pushRoutes from './push.routes';
 import blockedUsersRoutes from './blockedUsers.routes';
+import faqRoutes from './faq.routes';
 
 const router = Router();
 
@@ -52,6 +53,7 @@ router.use('/goods', goodsRoutes);
 router.use('/level-changes', levelChangeRoutes);
 router.use('/push', pushRoutes);
 router.use('/blocked-users', blockedUsersRoutes);
+router.use('/faqs', faqRoutes);
 
 export default router;
 

@@ -235,6 +235,7 @@ model Game {
   gameCourts             GameCourt[]
   levelChangeEvents      LevelChangeEvent[]
   leagueSeason           LeagueSeason?       @relation("GameLeagueSeason")
+  faqs                   GameFaq[]
 
   @@index([clubId])
   @@index([courtId])
@@ -248,6 +249,20 @@ model Game {
   @@index([affectsRating])
   @@index([resultsStatus])
   @@index([hasFixedTeams])
+}
+
+model GameFaq {
+  id        String   @id @default(cuid())
+  gameId    String
+  question  String
+  answer    String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([gameId])
+  @@index([order])
 }
 
 model GameParticipant {

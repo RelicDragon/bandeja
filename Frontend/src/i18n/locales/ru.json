@@ -888,6 +888,7 @@
     "general": "Общее",
     "schedule": "Расписание",
     "standings": "Таблица",
+    "faq": "FAQ",
     "round": "Раунд",
     "totalGames_one": "{{count}} матч",
     "totalGames_few": "{{count}} матча",
@@ -1191,6 +1192,26 @@
     "transferTo": "К {{name}}",
     "transferFrom": "От {{name}}",
     "walletEmpty": "Ваш кошелек пуст"
+  },
+  "faq": {
+    "noFaqs": "Нет доступных вопросов",
+    "fetchError": "Не удалось загрузить вопросы",
+    "fieldsRequired": "Вопрос и ответ обязательны",
+    "created": "Вопрос успешно создан",
+    "updated": "Вопрос успешно обновлен",
+    "saveError": "Не удалось сохранить вопрос",
+    "deleted": "Вопрос успешно удален",
+    "deleteError": "Не удалось удалить вопрос",
+    "reorderError": "Не удалось изменить порядок вопросов",
+    "add": "Добавить Вопрос",
+    "question": "Вопрос",
+    "answer": "Ответ",
+    "questionPlaceholder": "Введите вопрос...",
+    "answerPlaceholder": "Введите ответ...",
+    "deleteTitle": "Удалить Вопрос",
+    "deleteConfirm": "Вы уверены, что хотите удалить этот вопрос?",
+    "moveUp": "Переместить вверх",
+    "moveDown": "Переместить вниз"
   }
 }
 

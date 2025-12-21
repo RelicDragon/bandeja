@@ -881,6 +881,7 @@
     "general": "Опште",
     "schedule": "Распоред",
     "standings": "Табела",
+    "faq": "FAQ",
     "round": "Рунда",
     "totalGames_one": "{{count}} меч",
     "totalGames_few": "{{count}} меча",
@@ -1184,5 +1185,25 @@
     "transferTo": "За {{name}}",
     "transferFrom": "Од {{name}}",
     "walletEmpty": "Ваш новчаник је празан"
+  },
+  "faq": {
+    "noFaqs": "Нема доступних питања",
+    "fetchError": "Неуспешно учитавање питања",
+    "fieldsRequired": "Питање и одговор су обавезни",
+    "created": "Питање успешно креирано",
+    "updated": "Питање успешно ажурирано",
+    "saveError": "Неуспешно чување питања",
+    "deleted": "Питање успешно обрисано",
+    "deleteError": "Неуспешно брисање питања",
+    "reorderError": "Неуспешно промењено редоследа питања",
+    "add": "Додај Питање",
+    "question": "Питање",
+    "answer": "Одговор",
+    "questionPlaceholder": "Унесите питање...",
+    "answerPlaceholder": "Унесите одговор...",
+    "deleteTitle": "Обриши Питање",
+    "deleteConfirm": "Да ли сте сигурни да желите да обришете ово питање?",
+    "moveUp": "Помери горе",
+    "moveDown": "Помери доле"
   }
 }

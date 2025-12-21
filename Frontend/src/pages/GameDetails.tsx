@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Trash2, LogOut, Copy } from 'lucide-react';
+import { Trash2, LogOut, Copy, HelpCircle } from 'lucide-react';
 import {
   Card,
   PlayerListModal,
@@ -24,12 +24,15 @@ import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationMo
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
 import { GameSetup } from '@/components/GameDetails/GameSetup';
+import { FaqTab } from '@/components/GameDetails/FaqTab';
+import { FaqEdit } from '@/components/GameDetails/FaqEdit';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { LocationModal, TimeDurationModal } from '@/components/GameDetails';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { resultsApi } from '@/api/results';
+import { faqApi } from '@/api/faq';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
@@ -66,7 +69,8 @@ export const GameDetailsContent = () => {
   const [isEditMaxParticipantsModalOpen, setIsEditMaxParticipantsModalOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isTimeDurationModalOpen, setIsTimeDurationModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'standings'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'standings' | 'faq'>('general');
+  const [hasFaqs, setHasFaqs] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -105,6 +109,16 @@ export const GameDetailsContent = () => {
         if (isParticipant) {
           const gameInvitesResponse = await invitesApi.getGameInvites(id);
           setGameInvites(gameInvitesResponse.data);
+        }
+
+        if (response.data.entityType === 'LEAGUE_SEASON') {
+          try {
+            const faqsResponse = await faqApi.getGameFaqs(id);
+            setHasFaqs(faqsResponse.data.length > 0);
+          } catch (error) {
+            console.error('Failed to fetch FAQs:', error);
+            setHasFaqs(false);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch game:', error);
@@ -920,6 +934,13 @@ export const GameDetailsContent = () => {
             />
           )}
 
+          {isLeagueSeason && canEdit && (
+            <FaqEdit 
+              gameId={game.id} 
+              onFaqsChange={(hasFaqs) => setHasFaqs(hasFaqs)}
+            />
+          )}
+
           {game.maxParticipants > 4 && game.resultsStatus === 'NONE' && (
             <MultipleCourtsSelector
               gameId={game.id}
@@ -1121,6 +1142,10 @@ export const GameDetailsContent = () => {
       return <LeagueStandingsTab leagueSeasonId={game.id} hasFixedTeams={game.hasFixedTeams || false} />;
     }
 
+    if (activeTab === 'faq') {
+      return <FaqTab gameId={game.id} />;
+    }
+
     return null;
   };
 
@@ -1158,6 +1183,19 @@ export const GameDetailsContent = () => {
           >
             {t('gameDetails.standings')}
           </button>
+          {hasFaqs && (
+            <button
+              onClick={() => setActiveTab('faq')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                activeTab === 'faq'
+                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <HelpCircle size={16} />
+              {t('gameDetails.faq', { defaultValue: 'FAQ' })}
+            </button>
+          )}
         </div>
       )}
 
