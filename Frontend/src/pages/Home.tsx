@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -49,7 +49,7 @@ const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: st
 export const HomeContent = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { showChatFilter, setShowChatFilter } = useHeaderStore();
+  const { showChatFilter, setShowChatFilter, unreadMessages } = useHeaderStore();
 
   const [loading, setLoading] = useState(true);
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
@@ -124,30 +124,6 @@ export const HomeContent = () => {
     loadAllBugsWithUnread,
   } = useBugsWithUnread(user);
 
-  const [userChatsUnreadCounts, setUserChatsUnreadCounts] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    const loadUserChatsUnreadCounts = async () => {
-      if (!user?.id || !showChatFilter) return;
-
-      try {
-        const chatsResponse = await chatApi.getUserChats();
-        const chats = chatsResponse.data || [];
-
-        if (chats.length > 0) {
-          const chatIds = chats.map(chat => chat.id);
-          const unreadResponse = await chatApi.getUserChatsUnreadCounts(chatIds);
-          setUserChatsUnreadCounts(unreadResponse.data || {});
-        } else {
-          setUserChatsUnreadCounts({});
-        }
-      } catch (error) {
-        console.error('Failed to load user chats unread counts:', error);
-      }
-    };
-
-    loadUserChatsUnreadCounts();
-  }, [user?.id, showChatFilter]);
 
   const mergedGames = useMemo(() => {
     if (!showChatFilter) return games;
@@ -205,21 +181,27 @@ export const HomeContent = () => {
     setIsMarkingAllAsRead(true);
     try {
       const allChatGamesResponse = await chatApi.getUserChatGames();
-      const allChatGames = allChatGamesResponse.data;
+      const allChatGames = allChatGamesResponse.data || [];
       
-      if (allChatGames.length === 0) {
-        setIsMarkingAllAsRead(false);
-        return;
-      }
-
       const gameIds = allChatGames.map(game => game.id);
-      const unreadCounts = await chatApi.getGamesUnreadCounts(gameIds);
-      
-      const gamesWithUnread = allChatGames.filter(game => (unreadCounts.data[game.id] || 0) > 0);
+      const unreadCountsResponse = gameIds.length > 0
+        ? await chatApi.getGamesUnreadCounts(gameIds)
+        : { data: {} as Record<string, number> };
+      const unreadCounts = unreadCountsResponse.data || {};
+      const gamesWithUnread = allChatGames.filter(game => (unreadCounts[game.id] || 0) > 0);
       
       const bugsWithUnreadMessages = bugsWithUnread.filter(bug => (bugsUnreadCounts[bug.id] || 0) > 0);
       
-      if (gamesWithUnread.length === 0 && bugsWithUnreadMessages.length === 0) {
+      const userChatsResponse = await chatApi.getUserChats();
+      const allUserChats = userChatsResponse.data || [];
+      const userChatIds = allUserChats.map(chat => chat.id);
+      const userChatsUnreadCountsResponse = userChatIds.length > 0 
+        ? await chatApi.getUserChatsUnreadCounts(userChatIds)
+        : { data: {} as Record<string, number> };
+      const freshUserChatsUnreadCounts = userChatsUnreadCountsResponse.data || {};
+      const userChatsWithUnread = allUserChats.filter(chat => (freshUserChatsUnreadCounts[chat.id] || 0) > 0);
+      
+      if (gamesWithUnread.length === 0 && bugsWithUnreadMessages.length === 0 && userChatsWithUnread.length === 0) {
         setIsMarkingAllAsRead(false);
         return;
       }
@@ -233,7 +215,11 @@ export const HomeContent = () => {
         chatApi.markAllBugMessagesAsRead(bug.id)
       );
 
-      await Promise.all([...markPromises, ...bugMarkPromises]);
+      const userChatMarkPromises = userChatsWithUnread.map(chat =>
+        chatApi.markUserChatAsRead(chat.id)
+      );
+
+      await Promise.all([...markPromises, ...bugMarkPromises, ...userChatMarkPromises]);
 
       const { setUnreadMessages } = useHeaderStore.getState();
       setUnreadMessages(0);
@@ -309,12 +295,6 @@ export const HomeContent = () => {
     }
   };
 
-  const hasUnreadMessages = useMemo(() => {
-    const gamesHaveUnread = Object.values(mergedUnreadCounts).some(count => count > 0);
-    const bugsHaveUnread = Object.values(bugsUnreadCounts).some(count => count > 0);
-    const userChatsHaveUnread = Object.values(userChatsUnreadCounts).some(count => count > 0);
-    return gamesHaveUnread || bugsHaveUnread || userChatsHaveUnread;
-  }, [mergedUnreadCounts, bugsUnreadCounts, userChatsUnreadCounts]);
 
   return (
     <>
@@ -322,7 +302,7 @@ export const HomeContent = () => {
 
       <div
         className={`transition-all duration-500 ease-in-out overflow-hidden ${
-          showChatFilter && hasUnreadMessages
+          showChatFilter && unreadMessages > 0
             ? 'max-h-[100px] opacity-100 translate-y-0 mb-4'
             : 'max-h-0 opacity-0 -translate-y-4'
         }`}
@@ -332,7 +312,7 @@ export const HomeContent = () => {
             onClick={handleMarkAllAsRead}
             variant="primary"
             size="sm"
-            disabled={isMarkingAllAsRead || !hasUnreadMessages}
+            disabled={isMarkingAllAsRead || unreadMessages === 0}
             className="animate-in slide-in-from-top-4 fade-in"
           >
             {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
