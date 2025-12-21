@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search, X } from 'lucide-react';
@@ -51,40 +51,49 @@ export const Contacts = () => {
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      if (!user?.id) return;
+  const loadData = useCallback(async () => {
+    if (!user?.id) return;
 
-      setLoading(true);
-      try {
-        const [chatsResponse, playersResponse] = await Promise.all([
-          chatApi.getUserChats(),
-          usersApi.getInvitablePlayers()
-        ]);
+    setLoading(true);
+    try {
+      const [chatsResponse, playersResponse] = await Promise.all([
+        chatApi.getUserChats(),
+        usersApi.getInvitablePlayers()
+      ]);
 
-        await fetchFavorites();
+      await fetchFavorites();
 
-        const chats = chatsResponse.data || [];
-        let unreadCounts: Record<string, number> = {};
+      const chats = chatsResponse.data || [];
+      let unreadCounts: Record<string, number> = {};
 
-        if (chats.length > 0) {
-          const chatIds = chats.map(chat => chat.id);
-          const unreadResponse = await chatApi.getUserChatsUnreadCounts(chatIds);
-          unreadCounts = unreadResponse.data || {};
-        }
-
-        setUserChats(chats);
-        setUserChatsUnreadCounts(unreadCounts);
-        setAllPlayers(playersResponse.data || []);
-      } catch (error) {
-        console.error('Failed to load contacts:', error);
-      } finally {
-        setLoading(false);
+      if (chats.length > 0) {
+        const chatIds = chats.map(chat => chat.id);
+        const unreadResponse = await chatApi.getUserChatsUnreadCounts(chatIds);
+        unreadCounts = unreadResponse.data || {};
       }
-    };
 
-    loadData();
+      setUserChats(chats);
+      setUserChatsUnreadCounts(unreadCounts);
+      setAllPlayers(playersResponse.data || []);
+    } catch (error) {
+      console.error('Failed to load contacts:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [user?.id, fetchFavorites]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const prevShowChatFilterRef = useRef(showChatFilter);
+  useEffect(() => {
+    if (showChatFilter && !prevShowChatFilterRef.current && user?.id) {
+      loadData();
+    }
+    prevShowChatFilterRef.current = showChatFilter;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showChatFilter, user?.id]);
 
   const contacts = useMemo(() => {
     if (loading) return [];

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -123,6 +123,31 @@ export const HomeContent = () => {
     bugsUnreadCounts,
     loadAllBugsWithUnread,
   } = useBugsWithUnread(user);
+
+  const [userChatsUnreadCounts, setUserChatsUnreadCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const loadUserChatsUnreadCounts = async () => {
+      if (!user?.id || !showChatFilter) return;
+
+      try {
+        const chatsResponse = await chatApi.getUserChats();
+        const chats = chatsResponse.data || [];
+
+        if (chats.length > 0) {
+          const chatIds = chats.map(chat => chat.id);
+          const unreadResponse = await chatApi.getUserChatsUnreadCounts(chatIds);
+          setUserChatsUnreadCounts(unreadResponse.data || {});
+        } else {
+          setUserChatsUnreadCounts({});
+        }
+      } catch (error) {
+        console.error('Failed to load user chats unread counts:', error);
+      }
+    };
+
+    loadUserChatsUnreadCounts();
+  }, [user?.id, showChatFilter]);
 
   const mergedGames = useMemo(() => {
     if (!showChatFilter) return games;
@@ -287,8 +312,9 @@ export const HomeContent = () => {
   const hasUnreadMessages = useMemo(() => {
     const gamesHaveUnread = Object.values(mergedUnreadCounts).some(count => count > 0);
     const bugsHaveUnread = Object.values(bugsUnreadCounts).some(count => count > 0);
-    return gamesHaveUnread || bugsHaveUnread;
-  }, [mergedUnreadCounts, bugsUnreadCounts]);
+    const userChatsHaveUnread = Object.values(userChatsUnreadCounts).some(count => count > 0);
+    return gamesHaveUnread || bugsHaveUnread || userChatsHaveUnread;
+  }, [mergedUnreadCounts, bugsUnreadCounts, userChatsUnreadCounts]);
 
   return (
     <>
