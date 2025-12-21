@@ -171,7 +171,7 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
               extrasmall
               showName={false}
             />
-            <span className={`text-sm font-medium ${isArchived ? 'text-gray-500' : ''}`}>
+            <span className={`text-sm font-medium ${isArchived ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
               {bug.sender.firstName} {bug.sender.lastName}
             </span>
           </div>
@@ -190,7 +190,7 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
 
           <div 
             onClick={() => bug.text.length > 200 && setIsExpanded(!isExpanded)}
-            className={`text-sm mb-2 w-full whitespace-pre-line ${isArchived ? 'text-gray-500' : 'text-gray-700'} ${bug.text.length > 200 ? 'cursor-pointer hover:opacity-80' : ''}`}
+            className={`text-sm mb-2 w-full whitespace-pre-line ${isArchived ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-200'} ${bug.text.length > 200 ? 'cursor-pointer hover:opacity-80' : ''}`}
           >
             {isExpanded ? bug.text : bug.text.length > 200 ? `${bug.text.substring(0, 100)}...` : bug.text}
           </div>
@@ -207,7 +207,7 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-medium ${isArchived ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <span className={`text-xs font-medium ${isArchived ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300'}`}>
                     {lastMessage.sender.firstName} {lastMessage.sender.lastName}
                   </span>
                   <span className={`text-xs ${isArchived ? 'text-gray-400' : 'text-gray-500'}`}>

@@ -344,7 +344,7 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
             
             <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}>
               {!isOwnMessage && (
-                <span className="text-xs text-gray-500 dark:text-gray-400 mb-0.5 px-2">{getSenderName()}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-300 mb-0.5 px-2">{getSenderName()}</span>
               )}
               
               <div className="relative">
