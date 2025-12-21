@@ -3,7 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import { WinnerOfGame, Prisma } from '@prisma/client';
 import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
-import { hasParentGamePermission } from '../../utils/parentGamePermissions';
+import { canModifyResults } from '../../utils/parentGamePermissions';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
@@ -336,9 +336,9 @@ export async function recalculateGameOutcomes(gameId: string, requestUserId: str
     throw new ApiError(404, 'Game not found');
   }
 
-  const hasPermission = await hasParentGamePermission(gameId, requestUserId);
+  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
 
-  if (!hasPermission && !game.resultsByAnyone) {
+  if (!canModify) {
     console.log(`[RECALCULATE GAME OUTCOMES] User ${requestUserId} not authorized to recalculate outcomes for game ${gameId}`);
     throw new ApiError(403, 'Only game owners/admins can recalculate outcomes');
   }

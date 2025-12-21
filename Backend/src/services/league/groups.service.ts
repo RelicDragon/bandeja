@@ -124,6 +124,18 @@ export class LeagueGroupManagementService {
     return this.buildPayload(leagueSeasonId);
   }
 
+  static async getGroupsReadOnly(leagueSeasonId: string) {
+    const leagueSeason = await prisma.leagueSeason.findUnique({
+      where: { id: leagueSeasonId },
+    });
+
+    if (!leagueSeason) {
+      throw new ApiError(404, 'League season not found');
+    }
+
+    return this.buildPayload(leagueSeasonId);
+  }
+
   static async createGroup(leagueSeasonId: string, name: string, userId: string) {
     if (!name.trim()) {
       throw new ApiError(400, 'Group name is required');

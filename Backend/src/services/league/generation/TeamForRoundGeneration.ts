@@ -1,9 +1,6 @@
 import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
-import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@prisma/client';
-import { calculateGameStatus } from '../../../utils/gameStatus';
-import { GameService } from '../../game/game.service';
-import { getUserTimezoneFromCityId } from '../../user-timezone.service';
+import { createLeagueGame } from '../gameCreation.util';
 
 interface TempTeam {
   participant1Id: string;
@@ -446,107 +443,18 @@ export class TeamForRoundGeneration {
     groupId: string,
     leagueSeasonId: string
   ) {
-    const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
-
-    const round = await prisma.leagueRound.findUnique({
-      where: { id: leagueRoundId },
+    return await createLeagueGame({
+      leagueRoundId,
+      seasonGame,
+      leagueSeasonId,
+      team1PlayerIds: [team1.participant1Id, team1.participant2Id],
+      team2PlayerIds: [team2.participant1Id, team2.participant2Id],
+      leagueGroupId: groupId,
+      maxParticipants: 4,
+      minParticipants: 4,
+      isPublic: false,
+      affectsRating: true,
     });
-
-    if (!round) {
-      throw new ApiError(404, 'League round not found');
-    }
-
-    const participantUserIds = Array.from(
-      new Set([
-        team1.participant1Id,
-        team1.participant2Id,
-        team2.participant1Id,
-        team2.participant2Id,
-      ])
-    );
-
-    const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
-
-    const game = await prisma.game.create({
-      data: {
-        entityType: EntityType.LEAGUE,
-        gameType: seasonGame.gameType || 'CLASSIC',
-        name: `Round ${round.orderIndex + 1} - Game`,
-        clubId: seasonGame.clubId,
-        cityId: seasonGame.cityId,
-        startTime,
-        endTime,
-        maxParticipants: 4,
-        minParticipants: 4,
-        minLevel: seasonGame.minLevel,
-        maxLevel: seasonGame.maxLevel,
-        isPublic: false,
-        affectsRating: true,
-        anyoneCanInvite: false,
-        resultsByAnyone: false,
-        allowDirectJoin: false,
-        hasBookedCourt: false,
-        afterGameGoToBar: false,
-        hasFixedTeams: true,
-        genderTeams: seasonGame.genderTeams || 'ANY',
-        fixedNumberOfSets: seasonGame.fixedNumberOfSets ?? 0,
-        maxTotalPointsPerSet: seasonGame.maxTotalPointsPerSet ?? 0,
-        maxPointsPerTeam: seasonGame.maxPointsPerTeam ?? 0,
-        winnerOfGame: seasonGame.winnerOfGame ?? WinnerOfGame.BY_MATCHES_WON,
-        winnerOfMatch: seasonGame.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
-        matchGenerationType: seasonGame.matchGenerationType ?? MatchGenerationType.HANDMADE,
-        prohibitMatchesEditing: seasonGame.prohibitMatchesEditing ?? false,
-        pointsPerWin: seasonGame.pointsPerWin ?? 0,
-        pointsPerLoose: seasonGame.pointsPerLoose ?? 0,
-        pointsPerTie: seasonGame.pointsPerTie ?? 0,
-        parentId: leagueSeasonId,
-        leagueRoundId: leagueRoundId,
-        leagueGroupId: groupId,
-        status: calculateGameStatus({
-          startTime,
-          endTime,
-          resultsStatus: 'NONE',
-        }, cityTimezone),
-        participants: {
-          create: participantUserIds.map(userId => ({
-            userId,
-            role: 'PARTICIPANT' as const,
-            isPlaying: true,
-          })),
-        },
-      },
-    });
-
-    await prisma.gameTeam.create({
-      data: {
-        gameId: game.id,
-        teamNumber: 1,
-        players: {
-          create: [
-            { userId: team1.participant1Id },
-            { userId: team1.participant2Id },
-          ],
-        },
-      },
-    });
-
-    await prisma.gameTeam.create({
-      data: {
-        gameId: game.id,
-        teamNumber: 2,
-        players: {
-          create: [
-            { userId: team2.participant1Id },
-            { userId: team2.participant2Id },
-          ],
-        },
-      },
-    });
-
-    await GameService.updateGameReadiness(game.id);
-
-    return game;
   }
 }
 

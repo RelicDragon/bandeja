@@ -33,7 +33,7 @@ import { resultsApi } from '@/api/results';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
-import { isUserGameAdminOrOwner } from '@/utils/gameResults';
+import { isUserGameAdminOrOwner, canUserEditResults } from '@/utils/gameResults';
 import { socketService } from '@/services/socketService';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
@@ -361,7 +361,10 @@ export const GameDetailsContent = () => {
 
 
   const handleStartResultsEntry = async () => {
-    if (!id || !canEdit || !user?.id) return;
+    if (!id || !user?.id || !game) return;
+    
+    const canEditResults = canUserEditResults(game, user);
+    if (!canEditResults) return;
 
     // Scroll to top immediately
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -944,7 +947,7 @@ export const GameDetailsContent = () => {
             />
           )}
 
-          {!isLeague && game.resultsStatus === 'NONE' && canEdit && (
+          {game.resultsStatus === 'NONE' && game && user && canUserEditResults(game, user) && (
             <Card className="overflow-hidden">
               <button
                 onClick={handleStartResultsEntry}
@@ -956,7 +959,7 @@ export const GameDetailsContent = () => {
             </Card>
           )}
 
-          {isParticipant && (
+          {isParticipant && !isLeague && (
             <Card>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -1014,7 +1017,7 @@ export const GameDetailsContent = () => {
             </Card>
           )}
 
-          {canEdit && (
+          {canEdit && !isLeague && (
             <Card>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

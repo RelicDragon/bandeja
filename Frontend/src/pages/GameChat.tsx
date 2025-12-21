@@ -753,7 +753,7 @@ export const GameChat: React.FC = () => {
           
           {contextType === 'GAME' && (
             <div className="flex items-center gap-2">
-              {isCurrentUserGuest && (
+              {isCurrentUserGuest && game?.entityType !== 'LEAGUE' && (
                 <button
                   onClick={() => setShowLeaveConfirmation(true)}
                   className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"

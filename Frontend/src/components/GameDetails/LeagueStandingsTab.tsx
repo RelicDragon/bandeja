@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { leaguesApi, LeagueStanding } from '@/api/leagues';
+import { leaguesApi, LeagueStanding, LeagueGroup } from '@/api/leagues';
 import { Loader2, Trophy, Medal } from 'lucide-react';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
+import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
 
 const ALL_GROUP_ID = 'ALL';
-const GROUP_FILTER_STORAGE_PREFIX = 'group_filter_league_season_';
 
 interface LeagueStandingsTabProps {
   leagueSeasonId: string;
@@ -18,25 +18,29 @@ interface LeagueStandingsTabProps {
 export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStandingsTabProps) => {
   const { t } = useTranslation();
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
+  const [groups, setGroups] = useState<LeagueGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAwardIcons, setShowAwardIcons] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string>(ALL_GROUP_ID);
   const NO_GROUP_KEY = 'no-group';
-  const storageKey = `${GROUP_FILTER_STORAGE_PREFIX}${leagueSeasonId}`;
 
   useEffect(() => {
-    const fetchStandings = async () => {
+    const fetchData = async () => {
       try {
-        const response = await leaguesApi.getStandings(leagueSeasonId);
-        setStandings(response.data);
+        const [standingsResponse, groupsResponse] = await Promise.all([
+          leaguesApi.getStandings(leagueSeasonId),
+          leaguesApi.getGroups(leagueSeasonId).catch(() => ({ data: { groups: [] } })),
+        ]);
+        setStandings(standingsResponse.data);
+        setGroups(groupsResponse.data.groups);
       } catch (error) {
-        console.error('Failed to fetch league standings:', error);
+        console.error('Failed to fetch league data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStandings();
+    fetchData();
   }, [leagueSeasonId]);
 
   useEffect(() => {
@@ -45,17 +49,18 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const savedGroupId = localStorage.getItem(storageKey);
-    if (savedGroupId) {
-      setSelectedGroupId(savedGroupId);
-    }
-  }, [storageKey]);
+    const loadSavedFilter = async () => {
+      const savedGroupId = await getGroupFilter(leagueSeasonId);
+      if (savedGroupId) {
+        setSelectedGroupId(savedGroupId);
+      }
+    };
+    loadSavedFilter();
+  }, [leagueSeasonId]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(storageKey, selectedGroupId);
-  }, [selectedGroupId, storageKey]);
+    setGroupFilter(leagueSeasonId, selectedGroupId);
+  }, [selectedGroupId, leagueSeasonId]);
 
   const compareStandings = (a: LeagueStanding, b: LeagueStanding) => {
     if (b.points !== a.points) return b.points - a.points;
@@ -65,16 +70,8 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
   };
 
   const groupStandingsMap = new Map<string, LeagueStanding[]>();
-  const groupMetadata = new Map<
-    string,
-    NonNullable<LeagueStanding['currentGroup']>
-  >();
 
   standings.forEach((standing) => {
-    if (standing.currentGroup) {
-      groupMetadata.set(standing.currentGroup.id, standing.currentGroup);
-    }
-
     const key = standing.currentGroup?.id ?? NO_GROUP_KEY;
     if (!groupStandingsMap.has(key)) {
       groupStandingsMap.set(key, []);
@@ -82,54 +79,21 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
     groupStandingsMap.get(key)!.push(standing);
   });
 
-  const getOrderedGroupIds = () => {
-    const visited = new Set<string>();
-    const order: string[] = [];
-
-    const walkChain = (groupId: string | undefined | null) => {
-      let currentId = groupId ?? undefined;
-      while (currentId && !visited.has(currentId)) {
-        visited.add(currentId);
-        if (groupStandingsMap.has(currentId)) {
-          order.push(currentId);
-        }
-        const currentGroup = groupMetadata.get(currentId);
-        currentId = currentGroup?.worseGroupId ?? undefined;
-      }
-    };
-
-    const heads = Array.from(groupMetadata.values()).filter(
-      (group) => !group.betterGroupId || !groupMetadata.has(group.betterGroupId)
-    );
-
-    heads.sort((a, b) => a.name.localeCompare(b.name)).forEach((head) => walkChain(head.id));
-
-    groupMetadata.forEach((_, groupId) => {
-      if (!visited.has(groupId)) {
-        walkChain(groupId);
-      }
-    });
-
-    return order;
-  };
-
-  const orderedGroupIds = getOrderedGroupIds();
-  const orderedGroups = orderedGroupIds.map((groupId) => ({
-    id: groupId,
-    name: groupMetadata.get(groupId)?.name || t('gameDetails.group') || 'Group',
-    color: groupMetadata.get(groupId)?.color,
-    standings: [...(groupStandingsMap.get(groupId) || [])].sort(compareStandings),
+  const orderedGroupIds = groups.map((g) => g.id);
+  const orderedGroups = groups.map((group) => ({
+    id: group.id,
+    name: group.name || t('gameDetails.group') || 'Group',
+    color: group.color,
+    standings: [...(groupStandingsMap.get(group.id) || [])].sort(compareStandings),
   }));
 
   useEffect(() => {
     if (loading) return;
     if (selectedGroupId !== ALL_GROUP_ID && !orderedGroupIds.includes(selectedGroupId)) {
       setSelectedGroupId(ALL_GROUP_ID);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(storageKey, ALL_GROUP_ID);
-      }
+      setGroupFilter(leagueSeasonId, ALL_GROUP_ID);
     }
-  }, [loading, orderedGroupIds, selectedGroupId, storageKey]);
+  }, [loading, orderedGroupIds, selectedGroupId, leagueSeasonId]);
 
   const ungroupedStandings = groupStandingsMap.get(NO_GROUP_KEY);
   const hasGroups = orderedGroups.length > 0;

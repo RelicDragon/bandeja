@@ -4,7 +4,7 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { GameReadService } from './read.service';
-import { hasParentGamePermission } from '../../utils/parentGamePermissions';
+import { hasParentGamePermission, canModifyResults } from '../../utils/parentGamePermissions';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType } from '../../utils/systemMessages';
 import telegramNotificationService from '../telegram/notification.service';
@@ -12,10 +12,27 @@ import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId
 
 export class GameUpdateService {
   static async updateGame(id: string, data: any, userId: string) {
-    const hasPermission = await hasParentGamePermission(id, userId);
+    const isOnlyResultsStatusUpdate = Object.keys(data).length === 1 && data.resultsStatus !== undefined;
+    
+    if (isOnlyResultsStatusUpdate) {
+      const gameForPermission = await prisma.game.findUnique({
+        where: { id },
+        select: { resultsByAnyone: true },
+      });
 
-    if (!hasPermission) {
-      throw new ApiError(403, 'Only owners and admins can update the game');
+      if (!gameForPermission) {
+        throw new ApiError(404, 'Game not found');
+      }
+
+      const canModify = await canModifyResults(id, userId, gameForPermission.resultsByAnyone);
+      if (!canModify) {
+        throw new ApiError(403, 'You do not have permission to update results status');
+      }
+    } else {
+      const hasPermission = await hasParentGamePermission(id, userId);
+      if (!hasPermission) {
+        throw new ApiError(403, 'Only owners and admins can update the game');
+      }
     }
 
     const game = await prisma.game.findUnique({

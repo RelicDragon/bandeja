@@ -7,6 +7,7 @@ import { GameTeamService } from '../gameTeam.service';
 import { GameService } from '../game/game.service';
 import { getDistinctLeagueGroupColor } from './groupColors';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
+import { createLeagueGame } from './gameCreation.util';
 
 export class LeagueCreateService {
   static async createLeague(data: any, userId: string) {
@@ -512,61 +513,21 @@ export class LeagueCreateService {
       throw new ApiError(400, 'Team 1 and Team 2 must have different participants');
     }
 
-    const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
+    const createdGame = await createLeagueGame({
+      leagueRoundId,
+      seasonGame,
+      leagueSeasonId: round.leagueSeasonId,
+      team1PlayerIds,
+      team2PlayerIds,
+      leagueGroupId,
+      maxParticipants: seasonGame.maxParticipants,
+      minParticipants: seasonGame.minParticipants || 2,
+      isPublic: seasonGame.isPublic,
+      affectsRating: seasonGame.affectsRating,
+    });
 
-    const participantUserIds = Array.from(new Set([...team1PlayerIds, ...team2PlayerIds]));
-
-    const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
-
-    const game = await prisma.game.create({
-      data: {
-        entityType: EntityType.LEAGUE,
-        gameType: seasonGame.gameType || 'CLASSIC',
-        name: `Round ${round.orderIndex + 1} - Game`,
-        clubId: seasonGame.clubId,
-        cityId: seasonGame.cityId,
-        startTime,
-        endTime,
-        maxParticipants: seasonGame.maxParticipants,
-        minParticipants: seasonGame.minParticipants || 2,
-        minLevel: seasonGame.minLevel,
-        maxLevel: seasonGame.maxLevel,
-        isPublic: seasonGame.isPublic,
-        affectsRating: seasonGame.affectsRating,
-        anyoneCanInvite: false,
-        resultsByAnyone: false,
-        allowDirectJoin: false,
-        hasBookedCourt: false,
-        afterGameGoToBar: false,
-        hasFixedTeams: true,
-        genderTeams: seasonGame.genderTeams || 'ANY',
-        fixedNumberOfSets: seasonGame.fixedNumberOfSets ?? 0,
-        maxTotalPointsPerSet: seasonGame.maxTotalPointsPerSet ?? 0,
-        maxPointsPerTeam: seasonGame.maxPointsPerTeam ?? 0,
-        winnerOfGame: seasonGame.winnerOfGame ?? WinnerOfGame.BY_MATCHES_WON,
-        winnerOfMatch: seasonGame.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
-        matchGenerationType: seasonGame.matchGenerationType ?? MatchGenerationType.HANDMADE,
-        prohibitMatchesEditing: seasonGame.prohibitMatchesEditing ?? false,
-        pointsPerWin: seasonGame.pointsPerWin ?? 0,
-        pointsPerLoose: seasonGame.pointsPerLoose ?? 0,
-        pointsPerTie: seasonGame.pointsPerTie ?? 0,
-        parentId: round.leagueSeasonId,
-        leagueRoundId: leagueRoundId,
-        leagueGroupId,
-        status: calculateGameStatus({
-          startTime,
-          endTime,
-          resultsStatus: 'NONE',
-        }, cityTimezone),
-        participants: {
-          create: participantUserIds.map(userId => ({
-            userId,
-            role: 'PARTICIPANT' as const,
-            isPlaying: true,
-          })),
-        },
-      },
+    const game = await prisma.game.findUnique({
+      where: { id: createdGame.id },
       include: {
         club: {
           include: {
@@ -615,79 +576,9 @@ export class LeagueCreateService {
       },
     });
 
-    if (team1PlayerIds.length > 0 || team2PlayerIds.length > 0) {
-      const teamsData = [];
-      if (team1PlayerIds.length > 0) {
-        teamsData.push({
-          teamNumber: 1,
-          playerIds: team1PlayerIds,
-        });
-      }
-      if (team2PlayerIds.length > 0) {
-        teamsData.push({
-          teamNumber: 2,
-          playerIds: team2PlayerIds,
-        });
-      }
-      
-      if (teamsData.length > 0) {
-        await GameTeamService.setGameTeams(game.id, teamsData, userId);
-        
-        const updatedGame = await prisma.game.findUnique({
-          where: { id: game.id },
-          include: {
-            club: {
-              include: {
-                courts: true,
-                city: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-            court: {
-              include: {
-                club: true,
-              },
-            },
-            participants: {
-              include: {
-                user: {
-                  select: USER_SELECT_FIELDS,
-                },
-              },
-            },
-            fixedTeams: {
-              include: {
-                players: {
-                  include: {
-                    user: {
-                      select: USER_SELECT_FIELDS,
-                    },
-                  },
-                },
-              },
-              orderBy: { teamNumber: 'asc' },
-            },
-            leagueSeason: {
-              include: {
-                league: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        });
-        
-        return updatedGame || game;
-      }
+    if (!game) {
+      throw new ApiError(500, 'Failed to fetch created game');
     }
-
-    await GameService.updateGameReadiness(game.id);
 
     return game;
   }

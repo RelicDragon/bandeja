@@ -149,7 +149,9 @@ export const GroupFilterDropdown = ({
                     />
                   )}
                   <span
-                    className="text-sm font-medium"
+                    className={`text-sm font-medium ${
+                      isSelected ? '' : 'text-gray-700 dark:text-gray-300'
+                    }`}
                     style={isSelected ? { color: accent } : undefined}
                   >
                     {group.name}

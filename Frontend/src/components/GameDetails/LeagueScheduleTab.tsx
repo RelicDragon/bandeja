@@ -11,6 +11,7 @@ import { leaguesApi, LeagueRound, LeagueGroup } from '@/api/leagues';
 import { Loader2, Calendar, Users } from 'lucide-react';
 import { Game } from '@/types';
 import { LeagueRoundAccordion } from './LeagueRoundAccordion';
+import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
 
 interface LeagueScheduleTabProps {
   leagueSeasonId: string;
@@ -19,7 +20,6 @@ interface LeagueScheduleTabProps {
 }
 
 const ALL_GROUP_ID = 'ALL';
-const GROUP_FILTER_STORAGE_PREFIX = 'group_filter_league_season_';
 
 export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTeams = false }: LeagueScheduleTabProps) => {
   const { t } = useTranslation();
@@ -46,7 +46,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const [loadedRoundIds, setLoadedRoundIds] = useState<Set<string>>(new Set());
   const canManageGroups = canEdit && hasGroups;
   const canAddRound = canEdit && (rounds.length > 0 || (hasGroups && participantCount > 0));
-  const storageKey = `${GROUP_FILTER_STORAGE_PREFIX}${leagueSeasonId}`;
 
   const fetchRounds = useCallback(async () => {
     try {
@@ -100,27 +99,26 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const savedGroupId = localStorage.getItem(storageKey);
-    if (savedGroupId) {
-      setSelectedGroupId(savedGroupId);
-    }
-  }, [storageKey]);
+    const loadSavedFilter = async () => {
+      const savedGroupId = await getGroupFilter(leagueSeasonId);
+      if (savedGroupId) {
+        setSelectedGroupId(savedGroupId);
+      }
+    };
+    loadSavedFilter();
+  }, [leagueSeasonId]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(storageKey, selectedGroupId);
-  }, [selectedGroupId, storageKey]);
+    setGroupFilter(leagueSeasonId, selectedGroupId);
+  }, [selectedGroupId, leagueSeasonId]);
 
   useEffect(() => {
     if (!groupsInitialized) return;
     if (selectedGroupId !== ALL_GROUP_ID && !groups.some((group) => group.id === selectedGroupId)) {
       setSelectedGroupId(ALL_GROUP_ID);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(storageKey, ALL_GROUP_ID);
-      }
+      setGroupFilter(leagueSeasonId, ALL_GROUP_ID);
     }
-  }, [groupsInitialized, groups, selectedGroupId, storageKey]);
+  }, [groupsInitialized, groups, selectedGroupId, leagueSeasonId]);
 
   const handleCreateRound = async () => {
     if (isCreating) return;

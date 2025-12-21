@@ -249,9 +249,9 @@ export async function resetGameResults(gameId: string, requestUserId: string) {
     throw new ApiError(404, 'Game not found');
   }
 
-  const hasPermission = await hasParentGamePermission(gameId, requestUserId);
+  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
 
-  if (!hasPermission) {
+  if (!canModify) {
     throw new ApiError(403, 'Only game owners/admins can reset results');
   }
 

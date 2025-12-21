@@ -88,7 +88,7 @@ export const createLeagueGroups = asyncHandler(async (req: AuthRequest, res: Res
 export const getLeagueGroups = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { leagueSeasonId } = req.params;
 
-  const data = await LeagueGroupManagementService.getGroups(leagueSeasonId, req.userId!);
+  const data = await LeagueGroupManagementService.getGroupsReadOnly(leagueSeasonId);
 
   res.json({
     success: true,

@@ -46,13 +46,14 @@ export async function hasParentGamePermission(
 }
 
 /**
- * Checks if a user is a participant in a game (including parent game)
+ * Checks if a user is a playing participant in a game (including parent game)
  */
-async function isGameParticipant(gameId: string, userId: string): Promise<boolean> {
+async function isPlayingParticipant(gameId: string, userId: string): Promise<boolean> {
   const currentGameParticipant = await prisma.gameParticipant.findFirst({
     where: {
       gameId,
       userId,
+      isPlaying: true,
     },
   });
 
@@ -70,6 +71,7 @@ async function isGameParticipant(gameId: string, userId: string): Promise<boolea
       where: {
         gameId: game.parentId,
         userId,
+        isPlaying: true,
       },
     });
 
@@ -99,7 +101,7 @@ export async function canModifyResults(
   }
 
   if (resultsByAnyone) {
-    return await isGameParticipant(gameId, userId);
+    return await isPlayingParticipant(gameId, userId);
   }
 
   return false;
