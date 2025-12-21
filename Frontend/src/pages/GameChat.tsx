@@ -70,7 +70,6 @@ export const GameChat: React.FC = () => {
   const canAccessChat = contextType === 'USER' || (contextType === 'BUG' && canWriteBugChat) || isParticipant || hasPendingInvite || isGuest;
   const canViewPublicChat = contextType === 'USER' || contextType === 'BUG' || canAccessChat || game?.isPublic;
   const isCurrentUserGuest = game?.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying && participant.role !== 'OWNER' && participant.role !== 'ADMIN') ?? false;
-  const canWriteChat = canAccessChat && !isBlockedByUser;
 
   const loadContext = useCallback(async () => {
     if (!id) return null;

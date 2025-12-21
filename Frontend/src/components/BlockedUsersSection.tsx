@@ -25,7 +25,7 @@ interface BlockedUser {
 
 export const BlockedUsersSection = () => {
   const { t } = useTranslation();
-  const { user, updateUser } = useAuthStore();
+  const { user } = useAuthStore();
   const { openPlayerCard } = usePlayerCardModal();
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +91,10 @@ export const BlockedUsersSection = () => {
           >
             <div className="flex-shrink-0">
               <PlayerAvatar
-                player={blockedUser.blockedUser}
+                player={{
+                  ...blockedUser.blockedUser,
+                  avatar: blockedUser.blockedUser.avatar ?? undefined
+                }}
                 showName={false}
                 fullHideName={true}
                 smallLayout={false}
