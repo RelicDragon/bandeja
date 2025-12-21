@@ -214,7 +214,7 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
                     {formatRelativeTime(lastMessage.createdAt)}
                   </span>
                 </div>
-                <div className={`text-xs ${isArchived ? 'text-gray-400' : 'text-gray-700'} whitespace-pre-line max-h-16 overflow-hidden`}>
+                <div className={`text-xs ${isArchived ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'} whitespace-pre-line max-h-16 overflow-hidden`}>
                   {lastMessage.content}
                 </div>
                 {lastMessage.mediaUrls && lastMessage.mediaUrls.length > 0 && (
