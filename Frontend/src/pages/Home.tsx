@@ -13,7 +13,7 @@ import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
 import { useMyGames } from '@/hooks/useMyGames';
 import { usePastGames } from '@/hooks/usePastGames';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
-import { useBugsWithUnread } from '@/hooks/useBugsWithUnread';
+import { useUnreadObjects } from '@/hooks/useUnreadObjects';
 import { ChatType } from '@/types';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { enUS, ru, es, sr } from 'date-fns/locale';
@@ -67,7 +67,6 @@ export const HomeContent = () => {
     gamesUnreadCounts,
     setInvites,
     fetchData,
-    loadAllGamesWithUnread,
   } = useMyGames(user, (loadingState) => setLoading(loadingState), {
     showSkeletonsAnimated: skeletonAnimation.showSkeletonsAnimated,
     hideSkeletonsAnimated: skeletonAnimation.hideSkeletonsAnimated,
@@ -86,7 +85,6 @@ export const HomeContent = () => {
     hasMorePastGames,
     pastGamesUnreadCounts,
     loadPastGames,
-    loadAllPastGamesWithUnread,
   } = usePastGames(user, activeTab === 'past-games');
 
   const { i18n } = useI18nTranslation();
@@ -119,34 +117,33 @@ export const HomeContent = () => {
   };
 
   const {
-    bugsWithUnread,
-    bugsUnreadCounts,
-    loadAllBugsWithUnread,
-  } = useBugsWithUnread(user);
-
+    games: unreadGames,
+    bugs: unreadBugs,
+    gamesUnreadCounts: unreadGamesCounts,
+    bugsUnreadCounts: unreadBugsCounts,
+    loading: loadingUnreadObjects,
+    loadUnreadObjects,
+  } = useUnreadObjects(user?.id);
 
   const mergedGames = useMemo(() => {
     if (!showChatFilter) return games;
-    
-    const pastGamesWithUnread = pastGames.filter(game => (pastGamesUnreadCounts[game.id] || 0) > 0);
-    const existingGameIds = new Set(games.map(g => g.id));
-    const newPastGames = pastGamesWithUnread.filter(game => !existingGameIds.has(game.id));
-    
-    return [...games, ...newPastGames];
-  }, [games, pastGames, pastGamesUnreadCounts, showChatFilter]);
+    return unreadGames;
+  }, [games, unreadGames, showChatFilter]);
 
   const mergedUnreadCounts = useMemo(() => {
-    return { ...gamesUnreadCounts, ...pastGamesUnreadCounts };
-  }, [gamesUnreadCounts, pastGamesUnreadCounts]);
+    if (!showChatFilter) {
+      return { ...gamesUnreadCounts, ...pastGamesUnreadCounts };
+    }
+    return unreadGamesCounts;
+  }, [gamesUnreadCounts, pastGamesUnreadCounts, unreadGamesCounts, showChatFilter]);
 
   const filteredMyGames = useMemo(() => {
     if (!showChatFilter) {
       return sortGamesByStatusAndDateTime(mergedGames);
     }
     
-    const filtered = mergedGames.filter((game) => (mergedUnreadCounts[game.id] || 0) > 0);
-    return sortGamesByStatusAndDateTime(filtered);
-  }, [mergedGames, mergedUnreadCounts, showChatFilter]);
+    return sortGamesByStatusAndDateTime(mergedGames);
+  }, [mergedGames, showChatFilter]);
   
   const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(pastGames), [pastGames]);
   const filteredAvailableGames = useMemo(() => sortGamesByStatusAndDateTime(availableGames), [availableGames]);
@@ -180,26 +177,12 @@ export const HomeContent = () => {
 
     setIsMarkingAllAsRead(true);
     try {
-      const allChatGamesResponse = await chatApi.getUserChatGames();
-      const allChatGames = allChatGamesResponse.data || [];
+      const unreadObjectsResponse = await chatApi.getUnreadObjects();
+      const unreadObjects = unreadObjectsResponse.data;
       
-      const gameIds = allChatGames.map(game => game.id);
-      const unreadCountsResponse = gameIds.length > 0
-        ? await chatApi.getGamesUnreadCounts(gameIds)
-        : { data: {} as Record<string, number> };
-      const unreadCounts = unreadCountsResponse.data || {};
-      const gamesWithUnread = allChatGames.filter(game => (unreadCounts[game.id] || 0) > 0);
-      
-      const bugsWithUnreadMessages = bugsWithUnread.filter(bug => (bugsUnreadCounts[bug.id] || 0) > 0);
-      
-      const userChatsResponse = await chatApi.getUserChats();
-      const allUserChats = userChatsResponse.data || [];
-      const userChatIds = allUserChats.map(chat => chat.id);
-      const userChatsUnreadCountsResponse = userChatIds.length > 0 
-        ? await chatApi.getUserChatsUnreadCounts(userChatIds)
-        : { data: {} as Record<string, number> };
-      const freshUserChatsUnreadCounts = userChatsUnreadCountsResponse.data || {};
-      const userChatsWithUnread = allUserChats.filter(chat => (freshUserChatsUnreadCounts[chat.id] || 0) > 0);
+      const gamesWithUnread = unreadObjects.games.map(item => item.game);
+      const bugsWithUnreadMessages = unreadObjects.bugs.map(item => item.bug);
+      const userChatsWithUnread = unreadObjects.userChats.map(item => item.chat);
       
       if (gamesWithUnread.length === 0 && bugsWithUnreadMessages.length === 0 && userChatsWithUnread.length === 0) {
         setIsMarkingAllAsRead(false);
@@ -227,11 +210,7 @@ export const HomeContent = () => {
       await fetchData(false, true);
       
       if (showChatFilter) {
-        await Promise.all([
-          loadAllGamesWithUnread?.(),
-          loadAllPastGamesWithUnread?.(),
-          loadAllBugsWithUnread?.()
-        ]);
+        await loadUnreadObjects?.();
       }
 
       const updatedUnreadResponse = await chatApi.getUnreadCount();
@@ -347,17 +326,17 @@ export const HomeContent = () => {
             <MyGamesSection
               games={filteredMyGames}
               user={user}
-              loading={loading}
+              loading={loading || loadingUnreadObjects}
               showSkeleton={skeletonAnimation.showSkeleton}
               skeletonStates={skeletonAnimation.skeletonStates}
               showChatFilter={showChatFilter}
               gamesUnreadCounts={mergedUnreadCounts}
               onShowAllGames={() => setShowChatFilter(false)}
             />
-            {bugsWithUnread.length > 0 && (
+            {unreadBugs.length > 0 && (
               <BugsSection
-                bugs={bugsWithUnread}
-                bugsUnreadCounts={bugsUnreadCounts}
+                bugs={unreadBugs}
+                bugsUnreadCounts={unreadBugsCounts}
               />
             )}
           </>

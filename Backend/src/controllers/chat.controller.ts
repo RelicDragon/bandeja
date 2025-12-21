@@ -10,6 +10,7 @@ import { ReadReceiptService } from '../services/chat/readReceipt.service';
 import { SystemMessageService } from '../services/chat/systemMessage.service';
 import { UserChatService } from '../services/chat/userChat.service';
 import { MessageReportService } from '../services/chat/messageReport.service';
+import { UnreadObjectsService } from '../services/chat/unreadObjects.service';
 import prisma from '../config/database';
 
 export const createSystemMessage = async (contextId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC, chatContextType: ChatContextType = ChatContextType.GAME) => {
@@ -225,6 +226,21 @@ export const getUnreadCount = asyncHandler(async (req: AuthRequest, res: Respons
   }
 
   const result = await ReadReceiptService.getUnreadCount(userId);
+
+  res.json({
+    success: true,
+    data: result
+  });
+});
+
+export const getUnreadObjects = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const result = await UnreadObjectsService.getUnreadObjects(userId);
 
   res.json({
     success: true,

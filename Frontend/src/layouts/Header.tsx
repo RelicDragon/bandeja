@@ -4,9 +4,6 @@ import { Bell, MessageCircle, User, ArrowLeft, Bug } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/store/authStore';
-import { chatApi } from '@/api/chat';
-import { bugsApi } from '@/api';
 import {
   HeaderContentWrapper,
   HomeHeaderContent,
@@ -27,7 +24,6 @@ export const Header = ({
 }: HeaderProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
   const { pendingInvites, unreadMessages, isNewInviteAnimating, showChatFilter: globalShowChatFilter, setShowChatFilter } = useHeaderStore();
   const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications, bugsButtonSlidingUp, bugsButtonSlidingDown, setBugsButtonSlidingUp, setBugsButtonSlidingDown } = useNavigationStore();
   
@@ -93,85 +89,6 @@ export const Header = ({
     setTimeout(() => setIsAnimating(false), 300);
   };
 
-  const logUnreadObjects = async () => {
-    if (!user?.id) return;
-
-    try {
-      const unreadData: {
-        games: Array<{ game: any; unreadCount: number }>;
-        bugs: Array<{ bug: any; unreadCount: number }>;
-        userChats: Array<{ chat: any; unreadCount: number }>;
-      } = {
-        games: [],
-        bugs: [],
-        userChats: [],
-      };
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const allChatGamesResponse = await chatApi.getUserChatGames();
-      const allChatGames = allChatGamesResponse.data || [];
-      
-      const upcomingChatGames = allChatGames.filter(game => {
-        if (game.status === 'ARCHIVED') {
-          const gameDate = new Date(game.startTime);
-          gameDate.setHours(0, 0, 0, 0);
-          return gameDate >= today;
-        }
-        const gameDate = new Date(game.startTime);
-        gameDate.setHours(0, 0, 0, 0);
-        return gameDate >= today;
-      });
-
-      if (upcomingChatGames.length > 0) {
-        const gameIds = upcomingChatGames.map(game => game.id);
-        const gamesUnreadCounts = await chatApi.getGamesUnreadCounts(gameIds);
-        
-        upcomingChatGames.forEach(game => {
-          const unreadCount = gamesUnreadCounts.data[game.id] || 0;
-          if (unreadCount > 0) {
-            unreadData.games.push({ game, unreadCount });
-          }
-        });
-      }
-
-      const bugsResponse = await bugsApi.getBugs({ page: 1, limit: 100 });
-      const bugs = bugsResponse.data.bugs || [];
-      
-      if (bugs.length > 0) {
-        const bugIds = bugs.map(bug => bug.id);
-        const bugsUnreadCounts = await chatApi.getBugsUnreadCounts(bugIds);
-        
-        bugs.forEach(bug => {
-          const unreadCount = bugsUnreadCounts.data[bug.id] || 0;
-          if (unreadCount > 0) {
-            unreadData.bugs.push({ bug, unreadCount });
-          }
-        });
-      }
-
-      const userChatsResponse = await chatApi.getUserChats();
-      const userChats = userChatsResponse.data || [];
-      
-      if (userChats.length > 0) {
-        const chatIds = userChats.map(chat => chat.id);
-        const userChatsUnreadCounts = await chatApi.getUserChatsUnreadCounts(chatIds);
-        
-        userChats.forEach(chat => {
-          const unreadCount = userChatsUnreadCounts.data[chat.id] || 0;
-          if (unreadCount > 0) {
-            unreadData.userChats.push({ chat, unreadCount });
-          }
-        });
-      }
-
-      console.log('Unread Objects:', unreadData);
-    } catch (error) {
-      console.error('Failed to fetch unread objects:', error);
-    }
-  };
-
   return (
     <>
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed top-0 right-0 left-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)', height: 'calc(4rem + env(safe-area-inset-top))' }}>
@@ -214,7 +131,6 @@ export const Header = ({
             {(unreadMessages > 0 || isChatFilterActive) && (
               <button
                 onClick={() => {
-                  logUnreadObjects();
                   if (currentPage !== 'home') {
                     setIsAnimating(true);
                     setCurrentPage('home');

@@ -26,7 +26,8 @@ import {
   getBugUnreadCount,
   getBugsUnreadCounts,
   markAllBugMessagesAsRead,
-  reportMessage
+  reportMessage,
+  getUnreadObjects
 } from '../controllers/chat.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -59,6 +60,7 @@ router.post(
   getGamesUnreadCounts
 );
 router.get('/unread-count', getUnreadCount);
+router.get('/unread-objects', getUnreadObjects);
 router.get('/user-games', getUserChatGames);
 
 router.patch(

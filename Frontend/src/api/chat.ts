@@ -158,6 +158,15 @@ export const chatApi = {
     return response.data;
   },
 
+  getUnreadObjects: async () => {
+    const response = await api.get<ApiResponse<{
+      games: Array<{ game: Game; unreadCount: number }>;
+      bugs: Array<{ bug: any; unreadCount: number }>;
+      userChats: Array<{ chat: UserChat; unreadCount: number }>;
+    }>>('/chat/unread-objects');
+    return response.data;
+  },
+
   getUserChatGames: async () => {
     const response = await api.get<ApiResponse<Game[]>>('/chat/user-games');
     return response.data;
