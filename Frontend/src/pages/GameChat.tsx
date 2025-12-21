@@ -58,6 +58,7 @@ export const GameChat: React.FC = () => {
   const sendingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSendingRef = useRef(false);
   const sendingStartTimeRef = useRef<number | null>(null);
+  const justLoadedOlderMessagesRef = useRef(false);
 
   const userParticipant = game?.participants.find(p => p.userId === user?.id);
   const isParticipant = !!userParticipant;
@@ -183,10 +184,15 @@ export const GameChat: React.FC = () => {
     if (!hasMoreMessages || isLoadingMore) return;
     
     setIsLoadingMore(true);
+    justLoadedOlderMessagesRef.current = true;
     const nextPage = page + 1;
     await loadMessages(nextPage, true);
     setPage(nextPage);
     setIsLoadingMore(false);
+    
+    setTimeout(() => {
+      justLoadedOlderMessagesRef.current = false;
+    }, 500);
   }, [hasMoreMessages, isLoadingMore, page, loadMessages]);
 
   const handleAddReaction = useCallback(async (messageId: string, emoji: string) => {
@@ -610,6 +616,10 @@ export const GameChat: React.FC = () => {
   }, [id, contextType, handleNewMessage, handleMessageReaction, handleReadReceipt, handleMessageDeleted]);
 
   useEffect(() => {
+    if (justLoadedOlderMessagesRef.current) {
+      return;
+    }
+    
     if (!isLoadingMessages && !isSwitchingChatType && !isLoadingMore && !isInitialLoad && messages.length > 0) {
       const scrollToBottom = () => {
         const messagesContainer = document.querySelector('.overflow-y-auto');
@@ -657,6 +667,7 @@ export const GameChat: React.FC = () => {
             hasMoreMessages={false}
             onLoadMore={loadMoreMessages}
             isInitialLoad={true}
+            isLoadingMore={false}
           />
         </main>
       </div>
@@ -853,6 +864,7 @@ export const GameChat: React.FC = () => {
           hasMoreMessages={hasMoreMessages}
           onLoadMore={loadMoreMessages}
           isInitialLoad={isInitialLoad}
+          isLoadingMore={isLoadingMore}
         />
       </main>
 

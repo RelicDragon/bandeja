@@ -19,6 +19,7 @@ interface MessageListProps {
   hasMoreMessages?: boolean;
   onLoadMore?: () => void;
   isInitialLoad?: boolean;
+  isLoadingMore?: boolean;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -34,11 +35,16 @@ export const MessageList: React.FC<MessageListProps> = ({
   onLoadMore,
   isInitialLoad = false,
   isLoading = false,
+  isLoadingMore = false,
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
+  const previousScrollHeightRef = useRef(0);
+  const previousScrollTopRef = useRef(0);
+  const isLoadingMoreRef = useRef(false);
+  const justLoadedOlderMessagesRef = useRef(false);
   const { contextMenuState, openContextMenu, closeContextMenu, handleScrollStart } = useContextMenuManager();
   const [isButtonVisible, setIsButtonVisible] = React.useState(true);
   const [shouldRenderButton, setShouldRenderButton] = React.useState(true);
@@ -48,12 +54,66 @@ export const MessageList: React.FC<MessageListProps> = ({
   };
 
   useEffect(() => {
-    // Only scroll to bottom when new messages are added, not when existing messages are updated
-    if (messages.length > previousMessageCountRef.current) {
-      scrollToBottom();
+    isLoadingMoreRef.current = isLoadingMore;
+    
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    if (isLoadingMore) {
+      previousScrollHeightRef.current = container.scrollHeight;
+      previousScrollTopRef.current = container.scrollTop;
+      justLoadedOlderMessagesRef.current = false;
+    } else if (isLoadingMoreRef.current) {
+      justLoadedOlderMessagesRef.current = true;
+      setTimeout(() => {
+        justLoadedOlderMessagesRef.current = false;
+      }, 500);
     }
-    previousMessageCountRef.current = messages.length;
-  }, [messages]);
+  }, [isLoadingMore]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const currentMessageCount = messages.length;
+    const previousMessageCount = previousMessageCountRef.current;
+    const isNewMessagesAdded = currentMessageCount > previousMessageCount;
+
+    if (isNewMessagesAdded) {
+      const wasLoadingMore = isLoadingMoreRef.current || isLoadingMore;
+      const justLoadedOlder = justLoadedOlderMessagesRef.current;
+      
+      if (wasLoadingMore || justLoadedOlder) {
+        const previousScrollHeight = previousScrollHeightRef.current;
+        const previousScrollTop = previousScrollTopRef.current;
+        
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (container) {
+              const currentScrollHeight = container.scrollHeight;
+              const scrollDifference = currentScrollHeight - previousScrollHeight;
+              const newScrollTop = previousScrollTop + scrollDifference;
+              container.scrollTop = newScrollTop;
+            }
+          });
+        });
+      } else {
+        const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        if (isAtBottom) {
+          scrollToBottom();
+        }
+      }
+    }
+
+    previousMessageCountRef.current = currentMessageCount;
+    if (!isLoadingMore) {
+      requestAnimationFrame(() => {
+        if (container) {
+          previousScrollHeightRef.current = container.scrollHeight;
+        }
+      });
+    }
+  }, [messages, isLoadingMore]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
