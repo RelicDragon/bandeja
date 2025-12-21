@@ -497,6 +497,28 @@ export const getBugMessages = asyncHandler(async (req: AuthRequest, res: Respons
   });
 });
 
+export const getBugLastUserMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { bugId } = req.params;
+  const userId = req.userId;
+  const { chatType = ChatType.PUBLIC } = req.query;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const message = await MessageService.getLastUserMessage(
+    ChatContextType.BUG,
+    bugId,
+    userId,
+    chatType as ChatType
+  );
+
+  res.json({
+    success: true,
+    data: message
+  });
+});
+
 export const getBugUnreadCount = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { bugId } = req.params;
   const userId = req.userId;

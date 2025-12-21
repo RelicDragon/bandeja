@@ -406,6 +406,36 @@ export class MessageService {
     return messages.reverse();
   }
 
+  static async getLastUserMessage(
+    chatContextType: ChatContextType,
+    contextId: string,
+    userId: string,
+    chatType: ChatType = ChatType.PUBLIC
+  ) {
+    // Validate access based on context type
+    if (chatContextType === 'GAME') {
+      const { participant, game } = await this.validateGameAccess(contextId, userId);
+      await this.validateChatTypeAccess(participant, chatType, game);
+    } else if (chatContextType === 'BUG') {
+      await this.validateBugAccess(contextId, userId);
+    } else if (chatContextType === 'USER') {
+      await this.validateUserChatAccess(contextId, userId);
+    }
+
+    const message = await prisma.chatMessage.findFirst({
+      where: { 
+        chatContextType,
+        contextId,
+        chatType: chatType as ChatType,
+        senderId: { not: null }
+      },
+      include: this.getMessageInclude(),
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return message;
+  }
+
   static async updateMessageState(messageId: string, userId: string, state: MessageState) {
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId }

@@ -23,6 +23,7 @@ import {
   pinUserChat,
   unpinUserChat,
   getBugMessages,
+  getBugLastUserMessage,
   getBugUnreadCount,
   getBugsUnreadCounts,
   markAllBugMessagesAsRead,
@@ -106,6 +107,7 @@ router.post(
 
 // Bug Chat Routes
 router.get('/bugs/:bugId/messages', getBugMessages);
+router.get('/bugs/:bugId/last-user-message', getBugLastUserMessage);
 router.get('/bugs/:bugId/unread-count', getBugUnreadCount);
 router.post('/bugs/:bugId/mark-all-read', markAllBugMessagesAsRead);
 router.post(

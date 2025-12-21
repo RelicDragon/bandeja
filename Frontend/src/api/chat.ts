@@ -240,6 +240,13 @@ export const chatApi = {
     return response.data.data;
   },
 
+  getBugLastUserMessage: async (bugId: string, chatType: ChatType = 'PUBLIC') => {
+    const response = await api.get<ApiResponse<ChatMessage | null>>(`/chat/bugs/${bugId}/last-user-message`, {
+      params: { chatType }
+    });
+    return response.data.data;
+  },
+
   getBugUnreadCount: async (bugId: string) => {
     const response = await api.get<ApiResponse<{ count: number }>>(`/chat/bugs/${bugId}/unread-count`);
     return response.data;

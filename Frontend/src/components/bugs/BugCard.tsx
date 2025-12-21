@@ -58,14 +58,10 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
   useEffect(() => {
     const fetchLastMessage = async () => {
       try {
-        const messages = await chatApi.getBugMessages(bug.id, 1, 1);
-        if (messages && messages.length > 0) {
-          setLastMessage(messages[0]);
-        } else {
-          setLastMessage(null);
-        }
+        const message = await chatApi.getBugLastUserMessage(bug.id);
+        setLastMessage(message);
       } catch (error) {
-        console.error('Failed to fetch bug messages:', error);
+        console.error('Failed to fetch bug last user message:', error);
         setLastMessage(null);
       }
     };
