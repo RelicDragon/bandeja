@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { chatApi } from '@/api/chat';
-import { Game, Bug, UserChat } from '@/types';
+import { chatApi, UserChat } from '@/api/chat';
+import { Game, Bug } from '@/types';
 import { useHeaderStore } from '@/store/headerStore';
 
 export interface UnreadObject {
