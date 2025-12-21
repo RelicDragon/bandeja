@@ -51,6 +51,12 @@ router.delete(
 );
 
 router.post(
+  '/rounds/:leagueRoundId/send-start-message',
+  authenticate,
+  leagueController.sendRoundStartMessage
+);
+
+router.post(
   '/:leagueSeasonId/sync-participants',
   authenticate,
   leagueController.syncLeagueParticipants

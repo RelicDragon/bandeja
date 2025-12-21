@@ -49,6 +49,7 @@ export interface LeagueRound {
   id: string;
   leagueSeasonId: string;
   orderIndex: number;
+  sentStartMessage: boolean;
   createdAt: string;
   updatedAt: string;
   games: Game[];
@@ -166,6 +167,10 @@ export const leaguesApi = {
   },
   reorderGroups: async (leagueSeasonId: string, groupIds: string[]) => {
     const response = await api.put<ApiResponse<LeagueGroupManagementPayload>>(`/leagues/${leagueSeasonId}/groups/reorder`, { groupIds });
+    return response.data;
+  },
+  sendRoundStartMessage: async (leagueRoundId: string) => {
+    const response = await api.post<ApiResponse<{ success: boolean; notifiedUsers: number }>>(`/leagues/rounds/${leagueRoundId}/send-start-message`);
     return response.data;
   },
 };

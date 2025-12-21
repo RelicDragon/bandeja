@@ -8,79 +8,79 @@ datasource db {
 }
 
 model User {
-  id                      String               @id @default(cuid())
-  phone                   String?              @unique
-  email                   String?              @unique
-  telegramId              String?              @unique
-  telegramUsername        String?
-  firstName               String?
-  lastName                String?
-  avatar                  String?
-  originalAvatar          String?
-  authProvider            AuthProvider
-  passwordHash            String?
-  isActive                Boolean              @default(true)
-  level                   Float                @default(1.0)
-  socialLevel             Float                @default(1.0)
-  reliability             Float                @default(0)
-  totalPoints             Int                  @default(0)
-  gamesPlayed             Int                  @default(0)
-  gamesWon                Int                  @default(0)
-  wallet                  Int                  @default(0)
-  currentCityId           String?
-  language                String?
-  preferredHandLeft       Boolean              @default(false)
-  preferredHandRight      Boolean              @default(false)
-  preferredCourtSideLeft  Boolean              @default(false)
-  preferredCourtSideRight Boolean              @default(false)
-  createdAt               DateTime             @default(now())
-  updatedAt               DateTime             @updatedAt
-  isAdmin                 Boolean              @default(false)
-  isTrainer               Boolean              @default(false)
-  canCreateTournament     Boolean              @default(false)
-  canCreateLeague         Boolean              @default(false)
-  gender                  Gender               @default(PREFER_NOT_TO_SAY)
-  genderIsSet             Boolean              @default(false)
-  sendTelegramMessages    Boolean              @default(true)
-  sendTelegramInvites     Boolean              @default(true)
-  sendTelegramDirectMessages Boolean           @default(true)
-  sendTelegramReminders   Boolean              @default(true)
-  chatMessages            ChatMessage[]
-  participateInGames      GameParticipant[]    @relation("ParticipantUser")
-  userChats1              UserChat[]           @relation("UserChat1")
-  userChats2              UserChat[]           @relation("UserChat2")
-  pinnedUserChats         PinnedUserChat[]
-  receivedInvites         Invite[]             @relation("InviteReceiver")
-  sentInvites             Invite[]             @relation("InviteSender")
-  joinQueues              JoinQueue[]          @relation("JoinQueueUser")
-  messageReactions        MessageReaction[]
-  messageReadReceipts     MessageReadReceipt[]
-  currentCity             City?                @relation("UserCurrentCity", fields: [currentCityId], references: [id])
-  favoriteClubs           UserFavoriteClub[]
-  favoriteUsers           UserFavoriteUser[]   @relation("UserFavorites")
-  favoritedBy             UserFavoriteUser[]   @relation("UserFavoritedBy")
-  interactionsFrom        UserInteraction[]    @relation("InteractionFromUser")
-  interactionsTo          UserInteraction[]    @relation("InteractionToUser")
-  teamPlayers             TeamPlayer[]
-  roundOutcomes           RoundOutcome[]
-  gameOutcomes            GameOutcome[]
-  gameTeamPlayers         GameTeamPlayer[]
-  bugs                    Bug[]
-  bugParticipants         BugParticipant[]
-  lundaProfile            LundaProfile?
-  transactionsFrom        Transaction[]        @relation("TransactionFromUser")
-  transactionsTo          Transaction[]        @relation("TransactionToUser")
-  levelChangeEvents       LevelChangeEvent[]
-  leagueParticipants      LeagueParticipant[]
-  leagueTeamPlayers       LeagueTeamPlayer[]
-  sendPushMessages        Boolean              @default(true)
-  sendPushInvites         Boolean              @default(true)
-  sendPushDirectMessages  Boolean              @default(true)
-  sendPushReminders       Boolean              @default(true)
-  pushTokens              PushToken[]
-  messageReports          MessageReport[]      @relation("MessageReportReporter")
-  blockedUsers            BlockedUser[]         @relation("UserBlocked")
-  blockedBy               BlockedUser[]         @relation("UserBlockedBy")
+  id                         String               @id @default(cuid())
+  phone                      String?              @unique
+  email                      String?              @unique
+  telegramId                 String?              @unique
+  telegramUsername           String?
+  firstName                  String?
+  lastName                   String?
+  avatar                     String?
+  originalAvatar             String?
+  authProvider               AuthProvider
+  passwordHash               String?
+  isActive                   Boolean              @default(true)
+  level                      Float                @default(1.0)
+  socialLevel                Float                @default(1.0)
+  reliability                Float                @default(0)
+  totalPoints                Int                  @default(0)
+  gamesPlayed                Int                  @default(0)
+  gamesWon                   Int                  @default(0)
+  wallet                     Int                  @default(0)
+  currentCityId              String?
+  language                   String?
+  preferredHandLeft          Boolean              @default(false)
+  preferredHandRight         Boolean              @default(false)
+  preferredCourtSideLeft     Boolean              @default(false)
+  preferredCourtSideRight    Boolean              @default(false)
+  createdAt                  DateTime             @default(now())
+  updatedAt                  DateTime             @updatedAt
+  isAdmin                    Boolean              @default(false)
+  isTrainer                  Boolean              @default(false)
+  canCreateTournament        Boolean              @default(false)
+  canCreateLeague            Boolean              @default(false)
+  gender                     Gender               @default(PREFER_NOT_TO_SAY)
+  genderIsSet                Boolean              @default(false)
+  sendTelegramMessages       Boolean              @default(true)
+  sendTelegramInvites        Boolean              @default(true)
+  sendTelegramDirectMessages Boolean              @default(true)
+  sendTelegramReminders      Boolean              @default(true)
+  chatMessages               ChatMessage[]
+  participateInGames         GameParticipant[]    @relation("ParticipantUser")
+  userChats1                 UserChat[]           @relation("UserChat1")
+  userChats2                 UserChat[]           @relation("UserChat2")
+  pinnedUserChats            PinnedUserChat[]
+  receivedInvites            Invite[]             @relation("InviteReceiver")
+  sentInvites                Invite[]             @relation("InviteSender")
+  joinQueues                 JoinQueue[]          @relation("JoinQueueUser")
+  messageReactions           MessageReaction[]
+  messageReadReceipts        MessageReadReceipt[]
+  currentCity                City?                @relation("UserCurrentCity", fields: [currentCityId], references: [id])
+  favoriteClubs              UserFavoriteClub[]
+  favoriteUsers              UserFavoriteUser[]   @relation("UserFavorites")
+  favoritedBy                UserFavoriteUser[]   @relation("UserFavoritedBy")
+  interactionsFrom           UserInteraction[]    @relation("InteractionFromUser")
+  interactionsTo             UserInteraction[]    @relation("InteractionToUser")
+  teamPlayers                TeamPlayer[]
+  roundOutcomes              RoundOutcome[]
+  gameOutcomes               GameOutcome[]
+  gameTeamPlayers            GameTeamPlayer[]
+  bugs                       Bug[]
+  bugParticipants            BugParticipant[]
+  lundaProfile               LundaProfile?
+  transactionsFrom           Transaction[]        @relation("TransactionFromUser")
+  transactionsTo             Transaction[]        @relation("TransactionToUser")
+  levelChangeEvents          LevelChangeEvent[]
+  leagueParticipants         LeagueParticipant[]
+  leagueTeamPlayers          LeagueTeamPlayer[]
+  sendPushMessages           Boolean              @default(true)
+  sendPushInvites            Boolean              @default(true)
+  sendPushDirectMessages     Boolean              @default(true)
+  sendPushReminders          Boolean              @default(true)
+  pushTokens                 PushToken[]
+  messageReports             MessageReport[]      @relation("MessageReportReporter")
+  blockedUsers               BlockedUser[]        @relation("UserBlocked")
+  blockedBy                  BlockedUser[]        @relation("UserBlockedBy")
 
   @@index([phone])
   @@index([telegramId])
@@ -90,13 +90,13 @@ model User {
 }
 
 model LundaProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cookie      String?
-  metadata    Json     // Store the entire player data response from Lunda API
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cookie    String?
+  metadata  Json // Store the entire player data response from Lunda API
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model City {
@@ -116,29 +116,29 @@ model City {
 }
 
 model Club {
-  id          String             @id @default(cuid())
-  name        String
-  description String?
-  address     String
-  cityId      String
-  phone       String?
-  email       String?
-  website     String?
-  latitude    Float?
-  longitude   Float?
-  openingTime String?
-  closingTime String?
-  amenities   Json?
-  isActive    Boolean            @default(true)
-  isBar       Boolean            @default(false)
-  isForPlaying Boolean           @default(true)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  city        City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  courts      Court[]
-  games       Game[]
-  favoritedBy UserFavoriteClub[]
-  leagues     League[]
+  id           String             @id @default(cuid())
+  name         String
+  description  String?
+  address      String
+  cityId       String
+  phone        String?
+  email        String?
+  website      String?
+  latitude     Float?
+  longitude    Float?
+  openingTime  String?
+  closingTime  String?
+  amenities    Json?
+  isActive     Boolean            @default(true)
+  isBar        Boolean            @default(false)
+  isForPlaying Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  city         City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  courts       Court[]
+  games        Game[]
+  favoritedBy  UserFavoriteClub[]
+  leagues      League[]
 
   @@index([cityId])
   @@index([isActive])
@@ -165,76 +165,76 @@ model Court {
 }
 
 model Game {
-  id              String            @id @default(cuid())
-  entityType      EntityType
-  gameType        GameType
-  name            String?
-  description     String?
-  avatar          String?
-  originalAvatar  String?
-  clubId          String?
-  courtId         String?
-  cityId          String
-  startTime       DateTime
-  endTime         DateTime
-  maxParticipants Int               @default(4)
-  minParticipants Int               @default(2)
-  minLevel        Float?
-  maxLevel        Float?
-  isPublic        Boolean           @default(true)
-  affectsRating   Boolean           @default(true)
-  anyoneCanInvite Boolean           @default(false)
-  resultsByAnyone Boolean           @default(false)
-  allowDirectJoin Boolean           @default(false)
-  hasBookedCourt  Boolean           @default(false)
-  afterGameGoToBar Boolean          @default(false)
-  hasFixedTeams   Boolean           @default(false)
-  genderTeams     GenderTeam        @default(ANY)
-  teamsReady      Boolean           @default(false)
-  participantsReady Boolean         @default(false)
-  status          GameStatus        @default(ANNOUNCED)
-  resultsStatus   ResultsStatus     @default(NONE)
-  resultsMeta     Json?
-  fixedNumberOfSets Int             @default(0)
-  maxTotalPointsPerSet Int          @default(0)
-  maxPointsPerTeam Int              @default(0)
-  winnerOfGame    WinnerOfGame      @default(BY_MATCHES_WON)
-  winnerOfMatch   WinnerOfMatch     @default(BY_SCORES)
-  matchGenerationType MatchGenerationType @default(HANDMADE)
-  prohibitMatchesEditing Boolean   @default(false)
-  pointsPerWin   Int              @default(0)
-  pointsPerLoose Int              @default(0)
-  pointsPerTie   Int              @default(0)
-  ballsInGames   Boolean          @default(false)
-  mediaUrls       String[]
-  photosCount     Int              @default(0)
-  mainPhotoId     String?
-  parentId        String?
-  leagueRoundId   String?
-  leagueGroupId   String?
-  timeIsSet       Boolean          @default(false)
-  priceTotal      Float?
-  priceType       PriceType        @default(NOT_KNOWN)
-  priceCurrency   PriceCurrency?
-  metadata        Json?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  club            Club?             @relation(fields: [clubId], references: [id])
-  court           Court?            @relation(fields: [courtId], references: [id])
-  city            City              @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  parent          Game?             @relation("GameHierarchy", fields: [parentId], references: [id])
-  children        Game[]            @relation("GameHierarchy")
-  leagueRound     LeagueRound?      @relation(fields: [leagueRoundId], references: [id], onDelete: SetNull)
-  leagueGroup     LeagueGroup?      @relation(fields: [leagueGroupId], references: [id], onDelete: SetNull)
-  participants    GameParticipant[]
-  invites         Invite[]
-  joinQueues      JoinQueue[]
-  rounds          Round[]
-  outcomes        GameOutcome[]
-  fixedTeams      GameTeam[]
-  gameCourts      GameCourt[]
-  levelChangeEvents LevelChangeEvent[]
-  leagueSeason               LeagueSeason?  @relation("GameLeagueSeason")
+  id                     String              @id @default(cuid())
+  entityType             EntityType
+  gameType               GameType
+  name                   String?
+  description            String?
+  avatar                 String?
+  originalAvatar         String?
+  clubId                 String?
+  courtId                String?
+  cityId                 String
+  startTime              DateTime
+  endTime                DateTime
+  maxParticipants        Int                 @default(4)
+  minParticipants        Int                 @default(2)
+  minLevel               Float?
+  maxLevel               Float?
+  isPublic               Boolean             @default(true)
+  affectsRating          Boolean             @default(true)
+  anyoneCanInvite        Boolean             @default(false)
+  resultsByAnyone        Boolean             @default(false)
+  allowDirectJoin        Boolean             @default(false)
+  hasBookedCourt         Boolean             @default(false)
+  afterGameGoToBar       Boolean             @default(false)
+  hasFixedTeams          Boolean             @default(false)
+  genderTeams            GenderTeam          @default(ANY)
+  teamsReady             Boolean             @default(false)
+  participantsReady      Boolean             @default(false)
+  status                 GameStatus          @default(ANNOUNCED)
+  resultsStatus          ResultsStatus       @default(NONE)
+  resultsMeta            Json?
+  fixedNumberOfSets      Int                 @default(0)
+  maxTotalPointsPerSet   Int                 @default(0)
+  maxPointsPerTeam       Int                 @default(0)
+  winnerOfGame           WinnerOfGame        @default(BY_MATCHES_WON)
+  winnerOfMatch          WinnerOfMatch       @default(BY_SCORES)
+  matchGenerationType    MatchGenerationType @default(HANDMADE)
+  prohibitMatchesEditing Boolean             @default(false)
+  pointsPerWin           Int                 @default(0)
+  pointsPerLoose         Int                 @default(0)
+  pointsPerTie           Int                 @default(0)
+  ballsInGames           Boolean             @default(false)
+  mediaUrls              String[]
+  photosCount            Int                 @default(0)
+  mainPhotoId            String?
+  parentId               String?
+  leagueRoundId          String?
+  leagueGroupId          String?
+  timeIsSet              Boolean             @default(false)
+  priceTotal             Float?
+  priceType              PriceType           @default(NOT_KNOWN)
+  priceCurrency          PriceCurrency?
+  metadata               Json?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  club                   Club?               @relation(fields: [clubId], references: [id])
+  court                  Court?              @relation(fields: [courtId], references: [id])
+  city                   City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  parent                 Game?               @relation("GameHierarchy", fields: [parentId], references: [id])
+  children               Game[]              @relation("GameHierarchy")
+  leagueRound            LeagueRound?        @relation(fields: [leagueRoundId], references: [id], onDelete: SetNull)
+  leagueGroup            LeagueGroup?        @relation(fields: [leagueGroupId], references: [id], onDelete: SetNull)
+  participants           GameParticipant[]
+  invites                Invite[]
+  joinQueues             JoinQueue[]
+  rounds                 Round[]
+  outcomes               GameOutcome[]
+  fixedTeams             GameTeam[]
+  gameCourts             GameCourt[]
+  levelChangeEvents      LevelChangeEvent[]
+  leagueSeason           LeagueSeason?       @relation("GameLeagueSeason")
 
   @@index([clubId])
   @@index([courtId])
@@ -249,7 +249,6 @@ model Game {
   @@index([resultsStatus])
   @@index([hasFixedTeams])
 }
-
 
 model GameParticipant {
   id        String          @id @default(cuid())
@@ -291,14 +290,14 @@ model Invite {
 }
 
 model JoinQueue {
-  id         String       @id @default(cuid())
-  userId     String
-  gameId     String
-  status     InviteStatus @default(PENDING)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  game       Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  user       User         @relation("JoinQueueUser", fields: [userId], references: [id], onDelete: Cascade)
+  id        String       @id @default(cuid())
+  userId    String
+  gameId    String
+  status    InviteStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  game      Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User         @relation("JoinQueueUser", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, gameId])
   @@index([userId])
@@ -322,17 +321,17 @@ model Round {
 }
 
 model Match {
-  id          String      @id @default(cuid())
+  id          String   @id @default(cuid())
   roundId     String
   matchNumber Int
   winnerId    String?
   courtId     String?
   metadata    Json?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  round       Round       @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  winner      Team?       @relation("MatchWinner", fields: [winnerId], references: [id])
-  court       Court?      @relation(fields: [courtId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  round       Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  winner      Team?    @relation("MatchWinner", fields: [winnerId], references: [id])
+  court       Court?   @relation(fields: [courtId], references: [id])
   teams       Team[]
   sets        Set[]
 
@@ -342,16 +341,16 @@ model Match {
 }
 
 model Team {
-  id          String       @id @default(cuid())
-  matchId     String
-  teamNumber  Int
-  score       Int          @default(0)
-  metadata    Json?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  match       Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  players     TeamPlayer[]
-  wonMatches  Match[]      @relation("MatchWinner")
+  id         String       @id @default(cuid())
+  matchId    String
+  teamNumber Int
+  score      Int          @default(0)
+  metadata   Json?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  match      Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  players    TeamPlayer[]
+  wonMatches Match[]      @relation("MatchWinner")
 
   @@index([matchId])
 }
@@ -474,13 +473,13 @@ model UserInteraction {
 }
 
 model UserChat {
-  id           String            @id @default(cuid())
-  user1Id      String
-  user2Id      String
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  user1        User              @relation("UserChat1", fields: [user1Id], references: [id], onDelete: Cascade)
-  user2        User              @relation("UserChat2", fields: [user2Id], references: [id], onDelete: Cascade)
+  id            String           @id @default(cuid())
+  user1Id       String
+  user2Id       String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  user1         User             @relation("UserChat1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2         User             @relation("UserChat2", fields: [user2Id], references: [id], onDelete: Cascade)
   pinnedByUsers PinnedUserChat[]
 
   @@unique([user1Id, user2Id])
@@ -574,12 +573,12 @@ model UserFavoriteClub {
 }
 
 model UserFavoriteUser {
-  id        String   @id @default(cuid())
-  userId    String
+  id             String   @id @default(cuid())
+  userId         String
   favoriteUserId String
-  createdAt DateTime @default(now())
-  user      User     @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
-  favoriteUser User   @relation("UserFavoritedBy", fields: [favoriteUserId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  user           User     @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
+  favoriteUser   User     @relation("UserFavoritedBy", fields: [favoriteUserId], references: [id], onDelete: Cascade)
 
   @@unique([userId, favoriteUserId])
   @@index([userId])
@@ -587,12 +586,12 @@ model UserFavoriteUser {
 }
 
 model BlockedUser {
-  id        String   @id @default(cuid())
-  userId    String
+  id            String   @id @default(cuid())
+  userId        String
   blockedUserId String
-  createdAt DateTime @default(now())
-  user      User     @relation("UserBlocked", fields: [userId], references: [id], onDelete: Cascade)
-  blockedUser User   @relation("UserBlockedBy", fields: [blockedUserId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  user          User     @relation("UserBlocked", fields: [userId], references: [id], onDelete: Cascade)
+  blockedUser   User     @relation("UserBlockedBy", fields: [blockedUserId], references: [id], onDelete: Cascade)
 
   @@unique([userId, blockedUserId])
   @@index([userId])
@@ -666,20 +665,19 @@ enum ChatContextType {
   USER
 }
 
-
 model TelegramOtp {
-  id              String   @id @default(cuid())
-  code            String   @db.VarChar(6)
-  telegramId      String   @db.VarChar(255)
-  username        String?  @db.VarChar(255)
-  firstName       String?  @db.VarChar(255)
-  lastName        String?  @db.VarChar(255)
-  languageCode    String?  @db.VarChar(10)
-  chatId          String?  @db.VarChar(255)
-  textMessageId   String?  @db.VarChar(255)
-  codeMessageId   String?  @db.VarChar(255)
-  expiresAt       DateTime
-  createdAt       DateTime @default(now())
+  id            String   @id @default(cuid())
+  code          String   @db.VarChar(6)
+  telegramId    String   @db.VarChar(255)
+  username      String?  @db.VarChar(255)
+  firstName     String?  @db.VarChar(255)
+  lastName      String?  @db.VarChar(255)
+  languageCode  String?  @db.VarChar(10)
+  chatId        String?  @db.VarChar(255)
+  textMessageId String?  @db.VarChar(255)
+  codeMessageId String?  @db.VarChar(255)
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
 
   @@index([code])
   @@index([telegramId])
@@ -687,14 +685,14 @@ model TelegramOtp {
 }
 
 model Bug {
-  id        String            @id @default(cuid())
-  text      String
-  senderId  String
-  status    BugStatus         @default(CREATED)
-  bugType   BugType           @default(BUG)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  sender    User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  id           String           @id @default(cuid())
+  text         String
+  senderId     String
+  status       BugStatus        @default(CREATED)
+  bugType      BugType          @default(BUG)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  sender       User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
   participants BugParticipant[]
 
   @@index([senderId])
@@ -703,12 +701,12 @@ model Bug {
 }
 
 model BugParticipant {
-  id        String   @id @default(cuid())
-  bugId     String
-  userId    String
-  joinedAt  DateTime @default(now())
-  bug       Bug      @relation(fields: [bugId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       String   @id @default(cuid())
+  bugId    String
+  userId   String
+  joinedAt DateTime @default(now())
+  bug      Bug      @relation(fields: [bugId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([bugId, userId])
   @@index([bugId])
@@ -783,26 +781,26 @@ model GameCourt {
 }
 
 model Goods {
-  id        String           @id @default(cuid())
-  name      String
-  price     Int
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id              String           @id @default(cuid())
+  name            String
+  price           Int
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   transactionRows TransactionRow[]
 
   @@index([name])
 }
 
 model Transaction {
-  id              String            @id @default(cuid())
+  id              String           @id @default(cuid())
   type            TransactionType
   total           Int
   fromUserId      String?
   toUserId        String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  fromUser        User?             @relation("TransactionFromUser", fields: [fromUserId], references: [id], onDelete: SetNull)
-  toUser          User?             @relation("TransactionToUser", fields: [toUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  fromUser        User?            @relation("TransactionFromUser", fields: [fromUserId], references: [id], onDelete: SetNull)
+  toUser          User?            @relation("TransactionToUser", fields: [toUserId], references: [id], onDelete: SetNull)
   transactionRows TransactionRow[]
 
   @@index([fromUserId])
@@ -835,16 +833,16 @@ enum TransactionType {
 }
 
 model LevelChangeEvent {
-  id            String      @id @default(cuid())
-  userId        String
-  levelBefore   Float
-  levelAfter    Float
-  eventType     LevelChangeEventType
-  gameId        String?
+  id             String               @id @default(cuid())
+  userId         String
+  levelBefore    Float
+  levelAfter     Float
+  eventType      LevelChangeEventType
+  gameId         String?
   linkEntityType EntityType?
-  createdAt     DateTime    @default(now())
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  game          Game?       @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  createdAt      DateTime             @default(now())
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game           Game?                @relation(fields: [gameId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([gameId])
@@ -860,16 +858,16 @@ enum LevelChangeEventType {
 }
 
 model League {
-  id            String            @id @default(cuid())
+  id            String              @id @default(cuid())
   name          String
   description   String?
-  hasFixedTeams Boolean           @default(false)
+  hasFixedTeams Boolean             @default(false)
   cityId        String
   clubId        String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  city          City              @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  club          Club?             @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  city          City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  club          Club?               @relation(fields: [clubId], references: [id], onDelete: SetNull)
   seasons       LeagueSeason[]
   participants  LeagueParticipant[]
 
@@ -878,59 +876,59 @@ model League {
 }
 
 model LeagueSeason {
-  id                String            @id
-  leagueId          String
-  orderIndex        Int
-  movePlayersRule   Json?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  league            League            @relation(fields: [leagueId], references: [id], onDelete: Cascade)
-  game              Game?             @relation("GameLeagueSeason", fields: [id], references: [id], onDelete: Cascade)
-  groups            LeagueGroup[]
-  participants      LeagueParticipant[]
-  rounds            LeagueRound[]
+  id              String              @id
+  leagueId        String
+  orderIndex      Int
+  movePlayersRule Json?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  league          League              @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  game            Game?               @relation("GameLeagueSeason", fields: [id], references: [id], onDelete: Cascade)
+  groups          LeagueGroup[]
+  participants    LeagueParticipant[]
+  rounds          LeagueRound[]
 
   @@index([leagueId])
   @@index([orderIndex])
 }
 
 model LeagueGroup {
-  id              String            @id @default(cuid())
-  leagueSeasonId  String
-  name            String
-  color           String?
-  betterGroupId   String?
-  worseGroupId    String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  leagueSeason    LeagueSeason      @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
-  betterGroup     LeagueGroup?      @relation("LeagueGroupBetter", fields: [betterGroupId], references: [id], onDelete: SetNull)
-  worseGroup      LeagueGroup?      @relation("LeagueGroupWorse", fields: [worseGroupId], references: [id], onDelete: SetNull)
-  betterGroups    LeagueGroup[]     @relation("LeagueGroupBetter")
-  worseGroups     LeagueGroup[]     @relation("LeagueGroupWorse")
-  participants    LeagueParticipant[]
-  games           Game[]
+  id             String              @id @default(cuid())
+  leagueSeasonId String
+  name           String
+  color          String?
+  betterGroupId  String?
+  worseGroupId   String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  leagueSeason   LeagueSeason        @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  betterGroup    LeagueGroup?        @relation("LeagueGroupBetter", fields: [betterGroupId], references: [id], onDelete: SetNull)
+  worseGroup     LeagueGroup?        @relation("LeagueGroupWorse", fields: [worseGroupId], references: [id], onDelete: SetNull)
+  betterGroups   LeagueGroup[]       @relation("LeagueGroupBetter")
+  worseGroups    LeagueGroup[]       @relation("LeagueGroupWorse")
+  participants   LeagueParticipant[]
+  games          Game[]
 
   @@index([leagueSeasonId])
 }
 
 model LeagueTeam {
-  id         String            @id @default(cuid())
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
-  players    LeagueTeamPlayer[]
+  id           String              @id @default(cuid())
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  players      LeagueTeamPlayer[]
   participants LeagueParticipant[]
 
   @@index([id])
 }
 
 model LeagueTeamPlayer {
-  id          String      @id @default(cuid())
+  id           String     @id @default(cuid())
   leagueTeamId String
-  userId      String
-  createdAt   DateTime    @default(now())
-  leagueTeam  LeagueTeam  @relation(fields: [leagueTeamId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  createdAt    DateTime   @default(now())
+  leagueTeam   LeagueTeam @relation(fields: [leagueTeamId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([leagueTeamId, userId])
   @@index([leagueTeamId])
@@ -938,25 +936,25 @@ model LeagueTeamPlayer {
 }
 
 model LeagueParticipant {
-  id                    String                @id @default(cuid())
-  leagueId              String
-  leagueSeasonId        String
-  participantType       LeagueParticipantType
-  userId                String?
-  leagueTeamId          String?
-  currentGroupId        String?
-  points                Int                   @default(0)
-  wins                  Int                   @default(0)
-  ties                  Int                   @default(0)
-  losses                Int                   @default(0)
-  scoreDelta            Int                   @default(0)
-  createdAt             DateTime              @default(now())
-  updatedAt             DateTime              @updatedAt
-  league                League                @relation(fields: [leagueId], references: [id], onDelete: Cascade)
-  leagueSeason          LeagueSeason          @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
-  user                  User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  leagueTeam            LeagueTeam?           @relation(fields: [leagueTeamId], references: [id], onDelete: Cascade)
-  currentGroup          LeagueGroup?          @relation(fields: [currentGroupId], references: [id], onDelete: SetNull)
+  id              String                @id @default(cuid())
+  leagueId        String
+  leagueSeasonId  String
+  participantType LeagueParticipantType
+  userId          String?
+  leagueTeamId    String?
+  currentGroupId  String?
+  points          Int                   @default(0)
+  wins            Int                   @default(0)
+  ties            Int                   @default(0)
+  losses          Int                   @default(0)
+  scoreDelta      Int                   @default(0)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  league          League                @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  leagueSeason    LeagueSeason          @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  user            User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leagueTeam      LeagueTeam?           @relation(fields: [leagueTeamId], references: [id], onDelete: Cascade)
+  currentGroup    LeagueGroup?          @relation(fields: [currentGroupId], references: [id], onDelete: SetNull)
 
   @@index([leagueId])
   @@index([leagueSeasonId])
@@ -967,13 +965,14 @@ model LeagueParticipant {
 }
 
 model LeagueRound {
-  id            String   @id @default(cuid())
-  leagueSeasonId String
-  orderIndex    Int
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  leagueSeason  LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
-  games         Game[]
+  id               String       @id @default(cuid())
+  leagueSeasonId   String
+  orderIndex       Int
+  sentStartMessage Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  leagueSeason     LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  games            Game[]
 
   @@index([leagueSeasonId])
   @@index([orderIndex])
@@ -1014,19 +1013,19 @@ model PushToken {
 }
 
 model DeletedUser {
-  id                String       @id @default(cuid())
-  originalUserId    String
-  phone             String?
-  email             String?
-  telegramId        String?
-  telegramUsername  String?
-  firstName         String?
-  lastName          String?
-  avatar            String?
-  originalAvatar    String?
-  passwordHash      String?
-  currentCityId     String?
-  deletedAt         DateTime     @default(now())
+  id               String   @id @default(cuid())
+  originalUserId   String
+  phone            String?
+  email            String?
+  telegramId       String?
+  telegramUsername String?
+  firstName        String?
+  lastName         String?
+  avatar           String?
+  originalAvatar   String?
+  passwordHash     String?
+  currentCityId    String?
+  deletedAt        DateTime @default(now())
 
   @@index([originalUserId])
   @@index([deletedAt])
@@ -1039,16 +1038,16 @@ enum PushPlatform {
 }
 
 model MessageReport {
-  id          String            @id @default(cuid())
+  id          String              @id @default(cuid())
   messageId   String
   reporterId  String
   reason      MessageReportReason
   description String?
   status      MessageReportStatus @default(PENDING)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  message     ChatMessage        @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  reporter    User               @relation("MessageReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  message     ChatMessage         @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  reporter    User                @relation("MessageReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, reporterId])
   @@index([messageId])

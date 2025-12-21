@@ -279,6 +279,7 @@ export const LeagueGroupEditorModal = ({
               gender: participant.user.gender,
             }}
             showName={false}
+            fullHideName={true}
             extrasmall
           />
           <div className="text-sm">
@@ -469,10 +470,17 @@ export const LeagueGroupEditorModal = ({
 
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <div className="relative flex-1" ref={(el) => { dropdownRefs.current[group.id] = el; }}>
-                      <button
-                        type="button"
+                      <div
+                        role="button"
+                        tabIndex={0}
                         onClick={() => setOpenDropdown(openDropdown === group.id ? null : group.id)}
-                        className="w-full flex items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white pl-4 pr-3 py-2.5 text-sm font-medium shadow-sm transition-all duration-200 hover:border-primary-300 dark:hover:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setOpenDropdown(openDropdown === group.id ? null : group.id);
+                          }
+                        }}
+                        className="w-full flex items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white pl-4 pr-3 py-2.5 text-sm font-medium shadow-sm transition-all duration-200 hover:border-primary-300 dark:hover:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent cursor-pointer"
                       >
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           {participantSelections[group.id] ? (
@@ -492,6 +500,7 @@ export const LeagueGroupEditorModal = ({
                                       gender: selected.user.gender,
                                     }}
                                     showName={false}
+                                    fullHideName={true}
                                     extrasmall
                                   />
                                   <span className="truncate">
@@ -514,7 +523,7 @@ export const LeagueGroupEditorModal = ({
                             openDropdown === group.id ? 'rotate-180' : ''
                           }`}
                         />
-                      </button>
+                      </div>
                       {openDropdown === group.id && data?.unassignedParticipants.length > 0 && (
                         <div className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                           <div className="max-h-64 overflow-y-auto py-1">
@@ -522,14 +531,13 @@ export const LeagueGroupEditorModal = ({
                               const isSelected = participantSelections[group.id] === participant.id;
 
                               return (
-                                <button
+                                <div
                                   key={participant.id}
-                                  type="button"
                                   onClick={() => {
                                     setParticipantSelections((prev) => ({ ...prev, [group.id]: participant.id }));
                                     setOpenDropdown(null);
                                   }}
-                                  className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm transition-colors ${
+                                  className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm transition-colors cursor-pointer ${
                                     isSelected
                                       ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
                                       : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50'
@@ -548,6 +556,7 @@ export const LeagueGroupEditorModal = ({
                                             gender: participant.user.gender,
                                           }}
                                           showName={false}
+                                          fullHideName={true}
                                           extrasmall
                                         />
                                         <span className="font-medium truncate">
@@ -561,7 +570,7 @@ export const LeagueGroupEditorModal = ({
                                     )}
                                   </div>
                                   {isSelected && <Check size={16} className="text-primary-600 dark:text-primary-400 flex-shrink-0" />}
-                                </button>
+                                </div>
                               );
                             })}
                           </div>

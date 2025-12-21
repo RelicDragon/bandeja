@@ -9,6 +9,7 @@ import { createBugChatPushNotification } from './push/notifications/bug-chat-pus
 import { createGameSystemMessagePushNotification } from './push/notifications/game-system-push.notification';
 import { createGameReminderPushNotification } from './push/notifications/game-reminder-push.notification';
 import { createGameResultsPushNotification } from './push/notifications/game-results-push.notification';
+import { createLeagueRoundStartPushNotification } from './push/notifications/league-round-start-push.notification';
 
 class NotificationService {
   async sendNotification(request: UnifiedNotificationRequest) {
@@ -160,6 +161,20 @@ class NotificationService {
         payload
       });
     }
+  }
+
+  async sendLeagueRoundStartNotification(game: any, user: any) {
+    const payload = await createLeagueRoundStartPushNotification(game, user);
+    
+    if (payload) {
+      await this.sendNotification({
+        userId: user.id,
+        type: NotificationType.GAME_REMINDER,
+        payload
+      });
+    }
+
+    await telegramNotificationService.sendLeagueRoundStartNotification(game, user);
   }
 
   private shouldSendViaTelegram(user: any, type: NotificationType, preferTelegram: boolean): boolean {

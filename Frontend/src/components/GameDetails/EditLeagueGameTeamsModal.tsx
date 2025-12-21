@@ -141,7 +141,7 @@ export const EditLeagueGameTeamsModal = ({
 
     setTeam1Players(t1);
     setTeam2Players(t2);
-  }, [game, hasFixedTeams]);
+  }, [game.id, game.fixedTeams, game.participants, hasFixedTeams]);
 
   const fetchClubs = useCallback(async () => {
     try {
@@ -179,24 +179,33 @@ export const EditLeagueGameTeamsModal = ({
       const hoursDiff = differenceInHours(endDateTime, startDateTime);
       setDuration(hoursDiff || 2);
     }
-  }, [game, clubs, setSelectedDate, setSelectedTime, setDuration]);
+  }, [game.id, game.clubId, game.courtId, game.hasBookedCourt, game.startTime, game.endTime, clubs, setSelectedDate, setSelectedTime, setDuration]);
+
+  const gameIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      setIsClosing(false);
-      setActiveTab('teams');
+      const shouldInitialize = gameIdRef.current !== game.id;
+      if (shouldInitialize) {
+        gameIdRef.current = game.id;
+        setIsClosing(false);
+        setActiveTab('teams');
+        fetchStandings();
+        initializeTeams();
+        fetchClubs();
+        initializeGameData();
+      }
       document.body.style.overflow = 'hidden';
-      fetchStandings();
-      initializeTeams();
-      fetchClubs();
-      initializeGameData();
     } else {
       document.body.style.overflow = '';
+      if (!isOpen && gameIdRef.current === game.id) {
+        gameIdRef.current = null;
+      }
     }
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen, fetchStandings, initializeTeams, fetchClubs, initializeGameData]);
+  }, [isOpen, game.id, fetchStandings, initializeTeams, fetchClubs, initializeGameData]);
 
   useEffect(() => {
     if (selectedClubId) {

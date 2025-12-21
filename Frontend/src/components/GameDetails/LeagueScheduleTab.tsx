@@ -37,6 +37,8 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const [groups, setGroups] = useState<LeagueGroup[]>([]);
   const [roundPendingDeletion, setRoundPendingDeletion] = useState<LeagueRound | null>(null);
   const [roundIdBeingDeleted, setRoundIdBeingDeleted] = useState<string | null>(null);
+  const [roundIdSendingMessage, setRoundIdSendingMessage] = useState<string | null>(null);
+  const [roundPendingStartMessage, setRoundPendingStartMessage] = useState<LeagueRound | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [expandedRoundId, setExpandedRoundId] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string>(ALL_GROUP_ID);
@@ -161,8 +163,8 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   };
 
   const handleGameUpdate = async () => {
-    await fetchRounds();
     setEditingGame(null);
+    await fetchRounds();
   };
 
   const handleOpenGroupModal = async () => {
@@ -206,6 +208,31 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     } finally {
       setRoundIdBeingDeleted(null);
       setRoundPendingDeletion(null);
+    }
+  };
+
+  const handleSendStartMessage = async (leagueRoundId: string) => {
+    const round = rounds.find((r) => r.id === leagueRoundId);
+    if (round) {
+      setRoundPendingStartMessage(round);
+    }
+  };
+
+  const confirmSendStartMessage = async () => {
+    if (!roundPendingStartMessage) return;
+    
+    const leagueRoundId = roundPendingStartMessage.id;
+    try {
+      setRoundIdSendingMessage(leagueRoundId);
+      const response = await leaguesApi.sendRoundStartMessage(leagueRoundId);
+      toast.success(t('gameDetails.startMessageSent', { count: response.data.notifiedUsers }));
+      await fetchRounds();
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setRoundIdSendingMessage(null);
+      setRoundPendingStartMessage(null);
     }
   };
 
@@ -327,6 +354,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
                 isExpanded={isExpanded}
                 isCreatingGame={isCreatingGame}
                 roundIdBeingDeleted={roundIdBeingDeleted}
+                roundIdSendingMessage={roundIdSendingMessage}
                 selectedGroupId={selectedGroupId === ALL_GROUP_ID ? null : selectedGroupId}
                 shouldRenderContent={shouldRenderContent}
                 onToggle={handleToggle}
@@ -334,6 +362,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
                 onAddGame={(groupId) => handleCreateGame(round.id, groupId)}
                 onEditGame={handleEditGame}
                 onOpenGame={handleOpenGame}
+                onSendStartMessage={() => handleSendStartMessage(round.id)}
                 t={t}
               />
             );
@@ -378,6 +407,19 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           confirmVariant="danger"
           onConfirm={() => handleDeleteRound(roundPendingDeletion.id)}
           onClose={() => setRoundPendingDeletion(null)}
+        />
+      )}
+      {isClient && roundPendingStartMessage && (
+        <ConfirmationModal
+          isOpen={!!roundPendingStartMessage}
+          title={t('gameDetails.sendStartMessage')}
+          message={t('gameDetails.sendStartMessageConfirmation')}
+          highlightedText={`${t('gameDetails.round')} ${roundPendingStartMessage.orderIndex + 1}`}
+          confirmText={t('gameDetails.sendStartMessage')}
+          cancelText={t('common.cancel')}
+          confirmVariant="primary"
+          onConfirm={confirmSendStartMessage}
+          onClose={() => setRoundPendingStartMessage(null)}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 import { TFunction } from 'i18next';
 import { Divider } from '@/components/Divider';
-import { ChevronDown, Gamepad2, Loader2, Trash2 } from 'lucide-react';
+import { ChevronDown, Gamepad2, Loader2, Trash2, Send } from 'lucide-react';
 import { LeagueRound, LeagueGroup } from '@/api/leagues';
 import { Game } from '@/types';
 import { LeagueGameCard } from './LeagueGameCard';
@@ -16,6 +16,7 @@ interface LeagueRoundAccordionProps {
   isExpanded: boolean;
   isCreatingGame: boolean;
   roundIdBeingDeleted: string | null;
+  roundIdSendingMessage: string | null;
   selectedGroupId?: string | null;
   shouldRenderContent?: boolean;
   onToggle: () => void;
@@ -23,6 +24,7 @@ interface LeagueRoundAccordionProps {
   onAddGame: (leagueGroupId?: string) => void;
   onEditGame: (game: Game) => void;
   onOpenGame: (game: Game) => void;
+  onSendStartMessage: () => void;
   t: TFunction;
 }
 
@@ -36,6 +38,7 @@ export const LeagueRoundAccordion = ({
   isExpanded,
   isCreatingGame,
   roundIdBeingDeleted,
+  roundIdSendingMessage,
   selectedGroupId = null,
   shouldRenderContent = true,
   onToggle,
@@ -43,6 +46,7 @@ export const LeagueRoundAccordion = ({
   onAddGame,
   onEditGame,
   onOpenGame,
+  onSendStartMessage,
   t,
 }: LeagueRoundAccordionProps) => {
   const hasGroups = groups.length > 0;
@@ -81,8 +85,28 @@ export const LeagueRoundAccordion = ({
         <div className="overflow-hidden">
           {shouldRenderContent && (
           <div className="px-4 pb-4 space-y-4">
-            {canEdit && (canDeleteRound || showRoundLevelAddButton) && (
+            {canEdit && (canDeleteRound || showRoundLevelAddButton || !round.sentStartMessage) && (
               <div className="flex flex-wrap gap-2">
+                {!round.sentStartMessage && (
+                  <button
+                    onClick={onSendStartMessage}
+                    disabled={roundIdSendingMessage === round.id}
+                    className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium py-2 px-4 transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                    {roundIdSendingMessage === round.id ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin relative z-10" />
+                        <span className="relative z-10">{t('common.loading')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send size={16} className="relative z-10" />
+                        <span className="relative z-10">{t('gameDetails.sendStartMessage')}</span>
+                      </>
+                    )}
+                  </button>
+                )}
                 {canDeleteRound && (
                   <button
                     onClick={onRequestDelete}

@@ -92,6 +92,8 @@ const translations: Record<string, Record<string, string>> = {
     'errors.invites.gameFull': 'The game is full',
     'chat.systemMessages.GAME_CLUB_CHANGED': 'Game location changed to {{clubName}}',
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Game date/time changed to {{dateTime}}',
+    'telegram.leagueRoundStartReceived': 'You\'ve received the schedule for league games for this round',
+    'telegram.round': 'Round',
   },
   ru: {
     'createGame.today': 'Сегодня',
@@ -173,6 +175,8 @@ const translations: Record<string, Record<string, string>> = {
     'errors.invites.gameFull': 'Игра заполнена',
     'chat.systemMessages.GAME_CLUB_CHANGED': 'Место игры изменено на {{clubName}}',
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Дата/время игры изменено на {{dateTime}}',
+    'telegram.leagueRoundStartReceived': 'Вы получили расписание игр лиги на этот раунд',
+    'telegram.round': 'Раунд',
   },
   sr: {
     'createGame.today': 'Данас',
@@ -254,6 +258,8 @@ const translations: Record<string, Record<string, string>> = {
     'errors.invites.gameFull': 'Игра је пуна',
     'chat.systemMessages.GAME_CLUB_CHANGED': 'Локација игре промењена на {{clubName}}',
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Датум/време игре промењено на {{dateTime}}',
+    'telegram.leagueRoundStartReceived': 'Добили сте распоред игара лиге за ову рунду',
+    'telegram.round': 'Рунда',
   },
   es: {
     'createGame.today': 'Hoy',
@@ -335,6 +341,8 @@ const translations: Record<string, Record<string, string>> = {
     'errors.invites.gameFull': 'El juego está lleno',
     'chat.systemMessages.GAME_CLUB_CHANGED': 'Ubicación del juego cambiada a {{clubName}}',
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Fecha/hora del juego cambiada a {{dateTime}}',
+    'telegram.leagueRoundStartReceived': 'Has recibido el calendario de partidos de liga para esta ronda',
+    'telegram.round': 'Ronda',
   },
 };
 

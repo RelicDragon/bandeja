@@ -5,6 +5,7 @@ import { LeagueCreateService } from '../services/league/create.service';
 import { LeagueReadService } from '../services/league/read.service';
 import { LeagueSyncService } from '../services/league/sync.service';
 import { LeagueGroupManagementService } from '../services/league/groups.service';
+import { LeagueBroadcastService } from '../services/league/broadcast.service';
 
 export const createLeague = asyncHandler(async (req: AuthRequest, res: Response) => {
   const league = await LeagueCreateService.createLeague(req.body, req.userId!);
@@ -173,6 +174,17 @@ export const deleteLeagueRound = asyncHandler(async (req: AuthRequest, res: Resp
   res.json({
     success: true,
     data: { id: leagueRoundId },
+  });
+});
+
+export const sendRoundStartMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueRoundId } = req.params;
+
+  const result = await LeagueBroadcastService.broadcastRoundStartMessage(leagueRoundId, req.userId!);
+
+  res.json({
+    success: true,
+    data: result,
   });
 });
 
