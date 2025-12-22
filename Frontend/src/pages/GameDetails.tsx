@@ -328,7 +328,7 @@ export const GameDetailsContent = () => {
   const hasPendingInvite = myInvites.length > 0;
   const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') || false;
   const isInJoinQueue = game?.joinQueues?.some(q => q.userId === user?.id && q.status === 'PENDING') || false;
-  const canAccessChat = isParticipant || hasPendingInvite || isGuest || game?.isPublic || false;
+  const canAccessChat = isParticipant || hasPendingInvite || isGuest || game?.isPublic || game?.entityType === 'BAR' || game?.entityType === 'LEAGUE' || false;
   
   const isOwner = game && user ? isUserGameAdminOrOwner(game, user.id) : false;
   const canEdit = isOwner || user?.isAdmin || false;
