@@ -564,6 +564,19 @@ body.keyboard-visible #root {
   min-height: auto !important;
 }
 
+/* Chat layout improvements for mobile */
+.chat-container {
+  height: 100dvh;
+  max-height: 100dvh;
+  position: fixed;
+  inset: 0;
+}
+
+body.keyboard-visible .chat-container {
+  height: 100vh !important;
+  max-height: 100vh !important;
+}
+
 /* Modal safe area support - modals with fixed inset-0 */
 .modal-safe-area {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);

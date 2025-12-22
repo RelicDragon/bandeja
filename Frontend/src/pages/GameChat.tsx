@@ -642,8 +642,8 @@ export const GameChat: React.FC = () => {
 
   if (isLoadingContext) {
     return (
-      <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 fixed top-0 right-0 left-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)', height: 'calc(4rem + env(safe-area-inset-top))' }}>
+      <div className="chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
+        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
             <div className="flex items-center gap-3">
               <button
@@ -656,7 +656,7 @@ export const GameChat: React.FC = () => {
             </div>
           </div>
         </header>
-        <main className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ paddingTop: 'calc(4rem + env(safe-area-inset-top))', paddingBottom: '3.5rem' }}>
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <MessageList
             messages={[]}
             onAddReaction={handleAddReaction}
@@ -764,13 +764,10 @@ export const GameChat: React.FC = () => {
     return null;
   };
 
-  const headerHeight = contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || isAdminOrOwner || (game?.status && game.status !== 'ANNOUNCED')) 
-    ? 'calc(7rem + env(safe-area-inset-top))' 
-    : 'calc(4rem + env(safe-area-inset-top))';
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 fixed top-0 right-0 left-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)', height: headerHeight }}>
+    <div className="chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <button
@@ -853,7 +850,7 @@ export const GameChat: React.FC = () => {
         )}
       </header>
 
-      <main className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ paddingTop: headerHeight, paddingBottom: '3.5rem' }}>
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <MessageList
           messages={messages}
           onAddReaction={handleAddReaction}
@@ -872,7 +869,7 @@ export const GameChat: React.FC = () => {
       </main>
 
       {!isInitialLoad && (
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 fixed bottom-0 right-0 left-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {isBlockedByUser && contextType === 'USER' ? (
           <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
             <div className="text-sm text-center text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-3">
