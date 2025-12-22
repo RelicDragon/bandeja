@@ -247,7 +247,10 @@ export const PlayersCarousel = ({
               <div key={`empty-${i}`} className="flex-shrink-0 w-16">
                 {canInvitePlayers ? (
                   <button
-                    onClick={() => onShowPlayerList?.(gender)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onShowPlayerList?.(gender);
+                    }}
                     className="flex flex-col items-center w-full"
                   >
                     <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
@@ -268,7 +271,10 @@ export const PlayersCarousel = ({
           <>
             <div className="absolute top-0 bottom-0 -left-1 w-8 bg-gradient-to-r from-white from-0% via-white/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10" />
             <button
-              onClick={scrollLeft}
+              onClick={(e) => {
+                e.stopPropagation();
+                scrollLeft();
+              }}
               className="absolute left-0 top-7 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer z-20"
             >
               <ChevronLeft size={14} className="text-gray-400 dark:text-gray-500" />
@@ -279,7 +285,10 @@ export const PlayersCarousel = ({
           <>
             <div className="absolute top-0 bottom-0 -right-1 w-8 bg-gradient-to-l from-white from-0% via-white/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10" />
             <button
-              onClick={scrollRight}
+              onClick={(e) => {
+                e.stopPropagation();
+                scrollRight();
+              }}
               className="absolute right-0 top-7 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer z-20"
             >
               <ChevronRight size={14} className="text-gray-400 dark:text-gray-500" />

@@ -343,7 +343,7 @@ export const Contacts = () => {
               <PlayersCarousel
                 participants={participants}
                 userId={user?.id}
-                autoHideNames={true}
+                autoHideNames={!showSearch}
                 participantUnreadCounts={participantUnreadCounts}
               />
             </div>

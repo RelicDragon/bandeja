@@ -25,6 +25,7 @@ import { isCapacitor, isIOS, isAndroid } from './utils/capacitor';
 import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerUtils';
 import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
 import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersistence';
+import { useDeepLink } from './hooks/useDeepLink';
 import './i18n/config';
 
 function AppContent() {
@@ -35,6 +36,8 @@ function AppContent() {
   const finishInitializing = useAuthStore((state) => state.finishInitializing);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const isOnline = useNetworkStore((state) => state.isOnline);
+
+  useDeepLink();
 
   useEffect(() => {
     restoreAuthIfNeeded();
