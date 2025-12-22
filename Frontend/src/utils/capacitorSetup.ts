@@ -135,3 +135,108 @@ export const setupCapacitor = async () => {
   }
 };
 
+export const setupBrowserKeyboardDetection = () => {
+  if (isCapacitor()) return () => {}; // Return empty cleanup if in Capacitor
+
+  let initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+  let isKeyboardVisible = false;
+  const KEYBOARD_THRESHOLD = 150; // Consider keyboard visible if viewport shrinks by more than 150px
+
+  // Update initial height after a short delay to ensure it's accurate
+  const updateInitialHeight = () => {
+    initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+  };
+
+  // Set initial height after page load
+  if (document.readyState === 'complete') {
+    setTimeout(updateInitialHeight, 100);
+  } else {
+    window.addEventListener('load', () => {
+      setTimeout(updateInitialHeight, 100);
+    });
+  }
+
+  // Use Visual Viewport API if available (modern mobile browsers)
+  if (window.visualViewport) {
+    const handleViewportChange = () => {
+      const viewport = window.visualViewport!;
+      const heightDifference = initialViewportHeight - viewport.height;
+      
+      if (heightDifference > KEYBOARD_THRESHOLD && !isKeyboardVisible) {
+        isKeyboardVisible = true;
+        document.body.classList.add('keyboard-visible');
+      } else if (heightDifference <= KEYBOARD_THRESHOLD && isKeyboardVisible) {
+        isKeyboardVisible = false;
+        document.body.classList.remove('keyboard-visible');
+      }
+    };
+
+    window.visualViewport.addEventListener('resize', handleViewportChange);
+    window.visualViewport.addEventListener('scroll', handleViewportChange);
+
+    // Update initial height when orientation changes
+    const handleOrientationChange = () => {
+      setTimeout(() => {
+        updateInitialHeight();
+      }, 100);
+    };
+
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleViewportChange);
+      window.visualViewport?.removeEventListener('scroll', handleViewportChange);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleOrientationChange);
+    };
+  } else {
+    // Fallback for older browsers - use window resize
+    const updateKeyboardState = () => {
+      const currentHeight = window.innerHeight;
+      const heightDifference = initialViewportHeight - currentHeight;
+      
+      if (heightDifference > KEYBOARD_THRESHOLD && !isKeyboardVisible) {
+        isKeyboardVisible = true;
+        document.body.classList.add('keyboard-visible');
+      } else if (heightDifference <= KEYBOARD_THRESHOLD && isKeyboardVisible) {
+        isKeyboardVisible = false;
+        document.body.classList.remove('keyboard-visible');
+      }
+    };
+
+    const handleResize = () => {
+      updateKeyboardState();
+    };
+
+    const handleOrientationChange = () => {
+      setTimeout(() => {
+        updateInitialHeight();
+        updateKeyboardState();
+      }, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    // Also check on input focus/blur as additional triggers
+    const handleFocus = () => {
+      setTimeout(updateKeyboardState, 300);
+    };
+
+    const handleBlur = () => {
+      setTimeout(updateKeyboardState, 300);
+    };
+
+    document.addEventListener('focusin', handleFocus);
+    document.addEventListener('focusout', handleBlur);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      document.removeEventListener('focusin', handleFocus);
+      document.removeEventListener('focusout', handleBlur);
+    };
+  }
+};
+

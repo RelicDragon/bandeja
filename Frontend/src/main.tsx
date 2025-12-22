@@ -1,12 +1,13 @@
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
-import { setupCapacitor } from './utils/capacitorSetup';
+import { setupCapacitor, setupBrowserKeyboardDetection } from './utils/capacitorSetup';
 import { isCapacitor } from './utils/capacitor';
 
 const CACHE_VERSION = 'v1';
 
 setupCapacitor();
+setupBrowserKeyboardDetection();
 
 // Only use service worker in web browsers, not in Capacitor apps
 if ('serviceWorker' in navigator && !isCapacitor()) {
