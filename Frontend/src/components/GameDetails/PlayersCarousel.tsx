@@ -65,6 +65,20 @@ export const PlayersCarousel = ({
     };
   }, [participants, emptySlots]);
 
+  const scrollLeft = () => {
+    const container = carouselRef.current;
+    if (!container) return;
+    const scrollAmount = container.clientWidth * 0.8;
+    container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+  };
+
+  const scrollRight = () => {
+    const container = carouselRef.current;
+    if (!container) return;
+    const scrollAmount = container.clientWidth * 0.8;
+    container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  };
+
   const renderGenderIndicator = (gender: 'MALE' | 'FEMALE') => (
     <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
       gender === 'MALE' 
@@ -134,17 +148,23 @@ export const PlayersCarousel = ({
         {showLeftFade && (
           <>
             <div className="absolute top-0 bottom-0 -left-1 w-8 bg-gradient-to-r from-white from-0% via-white/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10" />
-            <div className="absolute left-0 top-7 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center pointer-events-none z-20">
+            <button
+              onClick={scrollLeft}
+              className="absolute left-0 top-7 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer z-20"
+            >
               <ChevronLeft size={14} className="text-gray-400 dark:text-gray-500" />
-            </div>
+            </button>
           </>
         )}
         {showRightFade && (
           <>
             <div className="absolute top-0 bottom-0 -right-1 w-8 bg-gradient-to-l from-white from-0% via-white/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10" />
-            <div className="absolute right-0 top-7 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center pointer-events-none z-20">
+            <button
+              onClick={scrollRight}
+              className="absolute right-0 top-7 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer z-20"
+            >
               <ChevronRight size={14} className="text-gray-400 dark:text-gray-500" />
-            </div>
+            </button>
           </>
         )}
       </div>
