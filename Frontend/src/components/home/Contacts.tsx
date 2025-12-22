@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search, X } from 'lucide-react';
-import { PlayerAvatar } from '@/components';
+import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { chatApi, UserChat } from '@/api/chat';
 import { usersApi, InvitablePlayer } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
+import { GameParticipant } from '@/types';
 
 interface ContactItem {
   type: 'search' | 'user';
@@ -28,7 +28,6 @@ interface ContactItem {
 
 export const Contacts = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const { showChatFilter } = useHeaderStore();
   const favoriteUserIds = useFavoritesStore((state) => state.favoriteUserIds);
@@ -41,15 +40,7 @@ export const Contacts = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const carouselRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [showLeftFade, setShowLeftFade] = useState(false);
-  const [showRightFade, setShowRightFade] = useState(false);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user?.id) return;
@@ -207,27 +198,6 @@ export const Contacts = () => {
     ];
   }, [loading, userChats, userChatsUnreadCounts, allPlayers, user?.id, user?.blockedUserIds, showChatFilter, favoriteUserIds]);
 
-  const checkScrollPosition = () => {
-    const container = carouselRef.current;
-    if (!container) return;
-    
-    const { scrollLeft, scrollWidth, clientWidth } = container;
-    setShowLeftFade(scrollLeft > 0);
-    setShowRightFade(scrollLeft < scrollWidth - clientWidth - 1);
-  };
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-    };
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -258,46 +228,34 @@ export const Contacts = () => {
     return filteredContacts.some(contact => (contact.unreadCount ?? 0) > 0);
   }, [filteredContacts]);
 
-  useEffect(() => {
-    const container = carouselRef.current;
-    if (!container) return;
+  const participants = useMemo(() => {
+    return filteredContacts
+      .filter(contact => contact.user)
+      .map((contact): GameParticipant => ({
+        userId: contact.userId || contact.user?.id || '',
+        role: 'PARTICIPANT',
+        isPlaying: true,
+        joinedAt: new Date().toISOString(),
+        user: {
+          id: contact.user?.id || '',
+          firstName: contact.user?.firstName,
+          lastName: contact.user?.lastName,
+          avatar: contact.user?.avatar,
+          level: contact.user?.level || 0,
+          gender: contact.user?.gender || 'PREFER_NOT_TO_SAY',
+        },
+      }));
+  }, [filteredContacts]);
 
-    checkScrollPosition();
-    
-    const handleScroll = () => {
-      checkScrollPosition();
-      
-      if (isMobile) {
-        setIsScrolling(true);
-        
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
-        }
-        
-        scrollTimeoutRef.current = setTimeout(() => {
-          setIsScrolling(false);
-        }, 500);
+  const participantUnreadCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredContacts.forEach(contact => {
+      if (contact.userId && contact.unreadCount) {
+        counts[contact.userId] = contact.unreadCount;
       }
-    };
-    
-    container.addEventListener('scroll', handleScroll);
-    
-    const resizeObserver = new ResizeObserver(() => {
-      checkScrollPosition();
     });
-    resizeObserver.observe(container);
-    
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      resizeObserver.disconnect();
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      if (pressTimeoutRef.current) {
-        clearTimeout(pressTimeoutRef.current);
-      }
-    };
-  }, [filteredContacts, isMobile]);
+    return counts;
+  }, [filteredContacts]);
 
   const handleSearchClick = () => {
     setShowSearch(true);
@@ -312,45 +270,8 @@ export const Contacts = () => {
     }
   };
 
-  const handlePressStart = () => {
-    if (pressTimeoutRef.current) {
-      clearTimeout(pressTimeoutRef.current);
-    }
-    pressTimeoutRef.current = setTimeout(() => {
-      setIsPressed(true);
-    }, 300);
-  };
-
-  const handlePressEnd = () => {
-    if (pressTimeoutRef.current) {
-      clearTimeout(pressTimeoutRef.current);
-      pressTimeoutRef.current = null;
-    }
-    setIsPressed(false);
-  };
 
 
-  const handleUserClick = async (contact: ContactItem) => {
-    if (!contact.userId || !contact.user) return;
-
-    try {
-      if (contact.chat) {
-        navigate(`/user-chat/${contact.chat.id}`, { 
-          state: { chat: contact.chat, contextType: 'USER' } 
-        });
-      } else {
-        const response = await chatApi.getOrCreateChatWithUser(contact.userId);
-        const chat = response.data;
-        if (chat) {
-          navigate(`/user-chat/${chat.id}`, { 
-            state: { chat, contextType: 'USER' } 
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Failed to open chat:', error);
-    }
-  };
 
   if (loading) {
     return null;
@@ -418,54 +339,16 @@ export const Contacts = () => {
               </div>
             </div>
           ) : (
-            <div 
-              ref={carouselRef}
-              className="flex items-center gap-2 overflow-x-auto pb-2 pl-1 pr-2 pt-2 scrollbar-hide"
-              onMouseDown={handlePressStart}
-              onMouseUp={handlePressEnd}
-              onMouseLeave={handlePressEnd}
-              onTouchStart={handlePressStart}
-              onTouchEnd={handlePressEnd}
-              onTouchCancel={handlePressEnd}
-            >
-              {filteredContacts.map((contact, index) => {
-                if (!contact.user) return null;
-                const showName = (isMobile && isScrolling) || showSearch || isPressed;
-
-                return (
-                  <div
-                    key={contact.userId || index}
-                    onClick={() => handleUserClick(contact)}
-                    className="relative flex-shrink-0 cursor-pointer group"
-                  >
-                    <PlayerAvatar
-                      player={contact.user}
-                      showName={showName}
-                      smallLayout={true}
-                    />
-                    {(contact.unreadCount ?? 0) > 0 && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center border-2 border-white dark:border-gray-900">
-                        <span className="text-[10px] font-bold text-white">
-                          {(contact.unreadCount ?? 0) > 9 ? '9+' : (contact.unreadCount ?? 0)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="pb-2 pl-1 pr-2 pt-2">
+              <PlayersCarousel
+                participants={participants}
+                userId={user?.id}
+                autoHideNames={true}
+                participantUnreadCounts={participantUnreadCounts}
+              />
             </div>
-            
           )}
         </div>
-
-        {showLeftFade && (
-            <div className={`absolute top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 from-0% via-gray-50/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10 ${
-              showSearch || (showChatFilter && hasUnreadContacts) ? 'left-2' : 'left-12'
-            }`} />
-          )}
-          {showRightFade && (
-            <div className="absolute -right-1 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 from-0% via-gray-50/90 via-30% to-transparent to-100% dark:from-gray-900 dark:via-gray-900/90 pointer-events-none z-10" />
-          )}
       </div>
     </div>
   );

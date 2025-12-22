@@ -5,6 +5,7 @@ import { Card, Button } from '@/components';
 import { GameStatusIcon } from '@/components/GameStatusIcon';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { GameAvatar } from '@/components/GameAvatar';
+import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { getGameResultStatus } from '@/utils/gameResults';
@@ -45,15 +46,7 @@ export const GameCard = ({
   const [isCollapsing, setIsCollapsing] = useState(false);
   const expandedContentRef = useRef<HTMLDivElement>(null);
   const previousForceCollapsedRef = useRef<boolean | undefined>(undefined);
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [showLeftFade, setShowLeftFade] = useState(false);
-  const [showRightFade, setShowRightFade] = useState(false);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
   const [mainPhotoUrl, setMainPhotoUrl] = useState<string | null>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const previousForceCollapsed = previousForceCollapsedRef.current;
@@ -69,68 +62,6 @@ export const GameCard = ({
     }
   }, [forceCollapsed, isCollapsed, isCollapsing]);
 
-  const checkScrollPosition = () => {
-    const container = carouselRef.current;
-    if (!container) return;
-    
-    const { scrollLeft, scrollWidth, clientWidth } = container;
-    setShowLeftFade(scrollLeft > 0);
-    setShowRightFade(scrollLeft < scrollWidth - clientWidth - 1);
-  };
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-    };
-  }, []);
-
-  useEffect(() => {
-    const container = carouselRef.current;
-    if (!container) return;
-
-    checkScrollPosition();
-    
-    const handleScroll = () => {
-      checkScrollPosition();
-      
-      if (isMobile) {
-        setIsScrolling(true);
-        
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
-        }
-        
-        scrollTimeoutRef.current = setTimeout(() => {
-          setIsScrolling(false);
-        }, 500);
-      }
-    };
-    
-    container.addEventListener('scroll', handleScroll);
-    
-    const resizeObserver = new ResizeObserver(() => {
-      checkScrollPosition();
-    });
-    resizeObserver.observe(container);
-    
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      resizeObserver.disconnect();
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      if (pressTimeoutRef.current) {
-        clearTimeout(pressTimeoutRef.current);
-      }
-    };
-  }, [game.participants, isCollapsed, isMobile]);
 
   useEffect(() => {
     const loadMainPhoto = async () => {
@@ -213,22 +144,6 @@ export const GameCard = ({
     }
   };
 
-  const handlePressStart = () => {
-    if (pressTimeoutRef.current) {
-      clearTimeout(pressTimeoutRef.current);
-    }
-    pressTimeoutRef.current = setTimeout(() => {
-      setIsPressed(true);
-    }, 300);
-  };
-
-  const handlePressEnd = () => {
-    if (pressTimeoutRef.current) {
-      clearTimeout(pressTimeoutRef.current);
-      pressTimeoutRef.current = null;
-    }
-    setIsPressed(false);
-  };
 
   const getDateLabel = (date: Date | string, includeComma = true) => {
     const gameDate = typeof date === 'string' ? new Date(date) : date;
@@ -271,32 +186,6 @@ export const GameCard = ({
     }
   };
 
-  const getFadeGradient = (direction: 'left' | 'right') => {
-    const isLeft = direction === 'left';
-    switch (game.entityType) {
-      case 'TOURNAMENT':
-        return isLeft 
-          ? 'bg-gradient-to-r from-red-50/60 via-red-50/60 to-transparent dark:from-red-950/25 dark:via-red-950/25'
-          : 'bg-gradient-to-l from-red-50/60 via-red-50/60 to-transparent dark:from-red-950/25 dark:via-red-950/25';
-      case 'LEAGUE':
-      case 'LEAGUE_SEASON':
-        return isLeft
-          ? 'bg-gradient-to-r from-blue-50/60 via-blue-50/60 to-transparent dark:from-blue-950/25 dark:via-blue-950/25'
-          : 'bg-gradient-to-l from-blue-50/60 via-blue-50/60 to-transparent dark:from-blue-950/25 dark:via-blue-950/25';
-      case 'TRAINING':
-        return isLeft
-          ? 'bg-gradient-to-r from-green-50/60 via-green-50/60 to-transparent dark:from-green-950/25 dark:via-green-950/25'
-          : 'bg-gradient-to-l from-green-50/60 via-green-50/60 to-transparent dark:from-green-950/25 dark:via-green-950/25';
-      case 'BAR':
-        return isLeft
-          ? 'bg-gradient-to-r from-yellow-50/60 via-yellow-50/60 to-transparent dark:from-yellow-950/25 dark:via-yellow-950/25'
-          : 'bg-gradient-to-l from-yellow-50/60 via-yellow-50/60 to-transparent dark:from-yellow-950/25 dark:via-yellow-950/25';
-      default:
-        return isLeft
-          ? 'bg-gradient-to-r from-white via-white/80 to-transparent dark:from-gray-900 dark:via-gray-900/80'
-          : 'bg-gradient-to-l from-white via-white/80 to-transparent dark:from-gray-900 dark:via-gray-900/80';
-    }
-  };
 
   const getEntityIcon = () => {
     if (game.entityType === 'GAME') return null;
@@ -837,47 +726,15 @@ export const GameCard = ({
           </div>
         )}
         <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-            <div className="flex items-center gap-2">
-              <div className="relative -mx-0 flex-1 w-full">
-                <div 
-                  ref={carouselRef}
-                  className="flex overflow-x-auto scrollbar-hide scroll-smooth flex-nowrap py-2 pb-2"
-                  onMouseDown={handlePressStart}
-                  onMouseUp={handlePressEnd}
-                  onMouseLeave={handlePressEnd}
-                  onTouchStart={handlePressStart}
-                  onTouchEnd={handlePressEnd}
-                  onTouchCancel={handlePressEnd}
-                >
-                  {game.participants.filter(p => p.isPlaying).map((participant) => {
-                    const showName = (isMobile && isScrolling) || isPressed;
-                    return (
-                      <div key={participant.userId} className="flex-shrink-0 mx-2">
-                        <PlayerAvatar
-                          player={{
-                            id: participant.userId,
-                            firstName: participant.user.firstName,
-                            lastName: participant.user.lastName,
-                            avatar: participant.user.avatar,
-                            level: participant.user.level,
-                            gender: participant.user.gender,
-                          }}
-                          smallLayout={true}
-                          showName={showName}
-                          role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-                {showLeftFade && (
-                  <div className={`absolute -left-1 top-0 bottom-0 w-8 ${getFadeGradient('left')} pointer-events-none z-10`} />
-                )}
-                {showRightFade && (
-                  <div className={`absolute -right-1 top-0 bottom-0 w-8 ${getFadeGradient('right')} pointer-events-none z-10`} />
-                )}
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="relative -mx-0 flex-1 w-full">
+              <PlayersCarousel
+                participants={game.participants.filter(p => p.isPlaying)}
+                userId={user?.id}
+                shouldShowCrowns={true}
+              />
             </div>
+          </div>
         </div>
 
         {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && resultStatus && (
