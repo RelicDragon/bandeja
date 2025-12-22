@@ -8,7 +8,7 @@ export async function sendBugChatNotification(
   bug: any,
   sender: any
 ) {
-  const bugText = bug.text || 'Bug';
+  const bugText = (bug.text || 'Bug').substring(0, 50);
   const senderName = `${sender.firstName || ''} ${sender.lastName || ''}`.trim() || 'Unknown';
   const messageContent = message.content || '[Media]';
 
