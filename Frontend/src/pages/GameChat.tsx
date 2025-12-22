@@ -766,7 +766,7 @@ export const GameChat: React.FC = () => {
 
 
   return (
-    <div className="chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
+    <div className="chat-container bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           <div className="flex items-center gap-2 min-w-0 flex-1">

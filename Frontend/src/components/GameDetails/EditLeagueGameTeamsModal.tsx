@@ -164,10 +164,19 @@ export const EditLeagueGameTeamsModal = ({
     }
   }, [selectedClubId]);
 
+  const isInitializingRef = useRef(false);
+  const gameCourtIdRef = useRef<string | undefined>(undefined);
+
   const initializeGameData = useCallback(() => {
-    setSelectedClubId(game.clubId || '');
-    setSelectedCourtId(game.courtId || '');
-    setHasBookedCourt(game.hasBookedCourt || false);
+    isInitializingRef.current = true;
+    const clubId = game.clubId || '';
+    const courtId = game.courtId || '';
+    const booked = game.hasBookedCourt || false;
+    
+    setSelectedClubId(clubId);
+    setSelectedCourtId(courtId);
+    setHasBookedCourt(booked);
+    gameCourtIdRef.current = game.courtId;
     
     if (game.startTime) {
       const startDateTime = new Date(game.startTime);
@@ -179,6 +188,10 @@ export const EditLeagueGameTeamsModal = ({
       const hoursDiff = differenceInHours(endDateTime, startDateTime);
       setDuration(hoursDiff || 2);
     }
+    
+    setTimeout(() => {
+      isInitializingRef.current = false;
+    }, 100);
   }, [game.clubId, game.courtId, game.hasBookedCourt, game.startTime, game.endTime, clubs, setSelectedDate, setSelectedTime, setDuration]);
 
   const gameIdRef = useRef<string | null>(null);
@@ -192,14 +205,19 @@ export const EditLeagueGameTeamsModal = ({
         setActiveTab('teams');
         fetchStandings();
         initializeTeams();
-        fetchClubs();
         initializeGameData();
+        fetchClubs().then(() => {
+          if (game.clubId) {
+            fetchCourts();
+          }
+        });
       }
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
       if (!isOpen && gameIdRef.current === game.id) {
         gameIdRef.current = null;
+        gameCourtIdRef.current = undefined;
       }
     }
     return () => {
@@ -212,9 +230,22 @@ export const EditLeagueGameTeamsModal = ({
       fetchCourts();
     } else {
       setCourts([]);
-      setSelectedCourtId('');
+      if (!isInitializingRef.current) {
+        setSelectedCourtId('');
+      }
     }
   }, [selectedClubId, fetchCourts]);
+
+  useEffect(() => {
+    if (courts.length > 0 && gameCourtIdRef.current) {
+      const courtExists = courts.some(c => c.id === gameCourtIdRef.current);
+      if (courtExists && selectedCourtId !== gameCourtIdRef.current) {
+        setSelectedCourtId(gameCourtIdRef.current);
+      } else if (!courtExists && selectedCourtId === gameCourtIdRef.current) {
+        setSelectedCourtId('');
+      }
+    }
+  }, [courts, selectedCourtId]);
 
   const areTeamsFull = useMemo(() => {
     const team1Valid = team1Players.filter(p => p !== null);
@@ -393,19 +424,24 @@ export const EditLeagueGameTeamsModal = ({
       const updateData: Partial<Game> = {};
       let hasChanges = false;
 
-      if (selectedClubId !== game.clubId) {
-        updateData.clubId = selectedClubId || undefined;
+      const normalizedSelectedClubId = selectedClubId || undefined;
+      const normalizedGameClubId = game.clubId || undefined;
+      const normalizedSelectedCourtId = selectedCourtId || undefined;
+      const normalizedGameCourtId = game.courtId || undefined;
+
+      if (normalizedSelectedClubId !== normalizedGameClubId) {
+        updateData.clubId = normalizedSelectedClubId;
         hasChanges = true;
         
         if (!selectedClubId && game.timeIsSet) {
           updateData.timeIsSet = false;
         }
       }
-      if (selectedCourtId !== game.courtId) {
-        updateData.courtId = selectedCourtId || undefined;
+      if (normalizedSelectedCourtId !== normalizedGameCourtId) {
+        updateData.courtId = normalizedSelectedCourtId;
         hasChanges = true;
       }
-      if (hasBookedCourt !== game.hasBookedCourt) {
+      if (hasBookedCourt !== (game.hasBookedCourt || false)) {
         updateData.hasBookedCourt = hasBookedCourt;
         hasChanges = true;
       }
