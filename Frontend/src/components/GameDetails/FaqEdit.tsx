@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, ConfirmationModal } from '@/components';
 import { faqApi, Faq } from '@/api/faq';
 import { Plus, Trash2, Edit3, ChevronUp, ChevronDown, X, Save, HelpCircle } from 'lucide-react';
@@ -18,6 +19,8 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({ question: '', answer: '' });
   const [faqToDelete, setFaqToDelete] = useState<Faq | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isInitialLoad = useRef(true);
 
   const fetchFaqs = useCallback(async () => {
     try {
@@ -25,21 +28,31 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
       const response = await faqApi.getGameFaqs(gameId);
       setFaqs(response.data);
       onFaqsChange?.(response.data.length > 0);
+      if (isInitialLoad.current) {
+        setIsExpanded(response.data.length === 0);
+        isInitialLoad.current = false;
+      }
     } catch (error) {
       console.error('Failed to fetch FAQs:', error);
       toast.error(t('faq.fetchError', { defaultValue: 'Failed to fetch questions' }));
       onFaqsChange?.(false);
+      if (isInitialLoad.current) {
+        setIsExpanded(false);
+        isInitialLoad.current = false;
+      }
     } finally {
       setLoading(false);
     }
   }, [gameId, onFaqsChange, t]);
 
   useEffect(() => {
+    isInitialLoad.current = true;
     fetchFaqs();
   }, [fetchFaqs]);
 
   const handleCreate = () => {
     setIsCreating(true);
+    setIsExpanded(true);
     setFormData({ question: '', answer: '' });
   };
 
@@ -101,14 +114,15 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
 
     const newFaqs = [...faqs];
     [newFaqs[index - 1], newFaqs[index]] = [newFaqs[index], newFaqs[index - 1]];
+    setFaqs(newFaqs);
     const faqIds = newFaqs.map(f => f.id);
 
     try {
       await faqApi.reorderFaqs(gameId, faqIds);
-      await fetchFaqs();
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || t('faq.reorderError', { defaultValue: 'Failed to reorder questions' });
       toast.error(errorMessage);
+      await fetchFaqs();
     }
   };
 
@@ -117,14 +131,15 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
 
     const newFaqs = [...faqs];
     [newFaqs[index], newFaqs[index + 1]] = [newFaqs[index + 1], newFaqs[index]];
+    setFaqs(newFaqs);
     const faqIds = newFaqs.map(f => f.id);
 
     try {
       await faqApi.reorderFaqs(gameId, faqIds);
-      await fetchFaqs();
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || t('faq.reorderError', { defaultValue: 'Failed to reorder questions' });
       toast.error(errorMessage);
+      await fetchFaqs();
     }
   };
 
@@ -151,13 +166,27 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
             </h2>
           </div>
           {!isCreating && !editingId && (
-            <button
-              onClick={handleCreate}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20 text-white font-medium"
-            >
-              <Plus size={18} />
-              {t('faq.add', { defaultValue: 'Add Question' })}
-            </button>
+            <div className="flex items-center gap-2">
+              {faqs.length > 0 && (
+                <button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="flex items-center justify-center px-3 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20 text-white font-medium"
+                >
+                  {isExpanded ? (
+                    <ChevronUp size={24} />
+                  ) : (
+                    <ChevronDown size={24} />
+                  )}
+                </button>
+              )}
+              <button
+                onClick={handleCreate}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20 text-white font-medium"
+              >
+                <Plus size={18} />
+                {t('faq.add', { defaultValue: 'Add Question' })}
+              </button>
+            </div>
           )}
         </div>
 
@@ -206,16 +235,20 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
           </div>
         )}
 
-        <div className="space-y-2">
-          {faqs.map((faq, index) => (
-            <div
-              key={faq.id}
-              className={`p-4 border rounded-lg ${
-                editingId === faq.id
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
-              }`}
-            >
+        {isExpanded && (
+          <motion.div layout className="space-y-2">
+            <AnimatePresence initial={false}>
+              {faqs.map((faq, index) => (
+              <motion.div
+                key={faq.id}
+                layout
+                transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+                className={`p-4 border rounded-lg ${
+                  editingId === faq.id
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+                }`}
+              >
               {editingId === faq.id ? (
                 <div className="space-y-4">
                   <div>
@@ -303,9 +336,11 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
           ))}
-        </div>
+            </AnimatePresence>
+          </motion.div>
+        )}
       </div>
 
       {faqToDelete && (

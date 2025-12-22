@@ -1,10 +1,13 @@
 import { TFunction } from 'i18next';
-import { Divider } from '@/components/Divider';
+import { Divider } from '@/components';
 import { ChevronDown, Gamepad2, Loader2, Trash2, Send } from 'lucide-react';
 import { LeagueRound, LeagueGroup } from '@/api/leagues';
 import { Game } from '@/types';
 import { LeagueGameCard } from './LeagueGameCard';
 import { getLeagueGroupColor } from '@/utils/leagueGroupColors';
+import { resultsApi } from '@/api/results';
+import { SetResult } from '@/types/gameResults';
+import { useState, useEffect } from 'react';
 
 interface LeagueRoundAccordionProps {
   round: LeagueRound;
@@ -24,6 +27,7 @@ interface LeagueRoundAccordionProps {
   onAddGame: (leagueGroupId?: string) => void;
   onEditGame: (game: Game) => void;
   onOpenGame: (game: Game) => void;
+  onRemoveTime?: (gameId: string) => void;
   onSendStartMessage: () => void;
   t: TFunction;
 }
@@ -46,14 +50,76 @@ export const LeagueRoundAccordion = ({
   onAddGame,
   onEditGame,
   onOpenGame,
+  onRemoveTime,
   onSendStartMessage,
   t,
 }: LeagueRoundAccordionProps) => {
+  const [gameResultsMap, setGameResultsMap] = useState<Map<string, SetResult[] | null>>(new Map());
+
   const hasGroups = groups.length > 0;
   const showRoundLevelAddButton = showAddGameButton && !hasGroups;
   const filteredGameCount = selectedGroupId
     ? round.games.filter((game) => game.leagueGroupId === selectedGroupId).length
     : round.games.length;
+
+  useEffect(() => {
+    const fetchAllGameResults = async () => {
+      if (!shouldRenderContent) {
+        setGameResultsMap(new Map());
+        return;
+      }
+
+      const resultsMap = new Map<string, SetResult[] | null>();
+      
+      const gamesToFetch = selectedGroupId
+        ? round.games.filter((game) => game.leagueGroupId === selectedGroupId)
+        : round.games;
+
+      for (const game of gamesToFetch) {
+        if (game.resultsStatus !== 'NONE') {
+          try {
+            const response = await resultsApi.getGameResults(game.id);
+            const rounds = response.data?.rounds || [];
+            
+            if (rounds.length > 0) {
+              const round0 = rounds[0];
+              const matches = round0.matches || [];
+              
+              if (matches.length > 0) {
+                const match0 = matches[0];
+                const sets = match0.sets || [];
+                
+                resultsMap.set(
+                  game.id,
+                  sets.map((s: any) => ({
+                    teamA: s.teamAScore || 0,
+                    teamB: s.teamBScore || 0,
+                  }))
+                );
+              } else {
+                resultsMap.set(game.id, null);
+              }
+            } else {
+              resultsMap.set(game.id, null);
+            }
+          } catch (error) {
+            console.error(`Failed to fetch results for game ${game.id}:`, error);
+            resultsMap.set(game.id, null);
+          }
+        } else {
+          resultsMap.set(game.id, null);
+        }
+      }
+      
+      setGameResultsMap(resultsMap);
+    };
+
+    fetchAllGameResults();
+  }, [shouldRenderContent, round.games, selectedGroupId]);
+
+  const getRound0Match0Sets = (gameId: string): SetResult[] | null => {
+    return gameResultsMap.get(gameId) || null;
+  };
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
@@ -186,7 +252,13 @@ export const LeagueRoundAccordion = ({
                                       : undefined
                                   }
                                   onOpen={() => onOpenGame(game)}
+                                  onRemoveTime={
+                                    game.resultsStatus === 'NONE' && canEditGames && onRemoveTime
+                                      ? () => onRemoveTime(game.id)
+                                      : undefined
+                                  }
                                   showGroupTag={false}
+                                  round0Match0Sets={getRound0Match0Sets(game.id)}
                                 />
                               ))
                             )}
@@ -236,7 +308,13 @@ export const LeagueRoundAccordion = ({
                                     : undefined
                                 }
                                 onOpen={() => onOpenGame(game)}
+                                onRemoveTime={
+                                  game.resultsStatus === 'NONE' && canEditGames && onRemoveTime
+                                    ? () => onRemoveTime(game.id)
+                                    : undefined
+                                }
                                 showGroupTag={false}
+                                round0Match0Sets={getRound0Match0Sets(game.id)}
                               />
                             ))}
                         </div>
@@ -255,7 +333,13 @@ export const LeagueRoundAccordion = ({
                             : undefined
                         }
                         onOpen={() => onOpenGame(game)}
+                        onRemoveTime={
+                          game.resultsStatus === 'NONE' && canEditGames && onRemoveTime
+                            ? () => onRemoveTime(game.id)
+                            : undefined
+                        }
                         showGroupTag={false}
+                        round0Match0Sets={getRound0Match0Sets(game.id)}
                       />
                     ))}
                   </div>

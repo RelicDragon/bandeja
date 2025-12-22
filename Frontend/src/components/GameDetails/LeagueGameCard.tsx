@@ -1,15 +1,19 @@
-import { Edit2, ExternalLink, Award, MapPin, Calendar } from 'lucide-react';
+import { Edit2, ExternalLink, Award, MapPin, Calendar, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { PlayerAvatar } from '@/components';
+import { useState } from 'react';
+import { PlayerAvatar, ConfirmationModal } from '@/components';
 import { Game } from '@/types';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { formatDate } from '@/utils/dateFormat';
+import { SetResult } from '@/types/gameResults';
 
 interface LeagueGameCardProps {
   game: Game;
   onEdit?: () => void;
   onOpen?: () => void;
   showGroupTag?: boolean;
+  onRemoveTime?: () => void;
+  round0Match0Sets?: SetResult[] | null;
 }
 
 export const LeagueGameCard = ({
@@ -17,8 +21,11 @@ export const LeagueGameCard = ({
   onEdit,
   onOpen,
   showGroupTag = true,
+  onRemoveTime,
+  round0Match0Sets,
 }: LeagueGameCardProps) => {
   const { t } = useTranslation();
+  const [showConfirmRemoveTime, setShowConfirmRemoveTime] = useState(false);
 
   const getTeamPlayers = (teamIndex: number) => {
     if (game.fixedTeams && game.fixedTeams.length > teamIndex) {
@@ -95,15 +102,15 @@ export const LeagueGameCard = ({
   const getDateTimeLabel = () => {
     if (!game.startTime) return '';
 
-    const datePart = formatDate(game.startTime, 'MMM d');
+    const datePart = formatDate(game.startTime, 'd MMM');
     const timePart = formatDate(game.startTime, 'HH:mm');
     const durationPart = getDurationLabel();
 
-    return `${datePart} ${timePart}${durationPart ? `, ${durationPart}` : ''}`;
+    return `${datePart} • ${timePart}${durationPart ? ` • ${durationPart}` : ''}`;
   };
 
   return (
-    <div className="relative pr-12 pl-2 pt-2 pb-2 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="relative pl-2 pt-2 pb-2 pr-12 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       {game.leagueGroup && (
         <div
           className="absolute left-0 top-0 bottom-0 w-1"
@@ -124,29 +131,11 @@ export const LeagueGameCard = ({
           {game.leagueGroup.name}
         </div>
       )}
-      <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
-        {onOpen && (
-          <button
-            onClick={onOpen}
-            className="w-8 h-8 rounded-full border-2 border-emerald-500 hover:border-emerald-600 bg-white dark:bg-gray-800 text-emerald-500 hover:text-emerald-600 flex items-center justify-center transition-colors shadow-lg"
-          >
-            <ExternalLink size={16} />
-          </button>
-        )}
-        {canEdit && (
-          <button
-            onClick={onEdit}
-            className="w-8 h-8 rounded-full border-2 border-blue-500 hover:border-blue-600 bg-white dark:bg-gray-800 text-blue-500 hover:text-blue-600 flex items-center justify-center transition-colors shadow-lg"
-          >
-            <Edit2 size={16} />
-          </button>
-        )}
-      </div>
 
       <div className="flex items-center justify-start w-full gap-3">
         <div className="flex justify-start relative">
           <div
-            className={`min-h-[40px] p-2 flex items-center justify-center ${
+            className={`min-h-[20px] p-2 flex items-center justify-center ${
               winner === 'teamA' 
                 ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-500 rounded-lg' 
                 : isTie 
@@ -154,7 +143,7 @@ export const LeagueGameCard = ({
                 : ''
             }`}
           >
-            <div className="flex gap-1 justify-center">
+            <div className="flex gap-4 justify-center">
               {teamAPlayers.map(player => (
                 <div key={player.id}>
                   <PlayerAvatar
@@ -180,15 +169,31 @@ export const LeagueGameCard = ({
           )}
         </div>
 
-        <div className="flex items-center">
-          <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-            VS
+        {round0Match0Sets && round0Match0Sets.length > 0 && round0Match0Sets.some(s => s.teamA > 0 || s.teamB > 0) ? (
+          <div className="flex flex-col items-center gap-1 -ml-2 -mr-2">
+            {round0Match0Sets.map((set, index) => {
+              if (set.teamA === 0 && set.teamB === 0) return null;
+              return (
+                <div
+                  key={index}
+                  className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                >
+                  {set.teamA}:{set.teamB}
+                </div>
+              );
+            })}
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center">
+            <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+              VS
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-start relative">
           <div
-            className={`min-h-[40px] p-2 flex items-center justify-center ${
+            className={`min-h-[20px] p-2 flex items-center justify-center ${
               winner === 'teamB' 
                 ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-500 rounded-lg' 
                 : isTie 
@@ -196,7 +201,7 @@ export const LeagueGameCard = ({
                 : ''
             }`}
           >
-            <div className="flex gap-1 justify-center">
+            <div className="flex gap-4 justify-center">
               {teamBPlayers.map(player => (
                 <div key={player.id}>
                   <PlayerAvatar
@@ -236,10 +241,57 @@ export const LeagueGameCard = ({
               {game.club?.name && <span className="text-gray-500 dark:text-gray-600">•</span>}
               <Calendar size={10} />
               <span>{getDateTimeLabel()}</span>
+              {canEdit && onRemoveTime && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowConfirmRemoveTime(true);
+                  }}
+                  className="ml-1 w-4 h-4 rounded-full border border-red-400 hover:border-red-500 bg-white dark:bg-gray-800 text-red-400 hover:text-red-500 flex items-center justify-center transition-colors"
+                >
+                  <Trash2 size={10} />
+                </button>
+              )}
             </>
           )}
         </div>
       )}
+
+      {(onOpen || canEdit) && (
+        <div className="absolute bottom-2 right-2 flex items-center gap-2 z-10">
+          {canEdit && (
+            <button
+              onClick={onEdit}
+              className="w-8 h-8 rounded-full border-2 border-blue-500 hover:border-blue-600 bg-white dark:bg-gray-800 text-blue-500 hover:text-blue-600 flex items-center justify-center transition-colors shadow-lg"
+            >
+              <Edit2 size={16} />
+            </button>
+          )}
+          {onOpen && (
+            <button
+              onClick={onOpen}
+              className="w-8 h-8 rounded-full border-2 border-emerald-500 hover:border-emerald-600 bg-white dark:bg-gray-800 text-emerald-500 hover:text-emerald-600 flex items-center justify-center transition-colors shadow-lg"
+            >
+              <ExternalLink size={16} />
+            </button>
+          )}
+        </div>
+      )}
+
+      <ConfirmationModal
+        isOpen={showConfirmRemoveTime}
+        onClose={() => setShowConfirmRemoveTime(false)}
+        onConfirm={() => {
+          if (onRemoveTime) {
+            onRemoveTime();
+          }
+        }}
+        title={t('gameDetails.removeTime') || 'Remove Date & Time'}
+        message={t('gameDetails.removeTimeConfirmation') || 'Are you sure you want to remove the date and time for this game?'}
+        confirmText={t('common.remove') || 'Remove'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        confirmVariant="danger"
+      />
     </div>
   );
 };
