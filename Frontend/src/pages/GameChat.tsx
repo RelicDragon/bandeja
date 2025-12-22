@@ -15,6 +15,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
+import { isUserGameAdminOrOwner } from '@/utils/gameResults';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon } from 'lucide-react';
 
 interface LocationState {
@@ -63,7 +64,7 @@ export const GameChat: React.FC = () => {
   const userParticipant = game?.participants.find(p => p.userId === user?.id);
   const isParticipant = !!userParticipant;
   const isPlayingParticipant = userParticipant?.isPlaying ?? false;
-  const isAdminOrOwner = userParticipant?.role === 'ADMIN' || userParticipant?.role === 'OWNER';
+  const isAdminOrOwner = game && user ? isUserGameAdminOrOwner(game, user.id) : (userParticipant?.role === 'ADMIN' || userParticipant?.role === 'OWNER');
   const hasPendingInvite = game?.invites?.some(invite => invite.receiverId === user?.id) ?? false;
   const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') ?? false;
   
@@ -72,7 +73,7 @@ export const GameChat: React.FC = () => {
   const isBugParticipant = bug?.participants?.some(p => p.userId === user?.id) ?? false;
   const canWriteBugChat = contextType === 'BUG' && (isBugCreator || isBugAdmin || isBugParticipant);
   
-  const canAccessChat = contextType === 'USER' || (contextType === 'BUG' && canWriteBugChat) || isParticipant || hasPendingInvite || isGuest;
+  const canAccessChat = contextType === 'USER' || (contextType === 'BUG' && canWriteBugChat) || (contextType === 'GAME' && (isParticipant || hasPendingInvite || isGuest || isAdminOrOwner));
   const canViewPublicChat = contextType === 'USER' || contextType === 'BUG' || canAccessChat || game?.isPublic;
   const isCurrentUserGuest = game?.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying && participant.role !== 'OWNER' && participant.role !== 'ADMIN') ?? false;
 
@@ -387,14 +388,16 @@ export const GameChat: React.FC = () => {
     
     availableTypes.push('PUBLIC');
     
+    if (isAdminOrOwner) {
+      availableTypes.push('PRIVATE');
+      availableTypes.push('ADMINS');
+      return availableTypes;
+    }
+    
     if (!isParticipant) return availableTypes;
     if (!isPlayingParticipant) return availableTypes;
     
     availableTypes.push('PRIVATE');
-    
-    if (isAdminOrOwner) {
-      availableTypes.push('ADMINS');
-    }
     
     return availableTypes;
   }, [contextType, isParticipant, isPlayingParticipant, isAdminOrOwner, game?.status]);
@@ -761,7 +764,7 @@ export const GameChat: React.FC = () => {
     return null;
   };
 
-  const headerHeight = contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || (game?.status && game.status !== 'ANNOUNCED')) 
+  const headerHeight = contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || isAdminOrOwner || (game?.status && game.status !== 'ANNOUNCED')) 
     ? 'calc(7rem + env(safe-area-inset-top))' 
     : 'calc(4rem + env(safe-area-inset-top))';
 
@@ -822,7 +825,7 @@ export const GameChat: React.FC = () => {
           )}
         </div>
 
-        {contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || (game?.status && game.status !== 'ANNOUNCED')) && (
+        {contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || isAdminOrOwner || (game?.status && game.status !== 'ANNOUNCED')) && (
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div className="max-w-2xl mx-auto px-4" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
               <div className="flex justify-center space-x-1 py-2">

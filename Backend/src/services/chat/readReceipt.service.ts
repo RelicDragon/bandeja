@@ -1,6 +1,8 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
+import { hasParentGamePermission } from '../../utils/parentGamePermissions';
+import { ParticipantRole } from '@prisma/client';
 
 export class ReadReceiptService {
   static async markMessageAsRead(messageId: string, userId: string) {
@@ -199,16 +201,22 @@ export class ReadReceiptService {
   static async getGameUnreadCount(gameId: string, userId: string) {
     const { participant, game } = await MessageService.validateGameAccess(gameId, userId);
 
+    const isParentGameAdminOrOwner = await hasParentGamePermission(
+      gameId,
+      userId,
+      [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+    );
+
     // Build chat type filter based on user access
     const chatTypeFilter: any[] = ['PUBLIC'];
 
-    // Add PRIVATE if user is a playing participant
-    if (participant && participant.isPlaying) {
+    // Add PRIVATE if user is a playing participant or parent game admin/owner
+    if ((participant && participant.isPlaying) || isParentGameAdminOrOwner) {
       chatTypeFilter.push('PRIVATE');
     }
 
-    // Add ADMINS if user is owner or admin
-    if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) {
+    // Add ADMINS if user is owner or admin (current or parent game)
+    if ((participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) || isParentGameAdminOrOwner) {
       chatTypeFilter.push('ADMINS');
     }
 
@@ -362,16 +370,22 @@ export class ReadReceiptService {
   static async markAllMessagesAsRead(gameId: string, userId: string, chatTypes: string[] = []) {
     const { participant } = await MessageService.validateGameAccess(gameId, userId);
 
+    const isParentGameAdminOrOwner = await hasParentGamePermission(
+      gameId,
+      userId,
+      [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+    );
+
     // Build chat type filter based on user access
     const chatTypeFilter: any[] = chatTypes.length > 0 ? chatTypes : ['PUBLIC'];
 
-    // Add PRIVATE if user is a playing participant
-    if (participant && participant.isPlaying && !chatTypes.length) {
+    // Add PRIVATE if user is a playing participant or parent game admin/owner
+    if (((participant && participant.isPlaying) || isParentGameAdminOrOwner) && !chatTypes.length) {
       chatTypeFilter.push('PRIVATE');
     }
 
-    // Add ADMINS if user is owner or admin
-    if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN') && !chatTypes.length) {
+    // Add ADMINS if user is owner or admin (current or parent game)
+    if (((participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) || isParentGameAdminOrOwner) && !chatTypes.length) {
       chatTypeFilter.push('ADMINS');
     }
 

@@ -100,12 +100,18 @@ export class MessageService {
     return { userChat };
   }
 
-  static async validateChatTypeAccess(participant: any, chatType: ChatType, game: any) {
-    if (chatType === ChatType.PRIVATE && (!participant || !participant.isPlaying)) {
+  static async validateChatTypeAccess(participant: any, chatType: ChatType, game: any, userId: string, gameId: string) {
+    const isParentGameAdminOrOwner = await hasParentGamePermission(
+      gameId,
+      userId,
+      [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+    );
+
+    if (chatType === ChatType.PRIVATE && (!participant || !participant.isPlaying) && !isParentGameAdminOrOwner) {
       throw new ApiError(403, 'Only playing participants can access private chat');
     }
 
-    if (chatType === ChatType.ADMINS && (!participant || (participant.role !== 'OWNER' && participant.role !== 'ADMIN'))) {
+    if (chatType === ChatType.ADMINS && (!participant || (participant.role !== 'OWNER' && participant.role !== 'ADMIN')) && !isParentGameAdminOrOwner) {
       throw new ApiError(403, 'Only game owners and admins can access admin chat');
     }
 
@@ -204,7 +210,7 @@ export class MessageService {
       const result = await this.validateGameAccess(contextId, senderId);
       game = result.game;
       participant = result.participant;
-      await this.validateChatTypeAccess(participant, chatType, game);
+      await this.validateChatTypeAccess(participant, chatType, game, senderId, contextId);
     } else if (chatContextType === 'BUG') {
       const result = await this.validateBugAccess(contextId, senderId, true);
       bug = result.bug;
@@ -382,7 +388,7 @@ export class MessageService {
     // Validate access based on context type
     if (chatContextType === 'GAME') {
       const { participant, game } = await this.validateGameAccess(contextId, userId);
-      await this.validateChatTypeAccess(participant, chatType, game);
+      await this.validateChatTypeAccess(participant, chatType, game, userId, contextId);
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {
@@ -415,7 +421,7 @@ export class MessageService {
     // Validate access based on context type
     if (chatContextType === 'GAME') {
       const { participant, game } = await this.validateGameAccess(contextId, userId);
-      await this.validateChatTypeAccess(participant, chatType, game);
+      await this.validateChatTypeAccess(participant, chatType, game, userId, contextId);
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {
