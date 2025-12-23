@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import { ChatType } from '@prisma/client';
 import {
   createMessage,
@@ -28,7 +28,10 @@ import {
   getBugsUnreadCounts,
   markAllBugMessagesAsRead,
   reportMessage,
-  getUnreadObjects
+  getUnreadObjects,
+  muteChat,
+  unmuteChat,
+  isChatMuted
 } from '../controllers/chat.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -127,6 +130,34 @@ router.post(
     body('description').optional().isString().withMessage('Description must be a string')
   ]),
   reportMessage
+);
+
+// Chat Mute Routes
+router.post(
+  '/mute',
+  validate([
+    body('chatContextType').isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid chat context type'),
+    body('contextId').notEmpty().withMessage('Context ID is required')
+  ]),
+  muteChat
+);
+
+router.post(
+  '/unmute',
+  validate([
+    body('chatContextType').isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid chat context type'),
+    body('contextId').notEmpty().withMessage('Context ID is required')
+  ]),
+  unmuteChat
+);
+
+router.get(
+  '/mute-status',
+  validate([
+    query('chatContextType').isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid chat context type'),
+    query('contextId').notEmpty().withMessage('Context ID is required')
+  ]),
+  isChatMuted
 );
 
 export default router;

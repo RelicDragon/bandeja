@@ -11,6 +11,7 @@ import { SystemMessageService } from '../services/chat/systemMessage.service';
 import { UserChatService } from '../services/chat/userChat.service';
 import { MessageReportService } from '../services/chat/messageReport.service';
 import { UnreadObjectsService } from '../services/chat/unreadObjects.service';
+import { ChatMuteService } from '../services/chat/chatMute.service';
 import prisma from '../config/database';
 
 export const createSystemMessage = async (contextId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC, chatContextType: ChatContextType = ChatContextType.GAME) => {
@@ -607,5 +608,79 @@ export const reportMessage = asyncHandler(async (req: AuthRequest, res: Response
   res.status(201).json({
     success: true,
     data: report
+  });
+});
+
+export const muteChat = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { chatContextType, contextId } = req.body;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!chatContextType || !contextId) {
+    throw new ApiError(400, 'chatContextType and contextId are required');
+  }
+
+  const validContextTypes = ['GAME', 'BUG', 'USER'];
+  if (!validContextTypes.includes(chatContextType)) {
+    throw new ApiError(400, 'Invalid chatContextType');
+  }
+
+  const chatMute = await ChatMuteService.muteChat(userId, chatContextType as ChatContextType, contextId);
+
+  res.json({
+    success: true,
+    data: chatMute
+  });
+});
+
+export const unmuteChat = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { chatContextType, contextId } = req.body;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!chatContextType || !contextId) {
+    throw new ApiError(400, 'chatContextType and contextId are required');
+  }
+
+  const validContextTypes = ['GAME', 'BUG', 'USER'];
+  if (!validContextTypes.includes(chatContextType)) {
+    throw new ApiError(400, 'Invalid chatContextType');
+  }
+
+  await ChatMuteService.unmuteChat(userId, chatContextType as ChatContextType, contextId);
+
+  res.json({
+    success: true
+  });
+});
+
+export const isChatMuted = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { chatContextType, contextId } = req.query;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!chatContextType || !contextId) {
+    throw new ApiError(400, 'chatContextType and contextId are required');
+  }
+
+  const validContextTypes = ['GAME', 'BUG', 'USER'];
+  if (!validContextTypes.includes(chatContextType as string)) {
+    throw new ApiError(400, 'Invalid chatContextType');
+  }
+
+  const isMuted = await ChatMuteService.isChatMuted(userId, chatContextType as ChatContextType, contextId as string);
+
+  res.json({
+    success: true,
+    data: { isMuted }
   });
 });

@@ -278,4 +278,28 @@ export const chatApi = {
     const response = await api.post<ApiResponse<any>>(`/chat/messages/${messageId}/report`, data);
     return response.data;
   },
+
+  // Chat Mute Methods
+  muteChat: async (chatContextType: ChatContextType, contextId: string) => {
+    const response = await api.post<ApiResponse<any>>('/chat/mute', {
+      chatContextType,
+      contextId
+    });
+    return response.data;
+  },
+
+  unmuteChat: async (chatContextType: ChatContextType, contextId: string) => {
+    const response = await api.post<ApiResponse<{ success: boolean }>>('/chat/unmute', {
+      chatContextType,
+      contextId
+    });
+    return response.data;
+  },
+
+  isChatMuted: async (chatContextType: ChatContextType, contextId: string) => {
+    const response = await api.get<ApiResponse<{ isMuted: boolean }>>('/chat/mute-status', {
+      params: { chatContextType, contextId }
+    });
+    return response.data.data;
+  },
 };

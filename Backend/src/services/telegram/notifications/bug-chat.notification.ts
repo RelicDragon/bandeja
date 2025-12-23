@@ -1,6 +1,8 @@
 import { Api } from 'grammy';
 import prisma from '../../../config/database';
+import { ChatContextType } from '@prisma/client';
 import { escapeMarkdown } from '../utils';
+import { ChatMuteService } from '../../chat/chatMute.service';
 
 export async function sendBugChatNotification(
   api: Api,
@@ -27,7 +29,8 @@ export async function sendBugChatNotification(
   });
 
   if (bugCreator && bugCreator.id !== sender.id) {
-    if (bugCreator.telegramId && bugCreator.sendTelegramMessages) {
+    const isMuted = await ChatMuteService.isChatMuted(bugCreator.id, ChatContextType.BUG, bug.id);
+    if (!isMuted && bugCreator.telegramId && bugCreator.sendTelegramMessages) {
       try {
         await api.sendMessage(bugCreator.telegramId, formattedMessage, { parse_mode: 'Markdown' });
       } catch (error) {
@@ -57,6 +60,12 @@ export async function sendBugChatNotification(
       continue;
     }
 
+    const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.BUG, bug.id);
+    if (isMuted) {
+      notifiedUserIds.add(user.id);
+      continue;
+    }
+
     notifiedUserIds.add(user.id);
     try {
       await api.sendMessage(user.telegramId, formattedMessage, { parse_mode: 'Markdown' });
@@ -80,6 +89,12 @@ export async function sendBugChatNotification(
 
   for (const admin of admins) {
     if (admin.telegramId && !notifiedUserIds.has(admin.id)) {
+      const isMuted = await ChatMuteService.isChatMuted(admin.id, ChatContextType.BUG, bug.id);
+      if (isMuted) {
+        notifiedUserIds.add(admin.id);
+        continue;
+      }
+      
       notifiedUserIds.add(admin.id);
       try {
         await api.sendMessage(admin.telegramId, formattedMessage, { parse_mode: 'Markdown' });

@@ -16,7 +16,7 @@ import { useHeaderStore } from '@/store/headerStore';
 import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
 import { isUserGameAdminOrOwner } from '@/utils/gameResults';
-import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon } from 'lucide-react';
+import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff } from 'lucide-react';
 
 interface LocationState {
   initialChatType?: ChatType;
@@ -56,6 +56,8 @@ export const GameChat: React.FC = () => {
   const [isLeavingChat, setIsLeavingChat] = useState(false);
   const [isBlockedByUser, setIsBlockedByUser] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isTogglingMute, setIsTogglingMute] = useState(false);
   const sendingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSendingRef = useRef(false);
   const sendingStartTimeRef = useRef<number | null>(null);
@@ -326,6 +328,25 @@ export const GameChat: React.FC = () => {
     }
   }, [id, contextType, isLeavingChat, loadContext, navigate]);
 
+  const handleToggleMute = useCallback(async () => {
+    if (!id || isTogglingMute) return;
+
+    setIsTogglingMute(true);
+    try {
+      if (isMuted) {
+        await chatApi.unmuteChat(contextType, id);
+        setIsMuted(false);
+      } else {
+        await chatApi.muteChat(contextType, id);
+        setIsMuted(true);
+      }
+    } catch (error) {
+      console.error('Failed to toggle mute:', error);
+    } finally {
+      setIsTogglingMute(false);
+    }
+  }, [id, contextType, isMuted, isTogglingMute]);
+
   const handleChatTypeChange = useCallback(async (newChatType: ChatType) => {
     if (newChatType === currentChatType || contextType === 'USER') return;
     
@@ -519,6 +540,13 @@ export const GameChat: React.FC = () => {
             console.error('Failed to check if blocked by user:', error);
           }
         }
+      }
+
+      try {
+        const muteStatus = await chatApi.isChatMuted(contextType, id);
+        setIsMuted(muteStatus.isMuted);
+      } catch (error) {
+        console.error('Failed to check mute status:', error);
       }
       
       if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
@@ -792,6 +820,22 @@ export const GameChat: React.FC = () => {
           
           {contextType === 'GAME' && (
             <div className="flex items-center gap-2">
+              <button
+                onClick={handleToggleMute}
+                disabled={isTogglingMute}
+                className={`p-2 rounded-lg transition-colors ${
+                  isMuted
+                    ? 'hover:bg-orange-100 dark:hover:bg-orange-900/20'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+                title={isMuted ? t('chat.unmute', { defaultValue: 'Unmute chat' }) : t('chat.mute', { defaultValue: 'Mute chat' })}
+              >
+                {isMuted ? (
+                  <BellOff size={20} className="text-orange-600 dark:text-orange-400" />
+                ) : (
+                  <Bell size={20} className="text-gray-600 dark:text-gray-400" />
+                )}
+              </button>
               {isCurrentUserGuest && game?.entityType !== 'LEAGUE' && (
                 <button
                   onClick={() => setShowLeaveConfirmation(true)}
@@ -809,6 +853,22 @@ export const GameChat: React.FC = () => {
           )}
           {contextType === 'BUG' && bug && (isBugParticipant || isBugCreator || isBugAdmin) && (
             <div className="flex items-center gap-2">
+              <button
+                onClick={handleToggleMute}
+                disabled={isTogglingMute}
+                className={`p-2 rounded-lg transition-colors ${
+                  isMuted
+                    ? 'hover:bg-orange-100 dark:hover:bg-orange-900/20'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+                title={isMuted ? t('chat.unmute', { defaultValue: 'Unmute chat' }) : t('chat.mute', { defaultValue: 'Mute chat' })}
+              >
+                {isMuted ? (
+                  <BellOff size={20} className="text-orange-600 dark:text-orange-400" />
+                ) : (
+                  <Bell size={20} className="text-gray-600 dark:text-gray-400" />
+                )}
+              </button>
               {!isBugCreator && (
                 <button
                   onClick={() => setShowLeaveConfirmation(true)}
@@ -818,6 +878,26 @@ export const GameChat: React.FC = () => {
                   <LogOut size={20} className="text-red-600 dark:text-red-400" />
                 </button>
               )}
+            </div>
+          )}
+          {contextType === 'USER' && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleToggleMute}
+                disabled={isTogglingMute}
+                className={`p-2 rounded-lg transition-colors ${
+                  isMuted
+                    ? 'hover:bg-orange-100 dark:hover:bg-orange-900/20'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+                title={isMuted ? t('chat.unmute', { defaultValue: 'Unmute chat' }) : t('chat.mute', { defaultValue: 'Mute chat' })}
+              >
+                {isMuted ? (
+                  <BellOff size={20} className="text-orange-600 dark:text-orange-400" />
+                ) : (
+                  <Bell size={20} className="text-gray-600 dark:text-gray-400" />
+                )}
+              </button>
             </div>
           )}
         </div>

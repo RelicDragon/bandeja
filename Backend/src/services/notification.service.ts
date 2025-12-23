@@ -1,7 +1,9 @@
 import prisma from '../config/database';
 import { NotificationType, UnifiedNotificationRequest } from '../types/notifications.types';
+import { ChatContextType } from '@prisma/client';
 import telegramNotificationService from './telegram/notification.service';
 import pushNotificationService from './push/push-notification.service';
+import { ChatMuteService } from './chat/chatMute.service';
 import { createInvitePushNotification } from './push/notifications/invite-push.notification';
 import { createGameChatPushNotification } from './push/notifications/game-chat-push.notification';
 import { createUserChatPushNotification } from './push/notifications/user-chat-push.notification';
@@ -75,6 +77,11 @@ class NotificationService {
 
   async sendGameChatNotification(message: any, game: any, sender: any, recipients: any[]) {
     for (const recipient of recipients) {
+      if (recipient.id === sender.id) continue;
+      
+      const isMuted = await ChatMuteService.isChatMuted(recipient.id, ChatContextType.GAME, game.id);
+      if (isMuted) continue;
+      
       const payload = await createGameChatPushNotification(message, game, sender, recipient);
       
       if (payload) {
@@ -92,6 +99,11 @@ class NotificationService {
   async sendUserChatNotification(message: any, userChat: any, sender: any) {
     const recipient = userChat.user1Id === sender.id ? userChat.user2 : userChat.user1;
     
+    if (!recipient) return;
+    
+    const isMuted = await ChatMuteService.isChatMuted(recipient.id, ChatContextType.USER, userChat.id);
+    if (isMuted) return;
+    
     const payload = await createUserChatPushNotification(message, userChat, sender, recipient);
     
     if (payload) {
@@ -107,6 +119,11 @@ class NotificationService {
 
   async sendBugChatNotification(message: any, bug: any, sender: any, recipients: any[]) {
     for (const recipient of recipients) {
+      if (recipient.id === sender.id) continue;
+      
+      const isMuted = await ChatMuteService.isChatMuted(recipient.id, ChatContextType.BUG, bug.id);
+      if (isMuted) continue;
+      
       const payload = await createBugChatPushNotification(message, bug, sender, recipient);
       
       if (payload) {

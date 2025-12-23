@@ -1,6 +1,8 @@
 import { Api } from 'grammy';
+import { ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown } from '../utils';
+import { ChatMuteService } from '../../chat/chatMute.service';
 
 export async function sendUserChatNotification(
   api: Api,
@@ -14,6 +16,11 @@ export async function sendUserChatNotification(
   const recipient = userChat.user1Id === sender.id ? userChat.user2 : userChat.user1;
 
   if (!recipient || !recipient.telegramId || !recipient.sendTelegramDirectMessages || recipient.id === sender.id) {
+    return;
+  }
+
+  const isMuted = await ChatMuteService.isChatMuted(recipient.id, ChatContextType.USER, userChat.id);
+  if (isMuted) {
     return;
   }
 

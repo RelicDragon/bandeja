@@ -1,9 +1,10 @@
 import { Api } from 'grammy';
 import prisma from '../../../config/database';
-import { ChatType } from '@prisma/client';
+import { ChatType, ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, formatDuration } from '../utils';
 import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
+import { ChatMuteService } from '../../chat/chatMute.service';
 
 export async function sendGameChatNotification(
   api: Api,
@@ -35,6 +36,11 @@ export async function sendGameChatNotification(
     const user = participant.user;
     
     if (!user.telegramId || !user.sendTelegramMessages || user.id === sender.id) {
+      continue;
+    }
+
+    const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
+    if (isMuted) {
       continue;
     }
 
