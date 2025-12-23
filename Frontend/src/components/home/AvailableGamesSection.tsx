@@ -136,6 +136,14 @@ export const AvailableGamesSection = ({
     return { start, end };
   };
 
+  useEffect(() => {
+    if (activeTab === 'list' && onDateRangeChange) {
+      const start = startOfDay(listViewStartDate);
+      const end = startOfDay(addDays(listViewStartDate, 6));
+      onDateRangeChange(start, end);
+    }
+  }, [activeTab, listViewStartDate]);
+
   const getFilteredGames = () => {
     if (activeTab === 'calendar') {
       return availableGames.filter(game => {
