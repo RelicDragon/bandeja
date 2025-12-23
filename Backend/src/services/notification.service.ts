@@ -1,6 +1,6 @@
 import prisma from '../config/database';
 import { NotificationType, UnifiedNotificationRequest } from '../types/notifications.types';
-import { ChatContextType } from '@prisma/client';
+import { ChatContextType, ChatType } from '@prisma/client';
 import telegramNotificationService from './telegram/notification.service';
 import pushNotificationService from './push/push-notification.service';
 import { ChatMuteService } from './chat/chatMute.service';
@@ -76,20 +76,93 @@ class NotificationService {
   }
 
   async sendGameChatNotification(message: any, game: any, sender: any, recipients: any[]) {
-    for (const recipient of recipients) {
-      if (recipient.id === sender.id) continue;
+    const mentionIds = message.mentionIds || [];
+    const hasMentions = mentionIds.length > 0;
+    const chatType = message.chatType as ChatType;
+
+    if (hasMentions) {
+      const mentionedUserIds = new Set(mentionIds);
       
-      const isMuted = await ChatMuteService.isChatMuted(recipient.id, ChatContextType.GAME, game.id);
-      if (isMuted) continue;
-      
-      const payload = await createGameChatPushNotification(message, game, sender, recipient);
-      
-      if (payload) {
-        await this.sendNotification({
-          userId: recipient.id,
-          type: NotificationType.GAME_CHAT,
-          payload
-        });
+      const participants = await prisma.gameParticipant.findMany({
+        where: { gameId: game.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              language: true,
+              currentCityId: true,
+            }
+          }
+        }
+      });
+
+      for (const participant of participants) {
+        const user = participant.user;
+        if (user.id === sender.id) continue;
+        if (!mentionedUserIds.has(user.id)) continue;
+
+        let canSeeMessage = false;
+        if (chatType === ChatType.PUBLIC) {
+          canSeeMessage = true;
+        } else if (chatType === ChatType.PRIVATE) {
+          canSeeMessage = participant.isPlaying;
+        } else if (chatType === ChatType.ADMINS) {
+          canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
+        }
+
+        if (canSeeMessage) {
+          const payload = await createGameChatPushNotification(message, game, sender, user);
+          
+          if (payload) {
+            await this.sendNotification({
+              userId: user.id,
+              type: NotificationType.GAME_CHAT,
+              payload
+            });
+          }
+        }
+      }
+    } else {
+      const participants = await prisma.gameParticipant.findMany({
+        where: { gameId: game.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              language: true,
+              currentCityId: true,
+            }
+          }
+        }
+      });
+
+      for (const participant of participants) {
+        const user = participant.user;
+        if (user.id === sender.id) continue;
+
+        const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
+        if (isMuted) continue;
+
+        let canSeeMessage = false;
+        if (chatType === ChatType.PUBLIC) {
+          canSeeMessage = true;
+        } else if (chatType === ChatType.PRIVATE) {
+          canSeeMessage = participant.isPlaying;
+        } else if (chatType === ChatType.ADMINS) {
+          canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
+        }
+
+        if (canSeeMessage) {
+          const payload = await createGameChatPushNotification(message, game, sender, user);
+          
+          if (payload) {
+            await this.sendNotification({
+              userId: user.id,
+              type: NotificationType.GAME_CHAT,
+              payload
+            });
+          }
+        }
       }
     }
 
@@ -101,8 +174,18 @@ class NotificationService {
     
     if (!recipient) return;
     
-    const isMuted = await ChatMuteService.isChatMuted(recipient.id, ChatContextType.USER, userChat.id);
-    if (isMuted) return;
+    const mentionIds = message.mentionIds || [];
+    const hasMentions = mentionIds.length > 0;
+    const isMentioned = hasMentions && mentionIds.includes(recipient.id);
+    
+    if (hasMentions && !isMentioned) {
+      return;
+    }
+    
+    if (!hasMentions) {
+      const isMuted = await ChatMuteService.isChatMuted(recipient.id, ChatContextType.USER, userChat.id);
+      if (isMuted) return;
+    }
     
     const payload = await createUserChatPushNotification(message, userChat, sender, recipient);
     
@@ -118,20 +201,130 @@ class NotificationService {
   }
 
   async sendBugChatNotification(message: any, bug: any, sender: any, recipients: any[]) {
-    for (const recipient of recipients) {
-      if (recipient.id === sender.id) continue;
+    const mentionIds = message.mentionIds || [];
+    const hasMentions = mentionIds.length > 0;
+
+    if (hasMentions) {
+      const bugCreator = await prisma.user.findUnique({
+        where: { id: bug.senderId },
+        select: {
+          id: true,
+        }
+      });
+
+      const bugParticipants = await prisma.bugParticipant.findMany({
+        where: { bugId: bug.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+            }
+          }
+        }
+      });
+
+      const admins = await prisma.user.findMany({
+        where: {
+          isAdmin: true,
+        },
+        select: {
+          id: true,
+        }
+      });
+
+      const allPotentialRecipients = new Map<string, any>();
       
-      const isMuted = await ChatMuteService.isChatMuted(recipient.id, ChatContextType.BUG, bug.id);
-      if (isMuted) continue;
+      if (bugCreator && bugCreator.id !== sender.id) {
+        allPotentialRecipients.set(bugCreator.id, bugCreator);
+      }
+
+      for (const participant of bugParticipants) {
+        if (participant.user.id !== sender.id) {
+          allPotentialRecipients.set(participant.user.id, participant.user);
+        }
+      }
+
+      for (const admin of admins) {
+        if (admin.id !== sender.id && !allPotentialRecipients.has(admin.id)) {
+          allPotentialRecipients.set(admin.id, admin);
+        }
+      }
+
+      for (const userId of mentionIds) {
+        if (userId === sender.id) continue;
+        
+        const recipient = allPotentialRecipients.get(userId);
+        if (!recipient) continue;
+
+        const payload = await createBugChatPushNotification(message, bug, sender, recipient);
+        
+        if (payload) {
+          await this.sendNotification({
+            userId: recipient.id,
+            type: NotificationType.BUG_CHAT,
+            payload
+          });
+        }
+      }
+    } else {
+      const bugCreator = await prisma.user.findUnique({
+        where: { id: bug.senderId },
+        select: {
+          id: true,
+        }
+      });
+
+      const bugParticipants = await prisma.bugParticipant.findMany({
+        where: { bugId: bug.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+            }
+          }
+        }
+      });
+
+      const admins = await prisma.user.findMany({
+        where: {
+          isAdmin: true,
+        },
+        select: {
+          id: true,
+        }
+      });
+
+      const allPotentialRecipients = new Map<string, any>();
       
-      const payload = await createBugChatPushNotification(message, bug, sender, recipient);
-      
-      if (payload) {
-        await this.sendNotification({
-          userId: recipient.id,
-          type: NotificationType.BUG_CHAT,
-          payload
-        });
+      if (bugCreator && bugCreator.id !== sender.id) {
+        allPotentialRecipients.set(bugCreator.id, bugCreator);
+      }
+
+      for (const participant of bugParticipants) {
+        if (participant.user.id !== sender.id) {
+          allPotentialRecipients.set(participant.user.id, participant.user);
+        }
+      }
+
+      for (const admin of admins) {
+        if (admin.id !== sender.id && !allPotentialRecipients.has(admin.id)) {
+          allPotentialRecipients.set(admin.id, admin);
+        }
+      }
+
+      for (const recipient of allPotentialRecipients.values()) {
+        const isMuted = await ChatMuteService.isChatMuted(recipient.id, ChatContextType.BUG, bug.id);
+        if (isMuted) continue;
+
+        const payload = await createBugChatPushNotification(message, bug, sender, recipient);
+        
+        if (payload) {
+          await this.sendNotification({
+            userId: recipient.id,
+            type: NotificationType.BUG_CHAT,
+            payload
+          });
+        }
       }
     }
 

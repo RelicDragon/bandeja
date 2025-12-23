@@ -13,6 +13,7 @@ export interface ChatMessage {
   content: string;
   mediaUrls: string[];
   thumbnailUrls: string[];
+  mentionIds: string[];
   state: MessageState;
   chatType: ChatType;
   createdAt: string;
@@ -79,6 +80,7 @@ export interface CreateMessageRequest {
   thumbnailUrls?: string[];
   replyToId?: string;
   chatType?: ChatType;
+  mentionIds?: string[];
 }
 
 export interface UpdateMessageStateRequest {

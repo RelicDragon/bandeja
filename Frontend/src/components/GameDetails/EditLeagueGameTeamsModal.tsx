@@ -223,7 +223,7 @@ export const EditLeagueGameTeamsModal = ({
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen, game.id, fetchStandings, initializeTeams, fetchClubs, initializeGameData]);
+  }, [isOpen, game.id, game.clubId, fetchStandings, initializeTeams, fetchClubs, initializeGameData, fetchCourts]);
 
   useEffect(() => {
     if (selectedClubId) {

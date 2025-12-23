@@ -200,8 +200,9 @@ export class MessageService {
     mediaUrls: string[];
     replyToId?: string;
     chatType: ChatType;
+    mentionIds?: string[];
   }) {
-    const { chatContextType, contextId, senderId, content, mediaUrls, replyToId, chatType } = data;
+    const { chatContextType, contextId, senderId, content, mediaUrls, replyToId, chatType, mentionIds = [] } = data;
 
     // Validate access based on context type
     let game, participant, bug, userChat;
@@ -246,10 +247,11 @@ export class MessageService {
         thumbnailUrls,
         replyToId,
         chatType,
+        mentionIds: mentionIds || [],
         state: MessageState.SENT
-      },
+      } as any,
       include: this.getMessageInclude()
-    });
+    }) as any;
 
     // Handle game-specific logic
     if (chatContextType === 'GAME' && game) {
@@ -356,6 +358,7 @@ export class MessageService {
     mediaUrls: string[];
     replyToId?: string;
     chatType: ChatType;
+    mentionIds?: string[];
   }) {
     const message = await this.createMessage(data);
     

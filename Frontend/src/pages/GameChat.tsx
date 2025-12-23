@@ -949,7 +949,7 @@ export const GameChat: React.FC = () => {
       </main>
 
       {!isInitialLoad && (
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 z-40 overflow-visible" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {isBlockedByUser && contextType === 'USER' ? (
           <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
             <div className="text-sm text-center text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-3">
@@ -957,7 +957,7 @@ export const GameChat: React.FC = () => {
             </div>
           </div>
         ) : canAccessChat ? (
-          <div className="relative overflow-hidden">
+          <div className="relative overflow-visible">
             <div 
               className={`transition-transform duration-300 ease-in-out ${
                 isSendingMessage ? '-translate-y-full' : 'translate-y-0'
@@ -967,6 +967,8 @@ export const GameChat: React.FC = () => {
                 gameId={contextType === 'GAME' ? id : undefined}
                 bugId={contextType === 'BUG' ? id : undefined}
                 userChatId={contextType === 'USER' ? id : undefined}
+                game={game}
+                bug={bug}
                 onMessageSent={handleMessageSent}
                 disabled={false}
                 replyTo={replyTo}

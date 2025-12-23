@@ -1,16 +1,19 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { chatApi, CreateMessageRequest, ChatMessage } from '@/api/chat';
+import { chatApi, CreateMessageRequest, ChatMessage, ChatContextType } from '@/api/chat';
 import { mediaApi } from '@/api/media';
-import { ChatType } from '@/types';
+import { ChatType, Game, Bug } from '@/types';
 import { ReplyPreview } from './ReplyPreview';
+import { MentionInput } from './MentionInput';
 import { Image, X } from 'lucide-react';
 
 interface MessageInputProps {
   gameId?: string;
   bugId?: string;
   userChatId?: string;
+  game?: Game | null;
+  bug?: Bug | null;
   onMessageSent: () => void;
   disabled?: boolean;
   replyTo?: ChatMessage | null;
@@ -23,6 +26,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   gameId,
   bugId,
   userChatId,
+  game,
+  bug,
   onMessageSent,
   disabled = false,
   replyTo,
@@ -32,10 +37,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 }) => {
   const { t } = useTranslation();
   const [message, setMessage] = useState('');
+  const [mentionIds, setMentionIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const contextType: ChatContextType = gameId ? 'GAME' : bugId ? 'BUG' : 'USER';
 
   const imagePreviewUrls = useMemo(() => {
     return selectedImages.map(file => URL.createObjectURL(file));
@@ -47,26 +54,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     };
   }, [imagePreviewUrls]);
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      const textarea = textareaRef.current;
-      const singleRowHeight = 48; // minHeight from style
-      const maxHeight = 120; // maxHeight from style
-      
-      textarea.style.height = 'auto';
-      const scrollHeight = textarea.scrollHeight;
-      
-      if (scrollHeight <= singleRowHeight) {
-        textarea.style.height = `${singleRowHeight}px`;
-        textarea.style.overflowY = 'hidden';
-      } else {
-        const newHeight = Math.min(scrollHeight, maxHeight);
-        textarea.style.height = `${newHeight}px`;
-        // Only show scrollbar if content actually overflows the container
-        textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
-      }
-    }
-  }, [message]);
 
   const handleImageSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -115,6 +102,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     };
   };
 
+  const handleMessageChange = (newValue: string, newMentionIds: string[]) => {
+    setMessage(newValue);
+    setMentionIds(newMentionIds);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!message.trim() && selectedImages.length === 0) || isLoading || disabled) return;
@@ -136,11 +128,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
         replyToId: replyTo?.id,
         chatType: userChatId ? 'PUBLIC' : chatType,
+        mentionIds: mentionIds.length > 0 ? mentionIds : undefined,
       };
 
       await chatApi.createMessage(messageData);
 
       setMessage('');
+      setMentionIds([]);
       setSelectedImages([]);
       onCancelReply?.();
     } catch (error) {
@@ -158,7 +152,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4">
+    <div className="bg-white dark:bg-gray-800 p-4 overflow-visible">
       {replyTo && (
         <ReplyPreview
           replyTo={replyTo.replyTo || {
@@ -192,21 +186,28 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </div>
       )}
       
-      <form onSubmit={handleSubmit} className="relative">
-        <div className="relative">
-          <textarea
-            ref={textareaRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={t('chat.messages.typeMessage')}
-            disabled={disabled || isLoading}
-            className="w-full px-4 py-3 pr-20 border border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-            rows={1}
-            style={{ minHeight: '48px', maxHeight: '120px', overflowY: 'auto' }}
-          />
-          
-          <div className="absolute bottom-2.5 right-1.5 flex items-center gap-1">
+      <form onSubmit={handleSubmit} className="relative overflow-visible">
+        <div className="relative overflow-visible">
+          <div className="relative overflow-visible">
+            <MentionInput
+              value={message}
+              onChange={handleMessageChange}
+              placeholder={t('chat.messages.typeMessage')}
+              disabled={disabled || isLoading}
+              game={game}
+              bug={bug}
+              userChatId={userChatId}
+              contextType={contextType}
+              chatType={chatType}
+              onKeyDown={handleKeyDown}
+              className="w-full"
+              style={{
+                minHeight: '48px',
+                maxHeight: '120px',
+              }}
+            />
+            
+            <div className="absolute bottom-2.5 right-1.5 flex items-center gap-1 z-10">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -239,6 +240,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 </svg>
               )}
             </button>
+            </div>
           </div>
         </div>
       </form>

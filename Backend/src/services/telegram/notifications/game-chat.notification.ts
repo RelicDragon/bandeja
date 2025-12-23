@@ -32,6 +32,10 @@ export async function sendGameChatNotification(
     }
   });
 
+  const mentionIds = message.mentionIds || [];
+  const hasMentions = mentionIds.length > 0;
+  const mentionedUserIds = hasMentions ? new Set(mentionIds) : null;
+
   for (const participant of participants) {
     const user = participant.user;
     
@@ -39,9 +43,15 @@ export async function sendGameChatNotification(
       continue;
     }
 
-    const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
-    if (isMuted) {
-      continue;
+    if (hasMentions) {
+      if (!mentionedUserIds?.has(user.id)) {
+        continue;
+      }
+    } else {
+      const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
+      if (isMuted) {
+        continue;
+      }
     }
 
     let canSeeMessage = false;

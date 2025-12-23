@@ -10,6 +10,7 @@ import { PlayerCardBottomSheet } from './PlayerCardBottomSheet';
 import { parseSystemMessage, useSystemMessageTranslation } from '@/utils/systemMessages';
 import { FullscreenImageViewer } from './FullscreenImageViewer';
 import { ReportMessageModal } from './ReportMessageModal';
+import { parseMentions } from '@/utils/parseMentions';
 
 interface ContextMenuState {
   isOpen: boolean;
@@ -50,6 +51,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const [showPlayerCard, setShowPlayerCard] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [reportMessage, setReportMessage] = useState<ChatMessage | null>(null);
+  const [selectedMentionUserId, setSelectedMentionUserId] = useState<string | null>(null);
   const isOwnMessage = message.senderId === user?.id;
   const isSystemMessage = !message.senderId;
   const { observeMessage, unobserveMessage } = useMessageReadTracking();
@@ -61,6 +63,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const displayContent = systemMessageData 
     ? translateSystemMessage(systemMessageData)
     : message.content;
+
+  const parsedContent = isSystemMessage ? null : parseMentions(displayContent);
 
   const getSenderName = () => {
     if (isSystemMessage) {
@@ -366,7 +370,40 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                         : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap break-words pr-12 pb-3">{message.content}</p>
+                    <p className="text-sm whitespace-pre-wrap break-words pr-12 pb-3">
+                      {parsedContent ? (
+                        parsedContent.map((part, index) => {
+                          if (part.type === 'mention') {
+                            const isMentioned = message.mentionIds?.includes(part.userId || '') || user?.id === part.userId;
+                            return (
+                              <span
+                                key={index}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (part.userId) {
+                                    setSelectedMentionUserId(part.userId);
+                                  }
+                                }}
+                                className={`font-semibold cursor-pointer hover:underline ${
+                                  isOwnMessage
+                                    ? isMentioned
+                                      ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
+                                      : 'text-blue-100'
+                                    : isMentioned
+                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
+                                    : 'text-blue-600 dark:text-blue-400'
+                                }`}
+                              >
+                                @{part.display}
+                              </span>
+                            );
+                          }
+                          return <span key={index}>{part.content}</span>;
+                        })
+                      ) : (
+                        displayContent
+                      )}
+                    </p>
                     
                     {message.mediaUrls && message.mediaUrls.length > 0 && (
                       <div className="mt-2 space-y-2">
@@ -507,6 +544,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         <PlayerCardBottomSheet
           playerId={message.senderId!}
           onClose={() => setShowPlayerCard(false)}
+        />
+      )}
+
+      {selectedMentionUserId && (
+        <PlayerCardBottomSheet
+          playerId={selectedMentionUserId}
+          onClose={() => setSelectedMentionUserId(null)}
         />
       )}
 

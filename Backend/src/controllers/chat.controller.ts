@@ -37,7 +37,7 @@ export const createBugSystemMessage = async (bugId: string, messageData: { type:
 };
 
 export const createMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { chatContextType = 'GAME', contextId, gameId, content, mediaUrls = [], replyToId, chatType = ChatType.PUBLIC } = req.body;
+  const { chatContextType = 'GAME', contextId, gameId, content, mediaUrls = [], replyToId, chatType = ChatType.PUBLIC, mentionIds = [] } = req.body;
   const senderId = req.userId;
 
   if (!senderId) {
@@ -57,7 +57,8 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     content,
     mediaUrls,
     replyToId,
-    chatType
+    chatType,
+    mentionIds: Array.isArray(mentionIds) ? mentionIds : []
   });
 
   res.status(201).json({

@@ -19,9 +19,19 @@ export async function sendUserChatNotification(
     return;
   }
 
-  const isMuted = await ChatMuteService.isChatMuted(recipient.id, ChatContextType.USER, userChat.id);
-  if (isMuted) {
+  const mentionIds = message.mentionIds || [];
+  const hasMentions = mentionIds.length > 0;
+  const isMentioned = hasMentions && mentionIds.includes(recipient.id);
+
+  if (hasMentions && !isMentioned) {
     return;
+  }
+
+  if (!hasMentions) {
+    const isMuted = await ChatMuteService.isChatMuted(recipient.id, ChatContextType.USER, userChat.id);
+    if (isMuted) {
+      return;
+    }
   }
 
   try {

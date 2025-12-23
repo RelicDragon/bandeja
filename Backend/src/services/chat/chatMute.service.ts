@@ -1,5 +1,4 @@
 import prisma from '../../config/database';
-import { ApiError } from '../../utils/ApiError';
 import { ChatContextType } from '@prisma/client';
 
 export class ChatMuteService {

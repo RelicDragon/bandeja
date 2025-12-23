@@ -1,0 +1,323 @@
+import React, { useRef, useEffect, useState, useMemo } from 'react';
+import { MentionsInput, Mention, SuggestionDataItem, MentionData } from 'react-mentions';
+import { ChatContextType } from '@/api/chat';
+import { Game, Bug } from '@/types';
+import { PlayerAvatar } from './PlayerAvatar';
+
+interface MentionableUser {
+  id: string;
+  display: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+}
+
+interface MentionInputProps {
+  value: string;
+  onChange: (value: string, mentionIds: string[]) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  game?: Game | null;
+  bug?: Bug | null;
+  userChatId?: string;
+  contextType: ChatContextType;
+  chatType?: string;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export const MentionInput: React.FC<MentionInputProps> = ({
+  value,
+  onChange,
+  placeholder,
+  disabled = false,
+  game,
+  bug,
+  userChatId: _userChatId,
+  contextType,
+  chatType = 'PUBLIC',
+  onKeyDown,
+  className = '',
+  style,
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [suggestionsWidth, setSuggestionsWidth] = useState(300);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        const inputWidth = containerRef.current.offsetWidth;
+        setSuggestionsWidth(Math.min(300, inputWidth * 0.9));
+      }
+    };
+    
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    
+    return () => observer.disconnect();
+  }, []);
+
+
+  const mentionableUsers = useMemo((): MentionableUser[] => {
+    if (contextType === 'GAME' && game) {
+      const users: MentionableUser[] = [];
+      const userIds = new Set<string>();
+
+      if (chatType === 'PUBLIC') {
+        game.participants.forEach(p => {
+          if (p.user && !userIds.has(p.user.id)) {
+            userIds.add(p.user.id);
+            users.push({
+              id: p.user.id,
+              display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+              firstName: p.user.firstName,
+              lastName: p.user.lastName,
+              avatar: p.user.avatar,
+            });
+          }
+        });
+        game.invites?.forEach(invite => {
+          if (invite.receiver && !userIds.has(invite.receiver.id)) {
+            userIds.add(invite.receiver.id);
+            users.push({
+              id: invite.receiver.id,
+              display: `${invite.receiver.firstName || ''} ${invite.receiver.lastName || ''}`.trim() || 'Unknown',
+              firstName: invite.receiver.firstName,
+              lastName: invite.receiver.lastName,
+              avatar: invite.receiver.avatar,
+            });
+          }
+        });
+      } else if (chatType === 'PRIVATE') {
+        game.participants
+          .filter(p => p.isPlaying)
+          .forEach(p => {
+            if (p.user && !userIds.has(p.user.id)) {
+              userIds.add(p.user.id);
+              users.push({
+                id: p.user.id,
+                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+                firstName: p.user.firstName,
+                lastName: p.user.lastName,
+                avatar: p.user.avatar,
+              });
+            }
+          });
+      } else if (chatType === 'ADMINS') {
+        game.participants
+          .filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
+          .forEach(p => {
+            if (p.user && !userIds.has(p.user.id)) {
+              userIds.add(p.user.id);
+              users.push({
+                id: p.user.id,
+                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+                firstName: p.user.firstName,
+                lastName: p.user.lastName,
+                avatar: p.user.avatar,
+              });
+            }
+          });
+      }
+
+      return users;
+    } else if (contextType === 'BUG' && bug) {
+      const users: MentionableUser[] = [];
+      const userIds = new Set<string>();
+
+      if (bug.sender && !userIds.has(bug.sender.id)) {
+        userIds.add(bug.sender.id);
+        users.push({
+          id: bug.sender.id,
+          display: `${bug.sender.firstName || ''} ${bug.sender.lastName || ''}`.trim() || 'Unknown',
+          firstName: bug.sender.firstName,
+          lastName: bug.sender.lastName,
+          avatar: bug.sender.avatar,
+        });
+      }
+
+      bug.participants?.forEach(p => {
+        if (p.user && !userIds.has(p.user.id)) {
+          userIds.add(p.user.id);
+          users.push({
+            id: p.user.id,
+            display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+            firstName: p.user.firstName,
+            lastName: p.user.lastName,
+            avatar: p.user.avatar,
+          });
+        }
+      });
+
+      return users;
+    } else if (contextType === 'USER') {
+      return [];
+    }
+
+    return [];
+  }, [contextType, game, bug, chatType]);
+
+  const handleChange = (_e: any, newValue: string, _newPlainTextValue: string, mentions: MentionData[]) => {
+    const ids = mentions.map(m => m.id);
+    onChange(newValue, ids);
+  };
+
+  const searchUsers = (query: string, callback: (items: SuggestionDataItem[]) => void) => {
+    const searchTerm = query.toLowerCase();
+    const filtered = mentionableUsers.filter(user => {
+      const display = user.display.toLowerCase();
+      const firstName = (user.firstName || '').toLowerCase();
+      const lastName = (user.lastName || '').toLowerCase();
+      return display.includes(searchTerm) || firstName.includes(searchTerm) || lastName.includes(searchTerm);
+    });
+
+    const suggestions: SuggestionDataItem[] = filtered.map(user => ({
+      id: user.id,
+      display: user.display,
+      user: user,
+    }));
+
+    callback(suggestions);
+  };
+
+  const renderSuggestion = (entry: SuggestionDataItem) => {
+    const user = (entry as any).user || mentionableUsers.find(u => u.id === entry.id);
+    if (!user) return <span>{entry.display}</span>;
+    
+    return (
+      <div className="flex items-center gap-2">
+        <PlayerAvatar
+          player={{
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            avatar: user.avatar,
+          }}
+          extrasmall={true}
+          fullHideName={true}
+        />
+        <span>{entry.display}</span>
+      </div>
+    );
+  };
+
+  const customStyle = {
+    control: {
+      backgroundColor: 'transparent',
+      fontSize: 14,
+      fontWeight: 'normal',
+      color: 'inherit',
+    },
+    '&multiLine': {
+      control: {
+        fontFamily: 'inherit',
+        minHeight: 48,
+        maxHeight: 120,
+      },
+      highlighter: {
+        padding: '12px 16px',
+        border: '1px solid transparent',
+        borderRadius: '16px',
+        boxSizing: 'border-box' as const,
+      },
+      input: {
+        padding: '12px 16px',
+        paddingRight: '80px',
+        border: '1px solid rgb(209, 213, 219)',
+        borderRadius: '16px',
+        outline: 'none',
+        backgroundColor: 'white',
+        color: 'rgb(17, 24, 39)',
+        boxSizing: 'border-box' as const,
+        ...(style || {}),
+      },
+    },
+    suggestions: {
+      list: {
+        backgroundColor: 'white',
+        border: '1px solid rgba(0,0,0,0.15)',
+        fontSize: 14,
+        maxHeight: '200px',
+        overflowY: 'auto' as const,
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        zIndex: 9999,
+        width: `${suggestionsWidth}px`,
+        position: 'fixed' as const,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        bottom: '100%',
+        marginBottom: '4px',
+      },
+      item: {
+        padding: '8px 12px',
+        borderBottom: '1px solid rgba(0,0,0,0.15)',
+        '&focused': {
+          backgroundColor: '#e3f2fd',
+        },
+      },
+    },
+  };
+
+  const darkStyle = {
+    ...customStyle,
+    '&multiLine': {
+      ...customStyle['&multiLine'],
+      input: {
+        ...customStyle['&multiLine'].input,
+        backgroundColor: '#374151',
+        borderColor: '#4b5563',
+        color: '#f3f4f6',
+        paddingRight: '80px',
+      },
+    },
+    suggestions: {
+      ...customStyle.suggestions,
+      list: {
+        ...customStyle.suggestions.list,
+        backgroundColor: '#374151',
+        borderColor: '#4b5563',
+        color: '#f3f4f6',
+        width: `${suggestionsWidth}px`,
+      },
+      item: {
+        ...customStyle.suggestions.item,
+        borderBottomColor: '#4b5563',
+        '&focused': {
+          backgroundColor: '#4b5563',
+        },
+      },
+    },
+  };
+
+  const isDark = document.documentElement.classList.contains('dark');
+  const finalStyle = isDark ? darkStyle : customStyle;
+
+  return (
+    <div ref={containerRef} className={className}>
+      <MentionsInput
+        value={value}
+        onChange={handleChange}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+        disabled={disabled}
+        style={finalStyle}
+        allowSuggestionsAboveCursor
+      >
+      <Mention
+        trigger="@"
+        data={searchUsers}
+        displayTransform={(_id: string, display: string) => `@${display}`}
+        markup="@[__display__](__id__)"
+        regex={/@\[([^\]]+)\]\(([^)]+)\)/}
+        renderSuggestion={renderSuggestion}
+      />
+    </MentionsInput>
+    </div>
+  );
+};
+
