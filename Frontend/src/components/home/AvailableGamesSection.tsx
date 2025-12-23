@@ -47,6 +47,7 @@ export const AvailableGamesSection = ({
       const filters = await getGameFilters();
       setFilterByLevel(filters.filterByLevel);
       setFilterByAvailableSlots(filters.filterByAvailableSlots);
+      setActiveTab(filters.activeTab);
     };
     loadFilters();
   }, []);
@@ -56,10 +57,11 @@ export const AvailableGamesSection = ({
       await setGameFilters({
         filterByLevel,
         filterByAvailableSlots,
+        activeTab,
       });
     };
     saveFilters();
-  }, [filterByLevel, filterByAvailableSlots]);
+  }, [filterByLevel, filterByAvailableSlots, activeTab]);
 
   useEffect(() => {
     console.log('AvailableGamesSection - storing date for create game:', selectedDate);
