@@ -162,6 +162,8 @@
     "haveAvailableSlots": "Con plazas disponibles",
     "showArchived": "Mostrar archivados",
     "switchCityInProfile": "Puedes cambiar la ciudad en tu perfil",
+    "calendar": "Calendario",
+    "list": "Lista",
     "gamesCount_one": "{{count}} juego",
     "gamesCount_other": "{{count}} juegos",
     "invitePlayer": "Invitar jugador",

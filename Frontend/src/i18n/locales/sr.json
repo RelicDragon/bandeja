@@ -162,6 +162,8 @@
     "haveAvailableSlots": "Са слободним местом",
     "showArchived": "Прикажи архивиране",
     "switchCityInProfile": "Можеш променити град у свом профилу",
+    "calendar": "Календар",
+    "list": "Листа",
     "gamesCount_one": "{{count}} игра",
     "gamesCount_few": "{{count}} игре",
     "gamesCount_many": "{{count}} игара",

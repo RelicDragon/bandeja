@@ -162,6 +162,8 @@
     "haveAvailableSlots": "С доступными местами",
     "showArchived": "Показать архивированные",
     "switchCityInProfile": "Вы можете изменить город в своем профиле",
+    "calendar": "Календарь",
+    "list": "Список",
     "gamesCount_one": "{{count}} игра",
     "gamesCount_few": "{{count}} игры",
     "gamesCount_many": "{{count}} игр",

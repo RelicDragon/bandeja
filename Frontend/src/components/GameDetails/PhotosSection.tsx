@@ -3,7 +3,6 @@ import { Card } from '@/components';
 import { Game } from '@/types';
 import { chatApi, ChatMessage } from '@/api/chat';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
-import { capturePhoto } from '@/utils/photoCapture';
 import { mediaApi } from '@/api/media';
 import { socketService } from '@/services/socketService';
 import { gamesApi } from '@/api/games';
@@ -28,6 +27,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   const [isUpdatingMainPhoto, setIsUpdatingMainPhoto] = useState(false);
   const [mainPhotoId, setMainPhotoId] = useState<string | null | undefined>(game.mainPhotoId);
   const hasAttemptedSetMainPhoto = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const canEditMainPhoto = user ? isUserGameAdminOrOwner(game, user.id) : false;
 
@@ -99,34 +99,44 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     };
   }, [game.id, game.status]);
 
-  const handlePhotoCapture = async () => {
-    if (isUploadingPhoto || !game.id) return;
+  const handlePhotoSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0 || isUploadingPhoto || !game.id) return;
+
+    const imageFiles = Array.from(files).filter(file => 
+      file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024
+    );
+
+    if (imageFiles.length === 0) {
+      toast.error(t('chat.invalidImageType'));
+      return;
+    }
 
     setIsUploadingPhoto(true);
     try {
-      const photoResult = await capturePhoto();
-      if (!photoResult) {
-        setIsUploadingPhoto(false);
-        return;
+      for (const file of imageFiles) {
+        const uploadResponse = await mediaApi.uploadChatImage(file, game.id, 'GAME');
+        
+        await chatApi.createMessage({
+          gameId: game.id,
+          chatType: 'PHOTOS',
+          mediaUrls: [uploadResponse.originalUrl],
+          thumbnailUrls: [uploadResponse.thumbnailUrl],
+        });
       }
-
-      const uploadResponse = await mediaApi.uploadChatImage(photoResult.file, game.id, 'GAME');
-      
-      await chatApi.createMessage({
-        gameId: game.id,
-        chatType: 'PHOTOS',
-        mediaUrls: [uploadResponse.originalUrl],
-        thumbnailUrls: [uploadResponse.thumbnailUrl],
-      });
 
       toast.success(t('gameDetails.photoAdded'));
       await loadPhotos();
     } catch (error) {
-      console.error('Failed to capture and upload photo:', error);
+      console.error('Failed to upload photo:', error);
       toast.error(t('gameDetails.photoUploadFailed'));
     } finally {
       setIsUploadingPhoto(false);
     }
+  };
+
+  const handlePhotoCapture = () => {
+    if (isUploadingPhoto || !game.id) return;
+    fileInputRef.current?.click();
   };
 
   const handleImageClick = (imageUrl: string) => {
@@ -302,6 +312,15 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
           onClose={() => setFullscreenImage(null)}
         />
       )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={(e) => handlePhotoSelect(e.target.files)}
+        className="hidden"
+      />
     </>
   );
 };

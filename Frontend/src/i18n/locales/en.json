@@ -162,6 +162,8 @@
     "haveAvailableSlots": "Have available slots",
     "showArchived": "Show archived",
     "switchCityInProfile": "You can switch city in your profile",
+    "calendar": "Calendar",
+    "list": "List",
     "gamesCount_one": "{{count}} game",
     "gamesCount_other": "{{count}} games",
     "invitePlayer": "Invite Player",
