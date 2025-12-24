@@ -245,12 +245,11 @@ export async function getOutcomeExplanation(
         });
       }
 
-      const levelAfterMatch = Math.max(1.0, Math.min(7.0, currentLevel + rawMatchLevelChange));
-      matchLevelChange = levelAfterMatch - currentLevel;
-      currentLevel = levelAfterMatch;
+      matchLevelChange = rawMatchLevelChange;
+      currentLevel = currentLevel + rawMatchLevelChange;
       matchesPlayed += 1;
 
-      totalLevelChange += matchLevelChange;
+      totalLevelChange += rawMatchLevelChange;
 
       if (isTie) draws++;
       else if (isWinner) wins++;
@@ -284,12 +283,15 @@ export async function getOutcomeExplanation(
   const clampedReliability = Math.max(0.0, Math.min(100.0, startingReliability));
   const reliabilityCoefficient = Math.max(0.05, Math.exp(-0.15 * Math.pow(clampedReliability, 0.68)));
 
+  const finalLevel = Math.max(1.0, Math.min(7.0, startingLevel + totalLevelChange));
+  const clampedLevelChange = finalLevel - startingLevel;
+
   return {
     userId,
     userLevel: startingLevel,
     userReliability: startingReliability,
     userGamesPlayed: user.gamesPlayed,
-    levelChange: totalLevelChange,
+    levelChange: clampedLevelChange,
     reliabilityChange: totalReliabilityChange,
     reliabilityCoefficient,
     matches,
