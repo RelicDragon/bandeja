@@ -59,12 +59,12 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
   const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === message.id;
 
   // Parse system message data
-  const systemMessageData = isSystemMessage ? parseSystemMessage(message.content || '') : null;
+  const systemMessageData = isSystemMessage ? parseSystemMessage(message.content) : null;
   const displayContent = systemMessageData 
     ? translateSystemMessage(systemMessageData)
-    : message.content || '';
+    : message.content;
 
-  const parsedContent = isSystemMessage ? null : (displayContent ? parseMentions(displayContent) : null);
+  const parsedContent = isSystemMessage ? null : parseMentions(displayContent);
 
   const getSenderName = () => {
     if (isSystemMessage) {
@@ -103,7 +103,7 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
 
 
   const handleCopyMessage = (message: ChatMessage) => {
-    navigator.clipboard.writeText(message.content || '');
+    navigator.clipboard.writeText(message.content);
   };
 
 
@@ -370,42 +370,40 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
                         : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
                     }`}
                   >
-                    {(displayContent || parsedContent) && (
-                      <p className={`text-sm whitespace-pre-wrap break-words pr-12 pb-3 ${isOwnMessage ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>
-                        {parsedContent ? (
-                          parsedContent.map((part, index) => {
-                            if (part.type === 'mention') {
-                              const isMentioned = message.mentionIds?.includes(part.userId || '') || user?.id === part.userId;
-                              return (
-                                <span
-                                  key={index}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (part.userId) {
-                                      setSelectedMentionUserId(part.userId);
-                                    }
-                                  }}
-                                  className={`font-semibold cursor-pointer hover:underline ${
-                                    isOwnMessage
-                                      ? isMentioned
-                                        ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
-                                        : 'text-blue-100'
-                                      : isMentioned
-                                      ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
-                                      : 'text-blue-600 dark:text-blue-400'
-                                  }`}
-                                >
-                                  @{part.display}
-                                </span>
-                              );
-                            }
-                            return <span key={index}>{part.content}</span>;
-                          })
-                        ) : (
-                          displayContent
-                        )}
-                      </p>
-                    )}
+                    <p className={`text-sm whitespace-pre-wrap break-words pr-12 pb-3 ${isOwnMessage ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>
+                      {parsedContent ? (
+                        parsedContent.map((part, index) => {
+                          if (part.type === 'mention') {
+                            const isMentioned = message.mentionIds?.includes(part.userId || '') || user?.id === part.userId;
+                            return (
+                              <span
+                                key={index}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (part.userId) {
+                                    setSelectedMentionUserId(part.userId);
+                                  }
+                                }}
+                                className={`font-semibold cursor-pointer hover:underline ${
+                                  isOwnMessage
+                                    ? isMentioned
+                                      ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
+                                      : 'text-blue-100'
+                                    : isMentioned
+                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
+                                    : 'text-blue-600 dark:text-blue-400'
+                                }`}
+                              >
+                                @{part.display}
+                              </span>
+                            );
+                          }
+                          return <span key={index}>{part.content}</span>;
+                        })
+                      ) : (
+                        displayContent
+                      )}
+                    </p>
                     
                     {message.mediaUrls && message.mediaUrls.length > 0 && (
                       <div className="mt-2 space-y-2">

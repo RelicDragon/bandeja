@@ -5,11 +5,7 @@ export interface ParsedMention {
   display?: string;
 }
 
-export function parseMentions(text: string | null | undefined): ParsedMention[] {
-  if (!text) {
-    return [];
-  }
-
+export function parseMentions(text: string): ParsedMention[] {
   const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
   const parts: ParsedMention[] = [];
   let lastIndex = 0;
