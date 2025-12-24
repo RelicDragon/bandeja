@@ -10,7 +10,7 @@ export interface ChatMessage {
   contextId: string;
   gameId?: string | null; // Deprecated, kept for backward compatibility
   senderId: string | null;
-  content: string;
+  content: string | null;
   mediaUrls: string[];
   thumbnailUrls: string[];
   mentionIds: string[];
