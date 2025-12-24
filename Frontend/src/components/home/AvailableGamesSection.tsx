@@ -144,7 +144,7 @@ export const AvailableGamesSection = ({
       const end = startOfDay(addDays(listViewStartDate, 6));
       onDateRangeChange(start, end);
     }
-  }, [activeTab, listViewStartDate]);
+  }, [activeTab, listViewStartDate, onDateRangeChange]);
 
   const getFilteredGames = () => {
     if (activeTab === 'calendar') {

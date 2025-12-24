@@ -7,6 +7,7 @@ import { ShareModal } from '@/components/ShareModal';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { GameAvatar } from '@/components/GameAvatar';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
+import { getShareUrl } from '@/utils/shareUrl';
 import { EditGameTextModal } from './EditGameTextModal';
 import { EditGamePriceModal } from './EditGamePriceModal';
 import {
@@ -104,7 +105,7 @@ export const GameInfo = ({
   };
 
   const handleShare = async () => {
-    const shareUrl = window.location.href;
+    const shareUrl = getShareUrl();
     const clubName = game.court?.club?.name || game.club?.name || '';
 
     const shareParts = [];
