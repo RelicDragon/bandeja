@@ -424,30 +424,6 @@ export const GameChat: React.FC = () => {
   }, [contextType, isParticipant, isPlayingParticipant, isAdminOrOwner, game?.status]);
 
   const handleNewMessage = useCallback((message: ChatMessage) => {
-    if (isSendingRef.current || message.senderId === user?.id) {
-      if (sendingTimeoutRef.current) {
-        clearTimeout(sendingTimeoutRef.current);
-        sendingTimeoutRef.current = null;
-      }
-      
-      const minDisplayTime = 500;
-      const elapsedTime = sendingStartTimeRef.current ? Date.now() - sendingStartTimeRef.current : minDisplayTime;
-      const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
-      
-      if (remainingTime > 0) {
-        sendingTimeoutRef.current = setTimeout(() => {
-          isSendingRef.current = false;
-          sendingStartTimeRef.current = null;
-          setIsSendingMessage(false);
-          sendingTimeoutRef.current = null;
-        }, remainingTime);
-      } else {
-        isSendingRef.current = false;
-        sendingStartTimeRef.current = null;
-        setIsSendingMessage(false);
-      }
-    }
-    
     const matchesChatType = contextType === 'USER' || message.chatType === currentChatType;
     if (matchesChatType) {
       setMessages(prevMessages => {
@@ -455,6 +431,31 @@ export const GameChat: React.FC = () => {
         if (exists) {
           return prevMessages;
         }
+        
+        if (isSendingRef.current && message.senderId === user?.id) {
+          if (sendingTimeoutRef.current) {
+            clearTimeout(sendingTimeoutRef.current);
+            sendingTimeoutRef.current = null;
+          }
+          
+          const minDisplayTime = 500;
+          const elapsedTime = sendingStartTimeRef.current ? Date.now() - sendingStartTimeRef.current : minDisplayTime;
+          const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
+          
+          if (remainingTime > 0) {
+            sendingTimeoutRef.current = setTimeout(() => {
+              isSendingRef.current = false;
+              sendingStartTimeRef.current = null;
+              setIsSendingMessage(false);
+              sendingTimeoutRef.current = null;
+            }, remainingTime);
+          } else {
+            isSendingRef.current = false;
+            sendingStartTimeRef.current = null;
+            setIsSendingMessage(false);
+          }
+        }
+        
         return [...prevMessages, message];
       });
     }
