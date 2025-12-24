@@ -242,7 +242,7 @@ export class MessageService {
         contextId,
         gameId: chatContextType === 'GAME' ? contextId : null,
         senderId,
-        content,
+        content: content ?? '',
         mediaUrls,
         thumbnailUrls,
         replyToId,

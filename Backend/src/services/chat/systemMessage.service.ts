@@ -22,7 +22,7 @@ export class SystemMessageService {
         contextId,
         gameId: chatContextType === 'GAME' ? contextId : null,
         senderId: null,
-        content,
+        content: content ?? '',
         mediaUrls: [],
         thumbnailUrls: [],
         chatType,
