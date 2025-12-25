@@ -6,6 +6,8 @@ import { Game } from '@/types';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { formatDate } from '@/utils/dateFormat';
 import { SetResult } from '@/types/gameResults';
+import { gamesApi } from '@/api/games';
+import toast from 'react-hot-toast';
 
 interface LeagueGameCardProps {
   game: Game;
@@ -14,6 +16,7 @@ interface LeagueGameCardProps {
   showGroupTag?: boolean;
   onRemoveTime?: () => void;
   round0Match0Sets?: SetResult[] | null;
+  onDelete?: () => Promise<void> | void;
 }
 
 export const LeagueGameCard = ({
@@ -23,9 +26,12 @@ export const LeagueGameCard = ({
   showGroupTag = true,
   onRemoveTime,
   round0Match0Sets,
+  onDelete,
 }: LeagueGameCardProps) => {
   const { t } = useTranslation();
   const [showConfirmRemoveTime, setShowConfirmRemoveTime] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getTeamPlayers = (teamIndex: number) => {
     if (game.fixedTeams && game.fixedTeams.length > teamIndex) {
@@ -51,6 +57,7 @@ export const LeagueGameCard = ({
 
   const isFinal = game.resultsStatus === 'FINAL';
   const canEdit = game.resultsStatus === 'NONE' && onEdit;
+  const canDelete = game.resultsStatus === 'NONE' && onDelete;
   const groupColor = game.leagueGroup ? getLeagueGroupColor(game.leagueGroup.color) : null;
   const groupSoftColor = game.leagueGroup ? getLeagueGroupSoftColor(game.leagueGroup.color) : null;
 
@@ -107,6 +114,37 @@ export const LeagueGameCard = ({
     const durationPart = getDurationLabel();
 
     return `${datePart} • ${timePart}${durationPart ? ` • ${durationPart}` : ''}`;
+  };
+
+  const handleDelete = async () => {
+    if (isDeleting) return;
+    
+    setIsDeleting(true);
+    try {
+      if (game.children && game.children.length > 0) {
+        for (const child of game.children) {
+          if (child.resultsStatus === 'NONE') {
+            try {
+              await gamesApi.delete(child.id);
+            } catch (error: any) {
+              console.error(`Failed to delete linked game ${child.id}:`, error);
+            }
+          }
+        }
+      }
+      
+      await gamesApi.delete(game.id);
+      toast.success(t('gameDetails.gameDeleted') || 'Game deleted successfully');
+      if (onDelete) {
+        await onDelete();
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setIsDeleting(false);
+      setShowConfirmDelete(false);
+    }
   };
 
   return (
@@ -257,8 +295,20 @@ export const LeagueGameCard = ({
         </div>
       )}
 
-      {(onOpen || canEdit) && (
+      {(onOpen || canEdit || canDelete) && (
         <div className="absolute bottom-2 right-2 flex items-center gap-2 z-10">
+          {canDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowConfirmDelete(true);
+              }}
+              disabled={isDeleting}
+              className="w-8 h-8 rounded-full border-2 border-red-500 hover:border-red-600 bg-white dark:bg-gray-800 text-red-500 hover:text-red-600 flex items-center justify-center transition-colors shadow-lg disabled:opacity-50"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
           {canEdit && (
             <button
               onClick={onEdit}
@@ -289,6 +339,17 @@ export const LeagueGameCard = ({
         title={t('gameDetails.removeTime') || 'Remove Date & Time'}
         message={t('gameDetails.removeTimeConfirmation') || 'Are you sure you want to remove the date and time for this game?'}
         confirmText={t('common.remove') || 'Remove'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        confirmVariant="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={showConfirmDelete}
+        onClose={() => setShowConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title={t('gameDetails.deleteGame') || 'Delete Game'}
+        message={t('gameDetails.deleteGameConfirmation') || 'Are you sure you want to delete this game? This action cannot be undone.'}
+        confirmText={isDeleting ? (t('common.deleting') || 'Deleting...') : (t('common.delete') || 'Delete')}
         cancelText={t('common.cancel') || 'Cancel'}
         confirmVariant="danger"
       />

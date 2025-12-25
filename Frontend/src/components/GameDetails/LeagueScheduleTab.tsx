@@ -177,6 +177,10 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     }
   };
 
+  const handleDeleteGame = async () => {
+    await fetchRounds();
+  };
+
   const handleOpenGroupModal = async () => {
     setIsCreatingGroups(true);
     try {
@@ -373,6 +377,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
                 onEditGame={handleEditGame}
                 onOpenGame={handleOpenGame}
                 onRemoveTime={handleRemoveTime}
+                onDeleteGame={handleDeleteGame}
                 onSendStartMessage={() => handleSendStartMessage(round.id)}
                 t={t}
               />

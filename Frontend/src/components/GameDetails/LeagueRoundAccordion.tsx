@@ -28,6 +28,7 @@ interface LeagueRoundAccordionProps {
   onEditGame: (game: Game) => void;
   onOpenGame: (game: Game) => void;
   onRemoveTime?: (gameId: string) => void;
+  onDeleteGame?: () => void;
   onSendStartMessage: () => void;
   t: TFunction;
 }
@@ -51,6 +52,7 @@ export const LeagueRoundAccordion = ({
   onEditGame,
   onOpenGame,
   onRemoveTime,
+  onDeleteGame,
   onSendStartMessage,
   t,
 }: LeagueRoundAccordionProps) => {
@@ -257,6 +259,11 @@ export const LeagueRoundAccordion = ({
                                       ? () => onRemoveTime(game.id)
                                       : undefined
                                   }
+                                  onDelete={
+                                    game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
+                                      ? onDeleteGame
+                                      : undefined
+                                  }
                                   showGroupTag={false}
                                   round0Match0Sets={getRound0Match0Sets(game.id)}
                                 />
@@ -313,6 +320,11 @@ export const LeagueRoundAccordion = ({
                                     ? () => onRemoveTime(game.id)
                                     : undefined
                                 }
+                                onDelete={
+                                  game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
+                                    ? onDeleteGame
+                                    : undefined
+                                }
                                 showGroupTag={false}
                                 round0Match0Sets={getRound0Match0Sets(game.id)}
                               />
@@ -336,6 +348,11 @@ export const LeagueRoundAccordion = ({
                         onRemoveTime={
                           game.resultsStatus === 'NONE' && canEditGames && onRemoveTime
                             ? () => onRemoveTime(game.id)
+                            : undefined
+                        }
+                        onDelete={
+                          game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
+                            ? onDeleteGame
                             : undefined
                         }
                         showGroupTag={false}
