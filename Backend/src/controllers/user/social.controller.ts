@@ -80,7 +80,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
       isTrainer: true,
       telegramUsername: true,
     },
-    take: 100,
+    take: 1000,
   });
 
   const usersWithInteractions = users.map((user: any) => ({

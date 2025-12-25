@@ -22,12 +22,18 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isInitialLoad = useRef(true);
 
+  const onFaqsChangeRef = useRef(onFaqsChange);
+  
+  useEffect(() => {
+    onFaqsChangeRef.current = onFaqsChange;
+  }, [onFaqsChange]);
+
   const fetchFaqs = useCallback(async () => {
     try {
       setLoading(true);
       const response = await faqApi.getGameFaqs(gameId);
       setFaqs(response.data);
-      onFaqsChange?.(response.data.length > 0);
+      onFaqsChangeRef.current?.(response.data.length > 0);
       if (isInitialLoad.current) {
         setIsExpanded(response.data.length === 0);
         isInitialLoad.current = false;
@@ -35,7 +41,7 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
     } catch (error) {
       console.error('Failed to fetch FAQs:', error);
       toast.error(t('faq.fetchError', { defaultValue: 'Failed to fetch questions' }));
-      onFaqsChange?.(false);
+      onFaqsChangeRef.current?.(false);
       if (isInitialLoad.current) {
         setIsExpanded(false);
         isInitialLoad.current = false;
@@ -43,7 +49,7 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
     } finally {
       setLoading(false);
     }
-  }, [gameId, onFaqsChange, t]);
+  }, [gameId, t]);
 
   useEffect(() => {
     isInitialLoad.current = true;

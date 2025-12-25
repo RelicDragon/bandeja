@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { PlayerAvatar } from '@/components';
 import { GameParticipant } from '@/types';
-import { chatApi } from '@/api/chat';
+import { usePlayersStore } from '@/store/playersStore';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -40,9 +40,21 @@ export const PlayersCarousel = ({
   const [isScrolling, setIsScrolling] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const { getUnreadCountByUserId } = usePlayersStore();
+  
+  const unreadCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    participants.forEach(participant => {
+      const count = getUnreadCountByUserId(participant.userId);
+      if (count > 0) {
+        counts[participant.userId] = count;
+      }
+    });
+    return counts;
+  }, [participants, getUnreadCountByUserId]);
 
   const checkScrollPosition = () => {
     const container = carouselRef.current;
@@ -64,46 +76,6 @@ export const PlayersCarousel = ({
       window.removeEventListener('resize', checkMobile);
     };
   }, []);
-
-  useEffect(() => {
-    const fetchUnreadCounts = async () => {
-      if (!userId || participants.length === 0) return;
-
-      try {
-        const participantUserIds = new Set(participants.map(p => p.userId));
-        const chatsResponse = await chatApi.getUserChats();
-        const chats = chatsResponse.data || [];
-
-        const relevantChats = chats.filter(chat => {
-          const otherUserId = chat.user1Id === userId ? chat.user2Id : chat.user1Id;
-          return participantUserIds.has(otherUserId);
-        });
-
-        if (relevantChats.length > 0) {
-          const chatIds = relevantChats.map(chat => chat.id);
-          const unreadResponse = await chatApi.getUserChatsUnreadCounts(chatIds);
-          const chatUnreadCounts = unreadResponse.data || {};
-
-          const userIdUnreadCounts: Record<string, number> = {};
-          relevantChats.forEach(chat => {
-            const otherUserId = chat.user1Id === userId ? chat.user2Id : chat.user1Id;
-            const unreadCount = chatUnreadCounts[chat.id] || 0;
-            if (unreadCount > 0) {
-              userIdUnreadCounts[otherUserId] = unreadCount;
-            }
-          });
-
-          setUnreadCounts(userIdUnreadCounts);
-        } else {
-          setUnreadCounts({});
-        }
-      } catch (error) {
-        console.error('Failed to fetch unread counts:', error);
-      }
-    };
-
-    fetchUnreadCounts();
-  }, [participants, userId]);
 
   useEffect(() => {
     checkScrollPosition();

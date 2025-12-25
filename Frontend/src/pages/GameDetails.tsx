@@ -75,6 +75,10 @@ export const GameDetailsContent = () => {
   const [hasFaqs, setHasFaqs] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+
+  const handleFaqsChange = useCallback((hasFaqs: boolean) => {
+    setHasFaqs(hasFaqs);
+  }, []);
   const [editFormData, setEditFormData] = useState({
     clubId: '',
     courtId: '',
@@ -113,15 +117,6 @@ export const GameDetailsContent = () => {
           setGameInvites(gameInvitesResponse.data);
         }
 
-        if (response.data.entityType === 'LEAGUE_SEASON') {
-          try {
-            const faqsResponse = await faqApi.getGameFaqs(id);
-            setHasFaqs(faqsResponse.data.length > 0);
-          } catch (error) {
-            console.error('Failed to fetch FAQs:', error);
-            setHasFaqs(false);
-          }
-        }
       } catch (error) {
         console.error('Failed to fetch game:', error);
       } finally {
@@ -962,7 +957,7 @@ export const GameDetailsContent = () => {
           {isLeagueSeason && canEdit && (
             <FaqEdit 
               gameId={game.id} 
-              onFaqsChange={(hasFaqs) => setHasFaqs(hasFaqs)}
+              onFaqsChange={handleFaqsChange}
             />
           )}
 

@@ -13,6 +13,7 @@ import { ChatParticipantsButton } from '@/components/ChatParticipantsButton';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
+import { usePlayersStore } from '@/store/playersStore';
 import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
 import { isUserGameAdminOrOwner } from '@/utils/gameResults';
@@ -95,8 +96,9 @@ export const GameChat: React.FC = () => {
         return response.data;
       } else if (contextType === 'USER') {
         if (!userChat) {
-          const response = await chatApi.getUserChats();
-          const foundChat = response.data?.find((c: UserChatType) => c.id === id);
+          const { fetchUserChats, getChatById } = usePlayersStore.getState();
+          await fetchUserChats();
+          const foundChat = getChatById(id);
           if (foundChat) {
             setUserChat(foundChat);
             const otherUserId = foundChat.user1Id === user?.id ? foundChat.user2Id : foundChat.user1Id;

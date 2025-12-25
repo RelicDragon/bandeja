@@ -1,12 +1,12 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, X } from 'lucide-react';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
-import { chatApi, UserChat } from '@/api/chat';
-import { usersApi, InvitablePlayer } from '@/api/users';
+import { UserChat } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
+import { usePlayersStore } from '@/store/playersStore';
 import { GameParticipant } from '@/types';
 
 interface ContactItem {
@@ -32,92 +32,63 @@ export const Contacts = () => {
   const { showChatFilter } = useHeaderStore();
   const favoriteUserIds = useFavoritesStore((state) => state.favoriteUserIds);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
+  
+  const {
+    users,
+    chats,
+    unreadCounts,
+    loading,
+    chatsLoading,
+    fetchPlayers,
+    fetchUserChats,
+    fetchUnreadCounts,
+    getUserWithMetadata,
+    getUnreadCountByUserId,
+  } = usePlayersStore();
 
-  const [userChats, setUserChats] = useState<UserChat[]>([]);
-  const [userChatsUnreadCounts, setUserChatsUnreadCounts] = useState<Record<string, number>>({});
-  const [allPlayers, setAllPlayers] = useState<InvitablePlayer[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const loadData = useCallback(async () => {
-    if (!user?.id) return;
-
-    setLoading(true);
-    try {
-      const [chatsResponse, playersResponse] = await Promise.all([
-        chatApi.getUserChats(),
-        usersApi.getInvitablePlayers()
-      ]);
-
-      await fetchFavorites();
-
-      const chats = chatsResponse.data || [];
-      let unreadCounts: Record<string, number> = {};
-
-      if (chats.length > 0) {
-        const chatIds = chats.map(chat => chat.id);
-        const unreadResponse = await chatApi.getUserChatsUnreadCounts(chatIds);
-        unreadCounts = unreadResponse.data || {};
-      }
-
-      setUserChats(chats);
-      setUserChatsUnreadCounts(unreadCounts);
-      setAllPlayers(playersResponse.data || []);
-    } catch (error) {
-      console.error('Failed to load contacts:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, fetchFavorites]);
-
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (user?.id) {
+      fetchFavorites();
+      fetchUserChats();
+      fetchPlayers();
+    }
+  }, [user?.id]);
 
   const prevShowChatFilterRef = useRef(showChatFilter);
   useEffect(() => {
     if (showChatFilter && !prevShowChatFilterRef.current && user?.id) {
-      loadData();
+      fetchUserChats();
+      fetchUnreadCounts();
+      fetchPlayers();
     }
     prevShowChatFilterRef.current = showChatFilter;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showChatFilter, user?.id]);
 
   const contacts = useMemo(() => {
-    if (loading) return [];
+    if (loading || chatsLoading) return [];
 
     const blockedUserIds = user?.blockedUserIds || [];
-
-    const chatMap = new Map<string, UserChat>();
-    const unreadMap = new Map<string, number>();
-    const playerMap = new Map<string, InvitablePlayer>();
-
-    userChats.forEach(chat => {
-      const otherUserId = chat.user1Id === user?.id ? chat.user2Id : chat.user1Id;
-      chatMap.set(otherUserId, chat);
-      unreadMap.set(otherUserId, userChatsUnreadCounts[chat.id] || 0);
-    });
-
-    allPlayers.forEach(player => {
-      playerMap.set(player.id, player);
-    });
 
     const processedUserIds = new Set<string>();
     const unreadChats: ContactItem[] = [];
     const favoriteNoUnread: ContactItem[] = [];
     const others: ContactItem[] = [];
 
-    chatMap.forEach((chat, userId) => {
-      if (blockedUserIds.includes(userId)) {
+    Object.values(chats).forEach((chat: UserChat) => {
+      const otherUserId = chat.user1Id === user?.id ? chat.user2Id : chat.user1Id;
+      
+      if (!otherUserId || blockedUserIds.includes(otherUserId)) {
         return;
       }
 
-      const unreadCount = unreadMap.get(userId) || 0;
-      const player = playerMap.get(userId);
-      const favorite = favoriteUserIds.includes(userId);
+      const unreadCount = getUnreadCountByUserId(otherUserId);
+      const userData = getUserWithMetadata(otherUserId);
+      const favorite = favoriteUserIds.includes(otherUserId);
 
       if (showChatFilter && unreadCount === 0) {
         return;
@@ -126,15 +97,15 @@ export const Contacts = () => {
       const otherUser = chat.user1Id === user?.id ? chat.user2 : chat.user1;
       const contact: ContactItem = {
         type: 'user',
-        userId,
+        userId: otherUserId,
         chat,
         unreadCount,
-        interactionCount: player?.interactionCount || 0,
+        interactionCount: userData?.interactionCount || 0,
         isFavorite: favorite,
         user: otherUser
       };
 
-      processedUserIds.add(userId);
+      processedUserIds.add(otherUserId);
 
       if (unreadCount > 0) {
         unreadChats.push(contact);
@@ -146,22 +117,24 @@ export const Contacts = () => {
     });
 
     if (!showChatFilter) {
-      playerMap.forEach((player, userId) => {
+      Object.values(users).forEach((userData) => {
+        const userId = userData.id;
         if (processedUserIds.has(userId) || userId === user?.id || blockedUserIds.includes(userId)) return;
 
         const favorite = favoriteUserIds.includes(userId);
+        const metadata = getUserWithMetadata(userId);
         const contact: ContactItem = {
           type: 'user',
           userId,
-          interactionCount: player.interactionCount || 0,
+          interactionCount: metadata?.interactionCount || 0,
           isFavorite: favorite,
           user: {
-            id: player.id,
-            firstName: player.firstName,
-            lastName: player.lastName,
-            avatar: player.avatar,
-            level: player.level,
-            gender: player.gender
+            id: userData.id,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            avatar: userData.avatar ?? undefined,
+            level: userData.level,
+            gender: userData.gender
           }
         };
 
@@ -196,7 +169,7 @@ export const Contacts = () => {
       ...favoriteNoUnread,
       ...others
     ];
-  }, [loading, userChats, userChatsUnreadCounts, allPlayers, user?.id, user?.blockedUserIds, showChatFilter, favoriteUserIds]);
+  }, [loading, chatsLoading, chats, users, unreadCounts, user?.id, user?.blockedUserIds, showChatFilter, favoriteUserIds, getUnreadCountByUserId, getUserWithMetadata]);
 
 
   useEffect(() => {

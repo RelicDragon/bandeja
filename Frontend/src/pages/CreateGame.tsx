@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameSetupSection, GameSetupModal, MultipleCourtsSelector, AvatarUpload, PriceSection } from '@/components';
 import { useAuthStore } from '@/store/authStore';
+import { usePlayersStore } from '@/store/playersStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
-import { usersApi } from '@/api/users';
+import { InvitablePlayer } from '@/api/users';
 import { gameCourtsApi } from '@/api/gameCourts';
 import { mediaApi } from '@/api/media';
 import { Club, Court, EntityType, GameType, PriceType, PriceCurrency, Game } from '@/types';
-import { InvitablePlayer } from '@/api/users';
 import { addHours } from 'date-fns';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { useGameTimeDuration, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
@@ -637,8 +637,25 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
           onConfirm={async (playerIds: string[]) => {
             setInvitedPlayerIds(playerIds);
             try {
-              const allPlayersResponse = await usersApi.getInvitablePlayers();
-              const selectedPlayers = allPlayersResponse.data.filter(p => playerIds.includes(p.id));
+              const { fetchPlayers, users, getUserWithMetadata } = usePlayersStore.getState();
+              await fetchPlayers();
+              const selectedPlayers: InvitablePlayer[] = playerIds
+                .map(id => {
+                  const user = users[id];
+                  if (!user) return null;
+                  const metadata = getUserWithMetadata(id);
+                  return {
+                    id: user.id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    avatar: user.avatar,
+                    level: user.level,
+                    gender: user.gender,
+                    telegramUsername: undefined,
+                    interactionCount: metadata?.interactionCount || 0,
+                  } as InvitablePlayer;
+                })
+                .filter((p): p is InvitablePlayer => p !== null);
               setInvitedPlayers(selectedPlayers);
             } catch (error) {
               console.error('Failed to fetch invited players data:', error);

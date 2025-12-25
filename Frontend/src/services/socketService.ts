@@ -2,10 +2,21 @@ import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/authStore';
 import { isCapacitor } from '@/utils/capacitor';
 
+export interface NewUserChatMessage {
+  contextId: string;
+  chatId?: string;
+  senderId?: string;
+}
+
+export interface UserChatReadReceipt {
+  userId: string;
+  chatId?: string;
+}
+
 export interface SocketEvents {
   'new-message': (message: any) => void;
   'new-bug-message': (message: any) => void;
-  'new-user-chat-message': (message: any) => void;
+  'new-user-chat-message': (message: NewUserChatMessage) => void;
   'new-invite': (invite: any) => void;
   'invite-deleted': (data: { inviteId: string; gameId?: string }) => void;
   'message-reaction': (reaction: any) => void;
@@ -13,7 +24,7 @@ export interface SocketEvents {
   'user-chat-message-reaction': (reaction: any) => void;
   'read-receipt': (readReceipt: any) => void;
   'bug-read-receipt': (readReceipt: any) => void;
-  'user-chat-read-receipt': (readReceipt: any) => void;
+  'user-chat-read-receipt': (readReceipt: UserChatReadReceipt) => void;
   'message-deleted': (data: { messageId: string }) => void;
   'bug-message-deleted': (data: { messageId: string }) => void;
   'user-chat-message-deleted': (data: { messageId: string }) => void;

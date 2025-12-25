@@ -14,6 +14,7 @@ import { GenderIndicator } from './GenderIndicator';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { GamesStatsSection } from './GamesStatsSection';
 import { ConfirmationModal } from './ConfirmationModal';
+import { Button } from './Button';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import toast from 'react-hot-toast';
@@ -354,48 +355,17 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
               </button>
             )}
             {stats && !isCurrentUser && (
-              <>
-                {(() => {
-                  const getTelegramUrl = () => {
-                    if (stats.user.telegramUsername) {
-                      return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
-                    }
-                    if (stats.user.telegramId) {
-                      return `tg://user?id=${stats.user.telegramId}`;
-                    }
-                    return null;
-                  };
-                  const telegramUrl = getTelegramUrl();
-                  const hasTelegram = !!(stats.user.telegramId || stats.user.telegramUsername);
-                  
-                  return hasTelegram && telegramUrl ? (
-                    <button
-                      onClick={() => !isBlocked && window.open(telegramUrl, '_blank')}
-                      disabled={isBlocked}
-                      className={`px-4 py-2 rounded-xl text-white transition-all duration-200 flex items-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
-                        isBlocked
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg hover:scale-105 active:scale-95'
-                      }`}
-                      title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('playerCard.openTelegramChat')}
-                    >
-                      <Send size={18} />
-                    </button>
-                  ) : null;
-                })()}
-                <button
-                  onClick={handleStartChat}
-                  disabled={startingChat || isBlocked}
-                  className={`px-4 py-2 rounded-xl text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2 shadow-md ${
-                    isBlocked
-                      ? 'bg-gray-400'
-                      : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-lg hover:scale-105 active:scale-95'
-                  }`}
-                  title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('nav.chat')}
-                >
-                  <MessageCircle size={18} />
-                </button>
-              </>
+              <Button
+                onClick={handleStartChat}
+                disabled={startingChat || isBlocked}
+                variant="primary"
+                size="sm"
+                className="flex items-center gap-2"
+                title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('nav.chat')}
+              >
+                <MessageCircle size={16} />
+                {t('nav.chat')}
+              </Button>
             )}
             {stats && !isCurrentUser && (
               <button
@@ -474,6 +444,21 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                       onLevelClick={() => setShowLevelView(true)}
                       gamesStatsTab={gamesStatsTab}
                       onGamesStatsTabChange={setGamesStatsTab}
+                      onTelegramClick={() => {
+                        const getTelegramUrl = () => {
+                          if (stats.user.telegramUsername) {
+                            return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
+                          }
+                          if (stats.user.telegramId) {
+                            return `tg://user?id=${stats.user.telegramId}`;
+                          }
+                          return null;
+                        };
+                        const telegramUrl = getTelegramUrl();
+                        if (telegramUrl && !isBlocked) {
+                          window.open(telegramUrl, '_blank');
+                        }
+                      }}
                     />
                   </motion.div>
                 )}
@@ -518,12 +503,14 @@ interface PlayerCardContentProps {
   onLevelClick: () => void;
   gamesStatsTab: '30' | '90' | 'all';
   onGamesStatsTabChange: (tab: '30' | '90' | 'all') => void;
+  onTelegramClick: () => void;
 }
 
-const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, gamesStatsTab, onGamesStatsTabChange }: PlayerCardContentProps) => {
+const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, gamesStatsTab, onGamesStatsTabChange, onTelegramClick }: PlayerCardContentProps) => {
   const { user } = stats;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
+  const hasTelegram = !!(user.telegramId || user.telegramUsername);
 
   return (
     <motion.div
@@ -567,7 +554,7 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, g
                 {initials}
               </div>
             )}
-            <div className="absolute -bottom-1 left-3">
+            <div className="absolute -bottom-1 -left-4">
               <GenderIndicator gender={user.gender} layout="big" position="bottom-left" />
             </div>
           </div>
@@ -585,32 +572,55 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, g
                 {user.lastName}
               </h3>
             )}
+            <button
+              onClick={onLevelClick}
+              className="mt-2 bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors cursor-pointer"
+            >
+              <span>{user.level.toFixed(2)}</span>
+              <span>•</span>
+              <div className="relative flex items-center">
+                <Beer
+                  size={14}
+                  className="text-amber-600 dark:text-amber-500 absolute"
+                  fill="currentColor"
+                />
+                <Beer
+                  size={14}
+                  className="text-white dark:text-gray-900 relative z-10"
+                  strokeWidth={1.5}
+                />
+              </div>
+              <span>{user.socialLevel?.toFixed(2) || '1.00'}</span>
+            </button>
           </div>
         </div>
-        <button
-          onClick={onLevelClick}
-          className="absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors cursor-pointer"
-        >
-          <span>{user.level.toFixed(2)}</span>
-          <span>•</span>
-          <div className="relative flex items-center">
-            <Beer
-              size={14}
-              className="text-amber-600 dark:text-amber-500 absolute"
-              fill="currentColor"
-            />
-            <Beer
-              size={14}
-              className="text-white dark:text-gray-900 relative z-10"
-              strokeWidth={1.5}
-            />
-          </div>
-          <span>{user.socialLevel?.toFixed(2) || '1.00'}</span>
-        </button>
         {user.isTrainer && (
           <div className="absolute top-3 left-3 bg-green-500 dark:bg-green-600 text-white px-3 py-1 rounded-full font-semibold text-sm shadow-lg">
             {t('playerCard.isTrainer')}
           </div>
+        )}
+        {hasTelegram && (
+          <button
+            onClick={onTelegramClick}
+            disabled={isBlocked}
+            className="absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:scale-105 active:scale-95"
+            style={{
+              backgroundColor: isBlocked ? '#9CA3AF' : '#229ED9',
+            }}
+            onMouseEnter={(e) => {
+              if (!isBlocked) {
+                e.currentTarget.style.backgroundColor = '#1E8BC3';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isBlocked) {
+                e.currentTarget.style.backgroundColor = '#229ED9';
+              }
+            }}
+            title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('playerCard.openTelegramChat')}
+          >
+            <Send size={12} className="text-white flex-shrink-0" />
+          </button>
         )}
       </div>
 

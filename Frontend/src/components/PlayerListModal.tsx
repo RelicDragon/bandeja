@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { X, MessageCircle, Check, Search } from 'lucide-react';
-import { usersApi, InvitablePlayer } from '@/api/users';
+import { InvitablePlayer } from '@/api/users';
 import { invitesApi } from '@/api';
 import { gamesApi } from '@/api/games';
+import { usersApi } from '@/api/users';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
 import { useFavoritesStore } from '@/store/favoritesStore';
+import { usePlayersStore } from '@/store/playersStore';
 
 interface PlayerListModalProps {
   gameId?: string;
@@ -35,6 +37,7 @@ export const PlayerListModal = ({
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
+  const { users, getUserWithMetadata, fetchPlayers } = usePlayersStore();
   const [players, setPlayers] = useState<InvitablePlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviting, setInviting] = useState<string | null>(null);
@@ -49,17 +52,14 @@ export const PlayerListModal = ({
   }, []);
 
   useEffect(() => {
-    const fetchPlayers = async () => {
+    const loadPlayers = async () => {
       try {
-        const [playersResponse, gameResponse, invitesResponse] = await Promise.allSettled([
-          usersApi.getInvitablePlayers(gameId),
+        await fetchPlayers();
+        
+        const [gameResponse, invitesResponse] = await Promise.allSettled([
           gameId ? gamesApi.getById(gameId) : Promise.resolve(null),
           gameId ? invitesApi.getGameInvites(gameId).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
         ]);
-
-        if (playersResponse.status === 'fulfilled') {
-          setPlayers(playersResponse.value.data);
-        }
 
         const participantIds = new Set<string>();
         const invitedUserIds = new Set<string>();
@@ -78,12 +78,24 @@ export const PlayerListModal = ({
           });
         }
 
-        if (playersResponse.status === 'fulfilled') {
-          const filtered = playersResponse.value.data.filter((player) => {
+        const filtered = Object.values(users)
+          .map((user) => {
+            const metadata = getUserWithMetadata(user.id);
+            return {
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              avatar: user.avatar,
+              level: user.level,
+              gender: user.gender,
+              telegramUsername: undefined,
+              interactionCount: metadata?.interactionCount || 0,
+            } as InvitablePlayer;
+          })
+          .filter((player) => {
             return !participantIds.has(player.id) && !invitedUserIds.has(player.id);
           });
-          setPlayers(filtered);
-        }
+        setPlayers(filtered);
       } catch (error) {
         console.error('Failed to fetch players:', error);
       } finally {
@@ -91,8 +103,8 @@ export const PlayerListModal = ({
       }
     };
 
-    fetchPlayers();
-  }, [gameId]);
+    loadPlayers();
+  }, [gameId, fetchPlayers, users, getUserWithMetadata]);
 
   const filteredPlayers = useMemo(() => {
     let filtered = players;

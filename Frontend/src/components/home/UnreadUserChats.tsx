@@ -1,49 +1,32 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlayerAvatar } from '@/components';
 import { chatApi, UserChat } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
+import { usePlayersStore } from '@/store/playersStore';
 import { X } from 'lucide-react';
 
 export const UnreadUserChats = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-
-  const [userChats, setUserChats] = useState<UserChat[]>([]);
-  const [userChatsUnreadCounts, setUserChatsUnreadCounts] = useState<Record<string, number>>({});
+  const { chats, unreadCounts, fetchUserChats, markChatAsRead } = usePlayersStore();
 
   useEffect(() => {
-    const loadUserChats = async () => {
-      if (!user?.id) return;
-      
-      try {
-        const response = await chatApi.getUserChats();
-        const chats = response.data || [];
-        setUserChats(chats);
-        
-        if (chats.length > 0) {
-          const chatIds = chats.map(chat => chat.id);
-          const unreadResponse = await chatApi.getUserChatsUnreadCounts(chatIds);
-          setUserChatsUnreadCounts(unreadResponse.data || {});
-        }
-      } catch (error) {
-        console.error('Failed to load user chats:', error);
-      }
-    };
-
-    loadUserChats();
-  }, [user?.id]);
+    if (user?.id) {
+      fetchUserChats();
+    }
+  }, [user?.id, fetchUserChats]);
 
   const visibleChats = useMemo(() => {
-    return userChats
-      .filter(chat => {
-        const hasUnread = (userChatsUnreadCounts[chat.id] || 0) > 0;
+    return Object.values(chats)
+      .filter((chat: UserChat) => {
+        const hasUnread = (unreadCounts[chat.id] || 0) > 0;
         const isPinned = chat.isPinned || false;
         return hasUnread || isPinned;
       })
-      .sort((a, b) => {
-        const aUnread = userChatsUnreadCounts[a.id] || 0;
-        const bUnread = userChatsUnreadCounts[b.id] || 0;
+      .sort((a: UserChat, b: UserChat) => {
+        const aUnread = unreadCounts[a.id] || 0;
+        const bUnread = unreadCounts[b.id] || 0;
         const aPinned = a.isPinned || false;
         const bPinned = b.isPinned || false;
         
@@ -56,7 +39,7 @@ export const UnreadUserChats = () => {
         
         return 0;
       });
-  }, [userChats, userChatsUnreadCounts]);
+  }, [chats, unreadCounts]);
 
   const handleUserChatClick = (chat: UserChat) => {
     navigate(`/user-chat/${chat.id}`, { state: { chat, contextType: 'USER' } });
@@ -66,25 +49,18 @@ export const UnreadUserChats = () => {
     e.stopPropagation();
     
     try {
-      const hasUnread = (userChatsUnreadCounts[chat.id] || 0) > 0;
+      const hasUnread = (unreadCounts[chat.id] || 0) > 0;
       
       if (hasUnread) {
         await chatApi.markUserChatAsRead(chat.id);
-        setUserChatsUnreadCounts(prev => ({
-          ...prev,
-          [chat.id]: 0
-        }));
+        markChatAsRead(chat.id);
         
         await chatApi.pinUserChat(chat.id);
-        setUserChats(prev => 
-          prev.map(c => c.id === chat.id ? { ...c, isPinned: true } : c)
-        );
       } else {
         await chatApi.unpinUserChat(chat.id);
-        setUserChats(prev => 
-          prev.map(c => c.id === chat.id ? { ...c, isPinned: false } : c)
-        );
       }
+      
+      fetchUserChats();
     } catch (error) {
       console.error('Failed to close chat:', error);
     }
@@ -97,9 +73,9 @@ export const UnreadUserChats = () => {
   return (
     <div className="mb-4 px-4">
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {visibleChats.map(chat => {
+        {visibleChats.map((chat: UserChat) => {
           const otherUser = chat.user1Id === user?.id ? chat.user2 : chat.user1;
-          const unreadCount = userChatsUnreadCounts[chat.id] || 0;
+          const unreadCount = unreadCounts[chat.id] || 0;
           
           return (
             <div
