@@ -34,7 +34,6 @@ import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEn
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { resultsApi } from '@/api/results';
-import { faqApi } from '@/api/faq';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
