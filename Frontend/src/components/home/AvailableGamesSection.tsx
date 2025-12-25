@@ -41,6 +41,7 @@ export const AvailableGamesSection = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const [modalPosition, setModalPosition] = useState<{ top: number; right: number } | null>(null);
   const setSelectedDateForCreateGame = useHeaderStore((state) => state.setSelectedDateForCreateGame);
+  const lastDateRangeRef = useRef<{ start: string; end: string } | null>(null);
 
   useEffect(() => {
     const loadFilters = async () => {
@@ -142,7 +143,17 @@ export const AvailableGamesSection = ({
     if (activeTab === 'list' && onDateRangeChange) {
       const start = startOfDay(listViewStartDate);
       const end = startOfDay(addDays(listViewStartDate, 6));
-      onDateRangeChange(start, end);
+      const startStr = format(start, 'yyyy-MM-dd');
+      const endStr = format(end, 'yyyy-MM-dd');
+      
+      if (!lastDateRangeRef.current || 
+          lastDateRangeRef.current.start !== startStr || 
+          lastDateRangeRef.current.end !== endStr) {
+        lastDateRangeRef.current = { start: startStr, end: endStr };
+        onDateRangeChange(start, end);
+      }
+    } else if (activeTab === 'calendar') {
+      lastDateRangeRef.current = null;
     }
   }, [activeTab, listViewStartDate, onDateRangeChange]);
 

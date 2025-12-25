@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Trash2, LogOut, Copy, HelpCircle } from 'lucide-react';
+import { Trash2, LogOut, Copy, HelpCircle, ArrowLeft } from 'lucide-react';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import {
   Card,
   PlayerListModal,
@@ -571,6 +573,30 @@ export const GameDetailsContent = () => {
       settingsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
+
+  const handleRefresh = useCallback(async () => {
+    if (!id) return;
+    await clearCachesExceptUnsyncedResults();
+    try {
+      const response = await gamesApi.getById(id);
+      setGame(response.data);
+      const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
+      const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
+      setMyInvites(gameMyInvites);
+      const isParticipant = response.data.participants.some((p) => p.userId === user?.id);
+      if (isParticipant) {
+        const gameInvitesResponse = await invitesApi.getGameInvites(id);
+        setGameInvites(gameInvitesResponse.data);
+      }
+    } catch (error) {
+      console.error('Failed to refresh game:', error);
+    }
+  }, [id, user?.id]);
+
+  const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: loading,
+  });
 
   const handleCourtSelect = async (courtId: string) => {
     if (!id) return;
@@ -1149,8 +1175,30 @@ export const GameDetailsContent = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 overflow-visible">
-      {isLeagueSeason && (
+    <div className="relative">
+      {pullDistance > 0 && (
+        <div 
+          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
+          style={{ 
+            transform: `translate(-50%, ${Math.min(pullDistance * 0.5, 60)}px)`,
+            opacity: Math.min(pullProgress, 1)
+          }}
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-full p-3 shadow-lg border border-gray-200 dark:border-gray-700">
+            {isRefreshing ? (
+              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <ArrowLeft 
+                size={24} 
+                className="text-blue-500"
+                style={{ transform: `rotate(${-90 + pullProgress * 180}deg)`, transition: 'transform 0.1s ease-out' }}
+              />
+            )}
+          </div>
+        </div>
+      )}
+      <div className="max-w-2xl mx-auto space-y-4 overflow-visible">
+        {isLeagueSeason && (
         <div className="flex border-b border-gray-200 dark:border-gray-700 rounded-xl">
           <button
             onClick={() => setActiveTab('general')}
@@ -1347,6 +1395,7 @@ export const GameDetailsContent = () => {
           }}
         />
       )}
+      </div>
     </div>
   );
 };

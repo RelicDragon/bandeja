@@ -17,6 +17,8 @@ import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
 import { isUserGameAdminOrOwner } from '@/utils/gameResults';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff } from 'lucide-react';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 
 interface LocationState {
   initialChatType?: ChatType;
@@ -522,6 +524,19 @@ export const GameChat: React.FC = () => {
     );
   }, []);
 
+  const handleRefresh = useCallback(async () => {
+    await clearCachesExceptUnsyncedResults();
+    setPage(1);
+    setHasMoreMessages(true);
+    await loadContext();
+    await loadMessages(1, false);
+  }, [loadContext, loadMessages]);
+
+  const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: isLoadingMessages || isSwitchingChatType || isLoadingContext,
+  });
+
   useEffect(() => {
     const loadData = async () => {
       if (!id || !user?.id) return;
@@ -931,7 +946,28 @@ export const GameChat: React.FC = () => {
         )}
       </header>
 
-      <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+        {pullDistance > 0 && (
+          <div 
+            className="absolute top-0 left-0 right-0 flex items-center justify-center z-50 pointer-events-none"
+            style={{ 
+              transform: `translateY(${Math.min(pullDistance * 0.5, 60)}px)`,
+              opacity: Math.min(pullProgress, 1)
+            }}
+          >
+            <div className="bg-white dark:bg-gray-800 rounded-full p-3 shadow-lg border border-gray-200 dark:border-gray-700">
+              {isRefreshing ? (
+                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <ArrowLeft 
+                  size={24} 
+                  className="text-blue-500"
+                  style={{ transform: `rotate(${-90 + pullProgress * 180}deg)`, transition: 'transform 0.1s ease-out' }}
+                />
+              )}
+            </div>
+          </div>
+        )}
         <MessageList
           messages={messages}
           onAddReaction={handleAddReaction}
@@ -939,7 +975,7 @@ export const GameChat: React.FC = () => {
           onDeleteMessage={handleDeleteMessage}
           onReplyMessage={handleReplyMessage}
           isLoading={isLoadingMore}
-          isLoadingMessages={isLoadingMessages || isInitialLoad}
+          isLoadingMessages={isLoadingMessages || isInitialLoad || isRefreshing}
           isSwitchingChatType={isSwitchingChatType}
           onScrollToMessage={handleScrollToMessage}
           hasMoreMessages={hasMoreMessages}

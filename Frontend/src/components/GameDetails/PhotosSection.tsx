@@ -134,7 +134,9 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     }
   };
 
-  const handlePhotoCapture = () => {
+  const handlePhotoCapture = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (isUploadingPhoto || !game.id) return;
     fileInputRef.current?.click();
   };
@@ -229,7 +231,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
             </span>
             <button
               onClick={handlePhotoCapture}
-              disabled={isUploadingPhoto}
+              disabled={isUploadingPhoto || !game.id}
               className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
               title={t('gameDetails.addPhoto')}
             >
@@ -294,7 +296,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
               <div className="flex-shrink-0">
                 <button
                   onClick={handlePhotoCapture}
-                  disabled={isUploadingPhoto}
+                  disabled={isUploadingPhoto || !game.id}
                   className="w-24 h-24 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   title={t('gameDetails.addPhoto')}
                 >
@@ -317,6 +319,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        capture="environment"
         multiple
         onChange={(e) => handlePhotoSelect(e.target.files)}
         className="hidden"

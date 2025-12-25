@@ -1,10 +1,10 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
 import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController, Contacts, BugsSection } from '@/components/home';
 import { Divider, Button } from '@/components';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, ArrowLeft } from 'lucide-react';
 import { chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -18,6 +18,8 @@ import { ChatType } from '@/types';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { enUS, ru, es, sr } from 'date-fns/locale';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 
 const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string }>(list: T[] = []): T[] => {
   const getStatusPriority = (status?: string): number => {
@@ -274,9 +276,44 @@ export const HomeContent = () => {
     }
   };
 
+  const handleRefresh = useCallback(async () => {
+    await clearCachesExceptUnsyncedResults();
+    await Promise.all([
+      fetchData(false, true),
+      fetchAvailableGames(true),
+      loadPastGames?.(),
+      loadUnreadObjects?.(),
+    ]);
+  }, [fetchData, fetchAvailableGames, loadPastGames, loadUnreadObjects]);
+
+  const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: loading || loadingAvailableGames || loadingPastGames || loadingUnreadObjects,
+  });
 
   return (
-    <>
+    <div className="relative">
+      {pullDistance > 0 && (
+        <div 
+          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
+          style={{ 
+            transform: `translate(-50%, ${Math.min(pullDistance * 0.5, 60)}px)`,
+            opacity: Math.min(pullProgress, 1)
+          }}
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-full p-3 shadow-lg border border-gray-200 dark:border-gray-700">
+            {isRefreshing ? (
+              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <ArrowLeft 
+                size={24} 
+                className="text-blue-500"
+                style={{ transform: `rotate(${-90 + pullProgress * 180}deg)`, transition: 'transform 0.1s ease-out' }}
+              />
+            )}
+          </div>
+        </div>
+      )}
       <Contacts />
 
       <div
@@ -477,7 +514,7 @@ export const HomeContent = () => {
           onClick={handleLogoClick}
         />
       </div>
-    </>
+    </div>
   );
 };
 

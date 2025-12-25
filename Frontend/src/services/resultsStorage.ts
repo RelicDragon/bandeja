@@ -52,4 +52,12 @@ export class ResultsStorage {
       await del(key);
     }
   }
+
+  static clearCache(): void {
+    this.gamesCache.clear();
+  }
+
+  static getCacheSize(): number {
+    return this.gamesCache.size;
+  }
 }

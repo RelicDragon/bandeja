@@ -71,8 +71,9 @@ export function createCallbackHandler(
           const chat = query.message.chat;
           if ('id' in chat && typeof chat.id === 'number') {
             const originalMessage = query.message.text;
-            const isHTML = query.message.text.includes('<') && query.message.text.includes('>');
+            const isHTML = originalMessage.includes('<') && originalMessage.includes('>');
             const parseMode = isHTML ? 'HTML' : 'Markdown';
+            const escapeFunction = isHTML ? escapeHTML : escapeMarkdown;
             
             let updatedMessage: string;
             let statusText: string;
@@ -82,23 +83,12 @@ export function createCallbackHandler(
                 ? t('telegram.inviteAccepted', lang)
                 : t('telegram.inviteDeclined', lang);
               
-              if (isHTML) {
-                const escapedStatus = escapeHTML('✅ ' + statusText);
-                updatedMessage = escapedStatus + '\n\n' + originalMessage.replace(/🎯.*?\n\n/g, '');
-              } else {
-                const escapedStatus = '✅ ' + escapeMarkdown(statusText);
-                updatedMessage = escapedStatus + '\n\n' + originalMessage.replace(/🎯.*?\n\n/g, '');
-              }
+              const cleanedMessage = originalMessage.replace(/^(✅|❌).*?\n\n/s, '').replace(/🎯.*?\n\n/s, '');
+              updatedMessage = escapeFunction('✅ ' + statusText) + '\n\n' + cleanedMessage;
             } else {
               const errorText = t(result.message, lang) || t('telegram.inviteActionError', lang);
-              
-              if (isHTML) {
-                const escapedError = escapeHTML('❌ ' + errorText);
-                updatedMessage = escapedError + '\n\n' + originalMessage;
-              } else {
-                const escapedError = '❌ ' + escapeMarkdown(errorText);
-                updatedMessage = escapedError + '\n\n' + originalMessage;
-              }
+              const cleanedMessage = originalMessage.replace(/^(✅|❌).*?\n\n/s, '');
+              updatedMessage = escapeFunction('❌ ' + errorText) + '\n\n' + cleanedMessage;
             }
 
             try {
