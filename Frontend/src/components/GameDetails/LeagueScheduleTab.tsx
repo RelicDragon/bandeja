@@ -86,13 +86,16 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
       }
     } catch (error) {
       console.error('Failed to fetch league rounds:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
   }, [leagueSeasonId]);
 
   useEffect(() => {
-    fetchRounds();
+    fetchRounds().catch((error) => {
+      console.error('Failed to fetch rounds on initial load:', error);
+    });
   }, [fetchRounds]);
 
   useEffect(() => {
@@ -163,7 +166,12 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
 
   const handleGameUpdate = async () => {
     setEditingGame(null);
-    await fetchRounds();
+    try {
+      await fetchRounds();
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
   };
 
   const handleRemoveTime = async (gameId: string) => {
@@ -178,7 +186,12 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   };
 
   const handleDeleteGame = async () => {
-    await fetchRounds();
+    try {
+      await fetchRounds();
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
   };
 
   const handleOpenGroupModal = async () => {

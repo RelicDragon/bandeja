@@ -68,6 +68,7 @@
     "addSuggestion": "Agregar Sugerencia",
     "addQuestion": "Agregar Pregunta",
     "addProblem": "Agregar Problema",
+    "addTask": "Agregar Tarea",
     "description": "Reporta errores, sugerencias y preguntas para ayudar a mejorar la app",
     "type": "Tipo",
     "descriptionPlaceholder": "Describe el error, sugerencia o pregunta...",
@@ -94,7 +95,8 @@
       "BUG": "Error",
       "CRITICAL": "Crítico",
       "SUGGESTION": "Sugerencia",
-      "QUESTION": "Pregunta"
+      "QUESTION": "Pregunta",
+      "TASK": "Tarea"
     },
     "statuses": {
       "CREATED": "Creado",

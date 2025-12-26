@@ -1,7 +1,7 @@
 import * as cron from 'node-cron';
 import prisma from '../config/database';
 import { calculateGameStatus } from '../utils/gameStatus';
-import { deleteInvitesForStartedGame } from '../controllers/invite.controller';
+import { deleteInvitesForStartedGame, deleteInvitesForArchivedGame } from '../controllers/invite.controller';
 import telegramBotService from './telegram/bot.service';
 import { sendGameReminderNotification } from './telegram/notifications/game-reminder.notification';
 import { EntityType } from '@prisma/client';
@@ -68,6 +68,11 @@ export class GameStatusScheduler {
           // Delete invites when game status changes to STARTED
           if (newStatus === 'STARTED') {
             await deleteInvitesForStartedGame(game.id);
+          }
+
+          // Delete invites when game status changes to ARCHIVED
+          if (newStatus === 'ARCHIVED') {
+            await deleteInvitesForArchivedGame(game.id);
           }
         }
       }

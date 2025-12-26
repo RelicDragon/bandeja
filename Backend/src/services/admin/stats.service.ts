@@ -37,15 +37,18 @@ export class AdminStatsService {
       prisma.invite.count({
         where: {
           status: 'PENDING',
-          ...(cityId && {
-            game: {
+          game: {
+            status: {
+              not: 'ARCHIVED',
+            },
+            ...(cityId && {
               court: {
                 club: {
                   cityId: cityId,
                 },
               },
-            },
-          }),
+            }),
+          },
         },
       }),
     ]);

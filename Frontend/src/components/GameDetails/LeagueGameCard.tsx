@@ -148,7 +148,7 @@ export const LeagueGameCard = ({
   };
 
   return (
-    <div className="relative pl-2 pt-2 pb-2 pr-12 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="relative pl-2 pt-2 pb-6 pr-12 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       {game.leagueGroup && (
         <div
           className="absolute left-0 top-0 bottom-0 w-1"
@@ -267,7 +267,7 @@ export const LeagueGameCard = ({
       </div>
 
       {(game.club?.name || (game.timeIsSet && game.startTime)) && (
-        <div className="mt-2 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 flex items-center gap-1">
+        <div className="mt-8 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 flex items-center gap-1">
           {game.club?.name && (
             <>
               <MapPin size={10} />

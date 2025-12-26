@@ -758,6 +758,7 @@ enum BugType {
   CRITICAL
   SUGGESTION
   QUESTION
+  TASK
 }
 
 enum GameStatus {

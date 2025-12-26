@@ -563,3 +563,50 @@ export const deleteInvitesForStartedGame = async (gameId: string) => {
   }
 };
 
+export const deleteInvitesForArchivedGame = async (gameId: string) => {
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: {
+      status: true,
+      invites: {
+        where: {
+          status: InviteStatus.PENDING,
+        },
+        select: {
+          id: true,
+          receiverId: true,
+          gameId: true,
+        },
+      },
+    },
+  });
+
+  if (!game || game.status !== 'ARCHIVED') {
+    return;
+  }
+
+  if (game.invites.length === 0) {
+    return;
+  }
+
+  const inviteIds = game.invites.map(invite => invite.id);
+  const receiverIds = Array.from(new Set(game.invites.map(invite => invite.receiverId)));
+
+  await prisma.invite.deleteMany({
+    where: {
+      id: { in: inviteIds },
+      status: InviteStatus.PENDING,
+    },
+  });
+
+  if ((global as any).socketService) {
+    receiverIds.forEach(receiverId => {
+      game.invites
+        .filter(invite => invite.receiverId === receiverId)
+        .forEach(invite => {
+          (global as any).socketService.emitInviteDeleted(receiverId, invite.id, invite.gameId || undefined);
+        });
+    });
+  }
+};
+

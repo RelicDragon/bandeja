@@ -10,26 +10,26 @@ import { chatApi } from '@/api/chat';
 import { toast } from 'react-hot-toast';
 import { Plus } from 'lucide-react';
 import { BugModal } from './BugModal';
+import { get, set } from 'idb-keyval';
+import { useAuthStore } from '@/store/authStore';
 
 interface BugListProps {
   isVisible?: boolean;
 }
 
 const STORAGE_KEY = 'bugs-filters';
-const STORAGE_TAB_KEY = 'bugs-active-tab';
+const IDB_TAB_KEY = 'padelpulse-bugs-active-tab';
 
 export const BugList = ({ isVisible = true }: BugListProps) => {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
   const [allBugs, setAllBugs] = useState<Bug[]>([]);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   
-  const [activeTab, setActiveTab] = useState<BugType | null>(() => {
-    const stored = localStorage.getItem(STORAGE_TAB_KEY);
-    return stored ? (stored as BugType) : null;
-  });
+  const [activeTab, setActiveTab] = useState<BugType | null>(null);
   
   const [filters, setFilters] = useState<{
     status?: BugStatus;
@@ -56,7 +56,8 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     t('bug.addBug'),
     t('bug.addSuggestion'),
     t('bug.addQuestion'),
-    t('bug.addProblem')
+    t('bug.addProblem'),
+    t('bug.addTask')
   ], [t]);
 
   useEffect(() => {
@@ -136,6 +137,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   useEffect(() => {
     if (isVisible) {
       setCurrentPage(1);
+      hasInitializedTab.current = false;
       loadBugs(1, false);
     } else {
       // Clear bugs when not visible to free up memory
@@ -159,16 +161,14 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
       types.add(bug.bugType);
     });
     return Array.from(types).sort((a, b) => {
-      const order = ['CRITICAL', 'BUG', 'SUGGESTION', 'QUESTION'];
+      const order = ['CRITICAL', 'BUG', 'SUGGESTION', 'QUESTION', 'TASK'];
       return order.indexOf(a) - order.indexOf(b);
     });
   }, [allBugs]);
 
   useEffect(() => {
     if (activeTab !== null) {
-      localStorage.setItem(STORAGE_TAB_KEY, activeTab);
-    } else {
-      localStorage.removeItem(STORAGE_TAB_KEY);
+      set(IDB_TAB_KEY, activeTab);
     }
   }, [activeTab]);
 
@@ -177,22 +177,34 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   }, [filters]);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (availableTypes.length > 0) {
-      if (!hasInitializedTab.current) {
-        const storedTab = localStorage.getItem(STORAGE_TAB_KEY) as BugType | null;
-        if (storedTab && availableTypes.includes(storedTab)) {
-          setActiveTab(storedTab);
-        } else {
+      const restoreTab = async () => {
+        if (!hasInitializedTab.current) {
+          const storedTab = await get<BugType>(IDB_TAB_KEY);
+          if (!isMounted) return;
+          if (storedTab && availableTypes.includes(storedTab)) {
+            setActiveTab(storedTab);
+          } else {
+            setActiveTab(availableTypes[0]);
+          }
+          hasInitializedTab.current = true;
+        } else if (!activeTab || !availableTypes.includes(activeTab)) {
+          if (!isMounted) return;
           setActiveTab(availableTypes[0]);
         }
-        hasInitializedTab.current = true;
-      } else if (!activeTab || !availableTypes.includes(activeTab)) {
-        setActiveTab(availableTypes[0]);
-      }
+      };
+      restoreTab();
     } else {
+      if (!isMounted) return;
       setActiveTab(null);
       hasInitializedTab.current = false;
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [availableTypes, activeTab]);
 
   const filteredBugs = useMemo(() => {
@@ -202,8 +214,20 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
       filtered = filtered.filter(bug => bug.bugType === activeTab);
     }
     
+    if (!filters.status) {
+      filtered = filtered.filter(bug => {
+        if (bug.status === 'ARCHIVED') {
+          return false;
+        }
+        if (bug.status === 'FINISHED') {
+          return bug.senderId === user?.id;
+        }
+        return true;
+      });
+    }
+    
     return filtered;
-  }, [allBugs, activeTab]);
+  }, [allBugs, activeTab, filters.status, user?.id]);
 
   const handleBugCreated = () => {
     setShowAddModal(false);
@@ -220,10 +244,20 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     setAllBugs(prev => prev.filter(bug => bug.id !== bugId));
   };
 
+  const handleAddBugClick = () => {
+    setShowAddModal(true);
+  };
+
+  const handleAddBugTouch = (e: React.TouchEvent) => {
+    e.preventDefault();
+    setShowAddModal(true);
+  };
+
   const AddBugCard = () => (
     <Card
       className="p-6 mb-4 border-dashed border-2 border-gray-300 hover:border-blue-400 transition-colors cursor-pointer"
-      onClick={() => setShowAddModal(true)}
+      onClick={handleAddBugClick}
+      onTouchStart={handleAddBugTouch}
     >
       <div className="flex items-center justify-center text-gray-500 hover:text-blue-600">
         <Plus className="w-6 h-6 mr-2" />

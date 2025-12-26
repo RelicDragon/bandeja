@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
-import { Button } from '@/components';
+import { Button, Select } from '@/components';
 import { BugType } from '@/types';
 
-const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION'];
+const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
 import { bugsApi } from '@/api';
 import { toast } from 'react-hot-toast';
 import { X } from 'lucide-react';
@@ -93,17 +93,14 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
               {t('bug.type')}
             </label>
-            <select
+            <Select
+              options={BUG_TYPE_VALUES.map((type) => ({
+                value: type,
+                label: t(`bug.types.${type}`)
+              }))}
               value={bugType}
-              onChange={(e) => setBugType(e.target.value as BugType)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {BUG_TYPE_VALUES.map((type) => (
-                <option key={type} value={type}>
-                  {t(`bug.types.${type}`)}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setBugType(value as BugType)}
+            />
           </div>
 
           <div className="mb-6">
