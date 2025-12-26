@@ -371,17 +371,19 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
               <button
                 onClick={handleToggleFavorite}
                 disabled={isBlocked}
-                className={`p-2.5 rounded-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm transition-all duration-200 shadow-sm border border-gray-200/50 dark:border-gray-700/50 ${
+                className={`p-2.5 rounded-xl backdrop-blur-sm transition-all duration-200 shadow-sm border transition-all duration-200 ${
                   isBlocked
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-white dark:hover:bg-gray-800 hover:shadow-md hover:scale-105 active:scale-95'
+                    ? 'opacity-50 cursor-not-allowed bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50'
+                    : stats.user.isFavorite
+                    ? 'bg-yellow-500 dark:bg-yellow-600 border-yellow-400 dark:border-yellow-500 hover:bg-yellow-600 dark:hover:bg-yellow-700 hover:shadow-md hover:scale-105 active:scale-95'
+                    : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md hover:scale-105 active:scale-95'
                 }`}
                 title={isBlocked ? t('playerCard.userBlockedCannotFavorite') : (stats.user.isFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites'))}
               >
                 <Star
                   size={20}
                   className={stats.user.isFavorite
-                    ? 'text-yellow-500 fill-yellow-500'
+                    ? 'text-white fill-white'
                     : 'text-gray-400 hover:text-yellow-500 transition-colors'
                   }
                 />
