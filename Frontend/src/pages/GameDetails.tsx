@@ -103,6 +103,11 @@ export const GameDetailsContent = () => {
     const fetchGame = async () => {
       if (!id) return;
 
+      setGame(null);
+      setMyInvites([]);
+      setGameInvites([]);
+      setLoading(true);
+
       try {
         const response = await gamesApi.getById(id);
         setGame(response.data);

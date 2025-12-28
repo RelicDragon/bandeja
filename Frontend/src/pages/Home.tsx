@@ -254,10 +254,7 @@ export const HomeContent = () => {
       const { setPendingInvites } = useHeaderStore.getState();
       const currentCount = useHeaderStore.getState().pendingInvites;
       setPendingInvites(Math.max(0, currentCount - 1));
-      Promise.resolve().then(() => {
-        fetchData(false, true);
-        fetchAvailableGames(true);
-      });
+      fetchAvailableGames(true);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
