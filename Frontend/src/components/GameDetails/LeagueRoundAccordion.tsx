@@ -254,11 +254,6 @@ export const LeagueRoundAccordion = ({
                                       : undefined
                                   }
                                   onOpen={() => onOpenGame(game)}
-                                  onRemoveTime={
-                                    game.resultsStatus === 'NONE' && canEditGames && onRemoveTime
-                                      ? () => onRemoveTime(game.id)
-                                      : undefined
-                                  }
                                   onDelete={
                                     game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
                                       ? onDeleteGame
@@ -315,11 +310,6 @@ export const LeagueRoundAccordion = ({
                                     : undefined
                                 }
                                 onOpen={() => onOpenGame(game)}
-                                onRemoveTime={
-                                  game.resultsStatus === 'NONE' && canEditGames && onRemoveTime
-                                    ? () => onRemoveTime(game.id)
-                                    : undefined
-                                }
                                 onDelete={
                                   game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
                                     ? onDeleteGame
@@ -345,11 +335,6 @@ export const LeagueRoundAccordion = ({
                             : undefined
                         }
                         onOpen={() => onOpenGame(game)}
-                        onRemoveTime={
-                          game.resultsStatus === 'NONE' && canEditGames && onRemoveTime
-                            ? () => onRemoveTime(game.id)
-                            : undefined
-                        }
                         onDelete={
                           game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
                             ? onDeleteGame
