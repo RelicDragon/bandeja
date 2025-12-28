@@ -8,7 +8,6 @@ import { GroupCreationModal } from './GroupCreationModal';
 import { LeagueGroupEditorModal } from './LeagueGroupEditorModal';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { leaguesApi, LeagueRound, LeagueGroup } from '@/api/leagues';
-import { gamesApi } from '@/api/games';
 import { Loader2, Calendar, Users } from 'lucide-react';
 import { Game } from '@/types';
 import { LeagueRoundAccordion } from './LeagueRoundAccordion';
@@ -167,17 +166,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const handleGameUpdate = async () => {
     setEditingGame(null);
     try {
-      await fetchRounds();
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    }
-  };
-
-  const handleRemoveTime = async (gameId: string) => {
-    try {
-      await gamesApi.update(gameId, { timeIsSet: false });
-      toast.success(t('gameDetails.timeRemoved') || 'Date and time removed');
       await fetchRounds();
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
@@ -389,7 +377,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
                 onAddGame={(groupId) => handleCreateGame(round.id, groupId)}
                 onEditGame={handleEditGame}
                 onOpenGame={handleOpenGame}
-                onRemoveTime={handleRemoveTime}
                 onDeleteGame={handleDeleteGame}
                 onSendStartMessage={() => handleSendStartMessage(round.id)}
                 t={t}
