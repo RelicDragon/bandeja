@@ -27,7 +27,6 @@ interface LeagueRoundAccordionProps {
   onAddGame: (leagueGroupId?: string) => void;
   onEditGame: (game: Game) => void;
   onOpenGame: (game: Game) => void;
-  onRemoveTime?: (gameId: string) => void;
   onDeleteGame?: () => void;
   onSendStartMessage: () => void;
   t: TFunction;
@@ -51,7 +50,6 @@ export const LeagueRoundAccordion = ({
   onAddGame,
   onEditGame,
   onOpenGame,
-  onRemoveTime,
   onDeleteGame,
   onSendStartMessage,
   t,
