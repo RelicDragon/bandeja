@@ -50,7 +50,7 @@ export const usePullToRefresh = ({
       const distance = Math.min(diff * resistance, threshold * 2);
       setPullDistance(distance);
 
-      if (distance > 10) {
+      if (distance > 10 && e.cancelable) {
         e.preventDefault();
       }
     } else if (diff < 0) {
