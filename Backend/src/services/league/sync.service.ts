@@ -131,26 +131,42 @@ export class LeagueSyncService {
             },
           });
 
-          await prisma.leagueParticipant.create({
-            data: {
-              leagueId,
+          const existingTeamParticipant = await prisma.leagueParticipant.findFirst({
+            where: {
               leagueSeasonId,
-              participantType: 'TEAM',
               leagueTeamId: newLeagueTeam.id,
-              points: 0,
-              wins: 0,
-              ties: 0,
-              losses: 0,
-              scoreDelta: 0,
+              participantType: 'TEAM',
             },
           });
+
+          if (!existingTeamParticipant) {
+            await prisma.leagueParticipant.create({
+              data: {
+                leagueId,
+                leagueSeasonId,
+                participantType: 'TEAM',
+                leagueTeamId: newLeagueTeam.id,
+                points: 0,
+                wins: 0,
+                ties: 0,
+                losses: 0,
+                scoreDelta: 0,
+              },
+            });
+          }
         }
       }
 
       for (const playerId of allGameTeamPlayerIds) {
         if (!standingsPlayerIds.has(playerId)) {
-          const existingStanding = standings.find(s => s.userId === playerId);
-          if (!existingStanding) {
+          const existingParticipant = await prisma.leagueParticipant.findFirst({
+            where: {
+              leagueSeasonId,
+              userId: playerId,
+              participantType: 'USER',
+            },
+          });
+          if (!existingParticipant) {
             await prisma.leagueParticipant.create({
               data: {
                 leagueId,
@@ -176,19 +192,28 @@ export class LeagueSyncService {
 
       for (const participant of seasonGame.participants) {
         if (!standingsUserIds.has(participant.userId)) {
-          await prisma.leagueParticipant.create({
-            data: {
-              leagueId,
+          const existingParticipant = await prisma.leagueParticipant.findFirst({
+            where: {
               leagueSeasonId,
-              participantType: 'USER',
               userId: participant.userId,
-              points: 0,
-              wins: 0,
-              ties: 0,
-              losses: 0,
-              scoreDelta: 0,
+              participantType: 'USER',
             },
           });
+          if (!existingParticipant) {
+            await prisma.leagueParticipant.create({
+              data: {
+                leagueId,
+                leagueSeasonId,
+                participantType: 'USER',
+                userId: participant.userId,
+                points: 0,
+                wins: 0,
+                ties: 0,
+                losses: 0,
+                scoreDelta: 0,
+              },
+            });
+          }
         }
       }
     }
