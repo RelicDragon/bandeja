@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { X, Trash2, RefreshCw, UserPlus, Check } from 'lucide-react';
-import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection } from '@/components';
+import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection, ConfirmationModal } from '@/components';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { Game, Club, Court, EntityType } from '@/types';
 import { gamesApi, leaguesApi, invitesApi, LeagueStanding, clubsApi, courtsApi } from '@/api';
@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 import { addHours, differenceInHours } from 'date-fns';
 import { createDateFromClubTime, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
+import { formatDate } from '@/utils/dateFormat';
 
 interface EditLeagueGameTeamsModalProps {
   isOpen: boolean;
@@ -61,6 +62,8 @@ export const EditLeagueGameTeamsModal = ({
   const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [activeTab, setActiveTab] = useState<'teams' | 'place' | 'time'>('teams');
+  const [isEditingTime, setIsEditingTime] = useState(false);
+  const [showConfirmRemoveTime, setShowConfirmRemoveTime] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -203,6 +206,7 @@ export const EditLeagueGameTeamsModal = ({
         gameIdRef.current = game.id;
         setIsClosing(false);
         setActiveTab('teams');
+        setIsEditingTime(false);
         fetchStandings();
         initializeTeams();
         initializeGameData();
@@ -280,6 +284,23 @@ export const EditLeagueGameTeamsModal = ({
       setIsClosing(false);
       setSelectingPlayerFor(null);
     }, 200);
+  };
+
+  const handleRemoveTime = async () => {
+    setIsSaving(true);
+    try {
+      await gamesApi.update(game.id, { timeIsSet: false });
+      toast.success(t('gameDetails.timeRemoved') || 'Date and time removed');
+      const response = await gamesApi.getById(game.id);
+      onUpdate(response.data);
+      handleClose();
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setIsSaving(false);
+      setShowConfirmRemoveTime(false);
+    }
   };
 
   const getAllAvailablePlayers = (): Array<TeamPlayer & { points: number; gamesPlayed: number }> => {
@@ -454,9 +475,10 @@ export const EditLeagueGameTeamsModal = ({
         if (newStartTime.toISOString() !== game.startTime || newEndTime.toISOString() !== game.endTime) {
           updateData.startTime = newStartTime.toISOString();
           updateData.endTime = newEndTime.toISOString();
-          updateData.timeIsSet = true;
           hasChanges = true;
         }
+        updateData.timeIsSet = true;
+        hasChanges = true;
       } else if (game.timeIsSet && (!selectedDate || !selectedTime)) {
         updateData.timeIsSet = false;
         hasChanges = true;
@@ -781,6 +803,31 @@ export const EditLeagueGameTeamsModal = ({
                       </div>
                     )}
                   </div>
+                ) : game.timeIsSet && !isEditingTime ? (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                            {t('gameDetails.time')}
+                          </div>
+                          <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {formatDate(game.startTime, 'PPP')}
+                          </div>
+                          <div className="text-base text-gray-700 dark:text-gray-300 mt-1">
+                            {formatDate(game.startTime, 'p')} - {formatDate(game.endTime, 'p')}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setShowConfirmRemoveTime(true)}
+                          className="w-8 h-8 rounded bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center justify-center"
+                          title={t('common.remove')}
+                        >
+                          <Trash2 size={14} className="text-red-600 dark:text-red-400" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <GameStartSection
                     selectedDate={selectedDate}
@@ -873,6 +920,17 @@ export const EditLeagueGameTeamsModal = ({
           entityType={game.entityType}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={showConfirmRemoveTime}
+        onClose={() => setShowConfirmRemoveTime(false)}
+        onConfirm={handleRemoveTime}
+        title={t('gameDetails.removeTime') || 'Remove Date & Time'}
+        message={t('gameDetails.removeTimeConfirmation') || 'Are you sure you want to remove the date and time for this game?'}
+        confirmText={isSaving ? (t('common.removing') || 'Removing...') : (t('common.remove') || 'Remove')}
+        cancelText={t('common.cancel') || 'Cancel'}
+        confirmVariant="danger"
+      />
     </div>,
     document.body
   );

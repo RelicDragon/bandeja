@@ -204,7 +204,9 @@ export const GameInfo = ({
     } else if (gameDateOnly.getTime() === yesterdayOnly.getTime()) {
       return t('createGame.yesterday');
     } else {
-      return formatDate(gameDate, 'MMM d') + (includeComma ? ',' : '');
+      const daysDiff = Math.abs(Math.round((gameDateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24)));
+      const dateFormat = daysDiff <= 7 ? 'EEE, MMM d' : 'MMM d';
+      return formatDate(gameDate, dateFormat) + (includeComma ? ',' : '');
     }
   };
 

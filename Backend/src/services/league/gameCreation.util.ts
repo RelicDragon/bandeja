@@ -43,7 +43,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
   const participantUserIds = Array.from(new Set([...team1PlayerIds, ...team2PlayerIds]));
   const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
   const startTime = new Date();
-  const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
+  const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
 
   const game = await prisma.game.create({
     data: {

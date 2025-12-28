@@ -6,7 +6,7 @@ import { Card } from '@/components';
 import { Bug, BugStatus, BugType } from '@/types';
 
 const BUG_STATUS_VALUES: BugStatus[] = ['CREATED', 'CONFIRMED', 'IN_PROGRESS', 'TEST', 'FINISHED', 'ARCHIVED'];
-const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION'];
+const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { bugsApi, chatApi } from '@/api';

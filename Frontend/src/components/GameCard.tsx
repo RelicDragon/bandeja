@@ -166,7 +166,9 @@ export const GameCard = ({
     } else if (gameDateOnly.getTime() === yesterdayOnly.getTime()) {
       return t('createGame.yesterday');
     } else {
-      return formatDate(gameDate, 'MMM d') + (includeComma ? ',' : '');
+      const daysDiff = Math.abs(Math.round((gameDateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24)));
+      const dateFormat = daysDiff <= 7 ? 'EEEE • MMM d ' : 'MMM d ';
+      return formatDate(gameDate, dateFormat) + (includeComma ? '•' : '');
     }
   };
 
@@ -429,7 +431,7 @@ export const GameCard = ({
                     {shouldShowTiming && (
                       <>
                         {` ${formatDate(game.startTime, 'HH:mm')}`}
-                        {`, ${(() => {
+                        {` • ${(() => {
                           const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                           if (durationHours === Math.floor(durationHours)) {
                             return `${durationHours}${t('common.h')}`;
@@ -449,6 +451,7 @@ export const GameCard = ({
                       <MapPin size={14} />
                       <span className="truncate max-w-32">
                         {game.court?.club?.name || game.club?.name}
+                        {game.court?.name && ` • ${game.court.name}`}
                       </span>
                     </div>
                   )}
@@ -474,7 +477,7 @@ export const GameCard = ({
                     {shouldShowTiming && (
                       <>
                         {` ${formatDate(game.startTime, 'HH:mm')}`}
-                        {game.entityType !== 'BAR' ? `, ${(() => {
+                        {game.entityType !== 'BAR' ? ` • ${(() => {
                           const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                           if (durationHours === Math.floor(durationHours)) {
                             return `${durationHours}${t('common.h')}`;
@@ -489,6 +492,15 @@ export const GameCard = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
+                  {(game.court?.club || game.club) && (
+                    <div className="flex items-center gap-1">
+                      <MapPin size={14} />
+                      <span className="truncate max-w-32">
+                        {game.court?.club?.name || game.club?.name}
+                        {game.court?.name && ` • ${game.court.name}`}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1">
                     <Users size={14} />
                     <span>
@@ -498,14 +510,6 @@ export const GameCard = ({
                       }
                     </span>
                   </div>
-                  {(game.court?.club || game.club) && (
-                    <div className="flex items-center gap-1">
-                      <MapPin size={14} />
-                      <span className="truncate max-w-32">
-                        {game.court?.club?.name || game.club?.name}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
             </>
@@ -529,7 +533,7 @@ export const GameCard = ({
                     {shouldShowTiming && (
                       <>
                         {` ${formatDate(game.startTime, 'HH:mm')}`}
-                        {game.entityType !== 'BAR' ? `, ${(() => {
+                        {game.entityType !== 'BAR' ? ` • ${(() => {
                           const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                           if (durationHours === Math.floor(durationHours)) {
                             return `${durationHours}${t('common.h')}`;
@@ -544,6 +548,15 @@ export const GameCard = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
+                  {(game.court?.club || game.club) && (
+                    <div className="flex items-center gap-1">
+                      <MapPin size={14} />
+                      <span className="truncate max-w-32">
+                        {game.court?.club?.name || game.club?.name}
+                        {game.court?.name && ` • ${game.court.name}`}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1">
                     <Users size={14} />
                     <span>
@@ -553,19 +566,11 @@ export const GameCard = ({
                       }
                     </span>
                   </div>
-                  {(game.court?.club || game.club) && (
-                    <div className="flex items-center gap-1">
-                      <MapPin size={14} />
-                      <span className="truncate max-w-32">
-                        {game.court?.club?.name || game.club?.name}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
             </>
           ) : (
-            <>
+            <div className="flex flex-col gap-2 flex-1">
               <div className="flex items-center gap-1">
                 {showDate && <Calendar size={14} />}
                 <span>
@@ -573,7 +578,7 @@ export const GameCard = ({
                   {shouldShowTiming && (
                     <>
                       {` ${formatDate(game.startTime, 'HH:mm')}`}
-                      {game.entityType !== 'BAR' ? `, ${(() => {
+                      {game.entityType !== 'BAR' ? ` • ${(() => {
                         const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                         if (durationHours === Math.floor(durationHours)) {
                           return `${durationHours}${t('common.h')}`;
@@ -587,24 +592,27 @@ export const GameCard = ({
                   )}
                 </span>
               </div>
-              <div className="flex items-center gap-1">
-                <Users size={14} />
-                <span>
-                  {game.entityType === 'BAR' 
-                    ? game.participants.filter(p => p.isPlaying).length
-                    : `${game.participants.filter(p => p.isPlaying).length}/${game.maxParticipants}`
-                  }
-                </span>
-              </div>
-              {(game.court?.club || game.club) && (
+              <div className="flex items-center gap-4">
+                {(game.court?.club || game.club) && (
+                  <div className="flex items-center gap-1">
+                    <MapPin size={14} />
+                    <span className="truncate max-w-32">
+                      {game.court?.club?.name || game.club?.name}
+                      {game.court?.name && ` • ${game.court.name}`}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center gap-1">
-                  <MapPin size={14} />
-                  <span className="truncate max-w-32">
-                    {game.court?.club?.name || game.club?.name}
+                  <Users size={14} />
+                  <span>
+                    {game.entityType === 'BAR' 
+                      ? game.participants.filter(p => p.isPlaying).length
+                      : `${game.participants.filter(p => p.isPlaying).length}/${game.maxParticipants}`
+                    }
                   </span>
                 </div>
-              )}
-            </>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -638,7 +646,7 @@ export const GameCard = ({
                   {shouldShowTiming && (
                     <>
                       {` ${formatDate(game.startTime, 'HH:mm')}`}
-                      {game.entityType !== 'BAR' ? ` - ${formatDate(game.endTime, 'HH:mm')}` : ''}
+                      {game.entityType !== 'BAR' ? ` • ${formatDate(game.endTime, 'HH:mm')}` : ''}
                     </>
                   )}
                 </span>
@@ -646,7 +654,10 @@ export const GameCard = ({
               {(game.court?.club || game.club) && (
                 <div className="flex items-center gap-2">
                   <MapPin size={16} />
-                  <span>{game.court?.club?.name || game.club?.name}</span>
+                  <span>
+                    {game.court?.club?.name || game.club?.name}
+                    {game.court?.name && ` • ${game.court.name}`}
+                  </span>
                   {game.entityType === 'BAR' && (
                     <>
                       <span className="text-gray-400 dark:text-gray-500">•</span>
@@ -686,7 +697,7 @@ export const GameCard = ({
                 {shouldShowTiming && (
                   <>
                     {` ${formatDate(game.startTime, 'HH:mm')}`}
-                    {game.entityType !== 'BAR' ? ` - ${formatDate(game.endTime, 'HH:mm')}` : ''}
+                    {game.entityType !== 'BAR' ? ` • ${formatDate(game.endTime, 'HH:mm')}` : ''}
                   </>
                 )}
               </span>
@@ -694,7 +705,10 @@ export const GameCard = ({
             {(game.court?.club || game.club) && (
               <div className="flex items-center gap-2">
                 <MapPin size={16} />
-                <span>{game.court?.club?.name || game.club?.name}</span>
+                <span>
+                  {game.court?.club?.name || game.club?.name}
+                  {game.court?.name && ` • ${game.court.name}`}
+                </span>
                 {game.entityType === 'BAR' && (
                   <>
                     <span className="text-gray-400 dark:text-gray-500">•</span>

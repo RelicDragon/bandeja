@@ -14,7 +14,6 @@ interface LeagueGameCardProps {
   onEdit?: () => void;
   onOpen?: () => void;
   showGroupTag?: boolean;
-  onRemoveTime?: () => void;
   round0Match0Sets?: SetResult[] | null;
   onDelete?: () => Promise<void> | void;
 }
@@ -24,12 +23,10 @@ export const LeagueGameCard = ({
   onEdit,
   onOpen,
   showGroupTag = true,
-  onRemoveTime,
   round0Match0Sets,
   onDelete,
 }: LeagueGameCardProps) => {
   const { t } = useTranslation();
-  const [showConfirmRemoveTime, setShowConfirmRemoveTime] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -109,7 +106,31 @@ export const LeagueGameCard = ({
   const getDateTimeLabel = () => {
     if (!game.startTime) return '';
 
-    const datePart = formatDate(game.startTime, 'd MMM');
+    const gameDate = new Date(game.startTime);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    const gameDateOnly = new Date(gameDate.getFullYear(), gameDate.getMonth(), gameDate.getDate());
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const tomorrowOnly = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
+    const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+
+    let datePart: string;
+    if (gameDateOnly.getTime() === todayOnly.getTime()) {
+      datePart = t('createGame.today');
+    } else if (gameDateOnly.getTime() === tomorrowOnly.getTime()) {
+      datePart = t('createGame.tomorrow');
+    } else if (gameDateOnly.getTime() === yesterdayOnly.getTime()) {
+      datePart = t('createGame.yesterday');
+    } else {
+      const daysDiff = Math.abs(Math.round((gameDateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24)));
+      const dateFormat = daysDiff <= 7 ? 'EEEE • d MMM' : 'd MMM';
+      datePart = formatDate(game.startTime, dateFormat);
+    }
+
     const timePart = formatDate(game.startTime, 'HH:mm');
     const durationPart = getDurationLabel();
 
@@ -170,7 +191,7 @@ export const LeagueGameCard = ({
         </div>
       )}
 
-      <div className="flex items-center justify-start w-full gap-3">
+      <div className="flex items-center justify-center w-full gap-3">
         <div className="flex justify-start relative">
           <div
             className={`min-h-[20px] p-2 flex items-center justify-center ${
@@ -181,7 +202,7 @@ export const LeagueGameCard = ({
                 : ''
             }`}
           >
-            <div className="flex gap-4 justify-center">
+            <div className="flex gap-5 justify-center">
               {teamAPlayers.map(player => (
                 <div key={player.id}>
                   <PlayerAvatar
@@ -239,7 +260,7 @@ export const LeagueGameCard = ({
                 : ''
             }`}
           >
-            <div className="flex gap-4 justify-center">
+            <div className="flex gap-5 justify-center">
               {teamBPlayers.map(player => (
                 <div key={player.id}>
                   <PlayerAvatar
@@ -268,6 +289,12 @@ export const LeagueGameCard = ({
 
       {(game.club?.name || game.court?.name || (game.timeIsSet && game.startTime)) && (
         <div className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 flex flex-col gap-1">
+          {game.timeIsSet && game.startTime && (
+            <div className="flex items-center gap-1">
+              <Calendar size={10} />
+              <span>{getDateTimeLabel()}</span>
+            </div>
+          )}
           {(game.club?.name || game.court?.name) && (
             <div className="flex items-center gap-1">
               {game.club?.name && (
@@ -281,24 +308,6 @@ export const LeagueGameCard = ({
                   {game.club?.name && <span className="text-gray-500 dark:text-gray-600">•</span>}
                   <span>{game.court.name}</span>
                 </>
-              )}
-            </div>
-          )}
-          {game.timeIsSet && game.startTime && (
-            <div className="flex items-center gap-1">
-              {!game.court?.name && (game.club?.name) && <span className="text-gray-500 dark:text-gray-600">•</span>}
-              <Calendar size={10} />
-              <span>{getDateTimeLabel()}</span>
-              {canEdit && onRemoveTime && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowConfirmRemoveTime(true);
-                  }}
-                  className="ml-1 w-4 h-4 rounded-full border border-red-400 hover:border-red-500 bg-white dark:bg-gray-800 text-red-400 hover:text-red-500 flex items-center justify-center transition-colors"
-                >
-                  <Trash2 size={10} />
-                </button>
               )}
             </div>
           )}
@@ -337,21 +346,6 @@ export const LeagueGameCard = ({
           )}
         </div>
       )}
-
-      <ConfirmationModal
-        isOpen={showConfirmRemoveTime}
-        onClose={() => setShowConfirmRemoveTime(false)}
-        onConfirm={() => {
-          if (onRemoveTime) {
-            onRemoveTime();
-          }
-        }}
-        title={t('gameDetails.removeTime') || 'Remove Date & Time'}
-        message={t('gameDetails.removeTimeConfirmation') || 'Are you sure you want to remove the date and time for this game?'}
-        confirmText={t('common.remove') || 'Remove'}
-        cancelText={t('common.cancel') || 'Cancel'}
-        confirmVariant="danger"
-      />
 
       <ConfirmationModal
         isOpen={showConfirmDelete}
