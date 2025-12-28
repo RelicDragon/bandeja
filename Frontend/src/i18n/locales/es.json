@@ -795,6 +795,7 @@
     "removeTime": "Eliminar Fecha y Hora",
     "removeTimeConfirmation": "¿Estás seguro de que quieres eliminar la fecha y hora de este juego?",
     "timeRemoved": "Fecha y hora eliminadas",
+    "datetimeNotSet": "La hora aún no está establecida",
     "settingsUpdated": "Configuración actualizada exitosamente",
     "navigateToClub": "Navegar al club",
     "shareGame": "Compartir juego",

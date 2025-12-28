@@ -400,24 +400,28 @@ export const GameInfo = ({
           <div className="flex flex-col gap-2 flex-1">
             <div className="flex items-center gap-1">
               <Calendar size={14} />
-              <span>
-                {getDateLabel(game.startTime, false)}
-                {shouldShowTiming && (
-                  <>
-                    {` ${formatDate(game.startTime, 'HH:mm')}`}
-                    {`, ${(() => {
-                      const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                      if (durationHours === Math.floor(durationHours)) {
-                        return `${durationHours}${t('common.h')}`;
-                      } else {
-                        const hours = Math.floor(durationHours);
-                        const minutes = Math.round((durationHours % 1) * 60);
-                        return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                      }
-                    })()}`}
-                  </>
-                )}
-              </span>
+              {game.timeIsSet === false ? (
+                <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
+              ) : (
+                <span>
+                  {getDateLabel(game.startTime, false)}
+                  {shouldShowTiming && (
+                    <>
+                      {` ${formatDate(game.startTime, 'HH:mm')}`}
+                      {`, ${(() => {
+                        const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                        if (durationHours === Math.floor(durationHours)) {
+                          return `${durationHours}${t('common.h')}`;
+                        } else {
+                          const hours = Math.floor(durationHours);
+                          const minutes = Math.round((durationHours % 1) * 60);
+                          return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                        }
+                      })()}`}
+                    </>
+                  )}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-4">
               {(game.court?.club || game.club) && (
@@ -450,24 +454,28 @@ export const GameInfo = ({
           <div className="flex flex-col gap-2 flex-1">
             <div className="flex items-center gap-1">
               <Calendar size={14} />
-              <span>
-                {getDateLabel(game.startTime, false)}
-                {shouldShowTiming && (
-                  <>
-                    {` ${formatDate(game.startTime, 'HH:mm')}`}
-                    {game.entityType !== 'BAR' ? `, ${(() => {
-                      const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                      if (durationHours === Math.floor(durationHours)) {
-                        return `${durationHours}${t('common.h')}`;
-                      } else {
-                        const hours = Math.floor(durationHours);
-                        const minutes = Math.round((durationHours % 1) * 60);
-                        return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                      }
-                    })()}` : ''}
-                  </>
-                )}
-              </span>
+              {game.timeIsSet === false ? (
+                <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
+              ) : (
+                <span>
+                  {getDateLabel(game.startTime, false)}
+                  {shouldShowTiming && (
+                    <>
+                      {` ${formatDate(game.startTime, 'HH:mm')}`}
+                      {game.entityType !== 'BAR' ? `, ${(() => {
+                        const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                        if (durationHours === Math.floor(durationHours)) {
+                          return `${durationHours}${t('common.h')}`;
+                        } else {
+                          const hours = Math.floor(durationHours);
+                          const minutes = Math.round((durationHours % 1) * 60);
+                          return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                        }
+                      })()}` : ''}
+                    </>
+                  )}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
@@ -496,24 +504,28 @@ export const GameInfo = ({
       <>
         <div className="flex items-center gap-1">
           <Calendar size={14} />
-          <span>
-            {getDateLabel(game.startTime, false)}
-            {shouldShowTiming && (
-              <>
-                {` ${formatDate(game.startTime, 'HH:mm')}`}
-                {game.entityType !== 'BAR' ? `, ${(() => {
-                  const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                  if (durationHours === Math.floor(durationHours)) {
-                    return `${durationHours}${t('common.h')}`;
-                  } else {
-                    const hours = Math.floor(durationHours);
-                    const minutes = Math.round((durationHours % 1) * 60);
-                    return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                  }
-                })()}` : ''}
-              </>
-            )}
-          </span>
+          {game.timeIsSet === false ? (
+            <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
+          ) : (
+            <span>
+              {getDateLabel(game.startTime, false)}
+              {shouldShowTiming && (
+                <>
+                  {` ${formatDate(game.startTime, 'HH:mm')}`}
+                  {game.entityType !== 'BAR' ? `, ${(() => {
+                    const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                    if (durationHours === Math.floor(durationHours)) {
+                      return `${durationHours}${t('common.h')}`;
+                    } else {
+                      const hours = Math.floor(durationHours);
+                      const minutes = Math.round((durationHours % 1) * 60);
+                      return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                    }
+                  })()}` : ''}
+                </>
+              )}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <Users size={14} />
@@ -627,9 +639,13 @@ export const GameInfo = ({
         <div className="space-y-3 mb-0">
           <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
             <Calendar size={20} className="text-primary-600 dark:text-primary-400" />
-            <span>{formatDate(game.startTime, 'PPP')}</span>
+            {game.timeIsSet === false ? (
+              <span className="text-gray-500 dark:text-gray-400 italic">{t('gameDetails.datetimeNotSet')}</span>
+            ) : (
+              <span>{formatDate(game.startTime, 'PPP')}</span>
+            )}
           </div>
-          {game.entityType !== 'LEAGUE_SEASON' && (
+          {game.entityType !== 'LEAGUE_SEASON' && game.timeIsSet !== false && (
             <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
               <Clock size={20} className="text-primary-600 dark:text-primary-400" />
               <div className="flex-1">

@@ -18,8 +18,6 @@ import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
 import { isUserGameAdminOrOwner } from '@/utils/gameResults';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff } from 'lucide-react';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 
 interface LocationState {
   initialChatType?: ChatType;
@@ -61,6 +59,7 @@ export const GameChat: React.FC = () => {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isTogglingMute, setIsTogglingMute] = useState(false);
+  const [hasSetDefaultChatType, setHasSetDefaultChatType] = useState(false);
   const sendingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSendingRef = useRef(false);
   const sendingStartTimeRef = useRef<number | null>(null);
@@ -526,18 +525,6 @@ export const GameChat: React.FC = () => {
     );
   }, []);
 
-  const handleRefresh = useCallback(async () => {
-    await clearCachesExceptUnsyncedResults();
-    setPage(1);
-    setHasMoreMessages(true);
-    await loadContext();
-    await loadMessages(1, false);
-  }, [loadContext, loadMessages]);
-
-  const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    disabled: isLoadingMessages || isSwitchingChatType || isLoadingContext,
-  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -567,12 +554,28 @@ export const GameChat: React.FC = () => {
         console.error('Failed to check mute status:', error);
       }
       
+      let targetChatType = currentChatType;
+      
+      if (!hasSetDefaultChatType && !initialChatType && contextType === 'GAME' && loadedContext) {
+        const loadedGame = loadedContext as Game;
+        const loadedUserParticipant = loadedGame.participants.find(p => p.userId === user.id);
+        const loadedIsPlayingParticipant = loadedUserParticipant?.isPlaying ?? false;
+        
+        if (loadedIsPlayingParticipant) {
+          targetChatType = 'PRIVATE';
+          setCurrentChatType('PRIVATE');
+          setHasSetDefaultChatType(true);
+        }
+      }
+      
       if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
         if (currentChatType !== initialChatType) {
           await handleChatTypeChange(initialChatType);
         } else {
           await loadMessages();
         }
+      } else if (targetChatType !== currentChatType) {
+        await handleChatTypeChange(targetChatType);
       } else {
         await loadMessages();
       }
@@ -812,7 +815,7 @@ export const GameChat: React.FC = () => {
 
 
   return (
-    <div className="chat-container bg-gray-50 dark:bg-gray-900">
+    <div className="chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden h-screen">
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -949,27 +952,6 @@ export const GameChat: React.FC = () => {
       </header>
 
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
-        {pullDistance > 0 && (
-          <div 
-            className="absolute top-0 left-0 right-0 flex items-center justify-center z-50 pointer-events-none"
-            style={{ 
-              transform: `translateY(${Math.min(pullDistance * 0.5, 60)}px)`,
-              opacity: Math.min(pullProgress, 1)
-            }}
-          >
-            <div className="bg-white dark:bg-gray-800 rounded-full p-3 shadow-lg border border-gray-200 dark:border-gray-700">
-              {isRefreshing ? (
-                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <ArrowLeft 
-                  size={24} 
-                  className="text-blue-500"
-                  style={{ transform: `rotate(${-90 + pullProgress * 180}deg)`, transition: 'transform 0.1s ease-out' }}
-                />
-              )}
-            </div>
-          </div>
-        )}
         <MessageList
           messages={messages}
           onAddReaction={handleAddReaction}
@@ -977,7 +959,7 @@ export const GameChat: React.FC = () => {
           onDeleteMessage={handleDeleteMessage}
           onReplyMessage={handleReplyMessage}
           isLoading={isLoadingMore}
-          isLoadingMessages={isLoadingMessages || isInitialLoad || isRefreshing}
+          isLoadingMessages={isLoadingMessages || isInitialLoad}
           isSwitchingChatType={isSwitchingChatType}
           onScrollToMessage={handleScrollToMessage}
           hasMoreMessages={hasMoreMessages}
@@ -988,7 +970,7 @@ export const GameChat: React.FC = () => {
       </main>
 
       {!isInitialLoad && (
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 z-40 overflow-visible" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {isBlockedByUser && contextType === 'USER' ? (
           <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
             <div className="text-sm text-center text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-3">
@@ -996,10 +978,10 @@ export const GameChat: React.FC = () => {
             </div>
           </div>
         ) : canAccessChat ? (
-          <div className="relative overflow-visible">
+          <div className="relative overflow-hidden">
             <div 
-              className={`transition-transform duration-300 ease-in-out ${
-                isSendingMessage ? '-translate-y-full' : 'translate-y-0'
+              className={`transition-opacity duration-300 ease-in-out ${
+                isSendingMessage ? 'opacity-0 invisible' : 'opacity-100 visible'
               }`}
             >
               <MessageInput
@@ -1016,16 +998,14 @@ export const GameChat: React.FC = () => {
                 chatType={currentChatType}
               />
             </div>
-            <div 
-              className={`absolute inset-0 bg-white dark:bg-gray-800 p-4 flex items-center justify-center transition-transform duration-300 ease-in-out ${
-                isSendingMessage ? 'translate-y-0' : 'translate-y-full'
-              }`}
-            >
-              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm">{t('common.sending')}</span>
+            {isSendingMessage && (
+              <div className="absolute inset-0 bg-white dark:bg-gray-800 p-4 flex items-center justify-center">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm">{t('common.sending')}</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         ) : (
           <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>

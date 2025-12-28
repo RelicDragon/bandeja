@@ -266,17 +266,27 @@ export const LeagueGameCard = ({
         </div>
       </div>
 
-      {(game.club?.name || (game.timeIsSet && game.startTime)) && (
-        <div className="mt-8 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 flex items-center gap-1">
-          {game.club?.name && (
-            <>
-              <MapPin size={10} />
-              <span>{game.club.name}</span>
-            </>
+      {(game.club?.name || game.court?.name || (game.timeIsSet && game.startTime)) && (
+        <div className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 flex flex-col gap-1">
+          {(game.club?.name || game.court?.name) && (
+            <div className="flex items-center gap-1">
+              {game.club?.name && (
+                <>
+                  <MapPin size={10} />
+                  <span>{game.club.name}</span>
+                </>
+              )}
+              {game.court?.name && (
+                <>
+                  {game.club?.name && <span className="text-gray-500 dark:text-gray-600">•</span>}
+                  <span>{game.court.name}</span>
+                </>
+              )}
+            </div>
           )}
           {game.timeIsSet && game.startTime && (
-            <>
-              {game.club?.name && <span className="text-gray-500 dark:text-gray-600">•</span>}
+            <div className="flex items-center gap-1">
+              {!game.court?.name && (game.club?.name) && <span className="text-gray-500 dark:text-gray-600">•</span>}
               <Calendar size={10} />
               <span>{getDateTimeLabel()}</span>
               {canEdit && onRemoveTime && (
@@ -290,7 +300,7 @@ export const LeagueGameCard = ({
                   <Trash2 size={10} />
                 </button>
               )}
-            </>
+            </div>
           )}
         </div>
       )}

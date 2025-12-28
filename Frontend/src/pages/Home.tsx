@@ -4,7 +4,8 @@ import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
 import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController, Contacts, BugsSection } from '@/components/home';
 import { Divider, Button } from '@/components';
-import { Search, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Search, ChevronDown } from 'lucide-react';
+import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -292,28 +293,18 @@ export const HomeContent = () => {
   });
 
   return (
-    <div className="relative">
-      {pullDistance > 0 && (
-        <div 
-          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
-          style={{ 
-            transform: `translate(-50%, ${Math.min(pullDistance * 0.5, 60)}px)`,
-            opacity: Math.min(pullProgress, 1)
-          }}
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-full p-3 shadow-lg border border-gray-200 dark:border-gray-700">
-            {isRefreshing ? (
-              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <ArrowLeft 
-                size={24} 
-                className="text-blue-500"
-                style={{ transform: `rotate(${-90 + pullProgress * 180}deg)`, transition: 'transform 0.1s ease-out' }}
-              />
-            )}
-          </div>
-        </div>
-      )}
+    <>
+      <RefreshIndicator
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+        pullProgress={pullProgress}
+      />
+      <div
+        style={{
+          transform: `translateY(${pullDistance}px)`,
+          transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
+        }}
+      >
       <Contacts />
 
       <div
@@ -514,7 +505,8 @@ export const HomeContent = () => {
           onClick={handleLogoClick}
         />
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

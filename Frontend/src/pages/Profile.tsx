@@ -11,9 +11,10 @@ import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
 import { City, Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, ArrowLeft } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2 } from 'lucide-react';
 import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 
 export const ProfileContent = () => {
@@ -334,28 +335,18 @@ export const ProfileContent = () => {
   }
 
   return (
-    <div className="relative">
-      {pullDistance > 0 && (
-        <div 
-          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
-          style={{ 
-            transform: `translate(-50%, ${Math.min(pullDistance * 0.5, 60)}px)`,
-            opacity: Math.min(pullProgress, 1)
-          }}
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-full p-3 shadow-lg border border-gray-200 dark:border-gray-700">
-            {isRefreshing ? (
-              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <ArrowLeft 
-                size={24} 
-                className="text-blue-500"
-                style={{ transform: `rotate(${-90 + pullProgress * 180}deg)`, transition: 'transform 0.1s ease-out' }}
-              />
-            )}
-          </div>
-        </div>
-      )}
+    <>
+      <RefreshIndicator
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+        pullProgress={pullProgress}
+      />
+      <div
+        style={{
+          transform: `translateY(${pullDistance}px)`,
+          transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
+        }}
+      >
       <div className="space-y-6 pt-0">
         <div className="mb-4">
           <div className="flex gap-2 justify-center">
@@ -909,6 +900,7 @@ export const ProfileContent = () => {
           {t('auth.eula') || 'Terms of Service'}
         </a>
       </div>
-    </div>
+      </div>
+    </>
   );
 };

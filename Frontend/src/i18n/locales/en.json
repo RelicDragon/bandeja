@@ -799,6 +799,7 @@
     "removeTime": "Remove Date & Time",
     "removeTimeConfirmation": "Are you sure you want to remove the date and time for this game?",
     "timeRemoved": "Date and time removed",
+    "datetimeNotSet": "Time is not set yet",
     "settingsUpdated": "Settings updated successfully",
     "gameAvatar": "Game Avatar",
     "avatarUpdated": "Game avatar updated successfully",
