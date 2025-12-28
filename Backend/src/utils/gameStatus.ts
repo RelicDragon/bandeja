@@ -22,13 +22,13 @@ export const calculateGameStatus = (
   
   if (clubTimezone) {
     const endTimeInTimezone = toZonedTime(endTime, clubTimezone);
-    const endDateInTimezone = startOfDay(endTimeInTimezone);
-    const nextDayInTimezone = addDays(endDateInTimezone, 1);
-    const archiveTimeUTC = fromZonedTime(nextDayInTimezone, clubTimezone);
+    const endDatePlusOneDay = addDays(endTimeInTimezone, 1);
+    const nextDayMidnight = startOfDay(endDatePlusOneDay);
+    const archiveTimeUTC = fromZonedTime(nextDayMidnight, clubTimezone);
     
     shouldArchive = now >= archiveTimeUTC;
   } else {
-    shouldArchive = hoursSinceEnd > 24;
+    shouldArchive = hoursSinceEnd > 48;
   }
   
   if (shouldArchive) {
