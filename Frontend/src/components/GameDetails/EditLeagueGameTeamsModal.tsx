@@ -447,8 +447,6 @@ export const EditLeagueGameTeamsModal = ({
 
       const normalizedSelectedClubId = selectedClubId || undefined;
       const normalizedGameClubId = game.clubId || undefined;
-      const normalizedSelectedCourtId = selectedCourtId || undefined;
-      const normalizedGameCourtId = game.courtId || undefined;
 
       if (normalizedSelectedClubId !== normalizedGameClubId) {
         updateData.clubId = normalizedSelectedClubId;
@@ -458,8 +456,8 @@ export const EditLeagueGameTeamsModal = ({
           updateData.timeIsSet = false;
         }
       }
-      if (normalizedSelectedCourtId !== normalizedGameCourtId) {
-        updateData.courtId = normalizedSelectedCourtId;
+      if (selectedCourtId !== (game.courtId || '')) {
+        updateData.courtId = selectedCourtId || undefined;
         hasChanges = true;
       }
       if (hasBookedCourt !== (game.hasBookedCourt || false)) {
