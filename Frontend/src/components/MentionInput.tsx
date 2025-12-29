@@ -3,6 +3,7 @@ import { MentionsInput, Mention, SuggestionDataItem, MentionData } from 'react-m
 import { ChatContextType } from '@/api/chat';
 import { Game, Bug } from '@/types';
 import { PlayerAvatar } from './PlayerAvatar';
+import { matchesSearch } from '@/utils/transliteration';
 
 interface MentionableUser {
   id: string;
@@ -167,12 +168,11 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   };
 
   const searchUsers = (query: string, callback: (items: SuggestionDataItem[]) => void) => {
-    const searchTerm = query.toLowerCase();
     const filtered = mentionableUsers.filter(user => {
-      const display = user.display.toLowerCase();
-      const firstName = (user.firstName || '').toLowerCase();
-      const lastName = (user.lastName || '').toLowerCase();
-      return display.includes(searchTerm) || firstName.includes(searchTerm) || lastName.includes(searchTerm);
+      const display = user.display;
+      const firstName = user.firstName || '';
+      const lastName = user.lastName || '';
+      return matchesSearch(query, display) || matchesSearch(query, firstName) || matchesSearch(query, lastName);
     });
 
     const suggestions: SuggestionDataItem[] = filtered.map(user => ({

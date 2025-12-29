@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, Search } from 'lucide-react';
 import { PlayerAvatar } from '../PlayerAvatar';
 import { GameParticipant } from '@/types';
+import { matchesSearch } from '@/utils/transliteration';
 
 interface TeamPlayerSelectorProps {
   gameParticipants: GameParticipant[];
@@ -39,10 +40,9 @@ export const TeamPlayerSelector = ({
     }
 
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(p => {
-        const fullName = `${p.user.firstName || ''} ${p.user.lastName || ''}`.toLowerCase();
-        return fullName.includes(query);
+        const fullName = `${p.user.firstName || ''} ${p.user.lastName || ''}`;
+        return matchesSearch(searchQuery, fullName);
       });
     }
 
