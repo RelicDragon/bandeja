@@ -379,6 +379,29 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
 
   const dragAndDrop = useDragAndDrop(canEdit && isEditingResults);
 
+  useEffect(() => {
+    const isDragging = dragAndDrop.draggedPlayer !== null || dragAndDrop.isDragging;
+    
+    if (isDragging) {
+      const originalOverflow = document.body.style.overflow;
+      const originalPosition = document.body.style.position;
+      const scrollY = window.scrollY;
+      
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${scrollY}px`;
+      
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.position = originalPosition;
+        document.body.style.width = '';
+        document.body.style.top = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [dragAndDrop.draggedPlayer, dragAndDrop.isDragging]);
+
   const handleTouchEndWrapper = (e: TouchEvent) => {
     dragAndDrop.handleTouchEnd(e, handleMatchDrop);
   };

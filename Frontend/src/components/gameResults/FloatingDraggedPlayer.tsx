@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { PlayerAvatar } from '@/components';
 import { User } from '@/types';
 
@@ -9,7 +10,7 @@ interface FloatingDraggedPlayerProps {
 export const FloatingDraggedPlayer = ({ player, position }: FloatingDraggedPlayerProps) => {
   if (!player) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed pointer-events-none z-50"
       style={{
@@ -24,7 +25,8 @@ export const FloatingDraggedPlayer = ({ player, position }: FloatingDraggedPlaye
         smallLayout={true}
         draggable={false}
       />
-    </div>
+    </div>,
+    document.body
   );
 };
 

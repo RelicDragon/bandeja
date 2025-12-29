@@ -7,7 +7,8 @@ import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId
 
 export async function sendGameReminderNotification(
   api: Api,
-  gameId: string
+  gameId: string,
+  hoursBeforeStart: number
 ) {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -60,7 +61,11 @@ export async function sendGameReminderNotification(
       const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
       const entityTypeLabel = t(`games.entityTypes.${game.entityType}`, lang);
       
-      let message = `⏰ ${escapeMarkdown(t('telegram.gameReminder', lang))}\n\n`;
+      const reminderText = hoursBeforeStart === 24 
+        ? t('telegram.gameReminder24h', lang) 
+        : t('telegram.gameReminder2h', lang);
+      
+      let message = `⏰ ${escapeMarkdown(reminderText)}\n\n`;
       if (game.name) {
         message += `🎾 ${escapeMarkdown(entityTypeLabel)}: ${escapeMarkdown(game.name)}\n`;
       } else {

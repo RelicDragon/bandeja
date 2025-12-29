@@ -1,6 +1,8 @@
-import { PlayerAvatar } from '@/components';
-import { User } from '@/types';
+import { createPortal } from 'react-dom';
+import { useMemo } from 'react';
+import { User, GameParticipant } from '@/types';
 import { Match } from '@/types/gameResults';
+import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 
 interface AvailablePlayersFooterProps {
   players: User[];
@@ -44,39 +46,46 @@ export const AvailablePlayersFooter = ({
 
   const shouldShow = availablePlayers.length > 0 && !teamsAreFull;
 
-  return (
+  const participants: GameParticipant[] = useMemo(() => {
+    return availablePlayers.map(player => ({
+      userId: player.id,
+      role: 'PARTICIPANT' as const,
+      isPlaying: true,
+      joinedAt: new Date().toISOString(),
+      user: {
+        id: player.id,
+        firstName: player.firstName,
+        lastName: player.lastName,
+        avatar: player.avatar ?? undefined,
+        level: player.level,
+        gender: player.gender,
+      },
+    }));
+  }, [availablePlayers]);
+
+  if (!shouldShow) {
+    return null;
+  }
+
+  return createPortal(
     <div 
-      className={`fixed left-0 right-0 bottom-0 bg-white dark:bg-gray-800 border-t-2 border-blue-400 dark:border-blue-600 shadow-lg z-30 transition-transform duration-300 ease-in-out ${
-        shouldShow ? 'translate-y-0' : 'translate-y-[200%]'
-      }`}
+      className="fixed left-0 right-0 bottom-0 bg-white dark:bg-gray-800 border-t-2 border-blue-400 dark:border-blue-600 shadow-lg z-50 transition-transform duration-300 ease-in-out"
     >
-      <div className="px-4 py-3 pb-safe overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-        <div className="flex gap-2 w-max">
-          {availablePlayers.map(player => (
-            <div
-              key={player.id}
-              className={`transition-all duration-200 flex-shrink-0 ${
-                draggedPlayer === player.id
-                  ? 'opacity-0'
-                  : 'hover:scale-105'
-              }`}
-            >
-              <PlayerAvatar
-                player={player}
-                showName={true}
-                smallLayout={true}
-                draggable={true}
-                onDragStart={(e) => onDragStart(e, player.id)}
-                onDragEnd={onDragEnd}
-                onTouchStart={(e) => onTouchStart(e, player.id)}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onTouchEnd}
-              />
-            </div>
-          ))}
-        </div>
+      <div className="px-4 py-3 pb-safe">
+        <PlayersCarousel
+          participants={participants}
+          draggable={true}
+          draggedPlayerId={draggedPlayer}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          autoHideNames={false}
+        />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

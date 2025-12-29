@@ -2,6 +2,7 @@ import prisma from '../../config/database';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { GameService } from './game.service';
+import notificationService from '../notification.service';
 
 export class ParticipantMessageHelper {
   static async sendJoinMessage(gameId: string, userId: string, messageType = SystemMessageType.USER_JOINED_GAME) {
@@ -18,10 +19,32 @@ export class ParticipantMessageHelper {
       const userName = getUserDisplayName(user.firstName, user.lastName);
       
       try {
-        return await createSystemMessage(gameId, {
+        const systemMessage = await createSystemMessage(gameId, {
           type: messageType,
           variables: { userName }
         });
+
+        if (systemMessage) {
+          const game = await prisma.game.findUnique({
+            where: { id: gameId },
+            include: {
+              court: {
+                include: {
+                  club: true
+                }
+              },
+              club: true
+            }
+          });
+
+          if (game) {
+            notificationService.sendGameSystemMessageNotification(systemMessage, game).catch(error => {
+              console.error('Failed to send notifications for join:', error);
+            });
+          }
+        }
+
+        return systemMessage;
       } catch (error) {
         console.error('Failed to create system message for game join:', error);
         return null;
@@ -35,10 +58,32 @@ export class ParticipantMessageHelper {
       const userName = getUserDisplayName(user.firstName, user.lastName);
       
       try {
-        return await createSystemMessage(gameId, {
+        const systemMessage = await createSystemMessage(gameId, {
           type: messageType,
           variables: { userName }
         });
+
+        if (systemMessage) {
+          const game = await prisma.game.findUnique({
+            where: { id: gameId },
+            include: {
+              court: {
+                include: {
+                  club: true
+                }
+              },
+              club: true
+            }
+          });
+
+          if (game) {
+            notificationService.sendGameSystemMessageNotification(systemMessage, game).catch(error => {
+              console.error('Failed to send notifications for leave:', error);
+            });
+          }
+        }
+
+        return systemMessage;
       } catch (error) {
         console.error('Failed to create system message for game leave:', error);
         return null;

@@ -7,7 +7,7 @@ import { ParticipantMessageHelper } from './participantMessageHelper';
 import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
 import { InviteService } from '../invite.service';
-import telegramNotificationService from '../telegram/notification.service';
+import notificationService from '../notification.service';
 import { ChatType } from '@prisma/client';
 
 export class JoinQueueService {
@@ -68,8 +68,8 @@ export class JoinQueueService {
           );
 
           if (systemMessage) {
-            telegramNotificationService.sendGameSystemMessageNotification(systemMessage, game).catch(error => {
-              console.error('Failed to send Telegram system message notification:', error);
+            notificationService.sendGameSystemMessageNotification(systemMessage, game).catch(error => {
+              console.error('Failed to send notifications for join queue:', error);
             });
           }
         } catch (error) {
@@ -206,8 +206,8 @@ export class JoinQueueService {
         });
 
         if (updatedGame && systemMessage) {
-          telegramNotificationService.sendGameSystemMessageNotification(systemMessage, updatedGame).catch(error => {
-            console.error('Failed to send Telegram system message notification:', error);
+          notificationService.sendGameSystemMessageNotification(systemMessage, updatedGame).catch(error => {
+            console.error('Failed to send notifications for join queue acceptance:', error);
           });
         }
       } catch (error) {
@@ -216,14 +216,7 @@ export class JoinQueueService {
     }
 
     await InviteService.deleteInvitesForUserInGame(gameId, queueUserId);
-    
-    const joinSystemMessage = await ParticipantMessageHelper.sendJoinMessage(gameId, queueUserId);
-    
-    if (joinSystemMessage && updatedGame) {
-      telegramNotificationService.sendGameSystemMessageNotification(joinSystemMessage, updatedGame).catch(error => {
-        console.error('Failed to send Telegram system message notification:', error);
-      });
-    }
+    await ParticipantMessageHelper.sendJoinMessage(gameId, queueUserId);
 
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentUserId);

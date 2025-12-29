@@ -18,6 +18,13 @@ interface PlayersCarouselProps {
   participantUnreadCounts?: Record<string, number>;
   onLeave?: () => void;
   onShowPlayerList?: (gender?: 'MALE' | 'FEMALE') => void;
+  draggable?: boolean;
+  draggedPlayerId?: string | null;
+  onDragStart?: (e: React.DragEvent, playerId: string) => void;
+  onDragEnd?: () => void;
+  onTouchStart?: (e: TouchEvent, playerId: string) => void;
+  onTouchMove?: (e: TouchEvent) => void;
+  onTouchEnd?: (e: TouchEvent) => void;
 }
 
 export const PlayersCarousel = ({
@@ -33,6 +40,13 @@ export const PlayersCarousel = ({
   participantUnreadCounts,
   onLeave,
   onShowPlayerList,
+  draggable = false,
+  draggedPlayerId,
+  onDragStart,
+  onDragEnd,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
 }: PlayersCarouselProps) => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
@@ -187,8 +201,14 @@ export const PlayersCarousel = ({
             {participants.map((participant) => {
               const showName = autoHideNames ? ((isMobile && isScrolling) || isPressed) : undefined;
               const unreadCount = participantUnreadCounts?.[participant.userId] ?? unreadCounts[participant.userId] ?? 0;
+              const isDragged = draggedPlayerId === participant.user.id;
               return (
-                <div key={participant.userId} className="flex-shrink-0 w-16 relative">
+                <div 
+                  key={participant.userId} 
+                  className={`flex-shrink-0 w-16 relative transition-all duration-200 ${
+                    isDragged ? 'opacity-0' : draggable ? 'hover:scale-105' : ''
+                  }`}
+                >
                   <PlayerAvatar
                     player={{
                       id: participant.user.id,
@@ -204,6 +224,12 @@ export const PlayersCarousel = ({
                     role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
                     smallLayout={true}
                     showName={showName}
+                    draggable={draggable}
+                    onDragStart={draggable && onDragStart ? (e) => onDragStart(e, participant.user.id) : undefined}
+                    onDragEnd={draggable ? onDragEnd : undefined}
+                    onTouchStart={draggable && onTouchStart ? (e) => onTouchStart(e, participant.user.id) : undefined}
+                    onTouchMove={draggable ? onTouchMove : undefined}
+                    onTouchEnd={draggable ? onTouchEnd : undefined}
                   />
                   {unreadCount > 0 && (
                     <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center border-2 border-white dark:border-gray-900">

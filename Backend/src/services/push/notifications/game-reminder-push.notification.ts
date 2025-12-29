@@ -6,7 +6,8 @@ import { formatDuration } from '../../telegram/utils';
 
 export async function createGameReminderPushNotification(
   gameId: string,
-  recipient: any
+  recipient: any,
+  hoursBeforeStart: number
 ): Promise<NotificationPayload | null> {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -32,7 +33,10 @@ export async function createGameReminderPushNotification(
   const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
   const entityTypeLabel = t(`games.entityTypes.${game.entityType}`, lang);
 
-  let title = t('telegram.gameReminder', lang);
+  const title = hoursBeforeStart === 24 
+    ? t('telegram.gameReminder24h', lang) 
+    : t('telegram.gameReminder2h', lang);
+  
   let body = `${entityTypeLabel}`;
   if (game.name) {
     body += `: ${game.name}`;

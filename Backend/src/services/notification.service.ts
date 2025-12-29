@@ -75,7 +75,7 @@ class NotificationService {
     await telegramNotificationService.sendInviteNotification(invite);
   }
 
-  async sendGameChatNotification(message: any, game: any, sender: any, recipients: any[]) {
+  async sendGameChatNotification(message: any, game: any, sender: any, _recipients: any[]) {
     const mentionIds = message.mentionIds || [];
     const hasMentions = mentionIds.length > 0;
     const chatType = message.chatType as ChatType;
@@ -200,7 +200,7 @@ class NotificationService {
     await telegramNotificationService.sendUserChatNotification(message, userChat, sender);
   }
 
-  async sendBugChatNotification(message: any, bug: any, sender: any, recipients: any[]) {
+  async sendBugChatNotification(message: any, bug: any, sender: any, _recipients: any[]) {
     const mentionIds = message.mentionIds || [];
     const hasMentions = mentionIds.length > 0;
 
@@ -331,25 +331,57 @@ class NotificationService {
     await telegramNotificationService.sendBugChatNotification(message, bug, sender);
   }
 
-  async sendGameSystemMessageNotification(message: any, game: any, recipients: any[]) {
-    for (const recipient of recipients) {
-      const payload = await createGameSystemMessagePushNotification(message, game, recipient);
-      
-      if (payload) {
-        await this.sendNotification({
-          userId: recipient.id,
-          type: NotificationType.GAME_SYSTEM_MESSAGE,
-          payload
-        });
+  async sendGameSystemMessageNotification(message: any, game: any) {
+    const chatType = message.chatType as ChatType;
+    const participants = await prisma.gameParticipant.findMany({
+      where: { gameId: game.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            language: true,
+            currentCityId: true,
+          }
+        }
+      }
+    });
+
+    for (const participant of participants) {
+      const user = participant.user;
+
+      const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
+      if (isMuted) {
+        continue;
+      }
+
+      let canSeeMessage = false;
+      if (chatType === ChatType.PUBLIC) {
+        canSeeMessage = true;
+      } else if (chatType === ChatType.PRIVATE) {
+        canSeeMessage = participant.isPlaying;
+      } else if (chatType === ChatType.ADMINS) {
+        canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
+      }
+
+      if (canSeeMessage) {
+        const payload = await createGameSystemMessagePushNotification(message, game, user);
+        
+        if (payload) {
+          await this.sendNotification({
+            userId: user.id,
+            type: NotificationType.GAME_SYSTEM_MESSAGE,
+            payload
+          });
+        }
       }
     }
 
     await telegramNotificationService.sendGameSystemMessageNotification(message, game);
   }
 
-  async sendGameReminderNotification(gameId: string, recipients: any[]) {
+  async sendGameReminderNotification(gameId: string, recipients: any[], hoursBeforeStart: number) {
     for (const recipient of recipients) {
-      const payload = await createGameReminderPushNotification(gameId, recipient);
+      const payload = await createGameReminderPushNotification(gameId, recipient, hoursBeforeStart);
       
       if (payload) {
         await this.sendNotification({
@@ -359,6 +391,8 @@ class NotificationService {
         });
       }
     }
+
+    await telegramNotificationService.sendGameReminderNotification(gameId, hoursBeforeStart);
   }
 
   async sendGameResultsNotification(gameId: string, userId: string, isEdited: boolean = false) {

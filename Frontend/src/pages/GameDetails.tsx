@@ -1005,7 +1005,7 @@ export const GameDetailsContent = () => {
             </Card>
           )}
 
-          {isParticipant && !isLeague && (
+          {isParticipant && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && game.resultsStatus !== 'FINAL' && (
             <Card>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -1063,7 +1063,7 @@ export const GameDetailsContent = () => {
             </Card>
           )}
 
-          {canEdit && !isLeague && (
+          {canEdit && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && (
             <Card>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

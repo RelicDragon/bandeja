@@ -2,14 +2,14 @@ import * as cron from 'node-cron';
 import prisma from '../config/database';
 import { calculateGameStatus } from '../utils/gameStatus';
 import { deleteInvitesForStartedGame, deleteInvitesForArchivedGame } from '../controllers/invite.controller';
-import telegramBotService from './telegram/bot.service';
-import { sendGameReminderNotification } from './telegram/notifications/game-reminder.notification';
 import { EntityType } from '@prisma/client';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
+import notificationService from './notification.service';
 
 export class GameStatusScheduler {
   private cronJob: cron.ScheduledTask | null = null;
-  private reminderSentGames: Set<string> = new Set();
+  private reminder24hSentGames: Set<string> = new Set();
+  private reminder2hSentGames: Set<string> = new Set();
 
   start() {
     console.log('🔄 Game status scheduler started (runs at :00 and :30 every hour)');
@@ -85,26 +85,46 @@ export class GameStatusScheduler {
 
   private async sendReminders() {
     try {
-      const bot = telegramBotService.getBot();
-      if (!bot) {
-        return;
-      }
-
       const now = new Date();
-      const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-      const twoHoursFromNowPlus30Min = new Date(twoHoursFromNow.getTime() + 30 * 60 * 1000);
+      const WINDOW_MINUTES = 10;
 
-      const gamesToRemind = await prisma.game.findMany({
+      // 24 hours reminder window
+      const twentyFourHoursMinusWindow = new Date(now.getTime() + (24 * 60 * 60 * 1000) - (WINDOW_MINUTES * 60 * 1000));
+      const twentyFourHoursPlusWindow = new Date(now.getTime() + (24 * 60 * 60 * 1000) + (WINDOW_MINUTES * 60 * 1000));
+
+      // 2 hours reminder window
+      const twoHoursMinusWindow = new Date(now.getTime() + (2 * 60 * 60 * 1000) - (WINDOW_MINUTES * 60 * 1000));
+      const twoHoursPlusWindow = new Date(now.getTime() + (2 * 60 * 60 * 1000) + (WINDOW_MINUTES * 60 * 1000));
+
+      // Find games for 24h reminders
+      const gamesFor24hReminder = await prisma.game.findMany({
         where: {
-          status: {
-            not: 'ARCHIVED',
-          },
+          status: 'ANNOUNCED',
           entityType: {
-            in: [EntityType.GAME, EntityType.TOURNAMENT, EntityType.BAR, EntityType.TRAINING],
+            in: [EntityType.GAME, EntityType.TOURNAMENT, EntityType.BAR, EntityType.TRAINING, EntityType.LEAGUE],
           },
+          timeIsSet: true,
           startTime: {
-            gte: twoHoursFromNow,
-            lte: twoHoursFromNowPlus30Min,
+            gte: twentyFourHoursMinusWindow,
+            lte: twentyFourHoursPlusWindow,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      // Find games for 2h reminders
+      const gamesFor2hReminder = await prisma.game.findMany({
+        where: {
+          status: 'ANNOUNCED',
+          entityType: {
+            in: [EntityType.GAME, EntityType.TOURNAMENT, EntityType.BAR, EntityType.TRAINING, EntityType.LEAGUE],
+          },
+          timeIsSet: true,
+          startTime: {
+            gte: twoHoursMinusWindow,
+            lte: twoHoursPlusWindow,
           },
         },
         select: {
@@ -113,14 +133,29 @@ export class GameStatusScheduler {
       });
 
       let remindersSent = 0;
-      for (const game of gamesToRemind) {
-        if (!this.reminderSentGames.has(game.id)) {
+
+      // Send 24h reminders
+      for (const game of gamesFor24hReminder) {
+        if (!this.reminder24hSentGames.has(game.id)) {
           try {
-            await sendGameReminderNotification(bot.api, game.id);
-            this.reminderSentGames.add(game.id);
+            await this.sendGameReminder(game.id, 24);
+            this.reminder24hSentGames.add(game.id);
             remindersSent++;
           } catch (error) {
-            console.error(`Failed to send reminder for game ${game.id}:`, error);
+            console.error(`Failed to send 24h reminder for game ${game.id}:`, error);
+          }
+        }
+      }
+
+      // Send 2h reminders
+      for (const game of gamesFor2hReminder) {
+        if (!this.reminder2hSentGames.has(game.id)) {
+          try {
+            await this.sendGameReminder(game.id, 2);
+            this.reminder2hSentGames.add(game.id);
+            remindersSent++;
+          } catch (error) {
+            console.error(`Failed to send 2h reminder for game ${game.id}:`, error);
           }
         }
       }
@@ -129,6 +164,7 @@ export class GameStatusScheduler {
         console.log(`📧 Sent ${remindersSent} reminder notifications`);
       }
 
+      // Cleanup old games from tracking sets
       const pastGames = await prisma.game.findMany({
         where: {
           startTime: {
@@ -141,11 +177,33 @@ export class GameStatusScheduler {
       });
 
       for (const game of pastGames) {
-        this.reminderSentGames.delete(game.id);
+        this.reminder24hSentGames.delete(game.id);
+        this.reminder2hSentGames.delete(game.id);
       }
     } catch (error) {
       console.error('❌ Error sending reminders:', error);
     }
+  }
+
+  private async sendGameReminder(gameId: string, hoursBeforeStart: number) {
+    const participants = await prisma.gameParticipant.findMany({
+      where: {
+        gameId,
+        isPlaying: true,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            language: true,
+            currentCityId: true,
+          }
+        }
+      }
+    });
+
+    const recipients = participants.map(p => p.user);
+    await notificationService.sendGameReminderNotification(gameId, recipients, hoursBeforeStart);
   }
 
   stop() {
