@@ -347,7 +347,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
               canEdit &&
               isLastRound &&
               (round.games.length === 0 || round.games.every((game) => game.resultsStatus === 'NONE'));
-            const canEditGames = canEdit && isLastRound;
+            const canEditGames = canEdit && round.games.some((game) => game.resultsStatus === 'NONE');
             const isExpanded = expandedRoundId === round.id;
             const shouldRenderContent = loadedRoundIds.has(round.id);
             
