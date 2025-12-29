@@ -15,18 +15,6 @@ const startServer = async () => {
 
     await prisma.$connect();
     console.log('✅ Database connected successfully');
-    
-    const engine = (prisma as any)._engine;
-    if (engine) {
-      if (typeof engine.setMaxListeners === 'function') {
-        engine.setMaxListeners(20);
-      }
-      
-      const connection = engine.connection;
-      if (connection && typeof connection.setMaxListeners === 'function') {
-        connection.setMaxListeners(20);
-      }
-    }
 
     await telegramBotService.initialize();
     pushNotificationService.initialize();
