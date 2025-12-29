@@ -765,8 +765,8 @@ export const ProfileContent = () => {
               <Select
                 options={[
                   { value: 'auto', label: t('profile.auto') || 'Auto' },
-                  { value: '12h', label: '12-hour' },
-                  { value: '24h', label: '24-hour' },
+                  { value: '12h', label: t('profile.timeFormat12h') || '12-hour' },
+                  { value: '24h', label: t('profile.timeFormat24h') || '24-hour' },
                 ]}
                 value={timeFormat}
                 onChange={(value) => handleChangeTimeFormat(value as 'auto' | '12h' | '24h')}

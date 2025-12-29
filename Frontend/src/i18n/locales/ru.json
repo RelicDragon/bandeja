@@ -597,7 +597,14 @@
     "totalGames": "Всего игр",
     "totalMatches": "Всего матчей",
     "noGamesAgainstEachOther": "Нет игр, где оба игрока участвовали",
-    "coins": "монет"
+    "coins": "монет",
+    "timeFormat": "Формат времени",
+    "auto": "Авто",
+    "weekStart": "Начало недели",
+    "monday": "Понедельник",
+    "sunday": "Воскресенье",
+    "timeFormat12h": "12-часовой",
+    "timeFormat24h": "24-часовой"
   },
   "createGame": {
     "title": "Создать игру",

@@ -596,7 +596,14 @@
     "totalGames": "Total Games",
     "totalMatches": "Total Matches",
     "noGamesAgainstEachOther": "No games where both players participated",
-    "coins": "coins"
+    "coins": "coins",
+    "timeFormat": "Time Format",
+    "auto": "Auto",
+    "weekStart": "Week Start",
+    "monday": "Monday",
+    "sunday": "Sunday",
+    "timeFormat12h": "12-hour",
+    "timeFormat24h": "24-hour"
   },
   "createGame": {
     "title": "Create Game",

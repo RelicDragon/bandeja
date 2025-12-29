@@ -591,7 +591,14 @@
     "totalGames": "Укупно игара",
     "totalMatches": "Укупно мечева",
     "noGamesAgainstEachOther": "Нема игара где су оба играча учествовала",
-    "coins": "новчића"
+    "coins": "новчића",
+    "timeFormat": "Формат времена",
+    "auto": "Ауто",
+    "weekStart": "Почетак недеље",
+    "monday": "Понедељак",
+    "sunday": "Недеља",
+    "timeFormat12h": "12-часовни",
+    "timeFormat24h": "24-часовни"
   },
   "createGame": {
     "title": "Креирај игру",
