@@ -11,6 +11,7 @@ import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
+import { matchesSearch } from '@/utils/transliteration';
 
 interface PlayerListModalProps {
   gameId?: string;
@@ -120,11 +121,10 @@ export const PlayerListModal = ({
     }
 
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
       filtered = filtered.filter((player) => {
-        const fullName = `${player.firstName || ''} ${player.lastName || ''}`.toLowerCase();
-        const telegram = player.telegramUsername?.toLowerCase() || '';
-        return fullName.includes(query) || telegram.includes(query);
+        const fullName = `${player.firstName || ''} ${player.lastName || ''}`;
+        const telegram = player.telegramUsername || '';
+        return matchesSearch(searchQuery, fullName) || (telegram && matchesSearch(searchQuery, telegram));
       });
     }
 

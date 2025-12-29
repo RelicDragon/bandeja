@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { Bell, MessageCircle, User, ArrowLeft, Bug } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   HeaderContentWrapper,
   HomeHeaderContent,
@@ -24,10 +24,12 @@ export const Header = ({
 }: HeaderProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { pendingInvites, unreadMessages, isNewInviteAnimating, showChatFilter: globalShowChatFilter, setShowChatFilter } = useHeaderStore();
   const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications, bugsButtonSlidingUp, bugsButtonSlidingDown, setBugsButtonSlidingUp, setBugsButtonSlidingDown } = useNavigationStore();
   
   const isChatFilterActive = onChatFilterToggle ? showChatFilter : globalShowChatFilter;
+  const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
 
   const previousPageRef = useRef(currentPage);
 
@@ -60,8 +62,15 @@ export const Header = ({
 
   const handleBackClick = () => {
     setIsAnimating(true);
-    setCurrentPage('home');
-    navigate('/', { replace: true });
+    
+    if (currentPage === 'gameDetails' && locationState?.fromLeagueSeasonGameId) {
+      setCurrentPage('gameDetails');
+      navigate(`/games/${locationState.fromLeagueSeasonGameId}`, { replace: true });
+    } else {
+      setCurrentPage('home');
+      navigate('/', { replace: true });
+    }
+    
     setTimeout(() => setIsAnimating(false), 300);
   };
 

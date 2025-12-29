@@ -8,6 +8,7 @@ import { useHeaderStore } from '@/store/headerStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { GameParticipant } from '@/types';
+import { matchesSearch } from '@/utils/transliteration';
 
 interface ContactItem {
   type: 'search' | 'user';
@@ -189,11 +190,10 @@ export const Contacts = () => {
   const filteredContacts = useMemo(() => {
     if (!debouncedSearchTerm) return contacts;
     
-    const searchLower = debouncedSearchTerm.toLowerCase();
     return contacts.filter(contact => {
       if (!contact.user) return false;
-      const fullName = `${contact.user.firstName || ''} ${contact.user.lastName || ''}`.toLowerCase();
-      return fullName.includes(searchLower);
+      const fullName = `${contact.user.firstName || ''} ${contact.user.lastName || ''}`;
+      return matchesSearch(debouncedSearchTerm, fullName);
     });
   }, [debouncedSearchTerm, contacts]);
 

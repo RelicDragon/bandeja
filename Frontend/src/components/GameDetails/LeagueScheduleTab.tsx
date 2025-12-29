@@ -160,7 +160,9 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   };
 
   const handleOpenGame = (game: Game) => {
-    navigate(`/games/${game.id}`);
+    navigate(`/games/${game.id}`, {
+      state: { fromLeagueSeasonGameId: leagueSeasonId }
+    });
   };
 
   const handleGameUpdate = async () => {
