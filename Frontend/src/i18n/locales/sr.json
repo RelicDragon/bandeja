@@ -924,6 +924,8 @@
     "selectDifferentTeams": "Молимо изаберите различите тимове",
     "teamsUpdated": "Тимови су успешно ажурирани",
     "teamsUpdatedInvitesSent": "Тимови су ажурирани. Позивнице су послате новим учесницима",
+    "gameUpdated": "Игра је успешно ажурирана",
+    "gameUpdatedInvitesSent": "Игра је ажурирана. Позивнице су послате новим учесницима",
     "createGroups": "Креирај групе",
     "selectNumberOfGroups": "Изаберите број група",
     "groupCreationHint_one": "{{count}} учесник, максимум {{max}} група",

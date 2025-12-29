@@ -64,6 +64,7 @@ export const EditLeagueGameTeamsModal = ({
   const [activeTab, setActiveTab] = useState<'teams' | 'place' | 'time'>('teams');
   const [isEditingTime, setIsEditingTime] = useState(false);
   const [showConfirmRemoveTime, setShowConfirmRemoveTime] = useState(false);
+  const [timeManuallySelected, setTimeManuallySelected] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -216,6 +217,7 @@ export const EditLeagueGameTeamsModal = ({
           }
         });
       }
+      setTimeManuallySelected(false);
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -243,10 +245,17 @@ export const EditLeagueGameTeamsModal = ({
   useEffect(() => {
     if (courts.length > 0 && gameCourtIdRef.current) {
       const courtExists = courts.some(c => c.id === gameCourtIdRef.current);
-      if (courtExists && selectedCourtId !== gameCourtIdRef.current) {
-        setSelectedCourtId(gameCourtIdRef.current);
-      } else if (!courtExists && selectedCourtId === gameCourtIdRef.current) {
-        setSelectedCourtId('');
+      if (isInitializingRef.current) {
+        if (courtExists && selectedCourtId !== gameCourtIdRef.current) {
+          setSelectedCourtId(gameCourtIdRef.current);
+        } else if (!courtExists && selectedCourtId === gameCourtIdRef.current) {
+          setSelectedCourtId('');
+        }
+      } else {
+        const selectedCourtExists = !selectedCourtId || courts.some(c => c.id === selectedCourtId);
+        if (!selectedCourtExists) {
+          setSelectedCourtId('');
+        }
       }
     }
   }, [courts, selectedCourtId]);
@@ -475,8 +484,10 @@ export const EditLeagueGameTeamsModal = ({
           updateData.endTime = newEndTime.toISOString();
           hasChanges = true;
         }
-        updateData.timeIsSet = true;
-        hasChanges = true;
+        if (timeManuallySelected || game.timeIsSet) {
+          updateData.timeIsSet = true;
+          hasChanges = true;
+        }
       } else if (game.timeIsSet && (!selectedDate || !selectedTime)) {
         updateData.timeIsSet = false;
         hasChanges = true;
@@ -501,13 +512,13 @@ export const EditLeagueGameTeamsModal = ({
             receiverIds: stillNeedToAdd,
             gameId: game.id,
           });
-          toast.success(t('gameDetails.teamsUpdatedInvitesSent'));
+          toast.success(t('gameDetails.gameUpdatedInvitesSent'));
         } catch (error) {
           console.error('Failed to send invites:', error);
-          toast.success(t('gameDetails.teamsUpdated'));
+          toast.success(t('gameDetails.gameUpdated'));
         }
       } else {
-        toast.success(t('gameDetails.teamsUpdated'));
+        toast.success(t('gameDetails.gameUpdated'));
       }
       
       const finalResponse = await gamesApi.getById(game.id);
@@ -842,12 +853,21 @@ export const EditLeagueGameTeamsModal = ({
                     getTimeSlotsForDuration={getTimeSlotsForDuration}
                     isSlotHighlighted={isSlotHighlighted}
                     getDurationLabel={getDurationLabel}
-                    onDateSelect={setSelectedDate}
+                    onDateSelect={(date) => {
+                      setSelectedDate(date);
+                      setTimeManuallySelected(true);
+                    }}
                     onCalendarClick={() => setShowDatePicker(true)}
                     onToggleShowPastTimes={setShowPastTimes}
                     onCloseDatePicker={() => setShowDatePicker(false)}
-                    onTimeSelect={setSelectedTime}
-                    onDurationChange={setDuration}
+                    onTimeSelect={(time) => {
+                      setSelectedTime(time);
+                      setTimeManuallySelected(true);
+                    }}
+                    onDurationChange={(dur) => {
+                      setDuration(dur);
+                      setTimeManuallySelected(true);
+                    }}
                     entityType={game.entityType as EntityType}
                     dateInputRef={dateInputRef}
                     compact={true}

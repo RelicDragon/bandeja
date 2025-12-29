@@ -931,6 +931,8 @@
     "selectDifferentTeams": "Пожалуйста, выберите разные команды",
     "teamsUpdated": "Команды успешно обновлены",
     "teamsUpdatedInvitesSent": "Команды обновлены. Приглашения отправлены новым участникам",
+    "gameUpdated": "Игра успешно обновлена",
+    "gameUpdatedInvitesSent": "Игра обновлена. Приглашения отправлены новым участникам",
     "createGroups": "Создать группы",
     "selectNumberOfGroups": "Выберите количество групп",
     "groupCreationHint_one": "{{count}} участник, максимум {{max}} групп",

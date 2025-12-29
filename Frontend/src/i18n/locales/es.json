@@ -917,6 +917,8 @@
     "selectDifferentTeams": "Por favor selecciona equipos diferentes",
     "teamsUpdated": "Equipos actualizados exitosamente",
     "teamsUpdatedInvitesSent": "Equipos actualizados. Invitaciones enviadas a nuevos participantes",
+    "gameUpdated": "Juego actualizado exitosamente",
+    "gameUpdatedInvitesSent": "Juego actualizado. Invitaciones enviadas a nuevos participantes",
     "createGroups": "Crear grupos",
     "selectNumberOfGroups": "Selecciona el número de grupos",
     "groupCreationHint_one": "{{count}} participante, hasta {{max}} grupos",
