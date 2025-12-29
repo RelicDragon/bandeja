@@ -5,6 +5,8 @@ import { PlayerAvatar, ConfirmationModal } from '@/components';
 import { Game } from '@/types';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { formatDate } from '@/utils/dateFormat';
+import { useAuthStore } from '@/store/authStore';
+import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { SetResult } from '@/types/gameResults';
 import { gamesApi } from '@/api/games';
 import toast from 'react-hot-toast';
@@ -27,8 +29,10 @@ export const LeagueGameCard = ({
   onDelete,
 }: LeagueGameCardProps) => {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const displaySettings = user ? resolveDisplaySettings(user) : null;
 
   const getTeamPlayers = (teamIndex: number) => {
     if (game.fixedTeams && game.fixedTeams.length > teamIndex) {
@@ -131,7 +135,7 @@ export const LeagueGameCard = ({
       datePart = formatDate(game.startTime, dateFormat);
     }
 
-    const timePart = formatDate(game.startTime, 'HH:mm');
+    const timePart = displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm');
     const durationPart = getDurationLabel();
 
     return `${datePart} • ${timePart}${durationPart ? ` • ${durationPart}` : ''}`;

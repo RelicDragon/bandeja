@@ -349,7 +349,6 @@ export const AvailableGamesSection = ({
             availableGames={availableGames}
             filterByLevel={filterByLevel}
             filterByAvailableSlots={filterByAvailableSlots}
-            user={user}
             onMonthChange={onMonthChange}
             onDateRangeChange={onDateRangeChange}
           />

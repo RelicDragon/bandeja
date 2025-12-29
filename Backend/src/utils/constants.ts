@@ -151,6 +151,8 @@ export const PROFILE_SELECT_FIELDS = {
   createdAt: true,
   isActive: true,
   language: true,
+  timeFormat: true,
+  weekStart: true,
   sendTelegramMessages: true,
   sendTelegramInvites: true,
   sendTelegramDirectMessages: true,

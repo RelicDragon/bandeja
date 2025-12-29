@@ -2,8 +2,9 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Trophy, Star } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enUS, ru, es, sr } from 'date-fns/locale';
-import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
+import { useAuthStore } from '@/store/authStore';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
 
 interface MonthCalendarProps {
   selectedDate: Date;
@@ -11,7 +12,6 @@ interface MonthCalendarProps {
   availableGames: Game[];
   filterByLevel?: boolean;
   filterByAvailableSlots?: boolean;
-  user?: any;
   onMonthChange?: (month: number, year: number) => void;
   onDateRangeChange?: (startDate: Date, endDate: Date) => void;
 }
@@ -29,18 +29,22 @@ export const MonthCalendar = ({
   availableGames,
   filterByLevel = false,
   filterByAvailableSlots = true,
-  user,
   onMonthChange,
   onDateRangeChange,
 }: MonthCalendarProps) => {
-  const { i18n } = useTranslation();
+  const { user } = useAuthStore();
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(selectedDate));
   const isNavigatingRef = useRef(false);
   const [visibleDays, setVisibleDays] = useState<Set<number>>(new Set());
   const animationTriggerRef = useRef(0);
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enUS, [i18n.language]);
+  const displaySettings = useMemo(() => user ? resolveDisplaySettings(user) : resolveDisplaySettings(null), [user]);
+  const locale = useMemo(() => {
+    const langCode = displaySettings.locale.split('-')[0].toLowerCase();
+    return localeMap[langCode as keyof typeof localeMap] || enUS;
+  }, [displaySettings.locale]);
+  const weekStartsOn = useMemo(() => displaySettings.weekStart, [displaySettings.weekStart]);
 
   useEffect(() => {
     if (!isNavigatingRef.current) {
@@ -54,8 +58,8 @@ export const MonthCalendar = ({
 
   const monthStart = useMemo(() => startOfMonth(currentMonth), [currentMonth]);
   const monthEnd = useMemo(() => endOfMonth(currentMonth), [currentMonth]);
-  const startDate = useMemo(() => startOfWeek(monthStart, { locale }), [monthStart, locale]);
-  const endDate = useMemo(() => endOfWeek(monthEnd, { locale }), [monthEnd, locale]);
+  const startDate = useMemo(() => startOfWeek(monthStart, { locale, weekStartsOn }), [monthStart, locale, weekStartsOn]);
+  const endDate = useMemo(() => endOfWeek(monthEnd, { locale, weekStartsOn }), [monthEnd, locale, weekStartsOn]);
 
   const dateCellData = useMemo(() => {
     const dataMap = new Map<string, { gameCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean }>();

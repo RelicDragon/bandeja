@@ -16,6 +16,7 @@ import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
+import { extractLanguageCode } from '@/utils/displayPreferences';
 
 export const ProfileContent = () => {
   const { t, i18n } = useTranslation();
@@ -36,6 +37,9 @@ export const ProfileContent = () => {
   const [preferredHandRight, setPreferredHandRight] = useState(user?.preferredHandRight || false);
   const [preferredCourtSideLeft, setPreferredCourtSideLeft] = useState(user?.preferredCourtSideLeft || false);
   const [preferredCourtSideRight, setPreferredCourtSideRight] = useState(user?.preferredCourtSideRight || false);
+  const [language, setLanguage] = useState(user?.language || 'auto');
+  const [timeFormat, setTimeFormat] = useState<'auto' | '12h' | '24h'>(user?.timeFormat || 'auto');
+  const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday'>(user?.weekStart || 'auto');
 
   const [cities, setCities] = useState<City[]>([]);
   const [showCityModal, setShowCityModal] = useState(false);
@@ -60,16 +64,13 @@ export const ProfileContent = () => {
 
   const updateProfile = useCallback(async (updates: Partial<User>) => {
     try {
-      const response = await usersApi.updateProfile({
-        ...updates,
-        language: updates.language ?? i18n.language,
-      });
+      const response = await usersApi.updateProfile(updates);
       console.log(response.data);
       updateUser(response.data);
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
     }
-  }, [i18n.language, updateUser, t]);
+  }, [updateUser, t]);
 
   const debouncedUpdate = useCallback((updates: Partial<User>, skipValidation = false) => {
     if (updateTimeoutRef.current) {
@@ -234,10 +235,21 @@ export const ProfileContent = () => {
   };
 
 
-  const handleChangeLanguage = (lang: string) => {
-    i18n.changeLanguage(lang);
-    localStorage.setItem('language', lang);
-    updateProfile({ language: lang });
+  const handleChangeLanguage = (locale: string) => {
+    setLanguage(locale);
+    const langCode = extractLanguageCode(locale);
+    i18n.changeLanguage(langCode);
+    updateProfile({ language: locale });
+  };
+
+  const handleChangeTimeFormat = (format: 'auto' | '12h' | '24h') => {
+    setTimeFormat(format);
+    updateProfile({ timeFormat: format });
+  };
+
+  const handleChangeWeekStart = (start: 'auto' | 'monday' | 'sunday') => {
+    setWeekStart(start);
+    updateProfile({ weekStart: start });
   };
 
   const handleChangeCity = async (cityId: string) => {
@@ -293,6 +305,14 @@ export const ProfileContent = () => {
       toast.error(error.response?.data?.message || t('errors.generic'));
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      setLanguage(user.language || 'auto');
+      setTimeFormat(user.timeFormat || 'auto');
+      setWeekStart(user.weekStart || 'auto');
+    }
+  }, [user]);
 
   useEffect(() => {
     return () => {
@@ -726,13 +746,45 @@ export const ProfileContent = () => {
               </label>
               <Select
                 options={[
-                  { value: 'en', label: 'English', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
-                  { value: 'ru', label: 'Русский', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
-                  { value: 'sr', label: 'Српски', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
-                  { value: 'es', label: 'Español', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'auto', label: t('profile.auto') || 'Auto', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'en-US', label: 'English (US)', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'en-GB', label: 'English (UK)', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'ru-RU', label: 'Русский', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'sr-RS', label: 'Српски', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'es-ES', label: 'Español', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
                 ]}
-                value={i18n.language}
+                value={language}
                 onChange={handleChangeLanguage}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('profile.timeFormat') || 'Time Format'}
+              </label>
+              <Select
+                options={[
+                  { value: 'auto', label: t('profile.auto') || 'Auto' },
+                  { value: '12h', label: '12-hour' },
+                  { value: '24h', label: '24-hour' },
+                ]}
+                value={timeFormat}
+                onChange={(value) => handleChangeTimeFormat(value as 'auto' | '12h' | '24h')}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('profile.weekStart') || 'Week Start'}
+              </label>
+              <Select
+                options={[
+                  { value: 'auto', label: t('profile.auto') || 'Auto' },
+                  { value: 'monday', label: t('profile.monday') || 'Monday' },
+                  { value: 'sunday', label: t('profile.sunday') || 'Sunday' },
+                ]}
+                value={weekStart}
+                onChange={(value) => handleChangeWeekStart(value as 'auto' | 'monday' | 'sunday')}
               />
             </div>
           </div>

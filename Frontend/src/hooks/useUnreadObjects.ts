@@ -55,7 +55,7 @@ export const useUnreadObjects = (userId: string | undefined) => {
       isLoadingRef.current = false;
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, fetchUserChats]);
 
   useEffect(() => {
     if (showChatFilter && userId) {

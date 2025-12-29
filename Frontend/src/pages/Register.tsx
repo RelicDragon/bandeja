@@ -138,7 +138,7 @@ export const Register = () => {
         genderIsSet,
         language: i18n.language,
       });
-      setAuth(response.data.user, response.data.token);
+      await setAuth(response.data.user, response.data.token);
       navigate('/select-city');
     } catch (err: any) {
       const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';

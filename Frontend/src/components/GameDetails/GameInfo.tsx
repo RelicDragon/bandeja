@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components';
 import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
+import { useAuthStore } from '@/store/authStore';
+import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { GameStatusIcon } from '@/components';
 import { ShareModal } from '@/components/ShareModal';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
@@ -66,6 +68,8 @@ export const GameInfo = ({
   collapsedByDefault = false
 }: GameInfoProps) => {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
+  const displaySettings = user ? resolveDisplaySettings(user) : null;
   const showTags = game.entityType !== 'LEAGUE';
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState({ url: '', title: '', text: '' });
@@ -409,7 +413,7 @@ export const GameInfo = ({
                   {getDateLabel(game.startTime, false)}
                   {shouldShowTiming && (
                     <>
-                      {` ${formatDate(game.startTime, 'HH:mm')}`}
+                      {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
                       {`, ${(() => {
                         const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                         if (durationHours === Math.floor(durationHours)) {
@@ -463,7 +467,7 @@ export const GameInfo = ({
                   {getDateLabel(game.startTime, false)}
                   {shouldShowTiming && (
                     <>
-                      {` ${formatDate(game.startTime, 'HH:mm')}`}
+                      {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
                       {game.entityType !== 'BAR' ? `, ${(() => {
                         const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                         if (durationHours === Math.floor(durationHours)) {
@@ -513,7 +517,7 @@ export const GameInfo = ({
               {getDateLabel(game.startTime, false)}
               {shouldShowTiming && (
                 <>
-                  {` ${formatDate(game.startTime, 'HH:mm')}`}
+                  {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
                   {game.entityType !== 'BAR' ? `, ${(() => {
                     const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                     if (durationHours === Math.floor(durationHours)) {

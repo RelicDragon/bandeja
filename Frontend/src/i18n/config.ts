@@ -4,11 +4,39 @@ import en from './locales/en.json';
 import ru from './locales/ru.json';
 import sr from './locales/sr.json';
 import es from './locales/es.json';
+import { extractLanguageCode } from '@/utils/displayPreferences';
 
 const getSystemLanguage = () => {
   const systemLang = navigator.language.split('-')[0];
   const supportedLanguages = ['en', 'ru', 'sr', 'es'];
   return supportedLanguages.includes(systemLang) ? systemLang : 'en';
+};
+
+const getUserLanguage = (): string => {
+  try {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (user?.language) {
+        const langCode = extractLanguageCode(user.language);
+        if (langCode) {
+          return langCode;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error reading user language:', error);
+  }
+  
+  const storedLang = localStorage.getItem('language');
+  if (storedLang) {
+    const langCode = extractLanguageCode(storedLang);
+    if (langCode) {
+      return langCode;
+    }
+  }
+  
+  return getSystemLanguage();
 };
 
 i18n.use(initReactI18next).init({
@@ -18,7 +46,7 @@ i18n.use(initReactI18next).init({
     sr: { translation: sr },
     es: { translation: es },
   },
-  lng: localStorage.getItem('language') || getSystemLanguage(),
+  lng: getUserLanguage(),
   fallbackLng: 'en',
   interpolation: {
     escapeValue: false,

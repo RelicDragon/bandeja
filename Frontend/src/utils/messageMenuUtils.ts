@@ -1,9 +1,16 @@
 import { formatDate } from '@/utils/dateFormat';
+import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
+import { User } from '@/types';
 
 export const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '😡', '🎉', '🔥'];
 
-export const formatFullDateTime = (dateString: string): string => {
+export const formatFullDateTime = (dateString: string, user?: User | null): string => {
   const date = new Date(dateString);
+  const displaySettings = user ? resolveDisplaySettings(user) : null;
+  if (displaySettings) {
+    const timePart = formatGameTime(dateString, displaySettings);
+    return `${formatDate(date, 'MMM d, yyyy')} ${timePart}`;
+  }
   return formatDate(date, 'MMM d, yyyy HH:mm:ss');
 };
 

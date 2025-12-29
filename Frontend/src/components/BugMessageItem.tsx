@@ -6,6 +6,7 @@ import { ReplyPreview } from './ReplyPreview';
 import { useMessageReadTracking } from '@/hooks/useMessageReadTracking';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
+import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { PlayerCardBottomSheet } from './PlayerCardBottomSheet';
 import { parseSystemMessage, useSystemMessageTranslation } from '@/utils/systemMessages';
 import { FullscreenImageViewer } from './FullscreenImageViewer';
@@ -88,6 +89,8 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
     setFullscreenImage(imageUrl || '');
   };
 
+  const displaySettings = user ? resolveDisplaySettings(user) : null;
+  
   const formatMessageTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -95,9 +98,10 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
     const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     
     if (messageDate.getTime() === today.getTime()) {
-      return formatDate(date, 'HH:mm');
+      return displaySettings ? formatGameTime(dateString, displaySettings) : formatDate(date, 'HH:mm');
     } else {
-      return formatDate(date, 'MMM d HH:mm');
+      const timePart = displaySettings ? formatGameTime(dateString, displaySettings) : formatDate(date, 'HH:mm');
+      return `${formatDate(date, 'MMM d')} ${timePart}`;
     }
   };
 

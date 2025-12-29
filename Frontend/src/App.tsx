@@ -26,6 +26,8 @@ import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerU
 import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
 import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersistence';
 import { useDeepLink } from './hooks/useDeepLink';
+import { extractLanguageCode } from './utils/displayPreferences';
+import i18n from './i18n/config';
 import './i18n/config';
 
 function AppContent() {
@@ -66,6 +68,15 @@ function AppContent() {
       clearTimeout(timer);
     };
   }, [finishInitializing]);
+
+  useEffect(() => {
+    if (user?.language) {
+      const langCode = extractLanguageCode(user.language);
+      if (langCode && i18n.language !== langCode) {
+        i18n.changeLanguage(langCode);
+      }
+    }
+  }, [user?.language]);
 
   useEffect(() => {
     const checkServiceWorker = async () => {

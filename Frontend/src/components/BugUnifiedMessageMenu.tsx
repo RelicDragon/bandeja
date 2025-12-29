@@ -4,6 +4,8 @@ import { ChatMessage } from '@/api/chat';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
 import { REACTION_EMOJIS, formatFullDateTime, getUserDisplayName, getUserInitials } from '@/utils/messageMenuUtils';
+import { useAuthStore } from '@/store/authStore';
+import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { Flag } from 'lucide-react';
 
 interface BugUnifiedMessageMenuProps {
@@ -36,6 +38,8 @@ export const BugUnifiedMessageMenu: React.FC<BugUnifiedMessageMenuProps> = ({
   onReport,
 }) => {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
+  const displaySettings = user ? resolveDisplaySettings(user) : null;
   const menuRef = useRef<HTMLDivElement>(null);
   const mainMenuRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
@@ -178,11 +182,13 @@ export const BugUnifiedMessageMenu: React.FC<BugUnifiedMessageMenuProps> = ({
     const diffInHours = (now.getTime() - readDate.getTime()) / (1000 * 60 * 60);
 
     if (diffInHours < 24) {
-      return `today at ${formatDate(readDate, 'HH:mm')}`;
+      const timePart = displaySettings ? formatGameTime(readAt, displaySettings) : formatDate(readDate, 'HH:mm');
+      return `today at ${timePart}`;
     } else if (diffInHours < 48) {
-      return `yesterday at ${formatDate(readDate, 'HH:mm')}`;
+      const timePart = displaySettings ? formatGameTime(readAt, displaySettings) : formatDate(readDate, 'HH:mm');
+      return `yesterday at ${timePart}`;
     } else {
-      return formatFullDateTime(readAt);
+      return formatFullDateTime(readAt, user);
     }
   };
 
@@ -390,7 +396,7 @@ export const BugUnifiedMessageMenu: React.FC<BugUnifiedMessageMenuProps> = ({
           {/* Message Details */}
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              <div>{formatFullDateTime(message.createdAt)}</div>
+              <div>{formatFullDateTime(message.createdAt, user)}</div>
               <div>{message.sender ? getUserDisplayName(message.sender) : 'Unknown User'}</div>
             </div>
           </div>

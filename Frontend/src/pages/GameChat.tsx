@@ -619,7 +619,7 @@ export const GameChat: React.FC = () => {
     };
     
     loadData();
-  }, [loadContext, loadMessages, id, user?.id, initialChatType, currentChatType, handleChatTypeChange, contextType, userChat]);
+  }, [loadContext, loadMessages, id, user?.id, initialChatType, currentChatType, handleChatTypeChange, contextType, userChat, hasSetDefaultChatType]);
 
   useEffect(() => {
     if (!id) return;

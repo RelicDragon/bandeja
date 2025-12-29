@@ -8,6 +8,7 @@ import { GameAvatar } from '@/components/GameAvatar';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
+import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { getGameResultStatus } from '@/utils/gameResults';
 import { useNavigationStore } from '@/store/navigationStore';
 import { chatApi } from '@/api/chat';
@@ -99,6 +100,7 @@ export const GameCard = ({
   const resultStatus = getGameResultStatus(game, user);
   const isLeagueSeasonGame = game.entityType === 'LEAGUE_SEASON';
   const shouldShowTiming = !isLeagueSeasonGame;
+  const displaySettings = user ? resolveDisplaySettings(user) : null;
 
   const hasOtherTags = (game.photosCount ?? 0) > 0 ||
     !game.isPublic ||
@@ -430,7 +432,7 @@ export const GameCard = ({
                     {showDate && getDateLabel(game.startTime, false)}
                     {shouldShowTiming && (
                       <>
-                        {` ${formatDate(game.startTime, 'HH:mm')}`}
+                        {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
                         {` • ${(() => {
                           const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                           if (durationHours === Math.floor(durationHours)) {
@@ -476,7 +478,7 @@ export const GameCard = ({
                     {showDate && getDateLabel(game.startTime, false)}
                     {shouldShowTiming && (
                       <>
-                        {` ${formatDate(game.startTime, 'HH:mm')}`}
+                        {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
                         {game.entityType !== 'BAR' ? ` • ${(() => {
                           const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                           if (durationHours === Math.floor(durationHours)) {
@@ -532,7 +534,7 @@ export const GameCard = ({
                     {showDate && getDateLabel(game.startTime, false)}
                     {shouldShowTiming && (
                       <>
-                        {` ${formatDate(game.startTime, 'HH:mm')}`}
+                        {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
                         {game.entityType !== 'BAR' ? ` • ${(() => {
                           const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                           if (durationHours === Math.floor(durationHours)) {
@@ -577,7 +579,7 @@ export const GameCard = ({
                   {showDate && getDateLabel(game.startTime, false)}
                   {shouldShowTiming && (
                     <>
-                      {` ${formatDate(game.startTime, 'HH:mm')}`}
+                      {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
                       {game.entityType !== 'BAR' ? ` • ${(() => {
                         const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                         if (durationHours === Math.floor(durationHours)) {
@@ -645,8 +647,8 @@ export const GameCard = ({
                   {getDateLabel(game.startTime)}
                   {shouldShowTiming && (
                     <>
-                      {` ${formatDate(game.startTime, 'HH:mm')}`}
-                      {game.entityType !== 'BAR' ? ` • ${formatDate(game.endTime, 'HH:mm')}` : ''}
+                      {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
+                      {game.entityType !== 'BAR' ? ` • ${displaySettings ? formatGameTime(game.endTime, displaySettings) : formatDate(game.endTime, 'HH:mm')}` : ''}
                     </>
                   )}
                 </span>
@@ -696,8 +698,8 @@ export const GameCard = ({
                 {getDateLabel(game.startTime)}
                 {shouldShowTiming && (
                   <>
-                    {` ${formatDate(game.startTime, 'HH:mm')}`}
-                    {game.entityType !== 'BAR' ? ` • ${formatDate(game.endTime, 'HH:mm')}` : ''}
+                    {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
+                    {game.entityType !== 'BAR' ? ` • ${displaySettings ? formatGameTime(game.endTime, displaySettings) : formatDate(game.endTime, 'HH:mm')}` : ''}
                   </>
                 )}
               </span>

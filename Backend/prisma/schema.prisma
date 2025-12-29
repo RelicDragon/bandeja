@@ -28,7 +28,9 @@ model User {
   gamesWon                   Int                  @default(0)
   wallet                     Int                  @default(0)
   currentCityId              String?
-  language                   String?
+  language                   String?              @default("auto")
+  timeFormat                 String               @default("auto")
+  weekStart                  String               @default("auto")
   preferredHandLeft          Boolean              @default(false)
   preferredHandRight         Boolean              @default(false)
   preferredCourtSideLeft     Boolean              @default(false)

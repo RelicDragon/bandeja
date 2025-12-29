@@ -35,7 +35,9 @@ export interface User {
   totalPoints: number;
   gamesPlayed: number;
   gamesWon: number;
-  language?: string;
+  language?: string; // Full locale (e.g., "en-US", "ru-RU") or "auto"
+  timeFormat?: 'auto' | '12h' | '24h';
+  weekStart?: 'auto' | 'monday' | 'sunday';
   gender: Gender;
   genderIsSet?: boolean;
   isAdmin?: boolean;

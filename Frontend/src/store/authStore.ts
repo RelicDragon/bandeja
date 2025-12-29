@@ -1,12 +1,15 @@
 import { create } from 'zustand';
 import { User } from '@/types';
+import i18n from '@/i18n/config';
+import { extractLanguageCode, detectTimeFormat, detectWeekStart } from '@/utils/displayPreferences';
+import { usersApi } from '@/api';
 
 interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   isInitializing: boolean;
-  setAuth: (user: User, token: string) => void;
+  setAuth: (user: User, token: string) => Promise<void>;
   setToken: (token: string) => void;
   logout: () => void;
   updateUser: (user: User) => void;
@@ -45,13 +48,49 @@ export const useAuthStore = create<AuthState>((set) => {
     token: savedToken,
     isAuthenticated: !!savedToken,
     isInitializing: true,
-    setAuth: (user, token) => {
+    setAuth: async (user, token) => {
       try {
-        const userJson = JSON.stringify(user);
+        const deviceLocale = navigator.language || 'en-US';
+        const needsUpdate = 
+          !user.language || 
+          !user.timeFormat || 
+          !user.weekStart;
+        
+        let userToSet = user;
+        
+        if (needsUpdate) {
+          const updates: Partial<User> = {};
+          if (!user.language) {
+            updates.language = deviceLocale;
+          }
+          if (!user.timeFormat) {
+            updates.timeFormat = detectTimeFormat(deviceLocale);
+          }
+          if (!user.weekStart) {
+            updates.weekStart = detectWeekStart(deviceLocale);
+          }
+          
+          if (Object.keys(updates).length > 0) {
+            try {
+              const response = await usersApi.updateProfile(updates);
+              userToSet = response.data;
+            } catch (error) {
+              console.error('Error auto-detecting preferences:', error);
+              userToSet = { ...user, ...updates };
+            }
+          }
+        }
+        
+        const userJson = JSON.stringify(userToSet);
         localStorage.setItem('user', userJson);
         localStorage.setItem('token', token);
-        set({ user, token, isAuthenticated: true });
+        set({ user: userToSet, token, isAuthenticated: true });
         console.log('Auth saved to localStorage');
+        
+        if (userToSet.language) {
+          const langCode = extractLanguageCode(userToSet.language);
+          i18n.changeLanguage(langCode);
+        }
         
         setTimeout(() => {
           const verifyUser = localStorage.getItem('user');
@@ -85,6 +124,11 @@ export const useAuthStore = create<AuthState>((set) => {
       try {
         localStorage.setItem('user', JSON.stringify(user));
         set({ user });
+        
+        if (user.language) {
+          const langCode = extractLanguageCode(user.language);
+          i18n.changeLanguage(langCode);
+        }
       } catch (error) {
         console.error('Error updating user in localStorage:', error);
       }

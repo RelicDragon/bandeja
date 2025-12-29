@@ -37,7 +37,6 @@ export const Contacts = () => {
   const {
     users,
     chats,
-    unreadCounts,
     loading,
     chatsLoading,
     fetchPlayers,
@@ -58,7 +57,7 @@ export const Contacts = () => {
       fetchUserChats();
       fetchPlayers();
     }
-  }, [user?.id]);
+  }, [user?.id, fetchFavorites, fetchUserChats, fetchPlayers]);
 
   const prevShowChatFilterRef = useRef(showChatFilter);
   useEffect(() => {
@@ -68,7 +67,7 @@ export const Contacts = () => {
       fetchPlayers();
     }
     prevShowChatFilterRef.current = showChatFilter;
-  }, [showChatFilter, user?.id]);
+  }, [showChatFilter, user?.id, fetchUserChats, fetchUnreadCounts, fetchPlayers]);
 
   const contacts = useMemo(() => {
     if (loading || chatsLoading) return [];
@@ -170,7 +169,7 @@ export const Contacts = () => {
       ...favoriteNoUnread,
       ...others
     ];
-  }, [loading, chatsLoading, chats, users, unreadCounts, user?.id, user?.blockedUserIds, showChatFilter, favoriteUserIds, getUnreadCountByUserId, getUserWithMetadata]);
+  }, [loading, chatsLoading, chats, users, user?.id, user?.blockedUserIds, showChatFilter, favoriteUserIds, getUnreadCountByUserId, getUserWithMetadata]);
 
 
   useEffect(() => {
