@@ -184,3 +184,33 @@ export const getUserLevelChangesByUserId = asyncHandler(async (req: AuthRequest,
   });
 });
 
+export const getGameLevelChanges = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId } = req.params;
+
+  const levelChanges = await prisma.levelChangeEvent.findMany({
+    where: { gameId },
+    include: {
+      user: {
+        select: USER_SELECT_FIELDS,
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  const result = levelChanges.map((event) => ({
+    id: event.id,
+    userId: event.userId,
+    levelBefore: event.levelBefore,
+    levelAfter: event.levelAfter,
+    levelChange: event.levelAfter - event.levelBefore,
+    eventType: event.eventType,
+    user: event.user,
+    createdAt: event.createdAt,
+  }));
+
+  res.json({
+    success: true,
+    data: result,
+  });
+});
+

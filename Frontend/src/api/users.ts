@@ -181,6 +181,11 @@ export const usersApi = {
     return response.data;
   },
 
+  getGameLevelChanges: async (gameId: string) => {
+    const response = await api.get<ApiResponse<(LevelHistoryItem & { userId: string; user?: User })[]>>(`/level-changes/game/${gameId}`);
+    return response.data;
+  },
+
   deleteUser: async () => {
     const response = await api.delete<ApiResponse<{ message: string }>>('/users/profile');
     return response.data;

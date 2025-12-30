@@ -7,6 +7,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', levelChangeController.getUserLevelChanges);
+router.get('/game/:gameId', levelChangeController.getGameLevelChanges);
 router.get('/:userId', levelChangeController.getUserLevelChangesByUserId);
 
 export default router;

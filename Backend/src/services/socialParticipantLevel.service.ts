@@ -34,6 +34,10 @@ export class SocialParticipantLevelService {
       return;
     }
 
+    if (!game.startTime) {
+      return;
+    }
+
     const playingParticipants = game.participants.filter(p => p.isPlaying);
     if (playingParticipants.length < 2) {
       return;
@@ -204,6 +208,7 @@ export class SocialParticipantLevelService {
       where: {
         id: { not: currentGameId },
         startTime: { lt: currentGameStartTime },
+        resultsStatus: 'FINAL',
         entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON] },
         AND: [
           { participants: { some: { userId: userId1, isPlaying: true } } },

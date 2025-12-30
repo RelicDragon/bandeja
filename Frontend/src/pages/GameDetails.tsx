@@ -22,6 +22,7 @@ import {
   ConfirmationModal
 } from '@/components';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
+import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
 import { DeleteGameConfirmationModal } from '@/components/DeleteGameConfirmationModal';
 import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
@@ -895,6 +896,10 @@ export const GameDetailsContent = () => {
 
           {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && (
             <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} />
+          )}
+
+          {game.entityType === 'BAR' && game.resultsStatus === 'FINAL' && (
+            <BarParticipantsList gameId={game.id} participants={game.participants} />
           )}
 
           {!isLeague && game.resultsStatus === 'NONE' && (
