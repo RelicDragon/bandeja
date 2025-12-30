@@ -103,6 +103,7 @@ export interface UserChat {
     lastName?: string;
     avatar?: string;
     level: number;
+    socialLevel: number;
     gender: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
   };
   user2: {
@@ -111,6 +112,7 @@ export interface UserChat {
     lastName?: string;
     avatar?: string;
     level: number;
+    socialLevel: number;
     gender: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
   };
   lastMessage?: ChatMessage;

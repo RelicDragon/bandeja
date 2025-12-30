@@ -203,6 +203,9 @@ export async function deleteGameResults(gameId: string, requestUserId: string) {
       where: { gameId },
     });
 
+    const { SocialParticipantLevelService } = await import('./socialParticipantLevel.service');
+    await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
+
     await tx.levelChangeEvent.deleteMany({
       where: {
         gameId: gameId,
@@ -334,6 +337,9 @@ export async function resetGameResults(gameId: string, requestUserId: string) {
       where: { gameId },
     });
 
+    const { SocialParticipantLevelService } = await import('./socialParticipantLevel.service');
+    await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
+
     await tx.levelChangeEvent.deleteMany({
       where: {
         gameId: gameId,
@@ -424,6 +430,9 @@ export async function editGameResults(gameId: string, requestUserId: string) {
         },
       },
     });
+
+    const { SocialParticipantLevelService } = await import('./socialParticipantLevel.service');
+    await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
 
     await tx.levelChangeEvent.deleteMany({
       where: {

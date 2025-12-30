@@ -8,7 +8,7 @@ export interface LevelHistoryItem {
   levelAfter: number;
   levelChange: number;
   createdAt: string;
-  eventType?: 'GAME' | 'LUNDA' | 'SET' | 'OTHER';
+  eventType?: 'GAME' | 'LUNDA' | 'SET' | 'OTHER' | 'SOCIAL_BAR';
 }
 
 export type GamesStatType = '30' | '90' | 'all';
@@ -128,6 +128,7 @@ export interface InvitablePlayer {
   lastName?: string;
   avatar?: string;
   level: number;
+  socialLevel: number;
   gender: Gender;
   telegramUsername?: string;
   interactionCount: number;

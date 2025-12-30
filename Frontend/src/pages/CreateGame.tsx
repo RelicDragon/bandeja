@@ -534,12 +534,14 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
           onGameTypeChange={setGameType}
         />
 
-        <GameSetupSection
-          onOpenSetup={() => setIsGameSetupModalOpen(true)}
-          hasSetup={hasGameSetup}
-        />
+        {entityType !== 'BAR' && (
+          <GameSetupSection
+            onOpenSetup={() => setIsGameSetupModalOpen(true)}
+            hasSetup={hasGameSetup}
+          />
+        )}
 
-        {maxParticipants > 4 && (
+        {maxParticipants > 4 && entityType !== 'BAR' && (
           <MultipleCourtsSelector
             courts={courts}
             selectedClub={selectedClub}

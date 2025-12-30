@@ -75,6 +75,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
       lastName: true,
       avatar: true,
       level: true,
+      socialLevel: true,
       gender: true,
       isAdmin: true,
       isTrainer: true,

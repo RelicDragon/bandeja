@@ -5,6 +5,7 @@ import { deleteInvitesForStartedGame, deleteInvitesForArchivedGame } from '../co
 import { EntityType } from '@prisma/client';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
 import notificationService from './notification.service';
+import { BarResultsService } from './barResults.service';
 
 export class GameStatusScheduler {
   private cronJob: cron.ScheduledTask | null = null;
@@ -59,11 +60,22 @@ export class GameStatusScheduler {
             continue;
           }
 
+          const previousStatus = game.status;
+
           await prisma.game.update({
             where: { id: game.id },
             data: { status: newStatus },
           });
           updated++;
+
+          // Handle BAR game completion
+          if (game.entityType === EntityType.BAR && previousStatus !== 'FINISHED' && newStatus === 'FINISHED') {
+            try {
+              await BarResultsService.setBarResults(game.id);
+            } catch (error) {
+              console.error(`Failed to set bar results for game ${game.id}:`, error);
+            }
+          }
 
           // Delete invites when game status changes to STARTED
           if (newStatus === 'STARTED') {

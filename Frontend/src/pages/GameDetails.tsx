@@ -893,7 +893,7 @@ export const GameDetailsContent = () => {
             <PhotosSection game={game} onGameUpdate={setGame} />
           )}
 
-          {!isLeagueSeason && game.resultsStatus !== 'NONE' && (
+          {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && (
             <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} />
           )}
 
@@ -952,7 +952,7 @@ export const GameDetailsContent = () => {
             </div>
           )}
 
-          {!isLeague && canViewSettings && (
+          {!isLeague && canViewSettings && game.entityType !== 'BAR' && (
             <GameSetup
               onOpenSetup={() => setIsGameSetupModalOpen(true)}
               canEdit={canEdit}
@@ -966,7 +966,7 @@ export const GameDetailsContent = () => {
             />
           )}
 
-          {game.maxParticipants > 4 && game.resultsStatus === 'NONE' && (
+          {game.maxParticipants > 4 && game.resultsStatus === 'NONE' && game.entityType !== 'BAR' && (
             <MultipleCourtsSelector
               gameId={game.id}
               courts={courts}
@@ -993,7 +993,7 @@ export const GameDetailsContent = () => {
             />
           )}
 
-          {game.resultsStatus === 'NONE' && game && user && canUserEditResults(game, user) && (
+          {game.resultsStatus === 'NONE' && game && user && canUserEditResults(game, user) && game.entityType !== 'BAR' && (
             <Card className="overflow-hidden">
               <button
                 onClick={handleStartResultsEntry}

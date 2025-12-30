@@ -110,6 +110,7 @@ export interface GameParticipant {
     lastName?: string;
     avatar?: string;
     level: number;
+    socialLevel?: number;
     gender: Gender;
   };
 }

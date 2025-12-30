@@ -303,7 +303,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         lastName: p.lastName,
         avatar: p.avatar,
         level: p.level,
-        socialLevel: 0,
+        socialLevel: p.socialLevel || 0,
         gender: p.gender,
       }));
 
@@ -378,7 +378,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
             lastName: otherUser.lastName,
             avatar: otherUser.avatar,
             level: otherUser.level,
-            socialLevel: (otherUser as any).socialLevel || 0,
+            socialLevel: otherUser.socialLevel || 0,
             gender: otherUser.gender,
           };
 

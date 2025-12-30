@@ -1,6 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { WinnerOfGame, Prisma } from '@prisma/client';
+import { WinnerOfGame, Prisma, EntityType } from '@prisma/client';
 import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
 import { canModifyResults } from '../../utils/parentGamePermissions';
@@ -138,6 +138,9 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
   const { LeagueGameResultsService } = await import('../league/gameResults.service');
   await LeagueGameResultsService.unsyncGameResults(gameId, tx);
 
+  const { SocialParticipantLevelService } = await import('../socialParticipantLevel.service');
+  await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
+
   for (const outcome of game.outcomes) {
     await tx.user.update({
       where: { id: outcome.userId },
@@ -180,7 +183,11 @@ export async function applyGameOutcomes(
 ): Promise<{ wasEdited: boolean }> {
   const game = await tx.game.findUnique({
     where: { id: gameId },
-    include: {
+    select: {
+      id: true,
+      entityType: true,
+      affectsRating: true,
+      winnerOfGame: true,
       rounds: {
         orderBy: { roundNumber: 'asc' },
       },
@@ -314,6 +321,11 @@ export async function applyGameOutcomes(
 
     const { LeagueGameResultsService } = await import('../league/gameResults.service');
     await LeagueGameResultsService.syncGameResults(gameId, tx);
+
+    if (previousResultsStatus !== 'FINAL' && game.entityType !== EntityType.BAR && game.entityType !== EntityType.LEAGUE_SEASON) {
+      const { SocialParticipantLevelService } = await import('../socialParticipantLevel.service');
+      await SocialParticipantLevelService.applySocialParticipantLevelChanges(gameId, tx);
+    }
     
     const isEdited = previousResultsStatus === 'FINAL' || previousResultsStatus === 'IN_PROGRESS';
     return { wasEdited: isEdited };

@@ -119,6 +119,20 @@ export interface OutcomeExplanation {
     draws: number;
     averageOpponentLevel: number;
   };
+  socialLevelChange?: {
+    levelBefore: number;
+    levelAfter: number;
+    levelChange: number;
+    baseBoost: number;
+    roleMultiplier: number;
+    roleName: string;
+    participantBreakdown: Array<{
+      participantId: string;
+      participantName: string;
+      gamesPlayedTogether: number;
+      boost: number;
+    }>;
+  };
 }
 
 export interface SetExplanation {

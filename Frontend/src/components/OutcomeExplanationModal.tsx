@@ -42,7 +42,13 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
   };
 
   const formatNumber = (value: number) => {
-    return value.toFixed(getDecimals(value));
+    const formatted = value.toFixed(getDecimals(value));
+    const absValue = Math.abs(value);
+    if (absValue < 0.1 && absValue > 0) {
+      // Only remove trailing zeros after the decimal point, but keep at least one digit after the decimal
+      return formatted.replace(/0+$/, '').replace(/\.$/, '');
+    }
+    return formatted;
   };
 
   const formatChange = (change: number) => {
@@ -295,6 +301,85 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
               <strong>{t('gameResults.howItWorks')}:</strong> {t('gameResults.ratingExplanation')}
             </p>
           </div>
+
+          {explanation.socialLevelChange && (
+            <div className="mt-6 space-y-4">
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <h3 className="text-lg font-semibold mb-3 text-amber-900 dark:text-amber-100">
+                  {t('gameResults.socialLevelChange')}
+                </h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <span className="text-amber-800 dark:text-amber-200">{t('gameResults.socialLevelBefore')}:</span>
+                    <span className="ml-2 font-semibold text-amber-900 dark:text-amber-100">
+                      {formatNumber(explanation.socialLevelChange.levelBefore)} → {formatNumber(explanation.socialLevelChange.levelAfter)}
+                    </span>
+                    <span className={`ml-2 font-bold text-lg ${getLevelChangeColor(explanation.socialLevelChange.levelChange)}`}>
+                      {formatChange(explanation.socialLevelChange.levelChange)}
+                    </span>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-amber-300 dark:border-amber-700">
+                    <div className="mb-2">
+                      <span className="text-amber-800 dark:text-amber-200">{t('gameResults.baseBoost')}:</span>
+                      <span className="ml-2 font-semibold text-amber-900 dark:text-amber-100">
+                        {formatChange(explanation.socialLevelChange.baseBoost)}
+                      </span>
+                    </div>
+                    <div className="mb-2">
+                      <span className="text-amber-800 dark:text-amber-200">{t('gameResults.roleMultiplier')}:</span>
+                      <span className="ml-2 font-semibold text-purple-600 dark:text-purple-400">
+                        {formatNumber(explanation.socialLevelChange.roleMultiplier)}x
+                      </span>
+                      <span className="ml-2 text-xs text-amber-700 dark:text-amber-300">
+                        ({explanation.socialLevelChange.roleName})
+                      </span>
+                    </div>
+                    <div className="mb-2">
+                      <span className="text-amber-800 dark:text-amber-200">{t('gameResults.totalSocialLevelChange')}:</span>
+                      <span className={`ml-2 font-bold text-lg ${getLevelChangeColor(explanation.socialLevelChange.levelChange)}`}>
+                        {formatChange(explanation.socialLevelChange.levelChange)}
+                      </span>
+                      <span className="ml-2 text-xs text-amber-700 dark:text-amber-300">
+                        ({formatChange(explanation.socialLevelChange.baseBoost)} × {formatNumber(explanation.socialLevelChange.roleMultiplier)})
+                      </span>
+                    </div>
+                  </div>
+
+                  {explanation.socialLevelChange.participantBreakdown.length > 0 && (
+                    <div className="pt-2 border-t border-amber-300 dark:border-amber-700">
+                      <div className="text-xs font-semibold text-amber-800 dark:text-amber-200 mb-2">
+                        {t('gameResults.socialLevelBreakdown')}:
+                      </div>
+                      <div className="space-y-1">
+                        {explanation.socialLevelChange.participantBreakdown.map((participant, index) => (
+                          <div key={index} className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="text-amber-700 dark:text-amber-300">
+                                {participant.participantName}
+                              </span>
+                              <span className="text-amber-600 dark:text-amber-400 text-[10px]">
+                                ({t('gameResults.gamesPlayedTogether', { count: participant.gamesPlayedTogether })})
+                              </span>
+                            </div>
+                            <span className={`font-semibold ${getLevelChangeColor(participant.boost)}`}>
+                              {formatChange(participant.boost)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <p className="text-xs text-amber-800 dark:text-amber-200">
+                  <strong>{t('gameResults.howItWorks')}:</strong> {t('gameResults.socialLevelExplanation')}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

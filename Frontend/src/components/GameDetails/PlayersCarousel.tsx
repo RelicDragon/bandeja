@@ -216,6 +216,7 @@ export const PlayersCarousel = ({
                       lastName: participant.user.lastName,
                       avatar: participant.user.avatar,
                       level: participant.user.level,
+                      socialLevel: participant.user.socialLevel,
                       gender: participant.user.gender,
                     }}
                     isCurrentUser={participant.user.id === userId}

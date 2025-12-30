@@ -86,11 +86,11 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
   };
 
   const allMergedHistory = useMemo(() => {
-    if (showSocialLevel) {
-      return [];
-    }
+    const filteredEvents = showSocialLevel
+      ? levelChangeEvents.filter(item => item.eventType?.startsWith('SOCIAL_'))
+      : levelChangeEvents.filter(item => !item.eventType?.startsWith('SOCIAL_'));
     
-    return levelChangeEvents
+    return filteredEvents
       .map(item => ({
         ...item,
         createdAt: new Date(item.createdAt).toISOString(),

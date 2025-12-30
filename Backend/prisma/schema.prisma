@@ -889,6 +889,8 @@ enum LevelChangeEventType {
   LUNDA
   SET
   OTHER
+  SOCIAL_BAR
+  SOCIAL_PARTICIPANT
 }
 
 model League {

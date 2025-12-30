@@ -75,41 +75,43 @@ export const GameSettingsSection = ({
         </button>
       </div>
       <div className="space-y-2">
-        <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.gameType')}
-            </span>
-            <div className="flex-shrink-0 w-40">
-              <Select
-                options={
-                  entityType === 'GAME'
-                    ? [
-                        { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                        { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                        { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                        { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                      ]
-                    : [
-                        { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                        { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                        { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                        { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
-                        { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
-                        { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                      ]
-                }
-                value={gameType}
-                onChange={(value) => onGameTypeChange(value as GameType)}
-              />
+        {entityType !== 'BAR' && (
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('createGame.gameType')}
+              </span>
+              <div className="flex-shrink-0 w-40">
+                <Select
+                  options={
+                    entityType === 'GAME'
+                      ? [
+                          { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                          { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                          { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
+                          { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                        ]
+                      : [
+                          { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                          { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                          { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
+                          { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
+                          { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
+                          { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                        ]
+                  }
+                  value={gameType}
+                  onChange={(value) => onGameTypeChange(value as GameType)}
+                />
+              </div>
             </div>
+            {showNotes && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('createGame.gameTypeNote')}
+              </p>
+            )}
           </div>
-          {showNotes && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {t('createGame.gameTypeNote')}
-            </p>
-          )}
-        </div>
+        )}
         {(entityType === 'GAME' || entityType === 'TOURNAMENT' || entityType === 'LEAGUE') && (
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
@@ -144,7 +146,7 @@ export const GameSettingsSection = ({
             )}
           </div>
         )}
-        {maxParticipants !== 2 && (
+        {maxParticipants !== 2 && entityType !== 'BAR' && (
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
@@ -167,25 +169,27 @@ export const GameSettingsSection = ({
             )}
           </div>
         )}
-        <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.ratingGame.title')}
-            </span>
-            <div className="flex-shrink-0">
-              <ToggleSwitch checked={isRatingGame} onChange={onRatingGameChange} />
+        {entityType !== 'BAR' && (
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('createGame.ratingGame.title')}
+              </span>
+              <div className="flex-shrink-0">
+                <ToggleSwitch checked={isRatingGame} onChange={onRatingGameChange} />
+              </div>
             </div>
+            {showNotes && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {isRatingGame 
+                  ? t('createGame.ratingGame.note.true')
+                  : t('createGame.ratingGame.note.false')}
+              </p>
+            )}
           </div>
-          {showNotes && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {isRatingGame 
-                ? t('createGame.ratingGame.note.true')
-                : t('createGame.ratingGame.note.false')}
-            </p>
-          )}
-        </div>
+        )}
         
-        <Divider />
+        {entityType !== 'BAR' && <Divider />}
         
         <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">

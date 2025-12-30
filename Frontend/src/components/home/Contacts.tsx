@@ -23,6 +23,7 @@ interface ContactItem {
     lastName?: string;
     avatar?: string;
     level: number;
+    socialLevel?: number;
     gender?: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
   };
 }
@@ -134,6 +135,7 @@ export const Contacts = () => {
             lastName: userData.lastName,
             avatar: userData.avatar ?? undefined,
             level: userData.level,
+            socialLevel: userData.socialLevel,
             gender: userData.gender
           }
         };
@@ -214,6 +216,7 @@ export const Contacts = () => {
           lastName: contact.user?.lastName,
           avatar: contact.user?.avatar,
           level: contact.user?.level || 0,
+          socialLevel: contact.user?.socialLevel,
           gender: contact.user?.gender || 'PREFER_NOT_TO_SAY',
         },
       }));

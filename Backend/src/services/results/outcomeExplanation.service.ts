@@ -1,5 +1,10 @@
 import prisma from '../../config/database';
 import { calculateRatingUpdate, RELIABILITY_INCREMENT } from './rating.service';
+import { LevelChangeEventType, EntityType, ParticipantRole } from '@prisma/client';
+import {
+  SOCIAL_PARTICIPANT_LEVEL,
+  ROLE_MULTIPLIERS,
+} from '../socialLevelConstants';
 
 interface ExplanationData {
   userId: string;
@@ -16,6 +21,20 @@ interface ExplanationData {
     losses: number;
     draws: number;
     averageOpponentLevel: number;
+  };
+  socialLevelChange?: {
+    levelBefore: number;
+    levelAfter: number;
+    levelChange: number;
+    baseBoost: number;
+    roleMultiplier: number;
+    roleName: string;
+    participantBreakdown: Array<{
+      participantId: string;
+      participantName: string;
+      gamesPlayedTogether: number;
+      boost: number;
+    }>;
   };
 }
 
@@ -90,6 +109,7 @@ export async function getOutcomeExplanation(
               level: true,
               reliability: true,
               gamesPlayed: true,
+              socialLevel: true,
             },
           },
         },
@@ -286,6 +306,104 @@ export async function getOutcomeExplanation(
   const finalLevel = Math.max(1.0, Math.min(7.0, startingLevel + totalLevelChange));
   const clampedLevelChange = finalLevel - startingLevel;
 
+  // Get social level change data if it exists
+  let socialLevelChangeData = undefined;
+  if (game.entityType !== EntityType.BAR && game.entityType !== EntityType.LEAGUE_SEASON) {
+    const socialLevelEvent = await prisma.levelChangeEvent.findFirst({
+      where: {
+        gameId: gameId,
+        userId: userId,
+        eventType: LevelChangeEventType.SOCIAL_PARTICIPANT,
+      },
+    });
+
+    if (socialLevelEvent) {
+      const currentParticipant = game.participants.find(p => p.userId === userId);
+      if (currentParticipant) {
+        const playingParticipants = game.participants.filter(p => p.isPlaying);
+        const allParticipants = game.participants;
+        
+        const parentGameParticipants = game.parentId
+          ? await prisma.gameParticipant.findMany({
+              where: {
+                gameId: game.parentId,
+                userId: { in: allParticipants.map(p => p.userId) },
+              },
+              select: {
+                userId: true,
+                role: true,
+              },
+            })
+          : [];
+
+        const parentParticipantMap = new Map(
+          parentGameParticipants.map(p => [p.userId, p.role])
+        );
+
+        let baseBoost = 0.0;
+        const participantBreakdown: Array<{
+          participantId: string;
+          participantName: string;
+          gamesPlayedTogether: number;
+          boost: number;
+        }> = [];
+
+        for (const otherParticipant of playingParticipants) {
+          if (otherParticipant.userId === userId) {
+            continue;
+          }
+
+          const numberOfPlayedGames = await countCoPlayedGames(
+            userId,
+            otherParticipant.userId,
+            gameId,
+            game.startTime
+          );
+
+          const boost =
+            SOCIAL_PARTICIPANT_LEVEL.MAX_BOOST_PER_RELATIONSHIP -
+            Math.min(
+              SOCIAL_PARTICIPANT_LEVEL.MAX_GAMES_FOR_REDUCTION,
+              numberOfPlayedGames
+            ) *
+              SOCIAL_PARTICIPANT_LEVEL.REDUCTION_PER_GAME;
+          
+          baseBoost += boost;
+
+          const otherUser = otherParticipant.user;
+          participantBreakdown.push({
+            participantId: otherParticipant.userId,
+            participantName: `${otherUser.firstName || ''} ${otherUser.lastName || ''}`.trim() || 'Unknown',
+            gamesPlayedTogether: numberOfPlayedGames,
+            boost: boost,
+          });
+        }
+
+        const multiplier = getRoleMultiplier(
+          currentParticipant.role,
+          parentParticipantMap.get(userId),
+          currentParticipant.isPlaying
+        );
+
+        const roleName = getRoleName(
+          currentParticipant.role,
+          parentParticipantMap.get(userId),
+          currentParticipant.isPlaying
+        );
+
+        socialLevelChangeData = {
+          levelBefore: socialLevelEvent.levelBefore,
+          levelAfter: socialLevelEvent.levelAfter,
+          levelChange: socialLevelEvent.levelAfter - socialLevelEvent.levelBefore,
+          baseBoost,
+          roleMultiplier: multiplier,
+          roleName,
+          participantBreakdown,
+        };
+      }
+    }
+  }
+
   return {
     userId,
     userLevel: startingLevel,
@@ -302,5 +420,86 @@ export async function getOutcomeExplanation(
       draws,
       averageOpponentLevel,
     },
+    socialLevelChange: socialLevelChangeData,
   };
+}
+
+async function countCoPlayedGames(
+  userId1: string,
+  userId2: string,
+  currentGameId: string,
+  currentGameStartTime: Date
+): Promise<number> {
+  const games = await prisma.game.findMany({
+    where: {
+      id: { not: currentGameId },
+      startTime: { lt: currentGameStartTime },
+      entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON] },
+      AND: [
+        { participants: { some: { userId: userId1, isPlaying: true } } },
+        { participants: { some: { userId: userId2, isPlaying: true } } },
+      ],
+    },
+    select: { id: true },
+  });
+
+  return games.length;
+}
+
+function getRoleMultiplier(
+  currentRole: ParticipantRole,
+  parentRole: ParticipantRole | undefined,
+  isPlaying: boolean
+): number {
+  if (currentRole === ParticipantRole.OWNER) {
+    return isPlaying
+      ? ROLE_MULTIPLIERS.OWNER.PLAYED
+      : ROLE_MULTIPLIERS.OWNER.NOT_PLAYED;
+  }
+
+  if (parentRole === ParticipantRole.OWNER) {
+    return isPlaying
+      ? ROLE_MULTIPLIERS.PARENT_OWNER.PLAYED
+      : ROLE_MULTIPLIERS.PARENT_OWNER.NOT_PLAYED;
+  }
+
+  if (currentRole === ParticipantRole.ADMIN) {
+    return isPlaying
+      ? ROLE_MULTIPLIERS.ADMIN.PLAYED
+      : ROLE_MULTIPLIERS.ADMIN.NOT_PLAYED;
+  }
+
+  if (parentRole === ParticipantRole.ADMIN) {
+    return isPlaying
+      ? ROLE_MULTIPLIERS.PARENT_ADMIN.PLAYED
+      : ROLE_MULTIPLIERS.PARENT_ADMIN.NOT_PLAYED;
+  }
+
+  return isPlaying
+    ? ROLE_MULTIPLIERS.PARTICIPANT.PLAYED
+    : ROLE_MULTIPLIERS.PARTICIPANT.NOT_PLAYED;
+}
+
+function getRoleName(
+  currentRole: ParticipantRole,
+  parentRole: ParticipantRole | undefined,
+  isPlaying: boolean
+): string {
+  if (currentRole === ParticipantRole.OWNER) {
+    return isPlaying ? 'Owner (Played)' : 'Owner (Not Played)';
+  }
+
+  if (parentRole === ParticipantRole.OWNER) {
+    return isPlaying ? 'Parent Owner (Played)' : 'Parent Owner (Not Played)';
+  }
+
+  if (currentRole === ParticipantRole.ADMIN) {
+    return isPlaying ? 'Admin (Played)' : 'Admin (Not Played)';
+  }
+
+  if (parentRole === ParticipantRole.ADMIN) {
+    return isPlaying ? 'Parent Admin (Played)' : 'Parent Admin (Not Played)';
+  }
+
+  return isPlaying ? 'Participant' : 'Participant (Not Played)';
 }

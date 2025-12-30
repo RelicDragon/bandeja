@@ -80,7 +80,7 @@ export function resolveDisplaySettings(
 export function formatGameTime(
   utcDate: string,
   settings: ResolvedDisplaySettings
-): string {
+): string { 
   try {
     return new Intl.DateTimeFormat(settings.locale, {
       hour: 'numeric',

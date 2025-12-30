@@ -9,6 +9,7 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType } from '../../utils/systemMessages';
 import telegramNotificationService from '../telegram/notification.service';
 import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../user-timezone.service';
+import { BarResultsService } from '../barResults.service';
 
 export class GameUpdateService {
   static async updateGame(id: string, data: any, userId: string) {
@@ -89,12 +90,14 @@ export class GameUpdateService {
 
     const currentGame = await prisma.game.findUnique({
       where: { id },
-      select: { startTime: true, endTime: true, resultsStatus: true, clubId: true, courtId: true, cityId: true },
+      select: { startTime: true, endTime: true, resultsStatus: true, clubId: true, courtId: true, cityId: true, status: true, entityType: true },
     });
 
     const oldClubId = currentGame?.clubId;
     const oldStartTime = currentGame?.startTime;
     const oldEndTime = currentGame?.endTime;
+    const oldStatus = currentGame?.status;
+    const oldEntityType = currentGame?.entityType;
 
     // Normalize courtId: convert 'notBooked', empty string, or undefined to null
     let normalizedCourtId: string | null = null;
@@ -340,6 +343,15 @@ export class GameUpdateService {
 
     if (!updatedGame) {
       throw new ApiError(404, 'Game not found after update');
+    }
+
+    // Handle BAR game completion when status changes to FINISHED
+    if (oldEntityType === 'BAR' && oldStatus !== 'FINISHED' && updatedGame.status === 'FINISHED') {
+      try {
+        await BarResultsService.setBarResults(id);
+      } catch (error) {
+        console.error(`Failed to set bar results for game ${id}:`, error);
+      }
     }
 
     try {

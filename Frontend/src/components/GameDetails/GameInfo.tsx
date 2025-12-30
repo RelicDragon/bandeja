@@ -209,7 +209,7 @@ export const GameInfo = ({
       return t('createGame.yesterday');
     } else {
       const daysDiff = Math.abs(Math.round((gameDateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24)));
-      const dateFormat = daysDiff <= 7 ? 'EEE, MMM d' : 'MMM d';
+      const dateFormat = daysDiff <= 7 ? 'EEEE, MMM d' : 'MMM d';
       return formatDate(gameDate, dateFormat) + (includeComma ? ',' : '');
     }
   };
@@ -648,7 +648,7 @@ export const GameInfo = ({
             {game.timeIsSet === false ? (
               <span className="text-gray-500 dark:text-gray-400 italic">{t('gameDetails.datetimeNotSet')}</span>
             ) : (
-              <span>{formatDate(game.startTime, 'PPP')}</span>
+              <span>{formatDate(game.startTime, 'EEEE, PPP')}</span>
             )}
           </div>
           {game.entityType !== 'LEAGUE_SEASON' && game.timeIsSet !== false && (
