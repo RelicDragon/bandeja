@@ -23,9 +23,10 @@ export class AdminLocationsService {
     name: string;
     country: string;
     timezone?: string;
+    telegramGroupId?: string | null;
     isActive?: boolean;
   }) {
-    const { name, country, timezone, isActive } = data;
+    const { name, country, timezone, telegramGroupId, isActive } = data;
 
     if (!name) {
       throw new ApiError(400, 'City name is required');
@@ -50,6 +51,7 @@ export class AdminLocationsService {
         name,
         country,
         timezone: cityTimezone,
+        telegramGroupId: telegramGroupId ?? null,
         isActive: isActive !== undefined ? isActive : true,
       },
     });
@@ -61,9 +63,10 @@ export class AdminLocationsService {
     name?: string;
     country?: string;
     timezone?: string;
+    telegramGroupId?: string | null;
     isActive?: boolean;
   }) {
-    const { name, country, timezone, isActive } = data;
+    const { name, country, timezone, telegramGroupId, isActive } = data;
 
     const existingCity = await prisma.city.findUnique({
       where: { id: cityId },
@@ -87,6 +90,7 @@ export class AdminLocationsService {
         ...(name && { name }),
         ...(country && { country }),
         ...(timezone && { timezone }),
+        ...(telegramGroupId !== undefined && { telegramGroupId }),
         ...(isActive !== undefined && { isActive }),
       },
     });

@@ -2,8 +2,9 @@ import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { ChatType, ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown, formatDuration } from '../utils';
-import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
+import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
+import { buildMessageWithButtons } from '../shared/message-builder';
+import { formatGameInfoForUser, formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 
 export async function sendGameChatNotification(
@@ -12,8 +13,7 @@ export async function sendGameChatNotification(
   game: any,
   sender: any
 ) {
-  const place = game.court?.club?.name || game.club?.name || 'Unknown location';
-  const senderName = `${sender.firstName || ''} ${sender.lastName || ''}`.trim() || 'Unknown';
+  const senderName = formatUserName(sender);
   const messageContent = message.content || '[Media]';
 
   const chatType = message.chatType as ChatType;
@@ -66,36 +66,27 @@ export async function sendGameChatNotification(
 
     if (canSeeMessage) {
       try {
-        const lang = user.language || 'en';
-        const timezone = await getUserTimezoneFromCityId(user.currentCityId);
-        const shortDate = await getDateLabelInTimezone(game.startTime, timezone, lang, false);
-        const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang);
-        const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
+        const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
+        const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
         
-        const formattedMessage = `📍 ${escapeMarkdown(place)} ${shortDate} ${startTime}, ${duration}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
-        
-        const showGameButton = t('telegram.showGame', lang);
-        const replyButton = t('telegram.reply', lang);
+        const formattedMessage = `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
         
         const chatTypeChar = chatType === 'PUBLIC' ? 'P' : chatType === 'PRIVATE' ? 'V' : 'A';
-        const showGameData = `sg:${game.id}:${user.id}`;
-        const replyData = `rm:${message.id}:${game.id}:${chatTypeChar}`;
         
-        await api.sendMessage(user.telegramId, formattedMessage, { 
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [[
-              {
-                text: showGameButton,
-                callback_data: showGameData
-              },
-              {
-                text: replyButton,
-                callback_data: replyData
-              }
-            ]]
+        const buttons = [[
+          {
+            text: t('telegram.showGame', lang),
+            callback_data: `sg:${game.id}:${user.id}`
+          },
+          {
+            text: t('telegram.reply', lang),
+            callback_data: `rm:${message.id}:${game.id}:${chatTypeChar}`
           }
-        });
+        ]];
+
+        const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
+        
+        await api.sendMessage(user.telegramId, finalMessage, options);
       } catch (error) {
         console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
       }

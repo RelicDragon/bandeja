@@ -1,8 +1,7 @@
 import prisma from '../../../config/database';
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
-import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
-import { formatDuration } from '../../telegram/utils';
+import { formatGameInfoForUser } from '../../shared/notification-base';
 
 export async function createGameReminderPushNotification(
   gameId: string,
@@ -26,11 +25,7 @@ export async function createGameReminderPushNotification(
   }
 
   const lang = recipient.language || 'en';
-  const place = game.court?.club?.name || game.club?.name || 'Unknown location';
-  const timezone = await getUserTimezoneFromCityId(recipient.currentCityId);
-  const shortDate = await getDateLabelInTimezone(game.startTime, timezone, lang, false);
-  const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang);
-  const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
+  const gameInfo = await formatGameInfoForUser(game, recipient.currentCityId, lang);
   const entityTypeLabel = t(`games.entityTypes.${game.entityType}`, lang);
 
   const title = hoursBeforeStart === 24 
@@ -41,7 +36,7 @@ export async function createGameReminderPushNotification(
   if (game.name) {
     body += `: ${game.name}`;
   }
-  body += `\n${place} ${shortDate} ${startTime}, ${duration}`;
+  body += `\n${gameInfo.place} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
   return {
     type: NotificationType.GAME_REMINDER,

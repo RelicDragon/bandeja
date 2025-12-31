@@ -2,8 +2,9 @@ import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown, escapeHTML, convertMarkdownMessageToHTML, formatDuration } from '../utils';
-import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
+import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
+import { buildMessageWithButtons } from '../shared/message-builder';
+import { formatGameInfoForUser } from '../../shared/notification-base';
 
 interface PlayerStats {
   wins: number;
@@ -178,14 +179,13 @@ export async function sendGameFinishedNotification(
   console.log(`[GAME RESULTS NOTIFICATION] User ${userId} is eligible, preparing message`);
   console.log(`[GAME RESULTS NOTIFICATION] Telegram ID: ${participant.user.telegramId}`);
 
-  const lang = participant.user.language || 'en';
+  const lang = await getUserLanguageFromTelegramId(participant.user.telegramId, undefined);
   const stats = calculatePlayerStats(userId, game.rounds);
   const metadata = userOutcome.metadata as any || {};
+  const gameInfo = await formatGameInfoForUser(game, participant.user.currentCityId, lang);
   
   const gameName = game.name ? game.name : t(`games.gameTypes.${game.gameType}`, lang);
   const clubName = game.court?.club?.name || game.club?.name;
-  
-  const timezone = await getUserTimezoneFromCityId(participant.user.currentCityId);
   
   const titleKey = isEdited ? 'telegram.gameResultsChanged' : 'telegram.gameFinished';
   let message = `🏁 *${escapeMarkdown(t(titleKey, lang))}*\n\n`;
@@ -195,13 +195,10 @@ export async function sendGameFinishedNotification(
     message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
   }
   
-  const dateLabel = await getDateLabelInTimezone(game.startTime, timezone, lang, false);
-  const timeStr = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang);
-  message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${dateLabel} ${timeStr}\n`;
+  message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
   
   if (game.entityType !== 'BAR') {
-    const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
-    message += `⏱️ ${escapeMarkdown(t('telegram.duration', lang))}: ${duration}\n`;
+    message += `⏱️ ${escapeMarkdown(t('telegram.duration', lang))}: ${gameInfo.duration}\n`;
   }
   
   message += `\n📊 *${escapeMarkdown(t('telegram.yourResults', lang))}*\n\n`;
@@ -243,34 +240,18 @@ export async function sendGameFinishedNotification(
     message += `💰 ${escapeMarkdown(t('telegram.pointsEarned', lang))}: ${userOutcome.pointsEarned}\n`;
   }
 
-  const gameUrl = `${config.frontendUrl}/games/${game.id}`;
-  const isLocalhost = gameUrl.includes('localhost') || gameUrl.includes('127.0.0.1');
+  const buttons = [[
+    {
+      text: t('telegram.viewGame', lang),
+      url: `${config.frontendUrl}/games/${game.id}`
+    }
+  ]];
 
-  let parseMode: 'Markdown' | 'HTML' = 'Markdown';
-  const replyMarkup: any = {};
-
-  if (isLocalhost) {
-    parseMode = 'HTML';
-    message = convertMarkdownMessageToHTML(message);
-    const viewGameText = escapeHTML(t('telegram.viewGame', lang));
-    message += `\n\n🔗 <a href="${escapeHTML(gameUrl)}">${viewGameText}</a>`;
-  } else {
-    replyMarkup.inline_keyboard = [
-      [
-        {
-          text: t('telegram.viewGame', lang),
-          url: gameUrl
-        }
-      ]
-    ];
-  }
+  const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
 
   try {
     console.log(`[GAME RESULTS NOTIFICATION] Sending message to telegram ID ${participant.user.telegramId}`);
-    await api.sendMessage(participant.user.telegramId, message, {
-      parse_mode: parseMode,
-      ...(Object.keys(replyMarkup).length > 0 ? { reply_markup: replyMarkup } : {})
-    });
+    await api.sendMessage(participant.user.telegramId, finalMessage, options);
     console.log(`[GAME RESULTS NOTIFICATION] Message sent successfully to user ${userId}`);
   } catch (error) {
     console.error(`[GAME RESULTS NOTIFICATION] Failed to send Telegram game results notification to user ${userId}:`, error);

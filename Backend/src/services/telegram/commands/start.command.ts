@@ -4,7 +4,7 @@ import { generateAuthCode } from './auth.command';
 import { t } from '../../../utils/translations';
 
 export const handleStartCommand: Middleware<BotContext> = async (ctx) => {
-  if (!ctx.from || !ctx.lang) return;
+  if (!ctx.from || !ctx.lang || !ctx.telegramId) return;
   
   try {
     await ctx.reply(t('telegram.welcome', ctx.lang));

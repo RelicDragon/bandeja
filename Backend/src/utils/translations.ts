@@ -95,6 +95,11 @@ const translations: Record<string, Record<string, string>> = {
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Game date/time changed to {{dateTime}}',
     'telegram.leagueRoundStartReceived': 'You\'ve received the schedule for league games for this round',
     'telegram.round': 'Round',
+    'telegram.availableGames': 'Available Games',
+    'telegram.noAvailableGames': 'No available games with empty slots at the moment.',
+    'telegram.slotsAvailable': 'slots available',
+    'telegram.slotAvailable': 'slot available',
+    'telegram.slotsAvailablePaucal': 'slots available',
   },
   ru: {
     'createGame.today': 'Сегодня',
@@ -179,6 +184,11 @@ const translations: Record<string, Record<string, string>> = {
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Дата/время игры изменено на {{dateTime}}',
     'telegram.leagueRoundStartReceived': 'Вы получили расписание игр лиги на этот раунд',
     'telegram.round': 'Раунд',
+    'telegram.availableGames': 'Доступные игры',
+    'telegram.noAvailableGames': 'В данный момент нет доступных игр со свободными местами.',
+    'telegram.slotsAvailable': 'свободных мест',
+    'telegram.slotAvailable': 'свободное место',
+    'telegram.slotsAvailablePaucal': 'свободных места',
   },
   sr: {
     'createGame.today': 'Данас',
@@ -263,6 +273,11 @@ const translations: Record<string, Record<string, string>> = {
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Датум/време игре промењено на {{dateTime}}',
     'telegram.leagueRoundStartReceived': 'Добили сте распоред игара лиге за ову рунду',
     'telegram.round': 'Рунда',
+    'telegram.availableGames': 'Доступне игре',
+    'telegram.noAvailableGames': 'Тренутно нема доступних игара са слободним местима.',
+    'telegram.slotsAvailable': 'слободних места',
+    'telegram.slotAvailable': 'слободно место',
+    'telegram.slotsAvailablePaucal': 'слободна места',
   },
   es: {
     'createGame.today': 'Hoy',
@@ -347,6 +362,11 @@ const translations: Record<string, Record<string, string>> = {
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Fecha/hora del juego cambiada a {{dateTime}}',
     'telegram.leagueRoundStartReceived': 'Has recibido el calendario de partidos de liga para esta ronda',
     'telegram.round': 'Ronda',
+    'telegram.availableGames': 'Juegos Disponibles',
+    'telegram.noAvailableGames': 'No hay juegos disponibles con plazas vacías en este momento.',
+    'telegram.slotsAvailable': 'plazas disponibles',
+    'telegram.slotAvailable': 'plaza disponible',
+    'telegram.slotsAvailablePaucal': 'plazas disponibles',
   },
 };
 

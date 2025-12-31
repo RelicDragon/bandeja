@@ -65,6 +65,7 @@ export interface City {
   name: string;
   country: string;
   timezone: string;
+  telegramGroupId?: string | null;
   isActive: boolean;
 }
 

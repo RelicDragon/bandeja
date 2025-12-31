@@ -8,8 +8,8 @@ export async function generateAuthCode(ctx: BotContext) {
 
   const chatId = ctx.chat.id;
   const from = ctx.from;
-  const lang = ctx.lang;
   const telegramId = ctx.telegramId;
+  const lang = ctx.lang;
 
   try {
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);

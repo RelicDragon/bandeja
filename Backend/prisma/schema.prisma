@@ -103,17 +103,20 @@ model LundaProfile {
 }
 
 model City {
-  id        String   @id @default(cuid())
-  name      String
-  country   String
-  timezone  String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  clubs     Club[]
-  users     User[]   @relation("UserCurrentCity")
-  leagues   League[]
-  games     Game[]
+  id                     String   @id @default(cuid())
+  name                   String
+  country                String
+  timezone               String
+  telegramGroupId        String?
+  telegramPinnedMessageId String?
+  telegramPinnedLanguage String   @default("en-US")
+  isActive               Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  clubs                  Club[]
+  users                  User[]   @relation("UserCurrentCity")
+  leagues                League[]
+  games                  Game[]
 
   @@index([isActive])
 }

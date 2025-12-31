@@ -2,8 +2,9 @@ import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown, escapeHTML, convertMarkdownMessageToHTML, formatDuration } from '../utils';
-import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
+import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
+import { buildMessageWithButtons } from '../shared/message-builder';
+import { formatGameInfoForUser } from '../../shared/notification-base';
 
 export async function sendGameReminderNotification(
   api: Api,
@@ -44,8 +45,6 @@ export async function sendGameReminderNotification(
     }
   });
 
-  const place = game.court?.club?.name || game.club?.name || 'Unknown location';
-
   for (const participant of participants) {
     const user = participant.user;
     
@@ -54,11 +53,8 @@ export async function sendGameReminderNotification(
     }
 
     try {
-      const lang = user.language || 'en';
-      const timezone = await getUserTimezoneFromCityId(user.currentCityId);
-      const shortDate = await getDateLabelInTimezone(game.startTime, timezone, lang, false);
-      const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang);
-      const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
+      const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
+      const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
       const entityTypeLabel = t(`games.entityTypes.${game.entityType}`, lang);
       
       const reminderText = hoursBeforeStart === 24 
@@ -71,38 +67,22 @@ export async function sendGameReminderNotification(
       } else {
         message += `🎾 ${escapeMarkdown(entityTypeLabel)}\n`;
       }
-      message += `📍 ${escapeMarkdown(place)} ${shortDate} ${startTime}, ${duration}`;
+      message += `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
       if (game.description) {
         message += `\n\n${escapeMarkdown(game.description)}`;
       }
 
-      const gameUrl = `${config.frontendUrl}/games/${game.id}`;
-      const isLocalhost = gameUrl.includes('localhost') || gameUrl.includes('127.0.0.1');
+      const buttons = [[
+        {
+          text: t('telegram.viewGame', lang),
+          url: `${config.frontendUrl}/games/${game.id}`
+        }
+      ]];
 
-      let parseMode: 'Markdown' | 'HTML' = 'Markdown';
-      const replyMarkup: any = {};
+      const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
 
-      if (isLocalhost) {
-        parseMode = 'HTML';
-        message = convertMarkdownMessageToHTML(message);
-        const viewGameText = escapeHTML(t('telegram.viewGame', lang));
-        message += `\n\n🔗 <a href="${escapeHTML(gameUrl)}">${viewGameText}</a>`;
-      } else {
-        replyMarkup.inline_keyboard = [
-          [
-            {
-              text: t('telegram.viewGame', lang),
-              url: gameUrl
-            }
-          ]
-        ];
-      }
-
-      await api.sendMessage(user.telegramId, message, {
-        parse_mode: parseMode,
-        ...(Object.keys(replyMarkup).length > 0 ? { reply_markup: replyMarkup } : {})
-      });
+      await api.sendMessage(user.telegramId, finalMessage, options);
     } catch (error) {
       console.error(`Failed to send Telegram reminder to user ${user.id}:`, error);
     }

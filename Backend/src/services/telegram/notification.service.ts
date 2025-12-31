@@ -35,12 +35,12 @@ class TelegramNotificationService {
     await sendInviteNotification(this.bot.api, invite);
   }
 
-  async sendGameCard(gameId: string, telegramId: string, lang: string = 'en', botApi?: any) {
+  async sendGameCard(gameId: string, telegramId: string, botApi?: any) {
     const api = botApi || this.bot?.api;
     if (!api) {
       throw new Error('Bot API not available');
     }
-    await sendGameCard(api, gameId, telegramId, lang);
+    await sendGameCard(api, gameId, telegramId);
   }
 
   async sendGameSystemMessageNotification(message: any, game: any) {

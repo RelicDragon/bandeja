@@ -3,7 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { InviteStatus } from '@prisma/client';
 
-const getGameInclude = () => ({
+export const getGameInclude = () => ({
   city: {
     select: {
       id: true,

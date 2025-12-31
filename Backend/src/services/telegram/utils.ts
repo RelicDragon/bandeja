@@ -1,4 +1,5 @@
 import { t } from '../../utils/translations';
+import prisma from '../../config/database';
 
 export function getLanguageCode(telegramLanguageCode: string | undefined): string {
   if (!telegramLanguageCode) return 'en';
@@ -7,6 +8,18 @@ export function getLanguageCode(telegramLanguageCode: string | undefined): strin
   const supportedLanguages = ['en', 'ru', 'sr', 'es'];
   
   return supportedLanguages.includes(code) ? code : 'en';
+}
+
+export function getUserLanguage(userLanguage: string | null | undefined, telegramLanguageCode: string | undefined): string {
+  if (userLanguage && userLanguage !== 'auto') {
+    const code = userLanguage.toLowerCase().split('-')[0];
+    const supportedLanguages = ['en', 'ru', 'sr', 'es'];
+    if (supportedLanguages.includes(code)) {
+      return code;
+    }
+  }
+  
+  return getLanguageCode(telegramLanguageCode);
 }
 
 export function escapeMarkdown(text: string): string {
@@ -53,5 +66,21 @@ export function formatDuration(startTime: Date, endTime: Date, lang: string = 'e
   
   if (minutes === 0) return `${hours}${hLabel}`;
   return `${hours}${hLabel} ${minutes}${mLabel}`;
+}
+
+export async function getUserLanguageFromTelegramId(
+  telegramId: string | null | undefined,
+  telegramLanguageCode?: string | undefined
+): Promise<string> {
+  if (!telegramId) {
+    return getUserLanguage(null, telegramLanguageCode);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { telegramId },
+    select: { language: true },
+  });
+
+  return getUserLanguage(user?.language, telegramLanguageCode);
 }
 

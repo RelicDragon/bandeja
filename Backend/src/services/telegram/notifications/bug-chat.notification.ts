@@ -2,6 +2,7 @@ import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { ChatContextType } from '@prisma/client';
 import { escapeMarkdown } from '../utils';
+import { formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 
 export async function sendBugChatNotification(
@@ -11,7 +12,7 @@ export async function sendBugChatNotification(
   sender: any
 ) {
   const bugText = (bug.text || 'Bug').substring(0, 50);
-  const senderName = `${sender.firstName || ''} ${sender.lastName || ''}`.trim() || 'Unknown';
+  const senderName = formatUserName(sender);
   const messageContent = message.content || '[Media]';
 
   const formattedMessage = `🐛 ${escapeMarkdown(bugText)}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;

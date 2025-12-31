@@ -1,16 +1,18 @@
 import { Bot } from 'grammy';
 import { config } from '../../config/env';
 import { PendingReply } from './types';
-import { requireUser, requireChat } from './middleware';
+import { requireUser, requireChat, requirePrivateChat } from './middleware';
 import { handleStartCommand } from './commands/start.command';
 import { generateAuthCode } from './commands/auth.command';
 import { handleMyGamesCommand } from './commands/myGames.command';
+import { handleGamesCommand } from './commands/games.command';
 import { createMessageHandler } from './handlers/message.handler';
 import { createCallbackHandler } from './handlers/callback.handler';
 import { startCleanupInterval } from './cleanup.service';
 import { verifyCode } from './otp.service';
 import telegramNotificationService from './notification.service';
 import telegramResultsSenderService from './resultsSender.service';
+import { t } from '../../utils/translations';
 
 class TelegramBotService {
   private bot: Bot | null = null;
@@ -36,19 +38,25 @@ class TelegramBotService {
       console.error('Failed to fetch bot info:', error);
     }
 
-    this.bot.command('start', requireUser, requireChat, handleStartCommand);
-    this.bot.command('auth', requireUser, requireChat, generateAuthCode);
-    this.bot.command('my', requireUser, requireChat, handleMyGamesCommand);
+    this.bot.command('start', requireUser, requirePrivateChat, handleStartCommand);
+    this.bot.command('auth', requireUser, requirePrivateChat, generateAuthCode);
+    this.bot.command('my', requireUser, requirePrivateChat, handleMyGamesCommand);
+    this.bot.command('games', requireUser, requireChat, handleGamesCommand);
 
-    this.bot.on('message', requireUser, requireChat, createMessageHandler(this.pendingReplies, this.bot));
+    this.bot.on('message', requireUser, requirePrivateChat, createMessageHandler(this.pendingReplies, this.bot));
 
-    this.bot.callbackQuery(/^(sg|rm|ia):/, requireUser, createCallbackHandler(this.pendingReplies));
+    this.bot.callbackQuery(/^(sg|rm|ia|rum):/, requireUser, createCallbackHandler(this.pendingReplies));
 
     this.bot.catch((err) => {
-      const ctx = err.ctx;
+      const ctx = err.ctx as any;
       console.error('Error in telegram bot:', err.error);
       
-      ctx.answerCallbackQuery?.({ text: 'An error occurred', show_alert: true }).catch(() => {});
+      if (ctx.callbackQuery) {
+        ctx.answerCallbackQuery?.({ text: 'An error occurred', show_alert: true }).catch(() => {});
+      } else {
+        const lang = ctx.lang || (ctx.from?.language_code ? ctx.from.language_code.split('-')[0] : 'en');
+        ctx.reply(t('telegram.authError', lang) || 'An error occurred. Please try again.').catch(() => {});
+      }
     });
 
     telegramNotificationService.initialize(this.bot);

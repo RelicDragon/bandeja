@@ -1,17 +1,16 @@
 import { Middleware } from 'grammy';
 import { BotContext } from '../types';
-import { escapeMarkdown } from '../utils';
+import { escapeMarkdown, getUserLanguage, getUserLanguageFromTelegramId } from '../utils';
 import prisma from '../../../config/database';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { GameReadService } from '../../game/read.service';
-import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
+import { formatGameInfoForUser } from '../../shared/notification-base';
 
 export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
   if (!ctx.from || !ctx.lang || !ctx.telegramId) return;
 
   const telegramId = ctx.telegramId;
-  const lang = ctx.lang;
 
   try {
     const user = await prisma.user.findUnique({
@@ -24,18 +23,17 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
     });
 
     if (!user) {
+      const lang = getUserLanguage(null, ctx.from.language_code);
       await ctx.reply(t('telegram.authError', lang));
       return;
     }
 
-    const userLang = user.language || lang;
+    const userLang = getUserLanguage(user.language, ctx.from.language_code);
 
     if (!user.currentCityId) {
       await ctx.reply(t('telegram.noCitySet', userLang) || 'Please set your current city in the app first.');
       return;
     }
-
-    const timezone = await getUserTimezoneFromCityId(user.currentCityId);
 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -65,8 +63,7 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
     let message = `*${escapeMarkdown(t('telegram.myGames', userLang) || 'My Games')}*\n\n`;
 
     for (const game of myGames.slice(0, 10)) {
-      const shortDate = await getDateLabelInTimezone(game.startTime, timezone, userLang, false);
-      const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, userLang);
+      const gameInfo = await formatGameInfoForUser(game, user.currentCityId, userLang);
       const statusKey = game.status.toLowerCase();
       const statusText = t(`games.status.${statusKey}`, userLang);
       const statusDisplay = `${statusEmoji[game.status] || '📅'} ${escapeMarkdown(statusText)}`;
@@ -81,7 +78,7 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
         : `${playingParticipants.length}/${game.maxParticipants}`;
 
       message += `${statusDisplay}\n`;
-      message += `📅 ${escapeMarkdown(shortDate)} ${escapeMarkdown(startTime)}\n`;
+      message += `📅 ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)}\n`;
       message += `📍 ${clubName}${courtName}\n`;
       message += `👥 ${participantsCount}\n`;
 
@@ -96,6 +93,7 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
     await ctx.reply(message, { parse_mode: 'Markdown' });
   } catch (error) {
     console.error('Error handling my command:', error);
+    const lang = await getUserLanguageFromTelegramId(telegramId, ctx.from?.language_code);
     await ctx.reply(t('telegram.authError', lang));
   }
 };

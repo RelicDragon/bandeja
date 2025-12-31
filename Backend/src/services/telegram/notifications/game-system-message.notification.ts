@@ -2,17 +2,12 @@ import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { ChatType, ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown, formatDuration } from '../utils';
-import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
+import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
+import { buildMessageWithButtons } from '../shared/message-builder';
+import { formatGameInfoForUser } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 
-export async function sendGameSystemMessageNotification(
-  api: Api,
-  message: any,
-  game: any
-) {
-  const place = game.court?.club?.name || game.club?.name || 'Unknown location';
-  
+function translateSystemMessage(message: any, lang: string): string {
   let messageData: any = null;
   let messageContent = '';
   try {
@@ -21,6 +16,29 @@ export async function sendGameSystemMessageNotification(
   } catch {
     messageContent = message.content || '';
   }
+
+  if (messageData && messageData.type && messageData.variables) {
+    const translationKey = `chat.systemMessages.${messageData.type}`;
+    let template = t(translationKey, lang);
+    
+    if (template === translationKey) {
+      template = messageData.text || messageContent;
+    } else {
+      for (const [key, value] of Object.entries(messageData.variables)) {
+        template = template.replace(new RegExp(`{{${key}}}`, 'g'), String(value || ''));
+      }
+      messageContent = template;
+    }
+  }
+
+  return messageContent;
+}
+
+export async function sendGameSystemMessageNotification(
+  api: Api,
+  message: any,
+  game: any
+) {
 
   const chatType = message.chatType as ChatType;
   const participants = await prisma.gameParticipant.findMany({
@@ -62,43 +80,22 @@ export async function sendGameSystemMessageNotification(
 
     if (canSeeMessage) {
       try {
-        const lang = user.language || 'en';
-        const timezone = await getUserTimezoneFromCityId(user.currentCityId);
-        const shortDate = await getDateLabelInTimezone(game.startTime, timezone, lang, false);
-        const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang);
-        const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
+        const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
+        const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
+        const translatedContent = translateSystemMessage(message, lang);
         
-        let translatedContent = messageContent;
-        if (messageData && messageData.type && messageData.variables) {
-          const translationKey = `chat.systemMessages.${messageData.type}`;
-          let template = t(translationKey, lang);
-          
-          if (template === translationKey) {
-            template = messageData.text || messageContent;
-          } else {
-            for (const [key, value] of Object.entries(messageData.variables)) {
-              template = template.replace(new RegExp(`{{${key}}}`, 'g'), String(value || ''));
-            }
-            translatedContent = template;
+        const formattedMessage = `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}\n🔔 ${escapeMarkdown(translatedContent)}`;
+        
+        const buttons = [[
+          {
+            text: t('telegram.showGame', lang),
+            callback_data: `sg:${game.id}:${user.id}`
           }
-        }
+        ]];
+
+        const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
         
-        const formattedMessage = `📍 ${escapeMarkdown(place)} ${shortDate} ${startTime}, ${duration}\n🔔 ${escapeMarkdown(translatedContent)}`;
-        
-        const showGameButton = t('telegram.showGame', lang);
-        const showGameData = `sg:${game.id}:${user.id}`;
-        
-        await api.sendMessage(user.telegramId, formattedMessage, { 
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [[
-              {
-                text: showGameButton,
-                callback_data: showGameData
-              }
-            ]]
-          }
-        });
+        await api.sendMessage(user.telegramId, finalMessage, options);
       } catch (error) {
         console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
       }

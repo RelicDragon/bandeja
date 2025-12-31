@@ -1,6 +1,6 @@
 import { Middleware } from 'grammy';
 import { BotContext, PendingReply } from '../types';
-import { getLanguageCode } from '../utils';
+import { getUserLanguageFromTelegramId } from '../utils';
 import { t } from '../../../utils/translations';
 import { MessageService } from '../../chat/message.service';
 import { scheduleMessageDeletion } from '../messageDeletion.service';
@@ -54,7 +54,7 @@ export function createMessageHandler(
       } catch (error) {
         console.error('Error sending reply:', error);
         pendingReplies.delete(telegramId);
-        const lang = ctx.lang || pendingReply.lang || 'en';
+        const lang = ctx.lang || await getUserLanguageFromTelegramId(telegramId, ctx.from?.language_code);
         const errorMessage = await ctx.reply(t('telegram.authError', lang));
         if (errorMessage.message_id) {
           scheduleMessageDeletion(ctx.chat.id, errorMessage.message_id, bot);
@@ -63,9 +63,12 @@ export function createMessageHandler(
       return;
     }
     
-    if (!msg.text?.startsWith('/')) {
-      const lang = ctx.lang ? getLanguageCode(ctx.lang) : (ctx.from ? getLanguageCode(ctx.from.language_code) : 'en');
-      await ctx.reply(t('telegram.commandsReminder', lang));
+    if (msg.text && !msg.text.startsWith('/') && msg.text.trim().length > 0) {
+      const lang = ctx.lang || await getUserLanguageFromTelegramId(telegramId, ctx.from?.language_code);
+      const reminderMessage = await ctx.reply(t('telegram.commandsReminder', lang));
+      if (reminderMessage.message_id) {
+        scheduleMessageDeletion(ctx.chat.id, reminderMessage.message_id, bot);
+      }
     }
   };
 }

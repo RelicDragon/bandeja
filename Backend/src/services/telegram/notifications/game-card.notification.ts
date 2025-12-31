@@ -2,14 +2,14 @@ import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown, escapeHTML, convertMarkdownMessageToHTML, formatDuration } from '../utils';
-import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
+import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
+import { buildMessageWithButtons } from '../shared/message-builder';
+import { formatGameInfoForUser } from '../../shared/notification-base';
 
 export async function sendGameCard(
   api: Api,
   gameId: string,
-  telegramId: string,
-  lang: string = 'en'
+  telegramId: string
 ) {
   const user = await prisma.user.findUnique({
     where: { telegramId },
@@ -19,8 +19,11 @@ export async function sendGameCard(
     },
   });
 
-  const userLang = user?.language || lang;
-  const timezone = await getUserTimezoneFromCityId(user?.currentCityId || null);
+  if (!user) {
+    throw new Error(`User with telegramId ${telegramId} not found`);
+  }
+
+  const userLang = await getUserLanguageFromTelegramId(telegramId, undefined);
 
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -115,15 +118,12 @@ export async function sendGameCard(
     header += `👥 ${escapeMarkdown(t('games.fixedTeams', userLang))}\n`;
   }
 
-  const shortDate = await getDateLabelInTimezone(game.startTime, timezone, userLang, false);
-  const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, userLang);
-  const dateTimeLine = `📅 ${escapeMarkdown(shortDate)} ${escapeMarkdown(startTime)}`;
+  const gameInfo = await formatGameInfoForUser(game, user.currentCityId || null, userLang);
+  const dateTimeLine = `📅 ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)}`;
   
   let timeLine = dateTimeLine;
   if (game.entityType !== 'BAR') {
-    const endTime = await formatDateInTimezone(game.endTime, 'HH:mm', timezone, userLang);
-    const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), userLang);
-    timeLine += ` - ${escapeMarkdown(endTime)} (${escapeMarkdown(duration)})`;
+    timeLine += ` (${escapeMarkdown(gameInfo.duration)})`;
   }
 
   const club = game.court?.club || game.club;
@@ -177,7 +177,6 @@ export async function sendGameCard(
   }
 
   const gameUrl = `${config.frontendUrl}/games/${game.id}`;
-  const isLocalhost = gameUrl.includes('localhost') || gameUrl.includes('127.0.0.1');
 
   let navigationUrl: string | null = null;
   if (club && club.city) {
@@ -198,37 +197,21 @@ export async function sendGameCard(
     descriptionLine,
   ].filter(Boolean).join('\n\n');
 
-  const replyMarkup: any = {};
-  let parseMode: 'Markdown' | 'HTML' = 'Markdown';
-
-  if (isLocalhost) {
-    parseMode = 'HTML';
-    message = convertMarkdownMessageToHTML(message);
-    const viewGameText = escapeHTML(t('telegram.viewGame', userLang));
-    message += `\n\n🔗 <a href="${escapeHTML(gameUrl)}">${viewGameText}</a>`;
-    if (navigationUrl) {
-      const navigateText = escapeHTML(t('telegram.navigateToClub', userLang));
-      message += `\n🗺️ <a href="${escapeHTML(navigationUrl)}">${navigateText}</a>`;
+  const buttons: Array<{ text: string; url: string }> = [
+    {
+      text: t('telegram.viewGame', userLang),
+      url: gameUrl
     }
-  } else {
-    const buttons = [
-      {
-        text: t('telegram.viewGame', userLang),
-        url: gameUrl
-      }
-    ];
-    if (navigationUrl) {
-      buttons.push({
-        text: t('telegram.navigateToClub', userLang),
-        url: navigationUrl
-      });
-    }
-    replyMarkup.inline_keyboard = [buttons];
+  ];
+  if (navigationUrl) {
+    buttons.push({
+      text: t('telegram.navigateToClub', userLang),
+      url: navigationUrl
+    });
   }
 
-  await api.sendMessage(telegramId, message, { 
-    parse_mode: parseMode,
-    ...(Object.keys(replyMarkup).length > 0 ? { reply_markup: replyMarkup } : {})
-  });
+  const { message: finalMessage, options } = buildMessageWithButtons(message, [buttons], userLang);
+
+  await api.sendMessage(telegramId, finalMessage, options);
 }
 

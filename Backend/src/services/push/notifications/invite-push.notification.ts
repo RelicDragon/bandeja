@@ -1,8 +1,7 @@
 import prisma from '../../../config/database';
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
-import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
-import { formatDuration } from '../../telegram/utils';
+import { formatGameInfoForUser, formatUserName } from '../../shared/notification-base';
 
 export async function createInvitePushNotification(
   invite: any
@@ -21,32 +20,23 @@ export async function createInvitePushNotification(
     return null;
   }
 
-  const senderName = invite.sender 
-    ? `${invite.sender.firstName || ''} ${invite.sender.lastName || ''}`.trim() || 'Unknown'
-    : 'Unknown';
-
-  const lang = receiver.language || 'en';
-
   if (!invite.game) {
     return null;
   }
 
-  const game = invite.game;
-  const place = game.court?.club?.name || game.club?.name || 'Unknown location';
-  const timezone = await getUserTimezoneFromCityId(receiver.currentCityId);
-  const shortDate = await getDateLabelInTimezone(game.startTime, timezone, lang, false);
-  const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang);
-  const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
+  const lang = receiver.language || 'en';
+  const senderName = invite.sender ? formatUserName(invite.sender) : 'Unknown';
+  const gameInfo = await formatGameInfoForUser(invite.game, receiver.currentCityId, lang);
 
   const title = t('telegram.inviteReceived', lang);
-  const body = `${senderName} ${t('telegram.invitedYou', lang)}\n${place} ${shortDate} ${startTime}, ${duration}`;
+  const body = `${senderName} ${t('telegram.invitedYou', lang)}\n${gameInfo.place} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
   return {
     type: NotificationType.INVITE,
     title,
     body,
     data: {
-      gameId: game.id,
+      gameId: invite.game.id,
       inviteId: invite.id
     },
     actions: [

@@ -1,18 +1,8 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
-import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../../user-timezone.service';
+import { formatGameInfoForUser } from '../../shared/notification-base';
 
-export async function createGameSystemMessagePushNotification(
-  message: any,
-  game: any,
-  recipient: any
-): Promise<NotificationPayload | null> {
-  const lang = recipient.language || 'en';
-  const place = game.court?.club?.name || game.club?.name || 'Unknown location';
-  const timezone = await getUserTimezoneFromCityId(recipient.currentCityId);
-  const shortDate = await getDateLabelInTimezone(game.startTime, timezone, lang, false);
-  const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang);
-
+function translateSystemMessage(message: any, lang: string): string {
   const messageContent = message.content || '';
   let translatedContent = messageContent;
   
@@ -29,9 +19,21 @@ export async function createGameSystemMessagePushNotification(
     }
   }
 
+  return translatedContent;
+}
+
+export async function createGameSystemMessagePushNotification(
+  message: any,
+  game: any,
+  recipient: any
+): Promise<NotificationPayload | null> {
+  const lang = recipient.language || 'en';
+  const gameInfo = await formatGameInfoForUser(game, recipient.currentCityId, lang);
+  const translatedContent = translateSystemMessage(message, lang);
+
   return {
     type: NotificationType.GAME_SYSTEM_MESSAGE,
-    title: `${place} ${shortDate} ${startTime}`,
+    title: `${gameInfo.place} ${gameInfo.shortDate} ${gameInfo.startTime}`,
     body: `🔔 ${translatedContent}`,
     data: {
       gameId: game.id,

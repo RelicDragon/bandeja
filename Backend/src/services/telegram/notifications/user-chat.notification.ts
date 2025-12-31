@@ -1,7 +1,9 @@
 import { Api } from 'grammy';
 import { ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown } from '../utils';
+import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
+import { buildMessageWithButtons } from '../shared/message-builder';
+import { formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 
 export async function sendUserChatNotification(
@@ -10,7 +12,7 @@ export async function sendUserChatNotification(
   userChat: any,
   sender: any
 ) {
-  const senderName = `${sender.firstName || ''} ${sender.lastName || ''}`.trim() || 'Unknown';
+  const senderName = formatUserName(sender);
   const messageContent = message.content || '[Media]';
 
   const recipient = userChat.user1Id === sender.id ? userChat.user2 : userChat.user1;
@@ -35,23 +37,19 @@ export async function sendUserChatNotification(
   }
 
   try {
-    const lang = recipient.language || 'en';
+    const lang = await getUserLanguageFromTelegramId(recipient.telegramId, undefined);
     const formattedMessage = `💬 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
     
-    const replyButton = t('telegram.reply', lang);
-    const replyData = `rum:${message.id}:${userChat.id}`;
-    
-    await api.sendMessage(recipient.telegramId, formattedMessage, { 
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [[
-          {
-            text: replyButton,
-            callback_data: replyData
-          }
-        ]]
+    const buttons = [[
+      {
+        text: t('telegram.reply', lang),
+        callback_data: `rum:${message.id}:${userChat.id}`
       }
-    });
+    ]];
+
+    const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
+    
+    await api.sendMessage(recipient.telegramId, finalMessage, options);
   } catch (error) {
     console.error(`Failed to send Telegram notification to user ${recipient.id}:`, error);
   }

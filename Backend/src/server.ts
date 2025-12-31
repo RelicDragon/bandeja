@@ -6,6 +6,7 @@ import SocketService from './services/socket.service';
 import telegramBotService from './services/telegram/bot.service';
 import pushNotificationService from './services/push/push-notification.service';
 import { GameStatusScheduler } from './services/gameStatusScheduler.service';
+import { TelegramGamesScheduler } from './services/telegram/gamesScheduler.service';
 import { createServer } from 'http';
 
 const startServer = async () => {
@@ -21,6 +22,9 @@ const startServer = async () => {
 
     const gameStatusScheduler = new GameStatusScheduler();
     gameStatusScheduler.start();
+
+    const telegramGamesScheduler = new TelegramGamesScheduler();
+    telegramGamesScheduler.start();
 
     // Create HTTP server
     const httpServer = createServer(app);
@@ -46,6 +50,7 @@ const startServer = async () => {
         console.log('HTTP server closed');
         
         gameStatusScheduler.stop();
+        telegramGamesScheduler.stop();
         telegramBotService.stop();
         pushNotificationService.shutdown();
         

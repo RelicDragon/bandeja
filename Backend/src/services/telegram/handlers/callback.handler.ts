@@ -5,7 +5,7 @@ import prisma from '../../../config/database';
 import { t } from '../../../utils/translations';
 import telegramNotificationService from '../notification.service';
 import { acceptInviteFromTelegram, declineInviteFromTelegram } from '../invite.service';
-import { escapeMarkdown, escapeHTML } from '../utils';
+import { escapeMarkdown, escapeHTML, getUserLanguage } from '../utils';
 
 export function createCallbackHandler(
   pendingReplies: Map<string, PendingReply>
@@ -49,7 +49,7 @@ export function createCallbackHandler(
           return;
         }
 
-        const lang = user.language || 'en';
+        const lang = getUserLanguage(user.language, ctx.from?.language_code);
         
         const result = action === 'accept'
           ? await acceptInviteFromTelegram(inviteId, user.id)
@@ -83,12 +83,13 @@ export function createCallbackHandler(
                 ? t('telegram.inviteAccepted', lang)
                 : t('telegram.inviteDeclined', lang);
               
-              const cleanedMessage = originalMessage.replace(/^(✅|❌).*?\n\n/s, '').replace(/🎯.*?\n\n/s, '');
-              updatedMessage = escapeFunction('✅ ' + statusText) + '\n\n' + cleanedMessage;
+              let cleanedMessage = originalMessage.replace(/^(✅|❌)[^\n]*(?:\n\n?)?/s, '');
+              cleanedMessage = cleanedMessage.replace(/^🎯[^\n]*(?:\n\n?)?/s, '');
+              updatedMessage = escapeFunction('✅ ' + statusText) + '\n\n' + cleanedMessage.trim();
             } else {
               const errorText = t(result.message, lang) || t('telegram.inviteActionError', lang);
-              const cleanedMessage = originalMessage.replace(/^(✅|❌).*?\n\n/s, '');
-              updatedMessage = escapeFunction('❌ ' + errorText) + '\n\n' + cleanedMessage;
+              let cleanedMessage = originalMessage.replace(/^(✅|❌)[^\n]*(?:\n\n?)?/s, '');
+              updatedMessage = escapeFunction('❌ ' + errorText) + '\n\n' + cleanedMessage.trim();
             }
 
             try {
@@ -120,13 +121,12 @@ export function createCallbackHandler(
         });
 
         if (user?.telegramId === telegramId) {
-          const lang = user.language || 'en';
           try {
             await ctx.answerCallbackQuery({
               text: 'Loading game...',
               show_alert: false
             });
-            await telegramNotificationService.sendGameCard(gameId, telegramId, lang, ctx.api);
+            await telegramNotificationService.sendGameCard(gameId, telegramId, ctx.api);
           } catch (error) {
             console.error('Error sending game card:', error);
             try {
@@ -180,7 +180,7 @@ export function createCallbackHandler(
         });
 
         if (user) {
-          const lang = user.language || 'en';
+          const lang = getUserLanguage(user.language, ctx.from?.language_code);
           pendingReplies.set(telegramId, {
             messageId,
             gameId,
@@ -226,7 +226,7 @@ export function createCallbackHandler(
         });
 
         if (user) {
-          const lang = user.language || 'en';
+          const lang = getUserLanguage(user.language, ctx.from?.language_code);
           pendingReplies.set(telegramId, {
             messageId,
             userChatId,

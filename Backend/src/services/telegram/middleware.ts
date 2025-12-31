@@ -23,3 +23,27 @@ export const requireChat: Middleware<BotContext> = async (ctx, next) => {
   return next();
 };
 
+export const requirePrivateChat: Middleware<BotContext> = async (ctx, next) => {
+  if (!ctx.chat) {
+    const lang = ctx.lang || getLanguageCode(ctx.from?.language_code) || 'en';
+    await ctx.reply(t('telegram.unableToIdentifyChat', lang));
+    return;
+  }
+  if (ctx.chat.type !== 'private') {
+    return;
+  }
+  return next();
+};
+
+export const requireGroupChat: Middleware<BotContext> = async (ctx, next) => {
+  if (!ctx.chat) {
+    const lang = ctx.lang || getLanguageCode(ctx.from?.language_code) || 'en';
+    await ctx.reply(t('telegram.unableToIdentifyChat', lang));
+    return;
+  }
+  if (ctx.chat.type !== 'group' && ctx.chat.type !== 'supergroup') {
+    return;
+  }
+  return next();
+};
+
