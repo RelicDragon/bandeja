@@ -223,23 +223,34 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     };
     
     return (
-      <Card>
-        <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              {t(getNoPhotosKey())}
-            </span>
-            <button
-              onClick={handlePhotoCapture}
-              disabled={isUploadingPhoto || !game.id}
-              className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={t('gameDetails.addPhoto')}
-            >
-              <Camera size={20} className="text-white" />
-            </button>
+      <>
+        <Card>
+          <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                {t(getNoPhotosKey())}
+              </span>
+              <button
+                onClick={handlePhotoCapture}
+                disabled={isUploadingPhoto || !game.id}
+                className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={t('gameDetails.addPhoto')}
+              >
+                <Camera size={20} className="text-white" />
+              </button>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          multiple
+          onChange={(e) => handlePhotoSelect(e.target.files)}
+          className="hidden"
+        />
+      </>
     );
   }
 

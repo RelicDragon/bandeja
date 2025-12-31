@@ -39,10 +39,15 @@ import { resultsApi } from '@/api/results';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
+import { Round } from '@/types/gameResults';
 import { isUserGameAdminOrOwner, canUserEditResults } from '@/utils/gameResults';
 import { socketService } from '@/services/socketService';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
+
+type GameWithResults = Game & {
+  rounds?: Round[];
+};
 
 export const GameDetailsContent = () => {
   const { id } = useParams<{ id: string }>();
@@ -141,10 +146,29 @@ export const GameDetailsContent = () => {
       }
     };
 
-    const handleGameUpdated = (data: { gameId: string; senderId: string; game: any }) => {
+    const handleGameUpdated = (data: { gameId: string; senderId: string; game: GameWithResults }) => {
       if (data.gameId === id && data.senderId !== user?.id) {
         const updatedGame = data.game;
-        setGame(updatedGame);
+        setGame((prevGame) => {
+          if (!prevGame) return updatedGame;
+          
+          // Preserve results data if game has FINAL results
+          // Use updatedGame's data if it exists and is valid, otherwise preserve prevGame's data
+          if (prevGame.resultsStatus === 'FINAL' && updatedGame.resultsStatus === 'FINAL') {
+            const prevGameWithResults = prevGame as GameWithResults;
+            return {
+              ...updatedGame,
+              rounds: (updatedGame.rounds && updatedGame.rounds.length > 0) 
+                ? updatedGame.rounds 
+                : (prevGameWithResults.rounds || updatedGame.rounds),
+              outcomes: (updatedGame.outcomes && updatedGame.outcomes.length > 0)
+                ? updatedGame.outcomes
+                : (prevGame.outcomes || updatedGame.outcomes),
+            };
+          }
+          
+          return updatedGame;
+        });
       }
     };
 
