@@ -68,7 +68,17 @@ export async function buildGamesMessage(
       : `${playingParticipants.length}/${gameAny.maxParticipants}`;
     const availableSlots = gameAny.maxParticipants - playingParticipants.length;
 
-    const gameBlock = `📅 ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)} (${gameInfo.duration})\n` +
+    let gameBlock = '';
+    
+    if (gameAny.name) {
+      gameBlock += `*${escapeMarkdown(gameAny.name)}*\n`;
+    }
+    
+    if (gameAny.entityType !== 'GAME') {
+      gameBlock += `🏷️ ${escapeMarkdown(t(`games.entityTypes.${gameAny.entityType}`, lang))}\n`;
+    }
+    
+    gameBlock += `📅 ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)} (${gameInfo.duration})\n` +
       `📍 ${clubName}${courtName}\n` +
       `👥 ${participantsCount} ${availableSlots > 0 ? `(${availableSlots} ${escapeMarkdown(getSlotsText(availableSlots, lang))})` : ''}\n` +
       `🔗 [${escapeMarkdown(t('telegram.viewGame', lang))}](${config.frontendUrl}/games/${gameAny.id})\n\n`;

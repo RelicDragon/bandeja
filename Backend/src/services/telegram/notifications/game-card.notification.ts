@@ -93,8 +93,11 @@ export async function sendGameCard(
   const statusText = t(`games.status.${statusKey}`, userLang);
   const statusDisplay = `${statusEmoji[game.status] || statusEmoji[statusKey] || '📅'} ${escapeMarkdown(statusText)}`;
 
-  const gameTitle = game.name || (game.gameType !== 'CLASSIC' ? t(`games.gameTypes.${game.gameType}`, userLang) : '');
-  let header = gameTitle ? `*${escapeMarkdown(gameTitle)}*\n` : '';
+  let header = '';
+  
+  if (game.name) {
+    header += `*${escapeMarkdown(game.name)}*\n`;
+  }
 
   if (game.entityType !== 'GAME') {
     header += `🏷️ ${escapeMarkdown(t(`games.entityTypes.${game.entityType}`, userLang))}\n`;
