@@ -96,7 +96,15 @@ export class TelegramGamesScheduler {
             );
             return;
           } catch (error: any) {
-            console.warn(`⚠️  Failed to edit pinned message for city ${city.id}, recreating:`, error.message);
+            const errorMessage = error.message || String(error);
+            const isMessageNotModified = errorMessage.includes('message is not modified');
+            const isParseError = errorMessage.includes('can\'t parse entities');
+            
+            if (isMessageNotModified || isParseError) {
+              return;
+            }
+            
+            console.warn(`⚠️  Failed to edit pinned message for city ${city.id}, recreating:`, errorMessage);
             
             try {
               await api.unpinChatMessage(chatId, messageId);
