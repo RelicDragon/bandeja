@@ -121,6 +121,7 @@ export function createCallbackHandler(
         });
 
         if (user?.telegramId === telegramId) {
+          const lang = getUserLanguage(user.language, ctx.from?.language_code);
           try {
             await ctx.answerCallbackQuery({
               text: 'Loading game...',
