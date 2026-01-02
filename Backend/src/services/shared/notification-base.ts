@@ -75,7 +75,7 @@ export interface GameWithParticipants extends GameInfo {
   participants?: Array<{ 
     isPlaying: boolean;
     role?: string;
-    user?: { firstName?: string | null; lastName?: string | null };
+    user?: { firstName?: string | null; lastName?: string | null; level?: number | null };
   }>;
   maxParticipants?: number;
   court?: { name?: string; club?: { name: string } } | null;
@@ -134,6 +134,7 @@ export async function formatNewGameText(
   const entityTypeLabel = t(`games.entityTypes.${game.entityType}`, lang);
   const owner = game.participants?.find((p: any) => p.role === 'OWNER');
   const ownerName = owner?.user ? formatUserName(owner.user) : null;
+  const ownerLevel = owner?.user?.level;
 
   let text = '';
   
@@ -146,7 +147,10 @@ export async function formatNewGameText(
   }
 
   if (ownerName) {
-    text += `👑 ${escapeFn(t('games.organizer', lang))}: ${escapeFn(ownerName)}\n`;
+    const ownerDisplay = ownerLevel !== null && ownerLevel !== undefined
+      ? `${escapeFn(ownerName)} (${ownerLevel.toFixed(1)})`
+      : escapeFn(ownerName);
+    text += `👑 ${escapeFn(t('games.organizer', lang))}: ${ownerDisplay}\n`;
   }
   
   text += `📅 ${escapeFn(gameInfo.shortDate)} ${escapeFn(gameInfo.startTime)} (${escapeFn(gameInfo.duration)})\n`;
@@ -159,6 +163,20 @@ export async function formatNewGameText(
       text += ` (${availableSlots} ${escapeFn(slotsText)})`;
     }
     text += '\n';
+    
+    if (playingParticipants.length > 1) {
+      const levels = playingParticipants
+        .map((p: any) => p.user?.level)
+        .filter((level: any): level is number => level !== null && level !== undefined);
+      
+      if (levels.length > 0) {
+        const minLevel = Math.min(...levels);
+        const maxLevel = Math.max(...levels);
+        const participantsLabel = t('games.participants', lang) || 'Participants';
+        const levelLabel = t('games.level', lang) || 'Level';
+        text += `⭐ ${escapeFn(participantsLabel)} ${escapeFn(levelLabel.toLowerCase())}: ${minLevel.toFixed(1)} - ${maxLevel.toFixed(1)}\n`;
+      }
+    }
   }
   
   if (includeLink) {
