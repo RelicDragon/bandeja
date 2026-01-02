@@ -12,6 +12,7 @@ import { createGameSystemMessagePushNotification } from './push/notifications/ga
 import { createGameReminderPushNotification } from './push/notifications/game-reminder-push.notification';
 import { createGameResultsPushNotification } from './push/notifications/game-results-push.notification';
 import { createLeagueRoundStartPushNotification } from './push/notifications/league-round-start-push.notification';
+import { createNewGamePushNotification } from './push/notifications/new-game-push.notification';
 
 class NotificationService {
   async sendNotification(request: UnifiedNotificationRequest) {
@@ -421,6 +422,59 @@ class NotificationService {
     await telegramNotificationService.sendLeagueRoundStartNotification(game, user);
   }
 
+  async sendNewGameNotification(game: any, cityId: string, creatorId: string) {
+    if (!game.isPublic || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
+      return;
+    }
+
+    const recipients = await prisma.user.findMany({
+      where: {
+        currentCityId: cityId,
+        id: { not: creatorId },
+        OR: [
+          { sendPushMessages: true },
+          { sendTelegramMessages: true }
+        ]
+      },
+      select: {
+        id: true,
+        telegramId: true,
+        sendTelegramMessages: true,
+        sendPushMessages: true,
+        language: true,
+        currentCityId: true,
+      }
+    });
+
+    for (const recipient of recipients) {
+      const shouldSendTelegram = recipient.telegramId && recipient.sendTelegramMessages;
+      const shouldSendPush = recipient.sendPushMessages;
+
+      if (shouldSendPush) {
+        try {
+          const payload = await createNewGamePushNotification(game, recipient);
+          if (payload) {
+            await this.sendNotification({
+              userId: recipient.id,
+              type: NotificationType.NEW_GAME,
+              payload
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to send push notification for new game to user ${recipient.id}:`, error);
+        }
+      }
+
+      if (shouldSendTelegram) {
+        try {
+          await telegramNotificationService.sendNewGameNotification(game, recipient);
+        } catch (error) {
+          console.error(`Failed to send telegram notification for new game to user ${recipient.id}:`, error);
+        }
+      }
+    }
+  }
+
   private shouldSendViaTelegram(user: any, type: NotificationType, preferTelegram: boolean): boolean {
     if (preferTelegram) return true;
 
@@ -435,6 +489,7 @@ class NotificationService {
       case NotificationType.BUG_CHAT:
       case NotificationType.GAME_SYSTEM_MESSAGE:
       case NotificationType.GAME_RESULTS:
+      case NotificationType.NEW_GAME:
         return user.sendTelegramMessages;
       default:
         return false;
@@ -455,6 +510,7 @@ class NotificationService {
       case NotificationType.BUG_CHAT:
       case NotificationType.GAME_SYSTEM_MESSAGE:
       case NotificationType.GAME_RESULTS:
+      case NotificationType.NEW_GAME:
         return user.sendPushMessages;
       default:
         return false;

@@ -6,6 +6,7 @@ import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
+import notificationService from '../notification.service';
 
 export class GameCreateService {
   static async createGame(data: any, userId: string) {
@@ -203,7 +204,7 @@ export class GameCreateService {
 
     await GameReadinessService.updateGameReadiness(createdGame.id);
 
-    return await prisma.game.findUnique({
+    const finalGame = await prisma.game.findUnique({
       where: { id: createdGame.id },
       include: {
         club: {
@@ -260,6 +261,14 @@ export class GameCreateService {
         },
       },
     });
+
+    if (finalGame && finalGame.isPublic && finalGame.entityType !== EntityType.LEAGUE && finalGame.entityType !== EntityType.LEAGUE_SEASON) {
+      notificationService.sendNewGameNotification(finalGame, cityId, userId).catch((error) => {
+        console.error('Failed to send new game notifications:', error);
+      });
+    }
+
+    return finalGame;
   }
 }
 

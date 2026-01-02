@@ -5,7 +5,8 @@ export enum NotificationType {
   BUG_CHAT = 'BUG_CHAT',
   GAME_SYSTEM_MESSAGE = 'GAME_SYSTEM_MESSAGE',
   GAME_REMINDER = 'GAME_REMINDER',
-  GAME_RESULTS = 'GAME_RESULTS'
+  GAME_RESULTS = 'GAME_RESULTS',
+  NEW_GAME = 'NEW_GAME'
 }
 
 export interface NotificationAction {

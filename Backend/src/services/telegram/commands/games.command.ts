@@ -6,7 +6,7 @@ import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { getUserTimezoneFromCityId } from '../../user-timezone.service';
 import { getGameInclude } from '../../game/read.service';
-import { formatGameInfo } from '../../shared/notification-base';
+import { formatGameInfo, formatNewGameText } from '../../shared/notification-base';
 
 function getSlotsText(count: number, lang: string): string {
   if (count === 1) {
@@ -56,32 +56,22 @@ export async function buildGamesMessage(
   for (let i = 0; i < gamesWithEmptySlots.length; i++) {
     const game = gamesWithEmptySlots[i];
     const gameAny = game as any;
-    const gameInfo = await formatGameInfo(gameAny, timezone, lang);
-
-    const club = gameAny.court?.club || gameAny.club;
-    const clubName = escapeMarkdown(club?.name || 'Unknown location');
-    const courtName = gameAny.court?.name ? ` • ${escapeMarkdown(gameAny.court.name)}` : '';
-
-    const playingParticipants = gameAny.participants.filter((p: any) => p.isPlaying);
-    const participantsCount = gameAny.entityType === 'BAR'
-      ? `${playingParticipants.length}`
-      : `${playingParticipants.length}/${gameAny.maxParticipants}`;
-    const availableSlots = gameAny.maxParticipants - playingParticipants.length;
+    
+    const gameText = await formatNewGameText(gameAny, timezone, lang, {
+      includeParticipants: true,
+      includeLink: false,
+      escapeMarkdown: true
+    });
 
     let gameBlock = '';
-    
     if (gameAny.name) {
-      gameBlock += `*${escapeMarkdown(gameAny.name)}*\n`;
+      const lines = gameText.split('\n');
+      gameBlock = `*${lines[0]}*\n${lines.slice(1).join('\n')}\n`;
+    } else {
+      gameBlock = gameText + '\n';
     }
     
-    if (gameAny.entityType !== 'GAME') {
-      gameBlock += `🏷️ ${escapeMarkdown(t(`games.entityTypes.${gameAny.entityType}`, lang))}\n`;
-    }
-    
-    gameBlock += `📅 ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)} (${gameInfo.duration})\n` +
-      `📍 ${clubName}${courtName}\n` +
-      `👥 ${participantsCount} ${availableSlots > 0 ? `(${availableSlots} ${escapeMarkdown(getSlotsText(availableSlots, lang))})` : ''}\n` +
-      `🔗 [${escapeMarkdown(t('telegram.viewGame', lang))}](${config.frontendUrl}/games/${gameAny.id})\n\n`;
+    gameBlock += `🔗 [${escapeMarkdown(t('telegram.viewGame', lang))}](${config.frontendUrl}/games/${gameAny.id})\n\n`;
 
     const remainingGames = gamesWithEmptySlots.length - i - 1;
     const suffix = remainingGames > 0 ? `\n\n_... and ${remainingGames} more_` : '';

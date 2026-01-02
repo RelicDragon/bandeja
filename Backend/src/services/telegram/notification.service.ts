@@ -7,6 +7,7 @@ import { sendGameCard } from './notifications/game-card.notification';
 import { sendGameSystemMessageNotification } from './notifications/game-system-message.notification';
 import { sendLeagueRoundStartNotification } from './notifications/league-round-start.notification';
 import { sendGameReminderNotification } from './notifications/game-reminder.notification';
+import { sendNewGameNotification } from './notifications/new-game.notification';
 
 class TelegramNotificationService {
   private bot: Bot | null = null;
@@ -56,6 +57,11 @@ class TelegramNotificationService {
   async sendGameReminderNotification(gameId: string, hoursBeforeStart: number) {
     if (!this.bot) return;
     await sendGameReminderNotification(this.bot.api, gameId, hoursBeforeStart);
+  }
+
+  async sendNewGameNotification(game: any, recipient: any) {
+    if (!this.bot) return;
+    await sendNewGameNotification(this.bot.api, game, recipient);
   }
 }
 
