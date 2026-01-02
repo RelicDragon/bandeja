@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PriceType, PriceCurrency } from '@/types';
 import { Select } from '@/components';
@@ -20,6 +21,15 @@ export const PriceSection = ({
   onPriceCurrencyChange,
 }: PriceSectionProps) => {
   const { t } = useTranslation();
+  const [inputValue, setInputValue] = useState<string>('');
+
+  useEffect(() => {
+    if (priceTotal !== undefined && priceTotal !== null) {
+      setInputValue(priceTotal.toString());
+    } else {
+      setInputValue('');
+    }
+  }, [priceTotal]);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
@@ -54,13 +64,21 @@ export const PriceSection = ({
                 {t('createGame.priceTotal')}
               </label>
               <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={priceTotal || ''}
+                type="text"
+                inputMode="decimal"
+                value={inputValue}
                 onChange={(e) => {
-                  const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                  onPriceTotalChange(value);
+                  const rawValue = e.target.value;
+                  const filteredValue = rawValue.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
+                  setInputValue(filteredValue);
+                  if (filteredValue === '' || filteredValue === '.') {
+                    onPriceTotalChange(undefined);
+                  } else {
+                    const numValue = parseFloat(filteredValue);
+                    if (!isNaN(numValue)) {
+                      onPriceTotalChange(numValue);
+                    }
+                  }
                 }}
                 placeholder={t('createGame.priceTotalPlaceholder')}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"

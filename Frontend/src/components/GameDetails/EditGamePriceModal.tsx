@@ -21,12 +21,18 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
   const [priceTotal, setPriceTotal] = useState<number | undefined>(undefined);
   const [priceType, setPriceType] = useState<PriceType>('NOT_KNOWN');
   const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(undefined);
+  const [inputValue, setInputValue] = useState<string>('');
 
   useEffect(() => {
     if (isOpen) {
       setPriceTotal(game.priceTotal);
       setPriceType(game.priceType || 'NOT_KNOWN');
       setPriceCurrency(game.priceCurrency || undefined);
+      if (game.priceTotal !== undefined && game.priceTotal !== null) {
+        setInputValue(game.priceTotal.toString());
+      } else {
+        setInputValue('');
+      }
       setIsClosing(false);
       document.body.style.overflow = 'hidden';
     } else {
@@ -151,13 +157,21 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
                   {t('createGame.priceTotal')}
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={priceTotal || ''}
+                  type="text"
+                  inputMode="decimal"
+                  value={inputValue}
                   onChange={(e) => {
-                    const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                    setPriceTotal(value);
+                    const rawValue = e.target.value;
+                    const filteredValue = rawValue.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
+                    setInputValue(filteredValue);
+                    if (filteredValue === '' || filteredValue === '.') {
+                      setPriceTotal(undefined);
+                    } else {
+                      const numValue = parseFloat(filteredValue);
+                      if (!isNaN(numValue)) {
+                        setPriceTotal(numValue);
+                      }
+                    }
                   }}
                   placeholder={t('createGame.priceTotalPlaceholder')}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
