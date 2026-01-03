@@ -99,13 +99,14 @@ interface SyncLundaProfileRequest extends AuthRequest {
 }
 
 export const syncLundaProfile = asyncHandler(async (req: SyncLundaProfileRequest, res: ExpressResponse) => {
-  const { phone, gender, level, preferredCourtSideLeft, preferredCourtSideRight, metadata } = req.body;
+  const { phone, gender, level, preferredCourtSideLeft, preferredCourtSideRight, metadata, socialLevel } = req.body;
   const userId = req.userId!;
 
   const updateData: any = {};
   if (phone) updateData.phone = phone;
   if (gender) updateData.gender = gender;
-  if (level !== undefined) updateData.level = Math.max(1.0, Math.min(7.0, level));
+  // Ignore level and socialLevel from frontend - only backend can modify these
+  // Level can only be updated from Lunda API response in lundaGetProfile
   if (preferredCourtSideLeft !== undefined) updateData.preferredCourtSideLeft = preferredCourtSideLeft;
   if (preferredCourtSideRight !== undefined) updateData.preferredCourtSideRight = preferredCourtSideRight;
 
