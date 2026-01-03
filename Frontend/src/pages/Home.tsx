@@ -1,10 +1,9 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
 import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController, Contacts, BugsSection } from '@/components/home';
-import { Divider, Button } from '@/components';
-import { Search, ChevronDown } from 'lucide-react';
+import { Button } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
@@ -75,12 +74,13 @@ export const HomeContent = () => {
     hideSkeletonsAnimated: skeletonAnimation.hideSkeletonsAnimated,
   });
 
-  const [activeTab, setActiveTab] = useState<'my-games' | 'past-games'>('my-games');
-  
-  const [isAvailableGamesExpanded, setIsAvailableGamesExpanded] = useState(true);
-  const [isButtonPressed, setIsButtonPressed] = useState(false);
-  const availableGamesSectionRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<'my-games' | 'past-games' | 'search'>('my-games');
 
+  useEffect(() => {
+    if (!loading && games.length === 0 && activeTab === 'my-games') {
+      setActiveTab('search');
+    }
+  }, [loading, games.length, activeTab]);
 
   const {
     pastGames,
@@ -402,79 +402,28 @@ export const HomeContent = () => {
                 onLoadMore={loadPastGames}
               />
             </div>
+
+            <div
+              className={`transition-all duration-300 ease-in-out ${
+                activeTab === 'search'
+                  ? 'opacity-100 translate-x-0'
+                  : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none'
+              }`}
+            >
+              <AvailableGamesSection
+                availableGames={filteredAvailableGames}
+                user={user}
+                loading={loadingAvailableGames}
+                onJoin={handleJoinGame}
+                onMonthChange={handleMonthChange}
+                onDateRangeChange={handleDateRangeChange}
+                showArchived={showArchived}
+                onShowArchivedChange={setShowArchived}
+              />
+            </div>
           </>
         )}
       </div>
-
-      {!showChatFilter && (
-        <>
-          <Divider className="mt-2" />
-          <div 
-            className="flex justify-center -mt-9 cursor-pointer"
-            onClick={() => {
-              const wasExpanded = isAvailableGamesExpanded;
-              setIsAvailableGamesExpanded(!isAvailableGamesExpanded);
-              
-              if (!wasExpanded) {
-                setTimeout(() => {
-                  const sectionElement = availableGamesSectionRef.current;
-                  if (sectionElement) {
-                    const calendarElement = sectionElement.querySelector('[data-calendar="true"]') as HTMLElement;
-                    if (calendarElement) {
-                      const rect = calendarElement.getBoundingClientRect();
-                      const header = document.querySelector('header');
-                      const headerHeight = header ? header.getBoundingClientRect().height : 0;
-                      const currentScrollY = window.scrollY || window.pageYOffset;
-                      const targetScrollY = currentScrollY + rect.top - headerHeight;
-                      
-                      window.scrollTo({
-                        top: Math.max(0, targetScrollY),
-                        behavior: 'smooth'
-                      });
-                    }
-                  }
-                }, 350);
-              }
-            }}
-            onMouseDown={() => setIsButtonPressed(true)}
-            onMouseUp={() => setIsButtonPressed(false)}
-            onMouseLeave={() => setIsButtonPressed(false)}
-            onTouchStart={() => setIsButtonPressed(true)}
-            onTouchEnd={() => setIsButtonPressed(false)}
-          >
-            <p className={`text-xs text-gray-500 dark:text-gray-400 text-center px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 flex items-center gap-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-transform duration-300 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] ${
-              isButtonPressed ? 'scale-[1.5]' : 'scale-100'
-            }`}>
-              <Search className="w-3 h-3" />
-              {t('home.findGames', { defaultValue: 'Find games' })}
-              <ChevronDown 
-                className={`w-3 h-3 transition-transform duration-300 ${
-                  isAvailableGamesExpanded ? 'rotate-180' : ''
-                }`}
-              />
-            </p>
-          </div>
-          <div
-            ref={availableGamesSectionRef}
-            className={`transition-all duration-300 ease-in-out overflow-hidden ${
-              isAvailableGamesExpanded
-                ? 'max-h-[5000px] opacity-100'
-                : 'max-h-0 opacity-0'
-            }`}
-          >
-            <AvailableGamesSection
-              availableGames={filteredAvailableGames}
-              user={user}
-              loading={loadingAvailableGames}
-              onJoin={handleJoinGame}
-              onMonthChange={handleMonthChange}
-              onDateRangeChange={handleDateRangeChange}
-              showArchived={showArchived}
-              onShowArchivedChange={setShowArchived}
-            />
-          </div>
-        </>
-      )}
 
       <div className="flex justify-center mt-4">
         <style>{`
