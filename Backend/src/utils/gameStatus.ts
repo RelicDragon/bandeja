@@ -22,8 +22,8 @@ export const calculateGameStatus = (
   
   if (clubTimezone) {
     const endTimeInTimezone = toZonedTime(endTime, clubTimezone);
-    const endDatePlusOneDay = addDays(endTimeInTimezone, 1);
-    const nextDayMidnight = startOfDay(endDatePlusOneDay);
+    const endDatePlusTwoDays = addDays(endTimeInTimezone, 2);
+    const nextDayMidnight = startOfDay(endDatePlusTwoDays);
     const archiveTimeUTC = fromZonedTime(nextDayMidnight, clubTimezone);
     
     shouldArchive = now >= archiveTimeUTC;

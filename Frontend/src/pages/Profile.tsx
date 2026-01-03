@@ -6,12 +6,13 @@ import { AnimatePresence } from 'framer-motion';
 import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal, WalletModal, NotificationSettingsModal, ConfirmationModal } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
+import { ProfileLeaderboard } from '@/components/ProfileLeaderboard';
 import { BlockedUsersSection } from '@/components/BlockedUsersSection';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
 import { City, Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2 } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, Trophy, User as UserIcon } from 'lucide-react';
 import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -23,7 +24,7 @@ export const ProfileContent = () => {
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
-  const [activeTab, setActiveTab] = useState<'general' | 'statistics' | 'comparison'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'statistics' | 'comparison' | 'leaderboard'>('general');
 
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
@@ -372,13 +373,13 @@ export const ProfileContent = () => {
           <div className="flex gap-2 justify-center">
             <button
               onClick={() => setActiveTab('general')}
-              className={`px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 ${
+              className={`px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 flex items-center gap-1 ${
                 activeTab === 'general'
                   ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
-              {t('profile.general') || 'General'}
+              <UserIcon size={16} />
             </button>
             <button
               onClick={() => setActiveTab('statistics')}
@@ -399,6 +400,17 @@ export const ProfileContent = () => {
               }`}
             >
               {t('profile.comparison') || 'Comparison'}
+            </button>
+            <button
+              onClick={() => setActiveTab('leaderboard')}
+              className={`px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 flex items-center gap-1 ${
+                activeTab === 'leaderboard'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              <Trophy size={16} />
+              {t('profile.top') || 'Top'}
             </button>
           </div>
         </div>
@@ -447,7 +459,7 @@ export const ProfileContent = () => {
                     strokeWidth={1.5}
                   />
                 </div>
-                <span>{user.socialLevel?.toFixed(1) || '1.0'}</span>
+                <span>{user.socialLevel.toFixed(1)}</span>
               </div>
             )}
           </div>
@@ -838,15 +850,17 @@ export const ProfileContent = () => {
         )}
 
         {activeTab === 'statistics' && (
-          <Card>
-            <ProfileStatistics />
-          </Card>
+          <ProfileStatistics />
         )}
 
         {activeTab === 'comparison' && (
           <Card>
             <ProfileComparison />
           </Card>
+        )}
+
+        {activeTab === 'leaderboard' && (
+            <ProfileLeaderboard />
         )}
       </div>
 

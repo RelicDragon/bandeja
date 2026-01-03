@@ -271,10 +271,16 @@ export function calculateByPointsOutcomes(
       const isTie = !teamAWins && !teamBWins;
 
       const teamBAvgLevel = teamB.playerIds
-        .map(id => players.find(p => p.userId === id)?.level || 1)
+        .map(id => {
+          const player = players.find(p => p.userId === id);
+          return player ? player.level : 1;
+        })
         .reduce((sum, level) => sum + level, 0) / teamB.playerIds.length;
       const teamAAvgLevel = teamA.playerIds
-        .map(id => players.find(p => p.userId === id)?.level || 1)
+        .map(id => {
+          const player = players.find(p => p.userId === id);
+          return player ? player.level : 1;
+        })
         .reduce((sum, level) => sum + level, 0) / teamA.playerIds.length;
 
       for (const playerId of teamA.playerIds) {
@@ -390,10 +396,16 @@ export function calculateByScoresDeltaOutcomes(
       const isTie = !teamAWins && !teamBWins;
 
       const teamBAvgLevel = teamB.playerIds
-        .map(id => players.find(p => p.userId === id)?.level || 1)
+        .map(id => {
+          const player = players.find(p => p.userId === id);
+          return player ? player.level : 1;
+        })
         .reduce((sum, level) => sum + level, 0) / teamB.playerIds.length;
       const teamAAvgLevel = teamA.playerIds
-        .map(id => players.find(p => p.userId === id)?.level || 1)
+        .map(id => {
+          const player = players.find(p => p.userId === id);
+          return player ? player.level : 1;
+        })
         .reduce((sum, level) => sum + level, 0) / teamA.playerIds.length;
 
       for (const playerId of teamA.playerIds) {

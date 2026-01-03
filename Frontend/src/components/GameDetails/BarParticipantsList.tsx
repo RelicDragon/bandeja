@@ -102,13 +102,12 @@ export const BarParticipantsList = ({ gameId, participants }: BarParticipantsLis
                 {t('gameDetails.player')}
               </th>
               <th className="text-center py-2 pl-0 pr-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                {t('gameResults.socialLevelBefore')}
+                {t('gameResults.socialLevel')}
               </th>
             </tr>
           </thead>
           <tbody>
             {participantsWithLevels.map((participant) => {
-              const socialLevel = participant.levelChange?.levelAfter ?? participant.user?.socialLevel;
               return (
                 <tr
                   key={participant.userId}
@@ -118,15 +117,7 @@ export const BarParticipantsList = ({ gameId, participants }: BarParticipantsLis
                     {participant.user ? (
                       <div className="flex items-center gap-3">
                         <PlayerAvatar
-                          player={{
-                            id: participant.user.id,
-                            firstName: participant.user.firstName,
-                            lastName: participant.user.lastName,
-                            avatar: participant.user.avatar,
-                            level: participant.user.level,
-                            socialLevel: socialLevel,
-                            gender: participant.user.gender,
-                          }}
+                          player={participant.user}
                           extrasmall={true}
                           showName={false}
                           fullHideName={true}

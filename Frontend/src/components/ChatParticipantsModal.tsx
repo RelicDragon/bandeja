@@ -43,7 +43,7 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
   const allParticipants = [
     ...game.participants.filter(p => p.isPlaying).map(p => ({ ...p.user, isParticipant: true, isInvited: false, isGuest: false, role: p.role })),
     ...game.participants.filter(p => !p.isPlaying).map(p => ({ ...p.user, isParticipant: false, isInvited: false, isGuest: p.role !== 'OWNER' && p.role !== 'ADMIN', role: p.role })),
-    ...(game.invites || []).map(invite => ({ ...invite.receiver, isParticipant: false, isInvited: true, isGuest: false, role: 'PARTICIPANT' as const }))
+    ...(game.invites || []).filter(invite => invite.receiver).map(invite => ({ ...invite.receiver!, isParticipant: false, isInvited: true, isGuest: false, role: 'PARTICIPANT' as const }))
   ];
 
   const isParticipantVisibleForChatType = (participant: any) => {
@@ -142,14 +142,7 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
                 >
                   <div className={`flex-shrink-0 ${!isVisibleForChat ? 'grayscale' : ''}`}>
                     <PlayerAvatar 
-                      player={{
-                        id: participant.id || '',
-                        firstName: participant.firstName,
-                        lastName: participant.lastName,
-                        avatar: participant.avatar,
-                        level: participant.level,
-                        gender: participant.gender,
-                      }}
+                      player={participant}
                       smallLayout={true}
                       showName={false}
                     />

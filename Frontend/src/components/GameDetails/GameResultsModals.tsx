@@ -6,14 +6,14 @@ import { TeamPlayerSelector, ConfirmationModal } from '@/components';
 import { HorizontalScoreEntryModal, SyncConflictModal } from '@/components/gameResults';
 import { OutcomeExplanationModal } from '@/components/OutcomeExplanationModal';
 import { ModalType } from '@/hooks/useModalManager';
-import { Game, User } from '@/types';
+import { Game, BasicUser } from '@/types';
 import { Round } from '@/types/gameResults';
 import { getRestartTitle, getFinishTitle, getEditTitle } from '@/utils/gameResultsHelpers';
 
 interface GameResultsModalsProps {
   modal: ModalType;
   rounds: Round[];
-  players: User[];
+  players: BasicUser[];
   currentGame: Game | null;
   expandedRoundId: string | null;
   effectiveHorizontalLayout: boolean;

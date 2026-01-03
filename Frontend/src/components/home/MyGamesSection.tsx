@@ -177,7 +177,7 @@ export const MyGamesSection = ({
       {!showChatFilter && onSwitchToSearch && (
         <div className="mt-6 flex justify-center">
           <Button
-            variant="secondary"
+            variant="primary"
             size="sm"
             onClick={onSwitchToSearch}
             className="flex items-center gap-2"

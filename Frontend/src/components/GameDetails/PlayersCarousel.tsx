@@ -210,15 +210,7 @@ export const PlayersCarousel = ({
                   }`}
                 >
                   <PlayerAvatar
-                    player={{
-                      id: participant.user.id,
-                      firstName: participant.user.firstName,
-                      lastName: participant.user.lastName,
-                      avatar: participant.user.avatar,
-                      level: participant.user.level,
-                      socialLevel: participant.user.socialLevel,
-                      gender: participant.user.gender,
-                    }}
+                    player={participant.user}
                     isCurrentUser={participant.user.id === userId}
                     removable={participant.user.id === userId}
                     onRemoveClick={participant.user.id === userId ? onLeave : undefined}

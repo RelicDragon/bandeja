@@ -647,13 +647,7 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
                   if (!user) return null;
                   const metadata = getUserWithMetadata(id);
                   return {
-                    id: user.id,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    avatar: user.avatar,
-                    level: user.level,
-                    gender: user.gender,
-                    telegramUsername: undefined,
+                    ...user,
                     interactionCount: metadata?.interactionCount || 0,
                   } as InvitablePlayer;
                 })

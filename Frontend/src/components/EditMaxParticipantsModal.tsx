@@ -642,14 +642,7 @@ export const EditMaxParticipantsModal = ({
                         >
                           <div className="flex-shrink-0">
                             <PlayerAvatar 
-                              player={{
-                                id: participant.userId,
-                                firstName: participant.user.firstName,
-                                lastName: participant.user.lastName,
-                                avatar: participant.user.avatar,
-                                level: participant.user.level,
-                                gender: participant.user.gender,
-                              }}
+                              player={participant.user}
                               showName={false}
                               fullHideName={true}
                               smallLayout={false}

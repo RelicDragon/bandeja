@@ -16,21 +16,25 @@ export type MatchGenerationType = 'HANDMADE' | 'FIXED' | 'RANDOM' | 'ROUND_ROBIN
 export type PriceType = 'PER_PERSON' | 'PER_TEAM' | 'TOTAL' | 'NOT_KNOWN' | 'FREE';
 export type PriceCurrency = 'EUR' | 'RSD' | 'RUB';
 
-export interface User {
+export interface BasicUser {
   id: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string | null;
+  level: number;
+  socialLevel: number;
+  gender: Gender;
+}
+
+export interface User extends BasicUser {
   phone?: string;
   email?: string;
   telegramId?: string;
   telegramUsername?: string;
-  firstName?: string;
-  lastName?: string;
-  avatar?: string | null;
   originalAvatar?: string | null;
   authProvider: AuthProvider;
   currentCityId?: string;
   currentCity?: City;
-  level: number;
-  socialLevel: number;
   reliability: number;
   totalPoints: number;
   gamesPlayed: number;
@@ -38,7 +42,6 @@ export interface User {
   language?: string; // Full locale (e.g., "en-US", "ru-RU") or "auto"
   timeFormat?: 'auto' | '12h' | '24h';
   weekStart?: 'auto' | 'monday' | 'sunday';
-  gender: Gender;
   genderIsSet?: boolean;
   isAdmin?: boolean;
   isTrainer?: boolean;
@@ -105,29 +108,14 @@ export interface GameParticipant {
   role: ParticipantRole;
   isPlaying: boolean;
   joinedAt: string;
-  user: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    socialLevel?: number;
-    gender: Gender;
-  };
+  user: BasicUser;
 }
 
 export interface GameTeamPlayer {
   id: string;
   gameTeamId: string;
   userId: string;
-  user: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    gender: Gender;
-  };
+  user: BasicUser;
 }
 
 export interface GameTeam {
@@ -162,15 +150,7 @@ export interface GameOutcome {
   losses: number;
   scoresMade: number;
   scoresLost: number;
-  user: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    reliability: number;
-    gender?: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
-  };
+  user: BasicUser;
 }
 
 export interface Faq {
@@ -314,22 +294,8 @@ export interface Invite {
   message?: string;
   expiresAt?: string;
   createdAt: string;
-  sender: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    gender: Gender;
-  };
-  receiver?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    gender: Gender;
-  };
+  sender: BasicUser;
+  receiver?: BasicUser;
   game?: Game;
 }
 
@@ -339,14 +305,7 @@ export interface JoinQueue {
   gameId: string;
   status: InviteStatus;
   createdAt: string;
-  user: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    gender: Gender;
-  };
+  user: BasicUser;
 }
 
 export interface Bug {
@@ -357,25 +316,12 @@ export interface Bug {
   bugType: BugType;
   createdAt: string;
   updatedAt: string;
-  sender: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level?: number;
-    gender?: Gender;
-    isAdmin?: boolean;
-  };
+  sender: User;
   participants?: Array<{
     id: string;
     userId: string;
     joinedAt: string;
-    user: {
-      id: string;
-      firstName?: string;
-      lastName?: string;
-      avatar?: string;
-    };
+    user: User;
   }>;
 }
 

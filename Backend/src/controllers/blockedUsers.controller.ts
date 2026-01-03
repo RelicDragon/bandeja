@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export const blockUser = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { userId: blockedUserId } = req.body;
@@ -43,12 +44,7 @@ export const blockUser = asyncHandler(async (req: AuthRequest, res: Response) =>
     },
     include: {
       blockedUser: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatar: true,
-        },
+        select: USER_SELECT_FIELDS,
       },
     },
   });
@@ -111,12 +107,7 @@ export const getBlockedUsers = asyncHandler(async (req: AuthRequest, res: Respon
     where: { userId: req.userId! },
     include: {
       blockedUser: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatar: true,
-        },
+        select: USER_SELECT_FIELDS,
       },
     },
     orderBy: {

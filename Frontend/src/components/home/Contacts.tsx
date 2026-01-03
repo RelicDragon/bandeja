@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
-import { GameParticipant } from '@/types';
+import { GameParticipant, BasicUser } from '@/types';
 import { matchesSearch } from '@/utils/transliteration';
 
 interface ContactItem {
@@ -17,15 +17,7 @@ interface ContactItem {
   unreadCount?: number;
   interactionCount?: number;
   isFavorite?: boolean;
-  user?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    socialLevel?: number;
-    gender?: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
-  };
+  user?: BasicUser;
 }
 
 export const Contacts = () => {
@@ -129,15 +121,7 @@ export const Contacts = () => {
           userId,
           interactionCount: metadata?.interactionCount || 0,
           isFavorite: favorite,
-          user: {
-            id: userData.id,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            avatar: userData.avatar ?? undefined,
-            level: userData.level,
-            socialLevel: userData.socialLevel,
-            gender: userData.gender
-          }
+          user: userData
         };
 
         if (favorite) {
@@ -206,19 +190,11 @@ export const Contacts = () => {
     return filteredContacts
       .filter(contact => contact.user)
       .map((contact): GameParticipant => ({
-        userId: contact.userId || contact.user?.id || '',
+        userId: contact.userId || contact.user!.id,
         role: 'PARTICIPANT',
         isPlaying: true,
         joinedAt: new Date().toISOString(),
-        user: {
-          id: contact.user?.id || '',
-          firstName: contact.user?.firstName,
-          lastName: contact.user?.lastName,
-          avatar: contact.user?.avatar,
-          level: contact.user?.level || 0,
-          socialLevel: contact.user?.socialLevel,
-          gender: contact.user?.gender || 'PREFER_NOT_TO_SAY',
-        },
+        user: contact.user!,
       }));
   }, [filteredContacts]);
 

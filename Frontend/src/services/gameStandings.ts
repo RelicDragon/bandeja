@@ -1,8 +1,8 @@
-import { Game, User, WinnerOfGame } from '@/types';
+import { Game, BasicUser, WinnerOfGame } from '@/types';
 import { Round, Match } from '@/types/gameResults';
 
 export interface PlayerStanding {
-  user: User;
+  user: BasicUser;
   place: number;
   wins: number;
   ties: number;
@@ -140,7 +140,7 @@ export function calculateGameStandings(
   winnerOfGame: WinnerOfGame
 ): PlayerStanding[] {
   const playingParticipants = game.participants.filter(p => p.isPlaying);
-  const players = playingParticipants.map(p => p.user as User);
+  const players = playingParticipants.map(p => p.user as BasicUser);
 
   if (players.length === 0 || rounds.length === 0) {
     return [];

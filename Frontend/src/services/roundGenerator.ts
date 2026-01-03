@@ -1,6 +1,6 @@
 import { createId } from '@paralleldrive/cuid2';
 import { Round, Match } from '@/types/gameResults';
-import { Game, User } from '@/types';
+import { Game, BasicUser } from '@/types';
 import { createOneOnOneMatches, createTwoOnTwoMatches } from './predefinedResults';
 import { generateFixedRound, generateRandomRound } from './predefinedResults';
 import { calculateGameStandings } from './gameStandings';
@@ -51,7 +51,7 @@ export class RoundGenerator {
     const { game } = this.options;
     const playingParticipants = game.participants.filter(p => p.isPlaying);
     const numPlayers = playingParticipants.length;
-    const players = playingParticipants.map(p => p.user) as User[];
+    const players = playingParticipants.map(p => p.user) as BasicUser[];
     
     const matches: Match[] = [];
 

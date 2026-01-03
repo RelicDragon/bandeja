@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse, User, Gender, EntityType, GameType, GameStatus, ParticipantRole } from '@/types';
+import { ApiResponse, User, BasicUser, EntityType, GameType, GameStatus, ParticipantRole } from '@/types';
 
 export interface LevelHistoryItem {
   id: string;
@@ -122,15 +122,7 @@ export interface PlayerComparison {
   };
 }
 
-export interface InvitablePlayer {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  avatar?: string;
-  level: number;
-  socialLevel: number;
-  gender: Gender;
-  telegramUsername?: string;
+export interface InvitablePlayer extends BasicUser {
   interactionCount: number;
 }
 

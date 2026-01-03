@@ -1,6 +1,6 @@
 import { Op } from '@/types/ops';
 import { OpCreator } from '../opCreators';
-import { User } from '@/types';
+import { BasicUser } from '@/types';
 
 export interface OneOnOneMatchSetup {
   matchId: string;
@@ -8,7 +8,7 @@ export interface OneOnOneMatchSetup {
   teamB: string[];
 }
 
-export function createOneOnOneMatches(players: User[]): OneOnOneMatchSetup[] {
+export function createOneOnOneMatches(players: BasicUser[]): OneOnOneMatchSetup[] {
   if (players.length !== 2) {
     throw new Error('One-on-one games require exactly 2 players');
   }

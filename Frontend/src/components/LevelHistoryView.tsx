@@ -105,7 +105,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
     const limit = activeTab === '10' ? 10 : 30;
     return allMergedHistory.slice(-limit);
   }, [allMergedHistory, activeTab]);
-  const currentValue = showSocialLevel ? (user.socialLevel || 1.0) : user.level;
+  const currentValue = showSocialLevel ? user.socialLevel : user.level;
   
   const maxLevel = currentHistory.length > 0 
     ? Math.max(...currentHistory.map(h => h.levelAfter), currentValue)
@@ -131,7 +131,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
             {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}
           </div>
           <div className="text-white text-6xl font-bold pb-6">
-            {showSocialLevel ? (user.socialLevel?.toFixed(2) || '1.00') : user.level.toFixed(2)}
+            {showSocialLevel ? user.socialLevel.toFixed(2) : user.level.toFixed(2)}
           </div>
           {!showSocialLevel && (
             <div className="absolute bottom-3 right-3 text-white/80 text-xs">

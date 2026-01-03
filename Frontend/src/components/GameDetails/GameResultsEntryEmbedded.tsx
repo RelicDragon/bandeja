@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { OutcomesDisplay } from '@/components';
 import { gamesApi } from '@/api';
 import { resultsApi } from '@/api/results';
-import { User, Game } from '@/types';
+import { BasicUser, Game } from '@/types';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
@@ -65,7 +65,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   const rounds = engine.rounds;
 
   const players = useMemo(() => 
-    (currentGame?.participants.filter(p => p.isPlaying).map(p => p.user) || []) as User[], 
+    (currentGame?.participants.filter(p => p.isPlaying).map(p => p.user) || []) as BasicUser[], 
     [currentGame?.participants]
   );
 

@@ -411,14 +411,7 @@ export const GameCard = ({
                   const owner = game.participants.find(p => p.role === 'OWNER');
                   return owner ? (
                     <PlayerAvatar
-                      player={{
-                        id: owner.userId,
-                        firstName: owner.user.firstName,
-                        lastName: owner.user.lastName,
-                        avatar: owner.user.avatar,
-                        level: owner.user.level,
-                        gender: owner.user.gender,
-                      }}
+                      player={owner.user}
                       smallLayout={true}
                       showName={false}
                     />

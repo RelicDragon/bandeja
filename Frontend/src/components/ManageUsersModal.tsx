@@ -128,14 +128,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
                   }`}
                 >
                   <PlayerAvatar
-                    player={{
-                      id: participant.userId,
-                      firstName: participant.user.firstName,
-                      lastName: participant.user.lastName,
-                      avatar: participant.user.avatar,
-                      level: participant.user.level,
-                      gender: participant.user.gender,
-                    }}
+                    player={participant.user}
                     showName={false}
                     smallLayout={true}
                     role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
@@ -150,7 +143,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
                       </span>
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Level {participant.user.level?.toFixed(1) || '0.0'}
+                      Level {participant.user ? participant.user.level.toFixed(1) : '0.0'}
                     </p>
                   </div>
                 </div>

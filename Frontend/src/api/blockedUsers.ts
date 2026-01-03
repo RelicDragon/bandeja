@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse } from '@/types';
+import { ApiResponse, BasicUser } from '@/types';
 
 export const blockedUsersApi = {
   blockUser: async (userId: string) => {
@@ -25,12 +25,7 @@ export const blockedUsersApi = {
       userId: string;
       blockedUserId: string;
       createdAt: string;
-      blockedUser: {
-        id: string;
-        firstName?: string;
-        lastName?: string;
-        avatar?: string | null;
-      };
+      blockedUser: BasicUser;
     }>>>('/blocked-users/list');
     return response.data;
   },

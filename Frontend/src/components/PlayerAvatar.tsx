@@ -1,6 +1,6 @@
 import { X, User, Crown, Beer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { User as UserType } from '@/types';
+import { BasicUser } from '@/types';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { useRef, useEffect, useState } from 'react';
 import { GenderIndicator } from './GenderIndicator';
@@ -9,15 +9,7 @@ import { useFavoritesStore } from '@/store/favoritesStore';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface PlayerAvatarProps {
-  player?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level?: number;
-    socialLevel?: number;
-    gender?: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
-  } | UserType | null;
+  player?: BasicUser | null;
   isCurrentUser?: boolean;
   onRemoveClick?: () => void;
   removable?: boolean;
@@ -66,8 +58,8 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
     ];
   };
 
-  const getLevelColor = (level: number | undefined, isDark: boolean = false): { backgroundColor: string } => {
-    const levelValue = Math.max(0, Math.min(7, level ?? 0));
+  const getLevelColor = (level: number, isDark: boolean = false): { backgroundColor: string } => {
+    const levelValue = Math.max(0, Math.min(7, level));
     
     const colorStops: Array<{ level: number; rgb: [number, number, number] }> = [
       { level: 0, rgb: [59, 130, 246] },   // blue-500
@@ -196,14 +188,14 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
               className={`absolute -bottom-1 -right-1 ${sizeClasses.level} rounded-full flex items-center justify-center text-white ${sizeClasses.level.includes('w-4') ? 'text-[8px]' : sizeClasses.level.includes('w-5') ? 'text-[10px]' : 'text-xs font-bold border-2'} border-white dark:border-gray-900`}
               style={getLevelColor(player.level, isDark)}
             >
-              {player.level?.toFixed(1) || '0.0'}
+              {player.level.toFixed(1)}
             </div>
           ) : (
             <div className="absolute -bottom-1 -right-1 flex flex-col items-center">
               <span className={`text-white font-bold text-center leading-none mb-0.5 ${
                 extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'
               } bg-black bg-opacity-60 rounded px-1 py-0.5`}>
-                {player.socialLevel?.toFixed(1) || '1.0'}
+                {player.socialLevel.toFixed(1)}
               </span>
               <div className="relative">
                 <Beer

@@ -437,14 +437,7 @@ export const GameInfo = ({
           <div className="flex-shrink-0">
             {owner && (
               <PlayerAvatar
-                player={{
-                  id: owner.userId,
-                  firstName: owner.user.firstName,
-                  lastName: owner.user.lastName,
-                  avatar: owner.user.avatar,
-                  level: owner.user.level,
-                  gender: owner.user.gender,
-                }}
+                player={owner.user}
                 smallLayout={true}
                 showName={false}
               />

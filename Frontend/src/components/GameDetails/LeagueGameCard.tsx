@@ -38,14 +38,7 @@ export const LeagueGameCard = ({
     if (game.fixedTeams && game.fixedTeams.length > teamIndex) {
       return game.fixedTeams[teamIndex].players
         .filter(tp => tp.user)
-        .map(tp => ({
-          id: tp.userId,
-          firstName: tp.user!.firstName,
-          lastName: tp.user!.lastName,
-          avatar: tp.user!.avatar,
-          level: tp.user!.level,
-          gender: tp.user!.gender,
-        }));
+        .map(tp => tp.user!);
     }
     return [];
   };

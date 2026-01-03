@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse, Game, ChatType } from '@/types';
+import { ApiResponse, Game, ChatType, BasicUser } from '@/types';
 
 export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
 export type ChatContextType = 'GAME' | 'BUG' | 'USER';
@@ -28,14 +28,7 @@ export interface ChatMessage {
       lastName?: string;
     };
   };
-  sender: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    gender: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
-  } | null;
+  sender: BasicUser | null;
   reactions: MessageReaction[];
   readReceipts: MessageReadReceipt[];
 }
@@ -46,14 +39,7 @@ export interface MessageReaction {
   userId: string;
   emoji: string;
   createdAt: string;
-  user: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    gender: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
-  };
+  user: BasicUser;
 }
 
 export interface MessageReadReceipt {
@@ -61,14 +47,7 @@ export interface MessageReadReceipt {
   messageId: string;
   userId: string;
   readAt: string;
-  user?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    gender: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
-  };
+  user?: BasicUser;
 }
 
 export interface CreateMessageRequest {
@@ -97,24 +76,8 @@ export interface UserChat {
   user2Id: string;
   createdAt: string;
   updatedAt: string;
-  user1: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    socialLevel: number;
-    gender: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
-  };
-  user2: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-    socialLevel: number;
-    gender: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
-  };
+  user1: BasicUser;
+  user2: BasicUser;
   lastMessage?: ChatMessage;
   isPinned?: boolean;
 }

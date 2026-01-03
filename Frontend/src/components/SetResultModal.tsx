@@ -5,12 +5,12 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
-import { User } from '@/types';
+import { BasicUser } from '@/types';
 
 interface SetResultModalProps {
   match: Match;
   setIndex: number;
-  players: User[];
+  players: BasicUser[];
   maxTotalPointsPerSet?: number;
   maxPointsPerTeam?: number;
   fixedNumberOfSets?: number;
@@ -82,8 +82,8 @@ export const SetResultModal = ({
     }
   };
 
-  const teamAPlayers = match.teamA.map(id => players.find(p => p.id === id)).filter(Boolean) as User[];
-  const teamBPlayers = match.teamB.map(id => players.find(p => p.id === id)).filter(Boolean) as User[];
+  const teamAPlayers = match.teamA.map(id => players.find(p => p.id === id)).filter(Boolean) as BasicUser[];
+  const teamBPlayers = match.teamB.map(id => players.find(p => p.id === id)).filter(Boolean) as BasicUser[];
 
   const maxNumber = Math.min(
     maxTotalPointsPerSet && maxTotalPointsPerSet > 0 ? maxTotalPointsPerSet : 32,

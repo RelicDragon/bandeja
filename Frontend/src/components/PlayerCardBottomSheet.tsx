@@ -592,7 +592,7 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, g
                   strokeWidth={1.5}
                 />
               </div>
-              <span>{user.socialLevel?.toFixed(2) || '1.00'}</span>
+              <span>{user.socialLevel.toFixed(2)}</span>
             </button>
           </div>
         </div>

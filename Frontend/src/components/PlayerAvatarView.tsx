@@ -66,7 +66,7 @@ export const PlayerAvatarView: React.FC<PlayerAvatarViewProps> = ({ stats, onBac
                 strokeWidth={1.5}
               />
             </div>
-            {user.socialLevel?.toFixed(1) || '1.0'}
+            {user.socialLevel.toFixed(1)}
           </div>
         </div>
       </div>

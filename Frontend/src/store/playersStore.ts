@@ -2,18 +2,8 @@ import { create } from 'zustand';
 import { chatApi, UserChat } from '@/api/chat';
 import { usersApi, InvitablePlayer } from '@/api/users';
 import { useAuthStore } from './authStore';
-import { Gender } from '@/types';
+import { BasicUser } from '@/types';
 import type { NewUserChatMessage, UserChatReadReceipt } from '@/services/socketService';
-
-export interface BasicUser {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  avatar?: string | null;
-  level: number;
-  socialLevel: number;
-  gender: Gender;
-}
 
 export interface UserMetadata {
   chatId?: string;
@@ -303,7 +293,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         lastName: p.lastName,
         avatar: p.avatar,
         level: p.level,
-        socialLevel: p.socialLevel || 0,
+        socialLevel: p.socialLevel,
         gender: p.gender,
       }));
 
@@ -372,15 +362,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         const otherUser = chat.user1Id === currentUserId ? chat.user2 : chat.user1;
 
         if (otherUser && otherUserId) {
-          newUsers[otherUserId] = {
-            id: otherUser.id,
-            firstName: otherUser.firstName,
-            lastName: otherUser.lastName,
-            avatar: otherUser.avatar,
-            level: otherUser.level,
-            socialLevel: otherUser.socialLevel || 0,
-            gender: otherUser.gender,
-          };
+          newUsers[otherUserId] = otherUser;
 
           updatedMetadata[otherUserId] = {
             ...updatedMetadata[otherUserId],

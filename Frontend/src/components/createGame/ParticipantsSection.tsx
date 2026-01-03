@@ -1,7 +1,7 @@
 import { Users as UsersIcon, UserPlus, Users2, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, PlayerAvatar } from '@/components';
-import { User } from '@/types';
+import { BasicUser } from '@/types';
 import { EntityType } from '@/types';
 import { InvitablePlayer } from '@/api/users';
 
@@ -10,7 +10,7 @@ interface ParticipantsSectionProps {
   maxParticipants: number;
   invitedPlayerIds: string[];
   invitedPlayers?: InvitablePlayer[];
-  user: User | null;
+  user: BasicUser | null;
   entityType: EntityType;
   canInvitePlayers: boolean;
   onMaxParticipantsChange: (num: number) => void;
@@ -44,14 +44,7 @@ export const ParticipantsSection = ({
         result.push(
           <PlayerAvatar
             key={i}
-            player={{
-              id: user.id,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              avatar: user.avatar || undefined,
-              level: user.level,
-              gender: user.gender,
-            }}
+            player={user}
             isCurrentUser={true}
             removable={true}
             onRemoveClick={() => onRemoveParticipant(i)}
@@ -175,14 +168,7 @@ export const ParticipantsSection = ({
               {invitedPlayers.map((player) => (
                 <PlayerAvatar
                   key={player.id}
-                  player={{
-                    id: player.id,
-                    firstName: player.firstName,
-                    lastName: player.lastName,
-                    avatar: player.avatar,
-                    level: player.level,
-                    gender: player.gender,
-                  }}
+                  player={player}
                   showName={false}
                   smallLayout={true}
                   removable={true}

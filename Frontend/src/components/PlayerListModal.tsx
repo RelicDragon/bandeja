@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
-import { X, MessageCircle, Check, Search } from 'lucide-react';
+import { X, Check, Search } from 'lucide-react';
 import { InvitablePlayer } from '@/api/users';
 import { invitesApi } from '@/api';
 import { gamesApi } from '@/api/games';
@@ -83,13 +83,7 @@ export const PlayerListModal = ({
           .map((user) => {
             const metadata = getUserWithMetadata(user.id);
             return {
-              id: user.id,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              avatar: user.avatar,
-              level: user.level,
-              gender: user.gender,
-              telegramUsername: undefined,
+              ...user,
               interactionCount: metadata?.interactionCount || 0,
             } as InvitablePlayer;
           })
@@ -123,8 +117,7 @@ export const PlayerListModal = ({
     if (searchQuery.trim()) {
       filtered = filtered.filter((player) => {
         const fullName = `${player.firstName || ''} ${player.lastName || ''}`;
-        const telegram = player.telegramUsername || '';
-        return matchesSearch(searchQuery, fullName) || (telegram && matchesSearch(searchQuery, telegram));
+        return matchesSearch(searchQuery, fullName);
       });
     }
 
@@ -267,14 +260,7 @@ export const PlayerListModal = ({
                   >
                     <div className="flex-shrink-0">
                       <PlayerAvatar 
-                        player={{
-                          id: player.id,
-                          firstName: player.firstName,
-                          lastName: player.lastName,
-                          avatar: player.avatar,
-                          level: player.level,
-                          gender: player.gender,
-                        }}
+                        player={player}
                         showName={false}
                         fullHideName={true}
                         smallLayout={false}
@@ -295,9 +281,6 @@ export const PlayerListModal = ({
                           }`}>
                             <i className={`bi ${player.gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'} text-white text-[8px]`}></i>
                           </div>
-                        )}
-                        {player.telegramUsername && (
-                          <MessageCircle size={16} className="text-blue-500 dark:text-blue-400 flex-shrink-0" />
                         )}
                       </div>
                     </div>

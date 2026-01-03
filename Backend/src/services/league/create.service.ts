@@ -690,8 +690,8 @@ export class LeagueCreateService {
     }
 
     const sortedParticipants = participants.sort((a, b) => {
-      const aLevel = a.user?.level || 0;
-      const bLevel = b.user?.level || 0;
+      const aLevel = a.user ? a.user.level : 0;
+      const bLevel = b.user ? b.user.level : 0;
       return bLevel - aLevel;
     });
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Trash2, Plus } from 'lucide-react';
 import { Round } from '@/types/gameResults';
-import { User, Court } from '@/types';
+import { BasicUser, Court } from '@/types';
 import { MatchCard } from './MatchCard';
 import { HorizontalMatchCard } from './HorizontalMatchCard';
 import { ConfirmationModal } from '@/components';
@@ -10,7 +10,7 @@ import { ConfirmationModal } from '@/components';
 interface RoundCardProps {
   round: Round;
   roundIndex: number;
-  players: User[];
+  players: BasicUser[];
   isPresetGame: boolean;
   isExpanded: boolean;
   canEditResults: boolean;

@@ -1,11 +1,11 @@
 import { createPortal } from 'react-dom';
 import { useMemo } from 'react';
-import { User, GameParticipant } from '@/types';
+import { BasicUser, GameParticipant } from '@/types';
 import { Match } from '@/types/gameResults';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 
 interface AvailablePlayersFooterProps {
-  players: User[];
+  players: BasicUser[];
   editingMatch: Match | undefined;
   roundMatches?: Match[];
   draggedPlayer: string | null;
@@ -52,14 +52,7 @@ export const AvailablePlayersFooter = ({
       role: 'PARTICIPANT' as const,
       isPlaying: true,
       joinedAt: new Date().toISOString(),
-      user: {
-        id: player.id,
-        firstName: player.firstName,
-        lastName: player.lastName,
-        avatar: player.avatar ?? undefined,
-        level: player.level,
-        gender: player.gender,
-      },
+      user: player,
     }));
   }, [availablePlayers]);
 

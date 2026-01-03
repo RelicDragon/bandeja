@@ -1,9 +1,9 @@
 import { createPortal } from 'react-dom';
 import { PlayerAvatar } from '@/components';
-import { User } from '@/types';
+import { BasicUser } from '@/types';
 
 interface FloatingDraggedPlayerProps {
-  player: User | null;
+  player: BasicUser | null;
   position: { x: number; y: number };
 }
 

@@ -179,14 +179,7 @@ export const SendMoneyToUserModal = ({
           {toUser && (
             <div className="mb-6 flex items-center justify-center">
               <PlayerAvatar
-                player={{
-                  id: toUser.id,
-                  firstName: toUser.firstName,
-                  lastName: toUser.lastName,
-                  avatar: toUser.avatar,
-                  level: toUser.level,
-                  gender: toUser.gender,
-                }}
+                player={toUser}
                 showName={true}
                 extrasmall={false}
               />

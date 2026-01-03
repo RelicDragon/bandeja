@@ -1,12 +1,12 @@
 import { Trash2, MapPin } from 'lucide-react';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
-import { User, Court } from '@/types';
+import { BasicUser, Court } from '@/types';
 
 interface MatchCardProps {
   match: Match;
   matchIndex: number;
-  players: User[];
+  players: BasicUser[];
   isPresetGame: boolean;
   isEditing: boolean;
   canEditResults: boolean;

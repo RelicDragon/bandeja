@@ -12,5 +12,6 @@ export * from './favorites';
 export * from './bugs';
 export * from './lunda';
 export * from './transactions';
+export * from './ranking';
 export { default as api } from './axios';
 

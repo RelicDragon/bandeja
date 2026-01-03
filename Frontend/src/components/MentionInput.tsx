@@ -1,16 +1,12 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { MentionsInput, Mention, SuggestionDataItem, MentionData } from 'react-mentions';
 import { ChatContextType } from '@/api/chat';
-import { Game, Bug } from '@/types';
+import { Game, Bug, BasicUser } from '@/types';
 import { PlayerAvatar } from './PlayerAvatar';
 import { matchesSearch } from '@/utils/transliteration';
 
-interface MentionableUser {
-  id: string;
+interface MentionableUser extends BasicUser {
   display: string;
-  firstName?: string;
-  lastName?: string;
-  avatar?: string;
 }
 
 interface MentionInputProps {
@@ -73,11 +69,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           if (p.user && !userIds.has(p.user.id)) {
             userIds.add(p.user.id);
             users.push({
-              id: p.user.id,
+              ...p.user,
               display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-              firstName: p.user.firstName,
-              lastName: p.user.lastName,
-              avatar: p.user.avatar,
             });
           }
         });
@@ -85,11 +78,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           if (invite.receiver && !userIds.has(invite.receiver.id)) {
             userIds.add(invite.receiver.id);
             users.push({
-              id: invite.receiver.id,
+              ...invite.receiver,
               display: `${invite.receiver.firstName || ''} ${invite.receiver.lastName || ''}`.trim() || 'Unknown',
-              firstName: invite.receiver.firstName,
-              lastName: invite.receiver.lastName,
-              avatar: invite.receiver.avatar,
             });
           }
         });
@@ -100,11 +90,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
             if (p.user && !userIds.has(p.user.id)) {
               userIds.add(p.user.id);
               users.push({
-                id: p.user.id,
+                ...p.user,
                 display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-                firstName: p.user.firstName,
-                lastName: p.user.lastName,
-                avatar: p.user.avatar,
               });
             }
           });
@@ -115,11 +102,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
             if (p.user && !userIds.has(p.user.id)) {
               userIds.add(p.user.id);
               users.push({
-                id: p.user.id,
+                ...p.user,
                 display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-                firstName: p.user.firstName,
-                lastName: p.user.lastName,
-                avatar: p.user.avatar,
               });
             }
           });
@@ -133,11 +117,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       if (bug.sender && !userIds.has(bug.sender.id)) {
         userIds.add(bug.sender.id);
         users.push({
-          id: bug.sender.id,
+          ...bug.sender,
           display: `${bug.sender.firstName || ''} ${bug.sender.lastName || ''}`.trim() || 'Unknown',
-          firstName: bug.sender.firstName,
-          lastName: bug.sender.lastName,
-          avatar: bug.sender.avatar,
         });
       }
 
@@ -145,11 +126,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         if (p.user && !userIds.has(p.user.id)) {
           userIds.add(p.user.id);
           users.push({
-            id: p.user.id,
+            ...p.user,
             display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-            firstName: p.user.firstName,
-            lastName: p.user.lastName,
-            avatar: p.user.avatar,
           });
         }
       });
@@ -191,12 +169,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     return (
       <div className="flex items-center gap-2">
         <PlayerAvatar
-          player={{
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            avatar: user.avatar,
-          }}
+          player={user}
           extrasmall={true}
           fullHideName={true}
         />

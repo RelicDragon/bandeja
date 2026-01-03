@@ -333,14 +333,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
             playerSlots.push(
               <div key={player.userId} className="flex items-center gap-2">
                 <PlayerAvatar
-                  player={{
-                    id: player.userId,
-                    firstName: player.user.firstName,
-                    lastName: player.user.lastName,
-                    avatar: player.user.avatar,
-                    level: player.user.level,
-                    gender: player.user.gender,
-                  }}
+                  player={player.user}
                   showName={false}
                   extrasmall={true}
                   removable={canEdit}

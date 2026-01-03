@@ -9,18 +9,14 @@ import { Loading } from './Loading';
 import { formatDate } from '@/utils/dateFormat';
 import toast from 'react-hot-toast';
 import { Ban } from 'lucide-react';
+import { BasicUser } from '@/types';
 
 interface BlockedUser {
   id: string;
   userId: string;
   blockedUserId: string;
   createdAt: string;
-  blockedUser: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string | null;
-  };
+  blockedUser: BasicUser;
 }
 
 export const BlockedUsersSection = () => {
@@ -91,10 +87,7 @@ export const BlockedUsersSection = () => {
           >
             <div className="flex-shrink-0">
               <PlayerAvatar
-                player={{
-                  ...blockedUser.blockedUser,
-                  avatar: blockedUser.blockedUser.avatar ?? undefined
-                }}
+                player={blockedUser.blockedUser}
                 showName={false}
                 fullHideName={true}
                 smallLayout={false}

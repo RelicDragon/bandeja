@@ -1,4 +1,4 @@
-import { Game, User } from '@/types';
+import { Game, BasicUser } from '@/types';
 import { Round, Match } from '@/types/gameResults';
 
 export const getRestartText = (game: Game | null, t: (key: string) => string) => {
@@ -50,8 +50,8 @@ export const getAvailablePlayers = (
   roundId: string,
   matchId: string,
   rounds: Round[],
-  players: User[]
-): User[] => {
+  players: BasicUser[]
+): BasicUser[] => {
   const round = rounds.find(r => r.id === roundId);
   if (!round) return [];
 

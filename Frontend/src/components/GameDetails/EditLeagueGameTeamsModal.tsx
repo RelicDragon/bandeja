@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, Trash2, RefreshCw, UserPlus, Check } from 'lucide-react';
 import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection, ConfirmationModal } from '@/components';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
-import { Game, Club, Court, EntityType } from '@/types';
+import { Game, Club, Court, EntityType, BasicUser } from '@/types';
 import { gamesApi, leaguesApi, invitesApi, LeagueStanding, clubsApi, courtsApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
@@ -19,15 +19,6 @@ interface EditLeagueGameTeamsModalProps {
   hasFixedTeams: boolean;
   onClose: () => void;
   onUpdate: (game: Game) => void;
-}
-
-interface TeamPlayer {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  avatar?: string;
-  level?: number;
-  gender?: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
 }
 
 export const EditLeagueGameTeamsModal = ({
@@ -45,8 +36,8 @@ export const EditLeagueGameTeamsModal = ({
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [team1Players, setTeam1Players] = useState<(TeamPlayer | null)[]>([null, null]);
-  const [team2Players, setTeam2Players] = useState<(TeamPlayer | null)[]>([null, null]);
+  const [team1Players, setTeam1Players] = useState<(BasicUser | null)[]>([null, null]);
+  const [team2Players, setTeam2Players] = useState<(BasicUser | null)[]>([null, null]);
   
   const [selectingPlayerFor, setSelectingPlayerFor] = useState<{
     team: 1 | 2;
@@ -122,16 +113,8 @@ export const EditLeagueGameTeamsModal = ({
     const team1Participants = getTeamParticipants(0);
     const team2Participants = getTeamParticipants(1);
 
-    const mapToTeamPlayer = (participant: typeof team1Participants[0]): TeamPlayer | null => {
-      if (!participant.user) return null;
-      return {
-        id: participant.userId,
-        firstName: participant.user.firstName,
-        lastName: participant.user.lastName,
-        avatar: participant.user.avatar,
-        level: participant.user.level,
-        gender: participant.user.gender,
-      };
+    const mapToTeamPlayer = (participant: typeof team1Participants[0]): BasicUser | null => {
+      return participant.user || null;
     };
 
     const t1 = [
@@ -312,8 +295,8 @@ export const EditLeagueGameTeamsModal = ({
     }
   };
 
-  const getAllAvailablePlayers = (): Array<TeamPlayer & { points: number; gamesPlayed: number }> => {
-    const players: Array<TeamPlayer & { points: number; gamesPlayed: number }> = [];
+  const getAllAvailablePlayers = (): Array<BasicUser & { points: number; gamesPlayed: number }> => {
+    const players: Array<BasicUser & { points: number; gamesPlayed: number }> = [];
     
     standings.forEach(standing => {
       // Filter by group - only show players from the same group as this game
@@ -327,12 +310,7 @@ export const EditLeagueGameTeamsModal = ({
         standing.leagueTeam.players.forEach((player: any) => {
           if (player.user) {
             players.push({
-              id: player.userId,
-              firstName: player.user.firstName,
-              lastName: player.user.lastName,
-              avatar: player.user.avatar,
-              level: player.user.level,
-              gender: player.user.gender,
+              ...player.user,
               points: standing.points,
               gamesPlayed,
             });
@@ -340,12 +318,7 @@ export const EditLeagueGameTeamsModal = ({
         });
       } else if (standing.user) {
         players.push({
-          id: standing.user.id,
-          firstName: standing.user.firstName,
-          lastName: standing.user.lastName,
-          avatar: standing.user.avatar,
-          level: standing.user.level,
-          gender: standing.user.gender,
+          ...standing.user,
           points: standing.points,
           gamesPlayed,
         });
@@ -355,7 +328,7 @@ export const EditLeagueGameTeamsModal = ({
     return players;
   };
 
-  const handlePlayerSelect = (player: TeamPlayer) => {
+  const handlePlayerSelect = (player: BasicUser) => {
     if (!selectingPlayerFor) return;
 
     const { team, slot } = selectingPlayerFor;
@@ -538,7 +511,7 @@ export const EditLeagueGameTeamsModal = ({
 
   if (!isOpen && !isClosing) return null;
 
-  const renderPlayerSlot = (player: TeamPlayer | null, team: 1 | 2, slot: 0 | 1) => {
+  const renderPlayerSlot = (player: BasicUser | null, team: 1 | 2, slot: 0 | 1) => {
     return (
       <div className="flex flex-col items-center">
         <div className="h-[72px] flex items-center justify-center">

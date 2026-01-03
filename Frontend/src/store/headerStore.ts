@@ -10,6 +10,10 @@ interface HeaderState {
   showChatFilter: boolean;
   syncStatus: SyncStatus;
   selectedDateForCreateGame: Date | null;
+  leaderboardType: 'level' | 'social' | 'games';
+  leaderboardScope: 'city' | 'global';
+  leaderboardTimePeriod: '10' | '30' | 'all';
+  areFiltersSticky: boolean;
   setPendingInvites: (count: number) => void;
   setUnreadMessages: (count: number) => void;
   setShowGameTypeModal: (show: boolean) => void;
@@ -17,6 +21,10 @@ interface HeaderState {
   triggerNewInviteAnimation: () => void;
   setSyncStatus: (status: SyncStatus) => void;
   setSelectedDateForCreateGame: (date: Date | null) => void;
+  setLeaderboardType: (type: 'level' | 'social' | 'games') => void;
+  setLeaderboardScope: (scope: 'city' | 'global') => void;
+  setLeaderboardTimePeriod: (period: '10' | '30' | 'all') => void;
+  setAreFiltersSticky: (sticky: boolean) => void;
 }
 
 export const useHeaderStore = create<HeaderState>((set) => ({
@@ -27,6 +35,10 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   showChatFilter: false,
   syncStatus: 'IDLE',
   selectedDateForCreateGame: null,
+  leaderboardType: 'level',
+  leaderboardScope: 'city',
+  leaderboardTimePeriod: 'all',
+  areFiltersSticky: false,
   setPendingInvites: (count) => set({ pendingInvites: count }),
   setUnreadMessages: (count) => set({ unreadMessages: count }),
   setShowGameTypeModal: (show) => set({ showGameTypeModal: show }),
@@ -38,4 +50,8 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   },
   setSyncStatus: (status) => set({ syncStatus: status }),
   setSelectedDateForCreateGame: (date) => set({ selectedDateForCreateGame: date }),
+  setLeaderboardType: (type) => set({ leaderboardType: type }),
+  setLeaderboardScope: (scope) => set({ leaderboardScope: scope }),
+  setLeaderboardTimePeriod: (period) => set({ leaderboardTimePeriod: period }),
+  setAreFiltersSticky: (sticky) => set({ areFiltersSticky: sticky }),
 }));

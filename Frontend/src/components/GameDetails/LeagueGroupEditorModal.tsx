@@ -270,14 +270,7 @@ export const LeagueGroupEditorModal = ({
       return (
         <div className="flex items-center gap-2">
           <PlayerAvatar
-            player={{
-              id: participant.user.id,
-              firstName: participant.user.firstName,
-              lastName: participant.user.lastName,
-              avatar: participant.user.avatar,
-              level: participant.user.level,
-              gender: participant.user.gender,
-            }}
+            player={participant.user}
             showName={false}
             fullHideName={true}
             extrasmall
@@ -491,14 +484,7 @@ export const LeagueGroupEditorModal = ({
                               return selected.user ? (
                                 <>
                                   <PlayerAvatar
-                                    player={{
-                                      id: selected.user.id,
-                                      firstName: selected.user.firstName,
-                                      lastName: selected.user.lastName,
-                                      avatar: selected.user.avatar,
-                                      level: selected.user.level,
-                                      gender: selected.user.gender,
-                                    }}
+                                    player={selected.user}
                                     showName={false}
                                     fullHideName={true}
                                     extrasmall
@@ -547,14 +533,7 @@ export const LeagueGroupEditorModal = ({
                                     {participant.user ? (
                                       <>
                                         <PlayerAvatar
-                                          player={{
-                                            id: participant.user.id,
-                                            firstName: participant.user.firstName,
-                                            lastName: participant.user.lastName,
-                                            avatar: participant.user.avatar,
-                                            level: participant.user.level,
-                                            gender: participant.user.gender,
-                                          }}
+                                          player={participant.user}
                                           showName={false}
                                           fullHideName={true}
                                           extrasmall

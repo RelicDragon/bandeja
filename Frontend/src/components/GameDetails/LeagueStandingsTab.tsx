@@ -200,14 +200,7 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
                       {standing.leagueTeam.players?.slice(0, 3).map((player: any) => (
                         <PlayerAvatar
                           key={player.id}
-                          player={{
-                            id: player.userId,
-                            firstName: player.user?.firstName,
-                            lastName: player.user?.lastName,
-                            avatar: player.user?.avatar,
-                            level: player.user?.level,
-                            gender: player.user?.gender,
-                          }}
+                          player={player.user}
                           extrasmall={true}
                           showName={false}
                           fullHideName={true}
@@ -224,14 +217,7 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
                 ) : standing.user ? (
                   <div className="flex items-center gap-3 -translate-x-2">
                     <PlayerAvatar
-                      player={{
-                        id: standing.user.id,
-                        firstName: standing.user.firstName,
-                        lastName: standing.user.lastName,
-                        avatar: standing.user.avatar,
-                        level: standing.user.level,
-                        gender: standing.user.gender,
-                      }}
+                      player={standing.user}
                       extrasmall={true}
                       showName={false}
                       fullHideName={true}
