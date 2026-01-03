@@ -199,7 +199,7 @@ export const ProfileLeaderboard = () => {
                 </td>
                 <td className="py-2 pl-0 pr-4 text-right">
                   <div className="flex items-center justify-end gap-1.5">
-                    {entry.lastGameRatingChange !== null && entry.lastGameRatingChange !== undefined && (
+                    {leaderboardType !== 'games' && entry.lastGameRatingChange !== null && entry.lastGameRatingChange !== undefined && (
                       <span
                         className={`text-[10px] font-medium px-1 py-0.5 rounded ${
                           entry.lastGameRatingChange > 0

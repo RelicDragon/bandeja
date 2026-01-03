@@ -383,10 +383,10 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       : usersWithCounts.length + 1;
 
     const usersAbove = currentUserIndex > 0 
-      ? usersWithCounts.slice(Math.max(0, currentUserIndex - 20), currentUserIndex) 
+      ? usersWithCounts.slice(Math.max(0, currentUserIndex - 40), currentUserIndex) 
       : [];
     const usersBelow = currentUserIndex >= 0 && currentUserIndex < usersWithCounts.length - 1
-      ? usersWithCounts.slice(currentUserIndex + 1, Math.min(usersWithCounts.length, currentUserIndex + 21))
+      ? usersWithCounts.slice(currentUserIndex + 1, Math.min(usersWithCounts.length, currentUserIndex + 41))
       : [];
 
     const relevantUserIds = new Set<string>();
@@ -467,7 +467,7 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       { reliability: 'desc' },
       { totalPoints: 'desc' },
     ],
-    take: 20,
+    take: 40,
     select: {
       ...USER_SELECT_FIELDS,
       reliability: true,
@@ -488,7 +488,7 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       { reliability: 'desc' },
       { totalPoints: 'desc' },
     ],
-    take: 20,
+    take: 40,
     select: {
       ...USER_SELECT_FIELDS,
       reliability: true,
