@@ -204,26 +204,26 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     return null;
   }
 
-  if (photos.length === 0) {
-    const getNoPhotosKey = () => {
-      switch (game.entityType) {
-        case 'GAME':
-          return 'gameDetails.noPhotosYetFromGame';
-        case 'TOURNAMENT':
-          return 'gameDetails.noPhotosYetFromTournament';
-        case 'LEAGUE':
-          return 'gameDetails.noPhotosYetFromLeague';
-        case 'BAR':
-          return 'gameDetails.noPhotosYetFromBar';
-        case 'TRAINING':
-          return 'gameDetails.noPhotosYetFromTraining';
-        default:
-          return 'gameDetails.noPhotosYet';
-      }
-    };
-    
-    return (
-      <>
+  const getNoPhotosKey = () => {
+    switch (game.entityType) {
+      case 'GAME':
+        return 'gameDetails.noPhotosYetFromGame';
+      case 'TOURNAMENT':
+        return 'gameDetails.noPhotosYetFromTournament';
+      case 'LEAGUE':
+        return 'gameDetails.noPhotosYetFromLeague';
+      case 'BAR':
+        return 'gameDetails.noPhotosYetFromBar';
+      case 'TRAINING':
+        return 'gameDetails.noPhotosYetFromTraining';
+      default:
+        return 'gameDetails.noPhotosYet';
+    }
+  };
+
+  return (
+    <>
+      {photos.length === 0 ? (
         <Card>
           <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
@@ -241,96 +241,83 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
             </div>
           </div>
         </Card>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          multiple
-          onChange={(e) => handlePhotoSelect(e.target.files)}
-          className="hidden"
-        />
-      </>
-    );
-  }
-
-  return (
-    <>
-      <Card>
-        <div className="p-0">
-          <div className="overflow-x-auto -mx-0.5 px-0.5">
-            <div className="flex gap-3 pb-0.5">
-              {photos.map((message, messageIndex) => 
-                message.mediaUrls?.map((mediaUrl, mediaIndex) => {
-                  const thumbnailUrl = getThumbnailUrl(message, mediaIndex);
-                  const globalIndex = photos.slice(0, messageIndex).reduce(
-                    (acc, msg) => acc + (msg.mediaUrls?.length || 0), 0
-                  ) + mediaIndex;
-                  const isMainPhoto = mainPhotoId === message.id;
-                  
-                  return (
-                    <div
-                      key={`${message.id}-${mediaIndex}`}
-                      className="flex-shrink-0"
-                    >
-                      <div className={`relative w-24 h-24 rounded-lg overflow-hidden border-2 transition-colors cursor-pointer group ${
-                        isMainPhoto 
-                          ? 'border-blue-500 dark:border-blue-400' 
-                          : 'border-gray-200 dark:border-gray-700 group-hover:border-primary-500 dark:group-hover:border-primary-400'
-                      }`}
-                        onClick={() => handleImageClick(mediaUrl)}
-                      >
-                        <img
-                          src={thumbnailUrl}
-                          alt={`Photo ${globalIndex + 1}`}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                      {canEditMainPhoto && photos.length >= 2 && (
-                        <div className="mt-1 flex items-center justify-center">
-                          <input
-                            type="radio"
-                            name="mainPhoto"
-                            checked={isMainPhoto}
-                            onChange={() => handleMainPhotoSelect(message.id)}
-                            disabled={isUpdatingMainPhoto || (isMainPhoto && photos.length > 0)}
-                            className="cursor-pointer disabled:opacity-50"
-                            onClick={(e) => e.stopPropagation()}
-                          />
+      ) : (
+        <>
+          <Card>
+            <div className="p-0">
+              <div className="overflow-x-auto -mx-0.5 px-0.5">
+                <div className="flex gap-3 pb-0.5">
+                  {photos.map((message, messageIndex) => 
+                    message.mediaUrls?.map((mediaUrl, mediaIndex) => {
+                      const thumbnailUrl = getThumbnailUrl(message, mediaIndex);
+                      const globalIndex = photos.slice(0, messageIndex).reduce(
+                        (acc, msg) => acc + (msg.mediaUrls?.length || 0), 0
+                      ) + mediaIndex;
+                      const isMainPhoto = mainPhotoId === message.id;
+                      
+                      return (
+                        <div
+                          key={`${message.id}-${mediaIndex}`}
+                          className="flex-shrink-0"
+                        >
+                          <div className={`relative w-24 h-24 rounded-lg overflow-hidden border-2 transition-colors cursor-pointer group ${
+                            isMainPhoto 
+                              ? 'border-blue-500 dark:border-blue-400' 
+                              : 'border-gray-200 dark:border-gray-700 group-hover:border-primary-500 dark:group-hover:border-primary-400'
+                          }`}
+                            onClick={() => handleImageClick(mediaUrl)}
+                          >
+                            <img
+                              src={thumbnailUrl}
+                              alt={`Photo ${globalIndex + 1}`}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          </div>
+                          {canEditMainPhoto && photos.length >= 2 && (
+                            <div className="mt-1 flex items-center justify-center">
+                              <input
+                                type="radio"
+                                name="mainPhoto"
+                                checked={isMainPhoto}
+                                onChange={() => handleMainPhotoSelect(message.id)}
+                                disabled={isUpdatingMainPhoto || (isMainPhoto && photos.length > 0)}
+                                className="cursor-pointer disabled:opacity-50"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-              <div className="flex-shrink-0">
-                <button
-                  onClick={handlePhotoCapture}
-                  disabled={isUploadingPhoto || !game.id}
-                  className="w-24 h-24 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  title={t('gameDetails.addPhoto')}
-                >
-                  <Camera size={24} className="text-white" />
-                </button>
+                      );
+                    })
+                  )}
+                  <div className="flex-shrink-0">
+                    <button
+                      onClick={handlePhotoCapture}
+                      disabled={isUploadingPhoto || !game.id}
+                      className="w-24 h-24 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      title={t('gameDetails.addPhoto')}
+                    >
+                      <Camera size={24} className="text-white" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </Card>
+          </Card>
 
-      {fullscreenImage && (
-        <FullscreenImageViewer
-          imageUrl={fullscreenImage}
-          onClose={() => setFullscreenImage(null)}
-        />
+          {fullscreenImage && (
+            <FullscreenImageViewer
+              imageUrl={fullscreenImage}
+              onClose={() => setFullscreenImage(null)}
+            />
+          )}
+        </>
       )}
-
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         multiple
         onChange={(e) => handlePhotoSelect(e.target.files)}
         className="hidden"
