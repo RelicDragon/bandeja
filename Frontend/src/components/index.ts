@@ -61,3 +61,4 @@ export * from './WalletModal';
 export * from './SendMoneyToUserModal';
 export * from './NotificationSettingsModal';
 export * from './RefreshIndicator';
+export * from './AddToCalendar';

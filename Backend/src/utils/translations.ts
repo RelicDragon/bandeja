@@ -101,6 +101,9 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.slotsAvailable': 'slots available',
     'telegram.slotAvailable': 'slot available',
     'telegram.slotsAvailablePaucal': 'slots available',
+    'telegram.newGameCreated': 'New game created',
+    'telegram.noCityConfigured': 'This group is not configured with a city.',
+    'telegram.errorLoadingGame': 'Failed to load game. Please try again.',
   },
   ru: {
     'createGame.today': 'Сегодня',
@@ -191,6 +194,9 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.slotsAvailable': 'свободных мест',
     'telegram.slotAvailable': 'свободное место',
     'telegram.slotsAvailablePaucal': 'свободных места',
+    'telegram.newGameCreated': 'Создана новая игра',
+    'telegram.noCityConfigured': 'Эта группа не настроена с городом.',
+    'telegram.errorLoadingGame': 'Не удалось загрузить игру. Пожалуйста, попробуйте еще раз.',
   },
   sr: {
     'createGame.today': 'Данас',
@@ -281,6 +287,9 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.slotsAvailable': 'слободних места',
     'telegram.slotAvailable': 'слободно место',
     'telegram.slotsAvailablePaucal': 'слободна места',
+    'telegram.newGameCreated': 'Нова игра креирана',
+    'telegram.noCityConfigured': 'Ова група није подешена са градом.',
+    'telegram.errorLoadingGame': 'Неуспешно учитавање игре. Молимо покушајте поново.',
   },
   es: {
     'createGame.today': 'Hoy',
@@ -371,6 +380,9 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.slotsAvailable': 'plazas disponibles',
     'telegram.slotAvailable': 'plaza disponible',
     'telegram.slotsAvailablePaucal': 'plazas disponibles',
+    'telegram.newGameCreated': 'Nuevo juego creado',
+    'telegram.noCityConfigured': 'Este grupo no está configurado con una ciudad.',
+    'telegram.errorLoadingGame': 'Error al cargar el juego. Por favor, intenta de nuevo.',
   },
 };
 

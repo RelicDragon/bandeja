@@ -6,30 +6,7 @@ import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { getUserTimezoneFromCityId } from '../../user-timezone.service';
 import { getGameInclude } from '../../game/read.service';
-import { formatGameInfo, formatNewGameText } from '../../shared/notification-base';
-
-function getSlotsText(count: number, lang: string): string {
-  if (count === 1) {
-    return t('telegram.slotAvailable', lang);
-  }
-  
-  if (lang === 'ru' || lang === 'sr') {
-    const lastDigit = count % 10;
-    const lastTwoDigits = count % 100;
-    
-    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
-      return t('telegram.slotsAvailable', lang);
-    }
-    
-    if (lastDigit >= 2 && lastDigit <= 4) {
-      return t('telegram.slotsAvailablePaucal', lang);
-    }
-    
-    return t('telegram.slotsAvailable', lang);
-  }
-  
-  return t('telegram.slotsAvailable', lang);
-}
+import { formatNewGameText } from '../../shared/notification-base';
 
 export async function buildGamesMessage(
   city: any,

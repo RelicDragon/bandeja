@@ -9,6 +9,7 @@ import { ShareModal } from '@/components/ShareModal';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { GameAvatar } from '@/components/GameAvatar';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
+import { AddToCalendarModal } from '@/components';
 import { getShareUrl } from '@/utils/shareUrl';
 import { EditGameTextModal } from './EditGameTextModal';
 import { EditGamePriceModal } from './EditGamePriceModal';
@@ -31,10 +32,12 @@ import {
   GraduationCap,
   ChevronRight,
   Banknote,
+  CalendarPlus,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import type { CalendarEventInput } from '@/utils/calendar';
 
 interface GameInfoProps {
   game: Game;
@@ -76,6 +79,7 @@ export const GameInfo = ({
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showEditGameTextModal, setShowEditGameTextModal] = useState(false);
   const [showEditGamePriceModal, setShowEditGamePriceModal] = useState(false);
+  const [showAddToCalendarModal, setShowAddToCalendarModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(collapsedByDefault);
   const contentRef = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState(0);
@@ -99,6 +103,47 @@ export const GameInfo = ({
 
   const ownerParticipant = game.participants?.find(p => p.role === 'OWNER');
   const owner = ownerParticipant?.user;
+
+  const calendarEvent: CalendarEventInput | null = game.timeIsSet === true
+    ? (() => {
+        const start = new Date(game.startTime);
+        const end = game.endTime ? new Date(game.endTime) : new Date(start.getTime() + 60 * 60 * 1000);
+        const club = game.court?.club || game.club;
+        const clubName = club?.name || '';
+        const shareUrl = getShareUrl();
+        const entityTypeLabel = t(`games.entityTypes.${game.entityType}`);
+        const ownerName = owner ? [owner.firstName, owner.lastName].filter(Boolean).join(' ').trim() : '';
+
+        const titleParts: string[] = [];
+        if (game.name) titleParts.push(game.name);
+        if (game.entityType !== 'GAME') titleParts.push(entityTypeLabel);
+        if (clubName) titleParts.push(clubName);
+        const title = titleParts.join(' - ') || entityTypeLabel || t('games.entityTypes.GAME');
+
+        const locationParts = [
+          club?.name,
+          (club as any)?.address,
+          game.city?.name,
+          game.city?.country,
+        ].filter(Boolean);
+
+        const notesParts = [
+          game.name?.trim() ? game.name.trim() : null,
+          entityTypeLabel,
+          ownerName ? `${t('games.organizerFull')}: ${ownerName}` : null,
+          game.description?.trim() ? game.description.trim() : null,
+        ].filter(Boolean) as string[];
+
+        return {
+          title,
+          start,
+          end,
+          location: locationParts.join(', '),
+          description: notesParts.join('\n'),
+          url: shareUrl,
+        };
+      })()
+    : null;
 
   const handleNavigate = () => {
     const club = game.court?.club || game.club;
@@ -581,6 +626,15 @@ export const GameInfo = ({
             >
               <ExternalLink size={24} className="text-white" />
             </button>
+            {game.timeIsSet === true && calendarEvent && (
+              <button
+                onClick={() => setShowAddToCalendarModal(true)}
+                className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
+                title={t('gameDetails.addToCalendar')}
+              >
+                <CalendarPlus size={24} className="text-white" />
+              </button>
+            )}
             <button
               onClick={handleNavigate}
               className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
@@ -817,6 +871,14 @@ export const GameInfo = ({
         shareUrl={shareData.url}
         shareText={shareData.text}
       />
+      {calendarEvent && (
+        <AddToCalendarModal
+          isOpen={showAddToCalendarModal}
+          onClose={() => setShowAddToCalendarModal(false)}
+          event={calendarEvent}
+          filename={`game-${game.id}.ics`}
+        />
+      )}
       {showFullscreenAvatar && game.originalAvatar && (
         <FullscreenImageViewer
           imageUrl={game.originalAvatar || ''}

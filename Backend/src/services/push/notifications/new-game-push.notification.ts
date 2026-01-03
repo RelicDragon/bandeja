@@ -1,7 +1,6 @@
-import prisma from '../../../config/database';
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
-import { formatNewGameText, formatGameInfoForUser } from '../../shared/notification-base';
+import { formatNewGameText } from '../../shared/notification-base';
 import { getUserTimezoneFromCityId } from '../../user-timezone.service';
 
 export async function createNewGamePushNotification(

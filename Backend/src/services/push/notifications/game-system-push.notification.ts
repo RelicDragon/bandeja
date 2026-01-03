@@ -3,23 +3,30 @@ import { t } from '../../../utils/translations';
 import { formatGameInfoForUser } from '../../shared/notification-base';
 
 function translateSystemMessage(message: any, lang: string): string {
-  const messageContent = message.content || '';
-  let translatedContent = messageContent;
-  
-  const messageData = message.metadata as any;
+  let messageData: any = null;
+  let messageContent = '';
+  try {
+    messageData = JSON.parse(message.content);
+    messageContent = messageData.text || message.content;
+  } catch {
+    messageContent = message.content || '';
+  }
+
   if (messageData && messageData.type && messageData.variables) {
     const translationKey = `chat.systemMessages.${messageData.type}`;
     let template = t(translationKey, lang);
     
-    if (template !== translationKey) {
+    if (template === translationKey) {
+      template = messageData.text || messageContent;
+    } else {
       for (const [key, value] of Object.entries(messageData.variables)) {
         template = template.replace(new RegExp(`{{${key}}}`, 'g'), String(value || ''));
       }
-      translatedContent = template;
+      messageContent = template;
     }
   }
 
-  return translatedContent;
+  return messageContent;
 }
 
 export async function createGameSystemMessagePushNotification(
