@@ -157,14 +157,27 @@ class GameResultsEngineClass {
         await ResultsStorage.saveResults(emptyData);
       }
 
-          useGameResultsStore.setState({ 
+      // Avoid overwriting rounds that might have been added while we were loading.
+      // This prevents a race where "Start results entry" adds the first round,
+      // but a late-finishing initialize() call writes stale (empty) rounds back.
+      const latestStoreState = this.getState();
+      const shouldKeepLatestRounds =
+        latestStoreState.gameId === gameId && latestStoreState.rounds.length > 0;
+
+      const finalRounds = shouldKeepLatestRounds ? latestStoreState.rounds : rounds;
+      const finalExpandedRoundId =
+        shouldKeepLatestRounds
+          ? (latestStoreState.expandedRoundId ?? (finalRounds.length > 0 ? finalRounds[finalRounds.length - 1].id : null))
+          : (finalRounds.length > 0 ? finalRounds[finalRounds.length - 1].id : null);
+
+      useGameResultsStore.setState({
         gameId,
         userId,
-        rounds,
+        rounds: finalRounds,
         initialized: true,
         loading: false,
-        expandedRoundId: rounds.length > 0 ? rounds[rounds.length - 1].id : null,
-          });
+        expandedRoundId: finalExpandedRoundId,
+      });
     } catch (error) {
       console.error('Failed to initialize game results:', error);
       useGameResultsStore.setState({ loading: false });
