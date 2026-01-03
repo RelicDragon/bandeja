@@ -5,8 +5,7 @@ import { LeagueRound, LeagueGroup } from '@/api/leagues';
 import { Game } from '@/types';
 import { LeagueGameCard } from './LeagueGameCard';
 import { getLeagueGroupColor } from '@/utils/leagueGroupColors';
-import { resultsApi } from '@/api/results';
-import { SetResult } from '@/types/gameResults';
+import { resultsApi, RoundData } from '@/api/results';
 import { useState, useEffect } from 'react';
 
 interface LeagueRoundAccordionProps {
@@ -54,7 +53,7 @@ export const LeagueRoundAccordion = ({
   onSendStartMessage,
   t,
 }: LeagueRoundAccordionProps) => {
-  const [gameResultsMap, setGameResultsMap] = useState<Map<string, SetResult[] | null>>(new Map());
+  const [gameResultsMap, setGameResultsMap] = useState<Map<string, RoundData[] | null>>(new Map());
 
   const hasGroups = groups.length > 0;
   const showRoundLevelAddButton = showAddGameButton && !hasGroups;
@@ -69,7 +68,7 @@ export const LeagueRoundAccordion = ({
         return;
       }
 
-      const resultsMap = new Map<string, SetResult[] | null>();
+      const resultsMap = new Map<string, RoundData[] | null>();
       
       const gamesToFetch = selectedGroupId
         ? round.games.filter((game) => game.leagueGroupId === selectedGroupId)
@@ -82,23 +81,7 @@ export const LeagueRoundAccordion = ({
             const rounds = response.data?.rounds || [];
             
             if (rounds.length > 0) {
-              const round0 = rounds[0];
-              const matches = round0.matches || [];
-              
-              if (matches.length > 0) {
-                const match0 = matches[0];
-                const sets = match0.sets || [];
-                
-                resultsMap.set(
-                  game.id,
-                  sets.map((s: any) => ({
-                    teamA: s.teamAScore || 0,
-                    teamB: s.teamBScore || 0,
-                  }))
-                );
-              } else {
-                resultsMap.set(game.id, null);
-              }
+              resultsMap.set(game.id, rounds);
             } else {
               resultsMap.set(game.id, null);
             }
@@ -117,7 +100,7 @@ export const LeagueRoundAccordion = ({
     fetchAllGameResults();
   }, [shouldRenderContent, round.games, selectedGroupId]);
 
-  const getRound0Match0Sets = (gameId: string): SetResult[] | null => {
+  const getAllRounds = (gameId: string): RoundData[] | null => {
     return gameResultsMap.get(gameId) || null;
   };
 
@@ -258,7 +241,7 @@ export const LeagueRoundAccordion = ({
                                       : undefined
                                   }
                                   showGroupTag={false}
-                                  round0Match0Sets={getRound0Match0Sets(game.id)}
+                                  allRounds={getAllRounds(game.id)}
                                 />
                               ))
                             )}
@@ -314,7 +297,7 @@ export const LeagueRoundAccordion = ({
                                     : undefined
                                 }
                                 showGroupTag={false}
-                                round0Match0Sets={getRound0Match0Sets(game.id)}
+                                allRounds={getAllRounds(game.id)}
                               />
                             ))}
                         </div>
@@ -339,7 +322,7 @@ export const LeagueRoundAccordion = ({
                             : undefined
                         }
                         showGroupTag={false}
-                        round0Match0Sets={getRound0Match0Sets(game.id)}
+                        allRounds={getAllRounds(game.id)}
                       />
                     ))}
                   </div>

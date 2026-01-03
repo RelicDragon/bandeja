@@ -7,16 +7,16 @@ import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGrou
 import { formatDate } from '@/utils/dateFormat';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
-import { SetResult } from '@/types/gameResults';
 import { gamesApi } from '@/api/games';
 import toast from 'react-hot-toast';
+import { RoundData } from '@/api/results';
 
 interface LeagueGameCardProps {
   game: Game;
   onEdit?: () => void;
   onOpen?: () => void;
   showGroupTag?: boolean;
-  round0Match0Sets?: SetResult[] | null;
+  allRounds?: RoundData[] | null;
   onDelete?: () => Promise<void> | void;
 }
 
@@ -25,7 +25,7 @@ export const LeagueGameCard = ({
   onEdit,
   onOpen,
   showGroupTag = true,
-  round0Match0Sets,
+  allRounds,
   onDelete,
 }: LeagueGameCardProps) => {
   const { t } = useTranslation();
@@ -225,19 +225,27 @@ export const LeagueGameCard = ({
           )}
         </div>
 
-        {round0Match0Sets && round0Match0Sets.length > 0 && round0Match0Sets.some(s => s.teamA > 0 || s.teamB > 0) ? (
-          <div className="flex flex-col items-center gap-1 -ml-2 -mr-2">
-            {round0Match0Sets.map((set, index) => {
-              if (set.teamA === 0 && set.teamB === 0) return null;
-              return (
-                <div
-                  key={index}
-                  className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                >
-                  {set.teamA}:{set.teamB}
-                </div>
-              );
-            })}
+        {isFinal && allRounds && allRounds.length > 0 && allRounds.some(round => 
+          round.matches && round.matches.some(match => 
+            match.sets && match.sets.some(set => set.teamAScore > 0 || set.teamBScore > 0)
+          )
+        ) ? (
+          <div className="flex flex-col items-center gap-1 -ml-2 -mr-2 max-h-32 overflow-y-auto">
+            {allRounds.flatMap((round, roundIndex) => 
+              round.matches?.flatMap((match, matchIndex) => 
+                match.sets?.map((set, setIndex) => {
+                  if (set.teamAScore === 0 && set.teamBScore === 0) return null;
+                  return (
+                    <div
+                      key={`r${roundIndex}-m${matchIndex}-s${setIndex}`}
+                      className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                    >
+                      {set.teamAScore}:{set.teamBScore}
+                    </div>
+                  );
+                }) || []
+              ) || []
+            )}
           </div>
         ) : (
           <div className="flex items-center">
