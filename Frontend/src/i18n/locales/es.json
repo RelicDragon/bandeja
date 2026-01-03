@@ -119,7 +119,8 @@
     "createGame": "Crea un juego para comenzar",
     "findGamesButton": "Buscar juegos",
     "finishedToday": "Finalizados hoy",
-    "findGames": "Buscar juegos"
+    "findGames": "Buscar juegos",
+    "findGameHint": "¿Quieres encontrar un juego? Presiona la pestaña Buscar"
   },
   "games": {
     "title": "Buscar juegos",

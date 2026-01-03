@@ -119,7 +119,8 @@
     "createGame": "Создайте игру, чтобы начать",
     "findGamesButton": "Найти игры",
     "finishedToday": "Завершённые сегодня",
-    "findGames": "Найти игры"
+    "findGames": "Найти игры",
+    "findGameHint": "Хотите найти игру? Нажмите вкладку Поиск"
   },
   "games": {
     "title": "Найти игры",

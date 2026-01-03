@@ -357,6 +357,7 @@ export const HomeContent = () => {
               showChatFilter={showChatFilter}
               gamesUnreadCounts={mergedUnreadCounts}
               onShowAllGames={() => setShowChatFilter(false)}
+              onSwitchToSearch={() => setActiveTab('search')}
             />
             {unreadBugs.length > 0 && (
               <BugsSection
@@ -383,6 +384,7 @@ export const HomeContent = () => {
                 showChatFilter={showChatFilter}
                 gamesUnreadCounts={mergedUnreadCounts}
                 onShowAllGames={() => setShowChatFilter(false)}
+                onSwitchToSearch={() => setActiveTab('search')}
               />
             </div>
 

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Check } from 'lucide-react';
+import { Check, Search } from 'lucide-react';
 import { Button, Card, GameCard, Divider } from '@/components';
 import { Game } from '@/types';
 
@@ -12,6 +12,7 @@ interface MyGamesSectionProps {
   showChatFilter: boolean;
   gamesUnreadCounts: Record<string, number>;
   onShowAllGames: () => void;
+  onSwitchToSearch?: () => void;
 }
 
 export const MyGamesSection = ({
@@ -23,6 +24,7 @@ export const MyGamesSection = ({
   showChatFilter,
   gamesUnreadCounts,
   onShowAllGames,
+  onSwitchToSearch,
 }: MyGamesSectionProps) => {
   const { t } = useTranslation();
 
@@ -172,6 +174,19 @@ export const MyGamesSection = ({
           )}
         </div>
       </div>
+      {!showChatFilter && onSwitchToSearch && (
+        <div className="mt-6 flex justify-center">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onSwitchToSearch}
+            className="flex items-center gap-2"
+          >
+            <Search className="w-4 h-4" />
+            {t('home.findGameHint', { defaultValue: 'Want to find a game? Press Search tab' })}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
