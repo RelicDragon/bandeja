@@ -827,6 +827,8 @@
     "openGoogleCalendar": "Отвори Google календар",
     "downloadIcs": "Преузми .ics",
     "addToOtherCalendar": "Додај у Apple/Остало",
+    "calendarEventAdded": "Догађај додат у календар",
+    "calendarError": "Није успело додавање догађаја у календар",
     "linkCopied": "Линк је копиран у привремену меморију",
     "copyError": "Није успело копирање линка",
     "duplicateGame": "Дуплирај игру",

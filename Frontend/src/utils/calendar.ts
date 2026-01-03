@@ -110,4 +110,69 @@ export const downloadIcsEvent = (event: CalendarEventInput, filename: string) =>
   setTimeout(() => URL.revokeObjectURL(url), 0);
 };
 
+export const addToNativeCalendar = async (event: CalendarEventInput): Promise<void> => {
+  try {
+    const { Capacitor } = await import('@capacitor/core');
+    const calendarModule = await import('@ebarooni/capacitor-calendar');
+    const Calendar = calendarModule.CapacitorCalendar;
+    const { CalendarPermissionScope } = calendarModule;
+    
+    const platform = Capacitor.getPlatform();
+    console.log('Platform:', platform);
+    
+    const permissionResult = await Calendar.checkPermission({ 
+      scope: CalendarPermissionScope.WRITE_CALENDAR 
+    });
+    
+    console.log('Calendar permission check result:', permissionResult.result);
+    
+    if (permissionResult.result !== 'granted') {
+      console.log('Requesting calendar permission...');
+      let requestResult;
+      
+      try {
+        requestResult = await Calendar.requestWriteOnlyCalendarAccess();
+        console.log('Write-only calendar permission request result:', requestResult.result);
+        
+        if (requestResult.result !== 'granted' && platform === 'ios') {
+          console.log('Trying full calendar access on iOS...');
+          requestResult = await Calendar.requestFullCalendarAccess();
+          console.log('Full calendar permission request result:', requestResult.result);
+        }
+      } catch (permissionError) {
+        console.error('Error requesting calendar permission:', permissionError);
+        throw new Error(`Failed to request calendar permission: ${permissionError}`);
+      }
+      
+      if (requestResult.result !== 'granted') {
+        throw new Error(`Calendar permission denied. Status: ${requestResult.result}`);
+      }
+    }
+
+    const eventData: any = {
+      title: event.title,
+      startDate: event.start.getTime(),
+      endDate: event.end.getTime(),
+    };
+
+    if (event.location) {
+      eventData.location = event.location;
+    }
+    if (event.description) {
+      eventData.description = event.description;
+    }
+    if (event.url && platform === 'ios') {
+      eventData.url = event.url;
+    }
+
+    console.log('Opening calendar event editor:', eventData);
+    const result = await Calendar.createEventWithPrompt(eventData);
+    console.log('Calendar event editor closed. Event ID:', result.id);
+  } catch (error: any) {
+    console.error('Error adding event to native calendar:', error);
+    const errorMessage = error?.message || 'Unknown error occurred';
+    throw new Error(`Failed to add event to calendar: ${errorMessage}`);
+  }
+};
+
 

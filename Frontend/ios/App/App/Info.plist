@@ -59,5 +59,9 @@
 	<string>This app needs access to your photo library to upload and share photos from your games.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to your camera to capture photos during games.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>This app needs access to your calendar to add game events.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>This app needs access to add events to your calendar.</string>
 </dict>
 </plist>

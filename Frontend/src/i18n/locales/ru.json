@@ -834,6 +834,8 @@
     "openGoogleCalendar": "Открыть Google Календарь",
     "downloadIcs": "Скачать .ics",
     "addToOtherCalendar": "Добавить в Apple/Другое",
+    "calendarEventAdded": "Событие добавлено в календарь",
+    "calendarError": "Не удалось добавить событие в календарь",
     "linkCopied": "Ссылка скопирована в буфер обмена",
     "copyError": "Не удалось скопировать ссылку",
     "duplicateGame": "Дублировать игру",

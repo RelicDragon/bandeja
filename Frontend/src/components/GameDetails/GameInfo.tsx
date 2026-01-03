@@ -13,6 +13,8 @@ import { AddToCalendarModal } from '@/components';
 import { getShareUrl } from '@/utils/shareUrl';
 import { EditGameTextModal } from './EditGameTextModal';
 import { EditGamePriceModal } from './EditGamePriceModal';
+import { isCapacitor } from '@/utils/capacitor';
+import { addToNativeCalendar } from '@/utils/calendar';
 import {
   Calendar,
   MapPin,
@@ -628,7 +630,19 @@ export const GameInfo = ({
             </button>
             {game.timeIsSet === true && calendarEvent && (
               <button
-                onClick={() => setShowAddToCalendarModal(true)}
+                onClick={async () => {
+                  if (isCapacitor()) {
+                    try {
+                      await addToNativeCalendar(calendarEvent);
+                      //toast.success(t('gameDetails.calendarEventAdded'));
+                    } catch (error) {
+                      toast.error(t('gameDetails.calendarError'));
+                      console.error('Failed to add event to calendar:', error);
+                    }
+                  } else {
+                    setShowAddToCalendarModal(true);
+                  }
+                }}
                 className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
                 title={t('gameDetails.addToCalendar')}
               >

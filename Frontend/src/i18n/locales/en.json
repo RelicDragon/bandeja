@@ -829,6 +829,8 @@
     "openGoogleCalendar": "Open Google Calendar",
     "downloadIcs": "Download .ics",
     "addToOtherCalendar": "Add to Apple/Other",
+    "calendarEventAdded": "Event added to calendar",
+    "calendarError": "Failed to add event to calendar",
     "linkCopied": "Link copied to clipboard",
     "copyError": "Failed to copy link",
     "duplicateGame": "Duplicate Game",
