@@ -5,6 +5,7 @@ import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessage
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { createSystemMessage } from '../../controllers/chat.controller';
+import { hasParentGamePermission, getParentGameParticipant } from '../../utils/parentGamePermissions';
 
 export class AdminService {
   static async addAdmin(gameId: string, ownerId: string, userId: string) {
@@ -96,16 +97,24 @@ export class AdminService {
   }
 
   static async kickUser(gameId: string, currentUserId: string, targetUserId: string) {
-    const currentUserParticipant = await prisma.gameParticipant.findFirst({
-      where: {
-        gameId,
-        userId: currentUserId,
-        role: { in: [ParticipantRole.OWNER, ParticipantRole.ADMIN] },
-      },
+    const user = await prisma.user.findUnique({
+      where: { id: currentUserId },
+      select: { isAdmin: true },
     });
 
-    if (!currentUserParticipant) {
-      throw new ApiError(404, 'User is not an owner or admin of this game');
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    const hasPermission = await hasParentGamePermission(
+      gameId,
+      currentUserId,
+      [ParticipantRole.OWNER, ParticipantRole.ADMIN],
+      user.isAdmin
+    );
+
+    if (!hasPermission) {
+      throw new ApiError(403, 'User is not an owner or admin of this game');
     }
 
     const targetParticipant = await prisma.gameParticipant.findFirst({
@@ -128,9 +137,18 @@ export class AdminService {
       throw new ApiError(404, 'User is not a participant of this game');
     }
 
-    if (currentUserParticipant.role === ParticipantRole.ADMIN && 
-        targetParticipant.role === ParticipantRole.OWNER) {
-      throw new ApiError(403, 'Admins cannot kick the owner');
+    if (!user.isAdmin) {
+      const currentUserParticipantInfo = await getParentGameParticipant(
+        gameId,
+        currentUserId,
+        [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+      );
+
+      if (currentUserParticipantInfo && 
+          currentUserParticipantInfo.participant.role === ParticipantRole.ADMIN && 
+          targetParticipant.role === ParticipantRole.OWNER) {
+        throw new ApiError(403, 'Admins cannot kick the owner');
+      }
     }
 
     await prisma.gameParticipant.delete({
