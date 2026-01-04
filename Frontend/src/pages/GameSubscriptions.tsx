@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { enUS, ru, es, sr, Locale } from 'date-fns/locale';
@@ -8,11 +7,9 @@ import { Plus, Edit2, Trash2, MapPin } from 'lucide-react';
 import { Button, Card, ConfirmationModal } from '@/components';
 import { GameSubscriptionForm } from '@/components/GameSubscriptionForm';
 import { useAuthStore } from '@/store/authStore';
-import { useNavigationStore } from '@/store/navigationStore';
 import { gameSubscriptionsApi, GameSubscription, CreateSubscriptionDto, UpdateSubscriptionDto } from '@/api/gameSubscriptions';
 import { clubsApi } from '@/api';
 import { Club } from '@/types';
-import { EntityType } from '@/types';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -27,9 +24,7 @@ const localeMap: Record<string, Locale> = {
 
 export const GameSubscriptionsContent = () => {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { setCurrentPage, setIsAnimating } = useNavigationStore();
   const [subscriptions, setSubscriptions] = useState<GameSubscription[]>([]);
   const [clubsMap, setClubsMap] = useState<Record<string, Club>>({});
   const [loading, setLoading] = useState(true);
@@ -77,9 +72,12 @@ export const GameSubscriptionsContent = () => {
     fetchSubscriptions();
   }, [fetchSubscriptions]);
 
-  const handleCreate = async (data: CreateSubscriptionDto) => {
+  const handleCreate = async (data: CreateSubscriptionDto | UpdateSubscriptionDto) => {
+    if (!data.cityId) {
+      throw new Error('City ID is required');
+    }
     try {
-      await gameSubscriptionsApi.createSubscription(data);
+      await gameSubscriptionsApi.createSubscription(data as CreateSubscriptionDto);
       toast.success(t('gameSubscriptions.subscriptionCreated') || 'Subscription created');
       setShowForm(false);
       await fetchSubscriptions();

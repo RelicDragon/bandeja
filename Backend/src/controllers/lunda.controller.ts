@@ -99,7 +99,7 @@ interface SyncLundaProfileRequest extends AuthRequest {
 }
 
 export const syncLundaProfile = asyncHandler(async (req: SyncLundaProfileRequest, res: ExpressResponse) => {
-  const { phone, gender, level, preferredCourtSideLeft, preferredCourtSideRight, metadata } = req.body;
+  const { phone, gender, preferredCourtSideLeft, preferredCourtSideRight, metadata } = req.body;
   const userId = req.userId!;
 
   const updateData: any = {};

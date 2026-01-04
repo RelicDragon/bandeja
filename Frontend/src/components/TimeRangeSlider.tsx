@@ -10,7 +10,6 @@ interface TimeRangeSliderProps {
 
 const MINUTES_IN_DAY = 1440;
 const STEP_MINUTES = 30;
-const TOTAL_STEPS = MINUTES_IN_DAY / STEP_MINUTES;
 
 const minutesToTimeString = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
