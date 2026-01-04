@@ -1,4 +1,5 @@
 import prisma from '../../config/database';
+import { ParticipantRole } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 
@@ -45,7 +46,7 @@ export class FaqService {
       throw new ApiError(404, 'FAQ not found');
     }
 
-    const hasPermission = await hasParentGamePermission(faq.gameId, userId, undefined, isAdmin);
+    const hasPermission = await hasParentGamePermission(faq.gameId, userId, [ParticipantRole.OWNER, ParticipantRole.ADMIN], isAdmin);
     if (!hasPermission) {
       throw new ApiError(403, 'Only owners and admins can update FAQs');
     }
@@ -79,7 +80,7 @@ export class FaqService {
       throw new ApiError(404, 'FAQ not found');
     }
 
-    const hasPermission = await hasParentGamePermission(faq.gameId, userId, undefined, isAdmin);
+    const hasPermission = await hasParentGamePermission(faq.gameId, userId, [ParticipantRole.OWNER, ParticipantRole.ADMIN], isAdmin);
     if (!hasPermission) {
       throw new ApiError(403, 'Only owners and admins can delete FAQs');
     }

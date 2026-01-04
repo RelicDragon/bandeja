@@ -1,4 +1,5 @@
 import prisma from '../../config/database';
+import { ParticipantRole } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { hasParentGamePermission } from '../../utils/parentGamePermissions';
@@ -92,7 +93,7 @@ export class LeagueBroadcastService {
     }
 
     if (!isAdmin) {
-      const hasPermission = await hasParentGamePermission(round.leagueSeasonId, userId, undefined, isAdmin);
+      const hasPermission = await hasParentGamePermission(round.leagueSeasonId, userId, [ParticipantRole.OWNER, ParticipantRole.ADMIN], isAdmin);
 
       if (!hasPermission) {
         throw new ApiError(403, 'Only owners and admins can send round start messages');

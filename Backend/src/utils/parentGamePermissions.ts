@@ -122,7 +122,7 @@ export async function canModifyResults(
     throw new ApiError(403, 'Cannot modify results for archived games');
   }
 
-  const hasPermission = await hasParentGamePermission(gameId, userId, undefined, isAdmin);
+  const hasPermission = await hasParentGamePermission(gameId, userId, [ParticipantRole.OWNER, ParticipantRole.ADMIN], isAdmin);
   
   if (hasPermission) {
     return;

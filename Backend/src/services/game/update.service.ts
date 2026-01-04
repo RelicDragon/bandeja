@@ -1,4 +1,5 @@
 import prisma from '../../config/database';
+import { ParticipantRole } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
@@ -28,7 +29,7 @@ export class GameUpdateService {
         throw new ApiError(404, 'Game not found');
       }
 
-      const hasPermission = await hasParentGamePermission(id, userId, undefined, isAdmin);
+      const hasPermission = await hasParentGamePermission(id, userId, [ParticipantRole.OWNER, ParticipantRole.ADMIN], isAdmin);
       if (!hasPermission) {
         throw new ApiError(403, 'Only owners and admins can update the game');
       }
