@@ -67,7 +67,7 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, game.clubId, game.courtId, game.hasBookedCourt, courts]);
 
   useEffect(() => {
     if (!isOpen) {
