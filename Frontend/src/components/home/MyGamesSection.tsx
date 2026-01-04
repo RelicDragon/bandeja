@@ -142,7 +142,7 @@ export const MyGamesSection = ({
       <GameCard
         game={game}
         user={user}
-        isInitiallyCollapsed={globalIndex !== 0}
+        isInitiallyCollapsed={false}
         unreadCount={gamesUnreadCounts[game.id] || 0}
         forceCollapsed={showChatFilter ? true : undefined}
       />

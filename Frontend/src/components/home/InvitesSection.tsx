@@ -91,7 +91,7 @@ export const InvitesSection = ({ invites, onAccept, onDecline }: InvitesSectionP
                         game={invite.game}
                         user={user}
                         showChatIndicator={false}
-                        isInitiallyCollapsed={true}
+                        isInitiallyCollapsed={false}
                       />
                     </div>
                   )}

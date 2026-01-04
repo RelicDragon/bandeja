@@ -9,7 +9,6 @@ import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
-import { getGameResultStatus } from '@/utils/gameResults';
 import { useNavigationStore } from '@/store/navigationStore';
 import { chatApi } from '@/api/chat';
 import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star } from 'lucide-react';
@@ -35,7 +34,7 @@ export const GameCard = ({
   showChatIndicator = true, 
   showJoinButton = false, 
   onJoin,
-  isInitiallyCollapsed = true,
+  isInitiallyCollapsed = false,
   showDate = true,
   unreadCount = 0,
   forceCollapsed
@@ -97,7 +96,6 @@ export const GameCard = ({
   const hasPendingInvite = game.invites?.some(invite => invite.receiverId === user?.id);
   const isGuest = game.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN');
   const canAccessChat = isParticipant || hasPendingInvite || isGuest || game.isPublic;
-  const resultStatus = getGameResultStatus(game, user);
   const isLeagueSeasonGame = game.entityType === 'LEAGUE_SEASON';
   const shouldShowTiming = !isLeagueSeasonGame;
   const displaySettings = user ? resolveDisplaySettings(user) : null;
@@ -746,21 +744,6 @@ export const GameCard = ({
             </div>
           </div>
         </div>
-
-        {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && resultStatus && (
-          <div className={`mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 ${
-            game.entityType !== 'GAME' ? 'pr-10' : ''}`}>
-            <div className={`text-sm px-3 py-2 rounded-lg ${
-              resultStatus.message === 'games.results.problems.accessDenied'
-                ? 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
-                : resultStatus.canModify
-                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800'
-                  : 'bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400'
-            }`}>
-              {resultStatus.message.split(' • ').map(key => t(key)).join(' • ')}
-            </div>
-          </div>
-        )}
 
         {showJoinButton && onJoin && (
           <div className="mt-4">

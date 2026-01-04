@@ -389,7 +389,7 @@ export const AvailableGamesSection = ({
                   showChatIndicator={false}
                   showJoinButton={true}
                   onJoin={onJoin}
-                  isInitiallyCollapsed={true}
+                  isInitiallyCollapsed={false}
                 />
               ))}
             </div>
@@ -429,7 +429,7 @@ export const AvailableGamesSection = ({
                   showChatIndicator={false}
                   showJoinButton={true}
                   onJoin={onJoin}
-                  isInitiallyCollapsed={true}
+                  isInitiallyCollapsed={false}
                 />
               ))}
             </div>

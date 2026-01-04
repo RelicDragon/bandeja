@@ -40,7 +40,7 @@ export const PastGamesSection = ({
             <GameCard
               game={game}
               user={user}
-              isInitiallyCollapsed={true}
+              isInitiallyCollapsed={false}
               unreadCount={pastGamesUnreadCounts[game.id] || 0}
             />
           </div>

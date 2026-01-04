@@ -218,7 +218,7 @@ export const ProfileComparison = () => {
                     key={game.id}
                     game={game as unknown as Game}
                     user={currentUser}
-                    isInitiallyCollapsed={true}
+                    isInitiallyCollapsed={false}
                   />
                 ))
               ) : (
