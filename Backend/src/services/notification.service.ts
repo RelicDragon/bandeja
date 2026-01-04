@@ -427,10 +427,22 @@ class NotificationService {
       return;
     }
 
-    const recipients = await prisma.user.findMany({
+    if (!game.clubId) {
+      return;
+    }
+
+    const { GameSubscriptionService } = await import('./gameSubscription.service');
+
+    const usersWithSubscriptions = await prisma.user.findMany({
       where: {
         currentCityId: cityId,
         id: { not: creatorId },
+        gameSubscriptions: {
+          some: {
+            isActive: true,
+            cityId: cityId,
+          },
+        },
         OR: [
           { sendPushMessages: true },
           { sendTelegramMessages: true }
@@ -446,7 +458,16 @@ class NotificationService {
       }
     });
 
-    for (const recipient of recipients) {
+    for (const recipient of usersWithSubscriptions) {
+      const matchesSubscription = await GameSubscriptionService.checkGameMatchesSubscriptions(
+        game,
+        recipient.id
+      );
+
+      if (!matchesSubscription) {
+        continue;
+      }
+
       const shouldSendTelegram = recipient.telegramId && recipient.sendTelegramMessages;
       const shouldSendPush = recipient.sendPushMessages;
 

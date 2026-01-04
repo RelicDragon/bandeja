@@ -25,6 +25,7 @@ import levelChangeRoutes from './levelChange.routes';
 import pushRoutes from './push.routes';
 import blockedUsersRoutes from './blockedUsers.routes';
 import faqRoutes from './faq.routes';
+import gameSubscriptionRoutes from './gameSubscription.routes';
 
 const router = Router();
 
@@ -54,6 +55,7 @@ router.use('/level-changes', levelChangeRoutes);
 router.use('/push', pushRoutes);
 router.use('/blocked-users', blockedUsersRoutes);
 router.use('/faqs', faqRoutes);
+router.use('/game-subscriptions', gameSubscriptionRoutes);
 
 export default router;
 

@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 
 interface NavigationState {
-  currentPage: 'home' | 'profile' | 'gameDetails' | 'bugs';
+  currentPage: 'home' | 'profile' | 'gameDetails' | 'bugs' | 'gameSubscriptions';
   isAnimating: boolean;
   gameDetailsCanAccessChat: boolean;
   bounceNotifications: boolean;
   bugsButtonSlidingUp: boolean;
   bugsButtonSlidingDown: boolean;
-  setCurrentPage: (page: 'home' | 'profile' | 'gameDetails' | 'bugs') => void;
+  setCurrentPage: (page: 'home' | 'profile' | 'gameDetails' | 'bugs' | 'gameSubscriptions') => void;
   setIsAnimating: (animating: boolean) => void;
   setGameDetailsCanAccessChat: (canAccessChat: boolean) => void;
   setBounceNotifications: (bounce: boolean) => void;

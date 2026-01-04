@@ -6,6 +6,7 @@ import { HomeContent } from './Home';
 import { ProfileContent } from './Profile';
 import { GameDetailsContent } from './GameDetails';
 import { BugsContent } from './Bugs';
+import { GameSubscriptionsContent } from './GameSubscriptions';
 
 export const MainPage = () => {
   const location = useLocation();
@@ -27,6 +28,8 @@ export const MainPage = () => {
         setCurrentPage('profile');
       } else if (path === '/bugs') {
         setCurrentPage('bugs');
+      } else if (path === '/game-subscriptions') {
+        setCurrentPage('gameSubscriptions');
       } else if (path.startsWith('/games/') && !path.includes('/chat')) {
         setCurrentPage('gameDetails');
       } else if (path === '/') {
@@ -79,6 +82,15 @@ export const MainPage = () => {
             : 'opacity-0 transform translate-x-full absolute inset-0'
         }`}>
           <BugsContent />
+        </div>
+
+        {/* Game Subscriptions Page */}
+        <div className={`transition-all duration-300 ease-in-out ${
+          currentPage === 'gameSubscriptions'
+            ? 'opacity-100 transform translate-x-0'
+            : 'opacity-0 transform translate-x-full absolute inset-0'
+        }`}>
+          <GameSubscriptionsContent />
         </div>
       </div>
     </MainLayout>

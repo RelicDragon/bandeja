@@ -12,6 +12,7 @@ import {
   ProfileHeaderContent,
   GameModeToggle
 } from '@/components';
+import { GameSubscriptionsHeaderContent } from '@/components/headerContent/GameSubscriptionsHeaderContent';
 
 interface HeaderProps {
   showChatFilter?: boolean;
@@ -200,6 +201,10 @@ export const Header = ({
 
             <HeaderContentWrapper page="profile">
               <ProfileHeaderContent />
+            </HeaderContentWrapper>
+
+            <HeaderContentWrapper page="gameSubscriptions">
+              <GameSubscriptionsHeaderContent />
             </HeaderContentWrapper>
           </div>
         </div>

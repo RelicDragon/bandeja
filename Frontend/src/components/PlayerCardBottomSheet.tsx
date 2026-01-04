@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, Beer, Star, ArrowLeft, Send, MessageCircle, Ban, Check } from 'lucide-react';
+import { X, Beer, Star, ArrowLeft, Send, MessageCircle, Ban, Check, LineChart } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
@@ -352,6 +352,15 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                 title={isBlocked ? t('playerCard.unblockUser') : t('playerCard.blockUser')}
               >
                 {isBlocked ? <Check size={18} /> : <Ban size={18} className="scale-x-[-1]" />}
+              </button>
+            )}
+            {stats && !isCurrentUser && (
+              <button
+                onClick={() => setShowLevelView(true)}
+                className="px-4 py-2 rounded-xl text-white transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                title={t('playerCard.levelHistory')}
+              >
+                <LineChart size={18} />
               </button>
             )}
             {stats && !isCurrentUser && (

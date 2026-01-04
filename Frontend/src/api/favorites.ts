@@ -30,4 +30,9 @@ export const favoritesApi = {
     const response = await api.delete<ApiResponse<{ success: boolean }>>(`/favorites/users/${userId}`);
     return response.data;
   },
+
+  getUserFavoriteClubIds: async (): Promise<string[]> => {
+    const response = await api.get<ApiResponse<any[]>>('/favorites');
+    return response.data.data.map((fav: any) => fav.clubId);
+  },
 };

@@ -328,6 +328,18 @@ function AppContent() {
           }
         />
         <Route
+          path="/game-subscriptions"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <MainPage />
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/bugs/:id/chat"
           element={
             <ProtectedRoute>

@@ -84,6 +84,7 @@ model User {
   blockedUsers               BlockedUser[]        @relation("UserBlocked")
   blockedBy                    BlockedUser[]        @relation("UserBlockedBy")
   chatMutes                   ChatMute[]
+  gameSubscriptions           GameSubscription[]
 
   @@index([phone])
   @@index([telegramId])
@@ -117,6 +118,7 @@ model City {
   users                  User[]   @relation("UserCurrentCity")
   leagues                League[]
   games                  Game[]
+  gameSubscriptions      GameSubscription[]
 
   @@index([isActive])
 }
@@ -1108,4 +1110,30 @@ enum MessageReportStatus {
   REVIEWED
   RESOLVED
   DISMISSED
+}
+
+model GameSubscription {
+  id            String      @id @default(cuid())
+  userId        String
+  cityId        String
+  clubIds       String[]
+  entityTypes   EntityType[]
+  dayOfWeek     Int[]
+  startDate     DateTime?
+  endDate       DateTime?
+  startTime     String?
+  endTime       String?
+  minLevel      Float?
+  maxLevel      Float?
+  myGenderOnly  Boolean     @default(false)
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city          City        @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([cityId])
+  @@index([isActive])
+  @@index([userId, isActive, cityId])
 }

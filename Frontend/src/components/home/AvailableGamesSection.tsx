@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
-import { Card, GameCard } from '@/components';
+import { Card, GameCard, Button } from '@/components';
 import { Game } from '@/types';
-import { MapPin, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, Filter, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
+import { useNavigationStore } from '@/store/navigationStore';
 import { format, startOfDay, addDays, subDays } from 'date-fns';
 import { useHeaderStore } from '@/store/headerStore';
 import { MonthCalendar } from './MonthCalendar';
@@ -31,6 +33,8 @@ export const AvailableGamesSection = ({
   onShowArchivedChange,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { setCurrentPage, setIsAnimating } = useNavigationStore();
   const [activeTab, setActiveTab] = useState<'calendar' | 'list'>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [listViewStartDate, setListViewStartDate] = useState<Date>(new Date());
@@ -219,9 +223,27 @@ export const AvailableGamesSection = ({
 
   const filteredGames = getFilteredGames();
 
+  const handleSubscriptionsClick = () => {
+    setIsAnimating(true);
+    setCurrentPage('gameSubscriptions');
+    navigate('/game-subscriptions', { replace: true });
+    setTimeout(() => setIsAnimating(false), 300);
+  };
+
   return (
     <div className="mt-8">
       <div className="mb-4">
+        <div className="mb-4 flex justify-center">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleSubscriptionsClick}
+            className="flex items-center gap-2"
+          >
+            <Bell className="w-4 h-4" />
+            {t('gameSubscriptions.wantToBeNotified', { defaultValue: 'Want to be notified when new games are created?' })}
+          </Button>
+        </div>
         <div className="flex items-center justify-center mb-3 relative">
           <button 
             onClick={handleCityClick}
