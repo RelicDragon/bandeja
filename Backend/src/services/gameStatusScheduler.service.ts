@@ -44,11 +44,23 @@ export class GameStatusScheduler {
           status: true,
           entityType: true,
           cityId: true,
+          timeIsSet: true,
         },
       });
 
       let updated = 0;
       for (const game of games) {
+        if (!game.timeIsSet) {
+          if (game.status !== 'ANNOUNCED') {
+            await prisma.game.update({
+              where: { id: game.id },
+              data: { status: 'ANNOUNCED' },
+            });
+            updated++;
+          }
+          continue;
+        }
+
         const cityTimezone = await getUserTimezoneFromCityId(game.cityId);
         const newStatus = calculateGameStatus(game, cityTimezone);
         

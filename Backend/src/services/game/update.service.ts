@@ -85,7 +85,7 @@ export class GameUpdateService {
 
     const currentGame = await prisma.game.findUnique({
       where: { id },
-      select: { startTime: true, endTime: true, resultsStatus: true, clubId: true, courtId: true, cityId: true, status: true, entityType: true },
+      select: { startTime: true, endTime: true, resultsStatus: true, clubId: true, courtId: true, cityId: true, status: true, entityType: true, timeIsSet: true },
     });
 
     const oldClubId = currentGame?.clubId;
@@ -93,6 +93,7 @@ export class GameUpdateService {
     const oldEndTime = currentGame?.endTime;
     const oldStatus = currentGame?.status;
     const oldEntityType = currentGame?.entityType;
+    const oldTimeIsSet = currentGame?.timeIsSet;
 
     // Normalize courtId: convert 'notBooked', empty string, or undefined to null
     let normalizedCourtId: string | null = null;
@@ -224,6 +225,31 @@ export class GameUpdateService {
       if (data.endTime !== undefined) {
         updateData.endTime = newEndTime;
       }
+    }
+
+    if (data.timeIsSet !== undefined && data.timeIsSet === true && oldTimeIsSet === false) {
+      const currentGameWithCityId = await prisma.game.findUnique({
+        where: { id },
+        select: { cityId: true, startTime: true, endTime: true, resultsStatus: true },
+      });
+      
+      if (currentGameWithCityId) {
+        const cityTimezone = await getUserTimezoneFromCityId(currentGameWithCityId.cityId ?? null);
+        
+        const startTime = updateData.startTime ? new Date(updateData.startTime) : currentGameWithCityId.startTime;
+        const endTime = updateData.endTime ? new Date(updateData.endTime) : currentGameWithCityId.endTime;
+        const resultsStatus = updateData.resultsStatus !== undefined ? updateData.resultsStatus : currentGameWithCityId.resultsStatus;
+        
+        updateData.status = calculateGameStatus({
+          startTime,
+          endTime,
+          resultsStatus,
+        }, cityTimezone);
+      }
+    }
+
+    if (data.timeIsSet !== undefined && data.timeIsSet === false) {
+      updateData.status = 'ANNOUNCED';
     }
 
     if (data.priceType !== undefined || data.priceTotal !== undefined) {
