@@ -5,11 +5,20 @@ import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessage
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { createSystemMessage } from '../../controllers/chat.controller';
-import { ParticipantValidationService } from './participantValidation.service';
 
 export class OwnershipService {
   static async transferOwnership(gameId: string, currentOwnerId: string, newOwnerId: string) {
-    const owner = await ParticipantValidationService.validateCanModifyParticipants(gameId, currentOwnerId, ['OWNER']);
+    const owner = await prisma.gameParticipant.findFirst({
+      where: {
+        gameId,
+        userId: currentOwnerId,
+        role: ParticipantRole.OWNER,
+      },
+    });
+
+    if (!owner) {
+      throw new ApiError(404, 'User is not the owner of this game');
+    }
 
     const newOwnerParticipant = await prisma.gameParticipant.findFirst({
       where: {

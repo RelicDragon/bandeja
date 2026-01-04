@@ -10,7 +10,7 @@ export const recalculateOutcomes = asyncHandler(async (req: AuthRequest, res: Re
   
   console.log(`[RECALCULATE CONTROLLER] Endpoint hit for game ${gameId} by user ${req.userId}`);
 
-  const result = await outcomesService.recalculateGameOutcomes(gameId, req.userId!);
+  const result = await outcomesService.recalculateGameOutcomes(gameId);
   
   console.log(`[RECALCULATE CONTROLLER] Recalculation completed successfully for game ${gameId}`);
 
@@ -61,7 +61,7 @@ export const getMatchResults = asyncHandler(async (req: AuthRequest, res: Respon
 export const deleteGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
 
-  await resultsService.deleteGameResults(gameId, req.userId!);
+  await resultsService.deleteGameResults(gameId);
 
   res.json({
     success: true,
@@ -74,7 +74,7 @@ export const resetGameResults = asyncHandler(async (req: AuthRequest, res: Respo
   
   console.log(`[RESET GAME RESULTS CONTROLLER] Endpoint hit for game ${gameId} by user ${req.userId}`);
 
-  await resultsService.resetGameResults(gameId, req.userId!);
+  await resultsService.resetGameResults(gameId);
   
   console.log(`[RESET GAME RESULTS CONTROLLER] Results reset successfully for game ${gameId}`);
 
@@ -94,7 +94,7 @@ export const editGameResults = asyncHandler(async (req: AuthRequest, res: Respon
   
   console.log(`[EDIT GAME RESULTS CONTROLLER] Endpoint hit for game ${gameId} by user ${req.userId}`);
 
-  await resultsService.editGameResults(gameId, req.userId!);
+  await resultsService.editGameResults(gameId);
   
   console.log(`[EDIT GAME RESULTS CONTROLLER] Results edited successfully for game ${gameId}`);
 
@@ -113,7 +113,7 @@ export const syncResults = asyncHandler(async (req: AuthRequest, res: Response) 
   const { gameId } = req.params;
   const { rounds } = req.body;
 
-  await resultsService.syncResults(gameId, rounds || [], req.userId!);
+  await resultsService.syncResults(gameId, rounds || []);
 
   const socketService = (global as any).socketService;
   if (socketService) {
@@ -128,12 +128,12 @@ export const syncResults = asyncHandler(async (req: AuthRequest, res: Response) 
 
 export const createRound = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
-  const { id, name } = req.body;
+  const { id } = req.body;
 
-  await resultsService.createRound(gameId, id, name, req.userId!);
+  await resultsService.createRound(gameId, id);
 
   res.json({
-    success: true,
+    success: true, 
     message: 'Round created successfully',
   });
 });
@@ -141,7 +141,7 @@ export const createRound = asyncHandler(async (req: AuthRequest, res: Response) 
 export const deleteRound = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, roundId } = req.params;
 
-  await resultsService.deleteRound(gameId, roundId, req.userId!);
+  await resultsService.deleteRound(gameId, roundId);
 
   res.json({
     success: true,
@@ -153,7 +153,7 @@ export const createMatch = asyncHandler(async (req: AuthRequest, res: Response) 
   const { gameId, roundId } = req.params;
   const { id } = req.body;
 
-  await resultsService.createMatch(gameId, roundId, id, req.userId!);
+  await resultsService.createMatch(gameId, roundId, id);
 
   res.json({
     success: true,
@@ -164,7 +164,7 @@ export const createMatch = asyncHandler(async (req: AuthRequest, res: Response) 
 export const deleteMatch = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, matchId } = req.params;
 
-  await resultsService.deleteMatch(gameId, matchId, req.userId!);
+  await resultsService.deleteMatch(gameId, matchId);
 
   res.json({
     success: true,
@@ -176,7 +176,7 @@ export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) 
   const { gameId, matchId } = req.params;
   const matchData = req.body;
 
-  await resultsService.updateMatch(gameId, matchId, matchData, req.userId!);
+  await resultsService.updateMatch(gameId, matchId, matchData);
 
   const socketService = (global as any).socketService;
   if (socketService) {

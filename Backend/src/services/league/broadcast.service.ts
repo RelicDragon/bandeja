@@ -5,7 +5,7 @@ import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 import notificationService from '../notification.service';
 
 export class LeagueBroadcastService {
-  static async broadcastRoundStartMessage(leagueRoundId: string, userId: string) {
+  static async broadcastRoundStartMessage(leagueRoundId: string, userId: string, isAdmin: boolean = false) {
     console.log(`📢 Starting broadcast round start message for league round ${leagueRoundId} by user ${userId}`);
     
     const round = await prisma.leagueRound.findUnique({
@@ -91,17 +91,8 @@ export class LeagueBroadcastService {
       throw new ApiError(404, 'League season not found');
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-
-    if (!user) {
-      throw new ApiError(404, 'User not found');
-    }
-
-    if (!user.isAdmin) {
-      const hasPermission = await hasParentGamePermission(round.leagueSeasonId, userId);
+    if (!isAdmin) {
+      const hasPermission = await hasParentGamePermission(round.leagueSeasonId, userId, undefined, isAdmin);
 
       if (!hasPermission) {
         throw new ApiError(403, 'Only owners and admins can send round start messages');

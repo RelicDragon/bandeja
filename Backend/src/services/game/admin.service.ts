@@ -5,11 +5,9 @@ import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessage
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { createSystemMessage } from '../../controllers/chat.controller';
-import { ParticipantValidationService } from './participantValidation.service';
 
 export class AdminService {
   static async addAdmin(gameId: string, ownerId: string, userId: string) {
-    await ParticipantValidationService.validateCanModifyParticipants(gameId, ownerId, ['OWNER']);
 
     const participant = await prisma.gameParticipant.findFirst({
       where: {
@@ -54,8 +52,6 @@ export class AdminService {
   }
 
   static async revokeAdmin(gameId: string, ownerId: string, userId: string) {
-    await ParticipantValidationService.validateCanModifyParticipants(gameId, ownerId, ['OWNER']);
-
     const participant = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
@@ -100,7 +96,17 @@ export class AdminService {
   }
 
   static async kickUser(gameId: string, currentUserId: string, targetUserId: string) {
-    const currentUserParticipant = await ParticipantValidationService.validateCanModifyParticipants(gameId, currentUserId, ['OWNER', 'ADMIN']);
+    const currentUserParticipant = await prisma.gameParticipant.findFirst({
+      where: {
+        gameId,
+        userId: currentUserId,
+        role: { in: [ParticipantRole.OWNER, ParticipantRole.ADMIN] },
+      },
+    });
+
+    if (!currentUserParticipant) {
+      throw new ApiError(404, 'User is not an owner or admin of this game');
+    }
 
     const targetParticipant = await prisma.gameParticipant.findFirst({
       where: {

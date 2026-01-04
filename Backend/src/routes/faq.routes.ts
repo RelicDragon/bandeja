@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { validate } from '../middleware/validate';
-import { authenticate } from '../middleware/auth';
+import { authenticate, canEditGame } from '../middleware/auth';
 import {
   getGameFaqs,
   createFaq,
@@ -28,6 +28,7 @@ router.post(
     body('answer').notEmpty().withMessage('Answer is required'),
     body('order').optional().isInt().withMessage('Order must be an integer'),
   ]),
+  canEditGame,
   createFaq
 );
 
@@ -55,6 +56,7 @@ router.put(
     body('faqIds').isArray().withMessage('faqIds must be an array'),
     body('faqIds.*').isString().withMessage('Each FAQ ID must be a string'),
   ]),
+  canEditGame,
   reorderFaqs
 );
 

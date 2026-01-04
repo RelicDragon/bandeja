@@ -50,7 +50,7 @@ export class InviteService {
     }
   }
 
-  static async acceptInvite(inviteId: string, userId: string, forceUpdate: boolean = false): Promise<InviteActionResult> {
+  static async acceptInvite(inviteId: string, userId: string, forceUpdate: boolean = false, isAdmin: boolean = false): Promise<InviteActionResult> {
     const invite = await prisma.invite.findUnique({
       where: { id: inviteId },
       include: {
@@ -91,7 +91,8 @@ export class InviteService {
       hasAdminPermission = await hasParentGamePermission(
         invite.gameId,
         userId,
-        [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+        [ParticipantRole.OWNER, ParticipantRole.ADMIN],
+        isAdmin
       );
     }
 
@@ -202,7 +203,7 @@ export class InviteService {
     };
   }
 
-  static async declineInvite(inviteId: string, userId: string): Promise<InviteActionResult> {
+  static async declineInvite(inviteId: string, userId: string, isAdmin: boolean = false): Promise<InviteActionResult> {
     const invite = await prisma.invite.findUnique({
       where: { id: inviteId },
       include: {
@@ -231,7 +232,8 @@ export class InviteService {
       hasAdminPermission = await hasParentGamePermission(
         invite.gameId,
         userId,
-        [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+        [ParticipantRole.OWNER, ParticipantRole.ADMIN],
+        isAdmin
       );
     }
 

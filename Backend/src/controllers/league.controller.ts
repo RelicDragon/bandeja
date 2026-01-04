@@ -65,7 +65,7 @@ export const createGameForRound = asyncHandler(async (req: AuthRequest, res: Res
 export const syncLeagueParticipants = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { leagueSeasonId } = req.params;
   
-  const standings = await LeagueSyncService.syncLeagueParticipants(leagueSeasonId, req.userId!);
+  const standings = await LeagueSyncService.syncLeagueParticipants(leagueSeasonId);
 
   res.json({
     success: true,
@@ -100,7 +100,7 @@ export const createManualLeagueGroup = asyncHandler(async (req: AuthRequest, res
   const { leagueSeasonId } = req.params;
   const { name } = req.body;
 
-  const data = await LeagueGroupManagementService.createGroup(leagueSeasonId, name, req.userId!);
+  const data = await LeagueGroupManagementService.createGroup(leagueSeasonId, name);
 
   res.status(201).json({
     success: true,
@@ -112,7 +112,7 @@ export const renameLeagueGroup = asyncHandler(async (req: AuthRequest, res: Resp
   const { groupId } = req.params;
   const { name } = req.body;
 
-  const data = await LeagueGroupManagementService.renameGroup(groupId, name, req.userId!);
+  const data = await LeagueGroupManagementService.renameGroup(groupId, name);
 
   res.json({
     success: true,
@@ -123,7 +123,7 @@ export const renameLeagueGroup = asyncHandler(async (req: AuthRequest, res: Resp
 export const deleteLeagueGroup = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { groupId } = req.params;
 
-  const data = await LeagueGroupManagementService.deleteGroup(groupId, req.userId!);
+  const data = await LeagueGroupManagementService.deleteGroup(groupId);
 
   res.json({
     success: true,
@@ -135,7 +135,7 @@ export const addParticipantToLeagueGroup = asyncHandler(async (req: AuthRequest,
   const { groupId } = req.params;
   const { participantId } = req.body;
 
-  const data = await LeagueGroupManagementService.addParticipant(groupId, participantId, req.userId!);
+  const data = await LeagueGroupManagementService.addParticipant(groupId, participantId);
 
   res.json({
     success: true,
@@ -146,7 +146,7 @@ export const addParticipantToLeagueGroup = asyncHandler(async (req: AuthRequest,
 export const removeParticipantFromLeagueGroup = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { groupId, participantId } = req.params;
 
-  const data = await LeagueGroupManagementService.removeParticipant(groupId, participantId, req.userId!);
+  const data = await LeagueGroupManagementService.removeParticipant(groupId, participantId);
 
   res.json({
     success: true,
@@ -158,7 +158,7 @@ export const reorderLeagueGroups = asyncHandler(async (req: AuthRequest, res: Re
   const { leagueSeasonId } = req.params;
   const { groupIds } = req.body;
 
-  const data = await LeagueGroupManagementService.reorderGroups(leagueSeasonId, groupIds, req.userId!);
+  const data = await LeagueGroupManagementService.reorderGroups(leagueSeasonId, groupIds);
 
   res.json({
     success: true,
@@ -180,7 +180,7 @@ export const deleteLeagueRound = asyncHandler(async (req: AuthRequest, res: Resp
 export const sendRoundStartMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { leagueRoundId } = req.params;
 
-  const result = await LeagueBroadcastService.broadcastRoundStartMessage(leagueRoundId, req.userId!);
+  const result = await LeagueBroadcastService.broadcastRoundStartMessage(leagueRoundId, req.userId!, req.user?.isAdmin || false);
 
   res.json({
     success: true,

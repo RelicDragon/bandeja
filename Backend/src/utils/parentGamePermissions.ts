@@ -1,14 +1,22 @@
 import prisma from '../config/database';
 import { ParticipantRole } from '@prisma/client';
+import { ApiError } from './ApiError';
 
 /**
  * Checks if a user has admin/owner permissions on a game or its parent game
+ * @param isAdmin - Flag indicating if the user is a global admin
  */
 export async function hasParentGamePermission(
   gameId: string,
   userId: string,
-  allowedRoles: ParticipantRole[] = [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+  allowedRoles: ParticipantRole[] = [ParticipantRole.OWNER, ParticipantRole.ADMIN],
+  isAdmin: boolean
 ): Promise<boolean> {
+  // Global admins have permission to all games
+  if (isAdmin) {
+    return true;
+  }
+
   // Check current game permissions
   const currentGameParticipant = await prisma.gameParticipant.findFirst({
     where: {
@@ -85,26 +93,49 @@ async function isPlayingParticipant(gameId: string, userId: string): Promise<boo
 
 /**
  * Checks if a user can modify results for a game.
- * Returns true if:
- * - User has admin/owner permissions, OR
- * - resultsByAnyone is true AND user is a participant
+ * Fetches the game and validates:
+ * - Game exists
+ * - Game is not ARCHIVED
+ * - User has permission (admin/owner OR resultsByAnyone is true AND user is a participant)
+ * @param isAdmin - Flag indicating if the user is a global admin
+ * @throws ApiError if game not found, is archived, or user lacks permission
  */
 export async function canModifyResults(
   gameId: string,
   userId: string,
-  resultsByAnyone: boolean
-): Promise<boolean> {
-  const hasPermission = await hasParentGamePermission(gameId, userId);
+  isAdmin: boolean
+): Promise<void> {
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: {
+      id: true,
+      status: true,
+      resultsByAnyone: true,
+    },
+  });
+
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+
+  if (game.status === 'ARCHIVED') {
+    throw new ApiError(403, 'Cannot modify results for archived games');
+  }
+
+  const hasPermission = await hasParentGamePermission(gameId, userId, undefined, isAdmin);
   
   if (hasPermission) {
-    return true;
+    return;
   }
 
-  if (resultsByAnyone) {
-    return await isPlayingParticipant(gameId, userId);
+  if (game.resultsByAnyone) {
+    const isParticipant = await isPlayingParticipant(gameId, userId);
+    if (isParticipant) {
+      return;
+    }
   }
 
-  return false;
+  throw new ApiError(403, 'Only game owners/admins can modify results');
 }
 
 /**
@@ -151,4 +182,26 @@ export async function getParentGameParticipant(
 
   return null;
 }
+
+/**
+ * Checks if a user has admin/owner permissions on a game or its parent game
+ * Fetches the user's admin status automatically
+ */
+export async function hasParentGamePermissionWithUserCheck(
+  gameId: string,
+  userId: string,
+  allowedRoles: ParticipantRole[] = [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isAdmin: true },
+  });
+
+  if (!user) {
+    return false;
+  }
+
+  return hasParentGamePermission(gameId, userId, allowedRoles, user.isAdmin);
+}
+
 

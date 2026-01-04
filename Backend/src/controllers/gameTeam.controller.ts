@@ -6,9 +6,8 @@ export const setGameTeams = async (req: AuthRequest, res: Response, next: NextFu
   try {
     const { gameId } = req.params;
     const { teams } = req.body;
-    const userId = req.userId!;
 
-    const result = await GameTeamService.setGameTeams(gameId, teams, userId);
+    const result = await GameTeamService.setGameTeams(gameId, teams);
 
     res.status(200).json({
       success: true,
@@ -37,9 +36,8 @@ export const getGameTeams = async (req: AuthRequest, res: Response, next: NextFu
 export const deleteGameTeams = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { gameId } = req.params;
-    const userId = req.userId!;
 
-    await GameTeamService.deleteGameTeams(gameId, userId);
+    await GameTeamService.deleteGameTeams(gameId);
 
     res.status(200).json({
       success: true,

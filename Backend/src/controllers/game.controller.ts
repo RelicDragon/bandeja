@@ -89,7 +89,7 @@ export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Resp
 
 export const updateGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const game = await GameService.updateGame(id, req.body, req.userId!);
+  const game = await GameService.updateGame(id, req.body, req.userId!, req.user?.isAdmin);
 
   res.json({
     success: true,
@@ -99,7 +99,7 @@ export const updateGame = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const deleteGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  await GameService.deleteGame(id, req.userId!);
+  await GameService.deleteGame(id);
 
   res.json({
     success: true,

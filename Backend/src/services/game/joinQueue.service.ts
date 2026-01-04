@@ -4,7 +4,6 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
-import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
 import { InviteService } from '../invite.service';
 import notificationService from '../notification.service';
@@ -100,10 +99,6 @@ export class JoinQueueService {
       },
     });
 
-    if (!game) {
-      throw new ApiError(404, 'Game not found');
-    }
-
     const currentParticipant = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
@@ -114,18 +109,15 @@ export class JoinQueueService {
     let canAccept = currentParticipant && (
       currentParticipant.role === 'OWNER' ||
       currentParticipant.role === 'ADMIN' ||
-      (game.anyoneCanInvite && currentParticipant.isPlaying)
+      (game!.anyoneCanInvite && currentParticipant.isPlaying)
     );
 
-    if (!canAccept) {
-      canAccept = await hasParentGamePermission(gameId, currentUserId);
-    }
 
     if (!canAccept) {
       throw new ApiError(403, 'games.notAuthorizedToAcceptJoinQueue');
     }
 
-    await canAddPlayerToGame(game, queueUserId);
+    await canAddPlayerToGame(game!, queueUserId);
 
     const joinQueue = await prisma.joinQueue.findUnique({
       where: {
@@ -226,11 +218,11 @@ export class JoinQueueService {
   static async declineJoinQueue(gameId: string, currentUserId: string, queueUserId: string) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
+      select: {
+        id: true,
+        anyoneCanInvite: true,
+      },
     });
-
-    if (!game) {
-      throw new ApiError(404, 'Game not found');
-    }
 
     const currentParticipant = await prisma.gameParticipant.findFirst({
       where: {
@@ -242,12 +234,9 @@ export class JoinQueueService {
     let canDecline = currentParticipant && (
       currentParticipant.role === 'OWNER' ||
       currentParticipant.role === 'ADMIN' ||
-      (game.anyoneCanInvite && currentParticipant.isPlaying)
+      (game!.anyoneCanInvite && currentParticipant.isPlaying)
     );
 
-    if (!canDecline) {
-      canDecline = await hasParentGamePermission(gameId, currentUserId);
-    }
 
     if (!canDecline) {
       throw new ApiError(403, 'games.notAuthorizedToDeclineJoinQueue');

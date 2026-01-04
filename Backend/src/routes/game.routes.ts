@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
-import { authenticate, optionalAuth } from '../middleware/auth';
+import { authenticate, optionalAuth, canEditGame, requireGamePermission } from '../middleware/auth';
+import { ParticipantRole } from '@prisma/client';
 import * as gameController from '../controllers/game.controller';
 
 const router = Router();
@@ -31,7 +32,7 @@ router.post(
 
 router.put('/:id', authenticate, gameController.updateGame);
 
-router.delete('/:id', authenticate, gameController.deleteGame);
+router.delete('/:id', authenticate, requireGamePermission([ParticipantRole.OWNER]), gameController.deleteGame);
 
 router.post('/:id/join', authenticate, gameController.joinGame);
 
@@ -51,6 +52,7 @@ router.put(
 router.post(
   '/:id/add-admin',
   authenticate,
+  requireGamePermission([ParticipantRole.OWNER]),
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),
@@ -60,6 +62,7 @@ router.post(
 router.post(
   '/:id/revoke-admin',
   authenticate,
+  requireGamePermission([ParticipantRole.OWNER]),
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),
@@ -69,6 +72,7 @@ router.post(
 router.post(
   '/:id/kick-user',
   authenticate,
+  canEditGame,
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),
@@ -78,6 +82,7 @@ router.post(
 router.post(
   '/:id/transfer-ownership',
   authenticate,
+  requireGamePermission([ParticipantRole.OWNER]),
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),
@@ -87,6 +92,7 @@ router.post(
 router.post(
   '/:id/accept-join-queue',
   authenticate,
+  canEditGame,
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),
@@ -96,6 +102,7 @@ router.post(
 router.post(
   '/:id/decline-join-queue',
   authenticate,
+  canEditGame,
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),

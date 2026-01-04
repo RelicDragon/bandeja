@@ -38,7 +38,7 @@ export const updateFaq = asyncHandler(async (req: AuthRequest, res: Response) =>
   const { question, answer, order } = req.body;
   const userId = req.userId!;
 
-  const faq = await FaqService.updateFaq(id, userId, { question, answer, order });
+  const faq = await FaqService.updateFaq(id, userId, { question, answer, order }, req.user?.isAdmin || false);
 
   res.json({
     success: true,
@@ -50,7 +50,7 @@ export const deleteFaq = asyncHandler(async (req: AuthRequest, res: Response) =>
   const { id } = req.params;
   const userId = req.userId!;
 
-  await FaqService.deleteFaq(id, userId);
+  await FaqService.deleteFaq(id, userId, req.user?.isAdmin || false);
 
   res.json({
     success: true,

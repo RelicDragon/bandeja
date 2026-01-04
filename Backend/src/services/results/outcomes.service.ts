@@ -3,7 +3,6 @@ import { ApiError } from '../../utils/ApiError';
 import { WinnerOfGame, Prisma, EntityType } from '@prisma/client';
 import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
-import { canModifyResults } from '../../utils/parentGamePermissions';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
@@ -334,8 +333,8 @@ export async function applyGameOutcomes(
   return { wasEdited: false };
 }
 
-export async function recalculateGameOutcomes(gameId: string, requestUserId: string) {
-  console.log(`[RECALCULATE GAME OUTCOMES] Starting recalculation for game ${gameId} by user ${requestUserId}`);
+export async function recalculateGameOutcomes(gameId: string) {
+  console.log(`[RECALCULATE GAME OUTCOMES] Starting recalculation for game ${gameId}`);
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
@@ -346,13 +345,6 @@ export async function recalculateGameOutcomes(gameId: string, requestUserId: str
   if (!game) {
     console.log(`[RECALCULATE GAME OUTCOMES] Game ${gameId} not found`);
     throw new ApiError(404, 'Game not found');
-  }
-
-  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
-
-  if (!canModify) {
-    console.log(`[RECALCULATE GAME OUTCOMES] User ${requestUserId} not authorized to recalculate outcomes for game ${gameId}`);
-    throw new ApiError(403, 'Only game owners/admins can recalculate outcomes');
   }
 
   console.log(`[RECALCULATE GAME OUTCOMES] Game ${gameId} configuration: winnerOfMatch=${game.winnerOfMatch}, winnerOfGame=${game.winnerOfGame}`);

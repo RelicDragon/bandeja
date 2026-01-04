@@ -47,12 +47,12 @@ export class GameService {
     return GameReadService.getAvailableGames(userId, userCityId, startDate, endDate, showArchived);
   }
 
-  static async updateGame(id: string, data: any, userId: string) {
-    return GameUpdateService.updateGame(id, data, userId);
+  static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {
+    return GameUpdateService.updateGame(id, data, userId, isAdmin);
   }
 
-  static async deleteGame(id: string, userId: string) {
-    return GameDeleteService.deleteGame(id, userId);
+  static async deleteGame(id: string) {
+    return GameDeleteService.deleteGame(id);
   }
 }
 

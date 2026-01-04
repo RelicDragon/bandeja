@@ -24,7 +24,7 @@ export const setGameCourts = asyncHandler(async (req: AuthRequest, res: Response
     });
   }
 
-  const gameCourts = await GameCourtService.setGameCourts(gameId, courtIds, req.userId!);
+  const gameCourts = await GameCourtService.setGameCourts(gameId, courtIds);
 
   res.json({
     success: true,
@@ -43,7 +43,7 @@ export const addGameCourt = asyncHandler(async (req: AuthRequest, res: Response)
     });
   }
 
-  const gameCourt = await GameCourtService.addGameCourt(gameId, courtId, req.userId!);
+  const gameCourt = await GameCourtService.addGameCourt(gameId, courtId);
 
   res.json({
     success: true,
@@ -53,7 +53,7 @@ export const addGameCourt = asyncHandler(async (req: AuthRequest, res: Response)
 
 export const removeGameCourt = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, gameCourtId } = req.params;
-  const result = await GameCourtService.removeGameCourt(gameId, gameCourtId, req.userId!);
+  const result = await GameCourtService.removeGameCourt(gameId, gameCourtId);
 
   res.json({
     success: true,
@@ -72,7 +72,7 @@ export const reorderGameCourts = asyncHandler(async (req: AuthRequest, res: Resp
     });
   }
 
-  const gameCourts = await GameCourtService.reorderGameCourts(gameId, gameCourtIds, req.userId!);
+  const gameCourts = await GameCourtService.reorderGameCourts(gameId, gameCourtIds);
 
   res.json({
     success: true,

@@ -13,19 +13,6 @@ export class FaqService {
   }
 
   static async createFaq(gameId: string, userId: string, data: { question: string; answer: string; order?: number }) {
-    const hasPermission = await hasParentGamePermission(gameId, userId);
-    if (!hasPermission) {
-      throw new ApiError(403, 'Only owners and admins can create FAQs');
-    }
-
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-    });
-
-    if (!game) {
-      throw new ApiError(404, 'Game not found');
-    }
-
     let order = data.order;
     if (order === undefined) {
       const maxOrder = await prisma.gameFaq.findFirst({
@@ -48,7 +35,7 @@ export class FaqService {
     return faq;
   }
 
-  static async updateFaq(faqId: string, userId: string, data: { question?: string; answer?: string; order?: number }) {
+  static async updateFaq(faqId: string, userId: string, data: { question?: string; answer?: string; order?: number }, isAdmin: boolean = false) {
     const faq = await prisma.gameFaq.findUnique({
       where: { id: faqId },
       select: { gameId: true },
@@ -58,7 +45,7 @@ export class FaqService {
       throw new ApiError(404, 'FAQ not found');
     }
 
-    const hasPermission = await hasParentGamePermission(faq.gameId, userId);
+    const hasPermission = await hasParentGamePermission(faq.gameId, userId, undefined, isAdmin);
     if (!hasPermission) {
       throw new ApiError(403, 'Only owners and admins can update FAQs');
     }
@@ -82,7 +69,7 @@ export class FaqService {
     return updatedFaq;
   }
 
-  static async deleteFaq(faqId: string, userId: string) {
+  static async deleteFaq(faqId: string, userId: string, isAdmin: boolean = false) {
     const faq = await prisma.gameFaq.findUnique({
       where: { id: faqId },
       select: { gameId: true },
@@ -92,7 +79,7 @@ export class FaqService {
       throw new ApiError(404, 'FAQ not found');
     }
 
-    const hasPermission = await hasParentGamePermission(faq.gameId, userId);
+    const hasPermission = await hasParentGamePermission(faq.gameId, userId, undefined, isAdmin);
     if (!hasPermission) {
       throw new ApiError(403, 'Only owners and admins can delete FAQs');
     }
@@ -103,19 +90,6 @@ export class FaqService {
   }
 
   static async reorderFaqs(gameId: string, userId: string, faqIds: string[]) {
-    const hasPermission = await hasParentGamePermission(gameId, userId);
-    if (!hasPermission) {
-      throw new ApiError(403, 'Only owners and admins can reorder FAQs');
-    }
-
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-    });
-
-    if (!game) {
-      throw new ApiError(404, 'Game not found');
-    }
-
     const existingFaqs = await prisma.gameFaq.findMany({
       where: { gameId },
       select: { id: true },

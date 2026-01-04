@@ -5,7 +5,7 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import notificationService from '../notification.service';
 import { GameReadService } from '../game/read.service';
 import { UserChatService } from './userChat.service';
-import { hasParentGamePermission } from '../../utils/parentGamePermissions';
+import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 
 export class MessageService {
   static async validateGameAccess(gameId: string, userId: string) {
@@ -29,7 +29,7 @@ export class MessageService {
     }
 
     const isDirectParticipant = game.participants.length > 0;
-    const hasPermission = isDirectParticipant || await hasParentGamePermission(
+    const hasPermission = isDirectParticipant || await hasParentGamePermissionWithUserCheck(
       gameId,
       userId,
       [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
@@ -101,7 +101,7 @@ export class MessageService {
   }
 
   static async validateChatTypeAccess(participant: any, chatType: ChatType, game: any, userId: string, gameId: string) {
-    const isParentGameAdminOrOwner = await hasParentGamePermission(
+    const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
       gameId,
       userId,
       [ParticipantRole.OWNER, ParticipantRole.ADMIN]

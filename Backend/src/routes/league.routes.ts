@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
-import { authenticate } from '../middleware/auth';
+import { authenticate, canEditGame } from '../middleware/auth';
 import * as leagueController from '../controllers/league.controller';
 
 const router = Router();
@@ -35,6 +35,7 @@ router.get(
 router.post(
   '/:leagueSeasonId/rounds',
   authenticate,
+  canEditGame,
   leagueController.createLeagueRound
 );
 
@@ -59,18 +60,21 @@ router.post(
 router.post(
   '/:leagueSeasonId/sync-participants',
   authenticate,
+  canEditGame,
   leagueController.syncLeagueParticipants
 );
 
 router.get(
   '/:leagueSeasonId/groups',
   authenticate,
+  canEditGame,
   leagueController.getLeagueGroups
 );
 
 router.post(
   '/:leagueSeasonId/groups',
   authenticate,
+  canEditGame,
   validate([
     body('numberOfGroups').notEmpty().withMessage('Number of groups is required').isInt({ min: 1 }).withMessage('Number of groups must be at least 1'),
   ]),
@@ -80,6 +84,7 @@ router.post(
 router.post(
   '/:leagueSeasonId/groups/manual',
   authenticate,
+  canEditGame,
   validate([body('name').notEmpty().withMessage('Group name is required')]),
   leagueController.createManualLeagueGroup
 );
@@ -113,6 +118,7 @@ router.delete(
 router.put(
   '/:leagueSeasonId/groups/reorder',
   authenticate,
+  canEditGame,
   validate([
     body('groupIds').isArray({ min: 1 }).withMessage('Group IDs must be an array'),
     body('groupIds.*').isString().withMessage('Each group ID must be a string'),

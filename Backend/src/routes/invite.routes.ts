@@ -1,14 +1,14 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
-import { authenticate } from '../middleware/auth';
+import { authenticate, canAccessGame } from '../middleware/auth';
 import * as inviteController from '../controllers/invite.controller';
 
 const router = Router();
 
 router.get('/my-invites', authenticate, inviteController.getMyInvites);
 
-router.get('/game/:gameId', authenticate, inviteController.getGameInvites);
+router.get('/game/:gameId', authenticate, canAccessGame, inviteController.getGameInvites);
 
 router.post(
   '/',

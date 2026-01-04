@@ -2,7 +2,6 @@ import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { GameService } from './game/game.service';
 import { USER_SELECT_FIELDS } from '../utils/constants';
-import { hasParentGamePermission } from '../utils/parentGamePermissions';
 
 interface GameTeamData {
   teamNumber: number;
@@ -11,7 +10,7 @@ interface GameTeamData {
 }
 
 export class GameTeamService {
-  static async setGameTeams(gameId: string, teams: GameTeamData[], userId: string) {
+  static async setGameTeams(gameId: string, teams: GameTeamData[]) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       include: {
@@ -22,12 +21,6 @@ export class GameTeamService {
 
     if (!game) {
       throw new ApiError(404, 'Game not found');
-    }
-
-    const hasPermission = await hasParentGamePermission(gameId, userId);
-
-    if (!hasPermission) {
-      throw new ApiError(403, 'Only game owners/admins can set fixed teams');
     }
 
     if (game.rounds.length > 0) {
@@ -146,7 +139,7 @@ export class GameTeamService {
     });
   }
 
-  static async deleteGameTeams(gameId: string, userId: string) {
+  static async deleteGameTeams(gameId: string) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       include: {
@@ -157,12 +150,6 @@ export class GameTeamService {
 
     if (!game) {
       throw new ApiError(404, 'Game not found');
-    }
-
-    const hasPermission = await hasParentGamePermission(gameId, userId);
-
-    if (!hasPermission) {
-      throw new ApiError(403, 'Only game owners/admins can delete fixed teams');
     }
 
     if (game.rounds.length > 0) {

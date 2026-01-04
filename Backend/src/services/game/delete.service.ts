@@ -1,16 +1,8 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { getParentGameParticipant } from '../../utils/parentGamePermissions';
-import { ParticipantRole } from '@prisma/client';
 
 export class GameDeleteService {
-  static async deleteGame(id: string, userId: string) {
-    const result = await getParentGameParticipant(id, userId, [ParticipantRole.OWNER]);
-
-    if (!result) {
-      throw new ApiError(403, 'Only the owner can delete the game');
-    }
-
+  static async deleteGame(id: string) {
     const game = await prisma.game.findUnique({
       where: { id },
       select: { 

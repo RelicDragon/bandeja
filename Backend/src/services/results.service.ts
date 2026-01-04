@@ -1,7 +1,6 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../utils/constants';
-import { canModifyResults } from '../utils/parentGamePermissions';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
 
 
@@ -153,7 +152,7 @@ export async function getMatchResults(matchId: string) {
   return match;
 }
 
-export async function deleteGameResults(gameId: string, requestUserId: string) {
+export async function deleteGameResults(gameId: string) {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
@@ -164,16 +163,6 @@ export async function deleteGameResults(gameId: string, requestUserId: string) {
 
   if (!game) {
     throw new ApiError(404, 'Game not found');
-  }
-
-  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
-
-  if (!canModify) {
-    throw new ApiError(403, 'Only game owners/admins can delete results');
-  }
-
-  if (game.status === 'ARCHIVED') {
-    throw new ApiError(403, 'Cannot delete results for archived games');
   }
 
   await prisma.$transaction(async (tx) => {
@@ -239,7 +228,7 @@ export async function deleteGameResults(gameId: string, requestUserId: string) {
   });
 }
 
-export async function resetGameResults(gameId: string, requestUserId: string) {
+export async function resetGameResults(gameId: string) {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
@@ -250,16 +239,6 @@ export async function resetGameResults(gameId: string, requestUserId: string) {
 
   if (!game) {
     throw new ApiError(404, 'Game not found');
-  }
-
-  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
-
-  if (!canModify) {
-    throw new ApiError(403, 'Only game owners/admins can reset results');
-  }
-
-  if (game.status === 'ARCHIVED') {
-    throw new ApiError(403, 'Cannot reset results for archived games');
   }
 
   await prisma.$transaction(async (tx) => {
@@ -373,7 +352,7 @@ export async function resetGameResults(gameId: string, requestUserId: string) {
   });
 }
 
-export async function editGameResults(gameId: string, requestUserId: string) {
+export async function editGameResults(gameId: string) {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
@@ -384,16 +363,6 @@ export async function editGameResults(gameId: string, requestUserId: string) {
 
   if (!game) {
     throw new ApiError(404, 'Game not found');
-  }
-
-  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
-
-  if (!canModify) {
-    throw new ApiError(403, 'Only game owners/admins can edit results');
-  }
-
-  if (game.status === 'ARCHIVED') {
-    throw new ApiError(403, 'Cannot edit results for archived games');
   }
 
   if (game.resultsStatus !== 'FINAL') {
@@ -464,7 +433,7 @@ export async function editGameResults(gameId: string, requestUserId: string) {
   });
 }
 
-export async function syncResults(gameId: string, rounds: any[], requestUserId: string) {
+export async function syncResults(gameId: string, rounds: any[]) {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
@@ -474,12 +443,6 @@ export async function syncResults(gameId: string, rounds: any[], requestUserId: 
 
   if (!game) {
     throw new ApiError(404, 'Game not found');
-  }
-
-  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
-
-  if (!canModify) {
-    throw new ApiError(403, 'Only game owners/admins can modify results');
   }
 
   await prisma.$transaction(async (tx) => {
@@ -611,20 +574,7 @@ export async function syncResults(gameId: string, rounds: any[], requestUserId: 
   });
 }
 
-export async function createRound(gameId: string, roundId: string, name: string, requestUserId: string) {
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    include: { participants: true },
-  });
-
-  if (!game) {
-    throw new ApiError(404, 'Game not found');
-  }
-
-  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
-  if (!canModify) {
-    throw new ApiError(403, 'Only game owners/admins can modify results');
-  }
+export async function createRound(gameId: string, roundId: string) {
 
   const roundCount = await prisma.round.count({ where: { gameId } });
 
@@ -644,20 +594,7 @@ export async function createRound(gameId: string, roundId: string, name: string,
   });
 }
 
-export async function deleteRound(gameId: string, roundId: string, requestUserId: string) {
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    include: { participants: true },
-  });
-
-  if (!game) {
-    throw new ApiError(404, 'Game not found');
-  }
-
-  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
-  if (!canModify) {
-    throw new ApiError(403, 'Only game owners/admins can modify results');
-  }
+export async function deleteRound(gameId: string, roundId: string) {
 
   const round = await prisma.round.findUnique({
     where: { id: roundId },
@@ -671,32 +608,26 @@ export async function deleteRound(gameId: string, roundId: string, requestUserId
     const deletedRoundNumber = round.roundNumber;
     await tx.round.delete({ where: { id: roundId } });
 
-    await tx.round.updateMany({
+    const roundsToUpdate = await tx.round.findMany({
       where: {
         gameId,
         roundNumber: { gt: deletedRoundNumber },
       },
-      data: {
-        roundNumber: { decrement: 1 },
-      },
+      select: { id: true },
     });
+
+    for (const roundToUpdate of roundsToUpdate) {
+      await tx.round.update({
+        where: { id: roundToUpdate.id },
+        data: {
+          roundNumber: { decrement: 1 },
+        },
+      });
+    }
   });
 }
 
-export async function createMatch(gameId: string, roundId: string, matchId: string, requestUserId: string) {
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    include: { participants: true },
-  });
-
-  if (!game) {
-    throw new ApiError(404, 'Game not found');
-  }
-
-  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
-  if (!canModify) {
-    throw new ApiError(403, 'Only game owners/admins can modify results');
-  }
+export async function createMatch(gameId: string, roundId: string, matchId: string) {
 
   const round = await prisma.round.findUnique({
     where: { id: roundId },
@@ -733,20 +664,7 @@ export async function createMatch(gameId: string, roundId: string, matchId: stri
   });
 }
 
-export async function deleteMatch(gameId: string, matchId: string, requestUserId: string) {
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    include: { participants: true },
-  });
-
-  if (!game) {
-    throw new ApiError(404, 'Game not found');
-  }
-
-  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
-  if (!canModify) {
-    throw new ApiError(403, 'Only game owners/admins can modify results');
-  }
+export async function deleteMatch(gameId: string, matchId: string) {
 
   const match = await prisma.match.findUnique({
     where: { id: matchId },
@@ -760,15 +678,22 @@ export async function deleteMatch(gameId: string, matchId: string, requestUserId
     const deletedMatchNumber = match.matchNumber;
     await tx.match.delete({ where: { id: matchId } });
 
-    await tx.match.updateMany({
+    const matchesToUpdate = await tx.match.findMany({
       where: {
         roundId: match.roundId,
         matchNumber: { gt: deletedMatchNumber },
       },
-      data: {
-        matchNumber: { decrement: 1 },
-      },
+      select: { id: true },
     });
+
+    for (const matchToUpdate of matchesToUpdate) {
+      await tx.match.update({
+        where: { id: matchToUpdate.id },
+        data: {
+          matchNumber: { decrement: 1 },
+        },
+      });
+    }
   });
 }
 
@@ -780,22 +705,8 @@ export async function updateMatch(
     teamB: string[];
     sets: Array<{ teamA: number; teamB: number }>;
     courtId?: string;
-  },
-  requestUserId: string
+  }
 ) {
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    include: { participants: true },
-  });
-
-  if (!game) {
-    throw new ApiError(404, 'Game not found');
-  }
-
-  const canModify = await canModifyResults(gameId, requestUserId, game.resultsByAnyone);
-  if (!canModify) {
-    throw new ApiError(403, 'Only game owners/admins can modify results');
-  }
 
   const match = await prisma.match.findUnique({
     where: { id: matchId },
@@ -803,11 +714,18 @@ export async function updateMatch(
       teams: {
         orderBy: { teamNumber: 'asc' },
       },
+      round: {
+        select: { gameId: true },
+      },
     },
   });
 
   if (!match) {
     throw new ApiError(404, 'Match not found');
+  }
+
+  if (match.round.gameId !== gameId) {
+    throw new ApiError(400, 'Match does not belong to the specified game');
   }
 
   await prisma.$transaction(async (tx) => {

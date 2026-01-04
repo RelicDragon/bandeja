@@ -107,39 +107,21 @@ export const uploadGameAvatar = asyncHandler(async (req: AuthRequest, res: Respo
   }
 
   const { gameId } = req.body;
-  if (!gameId) {
-    throw new ApiError(400, 'Game ID is required');
-  }
 
-  // Verify user has permission to update game
+  // Get old avatars for deletion
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     select: {
-      id: true,
       avatar: true,
       originalAvatar: true,
     }
   });
 
-  if (!game) {
-    throw new ApiError(404, 'Game not found');
-  }
-
-  const hasPermission = await hasParentGamePermission(
-    gameId,
-    userId,
-    [ParticipantRole.OWNER, ParticipantRole.ADMIN]
-  );
-
-  if (!hasPermission) {
-    throw new ApiError(403, 'Only owners and admins can update game avatar');
-  }
-
   // Delete old avatars if exist
-  if (game.avatar) {
+  if (game?.avatar) {
     await ImageProcessor.deleteFile(game.avatar);
   }
-  if (game.originalAvatar) {
+  if (game?.originalAvatar) {
     await ImageProcessor.deleteFile(game.originalAvatar);
   }
 
@@ -215,17 +197,9 @@ export const uploadChatDocument = asyncHandler(async (req: AuthRequest, res: Res
   }
 
   const { gameId } = req.body;
-  const senderId = req.userId;
+  const senderId = req.userId!;
 
-  if (!senderId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  if (!gameId) {
-    throw new ApiError(400, 'Game ID is required');
-  }
-
-  // Verify user has access to this game
+  // Check for pending invite or participant access
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
@@ -245,9 +219,10 @@ export const uploadChatDocument = asyncHandler(async (req: AuthRequest, res: Res
   const hasPermission = await hasParentGamePermission(
     gameId,
     senderId,
-    [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
+    [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT],
+    req.user?.isAdmin || false
   );
-  const hasPendingInvite = game.invites.length > 0;
+  const hasPendingInvite = (game.invites?.length ?? 0) > 0;
 
   if (!hasPermission && !hasPendingInvite) {
     throw new ApiError(403, 'You are not a participant or invited to this game');
@@ -275,34 +250,6 @@ export const uploadGameMedia = asyncHandler(async (req: AuthRequest, res: Respon
   }
 
   const { gameId } = req.body;
-  const userId = req.userId;
-
-  if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  if (!gameId) {
-    throw new ApiError(400, 'Game ID is required');
-  }
-
-  // Verify user has access to this game
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-  });
-
-  if (!game) {
-    throw new ApiError(404, 'Game not found');
-  }
-
-  const hasPermission = await hasParentGamePermission(
-    gameId,
-    userId,
-    [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
-  );
-
-  if (!hasPermission) {
-    throw new ApiError(403, 'You are not a participant of this game');
-  }
 
   // Process game media
   const result = await ImageProcessor.processGameMedia(req.file.buffer, req.file.originalname);

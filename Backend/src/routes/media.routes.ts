@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth';
+import { authenticate, canEditGame, canAccessGame } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { body } from 'express-validator';
 import { 
@@ -29,6 +29,7 @@ router.post(
   validate([
     body('gameId').notEmpty().withMessage('Game ID is required')
   ]),
+  canEditGame,
   uploadGameAvatar
 );
 
@@ -53,6 +54,7 @@ router.post(
   validate([
     body('gameId').notEmpty().withMessage('Game ID is required')
   ]),
+  canAccessGame,
   uploadGameMedia
 );
 

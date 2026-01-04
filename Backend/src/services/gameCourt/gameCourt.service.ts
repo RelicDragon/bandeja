@@ -1,6 +1,5 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 
 export class GameCourtService {
   static async getGameCourts(gameId: string) {
@@ -25,21 +24,7 @@ export class GameCourtService {
     return gameCourts;
   }
 
-  static async setGameCourts(gameId: string, courtIds: string[], userId: string) {
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-    });
-
-    if (!game) {
-      throw new ApiError(404, 'Game not found');
-    }
-
-    const hasPermission = await hasParentGamePermission(gameId, userId);
-
-    if (!hasPermission) {
-      throw new ApiError(403, 'Only owners and admins can manage game courts');
-    }
-
+  static async setGameCourts(gameId: string, courtIds: string[]) {
     await prisma.$transaction(async (tx) => {
       await tx.gameCourt.deleteMany({
         where: { gameId },
@@ -73,21 +58,7 @@ export class GameCourtService {
     return this.getGameCourts(gameId);
   }
 
-  static async addGameCourt(gameId: string, courtId: string, userId: string) {
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-    });
-
-    if (!game) {
-      throw new ApiError(404, 'Game not found');
-    }
-
-    const hasPermission = await hasParentGamePermission(gameId, userId);
-
-    if (!hasPermission) {
-      throw new ApiError(403, 'Only owners and admins can manage game courts');
-    }
-
+  static async addGameCourt(gameId: string, courtId: string) {
     const existingGameCourt = await prisma.gameCourt.findFirst({
       where: {
         gameId,
@@ -139,21 +110,7 @@ export class GameCourtService {
     return gameCourt;
   }
 
-  static async removeGameCourt(gameId: string, gameCourtId: string, userId: string) {
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-    });
-
-    if (!game) {
-      throw new ApiError(404, 'Game not found');
-    }
-
-    const hasPermission = await hasParentGamePermission(gameId, userId);
-
-    if (!hasPermission) {
-      throw new ApiError(403, 'Only owners and admins can manage game courts');
-    }
-
+  static async removeGameCourt(gameId: string, gameCourtId: string) {
     const gameCourt = await prisma.gameCourt.findUnique({
       where: { id: gameCourtId },
     });
@@ -183,21 +140,7 @@ export class GameCourtService {
     return { success: true };
   }
 
-  static async reorderGameCourts(gameId: string, gameCourtIds: string[], userId: string) {
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-    });
-
-    if (!game) {
-      throw new ApiError(404, 'Game not found');
-    }
-
-    const hasPermission = await hasParentGamePermission(gameId, userId);
-
-    if (!hasPermission) {
-      throw new ApiError(403, 'Only owners and admins can manage game courts');
-    }
-
+  static async reorderGameCourts(gameId: string, gameCourtIds: string[]) {
     const existingGameCourts = await prisma.gameCourt.findMany({
       where: { gameId },
     });

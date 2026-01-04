@@ -4,7 +4,7 @@ export async function acceptInviteFromTelegram(
   inviteId: string,
   userId: string
 ): Promise<InviteActionResult> {
-  const result = await InviteService.acceptInvite(inviteId, userId, true);
+  const result = await InviteService.acceptInvite(inviteId, userId, true, false);
   
   if (result.success) {
     return {
@@ -20,7 +20,7 @@ export async function declineInviteFromTelegram(
   inviteId: string,
   userId: string
 ): Promise<InviteActionResult> {
-  const result = await InviteService.declineInvite(inviteId, userId);
+  const result = await InviteService.declineInvite(inviteId, userId, false);
   
   if (result.success) {
     return {

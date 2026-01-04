@@ -1,10 +1,9 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
-import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 
 export class LeagueSyncService {
-  static async syncLeagueParticipants(leagueSeasonId: string, userId: string) {
+  static async syncLeagueParticipants(leagueSeasonId: string) {
     const leagueSeason = await prisma.leagueSeason.findUnique({
       where: { id: leagueSeasonId },
       include: {
@@ -18,23 +17,6 @@ export class LeagueSyncService {
 
     if (!leagueSeason.game) {
       throw new ApiError(404, 'League season game not found');
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-
-    if (!user) {
-      throw new ApiError(404, 'User not found');
-    }
-
-    if (!user.isAdmin) {
-      const hasPermission = await hasParentGamePermission(leagueSeasonId, userId);
-
-      if (!hasPermission) {
-        throw new ApiError(403, 'Only owners and admins can sync league participants');
-      }
     }
 
     const seasonGame = await prisma.game.findUnique({

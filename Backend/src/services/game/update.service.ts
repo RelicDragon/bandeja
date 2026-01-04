@@ -12,25 +12,23 @@ import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId
 import { BarResultsService } from '../barResults.service';
 
 export class GameUpdateService {
-  static async updateGame(id: string, data: any, userId: string) {
+  static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {
     const isOnlyResultsStatusUpdate = Object.keys(data).length === 1 && data.resultsStatus !== undefined;
     
     if (isOnlyResultsStatusUpdate) {
-      const gameForPermission = await prisma.game.findUnique({
+      await canModifyResults(id, userId, isAdmin);
+    } else {
+      // For non-resultsStatus updates, check game exists and OWNER/ADMIN permission
+      const gameExists = await prisma.game.findUnique({
         where: { id },
-        select: { resultsByAnyone: true },
+        select: { id: true },
       });
 
-      if (!gameForPermission) {
+      if (!gameExists) {
         throw new ApiError(404, 'Game not found');
       }
 
-      const canModify = await canModifyResults(id, userId, gameForPermission.resultsByAnyone);
-      if (!canModify) {
-        throw new ApiError(403, 'You do not have permission to update results status');
-      }
-    } else {
-      const hasPermission = await hasParentGamePermission(id, userId);
+      const hasPermission = await hasParentGamePermission(id, userId, undefined, isAdmin);
       if (!hasPermission) {
         throw new ApiError(403, 'Only owners and admins can update the game');
       }
@@ -41,12 +39,8 @@ export class GameUpdateService {
       select: { maxParticipants: true, hasFixedTeams: true, entityType: true, genderTeams: true },
     });
 
-    if (!game) {
-      throw new ApiError(404, 'Game not found');
-    }
-
-    const maxParticipants = data.maxParticipants !== undefined ? data.maxParticipants : game.maxParticipants;
-    const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams !== undefined ? data.hasFixedTeams : game.hasFixedTeams || false);
+    const maxParticipants = data.maxParticipants !== undefined ? data.maxParticipants : game!.maxParticipants;
+    const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams !== undefined ? data.hasFixedTeams : game!.hasFixedTeams || false);
 
     const updateData: any = { ...data };
     if (maxParticipants === 2) {
@@ -55,7 +49,7 @@ export class GameUpdateService {
       updateData.hasFixedTeams = hasFixedTeams;
     }
 
-    if (game.entityType === 'TOURNAMENT') {
+    if (game!.entityType === 'TOURNAMENT') {
       updateData.resultsByAnyone = false;
     }
 
@@ -79,7 +73,7 @@ export class GameUpdateService {
     }
 
     if (data.genderTeams !== undefined) {
-      if (game.entityType !== 'GAME' && game.entityType !== 'TOURNAMENT' && game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON') {
+      if (game!.entityType !== 'GAME' && game!.entityType !== 'TOURNAMENT' && game!.entityType !== 'LEAGUE' && game!.entityType !== 'LEAGUE_SEASON') {
         throw new ApiError(400, 'Gender teams can only be set for GAME, TOURNAMENT, LEAGUE, or LEAGUE_SEASON entity types');
       }
       if (data.genderTeams === 'MIX_PAIRS' && !(maxParticipants >= 4 && maxParticipants % 2 === 0)) {

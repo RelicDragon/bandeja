@@ -3,7 +3,6 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { getDistinctLeagueGroupColor } from './groupColors';
-import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 
 const participantInclude = {
   user: {
@@ -36,7 +35,7 @@ const participantOrder: Prisma.LeagueParticipantOrderByWithRelationInput[] = [
 ];
 
 export class LeagueGroupManagementService {
-  private static async ensureLeagueAccess(leagueSeasonId: string, userId: string) {
+  private static async ensureLeagueAccess(leagueSeasonId: string) {
     const leagueSeason = await prisma.leagueSeason.findUnique({
       where: { id: leagueSeasonId },
       include: {
@@ -48,29 +47,10 @@ export class LeagueGroupManagementService {
       throw new ApiError(404, 'League season not found');
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-
-    if (!user) {
-      throw new ApiError(404, 'User not found');
-    }
-
-    if (user.isAdmin) {
-      return leagueSeason;
-    }
-
-    const hasPermission = await hasParentGamePermission(leagueSeasonId, userId);
-
-    if (!hasPermission) {
-      throw new ApiError(403, 'Only owners and admins can manage league groups');
-    }
-
     return leagueSeason;
   }
 
-  private static async ensureGroupAccess(groupId: string, userId: string) {
+  private static async ensureGroupAccess(groupId: string) {
     const group = await prisma.leagueGroup.findUnique({
       where: { id: groupId },
     });
@@ -79,7 +59,7 @@ export class LeagueGroupManagementService {
       throw new ApiError(404, 'League group not found');
     }
 
-    await this.ensureLeagueAccess(group.leagueSeasonId, userId);
+    await this.ensureLeagueAccess(group.leagueSeasonId);
     return group;
   }
 
@@ -119,8 +99,8 @@ export class LeagueGroupManagementService {
     return { groups, unassignedParticipants };
   }
 
-  static async getGroups(leagueSeasonId: string, userId: string) {
-    await this.ensureLeagueAccess(leagueSeasonId, userId);
+  static async getGroups(leagueSeasonId: string) {
+    await this.ensureLeagueAccess(leagueSeasonId);
     return this.buildPayload(leagueSeasonId);
   }
 
@@ -136,17 +116,19 @@ export class LeagueGroupManagementService {
     return this.buildPayload(leagueSeasonId);
   }
 
-  static async createGroup(leagueSeasonId: string, name: string, userId: string) {
+  static async createGroup(leagueSeasonId: string, name: string) {
     if (!name.trim()) {
       throw new ApiError(400, 'Group name is required');
     }
 
-    await this.ensureLeagueAccess(leagueSeasonId, userId);
+    await this.ensureLeagueAccess(leagueSeasonId);
 
     const [lastGroup, existingGroupColors] = await Promise.all([
       prisma.leagueGroup.findFirst({
-        where: { leagueSeasonId },
-        orderBy: { createdAt: 'desc' },
+        where: { 
+          leagueSeasonId,
+          worseGroupId: null,
+        },
       }),
       prisma.leagueGroup.findMany({
         where: { leagueSeasonId },
@@ -178,12 +160,12 @@ export class LeagueGroupManagementService {
     return this.buildPayload(leagueSeasonId);
   }
 
-  static async renameGroup(groupId: string, name: string, userId: string) {
+  static async renameGroup(groupId: string, name: string) {
     if (!name.trim()) {
       throw new ApiError(400, 'Group name is required');
     }
 
-    const group = await this.ensureGroupAccess(groupId, userId);
+    const group = await this.ensureGroupAccess(groupId);
 
     await prisma.leagueGroup.update({
       where: { id: groupId },
@@ -193,8 +175,8 @@ export class LeagueGroupManagementService {
     return this.buildPayload(group.leagueSeasonId);
   }
 
-  static async deleteGroup(groupId: string, userId: string) {
-    const group = await this.ensureGroupAccess(groupId, userId);
+  static async deleteGroup(groupId: string) {
+    const group = await this.ensureGroupAccess(groupId);
 
     const operations: Prisma.PrismaPromise<unknown>[] = [
       prisma.leagueParticipant.updateMany({
@@ -232,8 +214,8 @@ export class LeagueGroupManagementService {
     return this.buildPayload(group.leagueSeasonId);
   }
 
-  static async addParticipant(groupId: string, participantId: string, userId: string) {
-    const group = await this.ensureGroupAccess(groupId, userId);
+  static async addParticipant(groupId: string, participantId: string) {
+    const group = await this.ensureGroupAccess(groupId);
 
     const participant = await prisma.leagueParticipant.findUnique({
       where: { id: participantId },
@@ -256,8 +238,8 @@ export class LeagueGroupManagementService {
     return this.buildPayload(group.leagueSeasonId);
   }
 
-  static async removeParticipant(groupId: string, participantId: string, userId: string) {
-    const group = await this.ensureGroupAccess(groupId, userId);
+  static async removeParticipant(groupId: string, participantId: string) {
+    const group = await this.ensureGroupAccess(groupId);
 
     const participant = await prisma.leagueParticipant.findFirst({
       where: { id: participantId, currentGroupId: groupId },
@@ -276,8 +258,8 @@ export class LeagueGroupManagementService {
     return this.buildPayload(group.leagueSeasonId);
   }
 
-  static async reorderGroups(leagueSeasonId: string, groupIds: string[], userId: string) {
-    await this.ensureLeagueAccess(leagueSeasonId, userId);
+  static async reorderGroups(leagueSeasonId: string, groupIds: string[]) {
+    await this.ensureLeagueAccess(leagueSeasonId);
 
     const groups = await prisma.leagueGroup.findMany({
       where: { leagueSeasonId },

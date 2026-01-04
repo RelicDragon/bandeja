@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
-import { hasParentGamePermission } from '../../utils/parentGamePermissions';
+import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { ParticipantRole } from '@prisma/client';
 
 export class ReadReceiptService {
@@ -201,7 +201,7 @@ export class ReadReceiptService {
   static async getGameUnreadCount(gameId: string, userId: string) {
     const { participant, game } = await MessageService.validateGameAccess(gameId, userId);
 
-    const isParentGameAdminOrOwner = await hasParentGamePermission(
+    const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
       gameId,
       userId,
       [ParticipantRole.OWNER, ParticipantRole.ADMIN]
@@ -370,7 +370,7 @@ export class ReadReceiptService {
   static async markAllMessagesAsRead(gameId: string, userId: string, chatTypes: string[] = []) {
     const { participant } = await MessageService.validateGameAccess(gameId, userId);
 
-    const isParentGameAdminOrOwner = await hasParentGamePermission(
+    const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
       gameId,
       userId,
       [ParticipantRole.OWNER, ParticipantRole.ADMIN]

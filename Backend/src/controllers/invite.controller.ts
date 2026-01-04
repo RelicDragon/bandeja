@@ -41,7 +41,8 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
     const isAdminOrOwner = await hasParentGamePermission(
       gameId,
       req.userId!,
-      [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+      [ParticipantRole.OWNER, ParticipantRole.ADMIN],
+      req.user?.isAdmin || false
     );
 
     if (!isAdminOrOwner) {
@@ -53,7 +54,8 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
       const isParticipant = await hasParentGamePermission(
         gameId,
         req.userId!,
-        [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
+        [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT],
+        req.user?.isAdmin || false
       );
 
       if (!isParticipant) {
@@ -387,7 +389,7 @@ export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response)
 export const acceptInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
-  const result = await InviteService.acceptInvite(id, req.userId!);
+  const result = await InviteService.acceptInvite(id, req.userId!, req.user?.isAdmin || false);
 
   if (!result.success) {
     const statusCode = result.message === 'errors.invites.notFound' ? 404 :
@@ -404,7 +406,7 @@ export const acceptInvite = asyncHandler(async (req: AuthRequest, res: Response)
 export const declineInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
-  const result = await InviteService.declineInvite(id, req.userId!);
+  const result = await InviteService.declineInvite(id, req.userId!, req.user?.isAdmin || false);
 
   if (!result.success) {
     const statusCode = result.message === 'errors.invites.notFound' ? 404 :
@@ -446,24 +448,6 @@ export const deleteExpiredInvites = asyncHandler(async (req: AuthRequest, res: R
 
 export const getGameInvites = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
-
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-  });
-
-  if (!game) {
-    throw new ApiError(404, 'errors.invites.gameNotFound');
-  }
-
-  const hasPermission = await hasParentGamePermission(
-    gameId,
-    req.userId!,
-    [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
-  );
-
-  if (!hasPermission) {
-    throw new ApiError(403, 'errors.invites.onlyParticipantsCanView');
-  }
 
   const invites = await prisma.invite.findMany({
     where: {
