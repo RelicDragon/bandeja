@@ -709,7 +709,34 @@ export const GameInfo = ({
             {game.timeIsSet === false ? (
               <span className="text-gray-500 dark:text-gray-400 italic">{t('gameDetails.datetimeNotSet')}</span>
             ) : (
-              <span>{formatDate(game.startTime, 'EEEE, PPP')}</span>
+              <div className="flex-1">
+                {canEdit && canShowEdit ? (
+                  <button
+                    onClick={() => {
+                      if (isEditMode) {
+                        onScrollToSettings();
+                      } else {
+                        onOpenTimeDurationModal();
+                      }
+                    }}
+                    className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                  >
+                    <span>{(() => {
+                      const dayOfWeek = formatDate(game.startTime, 'EEEE');
+                      return dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+                    })()}</span>
+                    <span>{formatDate(game.startTime, 'PPP')}</span>
+                  </button>
+                ) : (
+                  <div className="flex flex-col">
+                    <span>{(() => {
+                      const dayOfWeek = formatDate(game.startTime, 'EEEE');
+                      return dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+                    })()}</span>
+                    <span>{formatDate(game.startTime, 'PPP')}</span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
           {game.entityType !== 'LEAGUE_SEASON' && game.timeIsSet !== false && (

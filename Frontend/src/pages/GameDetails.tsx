@@ -595,7 +595,9 @@ export const GameDetailsContent = () => {
   const handleScrollToSettings = () => {
     const settingsElement = document.getElementById('game-settings');
     if (settingsElement) {
-      settingsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const elementTop = settingsElement.getBoundingClientRect().top + window.pageYOffset;
+      const offset = 60;
+      window.scrollTo({ top: elementTop - offset, behavior: 'smooth' });
     }
   };
 

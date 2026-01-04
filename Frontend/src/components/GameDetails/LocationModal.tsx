@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { ClubModal } from '@/components/ClubModal';
 import { CourtModal } from '@/components/CourtModal';
 import { ToggleSwitch } from '@/components';
 import { courtsApi } from '@/api';
+import toast from 'react-hot-toast';
 
 interface LocationModalProps {
   isOpen: boolean;
@@ -29,59 +30,115 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
   const [isSaving, setIsSaving] = useState(false);
   const [modalCourts, setModalCourts] = useState<Court[]>(courts);
   const [isLoadingCourts, setIsLoadingCourts] = useState(false);
+  const prevIsOpenRef = useRef(isOpen);
+  const fetchAbortControllerRef = useRef<AbortController | null>(null);
+  const currentClubIdRef = useRef<string>('');
+  const lastFetchedClubIdRef = useRef<string>('');
 
   useEffect(() => {
-    if (isOpen) {
+    const wasClosed = !prevIsOpenRef.current;
+    const isNowOpen = isOpen;
+    
+    if (isNowOpen && wasClosed) {
       setClubId(game.clubId || '');
       setCourtId(game.courtId || '');
       setHasBookedCourt(game.hasBookedCourt || false);
-      if (courts.length > 0 || !game.clubId) {
+      if (game.clubId && courts.length > 0 && courts[0]?.clubId === game.clubId) {
         setModalCourts(courts);
+        lastFetchedClubIdRef.current = game.clubId;
+      } else if (game.clubId) {
+        setModalCourts([]);
+        lastFetchedClubIdRef.current = '';
+      } else {
+        setModalCourts(courts);
+        lastFetchedClubIdRef.current = '';
       }
       setIsClosing(false);
+    }
+    
+    if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
+    
+    prevIsOpenRef.current = isOpen;
 
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen, game, courts]);
+  }, [isOpen]);
 
   useEffect(() => {
-    const fetchCourts = async () => {
-      if (!clubId || !isOpen) return;
+    if (!isOpen) {
+      if (fetchAbortControllerRef.current) {
+        fetchAbortControllerRef.current.abort();
+        fetchAbortControllerRef.current = null;
+      }
+      lastFetchedClubIdRef.current = '';
+      return;
+    }
+
+    const fetchCourts = async (targetClubId: string) => {
+      if (!targetClubId) return;
+      
+      if (fetchAbortControllerRef.current) {
+        fetchAbortControllerRef.current.abort();
+      }
+      
+      const abortController = new AbortController();
+      fetchAbortControllerRef.current = abortController;
+      currentClubIdRef.current = targetClubId;
       
       setIsLoadingCourts(true);
       try {
-        const response = await courtsApi.getByClubId(clubId);
-        setModalCourts(response.data);
-        if (onCourtsChange) {
-          onCourtsChange(response.data);
+        const response = await courtsApi.getByClubId(targetClubId);
+        
+        if (abortController.signal.aborted) return;
+        
+        if (currentClubIdRef.current === targetClubId) {
+          setModalCourts(response.data);
+          lastFetchedClubIdRef.current = targetClubId;
+          if (onCourtsChange) {
+            onCourtsChange(response.data);
+          }
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error.name === 'AbortError' || abortController.signal.aborted) {
+          return;
+        }
         console.error('Failed to fetch courts:', error);
-        setModalCourts([]);
+        if (currentClubIdRef.current === targetClubId) {
+          setModalCourts([]);
+          lastFetchedClubIdRef.current = '';
+        }
       } finally {
-        setIsLoadingCourts(false);
+        if (currentClubIdRef.current === targetClubId && !abortController.signal.aborted) {
+          setIsLoadingCourts(false);
+        }
+        if (fetchAbortControllerRef.current === abortController) {
+          fetchAbortControllerRef.current = null;
+        }
       }
     };
 
-    if (!isOpen) return;
-
     if (clubId) {
-      if (clubId === game.clubId && courts.length > 0) {
-        setModalCourts(courts);
-        setIsLoadingCourts(false);
-      } else {
-        fetchCourts();
+      if (lastFetchedClubIdRef.current !== clubId) {
+        fetchCourts(clubId);
       }
     } else {
       setModalCourts([]);
       setIsLoadingCourts(false);
+      lastFetchedClubIdRef.current = '';
     }
-  }, [clubId, isOpen, game.clubId, courts, onCourtsChange]);
+
+    return () => {
+      if (fetchAbortControllerRef.current) {
+        fetchAbortControllerRef.current.abort();
+        fetchAbortControllerRef.current = null;
+      }
+    };
+  }, [clubId, isOpen, onCourtsChange]);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -92,12 +149,31 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
   };
 
   const handleSave = async () => {
+    if (courtId && clubId) {
+      const court = modalCourts.find(c => c.id === courtId);
+      if (court && court.clubId !== clubId) {
+        toast.error(t('errors.courtDoesNotBelongToClub', { defaultValue: 'Selected court does not belong to the selected club' }));
+        return;
+      }
+    }
+
+    if (courtId && !clubId) {
+      toast.error(t('errors.clubRequired', { defaultValue: 'Please select a club first' }));
+      return;
+    }
+
     setIsSaving(true);
     try {
-      await onSave({ clubId, courtId, hasBookedCourt });
+      await onSave({ 
+        clubId: clubId || '', 
+        courtId: courtId || '', 
+        hasBookedCourt: courtId ? hasBookedCourt : false 
+      });
       handleClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving location:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       setIsSaving(false);
     }
@@ -210,6 +286,7 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
             onSelect={(id) => {
               setClubId(id);
               setCourtId('');
+              setHasBookedCourt(false);
               setIsClubModalOpen(false);
             }}
           />
@@ -223,10 +300,14 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
           onClose={() => setIsCourtModalOpen(false)}
           courts={modalCourts}
           selectedId={courtId || 'notBooked'}
-          onSelect={(id) => {
-            setCourtId(id === 'notBooked' ? '' : id);
-            setIsCourtModalOpen(false);
-          }}
+            onSelect={(id) => {
+              const newCourtId = id === 'notBooked' ? '' : id;
+              setCourtId(newCourtId);
+              if (!newCourtId) {
+                setHasBookedCourt(false);
+              }
+              setIsCourtModalOpen(false);
+            }}
           entityType={game.entityType}
         />
       )}
