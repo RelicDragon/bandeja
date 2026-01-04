@@ -543,7 +543,7 @@ export class LeagueCreateService {
       leagueGroupId,
       maxParticipants: seasonGame.maxParticipants,
       minParticipants: seasonGame.minParticipants || 2,
-      isPublic: seasonGame.isPublic,
+      isPublic: false,
       affectsRating: seasonGame.affectsRating,
     });
 
