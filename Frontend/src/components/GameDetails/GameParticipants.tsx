@@ -134,7 +134,7 @@ export const GameParticipants = ({
             ))}
           </div>
         )}
-        {!isParticipant && hasUnoccupiedSlots && game.isPublic && myInvites.length === 0 && !isInJoinQueue && (
+        {!isParticipant && hasUnoccupiedSlots && myInvites.length === 0 && !isInJoinQueue && (
           <Button
             onClick={onJoin}
             size="lg"

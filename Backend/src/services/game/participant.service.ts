@@ -1,7 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { createSystemMessage } from '../../controllers/chat.controller';
-import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
+import { SystemMessageType } from '../../utils/systemMessages';
 import { GameService } from './game.service';
 import { JoinQueueService } from './joinQueue.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
@@ -212,16 +211,10 @@ export class ParticipantService {
     }
 
     if (participant.user) {
-      const userName = getUserDisplayName(participant.user.firstName, participant.user.lastName);
-      const action = isPlaying ? 'joined the game' : 'left the game';
-
-      try {
-        await createSystemMessage(gameId, {
-          type: SystemMessageType.USER_TOGGLE_PLAYING_STATUS,
-          variables: { userName, action }
-        });
-      } catch (error) {
-        console.error('Failed to create system message for playing status change:', error);
+      if (isPlaying) {
+        await ParticipantMessageHelper.sendJoinMessage(gameId, userId);
+      } else {
+        await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_GAME);
       }
     }
 

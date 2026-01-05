@@ -1180,7 +1180,6 @@
       "USER_JOINED_JOIN_QUEUE": "{{userName}} захтевао да се придружи игри",
       "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} се придружио игри",
       "USER_DECLINED_JOIN_QUEUE": "{{userName}} захтев за придруживање је одбијен",
-      "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
       "BUG_STATUS_CHANGED": "Статус грешке промењен на {{status}}",
       "BUG_TYPE_CHANGED": "Тип грешке промењен на {{type}}",
       "GAME_CLUB_CHANGED": "Локација игре промењена на {{clubName}}",

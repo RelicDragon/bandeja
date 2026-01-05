@@ -1187,7 +1187,6 @@
       "USER_JOINED_JOIN_QUEUE": "{{userName}} запросил присоединение к игре",
       "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} присоединился к игре",
       "USER_DECLINED_JOIN_QUEUE": "{{userName}} запрос на присоединение был отклонен",
-      "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
       "BUG_STATUS_CHANGED": "Статус ошибки изменен на {{status}}",
       "BUG_TYPE_CHANGED": "Тип ошибки изменен на {{type}}",
       "GAME_CLUB_CHANGED": "Место игры изменено на {{clubName}}",

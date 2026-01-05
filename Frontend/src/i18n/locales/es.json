@@ -1169,7 +1169,6 @@
       "USER_JOINED_JOIN_QUEUE": "{{userName}} solicitó unirse al juego",
       "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} se unió al juego",
       "USER_DECLINED_JOIN_QUEUE": "{{userName}} solicitud de unión fue rechazada",
-      "USER_TOGGLE_PLAYING_STATUS": "{{userName}} {{action}}",
       "BUG_STATUS_CHANGED": "Estado del error cambiado a {{status}}",
       "BUG_TYPE_CHANGED": "Tipo del error cambiado a {{type}}",
       "GAME_CLUB_CHANGED": "Ubicación del juego cambiada a {{clubName}}",
