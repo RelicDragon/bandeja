@@ -67,7 +67,6 @@ router.post(
 router.get(
   '/:leagueSeasonId/groups',
   authenticate,
-  canEditGame,
   leagueController.getLeagueGroups
 );
 
