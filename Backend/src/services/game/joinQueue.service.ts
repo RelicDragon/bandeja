@@ -208,7 +208,6 @@ export class JoinQueueService {
     }
 
     await InviteService.deleteInvitesForUserInGame(gameId, queueUserId);
-    await ParticipantMessageHelper.sendJoinMessage(gameId, queueUserId);
 
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentUserId);
