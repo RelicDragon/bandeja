@@ -81,23 +81,25 @@ class NotificationService {
     const hasMentions = mentionIds.length > 0;
     const chatType = message.chatType as ChatType;
 
-    if (hasMentions) {
-      const mentionedUserIds = new Set(mentionIds);
-      
-      const participants = await prisma.gameParticipant.findMany({
-        where: { gameId: game.id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              language: true,
-              currentCityId: true,
-            }
+    const currentGameParticipants = await prisma.gameParticipant.findMany({
+      where: { gameId: game.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            language: true,
+            currentCityId: true,
           }
         }
-      });
+      }
+    });
 
-      for (const participant of participants) {
+    const currentGameUserIds = new Set(currentGameParticipants.map(p => p.user.id));
+
+    if (hasMentions) {
+      const mentionedUserIds = new Set(mentionIds);
+
+      for (const participant of currentGameParticipants) {
         const user = participant.user;
         if (user.id === sender.id) continue;
         if (!mentionedUserIds.has(user.id)) continue;
@@ -124,20 +126,7 @@ class NotificationService {
         }
       }
     } else {
-      const participants = await prisma.gameParticipant.findMany({
-        where: { gameId: game.id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              language: true,
-              currentCityId: true,
-            }
-          }
-        }
-      });
-
-      for (const participant of participants) {
+      for (const participant of currentGameParticipants) {
         const user = participant.user;
         if (user.id === sender.id) continue;
 
@@ -163,6 +152,54 @@ class NotificationService {
               payload
             });
           }
+        }
+      }
+    }
+
+    const gameWithParent = await prisma.game.findUnique({
+      where: { id: game.id },
+      select: { parentId: true }
+    });
+
+    if (gameWithParent?.parentId) {
+      const parentGameAdmins = await prisma.gameParticipant.findMany({
+        where: {
+          gameId: gameWithParent.parentId,
+          role: { in: ['OWNER', 'ADMIN'] }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              language: true,
+              currentCityId: true,
+            }
+          }
+        }
+      });
+
+      const mentionedUserIds = hasMentions ? new Set(mentionIds) : null;
+
+      for (const parentParticipant of parentGameAdmins) {
+        const user = parentParticipant.user;
+        if (user.id === sender.id) continue;
+        if (currentGameUserIds.has(user.id)) continue;
+
+        if (hasMentions) {
+          if (!mentionedUserIds?.has(user.id)) continue;
+        } else {
+          const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
+          if (isMuted) continue;
+        }
+
+        const payload = await createGameChatPushNotification(message, game, sender, user);
+        
+        if (payload) {
+          await this.sendNotification({
+            userId: user.id,
+            type: NotificationType.GAME_CHAT,
+            payload
+          });
         }
       }
     }

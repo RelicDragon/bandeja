@@ -36,6 +36,7 @@ import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEn
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { resultsApi } from '@/api/results';
+import { faqApi } from '@/api/faq';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
@@ -246,6 +247,27 @@ export const GameDetailsContent = () => {
 
     fetchClubs();
   }, [user?.currentCity, game?.entityType]);
+
+  useEffect(() => {
+    const checkFaqs = async () => {
+      if (!game || game.entityType !== 'LEAGUE_SEASON') return;
+      
+      const isOwner = game && user ? isUserGameAdminOrOwner(game, user.id) : false;
+      const canEdit = isOwner || user?.isAdmin || false;
+      
+      if (canEdit) return;
+      
+      try {
+        const response = await faqApi.getGameFaqs(game.id);
+        setHasFaqs(response.data.length > 0);
+      } catch (error) {
+        console.error('Failed to fetch FAQs:', error);
+        setHasFaqs(false);
+      }
+    };
+
+    checkFaqs();
+  }, [game, user]);
 
   useEffect(() => {
     if (game) {

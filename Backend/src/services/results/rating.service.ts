@@ -9,6 +9,7 @@ interface PlayerStats {
 
 interface MatchResult {
   isWinner: boolean;
+  isDraw?: boolean;
   scoreDelta?: number;
   opponentsLevel: number;
   setScores?: Array<{ teamAScore: number; teamBScore: number }>;
@@ -87,7 +88,9 @@ export function calculateRatingUpdate(
   const levelDifference = matchResult.opponentsLevel - playerStats.level;
   
   let baseLevelChange: number;
-  if (matchResult.isWinner) {
+  if (matchResult.isDraw) {
+    baseLevelChange = BASE_LEVEL_CHANGE * (levelDifference / 10) * 0.5;
+  } else if (matchResult.isWinner) {
     baseLevelChange = Math.min(
       BASE_LEVEL_CHANGE * (1 + levelDifference / 10),
       MAX_LEVEL_CHANGE

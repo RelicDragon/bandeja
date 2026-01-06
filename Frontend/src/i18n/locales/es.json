@@ -401,7 +401,7 @@
     "normal": "normal",
     "blowout": "decisivo",
     "howItWorks": "Cómo Funciona",
-    "ratingExplanation": "Tu calificación cambia según los resultados de los partidos, la fuerza del oponente y las diferencias de puntuación. Los partidos ajustados (pequeño diferencial de puntos) tienen menos impacto (30-100%), mientras que las victorias decisivas tienen mayor impacto (100-300%). Ganar contra oponentes más fuertes te da más puntos, mientras que perder contra oponentes más débiles cuesta más.",
+    "ratingExplanation": "Tu calificación cambia según los resultados de los partidos, la fuerza del oponente y las diferencias de puntuación. Los partidos ajustados (pequeño diferencial de puntos) tienen menos impacto (30-100%), mientras que las victorias decisivas tienen mayor impacto (100-300%). Ganar contra oponentes más fuertes te da más puntos, mientras que perder contra oponentes más débiles cuesta más. En empates, los jugadores con mayor calificación pierden nivel y los jugadores con menor calificación ganan nivel, proporcionalmente a la diferencia de nivel.",
     "socialLevelChange": "Cambio de Nivel Social",
     "socialLevelBefore": "Nivel Social",
     "socialLevelAfter": "Nivel Social Después",

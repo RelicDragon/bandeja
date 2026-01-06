@@ -408,7 +408,7 @@
     "normal": "normal",
     "blowout": "decisive",
     "howItWorks": "How It Works",
-    "ratingExplanation": "Your rating changes based on match results, opponent strength, and score differences. Close matches (small point differential) have less impact (30-100%), while decisive wins have greater impact (100-300%). Winning against stronger opponents gives you more points, while losing to weaker opponents costs more.",
+    "ratingExplanation": "Your rating changes based on match results, opponent strength, and score differences. Close matches (small point differential) have less impact (30-100%), while decisive wins have greater impact (100-300%). Winning against stronger opponents gives you more points, while losing to weaker opponents costs more. In draws, higher-rated players lose level and lower-rated players gain level, proportional to the level difference.",
     "socialLevelChange": "Social Level Change",
     "socialLevelBefore": "Social Level",
     "socialLevelAfter": "Social Level After",

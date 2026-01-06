@@ -175,6 +175,7 @@ export function calculateByMatchesWonOutcomes(
           },
           {
             isWinner: teamAWins,
+            isDraw: isTie,
             opponentsLevel: teamBAvgLevel,
             setScores: validSets,
           },
@@ -198,6 +199,7 @@ export function calculateByMatchesWonOutcomes(
           },
           {
             isWinner: teamBWins,
+            isDraw: isTie,
             opponentsLevel: teamAAvgLevel,
             setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore })),
           },
@@ -295,6 +297,7 @@ export function calculateByPointsOutcomes(
           },
           {
             isWinner: teamAWins,
+            isDraw: isTie,
             opponentsLevel: teamBAvgLevel,
             setScores: validSets,
           },
@@ -322,6 +325,7 @@ export function calculateByPointsOutcomes(
           },
           {
             isWinner: teamBWins,
+            isDraw: isTie,
             opponentsLevel: teamAAvgLevel,
             setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore })),
           },
@@ -420,6 +424,7 @@ export function calculateByScoresDeltaOutcomes(
           },
           {
             isWinner: teamAWins,
+            isDraw: isTie,
             opponentsLevel: teamBAvgLevel,
             setScores: validSets,
           },
@@ -447,6 +452,7 @@ export function calculateByScoresDeltaOutcomes(
           },
           {
             isWinner: teamBWins,
+            isDraw: isTie,
             opponentsLevel: teamAAvgLevel,
             setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore })),
           },

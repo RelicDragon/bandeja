@@ -237,6 +237,7 @@ export async function getOutcomeExplanation(
         },
         {
           isWinner,
+          isDraw: isTie,
           opponentsLevel: opponentLevel,
           setScores,
         },
