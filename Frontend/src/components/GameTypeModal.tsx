@@ -1,59 +1,193 @@
-import { X } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Card } from './Card';
+import { useNavigate } from 'react-router-dom';
+import { Gamepad2, Trophy, Swords, GraduationCap, Beer } from 'lucide-react';
 import { EntityType } from '@/types';
+import { useAuthStore } from '@/store/authStore';
 
 interface GameTypeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectType: (type: EntityType) => void;
+  buttonRef?: React.RefObject<HTMLElement | null>;
 }
 
-export const GameTypeModal = ({ isOpen, onClose, onSelectType }: GameTypeModalProps) => {
+export const GameTypeModal = ({ isOpen, onClose, onSelectType, buttonRef }: GameTypeModalProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
   
-  if (!isOpen) return null;
+  const getEntityTypes = (): EntityType[] => {
+    const types: EntityType[] = ['GAME'];
+    
+    if (user?.isAdmin || user?.canCreateTournament) {
+      types.push('TOURNAMENT');
+    }
+    
+    if (user?.isAdmin || user?.canCreateLeague) {
+      types.push('LEAGUE');
+    }
+    
+    if (user?.isAdmin || user?.isTrainer) {
+      types.push('TRAINING');
+    }
+    
+    types.push('BAR');
+    
+    return types;
+  };
+  
+  const entityTypes = getEntityTypes();
 
-  const entityTypes: EntityType[] = ['GAME', 'TOURNAMENT'];
+  useEffect(() => {
+    const updatePosition = () => {
+      if (buttonRef?.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        setPosition({
+          top: rect.bottom + 8,
+          left: rect.left + rect.width / 2
+        });
+      }
+    };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <Card className="w-full max-w-md relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-        >
-          <X size={24} />
-        </button>
-        
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-          {t('createGame.selectType')}
-        </h2>
-        
-        <div className="space-y-3">
-          {entityTypes.map((type) => (
+    if (isOpen && buttonRef?.current) {
+      updatePosition();
+      window.addEventListener('resize', updatePosition);
+      window.addEventListener('scroll', updatePosition, true);
+      return () => {
+        window.removeEventListener('resize', updatePosition);
+        window.removeEventListener('scroll', updatePosition, true);
+      };
+    }
+  }, [isOpen, buttonRef]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      const originalPaddingRight = document.body.style.paddingRight;
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      
+      document.body.style.overflow = 'hidden';
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
+      
+      return () => {
+        document.body.style.overflow = originalStyle;
+        document.body.style.paddingRight = originalPaddingRight;
+      };
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        if (buttonRef?.current && buttonRef.current.contains(event.target as Node)) {
+          return;
+        }
+        setIsAnimatingOut(true);
+        setTimeout(() => {
+          onClose();
+          setIsAnimatingOut(false);
+          setShouldRender(false);
+        }, 200);
+      }
+    };
+
+    if (isOpen) {
+      setShouldRender(true);
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    } else {
+      setShouldRender(false);
+    }
+  }, [isOpen, onClose, buttonRef]);
+
+  if (!isOpen || !shouldRender || typeof document === 'undefined') return null;
+
+  const handleSelectType = (type: EntityType) => {
+    setIsExiting(true);
+    setTimeout(() => {
+      if (type === 'LEAGUE') {
+        navigate('/create-league');
+        onClose();
+      } else {
+        onSelectType(type);
+        onClose();
+      }
+    }, 400);
+  };
+
+  const getIcon = (type: EntityType) => {
+    switch (type) {
+      case 'GAME':
+        return <Gamepad2 size={18} />;
+      case 'TOURNAMENT':
+        return <Swords size={18} />;
+      case 'LEAGUE':
+        return <Trophy size={18} />;
+      case 'TRAINING':
+        return <GraduationCap size={18} />;
+      case 'BAR':
+        return <Beer size={18} />;
+      default:
+        return null;
+    }
+  };
+
+  return createPortal(
+    <>
+      <div 
+        className={`fixed inset-0 bg-black/20 z-[9998] ${isAnimatingOut || isExiting ? 'animate-blur-out' : 'animate-blur-in'}`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setIsAnimatingOut(true);
+            setTimeout(() => {
+              onClose();
+              setIsAnimatingOut(false);
+              setShouldRender(false);
+            }, 200);
+          }
+        }}
+        style={{ pointerEvents: 'auto' }}
+      />
+      
+      <div 
+        ref={containerRef} 
+        className="fixed z-[9999] pr-8"
+        style={{
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          transform: 'translateX(-50%)'
+        }}
+      >
+        <div className="flex flex-col pr-8 gap-2">
+          {entityTypes.map((type, index) => (
             <button
               key={type}
-              onClick={() => onSelectType(type)}
-              disabled={type === 'TOURNAMENT'}
-              className={`w-full text-left p-4 rounded-lg border-2 transition-colors ${
-                type === 'TOURNAMENT'
-                  ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-primary-600 dark:hover:border-primary-500'
+              onClick={() => handleSelectType(type)}
+              className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
+                isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
               }`}
+              style={{
+                animationDelay: isExiting ? `${(entityTypes.length - index - 1) * 100}ms` : `${index * 100}ms`,
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+              }}
             >
-              <div className={`font-semibold ${
-                type === 'TOURNAMENT'
-                  ? 'text-gray-400 dark:text-gray-500'
-                  : 'text-gray-900 dark:text-white'
-              }`}>
-                {t(`games.entityTypes.${type}`)}
-              </div>
+              {getIcon(type)}
+              {t(`games.entityTypes.${type}`)}
             </button>
           ))}
         </div>
-      </Card>
-    </div>
+      </div>
+    </>,
+    document.body
   );
 };
 

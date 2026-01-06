@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
-import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, GamesTabController, Contacts, BugsSection } from '@/components/home';
+import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, BugsSection } from '@/components/home';
 import { Button } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { chatApi } from '@/api/chat';
@@ -74,7 +74,7 @@ export const HomeContent = () => {
     hideSkeletonsAnimated: skeletonAnimation.hideSkeletonsAnimated,
   });
 
-  const [activeTab, setActiveTab] = useState<'my-games' | 'past-games' | 'search'>('my-games');
+  const { activeTab, setActiveTab } = useNavigationStore();
 
   useEffect(() => {
     if (!loading && games.length === 0 && activeTab === 'my-games') {
@@ -302,8 +302,6 @@ export const HomeContent = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-      <Contacts />
-
       <div
         className={`transition-all duration-500 ease-in-out overflow-hidden ${
           showChatFilter && unreadMessages > 0
@@ -338,12 +336,6 @@ export const HomeContent = () => {
         />
       </div>
 
-      {!showChatFilter && (
-        <GamesTabController
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-      )}
 
       <div className="relative min-h-[100px]">
         {showChatFilter ? (

@@ -1240,7 +1240,7 @@ export const GameDetailsContent = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-      <div className="max-w-2xl mx-auto space-y-4 overflow-visible">
+      <div className="max-w-2xl mx-auto space-y-4 overflow-visible" style={{ paddingTop: `calc(4rem + env(safe-area-inset-top))` }}>
         {isLeagueSeason && (
         <div className="flex border-b border-gray-200 dark:border-gray-700 rounded-xl">
           <button

@@ -14,6 +14,8 @@ interface HeaderState {
   leaderboardScope: 'city' | 'global';
   leaderboardTimePeriod: '10' | '30' | 'all';
   areFiltersSticky: boolean;
+  showContacts: boolean;
+  contactsHeight: number;
   setPendingInvites: (count: number) => void;
   setUnreadMessages: (count: number) => void;
   setShowGameTypeModal: (show: boolean) => void;
@@ -25,6 +27,8 @@ interface HeaderState {
   setLeaderboardScope: (scope: 'city' | 'global') => void;
   setLeaderboardTimePeriod: (period: '10' | '30' | 'all') => void;
   setAreFiltersSticky: (sticky: boolean) => void;
+  setShowContacts: (show: boolean) => void;
+  setContactsHeight: (height: number) => void;
 }
 
 export const useHeaderStore = create<HeaderState>((set) => ({
@@ -39,6 +43,8 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   leaderboardScope: 'city',
   leaderboardTimePeriod: 'all',
   areFiltersSticky: false,
+  showContacts: false,
+  contactsHeight: 0,
   setPendingInvites: (count) => set({ pendingInvites: count }),
   setUnreadMessages: (count) => set({ unreadMessages: count }),
   setShowGameTypeModal: (show) => set({ showGameTypeModal: show }),
@@ -54,4 +60,6 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   setLeaderboardScope: (scope) => set({ leaderboardScope: scope }),
   setLeaderboardTimePeriod: (period) => set({ leaderboardTimePeriod: period }),
   setAreFiltersSticky: (sticky) => set({ areFiltersSticky: sticky }),
+  setShowContacts: (show) => set({ showContacts: show }),
+  setContactsHeight: (height) => set({ contactsHeight: height }),
 }));

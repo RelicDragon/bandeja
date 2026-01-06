@@ -10,7 +10,7 @@ export const GamesTabController = ({ activeTab, onTabChange }: GamesTabControlle
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-2 mb-4 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+    <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
       <button
         onClick={() => onTabChange('my-games')}
         className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${

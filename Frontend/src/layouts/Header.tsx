@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { useEffect, useRef } from 'react';
-import { Bell, MessageCircle, User, ArrowLeft, Bug } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Bell, MessageCircle, User, ArrowLeft, Bug, ContactRound } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -13,6 +13,9 @@ import {
   GameModeToggle
 } from '@/components';
 import { GameSubscriptionsHeaderContent } from '@/components/headerContent/GameSubscriptionsHeaderContent';
+import { GamesTabController } from '@/components/home/GamesTabController';
+import { Contacts } from '@/components/home/Contacts';
+import { getContactsVisibility, setContactsVisibility } from '@/utils/contactsVisibilityStorage';
 
 interface HeaderProps {
   showChatFilter?: boolean;
@@ -26,13 +29,92 @@ export const Header = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const { pendingInvites, unreadMessages, isNewInviteAnimating, showChatFilter: globalShowChatFilter, setShowChatFilter } = useHeaderStore();
-  const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications, bugsButtonSlidingUp, bugsButtonSlidingDown, setBugsButtonSlidingUp, setBugsButtonSlidingDown } = useNavigationStore();
+  const { pendingInvites, unreadMessages, isNewInviteAnimating, showChatFilter: globalShowChatFilter, setShowChatFilter, showContacts, setShowContacts, contactsHeight, setContactsHeight } = useHeaderStore();
+  const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications, bugsButtonSlidingUp, bugsButtonSlidingDown, setBugsButtonSlidingUp, setBugsButtonSlidingDown, activeTab, setActiveTab } = useNavigationStore();
   
   const isChatFilterActive = onChatFilterToggle ? showChatFilter : globalShowChatFilter;
   const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
 
   const previousPageRef = useRef(currentPage);
+  const [contactsLoading, setContactsLoading] = useState(true);
+  const contactsContainerRef = useRef<HTMLDivElement>(null);
+  const contactsContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadContactsVisibility = async () => {
+      try {
+        const visible = await getContactsVisibility();
+        if (mounted) {
+          setShowContacts(visible);
+        }
+      } catch (error) {
+        console.error('Failed to load contacts visibility:', error);
+      } finally {
+        if (mounted) {
+          setContactsLoading(false);
+        }
+      }
+    };
+    loadContactsVisibility();
+    return () => {
+      mounted = false;
+    };
+  }, [setShowContacts]);
+
+  useEffect(() => {
+    if (!contactsContentRef.current || !showContacts || contactsLoading) {
+      setContactsHeight(0);
+      return;
+    }
+
+    let rafId: number;
+    let lastHeight = 0;
+    let isMeasuring = false;
+
+    const measureHeight = () => {
+      if (contactsContentRef.current && contactsContainerRef.current && !isMeasuring) {
+        isMeasuring = true;
+        rafId = requestAnimationFrame(() => {
+          if (contactsContentRef.current && contactsContainerRef.current) {
+            const tempMaxHeight = contactsContainerRef.current.style.maxHeight;
+            contactsContainerRef.current.style.maxHeight = 'none';
+            const height = contactsContentRef.current.offsetHeight;
+            contactsContainerRef.current.style.maxHeight = tempMaxHeight;
+            
+            if (Math.abs(height - lastHeight) > 2) {
+              setContactsHeight(height);
+              lastHeight = height;
+            }
+          }
+          isMeasuring = false;
+        });
+      }
+    };
+
+    measureHeight();
+
+    const resizeObserver = new ResizeObserver(() => {
+      measureHeight();
+    });
+
+    resizeObserver.observe(contactsContentRef.current);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      resizeObserver.disconnect();
+    };
+  }, [showContacts, contactsLoading, setContactsHeight]);
+
+  const handleContactsToggle = async () => {
+    const newVisibility = !showContacts;
+    setShowContacts(newVisibility);
+    try {
+      await setContactsVisibility(newVisibility);
+    } catch (error) {
+      console.error('Failed to save contacts visibility:', error);
+    }
+  };
 
   // Handle page transitions
   useEffect(() => {
@@ -99,9 +181,20 @@ export const Header = ({
     setTimeout(() => setIsAnimating(false), 300);
   };
 
+  const isTabControllerVisible = currentPage === 'home' && !isChatFilterActive;
+  const contactsVisible = showContacts && !contactsLoading;
+  const contactsHeightPx = contactsVisible ? contactsHeight : 0;
+  const tabControllerHeight = isTabControllerVisible ? '3.5rem' : '0';
+
   return (
     <>
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed top-0 right-0 left-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)', height: 'calc(4rem + env(safe-area-inset-top))' }}>
+      <header 
+        className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed top-0 right-0 left-0 z-40 shadow-lg transition-all duration-300" 
+        style={{ 
+          paddingTop: 'env(safe-area-inset-top)', 
+          height: `calc(4rem + ${contactsHeightPx}px + ${tabControllerHeight} + env(safe-area-inset-top))`
+        }}
+      >
         <div className="h-16 px-4 flex" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           <div className="flex items-center gap-2">
             {currentPage === 'home' ? (
@@ -121,6 +214,34 @@ export const Header = ({
                 {t('common.back')}
               </button>
             )}
+
+            <button
+              onClick={handleContactsToggle}
+              className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 active:scale-110 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none ${
+                showContacts
+                  ? 'bg-primary-500 dark:bg-primary-600 shadow-md active:bg-primary-600 dark:active:bg-primary-700'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'
+              }`}
+              title={t('contacts.title', { defaultValue: 'Contacts' })}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                minWidth: '2.5rem',
+                minHeight: '2.5rem'
+              }}
+            >
+              <ContactRound 
+                size={20} 
+                style={{ 
+                  display: 'block',
+                  color: showContacts ? 'white' : undefined,
+                  opacity: 1,
+                  pointerEvents: 'none'
+                }}
+                className={showContacts ? '' : 'text-gray-600 dark:text-gray-400'} 
+              />
+            </button>
 
             {pendingInvites > 0 && (
               <button
@@ -206,6 +327,36 @@ export const Header = ({
             <HeaderContentWrapper page="gameSubscriptions">
               <GameSubscriptionsHeaderContent />
             </HeaderContentWrapper>
+          </div>
+        </div>
+        <div
+          ref={contactsContainerRef}
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+            showContacts && !contactsLoading
+              ? 'opacity-100 translate-y-0'
+              : 'max-h-0 opacity-0 -translate-y-4'
+          }`}
+          style={{
+            maxHeight: showContacts && !contactsLoading ? `${contactsHeight}px` : '0'
+          }}
+        >
+          <div 
+            ref={contactsContentRef}
+            className="px-4 py-2" 
+            style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}
+          >
+            <Contacts />
+          </div>
+        </div>
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+            isTabControllerVisible
+              ? 'max-h-16 opacity-100 translate-y-0'
+              : 'max-h-0 opacity-0 -translate-y-4'
+          }`}
+        >
+          <div className="px-4 pb-0 mx-auto max-w-2xl" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+            <GamesTabController activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
         </div>
       </header>
