@@ -745,7 +745,7 @@ export const GameCard = ({
           </div>
         </div>
 
-        {showJoinButton && onJoin && (
+        {showJoinButton && onJoin && game.status !== 'ARCHIVED' && game.resultsStatus === 'NONE' && (
           <div className="mt-4">
             <Button
               onClick={(e) => onJoin(game.id, e)}
