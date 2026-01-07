@@ -32,10 +32,16 @@ export const useSystemMessageTranslation = () => {
   const translateSystemMessage = (messageData: SystemMessageData): string => {
     const { type, variables } = messageData;
     
+    if (!type) {
+      return '';
+    }
+    
+    const safeVariables = variables || {};
+    
     // Get the template from translations
     const template = t(`chat.systemMessages.${type}`, { defaultValue: '' });
     
-    if (!template) {
+    if (!template || typeof template !== 'string') {
       // Fallback to English template if translation not found
       const fallbackTemplates: Record<SystemMessageType, string> = {
         [SystemMessageType.USER_JOINED_GAME]: '{{userName}} joined the game',
@@ -58,21 +64,26 @@ export const useSystemMessageTranslation = () => {
         [SystemMessageType.GAME_DATE_TIME_CHANGED]: 'Game date/time changed to {{dateTime}}'
       };
       
-      const fallbackTemplate = fallbackTemplates[type];
-      return interpolateTemplate(fallbackTemplate, variables);
+      const fallbackTemplate = fallbackTemplates[type] || '';
+      return interpolateTemplate(fallbackTemplate, safeVariables);
     }
     
-    return interpolateTemplate(template, variables);
+    return interpolateTemplate(template, safeVariables);
   };
 
   return { translateSystemMessage };
 };
 
 const interpolateTemplate = (template: string, variables: Record<string, string>): string => {
+  if (!template || typeof template !== 'string') {
+    return '';
+  }
+  
   let result = template;
+  const safeVariables = variables || {};
   
   // Replace template variables with actual values
-  for (const [key, value] of Object.entries(variables)) {
+  for (const [key, value] of Object.entries(safeVariables)) {
     const placeholder = `{{${key}}}`;
     const safeValue = value || '';
     result = result.replace(new RegExp(placeholder, 'g'), safeValue);
@@ -83,11 +94,15 @@ const interpolateTemplate = (template: string, variables: Record<string, string>
 
 export const parseSystemMessage = (content: string): SystemMessageData | null => {
   try {
+    if (!content || typeof content !== 'string') {
+      return null;
+    }
+    
     const parsed = JSON.parse(content);
-    if (parsed.type && parsed.variables) {
+    if (parsed.type && parsed.variables && typeof parsed.variables === 'object') {
       return {
         type: parsed.type as SystemMessageType,
-        variables: parsed.variables
+        variables: parsed.variables || {}
       };
     }
   } catch (error) {
