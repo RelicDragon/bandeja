@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { gamesApi } from '@/api';
 import { Club, BookedCourtSlot } from '@/types';
 import { getClubTimezone, createDateFromClubTime } from './useGameTimeDuration';
@@ -15,6 +15,7 @@ interface BookedSlotInfo {
   startTime: string;
   endTime: string;
   hasBookedCourt: boolean;
+  clubBooked: boolean;
 }
 
 export const useBookedCourts = ({
@@ -25,6 +26,7 @@ export const useBookedCourts = ({
 }: UseBookedCourtsProps) => {
   const [bookedCourts, setBookedCourts] = useState<BookedCourtSlot[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isLoadingExternalSlots, setIsLoadingExternalSlots] = useState(false);
 
   const startOfDay = useMemo(() => {
     if (!clubId || !selectedDate) return null;
@@ -40,32 +42,34 @@ export const useBookedCourts = ({
     return endDate.toISOString();
   }, [selectedDate, club, clubId]);
 
-  useEffect(() => {
+  const fetchBookedCourts = useCallback(async () => {
     if (!clubId || !startOfDay || !endOfDay) {
       setBookedCourts([]);
       return;
     }
 
-    const fetchBookedCourts = async () => {
-      setLoading(true);
-      try {
-        const response = await gamesApi.getBookedCourts({
-          clubId,
-          startDate: startOfDay,
-          endDate: endOfDay,
-          courtId: selectedCourt && selectedCourt !== 'notBooked' ? selectedCourt : undefined,
-        });
-        setBookedCourts(response.data || []);
-      } catch (error) {
-        console.error('Failed to fetch booked courts:', error);
-        setBookedCourts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBookedCourts();
+    setLoading(true);
+    try {
+      const response = await gamesApi.getBookedCourts({
+        clubId,
+        startDate: startOfDay,
+        endDate: endOfDay,
+        courtId: selectedCourt && selectedCourt !== 'notBooked' ? selectedCourt : undefined,
+      });
+      setBookedCourts(response.data || []);
+      setIsLoadingExternalSlots(response.isLoadingExternalSlots || false);
+    } catch (error) {
+      console.error('Failed to fetch booked courts:', error);
+      setBookedCourts([]);
+      setIsLoadingExternalSlots(false);
+    } finally {
+      setLoading(false);
+    }
   }, [clubId, startOfDay, endOfDay, selectedCourt]);
+
+  useEffect(() => {
+    fetchBookedCourts();
+  }, [fetchBookedCourts]);
 
   const bookedSlots = useMemo(() => {
     const slotsMap = new Map<string, BookedSlotInfo[]>();
@@ -96,6 +100,7 @@ export const useBookedCourts = ({
           startTime: startTimeStr,
           endTime: endTimeStr,
           hasBookedCourt: booking.hasBookedCourt,
+          clubBooked: booking.clubBooked || false,
         });
       }
     });
@@ -139,6 +144,7 @@ export const useBookedCourts = ({
           startTime: bookingStartTimeStr,
           endTime: bookingEndTimeStr,
           hasBookedCourt: booking.hasBookedCourt,
+          clubBooked: booking.clubBooked || false,
         });
       }
     });
@@ -152,13 +158,22 @@ export const useBookedCourts = ({
     return slots.every(slot => !slot.hasBookedCourt);
   };
 
+  const hasExternallyBookedSlot = (time: string): boolean => {
+    const slots = bookedSlots.get(time);
+    if (!slots || slots.length === 0) return false;
+    return slots.some(slot => slot.clubBooked);
+  };
+
   return {
     bookedSlots,
     isSlotBooked,
     getBookedSlotInfo,
     getOverlappingBookings,
     areAllSlotsUnconfirmed,
+    hasExternallyBookedSlot,
     loading,
+    isLoadingExternalSlots,
+    refetch: fetchBookedCourts,
   };
 };
 

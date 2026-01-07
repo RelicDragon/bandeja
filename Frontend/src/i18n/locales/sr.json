@@ -766,6 +766,7 @@
     "clubTime": "време клуба",
     "showPastTimes": "Прикажи прошла времена",
     "timeSlot": "Изабрани слот",
+    "loadingExternalSlots": "Учитавање спољних слотова",
     "bookedWithoutCourt": "Без терена",
     "notConfirmed": "није потврђено",
     "multipleCourts": "Више терена",

@@ -769,6 +769,7 @@
     "clubTime": "club time",
     "showPastTimes": "Show past times",
     "timeSlot": "Selected slot",
+    "loadingExternalSlots": "Loading external slots",
     "bookedWithoutCourt": "Without court",
     "notConfirmed": "not confirmed",
     "multipleCourts": "Multiple Courts",

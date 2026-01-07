@@ -124,52 +124,58 @@ model City {
 }
 
 model Club {
-  id           String             @id @default(cuid())
-  name         String
-  description  String?
-  address      String
-  cityId       String
-  phone        String?
-  email        String?
-  website      String?
-  latitude     Float?
-  longitude    Float?
-  openingTime  String?
-  closingTime  String?
-  amenities    Json?
-  isActive     Boolean            @default(true)
-  isBar        Boolean            @default(false)
-  isForPlaying Boolean            @default(true)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  city         City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  courts       Court[]
-  games        Game[]
-  favoritedBy  UserFavoriteClub[]
-  leagues      League[]
+  id                   String             @id @default(cuid())
+  name                 String
+  description          String?
+  address              String
+  cityId               String
+  phone                String?
+  email                String?
+  website              String?
+  latitude             Float?
+  longitude            Float?
+  openingTime          String?
+  closingTime          String?
+  amenities            Json?
+  isActive             Boolean            @default(true)
+  isBar                Boolean            @default(false)
+  isForPlaying         Boolean            @default(true)
+  integrationScriptName String?
+  integrationScriptDateIndependent Boolean? @default(false)
+  integrationConfig    Json?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  city                 City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  courts               Court[]
+  games                Game[]
+  favoritedBy          UserFavoriteClub[]
+  leagues              League[]
 
   @@index([cityId])
   @@index([isActive])
+  @@index([integrationScriptName])
 }
 
 model Court {
-  id           String      @id @default(cuid())
-  name         String
-  clubId       String
-  courtType    String?
-  isIndoor     Boolean     @default(false)
-  surfaceType  String?
-  pricePerHour Float?
-  isActive     Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  club         Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  games        Game[]
-  gameCourts   GameCourt[]
-  matches      Match[]
+  id             String      @id @default(cuid())
+  name           String
+  clubId         String
+  courtType      String?
+  isIndoor       Boolean     @default(false)
+  surfaceType    String?
+  pricePerHour   Float?
+  externalCourtId String?
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  club           Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  games          Game[]
+  gameCourts     GameCourt[]
+  matches        Match[]
 
   @@index([clubId])
   @@index([isActive])
+  @@index([externalCourtId])
 }
 
 model Game {
@@ -257,6 +263,9 @@ model Game {
   @@index([affectsRating])
   @@index([resultsStatus])
   @@index([hasFixedTeams])
+  @@index([timeIsSet, clubId, startTime])
+  @@index([endTime])
+  @@index([timeIsSet, courtId])
 }
 
 model GameFaq {

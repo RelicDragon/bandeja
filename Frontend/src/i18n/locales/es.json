@@ -762,6 +762,7 @@
     "clubTime": "hora del club",
     "showPastTimes": "Mostrar horarios pasados",
     "timeSlot": "Slot seleccionado",
+    "loadingExternalSlots": "Cargando slots externos",
     "bookedWithoutCourt": "Sin pista",
     "notConfirmed": "no confirmado",
     "multipleCourts": "Múltiples Canchas",

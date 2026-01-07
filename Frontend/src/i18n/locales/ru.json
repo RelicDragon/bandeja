@@ -772,6 +772,7 @@
     "clubTime": "время клуба",
     "showPastTimes": "Показать прошедшее время",
     "timeSlot": "Выбранный слот",
+    "loadingExternalSlots": "Загрузка внешних слотов",
     "bookedWithoutCourt": "Без корта",
     "notConfirmed": "не подтверждено",
     "multipleCourts": "Несколько кортов",

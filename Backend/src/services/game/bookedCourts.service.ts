@@ -8,6 +8,12 @@ export interface BookedCourtSlot {
   endTime: string;
   hasBookedCourt: boolean;
   clubBooked: boolean;
+  isFree: boolean;
+}
+
+export interface BookedCourtsResult {
+  slots: BookedCourtSlot[];
+  isLoadingExternalSlots: boolean;
 }
 
 export class BookedCourtsService {
@@ -16,7 +22,7 @@ export class BookedCourtsService {
     startDate?: string,
     endDate?: string,
     courtId?: string
-  ): Promise<BookedCourtSlot[]> {
+  ): Promise<BookedCourtsResult> {
     if (!clubId) {
       throw new ApiError(400, 'Club ID is required');
     }
@@ -94,9 +100,72 @@ export class BookedCourtsService {
       endTime: game.endTime.toISOString(),
       hasBookedCourt: game.hasBookedCourt,
       clubBooked: false,
+      isFree: false,
     }));
 
-    return bookedSlots;
+    let externalSlots: BookedCourtSlot[] = [];
+    let isLoadingExternalSlots = false;
+
+    if (startDate && endDate) {
+      try {
+        const club = await prisma.club.findUnique({
+          where: { id: clubId },
+          select: {
+            id: true,
+            integrationScriptName: true,
+            integrationScriptDateIndependent: true,
+          },
+        });
+
+        if (club?.integrationScriptName) {
+          const { ClubIntegrationService } = await import(
+            '../clubIntegration/clubIntegration.service'
+          );
+
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          const duration = 1;
+
+          const { slots: externalRawSlots, isLoading } =
+            await ClubIntegrationService.getExternalSlots(clubId, start, end, duration);
+
+          isLoadingExternalSlots = isLoading;
+
+          const mappedSlots =
+            await ClubIntegrationService.mapExternalSlotsToCourts(
+              clubId,
+              externalRawSlots
+            );
+
+          externalSlots = mappedSlots
+            .filter(
+              (slot) =>
+                slot.internalCourtId !== null &&
+                slot.isBooked === true &&
+                (!courtId || slot.internalCourtId === courtId)
+            )
+            .map((slot) => ({
+              courtId: slot.internalCourtId,
+              courtName: slot.internalCourtName || slot.externalCourtName,
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+              hasBookedCourt: slot.isBooked,
+              clubBooked: true,
+              isFree: false,
+            }));
+        }
+      } catch (error) {
+        console.error(
+          `Error checking external slots for club ${clubId}:`,
+          error
+        );
+      }
+    }
+
+    return {
+      slots: [...bookedSlots, ...externalSlots],
+      isLoadingExternalSlots,
+    };
   }
 }
 

@@ -142,7 +142,7 @@ export const gamesApi = {
     endDate?: string;
     courtId?: string;
   }) => {
-    const response = await api.get<ApiResponse<BookedCourtSlot[]>>('/games/booked-courts', { params });
+    const response = await api.get<ApiResponse<BookedCourtSlot[]> & { isLoadingExternalSlots?: boolean }>('/games/booked-courts', { params });
     return response.data;
   }
 };

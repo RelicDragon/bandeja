@@ -110,6 +110,7 @@ export interface BookedCourtSlot {
   endTime: string;
   hasBookedCourt: boolean;
   clubBooked: boolean;
+  isFree?: boolean;
 }
 
 export interface GameParticipant {

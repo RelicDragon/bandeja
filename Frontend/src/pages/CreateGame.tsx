@@ -488,6 +488,38 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
           />
         </div>
 
+        <div ref={timeSectionRef}>
+          <div ref={durationSectionRef}>
+            <GameStartSection
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              duration={duration}
+              showPastTimes={showPastTimes}
+              showDatePicker={showDatePicker}
+              selectedClub={selectedClub}
+              selectedCourt={selectedCourt}
+              club={clubs.find(c => c.id === selectedClub)}
+              generateTimeOptions={generateTimeOptions}
+              generateTimeOptionsForDate={generateTimeOptionsForDate}
+              canAccommodateDuration={canAccommodateDuration}
+              getAdjustedStartTime={getAdjustedStartTime}
+              getTimeSlotsForDuration={getTimeSlotsForDuration}
+              isSlotHighlighted={isSlotHighlighted}
+              getDurationLabel={getDurationLabel}
+              onDateSelect={(date) => {
+                setSelectedDate(date);
+              }}
+              onCalendarClick={() => setShowDatePicker(true)}
+              onToggleShowPastTimes={setShowPastTimes}
+              onCloseDatePicker={() => setShowDatePicker(false)}
+              onTimeSelect={setSelectedTime}
+              onDurationChange={setDuration}
+              entityType={entityType}
+              dateInputRef={dateInputRef}
+            />
+          </div>
+        </div>
+
         {entityType !== 'BAR' && entityType !== 'TRAINING' && (
           <PlayerLevelSection
             playerLevelRange={playerLevelRange}
@@ -571,38 +603,6 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
           onPriceTypeChange={setPriceType}
           onPriceCurrencyChange={setPriceCurrency}
         />
-
-        <div ref={timeSectionRef}>
-          <div ref={durationSectionRef}>
-            <GameStartSection
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              duration={duration}
-              showPastTimes={showPastTimes}
-              showDatePicker={showDatePicker}
-              selectedClub={selectedClub}
-              selectedCourt={selectedCourt}
-              club={clubs.find(c => c.id === selectedClub)}
-              generateTimeOptions={generateTimeOptions}
-              generateTimeOptionsForDate={generateTimeOptionsForDate}
-              canAccommodateDuration={canAccommodateDuration}
-              getAdjustedStartTime={getAdjustedStartTime}
-              getTimeSlotsForDuration={getTimeSlotsForDuration}
-              isSlotHighlighted={isSlotHighlighted}
-              getDurationLabel={getDurationLabel}
-              onDateSelect={(date) => {
-                setSelectedDate(date);
-              }}
-              onCalendarClick={() => setShowDatePicker(true)}
-              onToggleShowPastTimes={setShowPastTimes}
-              onCloseDatePicker={() => setShowDatePicker(false)}
-              onTimeSelect={setSelectedTime}
-              onDurationChange={setDuration}
-              entityType={entityType}
-              dateInputRef={dateInputRef}
-            />
-          </div>
-        </div>
 
         <Button
           onClick={handleCreateGame}

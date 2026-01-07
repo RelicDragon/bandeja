@@ -225,11 +225,12 @@ export const getBookedCourts = asyncHandler(async (req: AuthRequest, res: Respon
     throw new ApiError(400, 'Club ID is required');
   }
 
-  const bookedCourts = await BookedCourtsService.getBookedCourts(clubId, startDate, endDate, courtId);
+  const result = await BookedCourtsService.getBookedCourts(clubId, startDate, endDate, courtId);
 
   res.json({
     success: true,
-    data: bookedCourts,
+    data: result.slots,
+    isLoadingExternalSlots: result.isLoadingExternalSlots,
   });
 });
 
