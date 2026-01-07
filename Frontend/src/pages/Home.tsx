@@ -80,7 +80,7 @@ export const HomeContent = () => {
     if (!loading && games.length === 0 && activeTab === 'my-games') {
       setActiveTab('search');
     }
-  }, [loading, games.length, activeTab]);
+  }, [loading, games.length, activeTab, setActiveTab]);
 
   const {
     pastGames,

@@ -3,7 +3,6 @@ import { ApiError } from '../../utils/ApiError';
 import {
   ClubIntegrationFunction,
   ClubIntegrationParams,
-  ClubIntegrationResult,
   ExternalCourtSlot,
 } from './types';
 import path from 'path';
@@ -150,8 +149,7 @@ export class ClubIntegrationService {
     }
 
     try {
-      delete require.cache[require.resolve(scriptPath)];
-      const scriptModule = require(scriptPath);
+      const scriptModule = await import(scriptPath);
 
       // Try to get the function - handle different export patterns
       // Scripts can export: module.exports = function, module.exports.default, module.exports.getSlots, etc.
