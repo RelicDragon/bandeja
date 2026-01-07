@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { gamesApi } from '@/api';
 import { Club, BookedCourtSlot } from '@/types';
-import { format } from 'date-fns';
 import { getClubTimezone, createDateFromClubTime } from './useGameTimeDuration';
 
 interface UseBookedCourtsProps {
@@ -27,12 +26,9 @@ export const useBookedCourts = ({
   const [bookedCourts, setBookedCourts] = useState<BookedCourtSlot[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const clubTimezone = getClubTimezone(club);
-
   const startOfDay = useMemo(() => {
     if (!clubId || !selectedDate) return null;
     
-    const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const startDate = createDateFromClubTime(selectedDate, '00:00', club);
     return startDate.toISOString();
   }, [selectedDate, club, clubId]);
@@ -40,7 +36,6 @@ export const useBookedCourts = ({
   const endOfDay = useMemo(() => {
     if (!clubId || !selectedDate) return null;
     
-    const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const endDate = createDateFromClubTime(selectedDate, '23:59', club);
     return endDate.toISOString();
   }, [selectedDate, club, clubId]);
