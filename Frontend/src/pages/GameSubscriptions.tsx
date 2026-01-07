@@ -179,7 +179,7 @@ export const GameSubscriptionsContent = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-        <div className="space-y-6 pt-0">
+        <div className="space-y-6 pt-16">
           {showForm && (
             <GameSubscriptionForm
               userCityId={user?.currentCityId}

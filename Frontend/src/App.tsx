@@ -1,16 +1,17 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { ProtectedRoute, AppLoadingScreen, NoInternetScreen } from './components';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { SelectCity } from './pages/SelectCity';
-import { CompleteProfile } from './pages/CompleteProfile';
-import { MainPage } from './pages/MainPage';
-import { CreateGameWrapper } from './pages/CreateGameWrapper';
-import { CreateLeague } from './pages/CreateLeague';
-// import { Rating } from './pages/Rating';
-import { GameChat } from './pages/GameChat';
-import { ChatList } from './pages/ChatList';
+
+const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
+const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })));
+const SelectCity = lazy(() => import('./pages/SelectCity').then(module => ({ default: module.SelectCity })));
+const CompleteProfile = lazy(() => import('./pages/CompleteProfile').then(module => ({ default: module.CompleteProfile })));
+const MainPage = lazy(() => import('./pages/MainPage').then(module => ({ default: module.MainPage })));
+const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(module => ({ default: module.CreateGameWrapper })));
+const CreateLeague = lazy(() => import('./pages/CreateLeague').then(module => ({ default: module.CreateLeague })));
+// const Rating = lazy(() => import('./pages/Rating').then(module => ({ default: module.Rating })));
+const GameChat = lazy(() => import('./pages/GameChat').then(module => ({ default: module.GameChat })));
+const ChatList = lazy(() => import('./pages/ChatList').then(module => ({ default: module.ChatList })));
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
 import { isProfileComplete } from './utils/userValidation';
@@ -195,17 +196,39 @@ function AppContent() {
           <Routes>
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+          element={
+            isAuthenticated ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <Login />
+              </Suspense>
+            )
+          }
         />
         <Route
           path="/register"
-          element={isAuthenticated ? <Navigate to="/" replace /> : <Register />}
+          element={
+            isAuthenticated ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <Register />
+              </Suspense>
+            )
+          }
         />
         <Route
           path="/select-city"
           element={
             <ProtectedRoute>
-              {user?.currentCity ? <Navigate to="/" replace /> : <SelectCity />}
+              {user?.currentCity ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <SelectCity />
+                </Suspense>
+              )}
             </ProtectedRoute>
           }
         />
@@ -213,7 +236,13 @@ function AppContent() {
           path="/complete-profile"
           element={
             <ProtectedRoute>
-              {isProfileComplete(user) ? <Navigate to="/" replace /> : <CompleteProfile />}
+              {isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <CompleteProfile />
+                </Suspense>
+              )}
             </ProtectedRoute>
           }
         />
@@ -226,7 +255,9 @@ function AppContent() {
               ) : !isProfileComplete(user) ? (
                 <Navigate to="/complete-profile" replace />
               ) : (
-                <MainPage />
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
               )}
             </ProtectedRoute>
           }
@@ -238,7 +269,9 @@ function AppContent() {
               {!isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <MainPage />
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
               )}
             </ProtectedRoute>
           }
@@ -250,7 +283,9 @@ function AppContent() {
               {!isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <MainPage />
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
               )}
             </ProtectedRoute>
           }
@@ -262,7 +297,9 @@ function AppContent() {
               {!isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <CreateGameWrapper />
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <CreateGameWrapper />
+                </Suspense>
               )}
             </ProtectedRoute>
           }
@@ -274,7 +311,9 @@ function AppContent() {
               {!isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <CreateLeague />
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <CreateLeague />
+                </Suspense>
               )}
             </ProtectedRoute>
           }
@@ -298,7 +337,9 @@ function AppContent() {
               {!isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <GameChat />
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <GameChat />
+                </Suspense>
               )}
             </ProtectedRoute>
           }
@@ -310,7 +351,9 @@ function AppContent() {
               {!isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <ChatList />
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <ChatList />
+                </Suspense>
               )}
             </ProtectedRoute>
           }
@@ -322,7 +365,9 @@ function AppContent() {
               {!isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <MainPage />
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
               )}
             </ProtectedRoute>
           }
@@ -334,7 +379,9 @@ function AppContent() {
               {!isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <MainPage />
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
               )}
             </ProtectedRoute>
           }
@@ -346,7 +393,9 @@ function AppContent() {
               {!isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <GameChat />
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <GameChat />
+                </Suspense>
               )}
             </ProtectedRoute>
           }
@@ -358,7 +407,9 @@ function AppContent() {
               {!isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <GameChat />
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <GameChat />
+                </Suspense>
               )}
             </ProtectedRoute>
           }

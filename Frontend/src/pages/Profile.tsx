@@ -368,7 +368,7 @@ export const ProfileContent = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-      <div className="space-y-6" style={{ paddingTop: `calc(1rem + env(safe-area-inset-top))` }}>
+      <div className="mt-12 space-y-6" style={{ paddingTop: `calc(1rem + env(safe-area-inset-top))` }}>
         <div className="mb-4">
           <div className="flex gap-2 justify-center">
             <button

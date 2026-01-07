@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -45,52 +45,28 @@ export const MainPage = () => {
     }
   }, [location.pathname, setCurrentPage, setIsAnimating]);
 
+  const renderContent = useMemo(() => {
+    switch (currentPage) {
+      case 'home':
+        return <HomeContent />;
+      case 'profile':
+        return <ProfileContent />;
+      case 'gameDetails':
+        return <GameDetailsContent />;
+      case 'bugs':
+        return <BugsContent />;
+      case 'gameSubscriptions':
+        return <GameSubscriptionsContent />;
+      default:
+        return <HomeContent />;
+    }
+  }, [currentPage]);
+
   return (
     <MainLayout>
       <div className="relative px-2 overflow-hidden">
-        {/* Home Page */}
-        <div className={`transition-all duration-300 ease-in-out ${
-          currentPage === 'home' 
-            ? 'opacity-100 transform translate-x-0' 
-            : 'opacity-0 transform -translate-x-full absolute inset-0'
-        }`}>
-          <HomeContent />
-        </div>
-
-        {/* Profile Page */}
-        <div className={`transition-all duration-300 ease-in-out ${
-          currentPage === 'profile' 
-            ? 'opacity-100 transform translate-x-0' 
-            : 'opacity-0 transform translate-x-full absolute inset-0'
-        }`}>
-          <ProfileContent />
-        </div>
-
-        {/* Game Details Page */}
-        <div className={`transition-all duration-300 ease-in-out ${
-          currentPage === 'gameDetails'
-            ? 'opacity-100 transform translate-x-0'
-            : 'opacity-0 transform translate-x-full absolute inset-0'
-        }`}>
-          <GameDetailsContent />
-        </div>
-
-        {/* Bugs Page */}
-        <div className={`transition-all duration-300 ease-in-out ${
-          currentPage === 'bugs'
-            ? 'opacity-100 transform translate-x-0'
-            : 'opacity-0 transform translate-x-full absolute inset-0'
-        }`}>
-          <BugsContent />
-        </div>
-
-        {/* Game Subscriptions Page */}
-        <div className={`transition-all duration-300 ease-in-out ${
-          currentPage === 'gameSubscriptions'
-            ? 'opacity-100 transform translate-x-0'
-            : 'opacity-0 transform translate-x-full absolute inset-0'
-        }`}>
-          <GameSubscriptionsContent />
+        <div className="transition-all duration-300 ease-in-out opacity-100 transform translate-x-0">
+          {renderContent}
         </div>
       </div>
     </MainLayout>
