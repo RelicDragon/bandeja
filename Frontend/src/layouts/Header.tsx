@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
-import { Bell, MessageCircle, User, ArrowLeft, Bug, ContactRound } from 'lucide-react';
+import { Bell, MessageCircle, User, ArrowLeft, Bug, BookUser } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -173,7 +173,22 @@ export const Header = ({
     setTimeout(() => setBugsButtonSlidingUp(false), 1000);
   };
 
-  const handleNotificationsClick = () => {
+  const handleNotificationsClick = async () => {
+    if (isChatFilterActive) {
+      if (onChatFilterToggle) {
+        onChatFilterToggle();
+      } else {
+        setShowChatFilter(false);
+      }
+    }
+    if (showContacts) {
+      setShowContacts(false);
+      try {
+        await setContactsVisibility(false);
+      } catch (error) {
+        console.error('Failed to save contacts visibility:', error);
+      }
+    }
     setIsAnimating(true);
     setBounceNotifications(true);
     setCurrentPage('home');
@@ -196,7 +211,7 @@ export const Header = ({
         }}
       >
         <div className="h-16 px-4 flex" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             {currentPage === 'home' ? (
               <button
                 onClick={handleProfileClick}
@@ -217,7 +232,7 @@ export const Header = ({
 
             <button
               onClick={handleContactsToggle}
-              className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 active:scale-110 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none ${
+              className={`rounded-lg transition-all duration-200 hover:scale-105 active:scale-110 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none ${
                 showContacts
                   ? 'bg-primary-500 dark:bg-primary-600 shadow-md active:bg-primary-600 dark:active:bg-primary-700'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'
@@ -231,7 +246,7 @@ export const Header = ({
                 minHeight: '2.5rem'
               }}
             >
-              <ContactRound 
+              <BookUser 
                 size={20} 
                 style={{ 
                   display: 'block',
@@ -243,38 +258,40 @@ export const Header = ({
               />
             </button>
 
-            {pendingInvites > 0 && (
-              <button
-                onClick={handleNotificationsClick}
-                className={`relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-110 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current ${
-                  isNewInviteAnimating ? 'animate-pulse animate-bounce' : ''
-                }`}
-              >
-                <Bell size={20} className="text-gray-600 dark:text-gray-400" />
-                <span className={`absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center transition-all duration-300 ${
-                  isNewInviteAnimating ? 'animate-ping scale-110' : ''
-                }`}>
-                  {pendingInvites}
-                </span>
-              </button>
-            )}
 
             {(unreadMessages > 0 || isChatFilterActive) && (
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (currentPage !== 'home') {
                     setIsAnimating(true);
                     setCurrentPage('home');
                     navigate('/', { replace: true });
-                    setTimeout(() => {
+                    setTimeout(async () => {
                       setIsAnimating(false);
                       setShowChatFilter(true);
+                      if (unreadMessages > 0 && !showContacts) {
+                        setShowContacts(true);
+                        try {
+                          await setContactsVisibility(true);
+                        } catch (error) {
+                          console.error('Failed to save contacts visibility:', error);
+                        }
+                      }
                     }, 300);
                   } else {
+                    const willBeActive = !isChatFilterActive;
                     if (onChatFilterToggle) {
                       onChatFilterToggle();
                     } else {
                       setShowChatFilter(!globalShowChatFilter);
+                    }
+                    if (willBeActive && unreadMessages > 0 && !showContacts) {
+                      setShowContacts(true);
+                      try {
+                        await setContactsVisibility(true);
+                      } catch (error) {
+                        console.error('Failed to save contacts visibility:', error);
+                      }
                     }
                   }
                 }}
@@ -294,6 +311,22 @@ export const Header = ({
                     {unreadMessages > 99 ? '99+' : unreadMessages}
                   </span>
                 )}
+              </button>
+            )}
+            
+            {pendingInvites > 0 && (
+              <button
+                onClick={handleNotificationsClick}
+                className={`relative p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-110 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current ${
+                  isNewInviteAnimating ? 'animate-pulse animate-bounce' : ''
+                }`}
+              >
+                <Bell size={20} className="text-gray-600 dark:text-gray-400" />
+                <span className={`absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center transition-all duration-300 ${
+                  isNewInviteAnimating ? 'animate-ping scale-110' : ''
+                }`}>
+                  {pendingInvites}
+                </span>
               </button>
             )}
 

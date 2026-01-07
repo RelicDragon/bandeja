@@ -302,7 +302,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto pt-16">
       <p className="text-xs text-gray-500 mb-6">{t('bug.description')}</p>
 
       <div className="mb-4">

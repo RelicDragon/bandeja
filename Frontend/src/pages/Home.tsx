@@ -302,26 +302,8 @@ export const HomeContent = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-      <div
-        className={`transition-all duration-500 ease-in-out overflow-hidden ${
-          showChatFilter && unreadMessages > 0
-            ? 'max-h-[100px] opacity-100 translate-y-0 mb-4'
-            : 'max-h-0 opacity-0 -translate-y-4'
-        }`}
-      >
-        <div className="flex items-center justify-center">
-          <Button
-            onClick={handleMarkAllAsRead}
-            variant="primary"
-            size="sm"
-            disabled={isMarkingAllAsRead || unreadMessages === 0}
-            className="animate-in slide-in-from-top-4 fade-in"
-          >
-            {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
-          </Button>
-        </div>
+      <div className={showChatFilter ? 'pt-16' : ''}>
       </div>
-
       <div
         className={`transition-all duration-500 ease-in-out overflow-hidden ${
           !loading && !showChatFilter
@@ -417,6 +399,26 @@ export const HomeContent = () => {
             </div>
           </>
         )}
+      </div>
+
+      <div
+        className={`transition-all duration-500 ease-in-out overflow-hidden ${
+          showChatFilter && unreadMessages > 0
+            ? 'max-h-[100px] opacity-100 translate-y-0 mb-4'
+            : 'max-h-0 opacity-0 -translate-y-4'
+        }`}
+      >
+        <div className="flex items-center justify-center pt-4">
+          <Button
+            onClick={handleMarkAllAsRead}
+            variant="primary"
+            size="sm"
+            disabled={isMarkingAllAsRead || unreadMessages === 0}
+            className="animate-in slide-in-from-top-4 fade-in"
+          >
+            {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
+          </Button>
+        </div>
       </div>
 
       <div className="flex justify-center mt-4">
