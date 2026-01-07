@@ -9,7 +9,7 @@ interface UseGameTimeDurationProps {
   disableAutoAdjust?: boolean;
 }
 
-const getClubTimezone = (club: Club | undefined): string => {
+export const getClubTimezone = (club: Club | undefined): string => {
   return club?.city?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
 };
 

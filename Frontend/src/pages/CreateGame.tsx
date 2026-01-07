@@ -581,6 +581,7 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
               showPastTimes={showPastTimes}
               showDatePicker={showDatePicker}
               selectedClub={selectedClub}
+              selectedCourt={selectedCourt}
               club={clubs.find(c => c.id === selectedClub)}
               generateTimeOptions={generateTimeOptions}
               generateTimeOptionsForDate={generateTimeOptionsForDate}

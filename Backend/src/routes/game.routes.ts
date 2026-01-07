@@ -15,6 +15,8 @@ router.get('/past-games', authenticate, gameController.getPastGames);
 
 router.get('/available', authenticate, gameController.getAvailableGames);
 
+router.get('/booked-courts', authenticate, gameController.getBookedCourts);
+
 router.get('/:id', optionalAuth, gameController.getGameById);
 
 router.post(

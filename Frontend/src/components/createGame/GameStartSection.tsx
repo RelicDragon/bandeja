@@ -6,6 +6,7 @@ import { DateSelector, ToggleSwitch } from '@/components';
 import { CalendarComponent } from '@/components/Calendar';
 import { EntityType, Club } from '@/types';
 import { getTimezoneOffsetString, isTimezoneDifferent } from '@/hooks/useGameTimeDuration';
+import { useBookedCourts } from '@/hooks/useBookedCourts';
 
 interface GameStartSectionProps {
   selectedDate: Date;
@@ -14,6 +15,7 @@ interface GameStartSectionProps {
   showPastTimes: boolean;
   showDatePicker: boolean;
   selectedClub: string;
+  selectedCourt?: string | null;
   club?: Club;
   generateTimeOptions: () => string[];
   generateTimeOptionsForDate: (date: Date) => string[];
@@ -40,6 +42,7 @@ export const GameStartSection = ({
   showPastTimes,
   showDatePicker,
   selectedClub,
+  selectedCourt,
   club,
   generateTimeOptions,
   generateTimeOptionsForDate,
@@ -59,8 +62,21 @@ export const GameStartSection = ({
 }: GameStartSectionProps) => {
   const { t } = useTranslation();
   
+  const { isSlotBooked, getBookedSlotInfo, getOverlappingBookings, areAllSlotsUnconfirmed } = useBookedCourts({
+    clubId: selectedClub || null,
+    selectedDate,
+    selectedCourt: selectedCourt || null,
+    club,
+  });
+  
   const showTimezone = club && isTimezoneDifferent(club);
   const timezoneString = showTimezone ? getTimezoneOffsetString(club) : '';
+  
+  const bookedSlotInfo = selectedTime 
+    ? (entityType !== 'BAR' && duration 
+        ? getOverlappingBookings(selectedTime, duration)
+        : getBookedSlotInfo(selectedTime))
+    : null;
 
   // Check if selected date is within the fixed date range (same logic as DateSelector)
   const startDate = !showPastTimes && generateTimeOptionsForDate(new Date()).length === 0 ? addDays(new Date(), 1) : new Date();
@@ -161,6 +177,8 @@ export const GameStartSection = ({
                   const isSelected = selectedTime === time;
                   const isHighlighted = entityType !== 'BAR' ? isSlotHighlighted(time) : false;
                   const canAccommodate = entityType !== 'BAR' ? canAccommodateDuration(time, duration) : true;
+                  const isBooked = isSlotBooked(time);
+                  const allUnconfirmed = isBooked && areAllSlotsUnconfirmed(time);
                   
                   const handleTimeClick = () => {
                     if (entityType === 'BAR') {
@@ -184,6 +202,10 @@ export const GameStartSection = ({
                           ? 'bg-primary-500 text-white'
                           : isHighlighted
                           ? 'bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200 border border-primary-400 dark:border-primary-600'
+                          : isBooked
+                          ? allUnconfirmed
+                            ? 'bg-yellow-50 dark:bg-yellow-900/10 text-yellow-600 dark:text-yellow-500 border border-yellow-200 dark:border-yellow-900/30'
+                            : 'bg-yellow-200 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-400 dark:border-yellow-700'
                           : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                     >
@@ -192,6 +214,34 @@ export const GameStartSection = ({
                   );
                 })}
               </div>
+              {bookedSlotInfo && bookedSlotInfo.length > 0 && (
+                <div className="mt-2 px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <p className="text-xs font-medium text-yellow-900 dark:text-yellow-200 mb-1">
+                    {(() => {
+                      if (entityType !== 'BAR' && duration && selectedTime) {
+                        const [startHour, startMinute] = selectedTime.split(':').map(Number);
+                        const totalMinutes = duration * 60;
+                        const endMinutes = startMinute + totalMinutes;
+                        const endHour = startHour + Math.floor(endMinutes / 60);
+                        const finalMinute = endMinutes % 60;
+                        const endTime = `${endHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
+                        return `${t('createGame.timeSlot')} • ${selectedTime} - ${endTime}:`;
+                      }
+                      return `${t('createGame.timeSlot')} • ${selectedTime}:`;
+                    })()}
+                  </p>
+                  <div className="space-y-1">
+                    {bookedSlotInfo.map((info, idx) => (
+                      <p key={idx} className="text-xs text-yellow-800 dark:text-yellow-300">
+                        {info.courtName 
+                          ? `${info.courtName} • ${info.startTime} - ${info.endTime}${!info.hasBookedCourt ? ` (${t('createGame.notConfirmed')})` : ''}`
+                          : `${t('createGame.bookedWithoutCourt')} • ${info.startTime} - ${info.endTime}${!info.hasBookedCourt ? ` (${t('createGame.notConfirmed')})` : ''}`
+                        }
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}

@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse, Game, GameTeam, GameTeamData } from '@/types';
+import { ApiResponse, Game, GameTeam, GameTeamData, BookedCourtSlot } from '@/types';
 
 export const gamesApi = {
   getAll: async (params?: {
@@ -133,6 +133,16 @@ export const gamesApi = {
 
   declineJoinQueue: async (id: string, userId: string) => {
     const response = await api.post<ApiResponse<void>>(`/games/${id}/decline-join-queue`, { userId });
+    return response.data;
+  },
+
+  getBookedCourts: async (params: {
+    clubId: string;
+    startDate?: string;
+    endDate?: string;
+    courtId?: string;
+  }) => {
+    const response = await api.get<ApiResponse<BookedCourtSlot[]>>('/games/booked-courts', { params });
     return response.data;
   }
 };

@@ -103,6 +103,15 @@ export interface Court {
   club?: Club;
 }
 
+export interface BookedCourtSlot {
+  courtId: string | null;
+  courtName: string | null;
+  startTime: string;
+  endTime: string;
+  hasBookedCourt: boolean;
+  clubBooked: boolean;
+}
+
 export interface GameParticipant {
   userId: string;
   role: ParticipantRole;

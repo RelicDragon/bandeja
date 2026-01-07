@@ -7,6 +7,7 @@ import { ParticipantService } from '../services/game/participant.service';
 import { JoinQueueService } from '../services/game/joinQueue.service';
 import { AdminService } from '../services/game/admin.service';
 import { OwnershipService } from '../services/game/ownership.service';
+import { BookedCourtsService } from '../services/game/bookedCourts.service';
 
 export const createGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const game = await GameService.createGame(req.body, req.userId!);
@@ -211,6 +212,24 @@ export const declineJoinQueue = asyncHandler(async (req: AuthRequest, res: Respo
   res.json({
     success: true,
     message,
+  });
+});
+
+export const getBookedCourts = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const clubId = req.query.clubId as string;
+  const startDate = req.query.startDate as string | undefined;
+  const endDate = req.query.endDate as string | undefined;
+  const courtId = req.query.courtId as string | undefined;
+
+  if (!clubId) {
+    throw new ApiError(400, 'Club ID is required');
+  }
+
+  const bookedCourts = await BookedCourtsService.getBookedCourts(clubId, startDate, endDate, courtId);
+
+  res.json({
+    success: true,
+    data: bookedCourts,
   });
 });
 
