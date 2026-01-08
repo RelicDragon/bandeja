@@ -13,7 +13,6 @@ import toast from 'react-hot-toast';
 interface TrainingResultsSectionProps {
   game: Game;
   user: User | null;
-  onGameUpdate: (game: Game) => void;
   onUpdateParticipantLevel: (gameId: string, userId: string, level: number, reliability: number) => Promise<void>;
   onUndoTraining: (gameId: string) => Promise<void>;
 }
@@ -21,7 +20,6 @@ interface TrainingResultsSectionProps {
 export const TrainingResultsSection = ({
   game,
   user,
-  onGameUpdate,
   onUpdateParticipantLevel,
   onUndoTraining,
 }: TrainingResultsSectionProps) => {
