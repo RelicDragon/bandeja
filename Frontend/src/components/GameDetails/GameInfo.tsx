@@ -31,7 +31,7 @@ import {
   Lock,
   Swords,
   Trophy,
-  GraduationCap,
+  Dumbbell,
   ChevronRight,
   Banknote,
   CalendarPlus,
@@ -227,7 +227,7 @@ export const GameInfo = ({
       case 'LEAGUE':
         return <Trophy size={40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
       case 'TRAINING':
-        return <GraduationCap size={48} className="text-green-500 dark:text-green-400 opacity-15 dark:opacity-15" />;
+        return <Dumbbell size={48} className="text-green-500 dark:text-green-400 opacity-15 dark:opacity-15" />;
       case 'BAR':
         return <Beer size={40} className="text-yellow-500 dark:text-yellow-400 opacity-15 dark:opacity-15" />;
       default:
@@ -389,7 +389,7 @@ export const GameInfo = ({
           <span className={`${tagPadding} ${tagText} font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1`}>
             {game.entityType === 'TOURNAMENT' && <Swords size={iconSize} />}
             {(game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && <Trophy size={iconSize} />}
-            {game.entityType === 'TRAINING' && <GraduationCap size={iconSize} />}
+            {game.entityType === 'TRAINING' && <Dumbbell size={iconSize} />}
             {game.entityType === 'BAR' && <Beer size={iconSize} />}
             {t(`games.entityTypes.${game.entityType}`)}
           </span>

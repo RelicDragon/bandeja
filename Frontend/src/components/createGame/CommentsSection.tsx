@@ -18,6 +18,7 @@ export const CommentsSection = ({ comments, onCommentsChange, entityType }: Comm
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">
           {entityType === 'TOURNAMENT' ? t('createGame.commentsTournament') :
            entityType === 'LEAGUE' ? t('createGame.commentsLeague') :
+           entityType === 'TRAINING' ? t('createGame.commentsTraining') :
            t('createGame.comments')}
         </h2>
       </div>
@@ -26,6 +27,7 @@ export const CommentsSection = ({ comments, onCommentsChange, entityType }: Comm
         onChange={(e) => onCommentsChange(e.target.value)}
         placeholder={entityType === 'TOURNAMENT' ? t('createGame.commentsPlaceholderTournament') :
                      entityType === 'LEAGUE' ? t('createGame.commentsPlaceholderLeague') :
+                     entityType === 'TRAINING' ? t('createGame.commentsPlaceholderTraining') :
                      t('createGame.commentsPlaceholder')}
         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
         rows={3}

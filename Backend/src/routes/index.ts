@@ -26,6 +26,7 @@ import pushRoutes from './push.routes';
 import blockedUsersRoutes from './blockedUsers.routes';
 import faqRoutes from './faq.routes';
 import gameSubscriptionRoutes from './gameSubscription.routes';
+import trainingRoutes from './training.routes';
 
 const router = Router();
 
@@ -56,6 +57,7 @@ router.use('/push', pushRoutes);
 router.use('/blocked-users', blockedUsersRoutes);
 router.use('/faqs', faqRoutes);
 router.use('/game-subscriptions', gameSubscriptionRoutes);
+router.use('/training', trainingRoutes);
 
 export default router;
 

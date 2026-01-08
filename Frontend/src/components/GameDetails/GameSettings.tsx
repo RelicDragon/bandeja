@@ -77,14 +77,31 @@ export const GameSettings = ({
   const { t } = useTranslation();
   const { showNotes, toggleShowNotes } = useShowSettingsNotes();
   const isLeagueSeason = game?.entityType === 'LEAGUE_SEASON';
+  const isTraining = game?.entityType === 'TRAINING';
   const settingsTitle = t(isLeagueSeason ? 'createGame.settingsLeague' : 'createGame.settings');
   const avatarLabel = t(isLeagueSeason ? 'createLeague.seasonAvatar' : 'gameDetails.gameAvatar');
   const gameTypeLabel = t(isLeagueSeason ? 'createGame.gameTypeLeague' : 'createGame.gameType');
   const gameTypeNote = t(isLeagueSeason ? 'createGame.gameTypeNoteLeague' : 'createGame.gameTypeNote');
-  const nameLabel = t(isLeagueSeason ? 'createGame.gameNameLeague' : 'createGame.gameName');
-  const namePlaceholder = t(isLeagueSeason ? 'createGame.gameNamePlaceholderLeague' : 'createGame.gameNamePlaceholder');
-  const commentsLabel = t(isLeagueSeason ? 'createGame.commentsLeague' : 'createGame.comments');
-  const commentsPlaceholder = t(isLeagueSeason ? 'createGame.commentsPlaceholderLeague' : 'createGame.commentsPlaceholder');
+  const nameLabel = t(
+    isLeagueSeason ? 'createGame.gameNameLeague' :
+    isTraining ? 'createGame.gameNameTraining' :
+    'createGame.gameName'
+  );
+  const namePlaceholder = t(
+    isLeagueSeason ? 'createGame.gameNamePlaceholderLeague' :
+    isTraining ? 'createGame.gameNamePlaceholderTraining' :
+    'createGame.gameNamePlaceholder'
+  );
+  const commentsLabel = t(
+    isLeagueSeason ? 'createGame.commentsLeague' :
+    isTraining ? 'createGame.commentsTraining' :
+    'createGame.comments'
+  );
+  const commentsPlaceholder = t(
+    isLeagueSeason ? 'createGame.commentsPlaceholderLeague' :
+    isTraining ? 'createGame.commentsPlaceholderTraining' :
+    'createGame.commentsPlaceholder'
+  );
   const pointValues = [0, 1, 2, 3];
   const resolvedPoints = {
     win: isEditMode ? editFormData.pointsPerWin : (game?.pointsPerWin ?? 0),
@@ -219,11 +236,12 @@ export const GameSettings = ({
 
         {/* Boolean Settings */}
         <div className="space-y-2">
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {gameTypeLabel}
-              </span>
+          {!isTraining && (
+            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                  {gameTypeLabel}
+                </span>
               <div className="flex-shrink-0 w-40">
                 <Select
                   options={
@@ -255,6 +273,7 @@ export const GameSettings = ({
               </p>
             )}
           </div>
+          )}
           {isLeagueSeason && (
             <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 block mb-2">
@@ -290,7 +309,7 @@ export const GameSettings = ({
               </div>
             </div>
           )}
-          {game?.maxParticipants !== 2 && (
+          {game?.maxParticipants !== 2 && !isTraining && (
             <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
@@ -316,65 +335,63 @@ export const GameSettings = ({
               )}
             </div>
           )}
-          {!isLeagueSeason && (
-            <>
-              <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                    {t('createGame.ratingGame.title')}
-                  </span>
-                  <div className="flex-shrink-0">
-                    <ToggleSwitch 
-                      checked={isEditMode ? editFormData.affectsRating : game?.affectsRating || false} 
-                      onChange={(checked) => onFormDataChange({affectsRating: checked})}
-                      disabled={!isEditMode}
-                    />
-                  </div>
+          {!isLeagueSeason && !isTraining && (
+            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                  {t('createGame.ratingGame.title')}
+                </span>
+                <div className="flex-shrink-0">
+                  <ToggleSwitch 
+                    checked={isEditMode ? editFormData.affectsRating : game?.affectsRating || false} 
+                    onChange={(checked) => onFormDataChange({affectsRating: checked})}
+                    disabled={!isEditMode}
+                  />
                 </div>
-                {showNotes && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {(() => {
-                      const affectsRating = isEditMode ? editFormData.affectsRating : (game?.affectsRating || false);
-                      return affectsRating 
-                        ? t('createGame.ratingGame.note.true')
-                        : t('createGame.ratingGame.note.false');
-                    })()}
-                  </p>
-                )}
               </div>
-              
-              <Divider />
-              
-              <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                    {t('createGame.publicGame.title')}
-                  </span>
-                  <div className="flex-shrink-0">
-                    <ToggleSwitch 
-                      checked={isEditMode ? editFormData.isPublic : game?.isPublic || false} 
-                      onChange={(checked) => onFormDataChange({isPublic: checked})}
-                      disabled={!isEditMode}
-                    />
-                  </div>
-                </div>
-                {showNotes && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {(() => {
-                      const isPublic = isEditMode ? editFormData.isPublic : (game?.isPublic || false);
-                      return isPublic 
-                        ? t('createGame.publicGame.note.true')
-                        : t('createGame.publicGame.note.false');
-                    })()}
-                  </p>
-                )}
-              </div>
-            </>
+              {showNotes && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {(() => {
+                    const affectsRating = isEditMode ? editFormData.affectsRating : (game?.affectsRating || false);
+                    return affectsRating 
+                      ? t('createGame.ratingGame.note.true')
+                      : t('createGame.ratingGame.note.false');
+                  })()}
+                </p>
+              )}
+            </div>
           )}
+          
+          {!isLeagueSeason && !isTraining && <Divider />}
+          
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.anyoneCanInvite.title')}
+                {isTraining ? t('createGame.publicGame.titleTraining') : t('createGame.publicGame.title')}
+              </span>
+              <div className="flex-shrink-0">
+                <ToggleSwitch 
+                  checked={isEditMode ? editFormData.isPublic : game?.isPublic || false} 
+                  onChange={(checked) => onFormDataChange({isPublic: checked})}
+                  disabled={!isEditMode}
+                />
+              </div>
+            </div>
+            {showNotes && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {(() => {
+                  const isPublic = isEditMode ? editFormData.isPublic : (game?.isPublic || false);
+                  return isPublic 
+                    ? (isTraining ? t('createGame.publicGame.noteTraining.true') : t('createGame.publicGame.note.true'))
+                    : (isTraining ? t('createGame.publicGame.noteTraining.false') : t('createGame.publicGame.note.false'));
+                })()}
+              </p>
+            )}
+          </div>
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {isTraining ? t('createGame.anyoneCanInvite.titleTraining') : t('createGame.anyoneCanInvite.title')}
               </span>
               <div className="flex-shrink-0">
                 <ToggleSwitch 
@@ -389,13 +406,13 @@ export const GameSettings = ({
                 {(() => {
                   const anyoneCanInvite = isEditMode ? editFormData.anyoneCanInvite : (game?.anyoneCanInvite || false);
                   return anyoneCanInvite 
-                    ? t('createGame.anyoneCanInvite.note.true')
-                    : t('createGame.anyoneCanInvite.note.false');
+                    ? (isTraining ? t('createGame.anyoneCanInvite.noteTraining.true') : t('createGame.anyoneCanInvite.note.true'))
+                    : (isTraining ? t('createGame.anyoneCanInvite.noteTraining.false') : t('createGame.anyoneCanInvite.note.false'));
                 })()}
               </p>
             )}
           </div>
-          {!isLeagueSeason && game?.entityType !== 'TOURNAMENT' && (
+          {!isLeagueSeason && game?.entityType !== 'TOURNAMENT' && !isTraining && (
             <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
@@ -424,7 +441,7 @@ export const GameSettings = ({
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.allowDirectJoin.title')}
+                {isTraining ? t('createGame.allowDirectJoin.titleTraining') : t('createGame.allowDirectJoin.title')}
               </span>
               <div className="flex-shrink-0">
                 <ToggleSwitch 
@@ -439,8 +456,8 @@ export const GameSettings = ({
                 {(() => {
                   const allowDirectJoin = isEditMode ? editFormData.allowDirectJoin : (game?.allowDirectJoin ?? false);
                   return allowDirectJoin 
-                    ? t('createGame.allowDirectJoin.note.true')
-                    : t('createGame.allowDirectJoin.note.false');
+                    ? (isTraining ? t('createGame.allowDirectJoin.noteTraining.true') : t('createGame.allowDirectJoin.note.true'))
+                    : (isTraining ? t('createGame.allowDirectJoin.noteTraining.false') : t('createGame.allowDirectJoin.note.false'));
                 })()}
               </p>
             )}
@@ -449,7 +466,7 @@ export const GameSettings = ({
             <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                  {t('createGame.afterGameGoToBar.title')}
+                  {isTraining ? t('createGame.afterGameGoToBar.titleTraining') : t('createGame.afterGameGoToBar.title')}
                 </span>
                 <div className="flex-shrink-0">
                   <ToggleSwitch
@@ -464,8 +481,8 @@ export const GameSettings = ({
                   {(() => {
                     const afterGameGoToBar = isEditMode ? editFormData.afterGameGoToBar : (game?.afterGameGoToBar || false);
                     return afterGameGoToBar 
-                      ? t('createGame.afterGameGoToBar.note.true')
-                      : t('createGame.afterGameGoToBar.note.false');
+                      ? (isTraining ? t('createGame.afterGameGoToBar.noteTraining.true') : t('createGame.afterGameGoToBar.note.true'))
+                      : (isTraining ? t('createGame.afterGameGoToBar.noteTraining.false') : t('createGame.afterGameGoToBar.note.false'));
                   })()}
                 </p>
               )}

@@ -75,7 +75,7 @@ export const GameSettingsSection = ({
         </button>
       </div>
       <div className="space-y-2">
-        {entityType !== 'BAR' && (
+        {entityType !== 'BAR' && entityType !== 'TRAINING' && (
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
@@ -146,7 +146,7 @@ export const GameSettingsSection = ({
             )}
           </div>
         )}
-        {maxParticipants !== 2 && entityType !== 'BAR' && (
+        {maxParticipants !== 2 && entityType !== 'BAR' && entityType !== 'TRAINING' && (
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
@@ -169,7 +169,7 @@ export const GameSettingsSection = ({
             )}
           </div>
         )}
-        {entityType !== 'BAR' && (
+        {entityType !== 'BAR' && entityType !== 'TRAINING' && (
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
@@ -189,12 +189,12 @@ export const GameSettingsSection = ({
           </div>
         )}
         
-        {entityType !== 'BAR' && <Divider />}
+        {entityType !== 'BAR' && entityType !== 'TRAINING' && <Divider />}
         
         <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.publicGame.title')}
+              {entityType === 'TRAINING' ? t('createGame.publicGame.titleTraining') : t('createGame.publicGame.title')}
             </span>
             <div className="flex-shrink-0">
               <ToggleSwitch checked={isPublic} onChange={onPublicChange} />
@@ -203,15 +203,15 @@ export const GameSettingsSection = ({
           {showNotes && (
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {isPublic 
-                ? t('createGame.publicGame.note.true')
-                : t('createGame.publicGame.note.false')}
+                ? (entityType === 'TRAINING' ? t('createGame.publicGame.noteTraining.true') : t('createGame.publicGame.note.true'))
+                : (entityType === 'TRAINING' ? t('createGame.publicGame.noteTraining.false') : t('createGame.publicGame.note.false'))}
             </p>
           )}
         </div>
         <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.anyoneCanInvite.title')}
+              {entityType === 'TRAINING' ? t('createGame.anyoneCanInvite.titleTraining') : t('createGame.anyoneCanInvite.title')}
             </span>
             <div className="flex-shrink-0">
               <ToggleSwitch checked={anyoneCanInvite} onChange={onAnyoneCanInviteChange} />
@@ -220,12 +220,12 @@ export const GameSettingsSection = ({
           {showNotes && (
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {anyoneCanInvite 
-                ? t('createGame.anyoneCanInvite.note.true')
-                : t('createGame.anyoneCanInvite.note.false')}
+                ? (entityType === 'TRAINING' ? t('createGame.anyoneCanInvite.noteTraining.true') : t('createGame.anyoneCanInvite.note.true'))
+                : (entityType === 'TRAINING' ? t('createGame.anyoneCanInvite.noteTraining.false') : t('createGame.anyoneCanInvite.note.false'))}
             </p>
           )}
         </div>
-        {entityType !== 'TOURNAMENT' && (
+        {entityType !== 'TOURNAMENT' && entityType !== 'TRAINING' && (
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
@@ -247,7 +247,7 @@ export const GameSettingsSection = ({
         <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-              {t('createGame.allowDirectJoin.title')}
+              {entityType === 'TRAINING' ? t('createGame.allowDirectJoin.titleTraining') : t('createGame.allowDirectJoin.title')}
             </span>
             <div className="flex-shrink-0">
               <ToggleSwitch checked={allowDirectJoin} onChange={onAllowDirectJoinChange} />
@@ -256,8 +256,8 @@ export const GameSettingsSection = ({
           {showNotes && (
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {allowDirectJoin 
-                ? t('createGame.allowDirectJoin.note.true')
-                : t('createGame.allowDirectJoin.note.false')}
+                ? (entityType === 'TRAINING' ? t('createGame.allowDirectJoin.noteTraining.true') : t('createGame.allowDirectJoin.note.true'))
+                : (entityType === 'TRAINING' ? t('createGame.allowDirectJoin.noteTraining.false') : t('createGame.allowDirectJoin.note.false'))}
             </p>
           )}
         </div>
@@ -265,7 +265,7 @@ export const GameSettingsSection = ({
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.afterGameGoToBar.title')}
+                {entityType === 'TRAINING' ? t('createGame.afterGameGoToBar.titleTraining') : t('createGame.afterGameGoToBar.title')}
               </span>
               <div className="flex-shrink-0">
                 <ToggleSwitch checked={afterGameGoToBar} onChange={onAfterGameGoToBarChange} />
@@ -274,8 +274,8 @@ export const GameSettingsSection = ({
             {showNotes && (
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {afterGameGoToBar 
-                  ? t('createGame.afterGameGoToBar.note.true')
-                  : t('createGame.afterGameGoToBar.note.false')}
+                  ? (entityType === 'TRAINING' ? t('createGame.afterGameGoToBar.noteTraining.true') : t('createGame.afterGameGoToBar.note.true'))
+                  : (entityType === 'TRAINING' ? t('createGame.afterGameGoToBar.noteTraining.false') : t('createGame.afterGameGoToBar.note.false'))}
               </p>
             )}
           </div>

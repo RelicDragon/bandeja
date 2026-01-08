@@ -479,7 +479,7 @@
     "eventType": {
       "GAME": "Juego",
       "LUNDA": "Lunda",
-      "SET": "Set",
+      "SET": "Entrenador",
       "OTHER": "Otro",
       "SOCIAL_BAR": "Bar",
       "SOCIAL_PARTICIPANT": "Participante"

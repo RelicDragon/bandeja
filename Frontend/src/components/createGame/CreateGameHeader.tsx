@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Gamepad2, Trophy, Swords, Dumbbell, Beer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { EntityType } from '@/types';
 
@@ -10,6 +10,24 @@ interface CreateGameHeaderProps {
 export const CreateGameHeader = ({ onBack, entityType }: CreateGameHeaderProps) => {
   const { t } = useTranslation();
 
+  const getEntityIcon = () => {
+    switch (entityType) {
+      case 'GAME':
+        return <Gamepad2 size={20} className="text-gray-700 dark:text-gray-300" />;
+      case 'TOURNAMENT':
+        return <Swords size={20} className="text-gray-700 dark:text-gray-300" />;
+      case 'LEAGUE':
+      case 'LEAGUE_SEASON':
+        return <Trophy size={20} className="text-gray-700 dark:text-gray-300" />;
+      case 'TRAINING':
+        return <Dumbbell size={20} className="text-gray-700 dark:text-gray-300" />;
+      case 'BAR':
+        return <Beer size={20} className="text-gray-700 dark:text-gray-300" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 shadow-lg relative z-10" style={{ paddingTop: 'env(safe-area-inset-top)', height: 'calc(4rem + env(safe-area-inset-top))' }}>
       <div className="h-16 max-w-2xl mx-auto px-4 flex items-center gap-3" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
@@ -19,12 +37,13 @@ export const CreateGameHeader = ({ onBack, entityType }: CreateGameHeaderProps) 
         >
           <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
         </button>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           {entityType === 'BAR' ? t('createGame.createBar') : 
            entityType === 'TRAINING' ? t('createGame.createTraining') :
            entityType === 'TOURNAMENT' ? t('createGame.createTournament') :
            entityType === 'LEAGUE' ? t('createGame.createLeague') :
            t('createGame.title')}
+          {getEntityIcon()}
         </h1>
       </div>
     </div>

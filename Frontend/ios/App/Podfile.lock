@@ -6,27 +6,39 @@ PODS:
   - CapacitorCamera (7.0.2):
     - Capacitor
   - CapacitorCordova (8.0.0)
+  - CapacitorFilesystem (8.0.0):
+    - Capacitor
+    - IONFilesystemLib (~> 1.0.1)
   - CapacitorKeyboard (7.0.3):
     - Capacitor
   - CapacitorNetwork (7.0.2):
     - Capacitor
   - CapacitorPushNotifications (7.0.4):
     - Capacitor
+  - CapacitorShare (8.0.0):
+    - Capacitor
   - CapacitorStatusBar (7.0.3):
     - Capacitor
   - EbarooniCapacitorCalendar (8.0.0):
     - Capacitor
+  - IONFilesystemLib (1.0.1)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
   - "CapacitorCamera (from `../../node_modules/@capacitor/camera`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
   - "CapacitorNetwork (from `../../node_modules/@capacitor/network`)"
   - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
+  - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "EbarooniCapacitorCalendar (from `../../node_modules/@ebarooni/capacitor-calendar`)"
+
+SPEC REPOS:
+  trunk:
+    - IONFilesystemLib
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -37,12 +49,16 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/camera"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorFilesystem:
+    :path: "../../node_modules/@capacitor/filesystem"
   CapacitorKeyboard:
     :path: "../../node_modules/@capacitor/keyboard"
   CapacitorNetwork:
     :path: "../../node_modules/@capacitor/network"
   CapacitorPushNotifications:
     :path: "../../node_modules/@capacitor/push-notifications"
+  CapacitorShare:
+    :path: "../../node_modules/@capacitor/share"
   CapacitorStatusBar:
     :path: "../../node_modules/@capacitor/status-bar"
   EbarooniCapacitorCalendar:
@@ -53,12 +69,15 @@ SPEC CHECKSUMS:
   CapacitorApp: 3963a84197280757b84f126afd1520a85ae3b092
   CapacitorCamera: f9e54db0a18bb218a8dc360907d63aaefe9209ff
   CapacitorCordova: 5dc3912d25ef770a3fe0f431bb65c9fbfa2e92f9
+  CapacitorFilesystem: 2cb7c29536024668f333266a2177f8c10bbd9c98
   CapacitorKeyboard: 62f36104f26d53d8b3a2a43f2a69fe714f1777d5
   CapacitorNetwork: 695069886b3c5ed514db69aa3d026b8dc3c03a6b
   CapacitorPushNotifications: 7604512af53bbfdf1dd8fb2256b9ef1e8a69cdc2
+  CapacitorShare: 12f1d192170cbcf9f108fd675ac8e343761a4638
   CapacitorStatusBar: 0659ddc7b1713764a05831463d215b177a15d054
   EbarooniCapacitorCalendar: c028d8beba204fb145ee52a6697ac50998b5bec7
+  IONFilesystemLib: 89258b8e3e85465da93127d25d7ce37f977e8a6f
 
-PODFILE CHECKSUM: d4d896d1a7772064d60e080a3a38d48e7700ec9a
+PODFILE CHECKSUM: 902c97a5216747ab7fc31d49b96be6b69816a372
 
 COCOAPODS: 1.16.2

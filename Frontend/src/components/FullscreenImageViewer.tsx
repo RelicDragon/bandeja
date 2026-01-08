@@ -1,8 +1,11 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Download } from 'lucide-react';
+import { X, Download, Loader2 } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { useTranslation } from 'react-i18next';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { isCapacitor, isAndroid } from '@/utils/capacitor';
 
 interface FullscreenImageViewerProps {
   imageUrl: string;
@@ -15,6 +18,11 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
 }) => {
   const { t } = useTranslation();
   const transformRef = useRef<any>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -34,21 +42,60 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
 
   const handleDownload = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
+    setIsDownloading(true);
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `image-${Date.now()}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      if (isCapacitor()) {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            const base64 = result.split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        
+        const base64 = await base64Promise;
+        const fileName = `image-${Date.now()}.jpg`;
+        const filePath = fileName;
+        
+        await Filesystem.writeFile({
+          path: filePath,
+          data: base64,
+          directory: isAndroid() ? Directory.ExternalStorage : Directory.Data,
+        });
+        
+        const fileUri = await Filesystem.getUri({
+          path: filePath,
+          directory: isAndroid() ? Directory.ExternalStorage : Directory.Data,
+        });
+        
+        await Share.share({
+          url: fileUri.uri,
+          dialogTitle: t('media.download'),
+        });
+      } else {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `image-${Date.now()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
     } catch (error) {
       console.error('Failed to download image:', error);
+    } finally {
+      setIsDownloading(false);
     }
-  }, [imageUrl]);
+  }, [imageUrl, t]);
 
   const resetView = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -66,19 +113,73 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     }
   }, [onClose]);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartY.current = touch.clientY;
+    touchStartX.current = touch.clientX;
+    setSwipeOffset(0);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchStartY.current === null || touchStartX.current === null) return;
+    
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - touchStartY.current;
+    const deltaX = Math.abs(touch.clientX - touchStartX.current);
+    
+    const transform = transformRef.current?.instance?.state?.scale;
+    const isZoomed = transform && transform > 1;
+    
+    if (!isZoomed && deltaY > 0 && deltaY > deltaX) {
+      e.preventDefault();
+      setSwipeOffset(deltaY);
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    
+    const touch = e.changedTouches[0];
+    const deltaY = touch.clientY - touchStartY.current;
+    const deltaX = Math.abs(touch.clientX - (touchStartX.current || 0));
+    
+    const transform = transformRef.current?.instance?.state?.scale;
+    const isZoomed = transform && transform > 1;
+    
+    if (!isZoomed && deltaY > 100 && deltaY > deltaX) {
+      onClose();
+    } else {
+      setSwipeOffset(0);
+    }
+    
+    touchStartY.current = null;
+    touchStartX.current = null;
+  }, [onClose]);
+
   return createPortal(
     <div 
+      ref={containerRef}
       className="fixed inset-0 z-[9999] flex items-center justify-center"
       onClick={handleBackdropClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       style={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.95)',
+        backgroundColor: `rgba(0, 0, 0, ${Math.max(0.5, 0.95 - Math.abs(swipeOffset) / 1000)})`,
         paddingTop: 'env(safe-area-inset-top)',
         paddingRight: 'env(safe-area-inset-right)',
         paddingBottom: 'env(safe-area-inset-bottom)',
         paddingLeft: 'env(safe-area-inset-left)',
+        transition: swipeOffset === 0 ? 'background-color 0.2s' : 'none',
       }}
     >
-      <div className="relative w-full h-full flex items-center justify-center">
+      <div 
+        className="relative w-full h-full flex items-center justify-center"
+        style={{
+          transform: swipeOffset > 0 ? `translateY(${swipeOffset}px)` : 'none',
+          transition: swipeOffset === 0 ? 'transform 0.2s' : 'none',
+        }}
+      >
         <TransformWrapper
           ref={transformRef}
           initialScale={1}
@@ -113,10 +214,15 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         >
           <button
             onClick={handleDownload}
-            className="w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 shadow-xl backdrop-blur-sm"
+            disabled={isDownloading}
+            className="w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 shadow-xl backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={t('media.download')}
           >
-            <Download size={22} />
+            {isDownloading ? (
+              <Loader2 size={22} className="animate-spin" />
+            ) : (
+              <Download size={22} />
+            )}
           </button>
           <button
             onClick={handleClose}

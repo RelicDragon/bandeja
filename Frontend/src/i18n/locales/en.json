@@ -486,7 +486,7 @@
     "eventType": {
       "GAME": "Game",
       "LUNDA": "Lunda",
-      "SET": "Set",
+      "SET": "Trainer",
       "OTHER": "Other",
       "SOCIAL_BAR": "Bar",
       "SOCIAL_PARTICIPANT": "Participant"
@@ -668,20 +668,31 @@
     "settings": "Settings",
     "settingsTournament": "Tournament Settings",
     "settingsLeague": "League Settings",
+    "settingsTraining": "Training Settings",
     "gameType": "Game Type",
     "gameTypeLeague": "League Type",
     "gameTypeNote": "You can change detailed game settings in the Game Setup section.",
     "gameTypeNoteLeague": "You can change detailed league settings in the League Setup section.",
     "anyoneCanInvite": {
       "title": "Anyone can invite other players",
+      "titleTraining": "Anyone can invite other participants",
       "note": {
         "false": "Only organizers can invite players.",
         "true": "Any participant can invite other players."
+      },
+      "noteTraining": {
+        "false": "Only organizers can invite participants.",
+        "true": "Any participant can invite other participants."
       }
     },
     "publicGame": {
       "title": "Public game",
+      "titleTraining": "Public training",
       "note": {
+        "false": "Will be private and only visible to invited participants.",
+        "true": "Will be visible to all players and can be found in the search."
+      },
+      "noteTraining": {
         "false": "Will be private and only visible to invited participants.",
         "true": "Will be visible to all players and can be found in the search."
       }
@@ -695,16 +706,26 @@
     },
     "allowDirectJoin": {
       "title": "Enter without confirmation",
+      "titleTraining": "Join without confirmation",
       "note": {
         "false": "Players need approval from organizers before joining.",
         "true": "Players can join directly without waiting for approval."
+      },
+      "noteTraining": {
+        "false": "Participants need approval from organizers before joining.",
+        "true": "Participants can join directly without waiting for approval."
       }
     },
     "afterGameGoToBar": {
       "title": "Stay at the bar after the game",
+      "titleTraining": "Stay at the bar after the training",
       "note": {
         "false": "Does not include a social gathering after the match.",
         "true": "Includes a social gathering after the match."
+      },
+      "noteTraining": {
+        "false": "Does not include a social gathering after the training.",
+        "true": "Includes a social gathering after the training."
       }
     },
     "hasFixedTeams": {
@@ -737,15 +758,19 @@
     "gameName": "Game Name",
     "gameNameTournament": "Tournament Name",
     "gameNameLeague": "League Name",
+    "gameNameTraining": "Name of training",
     "gameNamePlaceholder": "Enter game name (optional)",
     "gameNamePlaceholderTournament": "Enter tournament name (optional)",
     "gameNamePlaceholderLeague": "Enter league name (optional)",
+    "gameNamePlaceholderTraining": "Enter training name (optional)",
     "comments": "Comments",
     "commentsTournament": "Tournament Comments",
     "commentsLeague": "League Comments",
+    "commentsTraining": "Training Comments",
     "commentsPlaceholder": "Add any additional information about the game...",
     "commentsPlaceholderTournament": "Add any additional information about the tournament...",
     "commentsPlaceholderLeague": "Add any additional information about the league...",
+    "commentsPlaceholderTraining": "Add any additional information about the training...",
     "price": "Price",
     "priceType": "Price Type",
     "priceTypeNotKnown": "Not Known",
@@ -760,6 +785,7 @@
     "gameStart": "Game start",
     "gameStartTournament": "Tournament start",
     "gameStartLeague": "League start",
+    "gameStartTraining": "Start of training",
     "selectDate": "Select Date",
     "date": "Date",
     "startTime": "Start Time",
@@ -858,10 +884,22 @@
     "duplicateGameTraining": "Duplicate Training",
     "duplicate": "Duplicate",
     "deleteGame": "Delete Game",
+    "deleteGameGame": "Delete Game",
+    "deleteGameTournament": "Delete Tournament",
+    "deleteGameLeague": "Delete League",
+    "deleteGameLeagueSeason": "Delete League Season",
+    "deleteGameBar": "Delete Bar",
+    "deleteGameTraining": "Delete Training",
     "deleteLeague": "Delete League",
     "deleteGameConfirmation": "Are you sure you want to delete this game? This action cannot be undone.",
     "gameDeleted": "Game deleted successfully",
     "leaveGame": "Leave Game",
+    "leaveGameGame": "Leave Game",
+    "leaveGameTournament": "Leave Tournament",
+    "leaveGameLeague": "Leave League",
+    "leaveGameLeagueSeason": "Leave League Season",
+    "leaveGameBar": "Leave Bar",
+    "leaveGameTraining": "Leave Training",
     "leaveGameConfirmation": "Are you sure you want to leave?",
     "leaveGameConfirmationGame": "Are you sure you want to leave this game?",
     "leaveGameConfirmationTournament": "Are you sure you want to leave this tournament?",
@@ -1301,6 +1339,28 @@
     "timeRange": "Time Range",
     "timeRangeHint": "Games will be filtered by this time range",
     "cityRequired": "Please select a city to continue"
+  },
+  "training": {
+    "finishTraining": "Finish Training",
+    "finishTrainingSuccess": "Training finished successfully",
+    "trainingResults": "Training Results",
+    "editLevel": "Edit Level",
+    "edit": "Edit",
+    "currentLevel": "Current Level",
+    "currentReliability": "Current Reliability",
+    "level": "Level",
+    "reliability": "Reliability",
+    "rating": "Rating",
+    "confirmLevelDecrease": "Confirm Level Decrease",
+    "confirmLevelDecreaseMessage": "Are you sure you want to decrease the level from {{current}} to {{new}}?",
+    "levelRangeHint": "Select level between 1.0 and 4.0",
+    "reliabilityRangeHint": "Select reliability between current value and 70",
+    "reliabilityTooHigh": "Reliability is already above 70 and cannot be increased",
+    "undoTraining": "Undo Training",
+    "undoTrainingConfirm": "Are you sure you want to undo all training changes? This will revert all level and reliability changes.",
+    "undoSuccess": "Training changes undone successfully",
+    "levelUpdated": "Level updated successfully",
+    "actions": "Actions"
   }
 }
 

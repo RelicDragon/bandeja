@@ -18,7 +18,7 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
   const { t } = useTranslation();
   const [isClosing, setIsClosing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [priceTotal, setPriceTotal] = useState<number | undefined>(undefined);
+  const [priceTotal, setPriceTotal] = useState<number | null | undefined>(undefined);
   const [priceType, setPriceType] = useState<PriceType>('NOT_KNOWN');
   const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(undefined);
   const [inputValue, setInputValue] = useState<string>('');
@@ -45,6 +45,14 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
       }
     };
   }, [isOpen, game.priceTotal, game.priceType, game.priceCurrency]);
+
+  useEffect(() => {
+    if (priceType === 'NOT_KNOWN' || priceType === 'FREE') {
+      setPriceTotal(undefined);
+      setPriceCurrency(undefined);
+      setInputValue('');
+    }
+  }, [priceType]);
 
   const validatePrice = (): boolean => {
     if (priceType !== 'NOT_KNOWN' && priceType !== 'FREE') {
@@ -78,10 +86,21 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
     setIsSaving(true);
     try {
       const updateData: Partial<Game> = {
-        priceTotal: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceTotal : undefined,
         priceType: priceType,
-        priceCurrency: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceCurrency : undefined,
       };
+
+      if (priceType === 'NOT_KNOWN' || priceType === 'FREE') {
+        updateData.priceTotal = null;
+        updateData.priceCurrency = null;
+      } else {
+        // Validation ensures priceTotal is a valid number at this point
+        if (priceTotal !== undefined && priceTotal !== null) {
+          updateData.priceTotal = priceTotal;
+        }
+        if (priceCurrency !== undefined) {
+          updateData.priceCurrency = priceCurrency;
+        }
+      }
 
       await gamesApi.update(game.id, updateData);
       

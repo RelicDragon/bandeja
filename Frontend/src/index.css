@@ -672,6 +672,60 @@ body.keyboard-visible .chat-container {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
+/* Range slider styles */
+input[type="range"].slider {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="range"].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #3b82f6;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+}
+
+input[type="range"].slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #3b82f6;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+}
+
+input[type="range"].slider:disabled::-webkit-slider-thumb {
+  background: #94a3b8;
+  border-color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+input[type="range"].slider:disabled::-moz-range-thumb {
+  background: #94a3b8;
+  border-color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.dark input[type="range"].slider {
+  background: #374151;
+}
+
+.dark input[type="range"].slider::-webkit-slider-thumb {
+  border-color: #3b82f6;
+}
+
+.dark input[type="range"].slider::-moz-range-thumb {
+  border-color: #3b82f6;
+}
+
 /* For inputs in modals on iOS - prevent keyboard from covering inputs */
 .capacitor-ios input:focus,
 .capacitor-ios textarea:focus {

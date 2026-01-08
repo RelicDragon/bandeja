@@ -11,7 +11,7 @@ import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { useNavigationStore } from '@/store/navigationStore';
 import { chatApi } from '@/api/chat';
-import { Calendar, MapPin, Users, MessageCircle, ChevronRight, GraduationCap, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star } from 'lucide-react';
+import { Calendar, MapPin, Users, MessageCircle, ChevronRight, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
@@ -199,7 +199,7 @@ export const GameCard = ({
       case 'LEAGUE_SEASON':
         return <Trophy size={40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
       case 'TRAINING':
-        return <GraduationCap size={48} className="text-green-500 dark:text-green-400 opacity-15 dark:opacity-15" />;
+        return <Dumbbell size={48} className="text-green-500 dark:text-green-400 opacity-15 dark:opacity-15" />;
       case 'BAR':
         return <Beer size={40} className="text-yellow-500 dark:text-yellow-400 opacity-15 dark:opacity-15" />;
       default:
@@ -339,7 +339,7 @@ export const GameCard = ({
             <span className="px-2 py-1 text-xs font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
               {game.entityType === 'TOURNAMENT' && <Swords size={12} />}
               {(game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && <Trophy size={12} />}
-              {game.entityType === 'TRAINING' && <GraduationCap size={12} />}
+              {game.entityType === 'TRAINING' && <Dumbbell size={12} />}
               {game.entityType === 'BAR' && <Beer size={12} />}
               {t(`games.entityTypes.${game.entityType}`)}
             </span>

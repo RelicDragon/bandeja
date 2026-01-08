@@ -54,9 +54,9 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
   const [gameType, setGameType] = useState<GameType>((initialGameData?.gameType as GameType) || 'CLASSIC');
   const [gameName, setGameName] = useState<string>(initialGameData?.name || '');
   const [comments, setComments] = useState<string>(initialGameData?.description || '');
-  const [priceTotal, setPriceTotal] = useState<number | undefined>(initialGameData?.priceTotal);
+  const [priceTotal, setPriceTotal] = useState<number | undefined>(initialGameData?.priceTotal ?? undefined);
   const [priceType, setPriceType] = useState<PriceType>(initialGameData?.priceType || 'NOT_KNOWN');
-  const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(initialGameData?.priceCurrency);
+  const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(initialGameData?.priceCurrency ?? undefined);
   const [storedInitialDate] = useState<Date>(() => {
     if (initialGameData?.startTime) {
       return new Date(initialGameData.startTime);
@@ -330,9 +330,8 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
       const startTime = createDateFromClubTime(selectedDate, selectedTime, selectedClubData);
       const endTime = addHours(startTime, duration);
 
-      const gameResponse = await gamesApi.create({
+      const gameData: any = {
         entityType: entityType,
-        gameType: gameType,
         clubId: selectedClub || undefined,
         courtId: selectedCourt !== 'notBooked' ? selectedCourt : undefined,
         startTime: startTime.toISOString(),
@@ -343,14 +342,10 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
         minLevel: playerLevelRange[0],
         maxLevel: playerLevelRange[1],
         isPublic,
-        affectsRating: isRatingGame,
         anyoneCanInvite,
-        resultsByAnyone: entityType === 'TOURNAMENT' ? false : resultsByAnyone,
         allowDirectJoin,
         hasBookedCourt: hasBookedCourt,
         afterGameGoToBar: afterGameGoToBar,
-        hasFixedTeams: hasFixedTeams,
-        genderTeams: genderTeams,
         name: gameName || undefined,
         description: comments,
         participants: participants.filter((id): id is string => id !== null) as any,
@@ -358,8 +353,31 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
         priceType: priceType,
         priceCurrency: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceCurrency : undefined,
         parentId: initialGameData?.parentId,
-        ...gameSetup,
-      });
+      };
+
+      if (entityType !== 'TRAINING') {
+        gameData.gameType = gameType;
+        gameData.affectsRating = isRatingGame;
+        gameData.resultsByAnyone = entityType === 'TOURNAMENT' ? false : resultsByAnyone;
+        gameData.hasFixedTeams = hasFixedTeams;
+        gameData.pointsPerWin = gameSetup.pointsPerWin;
+        gameData.pointsPerLoose = gameSetup.pointsPerLoose;
+        gameData.pointsPerTie = gameSetup.pointsPerTie;
+        gameData.fixedNumberOfSets = gameSetup.fixedNumberOfSets;
+        gameData.maxTotalPointsPerSet = gameSetup.maxTotalPointsPerSet;
+        gameData.maxPointsPerTeam = gameSetup.maxPointsPerTeam;
+        gameData.winnerOfGame = gameSetup.winnerOfGame;
+        gameData.winnerOfMatch = gameSetup.winnerOfMatch;
+        gameData.matchGenerationType = gameSetup.matchGenerationType;
+        gameData.prohibitMatchesEditing = gameSetup.prohibitMatchesEditing;
+        gameData.ballsInGames = gameSetup.ballsInGames;
+      }
+
+      if (entityType === 'GAME' || entityType === 'TOURNAMENT' || entityType === 'LEAGUE') {
+        gameData.genderTeams = genderTeams;
+      }
+
+      const gameResponse = await gamesApi.create(gameData);
 
       if (pendingAvatarFiles && gameResponse.data.id) {
         try {
@@ -566,7 +584,7 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
           onGameTypeChange={setGameType}
         />
 
-        {entityType !== 'BAR' && (
+        {entityType !== 'BAR' && entityType !== 'TRAINING' && (
           <GameSetupSection
             onOpenSetup={() => setIsGameSetupModalOpen(true)}
             hasSetup={hasGameSetup}

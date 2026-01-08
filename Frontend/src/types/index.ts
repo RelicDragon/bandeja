@@ -177,8 +177,8 @@ export interface Game {
   id: string;
   entityType: EntityType;
   gameType: GameType;
-  name?: string;
-  description?: string;
+  name?: string | null;
+  description?: string | null;
   avatar?: string | null;
   originalAvatar?: string | null;
   clubId?: string;
@@ -219,9 +219,9 @@ export interface Game {
   photosCount?: number;
   mainPhotoId?: string | null;
   isClubFavorite?: boolean;
-  priceTotal?: number;
+  priceTotal?: number | null;
   priceType?: PriceType;
-  priceCurrency?: PriceCurrency;
+  priceCurrency?: PriceCurrency | null;
   participants: GameParticipant[];
   invites?: Invite[];
   joinQueues?: JoinQueue[];

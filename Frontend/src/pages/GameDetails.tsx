@@ -33,9 +33,11 @@ import { FaqEdit } from '@/components/GameDetails/FaqEdit';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { LocationModal, TimeDurationModal } from '@/components/GameDetails';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
+import { TrainingResultsSection } from '@/components/GameDetails/TrainingResultsSection';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { resultsApi } from '@/api/results';
+import { trainingApi } from '@/api/training';
 import { faqApi } from '@/api/faq';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -422,6 +424,60 @@ export const GameDetailsContent = () => {
   };
 
 
+  const handleFinishTraining = async () => {
+    if (!id || !user?.id || !game) return;
+    
+    const canEditResults = canUserEditResults(game, user);
+    if (!canEditResults) return;
+
+    try {
+      await trainingApi.finishTraining(id);
+      toast.success(t('training.finishTrainingSuccess', { defaultValue: 'Training finished successfully' }));
+      const response = await gamesApi.getById(id);
+      const updatedGame = response.data;
+      setGame(updatedGame);
+    } catch (error: any) {
+      console.error('Failed to finish training:', error);
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
+  };
+
+  const handleUpdateParticipantLevel = async (
+    gameId: string,
+    userId: string,
+    level: number,
+    reliability: number
+  ) => {
+    try {
+      await trainingApi.updateParticipantLevel(gameId, userId, level, reliability);
+      toast.success(t('training.levelUpdated', { defaultValue: 'Level updated successfully' }));
+      const response = await gamesApi.getById(gameId);
+      const updatedGame = response.data;
+      setGame(updatedGame);
+    } catch (error: any) {
+      console.error('Failed to update participant level:', error);
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+      throw error;
+    }
+  };
+
+  const handleUndoTraining = async (gameId: string) => {
+    try {
+      await trainingApi.undoTraining(gameId);
+      toast.success(t('training.undoSuccess', { defaultValue: 'Training changes undone successfully' }));
+      const response = await gamesApi.getById(gameId);
+      const updatedGame = response.data;
+      setGame(updatedGame);
+    } catch (error: any) {
+      console.error('Failed to undo training:', error);
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+      throw error;
+    }
+  };
+
   const handleStartResultsEntry = async () => {
     if (!id || !user?.id || !game) return;
     
@@ -713,21 +769,26 @@ export const GameDetailsContent = () => {
         courtId: editFormData.courtId || undefined,
         name: editFormData.name || undefined,
         isPublic: editFormData.isPublic,
-        affectsRating: editFormData.affectsRating,
         anyoneCanInvite: editFormData.anyoneCanInvite,
-        resultsByAnyone: editFormData.resultsByAnyone,
         allowDirectJoin: editFormData.allowDirectJoin,
         hasBookedCourt: editFormData.hasBookedCourt,
         afterGameGoToBar: editFormData.afterGameGoToBar,
-        hasFixedTeams: game?.maxParticipants === 2 ? false : editFormData.hasFixedTeams,
-        gameType: editFormData.gameType,
         description: editFormData.description,
-        pointsPerWin: editFormData.pointsPerWin,
-        pointsPerLoose: editFormData.pointsPerLoose,
-        pointsPerTie: editFormData.pointsPerTie,
       };
 
-      updateData.genderTeams = editFormData.genderTeams;
+      if (game?.entityType !== 'TRAINING') {
+        updateData.affectsRating = editFormData.affectsRating;
+        updateData.resultsByAnyone = editFormData.resultsByAnyone;
+        updateData.hasFixedTeams = game?.maxParticipants === 2 ? false : editFormData.hasFixedTeams;
+        updateData.gameType = editFormData.gameType;
+        updateData.pointsPerWin = editFormData.pointsPerWin;
+        updateData.pointsPerLoose = editFormData.pointsPerLoose;
+        updateData.pointsPerTie = editFormData.pointsPerTie;
+      }
+
+      if (game?.entityType === 'GAME' || game?.entityType === 'TOURNAMENT' || game?.entityType === 'LEAGUE') {
+        updateData.genderTeams = editFormData.genderTeams;
+      }
 
       await gamesApi.update(id, updateData);
       
@@ -853,6 +914,30 @@ export const GameDetailsContent = () => {
     return keyMap[entityType] || 'gameDetails.duplicateGame';
   };
 
+  const getLeaveGameText = (entityType: string) => {
+    const keyMap: Record<string, string> = {
+      'GAME': 'gameDetails.leaveGameGame',
+      'TOURNAMENT': 'gameDetails.leaveGameTournament',
+      'LEAGUE': 'gameDetails.leaveGameLeague',
+      'LEAGUE_SEASON': 'gameDetails.leaveGameLeagueSeason',
+      'BAR': 'gameDetails.leaveGameBar',
+      'TRAINING': 'gameDetails.leaveGameTraining',
+    };
+    return keyMap[entityType] || 'gameDetails.leaveGame';
+  };
+
+  const getDeleteGameText = (entityType: string) => {
+    const keyMap: Record<string, string> = {
+      'GAME': 'gameDetails.deleteGameGame',
+      'TOURNAMENT': 'gameDetails.deleteGameTournament',
+      'LEAGUE': 'gameDetails.deleteGameLeague',
+      'LEAGUE_SEASON': 'gameDetails.deleteGameLeagueSeason',
+      'BAR': 'gameDetails.deleteGameBar',
+      'TRAINING': 'gameDetails.deleteGameTraining',
+    };
+    return keyMap[entityType] || 'gameDetails.deleteGame';
+  };
+
   const handleLeaveGame = async () => {
     if (!id || isLeaving) return;
     
@@ -942,8 +1027,18 @@ export const GameDetailsContent = () => {
             <PhotosSection game={game} onGameUpdate={setGame} />
           )}
 
-          {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && (
+          {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
             <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} />
+          )}
+
+          {game.entityType === 'TRAINING' && game.resultsStatus === 'FINAL' && (
+            <TrainingResultsSection
+              game={game}
+              user={user}
+              onGameUpdate={setGame}
+              onUpdateParticipantLevel={handleUpdateParticipantLevel}
+              onUndoTraining={handleUndoTraining}
+            />
           )}
 
           {game.entityType === 'BAR' && game.resultsStatus === 'FINAL' && (
@@ -1005,7 +1100,7 @@ export const GameDetailsContent = () => {
             </div>
           )}
 
-          {!isLeague && canViewSettings && game.entityType !== 'BAR' && (
+          {!isLeague && canViewSettings && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
             <GameSetup
               onOpenSetup={() => setIsGameSetupModalOpen(true)}
               canEdit={canEdit}
@@ -1049,10 +1144,12 @@ export const GameDetailsContent = () => {
           {game.resultsStatus === 'NONE' && game && user && canUserEditResults(game, user) && game.entityType !== 'BAR' && (
             <Card className="overflow-hidden">
               <button
-                onClick={handleStartResultsEntry}
+                onClick={game.entityType === 'TRAINING' ? handleFinishTraining : handleStartResultsEntry}
                 className="w-full px-8 py-4 text-base font-semibold rounded-xl transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 active:from-green-700 active:to-emerald-800 text-white shadow-lg hover:shadow-2xl hover:shadow-green-500/50 transform hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden group"
               >
-                <span className="relative z-10">{t('gameResults.startResultsEntry')}</span>
+                <span className="relative z-10">
+                  {game.entityType === 'TRAINING' ? t('training.finishTraining') : t('gameResults.startResultsEntry')}
+                </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
               </button>
             </Card>
@@ -1065,7 +1162,7 @@ export const GameDetailsContent = () => {
                   <div className="flex items-center gap-2">
                     <LogOut size={18} className="text-gray-500 dark:text-gray-400" />
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                      {t('gameDetails.leaveGame')}
+                      {t(getLeaveGameText(game?.entityType || 'GAME'))}
                     </h2>
                   </div>
                   {!isUserOwner ? (
@@ -1195,7 +1292,7 @@ export const GameDetailsContent = () => {
                 <div className="flex items-center gap-2">
                   <Trash2 size={18} className="text-gray-500 dark:text-gray-400" />
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    {t(isLeagueSeason ? 'gameDetails.deleteLeague' : 'gameDetails.deleteGame')}
+                    {t(getDeleteGameText(game?.entityType || 'GAME'))}
                   </h2>
                 </div>
                 <button

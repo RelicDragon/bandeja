@@ -65,6 +65,9 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
     hasEditPermission = true;
   } else if (isUserGameAdminOrOwner(game, user.id)) {
     hasEditPermission = true;
+  } else if (game.entityType === 'TRAINING' && (user.isTrainer || user.isAdmin)) {
+    // For training games, trainers and admins can edit
+    hasEditPermission = true;
   } else if (game.resultsByAnyone) {
     // Check if user is a playing participant and resultsByAnyone is true
     const isPlayingParticipant = game.participants.some(
@@ -96,14 +99,17 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
     problems.push('games.results.problems.gameNotStarted');
   }
 
-  // Problem: Not enough players
-  if (!game.participantsReady) {
-    problems.push('games.results.problems.insufficientPlayers');
-  }
+  // Skip participant checks for TRAINING games
+  if (game.entityType !== 'TRAINING') {
+    // Problem: Not enough players
+    if (!game.participantsReady) {
+      problems.push('games.results.problems.insufficientPlayers');
+    }
 
-  // Problem: Fixed teams not ready
-  if (game.hasFixedTeams && !game.teamsReady) {
-    problems.push('games.results.problems.fixedTeamsNotReady');
+    // Problem: Fixed teams not ready
+    if (game.hasFixedTeams && !game.teamsReady) {
+      problems.push('games.results.problems.fixedTeamsNotReady');
+    }
   }
 
   // Problem: User doesn't have permission to edit

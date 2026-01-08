@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Gamepad2, Trophy, Swords, GraduationCap, Beer } from 'lucide-react';
+import { Gamepad2, Trophy, Swords, Dumbbell, Beer } from 'lucide-react';
 import { EntityType } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 
@@ -92,7 +92,7 @@ export const GameTypeDropdown = ({ isOpen, onClose, onSelectType }: GameTypeDrop
       case 'LEAGUE':
         return <Trophy size={18} />;
       case 'TRAINING':
-        return <GraduationCap size={18} />;
+        return <Dumbbell size={18} />;
       case 'BAR':
         return <Beer size={18} />;
       default:

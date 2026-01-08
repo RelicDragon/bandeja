@@ -489,7 +489,7 @@
     "eventType": {
       "GAME": "Игра",
       "LUNDA": "Лунда",
-      "SET": "Сет",
+      "SET": "Тренер",
       "OTHER": "Другое",
       "SOCIAL_BAR": "Бар",
       "SOCIAL_PARTICIPANT": "Участник"
@@ -671,22 +671,33 @@
     "settings": "Настройки",
     "settingsTournament": "Настройки турнира",
     "settingsLeague": "Настройки лиги",
+    "settingsTraining": "Настройки тренировки",
     "gameType": "Тип игры",
     "gameTypeLeague": "Тип лиги",
     "gameTypeNote": "Вы можете изменить детальные настройки игры в разделе Игровые Настройки.",
     "gameTypeNoteLeague": "Вы можете изменить детальные настройки лиги в разделе Настройки лиги.",
     "anyoneCanInvite": {
       "title": "Любой может приглашать других игроков",
+      "titleTraining": "Любой может приглашать других участников",
       "note": {
         "false": "Только организаторы могут приглашать игроков.",
         "true": "Любой участник может приглашать других игроков."
+      },
+      "noteTraining": {
+        "false": "Только организаторы могут приглашать участников.",
+        "true": "Любой участник может приглашать других участников."
       }
     },
     "publicGame": {
       "title": "Публичная игра",
+      "titleTraining": "Публичная тренировка",
       "note": {
         "false": "Будет приватным и видно только приглашенным участникам.",
         "true": "Будет видно всем игрокам и может быть найдено в поиске."
+      },
+      "noteTraining": {
+        "false": "Будет приватной и видна только приглашенным участникам.",
+        "true": "Будет видна всем игрокам и может быть найдена в поиске."
       }
     },
     "resultsByAnyone": {
@@ -698,16 +709,26 @@
     },
     "allowDirectJoin": {
       "title": "Вход без подтверждения",
+      "titleTraining": "Присоединение без подтверждения",
       "note": {
         "false": "Игрокам требуется одобрение организаторов перед присоединением.",
         "true": "Игроки могут присоединиться напрямую без ожидания одобрения."
+      },
+      "noteTraining": {
+        "false": "Участникам требуется одобрение организаторов перед присоединением.",
+        "true": "Участники могут присоединиться напрямую без ожидания одобрения."
       }
     },
     "afterGameGoToBar": {
       "title": "Остаться в баре после игры",
+      "titleTraining": "Остаться в баре после тренировки",
       "note": {
         "false": "Не включает социальное мероприятие после матча.",
         "true": "Включает социальное мероприятие после матча."
+      },
+      "noteTraining": {
+        "false": "Не включает социальное мероприятие после тренировки.",
+        "true": "Включает социальное мероприятие после тренировки."
       }
     },
     "hasFixedTeams": {
@@ -740,15 +761,19 @@
     "gameName": "Название игры",
     "gameNameTournament": "Название турнира",
     "gameNameLeague": "Название лиги",
+    "gameNameTraining": "Название тренировки",
     "gameNamePlaceholder": "Введите название игры (необязательно)",
     "gameNamePlaceholderTournament": "Введите название турнира (необязательно)",
     "gameNamePlaceholderLeague": "Введите название лиги (необязательно)",
+    "gameNamePlaceholderTraining": "Введите название тренировки (необязательно)",
     "comments": "Комментарии к игре",
     "commentsTournament": "Комментарии к турниру",
     "commentsLeague": "Комментарии к лиге",
+    "commentsTraining": "Комментарии к тренировке",
     "commentsPlaceholder": "Добавьте дополнительную информацию об игре...",
     "commentsPlaceholderTournament": "Добавьте дополнительную информацию о турнире...",
     "commentsPlaceholderLeague": "Добавьте дополнительную информацию о лиге...",
+    "commentsPlaceholderTraining": "Добавьте дополнительную информацию о тренировке...",
     "price": "Цена",
     "priceType": "Тип цены",
     "priceTypeNotKnown": "Неизвестно",
@@ -763,6 +788,7 @@
     "gameStart": "Начало игры",
     "gameStartTournament": "Начало турнира",
     "gameStartLeague": "Начало лиги",
+    "gameStartTraining": "Начало тренировки",
     "selectDate": "Выберите дату",
     "date": "Дата",
     "startTime": "Время начала",
@@ -863,10 +889,22 @@
     "duplicateGameTraining": "Дублировать тренировку",
     "duplicate": "Дублировать",
     "deleteGame": "Удалить игру",
+    "deleteGameGame": "Удалить игру",
+    "deleteGameTournament": "Удалить турнир",
+    "deleteGameLeague": "Удалить лигу",
+    "deleteGameLeagueSeason": "Удалить сезон лиги",
+    "deleteGameBar": "Удалить бар",
+    "deleteGameTraining": "Удалить тренировку",
     "deleteLeague": "Удалить лигу",
     "deleteGameConfirmation": "Вы уверены, что хотите удалить эту игру? Это действие нельзя отменить.",
     "gameDeleted": "Игра успешно удалена",
     "leaveGame": "Покинуть игру",
+    "leaveGameGame": "Покинуть игру",
+    "leaveGameTournament": "Покинуть турнир",
+    "leaveGameLeague": "Покинуть лигу",
+    "leaveGameLeagueSeason": "Покинуть сезон лиги",
+    "leaveGameBar": "Покинуть бар",
+    "leaveGameTraining": "Покинуть тренировку",
     "leaveGameConfirmation": "Вы уверены, что хотите покинуть?",
     "leaveGameConfirmationGame": "Вы уверены, что хотите покинуть игру?",
     "leaveGameConfirmationTournament": "Вы уверены, что хотите покинуть турнир?",
@@ -1301,6 +1339,28 @@
     "timeRange": "Временной Диапазон",
     "timeRangeHint": "Игры будут отфильтрованы по этому временному диапазону",
     "cityRequired": "Пожалуйста, выберите город для продолжения"
+  },
+  "training": {
+    "finishTraining": "Завершить Тренировку",
+    "finishTrainingSuccess": "Тренировка успешно завершена",
+    "trainingResults": "Результаты Тренировки",
+    "editLevel": "Редактировать Уровень",
+    "edit": "Редактировать",
+    "currentLevel": "Текущий Уровень",
+    "currentReliability": "Текущая Надежность",
+    "level": "Уровень",
+    "reliability": "Надежность",
+    "rating": "Рейтинг",
+    "confirmLevelDecrease": "Подтвердить Снижение Уровня",
+    "confirmLevelDecreaseMessage": "Вы уверены, что хотите снизить уровень с {{current}} до {{new}}?",
+    "levelRangeHint": "Выберите уровень от 1.0 до 4.0",
+    "reliabilityRangeHint": "Выберите надежность между текущим значением и 70",
+    "reliabilityTooHigh": "Надежность уже выше 70 и не может быть увеличена",
+    "undoTraining": "Отменить Тренировку",
+    "undoTrainingConfirm": "Вы уверены, что хотите отменить все изменения тренировки? Это вернет все изменения уровня и надежности.",
+    "undoSuccess": "Изменения тренировки успешно отменены",
+    "levelUpdated": "Уровень успешно обновлен",
+    "actions": "Действия"
   }
 }
 

@@ -55,8 +55,8 @@ export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditG
     setIsSaving(true);
     try {
       const updateData: Partial<Game> = {
-        name: name.trim() || undefined,
-        description: description.trim() || undefined,
+        name: name.trim() || null,
+        description: description.trim() || null,
         gameType: gameType,
       };
 

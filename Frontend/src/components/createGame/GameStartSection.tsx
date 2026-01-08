@@ -360,6 +360,7 @@ export const GameStartSection = ({
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">
           {entityType === 'TOURNAMENT' ? t('createGame.gameStartTournament') :
            entityType === 'LEAGUE' ? t('createGame.gameStartLeague') :
+           entityType === 'TRAINING' ? t('createGame.gameStartTraining') :
            t('createGame.gameStart')}
         </h2>
       </div>
