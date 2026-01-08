@@ -1035,7 +1035,6 @@ export const GameDetailsContent = () => {
             <TrainingResultsSection
               game={game}
               user={user}
-              onGameUpdate={setGame}
               onUpdateParticipantLevel={handleUpdateParticipantLevel}
               onUndoTraining={handleUndoTraining}
             />
