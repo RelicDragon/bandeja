@@ -23,7 +23,17 @@ router.post(
   '/',
   authenticate,
   validate([
-    body('gameType').notEmpty().withMessage('Game type is required'),
+    body('gameType')
+      .custom((value, { req }) => {
+        if (req.body.entityType === 'TRAINING') {
+          return true;
+        }
+        if (!value || (typeof value === 'string' && value.trim() === '')) {
+          throw new Error('Game type is required');
+        }
+        return true;
+      })
+      .withMessage('Game type is required'),
     body('clubId').optional().isString().withMessage('Club ID must be a string'),
     body('courtId').optional().isString().withMessage('Court ID must be a string'),
     body('startTime').isISO8601().withMessage('Valid start time is required'),

@@ -106,10 +106,14 @@ export class GameCreateService {
     
     const cityTimezone = await getUserTimezoneFromCityId(cityId);
     
+    const gameType = entityType === EntityType.TRAINING 
+      ? (data.gameType || 'CLASSIC')
+      : data.gameType;
+    
     const createdGame = await prisma.game.create({
       data: {
         entityType: entityType,
-        gameType: data.gameType,
+        gameType: gameType,
         name: data.name,
         description: data.description,
         avatar: data.avatar,
