@@ -57,19 +57,21 @@ export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditG
       const updateData: Partial<Game> = {
         name: name.trim() || null,
         description: description.trim() || null,
-        gameType: gameType,
       };
 
-      const gameTypeChanged = gameType !== game.gameType;
-      if (gameTypeChanged) {
-        const template = applyGameTypeTemplate(gameType);
-        updateData.winnerOfMatch = template.winnerOfMatch;
-        updateData.matchGenerationType = template.matchGenerationType;
-        updateData.pointsPerWin = template.pointsPerWin ?? 0;
-        updateData.pointsPerLoose = template.pointsPerLoose ?? 0;
-        updateData.pointsPerTie = template.pointsPerTie ?? 0;
-        updateData.ballsInGames = template.ballsInGames ?? false;
-        updateData.fixedNumberOfSets = template.fixedNumberOfSets ?? 0;
+      if (game.entityType !== 'TRAINING') {
+        updateData.gameType = gameType;
+        const gameTypeChanged = gameType !== game.gameType;
+        if (gameTypeChanged) {
+          const template = applyGameTypeTemplate(gameType);
+          updateData.winnerOfMatch = template.winnerOfMatch;
+          updateData.matchGenerationType = template.matchGenerationType;
+          updateData.pointsPerWin = template.pointsPerWin ?? 0;
+          updateData.pointsPerLoose = template.pointsPerLoose ?? 0;
+          updateData.pointsPerTie = template.pointsPerTie ?? 0;
+          updateData.ballsInGames = template.ballsInGames ?? false;
+          updateData.fixedNumberOfSets = template.fixedNumberOfSets ?? 0;
+        }
       }
 
       await gamesApi.update(game.id, updateData);
@@ -125,37 +127,39 @@ export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditG
         </div>
 
         <div className="overflow-y-auto flex-1 p-6 space-y-4">
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {gameTypeLabel}
-              </span>
-              <div className="flex-shrink-0 w-40">
-                <Select
-                  options={
-                    game?.entityType === 'GAME'
-                      ? [
-                          { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                          { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                          { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                          { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                        ]
-                      : [
-                          { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                          { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                          { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                          { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
-                          { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
-                          { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                        ]
-                  }
-                  value={gameType}
-                  onChange={(value) => setGameType(value as GameType)}
-                  disabled={false}
-                />
+          {game.entityType !== 'TRAINING' && (
+            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                  {gameTypeLabel}
+                </span>
+                <div className="flex-shrink-0 w-40">
+                  <Select
+                    options={
+                      game?.entityType === 'GAME'
+                        ? [
+                            { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                            { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                            { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
+                            { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                          ]
+                        : [
+                            { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
+                            { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
+                            { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
+                            { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
+                            { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
+                            { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
+                          ]
+                    }
+                    value={gameType}
+                    onChange={(value) => setGameType(value as GameType)}
+                    disabled={false}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
