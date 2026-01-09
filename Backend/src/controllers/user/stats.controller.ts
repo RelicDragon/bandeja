@@ -3,39 +3,38 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
+import { USER_SELECT_FIELDS, PROFILE_SELECT_FIELDS } from '../../utils/constants';
+import { ParticipantRole } from '@prisma/client';
+import { BasicUser } from '../../types/user.types';
+
+type ParticipantWithUser = {
+  id: string;
+  userId: string;
+  role: ParticipantRole;
+  isPlaying: boolean;
+  joinedAt: Date;
+  stats: any;
+  user: BasicUser;
+};
 
 export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { userId } = req.params;
   
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      originalAvatar: true,
-      level: true,
-      socialLevel: true,
-      gender: true,
-      reliability: true,
-      isAdmin: true,
-      isTrainer: true,
-      totalPoints: true,
-      gamesPlayed: true,
-      gamesWon: true,
-      createdAt: true,
-      preferredHandLeft: true,
-      preferredHandRight: true,
-      preferredCourtSideLeft: true,
-      preferredCourtSideRight: true,
-      telegramId: true,
-      telegramUsername: true,
-    },
+    select: PROFILE_SELECT_FIELDS,
   });
 
   if (!user) {
     throw new ApiError(404, 'User not found');
+  }
+
+  let approvedByUser = null;
+  if (user.approvedById) {
+    approvedByUser = await prisma.user.findUnique({
+      where: { id: user.approvedById },
+      select: USER_SELECT_FIELDS,
+    });
   }
 
   const thirtyDaysAgo = new Date();
@@ -166,6 +165,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
       user: {
         ...user,
         isFavorite: !!isFavorite,
+        approvedBy: approvedByUser,
       },
       levelHistory: levelHistory.reverse(),
       gamesLast30Days,
@@ -190,13 +190,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
 
   const otherUser = await prisma.user.findUnique({
     where: { id: otherUserId },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      level: true,
-    },
+    select: USER_SELECT_FIELDS,
   });
 
   if (!otherUser) {
@@ -223,13 +217,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
           participants: {
             include: {
               user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  avatar: true,
-                  level: true,
-                },
+                select: USER_SELECT_FIELDS,
               },
             },
           },
@@ -394,10 +382,10 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
 
     if (playedAgainst) {
       const currentUserParticipant = game.participants.find(
-        (p: any) => p.userId === currentUserId && p.isPlaying === true
+        (p: ParticipantWithUser) => p.userId === currentUserId && p.isPlaying === true
       );
       const otherUserParticipant = game.participants.find(
-        (p: any) => p.userId === otherUserId && p.isPlaying === true
+        (p: ParticipantWithUser) => p.userId === otherUserId && p.isPlaying === true
       );
 
       if (currentUserParticipant && otherUserParticipant) {
@@ -418,20 +406,14 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
         hasFixedTeams: game.hasFixedTeams,
         genderTeams: game.genderTeams,
         photosCount: game.photosCount || 0,
-        participants: game.participants.map((p: any) => ({
+        participants: game.participants.map((p: ParticipantWithUser) => ({
           id: p.id,
           userId: p.userId,
           role: p.role,
           isPlaying: p.isPlaying,
           joinedAt: p.joinedAt,
           stats: p.stats,
-          user: p.user ? {
-            id: p.user.id,
-            firstName: p.user.firstName,
-            lastName: p.user.lastName,
-            avatar: p.user.avatar,
-            level: p.user.level,
-          } : null,
+          user: p.user,
         })),
         club: game.club ? {
           id: game.club.id,

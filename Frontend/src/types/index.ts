@@ -24,6 +24,8 @@ export interface BasicUser {
   level: number;
   socialLevel: number;
   gender: Gender;
+  approvedLevel: boolean;
+  isTrainer: boolean;
 }
 
 export interface User extends BasicUser {
@@ -39,12 +41,14 @@ export interface User extends BasicUser {
   totalPoints: number;
   gamesPlayed: number;
   gamesWon: number;
+  approvedById?: string | null;
+  approvedWhen?: Date | string | null;
+  approvedBy?: BasicUser | null;
   language?: string; // Full locale (e.g., "en-US", "ru-RU") or "auto"
   timeFormat?: 'auto' | '12h' | '24h';
   weekStart?: 'auto' | 'monday' | 'sunday';
   genderIsSet?: boolean;
   isAdmin?: boolean;
-  isTrainer?: boolean;
   canCreateTournament?: boolean;
   canCreateLeague?: boolean;
   preferredHandLeft?: boolean;

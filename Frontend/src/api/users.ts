@@ -32,13 +32,7 @@ export interface UserStats {
 }
 
 export interface PlayerComparison {
-  otherUser: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    avatar?: string;
-    level: number;
-  };
+  otherUser: BasicUser;
   gamesTogether: {
     total: number;
     wins: number;
@@ -75,13 +69,7 @@ export interface PlayerComparison {
       isPlaying: boolean;
       joinedAt: string;
       stats?: any;
-      user: {
-        id: string;
-        firstName?: string;
-        lastName?: string;
-        avatar?: string;
-        level: number;
-      } | null;
+      user: BasicUser;
     }>;
     club?: {
       id: string;

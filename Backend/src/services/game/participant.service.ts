@@ -6,6 +6,7 @@ import { JoinQueueService } from './joinQueue.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
 import { InviteService } from '../invite.service';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class ParticipantService {
   static async joinGame(gameId: string, userId: string) {
@@ -77,11 +78,7 @@ export class ParticipantService {
       },
       include: {
         user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          select: USER_SELECT_FIELDS,
         },
       },
     });
@@ -166,11 +163,7 @@ export class ParticipantService {
       },
       include: {
         user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          select: USER_SELECT_FIELDS,
         },
       },
     });

@@ -5,6 +5,7 @@ import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { GameService } from './game/game.service';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { canAddPlayerToGame } from '../utils/participantValidation';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export interface InviteActionResult {
   success: boolean;
@@ -55,18 +56,10 @@ export class InviteService {
       where: { id: inviteId },
       include: {
         sender: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          select: USER_SELECT_FIELDS,
         },
         receiver: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          select: USER_SELECT_FIELDS,
         },
         game: {
           include: {
@@ -208,11 +201,7 @@ export class InviteService {
       where: { id: inviteId },
       include: {
         receiver: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          select: USER_SELECT_FIELDS,
         },
       },
     });

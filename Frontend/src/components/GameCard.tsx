@@ -209,11 +209,13 @@ export const GameCard = ({
 
   return (
     <Card
-      className={`hover:shadow-md hover:scale-[1.02] active:scale-[1.05] transition-all duration-300 ease-in-out cursor-pointer relative ${getEntityGradient()}`}
+      className={`hover:shadow-md hover:scale-[1.02] 
+        active:scale-[1.05] transition-all duration-300 ease-in-out 
+        cursor-pointer relative pb-0 ${getEntityGradient()}`}
       onClick={handleCardClick}
     >
       {game.entityType !== 'GAME' && (
-        <div className="absolute bottom-2 right-2 z-0 pointer-events-none">
+        <div className="absolute top-10 right-2 z-0 pointer-events-none">
           {getEntityIcon()}
         </div>
       )}
@@ -745,8 +747,8 @@ export const GameCard = ({
           </div>
         </div>
 
-        {showJoinButton && onJoin && game.status !== 'ARCHIVED' && game.resultsStatus === 'NONE' && (
-          <div className="mt-4">
+        {showJoinButton && onJoin && game.status !== 'ARCHIVED' && game.resultsStatus === 'NONE' && game.entityType !== 'LEAGUE' && (
+          <div className="mt-0 mb-4">
             <Button
               onClick={(e) => onJoin(game.id, e)}
               className="w-full"

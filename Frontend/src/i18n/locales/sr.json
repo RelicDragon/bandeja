@@ -177,6 +177,7 @@
     "sendInvite": "Пошаљи позив",
     "inviteMessage": "Порука позива",
     "joinQueue": "Листа чекања",
+    "joinTheQueue": "Придружи се реду",
     "wantsToJoin": "Жели да се придружи",
     "inQueue": "Налазите се на листи чекања. Чека се одобравање...",
     "addedToJoinQueue": "Додато на листу чекања",
@@ -506,7 +507,8 @@
     "userBlocked": "Корисник је блокиран",
     "userUnblocked": "Корисник је деблокиран",
     "userBlockedCannotChat": "Корисник је блокиран",
-    "userBlockedCannotFavorite": "Корисник је блокиран"
+    "userBlockedCannotFavorite": "Корисник је блокиран",
+    "confirmedBy": "Ниво је потврђен"
   },
   "contacts": {
     "searchPlaceholder": "Претражи контакте...",

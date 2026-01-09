@@ -1,4 +1,4 @@
-import { X, User, Crown, Beer } from 'lucide-react';
+import { X, User, Crown, Beer, Check, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BasicUser } from '@/types';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
@@ -184,11 +184,37 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
           )}
           {!extrasmall && <GenderIndicator gender={player.gender} layout={smallLayout ? 'small' : 'normal'} position="bottom-left" />}
           {appMode === 'PADEL' ? (
-            <div 
-              className={`absolute -bottom-1 -right-1 ${sizeClasses.level} rounded-full flex items-center justify-center text-white ${sizeClasses.level.includes('w-4') ? 'text-[8px]' : sizeClasses.level.includes('w-5') ? 'text-[10px]' : 'text-xs font-bold border-2'} border-white dark:border-gray-900`}
-              style={getLevelColor(player.level, isDark)}
-            >
-              {player.level.toFixed(1)}
+            <div className="absolute -bottom-1 -right-2">
+              {player.approvedLevel ? (
+                <div 
+                  className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1 shadow-lg ring-4 ring-blue-300 dark:ring-blue-500 ring-offset-white dark:ring-offset-gray-900 ring-offset-1`}
+                  style={{
+                    ...getLevelColor(player.level, isDark),
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                  }}
+                >
+                  <span 
+                    className={`text-white font-bold leading-none ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'}`}
+                  >
+                    {player.level.toFixed(1)}
+                  </span>
+                  <Check 
+                    size={extrasmall ? 7 : smallLayout ? 9 : 12} 
+                    className="text-white" 
+                    strokeWidth={3}
+                  />
+                </div>
+              ) : (
+                <div 
+                  className={`relative ${sizeClasses.level} rounded-full flex items-center justify-center text-white ${sizeClasses.level.includes('w-4') ? 'text-[8px]' : sizeClasses.level.includes('w-5') ? 'text-[10px]' : 'text-xs font-bold border-2'} border-white dark:border-gray-900`}
+                  style={{
+                    ...getLevelColor(player.level, isDark),
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                  }}
+                >
+                  {player.level.toFixed(1)}
+                </div>
+              )}
             </div>
           ) : (
             <div className="absolute -bottom-1 -right-1 flex flex-col items-center">
@@ -219,6 +245,16 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
           >
             <X size={sizeClasses.removeIcon} className="text-white" />
           </button>
+        )}
+        {(!removable || !onRemoveClick) && player.isTrainer && (
+          <div
+            className={`absolute -top-1 -right-1 ${sizeClasses.remove} rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center border-2 border-white dark:border-gray-900 z-10`}
+            style={{
+              boxShadow: '0 4px 10px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)'
+            }}
+          >
+            <Dumbbell size={sizeClasses.removeIcon} className="text-white" />
+          </div>
         )}
       </div>
       {!fullHideName && (

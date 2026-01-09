@@ -177,6 +177,7 @@
     "sendInvite": "Отправить приглашение",
     "inviteMessage": "Сообщение с приглашением",
     "joinQueue": "Лист ожидания",
+    "joinTheQueue": "Встать в очередь",
     "wantsToJoin": "Хочет присоединиться",
     "inQueue": "Вы в списке ожидания. Ожидайте одобрения...",
     "addedToJoinQueue": "Добавлено в список ожидания",
@@ -512,7 +513,8 @@
     "userBlocked": "Пользователь заблокирован",
     "userUnblocked": "Пользователь разблокирован",
     "userBlockedCannotChat": "Пользователь заблокирован",
-    "userBlockedCannotFavorite": "Пользователь заблокирован"
+    "userBlockedCannotFavorite": "Пользователь заблокирован",
+    "confirmedBy": "Уровень подтвержден"
   },
   "contacts": {
     "searchPlaceholder": "Поиск контактов...",

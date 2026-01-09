@@ -197,7 +197,7 @@ export const PlayersCarousel = ({
           onTouchEnd={autoHideNames ? handlePressEnd : undefined}
           onTouchCancel={autoHideNames ? handlePressEnd : undefined}
         >
-          <div className="flex gap-2 pt-1 pb-1">
+          <div className="flex gap-2 pt-1 pb-4">
             {participants.map((participant) => {
               const showName = autoHideNames ? ((isMobile && isScrolling) || isPressed) : undefined;
               const unreadCount = participantUnreadCounts?.[participant.userId] ?? unreadCounts[participant.userId] ?? 0;

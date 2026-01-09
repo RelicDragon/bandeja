@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, Beer, Star, ArrowLeft, Send, MessageCircle, Ban, Check, LineChart } from 'lucide-react';
+import { X, Beer, Star, ArrowLeft, Send, MessageCircle, Ban, Check, LineChart, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
@@ -311,7 +311,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
-          className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl max-h-[75vh] overflow-hidden"
+          className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl max-h-[75vh] overflow-hidden max-w-[428px] mx-auto"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -565,11 +565,24 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, g
                 {initials}
               </div>
             )}
-            <div className="absolute -bottom-1 -left-4">
-              <GenderIndicator gender={user.gender} layout="big" position="bottom-left" />
-            </div>
           </div>
           <div className="text-left text-white">
+            {(user.isTrainer || user.gender) && (
+              <div className="mb-2 flex items-center gap-2">
+                {user.isTrainer && (
+                  <div 
+                    className="bg-blue-500 dark:bg-blue-600 text-white px-3 py-1 rounded-full font-semibold text-sm flex items-center gap-1.5 border-2 border-white dark:border-gray-900 w-fit"
+                    style={{
+                      boxShadow: '0 6px 15px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2)'
+                    }}
+                  >
+                    <Dumbbell size={14} className="text-white" />
+                    <span>{t('playerCard.isTrainer')}</span>
+                  </div>
+                )}
+                <GenderIndicator gender={user.gender} layout="big" position="bottom-left" />
+              </div>
+            )}
             <h2 className="text-2xl font-bold">
               {user.firstName}
               {isBlocked && (
@@ -583,33 +596,34 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, g
                 {user.lastName}
               </h3>
             )}
-            <button
-              onClick={onLevelClick}
-              className="mt-2 bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors cursor-pointer"
-            >
-              <span>{user.level.toFixed(2)}</span>
-              <span>•</span>
-              <div className="relative flex items-center">
-                <Beer
-                  size={14}
-                  className="text-amber-600 dark:text-amber-500 absolute"
-                  fill="currentColor"
-                />
-                <Beer
-                  size={14}
-                  className="text-white dark:text-gray-900 relative z-10"
-                  strokeWidth={1.5}
-                />
-              </div>
-              <span>{user.socialLevel.toFixed(2)}</span>
-            </button>
+            <div className="mt-2 flex items-center gap-0">
+              <button
+                onClick={onLevelClick}
+                className="bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors cursor-pointer"
+              >
+
+              {user.approvedLevel && (
+                <Check size={14} className="text-white" strokeWidth={3} />
+              )}
+                <span>{user.level.toFixed(2)}</span>
+                <span>•</span>
+                <div className="relative flex items-center">
+                  <Beer
+                    size={14}
+                    className="text-amber-600 dark:text-amber-500 absolute"
+                    fill="currentColor"
+                  />
+                  <Beer
+                    size={14}
+                    className="text-white dark:text-gray-900 relative z-10"
+                    strokeWidth={1.5}
+                  />
+                </div>
+                <span>{user.socialLevel.toFixed(2)}</span>
+              </button>
+            </div>
           </div>
         </div>
-        {user.isTrainer && (
-          <div className="absolute top-3 left-3 bg-green-500 dark:bg-green-600 text-white px-3 py-1 rounded-full font-semibold text-sm shadow-lg">
-            {t('playerCard.isTrainer')}
-          </div>
-        )}
         {hasTelegram && (
           <button
             onClick={onTelegramClick}

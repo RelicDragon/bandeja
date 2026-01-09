@@ -144,6 +144,16 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
+        {!isParticipant && !hasUnoccupiedSlots && myInvites.length === 0 && !isInJoinQueue && (
+          <Button
+            onClick={onJoin}
+            size="lg"
+            className="w-full flex items-center justify-center"
+          >
+            <UserPlus size={20} className="mr-2" />
+            {t('games.joinTheQueue')}
+          </Button>
+        )}
         {isInJoinQueue && (
           <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <p className="text-sm text-gray-700 dark:text-gray-300">

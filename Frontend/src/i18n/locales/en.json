@@ -176,6 +176,7 @@
     "sendInvite": "Send Invite",
     "inviteMessage": "Invitation Message",
     "joinQueue": "Waiting List",
+    "joinTheQueue": "Join the queue",
     "wantsToJoin": "Wants to join",
     "inQueue": "You are in the waiting list. Waiting for approval...",
     "addedToJoinQueue": "Added to join queue",
@@ -509,7 +510,8 @@
     "userBlocked": "User blocked",
     "userUnblocked": "User unblocked",
     "userBlockedCannotChat": "User is blocked",
-    "userBlockedCannotFavorite": "User is blocked"
+    "userBlockedCannotFavorite": "User is blocked",
+    "confirmedBy": "Level was confirmed"
   },
   "contacts": {
     "searchPlaceholder": "Search contacts...",

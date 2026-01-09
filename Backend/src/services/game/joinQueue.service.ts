@@ -8,6 +8,7 @@ import { canAddPlayerToGame } from '../../utils/participantValidation';
 import { InviteService } from '../invite.service';
 import notificationService from '../notification.service';
 import { ChatType } from '@prisma/client';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class JoinQueueService {
   static async addToQueue(gameId: string, userId: string) {
@@ -35,11 +36,7 @@ export class JoinQueueService {
 
       const queueUser = await prisma.user.findUnique({
         where: { id: userId },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
+        select: USER_SELECT_FIELDS,
       });
 
       const game = await prisma.game.findUnique({
@@ -134,11 +131,7 @@ export class JoinQueueService {
 
     const queueUser = await prisma.user.findUnique({
       where: { id: queueUserId },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-      },
+      select: USER_SELECT_FIELDS,
     });
 
     const existingParticipant = await prisma.gameParticipant.findFirst({
@@ -256,11 +249,7 @@ export class JoinQueueService {
 
     const queueUser = await prisma.user.findUnique({
       where: { id: queueUserId },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-      },
+      select: USER_SELECT_FIELDS,
     });
 
     await prisma.joinQueue.delete({

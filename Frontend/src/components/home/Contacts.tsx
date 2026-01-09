@@ -35,7 +35,7 @@ export const Contacts = () => {
     fetchPlayers,
     fetchUserChats,
     fetchUnreadCounts,
-    getUserWithMetadata,
+    getUserMetadata,
     getUnreadCountByUserId,
   } = usePlayersStore();
 
@@ -80,7 +80,6 @@ export const Contacts = () => {
       }
 
       const unreadCount = getUnreadCountByUserId(otherUserId);
-      const userData = getUserWithMetadata(otherUserId);
       const favorite = favoriteUserIds.includes(otherUserId);
 
       if (showChatFilter && unreadCount === 0) {
@@ -88,12 +87,13 @@ export const Contacts = () => {
       }
 
       const otherUser = chat.user1Id === user?.id ? chat.user2 : chat.user1;
+      const metadata = getUserMetadata(otherUserId);
       const contact: ContactItem = {
         type: 'user',
         userId: otherUserId,
         chat,
         unreadCount,
-        interactionCount: userData?.interactionCount || 0,
+        interactionCount: metadata?.interactionCount || 0,
         isFavorite: favorite,
         user: otherUser
       };
@@ -115,7 +115,7 @@ export const Contacts = () => {
         if (processedUserIds.has(userId) || userId === user?.id || blockedUserIds.includes(userId)) return;
 
         const favorite = favoriteUserIds.includes(userId);
-        const metadata = getUserWithMetadata(userId);
+        const metadata = getUserMetadata(userId);
         const contact: ContactItem = {
           type: 'user',
           userId,
@@ -155,7 +155,7 @@ export const Contacts = () => {
       ...favoriteNoUnread,
       ...others
     ];
-  }, [loading, chatsLoading, chats, users, user?.id, user?.blockedUserIds, showChatFilter, favoriteUserIds, getUnreadCountByUserId, getUserWithMetadata]);
+  }, [loading, chatsLoading, chats, users, user?.id, user?.blockedUserIds, showChatFilter, favoriteUserIds, getUnreadCountByUserId, getUserMetadata]);
 
 
   useEffect(() => {
@@ -233,7 +233,7 @@ export const Contacts = () => {
   }
 
   return (
-    <div className="mb-1">
+    <div className="-mb-4 -mt-2">
       <div 
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
           showSearch ? 'max-h-20 opacity-100 mb-3' : 'max-h-0 opacity-0'
@@ -273,7 +273,7 @@ export const Contacts = () => {
       <div className="relative flex items-center gap-2">
         <div
           onClick={handleSearchClick}
-          className={`flex-shrink-0 cursor-pointer hover:opacity-80 transition-all duration-300 ease-in-out overflow-hidden ${
+          className={`pb-4 flex-shrink-0 cursor-pointer hover:opacity-80 transition-all duration-300 ease-in-out overflow-hidden ${
             showSearch || (showChatFilter && hasUnreadContacts) ? 'w-0 opacity-0' : 'w-12 opacity-100'
           }`}
         >

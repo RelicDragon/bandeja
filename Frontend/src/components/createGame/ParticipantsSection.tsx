@@ -3,13 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Button, PlayerAvatar } from '@/components';
 import { BasicUser } from '@/types';
 import { EntityType } from '@/types';
-import { InvitablePlayer } from '@/api/users';
 
 interface ParticipantsSectionProps {
   participants: Array<string | null>;
   maxParticipants: number;
   invitedPlayerIds: string[];
-  invitedPlayers?: InvitablePlayer[];
+  invitedPlayers?: BasicUser[];
   user: BasicUser | null;
   entityType: EntityType;
   canInvitePlayers: boolean;

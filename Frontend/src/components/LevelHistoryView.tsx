@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, Beer } from 'lucide-react';
+import { TrendingUp, TrendingDown, Beer, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo } from 'react';
 import { UserStats, usersApi, LevelHistoryItem } from '@/api/users';
@@ -8,6 +8,8 @@ import { canUserSeeGame } from '@/utils/gameResults';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { LevelHistoryTabController } from './LevelHistoryTabController';
+import { PlayerAvatar } from './PlayerAvatar';
+import { formatDate, formatSmartRelativeTime } from '@/utils/dateFormat';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Dot } from 'recharts';
 
 const TennisBallIcon = () => (
@@ -35,6 +37,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
   const currentUser = useAuthStore((state) => state.user);
   const { setCurrentPage, setIsAnimating } = useNavigationStore();
   const { user } = stats;
+  const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const [showSocialLevel, setShowSocialLevel] = useState(false);
   const [isToggleAnimating, setIsToggleAnimating] = useState(false);
   const [showingPrivateMessage, setShowingPrivateMessage] = useState<string | null>(null);
@@ -118,7 +121,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
     return currentHistory.map((item, index) => ({
       index,
       level: item.levelAfter,
-      date: new Date(item.createdAt).toLocaleDateString(),
+      date: formatDate(item.createdAt, 'PP'),
       fullDate: item.createdAt,
     }));
   }, [currentHistory]);
@@ -126,7 +129,36 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
   return (
     <div className={`${padding} space-y-3`}>
       <div className="relative">
-        <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-4 text-center">
+        <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-4 text-center relative">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2">
+            {user.originalAvatar ? (
+              <button
+                className="cursor-pointer hover:opacity-90 transition-opacity"
+              >
+                {user.avatar ? (
+                  <img
+                    src={user.avatar || ''}
+                    alt={`${user.firstName} ${user.lastName}`}
+                    className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-4xl border-4 border-white dark:border-gray-800 shadow-xl">
+                    {initials}
+                  </div>
+                )}
+              </button>
+            ) : user.avatar ? (
+              <img
+                src={user.avatar || ''}
+                alt={`${user.firstName} ${user.lastName}`}
+                className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-4xl border-4 border-white dark:border-gray-800 shadow-xl">
+                {initials}
+              </div>
+            )}
+          </div>
           <div className="text-white text-sm mb-1">
             {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}
           </div>
@@ -152,6 +184,29 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
           )}
         </button>
       </div>
+
+      {!showSocialLevel && user.approvedLevel && user.approvedBy && (
+        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-2">
+          <div className="flex flex-col items-center gap-2">
+            <div className="bg-yellow-500 dark:bg-yellow-600 text-white px-2 py-0.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-2">
+              <Check size={14} className="text-white" strokeWidth={3} />
+              <span>{t('playerCard.confirmedBy') || 'Level was confirmed by'}</span>
+            </div>
+            <div className="flex items-center justify-center -mt-2 gap-2 text-gray-700 dark:text-gray-300 text-sm">
+              <PlayerAvatar player={user.approvedBy} showName={false} fullHideName={true} extrasmall={true} />
+              <span className="font-medium pl-2">{user.approvedBy.firstName} {user.approvedBy.lastName}</span>
+              {user.approvedWhen && (
+                <>
+                  <span className="text-gray-500 dark:text-gray-500">•</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {formatSmartRelativeTime(user.approvedWhen, t)}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {currentHistory.length > 0 ? (
         <>
@@ -297,7 +352,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {new Date(item.createdAt).toLocaleDateString()}
+                          {formatDate(item.createdAt, 'PP')}
                         </span>
                         {item.eventType && (
                           <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">

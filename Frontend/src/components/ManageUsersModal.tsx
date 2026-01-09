@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X, Crown, Shield, User, UserX, ArrowRightLeft } from 'lucide-react';
@@ -17,6 +17,8 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
   const user = useAuthStore((state) => state.user);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const selectedItemRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -24,6 +26,18 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
       document.body.style.overflow = '';
     };
   }, []);
+
+  useEffect(() => {
+    if (selectedUserId && selectedItemRef.current && scrollContainerRef.current) {
+      setTimeout(() => {
+        selectedItemRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'nearest',
+        });
+      }, 100);
+    }
+  }, [selectedUserId]);
 
   const currentUserParticipant = game.participants.find(p => p.userId === user?.id);
   const isOwner = currentUserParticipant?.role === 'OWNER';
@@ -109,16 +123,19 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
           </button>
         </div>
 
-        <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+        <div ref={scrollContainerRef} className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
           {participants.map((participant) => {
             const roleTag = getRoleTag(participant.role);
             const isSelected = selectedUserId === participant.userId;
             const actions = getAvailableActions(participant);
 
             return (
-              <div key={participant.userId} className={`transition-all duration-300 ${
-                selectedUserId && !isSelected ? 'blur-sm opacity-50' : ''
-              }`}>
+              <div 
+                key={participant.userId} 
+                ref={isSelected ? (el) => { selectedItemRef.current = el; } : null}
+                className={`transition-all duration-300 ${
+                  selectedUserId && !isSelected ? 'blur-sm opacity-50' : ''
+                }`}>
                 <div
                   onClick={() => setSelectedUserId(isSelected ? null : participant.userId)}
                   className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 ${
@@ -131,6 +148,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
                     player={participant.user}
                     showName={false}
                     smallLayout={true}
+                    fullHideName={true}
                     role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
                   />
                   <div className="flex-1 min-w-0">

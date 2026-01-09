@@ -6,10 +6,9 @@ import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, Locat
 import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
-import { InvitablePlayer } from '@/api/users';
 import { gameCourtsApi } from '@/api/gameCourts';
 import { mediaApi } from '@/api/media';
-import { Club, Court, EntityType, GameType, PriceType, PriceCurrency, Game } from '@/types';
+import { Club, Court, EntityType, GameType, PriceType, PriceCurrency, Game, BasicUser } from '@/types';
 import { addHours } from 'date-fns';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { useGameTimeDuration, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
@@ -76,7 +75,7 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
   const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>([]);
-  const [invitedPlayers, setInvitedPlayers] = useState<InvitablePlayer[]>([]);
+  const [invitedPlayers, setInvitedPlayers] = useState<BasicUser[]>([]);
   
   const {
     selectedDate,
@@ -658,19 +657,11 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
           onConfirm={async (playerIds: string[]) => {
             setInvitedPlayerIds(playerIds);
             try {
-              const { fetchPlayers, users, getUserWithMetadata } = usePlayersStore.getState();
+              const { fetchPlayers, users } = usePlayersStore.getState();
               await fetchPlayers();
-              const selectedPlayers: InvitablePlayer[] = playerIds
-                .map(id => {
-                  const user = users[id];
-                  if (!user) return null;
-                  const metadata = getUserWithMetadata(id);
-                  return {
-                    ...user,
-                    interactionCount: metadata?.interactionCount || 0,
-                  } as InvitablePlayer;
-                })
-                .filter((p): p is InvitablePlayer => p !== null);
+              const selectedPlayers = playerIds
+                .map(id => users[id])
+                .filter((p): p is BasicUser => p !== undefined);
               setInvitedPlayers(selectedPlayers);
             } catch (error) {
               console.error('Failed to fetch invited players data:', error);

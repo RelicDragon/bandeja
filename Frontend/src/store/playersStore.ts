@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { chatApi, UserChat } from '@/api/chat';
-import { usersApi, InvitablePlayer } from '@/api/users';
+import { usersApi } from '@/api/users';
 import { useAuthStore } from './authStore';
 import { BasicUser } from '@/types';
 import type { NewUserChatMessage, UserChatReadReceipt } from '@/services/socketService';
@@ -18,6 +18,7 @@ interface UsersState {
   users: Record<string, BasicUser>;
   metadata: Record<string, UserMetadata>;
   chats: Record<string, UserChat>;
+  userIdToChatId: Record<string, string>;
   unreadCounts: Record<string, number>;
   loading: boolean;
   chatsLoading: boolean;
@@ -38,6 +39,7 @@ interface UsersState {
   getChatById: (chatId: string) => UserChat | undefined;
   getUnreadCount: (chatId: string) => number;
   getUnreadCountByUserId: (userId: string) => number;
+  getUnreadUserChatsCount: () => number;
   updateUnreadCount: (chatId: string, count: number | ((current: number) => number)) => void;
   markChatAsRead: (chatId: string) => void;
   
@@ -132,6 +134,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
   users: {},
   metadata: {},
   chats: {},
+  userIdToChatId: {},
   unreadCounts: {},
   loading: false,
   chatsLoading: false,
@@ -203,19 +206,17 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
 
   incrementInteractionCount: (userId: string) => {
     set((state) => {
-      const currentMetadata = state.metadata[userId] || {
-        interactionCount: 0,
-        lastFetchedAt: Date.now(),
-      };
+      const currentMetadata = state.metadata[userId];
+      const currentCount = currentMetadata?.interactionCount || 0;
       
       return {
         metadata: {
           ...state.metadata,
-          [userId]: {
-            ...currentMetadata,
-            interactionCount: currentMetadata.interactionCount + 1,
+          [userId]: createDefaultMetadata({
+            ...state.metadata[userId],
+            interactionCount: currentCount + 1,
             lastInteractionAt: Date.now(),
-          },
+          }),
         },
       };
     });
@@ -223,28 +224,31 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
 
   getChatByUserId: (userId: string) => {
     const state = get();
-    const currentUserId = useAuthStore.getState().user?.id;
-    if (!currentUserId) return undefined;
-
-    return Object.values(state.chats).find(
-      (chat) =>
-        (chat.user1Id === currentUserId && chat.user2Id === userId) ||
-        (chat.user1Id === userId && chat.user2Id === currentUserId)
-    );
+    const chatId = state.userIdToChatId[userId];
+    if (!chatId) return undefined;
+    return state.chats[chatId];
   },
 
   getChatById: (chatId: string) => {
-    return get().chats[chatId];
+    const state = get();
+    return state.chats[chatId];
   },
 
   getUnreadCount: (chatId: string) => {
-    return get().unreadCounts[chatId] || 0;
+    const state = get();
+    return state.unreadCounts[chatId] || 0;
   },
 
   getUnreadCountByUserId: (userId: string) => {
-    const chat = get().getChatByUserId(userId);
-    if (!chat) return 0;
-    return get().unreadCounts[chat.id] || 0;
+    const state = get();
+    const chatId = state.userIdToChatId[userId];
+    if (!chatId) return 0;
+    return state.unreadCounts[chatId] || 0;
+  },
+
+  getUnreadUserChatsCount: () => {
+    const state = get();
+    return Object.values(state.unreadCounts).filter(count => count > 0).length;
   },
 
   updateUnreadCount: (chatId: string, count: number | ((current: number) => number)) => {
@@ -287,34 +291,16 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       const response = await usersApi.getInvitablePlayers();
       const players = response.data || [];
 
-      const basicUsers: BasicUser[] = players.map((p: InvitablePlayer) => ({
-        id: p.id,
-        firstName: p.firstName,
-        lastName: p.lastName,
-        avatar: p.avatar,
-        level: p.level,
-        socialLevel: p.socialLevel,
-        gender: p.gender,
-      }));
-
-      const interactionMetadata: Record<string, Partial<UserMetadata>> = {};
-      players.forEach((p: InvitablePlayer) => {
-        if (p.interactionCount > 0) {
-          interactionMetadata[p.id] = { interactionCount: p.interactionCount };
-        }
-      });
-
       set((currentState) => {
         const newUsers: Record<string, BasicUser> = {};
         const newMetadata: Record<string, UserMetadata> = {};
-        const updateTime = Date.now();
 
-        basicUsers.forEach((user) => {
-          newUsers[user.id] = user;
-          newMetadata[user.id] = createDefaultMetadata({
-            ...currentState.metadata[user.id],
-            ...interactionMetadata[user.id],
-            lastFetchedAt: updateTime,
+        players.forEach((player) => {
+          newUsers[player.id] = player;
+          newMetadata[player.id] = createDefaultMetadata({
+            ...currentState.metadata[player.id],
+            ...(player.interactionCount > 0 && { interactionCount: player.interactionCount }),
+            lastFetchedAt: now,
           });
         });
 
@@ -351,9 +337,9 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       const chats = response.data || [];
 
       const chatsMap: Record<string, UserChat> = {};
+      const userIdToChatIdMap: Record<string, string> = {};
       const currentUserId = useAuthStore.getState().user?.id;
       const newUsers: Record<string, BasicUser> = {};
-      const updatedMetadata: Record<string, Partial<UserMetadata>> = {};
 
       chats.forEach((chat: UserChat) => {
         chatsMap[chat.id] = chat;
@@ -363,27 +349,25 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
 
         if (otherUser && otherUserId) {
           newUsers[otherUserId] = otherUser;
-
-          updatedMetadata[otherUserId] = {
-            ...updatedMetadata[otherUserId],
-            chatId: chat.id,
-          };
+          userIdToChatIdMap[otherUserId] = chat.id;
         }
       });
 
       set((currentState) => {
-        const finalMetadata: Record<string, UserMetadata> = { ...currentState.metadata };
-        Object.keys(updatedMetadata).forEach((userId) => {
-          finalMetadata[userId] = createDefaultMetadata({
+        const newMetadata: Record<string, UserMetadata> = { ...currentState.metadata };
+        
+        Object.keys(userIdToChatIdMap).forEach((userId) => {
+          newMetadata[userId] = createDefaultMetadata({
             ...currentState.metadata[userId],
-            ...updatedMetadata[userId],
+            chatId: userIdToChatIdMap[userId],
           });
         });
 
         return {
           users: { ...currentState.users, ...newUsers },
-          metadata: finalMetadata,
+          metadata: newMetadata,
           chats: chatsMap,
+          userIdToChatId: userIdToChatIdMap,
           lastChatsFetchTime: now,
           chatsLoading: false,
           isFetchingChats: false,
@@ -428,6 +412,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       users: {},
       metadata: {},
       chats: {},
+      userIdToChatId: {},
       unreadCounts: {},
       lastPlayersFetchTime: 0,
       lastChatsFetchTime: 0,

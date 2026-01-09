@@ -5,6 +5,7 @@ import {
   SOCIAL_PARTICIPANT_LEVEL,
   ROLE_MULTIPLIERS,
 } from '../socialLevelConstants';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 interface ExplanationData {
   userId: string;
@@ -82,10 +83,7 @@ export async function getOutcomeExplanation(
                     include: {
                       user: {
                         select: {
-                          id: true,
-                          firstName: true,
-                          lastName: true,
-                          level: true,
+                          ...USER_SELECT_FIELDS,
                           reliability: true,
                           gamesPlayed: true,
                         },
@@ -103,13 +101,9 @@ export async function getOutcomeExplanation(
         include: {
           user: {
             select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              level: true,
+              ...USER_SELECT_FIELDS,
               reliability: true,
               gamesPlayed: true,
-              socialLevel: true,
             },
           },
         },

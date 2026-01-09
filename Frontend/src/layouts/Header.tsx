@@ -16,6 +16,8 @@ import { GameSubscriptionsHeaderContent } from '@/components/headerContent/GameS
 import { GamesTabController } from '@/components/home/GamesTabController';
 import { Contacts } from '@/components/home/Contacts';
 import { getContactsVisibility, setContactsVisibility } from '@/utils/contactsVisibilityStorage';
+import { usePlayersStore } from '@/store/playersStore';
+import { useAuthStore } from '@/store/authStore';
 
 interface HeaderProps {
   showChatFilter?: boolean;
@@ -31,11 +33,16 @@ export const Header = ({
   const location = useLocation();
   const { pendingInvites, unreadMessages, isNewInviteAnimating, showChatFilter: globalShowChatFilter, setShowChatFilter, showContacts, setShowContacts, contactsHeight, setContactsHeight } = useHeaderStore();
   const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications, bugsButtonSlidingUp, bugsButtonSlidingDown, setBugsButtonSlidingUp, setBugsButtonSlidingDown, activeTab, setActiveTab } = useNavigationStore();
+  const user = useAuthStore((state) => state.user);
+  const getUnreadUserChatsCount = usePlayersStore((state) => state.getUnreadUserChatsCount);
+  const fetchUnreadCounts = usePlayersStore((state) => state.fetchUnreadCounts);
+  const fetchUserChats = usePlayersStore((state) => state.fetchUserChats);
   
   const isChatFilterActive = onChatFilterToggle ? showChatFilter : globalShowChatFilter;
   const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
 
   const previousPageRef = useRef(currentPage);
+  const previousTabRef = useRef(activeTab);
   const [contactsLoading, setContactsLoading] = useState(true);
   const contactsContainerRef = useRef<HTMLDivElement>(null);
   const contactsContentRef = useRef<HTMLDivElement>(null);
@@ -108,6 +115,14 @@ export const Header = ({
 
   const handleContactsToggle = async () => {
     const newVisibility = !showContacts;
+    
+    if (newVisibility && isChatFilterActive) {
+      const unreadUserChatsCount = getUnreadUserChatsCount();
+      if (unreadUserChatsCount === 0) {
+        return;
+      }
+    }
+    
     setShowContacts(newVisibility);
     try {
       await setContactsVisibility(newVisibility);
@@ -133,8 +148,31 @@ export const Header = ({
       }
     }
     
+    // Turn off contacts when navigating to another page
+    if (previousPage !== currentPage && showContacts) {
+      setShowContacts(false);
+      setContactsVisibility(false).catch((error) => {
+        console.error('Failed to save contacts visibility:', error);
+      });
+    }
+    
     previousPageRef.current = currentPage;
-  }, [currentPage, setBugsButtonSlidingDown, setShowChatFilter, onChatFilterToggle]);
+  }, [currentPage, setBugsButtonSlidingDown, setShowChatFilter, onChatFilterToggle, showContacts, setShowContacts]);
+
+  // Handle tab changes on home page
+  useEffect(() => {
+    const previousTab = previousTabRef.current;
+    
+    // Turn off contacts when switching tabs on home page
+    if (currentPage === 'home' && previousTab !== activeTab && showContacts) {
+      setShowContacts(false);
+      setContactsVisibility(false).catch((error) => {
+        console.error('Failed to save contacts visibility:', error);
+      });
+    }
+    
+    previousTabRef.current = activeTab;
+  }, [activeTab, currentPage, showContacts, setShowContacts]);
 
   const handleProfileClick = () => {
     setIsAnimating(true);
@@ -269,10 +307,22 @@ export const Header = ({
                     setTimeout(async () => {
                       setIsAnimating(false);
                       setShowChatFilter(true);
-                      if (unreadMessages > 0 && !showContacts) {
+                      if (user?.id) {
+                        await fetchUserChats();
+                        await fetchUnreadCounts();
+                      }
+                      const unreadUserChatsCount = getUnreadUserChatsCount();
+                      if (unreadUserChatsCount > 0 && !showContacts) {
                         setShowContacts(true);
                         try {
                           await setContactsVisibility(true);
+                        } catch (error) {
+                          console.error('Failed to save contacts visibility:', error);
+                        }
+                      } else if (unreadUserChatsCount === 0 && showContacts) {
+                        setShowContacts(false);
+                        try {
+                          await setContactsVisibility(false);
                         } catch (error) {
                           console.error('Failed to save contacts visibility:', error);
                         }
@@ -285,12 +335,26 @@ export const Header = ({
                     } else {
                       setShowChatFilter(!globalShowChatFilter);
                     }
-                    if (willBeActive && unreadMessages > 0 && !showContacts) {
-                      setShowContacts(true);
-                      try {
-                        await setContactsVisibility(true);
-                      } catch (error) {
-                        console.error('Failed to save contacts visibility:', error);
+                    if (willBeActive) {
+                      if (user?.id) {
+                        await fetchUserChats();
+                        await fetchUnreadCounts();
+                      }
+                      const unreadUserChatsCount = getUnreadUserChatsCount();
+                      if (unreadUserChatsCount > 0 && !showContacts) {
+                        setShowContacts(true);
+                        try {
+                          await setContactsVisibility(true);
+                        } catch (error) {
+                          console.error('Failed to save contacts visibility:', error);
+                        }
+                      } else if (unreadUserChatsCount === 0 && showContacts) {
+                        setShowContacts(false);
+                        try {
+                          await setContactsVisibility(false);
+                        } catch (error) {
+                          console.error('Failed to save contacts visibility:', error);
+                        }
                       }
                     }
                   }

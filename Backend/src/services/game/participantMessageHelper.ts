@@ -3,6 +3,7 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { GameService } from './game.service';
 import notificationService from '../notification.service';
+import { BasicUser } from '../../types/user.types';
 
 export class ParticipantMessageHelper {
   static async sendJoinMessage(gameId: string, userId: string, messageType = SystemMessageType.USER_JOINED_GAME) {
@@ -53,7 +54,7 @@ export class ParticipantMessageHelper {
     return null;
   }
 
-  static async sendLeaveMessage(gameId: string, user: any, messageType: SystemMessageType) {
+  static async sendLeaveMessage(gameId: string, user: BasicUser, messageType: SystemMessageType) {
     if (user) {
       const userName = getUserDisplayName(user.firstName, user.lastName);
       

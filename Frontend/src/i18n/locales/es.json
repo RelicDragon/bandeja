@@ -176,6 +176,7 @@
     "sendInvite": "Enviar invitación",
     "inviteMessage": "Mensaje de invitación",
     "joinQueue": "Lista de espera",
+    "joinTheQueue": "Unirse a la cola",
     "wantsToJoin": "Quiere unirse",
     "inQueue": "Estás en la lista de espera. Esperando aprobación...",
     "addedToJoinQueue": "Agregado a la lista de espera",
@@ -502,7 +503,8 @@
     "userBlocked": "Usuario bloqueado",
     "userUnblocked": "Usuario desbloqueado",
     "userBlockedCannotChat": "Usuario bloqueado",
-    "userBlockedCannotFavorite": "Usuario bloqueado"
+    "userBlockedCannotFavorite": "Usuario bloqueado",
+    "confirmedBy": "Nivel confirmado"
   },
   "contacts": {
     "searchPlaceholder": "Buscar contactos...",

@@ -1,9 +1,8 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { EntityType, LevelChangeEventType } from '@prisma/client';
-import { getUserTimezoneFromCityId } from './user-timezone.service';
 
-export async function finishTraining(gameId: string, userId: string): Promise<void> {
+export async function finishTraining(gameId: string, _userId: string): Promise<void> {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
   });
@@ -113,15 +112,27 @@ export async function updateParticipantLevel(
       },
     });
 
-    if (game.affectsRating) {
-      await tx.user.update({
-        where: { id: participantUserId },
-        data: {
-          level: levelAfter,
-          reliability: reliabilityAfter,
-        },
-      });
+    const updateData: {
+      level: number;
+      reliability: number;
+      approvedLevel?: boolean;
+      approvedById?: string;
+      approvedWhen?: Date;
+    } = {
+      level: levelAfter,
+      reliability: reliabilityAfter,
+    };
+
+    if (user.isTrainer || user.isAdmin) {
+      updateData.approvedLevel = true;
+      updateData.approvedById = userId;
+      updateData.approvedWhen = new Date();
     }
+
+    await tx.user.update({
+      where: { id: participantUserId },
+      data: updateData,
+    });
 
     await tx.gameOutcome.upsert({
       where: {
@@ -214,7 +225,7 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
   }
 
   await prisma.$transaction(async (tx) => {
-    if (game.affectsRating && game.outcomes.length > 0) {
+    if (game.outcomes.length > 0) {
       for (const outcome of game.outcomes) {
         await tx.user.update({
           where: { id: outcome.userId },

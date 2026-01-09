@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { X, Check, Search } from 'lucide-react';
-import { InvitablePlayer } from '@/api/users';
+import { BasicUser } from '@/types';
 import { invitesApi } from '@/api';
 import { gamesApi } from '@/api/games';
 import { usersApi } from '@/api/users';
@@ -38,8 +38,8 @@ export const PlayerListModal = ({
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
-  const { users, getUserWithMetadata, fetchPlayers } = usePlayersStore();
-  const [players, setPlayers] = useState<InvitablePlayer[]>([]);
+  const { users, getUserMetadata, fetchPlayers } = usePlayersStore();
+  const [players, setPlayers] = useState<BasicUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviting, setInviting] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>(preSelectedIds);
@@ -80,13 +80,6 @@ export const PlayerListModal = ({
         }
 
         const filtered = Object.values(users)
-          .map((user) => {
-            const metadata = getUserWithMetadata(user.id);
-            return {
-              ...user,
-              interactionCount: metadata?.interactionCount || 0,
-            } as InvitablePlayer;
-          })
           .filter((player) => {
             return !participantIds.has(player.id) && !invitedUserIds.has(player.id);
           });
@@ -99,7 +92,7 @@ export const PlayerListModal = ({
     };
 
     loadPlayers();
-  }, [gameId, fetchPlayers, users, getUserWithMetadata]);
+  }, [gameId, fetchPlayers, users]);
 
   const filteredPlayers = useMemo(() => {
     let filtered = players;
@@ -129,11 +122,13 @@ export const PlayerListModal = ({
       if (aIsFavorite && !bIsFavorite) return -1;
       if (!aIsFavorite && bIsFavorite) return 1;
       
-      return b.interactionCount - a.interactionCount;
+      const aInteractionCount = getUserMetadata(a.id)?.interactionCount || 0;
+      const bInteractionCount = getUserMetadata(b.id)?.interactionCount || 0;
+      return bInteractionCount - aInteractionCount;
     });
 
     return filtered.slice(0, 50);
-  }, [players, searchQuery, filterPlayerIds, filterGender, isFavorite]);
+  }, [players, searchQuery, filterPlayerIds, filterGender, isFavorite, getUserMetadata]);
 
   const handlePlayerClick = (playerId: string) => {
     if (multiSelect) {

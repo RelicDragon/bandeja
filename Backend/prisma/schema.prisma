@@ -43,6 +43,9 @@ model User {
   canCreateLeague            Boolean              @default(false)
   gender                     Gender               @default(PREFER_NOT_TO_SAY)
   genderIsSet                Boolean              @default(false)
+  approvedLevel               Boolean              @default(false)
+  approvedById                String?
+  approvedWhen                DateTime?
   sendTelegramMessages       Boolean              @default(true)
   sendTelegramInvites        Boolean              @default(true)
   sendTelegramDirectMessages Boolean              @default(true)
@@ -58,6 +61,8 @@ model User {
   messageReactions           MessageReaction[]
   messageReadReceipts        MessageReadReceipt[]
   currentCity                City?                @relation("UserCurrentCity", fields: [currentCityId], references: [id])
+  approvedBy                 User?                @relation("UserApprovedBy", fields: [approvedById], references: [id])
+  approvedUsers              User[]               @relation("UserApprovedBy")
   favoriteClubs              UserFavoriteClub[]
   favoriteUsers              UserFavoriteUser[]   @relation("UserFavorites")
   favoritedBy                UserFavoriteUser[]   @relation("UserFavoritedBy")
@@ -91,6 +96,7 @@ model User {
   @@index([currentCityId])
   @@index([level])
   @@index([totalPoints])
+  @@index([approvedById])
 }
 
 model LundaProfile {

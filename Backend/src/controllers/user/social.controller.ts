@@ -3,6 +3,8 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { BasicUser } from '../../types/user.types';
 
 export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.query;
@@ -69,27 +71,16 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
       isActive: true,
       currentCityId: cityId,
     },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      avatar: true,
-      level: true,
-      socialLevel: true,
-      gender: true,
-      isAdmin: true,
-      isTrainer: true,
-      telegramUsername: true,
-    },
+    select: USER_SELECT_FIELDS,
     take: 1000,
   });
 
-  const usersWithInteractions = users.map((user: any) => ({
+  const usersWithInteractions = users.map((user: BasicUser) => ({
     ...user,
     interactionCount: interactionMap.get(user.id) || 0,
   }));
 
-  usersWithInteractions.sort((a: any, b: any) => b.interactionCount - a.interactionCount);
+  usersWithInteractions.sort((a, b) => b.interactionCount - a.interactionCount);
 
   res.json({
     success: true,

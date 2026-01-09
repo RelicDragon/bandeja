@@ -32,13 +32,7 @@ export async function getGameResults(gameId: string) {
           outcomes: {
             include: {
               user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  avatar: true,
-                  level: true,
-                },
+                select: USER_SELECT_FIELDS,
               },
             },
           },
@@ -77,13 +71,7 @@ export async function getRoundResults(roundId: string) {
               players: {
                 include: {
                   user: {
-                    select: {
-                      id: true,
-                      firstName: true,
-                      lastName: true,
-                      avatar: true,
-                      level: true,
-                    },
+                    select: USER_SELECT_FIELDS,
                   },
                 },
               },
@@ -98,13 +86,7 @@ export async function getRoundResults(roundId: string) {
       outcomes: {
         include: {
           user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-              level: true,
-            },
+            select: USER_SELECT_FIELDS,
           },
         },
       },
@@ -127,13 +109,7 @@ export async function getMatchResults(matchId: string) {
           players: {
             include: {
               user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  avatar: true,
-                  level: true,
-                },
+                select: USER_SELECT_FIELDS,
               },
             },
           },

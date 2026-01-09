@@ -144,7 +144,7 @@ export const MyGamesSection = ({
         user={user}
         isInitiallyCollapsed={false}
         unreadCount={gamesUnreadCounts[game.id] || 0}
-        forceCollapsed={showChatFilter ? true : undefined}
+        forceCollapsed={showChatFilter ? false : undefined}
       />
     </div>
   );

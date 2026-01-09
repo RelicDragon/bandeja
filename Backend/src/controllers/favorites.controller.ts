@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export const addToFavorites = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { clubId } = req.body;
@@ -193,14 +194,7 @@ export const addUserToFavorites = asyncHandler(async (req: AuthRequest, res: Res
     },
     include: {
       favoriteUser: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatar: true,
-          level: true,
-          gender: true,
-        },
+        select: USER_SELECT_FIELDS,
       },
     },
   });

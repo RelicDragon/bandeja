@@ -4,6 +4,7 @@ import { WinnerOfGame, Prisma, EntityType } from '@prisma/client';
 import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
   const prismaClient = tx || prisma;
@@ -384,14 +385,7 @@ export async function recalculateGameOutcomes(gameId: string) {
                     players: {
                       include: {
                         user: {
-                          select: {
-                            id: true,
-                            firstName: true,
-                            lastName: true,
-                            avatar: true,
-                            level: true,
-                            socialLevel: true,
-                          },
+                          select: USER_SELECT_FIELDS,
                         },
                       },
                     },
@@ -403,13 +397,7 @@ export async function recalculateGameOutcomes(gameId: string) {
             outcomes: {
               include: {
                 user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    avatar: true,
-                    level: true,
-                  },
+                  select: USER_SELECT_FIELDS,
                 },
               },
             },
@@ -420,12 +408,7 @@ export async function recalculateGameOutcomes(gameId: string) {
           include: {
             user: {
               select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                socialLevel: true,
+                ...USER_SELECT_FIELDS,
                 reliability: true,
               },
             },

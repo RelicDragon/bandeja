@@ -150,42 +150,21 @@ export class MessageService {
           id: true,
           content: true,
           sender: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-              level: true,
-              gender: true
-            }
+            select: USER_SELECT_FIELDS
           }
         }
       },
       reactions: {
         include: {
           user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-              level: true,
-              gender: true
-            }
+            select: USER_SELECT_FIELDS
           }
         }
       },
       readReceipts: {
         include: {
           user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-              level: true,
-              gender: true
-            }
+            select: USER_SELECT_FIELDS
           }
         }
       }
