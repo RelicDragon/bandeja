@@ -33,8 +33,14 @@ export function createMessageHandler(
       
       try {
         const contextId = pendingReply.chatContextType === 'USER' 
-          ? pendingReply.userChatId! 
-          : pendingReply.gameId!;
+          ? pendingReply.userChatId 
+          : pendingReply.chatContextType === 'BUG'
+          ? pendingReply.bugId
+          : pendingReply.gameId;
+        
+        if (!contextId) {
+          throw new Error('Missing context ID for reply');
+        }
         
         await MessageService.createMessageWithEvent({
           chatContextType: pendingReply.chatContextType,
@@ -51,11 +57,21 @@ export function createMessageHandler(
         if (successMessage.message_id) {
           scheduleMessageDeletion(ctx.chat.id, successMessage.message_id, bot);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error sending reply:', error);
         pendingReplies.delete(telegramId);
         const lang = ctx.lang || await getUserLanguageFromTelegramId(telegramId, ctx.from?.language_code);
-        const errorMessage = await ctx.reply(t('telegram.authError', lang));
+        
+        let errorText: string;
+        if (error?.statusCode === 403) {
+          errorText = 'You do not have permission to reply to this chat.';
+        } else if (error?.statusCode === 404) {
+          errorText = 'Chat or message not found.';
+        } else {
+          errorText = t('telegram.authError', lang) || 'An error occurred. Please try again.';
+        }
+        
+        const errorMessage = await ctx.reply(errorText);
         if (errorMessage.message_id) {
           scheduleMessageDeletion(ctx.chat.id, errorMessage.message_id, bot);
         }

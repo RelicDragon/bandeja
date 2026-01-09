@@ -1,9 +1,11 @@
 import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { ChatContextType } from '@prisma/client';
-import { escapeMarkdown } from '../utils';
+import { t } from '../../../utils/translations';
+import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
+import { buildMessageWithButtons } from '../shared/message-builder';
 
 export async function sendBugChatNotification(
   api: Api,
@@ -96,7 +98,15 @@ export async function sendBugChatNotification(
       if (user && user.telegramId && user.sendTelegramMessages) {
         notifiedUserIds.add(userId);
         try {
-          await api.sendMessage(user.telegramId, formattedMessage, { parse_mode: 'Markdown' });
+          const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
+          const buttons = [[
+            {
+              text: t('telegram.reply', lang),
+              callback_data: `rbm:${message.id}:${bug.id}`
+            }
+          ]];
+          const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
+          await api.sendMessage(user.telegramId, finalMessage, options);
         } catch (error) {
           console.error(`Failed to send Telegram notification to mentioned user ${userId}:`, error);
         }
@@ -116,7 +126,15 @@ export async function sendBugChatNotification(
       const isMuted = await ChatMuteService.isChatMuted(bugCreator.id, ChatContextType.BUG, bug.id);
       if (!isMuted && bugCreator.telegramId && bugCreator.sendTelegramMessages) {
         try {
-          await api.sendMessage(bugCreator.telegramId, formattedMessage, { parse_mode: 'Markdown' });
+          const lang = await getUserLanguageFromTelegramId(bugCreator.telegramId, undefined);
+          const buttons = [[
+            {
+              text: t('telegram.reply', lang),
+              callback_data: `rbm:${message.id}:${bug.id}`
+            }
+          ]];
+          const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
+          await api.sendMessage(bugCreator.telegramId, finalMessage, options);
         } catch (error) {
           console.error(`Failed to send Telegram notification to bug creator ${bugCreator.id}:`, error);
         }
@@ -152,7 +170,15 @@ export async function sendBugChatNotification(
 
       notifiedUserIds.add(user.id);
       try {
-        await api.sendMessage(user.telegramId, formattedMessage, { parse_mode: 'Markdown' });
+        const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
+        const buttons = [[
+          {
+            text: t('telegram.reply', lang),
+            callback_data: `rbm:${message.id}:${bug.id}`
+          }
+        ]];
+        const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
+        await api.sendMessage(user.telegramId, finalMessage, options);
       } catch (error) {
         console.error(`Failed to send Telegram notification to bug participant ${user.id}:`, error);
       }
@@ -181,7 +207,15 @@ export async function sendBugChatNotification(
         
         notifiedUserIds.add(admin.id);
         try {
-          await api.sendMessage(admin.telegramId, formattedMessage, { parse_mode: 'Markdown' });
+          const lang = await getUserLanguageFromTelegramId(admin.telegramId, undefined);
+          const buttons = [[
+            {
+              text: t('telegram.reply', lang),
+              callback_data: `rbm:${message.id}:${bug.id}`
+            }
+          ]];
+          const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
+          await api.sendMessage(admin.telegramId, finalMessage, options);
         } catch (error) {
           console.error(`Failed to send Telegram notification to admin ${admin.id}:`, error);
         }

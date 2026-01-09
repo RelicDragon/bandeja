@@ -252,6 +252,52 @@ export function createCallbackHandler(
             show_alert: true
           });
         }
+      } else if (query.data.startsWith('rbm:')) {
+        const parts = query.data.split(':');
+        if (parts.length !== 3) {
+          await ctx.answerCallbackQuery({ text: 'Invalid request', show_alert: true });
+          return;
+        }
+
+        const [, messageId, bugId] = parts;
+        const telegramId = ctx.telegramId;
+
+        await ctx.answerCallbackQuery();
+
+        const user = await prisma.user.findUnique({
+          where: { telegramId },
+          select: {
+            id: true,
+            language: true,
+          }
+        });
+
+        if (user) {
+          const lang = getUserLanguage(user.language, ctx.from?.language_code);
+          pendingReplies.set(telegramId, {
+            messageId,
+            bugId,
+            userId: user.id,
+            chatType: 'PUBLIC',
+            chatContextType: 'BUG',
+            lang
+          });
+          
+          if (query.message && 'chat' in query.message && query.message.chat) {
+            const chat = query.message.chat;
+            if ('id' in chat && typeof chat.id === 'number') {
+              await ctx.api.sendMessage(
+                chat.id,
+                t('telegram.replyPrompt', lang)
+              );
+            }
+          }
+        } else {
+          await ctx.answerCallbackQuery({
+            text: 'Unauthorized',
+            show_alert: true
+          });
+        }
       }
     } catch (error) {
       console.error('Error handling callback query:', error);

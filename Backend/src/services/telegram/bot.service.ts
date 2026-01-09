@@ -45,7 +45,7 @@ class TelegramBotService {
 
     this.bot.on('message', requireUser, requirePrivateChat, createMessageHandler(this.pendingReplies, this.bot));
 
-    this.bot.callbackQuery(/^(sg|rm|ia|rum):/, requireUser, createCallbackHandler(this.pendingReplies));
+    this.bot.callbackQuery(/^(sg|rm|ia|rum|rbm):/, requireUser, createCallbackHandler(this.pendingReplies));
 
     this.bot.catch((err) => {
       const ctx = err.ctx as any;
