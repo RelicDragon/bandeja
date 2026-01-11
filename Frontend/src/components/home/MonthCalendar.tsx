@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Trophy, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trophy, Star, Dumbbell } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enUS, ru, es, sr } from 'date-fns/locale';
 import { Game } from '@/types';
@@ -62,7 +62,7 @@ export const MonthCalendar = ({
   const endDate = useMemo(() => endOfWeek(monthEnd, { locale, weekStartsOn }), [monthEnd, locale, weekStartsOn]);
 
   const dateCellData = useMemo(() => {
-    const dataMap = new Map<string, { gameCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean }>();
+    const dataMap = new Map<string, { gameCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean; hasTraining: boolean }>();
     
     availableGames.forEach(game => {
       const gameDate = format(startOfDay(new Date(game.startTime)), 'yyyy-MM-dd');
@@ -87,12 +87,16 @@ export const MonthCalendar = ({
         }
       }
 
-      const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false };
+      const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false };
       
       existing.gameCount++;
       
       if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
         existing.hasLeagueTournament = true;
+      }
+      
+      if (game.entityType === 'TRAINING') {
+        existing.hasTraining = true;
       }
       
       if (isUserParticipantInGame) {
@@ -236,10 +240,11 @@ export const MonthCalendar = ({
           const isSelected = isSameDay(day, selectedDate);
           const isTodayDate = isToday(day);
           const dateStr = format(startOfDay(day), 'yyyy-MM-dd');
-          const dayData = dateCellData.get(dateStr) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false };
+          const dayData = dateCellData.get(dateStr) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false };
           const gameCount = dayData.gameCount;
           const hasGames = gameCount > 0;
           const hasLeagueTournament = dayData.hasLeagueTournament;
+          const hasTraining = dayData.hasTraining;
           const isParticipant = dayData.isUserParticipant;
 
           return (
@@ -326,6 +331,32 @@ export const MonthCalendar = ({
                   }
                 `}>
                   <Trophy 
+                    size={12} 
+                    className={`
+                      ${!isCurrentMonth
+                        ? 'text-gray-300 dark:text-gray-400'
+                        : isSelected 
+                        ? 'text-primary-500' 
+                        : 'text-white'
+                      }
+                    `}
+                  />
+                </span>
+              )}
+              {hasTraining && (
+                <span className={`
+                  absolute -bottom-1 -left-1 flex items-center justify-center
+                  w-[18px] h-[18px] rounded-full
+                  transition-all duration-300
+                  ${visibleDays.has(index) ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
+                  ${!isCurrentMonth
+                    ? 'bg-gray-400 dark:bg-gray-600'
+                    : isSelected 
+                    ? 'bg-white text-primary-500 border-2 border-primary-500' 
+                    : 'bg-green-500 dark:bg-green-600 text-white'
+                  }
+                `}>
+                  <Dumbbell 
                     size={12} 
                     className={`
                       ${!isCurrentMonth
