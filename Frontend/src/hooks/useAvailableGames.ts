@@ -4,7 +4,7 @@ import { Game } from '@/types';
 import { socketService } from '@/services/socketService';
 import { format } from 'date-fns';
 
-export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, showArchived?: boolean) => {
+export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) => {
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -21,8 +21,8 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, s
     if (!user?.id) return;
 
     const fetchParams = startDate && endDate 
-      ? `available-games-${user.id}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}-${showArchived ? 'archived' : 'no-archived'}`
-      : `available-games-${user.id}-${showArchived ? 'archived' : 'no-archived'}`;
+      ? `available-games-${user.id}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}`
+      : `available-games-${user.id}`;
 
     if (!force && (isLoadingRef.current || lastFetchParamsRef.current === fetchParams)) {
       return;
@@ -33,15 +33,14 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, s
 
     setLoading(true);
     try {
-      const params: any = {};
+      const params: any = {
+        showArchived: true,
+      };
       if (startDate && endDate) {
         params.startDate = format(startDate, 'yyyy-MM-dd');
         params.endDate = format(endDate, 'yyyy-MM-dd');
       }
-      if (showArchived !== undefined) {
-        params.showArchived = showArchived;
-      }
-      const response = await gamesApi.getAvailableGames(Object.keys(params).length > 0 ? params : undefined);
+      const response = await gamesApi.getAvailableGames(params);
       const allGames = response.data || [];
 
       const sortedGames = sortGames(allGames);
@@ -52,13 +51,13 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, s
       isLoadingRef.current = false;
       setLoading(false);
     }
-  }, [user?.id, startDate, endDate, showArchived]);
+  }, [user?.id, startDate, endDate]);
 
   useEffect(() => {
     if (user?.id) {
       fetchData();
     }
-  }, [user?.id, startDate, endDate, showArchived, fetchData]);
+  }, [user?.id, startDate, endDate, fetchData]);
 
   useEffect(() => {
     const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game; forceUpdate?: boolean }) => {

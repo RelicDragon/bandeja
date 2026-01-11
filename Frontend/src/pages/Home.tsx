@@ -103,13 +103,11 @@ export const HomeContent = () => {
     return { startDate: start, endDate: end };
   });
 
-  const [showArchived, setShowArchived] = useState(true);
-
   const {
     availableGames,
     loading: loadingAvailableGames,
     fetchData: fetchAvailableGames,
-  } = useAvailableGames(user, dateRange.startDate, dateRange.endDate, showArchived);
+  } = useAvailableGames(user, dateRange.startDate, dateRange.endDate);
 
   const handleMonthChange = () => {
     // Keep for compatibility but not used for fetching
