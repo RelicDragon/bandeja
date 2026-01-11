@@ -393,8 +393,6 @@ export const HomeContent = () => {
                 onJoin={handleJoinGame}
                 onMonthChange={handleMonthChange}
                 onDateRangeChange={handleDateRangeChange}
-                showArchived={showArchived}
-                onShowArchivedChange={setShowArchived}
               />
             </div>
           </>
