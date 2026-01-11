@@ -192,6 +192,10 @@ export const AvailableGamesSection = ({
   };
 
   const applyCommonFilters = (game: Game) => {
+    if (game.timeIsSet === false) {
+      return false;
+    }
+
     const gameOwner = game.participants.find((p: any) => p.role === 'OWNER');
     if (gameOwner && user?.blockedUserIds?.includes(gameOwner.userId)) {
       return false;

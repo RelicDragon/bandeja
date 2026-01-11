@@ -421,24 +421,28 @@ export const GameCard = ({
               <div className="flex flex-col gap-2 flex-1">
                 <div className="flex items-center gap-1">
                   {showDate && <Calendar size={14} />}
-                  <span>
-                    {showDate && getDateLabel(game.startTime, false)}
-                    {shouldShowTiming && (
-                      <>
-                        {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
-                        {` • ${(() => {
-                          const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                          if (durationHours === Math.floor(durationHours)) {
-                            return `${durationHours}${t('common.h')}`;
-                          } else {
-                            const hours = Math.floor(durationHours);
-                            const minutes = Math.round((durationHours % 1) * 60);
-                            return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                          }
-                        })()}`}
-                      </>
-                    )}
-                  </span>
+                  {game.timeIsSet === false ? (
+                    <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
+                  ) : (
+                    <span>
+                      {showDate && getDateLabel(game.startTime, false)}
+                      {shouldShowTiming && (
+                        <>
+                          {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
+                          {` • ${(() => {
+                            const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                            if (durationHours === Math.floor(durationHours)) {
+                              return `${durationHours}${t('common.h')}`;
+                            } else {
+                              const hours = Math.floor(durationHours);
+                              const minutes = Math.round((durationHours % 1) * 60);
+                              return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                            }
+                          })()}`}
+                        </>
+                      )}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
                   {(game.court?.club || game.club) && (
@@ -467,24 +471,28 @@ export const GameCard = ({
               <div className="flex flex-col gap-2 flex-1">
                 <div className="flex items-center gap-1">
                   {showDate && <Calendar size={14} />}
-                  <span>
-                    {showDate && getDateLabel(game.startTime, false)}
-                    {shouldShowTiming && (
-                      <>
-                        {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
-                        {game.entityType !== 'BAR' ? ` • ${(() => {
-                          const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                          if (durationHours === Math.floor(durationHours)) {
-                            return `${durationHours}${t('common.h')}`;
-                          } else {
-                            const hours = Math.floor(durationHours);
-                            const minutes = Math.round((durationHours % 1) * 60);
-                            return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                          }
-                        })()}` : ''}
-                      </>
-                    )}
-                  </span>
+                  {game.timeIsSet === false ? (
+                    <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
+                  ) : (
+                    <span>
+                      {showDate && getDateLabel(game.startTime, false)}
+                      {shouldShowTiming && (
+                        <>
+                          {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
+                          {game.entityType !== 'BAR' ? ` • ${(() => {
+                            const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                            if (durationHours === Math.floor(durationHours)) {
+                              return `${durationHours}${t('common.h')}`;
+                            } else {
+                              const hours = Math.floor(durationHours);
+                              const minutes = Math.round((durationHours % 1) * 60);
+                              return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                            }
+                          })()}` : ''}
+                        </>
+                      )}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
                   {(game.court?.club || game.club) && (
@@ -523,24 +531,28 @@ export const GameCard = ({
               <div className="flex flex-col gap-2 flex-1">
                 <div className="flex items-center gap-1">
                   {showDate && <Calendar size={14} />}
-                  <span>
-                    {showDate && getDateLabel(game.startTime, false)}
-                    {shouldShowTiming && (
-                      <>
-                        {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
-                        {game.entityType !== 'BAR' ? ` • ${(() => {
-                          const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                          if (durationHours === Math.floor(durationHours)) {
-                            return `${durationHours}${t('common.h')}`;
-                          } else {
-                            const hours = Math.floor(durationHours);
-                            const minutes = Math.round((durationHours % 1) * 60);
-                            return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                          }
-                        })()}` : ''}
-                      </>
-                    )}
-                  </span>
+                  {game.timeIsSet === false ? (
+                    <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
+                  ) : (
+                    <span>
+                      {showDate && getDateLabel(game.startTime, false)}
+                      {shouldShowTiming && (
+                        <>
+                          {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
+                          {game.entityType !== 'BAR' ? ` • ${(() => {
+                            const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                            if (durationHours === Math.floor(durationHours)) {
+                              return `${durationHours}${t('common.h')}`;
+                            } else {
+                              const hours = Math.floor(durationHours);
+                              const minutes = Math.round((durationHours % 1) * 60);
+                              return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                            }
+                          })()}` : ''}
+                        </>
+                      )}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
                   {(game.court?.club || game.club) && (
@@ -568,24 +580,28 @@ export const GameCard = ({
             <div className="flex flex-col gap-2 flex-1">
               <div className="flex items-center gap-1">
                 {showDate && <Calendar size={14} />}
-                <span>
-                  {showDate && getDateLabel(game.startTime, false)}
-                  {shouldShowTiming && (
-                    <>
-                      {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
-                      {game.entityType !== 'BAR' ? ` • ${(() => {
-                        const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                        if (durationHours === Math.floor(durationHours)) {
-                          return `${durationHours}${t('common.h')}`;
-                        } else {
-                          const hours = Math.floor(durationHours);
-                          const minutes = Math.round((durationHours % 1) * 60);
-                          return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                        }
-                      })()}` : ''}
-                    </>
-                  )}
-                </span>
+                {game.timeIsSet === false ? (
+                  <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
+                ) : (
+                  <span>
+                    {showDate && getDateLabel(game.startTime, false)}
+                    {shouldShowTiming && (
+                      <>
+                        {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
+                        {game.entityType !== 'BAR' ? ` • ${(() => {
+                          const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                          if (durationHours === Math.floor(durationHours)) {
+                            return `${durationHours}${t('common.h')}`;
+                          } else {
+                            const hours = Math.floor(durationHours);
+                            const minutes = Math.round((durationHours % 1) * 60);
+                            return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                          }
+                        })()}` : ''}
+                      </>
+                    )}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-4">
                 {(game.court?.club || game.club) && (
@@ -636,15 +652,19 @@ export const GameCard = ({
             <div className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center gap-2">
                 <Calendar size={16} />
-                <span>
-                  {getDateLabel(game.startTime)}
-                  {shouldShowTiming && (
-                    <>
-                      {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
-                      {game.entityType !== 'BAR' ? ` • ${displaySettings ? formatGameTime(game.endTime, displaySettings) : formatDate(game.endTime, 'HH:mm')}` : ''}
-                    </>
-                  )}
-                </span>
+                {game.timeIsSet === false ? (
+                  <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
+                ) : (
+                  <span>
+                    {getDateLabel(game.startTime)}
+                    {shouldShowTiming && (
+                      <>
+                        {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
+                        {game.entityType !== 'BAR' ? ` • ${displaySettings ? formatGameTime(game.endTime, displaySettings) : formatDate(game.endTime, 'HH:mm')}` : ''}
+                      </>
+                    )}
+                  </span>
+                )}
               </div>
               {(game.court?.club || game.club) && (
                 <div className="flex items-center gap-2">
@@ -687,15 +707,19 @@ export const GameCard = ({
           <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center gap-2">
               <Calendar size={16} />
-              <span>
-                {getDateLabel(game.startTime)}
-                {shouldShowTiming && (
-                  <>
-                    {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
-                    {game.entityType !== 'BAR' ? ` • ${displaySettings ? formatGameTime(game.endTime, displaySettings) : formatDate(game.endTime, 'HH:mm')}` : ''}
-                  </>
-                )}
-              </span>
+              {game.timeIsSet === false ? (
+                <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
+              ) : (
+                <span>
+                  {getDateLabel(game.startTime)}
+                  {shouldShowTiming && (
+                    <>
+                      {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
+                      {game.entityType !== 'BAR' ? ` • ${displaySettings ? formatGameTime(game.endTime, displaySettings) : formatDate(game.endTime, 'HH:mm')}` : ''}
+                    </>
+                  )}
+                </span>
+              )}
             </div>
             {(game.court?.club || game.club) && (
               <div className="flex items-center gap-2">
