@@ -3,14 +3,14 @@ import { get, set } from 'idb-keyval';
 const GAME_FILTERS_KEY = 'padelpulse-game-filters';
 
 export interface GameFilters {
-  filterByLevel: boolean;
-  filterByAvailableSlots: boolean;
+  userFilter: boolean;
+  trainingFilter: boolean;
   activeTab: 'calendar' | 'list';
 }
 
 const DEFAULT_FILTERS: GameFilters = {
-  filterByLevel: false,
-  filterByAvailableSlots: false,
+  userFilter: false,
+  trainingFilter: false,
   activeTab: 'calendar',
 };
 

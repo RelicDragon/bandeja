@@ -122,6 +122,9 @@
     "findGames": "Пронађи игре",
     "findGameHint": "Желите да пронађете игру? Притисните картицу Претрага"
   },
+  "trainers": {
+    "ourTrainers": "Наши тренери"
+  },
   "games": {
     "title": "Пронађи игре",
     "all": "Све игре",
@@ -162,6 +165,7 @@
       "LEAGUE_SEASON": "Сезона Лиге"
     },
     "noGamesFound": "Игре нису пронађене",
+    "noTrainingFound": "Тренинг није пронађен",
     "suitableGamesForMe": "Погодне игре за мене",
     "haveAvailableSlots": "Са слободним местом",
     "showArchived": "Прикажи архивиране",

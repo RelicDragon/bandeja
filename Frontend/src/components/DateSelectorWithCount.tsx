@@ -16,7 +16,7 @@ interface DateSelectorWithCountProps {
   availableGames: Game[];
   showDatePicker: boolean;
   onCloseDatePicker: () => void;
-  filterByLevel?: boolean;
+  userFilter?: boolean;
   user?: any;
 }
 
@@ -43,7 +43,7 @@ export const DateSelectorWithCount = ({
   availableGames,
   showDatePicker,
   onCloseDatePicker,
-  filterByLevel = false,
+  userFilter = false,
   user,
 }: DateSelectorWithCountProps) => {
   const { t, i18n } = useTranslation();
@@ -103,14 +103,19 @@ export const DateSelectorWithCount = ({
         return false;
       }
 
-      // Filter by level if toggle is on
-      if (filterByLevel && user?.level) {
-        const userLevel = user.level;
-        const minLevel = game.minLevel || 0;
-        const maxLevel = game.maxLevel || 10;
-        
-        if (userLevel < minLevel || userLevel > maxLevel) {
+      if (userFilter) {
+        if (game.participants.length >= game.maxParticipants) {
           return false;
+        }
+
+        if (user?.level) {
+          const userLevel = user.level;
+          const minLevel = game.minLevel || 0;
+          const maxLevel = game.maxLevel || 10;
+          
+          if (userLevel < minLevel || userLevel > maxLevel) {
+            return false;
+          }
         }
       }
 

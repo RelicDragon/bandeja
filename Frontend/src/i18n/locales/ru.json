@@ -122,6 +122,9 @@
     "findGames": "Найти игры",
     "findGameHint": "Хотите найти игру? Нажмите вкладку Поиск"
   },
+  "trainers": {
+    "ourTrainers": "Наши тренеры"
+  },
   "games": {
     "title": "Найти игры",
     "all": "Все игры",
@@ -162,6 +165,7 @@
       "LEAGUE_SEASON": "Сезон Лиги"
     },
     "noGamesFound": "Игры не найдены",
+    "noTrainingFound": "Тренировка не найдена",
     "suitableGamesForMe": "Подходящие игры для меня",
     "haveAvailableSlots": "С доступными местами",
     "showArchived": "Показать архивированные",

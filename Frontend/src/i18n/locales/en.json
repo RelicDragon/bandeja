@@ -122,6 +122,9 @@
     "findGames": "Find games",
     "findGameHint": "Want to find a game? Press Search tab"
   },
+  "trainers": {
+    "ourTrainers": "Our trainers"
+  },
   "games": {
     "title": "Find Games",
     "all": "All Games",
@@ -162,6 +165,7 @@
       "LEAGUE_SEASON": "League Season"
     },
     "noGamesFound": "No games found",
+    "noTrainingFound": "No training found",
     "suitableGamesForMe": "Suitable games for me",
     "haveAvailableSlots": "Have available slots",
     "showArchived": "Show archived",

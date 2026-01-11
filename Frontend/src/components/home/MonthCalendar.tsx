@@ -10,8 +10,8 @@ interface MonthCalendarProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
   availableGames: Game[];
-  filterByLevel?: boolean;
-  filterByAvailableSlots?: boolean;
+  userFilter?: boolean;
+  trainingFilter?: boolean;
   onMonthChange?: (month: number, year: number) => void;
   onDateRangeChange?: (startDate: Date, endDate: Date) => void;
 }
@@ -27,8 +27,8 @@ export const MonthCalendar = ({
   selectedDate,
   onDateSelect,
   availableGames,
-  filterByLevel = false,
-  filterByAvailableSlots = true,
+  userFilter = false,
+  trainingFilter = false,
   onMonthChange,
   onDateRangeChange,
 }: MonthCalendarProps) => {
@@ -73,18 +73,24 @@ export const MonthCalendar = ({
         return;
       }
 
-      if (filterByAvailableSlots && game.participants.length >= game.maxParticipants) {
-        return;
-      }
-
-      if (filterByLevel && user?.level) {
-        const userLevel = user.level;
-        const minLevel = game.minLevel || 0;
-        const maxLevel = game.maxLevel || 10;
-        
-        if (userLevel < minLevel || userLevel > maxLevel) {
+      if (userFilter) {
+        if (game.participants.length >= game.maxParticipants) {
           return;
         }
+
+        if (user?.level) {
+          const userLevel = user.level;
+          const minLevel = game.minLevel || 0;
+          const maxLevel = game.maxLevel || 10;
+          
+          if (userLevel < minLevel || userLevel > maxLevel) {
+            return;
+          }
+        }
+      }
+
+      if (trainingFilter && game.entityType !== 'TRAINING') {
+        return;
       }
 
       const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false };
@@ -107,7 +113,7 @@ export const MonthCalendar = ({
     });
 
     return dataMap;
-  }, [availableGames, filterByLevel, filterByAvailableSlots, user?.id, user?.level]);
+  }, [availableGames, userFilter, trainingFilter, user?.id, user?.level]);
 
   const handlePreviousMonth = () => {
     isNavigatingRef.current = true;
@@ -353,7 +359,7 @@ export const MonthCalendar = ({
                     ? 'bg-gray-400 dark:bg-gray-600'
                     : isSelected 
                     ? 'bg-white text-primary-500 border-2 border-primary-500' 
-                    : 'bg-green-500 dark:bg-green-600 text-white'
+                    : 'bg-blue-500 dark:bg-blue-600 text-white'
                   }
                 `}>
                   <Dumbbell 

@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { Card, GameCard, Button } from '@/components';
 import { Game } from '@/types';
-import { MapPin, Filter, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
+import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { format, startOfDay, addDays, subDays } from 'date-fns';
 import { useHeaderStore } from '@/store/headerStore';
 import { MonthCalendar } from './MonthCalendar';
+import { TrainersList } from './TrainersList';
 import { getGameFilters, setGameFilters } from '@/utils/gameFiltersStorage';
 
 interface AvailableGamesSectionProps {
@@ -19,8 +19,6 @@ interface AvailableGamesSectionProps {
   onJoin: (gameId: string, e: React.MouseEvent) => void;
   onMonthChange?: (month: number, year: number) => void;
   onDateRangeChange?: (startDate: Date, endDate: Date) => void;
-  showArchived?: boolean;
-  onShowArchivedChange?: (showArchived: boolean) => void;
 }
 
 export const AvailableGamesSection = ({
@@ -29,8 +27,6 @@ export const AvailableGamesSection = ({
   onJoin,
   onMonthChange,
   onDateRangeChange,
-  showArchived = false,
-  onShowArchivedChange,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -38,20 +34,16 @@ export const AvailableGamesSection = ({
   const [activeTab, setActiveTab] = useState<'calendar' | 'list'>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [listViewStartDate, setListViewStartDate] = useState<Date>(new Date());
-  const [filterByLevel, setFilterByLevel] = useState(false);
-  const [filterByAvailableSlots, setFilterByAvailableSlots] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const filterButtonRef = useRef<HTMLButtonElement>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
-  const [modalPosition, setModalPosition] = useState<{ top: number; right: number } | null>(null);
+  const [userFilter, setUserFilter] = useState(false);
+  const [trainingFilter, setTrainingFilter] = useState(false);
   const setSelectedDateForCreateGame = useHeaderStore((state) => state.setSelectedDateForCreateGame);
   const lastDateRangeRef = useRef<{ start: string; end: string } | null>(null);
 
   useEffect(() => {
     const loadFilters = async () => {
       const filters = await getGameFilters();
-      setFilterByLevel(filters.filterByLevel);
-      setFilterByAvailableSlots(filters.filterByAvailableSlots);
+      setUserFilter(filters.userFilter);
+      setTrainingFilter(filters.trainingFilter);
       setActiveTab(filters.activeTab);
     };
     loadFilters();
@@ -60,66 +52,19 @@ export const AvailableGamesSection = ({
   useEffect(() => {
     const saveFilters = async () => {
       await setGameFilters({
-        filterByLevel,
-        filterByAvailableSlots,
+        userFilter,
+        trainingFilter,
         activeTab,
       });
     };
     saveFilters();
-  }, [filterByLevel, filterByAvailableSlots, activeTab]);
+  }, [userFilter, trainingFilter, activeTab]);
 
   useEffect(() => {
     console.log('AvailableGamesSection - storing date for create game:', selectedDate);
     setSelectedDateForCreateGame(selectedDate);
   }, [selectedDate, setSelectedDateForCreateGame]);
 
-
-  const updateModalPosition = useCallback(() => {
-    if (!filterButtonRef.current) return;
-    const rect = filterButtonRef.current.getBoundingClientRect();
-    setModalPosition({
-      top: rect.bottom + 8,
-      right: window.innerWidth - rect.right,
-    });
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        (filterButtonRef.current && filterButtonRef.current.contains(target)) ||
-        (modalRef.current && modalRef.current.contains(target))
-      ) {
-        return;
-      }
-      setShowFilterModal(false);
-    };
-
-    if (showFilterModal) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showFilterModal]);
-
-  useEffect(() => {
-    if (!showFilterModal) return;
-    updateModalPosition();
-
-    const handleReposition = () => {
-      updateModalPosition();
-    };
-
-    window.addEventListener('resize', handleReposition);
-    window.addEventListener('scroll', handleReposition, true);
-
-    return () => {
-      window.removeEventListener('resize', handleReposition);
-      window.removeEventListener('scroll', handleReposition, true);
-    };
-  }, [showFilterModal, updateModalPosition]);
 
   const handleCityClick = () => {
     toast(t('games.switchCityInProfile'));
@@ -208,18 +153,24 @@ export const AvailableGamesSection = ({
       return false;
     }
 
-    if (filterByAvailableSlots && game.participants.length >= game.maxParticipants) {
-      return false;
-    }
-
-    if (filterByLevel && user?.level) {
-      const userLevel = user.level;
-      const minLevel = game.minLevel || 0;
-      const maxLevel = game.maxLevel || 10;
-      
-      if (userLevel < minLevel || userLevel > maxLevel) {
+    if (userFilter) {
+      if (game.participants.length >= game.maxParticipants) {
         return false;
       }
+
+      if (user?.level) {
+        const userLevel = user.level;
+        const minLevel = game.minLevel || 0;
+        const maxLevel = game.maxLevel || 10;
+        
+        if (userLevel < minLevel || userLevel > maxLevel) {
+          return false;
+        }
+      }
+    }
+
+    if (trainingFilter && game.entityType !== 'TRAINING') {
+      return false;
     }
 
     return true;
@@ -235,7 +186,7 @@ export const AvailableGamesSection = ({
   };
 
   return (
-    <div className="mt-8">
+    <div className="mt-2">
       <div className="mb-4">
         <div className="mb-4 flex justify-center">
           <Button
@@ -264,91 +215,32 @@ export const AvailableGamesSection = ({
               {user?.currentCity?.name || t('auth.selectCity')}
             </h2>
           </button>
-          <button
-            ref={filterButtonRef}
-            onClick={() => setShowFilterModal(!showFilterModal)}
-            className="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <Filter size={20} className="text-gray-600 dark:text-gray-400" />
-          </button>
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            <button
+              onClick={() => setTrainingFilter(!trainingFilter)}
+              className={`p-2 rounded-lg transition-colors ${
+                trainingFilter
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <Dumbbell size={20} className={trainingFilter ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={trainingFilter ? 'currentColor' : 'none'} />
+            </button>
+            <button
+              onClick={() => setUserFilter(!userFilter)}
+              className={`p-2 rounded-lg transition-colors ${
+                userFilter
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <Filter size={20} className={userFilter ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={userFilter ? 'currentColor' : 'none'} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {showFilterModal && modalPosition && typeof document !== 'undefined' && createPortal(
-        <div
-          ref={modalRef}
-          className="z-[1000] bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
-          style={{
-            position: 'fixed',
-            top: modalPosition.top,
-            right: modalPosition.right,
-            minWidth: '200px',
-          }}
-        >
-          <div className="p-4 space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('games.suitableGamesForMe')}
-              </label>
-              <button
-                onClick={() => setFilterByLevel(!filterByLevel)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  filterByLevel 
-                    ? 'bg-primary-600' 
-                    : 'bg-gray-200 dark:bg-gray-700'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    filterByLevel ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('games.haveAvailableSlots')}
-              </label>
-              <button
-                onClick={() => setFilterByAvailableSlots(!filterByAvailableSlots)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  filterByAvailableSlots 
-                    ? 'bg-primary-600' 
-                    : 'bg-gray-200 dark:bg-gray-700'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    filterByAvailableSlots ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-            {onShowArchivedChange && (
-              <div className="flex items-center justify-between gap-3">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {t('games.showArchived')}
-                </label>
-                <button
-                  onClick={() => onShowArchivedChange(!showArchived)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    showArchived 
-                      ? 'bg-primary-600' 
-                      : 'bg-gray-200 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      showArchived ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
+      <TrainersList show={trainingFilter} />
 
       <div className="flex items-center gap-2 mb-4 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
         <button
@@ -379,15 +271,17 @@ export const AvailableGamesSection = ({
             selectedDate={selectedDate}
             onDateSelect={handleDateSelect}
             availableGames={availableGames}
-            filterByLevel={filterByLevel}
-            filterByAvailableSlots={filterByAvailableSlots}
+            userFilter={userFilter}
+            trainingFilter={trainingFilter}
             onMonthChange={onMonthChange}
             onDateRangeChange={onDateRangeChange}
           />
           
           {filteredGames.length === 0 ? (
             <Card className="text-center py-12">
-              <p className="text-gray-600 dark:text-gray-400">{t('games.noGamesFound')}</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                {trainingFilter ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : t('games.noGamesFound')}
+              </p>
             </Card>
           ) : (
             <div className="space-y-4">
@@ -427,7 +321,9 @@ export const AvailableGamesSection = ({
           
           {filteredGames.length === 0 ? (
             <Card className="text-center py-12">
-              <p className="text-gray-600 dark:text-gray-400">{t('games.noGamesFound')}</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                {trainingFilter ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : t('games.noGamesFound')}
+              </p>
             </Card>
           ) : (
             <div className="space-y-4">

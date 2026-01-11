@@ -122,6 +122,9 @@
     "findGames": "Buscar juegos",
     "findGameHint": "¿Quieres encontrar un juego? Presiona la pestaña Buscar"
   },
+  "trainers": {
+    "ourTrainers": "Nuestros entrenadores"
+  },
   "games": {
     "title": "Buscar juegos",
     "all": "Todos los juegos",
@@ -162,6 +165,7 @@
       "LEAGUE_SEASON": "Temporada de Liga"
     },
     "noGamesFound": "No se encontraron juegos",
+    "noTrainingFound": "No se encontró entrenamiento",
     "suitableGamesForMe": "Juegos adecuados para mí",
     "haveAvailableSlots": "Con plazas disponibles",
     "showArchived": "Mostrar archivados",
