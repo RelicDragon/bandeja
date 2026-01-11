@@ -120,12 +120,20 @@ export const MyGamesSection = ({
     );
   }
 
-  const announcedOrStartedGames = displayGames.filter(
-    (game) => game.status === 'ANNOUNCED' || game.status === 'STARTED'
-  );
-  const finishedOrArchivedGames = displayGames.filter(
-    (game) => game.status === 'FINISHED' || game.status === 'ARCHIVED'
-  );
+  const announcedOrStartedGames = displayGames
+    .filter((game) => game.status === 'ANNOUNCED' || game.status === 'STARTED')
+    .sort((a, b) => {
+      if (a.timeIsSet === false && b.timeIsSet !== false) return 1;
+      if (a.timeIsSet !== false && b.timeIsSet === false) return -1;
+      return 0;
+    });
+  const finishedOrArchivedGames = displayGames
+    .filter((game) => game.status === 'FINISHED' || game.status === 'ARCHIVED')
+    .sort((a, b) => {
+      if (a.timeIsSet === false && b.timeIsSet !== false) return 1;
+      if (a.timeIsSet !== false && b.timeIsSet === false) return -1;
+      return 0;
+    });
 
   const renderGame = (game: Game, globalIndex: number) => (
     <div

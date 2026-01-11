@@ -100,6 +100,11 @@ export const GameCard = ({
   const shouldShowTiming = !isLeagueSeasonGame;
   const displaySettings = user ? resolveDisplaySettings(user) : null;
 
+  const playingCount = game.participants.filter(p => p.isPlaying).length;
+  const hasUnoccupiedSlots = game.entityType === 'BAR' || playingCount < game.maxParticipants;
+  const hasMyInvites = game.invites?.some(invite => invite.receiverId === user?.id) || false;
+  const isInJoinQueue = game.joinQueues?.some(q => q.userId === user?.id && q.status === 'PENDING') || false;
+
   const hasOtherTags = (game.photosCount ?? 0) > 0 ||
     !game.isPublic ||
     (game.genderTeams && game.genderTeams !== 'ANY') ||
@@ -771,15 +776,25 @@ export const GameCard = ({
           </div>
         </div>
 
-        {showJoinButton && onJoin && game.status !== 'ARCHIVED' && game.resultsStatus === 'NONE' && game.entityType !== 'LEAGUE' && (
+        {showJoinButton && onJoin && game.status !== 'ARCHIVED' && game.resultsStatus === 'NONE' && game.entityType !== 'LEAGUE' && !isParticipant && !hasMyInvites && !isInJoinQueue && (
           <div className="mt-0 mb-4">
-            <Button
-              onClick={(e) => onJoin(game.id, e)}
-              className="w-full"
-              size="sm"
-            >
-              {t('games.join')}
-            </Button>
+            {hasUnoccupiedSlots ? (
+              <Button
+                onClick={(e) => onJoin(game.id, e)}
+                className="w-full"
+                size="sm"
+              >
+                {t('createGame.addMeToGame')}
+              </Button>
+            ) : (
+              <Button
+                onClick={(e) => onJoin(game.id, e)}
+                className="w-full"
+                size="sm"
+              >
+                {t('games.joinTheQueue')}
+              </Button>
+            )}
           </div>
         )}
       </div>

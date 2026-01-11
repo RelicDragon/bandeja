@@ -780,6 +780,9 @@ export const GameChat: React.FC = () => {
 
   const getSubtitle = () => {
     if (contextType === 'GAME' && game) {
+      if (game.timeIsSet === false) {
+        return t('gameDetails.datetimeNotSet');
+      }
       return `${formatDate(game.startTime, 'PPP')} • ${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`;
     } else if (contextType === 'BUG' && bug) {
       return `${formatDate(bug.createdAt, 'PPP')} • ${t(`bug.types.${bug.bugType}`)} • ${t(`bug.statuses.${bug.status}`)}`;
