@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useAuthStore } from '@/store/authStore';
 import { useChatUnreadCounts } from '@/hooks/useChatUnreadCounts';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 
 interface BottomTabBarProps {
   containerPosition?: boolean;
@@ -19,6 +19,15 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   const chatsUnread = counts.users + counts.bugs;
   const user = useAuthStore((state) => state.user);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const tabs = useMemo(() => [
     {
@@ -66,7 +75,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       className={containerPosition ? "absolute bottom-0 left-0 right-0 z-50" : "fixed bottom-0 left-0 right-0 z-50"}
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      style={{ paddingBottom: `max(${isDesktop ? '1rem' : '0.5rem'}, env(safe-area-inset-bottom))` }}
     >
       <div className="flex justify-center">
         <div className="relative bg-white/30 dark:bg-gray-900/30 backdrop-blur-2xl border-t border-gray-200/20 dark:border-gray-700/20 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.48)] max-w-[300px] w-full rounded-2xl">
