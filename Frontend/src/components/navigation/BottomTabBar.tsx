@@ -61,6 +61,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
 
   return (
     <motion.div 
+      layoutId="bottom-tab-bar"
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
