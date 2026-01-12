@@ -85,7 +85,10 @@ export class GameCreateService {
         entityType: entityType,
         participants: [],
       };
-      await canAddPlayerToGame(tempGame, userId);
+      const joinResult = await canAddPlayerToGame(tempGame, userId);
+      if (!joinResult.canJoin) {
+        throw new ApiError(400, joinResult.reason || 'Owner cannot join this game');
+      }
     }
     
     const startTime = new Date(data.startTime);

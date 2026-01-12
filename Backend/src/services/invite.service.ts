@@ -4,7 +4,8 @@ import { createSystemMessage } from '../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { GameService } from './game/game.service';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
-import { canAddPlayerToGame } from '../utils/participantValidation';
+import { canAddPlayerToGame, validateGenderForGame } from '../utils/participantValidation';
+import { JoinQueueService } from './game/joinQueue.service';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export interface InviteActionResult {
@@ -114,6 +115,8 @@ export class InviteService {
     }
 
     if (invite.gameId && invite.game) {
+      await validateGenderForGame(invite.game, invite.receiverId);
+
       // Always add the receiver (not the person accepting) as participant
       const existingParticipant = invite.game.participants.find(
         (p: any) => p.userId === invite.receiverId
@@ -123,13 +126,17 @@ export class InviteService {
         if (existingParticipant.isPlaying) {
           // Already a playing participant, nothing to do
         } else {
-          // Existing non-playing participant, validate and update to playing
-          try {
-            await canAddPlayerToGame(invite.game, invite.receiverId);
-          } catch (error: any) {
+          // Existing non-playing participant, validate and update to playing or add to queue
+          const joinResult = await canAddPlayerToGame(invite.game, invite.receiverId);
+
+          if (!joinResult.canJoin && joinResult.shouldQueue) {
+            await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
+            await prisma.invite.delete({
+              where: { id: inviteId },
+            });
             return {
-              success: false,
-              message: error.message || 'errors.invites.gameFull',
+              success: true,
+              message: 'games.addedToJoinQueue',
             };
           }
 
@@ -140,13 +147,17 @@ export class InviteService {
           await GameService.updateGameReadiness(invite.gameId);
         }
       } else {
-        // No existing participant, validate and create as playing
-        try {
-          await canAddPlayerToGame(invite.game, invite.receiverId);
-        } catch (error: any) {
+        // No existing participant, validate and create as playing or add to queue
+        const joinResult = await canAddPlayerToGame(invite.game, invite.receiverId);
+
+        if (!joinResult.canJoin && joinResult.shouldQueue) {
+          await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
+          await prisma.invite.delete({
+            where: { id: inviteId },
+          });
           return {
-            success: false,
-            message: error.message || 'errors.invites.gameFull',
+            success: true,
+            message: 'games.addedToJoinQueue',
           };
         }
 

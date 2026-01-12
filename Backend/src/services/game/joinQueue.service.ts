@@ -4,7 +4,7 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
-import { canAddPlayerToGame } from '../../utils/participantValidation';
+import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
 import { InviteService } from '../invite.service';
 import notificationService from '../notification.service';
 import { ChatType } from '@prisma/client';
@@ -12,6 +12,21 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class JoinQueueService {
   static async addToQueue(gameId: string, userId: string) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: {
+        participants: {
+          where: { isPlaying: true }
+        },
+      },
+    });
+
+    if (!game) {
+      throw new ApiError(404, 'Game not found');
+    }
+
+    await validateGenderForGame(game, userId);
+
     const existingQueue = await prisma.joinQueue.findUnique({
       where: {
         userId_gameId: {
@@ -39,7 +54,7 @@ export class JoinQueueService {
         select: USER_SELECT_FIELDS,
       });
 
-      const game = await prisma.game.findUnique({
+      const gameWithDetails = await prisma.game.findUnique({
         where: { id: gameId },
         include: {
           court: {
@@ -51,7 +66,7 @@ export class JoinQueueService {
         }
       });
 
-      if (queueUser && game) {
+      if (queueUser && gameWithDetails) {
         const userName = getUserDisplayName(queueUser.firstName, queueUser.lastName);
         try {
           const systemMessage = await createSystemMessage(
@@ -64,7 +79,7 @@ export class JoinQueueService {
           );
 
           if (systemMessage) {
-            notificationService.sendGameSystemMessageNotification(systemMessage, game).catch(error => {
+            notificationService.sendGameSystemMessageNotification(systemMessage, gameWithDetails).catch(error => {
               console.error('Failed to send notifications for join queue:', error);
             });
           }
@@ -114,7 +129,11 @@ export class JoinQueueService {
       throw new ApiError(403, 'games.notAuthorizedToAcceptJoinQueue');
     }
 
-    await canAddPlayerToGame(game!, queueUserId);
+    await validateGenderForGame(game!, queueUserId);
+    const joinResult = await canAddPlayerToGame(game!, queueUserId);
+    if (!joinResult.canJoin) {
+      throw new ApiError(400, joinResult.reason || 'Cannot add player to game');
+    }
 
     const joinQueue = await prisma.joinQueue.findUnique({
       where: {

@@ -4,7 +4,8 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { GameService } from '../game/game.service';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
-import { canAddPlayerToGame } from '../../utils/participantValidation';
+import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
+import { JoinQueueService } from '../game/joinQueue.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 
 export class AdminGamesService {
@@ -130,6 +131,8 @@ export class AdminGamesService {
     }
 
     if (invite.gameId && invite.game) {
+      await validateGenderForGame(invite.game, invite.receiverId);
+
       const existingParticipant = invite.game.participants.find(
         p => p.userId === invite.receiverId
       );
@@ -138,8 +141,13 @@ export class AdminGamesService {
         if (existingParticipant.isPlaying) {
           // Already a playing participant, nothing to do
         } else {
-          // Existing non-playing participant, validate and update to playing
-          await canAddPlayerToGame(invite.game, invite.receiverId);
+          // Existing non-playing participant, validate and update to playing or add to queue
+          const joinResult = await canAddPlayerToGame(invite.game, invite.receiverId);
+
+          if (!joinResult.canJoin && joinResult.shouldQueue) {
+            await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
+            return;
+          }
 
           await prisma.gameParticipant.update({
             where: { id: existingParticipant.id },
@@ -148,8 +156,13 @@ export class AdminGamesService {
           await GameService.updateGameReadiness(invite.gameId);
         }
       } else {
-        // No existing participant, validate and create as playing
-        await canAddPlayerToGame(invite.game, invite.receiverId);
+        // No existing participant, validate and create as playing or add to queue
+        const joinResult = await canAddPlayerToGame(invite.game, invite.receiverId);
+
+        if (!joinResult.canJoin && joinResult.shouldQueue) {
+          await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
+          return;
+        }
 
         await prisma.gameParticipant.create({
           data: {

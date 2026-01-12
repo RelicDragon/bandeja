@@ -4,7 +4,7 @@ import { SystemMessageType } from '../../utils/systemMessages';
 import { GameService } from './game.service';
 import { JoinQueueService } from './joinQueue.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
-import { canAddPlayerToGame } from '../../utils/participantValidation';
+import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
 import { InviteService } from '../invite.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 
@@ -23,6 +23,8 @@ export class ParticipantService {
       throw new ApiError(404, 'Game not found');
     }
 
+    await validateGenderForGame(game, userId);
+
     const existingParticipant = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
@@ -34,7 +36,11 @@ export class ParticipantService {
       if (existingParticipant.isPlaying) {
         throw new ApiError(400, 'Already joined this game as a player');
       } else {
-        await canAddPlayerToGame(game, userId);
+        const joinResult = await canAddPlayerToGame(game, userId);
+
+        if (!joinResult.canJoin && joinResult.shouldQueue) {
+          return await JoinQueueService.addToQueue(gameId, userId);
+        }
 
         await prisma.gameParticipant.update({
           where: { id: existingParticipant.id },
@@ -44,11 +50,16 @@ export class ParticipantService {
         await InviteService.deleteInvitesForUserInGame(gameId, userId);
         await ParticipantMessageHelper.sendJoinMessage(gameId, userId);
         await GameService.updateGameReadiness(gameId);
+        await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
         return 'Successfully joined the game';
       }
     }
 
-    await canAddPlayerToGame(game, userId);
+    const joinResult = await canAddPlayerToGame(game, userId);
+
+    if (!joinResult.canJoin && joinResult.shouldQueue) {
+      return await JoinQueueService.addToQueue(gameId, userId);
+    }
 
     if (!game.allowDirectJoin) {
       return await JoinQueueService.addToQueue(gameId, userId);
@@ -190,7 +201,11 @@ export class ParticipantService {
       });
 
       if (game) {
-        await canAddPlayerToGame(game, userId);
+        await validateGenderForGame(game, userId);
+        const joinResult = await canAddPlayerToGame(game, userId);
+        if (!joinResult.canJoin) {
+          throw new ApiError(400, joinResult.reason || 'Cannot join game');
+        }
       }
     }
 
