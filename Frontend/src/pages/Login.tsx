@@ -235,13 +235,6 @@ export const Login = () => {
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200 dark:border-slate-700" />
-            </div>
-          </div>
-
           {/* Step 2: Enter Code */}
           <div>
             <div className="flex items-center gap-3 mb-4">
