@@ -199,6 +199,10 @@
     "joinQueueRequestNotFound": "Join queue request not found",
     "joinRequestWasDeclined": "Join request was declined",
     "joinRequestAlreadyAccepted": "Join request was already accepted",
+    "joinedSuccessfully": "Successfully joined the game",
+    "leftSuccessfully": "Successfully left the game",
+    "leftChatSuccessfully": "Successfully left the chat",
+    "joinedChatAsGuest": "Successfully joined the chat as a guest",
     "status": {
       "announced": "Announced",
       "ready": "Ready",
@@ -455,7 +459,9 @@
     "to": "To",
     "message": "Message",
     "accepted": "Invite accepted",
+    "acceptedSuccessfully": "Invite accepted successfully",
     "declined": "Invite declined",
+    "declinedSuccessfully": "Invite declined successfully",
     "selectPlayer": "Select a Player",
     "selectPlayers": "Select Players",
     "noPlayersAvailable": "No players available to invite",
@@ -1142,6 +1148,11 @@
       "onlyParticipantsCanView": "Only participants can view game invites",
       "onlySenderCanCancel": "Only the sender can cancel this invite",
       "canOnlyCancelPending": "Can only cancel pending invites"
+    },
+    "games": {
+      "cannotJoin": "Cannot join game",
+      "cannotAddPlayer": "Cannot add player to game",
+      "alreadyParticipant": "User is already a participant"
     },
     "bugs": {
       "notFound": "Bug not found",

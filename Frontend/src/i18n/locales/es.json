@@ -199,6 +199,10 @@
     "joinQueueRequestNotFound": "Solicitud de lista de espera no encontrada",
     "joinRequestWasDeclined": "La solicitud de unión fue rechazada",
     "joinRequestAlreadyAccepted": "La solicitud de unión ya fue aceptada",
+    "joinedSuccessfully": "Se unió al juego exitosamente",
+    "leftSuccessfully": "Dejó el juego exitosamente",
+    "leftChatSuccessfully": "Dejó el chat exitosamente",
+    "joinedChatAsGuest": "Se unió al chat como invitado exitosamente",
     "status": {
       "announced": "Anunciado",
       "ready": "Listo",
@@ -448,7 +452,9 @@
     "to": "Para",
     "message": "Mensaje",
     "accepted": "Invitación aceptada",
+    "acceptedSuccessfully": "Invitación aceptada exitosamente",
     "declined": "Invitación rechazada",
+    "declinedSuccessfully": "Invitación rechazada exitosamente",
     "selectPlayer": "Selecciona un jugador",
     "selectPlayers": "Selecciona jugadores",
     "noPlayersAvailable": "No hay jugadores disponibles para invitar",
@@ -1097,6 +1103,11 @@
       "onlyParticipantsCanView": "Solo los participantes pueden ver las invitaciones del juego",
       "onlySenderCanCancel": "Solo el remitente puede cancelar esta invitación",
       "canOnlyCancelPending": "Solo se pueden cancelar invitaciones pendientes"
+    },
+    "games": {
+      "cannotJoin": "No se puede unir al juego",
+      "cannotAddPlayer": "No se puede agregar jugador al juego",
+      "alreadyParticipant": "El usuario ya es un participante"
     },
     "bugs": {
       "notFound": "Error no encontrado",

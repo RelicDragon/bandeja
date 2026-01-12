@@ -4,9 +4,12 @@ import { createSystemMessage } from '../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { GameService } from './game/game.service';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
-import { canAddPlayerToGame, validateGenderForGame } from '../utils/participantValidation';
+import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants } from '../utils/participantValidation';
+import { fetchGameWithPlayingParticipants } from '../utils/gameQueries';
+import { addOrUpdateParticipant, performPostJoinOperations } from '../utils/participantOperations';
 import { JoinQueueService } from './game/joinQueue.service';
 import { USER_SELECT_FIELDS } from '../utils/constants';
+import { ApiError } from '../utils/ApiError';
 
 export interface InviteActionResult {
   success: boolean;
@@ -115,42 +118,34 @@ export class InviteService {
     }
 
     if (invite.gameId && invite.game) {
-      await validateGenderForGame(invite.game, invite.receiverId);
+      try {
+        await prisma.$transaction(async (tx: any) => {
+          const currentGame = await fetchGameWithPlayingParticipants(tx, invite.gameId!);
+          validateGameCanAcceptParticipants(currentGame);
 
-      // Always add the receiver (not the person accepting) as participant
-      const existingParticipant = invite.game.participants.find(
-        (p: any) => p.userId === invite.receiverId
-      );
+          const existingParticipant = await tx.gameParticipant.findFirst({
+            where: {
+              gameId: invite.gameId,
+              userId: invite.receiverId,
+            },
+          });
 
-      if (existingParticipant) {
-        if (existingParticipant.isPlaying) {
-          // Already a playing participant, nothing to do
-        } else {
-          // Existing non-playing participant, validate and update to playing or add to queue
-          const joinResult = await canAddPlayerToGame(invite.game, invite.receiverId);
-
-          if (!joinResult.canJoin && joinResult.shouldQueue) {
-            await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
-            await prisma.invite.delete({
-              where: { id: inviteId },
-            });
-            return {
-              success: true,
-              message: 'games.addedToJoinQueue',
-            };
+          if (existingParticipant?.isPlaying) {
+            return;
           }
 
-          await prisma.gameParticipant.update({
-            where: { id: existingParticipant.id },
-            data: { isPlaying: true },
-          });
-          await GameService.updateGameReadiness(invite.gameId);
-        }
-      } else {
-        // No existing participant, validate and create as playing or add to queue
-        const joinResult = await canAddPlayerToGame(invite.game, invite.receiverId);
+          const joinResult = await validatePlayerCanJoinGame(currentGame, invite.receiverId);
 
-        if (!joinResult.canJoin && joinResult.shouldQueue) {
+          if (!joinResult.canJoin && joinResult.shouldQueue) {
+            throw new ApiError(400, 'Game is full, should queue');
+          }
+
+          await addOrUpdateParticipant(tx, invite.gameId!, invite.receiverId);
+        });
+
+        await performPostJoinOperations(invite.gameId!, invite.receiverId);
+      } catch (error: any) {
+        if (error.message === 'Game is full, should queue' && invite.gameId) {
           await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
           await prisma.invite.delete({
             where: { id: inviteId },
@@ -160,29 +155,7 @@ export class InviteService {
             message: 'games.addedToJoinQueue',
           };
         }
-
-        await prisma.gameParticipant.create({
-          data: {
-            gameId: invite.gameId,
-            userId: invite.receiverId,
-            role: ParticipantRole.PARTICIPANT,
-            isPlaying: true,
-          },
-        });
-        await GameService.updateGameReadiness(invite.gameId);
-      }
-    }
-
-    if (invite.gameId && invite.receiver) {
-      const receiverName = getUserDisplayName(invite.receiver.firstName, invite.receiver.lastName);
-      
-      try {
-        await createSystemMessage(invite.gameId, {
-          type: SystemMessageType.USER_ACCEPTED_INVITE,
-          variables: { userName: receiverName }
-        });
-      } catch (error) {
-        console.error('Failed to create system message for invite acceptance:', error);
+        throw error;
       }
     }
 
@@ -203,7 +176,7 @@ export class InviteService {
 
     return {
       success: true,
-      message: 'Invite accepted successfully',
+      message: 'invites.acceptedSuccessfully',
     };
   }
 
@@ -277,7 +250,7 @@ export class InviteService {
 
     return {
       success: true,
-      message: 'Invite declined successfully',
+      message: 'invites.declinedSuccessfully',
     };
   }
 }

@@ -233,7 +233,15 @@ export const HomeContent = () => {
   const handleAcceptInvite = async (inviteId: string) => {
     try {
       const { invitesApi } = await import('@/api');
-      await invitesApi.accept(inviteId);
+      const response = await invitesApi.accept(inviteId);
+      const message = (response as any).message || 'Invite accepted successfully';
+      
+      if (message === 'games.addedToJoinQueue') {
+        toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
+      } else {
+        toast.success(t(message, { defaultValue: message }));
+      }
+      
       setInvites(invites.filter((inv) => inv.id !== inviteId));
       const { setPendingInvites } = useHeaderStore.getState();
       const currentCount = useHeaderStore.getState().pendingInvites;
@@ -267,7 +275,15 @@ export const HomeContent = () => {
     e.stopPropagation();
     try {
       const { gamesApi } = await import('@/api');
-      await gamesApi.join(gameId);
+      const response = await gamesApi.join(gameId);
+      const message = (response as any).message || 'Successfully joined the game';
+      
+      if (message === 'games.addedToJoinQueue') {
+        toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
+      } else {
+        toast.success(t(message, { defaultValue: message }));
+      }
+      
       fetchData(false, true);
       fetchAvailableGames(true);
     } catch (error: any) {

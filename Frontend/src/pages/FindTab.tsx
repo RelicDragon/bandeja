@@ -74,7 +74,15 @@ export const FindTab = () => {
     e.stopPropagation();
     try {
       const { gamesApi } = await import('@/api');
-      await gamesApi.join(gameId);
+      const response = await gamesApi.join(gameId);
+      const message = (response as any).message || 'Successfully joined the game';
+      
+      if (message === 'games.addedToJoinQueue') {
+        toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
+      } else {
+        toast.success(t(message, { defaultValue: message }));
+      }
+      
       fetchAvailableGames(true);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';

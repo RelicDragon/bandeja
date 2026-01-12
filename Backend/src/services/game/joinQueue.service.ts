@@ -1,12 +1,13 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { createSystemMessage } from '../../controllers/chat.controller';
-import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
+import { SystemMessageType } from '../../utils/systemMessages';
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
-import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
+import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants, canUserManageQueue } from '../../utils/participantValidation';
+import { fetchGameWithPlayingParticipants } from '../../utils/gameQueries';
+import { createSystemMessageWithNotification } from '../../utils/systemMessageHelper';
+import { addOrUpdateParticipant } from '../../utils/participantOperations';
 import { InviteService } from '../invite.service';
-import notificationService from '../notification.service';
 import { ChatType } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 
@@ -25,7 +26,7 @@ export class JoinQueueService {
       throw new ApiError(404, 'Game not found');
     }
 
-    await validateGenderForGame(game, userId);
+    await validatePlayerCanJoinGame(game, userId);
 
     const existingQueue = await prisma.joinQueue.findUnique({
       where: {
@@ -36,105 +37,61 @@ export class JoinQueueService {
       },
     });
 
-    if (existingQueue) {
-      if (existingQueue.status === 'PENDING') {
-        throw new ApiError(400, 'games.alreadyInJoinQueue');
-      }
-    } else {
-      await prisma.joinQueue.create({
-        data: {
-          userId,
-          gameId,
-          status: 'PENDING',
-        },
-      });
-
-      const queueUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: USER_SELECT_FIELDS,
-      });
-
-      const gameWithDetails = await prisma.game.findUnique({
-        where: { id: gameId },
-        include: {
-          court: {
-            include: {
-              club: true
-            }
-          },
-          club: true
-        }
-      });
-
-      if (queueUser && gameWithDetails) {
-        const userName = getUserDisplayName(queueUser.firstName, queueUser.lastName);
-        try {
-          const systemMessage = await createSystemMessage(
-            gameId,
-            {
-              type: SystemMessageType.USER_JOINED_JOIN_QUEUE,
-              variables: { userName }
-            },
-            ChatType.ADMINS
-          );
-
-          if (systemMessage) {
-            notificationService.sendGameSystemMessageNotification(systemMessage, gameWithDetails).catch(error => {
-              console.error('Failed to send notifications for join queue:', error);
-            });
-          }
-        } catch (error) {
-          console.error('Failed to create system message for join queue:', error);
-        }
-      }
-
-      await InviteService.deleteInvitesForUserInGame(gameId, userId);
-      await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
-      return 'games.addedToJoinQueue';
+    if (existingQueue?.status === 'PENDING') {
+      throw new ApiError(400, 'games.alreadyInJoinQueue');
     }
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        const currentGame = await tx.game.findUnique({
+          where: { id: gameId },
+        });
+
+        if (!currentGame) {
+          throw new ApiError(404, 'Game not found');
+        }
+
+        validateGameCanAcceptParticipants(currentGame);
+
+        await tx.joinQueue.create({
+          data: {
+            userId,
+            gameId,
+            status: 'PENDING',
+          },
+        });
+      });
+    } catch (error: any) {
+      if (error.code === 'P2025' || error.code === 'P2002') {
+        const existingQueueCheck = await prisma.joinQueue.findUnique({
+          where: {
+            userId_gameId: {
+              userId,
+              gameId,
+            },
+          },
+        });
+
+        if (existingQueueCheck?.status === 'PENDING') {
+          throw new ApiError(400, 'games.alreadyInJoinQueue');
+        }
+      }
+      throw error;
+    }
+
+    await createSystemMessageWithNotification(
+      gameId,
+      SystemMessageType.USER_JOINED_JOIN_QUEUE,
+      userId,
+      ChatType.ADMINS
+    );
+
+    await InviteService.deleteInvitesForUserInGame(gameId, userId);
+    await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
+    return 'games.addedToJoinQueue';
   }
 
   static async acceptJoinQueue(gameId: string, currentUserId: string, queueUserId: string) {
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      include: {
-        participants: {
-          where: { isPlaying: true },
-          include: {
-            user: {
-              select: {
-                gender: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const currentParticipant = await prisma.gameParticipant.findFirst({
-      where: {
-        gameId,
-        userId: currentUserId,
-      },
-    });
-
-    let canAccept = currentParticipant && (
-      currentParticipant.role === 'OWNER' ||
-      currentParticipant.role === 'ADMIN' ||
-      (game!.anyoneCanInvite && currentParticipant.isPlaying)
-    );
-
-
-    if (!canAccept) {
-      throw new ApiError(403, 'games.notAuthorizedToAcceptJoinQueue');
-    }
-
-    await validateGenderForGame(game!, queueUserId);
-    const joinResult = await canAddPlayerToGame(game!, queueUserId);
-    if (!joinResult.canJoin) {
-      throw new ApiError(400, joinResult.reason || 'Cannot add player to game');
-    }
-
     const joinQueue = await prisma.joinQueue.findUnique({
       where: {
         userId_gameId: {
@@ -153,74 +110,63 @@ export class JoinQueueService {
       select: USER_SELECT_FIELDS,
     });
 
-    const existingParticipant = await prisma.gameParticipant.findFirst({
-      where: {
-        gameId,
-        userId: queueUserId,
-      },
-    });
-
-    if (existingParticipant && existingParticipant.isPlaying) {
-      await prisma.joinQueue.delete({
-        where: { id: joinQueue.id },
-      });
-      throw new ApiError(400, 'User is already a participant');
-    }
-
     await prisma.$transaction(async (tx: any) => {
-      await tx.joinQueue.delete({
-        where: { id: joinQueue.id },
+      const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
+
+      const currentParticipant = await tx.gameParticipant.findFirst({
+        where: { gameId, userId: currentUserId },
       });
 
-      if (existingParticipant) {
-        await tx.gameParticipant.update({
-          where: { id: existingParticipant.id },
-          data: { isPlaying: true },
-        });
-      } else {
-        await tx.gameParticipant.create({
-          data: {
-            gameId,
-            userId: queueUserId,
-            role: 'PARTICIPANT',
-            isPlaying: true,
-          },
-        });
+      if (!canUserManageQueue(currentParticipant, currentGame)) {
+        throw new ApiError(403, 'games.notAuthorizedToAcceptJoinQueue');
       }
-    });
 
-    const updatedGame = await prisma.game.findUnique({
-      where: { id: gameId },
-      include: {
-        court: {
-          include: {
-            club: true
-          }
-        },
-        club: true
+      const joinResult = await validatePlayerCanJoinGame(currentGame, queueUserId);
+      if (!joinResult.canJoin) {
+        throw new ApiError(400, joinResult.reason || 'errors.games.cannotAddPlayer');
       }
+
+      const currentJoinQueue = await tx.joinQueue.findUnique({
+        where: {
+          userId_gameId: {
+            userId: queueUserId,
+            gameId,
+          },
+        },
+      });
+
+      if (!currentJoinQueue || currentJoinQueue.status !== 'PENDING') {
+        throw new ApiError(404, 'games.joinQueueRequestNotFound');
+      }
+
+      const existingParticipant = await tx.gameParticipant.findFirst({
+        where: { gameId, userId: queueUserId },
+      });
+
+      if (existingParticipant && existingParticipant.isPlaying) {
+        await tx.joinQueue.delete({
+          where: { id: currentJoinQueue.id },
+        });
+        throw new ApiError(400, 'errors.games.alreadyParticipant');
+      }
+
+      await tx.joinQueue.delete({
+        where: { id: currentJoinQueue.id },
+      });
+
+      await addOrUpdateParticipant(tx, gameId, queueUserId);
     });
 
     if (queueUser) {
-      const userName = getUserDisplayName(queueUser.firstName, queueUser.lastName);
-      try {
-        const systemMessage = await createSystemMessage(gameId, {
-          type: SystemMessageType.USER_ACCEPTED_JOIN_QUEUE,
-          variables: { userName }
-        });
-
-        if (updatedGame && systemMessage) {
-          notificationService.sendGameSystemMessageNotification(systemMessage, updatedGame).catch(error => {
-            console.error('Failed to send notifications for join queue acceptance:', error);
-          });
-        }
-      } catch (error) {
-        console.error('Failed to create system message for join queue acceptance:', error);
-      }
+      await createSystemMessageWithNotification(
+        gameId,
+        SystemMessageType.USER_ACCEPTED_JOIN_QUEUE,
+        queueUserId
+      );
     }
 
+    await ParticipantMessageHelper.sendJoinMessage(gameId, queueUserId);
     await InviteService.deleteInvitesForUserInGame(gameId, queueUserId);
-
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentUserId);
     return 'games.joinRequestAccepted';
@@ -235,21 +181,15 @@ export class JoinQueueService {
       },
     });
 
+    if (!game) {
+      throw new ApiError(404, 'Game not found');
+    }
+
     const currentParticipant = await prisma.gameParticipant.findFirst({
-      where: {
-        gameId,
-        userId: currentUserId,
-      },
+      where: { gameId, userId: currentUserId },
     });
 
-    let canDecline = currentParticipant && (
-      currentParticipant.role === 'OWNER' ||
-      currentParticipant.role === 'ADMIN' ||
-      (game!.anyoneCanInvite && currentParticipant.isPlaying)
-    );
-
-
-    if (!canDecline) {
+    if (!canUserManageQueue(currentParticipant, game)) {
       throw new ApiError(403, 'games.notAuthorizedToDeclineJoinQueue');
     }
 
@@ -266,26 +206,15 @@ export class JoinQueueService {
       throw new ApiError(404, 'games.joinQueueRequestNotFound');
     }
 
-    const queueUser = await prisma.user.findUnique({
-      where: { id: queueUserId },
-      select: USER_SELECT_FIELDS,
-    });
-
     await prisma.joinQueue.delete({
       where: { id: joinQueue.id },
     });
 
-    if (queueUser) {
-      const userName = getUserDisplayName(queueUser.firstName, queueUser.lastName);
-      try {
-        await createSystemMessage(gameId, {
-          type: SystemMessageType.USER_DECLINED_JOIN_QUEUE,
-          variables: { userName }
-        });
-      } catch (error) {
-        console.error('Failed to create system message for join queue decline:', error);
-      }
-    }
+    await createSystemMessageWithNotification(
+      gameId,
+      SystemMessageType.USER_DECLINED_JOIN_QUEUE,
+      queueUserId
+    );
 
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentUserId);
     await ParticipantMessageHelper.emitGameUpdateToUser(gameId, queueUserId);

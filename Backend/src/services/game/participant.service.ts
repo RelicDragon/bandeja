@@ -4,7 +4,9 @@ import { SystemMessageType } from '../../utils/systemMessages';
 import { GameService } from './game.service';
 import { JoinQueueService } from './joinQueue.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
-import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
+import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants } from '../../utils/participantValidation';
+import { fetchGameWithPlayingParticipants } from '../../utils/gameQueries';
+import { addOrUpdateParticipant, performPostJoinOperations } from '../../utils/participantOperations';
 import { InviteService } from '../invite.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 
@@ -23,8 +25,6 @@ export class ParticipantService {
       throw new ApiError(404, 'Game not found');
     }
 
-    await validateGenderForGame(game, userId);
-
     const existingParticipant = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
@@ -35,27 +35,24 @@ export class ParticipantService {
     if (existingParticipant) {
       if (existingParticipant.isPlaying) {
         throw new ApiError(400, 'Already joined this game as a player');
-      } else {
-        const joinResult = await canAddPlayerToGame(game, userId);
+      }
+
+      await prisma.$transaction(async (tx) => {
+        const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
+        const joinResult = await validatePlayerCanJoinGame(currentGame, userId);
 
         if (!joinResult.canJoin && joinResult.shouldQueue) {
-          return await JoinQueueService.addToQueue(gameId, userId);
+          throw new ApiError(400, joinResult.reason || 'errors.games.cannotAddPlayer');
         }
 
-        await prisma.gameParticipant.update({
-          where: { id: existingParticipant.id },
-          data: { isPlaying: true },
-        });
+        await addOrUpdateParticipant(tx, gameId, userId);
+      });
 
-        await InviteService.deleteInvitesForUserInGame(gameId, userId);
-        await ParticipantMessageHelper.sendJoinMessage(gameId, userId);
-        await GameService.updateGameReadiness(gameId);
-        await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
-        return 'Successfully joined the game';
-      }
+      await performPostJoinOperations(gameId, userId);
+      return 'games.joinedSuccessfully';
     }
 
-    const joinResult = await canAddPlayerToGame(game, userId);
+    const joinResult = await validatePlayerCanJoinGame(game, userId);
 
     if (!joinResult.canJoin && joinResult.shouldQueue) {
       return await JoinQueueService.addToQueue(gameId, userId);
@@ -65,20 +62,23 @@ export class ParticipantService {
       return await JoinQueueService.addToQueue(gameId, userId);
     }
 
-    await prisma.gameParticipant.create({
-      data: {
-        gameId,
-        userId,
-        role: 'PARTICIPANT',
-        isPlaying: true,
-      },
+    await prisma.$transaction(async (tx) => {
+      const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
+      const currentJoinResult = await validatePlayerCanJoinGame(currentGame, userId);
+
+      if (!currentJoinResult.canJoin) {
+        throw new ApiError(400, currentJoinResult.reason || 'errors.games.cannotAddPlayer');
+      }
+
+      if (!currentGame.allowDirectJoin) {
+        throw new ApiError(400, 'errors.games.directJoinNotAllowed');
+      }
+
+      await addOrUpdateParticipant(tx, gameId, userId);
     });
 
-    await InviteService.deleteInvitesForUserInGame(gameId, userId);
-    await ParticipantMessageHelper.sendJoinMessage(gameId, userId);
-    await GameService.updateGameReadiness(gameId);
-    await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
-    return 'Successfully joined the game';
+    await performPostJoinOperations(gameId, userId);
+    return 'games.joinedSuccessfully';
   }
 
   static async leaveGame(gameId: string, userId: string) {
@@ -111,7 +111,7 @@ export class ParticipantService {
       await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_GAME);
       await GameService.updateGameReadiness(gameId);
       await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
-      return 'Successfully left the game';
+      return 'games.leftSuccessfully';
     } else {
       await prisma.gameParticipant.delete({
         where: { id: participant.id },
@@ -120,7 +120,7 @@ export class ParticipantService {
       await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_CHAT);
       await GameService.updateGameReadiness(gameId);
       await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
-      return 'Successfully left the chat';
+      return 'games.leftChatSuccessfully';
     }
   }
 
@@ -135,6 +135,8 @@ export class ParticipantService {
     if (!game) {
       throw new ApiError(404, 'Game not found');
     }
+
+    validateGameCanAcceptParticipants(game);
 
     const existingParticipant = await prisma.gameParticipant.findFirst({
       where: {
@@ -163,7 +165,7 @@ export class ParticipantService {
     await ParticipantMessageHelper.sendJoinMessage(gameId, userId, SystemMessageType.USER_JOINED_CHAT);
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
-    return 'Successfully joined the chat as a guest';
+    return 'games.joinedChatAsGuest';
   }
 
   static async togglePlayingStatus(gameId: string, userId: string, isPlaying: boolean) {
@@ -200,12 +202,13 @@ export class ParticipantService {
         },
       });
 
-      if (game) {
-        await validateGenderForGame(game, userId);
-        const joinResult = await canAddPlayerToGame(game, userId);
-        if (!joinResult.canJoin) {
-          throw new ApiError(400, joinResult.reason || 'Cannot join game');
-        }
+      if (!game) {
+        throw new ApiError(404, 'Game not found');
+      }
+
+      const joinResult = await validatePlayerCanJoinGame(game, userId);
+      if (!joinResult.canJoin) {
+        throw new ApiError(400, joinResult.reason || 'errors.games.cannotJoin');
       }
     }
 
@@ -228,7 +231,7 @@ export class ParticipantService {
 
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
-    return `Successfully ${isPlaying ? 'joined' : 'left'} the game`;
+    return isPlaying ? 'games.joinedSuccessfully' : 'games.leftSuccessfully';
   }
 }
 

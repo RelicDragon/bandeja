@@ -308,7 +308,13 @@ export const GameDetailsContent = () => {
     try {
       const response = await gamesApi.join(id);
       const message = (response as any).message || 'Successfully joined the game';
-      toast.success(t(message, { defaultValue: message }));
+      
+      if (message === 'games.addedToJoinQueue') {
+        toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
+      } else {
+        toast.success(t(message, { defaultValue: message }));
+      }
+      
       const gameResponse = await gamesApi.getById(id);
       setGame(gameResponse.data);
     } catch (error: any) {
@@ -345,7 +351,15 @@ export const GameDetailsContent = () => {
 
   const handleAcceptInvite = async (inviteId: string) => {
     try {
-      await invitesApi.accept(inviteId);
+      const response = await invitesApi.accept(inviteId);
+      const message = (response as any).message || 'Invite accepted successfully';
+      
+      if (message === 'games.addedToJoinQueue') {
+        toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
+      } else {
+        toast.success(t(message, { defaultValue: message }));
+      }
+      
       setMyInvites(myInvites.filter((inv) => inv.id !== inviteId));
       if (id) {
         const response = await gamesApi.getById(id);

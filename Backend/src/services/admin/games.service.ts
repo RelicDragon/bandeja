@@ -146,7 +146,10 @@ export class AdminGamesService {
 
           if (!joinResult.canJoin && joinResult.shouldQueue) {
             await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
-            return;
+            await prisma.invite.delete({
+              where: { id: inviteId },
+            });
+            return { message: 'games.addedToJoinQueue' };
           }
 
           await prisma.gameParticipant.update({
@@ -161,7 +164,10 @@ export class AdminGamesService {
 
         if (!joinResult.canJoin && joinResult.shouldQueue) {
           await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
-          return;
+          await prisma.invite.delete({
+            where: { id: inviteId },
+          });
+          return { message: 'games.addedToJoinQueue' };
         }
 
         await prisma.gameParticipant.create({
@@ -193,7 +199,7 @@ export class AdminGamesService {
       where: { id: inviteId },
     });
 
-    return { message: 'Invite accepted successfully' };
+    return { message: 'invites.acceptedSuccessfully' };
   }
 
   static async declineInvite(inviteId: string) {
@@ -235,7 +241,7 @@ export class AdminGamesService {
       where: { id: inviteId },
     });
 
-    return { message: 'Invite declined successfully' };
+    return { message: 'invites.declinedSuccessfully' };
   }
 
   static async resetGameResults(gameId: string, _adminUserId: string) {

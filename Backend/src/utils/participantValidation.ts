@@ -1,5 +1,5 @@
 import prisma from '../config/database';
-import { Gender, GenderTeam, EntityType } from '@prisma/client';
+import { Gender, GenderTeam, EntityType, GameStatus } from '@prisma/client';
 import { ApiError } from './ApiError';
 
 interface GameWithParticipants {
@@ -16,10 +16,22 @@ interface GameWithParticipants {
   }>;
 }
 
+export interface GameWithStatus extends GameWithParticipants {
+  status: GameStatus;
+  allowDirectJoin?: boolean;
+  anyoneCanInvite?: boolean;
+}
+
 export interface PlayerJoinResult {
   canJoin: boolean;
   shouldQueue: boolean;
   reason?: string;
+}
+
+export function validateGameCanAcceptParticipants(game: { status: GameStatus }): void {
+  if (game.status === GameStatus.ARCHIVED || game.status === GameStatus.FINISHED) {
+    throw new ApiError(400, 'errors.games.cannotJoinArchivedOrFinished');
+  }
 }
 
 export async function validateGenderForGame(
@@ -142,3 +154,38 @@ export async function canAddPlayerToGame(
   }
 }
 
+export async function validatePlayerCanJoinGame(
+  game: GameWithStatus,
+  userId: string
+): Promise<PlayerJoinResult> {
+  validateGameCanAcceptParticipants(game);
+  await validateGenderForGame(game, userId);
+  return await canAddPlayerToGame(game, userId);
+}
+
+export function canUserManageQueue(
+  participant: { role: string; isPlaying: boolean } | null,
+  game: { anyoneCanInvite: boolean }
+): boolean {
+  return !!participant && (
+    participant.role === 'OWNER' ||
+    participant.role === 'ADMIN' ||
+    (game.anyoneCanInvite && participant.isPlaying)
+  );
+}
+
+export async function validateAndGetGameInTransaction(
+  tx: any,
+  gameId: string,
+  userId: string
+): Promise<{ game: GameWithStatus; joinResult: PlayerJoinResult }> {
+  const { fetchGameWithPlayingParticipants } = await import('./gameQueries');
+  const game = await fetchGameWithPlayingParticipants(tx, gameId);
+  const joinResult = await validatePlayerCanJoinGame(game, userId);
+
+  if (!joinResult.canJoin) {
+    throw new ApiError(400, joinResult.reason || 'errors.games.cannotAddPlayer');
+  }
+
+  return { game, joinResult };
+}

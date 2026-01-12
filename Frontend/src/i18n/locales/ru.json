@@ -200,6 +200,10 @@
     "joinQueueRequestNotFound": "Запрос из списка ожидания не найден",
     "joinRequestWasDeclined": "Запрос на присоединение был отклонен",
     "joinRequestAlreadyAccepted": "Запрос на присоединение уже был принят",
+    "joinedSuccessfully": "Успешно присоединился к игре",
+    "leftSuccessfully": "Успешно покинул игру",
+    "leftChatSuccessfully": "Успешно покинул чат",
+    "joinedChatAsGuest": "Успешно присоединился к чату как гость",
     "status": {
       "announced": "Объявлена",
       "ready": "Готова",
@@ -458,7 +462,9 @@
     "to": "Кому",
     "message": "Сообщение",
     "accepted": "Приглашение принято",
+    "acceptedSuccessfully": "Приглашение успешно принято",
     "declined": "Приглашение отклонено",
+    "declinedSuccessfully": "Приглашение успешно отклонено",
     "selectPlayer": "Выберите игрока",
     "selectPlayers": "Выберите игроков",
     "noPlayersAvailable": "Нет доступных игроков для приглашения",
@@ -1153,6 +1159,11 @@
       "onlyParticipantsCanView": "Только участники могут просматривать приглашения игры",
       "onlySenderCanCancel": "Только отправитель может отменить это приглашение",
       "canOnlyCancelPending": "Можно отменить только pending приглашения"
+    },
+    "games": {
+      "cannotJoin": "Нельзя присоединиться к игре",
+      "cannotAddPlayer": "Нельзя добавить игрока в игру",
+      "alreadyParticipant": "Пользователь уже является участником"
     },
     "bugs": {
       "notFound": "Ошибка не найдена",

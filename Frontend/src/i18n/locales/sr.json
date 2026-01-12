@@ -200,6 +200,10 @@
     "joinQueueRequestNotFound": "Захтев са листе чекања није пронађен",
     "joinRequestWasDeclined": "Захтев за придруживање је одбијен",
     "joinRequestAlreadyAccepted": "Захтев за придруживање је већ прихваћен",
+    "joinedSuccessfully": "Успешно се придружио игри",
+    "leftSuccessfully": "Успешно напустио игру",
+    "leftChatSuccessfully": "Успешно напустио чет",
+    "joinedChatAsGuest": "Успешно се придружио чету као гост",
     "status": {
       "announced": "Објављена",
       "ready": "Спремна",
@@ -451,7 +455,9 @@
     "to": "За",
     "message": "Порука",
     "accepted": "Позив прихваћен",
+    "acceptedSuccessfully": "Позивница је успешно прихваћена",
     "declined": "Позив одбачен",
+    "declinedSuccessfully": "Позивница је успешно одбачена",
     "selectPlayer": "Изаберите играча",
     "selectPlayers": "Изаберите играче",
     "noPlayersAvailable": "Нема доступних играча за позивање",
@@ -1108,6 +1114,11 @@
       "onlyParticipantsCanView": "Само учесници могу прегледати позиве игре",
       "onlySenderCanCancel": "Само пошиљалац може отказати овај позив",
       "canOnlyCancelPending": "Може се отказати само позив на чекању"
+    },
+    "games": {
+      "cannotJoin": "Не може се придружити игри",
+      "cannotAddPlayer": "Не може се додати играч у игру",
+      "alreadyParticipant": "Корисник је већ учесник"
     },
     "bugs": {
       "notFound": "Грешка није пронађена",
