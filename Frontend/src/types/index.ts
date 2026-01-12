@@ -294,6 +294,15 @@ export interface Game {
     lastBatchId?: string;
     processedOps?: string[];
   };
+  lastMessage?: {
+    id: string;
+    content?: string;
+    createdAt: string;
+    senderId: string;
+    sender?: BasicUser;
+    chatType?: ChatType;
+    mediaUrls?: string[];
+  };
   createdAt: string;
   updatedAt: string;
 }

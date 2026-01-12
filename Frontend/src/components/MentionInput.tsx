@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { MentionsInput, Mention, SuggestionDataItem, MentionData } from 'react-mentions';
 import { ChatContextType } from '@/api/chat';
 import { Game, Bug, BasicUser } from '@/types';
+import { normalizeChatType } from '@/utils/chatType';
 import { PlayerAvatar } from './PlayerAvatar';
 import { matchesSearch } from '@/utils/transliteration';
 
@@ -63,8 +64,9 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     if (contextType === 'GAME' && game) {
       const users: MentionableUser[] = [];
       const userIds = new Set<string>();
+      const normalizedChatType = chatType ? normalizeChatType(chatType as any) : 'PUBLIC';
 
-      if (chatType === 'PUBLIC') {
+      if (normalizedChatType === 'PUBLIC') {
         game.participants.forEach(p => {
           if (p.user && !userIds.has(p.user.id)) {
             userIds.add(p.user.id);
@@ -83,19 +85,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
             });
           }
         });
-      } else if (chatType === 'PRIVATE') {
-        game.participants
-          .filter(p => p.isPlaying)
-          .forEach(p => {
-            if (p.user && !userIds.has(p.user.id)) {
-              userIds.add(p.user.id);
-              users.push({
-                ...p.user,
-                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-              });
-            }
-          });
-      } else if (chatType === 'ADMINS') {
+      } else if (normalizedChatType === 'ADMINS') {
         game.participants
           .filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
           .forEach(p => {

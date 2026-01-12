@@ -2,13 +2,13 @@ import { useEffect, useRef, useCallback } from 'react';
 import { chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 
-export const useMessageReadTracking = () => {
+export const useMessageReadTracking = (disabled: boolean = false) => {
   const { user } = useAuthStore();
   const readMessagesRef = useRef<Set<string>>(new Set());
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const markMessageAsRead = useCallback(async (messageId: string) => {
-    if (readMessagesRef.current.has(messageId)) return;
+    if (readMessagesRef.current.has(messageId) || disabled) return;
     
     try {
       await chatApi.markMessageAsRead(messageId);
@@ -16,9 +16,11 @@ export const useMessageReadTracking = () => {
     } catch (error) {
       console.error('Failed to mark message as read:', error);
     }
-  }, []);
+  }, [disabled]);
 
   useEffect(() => {
+    if (disabled) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -45,15 +47,15 @@ export const useMessageReadTracking = () => {
         observerRef.current.disconnect();
       }
     };
-  }, [markMessageAsRead, user?.id]);
+  }, [markMessageAsRead, user?.id, disabled]);
 
   const observeMessage = useCallback((element: HTMLElement, messageId: string, senderId: string) => {
-    if (observerRef.current && !readMessagesRef.current.has(messageId)) {
-      element.setAttribute('data-message-id', messageId);
-      element.setAttribute('data-sender-id', senderId);
-      observerRef.current.observe(element);
-    }
-  }, []);
+    if (disabled || !observerRef.current || readMessagesRef.current.has(messageId)) return;
+    
+    element.setAttribute('data-message-id', messageId);
+    element.setAttribute('data-sender-id', senderId);
+    observerRef.current.observe(element);
+  }, [disabled]);
 
   const unobserveMessage = useCallback((element: HTMLElement) => {
     if (observerRef.current) {

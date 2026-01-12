@@ -24,7 +24,7 @@ export const createSystemMessage = async (contextId: string, messageData: { type
     } else if (chatContextType === 'BUG') {
       socketService.emitNewBugMessage(contextId, message);
     } else if (chatContextType === 'USER') {
-      socketService.emitNewUserMessage(contextId, message);
+      await socketService.emitNewUserMessage(contextId, message);
     }
   }
 
@@ -434,11 +434,6 @@ export const markUserChatAsRead = asyncHandler(async (req: AuthRequest, res: Res
   }
 
   const result = await ReadReceiptService.markUserChatAsRead(chatId, userId);
-
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    socketService.emitUserReadReceipt(chatId, { userId, readAt: new Date() });
-  }
 
   res.json({
     success: true,

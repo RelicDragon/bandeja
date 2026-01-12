@@ -14,9 +14,11 @@ import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { usePlayersStore } from '@/store/playersStore';
+import { useNavigationStore } from '@/store/navigationStore';
 import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
 import { isUserGameAdminOrOwner } from '@/utils/gameResults';
+import { normalizeChatType } from '@/utils/chatType';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff } from 'lucide-react';
 
 interface LocationState {
@@ -25,17 +27,28 @@ interface LocationState {
   chat?: UserChatType;
 }
 
-export const GameChat: React.FC = () => {
+interface GameChatProps {
+  isEmbedded?: boolean;
+  chatId?: string;
+  chatType?: 'user' | 'bug' | 'game';
+}
+
+export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: propChatId, chatType: propChatType }) => {
   const { t } = useTranslation();
-  const { id } = useParams<{ id: string }>();
+  const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
+  const { setBottomTabsVisible } = useNavigationStore();
+  
+  const id = isEmbedded ? propChatId : paramId;
   
   const locationState = location.state as LocationState | null;
-  const contextType: ChatContextType = locationState?.contextType || 
-    (location.pathname.includes('/bugs/') ? 'BUG' : 
-     location.pathname.includes('/user-chat/') ? 'USER' : 'GAME');
+  const contextType: ChatContextType = isEmbedded 
+    ? (propChatType === 'user' ? 'USER' : propChatType === 'bug' ? 'BUG' : 'GAME')
+    : (locationState?.contextType || 
+      (location.pathname.includes('/bugs/') ? 'BUG' : 
+       location.pathname.includes('/user-chat/') ? 'USER' : 'GAME'));
   const initialChatType = locationState?.initialChatType;
   
   const [game, setGame] = useState<Game | null>(null);
@@ -64,6 +77,9 @@ export const GameChat: React.FC = () => {
   const isSendingRef = useRef(false);
   const sendingStartTimeRef = useRef<number | null>(null);
   const justLoadedOlderMessagesRef = useRef(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
+  const previousIdRef = useRef<string | undefined>(undefined);
 
   const userParticipant = game?.participants.find(p => p.userId === user?.id);
   const isParticipant = !!userParticipant;
@@ -80,6 +96,15 @@ export const GameChat: React.FC = () => {
   const canAccessChat = contextType === 'USER' || (contextType === 'BUG' && canWriteBugChat) || (contextType === 'GAME' && (isParticipant || hasPendingInvite || isGuest || isAdminOrOwner));
   const canViewPublicChat = contextType === 'USER' || contextType === 'BUG' || canAccessChat || game?.isPublic;
   const isCurrentUserGuest = game?.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying && participant.role !== 'OWNER' && participant.role !== 'ADMIN') ?? false;
+
+  useEffect(() => {
+    if (!isEmbedded) {
+      setBottomTabsVisible(false);
+      return () => {
+        setBottomTabsVisible(true);
+      };
+    }
+  }, [setBottomTabsVisible, isEmbedded]);
 
   const loadContext = useCallback(async () => {
     if (!id) return null;
@@ -149,7 +174,8 @@ export const GameChat: React.FC = () => {
       if (contextType === 'USER') {
         response = await chatApi.getUserChatMessages(id, pageNum, 50);
       } else {
-        response = await chatApi.getMessages(contextType, id, pageNum, 50, currentChatType);
+        const normalizedChatType = normalizeChatType(currentChatType);
+        response = await chatApi.getMessages(contextType, id, pageNum, 50, normalizedChatType);
       }
       
       if (append) {
@@ -158,12 +184,14 @@ export const GameChat: React.FC = () => {
         setMessages(response);
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            const messagesContainer = document.querySelector('.overflow-y-auto');
-            if (messagesContainer) {
-              messagesContainer.scrollTo({
-                top: messagesContainer.scrollHeight,
-                behavior: 'smooth'
-              });
+            if (chatContainerRef.current) {
+              const messagesContainer = chatContainerRef.current.querySelector('.overflow-y-auto') as HTMLElement;
+              if (messagesContainer) {
+                messagesContainer.scrollTo({
+                  top: messagesContainer.scrollHeight,
+                  behavior: 'smooth'
+                });
+              }
             }
           });
         });
@@ -252,9 +280,11 @@ export const GameChat: React.FC = () => {
   }, []);
 
   const handleScrollToMessage = useCallback((messageId: string) => {
-    const messageElement = document.getElementById(`message-${messageId}`);
+    if (!chatContainerRef.current) return;
+    
+    const messageElement = chatContainerRef.current.querySelector(`#message-${messageId}`) as HTMLElement;
     if (messageElement) {
-      const messagesContainer = messageElement.closest('.overflow-y-auto');
+      const messagesContainer = messageElement.closest('.overflow-y-auto') as HTMLElement;
       
       if (messagesContainer) {
         const messageOffsetTop = messageElement.offsetTop;
@@ -361,10 +391,11 @@ export const GameChat: React.FC = () => {
     setHasMoreMessages(true);
     
     try {
-      const response = await chatApi.getMessages(contextType, id!, 1, 50, newChatType);
+      const normalizedChatType = normalizeChatType(newChatType);
+      const response = await chatApi.getMessages(contextType, id!, 1, 50, normalizedChatType);
       
       if (id && user?.id && contextType === 'GAME') {
-        const markReadResponse = await chatApi.markAllMessagesAsRead(id, [newChatType]);
+        const markReadResponse = await chatApi.markAllMessagesAsRead(id, [normalizedChatType]);
         const markedCount = markReadResponse.data.count || 0;
         
         const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
@@ -413,21 +444,17 @@ export const GameChat: React.FC = () => {
     availableTypes.push('PUBLIC');
     
     if (isAdminOrOwner) {
-      availableTypes.push('PRIVATE');
       availableTypes.push('ADMINS');
       return availableTypes;
     }
     
-    if (!isParticipant) return availableTypes;
-    if (!isPlayingParticipant) return availableTypes;
-    
-    availableTypes.push('PRIVATE');
-    
     return availableTypes;
-  }, [contextType, isParticipant, isPlayingParticipant, isAdminOrOwner, game?.status]);
+  }, [contextType, isAdminOrOwner, game?.status]);
 
   const handleNewMessage = useCallback((message: ChatMessage) => {
-    const matchesChatType = contextType === 'USER' || message.chatType === currentChatType;
+    const normalizedCurrentChatType = normalizeChatType(currentChatType);
+    const normalizedMessageChatType = normalizeChatType(message.chatType);
+    const matchesChatType = contextType === 'USER' || normalizedMessageChatType === normalizedCurrentChatType;
     if (matchesChatType) {
       setMessages(prevMessages => {
         const exists = prevMessages.some(msg => msg.id === message.id);
@@ -525,11 +552,32 @@ export const GameChat: React.FC = () => {
     );
   }, []);
 
+  useEffect(() => {
+    if (id !== previousIdRef.current) {
+      setGame(null);
+      setBug(null);
+      setUserChat(null);
+      setMessages([]);
+      setPage(1);
+      setHasMoreMessages(true);
+      setIsLoadingMessages(true);
+      setIsInitialLoad(true);
+      setIsLoadingContext(true);
+      setIsBlockedByUser(false);
+      setIsMuted(false);
+      setReplyTo(null);
+      setCurrentChatType('PUBLIC');
+      setHasSetDefaultChatType(false);
+      previousIdRef.current = id;
+    }
+  }, [id]);
 
   useEffect(() => {
     const loadData = async () => {
       if (!id || !user?.id) return;
+      if (isLoadingRef.current) return;
       
+      isLoadingRef.current = true;
       setIsInitialLoad(true);
       setIsLoadingMessages(true);
       
@@ -557,15 +605,9 @@ export const GameChat: React.FC = () => {
       let targetChatType = currentChatType;
       
       if (!hasSetDefaultChatType && !initialChatType && contextType === 'GAME' && loadedContext) {
-        const loadedGame = loadedContext as Game;
-        const loadedUserParticipant = loadedGame.participants.find(p => p.userId === user.id);
-        const loadedIsPlayingParticipant = loadedUserParticipant?.isPlaying ?? false;
-        
-        if (loadedIsPlayingParticipant) {
-          targetChatType = 'PRIVATE';
-          setCurrentChatType('PRIVATE');
-          setHasSetDefaultChatType(true);
-        }
+        targetChatType = 'PUBLIC';
+        setCurrentChatType('PUBLIC');
+        setHasSetDefaultChatType(true);
       }
       
       if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
@@ -584,7 +626,6 @@ export const GameChat: React.FC = () => {
         const loadedGame = loadedContext as Game;
         const loadedUserParticipant = loadedGame.participants.find(p => p.userId === user.id);
         const loadedIsParticipant = !!loadedUserParticipant;
-        const loadedIsPlayingParticipant = loadedUserParticipant?.isPlaying ?? false;
         const loadedIsAdminOrOwner = loadedUserParticipant?.role === 'ADMIN' || loadedUserParticipant?.role === 'OWNER';
         const loadedHasPendingInvite = loadedGame.invites?.some(invite => invite.receiverId === user.id) ?? false;
         const loadedIsGuest = loadedGame.participants.some(p => p.userId === user.id && !p.isPlaying) ?? false;
@@ -596,9 +637,6 @@ export const GameChat: React.FC = () => {
               availableChatTypes.push('PHOTOS');
             }
             availableChatTypes.push('PUBLIC');
-            if (loadedIsParticipant && loadedIsPlayingParticipant) {
-              availableChatTypes.push('PRIVATE');
-            }
             if (loadedIsParticipant && loadedIsAdminOrOwner) {
               availableChatTypes.push('ADMINS');
             }
@@ -616,9 +654,33 @@ export const GameChat: React.FC = () => {
           }
         }
       }
+
+      if (contextType === 'USER' && id) {
+        try {
+          const userChatUnreadResponse = await chatApi.getUserChatUnreadCount(id);
+          const userChatUnreadCount = userChatUnreadResponse.data.count || 0;
+          
+          await chatApi.markUserChatAsRead(id);
+          
+          const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+          const newCount = Math.max(0, unreadMessages - userChatUnreadCount);
+          setUnreadMessages(newCount);
+          
+          const { updateUnreadCount } = usePlayersStore.getState();
+          updateUnreadCount(id, () => 0);
+        } catch (error) {
+          console.error('Failed to mark user chat as read:', error);
+        }
+      }
+      
+      isLoadingRef.current = false;
     };
     
     loadData();
+    
+    return () => {
+      isLoadingRef.current = false;
+    };
   }, [loadContext, loadMessages, id, user?.id, initialChatType, currentChatType, handleChatTypeChange, contextType, userChat, hasSetDefaultChatType]);
 
   useEffect(() => {
@@ -674,12 +736,14 @@ export const GameChat: React.FC = () => {
     
     if (!isLoadingMessages && !isSwitchingChatType && !isLoadingMore && !isInitialLoad && messages.length > 0) {
       const scrollToBottom = () => {
-        const messagesContainer = document.querySelector('.overflow-y-auto');
-        if (messagesContainer) {
-          messagesContainer.scrollTo({
-            top: messagesContainer.scrollHeight,
-            behavior: 'smooth'
-          });
+        if (chatContainerRef.current) {
+          const messagesContainer = chatContainerRef.current.querySelector('.overflow-y-auto') as HTMLElement;
+          if (messagesContainer) {
+            messagesContainer.scrollTo({
+              top: messagesContainer.scrollHeight,
+              behavior: 'smooth'
+            });
+          }
         }
       };
       
@@ -720,6 +784,7 @@ export const GameChat: React.FC = () => {
             onLoadMore={loadMoreMessages}
             isInitialLoad={true}
             isLoadingMore={false}
+            disableReadTracking={contextType === 'USER'}
           />
         </main>
       </div>
@@ -818,16 +883,18 @@ export const GameChat: React.FC = () => {
 
 
   return (
-    <div className="chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden h-screen">
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <div ref={chatContainerRef} className={`chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'}`}>
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: isEmbedded ? '0' : 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
-            >
-              <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
-            </button>
+            {!isEmbedded && (
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+              >
+                <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
+              </button>
+            )}
             {contextType !== 'BUG' && <div className="flex-shrink-0">{getIcon()}</div>}
             <div className="min-w-0 flex-1">
               <h1 className={`${contextType === 'BUG' ? 'text-base' : 'text-lg'} font-semibold text-gray-900 dark:text-white flex items-center gap-2 whitespace-nowrap overflow-hidden`}>
@@ -969,6 +1036,7 @@ export const GameChat: React.FC = () => {
           onLoadMore={loadMoreMessages}
           isInitialLoad={isInitialLoad}
           isLoadingMore={isLoadingMore}
+          disableReadTracking={contextType === 'USER'}
         />
       </main>
 

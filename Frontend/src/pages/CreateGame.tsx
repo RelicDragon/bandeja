@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameSetupSection, GameSetupModal, MultipleCourtsSelector, AvatarUpload, PriceSection } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
+import { useNavigationStore } from '@/store/navigationStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
 import { gameCourtsApi } from '@/api/gameCourts';
 import { mediaApi } from '@/api/media';
@@ -23,6 +24,7 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const { setCurrentPage, setIsAnimating } = useNavigationStore();
 
   console.log('CreateGame - initialDate received:', initialDate, typeof initialDate);
   console.log('CreateGame - initialGameData received:', initialGameData);
@@ -405,7 +407,10 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
         }
       }
 
-      navigate('/');
+      setIsAnimating(true);
+      setCurrentPage('my');
+      navigate('/', { replace: true });
+      setTimeout(() => setIsAnimating(false), 300);
     } catch (error) {
       console.error('Failed to create game:', error);
     } finally {

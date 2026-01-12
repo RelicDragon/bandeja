@@ -59,6 +59,8 @@ export const GameCard = ({
       setTimeout(() => {
         setIsCollapsing(false);
       }, 300);
+    } else if (forceCollapsed !== undefined && previousForceCollapsed === undefined && !isCollapsing) {
+      setIsCollapsed(forceCollapsed);
     }
   }, [forceCollapsed, isCollapsed, isCollapsing]);
 
@@ -123,11 +125,13 @@ export const GameCard = ({
 
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     navigate(`/games/${game.id}/chat`);
   };
 
   const handleToggleCollapse = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     if (isCollapsing) return;
     
     setIsCollapsing(true);
@@ -201,8 +205,9 @@ export const GameCard = ({
       case 'TOURNAMENT':
         return <Swords size={40} className="text-red-500 dark:text-red-400 opacity-15 dark:opacity-15" />;
       case 'LEAGUE':
-      case 'LEAGUE_SEASON':
         return <Trophy size={40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
+      case 'LEAGUE_SEASON':
+        return <Trophy size={isCollapsed ? 27 : 40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
       case 'TRAINING':
         return <Dumbbell size={48} className="text-green-500 dark:text-green-400 opacity-15 dark:opacity-15" />;
       case 'BAR':
@@ -225,70 +230,72 @@ export const GameCard = ({
         </div>
       )}
       {/* Header - Always visible */}
-      <div className="mb-3 relative z-10">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-20 flex items-center gap-2">
-          {shouldMoveIconsToTitle && (
-            <>
-              {isUserParticipant && (
-                <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white flex-shrink-0">
-                  <Star 
-                    size={12} 
-                    className="text-white"
-                    fill="currentColor"
-                  />
-                </span>
-              )}
-              <GameStatusIcon status={game.status} />
-            </>
-          )}
-          <span>
-            {game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name
-              ? (
+      <div className={`${!(isCollapsed && game.entityType === 'LEAGUE_SEASON') ? 'mb-3' : ''} relative z-10`}>
+        {!(isCollapsed && game.entityType === 'LEAGUE_SEASON') && (
+          <>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-20 flex items-center gap-2">
+              {shouldMoveIconsToTitle && (
                 <>
-                  <span className="text-blue-600 dark:text-blue-400">
-                    {game.parent.leagueSeason.league.name}
-                  </span>
-                  {game.parent.leagueSeason.game?.name && (
-                    <span className="text-purple-600 dark:text-purple-400"> {game.parent.leagueSeason.game.name}</span>
+                  {isUserParticipant && (
+                    <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white flex-shrink-0">
+                      <Star 
+                        size={12} 
+                        className="text-white"
+                        fill="currentColor"
+                      />
+                    </span>
                   )}
-                  {(game.leagueGroup?.name || game.leagueRound) && (
-                    <div className="mt-1 flex items-center gap-2 flex-wrap">
-                      {game.leagueGroup?.name && (
-                        <span
-                          className="px-2 py-0.5 text-xs font-medium rounded text-white"
-                          style={{ backgroundColor: game.leagueGroup.color || '#6b7280' }}
-                        >
-                          {game.leagueGroup.name}
-                        </span>
-                      )}
-                      {game.leagueRound && (
-                        <span className="text-gray-600 dark:text-gray-400">
-                          {t('gameDetails.round')} {game.leagueRound.orderIndex + 1}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  <GameStatusIcon status={game.status} />
                 </>
-              )
-              : game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name
-                ? (
-                  <>
-                    <span className="text-blue-600 dark:text-blue-400">{game.leagueSeason.league.name}</span>
-                    {game.name && (
-                      <span className="text-purple-600 dark:text-purple-400"> {game.name}</span>
-                    )}
-                  </>
-                )
-                : game.name}
-            {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.name && game.gameType !== 'CLASSIC' && (
-              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                ({t(`games.gameTypes.${game.gameType}`)})
+              )}
+              <span>
+                {game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name
+                  ? (
+                    <>
+                      <span className="text-blue-600 dark:text-blue-400">
+                        {game.parent.leagueSeason.league.name}
+                      </span>
+                      {game.parent.leagueSeason.game?.name && (
+                        <span className="text-purple-600 dark:text-purple-400"> {game.parent.leagueSeason.game.name}</span>
+                      )}
+                      {(game.leagueGroup?.name || game.leagueRound) && (
+                        <div className="mt-1 flex items-center gap-2 flex-wrap">
+                          {game.leagueGroup?.name && (
+                            <span
+                              className="px-2 py-0.5 text-xs font-medium rounded text-white"
+                              style={{ backgroundColor: game.leagueGroup.color || '#6b7280' }}
+                            >
+                              {game.leagueGroup.name}
+                            </span>
+                          )}
+                          {game.leagueRound && (
+                            <span className="text-gray-600 dark:text-gray-400">
+                              {t('gameDetails.round')} {game.leagueRound.orderIndex + 1}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )
+                  : game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name
+                    ? (
+                      <>
+                        <span className="text-blue-600 dark:text-blue-400">{game.leagueSeason.league.name}</span>
+                        {game.name && (
+                          <span className="text-purple-600 dark:text-purple-400"> {game.name}</span>
+                        )}
+                      </>
+                    )
+                    : game.name}
+                {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.name && game.gameType !== 'CLASSIC' && (
+                  <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                    ({t(`games.gameTypes.${game.gameType}`)})
+                  </span>
+                )}
+                {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
               </span>
-            )}
-            {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
-          </span>
-        </h3>
-        <div className="flex items-center gap-2 mb-1 pr-10 flex-wrap">
+            </h3>
+            <div className="flex items-center gap-2 mb-1 pr-10 flex-wrap">
           {!shouldMoveIconsToTitle && isUserParticipant && (
             <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white">
               <Star 
@@ -378,10 +385,13 @@ export const GameCard = ({
               {t('games.resultsAvailable')}
             </span>
           )}
-        </div>
+            </div>
+          </>
+        )}
         <div className="absolute -top-2 -right-3 flex items-center gap-0 z-20">
           {canAccessChat && showChatIndicator && (
             <button
+              type="button"
               onClick={handleChatClick}
               className="pl-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
             >
@@ -394,6 +404,7 @@ export const GameCard = ({
             </button>
           )}
           <button
+            type="button"
             onClick={handleToggleCollapse}
             className="pl-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
           >
@@ -408,8 +419,107 @@ export const GameCard = ({
 
       {/* Collapsed view - Single row */}
       {isCollapsed && (
-        <div className={`text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 ${game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : mainPhotoUrl ? 'flex gap-4' : 'flex items-center gap-4'}`}>
-          {game.entityType === 'TRAINING' ? (
+        <div className={`text-sm pb-4 text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 ${game.entityType === 'LEAGUE_SEASON' ? 'flex flex-col gap-2 -mt-3' : game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : mainPhotoUrl ? 'flex gap-4' : 'flex items-center gap-4'}`}>
+          {game.entityType === 'LEAGUE_SEASON' ? (
+            <>
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                {game.leagueSeason?.league?.name && (
+                  <>
+                    <span className="text-blue-600 dark:text-blue-400">{game.leagueSeason.league.name}</span>
+                    {game.name && (
+                      <span className="text-purple-600 dark:text-purple-400"> {game.name}</span>
+                    )}
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {isUserParticipant && (
+                  <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white">
+                    <Star 
+                      size={12} 
+                      className="text-white"
+                      fill="currentColor"
+                    />
+                  </span>
+                )}
+                <GameStatusIcon status={game.status} />
+                {(game.photosCount ?? 0) > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/games/${game.id}/chat`, { state: { initialChatType: 'PHOTOS' } });
+                    }}
+                    className="px-3 py-1.5 text-sm font-semibold rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1.5 shadow-[0_0_8px_rgba(168,85,247,0.4)] dark:shadow-[0_0_8px_rgba(168,85,247,0.5)] hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.6)] dark:hover:shadow-[0_0_12px_rgba(168,85,247,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+                  >
+                    <Camera size={16} />
+                    {game.photosCount}
+                  </button>
+                )}
+                {!game.isPublic && (
+                  <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
+                    <Lock size={12} />
+                    <span className="hidden sm:inline">{t('games.private')}</span>
+                  </span>
+                )}
+                {game.genderTeams && game.genderTeams !== 'ANY' && (
+                  <div className="flex items-center gap-1">
+                    {game.genderTeams === 'MIX_PAIRS' ? (
+                      <div className="h-6 px-2 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 dark:from-blue-600 dark:to-pink-600 flex items-center justify-center gap-1">
+                        <i className="bi bi-gender-male text-white text-[10px]"></i>
+                        <i className="bi bi-gender-female -ml-1 text-white text-[10px]"></i>
+                      </div>
+                    ) : (
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                        game.genderTeams === 'MEN' 
+                          ? 'bg-blue-500 dark:bg-blue-600' 
+                          : 'bg-pink-500 dark:bg-pink-600'
+                      }`}>
+                        <i className={`bi ${game.genderTeams === 'MEN' ? 'bi-gender-male' : 'bi-gender-female'} text-white text-xs`}></i>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {game.participants.some(
+                  (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
+                ) && (
+                  <span className="px-2 py-1 text-xs font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                    {t('games.owner')}
+                  </span>
+                )}
+                <span className="px-2 py-1 text-xs font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
+                  <Trophy size={12} />
+                  {t(`games.entityTypes.${game.entityType}`)}
+                </span>
+                {isGuest && (
+                  <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    {t('chat.guest')}
+                  </span>
+                )}
+                {!game.affectsRating && (
+                  <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
+                    <Award size={12} />
+                    <Ban size={12} />
+                    <span className="hidden sm:inline">{t('games.noRating')}</span>
+                  </span>
+                )}
+                {game.hasFixedTeams && (
+                  <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1">
+                    <div className="flex items-center">
+                      <Users size={12} />
+                      <Users size={12} />
+                    </div>
+                    <span className="hidden sm:inline">{t('games.fixedTeams')}</span>
+                  </span>
+                )}
+                {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && game.resultsStatus === 'FINAL' && (
+                  <span className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+                    <Award size={12} />
+                    {t('games.resultsAvailable')}
+                  </span>
+                )}
+              </div>
+            </>
+          ) : game.entityType === 'TRAINING' ? (
             <>
               <div className="flex-shrink-0">
                 {(() => {

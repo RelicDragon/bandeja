@@ -11,7 +11,6 @@ const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(mo
 const CreateLeague = lazy(() => import('./pages/CreateLeague').then(module => ({ default: module.CreateLeague })));
 // const Rating = lazy(() => import('./pages/Rating').then(module => ({ default: module.Rating })));
 const GameChat = lazy(() => import('./pages/GameChat').then(module => ({ default: module.GameChat })));
-const ChatList = lazy(() => import('./pages/ChatList').then(module => ({ default: module.ChatList })));
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
 import { isProfileComplete } from './utils/userValidation';
@@ -263,7 +262,49 @@ function AppContent() {
           }
         />
         <Route
+          path="/find"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chats"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/profile"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/leaderboard"
           element={
             <ProtectedRoute>
               {!isProfileComplete(user) ? (
@@ -339,20 +380,6 @@ function AppContent() {
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
                   <GameChat />
-                </Suspense>
-              )}
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/chat"
-          element={
-            <ProtectedRoute>
-              {!isProfileComplete(user) ? (
-                <Navigate to="/" replace />
-              ) : (
-                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                  <ChatList />
                 </Suspense>
               )}
             </ProtectedRoute>

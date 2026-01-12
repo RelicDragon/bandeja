@@ -65,3 +65,33 @@ export const formatSmartRelativeTime = (date: Date | string, t?: (key: string) =
   return dateFnsFormat(dateObj, 'PPp', { locale: currentLocale });
 };
 
+export const formatChatTime = (
+  date: Date | string,
+  locale: string,
+  hour12: boolean
+): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const now = new Date();
+  const daysDiff = differenceInDays(now, dateObj);
+  
+  if (isToday(dateObj)) {
+    return new Intl.DateTimeFormat(locale, {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: hour12,
+    }).format(dateObj);
+  }
+  
+  if (daysDiff < 7 && daysDiff > 0) {
+    const dayName = new Intl.DateTimeFormat(locale, {
+      weekday: 'short',
+    }).format(dateObj);
+    return dayName.slice(0, 2).toUpperCase();
+  }
+  
+  return new Intl.DateTimeFormat(locale, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(dateObj);
+};

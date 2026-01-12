@@ -21,7 +21,10 @@ import { useTranslation as useI18nTranslation } from 'react-i18next';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 
-const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string }>(list: T[] = []): T[] => {
+const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string }>(
+  list: T[] = [],
+  unreadCounts?: Record<string, number>
+): T[] => {
   const getStatusPriority = (status?: string): number => {
     if (status === 'ANNOUNCED' || status === 'STARTED') return 0;
     if (status === 'FINISHED') return 1;
@@ -29,7 +32,16 @@ const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: st
     return 3;
   };
 
+  const isPrimaryGame = (game: T): boolean => !game.parentId;
+  const hasUnreadChats = (game: T): boolean => (unreadCounts?.[game.id] || 0) > 0;
+
   return [...list].sort((a, b) => {
+    const aIsPrimaryWithUnread = isPrimaryGame(a) && hasUnreadChats(a);
+    const bIsPrimaryWithUnread = isPrimaryGame(b) && hasUnreadChats(b);
+
+    if (aIsPrimaryWithUnread && !bIsPrimaryWithUnread) return -1;
+    if (!aIsPrimaryWithUnread && bIsPrimaryWithUnread) return 1;
+
     const statusPriorityA = getStatusPriority(a.status);
     const statusPriorityB = getStatusPriority(b.status);
     
@@ -139,14 +151,10 @@ export const HomeContent = () => {
   }, [gamesUnreadCounts, pastGamesUnreadCounts, unreadGamesCounts, showChatFilter]);
 
   const filteredMyGames = useMemo(() => {
-    if (!showChatFilter) {
-      return sortGamesByStatusAndDateTime(mergedGames);
-    }
-    
-    return sortGamesByStatusAndDateTime(mergedGames);
-  }, [mergedGames, showChatFilter]);
+    return sortGamesByStatusAndDateTime(mergedGames, mergedUnreadCounts);
+  }, [mergedGames, mergedUnreadCounts]);
   
-  const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(pastGames), [pastGames]);
+  const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(pastGames, pastGamesUnreadCounts), [pastGames, pastGamesUnreadCounts]);
   const filteredAvailableGames = useMemo(() => sortGamesByStatusAndDateTime(availableGames), [availableGames]);
 
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
@@ -161,10 +169,6 @@ export const HomeContent = () => {
     }
     
     availableChatTypes.push('PUBLIC');
-    
-    if (participant?.isPlaying) {
-      availableChatTypes.push('PRIVATE');
-    }
     
     if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) {
       availableChatTypes.push('ADMINS');
@@ -454,7 +458,7 @@ export const Home = () => {
   return (
     <MainLayout>
       <div className={`transition-all duration-300 ease-in-out ${
-        currentPage === 'home' && !isAnimating 
+        currentPage === 'my' && !isAnimating 
           ? 'opacity-100 transform translate-x-0' 
           : currentPage === 'profile' 
             ? 'opacity-0 transform -translate-x-full' 

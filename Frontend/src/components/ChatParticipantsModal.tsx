@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { Game, ChatType } from '@/types';
+import { normalizeChatType } from '@/utils/chatType';
 import { PlayerAvatar } from './PlayerAvatar';
 import { useState, useEffect } from 'react';
 import { gamesApi } from '@/api/games';
@@ -47,15 +48,13 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
   ];
 
   const isParticipantVisibleForChatType = (participant: any) => {
-    if (currentChatType === 'PUBLIC') {
+    const normalizedChatType = normalizeChatType(currentChatType);
+    
+    if (normalizedChatType === 'PUBLIC') {
       return true; // All participants are visible in public chat
     }
     
-    if (currentChatType === 'PRIVATE') {
-      return participant.isParticipant; // Only playing participants are visible
-    }
-    
-    if (currentChatType === 'ADMINS') {
+    if (normalizedChatType === 'ADMINS') {
       return participant.isParticipant && (participant.role === 'ADMIN' || participant.role === 'OWNER');
     }
     

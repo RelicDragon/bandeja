@@ -20,6 +20,7 @@ interface MessageListProps {
   onLoadMore?: () => void;
   isInitialLoad?: boolean;
   isLoadingMore?: boolean;
+  disableReadTracking?: boolean;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -28,14 +29,15 @@ export const MessageList: React.FC<MessageListProps> = ({
   onRemoveReaction,
   onDeleteMessage,
   onReplyMessage,
+  isLoading = false,
   isLoadingMessages = false,
   isSwitchingChatType = false,
   onScrollToMessage,
   hasMoreMessages = false,
   onLoadMore,
   isInitialLoad = false,
-  isLoading = false,
   isLoadingMore = false,
+  disableReadTracking = false,
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -212,6 +214,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             onCloseContextMenu={closeContextMenu}
             allMessages={messages}
             onScrollToMessage={onScrollToMessage}
+            disableReadTracking={disableReadTracking}
           />
         </div>
       ))}

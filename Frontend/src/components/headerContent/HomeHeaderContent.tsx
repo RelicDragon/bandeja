@@ -1,8 +1,9 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { Button, GameTypeModal } from '@/components';
 import { useHeaderStore } from '@/store/headerStore';
+import { useNavigationStore } from '@/store/navigationStore';
 import { EntityType } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,7 +11,26 @@ export const HomeHeaderContent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showGameTypeModal, setShowGameTypeModal, selectedDateForCreateGame } = useHeaderStore();
+  const { currentPage } = useNavigationStore();
   const buttonContainerRef = useRef<HTMLDivElement>(null);
+  const [isIconOnly, setIsIconOnly] = useState(false);
+
+  const shouldUseIconOnly = currentPage === 'profile' || currentPage === 'leaderboard';
+
+  useEffect(() => {
+    if (!shouldUseIconOnly) {
+      setIsIconOnly(false);
+      return;
+    }
+
+    const checkWidth = () => {
+      setIsIconOnly(window.innerWidth < 450);
+    };
+
+    checkWidth();
+    window.addEventListener('resize', checkWidth);
+    return () => window.removeEventListener('resize', checkWidth);
+  }, [shouldUseIconOnly]);
 
   const handleSelectEntityType = (entityType: EntityType) => {
     console.log('HomeHeaderContent - navigating with date:', selectedDateForCreateGame);
@@ -21,15 +41,24 @@ export const HomeHeaderContent = () => {
   return (
     <div className="relative">
       <div ref={buttonContainerRef}>
-        <Button
-          onClick={() => setShowGameTypeModal(true)}
-          variant="primary"
-          size="sm"
-          className="flex items-center gap-2 relative z-10"
-        >
-          <Plus size={16} />
-          {t('games.create')}
-        </Button>
+        {isIconOnly ? (
+          <button
+            onClick={() => setShowGameTypeModal(true)}
+            className="p-2 rounded-lg bg-primary-600 dark:bg-primary-500 text-white hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors relative z-10 flex items-center justify-center"
+          >
+            <Plus size={20} />
+          </button>
+        ) : (
+          <Button
+            onClick={() => setShowGameTypeModal(true)}
+            variant="primary"
+            size="sm"
+            className="flex items-center gap-2 relative z-10"
+          >
+            <Plus size={16} />
+            {t('games.create')}
+          </Button>
+        )}
       </div>
       
       <GameTypeModal

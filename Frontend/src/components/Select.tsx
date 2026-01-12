@@ -28,10 +28,37 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
   const updateDropdownPosition = useCallback(() => {
     if (!selectRef.current) return;
     const rect = selectRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    const estimatedDropdownHeight = options.length * 40 + 8;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const openUpward = spaceBelow < estimatedDropdownHeight && spaceAbove > spaceBelow;
+    
+    let top: number;
+    
+    if (openUpward) {
+      top = rect.top - estimatedDropdownHeight - 4;
+      if (top < 8) {
+        top = 8;
+      }
+    } else {
+      top = rect.bottom + 4;
+    }
+    
+    let left = rect.left;
+    if (left + rect.width > viewportWidth - 8) {
+      left = Math.max(8, viewportWidth - rect.width - 8);
+    }
+    if (left < 8) {
+      left = 8;
+    }
+    
     setDropdownPosition(prev => {
       const newPos = {
-        top: rect.bottom + 4,
-        left: rect.left,
+        top,
+        left,
         width: rect.width,
       };
       if (prev && 
@@ -42,7 +69,7 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
       }
       return newPos;
     });
-  }, []);
+  }, [options.length]);
 
   useEffect(() => {
     if (!isOpen) {

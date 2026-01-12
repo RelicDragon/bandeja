@@ -6,13 +6,13 @@ import { AnimatePresence } from 'framer-motion';
 import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal, WalletModal, NotificationSettingsModal, ConfirmationModal } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
-import { ProfileLeaderboard } from '@/components/ProfileLeaderboard';
 import { BlockedUsersSection } from '@/components/BlockedUsersSection';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
+import { useNavigationStore } from '@/store/navigationStore';
 import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
 import { City, Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, Trophy, User as UserIcon } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2 } from 'lucide-react';
 import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -24,7 +24,7 @@ export const ProfileContent = () => {
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
-  const [activeTab, setActiveTab] = useState<'general' | 'statistics' | 'comparison' | 'leaderboard'>('general');
+  const { profileActiveTab } = useNavigationStore();
 
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
@@ -368,57 +368,11 @@ export const ProfileContent = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-      <div className="mt-12 space-y-6" style={{ paddingTop: `calc(1rem + env(safe-area-inset-top))` }}>
-        <div className="mb-4">
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => setActiveTab('general')}
-              className={`px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 flex items-center gap-1 ${
-                activeTab === 'general'
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              <UserIcon size={16} />
-            </button>
-            <button
-              onClick={() => setActiveTab('statistics')}
-              className={`px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 ${
-                activeTab === 'statistics'
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              {t('profile.statistics') || 'Statistics'}
-            </button>
-            <button
-              onClick={() => setActiveTab('comparison')}
-              className={`px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 ${
-                activeTab === 'comparison'
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              {t('profile.comparison') || 'Comparison'}
-            </button>
-            <button
-              onClick={() => setActiveTab('leaderboard')}
-              className={`px-4 py-2 text-sm font-medium transition-all duration-200 border-b-2 flex items-center gap-1 ${
-                activeTab === 'leaderboard'
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              <Trophy size={16} />
-              {t('profile.top') || 'Top'}
-            </button>
-          </div>
-        </div>
-
-        {activeTab === 'general' && (
+      <div className="space-y-6">
+        {profileActiveTab === 'general' && (
           <>
         <div className="flex justify-center">
-          <div className="relative">
+          <div className="relative pt-2">
             <AvatarUpload
               currentAvatar={user?.avatar || undefined}
               onUpload={handleAvatarUpload}
@@ -428,7 +382,7 @@ export const ProfileContent = () => {
             {!isLoadingProfile && user?.wallet !== undefined && (
               <button
                 onClick={() => setShowWalletModal(true)}
-                className="absolute -top-1 -left-10 bg-primary-600 dark:bg-primary-500 text-white px-2 py-1 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 z-10 hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors cursor-pointer"
+                className="absolute top-0 -left-10 bg-primary-600 dark:bg-primary-500 text-white px-2 py-1 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 z-10 hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors cursor-pointer"
               >
                 <Wallet size={14} className="text-white" />
                 <span>{user.wallet}</span>
@@ -437,7 +391,7 @@ export const ProfileContent = () => {
             {!isLoadingProfile && user?.originalAvatar && (
               <button
                 onClick={() => setShowFullscreenAvatar(true)}
-                className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl z-10"
+                className="absolute top-0 -right-1 w-7 h-7 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl z-10"
                 title={t('profile.viewOriginalAvatar')}
               >
                 <Eye size={14} />
@@ -849,18 +803,14 @@ export const ProfileContent = () => {
           </>
         )}
 
-        {activeTab === 'statistics' && (
+        {profileActiveTab === 'statistics' && (
           <ProfileStatistics />
         )}
 
-        {activeTab === 'comparison' && (
+        {profileActiveTab === 'comparison' && (
           <Card>
             <ProfileComparison />
           </Card>
-        )}
-
-        {activeTab === 'leaderboard' && (
-            <ProfileLeaderboard />
         )}
       </div>
 

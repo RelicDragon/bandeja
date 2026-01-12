@@ -57,6 +57,13 @@
     "profile": "Профиль",
     "chat": "Чат"
   },
+  "bottomTab": {
+    "my": "Мои",
+    "find": "Поиск",
+    "chats": "Чаты",
+    "leaderboard": "Топ",
+    "profile": "Профиль"
+  },
   "offline": {
     "working_offline": "Работа в автономном режиме - Некоторые функции могут быть ограничены",
     "noInternetConnection": "Нет подключения к интернету",
@@ -1176,6 +1183,7 @@
     "resetView": "Сбросить вид"
   },
   "chat": {
+    "noMessages": "Пока нет сообщений",
     "reactions": {
       "addReaction": "Добавить реакцию",
       "removeReaction": "Убрать реакцию",

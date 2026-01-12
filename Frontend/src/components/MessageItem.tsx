@@ -30,6 +30,7 @@ interface MessageItemProps {
   onCloseContextMenu: () => void;
   allMessages?: ChatMessage[];
   onScrollToMessage?: (messageId: string) => void;
+  disableReadTracking?: boolean;
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -43,6 +44,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onCloseContextMenu,
   allMessages = [],
   onScrollToMessage,
+  disableReadTracking = false,
 }) => {
   const { user } = useAuthStore();
   const { translateSystemMessage } = useSystemMessageTranslation();
@@ -55,7 +57,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const [selectedMentionUserId, setSelectedMentionUserId] = useState<string | null>(null);
   const isOwnMessage = message.senderId === user?.id;
   const isSystemMessage = !message.senderId;
-  const { observeMessage, unobserveMessage } = useMessageReadTracking();
+  const { observeMessage, unobserveMessage } = useMessageReadTracking(disableReadTracking);
   
   const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === message.id;
 

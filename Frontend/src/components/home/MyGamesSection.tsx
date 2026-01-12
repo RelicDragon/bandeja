@@ -150,7 +150,7 @@ export const MyGamesSection = ({
       <GameCard
         game={game}
         user={user}
-        isInitiallyCollapsed={false}
+        isInitiallyCollapsed={game.entityType === 'LEAGUE_SEASON' ? true : false}
         unreadCount={gamesUnreadCounts[game.id] || 0}
         forceCollapsed={showChatFilter ? false : undefined}
       />

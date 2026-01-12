@@ -1,5 +1,4 @@
 import { invitesApi } from '@/api';
-import { chatApi } from '@/api/chat';
 import { useHeaderStore } from '../store/headerStore';
 import { useAuthStore } from '../store/authStore';
 
@@ -20,14 +19,10 @@ class HeaderService {
       }
       
       try {
-        const [invitesResponse, messagesResponse] = await Promise.all([
-          invitesApi.getMyInvites('PENDING'),
-          chatApi.getUnreadCount()
-        ]);
+        const invitesResponse = await invitesApi.getMyInvites('PENDING');
 
-        const { setPendingInvites, setUnreadMessages } = useHeaderStore.getState();
+        const { setPendingInvites } = useHeaderStore.getState();
         setPendingInvites(invitesResponse.data.length);
-        setUnreadMessages(messagesResponse.data.count);
       } catch (error) {
         console.error('Failed to fetch header data:', error);
       }

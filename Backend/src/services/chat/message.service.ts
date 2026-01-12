@@ -348,7 +348,7 @@ export class MessageService {
       } else if (data.chatContextType === 'BUG') {
         socketService.emitNewBugMessage(data.contextId, message);
       } else if (data.chatContextType === 'USER') {
-        socketService.emitNewUserMessage(data.contextId, message);
+        await socketService.emitNewUserMessage(data.contextId, message);
       }
     }
     
@@ -572,7 +572,7 @@ export class MessageService {
   }
 
   static async getUserChatGames(userId: string) {
-    return await prisma.game.findMany({
+    const games = await prisma.game.findMany({
       where: {
         OR: [
           {
@@ -668,11 +668,67 @@ export class MessageService {
             },
           },
         },
+        invites: {
+          where: {
+            receiverId: userId,
+            status: 'PENDING'
+          }
+        }
       },
       orderBy: {
         startTime: 'desc'
       }
     });
+
+    const gamesWithLastMessage = await Promise.all(
+      games.map(async (game) => {
+        const participant = game.participants.find((p: any) => p.userId === userId);
+        
+        const chatTypeFilter: any[] = ['PUBLIC'];
+        
+        if (participant && participant.isPlaying) {
+          chatTypeFilter.push('PRIVATE');
+        }
+        
+        if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) {
+          chatTypeFilter.push('ADMINS');
+        }
+
+        if (game.status !== 'ANNOUNCED') {
+          chatTypeFilter.push('PHOTOS');
+        }
+
+        const lastMessage = await prisma.chatMessage.findFirst({
+          where: {
+            chatContextType: 'GAME',
+            contextId: game.id,
+            chatType: {
+              in: chatTypeFilter
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                level: true,
+                gender: true
+              }
+            }
+          }
+        });
+
+        return {
+          ...game,
+          lastMessage
+        };
+      })
+    );
+
+    return gamesWithLastMessage;
   }
 }
 

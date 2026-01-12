@@ -57,6 +57,13 @@
     "profile": "Perfil",
     "chat": "Chat"
   },
+  "bottomTab": {
+    "my": "Mis",
+    "find": "Buscar",
+    "chats": "Chats",
+    "leaderboard": "Top",
+    "profile": "Perfil"
+  },
   "offline": {
     "working_offline": "Trabajando sin conexión - Algunas funciones pueden estar limitadas",
     "noInternetConnection": "Sin conexión a internet",
@@ -1120,6 +1127,7 @@
     "resetView": "Restablecer Vista"
   },
   "chat": {
+    "noMessages": "Aún no hay mensajes",
     "reactions": {
       "addReaction": "Añadir reacción",
       "removeReaction": "Quitar reacción",

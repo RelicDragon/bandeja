@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { chatApi, CreateMessageRequest, ChatMessage, ChatContextType } from '@/api/chat';
 import { mediaApi } from '@/api/media';
 import { ChatType, Game, Bug } from '@/types';
+import { normalizeChatType } from '@/utils/chatType';
 import { ReplyPreview } from './ReplyPreview';
 import { MentionInput } from './MentionInput';
 import { Image, X } from 'lucide-react';
@@ -127,7 +128,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
         thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
         replyToId: replyTo?.id,
-        chatType: userChatId ? 'PUBLIC' : chatType,
+        chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
         mentionIds: mentionIds.length > 0 ? mentionIds : undefined,
       };
 

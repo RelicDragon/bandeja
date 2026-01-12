@@ -655,6 +655,13 @@ body.keyboard-visible #root {
   overflow: hidden;
 }
 
+.chat-container.chat-embedded {
+  position: relative !important;
+  inset: auto !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
 body.keyboard-visible .chat-container {
   height: 100dvh;
   max-height: 100dvh;

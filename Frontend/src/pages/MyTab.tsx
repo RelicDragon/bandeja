@@ -1,0 +1,294 @@
+import { useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
+import { InvitesSection, MyGamesSection, PastGamesSection } from '@/components/home';
+import { Button } from '@/components';
+import { RefreshIndicator } from '@/components/RefreshIndicator';
+import { chatApi } from '@/api/chat';
+import { useAuthStore } from '@/store/authStore';
+import { useNavigationStore } from '@/store/navigationStore';
+import { useHeaderStore } from '@/store/headerStore';
+import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
+import { useMyGames } from '@/hooks/useMyGames';
+import { usePastGames } from '@/hooks/usePastGames';
+import { ChatType } from '@/types';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
+
+const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string }>(
+  list: T[] = [],
+  unreadCounts?: Record<string, number>
+): T[] => {
+  const getStatusPriority = (status?: string): number => {
+    if (status === 'ANNOUNCED' || status === 'STARTED') return 0;
+    if (status === 'FINISHED') return 1;
+    if (status === 'ARCHIVED') return 2;
+    return 3;
+  };
+
+  const isPrimaryGame = (game: T): boolean => !game.parentId;
+  const hasUnreadChats = (game: T): boolean => (unreadCounts?.[game.id] || 0) > 0;
+
+  return [...list].sort((a, b) => {
+    const aIsPrimaryWithUnread = isPrimaryGame(a) && hasUnreadChats(a);
+    const bIsPrimaryWithUnread = isPrimaryGame(b) && hasUnreadChats(b);
+
+    if (aIsPrimaryWithUnread && !bIsPrimaryWithUnread) return -1;
+    if (!aIsPrimaryWithUnread && bIsPrimaryWithUnread) return 1;
+
+    const statusPriorityA = getStatusPriority(a.status);
+    const statusPriorityB = getStatusPriority(b.status);
+    
+    if (statusPriorityA !== statusPriorityB) {
+      return statusPriorityA - statusPriorityB;
+    }
+    
+    const dateTimeA = new Date(a.startTime).getTime();
+    const dateTimeB = new Date(b.startTime).getTime();
+    
+    if (statusPriorityA === 0) {
+      return dateTimeA - dateTimeB;
+    }
+    
+    return dateTimeB - dateTimeA;
+  });
+};
+
+export const MyTab = () => {
+  const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
+  const { showChatFilter, setShowChatFilter, unreadMessages } = useHeaderStore();
+  const { activeTab } = useNavigationStore();
+
+  const [loading, setLoading] = useState(true);
+
+  const skeletonAnimation = useSkeletonAnimation();
+  
+  const {
+    games,
+    invites,
+    gamesUnreadCounts,
+    setInvites,
+    fetchData,
+  } = useMyGames(user, (loadingState) => setLoading(loadingState), {
+    showSkeletonsAnimated: skeletonAnimation.showSkeletonsAnimated,
+    hideSkeletonsAnimated: skeletonAnimation.hideSkeletonsAnimated,
+  });
+
+  const {
+    pastGames,
+    loadingPastGames,
+    hasMorePastGames,
+    pastGamesUnreadCounts,
+    loadPastGames,
+  } = usePastGames(user, activeTab === 'past-games');
+
+  const mergedUnreadCounts = useMemo(() => {
+    return { ...gamesUnreadCounts, ...pastGamesUnreadCounts };
+  }, [gamesUnreadCounts, pastGamesUnreadCounts]);
+
+  const filteredMyGames = useMemo(() => sortGamesByStatusAndDateTime(games, mergedUnreadCounts), [games, mergedUnreadCounts]);
+  const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(pastGames, pastGamesUnreadCounts), [pastGames, pastGamesUnreadCounts]);
+
+  const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
+
+  const getAvailableChatTypes = (game: any): ChatType[] => {
+    const availableChatTypes: ChatType[] = [];
+    const participant = game.participants?.find((p: any) => p.userId === user?.id);
+    
+    if (game.status && game.status !== 'ANNOUNCED') {
+      availableChatTypes.push('PHOTOS');
+    }
+    
+    availableChatTypes.push('PUBLIC');
+    
+    if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) {
+      availableChatTypes.push('ADMINS');
+    }
+    
+    return availableChatTypes;
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (!user?.id || isMarkingAllAsRead) return;
+
+    setIsMarkingAllAsRead(true);
+    try {
+      const unreadObjectsResponse = await chatApi.getUnreadObjects();
+      const unreadObjects = unreadObjectsResponse.data;
+      
+      const gamesWithUnread = unreadObjects.games.map(item => item.game);
+      const bugsWithUnreadMessages = unreadObjects.bugs.map(item => item.bug);
+      const userChatsWithUnread = unreadObjects.userChats.map(item => item.chat);
+      
+      if (gamesWithUnread.length === 0 && bugsWithUnreadMessages.length === 0 && userChatsWithUnread.length === 0) {
+        setIsMarkingAllAsRead(false);
+        return;
+      }
+
+      const markPromises = gamesWithUnread.map(game => {
+        const chatTypes = getAvailableChatTypes(game);
+        return chatApi.markAllMessagesAsRead(game.id, chatTypes);
+      });
+
+      const bugMarkPromises = bugsWithUnreadMessages.map(bug => 
+        chatApi.markAllBugMessagesAsRead(bug.id)
+      );
+
+      const userChatMarkPromises = userChatsWithUnread.map(chat =>
+        chatApi.markUserChatAsRead(chat.id)
+      );
+
+      await Promise.all([...markPromises, ...bugMarkPromises, ...userChatMarkPromises]);
+
+      const { setUnreadMessages } = useHeaderStore.getState();
+      setUnreadMessages(0);
+
+      await fetchData(false, true);
+
+      const updatedUnreadResponse = await chatApi.getUnreadCount();
+      setUnreadMessages(updatedUnreadResponse.data.count || 0);
+      
+      toast.success(t('chat.allMarkedAsRead', { defaultValue: 'All messages marked as read' }));
+    } catch (error) {
+      console.error('Failed to mark all messages as read:', error);
+      toast.error(t('errors.generic', { defaultValue: 'Failed to mark all messages as read' }));
+    } finally {
+      setIsMarkingAllAsRead(false);
+    }
+  };
+
+  const handleAcceptInvite = async (inviteId: string) => {
+    try {
+      const { invitesApi } = await import('@/api');
+      await invitesApi.accept(inviteId);
+      setInvites(invites.filter((inv) => inv.id !== inviteId));
+      const { setPendingInvites } = useHeaderStore.getState();
+      const currentCount = useHeaderStore.getState().pendingInvites;
+      setPendingInvites(Math.max(0, currentCount - 1));
+      Promise.resolve().then(() => {
+        fetchData(false, true);
+      });
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
+  };
+
+  const handleDeclineInvite = async (inviteId: string) => {
+    try {
+      const { invitesApi } = await import('@/api');
+      await invitesApi.decline(inviteId);
+      setInvites(invites.filter((inv) => inv.id !== inviteId));
+      const { setPendingInvites } = useHeaderStore.getState();
+      const currentCount = useHeaderStore.getState().pendingInvites;
+      setPendingInvites(Math.max(0, currentCount - 1));
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
+  };
+
+  const handleRefresh = useCallback(async () => {
+    await clearCachesExceptUnsyncedResults();
+    await Promise.all([
+      fetchData(false, true),
+      loadPastGames?.(),
+    ]);
+  }, [fetchData, loadPastGames]);
+
+  const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: loading || loadingPastGames,
+  });
+
+  return (
+    <>
+      <RefreshIndicator
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+        pullProgress={pullProgress}
+      />
+      <div
+        style={{
+          transform: `translateY(${pullDistance}px)`,
+          transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
+        }}
+      >
+        <div className={showChatFilter ? 'pt-16' : ''}>
+        </div>
+        <div
+          className={`transition-all duration-500 ease-in-out overflow-hidden ${
+            !loading && !showChatFilter
+              ? 'max-h-[2000px] opacity-100 translate-y-0'
+              : 'max-h-0 opacity-0 -translate-y-4'
+          }`}
+        >
+          <InvitesSection
+            invites={invites}
+            onAccept={handleAcceptInvite}
+            onDecline={handleDeclineInvite}
+          />
+        </div>
+
+        <div className="relative min-h-[100px]">
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              activeTab === 'my-games'
+                ? 'opacity-100 translate-x-0'
+                : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none'
+            }`}
+          >
+            <MyGamesSection
+              games={filteredMyGames}
+              user={user}
+              loading={loading}
+              showSkeleton={skeletonAnimation.showSkeleton}
+              skeletonStates={skeletonAnimation.skeletonStates}
+              showChatFilter={showChatFilter}
+              gamesUnreadCounts={mergedUnreadCounts}
+              onShowAllGames={() => setShowChatFilter(false)}
+            />
+          </div>
+
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              activeTab === 'past-games'
+                ? 'opacity-100 translate-x-0'
+                : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none'
+            }`}
+          >
+            <PastGamesSection
+              pastGames={filteredPastGames}
+              loadingPastGames={loadingPastGames}
+              hasMorePastGames={hasMorePastGames}
+              user={user}
+              pastGamesUnreadCounts={pastGamesUnreadCounts}
+              onLoadMore={loadPastGames}
+            />
+          </div>
+        </div>
+
+        <div
+          className={`transition-all duration-500 ease-in-out overflow-hidden ${
+            showChatFilter && unreadMessages > 0
+              ? 'max-h-[100px] opacity-100 translate-y-0 mb-4'
+              : 'max-h-0 opacity-0 -translate-y-4'
+          }`}
+        >
+          <div className="flex items-center justify-center pt-4">
+            <Button
+              onClick={handleMarkAllAsRead}
+              variant="primary"
+              size="sm"
+              disabled={isMarkingAllAsRead || unreadMessages === 0}
+              className="animate-in slide-in-from-top-4 fade-in"
+            >
+              {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};

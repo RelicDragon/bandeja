@@ -1,5 +1,6 @@
 import api from './axios';
 import { ApiResponse, Game, ChatType, BasicUser } from '@/types';
+import { normalizeChatType } from '@/utils/chatType';
 
 export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
 export type ChatContextType = 'GAME' | 'BUG' | 'USER';
@@ -84,13 +85,37 @@ export interface UserChat {
 
 export const chatApi = {
   createMessage: async (data: CreateMessageRequest) => {
-    const response = await api.post<ApiResponse<ChatMessage>>('/chat/messages', data);
+    const normalizedData = {
+      ...data,
+      chatType: data.chatType ? normalizeChatType(data.chatType) : data.chatType
+    };
+    const response = await api.post<ApiResponse<ChatMessage>>('/chat/messages', normalizedData);
     return response.data.data;
   },
 
   getGameMessages: async (gameId: string, page = 1, limit = 50, chatType: ChatType = 'PUBLIC') => {
+    const normalizedChatType = normalizeChatType(chatType);
+    
+    if (normalizedChatType === 'PUBLIC') {
+      const [publicResponse, privateResponse] = await Promise.all([
+        api.get<ApiResponse<ChatMessage[]>>(`/chat/games/${gameId}/messages`, {
+          params: { page, limit, chatType: 'PUBLIC' }
+        }),
+        api.get<ApiResponse<ChatMessage[]>>(`/chat/games/${gameId}/messages`, {
+          params: { page, limit, chatType: 'PRIVATE' }
+        }).catch(() => ({ data: { data: [] } }))
+      ]);
+      
+      const allMessages = [...publicResponse.data.data, ...privateResponse.data.data];
+      const sortedMessages = allMessages.sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      
+      return sortedMessages.slice(0, limit);
+    }
+    
     const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/games/${gameId}/messages`, {
-      params: { page, limit, chatType }
+      params: { page, limit, chatType: normalizedChatType }
     });
     return response.data.data;
   },
@@ -201,15 +226,17 @@ export const chatApi = {
 
   // Bug Chat Methods
   getBugMessages: async (bugId: string, page = 1, limit = 50, chatType: ChatType = 'PUBLIC') => {
+    const normalizedChatType = normalizeChatType(chatType);
     const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/bugs/${bugId}/messages`, {
-      params: { page, limit, chatType }
+      params: { page, limit, chatType: normalizedChatType }
     });
     return response.data.data;
   },
 
   getBugLastUserMessage: async (bugId: string, chatType: ChatType = 'PUBLIC') => {
+    const normalizedChatType = normalizeChatType(chatType);
     const response = await api.get<ApiResponse<ChatMessage | null>>(`/chat/bugs/${bugId}/last-user-message`, {
-      params: { chatType }
+      params: { chatType: normalizedChatType }
     });
     return response.data.data;
   },

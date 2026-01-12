@@ -271,8 +271,37 @@ class SocketService {
   }
 
   // Emit new user chat message to all users in a user chat room
-  public emitNewUserMessage(chatId: string, message: any) {
+  public async emitNewUserMessage(chatId: string, message: any) {
+    // Emit to the room (for users currently in the chat)
     this.io.to(`user-chat-${chatId}`).emit('new-user-chat-message', message);
+    
+    // Also emit directly to both users (for notification/badge updates even when not in chat)
+    try {
+      const chat = await prisma.userChat.findUnique({
+        where: { id: chatId },
+        select: { user1Id: true, user2Id: true }
+      });
+      
+      if (chat) {
+        // Emit to user1
+        this.connectedUsers.get(chat.user1Id)?.forEach(socketId => {
+          const socket = this.io.sockets.sockets.get(socketId);
+          if (socket) {
+            socket.emit('new-user-chat-message', message);
+          }
+        });
+        
+        // Emit to user2
+        this.connectedUsers.get(chat.user2Id)?.forEach(socketId => {
+          const socket = this.io.sockets.sockets.get(socketId);
+          if (socket) {
+            socket.emit('new-user-chat-message', message);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to emit user chat message to individual users:', error);
+    }
   }
 
   // Emit user chat message reaction to all users in a user chat room

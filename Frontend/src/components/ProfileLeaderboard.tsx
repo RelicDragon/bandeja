@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 export const ProfileLeaderboard = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const { leaderboardType, leaderboardScope, leaderboardTimePeriod, areFiltersSticky, setLeaderboardType, setLeaderboardScope, setLeaderboardTimePeriod, setAreFiltersSticky } = useHeaderStore();
+  const { leaderboardType, leaderboardScope, leaderboardTimePeriod, areFiltersSticky, setLeaderboardScope, setLeaderboardTimePeriod, setAreFiltersSticky } = useHeaderStore();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -230,39 +230,6 @@ export const ProfileLeaderboard = () => {
   return (
     <div className="space-y-4">
       <div ref={filtersRef} className={`space-y-4 ${areFiltersSticky ? 'opacity-0 pointer-events-none' : ''}`}>
-        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
-          <button
-            onClick={() => setLeaderboardType('level')}
-            className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${
-              leaderboardType === 'level'
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-          >
-            {t('profile.level') || 'Level'}
-          </button>
-          <button
-            onClick={() => setLeaderboardType('social')}
-            className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${
-              leaderboardType === 'social'
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-          >
-            {t('profile.social') || 'Social'}
-          </button>
-          <button
-            onClick={() => setLeaderboardType('games')}
-            className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${
-              leaderboardType === 'games'
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-          >
-            {t('profile.games') || 'Games'}
-          </button>
-        </div>
-
         {leaderboardType === 'games' && (
           <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
             <button

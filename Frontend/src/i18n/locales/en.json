@@ -57,6 +57,13 @@
     "profile": "Profile",
     "chat": "Chat"
   },
+  "bottomTab": {
+    "my": "My",
+    "find": "Find",
+    "chats": "Chats",
+    "leaderboard": "Top",
+    "profile": "Profile"
+  },
   "offline": {
     "working_offline": "Working Offline - Some features may be limited",
     "noInternetConnection": "No Internet Connection",
@@ -1165,6 +1172,7 @@
     "resetView": "Reset View"
   },
   "chat": {
+    "noMessages": "No messages yet",
     "reactions": {
       "addReaction": "Add reaction",
       "removeReaction": "Remove reaction",

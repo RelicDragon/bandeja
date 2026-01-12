@@ -30,8 +30,7 @@ export const AvailableGamesSection = ({
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { setCurrentPage, setIsAnimating } = useNavigationStore();
-  const [activeTab, setActiveTab] = useState<'calendar' | 'list'>('calendar');
+  const { setCurrentPage, setIsAnimating, findViewMode, setFindViewMode } = useNavigationStore();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [listViewStartDate, setListViewStartDate] = useState<Date>(new Date());
   const [userFilter, setUserFilter] = useState(false);
@@ -44,21 +43,23 @@ export const AvailableGamesSection = ({
       const filters = await getGameFilters();
       setUserFilter(filters.userFilter);
       setTrainingFilter(filters.trainingFilter);
-      setActiveTab(filters.activeTab);
+      if (filters.activeTab) {
+        setFindViewMode(filters.activeTab);
+      }
     };
     loadFilters();
-  }, []);
+  }, [setFindViewMode]);
 
   useEffect(() => {
     const saveFilters = async () => {
       await setGameFilters({
         userFilter,
         trainingFilter,
-        activeTab,
+        activeTab: findViewMode,
       });
     };
     saveFilters();
-  }, [userFilter, trainingFilter, activeTab]);
+  }, [userFilter, trainingFilter, findViewMode]);
 
   useEffect(() => {
     console.log('AvailableGamesSection - storing date for create game:', selectedDate);
@@ -89,7 +90,7 @@ export const AvailableGamesSection = ({
   };
 
   useEffect(() => {
-    if (activeTab === 'list' && onDateRangeChange) {
+    if (findViewMode === 'list' && onDateRangeChange) {
       const start = startOfDay(listViewStartDate);
       const end = startOfDay(addDays(listViewStartDate, 6));
       const startStr = format(start, 'yyyy-MM-dd');
@@ -101,13 +102,13 @@ export const AvailableGamesSection = ({
         lastDateRangeRef.current = { start: startStr, end: endStr };
         onDateRangeChange(start, end);
       }
-    } else if (activeTab === 'calendar') {
+    } else if (findViewMode === 'calendar') {
       lastDateRangeRef.current = null;
     }
-  }, [activeTab, listViewStartDate, onDateRangeChange]);
+  }, [findViewMode, listViewStartDate, onDateRangeChange]);
 
   const getFilteredGames = () => {
-    if (activeTab === 'calendar') {
+    if (findViewMode === 'calendar') {
       return availableGames.filter(game => {
         const gameDate = startOfDay(new Date(game.startTime));
         const selectedDateStr = format(startOfDay(selectedDate), 'yyyy-MM-dd');
@@ -188,23 +189,6 @@ export const AvailableGamesSection = ({
   return (
     <div className="mt-2">
       <div className="mb-4">
-        <div className="mb-4 flex justify-center">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleSubscriptionsClick}
-            className="flex items-center gap-2"
-          >
-            <div className="relative inline-flex items-center justify-center w-4 h-4">
-              <Bell className="w-4 h-4 animate-bell-pulse relative z-10" />
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="absolute w-8 h-8 rounded-full border-2 border-current opacity-0 animate-ring-1"></div>
-                <div className="absolute w-8 h-8 rounded-full border-2 border-current opacity-0 animate-ring-2"></div>
-              </div>
-            </div>
-            {t('gameSubscriptions.wantToBeNotified', { defaultValue: 'Want to be notified when new games are created?' })}
-          </Button>
-        </div>
         <div className="flex items-center justify-center mb-3 relative">
           <button 
             onClick={handleCityClick}
@@ -242,30 +226,7 @@ export const AvailableGamesSection = ({
 
       <TrainersList show={trainingFilter} />
 
-      <div className="flex items-center gap-2 mb-4 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
-        <button
-          onClick={() => setActiveTab('calendar')}
-          className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${
-            activeTab === 'calendar'
-              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          {t('games.calendar') || 'Calendar'}
-        </button>
-        <button
-          onClick={() => setActiveTab('list')}
-          className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${
-            activeTab === 'list'
-              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          {t('games.list') || 'List'}
-        </button>
-      </div>
-
-      {activeTab === 'calendar' ? (
+      {findViewMode === 'calendar' ? (
         <>
           <MonthCalendar
             selectedDate={selectedDate}
@@ -342,6 +303,24 @@ export const AvailableGamesSection = ({
           )}
         </>
       )}
+      
+      <div className="mt-6 flex justify-center">
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={handleSubscriptionsClick}
+          className="flex items-center gap-2"
+        >
+          <div className="relative inline-flex items-center justify-center w-4 h-4">
+            <Bell className="w-4 h-4 animate-bell-pulse relative z-10" />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute w-8 h-8 rounded-full border-2 border-current opacity-0 animate-ring-1"></div>
+              <div className="absolute w-8 h-8 rounded-full border-2 border-current opacity-0 animate-ring-2"></div>
+            </div>
+          </div>
+          {t('gameSubscriptions.wantToBeNotified', { defaultValue: 'Want to be notified when new games are created?' })}
+        </Button>
+      </div>
     </div>
   );
 };

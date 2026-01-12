@@ -42,6 +42,7 @@ interface UsersState {
   getUnreadUserChatsCount: () => number;
   updateUnreadCount: (chatId: string, count: number | ((current: number) => number)) => void;
   markChatAsRead: (chatId: string) => void;
+  addChat: (chat: UserChat) => Promise<void>;
   
   fetchPlayers: () => Promise<void>;
   fetchUserChats: () => Promise<void>;
@@ -69,11 +70,32 @@ const setupSocketSubscriptions = () => {
 
   import('@/services/socketService').then(({ socketService }) => {
     newMessageHandler = (message: NewUserChatMessage) => {
+      console.log('[playersStore] New user chat message received:', message);
       const store = usePlayersStore.getState();
+      const { user } = useAuthStore.getState();
       const chat = store.getChatById(message.contextId);
+      console.log('[playersStore] Chat found in store:', chat ? `Yes (${chat.id})` : 'No');
       if (chat) {
-        store.updateUnreadCount(chat.id, (current) => (current || 0) + 1);
+        console.log('[playersStore] Current unread counts:', store.unreadCounts);
+        
+        // Update the chat's lastMessage in the store
+        usePlayersStore.setState((state) => ({
+          chats: {
+            ...state.chats,
+            [chat.id]: {
+              ...state.chats[chat.id],
+              lastMessage: message as any,
+              updatedAt: new Date().toISOString(),
+            },
+          },
+        }));
+        
+        // Only increment unread count if the message is from another user
+        if (message.senderId && message.senderId !== user?.id) {
+          store.updateUnreadCount(chat.id, (current) => (current || 0) + 1);
+        }
       } else {
+        console.log('[playersStore] Chat not found, fetching user chats...');
         store.fetchUserChats();
       }
     };
@@ -255,11 +277,16 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     set((state) => {
       const currentCount = state.unreadCounts[chatId] || 0;
       const newCount = typeof count === 'function' ? count(currentCount) : count;
+      const newUnreadCounts = {
+        ...state.unreadCounts,
+        [chatId]: newCount,
+      };
+      console.log(`[playersStore] Updating unread count for chat ${chatId}: ${currentCount} -> ${newCount}`);
+      console.log('[playersStore] Old unreadCounts object:', state.unreadCounts);
+      console.log('[playersStore] New unreadCounts object:', newUnreadCounts);
+      console.log('[playersStore] Objects are different?', state.unreadCounts !== newUnreadCounts);
       return {
-        unreadCounts: {
-          ...state.unreadCounts,
-          [chatId]: newCount,
-        },
+        unreadCounts: newUnreadCounts,
       };
     });
   },
@@ -271,6 +298,55 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         [chatId]: 0,
       },
     }));
+  },
+
+  addChat: async (chat: UserChat) => {
+    const currentUserId = useAuthStore.getState().user?.id;
+    if (!currentUserId) return;
+
+    const otherUserId = chat.user1Id === currentUserId ? chat.user2Id : chat.user1Id;
+    const otherUser = chat.user1Id === currentUserId ? chat.user2 : chat.user1;
+
+    if (!otherUser || !otherUserId) return;
+
+    set((state) => {
+      const newMetadata: Record<string, UserMetadata> = { ...state.metadata };
+      
+      newMetadata[otherUserId] = createDefaultMetadata({
+        ...state.metadata[otherUserId],
+        chatId: chat.id,
+      });
+
+      return {
+        chats: {
+          ...state.chats,
+          [chat.id]: chat,
+        },
+        userIdToChatId: {
+          ...state.userIdToChatId,
+          [otherUserId]: chat.id,
+        },
+        users: {
+          ...state.users,
+          [otherUserId]: otherUser,
+        },
+        metadata: newMetadata,
+      };
+    });
+
+    try {
+      const unreadResponse = await chatApi.getUserChatsUnreadCounts([chat.id]);
+      if (unreadResponse.data && unreadResponse.data[chat.id] !== undefined) {
+        set((state) => ({
+          unreadCounts: {
+            ...state.unreadCounts,
+            [chat.id]: unreadResponse.data[chat.id],
+          },
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count for new chat:', error);
+    }
   },
 
   fetchPlayers: async () => {

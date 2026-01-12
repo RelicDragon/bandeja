@@ -57,6 +57,13 @@
     "profile": "Профил",
     "chat": "Чет"
   },
+  "bottomTab": {
+    "my": "Моје",
+    "find": "Претрага",
+    "chats": "Ћаскања",
+    "leaderboard": "Топ",
+    "profile": "Профил"
+  },
   "offline": {
     "working_offline": "Рад ван мреже - Неке функције могу бити ограничене",
     "noInternetConnection": "Нема интернет везе",
@@ -1131,6 +1138,7 @@
     "resetView": "Ресетуј приказ"
   },
   "chat": {
+    "noMessages": "Још нема порука",
     "reactions": {
       "addReaction": "Додај реакцију",
       "removeReaction": "Уклони реакцију",

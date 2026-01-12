@@ -57,7 +57,7 @@ export const GameDetailsContent = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setGameDetailsCanAccessChat } = useNavigationStore();
+  const { setGameDetailsCanAccessChat, setBottomTabsVisible } = useNavigationStore();
 
   const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
@@ -200,6 +200,13 @@ export const GameDetailsContent = () => {
       }
     }
   }, [game, user?.id]);
+
+  useEffect(() => {
+    setBottomTabsVisible(false);
+    return () => {
+      setBottomTabsVisible(true);
+    };
+  }, [setBottomTabsVisible]);
 
   useEffect(() => {
     if (!id || !isEditMode || !game) return;
@@ -1336,7 +1343,7 @@ export const GameDetailsContent = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-      <div className="max-w-2xl mx-auto space-y-4 overflow-visible" style={{ paddingTop: `calc(4rem + env(safe-area-inset-top))` }}>
+      <div className="max-w-2xl mx-auto space-y-4 overflow-visible">
         {isLeagueSeason && (
         <div className="flex border-b border-gray-200 dark:border-gray-700 rounded-xl">
           <button
