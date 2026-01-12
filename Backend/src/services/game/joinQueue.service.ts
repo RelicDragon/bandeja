@@ -157,14 +157,6 @@ export class JoinQueueService {
       await addOrUpdateParticipant(tx, gameId, queueUserId);
     });
 
-    if (queueUser) {
-      await createSystemMessageWithNotification(
-        gameId,
-        SystemMessageType.USER_ACCEPTED_JOIN_QUEUE,
-        queueUserId
-      );
-    }
-
     await ParticipantMessageHelper.sendJoinMessage(gameId, queueUserId);
     await InviteService.deleteInvitesForUserInGame(gameId, queueUserId);
     await GameService.updateGameReadiness(gameId);

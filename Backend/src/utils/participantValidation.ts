@@ -116,7 +116,7 @@ export async function canAddPlayerToGame(
   switch (game.genderTeams) {
     case GenderTeam.ANY:
       if (existingPlayingParticipants.length >= game.maxParticipants) {
-        return { canJoin: false, shouldQueue: true, reason: 'Game is full' };
+        return { canJoin: false, shouldQueue: true, reason: 'errors.invites.gameFull' };
       }
       return { canJoin: true, shouldQueue: false };
 
@@ -126,7 +126,7 @@ export async function canAddPlayerToGame(
       );
 
       if (maleParticipants.length >= game.maxParticipants) {
-        return { canJoin: false, shouldQueue: true, reason: 'Game is full' };
+        return { canJoin: false, shouldQueue: true, reason: 'errors.invites.gameFull' };
       }
       return { canJoin: true, shouldQueue: false };
 
@@ -136,7 +136,7 @@ export async function canAddPlayerToGame(
       );
 
       if (femaleParticipants.length >= game.maxParticipants) {
-        return { canJoin: false, shouldQueue: true, reason: 'Game is full' };
+        return { canJoin: false, shouldQueue: true, reason: 'errors.invites.gameFull' };
       }
       return { canJoin: true, shouldQueue: false };
 

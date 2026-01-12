@@ -137,7 +137,7 @@ export class InviteService {
           const joinResult = await validatePlayerCanJoinGame(currentGame, invite.receiverId);
 
           if (!joinResult.canJoin && joinResult.shouldQueue) {
-            throw new ApiError(400, 'Game is full, should queue');
+            throw new ApiError(400, joinResult.reason || 'errors.invites.gameFull');
           }
 
           await addOrUpdateParticipant(tx, invite.gameId!, invite.receiverId);
@@ -145,9 +145,9 @@ export class InviteService {
 
         await performPostJoinOperations(invite.gameId!, invite.receiverId);
       } catch (error: any) {
-        if (error.message === 'Game is full, should queue' && invite.gameId) {
+        if (error.message === 'errors.invites.gameFull' && invite.gameId) {
           await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
-          await prisma.invite.delete({
+          await prisma.invite.deleteMany({
             where: { id: inviteId },
           });
           return {
