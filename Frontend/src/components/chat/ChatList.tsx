@@ -299,7 +299,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         />
       )}
       <div
-        className={isDesktop ? 'overflow-y-auto h-full bg-white dark:bg-gray-900' : ''}
+        className={isDesktop ? 'overflow-y-auto h-full bg-white dark:bg-gray-900 flex flex-col min-h-0 pb-20' : ''}
         style={{
           transform: isDesktop ? 'none' : `translateY(${pullDistance}px)`,
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',

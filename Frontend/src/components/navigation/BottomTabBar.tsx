@@ -7,7 +7,11 @@ import { useAuthStore } from '@/store/authStore';
 import { useChatUnreadCounts } from '@/hooks/useChatUnreadCounts';
 import { useMemo, useRef } from 'react';
 
-export const BottomTabBar = () => {
+interface BottomTabBarProps {
+  containerPosition?: boolean;
+}
+
+export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
@@ -60,7 +64,7 @@ export const BottomTabBar = () => {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-      className="fixed bottom-0 left-0 right-0 z-50"
+      className={containerPosition ? "absolute bottom-0 left-0 right-0 z-50" : "fixed bottom-0 left-0 right-0 z-50"}
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex justify-center">

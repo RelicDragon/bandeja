@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -16,6 +16,16 @@ export const MainPage = () => {
   const { currentPage, setCurrentPage, setIsAnimating, bottomTabsVisible } = useNavigationStore();
   const previousPathnameRef = useRef(location.pathname);
   const isInitialMountRef = useRef(true);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const path = location.pathname;
@@ -77,7 +87,7 @@ export const MainPage = () => {
     return (
       <MainLayout>
         <ChatsTab />
-        {bottomTabsVisible && <BottomTabBar />}
+        {bottomTabsVisible && !isDesktop && <BottomTabBar />}
       </MainLayout>
     );
   }

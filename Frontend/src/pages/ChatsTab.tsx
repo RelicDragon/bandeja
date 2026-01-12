@@ -7,6 +7,7 @@ import { MessageCircle } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { BugsTab } from './BugsTab';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
+import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 
 export const ChatsTab = () => {
   const { t } = useTranslation();
@@ -46,15 +47,18 @@ export const ChatsTab = () => {
 
   if (isDesktop) {
     return (
-      <div className="h-[calc(100vh-9rem)] -mt-4 -mb-4 overflow-hidden">
+      <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
         <ResizableSplitter
           defaultLeftWidth={40}
           minLeftWidth={250}
           maxLeftWidth={600}
           leftPanel={
-            <div className="h-full border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col">
-              <div className="flex-1 overflow-hidden">
+            <div className="h-full border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col relative">
+              <div className="flex-1 overflow-hidden flex flex-col min-h-0">
                 <ChatList onChatSelect={handleChatSelect} isDesktop={true} selectedChatId={selectedChatId} selectedChatType={selectedChatType} />
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
+                <BottomTabBar containerPosition={true} />
               </div>
             </div>
           }
