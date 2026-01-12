@@ -172,7 +172,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     } finally {
       setLoading(false);
     }
-  }, [user, favoriteUserIds]);
+  }, [user, favoriteUserIds, sortUserChatItems]);
 
   useEffect(() => {
     if (chatsFilter === 'users' || chatsFilter === 'bugs') {
