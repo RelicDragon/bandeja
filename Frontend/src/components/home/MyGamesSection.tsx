@@ -82,7 +82,7 @@ export const MyGamesSection = ({
       return 0;
     });
 
-  const renderGame = (game: Game, globalIndex: number) => (
+  const renderGame = (game: Game) => (
     <div
       key={game.id}
       className="transition-all duration-500 ease-in-out animate-in slide-in-from-top-4"
@@ -100,8 +100,8 @@ export const MyGamesSection = ({
     <div>
       <div>
         <div className="space-y-4">
-          {announcedOrStartedGames.map((game, index) => 
-            renderGame(game, index)
+          {announcedOrStartedGames.map((game) => 
+            renderGame(game)
           )}
           
           {announcedOrStartedGames.length > 0 && finishedOrArchivedGames.length > 0 && (
@@ -116,8 +116,8 @@ export const MyGamesSection = ({
             </div>
           )}
           
-          {finishedOrArchivedGames.map((game, index) => 
-            renderGame(game, announcedOrStartedGames.length + index)
+          {finishedOrArchivedGames.map((game) => 
+            renderGame(game)
           )}
         </div>
       </div>
