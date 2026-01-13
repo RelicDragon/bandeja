@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ChatList } from '@/components/chat/ChatList';
@@ -15,6 +15,7 @@ export const ChatsTab = () => {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedChatType, setSelectedChatType] = useState<'user' | 'bug' | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const { setIsAnimating, chatsFilter, bottomTabsVisible } = useNavigationStore();
 
   useEffect(() => {
@@ -26,10 +27,17 @@ export const ChatsTab = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleChatSelect = (chatId: string, chatType: 'user' | 'bug') => {
+  const handleChatSelect = useCallback((chatId: string, chatType: 'user' | 'bug') => {
     if (isDesktop) {
-      setSelectedChatId(chatId);
-      setSelectedChatType(chatType);
+      if (selectedChatId === chatId && selectedChatType === chatType) {
+        return;
+      }
+      setIsTransitioning(true);
+      requestAnimationFrame(() => {
+        setSelectedChatId(chatId);
+        setSelectedChatType(chatType);
+        setTimeout(() => setIsTransitioning(false), 150);
+      });
     } else {
       setIsAnimating(true);
       if (chatType === 'user') {
@@ -39,7 +47,7 @@ export const ChatsTab = () => {
       }
       setTimeout(() => setIsAnimating(false), 300);
     }
-  };
+  }, [isDesktop, selectedChatId, selectedChatType, setIsAnimating, navigate]);
 
   if (chatsFilter === 'bugs') {
     return <BugsTab />;
@@ -65,13 +73,16 @@ export const ChatsTab = () => {
             </div>
           }
           rightPanel={
-            <div className="h-full bg-gray-50 dark:bg-gray-900">
+            <div className="h-full bg-gray-50 dark:bg-gray-900 relative">
               {selectedChatId && selectedChatType ? (
-                <GameChat
-                  isEmbedded={true}
-                  chatId={selectedChatId}
-                  chatType={selectedChatType}
-                />
+                <div className={`absolute inset-0 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+                  <GameChat
+                    key={`${selectedChatType}-${selectedChatId}`}
+                    isEmbedded={true}
+                    chatId={selectedChatId}
+                    chatType={selectedChatType}
+                  />
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
                   <MessageCircle size={80} className="mb-6 opacity-30" />

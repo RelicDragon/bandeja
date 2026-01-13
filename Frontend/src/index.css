@@ -99,6 +99,41 @@ body {
   scrollbar-width: none;
 }
 
+.scrollbar-auto::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 4px;
+}
+
+.scrollbar-auto::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
+}
+
+.dark .scrollbar-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(75, 85, 99, 0.5);
+}
+
+.dark .scrollbar-auto::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(75, 85, 99, 0.7);
+}
+
+.scrollbar-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.dark .scrollbar-auto {
+  scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+}
+
 .rc-slider-custom .rc-slider-rail {
   border-radius: 9999px;
 }

@@ -64,7 +64,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
   const [isJoiningAsGuest, setIsJoiningAsGuest] = useState(false);
   const [currentChatType, setCurrentChatType] = useState<ChatType>(initialChatType || 'PUBLIC');
-  const [isLoadingContext, setIsLoadingContext] = useState(true);
+  const [isLoadingContext, setIsLoadingContext] = useState(!isEmbedded);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [isLeavingChat, setIsLeavingChat] = useState(false);
@@ -201,9 +201,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       
       if (!append) {
         setIsLoadingMessages(false);
+        const delay = isEmbedded ? 100 : 500;
         setTimeout(() => {
           setIsInitialLoad(false);
-        }, 500);
+        }, delay);
       }
     } catch (error) {
       console.error('Failed to load messages:', error);
@@ -212,7 +213,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         setIsInitialLoad(false);
       }
     }
-  }, [id, contextType, currentChatType]);
+  }, [id, contextType, currentChatType, isEmbedded]);
 
   const loadMoreMessages = useCallback(async () => {
     if (!hasMoreMessages || isLoadingMore) return;
@@ -562,7 +563,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setHasMoreMessages(true);
       setIsLoadingMessages(true);
       setIsInitialLoad(true);
-      setIsLoadingContext(true);
+      if (!isEmbedded) {
+        setIsLoadingContext(true);
+      }
       setIsBlockedByUser(false);
       setIsMuted(false);
       setReplyTo(null);
@@ -570,7 +573,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setHasSetDefaultChatType(false);
       previousIdRef.current = id;
     }
-  }, [id]);
+  }, [id, isEmbedded]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -753,7 +756,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     }
   }, [isLoadingMessages, isSwitchingChatType, isLoadingMore, isInitialLoad, messages.length]);
 
-  if (isLoadingContext) {
+  if (isLoadingContext && !isEmbedded) {
     return (
       <div className="chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
         <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
@@ -882,34 +885,46 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   };
 
 
+  const showLoadingHeader = isEmbedded && isLoadingContext;
+
   return (
     <div ref={chatContainerRef} className={`chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'}`}>
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: isEmbedded ? '0' : 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            {!isEmbedded && (
-              <button
-                onClick={() => navigate(-1)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
-              >
-                <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
-              </button>
-            )}
-            {contextType !== 'BUG' && <div className="flex-shrink-0">{getIcon()}</div>}
-            <div className="min-w-0 flex-1">
-              <h1 className={`${contextType === 'BUG' ? 'text-base' : 'text-lg'} font-semibold text-gray-900 dark:text-white flex items-center gap-2 whitespace-nowrap overflow-hidden`}>
-                {contextType === 'BUG' && <BugIcon size={16} className="text-red-500 flex-shrink-0" />}
-                <span className="truncate">{getTitle()}</span>
-              </h1>
-              {getSubtitle() && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {getSubtitle()}
-                </p>
-              )}
+          {showLoadingHeader ? (
+            <div className="flex items-center gap-3 w-full">
+              <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
+              <div className="flex-1">
+                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1" />
+                <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              </div>
             </div>
-          </div>
-          
-          {contextType === 'GAME' && (
+          ) : (
+            <>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {!isEmbedded && (
+                  <button
+                    onClick={() => navigate(-1)}
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+                  >
+                    <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
+                  </button>
+                )}
+                {contextType !== 'BUG' && <div className="flex-shrink-0">{getIcon()}</div>}
+                <div className="min-w-0 flex-1">
+                  <h1 className={`${contextType === 'BUG' ? 'text-base' : 'text-lg'} font-semibold text-gray-900 dark:text-white flex items-center gap-2 whitespace-nowrap overflow-hidden`}>
+                    {contextType === 'BUG' && <BugIcon size={16} className="text-red-500 flex-shrink-0" />}
+                    <span className="truncate">{getTitle()}</span>
+                  </h1>
+                  {getSubtitle() && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {getSubtitle()}
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              {contextType === 'GAME' && (
             <div className="flex items-center gap-2">
               <button
                 onClick={handleToggleMute}
@@ -991,9 +1006,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               </button>
             </div>
           )}
+            </>
+          )}
         </div>
 
-        {contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || isAdminOrOwner || (game?.status && game.status !== 'ANNOUNCED')) && (
+        {!showLoadingHeader && contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || isAdminOrOwner || (game?.status && game.status !== 'ANNOUNCED')) && (
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div className="max-w-2xl mx-auto px-4" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
               <div className="flex justify-center space-x-1 py-2">
@@ -1029,18 +1046,18 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           onDeleteMessage={handleDeleteMessage}
           onReplyMessage={handleReplyMessage}
           isLoading={isLoadingMore}
-          isLoadingMessages={isLoadingMessages || isInitialLoad}
+          isLoadingMessages={isLoadingMessages && !isEmbedded}
           isSwitchingChatType={isSwitchingChatType}
           onScrollToMessage={handleScrollToMessage}
           hasMoreMessages={hasMoreMessages}
           onLoadMore={loadMoreMessages}
-          isInitialLoad={isInitialLoad}
+          isInitialLoad={isInitialLoad && !isEmbedded}
           isLoadingMore={isLoadingMore}
           disableReadTracking={contextType === 'USER'}
         />
       </main>
 
-      {!isInitialLoad && (
+      {(!isInitialLoad || isEmbedded) && (
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {isBlockedByUser && contextType === 'USER' ? (
           <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
