@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { InvitesSection, MyGamesSection, PastGamesSection } from '@/components/home';
@@ -57,7 +57,7 @@ const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: st
 export const MyTab = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { showChatFilter, setShowChatFilter, unreadMessages } = useHeaderStore();
+  const { unreadMessages, setMyGamesUnreadCount, setPastGamesUnreadCount } = useHeaderStore();
   const { activeTab } = useNavigationStore();
 
   const [loading, setLoading] = useState(true);
@@ -89,6 +89,46 @@ export const MyTab = () => {
 
   const filteredMyGames = useMemo(() => sortGamesByStatusAndDateTime(games, mergedUnreadCounts), [games, mergedUnreadCounts]);
   const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(pastGames, pastGamesUnreadCounts), [pastGames, pastGamesUnreadCounts]);
+
+  const myGamesTotalUnread = useMemo(() => {
+    return Object.values(gamesUnreadCounts).reduce((sum, count) => sum + count, 0);
+  }, [gamesUnreadCounts]);
+
+  const pastGamesTotalUnread = useMemo(() => {
+    return Object.values(pastGamesUnreadCounts).reduce((sum, count) => sum + count, 0);
+  }, [pastGamesUnreadCounts]);
+
+  const [totalGamesUnreadCount, setTotalGamesUnreadCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchTotalGamesUnread = async () => {
+      if (!user?.id) return;
+      try {
+        const response = await chatApi.getUnreadObjects();
+        const totalGamesUnread = response.data.games.reduce((sum: number, item: any) => sum + item.unreadCount, 0);
+        setTotalGamesUnreadCount(totalGamesUnread);
+      } catch (error) {
+        console.error('Failed to fetch total games unread count:', error);
+      }
+    };
+    fetchTotalGamesUnread();
+  }, [user?.id, gamesUnreadCounts, pastGamesUnreadCounts]);
+
+  useEffect(() => {
+    setMyGamesUnreadCount(myGamesTotalUnread);
+  }, [myGamesTotalUnread, setMyGamesUnreadCount]);
+
+  useEffect(() => {
+    if (loading || !totalGamesUnreadCount) {
+      setPastGamesUnreadCount(0);
+      return;
+    }
+    
+    const calculatedPastGamesUnread = Math.max(0, totalGamesUnreadCount - myGamesTotalUnread);
+    const actualPastGamesUnread = pastGamesTotalUnread;
+    const pastGamesUnread = actualPastGamesUnread > 0 ? actualPastGamesUnread : calculatedPastGamesUnread;
+    setPastGamesUnreadCount(pastGamesUnread);
+  }, [totalGamesUnreadCount, myGamesTotalUnread, pastGamesTotalUnread, loading, setPastGamesUnreadCount]);
 
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
 
@@ -223,11 +263,9 @@ export const MyTab = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-        <div className={showChatFilter ? 'pt-16' : ''}>
-        </div>
         <div
           className={`transition-all duration-500 ease-in-out overflow-hidden ${
-            !loading && !showChatFilter
+            !loading
               ? 'max-h-[2000px] opacity-100 translate-y-0'
               : 'max-h-0 opacity-0 -translate-y-4'
           }`}
@@ -253,9 +291,7 @@ export const MyTab = () => {
               loading={loading}
               showSkeleton={skeletonAnimation.showSkeleton}
               skeletonStates={skeletonAnimation.skeletonStates}
-              showChatFilter={showChatFilter}
               gamesUnreadCounts={mergedUnreadCounts}
-              onShowAllGames={() => setShowChatFilter(false)}
             />
           </div>
 
@@ -279,7 +315,7 @@ export const MyTab = () => {
 
         <div
           className={`transition-all duration-500 ease-in-out overflow-hidden ${
-            showChatFilter && unreadMessages > 0
+            unreadMessages > 0
               ? 'max-h-[100px] opacity-100 translate-y-0 mb-4'
               : 'max-h-0 opacity-0 -translate-y-4'
           }`}

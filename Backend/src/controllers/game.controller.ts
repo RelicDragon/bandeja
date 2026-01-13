@@ -58,7 +58,7 @@ export const getPastGames = asyncHandler(async (req: AuthRequest, res: Response)
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 30;
   const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
 
   const games = await GameService.getPastGames(req.userId, req.user?.currentCityId, limit, offset);

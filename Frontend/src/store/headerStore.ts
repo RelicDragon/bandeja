@@ -7,19 +7,17 @@ interface HeaderState {
   unreadMessages: number;
   showGameTypeModal: boolean;
   isNewInviteAnimating: boolean;
-  showChatFilter: boolean;
   syncStatus: SyncStatus;
   selectedDateForCreateGame: Date | null;
   leaderboardType: 'level' | 'social' | 'games';
   leaderboardScope: 'city' | 'global';
   leaderboardTimePeriod: '10' | '30' | 'all';
   areFiltersSticky: boolean;
-  showContacts: boolean;
-  contactsHeight: number;
+  myGamesUnreadCount: number;
+  pastGamesUnreadCount: number;
   setPendingInvites: (count: number) => void;
   setUnreadMessages: (count: number) => void;
   setShowGameTypeModal: (show: boolean) => void;
-  setShowChatFilter: (show: boolean) => void;
   triggerNewInviteAnimation: () => void;
   setSyncStatus: (status: SyncStatus) => void;
   setSelectedDateForCreateGame: (date: Date | null) => void;
@@ -27,8 +25,8 @@ interface HeaderState {
   setLeaderboardScope: (scope: 'city' | 'global') => void;
   setLeaderboardTimePeriod: (period: '10' | '30' | 'all') => void;
   setAreFiltersSticky: (sticky: boolean) => void;
-  setShowContacts: (show: boolean) => void;
-  setContactsHeight: (height: number) => void;
+  setMyGamesUnreadCount: (count: number) => void;
+  setPastGamesUnreadCount: (count: number) => void;
 }
 
 export const useHeaderStore = create<HeaderState>((set) => ({
@@ -36,19 +34,17 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   unreadMessages: 0,
   showGameTypeModal: false,
   isNewInviteAnimating: false,
-  showChatFilter: false,
   syncStatus: 'IDLE',
   selectedDateForCreateGame: null,
   leaderboardType: 'level',
   leaderboardScope: 'city',
   leaderboardTimePeriod: 'all',
   areFiltersSticky: false,
-  showContacts: false,
-  contactsHeight: 0,
+  myGamesUnreadCount: 0,
+  pastGamesUnreadCount: 0,
   setPendingInvites: (count) => set({ pendingInvites: count }),
   setUnreadMessages: (count) => set({ unreadMessages: count }),
   setShowGameTypeModal: (show) => set({ showGameTypeModal: show }),
-  setShowChatFilter: (show) => set({ showChatFilter: show }),
   triggerNewInviteAnimation: () => {
     set({ isNewInviteAnimating: true });
     // Reset animation after it completes
@@ -60,6 +56,6 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   setLeaderboardScope: (scope) => set({ leaderboardScope: scope }),
   setLeaderboardTimePeriod: (period) => set({ leaderboardTimePeriod: period }),
   setAreFiltersSticky: (sticky) => set({ areFiltersSticky: sticky }),
-  setShowContacts: (show) => set({ showContacts: show }),
-  setContactsHeight: (height) => set({ contactsHeight: height }),
+  setMyGamesUnreadCount: (count) => set({ myGamesUnreadCount: count }),
+  setPastGamesUnreadCount: (count) => set({ pastGamesUnreadCount: count }),
 }));

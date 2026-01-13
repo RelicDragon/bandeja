@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
-import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection, BugsSection } from '@/components/home';
+import { InvitesSection, MyGamesSection, PastGamesSection, AvailableGamesSection } from '@/components/home';
 import { Button } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { chatApi } from '@/api/chat';
@@ -13,7 +13,6 @@ import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
 import { useMyGames } from '@/hooks/useMyGames';
 import { usePastGames } from '@/hooks/usePastGames';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
-import { useUnreadObjects } from '@/hooks/useUnreadObjects';
 import { ChatType } from '@/types';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { enUS, ru, es, sr } from 'date-fns/locale';
@@ -63,7 +62,7 @@ const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: st
 export const HomeContent = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { showChatFilter, setShowChatFilter, unreadMessages } = useHeaderStore();
+  const { unreadMessages } = useHeaderStore();
 
   const [loading, setLoading] = useState(true);
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
@@ -129,26 +128,12 @@ export const HomeContent = () => {
     setDateRange({ startDate, endDate });
   };
 
-  const {
-    games: unreadGames,
-    bugs: unreadBugs,
-    gamesUnreadCounts: unreadGamesCounts,
-    bugsUnreadCounts: unreadBugsCounts,
-    loading: loadingUnreadObjects,
-    loadUnreadObjects,
-  } = useUnreadObjects(user?.id);
 
-  const mergedGames = useMemo(() => {
-    if (!showChatFilter) return games;
-    return unreadGames;
-  }, [games, unreadGames, showChatFilter]);
+  const mergedGames = games;
 
   const mergedUnreadCounts = useMemo(() => {
-    if (!showChatFilter) {
-      return { ...gamesUnreadCounts, ...pastGamesUnreadCounts };
-    }
-    return unreadGamesCounts;
-  }, [gamesUnreadCounts, pastGamesUnreadCounts, unreadGamesCounts, showChatFilter]);
+    return { ...gamesUnreadCounts, ...pastGamesUnreadCounts };
+  }, [gamesUnreadCounts, pastGamesUnreadCounts]);
 
   const filteredMyGames = useMemo(() => {
     return sortGamesByStatusAndDateTime(mergedGames, mergedUnreadCounts);
@@ -213,10 +198,6 @@ export const HomeContent = () => {
       setUnreadMessages(0);
 
       await fetchData(false, true);
-      
-      if (showChatFilter) {
-        await loadUnreadObjects?.();
-      }
 
       const updatedUnreadResponse = await chatApi.getUnreadCount();
       setUnreadMessages(updatedUnreadResponse.data.count || 0);
@@ -298,13 +279,12 @@ export const HomeContent = () => {
       fetchData(false, true),
       fetchAvailableGames(true),
       loadPastGames?.(),
-      loadUnreadObjects?.(),
     ]);
-  }, [fetchData, fetchAvailableGames, loadPastGames, loadUnreadObjects]);
+  }, [fetchData, fetchAvailableGames, loadPastGames]);
 
   const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
     onRefresh: handleRefresh,
-    disabled: loading || loadingAvailableGames || loadingPastGames || loadingUnreadObjects,
+    disabled: loading || loadingAvailableGames || loadingPastGames,
   });
 
   return (
@@ -320,11 +300,9 @@ export const HomeContent = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-      <div className={showChatFilter ? 'pt-16' : ''}>
-      </div>
       <div
         className={`transition-all duration-500 ease-in-out overflow-hidden ${
-          !loading && !showChatFilter
+          !loading
             ? 'max-h-[2000px] opacity-100 translate-y-0'
             : 'max-h-0 opacity-0 -translate-y-4'
         }`}
@@ -338,47 +316,23 @@ export const HomeContent = () => {
 
 
       <div className="relative min-h-[100px]">
-        {showChatFilter ? (
-          <>
-            <MyGamesSection
-              games={filteredMyGames}
-              user={user}
-              loading={loading || loadingUnreadObjects}
-              showSkeleton={skeletonAnimation.showSkeleton}
-              skeletonStates={skeletonAnimation.skeletonStates}
-              showChatFilter={showChatFilter}
-              gamesUnreadCounts={mergedUnreadCounts}
-              onShowAllGames={() => setShowChatFilter(false)}
-              onSwitchToSearch={() => setActiveTab('search')}
-            />
-            {unreadBugs.length > 0 && (
-              <BugsSection
-                bugs={unreadBugs}
-                bugsUnreadCounts={unreadBugsCounts}
-              />
-            )}
-          </>
-        ) : (
-          <>
-            <div
-              className={`transition-all duration-300 ease-in-out ${
-                activeTab === 'my-games'
-                  ? 'opacity-100 translate-x-0'
-                  : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none'
-              }`}
-            >
-              <MyGamesSection
-                games={filteredMyGames}
-                user={user}
-                loading={loading}
-                showSkeleton={skeletonAnimation.showSkeleton}
-                skeletonStates={skeletonAnimation.skeletonStates}
-                showChatFilter={showChatFilter}
-                gamesUnreadCounts={mergedUnreadCounts}
-                onShowAllGames={() => setShowChatFilter(false)}
-                onSwitchToSearch={() => setActiveTab('search')}
-              />
-            </div>
+        <div
+          className={`transition-all duration-300 ease-in-out ${
+            activeTab === 'my-games'
+              ? 'opacity-100 translate-x-0'
+              : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none'
+          }`}
+        >
+          <MyGamesSection
+            games={filteredMyGames}
+            user={user}
+            loading={loading}
+            showSkeleton={skeletonAnimation.showSkeleton}
+            skeletonStates={skeletonAnimation.skeletonStates}
+            gamesUnreadCounts={mergedUnreadCounts}
+            onSwitchToSearch={() => setActiveTab('search')}
+          />
+        </div>
 
             <div
               className={`transition-all duration-300 ease-in-out ${
@@ -397,29 +351,27 @@ export const HomeContent = () => {
               />
             </div>
 
-            <div
-              className={`transition-all duration-300 ease-in-out ${
-                activeTab === 'search'
-                  ? 'opacity-100 translate-x-0'
-                  : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none'
-              }`}
-            >
-              <AvailableGamesSection
-                availableGames={filteredAvailableGames}
-                user={user}
-                loading={loadingAvailableGames}
-                onJoin={handleJoinGame}
-                onMonthChange={handleMonthChange}
-                onDateRangeChange={handleDateRangeChange}
-              />
-            </div>
-          </>
-        )}
+        <div
+          className={`transition-all duration-300 ease-in-out ${
+            activeTab === 'search'
+              ? 'opacity-100 translate-x-0'
+              : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none'
+          }`}
+        >
+          <AvailableGamesSection
+            availableGames={filteredAvailableGames}
+            user={user}
+            loading={loadingAvailableGames}
+            onJoin={handleJoinGame}
+            onMonthChange={handleMonthChange}
+            onDateRangeChange={handleDateRangeChange}
+          />
+        </div>
       </div>
 
       <div
         className={`transition-all duration-500 ease-in-out overflow-hidden ${
-          showChatFilter && unreadMessages > 0
+          unreadMessages > 0
             ? 'max-h-[100px] opacity-100 translate-y-0 mb-4'
             : 'max-h-0 opacity-0 -translate-y-4'
         }`}

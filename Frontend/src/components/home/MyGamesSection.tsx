@@ -9,9 +9,7 @@ interface MyGamesSectionProps {
   loading: boolean;
   showSkeleton: boolean;
   skeletonStates: Record<number, 'hidden' | 'fading-in' | 'visible' | 'fading-out'>;
-  showChatFilter: boolean;
   gamesUnreadCounts: Record<string, number>;
-  onShowAllGames: () => void;
   onSwitchToSearch?: () => void;
 }
 
@@ -21,9 +19,7 @@ export const MyGamesSection = ({
   loading,
   showSkeleton,
   skeletonStates,
-  showChatFilter,
   gamesUnreadCounts,
-  onShowAllGames,
   onSwitchToSearch,
 }: MyGamesSectionProps) => {
   const { t } = useTranslation();
@@ -62,63 +58,14 @@ export const MyGamesSection = ({
       <div>
         <Card className="text-center py-12">
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {showChatFilter ? t('chat.noUnreadMessages') : t('home.noGames')}
+            {t('home.noGames')}
           </p>
-          {showChatFilter && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onShowAllGames}
-            >
-              {t('chat.showAllGames')}
-            </Button>
-          )}
-        </Card>
-      </div>
-    );
-  }
-
-  if (showChatFilter && games.filter(game => (gamesUnreadCounts[game.id] || 0) > 0).length === 0) {
-    return (
-      <div>
-        <Card className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {t('chat.noUnreadMessages')}
-          </p>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onShowAllGames}
-          >
-            {t('chat.showAllGames')}
-          </Button>
         </Card>
       </div>
     );
   }
 
   const displayGames = games;
-
-  if (displayGames.length === 0) {
-    return (
-      <div>
-        <Card className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {showChatFilter ? t('chat.noUnreadMessages') : t('home.noGames')}
-          </p>
-          {showChatFilter && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onShowAllGames}
-            >
-              {t('chat.showAllGames')}
-            </Button>
-          )}
-        </Card>
-      </div>
-    );
-  }
 
   const announcedOrStartedGames = displayGames
     .filter((game) => game.status === 'ANNOUNCED' || game.status === 'STARTED')
@@ -138,21 +85,13 @@ export const MyGamesSection = ({
   const renderGame = (game: Game, globalIndex: number) => (
     <div
       key={game.id}
-      className={`transition-all duration-500 ease-in-out ${
-        showChatFilter 
-          ? 'animate-in slide-in-from-top-4 fade-in' 
-          : 'animate-in slide-in-from-top-4'
-      }`}
-      style={{
-        animationDelay: showChatFilter ? `${globalIndex * 100}ms` : '0ms'
-      }}
+      className="transition-all duration-500 ease-in-out animate-in slide-in-from-top-4"
     >
       <GameCard
         game={game}
         user={user}
         isInitiallyCollapsed={game.entityType === 'LEAGUE_SEASON' ? true : false}
         unreadCount={gamesUnreadCounts[game.id] || 0}
-        forceCollapsed={showChatFilter ? false : undefined}
       />
     </div>
   );
@@ -182,7 +121,7 @@ export const MyGamesSection = ({
           )}
         </div>
       </div>
-      {!showChatFilter && onSwitchToSearch && (
+      {onSwitchToSearch && (
         <div className="mt-6 flex justify-center">
           <Button
             variant="primary"

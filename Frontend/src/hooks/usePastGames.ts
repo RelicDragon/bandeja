@@ -2,7 +2,6 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { gamesApi } from '@/api';
 import { chatApi } from '@/api/chat';
 import { Game } from '@/types';
-import { useHeaderStore } from '@/store/headerStore';
 import { socketService } from '@/services/socketService';
 
 export const usePastGames = (user: any, shouldLoad: boolean = false) => {
@@ -11,11 +10,9 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
   const [pastGamesOffset, setPastGamesOffset] = useState(0);
   const [hasMorePastGames, setHasMorePastGames] = useState(true);
   const [pastGamesUnreadCounts, setPastGamesUnreadCounts] = useState<Record<string, number>>({});
-  const showChatFilter = useHeaderStore((state) => state.showChatFilter);
 
   const isLoadingRef = useRef(false);
   const lastFetchParamsRef = useRef<string | null>(null);
-  const isLoadingUnreadPastGamesRef = useRef(false);
 
   const sortGames = (games: Game[]) => {
     return games.sort((a, b) => {
@@ -60,13 +57,13 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
     setLoadingPastGames(true);
     try {
       const response = await gamesApi.getPastGames({
-        limit: 10,
+        limit: 30,
         offset: pastGamesOffset,
       });
       
       const newPastGames = response.data || [];
       
-      if (newPastGames.length < 10) {
+      if (newPastGames.length < 30) {
         setHasMorePastGames(false);
       }
       
@@ -78,7 +75,7 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
         return sortGames([...prev, ...uniqueNewGames]);
       });
       setPastGamesUnreadCounts(prev => ({ ...prev, ...unreadCounts }));
-      setPastGamesOffset(pastGamesOffset + 10);
+      setPastGamesOffset(pastGamesOffset + 30);
     } catch (error) {
       console.error('Failed to load past games:', error);
     } finally {
@@ -86,67 +83,6 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
       setLoadingPastGames(false);
     }
   }, [user?.id, loadingPastGames, hasMorePastGames, pastGamesOffset]);
-
-  const loadAllPastGamesWithUnread = useCallback(async () => {
-    if (!user?.id || isLoadingUnreadPastGamesRef.current) return;
-
-    isLoadingUnreadPastGamesRef.current = true;
-    try {
-      const allChatGamesResponse = await chatApi.getUserChatGames();
-      const allChatGames = allChatGamesResponse.data;
-      
-      if (allChatGames.length === 0) {
-        isLoadingUnreadPastGamesRef.current = false;
-        return;
-      }
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const archivedChatGames = allChatGames.filter(game => {
-        if (game.status !== 'ARCHIVED') return false;
-        if (!game.participants.some((p: any) => p.userId === user.id)) return false;
-        
-        const gameDate = new Date(game.startTime);
-        gameDate.setHours(0, 0, 0, 0);
-        return gameDate < today;
-      });
-
-      if (archivedChatGames.length === 0) {
-        isLoadingUnreadPastGamesRef.current = false;
-        return;
-      }
-
-      const gameIds = archivedChatGames.map(game => game.id);
-      const unreadCounts = await chatApi.getGamesUnreadCounts(gameIds);
-      
-      const archivedGamesWithUnread = archivedChatGames.filter(game => (unreadCounts.data[game.id] || 0) > 0);
-      
-      if (archivedGamesWithUnread.length > 0) {
-        setPastGames(prevGames => {
-          const existingGameIds = new Set(prevGames.map(g => g.id));
-          const newGames = archivedGamesWithUnread.filter(game => !existingGameIds.has(game.id));
-          
-          if (newGames.length === 0) return prevGames;
-          
-          const mergedGames = [...prevGames, ...newGames];
-          return sortGames(mergedGames);
-        });
-        
-        setPastGamesUnreadCounts(prev => ({ ...prev, ...unreadCounts.data }));
-      }
-    } catch (error) {
-      console.error('Failed to load past games with unread messages:', error);
-    } finally {
-      isLoadingUnreadPastGamesRef.current = false;
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (showChatFilter && user?.id) {
-      loadAllPastGamesWithUnread();
-    }
-  }, [showChatFilter, user?.id, loadAllPastGamesWithUnread]);
 
   useEffect(() => {
     if (shouldLoad && pastGames.length === 0 && !loadingPastGames && user?.id) {
@@ -212,6 +148,5 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
     hasMorePastGames,
     pastGamesUnreadCounts,
     loadPastGames,
-    loadAllPastGamesWithUnread,
   };
 };

@@ -447,7 +447,7 @@ export class GameReadService {
     return games;
   }
 
-  static async getPastGames(userId: string, userCityId?: string, limit: number = 10, offset: number = 0) {
+  static async getPastGames(userId: string, userCityId?: string, limit: number = 30, offset: number = 0) {
     if (!userId) {
       throw new ApiError(401, 'Unauthorized');
     }
