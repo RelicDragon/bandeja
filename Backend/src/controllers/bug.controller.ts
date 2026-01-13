@@ -28,19 +28,23 @@ export const createBug = asyncHandler(async (req: AuthRequest, res: Response) =>
 });
 
 export const getBugs = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { status, bugType, myBugsOnly, page = '1', limit = '10' } = req.query;
+  const { status, bugType, myBugsOnly, page = '1', limit = '10', all } = req.query;
 
-  const pageNum = parseInt(page as string, 10);
-  const limitNum = parseInt(limit as string, 10);
+  const filters: any = {};
 
-  if (pageNum < 1 || limitNum < 1 || limitNum > 100) {
-    throw new ApiError(400, 'errors.generic');
+  if (all === 'true') {
+    filters.all = true;
+  } else {
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+
+    if (pageNum < 1 || limitNum < 1 || limitNum > 100) {
+      throw new ApiError(400, 'errors.generic');
+    }
+
+    filters.page = pageNum;
+    filters.limit = limitNum;
   }
-
-  const filters: any = {
-    page: pageNum,
-    limit: limitNum,
-  };
 
   if (status && Object.values(BugStatus).includes(status as BugStatus)) {
     filters.status = status;

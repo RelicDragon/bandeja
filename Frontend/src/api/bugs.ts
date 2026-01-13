@@ -23,6 +23,7 @@ export const bugsApi = {
     myBugsOnly?: boolean;
     page?: number;
     limit?: number;
+    all?: boolean;
   }) => {
     const response = await api.get<ApiResponse<BugsResponse>>('/bugs', { params });
     return response.data;

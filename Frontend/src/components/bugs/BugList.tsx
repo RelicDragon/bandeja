@@ -81,10 +81,11 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
       } else {
         setLoading(true);
       }
+      
+      const isArchived = filters.status === 'ARCHIVED';
       const response = await bugsApi.getBugs({
         ...filters,
-        page,
-        limit: 30,
+        ...(isArchived ? { page, limit: 30 } : { all: true }),
       });
       
       if (append) {
@@ -94,7 +95,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
       }
 
       setCurrentPage(page);
-      setHasMore(page < response.data.pagination.pages);
+      setHasMore(isArchived && page < response.data.pagination.pages);
 
       // Fetch unread counts for all bugs
       if (response.data.bugs.length > 0) {
@@ -374,7 +375,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
               onDelete={handleBugDeleted}
             />
           ))}
-          {hasMore && (
+          {hasMore && filters.status === 'ARCHIVED' && (
             <div className="flex justify-center pt-4">
               <button
                 onClick={loadMore}

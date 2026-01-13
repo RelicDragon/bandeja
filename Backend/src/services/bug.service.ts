@@ -27,8 +27,9 @@ export class BugService {
     senderId?: string;
     page?: number;
     limit?: number;
+    all?: boolean;
   }) {
-    const { status, bugType, senderId, page = 1, limit = 10 } = filters;
+    const { status, bugType, senderId, page = 1, limit = 10, all = false } = filters;
 
     const where: any = {};
 
@@ -46,38 +47,36 @@ export class BugService {
       where.senderId = senderId;
     }
 
-    const [bugs, total] = await Promise.all([
-      prisma.bug.findMany({
-        where,
-        include: {
-          sender: {
-            select: {
-              ...USER_SELECT_FIELDS,
-              isAdmin: true,
-            },
+    const total = await prisma.bug.count({ where });
+
+    const bugs = await prisma.bug.findMany({
+      where,
+      include: {
+        sender: {
+          select: {
+            ...USER_SELECT_FIELDS,
+            isAdmin: true,
           },
-          participants: {
-            include: {
-              user: {
-                select: USER_SELECT_FIELDS,
-              },
+        },
+        participants: {
+          include: {
+            user: {
+              select: USER_SELECT_FIELDS,
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.bug.count({ where }),
-    ]);
+      },
+      orderBy: { createdAt: 'desc' },
+      ...(all ? {} : { skip: (page - 1) * limit, take: limit }),
+    });
 
     return {
       bugs,
       pagination: {
-        page,
-        limit,
+        page: all ? 1 : page,
+        limit: all ? total : limit,
         total,
-        pages: Math.ceil(total / limit),
+        pages: all ? 1 : Math.ceil(total / limit),
       },
     };
   }
