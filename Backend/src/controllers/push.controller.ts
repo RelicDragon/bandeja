@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { PushTokenService } from '../services/push/push-token.service';
 import { PushPlatform } from '@prisma/client';
 import { asyncHandler } from '../utils/asyncHandler';
+import pushNotificationService from '../services/push/push-notification.service';
+import { NotificationType } from '../types/notifications.types';
 
 export const registerToken = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
@@ -88,5 +90,29 @@ export const getTokens = asyncHandler(async (req: Request, res: Response) => {
   res.json({
     success: true,
     data: tokens
+  });
+});
+
+export const sendTestNotification = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user.id;
+
+  console.log(`[TEST] Sending test notification to user ${userId}`);
+
+  const payload = {
+    title: 'Test Notification',
+    body: 'This is a test push notification from PadelPulse',
+    type: NotificationType.GAME_SYSTEM_MESSAGE,
+    sound: 'default'
+  };
+
+  const sent = await pushNotificationService.sendNotificationToUser(userId, payload);
+
+  res.json({
+    success: true,
+    message: `Test notification sent to ${sent} device(s)`,
+    data: {
+      devicesSent: sent,
+      payload
+    }
   });
 });

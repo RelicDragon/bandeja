@@ -8,34 +8,51 @@ export class PushTokenService {
     platform: PushPlatform,
     deviceId?: string
   ) {
-    const existingToken = await prisma.pushToken.findUnique({
-      where: {
-        userId_token: {
-          userId,
-          token
-        }
-      }
+    console.log(`[PushTokenService] Registering token for user ${userId}:`, {
+      platform,
+      deviceId,
+      tokenPreview: token.substring(0, 20) + '...'
     });
 
-    if (existingToken) {
-      return await prisma.pushToken.update({
-        where: { id: existingToken.id },
-        data: {
-          platform,
-          deviceId,
-          updatedAt: new Date()
+    try {
+      const existingToken = await prisma.pushToken.findUnique({
+        where: {
+          userId_token: {
+            userId,
+            token
+          }
         }
       });
-    }
 
-    return await prisma.pushToken.create({
-      data: {
-        userId,
-        token,
-        platform,
-        deviceId
+      if (existingToken) {
+        console.log(`[PushTokenService] Token already exists, updating platform and deviceId`);
+        const updated = await prisma.pushToken.update({
+          where: { id: existingToken.id },
+          data: {
+            platform,
+            deviceId,
+            updatedAt: new Date()
+          }
+        });
+        console.log(`[PushTokenService] ✅ Token updated successfully`);
+        return updated;
       }
-    });
+
+      console.log(`[PushTokenService] Creating new token record`);
+      const created = await prisma.pushToken.create({
+        data: {
+          userId,
+          token,
+          platform,
+          deviceId
+        }
+      });
+      console.log(`[PushTokenService] ✅ Token created successfully`);
+      return created;
+    } catch (error) {
+      console.error(`[PushTokenService] ❌ Error registering token:`, error);
+      throw error;
+    }
   }
 
   static async removeToken(userId: string, token: string) {
@@ -67,10 +84,28 @@ export class PushTokenService {
       where.platform = platform;
     }
 
-    return await prisma.pushToken.findMany({
-      where,
-      orderBy: { updatedAt: 'desc' }
-    });
+    console.log(`[PushTokenService] Getting tokens for user ${userId}, platform: ${platform || 'ALL'}`);
+    
+    try {
+      const tokens = await prisma.pushToken.findMany({
+        where,
+        orderBy: { updatedAt: 'desc' }
+      });
+      
+      console.log(`[PushTokenService] Found ${tokens.length} token(s):`, 
+        tokens.map(t => ({ 
+          platform: t.platform, 
+          deviceId: t.deviceId,
+          tokenPreview: t.token.substring(0, 20) + '...',
+          updatedAt: t.updatedAt
+        }))
+      );
+      
+      return tokens;
+    } catch (error) {
+      console.error(`[PushTokenService] ❌ Error fetching tokens for user ${userId}:`, error);
+      throw error;
+    }
   }
 
   static async renewToken(oldToken: string, newToken: string, userId: string) {
@@ -97,12 +132,14 @@ export class PushTokenService {
   }
 
   static async removeInvalidToken(token: string) {
+    console.log(`[PushTokenService] Removing invalid token: ${token.substring(0, 20)}...`);
     try {
-      await prisma.pushToken.deleteMany({
+      const result = await prisma.pushToken.deleteMany({
         where: { token }
       });
+      console.log(`[PushTokenService] ✅ Removed ${result.count} invalid token(s)`);
     } catch (error) {
-      console.error('Error removing invalid token:', error);
+      console.error('[PushTokenService] ❌ Error removing invalid token:', error);
     }
   }
 }

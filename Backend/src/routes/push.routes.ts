@@ -5,7 +5,8 @@ import {
   removeToken,
   removeAllTokens,
   renewToken,
-  getTokens
+  getTokens,
+  sendTestNotification
 } from '../controllers/push.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -44,5 +45,7 @@ router.post(
 );
 
 router.get('/tokens', getTokens);
+
+router.post('/test', sendTestNotification);
 
 export default router;
