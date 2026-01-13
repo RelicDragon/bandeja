@@ -13,7 +13,7 @@ import { GameSubscriptionsContent } from './GameSubscriptions';
 
 export const MainPage = () => {
   const location = useLocation();
-  const { currentPage, setCurrentPage, setIsAnimating, bottomTabsVisible } = useNavigationStore();
+  const { currentPage, setCurrentPage, setIsAnimating, bottomTabsVisible, chatsFilter } = useNavigationStore();
   const previousPathnameRef = useRef(location.pathname);
   const isInitialMountRef = useRef(true);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
@@ -84,10 +84,11 @@ export const MainPage = () => {
   }, [currentPage]);
 
   if (currentPage === 'chats') {
+    const showBottomTabBar = bottomTabsVisible && (!isDesktop || chatsFilter === 'bugs');
     return (
       <MainLayout>
         <ChatsTab />
-        {bottomTabsVisible && !isDesktop && <BottomTabBar />}
+        {showBottomTabBar && <BottomTabBar />}
       </MainLayout>
     );
   }

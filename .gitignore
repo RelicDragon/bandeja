@@ -229,3 +229,8 @@ $RECYCLE.BIN/
 # Local development files
 .local
 *.local.*
+
+# Firebase configuration (contains API keys)
+**/google-services.json
+google-services.json
+Frontend/android/app/google-services.json

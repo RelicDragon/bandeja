@@ -3,6 +3,7 @@ import { config } from '../../config/env';
 import { PushTokenService } from './push-token.service';
 import { NotificationPayload } from '../../types/notifications.types';
 import { PushPlatform } from '@prisma/client';
+import fcmService from './fcm.service';
 
 class PushNotificationService {
   private apnProvider: apn.Provider | null = null;
@@ -10,22 +11,23 @@ class PushNotificationService {
   initialize() {
     if (!config.apns.keyId || !config.apns.teamId || !config.apns.bundleId || !config.apns.keyPath) {
       console.log('APNs configuration missing, push notifications disabled');
-      return;
+    } else {
+      try {
+        this.apnProvider = new apn.Provider({
+          token: {
+            key: config.apns.keyPath,
+            keyId: config.apns.keyId,
+            teamId: config.apns.teamId
+          },
+          production: config.apns.production
+        });
+        console.log('✅ APNs Provider initialized');
+      } catch (error) {
+        console.error('❌ Failed to initialize APNs Provider:', error);
+      }
     }
 
-    try {
-      this.apnProvider = new apn.Provider({
-        token: {
-          key: config.apns.keyPath,
-          keyId: config.apns.keyId,
-          teamId: config.apns.teamId
-        },
-        production: config.apns.production
-      });
-      console.log('✅ APNs Provider initialized');
-    } catch (error) {
-      console.error('❌ Failed to initialize APNs Provider:', error);
-    }
+    fcmService.initialize();
   }
 
   async sendIOSNotification(token: string, payload: NotificationPayload): Promise<boolean> {
@@ -91,9 +93,26 @@ class PushNotificationService {
     return successCount;
   }
 
-  async sendAndroidNotification(_token: string, _payload: NotificationPayload): Promise<boolean> {
-    console.log('Android push notifications not implemented yet');
-    return false;
+  async sendAndroidNotification(token: string, payload: NotificationPayload): Promise<boolean> {
+    return await fcmService.sendNotification(token, payload);
+  }
+
+  async sendAndroidNotificationToUser(userId: string, payload: NotificationPayload): Promise<number> {
+    const tokens = await PushTokenService.getUserTokens(userId, PushPlatform.ANDROID);
+    
+    if (tokens.length === 0) {
+      return 0;
+    }
+
+    let successCount = 0;
+    for (const tokenRecord of tokens) {
+      const success = await this.sendAndroidNotification(tokenRecord.token, payload);
+      if (success) {
+        successCount++;
+      }
+    }
+
+    return successCount;
   }
 
   async sendWebNotification(_token: string, _payload: NotificationPayload): Promise<boolean> {
@@ -103,7 +122,8 @@ class PushNotificationService {
 
   async sendNotificationToUser(userId: string, payload: NotificationPayload): Promise<number> {
     const iosCount = await this.sendIOSNotificationToUser(userId, payload);
-    return iosCount;
+    const androidCount = await this.sendAndroidNotificationToUser(userId, payload);
+    return iosCount + androidCount;
   }
 
   shutdown() {

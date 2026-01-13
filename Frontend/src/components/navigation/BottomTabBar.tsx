@@ -14,12 +14,14 @@ interface BottomTabBarProps {
 export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
+  const { currentPage, setCurrentPage, setIsAnimating, chatsFilter } = useNavigationStore();
   const { counts } = useChatUnreadCounts();
   const chatsUnread = counts.users + counts.bugs;
   const user = useAuthStore((state) => state.user);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+  
+  const shouldCenterOnDesktop = isDesktop && currentPage === 'chats' && chatsFilter === 'bugs';
 
   useEffect(() => {
     const handleResize = () => {
@@ -71,8 +73,9 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   return (
     <motion.div 
       layoutId={isDesktop ? "bottom-tab-bar" : undefined}
-      className={containerPosition ? "absolute bottom-0 left-0 right-0 z-50" : "fixed bottom-0 left-0 right-0 z-50"}
+      className={containerPosition && !shouldCenterOnDesktop ? "absolute bottom-0 left-0 right-0 z-50" : "fixed bottom-0 left-0 right-0 z-50"}
       style={{ paddingBottom: `max(${isDesktop ? '1rem' : '0.5rem'}, env(safe-area-inset-bottom))` }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
       <div className="flex justify-center">
         <div className="relative bg-white/30 dark:bg-gray-900/30 backdrop-blur-2xl border-t border-gray-200/20 dark:border-gray-700/20 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.48)] max-w-[300px] w-full rounded-2xl">

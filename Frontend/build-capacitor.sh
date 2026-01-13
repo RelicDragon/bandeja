@@ -17,4 +17,4 @@ echo "📲 Syncing with Capacitor..."
 npx cap sync
 
 npx cap open ios
-
+npx cap open android

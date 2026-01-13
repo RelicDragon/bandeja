@@ -3,21 +3,21 @@ PODS:
     - CapacitorCordova
   - CapacitorApp (8.0.0):
     - Capacitor
-  - CapacitorCamera (7.0.2):
+  - CapacitorCamera (8.0.0):
     - Capacitor
   - CapacitorCordova (8.0.0)
   - CapacitorFilesystem (8.0.0):
     - Capacitor
     - IONFilesystemLib (~> 1.0.1)
-  - CapacitorKeyboard (7.0.3):
+  - CapacitorKeyboard (8.0.0):
     - Capacitor
-  - CapacitorNetwork (7.0.2):
+  - CapacitorNetwork (8.0.0):
     - Capacitor
-  - CapacitorPushNotifications (7.0.4):
+  - CapacitorPushNotifications (8.0.0):
     - Capacitor
   - CapacitorShare (8.0.0):
     - Capacitor
-  - CapacitorStatusBar (7.0.3):
+  - CapacitorStatusBar (8.0.0):
     - Capacitor
   - EbarooniCapacitorCalendar (8.0.0):
     - Capacitor
@@ -67,14 +67,14 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Capacitor: 341ff7cf652ec695d1a8ebf604db448ac7b6d635
   CapacitorApp: 3963a84197280757b84f126afd1520a85ae3b092
-  CapacitorCamera: f9e54db0a18bb218a8dc360907d63aaefe9209ff
+  CapacitorCamera: 592acb7ab9fb748e2d8571eb03af30ec4e1ace12
   CapacitorCordova: 5dc3912d25ef770a3fe0f431bb65c9fbfa2e92f9
   CapacitorFilesystem: 2cb7c29536024668f333266a2177f8c10bbd9c98
-  CapacitorKeyboard: 62f36104f26d53d8b3a2a43f2a69fe714f1777d5
-  CapacitorNetwork: 695069886b3c5ed514db69aa3d026b8dc3c03a6b
-  CapacitorPushNotifications: 7604512af53bbfdf1dd8fb2256b9ef1e8a69cdc2
+  CapacitorKeyboard: d7868c079a4d5277a3deca27a10a488fcbbb8b69
+  CapacitorNetwork: 156f8096cbbce5337eb1769fcc0d6adc4b85d3f3
+  CapacitorPushNotifications: 722c1528eabbefd355f47e373a4c6235d01e85e9
   CapacitorShare: 12f1d192170cbcf9f108fd675ac8e343761a4638
-  CapacitorStatusBar: 0659ddc7b1713764a05831463d215b177a15d054
+  CapacitorStatusBar: 312e2e67928dfe9514c4a8916a1fd610552f5f35
   EbarooniCapacitorCalendar: c028d8beba204fb145ee52a6697ac50998b5bec7
   IONFilesystemLib: 89258b8e3e85465da93127d25d7ce37f977e8a6f
 

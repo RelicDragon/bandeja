@@ -24,6 +24,11 @@ export const config = {
     keyPath: process.env.APNS_KEY_PATH || '',
     production: process.env.APNS_PRODUCTION === 'true',
   },
+  fcm: {
+    projectId: process.env.FCM_PROJECT_ID || '',
+    privateKey: process.env.FCM_PRIVATE_KEY?.replace(/\\n/g, '\n') || '',
+    clientEmail: process.env.FCM_CLIENT_EMAIL || '',
+  },
   aws: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
