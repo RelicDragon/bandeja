@@ -541,8 +541,8 @@ export class LeagueCreateService {
       team1PlayerIds,
       team2PlayerIds,
       leagueGroupId,
-      maxParticipants: seasonGame.maxParticipants,
-      minParticipants: seasonGame.minParticipants || 2,
+      maxParticipants: 4,
+      minParticipants: 4,
       isPublic: false,
       affectsRating: seasonGame.affectsRating,
     });

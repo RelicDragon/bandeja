@@ -77,6 +77,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       pointsPerWin: seasonGame.pointsPerWin ?? 0,
       pointsPerLoose: seasonGame.pointsPerLoose ?? 0,
       pointsPerTie: seasonGame.pointsPerTie ?? 0,
+      ballsInGames: seasonGame.ballsInGames ?? true,
       parentId: leagueSeasonId,
       leagueRoundId: leagueRoundId,
       leagueGroupId,
