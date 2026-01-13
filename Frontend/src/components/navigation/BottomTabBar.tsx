@@ -20,7 +20,6 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   const user = useAuthStore((state) => state.user);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
-  const previousPageRef = useRef<string | undefined>(currentPage);
 
   useEffect(() => {
     const handleResize = () => {
@@ -29,16 +28,6 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  const shouldAnimate = useMemo(() => {
-    if (!isDesktop) return false;
-    const previousPage = previousPageRef.current;
-    const isSwitchingToChats = currentPage === 'chats' && previousPage !== 'chats';
-    const isSwitchingFromChats = previousPage === 'chats' && currentPage !== 'chats';
-    const result = isSwitchingToChats || isSwitchingFromChats;
-    previousPageRef.current = currentPage;
-    return result;
-  }, [currentPage, isDesktop]);
 
   const tabs = useMemo(() => [
     {
@@ -81,12 +70,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
 
   return (
     <motion.div 
-      {...(shouldAnimate ? {
-        layoutId: "bottom-tab-bar",
-        initial: { y: 100, opacity: 0 },
-        animate: { y: 0, opacity: 1 },
-        transition: { type: 'spring', damping: 25, stiffness: 200 }
-      } : {})}
+      layoutId={isDesktop ? "bottom-tab-bar" : undefined}
       className={containerPosition ? "absolute bottom-0 left-0 right-0 z-50" : "fixed bottom-0 left-0 right-0 z-50"}
       style={{ paddingBottom: `max(${isDesktop ? '1rem' : '0.5rem'}, env(safe-area-inset-bottom))` }}
     >

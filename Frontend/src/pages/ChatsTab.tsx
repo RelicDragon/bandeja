@@ -15,7 +15,7 @@ export const ChatsTab = () => {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedChatType, setSelectedChatType] = useState<'user' | 'bug' | null>(null);
-  const { setIsAnimating, chatsFilter } = useNavigationStore();
+  const { setIsAnimating, chatsFilter, bottomTabsVisible } = useNavigationStore();
 
   useEffect(() => {
     const handleResize = () => {
@@ -57,9 +57,11 @@ export const ChatsTab = () => {
               <div className="flex-1 overflow-hidden flex flex-col min-h-0">
                 <ChatList onChatSelect={handleChatSelect} isDesktop={true} selectedChatId={selectedChatId} selectedChatType={selectedChatType} />
               </div>
-              <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
-                <BottomTabBar containerPosition={true} />
-              </div>
+              {bottomTabsVisible && (
+                <div className="absolute bottom-0 left-0 right-0 flex justify-center">
+                  <BottomTabBar containerPosition={true} />
+                </div>
+              )}
             </div>
           }
           rightPanel={

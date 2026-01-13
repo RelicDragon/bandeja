@@ -146,9 +146,13 @@ export const ProfileContent = () => {
     };
 
     fetchCities();
-    fetchUserProfile();
+    if (!user) {
+      fetchUserProfile();
+    } else {
+      setIsLoadingProfile(false);
+    }
     fetchLundaStatus();
-  }, [updateUser]);
+  }, [updateUser, user]);
 
   useEffect(() => {
     if (user) {
