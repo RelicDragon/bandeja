@@ -59,6 +59,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+import { getGameMetaTags } from './controllers/metatags.controller';
+app.get('/games/:gameId', getGameMetaTags);
+
 app.use('/api', routes);
 
 app.use(notFoundHandler);

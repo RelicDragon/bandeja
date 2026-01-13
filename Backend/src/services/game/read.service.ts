@@ -177,7 +177,7 @@ export const getGameInclude = () => ({
 });
 
 export class GameReadService {
-  static async getGameById(id: string, userId?: string) {
+  static async getGameById(id: string, userId?: string, skipRestrictions: boolean = false) {
     const game = await prisma.game.findUnique({
       where: { id },
       include: getGameInclude() as any,
@@ -187,7 +187,7 @@ export class GameReadService {
       throw new ApiError(404, 'Game not found');
     }
 
-    if (userId) {
+    if (userId && !skipRestrictions) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { currentCityId: true, isAdmin: true }

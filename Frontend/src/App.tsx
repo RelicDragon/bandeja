@@ -320,15 +320,13 @@ function AppContent() {
         <Route
           path="/games/:id"
           element={
-            <ProtectedRoute>
-              {!isProfileComplete(user) ? (
-                <Navigate to="/" replace />
-              ) : (
-                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                  <MainPage />
-                </Suspense>
-              )}
-            </ProtectedRoute>
+            isAuthenticated && !isProfileComplete(user) ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <MainPage />
+              </Suspense>
+            )
           }
         />
         <Route

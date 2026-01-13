@@ -34,6 +34,7 @@ import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal'
 import { LocationModal, TimeDurationModal } from '@/components/GameDetails';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
 import { TrainingResultsSection } from '@/components/GameDetails/TrainingResultsSection';
+import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { resultsApi } from '@/api/results';
@@ -121,14 +122,16 @@ export const GameDetailsContent = () => {
         const response = await gamesApi.getById(id);
         setGame(response.data);
 
-        const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
-        const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
-        setMyInvites(gameMyInvites);
+        if (user) {
+          const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
+          const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
+          setMyInvites(gameMyInvites);
 
-        const isParticipant = response.data.participants.some((p) => p.userId === user?.id);
-        if (isParticipant) {
-          const gameInvitesResponse = await invitesApi.getGameInvites(id);
-          setGameInvites(gameInvitesResponse.data);
+          const isParticipant = response.data.participants.some((p) => p.userId === user?.id);
+          if (isParticipant) {
+            const gameInvitesResponse = await invitesApi.getGameInvites(id);
+            setGameInvites(gameInvitesResponse.data);
+          }
         }
 
       } catch (error) {
@@ -706,13 +709,15 @@ export const GameDetailsContent = () => {
     try {
       const response = await gamesApi.getById(id);
       setGame(response.data);
-      const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
-      const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
-      setMyInvites(gameMyInvites);
-      const isParticipant = response.data.participants.some((p) => p.userId === user?.id);
-      if (isParticipant) {
-        const gameInvitesResponse = await invitesApi.getGameInvites(id);
-        setGameInvites(gameInvitesResponse.data);
+      if (user) {
+        const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
+        const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
+        setMyInvites(gameMyInvites);
+        const isParticipant = response.data.participants.some((p) => p.userId === user?.id);
+        if (isParticipant) {
+          const gameInvitesResponse = await invitesApi.getGameInvites(id);
+          setGameInvites(gameInvitesResponse.data);
+        }
       }
     } catch (error) {
       console.error('Failed to refresh game:', error);
@@ -1065,7 +1070,11 @@ export const GameDetailsContent = () => {
             <BarParticipantsList gameId={game.id} participants={game.participants} />
           )}
 
-          {!isLeague && game.resultsStatus === 'NONE' && (
+          {!user && (
+            <PublicGamePrompt />
+          )}
+
+          {!isLeague && game.resultsStatus === 'NONE' && user && (
             <>
               <GameParticipants
                 game={game}

@@ -27,8 +27,8 @@ export class GameService {
     return GameCreateService.createGame(data, userId);
   }
 
-  static async getGameById(id: string, userId?: string) {
-    return GameReadService.getGameById(id, userId);
+  static async getGameById(id: string, userId?: string, skipRestrictions: boolean = false) {
+    return GameReadService.getGameById(id, userId, skipRestrictions);
   }
 
   static async getGames(filters: any, userId?: string, userCityId?: string) {

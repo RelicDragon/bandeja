@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import transliterate from '@sindresorhus/transliterate';
 import { UserChatCard } from './UserChatCard';
 import { BugCard } from '@/components/bugs/BugCard';
 import { chatApi, UserChat } from '@/api/chat';
@@ -12,7 +13,7 @@ import { Bug, BasicUser } from '@/types';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Search } from 'lucide-react';
 
 type ChatItem =
   | { type: 'user'; data: UserChat; lastMessageDate: Date; unreadCount: number; otherUser?: BasicUser }
@@ -34,6 +35,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const liveUnreadCounts = usePlayersStore((state) => state.unreadCounts);
   const liveChats = usePlayersStore((state) => state.chats);
 
@@ -241,6 +243,30 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     }
   };
 
+  const normalizeString = (str: string) => {
+    return transliterate(str).toLowerCase();
+  };
+
+  const filteredChats = useMemo(() => {
+    if (!searchQuery.trim() || chatsFilter !== 'users') {
+      return chats;
+    }
+
+    const normalized = normalizeString(searchQuery);
+
+    return chats.filter((chat) => {
+      if (chat.type === 'user') {
+        const otherUser = chat.data.user1Id === user?.id ? chat.data.user2 : chat.data.user1;
+        const fullName = `${otherUser?.firstName || ''} ${otherUser?.lastName || ''}`.trim();
+        return normalizeString(fullName).includes(normalized);
+      } else if (chat.type === 'contact') {
+        const fullName = `${chat.user.firstName || ''} ${chat.user.lastName || ''}`.trim();
+        return normalizeString(fullName).includes(normalized);
+      }
+      return true;
+    });
+  }, [chats, searchQuery, chatsFilter, user?.id]);
+
   if (loading) {
     return (
       <>
@@ -305,7 +331,21 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-        {chats.map((chat) => {
+        {chatsFilter === 'users' && (
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              />
+            </div>
+          </div>
+        )}
+        {filteredChats.map((chat) => {
           if (chat.type === 'user') {
             const key = `${chat.type}-${chat.data.id}`;
             const liveChat = liveChats[chat.data.id] || chat.data;

@@ -49,7 +49,8 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
-      if (!isAuthPage) {
+      const isPublicGamePage = window.location.pathname.startsWith('/games/');
+      if (!isAuthPage && !isPublicGamePage) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
