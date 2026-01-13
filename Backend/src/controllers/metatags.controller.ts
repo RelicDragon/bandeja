@@ -9,9 +9,24 @@ const generateGameMetaTags = (game: any): string => {
                    (game.club?.name) || 
                    'Location TBD';
   
-  const datetime = game.datetime ? 
-    formatInTimeZone(new Date(game.datetime), 'Europe/Belgrade', 'EEE, dd MMM yyyy HH:mm') :
-    'Date TBD';
+  let datetime = 'Date TBD';
+  if (game.startTime) {
+    const startDate = new Date(game.startTime);
+    
+    if (game.timeIsSet) {
+      const startStr = formatInTimeZone(startDate, 'Europe/Belgrade', 'EEE, dd MMM yyyy HH:mm');
+      if (game.endTime) {
+        const endDate = new Date(game.endTime);
+        const endStr = formatInTimeZone(endDate, 'Europe/Belgrade', 'HH:mm');
+        datetime = `${startStr} - ${endStr}`;
+      } else {
+        datetime = startStr;
+      }
+    } else {
+      const dateStr = formatInTimeZone(startDate, 'Europe/Belgrade', 'EEE, dd MMM yyyy');
+      datetime = dateStr;
+    }
+  }
   
   const gameType = game.entityType === 'TRAINING' ? 'Training' : 
                    game.entityType === 'LEAGUE' ? 'League' : 
@@ -19,8 +34,28 @@ const generateGameMetaTags = (game: any): string => {
                    game.entityType === 'BAR' ? 'Bar Event' : 
                    'Game';
   
+  const owner = game.participants?.find((p: any) => p.role === 'OWNER')?.user;
+  const creatorName = owner ? `${owner.firstName || ''} ${owner.lastName || ''}`.trim() : null;
+  
+  const levelInfo = [];
+  if (game.minLevel) levelInfo.push(`Level ${game.minLevel}`);
+  if (game.maxLevel) {
+    if (game.minLevel && game.minLevel !== game.maxLevel) {
+      levelInfo[0] = `Level ${game.minLevel}-${game.maxLevel}`;
+    } else if (!game.minLevel) {
+      levelInfo.push(`Level up to ${game.maxLevel}`);
+    }
+  }
+  
+  const details = [];
+  details.push(location);
+  details.push(datetime);
+  if (levelInfo.length > 0) details.push(levelInfo.join(' '));
+  if (game.maxParticipants) details.push(`${game.maxParticipants} players`);
+  if (creatorName) details.push(`by ${creatorName}`);
+  
   const title = game.name || `Join the ${gameType}!`;
-  const description = `${location}, ${datetime}`;
+  const description = details.join(', ');
   
   const imageUrl = game.avatar || 
                    game.court?.club?.photos?.[0] || 
