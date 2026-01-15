@@ -1249,6 +1249,8 @@
     "selectChatHint": "Elige una conversación de la lista",
     "createGroup": "Crear Grupo",
     "createChannel": "Crear Canal",
+    "group": "Grupo",
+    "channel": "Canal",
     "name": "Nombre",
     "nameRequired": "El nombre es requerido",
     "nameTooLong": "El nombre debe tener 100 caracteres o menos",

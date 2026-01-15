@@ -14,7 +14,6 @@ interface CreateGroupChannelFormProps {
 export const CreateGroupChannelForm = ({ isChannel, onClose, onSuccess }: CreateGroupChannelFormProps) => {
   const { t } = useTranslation();
   const [name, setName] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,7 +34,7 @@ export const CreateGroupChannelForm = ({ isChannel, onClose, onSuccess }: Create
       await chatApi.createGroupChannel({
         name: name.trim(),
         isChannel,
-        isPublic
+        isPublic: true
       });
       
       toast.success(
@@ -45,7 +44,6 @@ export const CreateGroupChannelForm = ({ isChannel, onClose, onSuccess }: Create
       );
       
       setName('');
-      setIsPublic(true);
       onSuccess();
     } catch (error: any) {
       console.error('Failed to create group/channel:', error);
@@ -106,22 +104,6 @@ export const CreateGroupChannelForm = ({ isChannel, onClose, onSuccess }: Create
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {name.length}/100
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="isPublic"
-              checked={isPublic}
-              onChange={(e) => setIsPublic(e.target.checked)}
-              className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
-            />
-            <label htmlFor="isPublic" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t('chat.public', { defaultValue: 'Public' })}
-            </label>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {t('chat.publicHint', { defaultValue: 'Anyone can join' })}
             </p>
           </div>
 

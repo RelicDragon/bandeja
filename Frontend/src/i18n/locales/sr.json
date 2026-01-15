@@ -1260,6 +1260,8 @@
     "selectChatHint": "Изаберите разговор са листе",
     "createGroup": "Креирај Групу",
     "createChannel": "Креирај Канал",
+    "group": "Група",
+    "channel": "Канал",
     "name": "Име",
     "nameRequired": "Име је обавезно",
     "nameTooLong": "Име мора имати 100 карактера или мање",
