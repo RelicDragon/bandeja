@@ -64,6 +64,11 @@
     "leaderboard": "Top",
     "profile": "Profile"
   },
+  "chats": {
+    "users": "Users",
+    "bugs": "Bugs",
+    "channels": "Channels"
+  },
   "offline": {
     "working_offline": "Working Offline - Some features may be limited",
     "noInternetConnection": "No Internet Connection",
@@ -1282,6 +1287,13 @@
       "PHOTOS": "Photo"
     },
     "create": "Create",
+    "search": "Search",
+    "noConversations": "No conversations yet",
+    "noChannels": "No channels yet",
+    "noUserChats": "Start chatting with players",
+    "noBugChats": "No bug reports yet",
+    "selectChat": "Select a chat to start messaging",
+    "selectChatHint": "Choose a conversation from the list",
     "createGroup": "Create Group",
     "createChannel": "Create Channel",
     "name": "Name",

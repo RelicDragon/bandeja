@@ -64,6 +64,11 @@
     "leaderboard": "Топ",
     "profile": "Профил"
   },
+  "chats": {
+    "users": "Корисници",
+    "bugs": "Грешке",
+    "channels": "Канали"
+  },
   "offline": {
     "working_offline": "Рад ван мреже - Неке функције могу бити ограничене",
     "noInternetConnection": "Нема интернет везе",
@@ -1244,7 +1249,28 @@
       "PRIVATE": "Учесници",
       "ADMINS": "Организатори",
       "PHOTOS": "Фото"
-    }
+    },
+    "create": "Креирај",
+    "search": "Претрага",
+    "noConversations": "Још нема разговора",
+    "noChannels": "Још нема канала",
+    "noUserChats": "Почните да ћаскате са играчима",
+    "noBugChats": "Још нема пријављених грешака",
+    "selectChat": "Изаберите ћаскање да почнете да шаљете поруке",
+    "selectChatHint": "Изаберите разговор са листе",
+    "createGroup": "Креирај Групу",
+    "createChannel": "Креирај Канал",
+    "name": "Име",
+    "nameRequired": "Име је обавезно",
+    "nameTooLong": "Име мора имати 100 карактера или мање",
+    "groupNamePlaceholder": "Унесите име групе",
+    "channelNamePlaceholder": "Унесите име канала",
+    "public": "Јавно",
+    "publicHint": "Свако може да се придружи",
+    "groupCreated": "Група је успешно креирана",
+    "channelCreated": "Канал је успешно креиран",
+    "groupCreateError": "Неуспешно креирање групе",
+    "channelCreateError": "Неуспешно креирање канала"
   },
   "wallet": {
     "title": "Новчаник",

@@ -64,6 +64,11 @@
     "leaderboard": "Топ",
     "profile": "Профиль"
   },
+  "chats": {
+    "users": "Пользователи",
+    "bugs": "Ошибки",
+    "channels": "Каналы"
+  },
   "offline": {
     "working_offline": "Работа в автономном режиме - Некоторые функции могут быть ограничены",
     "noInternetConnection": "Нет подключения к интернету",
@@ -1289,7 +1294,28 @@
       "PRIVATE": "Участники",
       "ADMINS": "Организаторы",
       "PHOTOS": "Фото"
-    }
+    },
+    "create": "Создать",
+    "search": "Поиск",
+    "noConversations": "Пока нет разговоров",
+    "noChannels": "Пока нет каналов",
+    "noUserChats": "Начните общаться с игроками",
+    "noBugChats": "Пока нет сообщений об ошибках",
+    "selectChat": "Выберите чат, чтобы начать общение",
+    "selectChatHint": "Выберите разговор из списка",
+    "createGroup": "Создать Группу",
+    "createChannel": "Создать Канал",
+    "name": "Имя",
+    "nameRequired": "Имя обязательно",
+    "nameTooLong": "Имя должно содержать не более 100 символов",
+    "groupNamePlaceholder": "Введите название группы",
+    "channelNamePlaceholder": "Введите название канала",
+    "public": "Публичный",
+    "publicHint": "Любой может присоединиться",
+    "groupCreated": "Группа успешно создана",
+    "channelCreated": "Канал успешно создан",
+    "groupCreateError": "Не удалось создать группу",
+    "channelCreateError": "Не удалось создать канал"
   },
   "wallet": {
     "title": "Кошелек",

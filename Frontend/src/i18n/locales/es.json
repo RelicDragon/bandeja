@@ -64,6 +64,11 @@
     "leaderboard": "Top",
     "profile": "Perfil"
   },
+  "chats": {
+    "users": "Usuarios",
+    "bugs": "Errores",
+    "channels": "Canales"
+  },
   "offline": {
     "working_offline": "Trabajando sin conexión - Algunas funciones pueden estar limitadas",
     "noInternetConnection": "Sin conexión a internet",
@@ -1233,7 +1238,28 @@
       "PRIVATE": "Participantes",
       "ADMINS": "Organizadores",
       "PHOTOS": "Foto"
-    }
+    },
+    "create": "Crear",
+    "search": "Buscar",
+    "noConversations": "Aún no hay conversaciones",
+    "noChannels": "Aún no hay canales",
+    "noUserChats": "Comienza a chatear con jugadores",
+    "noBugChats": "Aún no hay reportes de errores",
+    "selectChat": "Selecciona un chat para comenzar a mensajear",
+    "selectChatHint": "Elige una conversación de la lista",
+    "createGroup": "Crear Grupo",
+    "createChannel": "Crear Canal",
+    "name": "Nombre",
+    "nameRequired": "El nombre es requerido",
+    "nameTooLong": "El nombre debe tener 100 caracteres o menos",
+    "groupNamePlaceholder": "Ingresa el nombre del grupo",
+    "channelNamePlaceholder": "Ingresa el nombre del canal",
+    "public": "Público",
+    "publicHint": "Cualquiera puede unirse",
+    "groupCreated": "Grupo creado exitosamente",
+    "channelCreated": "Canal creado exitosamente",
+    "groupCreateError": "Error al crear el grupo",
+    "channelCreateError": "Error al crear el canal"
   },
   "wallet": {
     "title": "Billetera",
