@@ -1,20 +1,24 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { chatApi, CreateMessageRequest, ChatMessage, ChatContextType } from '@/api/chat';
+import { chatApi, CreateMessageRequest, ChatMessage, ChatContextType, GroupChannel } from '@/api/chat';
 import { mediaApi } from '@/api/media';
 import { ChatType, Game, Bug } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
+import { isGroupChannelOwner } from '@/utils/gameResults';
 import { ReplyPreview } from './ReplyPreview';
 import { MentionInput } from './MentionInput';
 import { Image, X } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 
 interface MessageInputProps {
   gameId?: string;
   bugId?: string;
   userChatId?: string;
+  groupChannelId?: string;
   game?: Game | null;
   bug?: Bug | null;
+  groupChannel?: GroupChannel | null;
   onMessageSent: () => void;
   disabled?: boolean;
   replyTo?: ChatMessage | null;
@@ -27,8 +31,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   gameId,
   bugId,
   userChatId,
+  groupChannelId,
   game,
   bug,
+  groupChannel,
   onMessageSent,
   disabled = false,
   replyTo,
@@ -37,13 +43,18 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   chatType = 'PUBLIC',
 }) => {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
   const [message, setMessage] = useState('');
   const [mentionIds, setMentionIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const contextType: ChatContextType = gameId ? 'GAME' : bugId ? 'BUG' : 'USER';
+  const contextType: ChatContextType = gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER';
+
+  const isChannelOwner = groupChannel?.isChannel && user && groupChannel ? isGroupChannelOwner(groupChannel, user.id) : false;
+  const isChannelNonOwner = groupChannel?.isChannel && !isChannelOwner;
+  const isDisabledForChannel = isChannelNonOwner || disabled;
 
   const imagePreviewUrls = useMemo(() => {
     return selectedImages.map(file => URL.createObjectURL(file));
@@ -78,10 +89,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const uploadImages = async (): Promise<{ originalUrls: string[]; thumbnailUrls: string[] }> => {
     if (selectedImages.length === 0) return { originalUrls: [], thumbnailUrls: [] };
 
-    const targetId = gameId || bugId || userChatId;
+    const targetId = gameId || bugId || userChatId || groupChannelId;
     if (!targetId) return { originalUrls: [], thumbnailUrls: [] };
 
-    const contextType = gameId ? 'GAME' : bugId ? 'BUG' : 'USER';
+    const contextType = gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER';
 
     const uploadPromises = selectedImages.map(async (file) => {
       try {
@@ -110,7 +121,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!message.trim() && selectedImages.length === 0) || isLoading || disabled) return;
+    if ((!message.trim() && selectedImages.length === 0) || isLoading || isDisabledForChannel) return;
+
+    const finalContextId = gameId || bugId || userChatId || groupChannelId;
+    if (!finalContextId) {
+      console.error('[MessageInput] Missing contextId:', { gameId, bugId, userChatId, groupChannelId });
+      toast.error(t('chat.missingContextId') || 'Missing chat context');
+      return;
+    }
 
     setIsLoading(true);
     onMessageSent();
@@ -121,17 +139,18 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       const trimmedContent = message.trim();
 
       const messageData: CreateMessageRequest = {
-        chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : 'USER',
-        contextId: gameId || bugId || userChatId,
+        chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
+        contextId: finalContextId,
         gameId: gameId, // Keep for backward compatibility
         content: trimmedContent || undefined,
-        mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
+        mediaUrls: originalUrls.length > 0 ? originalUrls : [],
         thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
         replyToId: replyTo?.id,
         chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
         mentionIds: mentionIds.length > 0 ? mentionIds : undefined,
       };
 
+      console.log('[MessageInput] Sending message:', messageData);
       await chatApi.createMessage(messageData);
 
       setMessage('');
@@ -154,6 +173,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <div className="bg-white dark:bg-gray-800 p-4 overflow-visible">
+      {isChannelNonOwner && (
+        <div className="mb-3 px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-sm text-yellow-800 dark:text-yellow-200">
+          {t('chat.onlyOwnerCanPost', { defaultValue: 'Only the channel owner can post messages' })}
+        </div>
+      )}
       {replyTo && (
         <ReplyPreview
           replyTo={replyTo.replyTo || {
@@ -194,7 +218,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               value={message}
               onChange={handleMessageChange}
               placeholder={t('chat.messages.typeMessage')}
-              disabled={disabled || isLoading}
+              disabled={isDisabledForChannel || isLoading}
               game={game}
               bug={bug}
               userChatId={userChatId}
@@ -212,7 +236,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={disabled || isLoading}
+                disabled={isDisabledForChannel || isLoading}
                 className="w-8 h-8 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Image size={16} />
@@ -220,7 +244,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               
               <button
                 type="submit"
-                disabled={(!message.trim() && selectedImages.length === 0) || isLoading || disabled}
+                disabled={(!message.trim() && selectedImages.length === 0) || isLoading || isDisabledForChannel}
                 className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
                 aria-label={isLoading ? t('common.sending') : t('chat.messages.sendMessage')}
               >

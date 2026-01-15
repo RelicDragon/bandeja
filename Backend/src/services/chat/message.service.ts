@@ -6,6 +6,8 @@ import notificationService from '../notification.service';
 import { GameReadService } from '../game/read.service';
 import { UserChatService } from './userChat.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
+import { TranslationService } from './translation.service';
+import { ReadReceiptService } from './readReceipt.service';
 
 export class MessageService {
   static async validateGameAccess(gameId: string, userId: string) {
@@ -100,6 +102,41 @@ export class MessageService {
     return { userChat };
   }
 
+  static async validateGroupChannelAccess(groupChannelId: string, userId: string, requireWriteAccess: boolean = false) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId },
+      include: {
+        participants: {
+          where: { userId }
+        }
+      }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const userParticipant = groupChannel.participants.find(p => p.userId === userId);
+    const isOwner = userParticipant?.role === ParticipantRole.OWNER;
+    const isParticipant = !!userParticipant;
+
+    // For viewing: must be owner, participant, or public
+    if (!isOwner && !isParticipant && !groupChannel.isPublic) {
+      throw new ApiError(403, 'You are not a participant in this group/channel');
+    }
+
+    // For writing: Channel = only owner, Group = owner or participant
+    const canWrite = isOwner || (groupChannel.isChannel ? false : isParticipant);
+
+    if (requireWriteAccess && !canWrite) {
+      throw new ApiError(403, groupChannel.isChannel 
+        ? 'Only owner can post in channels' 
+        : 'You must be a participant to post');
+    }
+
+    return { groupChannel, isOwner, isParticipant, canWrite };
+  }
+
   static async validateChatTypeAccess(participant: any, chatType: ChatType, game: any, userId: string, gameId: string) {
     const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
       gameId,
@@ -171,6 +208,41 @@ export class MessageService {
     };
   }
 
+  static async enrichMessagesWithTranslations(
+    messages: any[],
+    languageCode: string
+  ): Promise<any[]> {
+    if (!messages || messages.length === 0) {
+      return messages;
+    }
+
+    const messageIds = messages.map(m => m.id);
+    const translations = await prisma.messageTranslation.findMany({
+      where: {
+        messageId: { in: messageIds },
+        languageCode: languageCode
+      },
+      select: {
+        messageId: true,
+        languageCode: true,
+        translation: true
+      }
+    });
+
+    const translationMap = new Map(translations.map(t => [t.messageId, t]));
+
+    return messages.map(message => {
+      const translation = translationMap.get(message.id);
+      return {
+        ...message,
+        translation: translation ? {
+          languageCode: translation.languageCode,
+          translation: translation.translation
+        } : undefined
+      };
+    });
+  }
+
   static async createMessage(data: {
     chatContextType: ChatContextType;
     contextId: string;
@@ -184,7 +256,7 @@ export class MessageService {
     const { chatContextType, contextId, senderId, content, mediaUrls, replyToId, chatType, mentionIds = [] } = data;
 
     // Validate access based on context type
-    let game, participant, bug, userChat;
+    let game, participant, bug, userChat, groupChannel;
     
     if (chatContextType === 'GAME') {
       const result = await this.validateGameAccess(contextId, senderId);
@@ -197,6 +269,11 @@ export class MessageService {
     } else if (chatContextType === 'USER') {
       const result = await this.validateUserChatAccess(contextId, senderId);
       userChat = result.userChat;
+    } else if (chatContextType === 'GROUP') {
+      await this.validateGroupChannelAccess(contextId, senderId, true);
+      groupChannel = await prisma.groupChannel.findUnique({
+        where: { id: contextId }
+      });
     }
 
     if (replyToId) {
@@ -324,6 +401,10 @@ export class MessageService {
           console.error('Failed to send notification:', error);
         });
       }
+    } else if (chatContextType === 'GROUP' && groupChannel && message.sender) {
+      notificationService.sendGroupChatNotification(message, groupChannel, message.sender, []).catch(error => {
+        console.error('Failed to send notification:', error);
+      });
     }
 
     return message;
@@ -343,12 +424,171 @@ export class MessageService {
     
     const socketService = (global as any).socketService;
     if (socketService) {
+      // Get recipients for delivery tracking
+      const recipients: string[] = [];
+      
       if (data.chatContextType === 'GAME') {
-        socketService.emitNewMessage(data.contextId, message);
-      } else if (data.chatContextType === 'BUG') {
-        socketService.emitNewBugMessage(data.contextId, message);
+        const game = await prisma.game.findUnique({
+          where: { id: data.contextId },
+          include: {
+            participants: {
+              where: { userId: { not: data.senderId } }
+            }
+          }
+        });
+        if (game) {
+          recipients.push(...game.participants.map(p => p.userId));
+        }
       } else if (data.chatContextType === 'USER') {
-        await socketService.emitNewUserMessage(data.contextId, message);
+        const userChat = await prisma.userChat.findUnique({
+          where: { id: data.contextId }
+        });
+        if (userChat) {
+          const recipientId = userChat.user1Id === data.senderId 
+            ? userChat.user2Id 
+            : userChat.user1Id;
+          if (recipientId) recipients.push(recipientId);
+        }
+      } else if (data.chatContextType === 'BUG') {
+        const bug = await prisma.bug.findUnique({
+          where: { id: data.contextId },
+          include: {
+            participants: {
+              where: { userId: { not: data.senderId } }
+            }
+          }
+        });
+        if (bug) {
+          if (bug.senderId !== data.senderId) {
+            recipients.push(bug.senderId);
+          }
+          recipients.push(...bug.participants.map(p => p.userId));
+          
+          const admins = await prisma.user.findMany({
+            where: { isAdmin: true },
+            select: { id: true }
+          });
+          admins.forEach(admin => {
+            if (admin.id !== data.senderId && !recipients.includes(admin.id)) {
+              recipients.push(admin.id);
+            }
+          });
+        }
+      } else if (data.chatContextType === 'GROUP') {
+        const groupChannel = await prisma.groupChannel.findUnique({
+          where: { id: data.contextId },
+          include: {
+            participants: {
+              where: { userId: { not: data.senderId } }
+            }
+          }
+        });
+        if (groupChannel) {
+          recipients.push(...groupChannel.participants.map(p => p.userId));
+        }
+      }
+
+      // Record delivery attempt
+      if (recipients.length > 0) {
+        socketService.recordMessageDelivery(
+          message.id,
+          data.chatContextType,
+          data.contextId,
+          recipients
+        );
+      }
+
+      // Enrich message with all existing translations before emitting
+      const allTranslations = await prisma.messageTranslation.findMany({
+        where: { messageId: message.id },
+        select: {
+          languageCode: true,
+          translation: true
+        }
+      });
+
+      const translationsArray = allTranslations.length > 0 ? allTranslations.map(t => ({
+        languageCode: t.languageCode,
+        translation: t.translation
+      })) : undefined;
+
+      // Get sender's language to include as primary translation if available
+      const sender = await prisma.user.findUnique({
+        where: { id: data.senderId },
+        select: { language: true }
+      });
+      const senderLanguageCode = sender ? TranslationService.extractLanguageCode(sender.language) : 'en';
+      const senderTranslation = translationsArray?.find(t => t.languageCode === senderLanguageCode);
+
+      const messageWithTranslations = {
+        ...message,
+        translation: senderTranslation || (translationsArray && translationsArray.length > 0 ? translationsArray[0] : undefined),
+        translations: translationsArray
+      };
+
+      // OLD events (keep for backward compatibility - GAME, BUG, USER only)
+      if (data.chatContextType === 'GAME') {
+        socketService.emitNewMessage(data.contextId, messageWithTranslations);
+      } else if (data.chatContextType === 'BUG') {
+        socketService.emitNewBugMessage(data.contextId, messageWithTranslations);
+      } else if (data.chatContextType === 'USER') {
+        await socketService.emitNewUserMessage(data.contextId, messageWithTranslations);
+      }
+      // GROUP uses only unified events (no old compatibility)
+      
+      // NEW unified event with messageId for acknowledgment
+      socketService.emitChatEvent(
+        data.chatContextType,
+        data.contextId,
+        'message',
+        { message: messageWithTranslations },
+        message.id
+      );
+
+      // Emit unread count updates immediately to all recipients (not just undelivered)
+      // This ensures badge updates even when users are not in the room
+      if (recipients.length > 0) {
+        setTimeout(async () => {
+          for (const userId of recipients) {
+            try {
+              const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+                data.chatContextType,
+                data.contextId,
+                userId
+              );
+              await socketService.emitUnreadCountUpdate(
+                data.chatContextType,
+                data.contextId,
+                userId,
+                unreadCount
+              );
+            } catch (error) {
+              console.error(`[MessageService] Failed to emit unread count update for user ${userId}:`, error);
+            }
+          }
+        }, 500); // Small delay to ensure message is saved
+      }
+
+      // Check for undelivered recipients after a delay
+      if (recipients.length > 0) {
+        setTimeout(async () => {
+          const undelivered = socketService.getUndeliveredRecipients(message.id);
+          
+          for (const userId of undelivered) {
+            const isOnline = socketService.isUserOnline(userId);
+            const isInRoom = await socketService.isUserInChatRoom(
+              data.chatContextType,
+              data.contextId,
+              userId
+            );
+
+            // If user is online but not in room, they might have missed it
+            // Push notification should already be sent by notification service
+            if (isOnline && !isInRoom) {
+              console.log(`[MessageService] User ${userId} is online but not in room for message ${message.id}`);
+            }
+          }
+        }, 2000); // Wait 2 seconds for socket delivery
       }
     }
     
@@ -375,9 +615,18 @@ export class MessageService {
       await this.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {
       await this.validateUserChatAccess(contextId, userId);
+    } else if (chatContextType === 'GROUP') {
+      await this.validateGroupChannelAccess(contextId, userId);
     }
 
     const skip = (Number(page) - 1) * Number(limit);
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+
+    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
 
     const messages = await prisma.chatMessage.findMany({
       where: { 
@@ -391,7 +640,9 @@ export class MessageService {
       take: Number(limit)
     });
 
-    return messages.reverse();
+    const messagesWithTranslation = await this.enrichMessagesWithTranslations(messages, languageCode);
+
+    return messagesWithTranslation.reverse();
   }
 
   static async getLastUserMessage(
@@ -408,7 +659,16 @@ export class MessageService {
       await this.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {
       await this.validateUserChatAccess(contextId, userId);
+    } else if (chatContextType === 'GROUP') {
+      await this.validateGroupChannelAccess(contextId, userId);
     }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+
+    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
 
     const message = await prisma.chatMessage.findFirst({
       where: { 
@@ -421,7 +681,12 @@ export class MessageService {
       orderBy: { createdAt: 'desc' }
     });
 
-    return message;
+    if (!message) {
+      return null;
+    }
+
+    const enrichedMessages = await this.enrichMessagesWithTranslations([message], languageCode);
+    return enrichedMessages[0] || null;
   }
 
   static async updateMessageState(messageId: string, userId: string, state: MessageState) {
@@ -680,6 +945,13 @@ export class MessageService {
       }
     });
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+
+    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
+
     const gamesWithLastMessage = await Promise.all(
       games.map(async (game) => {
         const participant = game.participants.find((p: any) => p.userId === userId);
@@ -721,9 +993,13 @@ export class MessageService {
           }
         });
 
+        const enrichedLastMessage = lastMessage 
+          ? (await this.enrichMessagesWithTranslations([lastMessage], languageCode))[0]
+          : null;
+
         return {
           ...game,
-          lastMessage
+          lastMessage: enrichedLastMessage
         };
       })
     );

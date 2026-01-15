@@ -9,7 +9,6 @@ import { createSystemMessageWithNotification } from '../../utils/systemMessageHe
 import { addOrUpdateParticipant } from '../../utils/participantOperations';
 import { InviteService } from '../invite.service';
 import { ChatType } from '@prisma/client';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class JoinQueueService {
   static async addToQueue(gameId: string, userId: string) {
@@ -104,11 +103,6 @@ export class JoinQueueService {
     if (!joinQueue || joinQueue.status !== 'PENDING') {
       throw new ApiError(404, 'games.joinQueueRequestNotFound');
     }
-
-    const queueUser = await prisma.user.findUnique({
-      where: { id: queueUserId },
-      select: USER_SELECT_FIELDS,
-    });
 
     await prisma.$transaction(async (tx: any) => {
       const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);

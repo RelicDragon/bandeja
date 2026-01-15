@@ -90,6 +90,13 @@ model User {
   blockedBy                    BlockedUser[]        @relation("UserBlockedBy")
   chatMutes                   ChatMute[]
   gameSubscriptions           GameSubscription[]
+  groupChannelParticipants    GroupChannelParticipant[]
+  groupInvitesSent            GroupChannelInvite[] @relation("GroupInviteSender")
+  groupInvitesReceived        GroupChannelInvite[] @relation("GroupInviteReceiver")
+  betsCreated                 Bet[]                @relation("BetCreator")
+  betsAccepted                Bet[]                @relation("BetAcceptor")
+  betsWon                     Bet[]                @relation("BetWinner")
+  messageTranslations         MessageTranslation[]
 
   @@index([phone])
   @@index([telegramId])
@@ -125,6 +132,7 @@ model City {
   leagues                League[]
   games                  Game[]
   gameSubscriptions      GameSubscription[]
+  groupChannels          GroupChannel[] @relation("GroupChannelCity")
 
   @@index([isActive])
 }
@@ -256,6 +264,7 @@ model Game {
   levelChangeEvents      LevelChangeEvent[]
   leagueSeason           LeagueSeason?       @relation("GameLeagueSeason")
   faqs                   GameFaq[]
+  bets                   Bet[]
 
   @@index([clubId])
   @@index([courtId])
@@ -560,6 +569,7 @@ model ChatMessage {
   reactions       MessageReaction[]
   readReceipts    MessageReadReceipt[]
   reports         MessageReport[]
+  translations    MessageTranslation[]
 
   @@index([chatContextType, contextId])
   @@index([gameId])
@@ -610,6 +620,21 @@ model MessageReadReceipt {
   @@unique([messageId, userId])
   @@index([messageId])
   @@index([userId])
+}
+
+model MessageTranslation {
+  id          String      @id @default(cuid())
+  messageId   String
+  message     ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  languageCode String     @db.VarChar(10)
+  translation String
+  createdBy   String
+  createdByUser User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+
+  @@unique([messageId, languageCode])
+  @@index([messageId])
+  @@index([languageCode])
 }
 
 model UserFavoriteClub {
@@ -716,6 +741,7 @@ enum ChatContextType {
   GAME
   BUG
   USER
+  GROUP
 }
 
 model TelegramOtp {
@@ -764,6 +790,60 @@ model BugParticipant {
   @@unique([bugId, userId])
   @@index([bugId])
   @@index([userId])
+}
+
+model GroupChannel {
+  id            String                  @id @default(cuid())
+  name          String
+  avatar        String?
+  cityId        String?
+  isChannel     Boolean                 @default(false)
+  isPublic      Boolean                 @default(true)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  city          City?                   @relation("GroupChannelCity", fields: [cityId], references: [id], onDelete: SetNull)
+  participants  GroupChannelParticipant[]
+  invites       GroupChannelInvite[]
+
+  @@index([isPublic])
+  @@index([isChannel])
+  @@index([cityId])
+}
+
+model GroupChannelParticipant {
+  id            String       @id @default(cuid())
+  groupChannelId String
+  userId        String
+  role          ParticipantRole @default(PARTICIPANT)
+  joinedAt      DateTime     @default(now())
+  hidden        Boolean      @default(false)
+  groupChannel  GroupChannel @relation(fields: [groupChannelId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupChannelId, userId])
+  @@index([groupChannelId])
+  @@index([userId])
+  @@index([hidden])
+}
+
+model GroupChannelInvite {
+  id            String       @id @default(cuid())
+  groupChannelId String
+  senderId      String
+  receiverId   String
+  status        InviteStatus @default(PENDING)
+  message       String?
+  expiresAt     DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  groupChannel  GroupChannel @relation(fields: [groupChannelId], references: [id], onDelete: Cascade)
+  sender        User         @relation("GroupInviteSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver      User         @relation("GroupInviteReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([groupChannelId])
+  @@index([receiverId])
+  @@index([status])
+  @@index([expiresAt])
 }
 
 enum BugStatus {
@@ -816,6 +896,18 @@ enum MatchGenerationType {
   ESCALERA
   RATING
   WINNERS_COURT
+}
+
+enum BetType {
+  SOCIAL
+}
+
+enum BetStatus {
+  OPEN
+  ACCEPTED
+  RESOLVED
+  CANCELLED
+  NEEDS_REVIEW
 }
 
 model GameCourt {
@@ -1151,4 +1243,37 @@ model GameSubscription {
   @@index([cityId])
   @@index([isActive])
   @@index([userId, isActive, cityId])
+}
+
+model Bet {
+  id               String    @id @default(cuid())
+  gameId           String
+  creatorId        String
+  type             BetType   @default(SOCIAL)
+  status           BetStatus @default(OPEN)
+  condition        Json      // BetCondition type
+  stakeType        String    @default("COINS") // COINS or TEXT
+  stakeCoins       Int?      // Amount if stakeType is COINS
+  stakeText        String?  // Text if stakeType is TEXT
+  rewardType       String    @default("COINS") // COINS or TEXT
+  rewardCoins      Int?      // Amount if rewardType is COINS
+  rewardText       String?   // Text if rewardType is TEXT
+  acceptedBy       String?
+  acceptedAt      DateTime?
+  winnerId         String?   // Set when resolved
+  resolvedAt       DateTime?
+  resolutionReason String?
+  metadata         Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  game             Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  creator          User      @relation("BetCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  acceptedByUser   User?     @relation("BetAcceptor", fields: [acceptedBy], references: [id], onDelete: SetNull)
+  winner           User?     @relation("BetWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+
+  @@index([gameId])
+  @@index([creatorId])
+  @@index([status])
+  @@index([gameId, status])
+  @@index([acceptedBy])
 }

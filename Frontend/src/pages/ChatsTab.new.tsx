@@ -11,7 +11,7 @@ export const ChatsTab = () => {
   const navigate = useNavigate();
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [selectedChatType, setSelectedChatType] = useState<'user' | 'bug' | 'game' | null>(null);
+  const [selectedChatType, setSelectedChatType] = useState<'user' | 'bug' | 'group' | null>(null);
   const { setIsAnimating } = useNavigationStore();
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export const ChatsTab = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleChatSelect = (chatId: string, chatType: 'user' | 'bug' | 'game') => {
+  const handleChatSelect = (chatId: string, chatType: 'user' | 'bug' | 'group') => {
     if (isDesktop) {
       setSelectedChatId(chatId);
       setSelectedChatType(chatType);
@@ -34,7 +34,7 @@ export const ChatsTab = () => {
       } else if (chatType === 'bug') {
         navigate(`/bugs/${chatId}/chat`);
       } else {
-        navigate(`/games/${chatId}/chat`);
+        navigate(`/group/${chatId}/chat`);
       }
       setTimeout(() => setIsAnimating(false), 300);
     }

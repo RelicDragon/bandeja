@@ -180,7 +180,7 @@ export async function applyGameOutcomes(
     levelChange: number;
   }>>,
   tx: Prisma.TransactionClient
-): Promise<{ wasEdited: boolean }> {
+): Promise<{ wasEdited: boolean; shouldResolveBets: boolean }> {
   const game = await tx.game.findUnique({
     where: { id: gameId },
     select: {
@@ -327,11 +327,10 @@ export async function applyGameOutcomes(
       await SocialParticipantLevelService.applySocialParticipantLevelChanges(gameId, tx);
     }
     
-    const isEdited = previousResultsStatus === 'FINAL' || previousResultsStatus === 'IN_PROGRESS';
-    return { wasEdited: isEdited };
+    return { wasEdited: previousResultsStatus === 'FINAL' || previousResultsStatus === 'IN_PROGRESS', shouldResolveBets: previousResultsStatus !== 'FINAL' };
   }
   
-  return { wasEdited: false };
+  return { wasEdited: false, shouldResolveBets: false };
 }
 
 export async function recalculateGameOutcomes(gameId: string) {
@@ -372,8 +371,9 @@ export async function recalculateGameOutcomes(gameId: string) {
     );
     
     wasEdited = applyResult.wasEdited;
+    const shouldResolveBets = applyResult.shouldResolveBets;
 
-    return await tx.game.findUnique({
+    const game = await tx.game.findUnique({
       where: { id: gameId },
       include: {
         rounds: {
@@ -417,9 +417,23 @@ export async function recalculateGameOutcomes(gameId: string) {
         },
       },
     });
+    
+    return { game, shouldResolveBets };
   });
   
   console.log(`[RECALCULATE GAME OUTCOMES] Transaction completed, wasEdited: ${wasEdited}`);
+  
+  if (result.shouldResolveBets) {
+    console.log(`[BET RESOLUTION] Triggering bet resolution for game ${gameId} (results finalizing)`);
+    try {
+      const { resolveGameBets } = await import('../bets/betResolution.service');
+      await resolveGameBets(gameId);
+      console.log(`[BET RESOLUTION] Bet resolution completed for game ${gameId}`);
+    } catch (error) {
+      console.error(`[BET RESOLUTION] Failed to resolve bets for game ${gameId}:`, error);
+    }
+  }
+  
   console.log(`[TELEGRAM NOTIFICATION] Preparing to send notifications for game ${gameId}`);
   
   setImmediate(async () => {
@@ -429,6 +443,8 @@ export async function recalculateGameOutcomes(gameId: string) {
       console.error(`Failed to send game finished notifications for game ${gameId}:`, error);
     });
   });
+  
+  return result.game;
   
   return result;
 }

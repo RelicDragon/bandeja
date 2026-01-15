@@ -14,7 +14,7 @@ export const ChatsTab = () => {
   const navigate = useNavigate();
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [selectedChatType, setSelectedChatType] = useState<'user' | 'bug' | null>(null);
+  const [selectedChatType, setSelectedChatType] = useState<'user' | 'bug' | 'group' | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { setIsAnimating, chatsFilter, bottomTabsVisible } = useNavigationStore();
 
@@ -27,7 +27,7 @@ export const ChatsTab = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleChatSelect = useCallback((chatId: string, chatType: 'user' | 'bug') => {
+  const handleChatSelect = useCallback((chatId: string, chatType: 'user' | 'bug' | 'group') => {
     if (isDesktop) {
       if (selectedChatId === chatId && selectedChatType === chatType) {
         return;
@@ -44,6 +44,8 @@ export const ChatsTab = () => {
         navigate(`/user-chat/${chatId}`);
       } else if (chatType === 'bug') {
         navigate(`/bugs/${chatId}/chat`);
+      } else if (chatType === 'group') {
+        navigate(`/group-chat/${chatId}`);
       }
       setTimeout(() => setIsAnimating(false), 300);
     }

@@ -21,6 +21,7 @@ interface MessageListProps {
   isInitialLoad?: boolean;
   isLoadingMore?: boolean;
   disableReadTracking?: boolean;
+  isChannel?: boolean;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -38,6 +39,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   isInitialLoad = false,
   isLoadingMore = false,
   disableReadTracking = false,
+  isChannel = false,
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -215,6 +217,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             allMessages={messages}
             onScrollToMessage={onScrollToMessage}
             disableReadTracking={disableReadTracking}
+            isChannel={isChannel}
           />
         </div>
       ))}

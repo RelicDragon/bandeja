@@ -90,12 +90,26 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
       setPhotos(prevPhotos => prevPhotos.filter(msg => msg.id !== data.messageId));
     };
 
-    socketService.on('new-message', handleNewMessage);
-    socketService.on('message-deleted', handleMessageDeleted);
+    // Unified event handlers
+    const handleUnifiedMessage = (data: { contextType: string; contextId: string; message: any }) => {
+      if (data.contextType === 'GAME' && data.contextId === game.id) {
+        handleNewMessage(data.message);
+      }
+    };
+
+    const handleUnifiedDeleted = (data: { contextType: string; contextId: string; messageId: string }) => {
+      if (data.contextType === 'GAME' && data.contextId === game.id) {
+        handleMessageDeleted({ messageId: data.messageId });
+      }
+    };
+
+    // Unified events
+    socketService.on('chat:message', handleUnifiedMessage);
+    socketService.on('chat:deleted', handleUnifiedDeleted);
 
     return () => {
-      socketService.off('new-message', handleNewMessage);
-      socketService.off('message-deleted', handleMessageDeleted);
+      socketService.off('chat:message', handleUnifiedMessage);
+      socketService.off('chat:deleted', handleUnifiedDeleted);
     };
   }, [game.id, game.status]);
 

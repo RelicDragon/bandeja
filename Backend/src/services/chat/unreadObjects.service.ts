@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { ParticipantRole } from '@prisma/client';
 
 export interface UnreadObjectsResult {
   games: Array<{
@@ -14,6 +15,10 @@ export interface UnreadObjectsResult {
     chat: any;
     unreadCount: number;
   }>;
+  groupChannels: Array<{
+    groupChannel: any;
+    unreadCount: number;
+  }>;
 }
 
 export class UnreadObjectsService {
@@ -22,6 +27,7 @@ export class UnreadObjectsService {
       games: [],
       bugs: [],
       userChats: [],
+      groupChannels: [],
     };
 
     // 1. Get games with unread messages
@@ -212,12 +218,12 @@ export class UnreadObjectsService {
     }
 
     // 3. Get bugs with unread messages
-    const user = await prisma.user.findUnique({
+    const userForBugs = await prisma.user.findUnique({
       where: { id: userId },
       select: { isAdmin: true }
     });
 
-    if (user && user.isAdmin) {
+    if (userForBugs && userForBugs.isAdmin) {
       const allBugs = await prisma.bug.findMany({
         include: {
           sender: {
@@ -325,6 +331,83 @@ export class UnreadObjectsService {
             unreadCount: bugUnreadCount
           });
         }
+      }
+    }
+
+    // 4. Get group channels with unread messages
+    const userForGroups = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentCityId: true }
+    });
+
+    const userCityId = userForGroups?.currentCityId;
+
+    const groupChannels = await prisma.groupChannel.findMany({
+      where: {
+        OR: [
+          {
+            isChannel: false,
+            participants: {
+              some: {
+                userId,
+                hidden: false
+              }
+            }
+          },
+          {
+            isChannel: true,
+            ...(userCityId ? { cityId: userCityId } : {}),
+            OR: [
+              {
+                participants: {
+                  some: {
+                    userId,
+                    hidden: false
+                  }
+                }
+              },
+              { isPublic: true }
+            ]
+          }
+        ]
+      },
+      include: {
+        participants: {
+          where: { userId },
+          include: {
+            user: {
+              select: USER_SELECT_FIELDS
+            }
+          }
+        }
+      }
+    });
+
+    for (const groupChannel of groupChannels) {
+      const groupChannelUnreadCount = await prisma.chatMessage.count({
+        where: {
+          chatContextType: 'GROUP',
+          contextId: groupChannel.id,
+          senderId: { not: userId },
+          readReceipts: {
+            none: { userId }
+          }
+        }
+      });
+
+      if (groupChannelUnreadCount > 0) {
+        const userParticipant = (groupChannel.participants as any[]).find((p: any) => p.userId === userId);
+        const isOwner = userParticipant?.role === ParticipantRole.OWNER;
+        const isParticipant = !!userParticipant;
+
+        result.groupChannels.push({
+          groupChannel: {
+            ...groupChannel,
+            isParticipant,
+            isOwner
+          },
+          unreadCount: groupChannelUnreadCount
+        });
       }
     }
 

@@ -39,12 +39,6 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
       });
     }
 
-    socketService.joinGameRoom(gameId).then(() => {
-      console.log(`[GameResultsEngine] Joined game room for game ${gameId}`);
-    }).catch((err) => {
-      console.error(`[GameResultsEngine] Failed to join game room for game ${gameId}:`, err);
-    });
-
     const handleResultsUpdated = (data: { gameId: string }) => {
       if (data.gameId === gameId) {
         console.log(`[GameResultsEngine] Received results-updated notification for game ${gameId}`);
@@ -60,7 +54,6 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     return () => {
       console.log(`[GameResultsEngine] Disconnecting from results stream for game ${gameId}`);
       socketService.off('game-results-updated', handleResultsUpdated);
-      socketService.leaveGameRoom(gameId);
       const state = GameResultsEngine.getState();
       if (state.initialized && state.gameId === currentGameId && state.userId === currentUserId) {
         GameResultsEngine.cleanup();

@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChatMessage } from '@/api/chat';
+import toast from 'react-hot-toast';
+import { ChatMessage, chatApi } from '@/api/chat';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
 import { REACTION_EMOJIS, formatFullDateTime, getUserDisplayName, getUserInitials } from '@/utils/messageMenuUtils';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
-import { Flag } from 'lucide-react';
+import { Flag, Languages } from 'lucide-react';
 
 interface UnifiedMessageMenuProps {
   message: ChatMessage;
@@ -21,6 +22,7 @@ interface UnifiedMessageMenuProps {
   messageElementRef: React.RefObject<HTMLDivElement | null>;
   onDeleteStart?: (messageId: string) => void;
   onReport?: (message: ChatMessage) => void;
+  onTranslationUpdate?: (messageId: string, translation: { languageCode: string; translation: string }) => void;
 }
 
 export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
@@ -36,6 +38,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   messageElementRef,
   onDeleteStart,
   onReport,
+  onTranslationUpdate,
 }) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
@@ -47,6 +50,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const [menuHeight, setMenuHeight] = useState<number>(0);
   const [detailsHeight, setDetailsHeight] = useState<number>(0);
   const [isInitialRender, setIsInitialRender] = useState(true);
+  const [isTranslating, setIsTranslating] = useState(false);
   const duplicateRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -127,6 +131,30 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const handleCopy = () => {
     onCopy(message);
     onClose();
+  };
+
+  const handleTranslate = async () => {
+    if (!message.content || !message.content.trim() || isTranslating) {
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const translation = await chatApi.translateMessage(message.id);
+      if (onTranslationUpdate) {
+        onTranslationUpdate(message.id, translation);
+      }
+      onClose();
+    } catch (error: any) {
+      console.error('Failed to translate message:', error);
+      // Always use frontend translations for user-facing error messages
+      const errorMessage = error?.response?.status === 503 
+        ? t('chat.translationUnavailable', { defaultValue: 'Translation is temporarily unavailable. Please try again later.' })
+        : t('chat.translationError', { defaultValue: 'Failed to translate message. Please try again.' });
+      toast.error(errorMessage);
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
   const handleReport = () => {
@@ -372,6 +400,17 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </svg>
               <span>{t('chat.contextMenu.copy')}</span>
             </button>
+            
+            {message.content && message.content.trim() && (
+              <button
+                onClick={handleTranslate}
+                disabled={isTranslating}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Languages className="w-4 h-4" />
+                <span>{isTranslating ? t('chat.contextMenu.translating', { defaultValue: 'Translating...' }) : t('chat.contextMenu.translate', { defaultValue: 'Translate' })}</span>
+              </button>
+            )}
             
             {!isOwnMessage && onReport && (
               <button

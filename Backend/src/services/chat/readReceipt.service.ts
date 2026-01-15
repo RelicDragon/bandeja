@@ -2,7 +2,7 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
-import { ParticipantRole } from '@prisma/client';
+import { ParticipantRole, ChatContextType } from '@prisma/client';
 
 export class ReadReceiptService {
   static async markMessageAsRead(messageId: string, userId: string) {
@@ -562,5 +562,90 @@ export class ReadReceiptService {
     });
 
     return { count: unreadMessages.length };
+  }
+
+  /**
+   * Unified method to get unread count for any chat context type
+   */
+  static async getUnreadCountForContext(
+    contextType: ChatContextType,
+    contextId: string,
+    userId: string
+  ): Promise<number> {
+    if (contextType === 'GAME') {
+      const result = await this.getGameUnreadCount(contextId, userId);
+      return result.count;
+    } else if (contextType === 'USER') {
+      const result = await this.getUserChatUnreadCount(contextId, userId);
+      return result.count;
+    } else if (contextType === 'GROUP') {
+      const messages = await prisma.chatMessage.findMany({
+        where: {
+          chatContextType: 'GROUP',
+          contextId,
+          senderId: { not: userId }
+        },
+        include: {
+          readReceipts: {
+            where: { userId }
+          }
+        }
+      });
+      return messages.filter(msg => msg.readReceipts.length === 0).length;
+    } else if (contextType === 'BUG') {
+      const result = await this.getBugUnreadCount(contextId, userId);
+      return result.count;
+    }
+    return 0;
+  }
+
+  /**
+   * Unified method to mark all messages as read for any chat context type
+   */
+  static async markAllMessagesAsReadForContext(
+    contextType: ChatContextType,
+    contextId: string,
+    userId: string,
+    chatTypes?: string[]
+  ) {
+    if (contextType === 'GAME') {
+      return await this.markAllMessagesAsRead(contextId, userId, chatTypes || []);
+    } else if (contextType === 'USER') {
+      return await this.markUserChatAsRead(contextId, userId);
+    } else if (contextType === 'BUG') {
+      return await this.markAllBugMessagesAsRead(contextId, userId);
+    } else if (contextType === 'GROUP') {
+      const messages = await prisma.chatMessage.findMany({
+        where: {
+          chatContextType: 'GROUP',
+          contextId,
+          senderId: { not: userId }
+        }
+      });
+
+      const readReceipts = await Promise.all(
+        messages.map(message =>
+          prisma.messageReadReceipt.upsert({
+            where: {
+              messageId_userId: {
+                messageId: message.id,
+                userId
+              }
+            },
+            update: {
+              readAt: new Date()
+            },
+            create: {
+              messageId: message.id,
+              userId,
+              readAt: new Date()
+            }
+          })
+        )
+      );
+
+      return { count: readReceipts.length };
+    }
+    return { count: 0 };
   }
 }

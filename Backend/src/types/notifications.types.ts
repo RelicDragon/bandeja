@@ -3,6 +3,7 @@ export enum NotificationType {
   GAME_CHAT = 'GAME_CHAT',
   USER_CHAT = 'USER_CHAT',
   BUG_CHAT = 'BUG_CHAT',
+  GROUP_CHAT = 'GROUP_CHAT',
   GAME_SYSTEM_MESSAGE = 'GAME_SYSTEM_MESSAGE',
   GAME_REMINDER = 'GAME_REMINDER',
   GAME_RESULTS = 'GAME_RESULTS',
@@ -23,6 +24,7 @@ export interface NotificationData {
   chatType?: string;
   messageId?: string;
   userChatId?: string;
+  groupChannelId?: string;
 }
 
 export interface NotificationPayload {

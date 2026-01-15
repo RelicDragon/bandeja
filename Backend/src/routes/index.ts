@@ -27,6 +27,8 @@ import blockedUsersRoutes from './blockedUsers.routes';
 import faqRoutes from './faq.routes';
 import gameSubscriptionRoutes from './gameSubscription.routes';
 import trainingRoutes from './training.routes';
+import groupChannelRoutes from './groupChannel.routes';
+import betRoutes from './bet.routes';
 
 const router = Router();
 
@@ -58,6 +60,8 @@ router.use('/blocked-users', blockedUsersRoutes);
 router.use('/faqs', faqRoutes);
 router.use('/game-subscriptions', gameSubscriptionRoutes);
 router.use('/training', trainingRoutes);
+router.use('/group-channels', groupChannelRoutes);
+router.use('/bets', betRoutes);
 
 export default router;
 

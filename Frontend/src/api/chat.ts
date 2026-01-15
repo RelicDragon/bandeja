@@ -3,7 +3,7 @@ import { ApiResponse, Game, ChatType, BasicUser } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 
 export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
-export type ChatContextType = 'GAME' | 'BUG' | 'USER';
+export type ChatContextType = 'GAME' | 'BUG' | 'USER' | 'GROUP';
 
 export interface ChatMessage {
   id: string;
@@ -32,6 +32,14 @@ export interface ChatMessage {
   sender: BasicUser | null;
   reactions: MessageReaction[];
   readReceipts: MessageReadReceipt[];
+  translation?: {
+    languageCode: string;
+    translation: string;
+  };
+  translations?: Array<{
+    languageCode: string;
+    translation: string;
+  }>;
 }
 
 export interface MessageReaction {
@@ -81,6 +89,45 @@ export interface UserChat {
   user2: BasicUser;
   lastMessage?: ChatMessage;
   isPinned?: boolean;
+}
+
+export interface GroupChannel {
+  id: string;
+  name: string;
+  avatar?: string;
+  isChannel: boolean;
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
+  participants?: GroupChannelParticipant[];
+  lastMessage?: ChatMessage;
+  isParticipant?: boolean;
+  isOwner?: boolean;
+}
+
+export interface GroupChannelParticipant {
+  id: string;
+  groupChannelId: string;
+  userId: string;
+  role: 'OWNER' | 'ADMIN' | 'PARTICIPANT';
+  joinedAt: string;
+  hidden: boolean;
+  user: BasicUser;
+}
+
+export interface GroupChannelInvite {
+  id: string;
+  groupChannelId: string;
+  senderId: string;
+  receiverId: string;
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+  message?: string;
+  expiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  sender: BasicUser;
+  receiver: BasicUser;
+  groupChannel: GroupChannel;
 }
 
 export const chatApi = {
@@ -155,6 +202,7 @@ export const chatApi = {
       games: Array<{ game: Game; unreadCount: number }>;
       bugs: Array<{ bug: any; unreadCount: number }>;
       userChats: Array<{ chat: UserChat; unreadCount: number }>;
+      groupChannels: Array<{ groupChannel: GroupChannel; unreadCount: number }>;
     }>>('/chat/unread-objects');
     return response.data;
   },
@@ -177,6 +225,15 @@ export const chatApi = {
   markAllMessagesAsRead: async (gameId: string, chatTypes?: ChatType[]) => {
     const response = await api.post<ApiResponse<{ count: number }>>(`/chat/games/${gameId}/mark-all-read`, { 
       chatTypes: chatTypes || [] 
+    });
+    return response.data;
+  },
+
+  markAllMessagesAsReadForContext: async (contextType: ChatContextType, contextId: string, chatTypes?: ChatType[]) => {
+    const response = await api.post<ApiResponse<{ count: number }>>('/chat/mark-all-read', {
+      contextType,
+      contextId,
+      chatTypes: chatTypes || []
     });
     return response.data;
   },
@@ -264,8 +321,123 @@ export const chatApi = {
       return chatApi.getUserChatMessages(contextId, page, limit);
     } else if (chatContextType === 'BUG') {
       return chatApi.getBugMessages(contextId, page, limit, chatType);
+    } else if (chatContextType === 'GROUP') {
+      return chatApi.getGroupChannelMessages(contextId, page, limit);
     }
     throw new Error(`Unsupported chat context type: ${chatContextType}`);
+  },
+
+  // Group Channel Methods
+  getGroupChannels: async () => {
+    const response = await api.get<ApiResponse<GroupChannel[]>>('/group-channels');
+    return response.data;
+  },
+
+  getPublicGroupChannels: async () => {
+    const response = await api.get<ApiResponse<GroupChannel[]>>('/group-channels/public');
+    return response.data;
+  },
+
+  getGroupChannelById: async (id: string) => {
+    const response = await api.get<ApiResponse<GroupChannel>>(`/group-channels/${id}`);
+    return response.data;
+  },
+
+  createGroupChannel: async (data: { name: string; avatar?: string; isChannel?: boolean; isPublic?: boolean }) => {
+    const response = await api.post<ApiResponse<GroupChannel>>('/group-channels', data);
+    return response.data;
+  },
+
+  updateGroupChannel: async (id: string, data: { name?: string; avatar?: string; isChannel?: boolean; isPublic?: boolean }) => {
+    const response = await api.put<ApiResponse<GroupChannel>>(`/group-channels/${id}`, data);
+    return response.data;
+  },
+
+  deleteGroupChannel: async (id: string) => {
+    const response = await api.delete<ApiResponse<{ success: boolean }>>(`/group-channels/${id}`);
+    return response.data;
+  },
+
+  joinGroupChannel: async (id: string) => {
+    const response = await api.post<ApiResponse<{ message: string }>>(`/group-channels/${id}/join`);
+    return response.data;
+  },
+
+  leaveGroupChannel: async (id: string) => {
+    const response = await api.post<ApiResponse<{ message: string }>>(`/group-channels/${id}/leave`);
+    return response.data;
+  },
+
+  inviteUser: async (id: string, data: { receiverId: string; message?: string }) => {
+    const response = await api.post<ApiResponse<GroupChannelInvite>>(`/group-channels/${id}/invite`, data);
+    return response.data;
+  },
+
+  acceptInvite: async (inviteId: string) => {
+    const response = await api.post<ApiResponse<{ message: string }>>(`/group-channels/invites/${inviteId}/accept`);
+    return response.data;
+  },
+
+  hideGroupChannel: async (id: string) => {
+    const response = await api.post<ApiResponse<{ success: boolean }>>(`/group-channels/${id}/hide`);
+    return response.data;
+  },
+
+  unhideGroupChannel: async (id: string) => {
+    const response = await api.post<ApiResponse<{ success: boolean }>>(`/group-channels/${id}/unhide`);
+    return response.data;
+  },
+
+  getGroupChannelMessages: async (id: string, page = 1, limit = 50) => {
+    const response = await api.get<ApiResponse<ChatMessage[]>>(`/group-channels/${id}/messages`, {
+      params: { page, limit }
+    });
+    return response.data.data;
+  },
+
+  getGroupChannelUnreadCount: async (id: string) => {
+    const response = await api.get<ApiResponse<{ count: number }>>(`/group-channels/${id}/unread-count`);
+    return response.data;
+  },
+
+  markGroupChannelAsRead: async (id: string) => {
+    const response = await api.post<ApiResponse<{ count: number }>>(`/group-channels/${id}/mark-read`);
+    return response.data;
+  },
+
+  getGroupChannelParticipants: async (id: string) => {
+    const response = await api.get<ApiResponse<GroupChannelParticipant[]>>(`/group-channels/${id}/participants`);
+    return response.data;
+  },
+
+  getGroupChannelInvites: async (id: string) => {
+    const response = await api.get<ApiResponse<GroupChannelInvite[]>>(`/group-channels/${id}/invites`);
+    return response.data;
+  },
+
+  promoteToAdmin: async (id: string, userId: string) => {
+    const response = await api.post<ApiResponse<{ success: boolean }>>(`/group-channels/${id}/participants/${userId}/promote`);
+    return response.data;
+  },
+
+  removeAdmin: async (id: string, userId: string) => {
+    const response = await api.post<ApiResponse<{ success: boolean }>>(`/group-channels/${id}/participants/${userId}/remove-admin`);
+    return response.data;
+  },
+
+  removeParticipant: async (id: string, userId: string) => {
+    const response = await api.delete<ApiResponse<{ success: boolean }>>(`/group-channels/${id}/participants/${userId}`);
+    return response.data;
+  },
+
+  transferOwnership: async (id: string, newOwnerId: string) => {
+    const response = await api.post<ApiResponse<{ success: boolean }>>(`/group-channels/${id}/transfer-ownership`, { newOwnerId });
+    return response.data;
+  },
+
+  cancelInvite: async (inviteId: string) => {
+    const response = await api.delete<ApiResponse<{ success: boolean }>>(`/group-channels/invites/${inviteId}`);
+    return response.data;
   },
 
   reportMessage: async (messageId: string, data: { reason: string; description?: string }) => {
@@ -294,6 +466,33 @@ export const chatApi = {
     const response = await api.get<ApiResponse<{ isMuted: boolean }>>('/chat/mute-status', {
       params: { chatContextType, contextId }
     });
+    return response.data.data;
+  },
+
+  confirmMessageReceipt: async (messageId: string, deliveryMethod: 'socket' | 'push') => {
+    const response = await api.post<ApiResponse<{ success: boolean }>>('/chat/messages/confirm-receipt', {
+      messageId,
+      deliveryMethod
+    });
+    return response.data;
+  },
+
+  getMissedMessages: async (contextType: ChatContextType, contextId: string, lastMessageId?: string) => {
+    const params = new URLSearchParams({
+      contextType,
+      contextId
+    });
+    if (lastMessageId) {
+      params.append('lastMessageId', lastMessageId);
+    }
+    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/messages/missed?${params.toString()}`);
+    return response.data;
+  },
+
+  translateMessage: async (messageId: string) => {
+    const response = await api.post<ApiResponse<{ translation: string; languageCode: string }>>(
+      `/chat/messages/${messageId}/translate`
+    );
     return response.data.data;
   },
 };

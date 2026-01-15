@@ -57,11 +57,6 @@ const generateGameMetaTags = (game: any): string => {
   const title = game.name || `Join the ${gameType}!`;
   const description = details.join(', ');
   
-  const imageUrl = game.avatar || 
-                   game.court?.club?.photos?.[0] || 
-                   game.club?.photos?.[0] || 
-                   `${config.frontendUrl}/bandeja-blue-flat-small.png`;
-  
   const pageUrl = `${config.frontendUrl}/games/${game.id}`;
   
   return `<!doctype html>
@@ -112,7 +107,7 @@ export const getGameMetaTags = async (req: Request, res: Response) => {
     
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
-  } catch (error: any) {
+  } catch {
     const fallbackHtml = `<!doctype html>
 <html lang="en">
   <head>

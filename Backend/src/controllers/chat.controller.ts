@@ -12,6 +12,7 @@ import { UserChatService } from '../services/chat/userChat.service';
 import { MessageReportService } from '../services/chat/messageReport.service';
 import { UnreadObjectsService } from '../services/chat/unreadObjects.service';
 import { ChatMuteService } from '../services/chat/chatMute.service';
+import { TranslationService } from '../services/chat/translation.service';
 import prisma from '../config/database';
 
 export const createSystemMessage = async (contextId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC, chatContextType: ChatContextType = ChatContextType.GAME) => {
@@ -19,6 +20,7 @@ export const createSystemMessage = async (contextId: string, messageData: { type
 
   const socketService = (global as any).socketService;
   if (socketService) {
+    // OLD events (keep for backward compatibility - GAME, BUG, USER only)
     if (chatContextType === 'GAME') {
       socketService.emitNewMessage(contextId, message);
     } else if (chatContextType === 'BUG') {
@@ -26,6 +28,15 @@ export const createSystemMessage = async (contextId: string, messageData: { type
     } else if (chatContextType === 'USER') {
       await socketService.emitNewUserMessage(contextId, message);
     }
+    // GROUP uses only unified events (no old compatibility)
+    
+    // NEW unified event
+    socketService.emitChatEvent(
+      chatContextType,
+      contextId,
+      'message',
+      { message }
+    );
   }
 
   return message;
@@ -37,34 +48,95 @@ export const createBugSystemMessage = async (bugId: string, messageData: { type:
 };
 
 export const createMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { chatContextType = 'GAME', contextId, gameId, content, mediaUrls = [], replyToId, chatType = ChatType.PUBLIC, mentionIds = [] } = req.body;
+  console.log('[createMessage] Request received:', {
+    body: req.body,
+    userId: req.userId,
+    headers: req.headers
+  });
+
+  const { chatContextType = 'GAME', contextId, gameId, content, mediaUrls, replyToId, chatType = ChatType.PUBLIC, mentionIds = [] } = req.body;
   const senderId = req.userId;
+  
+  const normalizedChatType = chatType === ChatType.PRIVATE ? ChatType.PUBLIC : chatType;
+
+  console.log('[createMessage] Parsed data:', {
+    chatContextType,
+    contextId,
+    gameId,
+    content: content ? `${content.substring(0, 50)}...` : null,
+    mediaUrls,
+    mediaUrlsType: typeof mediaUrls,
+    mediaUrlsIsArray: Array.isArray(mediaUrls),
+    replyToId,
+    chatType,
+    mentionIds,
+    senderId
+  });
 
   if (!senderId) {
+    console.error('[createMessage] No senderId found');
     throw new ApiError(401, 'Unauthorized');
   }
 
   // Support legacy gameId parameter
   const finalContextId = contextId || gameId;
+  console.log('[createMessage] Final contextId:', finalContextId);
   if (!finalContextId) {
+    console.error('[createMessage] Missing contextId and gameId');
     throw new ApiError(400, 'contextId or gameId is required');
   }
 
-  const message = await MessageService.createMessageWithEvent({
-    chatContextType: chatContextType as ChatContextType,
-    contextId: finalContextId,
-    senderId,
-    content,
-    mediaUrls,
-    replyToId,
-    chatType,
-    mentionIds: Array.isArray(mentionIds) ? mentionIds : []
-  });
+  // Ensure mediaUrls is an array
+  const finalMediaUrls = Array.isArray(mediaUrls) ? mediaUrls : [];
+  console.log('[createMessage] Final mediaUrls:', finalMediaUrls);
 
-  res.status(201).json({
-    success: true,
-    data: message
-  });
+  // Validate that message has content or media
+  const hasContent = content && content.trim();
+  const hasMedia = finalMediaUrls.length > 0;
+  console.log('[createMessage] Validation:', { hasContent, hasMedia, contentLength: content?.length });
+  if (!hasContent && !hasMedia) {
+    console.error('[createMessage] Message has no content or media');
+    throw new ApiError(400, 'Message must have content or media');
+  }
+
+  try {
+    console.log('[createMessage] Calling MessageService.createMessageWithEvent with:', {
+      chatContextType,
+      contextId: finalContextId,
+      senderId,
+      contentLength: content?.length,
+      mediaUrlsCount: finalMediaUrls.length,
+      replyToId,
+      chatType: normalizedChatType,
+      mentionIdsCount: Array.isArray(mentionIds) ? mentionIds.length : 0
+    });
+
+    const message = await MessageService.createMessageWithEvent({
+      chatContextType: chatContextType as ChatContextType,
+      contextId: finalContextId,
+      senderId,
+      content,
+      mediaUrls: finalMediaUrls,
+      replyToId,
+      chatType: normalizedChatType,
+      mentionIds: Array.isArray(mentionIds) ? mentionIds : []
+    });
+
+    console.log('[createMessage] Message created successfully:', message.id);
+
+    res.status(201).json({
+      success: true,
+      data: message
+    });
+  } catch (error: any) {
+    console.error('[createMessage] Error creating message:', {
+      error: error.message,
+      stack: error.stack,
+      statusCode: error.statusCode,
+      name: error.name
+    });
+    throw error;
+  }
 });
 
 export const getGameMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -124,6 +196,7 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
     });
     
     if (message) {
+      // OLD events (keep for backward compatibility - GAME, BUG, USER only)
       if (message.chatContextType === 'GAME') {
         socketService.emitReadReceipt(message.gameId || message.contextId, readReceipt);
       } else if (message.chatContextType === 'BUG') {
@@ -131,6 +204,28 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
       } else if (message.chatContextType === 'USER') {
         socketService.emitUserReadReceipt(message.contextId, readReceipt);
       }
+      // GROUP uses only unified events (no old compatibility)
+      
+      // NEW unified event
+      socketService.emitChatEvent(
+        message.chatContextType,
+        message.contextId,
+        'read-receipt',
+        { readReceipt }
+      );
+
+      // Emit unread count update
+      const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+        message.chatContextType,
+        message.contextId,
+        userId
+      );
+      await socketService.emitUnreadCountUpdate(
+        message.chatContextType,
+        message.contextId,
+        userId,
+        unreadCount
+      );
     }
   }
 
@@ -157,6 +252,7 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
     });
     
     if (message) {
+      // OLD events (keep for backward compatibility - GAME, BUG, USER only)
       if (message.chatContextType === 'GAME') {
         socketService.emitMessageReaction(message.gameId || message.contextId, reaction);
       } else if (message.chatContextType === 'BUG') {
@@ -164,6 +260,15 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
       } else if (message.chatContextType === 'USER') {
         socketService.emitUserMessageReaction(message.contextId, reaction);
       }
+      // GROUP uses only unified events (no old compatibility)
+      
+      // NEW unified event
+      socketService.emitChatEvent(
+        message.chatContextType,
+        message.contextId,
+        'reaction',
+        { reaction }
+      );
     }
   }
 
@@ -192,6 +297,7 @@ export const removeReaction = asyncHandler(async (req: AuthRequest, res: Respons
     });
     
     if (message) {
+      // OLD events (keep for backward compatibility)
       if (message.chatContextType === 'GAME') {
         socketService.emitMessageReaction(message.gameId || message.contextId, result);
       } else if (message.chatContextType === 'BUG') {
@@ -199,6 +305,14 @@ export const removeReaction = asyncHandler(async (req: AuthRequest, res: Respons
       } else if (message.chatContextType === 'USER') {
         socketService.emitUserMessageReaction(message.contextId, result);
       }
+      
+      // NEW unified event
+      socketService.emitChatEvent(
+        message.chatContextType,
+        message.contextId,
+        'reaction',
+        { reaction: result }
+      );
     }
   }
 
@@ -304,6 +418,19 @@ export const markAllMessagesAsRead = asyncHandler(async (req: AuthRequest, res: 
   const socketService = (global as any).socketService;
   if (socketService) {
     socketService.emitReadReceipt(gameId, { userId, readAt: new Date() });
+    
+    // Emit unread count update
+    const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+      'GAME',
+      gameId,
+      userId
+    );
+    await socketService.emitUnreadCountUpdate(
+      'GAME',
+      gameId,
+      userId,
+      unreadCount
+    );
   }
 
   res.json({
@@ -324,6 +451,7 @@ export const deleteMessage = asyncHandler(async (req: AuthRequest, res: Response
 
   const socketService = (global as any).socketService;
   if (socketService) {
+    // OLD events (keep for backward compatibility - GAME, BUG, USER only)
     if (message.chatContextType === 'GAME' && message.gameId) {
       socketService.emitMessageDeleted(message.gameId, messageId);
     } else if (message.chatContextType === 'BUG') {
@@ -331,6 +459,15 @@ export const deleteMessage = asyncHandler(async (req: AuthRequest, res: Response
     } else if (message.chatContextType === 'USER') {
       socketService.emitUserMessageDeleted(message.contextId, messageId);
     }
+    // GROUP uses only unified events (no old compatibility)
+    
+    // NEW unified event
+    socketService.emitChatEvent(
+      message.chatContextType,
+      message.contextId,
+      'deleted',
+      { messageId }
+    );
   }
 
   res.json({ success: true });
@@ -434,6 +571,22 @@ export const markUserChatAsRead = asyncHandler(async (req: AuthRequest, res: Res
   }
 
   const result = await ReadReceiptService.markUserChatAsRead(chatId, userId);
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    // Emit unread count update
+    const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+      'USER',
+      chatId,
+      userId
+    );
+    await socketService.emitUnreadCountUpdate(
+      'USER',
+      chatId,
+      userId,
+      unreadCount
+    );
+  }
 
   res.json({
     success: true,
@@ -569,6 +722,19 @@ export const markAllBugMessagesAsRead = asyncHandler(async (req: AuthRequest, re
   const socketService = (global as any).socketService;
   if (socketService) {
     socketService.emitBugReadReceipt(bugId, { userId, readAt: new Date() });
+    
+    // Emit unread count update
+    const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+      'BUG',
+      bugId,
+      userId
+    );
+    await socketService.emitUnreadCountUpdate(
+      'BUG',
+      bugId,
+      userId,
+      unreadCount
+    );
   }
 
   res.json({
@@ -607,6 +773,51 @@ export const reportMessage = asyncHandler(async (req: AuthRequest, res: Response
   });
 });
 
+export const translateMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { messageId } = req.params;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const message = await prisma.chatMessage.findUnique({
+    where: { id: messageId },
+    select: { content: true },
+  });
+
+  if (!message) {
+    throw new ApiError(404, 'Message not found');
+  }
+
+  if (!message.content || !message.content.trim()) {
+    throw new ApiError(400, 'Message has no text content to translate');
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { language: true },
+  });
+
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  const languageCode = TranslationService.extractLanguageCode(user.language);
+
+  const translation = await TranslationService.getOrCreateTranslation(
+    messageId,
+    languageCode,
+    userId,
+    message.content
+  );
+
+  res.json({
+    success: true,
+    data: translation
+  });
+});
+
 export const muteChat = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { chatContextType, contextId } = req.body;
   const userId = req.userId;
@@ -619,7 +830,7 @@ export const muteChat = asyncHandler(async (req: AuthRequest, res: Response) => 
     throw new ApiError(400, 'chatContextType and contextId are required');
   }
 
-  const validContextTypes = ['GAME', 'BUG', 'USER'];
+  const validContextTypes = ['GAME', 'BUG', 'USER', 'GROUP'];
   if (!validContextTypes.includes(chatContextType)) {
     throw new ApiError(400, 'Invalid chatContextType');
   }
@@ -644,7 +855,7 @@ export const unmuteChat = asyncHandler(async (req: AuthRequest, res: Response) =
     throw new ApiError(400, 'chatContextType and contextId are required');
   }
 
-  const validContextTypes = ['GAME', 'BUG', 'USER'];
+  const validContextTypes = ['GAME', 'BUG', 'USER', 'GROUP'];
   if (!validContextTypes.includes(chatContextType)) {
     throw new ApiError(400, 'Invalid chatContextType');
   }
@@ -668,7 +879,7 @@ export const isChatMuted = asyncHandler(async (req: AuthRequest, res: Response) 
     throw new ApiError(400, 'chatContextType and contextId are required');
   }
 
-  const validContextTypes = ['GAME', 'BUG', 'USER'];
+  const validContextTypes = ['GAME', 'BUG', 'USER', 'GROUP'];
   if (!validContextTypes.includes(chatContextType as string)) {
     throw new ApiError(400, 'Invalid chatContextType');
   }
@@ -678,5 +889,139 @@ export const isChatMuted = asyncHandler(async (req: AuthRequest, res: Response) 
   res.json({
     success: true,
     data: { isMuted }
+  });
+});
+
+export const confirmMessageReceipt = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { messageId, deliveryMethod } = req.body;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!messageId) {
+    throw new ApiError(400, 'messageId is required');
+  }
+
+  const message = await prisma.chatMessage.findUnique({
+    where: { id: messageId }
+  });
+
+  if (!message) {
+    throw new ApiError(404, 'Message not found');
+  }
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    if (deliveryMethod === 'socket') {
+      socketService.markSocketDelivered(messageId, userId);
+    } else if (deliveryMethod === 'push') {
+      socketService.markPushDelivered(messageId, userId);
+    }
+  }
+
+  res.json({ success: true });
+});
+
+export const getMissedMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { contextType, contextId, lastMessageId } = req.query;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!contextType || !contextId) {
+    throw new ApiError(400, 'contextType and contextId are required');
+  }
+
+  const validContextTypes = ['GAME', 'BUG', 'USER', 'GROUP'];
+  if (!validContextTypes.includes(contextType as string)) {
+    throw new ApiError(400, 'Invalid contextType');
+  }
+
+  // Get messages after the last known message
+  const where: any = {
+    chatContextType: contextType as ChatContextType,
+    contextId: contextId as string,
+    senderId: { not: userId }
+  };
+
+  if (lastMessageId) {
+    const lastMessage = await prisma.chatMessage.findUnique({
+      where: { id: lastMessageId as string },
+      select: { createdAt: true }
+    });
+    
+    if (lastMessage) {
+      where.createdAt = { gt: lastMessage.createdAt };
+    }
+  }
+
+  const messages = await MessageService.getMessages(
+    contextType as ChatContextType,
+    contextId as string,
+    userId,
+    { page: 1, limit: 100 }
+  );
+
+  res.json({
+    success: true,
+    data: messages
+  });
+});
+
+export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { contextType, contextId, chatTypes } = req.body;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!contextType || !contextId) {
+    throw new ApiError(400, 'contextType and contextId are required');
+  }
+
+  const validContextTypes = ['GAME', 'BUG', 'USER'];
+  if (!validContextTypes.includes(contextType)) {
+    throw new ApiError(400, 'Invalid contextType');
+  }
+
+  const result = await ReadReceiptService.markAllMessagesAsReadForContext(
+    contextType as ChatContextType,
+    contextId,
+    userId,
+    chatTypes
+  );
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    // Emit read receipt event
+    socketService.emitChatEvent(
+      contextType as ChatContextType,
+      contextId,
+      'read-receipt',
+      { readReceipt: { userId, readAt: new Date() } }
+    );
+    
+    // Emit unread count update
+    const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+      contextType as ChatContextType,
+      contextId,
+      userId
+    );
+    await socketService.emitUnreadCountUpdate(
+      contextType as ChatContextType,
+      contextId,
+      userId,
+      unreadCount
+    );
+  }
+
+  res.json({
+    success: true,
+    data: result
   });
 });

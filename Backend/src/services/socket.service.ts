@@ -3,6 +3,7 @@ import { Server as HTTPServer } from 'http';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/database';
 import { GameReadService } from './game/read.service';
+import { ChatContextType } from '@prisma/client';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -14,6 +15,15 @@ interface AuthenticatedSocket extends Socket {
 class SocketService {
   private io: SocketIOServer;
   private connectedUsers: Map<string, Set<string>> = new Map(); // userId -> Set of socketIds
+  private messageDeliveryAttempts = new Map<string, {
+    messageId: string;
+    contextType: ChatContextType;
+    contextId: string;
+    recipients: string[];
+    socketDelivered: Set<string>;
+    pushDelivered: Set<string>;
+    timestamp: Date;
+  }>();
 
   constructor(server: HTTPServer) {
     const allowedOrigins = [
@@ -213,6 +223,57 @@ class SocketService {
         socket.emit('left-user-chat-room', { chatId });
       });
 
+      // Unified join-chat-room handler (for GROUP and future context types)
+      socket.on('join-chat-room', async (data: { contextType: ChatContextType; contextId: string }) => {
+        try {
+          if (!socket.userId) return;
+
+          if (data.contextType === 'GROUP') {
+            const groupChannel = await prisma.groupChannel.findUnique({
+              where: { id: data.contextId },
+              include: {
+                participants: {
+                  where: { userId: socket.userId }
+                }
+              }
+            });
+
+            if (!groupChannel) {
+              socket.emit('error', { message: 'Group/Channel not found' });
+              return;
+            }
+
+            const userParticipant = groupChannel.participants.find(p => p.userId === socket.userId);
+            const isOwner = userParticipant?.role === 'OWNER';
+            const isParticipant = !!userParticipant;
+
+            if (!isOwner && !isParticipant && !groupChannel.isPublic) {
+              socket.emit('error', { message: 'Access denied to group/channel' });
+              return;
+            }
+
+            const room = this.getChatRoomName('GROUP', data.contextId);
+            socket.join(room);
+
+            console.log(`User ${socket.userId} joined group room ${data.contextId}`);
+            socket.emit('joined-chat-room', { contextType: 'GROUP', contextId: data.contextId });
+          }
+        } catch (error) {
+          console.error('[SocketService] Error joining chat room:', error);
+          socket.emit('error', { message: 'Failed to join chat room' });
+        }
+      });
+
+      // Handle leaving unified chat rooms
+      socket.on('leave-chat-room', (data: { contextType: ChatContextType; contextId: string }) => {
+        if (data.contextType === 'GROUP') {
+          const room = this.getChatRoomName('GROUP', data.contextId);
+          socket.leave(room);
+          console.log(`User ${socket.userId} left group room ${data.contextId}`);
+          socket.emit('left-chat-room', { contextType: 'GROUP', contextId: data.contextId });
+        }
+      });
+
       // Handle disconnect
       socket.on('disconnect', () => {
         console.log(`User ${socket.userId} disconnected`);
@@ -226,6 +287,39 @@ class SocketService {
             }
           }
         }
+      });
+
+      // Handle reconnection - check for missed messages
+      socket.on('reconnect', async () => {
+        console.log(`User ${socket.userId} reconnected`);
+        
+        // Notify client to sync missed messages
+        socket.emit('sync-required', {
+          timestamp: new Date().toISOString()
+        });
+      });
+
+      // Handle message acknowledgment
+      socket.on('chat:message-ack', async (data: { messageId: string; contextType: ChatContextType; contextId: string }) => {
+        if (!socket.userId) return;
+
+        this.markSocketDelivered(data.messageId, socket.userId);
+        console.log(`[SocketService] Message ${data.messageId} acknowledged by user ${socket.userId}`);
+      });
+
+      // Handle sync request from client
+      socket.on('sync-messages', async (data: { 
+        contextType: ChatContextType; 
+        contextId: string; 
+        lastMessageId?: string 
+      }) => {
+        if (!socket.userId) return;
+
+        // Notify client that sync is ready
+        socket.emit('sync-ready', {
+          contextType: data.contextType,
+          contextId: data.contextId
+        });
       });
     });
   }
@@ -322,6 +416,154 @@ class SocketService {
   // Emit typing indicator
   public emitTypingIndicator(gameId: string, userId: string, isTyping: boolean) {
     this.io.to(`game-${gameId}`).emit('typing-indicator', { userId, isTyping });
+  }
+
+  // ========== UNIFIED CHAT METHODS (NEW) ==========
+  // These methods work for all chat context types
+
+  /**
+   * Get the room name for a chat context
+   */
+  private getChatRoomName(contextType: ChatContextType, contextId: string): string {
+    const prefix = contextType === 'GAME' ? 'game' : 
+                   contextType === 'BUG' ? 'bug' : 
+                   contextType === 'USER' ? 'user-chat' :
+                   contextType === 'GROUP' ? 'group' : '';
+    return `${prefix}-${contextId}`;
+  }
+
+  /**
+   * Unified method to emit chat events (message, reaction, read-receipt, deleted)
+   * This emits to the unified event name while keeping backward compatibility
+   */
+  public emitChatEvent(
+    contextType: ChatContextType, 
+    contextId: string, 
+    eventType: 'message' | 'reaction' | 'read-receipt' | 'deleted',
+    data: any,
+    messageId?: string
+  ) {
+    const room = this.getChatRoomName(contextType, contextId);
+    const eventName = `chat:${eventType}`;
+    
+    // Emit to room with messageId for acknowledgment
+    this.io.to(room).emit(eventName, { 
+      contextType, 
+      contextId, 
+      messageId,
+      timestamp: new Date().toISOString(),
+      ...data 
+    });
+    
+    // For user chats, also emit directly to both users (for notifications)
+    if (contextType === 'USER' && eventType === 'message') {
+      this.emitUserChatMessageToUsers(contextId, data.message, messageId);
+    }
+  }
+
+  /**
+   * Helper to emit user chat messages directly to both users
+   * (for notification/badge updates even when not in chat)
+   */
+  private async emitUserChatMessageToUsers(chatId: string, message: any, messageId?: string) {
+    try {
+      const chat = await prisma.userChat.findUnique({
+        where: { id: chatId },
+        select: { user1Id: true, user2Id: true }
+      });
+      
+      if (chat) {
+        // Emit to user1
+        this.connectedUsers.get(chat.user1Id)?.forEach(socketId => {
+          const socket = this.io.sockets.sockets.get(socketId);
+          if (socket) {
+            socket.emit('chat:message', { 
+              contextType: 'USER', 
+              contextId: chatId, 
+              messageId,
+              timestamp: new Date().toISOString(),
+              message 
+            });
+          }
+        });
+        
+        // Emit to user2
+        this.connectedUsers.get(chat.user2Id)?.forEach(socketId => {
+          const socket = this.io.sockets.sockets.get(socketId);
+          if (socket) {
+            socket.emit('chat:message', { 
+              contextType: 'USER', 
+              contextId: chatId, 
+              messageId,
+              timestamp: new Date().toISOString(),
+              message 
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to emit user chat message to individual users:', error);
+    }
+  }
+
+  /**
+   * Record message delivery attempt
+   */
+  public recordMessageDelivery(
+    messageId: string,
+    contextType: ChatContextType,
+    contextId: string,
+    recipients: string[]
+  ) {
+    this.messageDeliveryAttempts.set(messageId, {
+      messageId,
+      contextType,
+      contextId,
+      recipients,
+      socketDelivered: new Set(),
+      pushDelivered: new Set(),
+      timestamp: new Date()
+    });
+
+    // Clean up old entries after 5 minutes
+    setTimeout(() => {
+      this.messageDeliveryAttempts.delete(messageId);
+    }, 5 * 60 * 1000);
+  }
+
+  /**
+   * Mark message as delivered via socket
+   */
+  public markSocketDelivered(messageId: string, userId: string) {
+    const attempt = this.messageDeliveryAttempts.get(messageId);
+    if (attempt) {
+      attempt.socketDelivered.add(userId);
+    }
+  }
+
+  /**
+   * Mark message as delivered via push
+   */
+  public markPushDelivered(messageId: string, userId: string) {
+    const attempt = this.messageDeliveryAttempts.get(messageId);
+    if (attempt) {
+      attempt.pushDelivered.add(userId);
+    }
+  }
+
+  /**
+   * Get undelivered recipients for a message
+   */
+  public getUndeliveredRecipients(messageId: string): string[] {
+    const attempt = this.messageDeliveryAttempts.get(messageId);
+    if (!attempt) return [];
+
+    const delivered = new Set([
+      ...Array.from(attempt.socketDelivered),
+      ...Array.from(attempt.pushDelivered)
+    ]);
+
+    return attempt.recipients.filter(userId => !delivered.has(userId));
   }
 
   // Emit new invite notification to specific user
@@ -514,6 +756,115 @@ class SocketService {
     }
     
     return onlineUsers;
+  }
+
+  // Check if user is in a specific chat room
+  public async isUserInChatRoom(
+    contextType: ChatContextType,
+    contextId: string,
+    userId: string
+  ): Promise<boolean> {
+    if (!this.connectedUsers.has(userId)) {
+      return false;
+    }
+
+    const userSockets = this.connectedUsers.get(userId);
+    if (!userSockets || userSockets.size === 0) {
+      return false;
+    }
+
+    for (const socketId of userSockets) {
+      const socket = this.io.sockets.sockets.get(socketId) as AuthenticatedSocket | undefined;
+      if (socket) {
+        if (contextType === 'GAME' && socket.gameRooms?.has(contextId)) {
+          return true;
+        } else if (contextType === 'BUG' && socket.bugRooms?.has(contextId)) {
+          return true;
+        } else if (contextType === 'USER' && socket.userChatRooms?.has(contextId)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Get users who are in a specific chat room
+  public async getUsersInChatRoom(
+    contextType: ChatContextType,
+    contextId: string
+  ): Promise<Set<string>> {
+    const userIds = new Set<string>();
+    
+    for (const [userId, socketIds] of this.connectedUsers) {
+      for (const socketId of socketIds) {
+        const socket = this.io.sockets.sockets.get(socketId) as AuthenticatedSocket | undefined;
+        if (socket) {
+          if (contextType === 'GAME' && socket.gameRooms?.has(contextId)) {
+            userIds.add(userId);
+            break;
+          } else if (contextType === 'BUG' && socket.bugRooms?.has(contextId)) {
+            userIds.add(userId);
+            break;
+          } else if (contextType === 'USER' && socket.userChatRooms?.has(contextId)) {
+            userIds.add(userId);
+            break;
+          }
+        }
+      }
+    }
+
+    return userIds;
+  }
+
+  /**
+   * Emit unread count update for a specific chat context
+   */
+  public async emitUnreadCountUpdate(
+    contextType: ChatContextType,
+    contextId: string,
+    userId: string,
+    unreadCount: number
+  ) {
+    const eventName = 'chat:unread-count';
+    
+    // Emit to the specific user
+    this.connectedUsers.get(userId)?.forEach(socketId => {
+      const socket = this.io.sockets.sockets.get(socketId);
+      if (socket) {
+        socket.emit(eventName, {
+          contextType,
+          contextId,
+          unreadCount
+        });
+      }
+    });
+  }
+
+  /**
+   * Generic emit method for bet events
+   * Emits to the game room so all users viewing the game receive the update
+   */
+  public async emit(eventName: string, data: any) {
+    if (eventName.startsWith('bet:')) {
+      const { gameId } = data;
+      if (!gameId) {
+        console.error(`[SocketService] Cannot emit ${eventName}: missing gameId`);
+        return;
+      }
+      
+      const roomName = `game-${gameId}`;
+      const socketsInRoom = await this.io.in(roomName).fetchSockets();
+      
+      if (socketsInRoom.length > 0) {
+        console.log(`[SocketService] Emitting ${eventName} to game room ${roomName} (${socketsInRoom.length} socket(s))`);
+        this.io.to(roomName).emit(eventName, data);
+      } else {
+        console.log(`[SocketService] No sockets in room ${roomName} for ${eventName}`);
+      }
+    } else {
+      console.warn(`[SocketService] Unknown event type: ${eventName}`);
+    }
   }
 
   public getIO(): SocketIOServer {

@@ -35,6 +35,7 @@ import { LocationModal, TimeDurationModal } from '@/components/GameDetails';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
 import { TrainingResultsSection } from '@/components/GameDetails/TrainingResultsSection';
 import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
+import { BetSection } from '@/components/GameDetails/BetSection';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { resultsApi } from '@/api/results';
@@ -142,9 +143,14 @@ export const GameDetailsContent = () => {
     };
 
     fetchGame();
-  }, [id, user?.id]);
+  }, [id, user]);
 
   useEffect(() => {
+    if (!id) return;
+
+    // Join game room once for all game-related events (updates, results, bets)
+    socketService.joinGameRoom(id);
+
     const handleInviteDeleted = (data: { inviteId: string; gameId?: string }) => {
       if (data.gameId === id || !data.gameId) {
         setMyInvites(prev => prev.filter(inv => inv.id !== data.inviteId));
@@ -184,6 +190,7 @@ export const GameDetailsContent = () => {
     return () => {
       socketService.off('invite-deleted', handleInviteDeleted);
       socketService.off('game-updated', handleGameUpdated);
+      socketService.leaveGameRoom(id);
     };
   }, [id, user?.id]);
 
@@ -722,7 +729,7 @@ export const GameDetailsContent = () => {
     } catch (error) {
       console.error('Failed to refresh game:', error);
     }
-  }, [id, user?.id]);
+  }, [id, user]);
 
   const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
     onRefresh: handleRefresh,
@@ -1108,6 +1115,8 @@ export const GameDetailsContent = () => {
               />
             </>
           )}
+
+          <BetSection game={game} onGameUpdate={setGame} />
 
           {!isLeague && canViewSettings && (
             <div id="game-settings">

@@ -56,6 +56,8 @@ let initSubscribed = false;
 let socketSubscriptionsSetup = false;
 let newMessageHandler: ((message: NewUserChatMessage) => void) | null = null;
 let readReceiptHandler: ((readReceipt: UserChatReadReceipt) => void) | null = null;
+let unifiedMessageHandler: ((data: { contextType: string; contextId: string; message: any }) => void) | null = null;
+let unifiedReadReceiptHandler: ((data: { contextType: string; contextId: string; readReceipt: any }) => void) | null = null;
 let cleanupPromise: Promise<void> | null = null;
 
 const createDefaultMetadata = (existing?: UserMetadata): UserMetadata => ({
@@ -107,8 +109,22 @@ const setupSocketSubscriptions = () => {
       }
     };
 
-    socketService.on('new-user-chat-message', newMessageHandler);
-    socketService.on('user-chat-read-receipt', readReceiptHandler);
+    // Unified event handlers
+    unifiedMessageHandler = (data: { contextType: string; contextId: string; message: any }) => {
+      if (data.contextType === 'USER' && newMessageHandler) {
+        newMessageHandler(data.message);
+      }
+    };
+
+    unifiedReadReceiptHandler = (data: { contextType: string; contextId: string; readReceipt: any }) => {
+      if (data.contextType === 'USER' && readReceiptHandler) {
+        readReceiptHandler(data.readReceipt);
+      }
+    };
+
+    // Unified events
+    socketService.on('chat:message', unifiedMessageHandler);
+    socketService.on('chat:read-receipt', unifiedReadReceiptHandler);
   });
 };
 
@@ -117,13 +133,14 @@ const cleanupSocketSubscriptions = () => {
   if (cleanupPromise) return cleanupPromise;
 
   cleanupPromise = import('@/services/socketService').then(({ socketService }) => {
-    if (newMessageHandler) {
-      socketService.off('new-user-chat-message', newMessageHandler);
-      newMessageHandler = null;
+    // Clean up unified event listeners
+    if (unifiedMessageHandler) {
+      socketService.off('chat:message', unifiedMessageHandler);
+      unifiedMessageHandler = null;
     }
-    if (readReceiptHandler) {
-      socketService.off('user-chat-read-receipt', readReceiptHandler);
-      readReceiptHandler = null;
+    if (unifiedReadReceiptHandler) {
+      socketService.off('chat:read-receipt', unifiedReadReceiptHandler);
+      unifiedReadReceiptHandler = null;
     }
     socketSubscriptionsSetup = false;
     cleanupPromise = null;

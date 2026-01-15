@@ -1,4 +1,3 @@
-import { ApiError } from './ApiError';
 import { ParticipantRole } from '@prisma/client';
 
 export interface ParticipantOperationResult {

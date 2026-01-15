@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import transliterate from '@sindresorhus/transliterate';
 import { UserChatCard } from './UserChatCard';
 import { BugCard } from '@/components/bugs/BugCard';
-import { chatApi, UserChat } from '@/api/chat';
+import { GroupChannelCard } from './GroupChannelCard';
+import { chatApi, UserChat, GroupChannel } from '@/api/chat';
 import { bugsApi } from '@/api/bugs';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
@@ -18,13 +19,15 @@ import { MessageCircle, Search } from 'lucide-react';
 type ChatItem =
   | { type: 'user'; data: UserChat; lastMessageDate: Date; unreadCount: number; otherUser?: BasicUser }
   | { type: 'contact'; userId: string; user: BasicUser; interactionCount: number; isFavorite: boolean }
-  | { type: 'bug'; data: Bug; lastMessageDate: Date; unreadCount: number };
+  | { type: 'bug'; data: Bug; lastMessageDate: Date; unreadCount: number }
+  | { type: 'group'; data: GroupChannel; lastMessageDate: Date; unreadCount: number }
+  | { type: 'channel'; data: GroupChannel; lastMessageDate: Date; unreadCount: number };
 
 interface ChatListProps {
-  onChatSelect?: (chatId: string, chatType: 'user' | 'bug') => void;
+  onChatSelect?: (chatId: string, chatType: 'user' | 'bug' | 'group') => void;
   isDesktop?: boolean;
   selectedChatId?: string | null;
-  selectedChatType?: 'user' | 'bug' | null;
+  selectedChatType?: 'user' | 'bug' | 'group' | null;
 }
 
 export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, selectedChatType }: ChatListProps) => {
@@ -89,7 +92,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     });
   }, [user, favoriteUserIds]);
 
-  const fetchChatsForFilter = useCallback(async (filter: 'users' | 'bugs') => {
+  const fetchChatsForFilter = useCallback(async (filter: 'users' | 'bugs' | 'channels') => {
     if (!user) return;
 
     try {
@@ -122,6 +125,40 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             });
           }
         });
+
+        // Add groups to users tab (integrated like Telegram)
+        try {
+          const groupsResponse = await chatApi.getGroupChannels();
+          const groups = groupsResponse.data || [];
+          const groupIds = groups.map(g => g.id);
+          
+          const groupUnreads: Record<string, number> = {};
+          if (groupIds.length > 0) {
+            await Promise.all(groupIds.map(async (id) => {
+              try {
+                const unread = await chatApi.getGroupChannelUnreadCount(id);
+                groupUnreads[id] = unread.data.count || 0;
+              } catch {
+                groupUnreads[id] = 0;
+              }
+            }));
+          }
+
+          groups.forEach(group => {
+            if (!group.isChannel && (group.isParticipant || group.isOwner)) {
+              chatItems.push({
+                type: 'group',
+                data: group,
+                lastMessageDate: group.lastMessage 
+                  ? new Date(group.lastMessage.createdAt)
+                  : new Date(group.updatedAt),
+                unreadCount: groupUnreads[group.id] || 0
+              });
+            }
+          });
+        } catch (error) {
+          console.error('Failed to fetch groups:', error);
+        }
 
         Object.values(users).forEach((userData) => {
           const userId = userData.id;
@@ -157,6 +194,39 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             unreadCount: bugUnreads.data[bug.id] || 0
           });
         });
+      } else if (filter === 'channels') {
+        try {
+          const channelsResponse = await chatApi.getGroupChannels();
+          const channels = channelsResponse.data || [];
+          const channelIds = channels.map(c => c.id);
+          
+          const channelUnreads: Record<string, number> = {};
+          if (channelIds.length > 0) {
+            await Promise.all(channelIds.map(async (id) => {
+              try {
+                const unread = await chatApi.getGroupChannelUnreadCount(id);
+                channelUnreads[id] = unread.data.count || 0;
+              } catch {
+                channelUnreads[id] = 0;
+              }
+            }));
+          }
+
+          channels.forEach(channel => {
+            if (channel.isChannel) {
+              chatItems.push({
+                type: 'channel',
+                data: channel,
+                lastMessageDate: channel.lastMessage 
+                  ? new Date(channel.lastMessage.createdAt)
+                  : new Date(channel.updatedAt),
+                unreadCount: channelUnreads[channel.id] || 0
+              });
+            }
+          });
+        } catch (error) {
+          console.error('Failed to fetch channels:', error);
+        }
       }
 
       if (filter !== 'users') {
@@ -177,14 +247,25 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   }, [user, favoriteUserIds, sortUserChatItems]);
 
   useEffect(() => {
-    if (chatsFilter === 'users' || chatsFilter === 'bugs') {
+    if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') {
       fetchChatsForFilter(chatsFilter);
     }
   }, [fetchChatsForFilter, chatsFilter]);
 
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') {
+        fetchChatsForFilter(chatsFilter);
+      }
+    };
+
+    window.addEventListener('refresh-chat-list', handleRefresh);
+    return () => window.removeEventListener('refresh-chat-list', handleRefresh);
+  }, [fetchChatsForFilter, chatsFilter]);
+
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();
-    if (chatsFilter === 'users' || chatsFilter === 'bugs') {
+    if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') {
       await fetchChatsForFilter(chatsFilter);
     }
   }, [fetchChatsForFilter, chatsFilter]);
@@ -194,7 +275,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     disabled: loading || isDesktop,
   });
 
-  const handleChatClick = (chatId: string, chatType: 'user' | 'bug') => {
+  const handleChatClick = (chatId: string, chatType: 'user' | 'bug' | 'group') => {
     if (onChatSelect) {
       onChatSelect(chatId, chatType);
     }
@@ -262,6 +343,8 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       } else if (chat.type === 'contact') {
         const fullName = `${chat.user.firstName || ''} ${chat.user.lastName || ''}`.trim();
         return normalizeString(fullName).includes(normalized);
+      } else if (chat.type === 'group' || chat.type === 'channel') {
+        return normalizeString(chat.data.name || '').includes(normalized);
       }
       return true;
     });
@@ -310,6 +393,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         <p className="text-sm mt-2">
           {chatsFilter === 'users' && t('chat.noUserChats', { defaultValue: 'Start chatting with players' })}
           {chatsFilter === 'bugs' && t('chat.noBugChats', { defaultValue: 'No bug reports yet' })}
+          {chatsFilter === 'channels' && t('chat.noChannels', { defaultValue: 'No channels yet' })}
         </p>
       </div>
     );
@@ -389,13 +473,26 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                   bug={chat.data}
                   unreadCount={chat.unreadCount}
                   onUpdate={() => {
-                    if (chatsFilter === 'users' || chatsFilter === 'bugs') {
+                    if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') {
                       fetchChatsForFilter(chatsFilter);
                     }
                   }}
                   onDelete={(bugId) => {
                     setChats(prev => prev.filter(c => !(c.type === 'bug' && c.data.id === bugId)));
                   }}
+                />
+              </div>
+            );
+          } else if (chat.type === 'group' || chat.type === 'channel') {
+            const key = `${chat.type}-${chat.data.id}`;
+            const isSelected = selectedChatType === 'group' && selectedChatId === chat.data.id;
+            return (
+              <div key={key} className={`border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                <GroupChannelCard
+                  groupChannel={chat.data}
+                  unreadCount={chat.unreadCount}
+                  onClick={() => handleChatClick(chat.data.id, 'group')}
+                  isSelected={isSelected}
                 />
               </div>
             );

@@ -1,0 +1,978 @@
+import prisma from '../../config/database';
+import { ApiError } from '../../utils/ApiError';
+import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { createSystemMessage } from '../../controllers/chat.controller';
+import { ChatContextType, ParticipantRole, InviteStatus } from '@prisma/client';
+
+export class GroupChannelService {
+  static async getGroupChannelOwner(groupChannelId: string) {
+    const owner = await prisma.groupChannelParticipant.findFirst({
+      where: {
+        groupChannelId,
+        role: ParticipantRole.OWNER
+      },
+      include: {
+        user: {
+          select: USER_SELECT_FIELDS
+        }
+      }
+    });
+    return owner;
+  }
+
+  static async isGroupChannelOwner(groupChannelId: string, userId: string): Promise<boolean> {
+    const participant = await prisma.groupChannelParticipant.findFirst({
+      where: {
+        groupChannelId,
+        userId,
+        role: ParticipantRole.OWNER
+      }
+    });
+    return !!participant;
+  }
+
+  static async isGroupChannelAdminOrOwner(groupChannelId: string, userId: string): Promise<boolean> {
+    const participant = await prisma.groupChannelParticipant.findFirst({
+      where: {
+        groupChannelId,
+        userId,
+        role: {
+          in: [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+        }
+      }
+    });
+    return !!participant;
+  }
+  static async createGroupChannel(data: {
+    name: string;
+    avatar?: string;
+    isChannel: boolean;
+    isPublic: boolean;
+    ownerId: string;
+  }) {
+    let cityId: string | undefined;
+    
+    if (data.isChannel) {
+      const owner = await prisma.user.findUnique({
+        where: { id: data.ownerId },
+        select: { currentCityId: true }
+      });
+      cityId = owner?.currentCityId || undefined;
+    }
+
+    const groupChannel = await prisma.groupChannel.create({
+      data: {
+        name: data.name,
+        avatar: data.avatar,
+        isChannel: data.isChannel,
+        isPublic: data.isPublic,
+        cityId: cityId,
+      }
+    });
+
+    await prisma.groupChannelParticipant.create({
+      data: {
+        groupChannelId: groupChannel.id,
+        userId: data.ownerId,
+        role: ParticipantRole.OWNER
+      }
+    });
+
+    return groupChannel;
+  }
+
+  static async getGroupChannelById(groupChannelId: string, userId?: string) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId },
+      include: {
+        participants: userId ? {
+          where: { userId },
+          include: {
+            user: {
+              select: USER_SELECT_FIELDS
+            }
+          }
+        } : {
+          include: {
+            user: {
+              select: USER_SELECT_FIELDS
+            }
+          }
+        }
+      }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const userParticipant = userId ? groupChannel.participants.find(p => p.userId === userId) : null;
+    const isOwner = userParticipant?.role === ParticipantRole.OWNER;
+    const isParticipant = !!userParticipant;
+
+    return {
+      ...groupChannel,
+      isParticipant,
+      isOwner
+    };
+  }
+
+  static async getGroupChannels(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentCityId: true }
+    });
+
+    const userCityId = user?.currentCityId;
+
+    const groupChannels = await prisma.groupChannel.findMany({
+      where: {
+        OR: [
+          {
+            isChannel: false,
+            participants: {
+              some: {
+                userId,
+                hidden: false
+              }
+            }
+          },
+          {
+            isChannel: true,
+            cityId: userCityId,
+            OR: [
+              {
+                participants: {
+                  some: {
+                    userId,
+                    hidden: false
+                  }
+                }
+              },
+              { isPublic: true }
+            ]
+          }
+        ]
+      },
+      include: {
+        participants: {
+          where: { userId },
+          include: {
+            user: {
+              select: USER_SELECT_FIELDS
+            }
+          }
+        }
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      }
+    });
+
+    const groupChannelsWithLastMessage = await Promise.all(
+      groupChannels.map(async (gc) => {
+        const lastMessage = await prisma.chatMessage.findFirst({
+          where: {
+            chatContextType: 'GROUP',
+            contextId: gc.id,
+            senderId: { not: null }
+          },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            sender: {
+              select: USER_SELECT_FIELDS
+            }
+          }
+        });
+
+        const userParticipant = gc.participants.find(p => p.userId === userId);
+        const isOwner = userParticipant?.role === ParticipantRole.OWNER;
+        const isParticipant = !!userParticipant;
+
+        return {
+          ...gc,
+          lastMessage,
+          isParticipant,
+          isOwner
+        };
+      })
+    );
+
+    return groupChannelsWithLastMessage;
+  }
+
+  static async getPublicGroupChannels(userId?: string) {
+    const groupChannels = await prisma.groupChannel.findMany({
+      where: {
+        isPublic: true
+      },
+      include: {
+        participants: userId ? {
+          where: { userId }
+        } : undefined
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return groupChannels;
+  }
+
+  static async updateGroupChannel(
+    groupChannelId: string,
+    userId: string,
+    data: {
+      name?: string;
+      avatar?: string;
+      isChannel?: boolean;
+      isPublic?: boolean;
+    }
+  ) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const isOwner = await this.isGroupChannelOwner(groupChannelId, userId);
+    if (!isOwner) {
+      throw new ApiError(403, 'Only owner can update group/channel');
+    }
+
+    const updated = await prisma.groupChannel.update({
+      where: { id: groupChannelId },
+      data
+    });
+
+    return updated;
+  }
+
+  static async deleteGroupChannel(groupChannelId: string, userId: string) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const isOwner = await this.isGroupChannelOwner(groupChannelId, userId);
+    if (!isOwner) {
+      throw new ApiError(403, 'Only owner can delete group/channel');
+    }
+
+    await prisma.groupChannel.delete({
+      where: { id: groupChannelId }
+    });
+
+    return { success: true };
+  }
+
+  static async joinGroupChannel(groupChannelId: string, userId: string) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const isParticipant = await this.isParticipant(groupChannelId, userId);
+    if (!groupChannel.isPublic && !isParticipant) {
+      throw new ApiError(403, 'This is a private group/channel. You need an invitation.');
+    }
+
+    const existingParticipant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      }
+    });
+
+    if (existingParticipant) {
+      throw new ApiError(400, 'Already a participant');
+    }
+
+    await prisma.groupChannelParticipant.create({
+      data: {
+        groupChannelId,
+        userId,
+        role: ParticipantRole.PARTICIPANT
+      }
+    });
+
+    if (!groupChannel.isChannel) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: USER_SELECT_FIELDS,
+      });
+
+      if (user) {
+        const userName = getUserDisplayName(user.firstName, user.lastName);
+        await createSystemMessage(
+          groupChannelId,
+          {
+            type: SystemMessageType.USER_JOINED_CHAT,
+            variables: { userName }
+          },
+          undefined,
+          ChatContextType.GROUP
+        );
+      }
+    }
+
+    return 'Successfully joined the group/channel';
+  }
+
+  static async leaveGroupChannel(groupChannelId: string, userId: string) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const participant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      }
+    });
+
+    if (!participant) {
+      throw new ApiError(404, 'Not a participant');
+    }
+
+    if (participant.role === ParticipantRole.OWNER) {
+      throw new ApiError(400, 'Owner cannot leave. Transfer ownership first.');
+    }
+
+    await prisma.groupChannelParticipant.delete({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      }
+    });
+
+    if (!groupChannel.isChannel) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: USER_SELECT_FIELDS,
+      });
+
+      if (user) {
+        const userName = getUserDisplayName(user.firstName, user.lastName);
+        await createSystemMessage(
+          groupChannelId,
+          {
+            type: SystemMessageType.USER_LEFT_CHAT,
+            variables: { userName }
+          },
+          undefined,
+          ChatContextType.GROUP
+        );
+      }
+    }
+
+    return 'Successfully left the group/channel';
+  }
+
+  static async inviteUser(
+    groupChannelId: string,
+    senderId: string,
+    receiverId: string,
+    message?: string
+  ) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const senderParticipant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId: senderId
+        }
+      }
+    });
+
+    if (!senderParticipant) {
+      throw new ApiError(403, 'Only participants can invite users');
+    }
+
+    // Check if receiver is already a participant
+    const existingParticipant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId: receiverId
+        }
+      }
+    });
+
+    if (existingParticipant) {
+      throw new ApiError(400, 'User is already a participant');
+    }
+
+    // Check for existing pending invite
+    const existingInvite = await prisma.groupChannelInvite.findFirst({
+      where: {
+        groupChannelId,
+        receiverId,
+        status: InviteStatus.PENDING
+      }
+    });
+
+    if (existingInvite) {
+      throw new ApiError(400, 'Invitation already sent');
+    }
+
+    const invite = await prisma.groupChannelInvite.create({
+      data: {
+        groupChannelId,
+        senderId,
+        receiverId,
+        message,
+        status: InviteStatus.PENDING
+      },
+      include: {
+        sender: {
+          select: USER_SELECT_FIELDS
+        },
+        receiver: {
+          select: USER_SELECT_FIELDS
+        },
+        groupChannel: true
+      }
+    });
+
+    return invite;
+  }
+
+  static async acceptInvite(inviteId: string, userId: string) {
+    const invite = await prisma.groupChannelInvite.findUnique({
+      where: { id: inviteId },
+      include: {
+        groupChannel: true
+      }
+    });
+
+    if (!invite) {
+      throw new ApiError(404, 'Invitation not found');
+    }
+
+    if (invite.receiverId !== userId) {
+      throw new ApiError(403, 'This invitation is not for you');
+    }
+
+    if (invite.status !== InviteStatus.PENDING) {
+      throw new ApiError(400, 'Invitation is no longer pending');
+    }
+
+    if (invite.expiresAt && invite.expiresAt < new Date()) {
+      throw new ApiError(400, 'Invitation has expired');
+    }
+
+    // Update invite status
+    await prisma.groupChannelInvite.update({
+      where: { id: inviteId },
+      data: { status: InviteStatus.ACCEPTED }
+    });
+
+    // Add user as participant
+    await prisma.groupChannelParticipant.create({
+      data: {
+        groupChannelId: invite.groupChannelId,
+        userId,
+        role: ParticipantRole.PARTICIPANT
+      }
+    });
+
+    if (!invite.groupChannel.isChannel) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: USER_SELECT_FIELDS,
+      });
+
+      if (user) {
+        const userName = getUserDisplayName(user.firstName, user.lastName);
+        await createSystemMessage(
+          invite.groupChannelId,
+          {
+            type: SystemMessageType.USER_JOINED_CHAT,
+            variables: { userName }
+          },
+          undefined,
+          ChatContextType.GROUP
+        );
+      }
+    }
+
+    return 'Successfully accepted invitation';
+  }
+
+  static async hideGroupChannel(groupChannelId: string, userId: string) {
+    const participant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      }
+    });
+
+    if (!participant) {
+      throw new ApiError(404, 'Not a participant');
+    }
+
+    await prisma.groupChannelParticipant.update({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      },
+      data: {
+        hidden: true
+      }
+    });
+
+    return { success: true };
+  }
+
+  static async unhideGroupChannel(groupChannelId: string, userId: string) {
+    const participant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      }
+    });
+
+    if (!participant) {
+      throw new ApiError(404, 'Not a participant');
+    }
+
+    await prisma.groupChannelParticipant.update({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      },
+      data: {
+        hidden: false
+      }
+    });
+
+    return { success: true };
+  }
+
+  static async isParticipant(groupChannelId: string, userId: string): Promise<boolean> {
+    const participant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      }
+    });
+
+    return !!participant;
+  }
+
+  static async getParticipants(groupChannelId: string, userId: string) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const userParticipant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      }
+    });
+
+    if (!userParticipant) {
+      throw new ApiError(403, 'Only participants can view participants');
+    }
+
+    const participants = await prisma.groupChannelParticipant.findMany({
+      where: { groupChannelId },
+      include: {
+        user: {
+          select: USER_SELECT_FIELDS
+        }
+      },
+      orderBy: [
+        { role: 'asc' },
+        { joinedAt: 'asc' }
+      ]
+    });
+
+    return participants;
+  }
+
+  static async getInvites(groupChannelId: string, userId: string) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const userParticipant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      }
+    });
+
+    if (!userParticipant) {
+      throw new ApiError(403, 'Only participants can view invites');
+    }
+
+    const invites = await prisma.groupChannelInvite.findMany({
+      where: {
+        groupChannelId,
+        status: InviteStatus.PENDING
+      },
+      include: {
+        sender: {
+          select: USER_SELECT_FIELDS
+        },
+        receiver: {
+          select: USER_SELECT_FIELDS
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return invites;
+  }
+
+  static async promoteToAdmin(groupChannelId: string, targetUserId: string, userId: string) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const isOwner = await this.isGroupChannelOwner(groupChannelId, userId);
+    if (!isOwner) {
+      throw new ApiError(403, 'Only owner can promote to admin');
+    }
+
+    const participant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId: targetUserId
+        }
+      }
+    });
+
+    if (!participant) {
+      throw new ApiError(404, 'Participant not found');
+    }
+
+    if (participant.role === ParticipantRole.OWNER) {
+      throw new ApiError(400, 'Owner is already the highest role');
+    }
+
+    if (participant.role === ParticipantRole.ADMIN) {
+      throw new ApiError(400, 'User is already an admin');
+    }
+
+    await prisma.groupChannelParticipant.update({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId: targetUserId
+        }
+      },
+      data: {
+        role: ParticipantRole.ADMIN
+      }
+    });
+
+    return { success: true };
+  }
+
+  static async removeAdmin(groupChannelId: string, targetUserId: string, userId: string) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const isOwner = await this.isGroupChannelOwner(groupChannelId, userId);
+    if (!isOwner) {
+      throw new ApiError(403, 'Only owner can remove admin');
+    }
+
+    const participant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId: targetUserId
+        }
+      }
+    });
+
+    if (!participant || participant.role !== ParticipantRole.ADMIN) {
+      throw new ApiError(404, 'Admin participant not found');
+    }
+
+    await prisma.groupChannelParticipant.update({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId: targetUserId
+        }
+      },
+      data: {
+        role: ParticipantRole.PARTICIPANT
+      }
+    });
+
+    return { success: true };
+  }
+
+  static async removeParticipant(groupChannelId: string, targetUserId: string, userId: string) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const targetParticipant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId: targetUserId
+        }
+      }
+    });
+
+    if (!targetParticipant) {
+      throw new ApiError(404, 'Participant not found');
+    }
+
+    if (targetParticipant.role === ParticipantRole.OWNER) {
+      throw new ApiError(400, 'Cannot remove owner. Transfer ownership first.');
+    }
+
+    const currentUserParticipant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      }
+    });
+
+    const isOwner = currentUserParticipant?.role === ParticipantRole.OWNER;
+    const isAdmin = currentUserParticipant?.role === ParticipantRole.ADMIN;
+
+    if (!isOwner && !isAdmin) {
+      throw new ApiError(403, 'Only owner or admin can remove participants');
+    }
+
+    if (isAdmin && targetParticipant.role === ParticipantRole.ADMIN) {
+      throw new ApiError(403, 'Admins cannot remove other admins');
+    }
+
+    await prisma.groupChannelParticipant.delete({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId: targetUserId
+        }
+      }
+    });
+
+    if (!groupChannel.isChannel) {
+      const user = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: USER_SELECT_FIELDS,
+      });
+
+      if (user) {
+        const userName = getUserDisplayName(user.firstName, user.lastName);
+        await createSystemMessage(
+          groupChannelId,
+          {
+            type: SystemMessageType.USER_LEFT_CHAT,
+            variables: { userName }
+          },
+          undefined,
+          ChatContextType.GROUP
+        );
+      }
+    }
+
+    return { success: true };
+  }
+
+  static async transferOwnership(groupChannelId: string, newOwnerId: string, userId: string) {
+    const groupChannel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId }
+    });
+
+    if (!groupChannel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+
+    const isOwner = await this.isGroupChannelOwner(groupChannelId, userId);
+    if (!isOwner) {
+      throw new ApiError(403, 'Only owner can transfer ownership');
+    }
+
+    const currentOwnerParticipant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId
+        }
+      }
+    });
+
+    if (!currentOwnerParticipant || currentOwnerParticipant.role !== ParticipantRole.OWNER) {
+      throw new ApiError(403, 'User is not the owner');
+    }
+
+    const newOwnerParticipant = await prisma.groupChannelParticipant.findUnique({
+      where: {
+        groupChannelId_userId: {
+          groupChannelId,
+          userId: newOwnerId
+        }
+      }
+    });
+
+    if (!newOwnerParticipant) {
+      throw new ApiError(404, 'User is not a participant');
+    }
+
+    if (newOwnerParticipant.role === ParticipantRole.OWNER) {
+      throw new ApiError(400, 'User is already the owner');
+    }
+
+    await prisma.$transaction([
+      prisma.groupChannelParticipant.update({
+        where: {
+          groupChannelId_userId: {
+            groupChannelId,
+            userId: newOwnerId
+          }
+        },
+        data: {
+          role: ParticipantRole.OWNER
+        }
+      }),
+      prisma.groupChannelParticipant.update({
+        where: {
+          groupChannelId_userId: {
+            groupChannelId,
+            userId
+          }
+        },
+        data: {
+          role: ParticipantRole.ADMIN
+        }
+      })
+    ]);
+
+    const newOwnerUser = await prisma.user.findUnique({
+      where: { id: newOwnerId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+
+    if (newOwnerUser) {
+      const newOwnerName = getUserDisplayName(newOwnerUser.firstName, newOwnerUser.lastName);
+      try {
+        await createSystemMessage(
+          groupChannelId,
+          {
+            type: SystemMessageType.OWNERSHIP_TRANSFERRED,
+            variables: { newOwnerName }
+          },
+          undefined,
+          ChatContextType.GROUP
+        );
+      } catch (error) {
+        console.error('Failed to create system message for ownership transfer:', error);
+      }
+    }
+
+    return { success: true };
+  }
+
+  static async cancelInvite(inviteId: string, userId: string) {
+    const invite = await prisma.groupChannelInvite.findUnique({
+      where: { id: inviteId },
+      include: {
+        groupChannel: true
+      }
+    });
+
+    if (!invite) {
+      throw new ApiError(404, 'Invitation not found');
+    }
+
+    const isOwner = await this.isGroupChannelOwner(invite.groupChannelId, userId);
+    const isSender = invite.senderId === userId;
+
+    if (!isOwner && !isSender) {
+      throw new ApiError(403, 'Only sender or owner can cancel invitation');
+    }
+
+    if (invite.status !== InviteStatus.PENDING) {
+      throw new ApiError(400, 'Can only cancel pending invitations');
+    }
+
+    await prisma.groupChannelInvite.delete({
+      where: { id: inviteId }
+    });
+
+    return { success: true };
+  }
+}

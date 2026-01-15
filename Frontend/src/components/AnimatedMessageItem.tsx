@@ -21,6 +21,7 @@ interface AnimatedMessageItemProps {
   allMessages: ChatMessage[];
   onScrollToMessage?: (messageId: string) => void;
   disableReadTracking?: boolean;
+  isChannel?: boolean;
 }
 
 export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
@@ -36,6 +37,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   allMessages,
   onScrollToMessage,
   disableReadTracking = false,
+  isChannel = false,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -72,6 +74,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
         allMessages={allMessages}
         onScrollToMessage={onScrollToMessage}
         disableReadTracking={disableReadTracking}
+        isChannel={isChannel}
       />
     </div>
   );

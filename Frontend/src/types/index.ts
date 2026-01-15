@@ -358,6 +358,57 @@ export interface BugsResponse {
   };
 }
 
+export type BetType = 'SOCIAL';
+export type BetStatus = 'OPEN' | 'ACCEPTED' | 'RESOLVED' | 'CANCELLED' | 'NEEDS_REVIEW';
+export type BetConditionType = 'PREDEFINED' | 'CUSTOM';
+export type BetEntityType = 'USER' | 'TEAM';
+
+export type PredefinedCondition = 
+  | 'WIN_MATCH' 
+  | 'LOSE_MATCH' 
+  | 'TIE_MATCH'
+  | 'WIN_GAME'
+  | 'LOSE_GAME'
+  | 'WIN_SET'
+  | 'LOSE_SET'
+  | 'STREAK_3_0'
+  | 'STREAK_2_1';
+
+export interface BetCondition {
+  type: BetConditionType;
+  predefined?: PredefinedCondition;
+  customText?: string;
+  entityType: BetEntityType;
+  entityId?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface Bet {
+  id: string;
+  gameId: string;
+  creatorId: string;
+  creator: BasicUser;
+  type: BetType;
+  status: BetStatus;
+  condition: BetCondition;
+  stakeType: 'COINS' | 'TEXT';
+  stakeCoins?: number | null;
+  stakeText?: string | null;
+  rewardType: 'COINS' | 'TEXT';
+  rewardCoins?: number | null;
+  rewardText?: string | null;
+  acceptedBy?: string;
+  acceptedByUser?: BasicUser;
+  acceptedAt?: string;
+  winnerId?: string;
+  winner?: BasicUser;
+  resolvedAt?: string;
+  resolutionReason?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;

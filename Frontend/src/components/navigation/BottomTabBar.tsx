@@ -16,7 +16,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   const navigate = useNavigate();
   const { currentPage, setCurrentPage, setIsAnimating, chatsFilter } = useNavigationStore();
   const { counts } = useChatUnreadCounts();
-  const chatsUnread = counts.users + counts.bugs;
+  const chatsUnread = counts.users + counts.bugs + counts.channels;
   const user = useAuthStore((state) => state.user);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
@@ -90,20 +90,21 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
                 ref={(el) => { tabRefs.current[index] = el; }}
                 onClick={() => handleTabClick(tab.id, tab.path)}
                 className="flex flex-col items-center justify-center flex-1 h-full relative group"
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.85 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                layout
               >
                 <motion.div
                   className="relative"
                   animate={{
-                    scale: isActive ? 1.1 : 1,
-                    y: isActive ? -2 : 0,
+                    scale: isActive ? 1.3 : 1,
+                    y: isActive ? 7 : 0,
                   }}
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 >
                   <motion.div
                     animate={{
-                      scale: isActive ? [1, 1.2, 1.1] : 1,
+                      scale: isActive ? [1, 1.4, 1.3] : 1,
                     }}
                     transition={{
                       duration: 0.3,
@@ -135,19 +136,22 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
                   </AnimatePresence>
                 </motion.div>
                 
-                <motion.span
-                  className={`text-[10px] mt-0.5 transition-colors duration-300 ${
-                    isActive
-                      ? 'font-bold text-primary-600 dark:text-primary-400'
-                      : 'font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
-                  }`}
-                  animate={{
-                    scale: isActive ? 1.05 : 1,
-                  }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                >
-                  {tab.label}
-                </motion.span>
+                <div className="h-[14px] flex items-center justify-center">
+                  <AnimatePresence mode="wait">
+                    {!isActive && (
+                      <motion.span
+                        key="label"
+                        initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -4, scale: 0.8 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25, duration: 0.2 }}
+                        className="text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200"
+                      >
+                        {tab.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
 
                 {isActive && (
                   <motion.div
@@ -165,14 +169,15 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
             ref={(el) => { tabRefs.current[4] = el; }}
             onClick={() => handleTabClick('profile', '/profile')}
             className="flex flex-col items-center justify-center flex-1 h-full relative group"
-            whileTap={{ scale: 0.9 }}
+            whileTap={{ scale: 0.85 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+            layout
           >
             <motion.div
               className="relative"
               animate={{
-                scale: currentPage === 'profile' ? 1.1 : 1,
-                y: currentPage === 'profile' ? -2 : 0,
+                scale: currentPage === 'profile' ? 1.4 : 1.1,
+                y: currentPage === 'profile' ? 7 : 0,
               }}
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             >
@@ -183,7 +188,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
                     : 'ring-2 ring-transparent'
                 }`}
                 animate={{
-                  scale: currentPage === 'profile' ? [1, 1.15, 1.1] : 1,
+                  scale: currentPage === 'profile' ? [1, 1.4, 1.2] : 1,
                 }}
                 transition={{
                   scale: { duration: 0.3, times: [0, 0.5, 1] },
@@ -213,19 +218,22 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
               </motion.div>
             </motion.div>
             
-            <motion.span
-              className={`text-[10px] mt-0.5 transition-colors duration-300 ${
-                currentPage === 'profile'
-                  ? 'font-bold text-primary-600 dark:text-primary-400'
-                  : 'font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
-              }`}
-              animate={{
-                scale: currentPage === 'profile' ? 1.05 : 1,
-              }}
-              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-            >
-              {t('bottomTab.profile', { defaultValue: 'Profile' })}
-            </motion.span>
+            <div className="h-[14px] flex items-center justify-center">
+              <AnimatePresence mode="wait">
+                {currentPage !== 'profile' && (
+                  <motion.span
+                    key="profile-label"
+                    initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.8 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25, duration: 0.2 }}
+                    className="text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200"
+                  >
+                    {t('bottomTab.profile', { defaultValue: 'Profile' })}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
 
             {currentPage === 'profile' && (
               <motion.div

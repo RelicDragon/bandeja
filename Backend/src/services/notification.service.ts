@@ -8,11 +8,13 @@ import { createInvitePushNotification } from './push/notifications/invite-push.n
 import { createGameChatPushNotification } from './push/notifications/game-chat-push.notification';
 import { createUserChatPushNotification } from './push/notifications/user-chat-push.notification';
 import { createBugChatPushNotification } from './push/notifications/bug-chat-push.notification';
+import { createGroupChatPushNotification } from './push/notifications/group-chat-push.notification';
 import { createGameSystemMessagePushNotification } from './push/notifications/game-system-push.notification';
 import { createGameReminderPushNotification } from './push/notifications/game-reminder-push.notification';
 import { createGameResultsPushNotification } from './push/notifications/game-results-push.notification';
 import { createLeagueRoundStartPushNotification } from './push/notifications/league-round-start-push.notification';
 import { createNewGamePushNotification } from './push/notifications/new-game-push.notification';
+import { createBetResolvedPushNotification, createBetNeedsReviewPushNotification } from './push/notifications/bet-resolved-push.notification';
 
 class NotificationService {
   async sendNotification(request: UnifiedNotificationRequest) {
@@ -376,6 +378,63 @@ class NotificationService {
     await telegramNotificationService.sendBugChatNotification(message, bug, sender);
   }
 
+  async sendGroupChatNotification(message: any, groupChannel: any, sender: any, _recipients: any[]) {
+    const mentionIds = message.mentionIds || [];
+    const hasMentions = mentionIds.length > 0;
+
+    const participants = await prisma.groupChannelParticipant.findMany({
+      where: { groupChannelId: groupChannel.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            language: true,
+          }
+        }
+      }
+    });
+
+    if (hasMentions) {
+      const mentionedUserIds = new Set(mentionIds);
+
+      for (const participant of participants) {
+        const user = participant.user;
+        if (user.id === sender.id) continue;
+        if (!mentionedUserIds.has(user.id)) continue;
+
+        const payload = await createGroupChatPushNotification(message, groupChannel, sender, user);
+        
+        if (payload) {
+          await this.sendNotification({
+            userId: user.id,
+            type: NotificationType.GROUP_CHAT,
+            payload
+          });
+        }
+      }
+    } else {
+      for (const participant of participants) {
+        const user = participant.user;
+        if (user.id === sender.id) continue;
+
+        const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GROUP, groupChannel.id);
+        if (isMuted) continue;
+
+        const payload = await createGroupChatPushNotification(message, groupChannel, sender, user);
+        
+        if (payload) {
+          await this.sendNotification({
+            userId: user.id,
+            type: NotificationType.GROUP_CHAT,
+            payload
+          });
+        }
+      }
+    }
+
+    await telegramNotificationService.sendGroupChatNotification(message, groupChannel, sender);
+  }
+
   async sendGameSystemMessageNotification(message: any, game: any) {
     const chatType = message.chatType as ChatType;
     const participants = await prisma.gameParticipant.findMany({
@@ -466,6 +525,40 @@ class NotificationService {
     await telegramNotificationService.sendLeagueRoundStartNotification(game, user);
   }
 
+  async sendBetResolvedNotification(betId: string, userId: string, isWinner: boolean, totalCoinsWon?: number) {
+    try {
+      const payload = await createBetResolvedPushNotification(betId, userId, isWinner, totalCoinsWon);
+      if (payload) {
+        await this.sendNotification({
+          userId,
+          type: NotificationType.GAME_SYSTEM_MESSAGE,
+          payload
+        });
+      }
+
+      await telegramNotificationService.sendBetResolvedNotification(betId, userId, isWinner, totalCoinsWon);
+    } catch (error) {
+      console.error(`Failed to send bet resolved notification to user ${userId}:`, error);
+    }
+  }
+
+  async sendBetNeedsReviewNotification(betId: string, userId: string) {
+    try {
+      const payload = await createBetNeedsReviewPushNotification(betId, userId);
+      if (payload) {
+        await this.sendNotification({
+          userId,
+          type: NotificationType.GAME_SYSTEM_MESSAGE,
+          payload
+        });
+      }
+
+      await telegramNotificationService.sendBetNeedsReviewNotification(betId, userId);
+    } catch (error) {
+      console.error(`Failed to send bet needs review notification to user ${userId}:`, error);
+    }
+  }
+
   async sendNewGameNotification(game: any, cityId: string, creatorId: string) {
     if (!game.isPublic || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
       return;
@@ -552,6 +645,7 @@ class NotificationService {
         return user.sendTelegramReminders;
       case NotificationType.GAME_CHAT:
       case NotificationType.BUG_CHAT:
+      case NotificationType.GROUP_CHAT:
       case NotificationType.GAME_SYSTEM_MESSAGE:
       case NotificationType.GAME_RESULTS:
       case NotificationType.NEW_GAME:
@@ -573,6 +667,7 @@ class NotificationService {
         return user.sendPushReminders;
       case NotificationType.GAME_CHAT:
       case NotificationType.BUG_CHAT:
+      case NotificationType.GROUP_CHAT:
       case NotificationType.GAME_SYSTEM_MESSAGE:
       case NotificationType.GAME_RESULTS:
       case NotificationType.NEW_GAME:

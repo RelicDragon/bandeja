@@ -2,7 +2,6 @@ import prisma from '../config/database';
 import { InviteStatus, ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from '../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
-import { GameService } from './game/game.service';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants } from '../utils/participantValidation';
 import { fetchGameWithPlayingParticipants } from '../utils/gameQueries';

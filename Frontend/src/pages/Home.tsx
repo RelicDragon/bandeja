@@ -173,8 +173,9 @@ export const HomeContent = () => {
       const gamesWithUnread = unreadObjects.games.map(item => item.game);
       const bugsWithUnreadMessages = unreadObjects.bugs.map(item => item.bug);
       const userChatsWithUnread = unreadObjects.userChats.map(item => item.chat);
+      const groupChannelsWithUnread = (unreadObjects.groupChannels || []).map(item => item.groupChannel);
       
-      if (gamesWithUnread.length === 0 && bugsWithUnreadMessages.length === 0 && userChatsWithUnread.length === 0) {
+      if (gamesWithUnread.length === 0 && bugsWithUnreadMessages.length === 0 && userChatsWithUnread.length === 0 && groupChannelsWithUnread.length === 0) {
         setIsMarkingAllAsRead(false);
         return;
       }
@@ -192,7 +193,11 @@ export const HomeContent = () => {
         chatApi.markUserChatAsRead(chat.id)
       );
 
-      await Promise.all([...markPromises, ...bugMarkPromises, ...userChatMarkPromises]);
+      const groupChannelMarkPromises = groupChannelsWithUnread.map(groupChannel =>
+        chatApi.markAllMessagesAsReadForContext('GROUP', groupChannel.id)
+      );
+
+      await Promise.all([...markPromises, ...bugMarkPromises, ...userChatMarkPromises, ...groupChannelMarkPromises]);
 
       const { setUnreadMessages } = useHeaderStore.getState();
       setUnreadMessages(0);

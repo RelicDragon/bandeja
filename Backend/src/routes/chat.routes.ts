@@ -28,10 +28,14 @@ import {
   getBugsUnreadCounts,
   markAllBugMessagesAsRead,
   reportMessage,
+  translateMessage,
   getUnreadObjects,
   muteChat,
   unmuteChat,
-  isChatMuted
+  isChatMuted,
+  confirmMessageReceipt,
+  getMissedMessages,
+  markAllMessagesAsReadForContext
 } from '../controllers/chat.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -45,9 +49,12 @@ router.post(
   validate([
     body('contextId').optional().isString().withMessage('Context ID must be a string'),
     body('gameId').optional().isString().withMessage('Game ID must be a string'),
-    body('chatContextType').optional().isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid chat context type'),
+    body('chatContextType').optional().isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid chat context type'),
     body('content').optional().isString().withMessage('Message content must be a string'),
     body('mediaUrls').optional().isArray().withMessage('Media URLs must be an array'),
+    body('thumbnailUrls').optional().isArray().withMessage('Thumbnail URLs must be an array'),
+    body('replyToId').optional().isString().withMessage('Reply to ID must be a string'),
+    body('mentionIds').optional().isArray().withMessage('Mention IDs must be an array'),
     body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type')
   ]),
   createMessage
@@ -132,11 +139,19 @@ router.post(
   reportMessage
 );
 
+router.post(
+  '/messages/:messageId/translate',
+  validate([
+    param('messageId').notEmpty().withMessage('Message ID is required')
+  ]),
+  translateMessage
+);
+
 // Chat Mute Routes
 router.post(
   '/mute',
   validate([
-    body('chatContextType').isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid chat context type'),
+    body('chatContextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid chat context type'),
     body('contextId').notEmpty().withMessage('Context ID is required')
   ]),
   muteChat
@@ -145,7 +160,7 @@ router.post(
 router.post(
   '/unmute',
   validate([
-    body('chatContextType').isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid chat context type'),
+    body('chatContextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid chat context type'),
     body('contextId').notEmpty().withMessage('Context ID is required')
   ]),
   unmuteChat
@@ -154,10 +169,39 @@ router.post(
 router.get(
   '/mute-status',
   validate([
-    query('chatContextType').isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid chat context type'),
+    query('chatContextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid chat context type'),
     query('contextId').notEmpty().withMessage('Context ID is required')
   ]),
   isChatMuted
+);
+
+router.post(
+  '/messages/confirm-receipt',
+  validate([
+    body('messageId').notEmpty().withMessage('messageId is required'),
+    body('deliveryMethod').isIn(['socket', 'push']).withMessage('deliveryMethod must be socket or push')
+  ]),
+  confirmMessageReceipt
+);
+
+router.get(
+  '/messages/missed',
+  validate([
+    query('contextType').isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid contextType'),
+    query('contextId').notEmpty().withMessage('contextId is required'),
+    query('lastMessageId').optional().isString().withMessage('lastMessageId must be a string')
+  ]),
+  getMissedMessages
+);
+
+router.post(
+  '/mark-all-read',
+  validate([
+    body('contextType').isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid contextType'),
+    body('contextId').notEmpty().withMessage('contextId is required'),
+    body('chatTypes').optional().isArray().withMessage('chatTypes must be an array')
+  ]),
+  markAllMessagesAsReadForContext
 );
 
 export default router;

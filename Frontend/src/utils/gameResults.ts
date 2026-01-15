@@ -1,4 +1,5 @@
 import { Game, User } from '@/types';
+import { GroupChannel } from '@/api/chat';
 
 /**
  * Checks if a user is admin or owner of a game (including parent game)
@@ -21,6 +22,34 @@ export const isUserGameAdminOrOwner = (game: Game, userId: string): boolean => {
   );
 
   return isParentGameAdminOrOwner || false;
+};
+
+/**
+ * Checks if a user is owner of a group/channel
+ * 
+ * @param groupChannel - The group/channel object
+ * @param userId - The user ID to check
+ * @returns boolean indicating if the user is the owner
+ */
+export const isGroupChannelOwner = (groupChannel: GroupChannel, userId: string): boolean => {
+  if (!groupChannel?.participants) return false;
+  return groupChannel.participants.some(
+    (p) => p.userId === userId && p.role === 'OWNER'
+  );
+};
+
+/**
+ * Checks if a user is admin or owner of a group/channel
+ * 
+ * @param groupChannel - The group/channel object
+ * @param userId - The user ID to check
+ * @returns boolean indicating if the user has admin/owner permissions
+ */
+export const isGroupChannelAdminOrOwner = (groupChannel: GroupChannel, userId: string): boolean => {
+  if (!groupChannel?.participants) return false;
+  return groupChannel.participants.some(
+    (p) => p.userId === userId && ['OWNER', 'ADMIN'].includes(p.role)
+  );
 };
 
 /**

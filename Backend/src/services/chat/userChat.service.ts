@@ -35,7 +35,8 @@ export class UserChatService {
         const lastMessage = await prisma.chatMessage.findFirst({
           where: {
             chatContextType: 'USER',
-            contextId: chat.id
+            contextId: chat.id,
+            senderId: { not: null }
           },
           orderBy: { createdAt: 'desc' },
           include: {

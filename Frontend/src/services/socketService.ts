@@ -14,33 +14,34 @@ export interface UserChatReadReceipt {
 }
 
 export interface SocketEvents {
-  'new-message': (message: any) => void;
-  'new-bug-message': (message: any) => void;
-  'new-user-chat-message': (message: NewUserChatMessage) => void;
   'new-invite': (invite: any) => void;
   'invite-deleted': (data: { inviteId: string; gameId?: string }) => void;
-  'message-reaction': (reaction: any) => void;
-  'bug-message-reaction': (reaction: any) => void;
-  'user-chat-message-reaction': (reaction: any) => void;
-  'read-receipt': (readReceipt: any) => void;
-  'bug-read-receipt': (readReceipt: any) => void;
-  'user-chat-read-receipt': (readReceipt: UserChatReadReceipt) => void;
-  'message-deleted': (data: { messageId: string }) => void;
-  'bug-message-deleted': (data: { messageId: string }) => void;
-  'user-chat-message-deleted': (data: { messageId: string }) => void;
-  'typing-indicator': (data: { userId: string; isTyping: boolean }) => void;
-  'bug-typing-indicator': (data: { userId: string; isTyping: boolean }) => void;
-  'user-chat-typing-indicator': (data: { userId: string; isTyping: boolean }) => void;
   'joined-game-room': (data: { gameId: string }) => void;
   'left-game-room': (data: { gameId: string }) => void;
   'joined-bug-room': (data: { bugId: string }) => void;
   'left-bug-room': (data: { bugId: string }) => void;
   'joined-user-chat-room': (data: { chatId: string }) => void;
   'left-user-chat-room': (data: { chatId: string }) => void;
+  'joined-chat-room': (data: { contextType: string; contextId: string }) => void;
+  'left-chat-room': (data: { contextType: string; contextId: string }) => void;
   'game-updated': (data: { gameId: string; senderId: string; game: any }) => void;
   'game-results-updated': (data: { gameId: string }) => void;
   'wallet-update': (data: { wallet: number }) => void;
   'error': (error: { message: string }) => void;
+  // Unified chat events
+  'chat:message': (data: { contextType: string; contextId: string; message: any; messageId?: string; timestamp?: string }) => void;
+  'chat:reaction': (data: { contextType: string; contextId: string; reaction: any }) => void;
+  'chat:read-receipt': (data: { contextType: string; contextId: string; readReceipt: any }) => void;
+  'chat:deleted': (data: { contextType: string; contextId: string; messageId: string }) => void;
+  'chat:unread-count': (data: { contextType: string; contextId: string; unreadCount: number }) => void;
+  'sync-required': (data: { timestamp: string }) => void;
+  'sync-ready': (data: { contextType: string; contextId: string }) => void;
+  'reconnect': () => void;
+  // Bet events
+  'bet:created': (data: { gameId: string; bet: any }) => void;
+  'bet:updated': (data: { gameId: string; bet: any }) => void;
+  'bet:deleted': (data: { gameId: string; betId: string }) => void;
+  'bet:resolved': (data: { gameId: string; betId: string; winnerId: string; loserId: string }) => void;
 }
 
 class SocketService {
@@ -132,6 +133,18 @@ class SocketService {
         // Server disconnected, try to reconnect
         this.handleReconnect();
       }
+    });
+
+    this.socket.on('reconnect', () => {
+      console.log('[SocketService] Reconnected, checking for missed messages');
+      // Trigger sync check
+      this.handleReconnectionSync();
+    });
+
+    this.socket.on('sync-required', (data: { timestamp: string }) => {
+      console.log('[SocketService] Server requested sync:', data);
+      // Notify components to sync
+      this.emit('sync-required', data);
     });
 
     this.socket.on('connect_error', (error) => {
@@ -292,6 +305,36 @@ class SocketService {
     }
   }
 
+  // ========== UNIFIED CHAT METHODS (NEW) ==========
+  // Generic join chat room based on context type
+  public async joinChatRoom(contextType: 'GAME' | 'BUG' | 'USER' | 'GROUP', contextId: string) {
+    if (contextType === 'GAME') {
+      return this.joinGameRoom(contextId);
+    } else if (contextType === 'BUG') {
+      return this.joinBugRoom(contextId);
+    } else if (contextType === 'USER') {
+      return this.joinUserChatRoom(contextId);
+    } else if (contextType === 'GROUP') {
+      if (!this.socket?.connected) {
+        await this.connect();
+      }
+      this.socket?.emit('join-chat-room', { contextType, contextId });
+    }
+  }
+
+  // Generic leave chat room based on context type
+  public leaveChatRoom(contextType: 'GAME' | 'BUG' | 'USER' | 'GROUP', contextId: string) {
+    if (contextType === 'GAME') {
+      return this.leaveGameRoom(contextId);
+    } else if (contextType === 'BUG') {
+      return this.leaveBugRoom(contextId);
+    } else if (contextType === 'USER') {
+      return this.leaveUserChatRoom(contextId);
+    } else if (contextType === 'GROUP') {
+      this.socket?.emit('leave-chat-room', { contextType, contextId });
+    }
+  }
+
   // Listen to events
   public on<K extends keyof SocketEvents>(event: K, callback: SocketEvents[K]) {
     this.ensureConnection();
@@ -350,6 +393,65 @@ class SocketService {
     this.disconnect();
     this.reconnectAttempts = 0;
     this.connect();
+  }
+
+  /**
+   * Acknowledge message receipt via socket
+   */
+  public acknowledgeMessage(messageId: string, contextType: 'GAME' | 'BUG' | 'USER', contextId: string) {
+    if (!this.socket || !this.socket.connected) return;
+
+    this.socket.emit('chat:message-ack', {
+      messageId,
+      contextType,
+      contextId
+    });
+  }
+
+  /**
+   * Confirm message receipt (socket or push)
+   */
+  public async confirmMessageReceipt(messageId: string, deliveryMethod: 'socket' | 'push') {
+    try {
+      const { api } = await import('@/api');
+      await api.post('/chat/messages/confirm-receipt', {
+        messageId,
+        deliveryMethod
+      });
+    } catch (error) {
+      console.error('Failed to confirm message receipt:', error);
+    }
+  }
+
+  /**
+   * Request missed messages after reconnection
+   */
+  public async syncMessages(contextType: 'GAME' | 'BUG' | 'USER', contextId: string, lastMessageId?: string) {
+    if (!this.socket || !this.socket.connected) return;
+
+    this.socket.emit('sync-messages', {
+      contextType,
+      contextId,
+      lastMessageId
+    });
+  }
+
+  /**
+   * Handle reconnection sync
+   */
+  private handleReconnectionSync() {
+    // This will be called by components that need to sync
+    this.emit('reconnect', {});
+  }
+
+  /**
+   * Emit custom event (for internal use)
+   */
+  private emit(event: string, data: any) {
+    // This is a simple event emitter pattern
+    if (this.socket) {
+      this.socket.emit(event, data);
+    }
   }
 }
 

@@ -156,15 +156,15 @@ export const uploadChatImage = asyncHandler(async (req: AuthRequest, res: Respon
     throw new ApiError(400, 'No image file provided');
   }
 
-  const { gameId, bugId, userChatId } = req.body;
+  const { gameId, bugId, userChatId, groupChannelId } = req.body;
   const senderId = req.userId;
 
   if (!senderId) {
     throw new ApiError(401, 'Unauthorized');
   }
 
-  if (!gameId && !bugId && !userChatId) {
-    throw new ApiError(400, 'At least one of gameId, bugId, or userChatId is required');
+  if (!gameId && !bugId && !userChatId && !groupChannelId) {
+    throw new ApiError(400, 'At least one of gameId, bugId, userChatId, or groupChannelId is required');
   }
 
   // Validate access based on context type
@@ -174,6 +174,8 @@ export const uploadChatImage = asyncHandler(async (req: AuthRequest, res: Respon
     await MessageService.validateBugAccess(bugId, senderId, true);
   } else if (userChatId) {
     await MessageService.validateUserChatAccess(userChatId, senderId);
+  } else if (groupChannelId) {
+    await MessageService.validateGroupChannelAccess(groupChannelId, senderId, true);
   }
 
   // Process chat image

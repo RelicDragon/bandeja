@@ -427,6 +427,10 @@ function AppContent() {
         />
         <Route
           path="/user-chat/:id"
+          element={<GameChat />}
+        />
+        <Route
+          path="/group-chat/:id"
           element={
             <ProtectedRoute>
               {!isProfileComplete(user) ? (

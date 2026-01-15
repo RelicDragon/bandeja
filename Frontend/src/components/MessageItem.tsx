@@ -12,6 +12,7 @@ import { parseSystemMessage, useSystemMessageTranslation } from '@/utils/systemM
 import { FullscreenImageViewer } from './FullscreenImageViewer';
 import { ReportMessageModal } from './ReportMessageModal';
 import { parseMentions } from '@/utils/parseMentions';
+import { extractLanguageCode } from '@/utils/language';
 
 interface ContextMenuState {
   isOpen: boolean;
@@ -31,6 +32,7 @@ interface MessageItemProps {
   allMessages?: ChatMessage[];
   onScrollToMessage?: (messageId: string) => void;
   disableReadTracking?: boolean;
+  isChannel?: boolean;
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -45,6 +47,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   allMessages = [],
   onScrollToMessage,
   disableReadTracking = false,
+  isChannel = false,
 }) => {
   const { user } = useAuthStore();
   const { translateSystemMessage } = useSystemMessageTranslation();
@@ -55,36 +58,67 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [reportMessage, setReportMessage] = useState<ChatMessage | null>(null);
   const [selectedMentionUserId, setSelectedMentionUserId] = useState<string | null>(null);
-  const isOwnMessage = message.senderId === user?.id;
-  const isSystemMessage = !message.senderId;
+  const [currentMessage, setCurrentMessage] = useState(message);
+  const isOwnMessage = currentMessage.senderId === user?.id;
+  const isSystemMessage = !currentMessage.senderId;
   const { observeMessage, unobserveMessage } = useMessageReadTracking(disableReadTracking);
   
-  const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === message.id;
+  const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === currentMessage.id;
+
+  useEffect(() => {
+    setCurrentMessage(message);
+  }, [message]);
 
   // Parse system message data
-  const systemMessageData = isSystemMessage ? parseSystemMessage(message.content) : null;
+  const systemMessageData = isSystemMessage ? parseSystemMessage(currentMessage.content) : null;
   const displayContent = systemMessageData 
     ? translateSystemMessage(systemMessageData)
-    : message.content;
+    : currentMessage.content;
 
   const parsedContent = isSystemMessage ? null : parseMentions(displayContent);
+
+  const userLanguageCode = user?.language ? extractLanguageCode(user.language).toLowerCase() : 'en';
+  
+  // Support both translation (singular) and translations (array) for backward compatibility
+  let matchingTranslation = currentMessage.translation;
+  if (currentMessage.translations && currentMessage.translations.length > 0) {
+    matchingTranslation = currentMessage.translations.find(
+      t => t.languageCode.toLowerCase() === userLanguageCode
+    ) || currentMessage.translation;
+  }
+  
+  const hasTranslation = matchingTranslation && 
+    matchingTranslation.languageCode.toLowerCase() === userLanguageCode;
+  const translationContent = hasTranslation && matchingTranslation ? parseMentions(matchingTranslation.translation) : null;
 
   const getSenderName = () => {
     if (isSystemMessage) {
       return 'System';
     }
-    if (message.sender?.firstName && message.sender?.lastName) {
-      return `${message.sender.firstName} ${message.sender.lastName}`;
+    if (currentMessage.sender?.firstName && currentMessage.sender?.lastName) {
+      return `${currentMessage.sender.firstName} ${currentMessage.sender.lastName}`;
     }
-    return message.sender?.firstName || 'Unknown';
+    return currentMessage.sender?.firstName || 'Unknown';
+  };
+
+  const handleTranslationUpdate = (messageId: string, translation: { languageCode: string; translation: string }) => {
+    if (messageId === currentMessage.id) {
+      setCurrentMessage({
+        ...currentMessage,
+        translation,
+        translations: currentMessage.translations 
+          ? [...currentMessage.translations.filter(t => t.languageCode !== translation.languageCode), translation]
+          : [translation]
+      });
+    }
   };
 
   const getThumbnailUrl = (index: number): string => {
-    if (message.thumbnailUrls && message.thumbnailUrls[index]) {
-      return message.thumbnailUrls[index] || '';
+    if (currentMessage.thumbnailUrls && currentMessage.thumbnailUrls[index]) {
+      return currentMessage.thumbnailUrls[index] || '';
     }
     // Fallback to original URL if thumbnail not available
-    return message.mediaUrls[index] || '';
+    return currentMessage.mediaUrls[index] || '';
   };
 
   const handleImageClick = (imageUrl: string) => {
@@ -119,26 +153,26 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     
     const currentReaction = getCurrentUserReaction();
     if (currentReaction === '❤️') {
-      onRemoveReaction(message.id);
+      onRemoveReaction(currentMessage.id);
     } else {
-      onAddReaction(message.id, '❤️');
+      onAddReaction(currentMessage.id, '❤️');
     }
   };
 
   const getCurrentUserReaction = () => {
-    return message.reactions.find(r => r.userId === user?.id)?.emoji;
+    return currentMessage.reactions.find(r => r.userId === user?.id)?.emoji;
   };
 
   const getReactionCounts = () => {
     const counts: { [emoji: string]: number } = {};
-    message.reactions.forEach(reaction => {
+    currentMessage.reactions.forEach(reaction => {
       counts[reaction.emoji] = (counts[reaction.emoji] || 0) + 1;
     });
     return counts;
   };
 
   const getReplyCount = () => {
-    return allMessages.filter(msg => msg.replyToId === message.id).length;
+    return allMessages.filter(msg => msg.replyToId === currentMessage.id).length;
   };
 
   const hasReplies = () => {
@@ -147,7 +181,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
   const handleScrollToReplies = () => {
     if (onScrollToMessage && hasReplies()) {
-      const replies = allMessages.filter(msg => msg.replyToId === message.id);
+      const replies = allMessages.filter(msg => msg.replyToId === currentMessage.id);
       if (replies.length > 0) {
         onScrollToMessage(replies[0].id);
       }
@@ -155,7 +189,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   };
 
   const handleDeleteStart = (messageId: string) => {
-    if (messageId === message.id) {
+    if (messageId === currentMessage.id) {
       setIsDeleting(true);
     }
   };
@@ -187,8 +221,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
   useEffect(() => {
     const element = messageRef.current;
-    if (element && !isOwnMessage && message.senderId) {
-      observeMessage(element, message.id, message.senderId);
+    const senderId = currentMessage.senderId;
+    if (element && !isOwnMessage && senderId) {
+      observeMessage(element, currentMessage.id, senderId);
     }
     
     return () => {
@@ -196,7 +231,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         unobserveMessage(element);
       }
     };
-  }, [message.id, message.senderId, isOwnMessage, observeMessage, unobserveMessage]);
+  }, [currentMessage.id, currentMessage.senderId, isOwnMessage, observeMessage, unobserveMessage]);
 
   useEffect(() => {
     // Add native DOM event listeners to prevent context menu and handle long press
@@ -220,7 +255,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       const clientY = e.clientY;
       
       longPressTimer.current = setTimeout(() => {
-        onOpenContextMenu(message.id, { x: clientX, y: clientY });
+        onOpenContextMenu(currentMessage.id, { x: clientX, y: clientY });
       }, 500);
     };
 
@@ -243,7 +278,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       const clientY = e.touches[0].clientY;
       
       longPressTimer.current = setTimeout(() => {
-        onOpenContextMenu(message.id, { x: clientX, y: clientY });
+        onOpenContextMenu(currentMessage.id, { x: clientX, y: clientY });
       }, 500);
     };
 
@@ -305,7 +340,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         reactionButton.removeEventListener('touchcancel', handleTouchCancel);
       }
     };
-  }, [message.id, onOpenContextMenu]);
+  }, [currentMessage.id, onOpenContextMenu]);
 
   return (
     <>
@@ -314,22 +349,22 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2 max-w-[80%]">
             <p className="text-xs text-gray-600 dark:text-gray-300 text-center">{displayContent}</p>
             <span className="text-[10px] text-gray-400 dark:text-gray-500 block text-center mt-1">
-              {formatMessageTime(message.createdAt)}
+              {formatMessageTime(currentMessage.createdAt)}
             </span>
           </div>
         </div>
       ) : (
         <div
           ref={messageRef}
-          className={`group flex select-none ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4 relative transition-all duration-300 ease-out ${
+          className={`group flex select-none ${isChannel ? 'justify-start' : (isOwnMessage ? 'justify-end' : 'justify-start')} mb-4 relative transition-all duration-300 ease-out ${
             isDeleting 
               ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' 
               : 'opacity-100 scale-100 translate-y-0'
           }`}
         >
           
-          <div className={`flex max-w-[85%] ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
-            {!isOwnMessage && (
+          <div className={`flex ${isChannel ? 'w-full max-w-full' : 'max-w-[85%]'} ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')}`}>
+            {(!isOwnMessage || isChannel) && (
               <div className="flex-shrink-0 mr-3 self-center">
                 <button
                   onClick={(e) => {
@@ -339,9 +374,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                   }}
                   className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-semibold hover:opacity-80 transition-opacity cursor-pointer"
                 >
-                  {message.sender?.avatar ? (
+                  {currentMessage.sender?.avatar ? (
                     <img
-                      src={message.sender.avatar || ''}
+                      src={currentMessage.sender.avatar || ''}
                       alt={getSenderName()}
                       className="w-8 h-8 rounded-full object-cover"
                     />
@@ -352,68 +387,155 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               </div>
             )}
             
-            <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}>
-              {!isOwnMessage && (
+            <div className={`flex flex-col ${isChannel ? 'items-start flex-1' : (isOwnMessage ? 'items-end' : 'items-start')}`}>
+              {(isChannel || !isOwnMessage) && (
                 <span className="text-xs text-gray-500 dark:text-gray-400 mb-0.5 px-2">{getSenderName()}</span>
               )}
               
               <div className="relative">
-                {message.replyTo && (
+                {currentMessage.replyTo && (
                   <ReplyPreview
-                    replyTo={message.replyTo}
+                    replyTo={currentMessage.replyTo}
                     onScrollToMessage={onScrollToMessage}
                     className="mb-1"
                   />
                 )}
                 
                 <div 
-                  className={`flex items-start select-none ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}
+                  className={`flex items-start select-none ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')}`}
                 >
                   <div
                     className={`px-4 py-2 rounded-lg shadow-sm relative min-w-[120px] ${
-                      isOwnMessage
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-                        : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
+                      isChannel
+                        ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
+                        : isOwnMessage
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+                          : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap break-words pr-12 pb-3">
-                      {parsedContent ? (
-                        parsedContent.map((part, index) => {
-                          if (part.type === 'mention') {
-                            const isMentioned = message.mentionIds?.includes(part.userId || '') || user?.id === part.userId;
-                            return (
-                              <span
-                                key={index}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (part.userId) {
-                                    setSelectedMentionUserId(part.userId);
-                                  }
-                                }}
-                                className={`font-semibold cursor-pointer hover:underline ${
-                                  isOwnMessage
-                                    ? isMentioned
-                                      ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
-                                      : 'text-blue-100'
-                                    : isMentioned
-                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
-                                    : 'text-blue-600 dark:text-blue-400'
-                                }`}
-                              >
-                                @{part.display}
-                              </span>
-                            );
-                          }
-                          return <span key={index}>{part.content}</span>;
-                        })
+                    {hasTranslation ? (
+                      <div className="space-y-2">
+                        <div className="pb-2 border-b border-gray-300 dark:border-gray-600">
+                          <p className="text-sm whitespace-pre-wrap break-words pr-12">
+                            {parsedContent ? (
+                              parsedContent.map((part, index) => {
+                                if (part.type === 'mention') {
+                                  const isMentioned = currentMessage.mentionIds?.includes(part.userId || '') || user?.id === part.userId;
+                                  return (
+                                    <span
+                                      key={index}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (part.userId) {
+                                          setSelectedMentionUserId(part.userId);
+                                        }
+                                      }}
+                                      className={`font-semibold cursor-pointer hover:underline ${
+                                        isChannel
+                                          ? isMentioned
+                                            ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
+                                            : 'text-blue-600 dark:text-blue-400'
+                                          : isOwnMessage
+                                            ? isMentioned
+                                              ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
+                                              : 'text-blue-100'
+                                            : isMentioned
+                                              ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
+                                              : 'text-blue-600 dark:text-blue-400'
+                                      }`}
+                                    >
+                                      @{part.display}
+                                    </span>
+                                  );
+                                }
+                                return <span key={index}>{part.content}</span>;
+                              })
+                            ) : (
+                              <span>{displayContent}</span>
+                            )}
+                          </p>
+                        </div>
+                        <div className={`${isChannel ? 'text-gray-600 dark:text-gray-400' : (isOwnMessage ? 'text-blue-50' : 'text-gray-600 dark:text-gray-400')}`}>
+                          <p className="text-sm whitespace-pre-wrap break-words pr-12">
+                            {translationContent ? (
+                              translationContent.map((part, index) => {
+                                if (part.type === 'mention') {
+                                  const isMentioned = currentMessage.mentionIds?.includes(part.userId || '') || user?.id === part.userId;
+                                  return (
+                                    <span
+                                      key={index}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (part.userId) {
+                                          setSelectedMentionUserId(part.userId);
+                                        }
+                                      }}
+                                      className={`font-semibold cursor-pointer hover:underline ${
+                                        isOwnMessage
+                                          ? isMentioned
+                                            ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
+                                            : 'text-blue-50'
+                                          : isMentioned
+                                          ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
+                                          : 'text-blue-600 dark:text-blue-400'
+                                      }`}
+                                    >
+                                      @{part.display}
+                                    </span>
+                                  );
+                                }
+                                return <span key={index}>{part.content}</span>;
+                              })
+                            ) : (
+                              <span>{currentMessage.translation?.translation}</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap break-words pr-12 pb-3">
+                        {parsedContent ? (
+                          parsedContent.map((part, index) => {
+                            if (part.type === 'mention') {
+                              const isMentioned = currentMessage.mentionIds?.includes(part.userId || '') || user?.id === part.userId;
+                              return (
+                                <span
+                                  key={index}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (part.userId) {
+                                      setSelectedMentionUserId(part.userId);
+                                    }
+                                  }}
+                                      className={`font-semibold cursor-pointer hover:underline ${
+                                        isChannel
+                                          ? isMentioned
+                                            ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
+                                            : 'text-blue-600 dark:text-blue-400'
+                                          : isOwnMessage
+                                            ? isMentioned
+                                              ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
+                                              : 'text-blue-100'
+                                            : isMentioned
+                                              ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
+                                              : 'text-blue-600 dark:text-blue-400'
+                                      }`}
+                                >
+                                  @{part.display}
+                                </span>
+                              );
+                            }
+                            return <span key={index}>{part.content}</span>;
+                          })
                       ) : (
                         displayContent
                       )}
                     </p>
+                    )}
                     
-                    {message.mediaUrls && message.mediaUrls.length > 0 && (
+                    {currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && (
                       <div className="mt-2 space-y-2">
-                        {message.mediaUrls.map((url, index) => (
+                        {currentMessage.mediaUrls.map((url, index) => (
                           <div key={index} className="rounded-lg overflow-hidden">
                             <div
                               onClick={() => handleImageClick(url)}
@@ -431,12 +553,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     )}
                     
                     {/* Time and read status inside bubble */}
-                    <div className={`absolute bottom-1 right-2 flex items-center gap-1 ${isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500'}`}>
+                    <div className={`absolute bottom-1 right-2 flex items-center gap-1 ${isChannel ? 'text-gray-400 dark:text-gray-500' : (isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500')}`}>
                       <span className="text-[10px]">{formatMessageTime(message.createdAt)}</span>
                       {isOwnMessage && (
                         <div className="flex items-center">
-                          {message.readReceipts && message.readReceipts.length > 0 ? (
-                            <div className="text-purple-200" title={`Read by ${message.readReceipts.length} ${message.readReceipts.length === 1 ? 'person' : 'people'}`}>
+                          {currentMessage.readReceipts && currentMessage.readReceipts.length > 0 ? (
+                            <div className="text-purple-200" title={`Read by ${currentMessage.readReceipts.length} ${currentMessage.readReceipts.length === 1 ? 'person' : 'people'}`}>
                               <DoubleTickIcon size={14} variant="double" />
                             </div>
                           ) : (
@@ -485,7 +607,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                       </span>
                     </button>
                     
-                    {message.reactions.length > 0 && (
+                    {currentMessage.reactions.length > 0 && (
                       <div className="flex gap-1">
                         {Object.entries(getReactionCounts()).map(([emoji, count]) => {
                           const isUserReaction = getCurrentUserReaction() === emoji;
@@ -523,7 +645,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       
       {isMenuOpen && !isSystemMessage && (
         <UnifiedMessageMenu
-          message={message}
+          message={currentMessage}
           isOwnMessage={isOwnMessage}
           currentReaction={getCurrentUserReaction()}
           onReply={onReplyMessage}
@@ -535,6 +657,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           messageElementRef={messageRef}
           onDeleteStart={handleDeleteStart}
           onReport={(msg) => setReportMessage(msg)}
+          onTranslationUpdate={handleTranslationUpdate}
         />
       )}
 
@@ -548,7 +671,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       
       {showPlayerCard && !isSystemMessage && (
         <PlayerCardBottomSheet
-          playerId={message.senderId!}
+          playerId={currentMessage.senderId!}
           onClose={() => setShowPlayerCard(false)}
         />
       )}

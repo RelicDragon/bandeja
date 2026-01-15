@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
 import { Game, Invite, JoinQueue } from '@/types';
-import { Users, UserPlus, Sliders, CheckCircle, XCircle, Edit3 } from 'lucide-react';
+import { Users, UserPlus, Sliders, CheckCircle, XCircle, Edit3, LayoutGrid, List } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PlayersCarousel } from './PlayersCarousel';
 
@@ -60,6 +61,7 @@ export const GameParticipants = ({
   onEditMaxParticipants,
 }: GameParticipantsProps) => {
   const { t } = useTranslation();
+  const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
 
   const playingOwnersAndAdmins = game.participants.filter(
     p => p.isPlaying && (p.role === 'OWNER' || p.role === 'ADMIN')
@@ -76,24 +78,37 @@ export const GameParticipants = ({
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           {game.minLevel !== undefined && game.maxLevel !== undefined && game.entityType !== 'BAR' ? `${t('games.level')} ${game.minLevel.toFixed(1)}-${game.maxLevel.toFixed(1)}` : t('games.participants')}
         </h2>
-        {canViewSettings && game.entityType !== 'BAR' && onEditMaxParticipants ? (
-          <Button
-            onClick={onEditMaxParticipants}
-            variant="primary"
-            size="sm"
-            className="ml-auto flex items-center gap-2"
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => setViewMode(viewMode === 'carousel' ? 'list' : 'carousel')}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title={viewMode === 'carousel' ? t('games.listView', { defaultValue: 'List view' }) : t('games.carouselView', { defaultValue: 'Carousel view' })}
           >
-            <Edit3 size={16} />
-            {`${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`}
-          </Button>
-        ) : (
-          <span className="ml-auto text-gray-600 dark:text-gray-400">
-            {game.entityType === 'BAR' 
-              ? game.participants.filter(p => p.isPlaying).length
-              : `${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`
-            }
-          </span>
-        )}
+            {viewMode === 'carousel' ? (
+              <List size={18} className="text-gray-600 dark:text-gray-400" />
+            ) : (
+              <LayoutGrid size={18} className="text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
+          {canViewSettings && game.entityType !== 'BAR' && onEditMaxParticipants ? (
+            <Button
+              onClick={onEditMaxParticipants}
+              variant="primary"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Edit3 size={16} />
+              {`${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`}
+            </Button>
+          ) : (
+            <span className="text-gray-600 dark:text-gray-400">
+              {game.entityType === 'BAR' 
+                ? game.participants.filter(p => p.isPlaying).length
+                : `${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`
+              }
+            </span>
+          )}
+        </div>
       </div>
       <div className="space-y-4">
         {myInvites.length > 0 && (
@@ -203,6 +218,134 @@ export const GameParticipants = ({
             : 0;
 
           const carousel1Gender = isMix ? 'MALE' : isMen ? 'MALE' : isWomen ? 'FEMALE' : undefined;
+
+          if (viewMode === 'list') {
+            return (
+              <div className="space-y-4">
+                {isMix && (
+                  <>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('games.male', { defaultValue: 'Male' })} ({carousel1Participants.length} / {maxPerGender})
+                      </h3>
+                      <div className="space-y-2">
+                        {carousel1Participants.map((participant) => (
+                          <div
+                            key={participant.userId}
+                            className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                          >
+                            <PlayerAvatar
+                              player={participant.user}
+                              isCurrentUser={participant.user.id === userId}
+                              removable={participant.user.id === userId}
+                              onRemoveClick={participant.user.id === userId ? onLeave : undefined}
+                              role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
+                              extrasmall={true}
+                              showName={false}
+                              fullHideName={true}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {participant.user.firstName} {participant.user.lastName}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                        {carousel1EmptySlots > 0 && canInvitePlayers && (
+                          <button
+                            onClick={() => onShowPlayerList('MALE')}
+                            className="w-full p-3 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <UserPlus size={18} className="text-primary-600 dark:text-primary-400" />
+                            <span className="text-sm text-primary-600 dark:text-primary-400">
+                              {t('games.invitePlayer', { defaultValue: 'Invite player' })}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('games.female', { defaultValue: 'Female' })} ({carousel2Participants.length} / {maxPerGender})
+                      </h3>
+                      <div className="space-y-2">
+                        {carousel2Participants.map((participant) => (
+                          <div
+                            key={participant.userId}
+                            className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                          >
+                            <PlayerAvatar
+                              player={participant.user}
+                              isCurrentUser={participant.user.id === userId}
+                              removable={participant.user.id === userId}
+                              onRemoveClick={participant.user.id === userId ? onLeave : undefined}
+                              role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
+                              extrasmall={true}
+                              showName={false}
+                              fullHideName={true}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {participant.user.firstName} {participant.user.lastName}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                        {carousel2EmptySlots > 0 && canInvitePlayers && (
+                          <button
+                            onClick={() => onShowPlayerList('FEMALE')}
+                            className="w-full p-3 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <UserPlus size={18} className="text-primary-600 dark:text-primary-400" />
+                            <span className="text-sm text-primary-600 dark:text-primary-400">
+                              {t('games.invitePlayer', { defaultValue: 'Invite player' })}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+                {!isMix && (
+                  <div className="space-y-2">
+                    {playingParticipants.map((participant) => (
+                      <div
+                        key={participant.userId}
+                        className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                      >
+                        <PlayerAvatar
+                          player={participant.user}
+                          isCurrentUser={participant.user.id === userId}
+                          removable={participant.user.id === userId}
+                          onRemoveClick={participant.user.id === userId ? onLeave : undefined}
+                          role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
+                          extrasmall={true}
+                          showName={false}
+                          fullHideName={true}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {participant.user.firstName} {participant.user.lastName}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {emptySlots > 0 && canInvitePlayers && (
+                      <button
+                        onClick={() => onShowPlayerList()}
+                        className="w-full p-3 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <UserPlus size={18} className="text-primary-600 dark:text-primary-400" />
+                        <span className="text-sm text-primary-600 dark:text-primary-400">
+                          {t('games.invitePlayer', { defaultValue: 'Invite player' })}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          }
 
           return (
             <div className={isMix ? 'space-y-4' : ''}>

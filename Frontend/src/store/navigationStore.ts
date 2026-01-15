@@ -10,7 +10,7 @@ interface NavigationState {
   bugsButtonSlidingDown: boolean;
   activeTab: 'my-games' | 'past-games' | 'search';
   profileActiveTab: 'general' | 'statistics' | 'comparison';
-  chatsFilter: 'users' | 'bugs';
+  chatsFilter: 'users' | 'bugs' | 'channels';
   findViewMode: 'calendar' | 'list';
   setCurrentPage: (page: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions') => void;
   setBottomTabsVisible: (visible: boolean) => void;
@@ -21,7 +21,7 @@ interface NavigationState {
   setBugsButtonSlidingDown: (sliding: boolean) => void;
   setActiveTab: (tab: 'my-games' | 'past-games' | 'search') => void;
   setProfileActiveTab: (tab: 'general' | 'statistics' | 'comparison') => void;
-  setChatsFilter: (filter: 'users' | 'bugs') => void;
+  setChatsFilter: (filter: 'users' | 'bugs' | 'channels') => void;
   setFindViewMode: (mode: 'calendar' | 'list') => void;
 }
 

@@ -1,10 +1,15 @@
-import { Megaphone, Play, Medal, Archive } from 'lucide-react';
+import { Megaphone, Play, Archive } from 'lucide-react';
+import { FaFlagCheckered } from 'react-icons/fa';
 import { GameStatus } from '@/types';
 
 interface GameStatusIconProps {
   status: GameStatus;
   className?: string;
 }
+
+const CheckeredFlag = ({ size = 16 }: { size?: number }) => {
+  return <FaFlagCheckered size={size} />;
+};
 
 export const GameStatusIcon = ({ status, className = '' }: GameStatusIconProps) => {
   const getStatusIcon = (status: GameStatus) => {
@@ -14,7 +19,7 @@ export const GameStatusIcon = ({ status, className = '' }: GameStatusIconProps) 
       case 'STARTED':
         return <Play size={16} />;
       case 'FINISHED':
-        return <Medal size={16} />;
+        return <CheckeredFlag size={16} />;
       case 'ARCHIVED':
         return <Archive size={16} />;
       default:

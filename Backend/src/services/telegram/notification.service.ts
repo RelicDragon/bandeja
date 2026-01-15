@@ -2,12 +2,14 @@ import { Bot } from 'grammy';
 import { sendGameChatNotification } from './notifications/game-chat.notification';
 import { sendBugChatNotification } from './notifications/bug-chat.notification';
 import { sendUserChatNotification } from './notifications/user-chat.notification';
+import { sendGroupChatNotification } from './notifications/group-chat.notification';
 import { sendInviteNotification } from './notifications/invite.notification';
 import { sendGameCard } from './notifications/game-card.notification';
 import { sendGameSystemMessageNotification } from './notifications/game-system-message.notification';
 import { sendLeagueRoundStartNotification } from './notifications/league-round-start.notification';
 import { sendGameReminderNotification } from './notifications/game-reminder.notification';
 import { sendNewGameNotification } from './notifications/new-game.notification';
+import { sendBetResolvedNotification, sendBetNeedsReviewNotification } from './notifications/bet-resolved.notification';
 
 class TelegramNotificationService {
   private bot: Bot | null = null;
@@ -29,6 +31,11 @@ class TelegramNotificationService {
   async sendUserChatNotification(message: any, userChat: any, sender: any) {
     if (!this.bot) return;
     await sendUserChatNotification(this.bot.api, message, userChat, sender);
+  }
+
+  async sendGroupChatNotification(message: any, groupChannel: any, sender: any) {
+    if (!this.bot) return;
+    await sendGroupChatNotification(this.bot.api, message, groupChannel, sender);
   }
 
   async sendInviteNotification(invite: any) {
@@ -62,6 +69,16 @@ class TelegramNotificationService {
   async sendNewGameNotification(game: any, recipient: any) {
     if (!this.bot) return;
     await sendNewGameNotification(this.bot.api, game, recipient);
+  }
+
+  async sendBetResolvedNotification(betId: string, userId: string, isWinner: boolean, totalCoinsWon?: number) {
+    if (!this.bot) return;
+    await sendBetResolvedNotification(this.bot.api, betId, userId, isWinner, totalCoinsWon);
+  }
+
+  async sendBetNeedsReviewNotification(betId: string, userId: string) {
+    if (!this.bot) return;
+    await sendBetNeedsReviewNotification(this.bot.api, betId, userId);
   }
 }
 
