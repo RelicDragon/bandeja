@@ -1,4 +1,4 @@
-import { Game, BasicUser, WinnerOfGame } from '@/types';
+import { Game, BasicUser, WinnerOfGame, WinnerOfMatch } from '@/types';
 import { Round, Match } from '@/types/gameResults';
 
 export interface PlayerStanding {
@@ -27,7 +27,10 @@ interface PlayerStats {
   scoresDelta: number;
 }
 
-function calculateMatchWinner(match: Match): 'teamA' | 'teamB' | 'tie' | null {
+function calculateMatchWinner(
+  match: Match,
+  winnerOfMatch: WinnerOfMatch = 'BY_SCORES'
+): 'teamA' | 'teamB' | 'tie' | null {
   if (!match.sets || match.sets.length === 0) {
     return null;
   }
@@ -37,6 +40,29 @@ function calculateMatchWinner(match: Match): 'teamA' | 'teamB' | 'tie' | null {
   }
 
   const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
+  if (validSets.length === 0) {
+    return null;
+  }
+
+  if (winnerOfMatch === 'BY_SETS') {
+    let teamASetsWon = 0;
+    let teamBSetsWon = 0;
+    
+    for (const set of validSets) {
+      if (set.teamA > set.teamB) {
+        teamASetsWon++;
+      } else if (set.teamB > set.teamA) {
+        teamBSetsWon++;
+      }
+    }
+
+    if (teamASetsWon > teamBSetsWon) return 'teamA';
+    if (teamBSetsWon > teamASetsWon) return 'teamB';
+    if (teamASetsWon === teamBSetsWon && teamASetsWon > 0) return 'tie';
+    return null;
+  }
+
+  // BY_SCORES (default)
   const totalScoreA = validSets.reduce((sum, set) => sum + set.teamA, 0);
   const totalScoreB = validSets.reduce((sum, set) => sum + set.teamB, 0);
 
@@ -49,7 +75,8 @@ function calculateMatchWinner(match: Match): 'teamA' | 'teamB' | 'tie' | null {
 
 function calculatePlayerStats(
   playerId: string,
-  rounds: Round[]
+  rounds: Round[],
+  winnerOfMatch: WinnerOfMatch = 'BY_SCORES'
 ): PlayerStats {
   const stats: PlayerStats = {
     userId: playerId,
@@ -79,7 +106,7 @@ function calculatePlayerStats(
         continue;
       }
 
-      const matchWinner = calculateMatchWinner(match);
+      const matchWinner = calculateMatchWinner(match, winnerOfMatch);
       const totalScoreA = validSets.reduce((sum, set) => sum + set.teamA, 0);
       const totalScoreB = validSets.reduce((sum, set) => sum + set.teamB, 0);
 
@@ -156,7 +183,8 @@ function compareLevelAtStart(aUser: BasicUser, bUser: BasicUser): number {
 function getHeadToHeadWinner(
   playerAId: string,
   playerBId: string,
-  rounds: Round[]
+  rounds: Round[],
+  winnerOfMatch: WinnerOfMatch = 'BY_SCORES'
 ): 'A' | 'B' | 'tie' | null {
   let aWins = 0;
   let bWins = 0;
@@ -178,7 +206,7 @@ function getHeadToHeadWinner(
 
       if (!areOpponents) continue;
 
-      const matchWinner = calculateMatchWinner(match);
+      const matchWinner = calculateMatchWinner(match, winnerOfMatch);
       
       if (matchWinner === 'teamA') {
         if (aInTeamA) aWins++;
@@ -198,7 +226,8 @@ function getHeadToHeadWinner(
 
 function calculateHeadToHeadMap(
   players: BasicUser[],
-  rounds: Round[]
+  rounds: Round[],
+  winnerOfMatch: WinnerOfMatch = 'BY_SCORES'
 ): Map<string, Map<string, 'A' | 'B' | 'tie' | null>> {
   const h2hMap = new Map<string, Map<string, 'A' | 'B' | 'tie' | null>>();
   
@@ -206,7 +235,7 @@ function calculateHeadToHeadMap(
     for (let j = i + 1; j < players.length; j++) {
       const playerA = players[i];
       const playerB = players[j];
-      const result = getHeadToHeadWinner(playerA.id, playerB.id, rounds);
+      const result = getHeadToHeadWinner(playerA.id, playerB.id, rounds, winnerOfMatch);
       
       if (!h2hMap.has(playerA.id)) {
         h2hMap.set(playerA.id, new Map());
@@ -233,6 +262,51 @@ function compareHeadToHead(
   if (h2h === 'A') return -1;
   if (h2h === 'B') return 1;
   return 0;
+}
+
+function arePlayersTied(
+  a: PlayerStanding,
+  b: PlayerStanding,
+  aStats: PlayerStats,
+  bStats: PlayerStats,
+  winnerOfGame: WinnerOfGame,
+  h2hMap: Map<string, Map<string, 'A' | 'B' | 'tie' | null>>,
+  pointsPerWin: number,
+  pointsPerTie: number,
+  pointsPerLoose: number
+): boolean {
+  // Check all stats are equal
+  if (
+    aStats.wins !== bStats.wins ||
+    aStats.ties !== bStats.ties ||
+    aStats.losses !== bStats.losses ||
+    aStats.matchesWon !== bStats.matchesWon ||
+    aStats.scoresDelta !== bStats.scoresDelta
+  ) {
+    return false;
+  }
+
+  // Check points earned (for BY_POINTS mode)
+  if (winnerOfGame === 'BY_POINTS') {
+    const aPoints = aStats.wins * pointsPerWin + aStats.ties * pointsPerTie + aStats.losses * pointsPerLoose;
+    const bPoints = bStats.wins * pointsPerWin + bStats.ties * pointsPerTie + bStats.losses * pointsPerLoose;
+    if (aPoints !== bPoints) {
+      return false;
+    }
+  }
+
+  // Check head-to-head
+  const h2h = h2hMap.get(a.user.id)?.get(b.user.id);
+  if (h2h !== null && h2h !== 'tie' && h2h !== undefined) {
+    return false;
+  }
+
+  // Check level
+  if (a.user.level !== b.user.level) {
+    return false;
+  }
+
+  return true;
 }
 
 function compareStandings(
@@ -268,6 +342,22 @@ function compareStandings(
     const pointsDiff = bValue - aValue;
     if (pointsDiff !== 0) return pointsDiff;
 
+    const matchesDiff = compareMatchesWon(aStats, bStats);
+    if (matchesDiff !== 0) return matchesDiff;
+
+    const tiesDiff = compareTies(aStats, bStats);
+    if (tiesDiff !== 0) return tiesDiff;
+
+    const scoresDiff = compareScoresDelta(aStats, bStats);
+    if (scoresDiff !== 0) return scoresDiff;
+
+    const h2hDiff = compareHeadToHead(a, b, h2hMap);
+    if (h2hDiff !== 0) return h2hDiff;
+
+    return compareLevelAtStart(a.user, b.user);
+  }
+
+  if (winnerOfGame === 'BY_SCORES_DELTA') {
     const scoresDiff = compareScoresDelta(aStats, bStats);
     if (scoresDiff !== 0) return scoresDiff;
 
@@ -301,10 +391,12 @@ export function calculateGameStandings(
     return [];
   }
 
+  const winnerOfMatch = game.winnerOfMatch || 'BY_SCORES';
+
   const playerStatsMap = new Map<string, PlayerStats>();
 
   for (const player of players) {
-    const stats = calculatePlayerStats(player.id, rounds);
+    const stats = calculatePlayerStats(player.id, rounds, winnerOfMatch);
     playerStatsMap.set(player.id, stats);
   }
 
@@ -312,7 +404,7 @@ export function calculateGameStandings(
   const pointsPerTie = game.pointsPerTie ?? 0;
   const pointsPerLoose = game.pointsPerLoose ?? 0;
 
-  const h2hMap = calculateHeadToHeadMap(players, rounds);
+  const h2hMap = calculateHeadToHeadMap(players, rounds, winnerOfMatch);
 
   const standings: PlayerStanding[] = [];
 
@@ -370,15 +462,20 @@ export function calculateGameStandings(
 
     const assignPlaces = (standingsToAssign: PlayerStanding[]) => {
       let currentPlace = 1;
-      for (let i = 0; i < standingsToAssign.length; i++) {
-        if (i > 0) {
-          const prev = standingsToAssign[i - 1];
-          const current = standingsToAssign[i];
+      let i = 0;
+
+      while (i < standingsToAssign.length) {
+        const tiedGroup: PlayerStanding[] = [standingsToAssign[i]];
+        let j = i + 1;
+
+        while (j < standingsToAssign.length) {
+          const prev = standingsToAssign[i];
+          const current = standingsToAssign[j];
           const prevStats = playerStatsMap.get(prev.user.id);
           const currentStats = playerStatsMap.get(current.user.id);
-          
+
           if (prevStats && currentStats) {
-            const comparison = compareStandings(
+            const isTied = arePlayersTied(
               prev,
               current,
               prevStats,
@@ -389,13 +486,24 @@ export function calculateGameStandings(
               pointsPerTie,
               pointsPerLoose
             );
-            
-            if (comparison !== 0) {
-              currentPlace = i + 1;
+
+            if (isTied) {
+              tiedGroup.push(current);
+              j++;
+            } else {
+              break;
             }
+          } else {
+            break;
           }
         }
-        standingsToAssign[i].place = currentPlace;
+
+        for (const standing of tiedGroup) {
+          standing.place = currentPlace;
+        }
+
+        currentPlace += 1;
+        i = j;
       }
     };
 
@@ -435,15 +543,20 @@ export function calculateGameStandings(
   });
 
   let currentPlace = 1;
-  for (let i = 0; i < standings.length; i++) {
-    if (i > 0) {
-      const prev = standings[i - 1];
-      const current = standings[i];
+  let i = 0;
+
+  while (i < standings.length) {
+    const tiedGroup: PlayerStanding[] = [standings[i]];
+    let j = i + 1;
+
+    while (j < standings.length) {
+      const prev = standings[i];
+      const current = standings[j];
       const prevStats = playerStatsMap.get(prev.user.id);
       const currentStats = playerStatsMap.get(current.user.id);
-      
+
       if (prevStats && currentStats) {
-        const comparison = compareStandings(
+        const isTied = arePlayersTied(
           prev,
           current,
           prevStats,
@@ -454,13 +567,24 @@ export function calculateGameStandings(
           pointsPerTie,
           pointsPerLoose
         );
-        
-        if (comparison !== 0) {
-          currentPlace = i + 1;
+
+        if (isTied) {
+          tiedGroup.push(current);
+          j++;
+        } else {
+          break;
         }
+      } else {
+        break;
       }
     }
-    standings[i].place = currentPlace;
+
+    for (const standing of tiedGroup) {
+      standing.place = currentPlace;
+    }
+
+    currentPlace += 1;
+    i = j;
   }
 
   return standings;
