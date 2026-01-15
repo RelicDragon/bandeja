@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useEffect, lazy, Suspense } from 'react';
-import { ProtectedRoute, AppLoadingScreen, NoInternetScreen } from './components';
+import { useEffect, lazy, Suspense, useState } from 'react';
+import { ProtectedRoute, AppLoadingScreen, NoInternetScreen, AppVersionModal } from './components';
 
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
 const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })));
@@ -27,6 +27,7 @@ import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
 import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersistence';
 import { useDeepLink } from './hooks/useDeepLink';
 import { extractLanguageCode } from './utils/displayPreferences';
+import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import i18n from './i18n/config';
 import './i18n/config';
 
@@ -38,7 +39,11 @@ function AppContent() {
   const finishInitializing = useAuthStore((state) => state.finishInitializing);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const isOnline = useNetworkStore((state) => state.isOnline);
+  const [showOptionalUpdateModal, setShowOptionalUpdateModal] = useState(false);
+  const [dismissedOptionalUpdate, setDismissedOptionalUpdate] = useState<string | null>(null);
 
+  const { versionCheck, isChecking: isCheckingVersion } = useAppVersionCheck();
+  
   useDeepLink();
 
   useEffect(() => {
@@ -175,9 +180,33 @@ function AppContent() {
     }
   }, [isAuthenticated, isInitializing]);
 
+  useEffect(() => {
+    if (versionCheck && versionCheck.status === 'optional_update' && !showOptionalUpdateModal) {
+      const versionKey = versionCheck.minVersion || 'unknown';
+      if (dismissedOptionalUpdate !== versionKey) {
+        setShowOptionalUpdateModal(true);
+      }
+    }
+  }, [versionCheck, showOptionalUpdateModal, dismissedOptionalUpdate]);
 
-  if (isInitializing) {
+  if (isCheckingVersion || isInitializing) {
     return <AppLoadingScreen isInitializing={isInitializing} />;
+  }
+
+  if (versionCheck && versionCheck.status === 'blocking_update') {
+    const offlineMessage = !isOnline 
+      ? 'You are currently offline. Please connect to the internet to update the app.'
+      : versionCheck.message;
+    
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <AppVersionModal
+          isBlocking={true}
+          minVersion={versionCheck.minVersion}
+          message={offlineMessage}
+        />
+      </div>
+    );
   }
 
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
@@ -190,6 +219,18 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <OfflineBanner />
+      {showOptionalUpdateModal && versionCheck && versionCheck.status === 'optional_update' && (
+        <AppVersionModal
+          isBlocking={false}
+          minVersion={versionCheck.minVersion}
+          message={versionCheck.message}
+          onClose={() => {
+            setShowOptionalUpdateModal(false);
+            const versionKey = versionCheck.minVersion || 'unknown';
+            setDismissedOptionalUpdate(versionKey);
+          }}
+        />
+      )}
       <ToastProvider>
         <PlayerCardModalManager>
           <Routes>

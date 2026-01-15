@@ -18,6 +18,7 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { extractLanguageCode } from '@/utils/displayPreferences';
+import { isCapacitor, getAppInfo } from '@/utils/capacitor';
 
 export const ProfileContent = () => {
   const { t, i18n } = useTranslation();
@@ -51,6 +52,7 @@ export const ProfileContent = () => {
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
   const [lundaStatus, setLundaStatus] = useState<{
     hasCookie: boolean;
     hasProfile: boolean;
@@ -145,6 +147,18 @@ export const ProfileContent = () => {
       }
     };
 
+    const loadAppInfo = async () => {
+      if (isCapacitor()) {
+        const info = await getAppInfo();
+        if (info) {
+          setAppVersion({
+            version: info.version,
+            buildNumber: String(info.buildNumber),
+          });
+        }
+      }
+    };
+
     fetchCities();
     if (!user) {
       fetchUserProfile();
@@ -152,6 +166,7 @@ export const ProfileContent = () => {
       setIsLoadingProfile(false);
     }
     fetchLundaStatus();
+    loadAppInfo();
   }, [updateUser, user]);
 
   useEffect(() => {
@@ -906,19 +921,26 @@ export const ProfileContent = () => {
         confirmVariant="danger"
       />
 
-      <div className="mt-8 text-center text-xs text-gray-500 dark:text-gray-400">
-        <a
-          href="/eula/world/eula.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors underline"
-          onClick={(e) => {
-            e.preventDefault();
-            window.open('/eula/world/eula.html', '_blank');
-          }}
-        >
-          {t('auth.eula') || 'Terms of Service'}
-        </a>
+      <div className="mt-8 text-center space-y-2">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          <a
+            href="/eula/world/eula.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors underline"
+            onClick={(e) => {
+              e.preventDefault();
+              window.open('/eula/world/eula.html', '_blank');
+            }}
+          >
+            {t('auth.eula') || 'Terms of Service'}
+          </a>
+        </div>
+        {appVersion && (
+          <div className="text-xs text-gray-400 dark:text-gray-500">
+            App Version: {appVersion.version} (Build {appVersion.buildNumber})
+          </div>
+        )}
       </div>
       </div>
     </>

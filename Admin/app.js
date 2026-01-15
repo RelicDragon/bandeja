@@ -102,7 +102,8 @@ function switchPage(pageName) {
     }
 
     const activeLink = document.querySelector(`[data-page="${pageName}"]`);
-    const activePage = document.getElementById(`${pageName}Page`);
+    const pageId = pageName.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase()) + 'Page';
+    const activePage = document.getElementById(pageId);
 
     if (activeLink) activeLink.classList.add('active');
     if (activePage) {
@@ -184,6 +185,9 @@ async function loadPageData(page) {
             break;
         case 'reports':
             loadMessageReports();
+            break;
+        case 'app-versions':
+            loadAppVersions();
             break;
         case 'logs':
             if (!isStreamActive) {
@@ -1008,3 +1012,139 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
+async function loadAppVersions() {
+    try {
+        const response = await apiRequest('/admin/app-versions');
+        if (response.success) {
+            renderAppVersionsTable(response.data);
+        }
+    } catch (error) {
+        console.error('Failed to load app versions:', error);
+    }
+}
+
+function renderAppVersionsTable(versions) {
+    const tbody = document.getElementById('appVersionsTableBody');
+    if (versions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No version requirements configured</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    versions.forEach(version => {
+        const row = document.createElement('tr');
+        
+        const platformCell = document.createElement('td');
+        platformCell.textContent = version.platform.toUpperCase();
+        row.appendChild(platformCell);
+        
+        const buildCell = document.createElement('td');
+        buildCell.textContent = version.minBuildNumber;
+        row.appendChild(buildCell);
+        
+        const versionCell = document.createElement('td');
+        versionCell.textContent = version.minVersion;
+        row.appendChild(versionCell);
+        
+        const blockingCell = document.createElement('td');
+        const badge = document.createElement('span');
+        badge.className = version.isBlocking ? 'badge badge-danger' : 'badge badge-warning';
+        badge.textContent = version.isBlocking ? 'Blocking' : 'Optional';
+        blockingCell.appendChild(badge);
+        row.appendChild(blockingCell);
+        
+        const messageCell = document.createElement('td');
+        messageCell.textContent = version.message || '-';
+        row.appendChild(messageCell);
+        
+        const dateCell = document.createElement('td');
+        dateCell.textContent = formatDate(version.updatedAt);
+        row.appendChild(dateCell);
+        
+        const actionsCell = document.createElement('td');
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn-secondary';
+        editBtn.textContent = 'Edit';
+        editBtn.onclick = () => editAppVersion(version.platform, version.minBuildNumber, version.minVersion, version.isBlocking, version.message || '');
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn-danger';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.onclick = () => deleteAppVersion(version.platform);
+        
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(document.createTextNode(' '));
+        actionsCell.appendChild(deleteBtn);
+        row.appendChild(actionsCell);
+        
+        tbody.appendChild(row);
+    });
+}
+
+function createAppVersionModal() {
+    document.getElementById('appVersionModalTitle').textContent = 'Add Version Requirement';
+    document.getElementById('appVersionForm').reset();
+    document.getElementById('versionPlatform').disabled = false;
+    openModal('appVersionModal');
+}
+
+function editAppVersion(platform, minBuildNumber, minVersion, isBlocking, message) {
+    document.getElementById('appVersionModalTitle').textContent = 'Edit Version Requirement';
+    document.getElementById('versionPlatform').value = platform;
+    document.getElementById('versionPlatform').disabled = true;
+    document.getElementById('versionMinBuildNumber').value = minBuildNumber;
+    document.getElementById('versionMinVersion').value = minVersion;
+    document.getElementById('versionIsBlocking').checked = isBlocking;
+    document.getElementById('versionMessage').value = message !== 'null' ? message : '';
+    openModal('appVersionModal');
+}
+
+async function deleteAppVersion(platform) {
+    if (!confirm(`Are you sure you want to delete the ${platform.toUpperCase()} version requirement?`)) {
+        return;
+    }
+
+    try {
+        const response = await apiRequest(`/admin/app-versions/${platform}`, {
+            method: 'DELETE',
+        });
+
+        if (response.success) {
+            alert('Version requirement deleted successfully');
+            loadAppVersions();
+        }
+    } catch (error) {
+        alert(error.message || 'Failed to delete version requirement');
+    }
+}
+
+document.getElementById('appVersionForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const platform = document.getElementById('versionPlatform').value;
+    const minBuildNumber = parseInt(document.getElementById('versionMinBuildNumber').value);
+    const minVersion = document.getElementById('versionMinVersion').value;
+    const isBlocking = document.getElementById('versionIsBlocking').checked;
+    const message = document.getElementById('versionMessage').value || null;
+
+    try {
+        const response = await apiRequest('/admin/app-versions', {
+            method: 'POST',
+            body: JSON.stringify({
+                platform,
+                minBuildNumber,
+                minVersion,
+                isBlocking,
+                message,
+            }),
+        });
+
+        if (response.success) {
+            alert('Version requirement saved successfully');
+            closeModal('appVersionModal');
+            loadAppVersions();
+        }
+    } catch (error) {
+        alert(error.message || 'Failed to save version requirement');
+    }
+});

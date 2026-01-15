@@ -198,6 +198,8 @@ body {
     padding: 2rem;
     flex: 1;
     width: calc(100% - 260px);
+    max-width: calc(100vw - 260px);
+    overflow-x: hidden;
 }
 
 .global-filter {
@@ -289,13 +291,15 @@ body {
 .table-container {
     background: var(--card-bg);
     border-radius: 12px;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: visible;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 600px;
 }
 
 thead {
@@ -372,6 +376,7 @@ tbody tr:hover {
     align-items: center;
     margin-bottom: 2rem;
     gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .page-header h1 {

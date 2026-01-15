@@ -2,6 +2,10 @@ function showModal(modalId) {
     document.getElementById(modalId).style.display = 'flex';
 }
 
+function openModal(modalId) {
+    showModal(modalId);
+}
+
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
 }
@@ -467,6 +471,7 @@ async function handleEmitCoinsSubmit(e) {
 }
 
 window.closeModal = closeModal;
+window.openModal = openModal;
 window.createCityModal = createCityModal;
 window.editCityModal = editCityModal;
 window.handleCitySubmit = handleCitySubmit;

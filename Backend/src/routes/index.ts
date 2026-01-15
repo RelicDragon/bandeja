@@ -29,9 +29,11 @@ import gameSubscriptionRoutes from './gameSubscription.routes';
 import trainingRoutes from './training.routes';
 import groupChannelRoutes from './groupChannel.routes';
 import betRoutes from './bet.routes';
+import appRoutes from './app.routes';
 
 const router = Router();
 
+router.use('/app', appRoutes);
 router.use('/auth', authRoutes);
 router.use('/telegram', telegramAuthRoutes);
 router.use('/users', userRoutes);

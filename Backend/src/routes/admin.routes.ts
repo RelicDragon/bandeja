@@ -31,6 +31,9 @@ import {
   emitCoins,
   getAllMessageReports,
   updateMessageReportStatus,
+  getAllAppVersions,
+  createOrUpdateAppVersion,
+  deleteAppVersion,
 } from '../controllers/admin.controller';
 
 const router = Router();
@@ -74,5 +77,9 @@ router.post('/users/:userId/emit-coins', requireAdmin, emitCoins);
 
 router.get('/message-reports', requireAdmin, getAllMessageReports);
 router.patch('/message-reports/:reportId/status', requireAdmin, updateMessageReportStatus);
+
+router.get('/app-versions', requireAdmin, getAllAppVersions);
+router.post('/app-versions', requireAdmin, createOrUpdateAppVersion);
+router.delete('/app-versions/:platform', requireAdmin, deleteAppVersion);
 
 export default router;

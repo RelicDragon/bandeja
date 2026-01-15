@@ -10,6 +10,7 @@ import { AdminUsersService } from '../services/admin/users.service';
 import { TransactionService } from '../services/transaction.service';
 import { TransactionType, MessageReportStatus } from '@prisma/client';
 import { AdminMessageReportsService } from '../services/admin/messageReports.service';
+import { AdminAppVersionService } from '../services/admin/appVersion.service';
 
 // Auth endpoints
 export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
@@ -545,5 +546,42 @@ export const updateMessageReportStatus = asyncHandler(async (req: AuthRequest, r
   res.json({
     success: true,
     data: report,
+  });
+});
+
+export const getAllAppVersions = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const versions = await AdminAppVersionService.getAllVersionRequirements();
+
+  res.json({
+    success: true,
+    data: versions,
+  });
+});
+
+export const createOrUpdateAppVersion = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { platform, minBuildNumber, minVersion, isBlocking, message } = req.body;
+
+  const version = await AdminAppVersionService.createOrUpdateVersionRequirement({
+    platform,
+    minBuildNumber,
+    minVersion,
+    isBlocking,
+    message,
+  });
+
+  res.json({
+    success: true,
+    data: version,
+  });
+});
+
+export const deleteAppVersion = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { platform } = req.params;
+
+  const result = await AdminAppVersionService.deleteVersionRequirement(platform);
+
+  res.json({
+    success: true,
+    message: result.message,
   });
 });

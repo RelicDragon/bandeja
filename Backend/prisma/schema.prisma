@@ -1277,3 +1277,16 @@ model Bet {
   @@index([gameId, status])
   @@index([acceptedBy])
 }
+
+model AppVersionRequirement {
+  id             String   @id @default(cuid())
+  platform       String   @unique
+  minBuildNumber Int
+  minVersion     String
+  isBlocking     Boolean  @default(false)
+  message        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([platform])
+}
