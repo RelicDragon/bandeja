@@ -107,7 +107,7 @@ export class InviteService {
     }
 
     if (invite.expiresAt && new Date() > invite.expiresAt) {
-      await prisma.invite.delete({
+      await prisma.invite.deleteMany({
         where: { id: inviteId },
       });
       return {
@@ -169,7 +169,7 @@ export class InviteService {
       }
     }
 
-    await prisma.invite.delete({
+    await prisma.invite.deleteMany({
       where: { id: inviteId },
     });
 
@@ -243,7 +243,7 @@ export class InviteService {
       }
     }
 
-    await prisma.invite.delete({
+    await prisma.invite.deleteMany({
       where: { id: inviteId },
     });
 

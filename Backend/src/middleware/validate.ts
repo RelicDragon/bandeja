@@ -4,12 +4,6 @@ import { ApiError } from '../utils/ApiError';
 
 export const validate = (validations: ValidationChain[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    console.log('[validate] Validating request:', {
-      path: req.path,
-      method: req.method,
-      body: req.body
-    });
-
     for (const validation of validations) {
       await validation.run(req);
     }
