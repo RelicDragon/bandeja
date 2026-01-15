@@ -75,6 +75,10 @@ function calculatePlayerStats(
 
       if (!isInTeamA && !isInTeamB) continue;
 
+      if (isInTeamA && isInTeamB) {
+        continue;
+      }
+
       const matchWinner = calculateMatchWinner(match);
       const totalScoreA = validSets.reduce((sum, set) => sum + set.teamA, 0);
       const totalScoreB = validSets.reduce((sum, set) => sum + set.teamB, 0);
@@ -133,6 +137,157 @@ function getSortValue(
   }
 }
 
+function compareMatchesWon(aStats: PlayerStats, bStats: PlayerStats): number {
+  return bStats.matchesWon - aStats.matchesWon;
+}
+
+function compareTies(aStats: PlayerStats, bStats: PlayerStats): number {
+  return bStats.ties - aStats.ties;
+}
+
+function compareScoresDelta(aStats: PlayerStats, bStats: PlayerStats): number {
+  return bStats.scoresDelta - aStats.scoresDelta;
+}
+
+function compareLevelAtStart(aUser: BasicUser, bUser: BasicUser): number {
+  return aUser.level - bUser.level;
+}
+
+function getHeadToHeadWinner(
+  playerAId: string,
+  playerBId: string,
+  rounds: Round[]
+): 'A' | 'B' | 'tie' | null {
+  let aWins = 0;
+  let bWins = 0;
+
+  for (const round of rounds) {
+    if (!round.matches || round.matches.length === 0) continue;
+
+    for (const match of round.matches) {
+      const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
+      if (validSets.length === 0) continue;
+
+      const aInTeamA = match.teamA.includes(playerAId);
+      const aInTeamB = match.teamB.includes(playerAId);
+      const bInTeamA = match.teamA.includes(playerBId);
+      const bInTeamB = match.teamB.includes(playerBId);
+
+      const areOpponents = 
+        (aInTeamA && bInTeamB) || (aInTeamB && bInTeamA);
+
+      if (!areOpponents) continue;
+
+      const matchWinner = calculateMatchWinner(match);
+      
+      if (matchWinner === 'teamA') {
+        if (aInTeamA) aWins++;
+        else bWins++;
+      } else if (matchWinner === 'teamB') {
+        if (aInTeamB) aWins++;
+        else bWins++;
+      }
+    }
+  }
+
+  if (aWins > bWins) return 'A';
+  if (bWins > aWins) return 'B';
+  if (aWins === bWins && aWins > 0) return 'tie';
+  return null;
+}
+
+function calculateHeadToHeadMap(
+  players: BasicUser[],
+  rounds: Round[]
+): Map<string, Map<string, 'A' | 'B' | 'tie' | null>> {
+  const h2hMap = new Map<string, Map<string, 'A' | 'B' | 'tie' | null>>();
+  
+  for (let i = 0; i < players.length; i++) {
+    for (let j = i + 1; j < players.length; j++) {
+      const playerA = players[i];
+      const playerB = players[j];
+      const result = getHeadToHeadWinner(playerA.id, playerB.id, rounds);
+      
+      if (!h2hMap.has(playerA.id)) {
+        h2hMap.set(playerA.id, new Map());
+      }
+      if (!h2hMap.has(playerB.id)) {
+        h2hMap.set(playerB.id, new Map());
+      }
+      
+      h2hMap.get(playerA.id)!.set(playerB.id, result);
+      const reverseResult = result === 'A' ? 'B' : result === 'B' ? 'A' : result;
+      h2hMap.get(playerB.id)!.set(playerA.id, reverseResult);
+    }
+  }
+  
+  return h2hMap;
+}
+
+function compareHeadToHead(
+  aStanding: PlayerStanding,
+  bStanding: PlayerStanding,
+  h2hMap: Map<string, Map<string, 'A' | 'B' | 'tie' | null>>
+): number {
+  const h2h = h2hMap.get(aStanding.user.id)?.get(bStanding.user.id);
+  if (h2h === 'A') return -1;
+  if (h2h === 'B') return 1;
+  return 0;
+}
+
+function compareStandings(
+  a: PlayerStanding,
+  b: PlayerStanding,
+  aStats: PlayerStats,
+  bStats: PlayerStats,
+  winnerOfGame: WinnerOfGame,
+  h2hMap: Map<string, Map<string, 'A' | 'B' | 'tie' | null>>,
+  pointsPerWin: number = 0,
+  pointsPerTie: number = 0,
+  pointsPerLoose: number = 0
+): number {
+  if (winnerOfGame === 'BY_MATCHES_WON') {
+    const diff = compareMatchesWon(aStats, bStats);
+    if (diff !== 0) return diff;
+
+    const tiesDiff = compareTies(aStats, bStats);
+    if (tiesDiff !== 0) return tiesDiff;
+
+    const scoresDiff = compareScoresDelta(aStats, bStats);
+    if (scoresDiff !== 0) return scoresDiff;
+
+    const h2hDiff = compareHeadToHead(a, b, h2hMap);
+    if (h2hDiff !== 0) return h2hDiff;
+
+    return compareLevelAtStart(a.user, b.user);
+  }
+
+  if (winnerOfGame === 'BY_POINTS') {
+    const aValue = getSortValue(aStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
+    const bValue = getSortValue(bStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
+    const pointsDiff = bValue - aValue;
+    if (pointsDiff !== 0) return pointsDiff;
+
+    const scoresDiff = compareScoresDelta(aStats, bStats);
+    if (scoresDiff !== 0) return scoresDiff;
+
+    const matchesDiff = compareMatchesWon(aStats, bStats);
+    if (matchesDiff !== 0) return matchesDiff;
+
+    const tiesDiff = compareTies(aStats, bStats);
+    if (tiesDiff !== 0) return tiesDiff;
+
+    const h2hDiff = compareHeadToHead(a, b, h2hMap);
+    if (h2hDiff !== 0) return h2hDiff;
+
+    return compareLevelAtStart(a.user, b.user);
+  }
+
+  const aValue = getSortValue(aStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
+  const bValue = getSortValue(bStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
+  return bValue - aValue;
+}
+
 
 export function calculateGameStandings(
   game: Game,
@@ -156,6 +311,8 @@ export function calculateGameStandings(
   const pointsPerWin = game.pointsPerWin ?? 0;
   const pointsPerTie = game.pointsPerTie ?? 0;
   const pointsPerLoose = game.pointsPerLoose ?? 0;
+
+  const h2hMap = calculateHeadToHeadMap(players, rounds);
 
   const standings: PlayerStanding[] = [];
 
@@ -191,87 +348,116 @@ export function calculateGameStandings(
 
     const sortStandings = (standingsToSort: PlayerStanding[]) => {
       return standingsToSort.sort((a, b) => {
-        const aStats = playerStatsMap.get(a.user.id)!;
-        const bStats = playerStatsMap.get(b.user.id)!;
-        
-        const aValue = getSortValue(aStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
-        const bValue = getSortValue(bStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
-        
-        const primaryDiff = bValue - aValue;
-        if (primaryDiff !== 0) return primaryDiff;
-        
-        if (winnerOfGame === 'BY_MATCHES_WON' || winnerOfGame === 'BY_POINTS') {
-          return bStats.scoresDelta - aStats.scoresDelta;
-        } else if (winnerOfGame === 'BY_SCORES_DELTA') {
-          return bStats.matchesWon - aStats.matchesWon;
-        }
-        
-        return 0;
+        const aStats = playerStatsMap.get(a.user.id);
+        const bStats = playerStatsMap.get(b.user.id);
+        if (!aStats || !bStats) return 0;
+        return compareStandings(
+          a,
+          b,
+          aStats,
+          bStats,
+          winnerOfGame,
+          h2hMap,
+          pointsPerWin,
+          pointsPerTie,
+          pointsPerLoose
+        );
       });
     };
 
     const sortedMaleStandings = sortStandings(maleStandings);
     const sortedFemaleStandings = sortStandings(femaleStandings);
 
-    let currentPlace = 1;
+    const assignPlaces = (standingsToAssign: PlayerStanding[]) => {
+      let currentPlace = 1;
+      for (let i = 0; i < standingsToAssign.length; i++) {
+        if (i > 0) {
+          const prev = standingsToAssign[i - 1];
+          const current = standingsToAssign[i];
+          const prevStats = playerStatsMap.get(prev.user.id);
+          const currentStats = playerStatsMap.get(current.user.id);
+          
+          if (prevStats && currentStats) {
+            const comparison = compareStandings(
+              prev,
+              current,
+              prevStats,
+              currentStats,
+              winnerOfGame,
+              h2hMap,
+              pointsPerWin,
+              pointsPerTie,
+              pointsPerLoose
+            );
+            
+            if (comparison !== 0) {
+              currentPlace = i + 1;
+            }
+          }
+        }
+        standingsToAssign[i].place = currentPlace;
+      }
+    };
+
+    assignPlaces(sortedMaleStandings);
+    assignPlaces(sortedFemaleStandings);
+
     const maxPairs = Math.max(sortedMaleStandings.length, sortedFemaleStandings.length);
     const interleavedStandings: PlayerStanding[] = [];
 
     for (let i = 0; i < maxPairs; i++) {
       if (i < sortedMaleStandings.length) {
-        sortedMaleStandings[i].place = currentPlace;
         interleavedStandings.push(sortedMaleStandings[i]);
       }
       if (i < sortedFemaleStandings.length) {
-        sortedFemaleStandings[i].place = currentPlace;
         interleavedStandings.push(sortedFemaleStandings[i]);
       }
-      currentPlace++;
     }
 
     return interleavedStandings;
   }
 
   standings.sort((a, b) => {
-    const aStats = playerStatsMap.get(a.user.id)!;
-    const bStats = playerStatsMap.get(b.user.id)!;
-    
-    const aValue = getSortValue(aStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
-    const bValue = getSortValue(bStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
-    
-    const primaryDiff = bValue - aValue;
-    if (primaryDiff !== 0) return primaryDiff;
-    
-    if (winnerOfGame === 'BY_MATCHES_WON' || winnerOfGame === 'BY_POINTS') {
-      return bStats.scoresDelta - aStats.scoresDelta;
-    } else if (winnerOfGame === 'BY_SCORES_DELTA') {
-      return bStats.matchesWon - aStats.matchesWon;
-    }
-    
-    return 0;
+    const aStats = playerStatsMap.get(a.user.id);
+    const bStats = playerStatsMap.get(b.user.id);
+    if (!aStats || !bStats) return 0;
+    return compareStandings(
+      a,
+      b,
+      aStats,
+      bStats,
+      winnerOfGame,
+      h2hMap,
+      pointsPerWin,
+      pointsPerTie,
+      pointsPerLoose
+    );
   });
 
   let currentPlace = 1;
   for (let i = 0; i < standings.length; i++) {
     if (i > 0) {
-      const prevStats = playerStatsMap.get(standings[i - 1].user.id)!;
-      const currentStats = playerStatsMap.get(standings[i].user.id)!;
+      const prev = standings[i - 1];
+      const current = standings[i];
+      const prevStats = playerStatsMap.get(prev.user.id);
+      const currentStats = playerStatsMap.get(current.user.id);
       
-      const prevValue = getSortValue(prevStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
-      const currentValue = getSortValue(currentStats, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose);
-      
-      let isDifferent = prevValue !== currentValue;
-      
-      if (!isDifferent) {
-        if (winnerOfGame === 'BY_MATCHES_WON' || winnerOfGame === 'BY_POINTS') {
-          isDifferent = prevStats.scoresDelta !== currentStats.scoresDelta;
-        } else if (winnerOfGame === 'BY_SCORES_DELTA') {
-          isDifferent = prevStats.matchesWon !== currentStats.matchesWon;
+      if (prevStats && currentStats) {
+        const comparison = compareStandings(
+          prev,
+          current,
+          prevStats,
+          currentStats,
+          winnerOfGame,
+          h2hMap,
+          pointsPerWin,
+          pointsPerTie,
+          pointsPerLoose
+        );
+        
+        if (comparison !== 0) {
+          currentPlace = i + 1;
         }
-      }
-      
-      if (isDifferent) {
-        currentPlace = i + 1;
       }
     }
     standings[i].place = currentPlace;

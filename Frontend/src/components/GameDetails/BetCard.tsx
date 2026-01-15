@@ -142,8 +142,8 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
   return (
     <Card className={`relative ${getCardBorderColor()}`}>
       <div className={`absolute -top-0 -right-0 sm:top-3 sm:right-3 px-3 py-1 rounded-full text-xs font-semibold z-10 ${getStatusColor()}`}>
-        {bet.status === 'RESOLVED' && getUserBetStatus() === 'won' && t('bets.won', { defaultValue: 'Won' })}
-        {bet.status === 'RESOLVED' && getUserBetStatus() === 'lost' && t('bets.lost', { defaultValue: 'Lost' })}
+        {bet.status === 'RESOLVED' && getUserBetStatus() === 'won' && 'W'}
+        {bet.status === 'RESOLVED' && getUserBetStatus() === 'lost' && 'L'}
         {bet.status === 'RESOLVED' && getUserBetStatus() === null && t('bets.resolved', { defaultValue: 'Resolved' })}
         {bet.status === 'OPEN' && t('bets.open', { defaultValue: 'Open' })}
         {bet.status === 'ACCEPTED' && t('bets.accepted', { defaultValue: 'Accepted' })}
