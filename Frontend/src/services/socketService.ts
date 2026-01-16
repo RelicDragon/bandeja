@@ -87,8 +87,8 @@ class SocketService {
 
     // Subscribe to network store changes (works for both Capacitor and web)
     this.networkUnsubscribe = useNetworkStore.subscribe(
-      (state) => state.isOnline,
-      (isOnline) => {
+      (state) => {
+        const isOnline = state.isOnline;
         if (isOnline) {
           this.handleNetworkOnline();
         } else {
