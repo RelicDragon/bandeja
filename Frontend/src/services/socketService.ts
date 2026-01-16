@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/authStore';
 import { isCapacitor } from '@/utils/capacitor';
+import { useNetworkStore } from '@/utils/networkStatus';
 
 export interface NewUserChatMessage {
   contextId: string;
@@ -51,6 +52,17 @@ class SocketService {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private isConnecting = false;
+  private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+  private heartbeatTimeout: ReturnType<typeof setTimeout> | null = null;
+  private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private lastPongTime: number = 0;
+  private activeChatRooms: Map<string, { contextType: 'GAME' | 'BUG' | 'USER' | 'GROUP'; contextId: string }> = new Map();
+  private isRejoining = false;
+  private heartbeatIntervalMs = 30000;
+  private heartbeatTimeoutMs = 10000;
+  private networkListenersSetup = false;
+  private isOffline = false;
+  private networkUnsubscribe: (() => void) | null = null;
 
   constructor() {
     // Don't auto-connect in constructor - let components trigger connection when needed
@@ -58,6 +70,7 @@ class SocketService {
       return SocketService.instance;
     }
     SocketService.instance = this;
+    this.setupNetworkListeners();
   }
 
   public static getInstance(): SocketService {
@@ -65,6 +78,56 @@ class SocketService {
       SocketService.instance = new SocketService();
     }
     return SocketService.instance;
+  }
+
+  private setupNetworkListeners() {
+    if (this.networkListenersSetup) {
+      return;
+    }
+
+    // Subscribe to network store changes (works for both Capacitor and web)
+    this.networkUnsubscribe = useNetworkStore.subscribe(
+      (state) => state.isOnline,
+      (isOnline) => {
+        if (isOnline) {
+          this.handleNetworkOnline();
+        } else {
+          this.handleNetworkOffline();
+        }
+      }
+    );
+
+    // Set initial state from store
+    const initialOnline = useNetworkStore.getState().isOnline;
+    this.isOffline = !initialOnline;
+    
+    this.networkListenersSetup = true;
+  }
+
+  private handleNetworkOnline() {
+    console.log('[SocketService] Network online - resuming connection');
+    this.isOffline = false;
+    
+    // Resume heartbeat if socket is connected
+    if (this.socket && this.socket.connected) {
+      this.startHeartbeat();
+    } else if (!this.isConnecting && !this.socket?.connected) {
+      // Attempt to reconnect if not already connected
+      this.reconnectAttempts = 0;
+      this.connect();
+    }
+  }
+
+  private handleNetworkOffline() {
+    console.log('[SocketService] Network offline - pausing heartbeat');
+    this.isOffline = true;
+    this.stopHeartbeat();
+    
+    // Cancel any pending reconnection attempts
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
   }
 
   private connect() {
@@ -81,12 +144,22 @@ class SocketService {
       return;
     }
 
-    if (!navigator.onLine) {
+    const isOnline = useNetworkStore.getState().isOnline;
+    if (!isOnline) {
       console.log('Skipping socket connection - offline');
       return;
     }
 
     this.isConnecting = true;
+
+    // Stop heartbeat before cleaning up
+    this.stopHeartbeat();
+
+    // Cancel any pending reconnection
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
 
     // Clean up existing socket if any
     if (this.socket) {
@@ -123,22 +196,41 @@ class SocketService {
       console.log('[SocketService] Socket.IO connected, socket ID:', this.socket?.id);
       this.isConnecting = false;
       this.reconnectAttempts = 0;
+      // Only start heartbeat if online
+      const isOnline = useNetworkStore.getState().isOnline;
+      if (!this.isOffline && isOnline) {
+        this.startHeartbeat();
+      }
+      this.rejoinActiveChatRooms();
     });
 
     this.socket.on('disconnect', (reason) => {
       console.log('Socket.IO disconnected:', reason);
       this.isConnecting = false;
+      this.stopHeartbeat();
       
       if (reason === 'io server disconnect') {
-        // Server disconnected, try to reconnect
         this.handleReconnect();
       }
     });
 
     this.socket.on('reconnect', () => {
       console.log('[SocketService] Reconnected, checking for missed messages');
-      // Trigger sync check
+      // Only start heartbeat if online
+      const isOnline = useNetworkStore.getState().isOnline;
+      if (!this.isOffline && isOnline) {
+        this.startHeartbeat();
+      }
+      this.rejoinActiveChatRooms();
       this.handleReconnectionSync();
+    });
+
+    this.socket.on('pong', () => {
+      this.lastPongTime = Date.now();
+      if (this.heartbeatTimeout) {
+        clearTimeout(this.heartbeatTimeout);
+        this.heartbeatTimeout = null;
+      }
     });
 
     this.socket.on('sync-required', (data: { timestamp: string }) => {
@@ -171,7 +263,123 @@ class SocketService {
     });
   }
 
+  private startHeartbeat() {
+    this.stopHeartbeat();
+    
+    if (!this.socket || !this.socket.connected) {
+      return;
+    }
+
+    // Don't start heartbeat if offline
+    const isOnline = useNetworkStore.getState().isOnline;
+    if (this.isOffline || !isOnline) {
+      console.log('[SocketService] Skipping heartbeat start - offline');
+      return;
+    }
+
+    this.lastPongTime = Date.now();
+    
+    this.heartbeatInterval = setInterval(() => {
+      // Skip heartbeat if offline
+      const isOnline = useNetworkStore.getState().isOnline;
+      if (this.isOffline || !isOnline) {
+        console.log('[SocketService] Heartbeat: Skipping - offline');
+        return;
+      }
+
+      if (!this.socket || !this.socket.connected) {
+        console.warn('[SocketService] Heartbeat: Socket not connected, attempting reconnect');
+        this.handleReconnect();
+        return;
+      }
+
+      const timeSinceLastPong = Date.now() - this.lastPongTime;
+      if (timeSinceLastPong > this.heartbeatTimeoutMs * 2) {
+        console.warn('[SocketService] Heartbeat: No pong received for too long, reconnecting');
+        this.handleReconnect();
+        return;
+      }
+
+      this.socket.emit('ping', { timestamp: Date.now() });
+      
+      this.heartbeatTimeout = setTimeout(() => {
+        // Check if still online before handling timeout
+        const isOnline = useNetworkStore.getState().isOnline;
+        if (this.isOffline || !isOnline) {
+          return;
+        }
+        
+        const timeSinceLastPong = Date.now() - this.lastPongTime;
+        if (timeSinceLastPong > this.heartbeatTimeoutMs) {
+          console.warn('[SocketService] Heartbeat: Pong timeout, reconnecting');
+          this.handleReconnect();
+        }
+      }, this.heartbeatTimeoutMs);
+    }, this.heartbeatIntervalMs);
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    if (this.heartbeatTimeout) {
+      clearTimeout(this.heartbeatTimeout);
+      this.heartbeatTimeout = null;
+    }
+  }
+
+  private async rejoinActiveChatRooms() {
+    if (!this.socket || !this.socket.connected) {
+      return;
+    }
+
+    // Prevent concurrent rejoin attempts
+    if (this.isRejoining) {
+      return;
+    }
+
+    this.isRejoining = true;
+    
+    try {
+      const rooms = Array.from(this.activeChatRooms.values());
+      console.log('[SocketService] Rejoining active chat rooms:', rooms);
+      
+      // Rejoin rooms sequentially to avoid overwhelming the server
+      for (const room of rooms) {
+        // Check connection status before each rejoin
+        if (!this.socket || !this.socket.connected) {
+          console.warn('[SocketService] Connection lost during room rejoin');
+          break;
+        }
+        
+        try {
+          await this.joinChatRoom(room.contextType, room.contextId);
+          // Small delay between rejoins to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error(`[SocketService] Failed to rejoin room ${room.contextType}:${room.contextId}:`, error);
+          // Continue with other rooms even if one fails
+        }
+      }
+    } finally {
+      this.isRejoining = false;
+    }
+  }
+
   private handleReconnect() {
+    // Don't attempt reconnection if offline
+    const isOnline = useNetworkStore.getState().isOnline;
+    if (this.isOffline || !isOnline) {
+      console.log('[SocketService] Skipping reconnection - offline');
+      return;
+    }
+
+    // Prevent multiple simultaneous reconnection attempts
+    if (this.reconnectTimeoutId || this.isConnecting) {
+      return;
+    }
+    
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max reconnection attempts reached');
       return;
@@ -182,8 +390,13 @@ class SocketService {
     
     console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
     
-    setTimeout(() => {
-      this.connect();
+    this.reconnectTimeoutId = setTimeout(() => {
+      this.reconnectTimeoutId = null;
+      // Check if still online before connecting
+      const isOnline = useNetworkStore.getState().isOnline;
+      if (!this.isOffline && isOnline) {
+        this.connect();
+      }
     }, delay);
   }
 
@@ -308,6 +521,9 @@ class SocketService {
   // ========== UNIFIED CHAT METHODS (NEW) ==========
   // Generic join chat room based on context type
   public async joinChatRoom(contextType: 'GAME' | 'BUG' | 'USER' | 'GROUP', contextId: string) {
+    const roomKey = `${contextType}:${contextId}`;
+    this.activeChatRooms.set(roomKey, { contextType, contextId });
+    
     if (contextType === 'GAME') {
       return this.joinGameRoom(contextId);
     } else if (contextType === 'BUG') {
@@ -324,6 +540,9 @@ class SocketService {
 
   // Generic leave chat room based on context type
   public leaveChatRoom(contextType: 'GAME' | 'BUG' | 'USER' | 'GROUP', contextId: string) {
+    const roomKey = `${contextType}:${contextId}`;
+    this.activeChatRooms.delete(roomKey);
+    
     if (contextType === 'GAME') {
       return this.leaveGameRoom(contextId);
     } else if (contextType === 'BUG') {
@@ -379,6 +598,22 @@ class SocketService {
 
   // Disconnect
   public disconnect() {
+    this.stopHeartbeat();
+    this.activeChatRooms.clear();
+    this.isRejoining = false;
+    
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
+    
+    // Clean up network subscription
+    if (this.networkUnsubscribe) {
+      this.networkUnsubscribe();
+      this.networkUnsubscribe = null;
+      this.networkListenersSetup = false;
+    }
+    
     if (this.socket) {
       this.socket.removeAllListeners();
       this.socket.disconnect();

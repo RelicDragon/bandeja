@@ -54,6 +54,52 @@ const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: st
   });
 };
 
+const sortMyGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string; entityType?: string }>(
+  list: T[] = [],
+  unreadCounts?: Record<string, number>
+): T[] => {
+  const getStatusPriority = (status?: string): number => {
+    if (status === 'ANNOUNCED' || status === 'STARTED') return 0;
+    if (status === 'FINISHED') return 1;
+    if (status === 'ARCHIVED') return 2;
+    return 3;
+  };
+
+  const isPrimaryGame = (game: T): boolean => !game.parentId;
+  const hasUnreadChats = (game: T): boolean => (unreadCounts?.[game.id] || 0) > 0;
+  const isLeagueSeason = (game: T): boolean => game.entityType === 'LEAGUE_SEASON';
+
+  return [...list].sort((a, b) => {
+    const aIsLeagueSeason = isLeagueSeason(a);
+    const bIsLeagueSeason = isLeagueSeason(b);
+
+    if (aIsLeagueSeason && !bIsLeagueSeason) return -1;
+    if (!aIsLeagueSeason && bIsLeagueSeason) return 1;
+
+    const aIsPrimaryWithUnread = isPrimaryGame(a) && hasUnreadChats(a);
+    const bIsPrimaryWithUnread = isPrimaryGame(b) && hasUnreadChats(b);
+
+    if (aIsPrimaryWithUnread && !bIsPrimaryWithUnread) return -1;
+    if (!aIsPrimaryWithUnread && bIsPrimaryWithUnread) return 1;
+
+    const statusPriorityA = getStatusPriority(a.status);
+    const statusPriorityB = getStatusPriority(b.status);
+    
+    if (statusPriorityA !== statusPriorityB) {
+      return statusPriorityA - statusPriorityB;
+    }
+    
+    const dateTimeA = new Date(a.startTime).getTime();
+    const dateTimeB = new Date(b.startTime).getTime();
+    
+    if (statusPriorityA === 0) {
+      return dateTimeA - dateTimeB;
+    }
+    
+    return dateTimeB - dateTimeA;
+  });
+};
+
 export const MyTab = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
@@ -87,7 +133,7 @@ export const MyTab = () => {
     return { ...gamesUnreadCounts, ...pastGamesUnreadCounts };
   }, [gamesUnreadCounts, pastGamesUnreadCounts]);
 
-  const filteredMyGames = useMemo(() => sortGamesByStatusAndDateTime(games, mergedUnreadCounts), [games, mergedUnreadCounts]);
+  const filteredMyGames = useMemo(() => sortMyGamesByStatusAndDateTime(games, mergedUnreadCounts), [games, mergedUnreadCounts]);
   const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(pastGames, pastGamesUnreadCounts), [pastGames, pastGamesUnreadCounts]);
 
   const myGamesTotalUnread = useMemo(() => {

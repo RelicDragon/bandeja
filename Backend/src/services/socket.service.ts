@@ -299,6 +299,18 @@ class SocketService {
         });
       });
 
+      // Handle ping from client (heartbeat)
+      socket.on('ping', (data: { timestamp?: number }) => {
+        // Validate ping data
+        if (typeof data?.timestamp === 'number') {
+          socket.emit('pong', { timestamp: data.timestamp });
+        } else {
+          // Still respond to maintain connection, but log invalid ping
+          console.warn(`[SocketService] Invalid ping from user ${socket.userId}:`, data);
+          socket.emit('pong', { timestamp: Date.now() });
+        }
+      });
+
       // Handle message acknowledgment
       socket.on('chat:message-ack', async (data: { messageId: string; contextType: ChatContextType; contextId: string }) => {
         if (!socket.userId) return;
