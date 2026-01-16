@@ -20,7 +20,7 @@ export const GameResults = ({
   
   const resultStatus = getGameResultStatus(game, user ?? null);
 
-  if (game.status !== 'STARTED' && game.status !== 'FINISHED' && game.status !== 'ARCHIVED') {
+  if (game.status !== 'ANNOUNCED' && game.status !== 'STARTED' && game.status !== 'FINISHED' && game.status !== 'ARCHIVED') {
     return null;
   }
 

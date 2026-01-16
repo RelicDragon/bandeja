@@ -86,6 +86,7 @@ export const GameDetailsContent = () => {
   const [hasFaqs, setHasFaqs] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [showAnnouncedConfirm, setShowAnnouncedConfirm] = useState(false);
 
   const handleFaqsChange = useCallback((hasFaqs: boolean) => {
     setHasFaqs(hasFaqs);
@@ -509,12 +510,11 @@ export const GameDetailsContent = () => {
     }
   };
 
-  const handleStartResultsEntry = async () => {
+  const proceedWithResultsEntry = async () => {
     if (!id || !user?.id || !game) return;
     
-    const canEditResults = canUserEditResults(game, user);
-    if (!canEditResults) return;
-
+    setShowAnnouncedConfirm(false);
+    
     // Scroll to top immediately
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -571,6 +571,21 @@ export const GameDetailsContent = () => {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
+  };
+
+  const handleStartResultsEntry = async () => {
+    if (!id || !user?.id || !game) return;
+    
+    const canEditResults = canUserEditResults(game, user);
+    if (!canEditResults) return;
+
+    // Show confirmation if game is ANNOUNCED
+    if (game.status === 'ANNOUNCED') {
+      setShowAnnouncedConfirm(true);
+      return;
+    }
+
+    await proceedWithResultsEntry();
   };
 
   const handleResetGame = async () => {
@@ -1534,6 +1549,21 @@ export const GameDetailsContent = () => {
           confirmVariant="danger"
           onConfirm={handleResetGame}
           onClose={() => setShowResetConfirmation(false)}
+        />
+      )}
+
+      {showAnnouncedConfirm && (
+        <ConfirmationModal
+          isOpen={showAnnouncedConfirm}
+          title={t('gameResults.confirmAnnouncedGame.title', { defaultValue: 'Game Not Started Yet' })}
+          message={t('gameResults.confirmAnnouncedGame.message', { 
+            defaultValue: 'This game is still in ANNOUNCED status. Are you sure you want to start entering results now?' 
+          })}
+          confirmText={t('gameResults.confirmAnnouncedGame.confirm', { defaultValue: 'Yes, Continue' })}
+          cancelText={t('common.cancel')}
+          confirmVariant="primary"
+          onConfirm={proceedWithResultsEntry}
+          onClose={() => setShowAnnouncedConfirm(false)}
         />
       )}
 

@@ -123,11 +123,6 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
   // Check for problems that prevent editing
   const problems: string[] = [];
 
-  // Problem: Game hasn't started yet
-  if (game.status === 'ANNOUNCED') {
-    problems.push('games.results.problems.gameNotStarted');
-  }
-
   // Skip participant checks for TRAINING games
   if (game.entityType !== 'TRAINING') {
     // Problem: Not enough players
@@ -142,7 +137,7 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
   }
 
   // Problem: User doesn't have permission to edit
-  if (!hasEditPermission && game.status !== 'ANNOUNCED') {
+  if (!hasEditPermission) {
     problems.push('games.results.problems.noEditAccess');
   }
 

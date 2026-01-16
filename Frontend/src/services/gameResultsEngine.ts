@@ -804,19 +804,6 @@ class GameResultsEngineClass {
       };
     }
 
-    const now = new Date();
-    const startTime = new Date(game.startTime);
-
-    if (now < startTime) {
-      return {
-        type: 'GAME_NOT_STARTED',
-        message: 'games.results.problems.gameNotStarted',
-        canEdit,
-        showInputs: false,
-        showClock: canEdit,
-      };
-    }
-
     const playingParticipants = game.participants?.filter((p) => p.isPlaying) || [];
     if (playingParticipants.length < 2) {
       return {
@@ -838,6 +825,9 @@ class GameResultsEngineClass {
       };
     }
 
+    const now = new Date();
+    const startTime = new Date(game.startTime);
+    
     return {
       type: 'NO_RESULTS',
       message: 'games.results.positive.noResultsYet',
