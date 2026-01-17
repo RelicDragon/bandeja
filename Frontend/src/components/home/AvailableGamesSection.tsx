@@ -189,7 +189,7 @@ export const AvailableGamesSection = ({
   return (
     <div className="mt-2">
       <div className="mb-4">
-        <div className="flex items-center justify-center mb-3 relative">
+        <div className="flex items-center justify-center mb-3">
           <button 
             onClick={handleCityClick}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -199,27 +199,42 @@ export const AvailableGamesSection = ({
               {user?.currentCity?.name || t('auth.selectCity')}
             </h2>
           </button>
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            <button
-              onClick={() => setTrainingFilter(!trainingFilter)}
-              className={`p-2 rounded-lg transition-colors ${
-                trainingFilter
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-            >
-              <Dumbbell size={20} className={trainingFilter ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={trainingFilter ? 'currentColor' : 'none'} />
-            </button>
-            <button
-              onClick={() => setUserFilter(!userFilter)}
-              className={`p-2 rounded-lg transition-colors ${
-                userFilter
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-            >
-              <Filter size={20} className={userFilter ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={userFilter ? 'currentColor' : 'none'} />
-            </button>
+        </div>
+        <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
+          <button
+            onClick={() => setTrainingFilter(!trainingFilter)}
+            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
+              trainingFilter
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <Dumbbell size={18} className={trainingFilter ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={trainingFilter ? 'currentColor' : 'none'} />
+            <span className="text-sm font-medium">{t('games.training', { defaultValue: 'Training' })}</span>
+          </button>
+          <button
+            onClick={() => setUserFilter(!userFilter)}
+            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
+              userFilter
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <Filter size={18} className={userFilter ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={userFilter ? 'currentColor' : 'none'} />
+            <span className="text-sm font-medium">{t('games.availableForMe', { defaultValue: 'Available for me' })}</span>
+          </button>
+        </div>
+        <div 
+          className={`max-w-md mx-auto mb-3 overflow-hidden transition-all duration-300 ease-in-out ${
+            userFilter 
+              ? 'max-h-20 opacity-100' 
+              : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
+            <p className="text-xs text-primary-700 dark:text-primary-300 text-center">
+              {t('games.availableForMeHint', { defaultValue: 'Showing games with available slots and suitable level limits' })}
+            </p>
           </div>
         </div>
       </div>
