@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash } from 'lucide-react';
+import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash, X } from 'lucide-react';
 import { EntityType } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { CreateGroupChannelForm } from './chat/CreateGroupChannelForm';
@@ -33,7 +33,7 @@ export const CreateMenuModal = ({
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [position, setPosition] = useState({ top: 0, right: 0 });
   
   const getEntityTypes = (): EntityType[] => {
     const types: EntityType[] = ['GAME'];
@@ -62,8 +62,8 @@ export const CreateMenuModal = ({
       if (buttonRef?.current) {
         const rect = buttonRef.current.getBoundingClientRect();
         setPosition({
-          top: rect.bottom + 8,
-          left: rect.left + rect.width / 2
+          top: rect.top,
+          right: window.innerWidth - rect.right
         });
       }
     };
@@ -175,8 +175,21 @@ export const CreateMenuModal = ({
     }
   };
 
-  const totalItems = entityTypes.length + 3;
+  const totalItems = entityTypes.length + 4;
   let currentIndex = 0;
+
+  const handleClose = () => {
+    setIsExiting(true);
+    setTimeout(() => {
+      setIsAnimatingOut(true);
+      setTimeout(() => {
+        onClose();
+        setIsAnimatingOut(false);
+        setIsExiting(false);
+        setShouldRender(false);
+      }, 200);
+    }, 400);
+  };
 
   return createPortal(
     <>
@@ -197,14 +210,25 @@ export const CreateMenuModal = ({
       
       <div 
         ref={containerRef} 
-        className="fixed z-[9999] pr-8"
+        className="fixed z-[9999]"
         style={{
           top: `${position.top}px`,
-          left: `${position.left}px`,
-          transform: 'translateX(-50%)'
+          right: `${position.right}px`
         }}
       >
-        <div className="flex flex-col pr-8 gap-2">
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={handleClose}
+            className={`game-type-button w-10 h-10 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center justify-center self-end ${
+              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+            }`}
+            style={{
+              animationDelay: isExiting ? `${(totalItems - currentIndex - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+            }}
+          >
+            <X size={18} />
+          </button>
           {entityTypes.map((type) => {
             const delay = isExiting ? `${(totalItems - currentIndex - 1) * 100}ms` : `${currentIndex * 100}ms`;
             currentIndex++;
