@@ -650,6 +650,7 @@
     "all": "Све",
     "global": "Глобални",
     "yourRank": "Ваше место",
+    "myPlace": "Моје место: {{rank}}",
     "you": "Ви",
     "selectPlayerToCompare": "Изаберите играча за поређење",
     "gamesTogether": "Мечеви заједно",

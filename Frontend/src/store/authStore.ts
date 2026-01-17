@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { User } from '@/types';
 import i18n from '@/i18n/config';
-import { extractLanguageCode, detectTimeFormat, detectWeekStart } from '@/utils/displayPreferences';
+import { extractLanguageCode, detectTimeFormat, detectWeekStart, normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { usersApi } from '@/api';
 
 interface AuthState {
@@ -51,8 +51,11 @@ export const useAuthStore = create<AuthState>((set) => {
     setAuth: async (user, token) => {
       try {
         const deviceLocale = navigator.language || 'en-US';
+        const normalizedLanguage = normalizeLanguageForProfile(user.language);
+        const needsLanguageNormalization = user.language && normalizedLanguage !== user.language;
         const needsUpdate = 
           !user.language || 
+          needsLanguageNormalization ||
           !user.timeFormat || 
           !user.weekStart;
         
@@ -62,6 +65,8 @@ export const useAuthStore = create<AuthState>((set) => {
           const updates: Partial<User> = {};
           if (!user.language) {
             updates.language = deviceLocale;
+          } else if (needsLanguageNormalization) {
+            updates.language = normalizedLanguage;
           }
           if (!user.timeFormat) {
             updates.timeFormat = detectTimeFormat(deviceLocale);

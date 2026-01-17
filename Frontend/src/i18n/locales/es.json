@@ -646,6 +646,7 @@
     "all": "Todo",
     "global": "Global",
     "yourRank": "Tu Posición",
+    "myPlace": "Mi lugar: {{rank}}",
     "you": "Tú",
     "selectPlayerToCompare": "Seleccionar jugador para comparar",
     "gamesTogether": "Partidos Juntos",

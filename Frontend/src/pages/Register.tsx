@@ -6,6 +6,7 @@ import { Button, Input, Select } from '@/components';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { Gender } from '@/types';
+import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
 
 export const Register = () => {
   const { t, i18n } = useTranslation();
@@ -128,6 +129,7 @@ export const Register = () => {
 
     try {
       const genderIsSet = gender === 'MALE' || gender === 'FEMALE' || (gender === 'PREFER_NOT_TO_SAY' && genderAcknowledged);
+      const normalizedLanguage = normalizeLanguageForProfile(i18n.language);
       const response = await authApi.registerPhone({
         phone,
         password,
@@ -136,7 +138,7 @@ export const Register = () => {
         email: email || undefined,
         gender,
         genderIsSet,
-        language: i18n.language,
+        language: normalizedLanguage,
       });
       await setAuth(response.data.user, response.data.token);
       navigate('/select-city');

@@ -653,6 +653,7 @@
     "all": "All",
     "global": "Global",
     "yourRank": "Your Rank",
+    "myPlace": "My place: {{rank}}",
     "you": "You",
     "selectPlayerToCompare": "Select player to compare",
     "gamesTogether": "Matches Together",

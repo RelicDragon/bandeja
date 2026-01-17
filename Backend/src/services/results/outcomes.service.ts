@@ -13,7 +13,13 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
     include: {
       participants: {
         include: {
-          user: true,
+          user: {
+            select: {
+              ...USER_SELECT_FIELDS,
+              reliability: true,
+              gamesPlayed: true,
+            },
+          },
         },
         where: {
           isPlaying: true,

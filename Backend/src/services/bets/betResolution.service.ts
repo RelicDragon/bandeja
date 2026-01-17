@@ -3,6 +3,7 @@ import { Bet, TransactionType, Prisma } from '@prisma/client';
 import { evaluateBetCondition, BetEvaluationResult } from './betConditionEvaluator.service';
 import { TransactionService } from '../transaction.service';
 import notificationService from '../notification.service';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
@@ -25,7 +26,11 @@ export async function resolveGameBets(gameId: string): Promise<void> {
                 teams: {
                   include: {
                     players: {
-                      include: { user: true }
+                      include: { 
+                        user: {
+                          select: USER_SELECT_FIELDS,
+                        }
+                      }
                     }
                   }
                 },
@@ -35,7 +40,11 @@ export async function resolveGameBets(gameId: string): Promise<void> {
           }
         },
         outcomes: {
-          include: { user: true }
+          include: { 
+            user: {
+              select: USER_SELECT_FIELDS,
+            }
+          }
         }
       }
     });
@@ -58,8 +67,12 @@ export async function resolveGameBets(gameId: string): Promise<void> {
         status: { in: ['OPEN', 'ACCEPTED'] }
       },
       include: {
-        creator: true,
-        acceptedByUser: true
+        creator: {
+          select: USER_SELECT_FIELDS,
+        },
+        acceptedByUser: {
+          select: USER_SELECT_FIELDS,
+        }
       }
     });
 
@@ -248,7 +261,14 @@ async function resolveBet(
   
   const currentBet = await tx.bet.findUnique({
     where: { id: bet.id },
-    include: { creator: true, acceptedByUser: true }
+    include: { 
+      creator: {
+        select: USER_SELECT_FIELDS,
+      }, 
+      acceptedByUser: {
+        select: USER_SELECT_FIELDS,
+      }
+    }
   });
 
   if (!currentBet) {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Trash2, Plus } from 'lucide-react';
 import { Round } from '@/types/gameResults';
@@ -36,6 +36,39 @@ interface RoundCardProps {
   prohibitMatchesEditing?: boolean;
 }
 
+type RoundStatus = 'red' | 'yellow' | 'normal';
+
+const getRoundStatus = (round: Round): RoundStatus => {
+  if (!round.matches || round.matches.length === 0) {
+    return 'red';
+  }
+
+  const matchStatuses = round.matches.map(match => {
+    if (!match.sets || match.sets.length === 0) {
+      return 'no-sets';
+    }
+    
+    const hasNonZeroSet = match.sets.some(set => set.teamA > 0 || set.teamB > 0);
+    if (hasNonZeroSet) {
+      return 'has-results';
+    }
+    
+    return 'all-zero';
+  });
+
+  const allNoSetsOrZero = matchStatuses.every(status => status === 'no-sets' || status === 'all-zero');
+  if (allNoSetsOrZero) {
+    return 'red';
+  }
+
+  const someAllZero = matchStatuses.some(status => status === 'all-zero');
+  if (someAllZero) {
+    return 'yellow';
+  }
+
+  return 'normal';
+};
+
 export const RoundCard = ({
   round,
   roundIndex,
@@ -67,6 +100,8 @@ export const RoundCard = ({
   const { t } = useTranslation();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const roundName = `${t('gameResults.round')} ${roundIndex + 1}`;
+  
+  const roundStatus = useMemo(() => getRoundStatus(round), [round]);
 
   const matchesContent = (
     <div className={hideFrame ? "" : "p-2"}>
@@ -163,14 +198,52 @@ export const RoundCard = ({
     );
   }
 
+  const getBorderClasses = () => {
+    if (isExpanded) {
+      return 'border-blue-500 dark:border-blue-400';
+    }
+    
+    if (roundStatus === 'red') {
+      return 'border-red-400 dark:border-red-500';
+    }
+    
+    if (roundStatus === 'yellow') {
+      return 'border-yellow-400 dark:border-yellow-500';
+    }
+    
+    return 'border-gray-200 dark:border-gray-700';
+  };
+
+  const getBackgroundClasses = () => {
+    if (roundStatus === 'red') {
+      return 'bg-red-50 dark:bg-red-900/20';
+    }
+    
+    if (roundStatus === 'yellow') {
+      return 'bg-yellow-50 dark:bg-yellow-900/20';
+    }
+    
+    return 'bg-white dark:bg-gray-800';
+  };
+
+  const getHoverClasses = () => {
+    if (roundStatus === 'red') {
+      return 'hover:bg-red-100 dark:hover:bg-red-900/30';
+    }
+    
+    if (roundStatus === 'yellow') {
+      return 'hover:bg-yellow-100 dark:hover:bg-yellow-900/30';
+    }
+    
+    return 'hover:bg-gray-50 dark:hover:bg-gray-700/50';
+  };
+
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-lg border-2 shadow-sm ${
-        isExpanded ? 'border-blue-500 dark:border-blue-400' : 'border-gray-200 dark:border-gray-700'
-      } transition-colors`}
+      className={`${getBackgroundClasses()} rounded-lg border-2 shadow-sm ${getBorderClasses()} transition-colors`}
     >
       <div
-        className="flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        className={`flex items-center justify-between cursor-pointer ${getHoverClasses()} transition-colors`}
         onClick={onToggleExpand}
       >
         <div className="flex items-center gap-1">

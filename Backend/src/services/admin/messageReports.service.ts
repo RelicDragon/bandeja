@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { MessageReportStatus } from '@prisma/client';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class AdminMessageReportsService {
   static async getAllReports(status?: MessageReportStatus) {
@@ -11,9 +12,7 @@ export class AdminMessageReportsService {
           include: {
             sender: {
               select: {
-                id: true,
-                firstName: true,
-                lastName: true,
+                ...USER_SELECT_FIELDS,
                 phone: true
               }
             }
@@ -21,9 +20,7 @@ export class AdminMessageReportsService {
         },
         reporter: {
           select: {
-            id: true,
-            firstName: true,
-            lastName: true,
+            ...USER_SELECT_FIELDS,
             phone: true
           }
         }
@@ -53,9 +50,7 @@ export class AdminMessageReportsService {
           include: {
             sender: {
               select: {
-                id: true,
-                firstName: true,
-                lastName: true,
+                ...USER_SELECT_FIELDS,
                 phone: true
               }
             }
@@ -63,9 +58,7 @@ export class AdminMessageReportsService {
         },
         reporter: {
           select: {
-            id: true,
-            firstName: true,
-            lastName: true,
+            ...USER_SELECT_FIELDS,
             phone: true
           }
         }

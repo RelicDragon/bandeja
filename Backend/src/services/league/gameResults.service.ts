@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 type ScoringRules = {
   pointsPerWin: number;
@@ -16,7 +17,9 @@ export class LeagueGameResultsService {
       include: {
         outcomes: {
           include: {
-            user: true,
+            user: {
+              select: USER_SELECT_FIELDS,
+            },
           },
         },
         fixedTeams: {
@@ -106,7 +109,9 @@ export class LeagueGameResultsService {
       include: {
         outcomes: {
           include: {
-            user: true,
+            user: {
+              select: USER_SELECT_FIELDS,
+            },
           },
         },
         fixedTeams: {

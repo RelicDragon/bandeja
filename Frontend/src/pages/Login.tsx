@@ -10,6 +10,7 @@ import { Send, Phone, AlertCircle } from 'lucide-react';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { isIOS } from '@/utils/capacitor';
 import { AppleIcon } from '@/components/AppleIcon';
+import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
 
 export const Login = () => {
   const { t } = useTranslation();
@@ -29,8 +30,8 @@ export const Login = () => {
     setError('');
 
     try {
-      const language = localStorage.getItem('language') || 'en';
-      const response = await authApi.loginPhone({ phone, password, language });
+      const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
+      const response = await authApi.loginPhone({ phone, password, language: normalizedLanguage });
       await setAuth(response.data.user, response.data.token);
       
       if (!response.data.user.currentCity) {
@@ -82,8 +83,8 @@ export const Login = () => {
 
     try {
       const telegramId = localStorage.getItem('telegramId') || '';
-      const language = localStorage.getItem('language') || 'en';
-      const response = await authApi.verifyTelegramOtp({ code: otp, telegramId, language });
+      const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
+      const response = await authApi.verifyTelegramOtp({ code: otp, telegramId, language: normalizedLanguage });
       await setAuth(response.data.user, response.data.token);
       localStorage.removeItem('telegramId');
       
@@ -148,7 +149,7 @@ export const Login = () => {
       }
 
       const { result: appleResult, nonce } = result;
-      const language = localStorage.getItem('language') || 'en';
+      const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
 
       let response;
       try {
@@ -158,7 +159,7 @@ export const Login = () => {
         response = await authApi.loginApple({
           identityToken: appleResult.identityToken,
           nonce,
-          language,
+          language: normalizedLanguage,
           firstName,
           lastName,
         });
@@ -173,7 +174,7 @@ export const Login = () => {
               nonce,
               firstName,
               lastName,
-              language,
+              language: normalizedLanguage,
             });
           } catch (registerErr: any) {
             if (registerErr?.response?.status === 400) {
@@ -185,7 +186,7 @@ export const Login = () => {
                 response = await authApi.loginApple({
                   identityToken: appleResult.identityToken,
                   nonce,
-                  language,
+                  language: normalizedLanguage,
                   firstName,
                   lastName,
                 });

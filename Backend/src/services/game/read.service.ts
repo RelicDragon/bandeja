@@ -335,7 +335,9 @@ export class GameReadService {
           include: {
             players: {
               include: {
-                user: true,
+                user: {
+                  select: USER_SELECT_FIELDS,
+                },
               },
             },
           },

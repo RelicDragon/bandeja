@@ -98,3 +98,28 @@ export function formatGameTime(
   }
 }
 
+export function normalizeLanguageForProfile(locale: string | null | undefined): string {
+  if (!locale || locale === 'auto') {
+    return 'auto';
+  }
+  
+  const langCode = locale.toLowerCase().split('-')[0];
+  
+  const languageMap: Record<string, string> = {
+    'en': 'en-US',
+    'ru': 'ru-RU',
+    'sr': 'sr-RS',
+    'es': 'es-ES',
+  };
+  
+  if (languageMap[langCode]) {
+    return languageMap[langCode];
+  }
+  
+  const validLocales = ['en-US', 'en-GB', 'ru-RU', 'sr-RS', 'es-ES', 'auto'];
+  if (validLocales.includes(locale)) {
+    return locale;
+  }
+  
+  return 'auto';
+}

@@ -656,6 +656,7 @@
     "all": "Все",
     "global": "Глобальный",
     "yourRank": "Ваше место",
+    "myPlace": "Мое место: {{rank}}",
     "you": "Вы",
     "selectPlayerToCompare": "Выберите игрока для сравнения",
     "gamesTogether": "Матчи вместе",

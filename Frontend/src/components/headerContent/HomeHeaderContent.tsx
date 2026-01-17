@@ -20,7 +20,7 @@ export const HomeHeaderContent = () => {
   const [showChatForm, setShowChatForm] = useState(false);
   const [activeChatType, setActiveChatType] = useState<'group' | 'channel' | null>(null);
 
-  const shouldUseIconOnly = currentPage === 'profile' || currentPage === 'leaderboard';
+  const shouldUseIconOnly = currentPage === 'profile' || currentPage === 'leaderboard' || currentPage === 'chats';
 
   useEffect(() => {
     if (!shouldUseIconOnly) {

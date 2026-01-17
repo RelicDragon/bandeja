@@ -53,14 +53,7 @@ export class UnreadObjectsService {
         participants: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true
-              }
+              select: USER_SELECT_FIELDS,
             }
           }
         },

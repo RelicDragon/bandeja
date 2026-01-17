@@ -124,13 +124,13 @@ export const USER_SELECT_FIELDS = {
   socialLevel: true,
   gender: true,
   approvedLevel: true,
-  approvedById: true,
-  approvedWhen: true,
   isTrainer: true,
 } as const;
 
 export const PROFILE_SELECT_FIELDS = {
   ...USER_SELECT_FIELDS,
+  approvedById: true,
+  approvedWhen: true,
   phone: true,
   email: true,
   telegramId: true,

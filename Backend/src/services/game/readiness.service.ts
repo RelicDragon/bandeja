@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class GameReadinessService {
   static async calculateGameReadiness(gameId: string) {
@@ -13,7 +14,9 @@ export class GameReadinessService {
           include: {
             players: {
               include: {
-                user: true,
+                user: {
+                  select: USER_SELECT_FIELDS,
+                },
               },
             },
           },

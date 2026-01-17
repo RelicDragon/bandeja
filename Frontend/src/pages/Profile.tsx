@@ -17,7 +17,7 @@ import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
-import { extractLanguageCode } from '@/utils/displayPreferences';
+import { extractLanguageCode, normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { isCapacitor, getAppInfo } from '@/utils/capacitor';
 
 export const ProfileContent = () => {
@@ -39,7 +39,7 @@ export const ProfileContent = () => {
   const [preferredHandRight, setPreferredHandRight] = useState(user?.preferredHandRight || false);
   const [preferredCourtSideLeft, setPreferredCourtSideLeft] = useState(user?.preferredCourtSideLeft || false);
   const [preferredCourtSideRight, setPreferredCourtSideRight] = useState(user?.preferredCourtSideRight || false);
-  const [language, setLanguage] = useState(user?.language || 'auto');
+  const [language, setLanguage] = useState(normalizeLanguageForProfile(user?.language) || 'auto');
   const [timeFormat, setTimeFormat] = useState<'auto' | '12h' | '24h'>(user?.timeFormat || 'auto');
   const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday'>(user?.weekStart || 'auto');
 
@@ -328,7 +328,7 @@ export const ProfileContent = () => {
 
   useEffect(() => {
     if (user) {
-      setLanguage(user.language || 'auto');
+      setLanguage(normalizeLanguageForProfile(user.language) || 'auto');
       setTimeFormat(user.timeFormat || 'auto');
       setWeekStart(user.weekStart || 'auto');
     }

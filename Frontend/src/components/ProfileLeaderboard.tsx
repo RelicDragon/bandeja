@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Search } from 'lucide-react';
 import { rankingApi, LeaderboardEntry } from '@/api/ranking';
 import { Loading } from './Loading';
 import { PlayerAvatar } from './PlayerAvatar';
@@ -39,6 +40,27 @@ export const ProfileLeaderboard = () => {
     const formatted = formatNumber(change);
     return change > 0 ? `+${formatted}` : formatted;
   };
+
+  const scrollToUser = () => {
+    if (userRowRef.current) {
+      const row = userRowRef.current;
+      requestAnimationFrame(() => {
+        const rowRect = row.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const rowHeight = rowRect.height;
+        const scrollY = window.scrollY;
+        const rowTop = rowRect.top + scrollY;
+        const targetScroll = rowTop - (windowHeight / 2) + (rowHeight / 2);
+        
+        window.scrollTo({
+          top: targetScroll,
+          behavior: 'smooth',
+        });
+      });
+    }
+  };
+
+  const userRank = leaderboard.find(entry => entry.id === user?.id)?.rank;
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -229,6 +251,17 @@ export const ProfileLeaderboard = () => {
 
   return (
     <div className="space-y-4">
+      {userRank && (
+        <button
+          onClick={scrollToUser}
+          className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+        >
+          <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+            {t('profile.myPlace', { rank: userRank, defaultValue: 'My place: {{rank}}' })}
+          </span>
+          <Search size={18} className="text-primary-600 dark:text-primary-400" />
+        </button>
+      )}
       <div ref={filtersRef} className={`space-y-4 ${areFiltersSticky ? 'opacity-0 pointer-events-none' : ''}`}>
         {leaderboardType === 'games' && (
           <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
