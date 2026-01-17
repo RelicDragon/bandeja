@@ -17,16 +17,16 @@ interface CreateBetModalProps {
   bet?: Bet;
 }
 
-const PREDEFINED_CONDITIONS: { value: PredefinedCondition; label: string }[] = [
-  { value: 'WIN_MATCH', label: 'Win a match' },
-  { value: 'LOSE_MATCH', label: 'Lose a match' },
-  { value: 'TIE_MATCH', label: 'Tie a match' },
-  { value: 'WIN_GAME', label: 'Win the game' },
-  { value: 'LOSE_GAME', label: 'Lose the game' },
-  { value: 'WIN_SET', label: 'Win a set' },
-  { value: 'LOSE_SET', label: 'Lose a set' },
-  { value: 'STREAK_3_0', label: 'Win 3-0 in a match' },
-  { value: 'STREAK_2_1', label: 'Win 2-1 in a match' },
+const getPredefinedConditions = (t: (key: string, options?: { defaultValue: string }) => string): { value: PredefinedCondition; label: string }[] => [
+  { value: 'WIN_MATCH', label: t('bets.condition.winMatch', { defaultValue: 'Win a match' }) },
+  { value: 'LOSE_MATCH', label: t('bets.condition.loseMatch', { defaultValue: 'Lose a match' }) },
+  { value: 'TIE_MATCH', label: t('bets.condition.tieMatch', { defaultValue: 'Tie a match' }) },
+  { value: 'WIN_GAME', label: t('bets.condition.winGame', { defaultValue: 'Win the game' }) },
+  { value: 'LOSE_GAME', label: t('bets.condition.loseGame', { defaultValue: 'Lose the game' }) },
+  { value: 'WIN_SET', label: t('bets.condition.winSet', { defaultValue: 'Win a set' }) },
+  { value: 'LOSE_SET', label: t('bets.condition.loseSet', { defaultValue: 'Lose a set' }) },
+  { value: 'STREAK_3_0', label: t('bets.condition.streak30', { defaultValue: 'Win 3-0 in a match' }) },
+  { value: 'STREAK_2_1', label: t('bets.condition.streak21', { defaultValue: 'Win 2-1 in a match' }) },
 ];
 
 export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdated, bet }: CreateBetModalProps) => {
@@ -41,9 +41,11 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
   const [entityId, setEntityId] = useState<string>(bet?.condition.entityId || '');
   const [stakeType, setStakeType] = useState<'COINS' | 'TEXT'>(bet?.stakeType || 'COINS');
   const [stakeCoins, setStakeCoins] = useState<number>(bet?.stakeCoins || 1);
+  const [stakeCoinsInput, setStakeCoinsInput] = useState<string>(String(bet?.stakeCoins || 1));
   const [stakeText, setStakeText] = useState(bet?.stakeText || '');
   const [rewardType, setRewardType] = useState<'COINS' | 'TEXT'>(bet?.rewardType || 'COINS');
   const [rewardCoins, setRewardCoins] = useState<number>(bet?.rewardCoins || 1);
+  const [rewardCoinsInput, setRewardCoinsInput] = useState<string>(String(bet?.rewardCoins || 1));
   const [rewardText, setRewardText] = useState(bet?.rewardText || '');
   const [wallet, setWallet] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,9 +70,11 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
         setEntityId(bet.condition.entityId ? String(bet.condition.entityId) : '');
         setStakeType(bet.stakeType);
         setStakeCoins(bet.stakeCoins || 1);
+        setStakeCoinsInput(String(bet.stakeCoins || 1));
         setStakeText(bet.stakeText || '');
         setRewardType(bet.rewardType);
         setRewardCoins(bet.rewardCoins || 1);
+        setRewardCoinsInput(String(bet.rewardCoins || 1));
         setRewardText(bet.rewardText || '');
       } else {
         setEntityId('');
@@ -162,8 +166,10 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
         
         // Reset form
         setStakeCoins(1);
+        setStakeCoinsInput('1');
         setStakeText('');
         setRewardCoins(1);
+        setRewardCoinsInput('1');
         setRewardText('');
         setCustomCondition('');
         setEntityId('');
@@ -256,7 +262,7 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
                     {t('bets.conditionLabel', { defaultValue: 'Condition' })}
                   </label>
                   <Select
-                    options={PREDEFINED_CONDITIONS.map(cond => ({
+                    options={getPredefinedConditions(t).map(cond => ({
                       value: cond.value,
                       label: cond.label,
                     }))}
@@ -322,13 +328,29 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
                       </span>
                     </div>
                     <input
-                      type="number"
-                      min="1"
-                      max={wallet}
-                      value={stakeCoins}
+                      type="text"
+                      inputMode="numeric"
+                      value={stakeCoinsInput}
                       onChange={(e) => {
-                        const val = parseInt(e.target.value) || 1;
-                        setStakeCoins(Math.max(1, Math.min(val, wallet)));
+                        const inputValue = e.target.value;
+                        if (inputValue === '' || /^\d*$/.test(inputValue)) {
+                          setStakeCoinsInput(inputValue);
+                          const val = parseInt(inputValue, 10);
+                          if (!isNaN(val) && val > 0) {
+                            setStakeCoins(Math.min(val, wallet));
+                          }
+                        }
+                      }}
+                      onBlur={() => {
+                        const val = parseInt(stakeCoinsInput, 10);
+                        if (isNaN(val) || val < 1) {
+                          setStakeCoinsInput('1');
+                          setStakeCoins(1);
+                        } else {
+                          const clamped = Math.min(val, wallet);
+                          setStakeCoinsInput(String(clamped));
+                          setStakeCoins(clamped);
+                        }
                       }}
                       className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     />
@@ -359,12 +381,28 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
                 />
                 {rewardType === 'COINS' ? (
                   <input
-                    type="number"
-                    min="1"
-                    value={rewardCoins}
+                    type="text"
+                    inputMode="numeric"
+                    value={rewardCoinsInput}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value) || 1;
-                      setRewardCoins(Math.max(1, val));
+                      const inputValue = e.target.value;
+                      if (inputValue === '' || /^\d*$/.test(inputValue)) {
+                        setRewardCoinsInput(inputValue);
+                        const val = parseInt(inputValue, 10);
+                        if (!isNaN(val) && val > 0) {
+                          setRewardCoins(val);
+                        }
+                      }
+                    }}
+                    onBlur={() => {
+                      const val = parseInt(rewardCoinsInput, 10);
+                      if (isNaN(val) || val < 1) {
+                        setRewardCoinsInput('1');
+                        setRewardCoins(1);
+                      } else {
+                        setRewardCoinsInput(String(val));
+                        setRewardCoins(val);
+                      }
                     }}
                     className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />

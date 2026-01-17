@@ -355,7 +355,6 @@ export class TransactionService {
 
     const whereClause: any = {
       isActive: true,
-      wallet: 0,
       OR: [
         { phone: null },
         { phone: { not: BANDEJA_BANK_IDENTIFIER } },

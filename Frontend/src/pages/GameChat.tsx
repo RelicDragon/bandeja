@@ -84,6 +84,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
   const previousIdRef = useRef<string | undefined>(undefined);
+  const messagesRef = useRef<ChatMessage[]>([]);
 
   const userParticipant = game?.participants.find(p => p.userId === user?.id);
   const isParticipant = !!userParticipant;
@@ -197,8 +198,13 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       }
       
       if (append) {
-        setMessages(prev => [...response, ...prev]);
+        setMessages(prev => {
+          const newMessages = [...response, ...prev];
+          messagesRef.current = newMessages;
+          return newMessages;
+        });
       } else {
+        messagesRef.current = response;
         setMessages(response);
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
@@ -266,9 +272,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   const handleDeleteMessage = useCallback(async (messageId: string) => {
     try {
-      setMessages(prevMessages => 
-        prevMessages.filter(message => message.id !== messageId)
-      );
+      setMessages(prevMessages => {
+        const newMessages = prevMessages.filter(message => message.id !== messageId);
+        messagesRef.current = newMessages;
+        return newMessages;
+      });
       await chatApi.deleteMessage(messageId);
     } catch (error) {
       console.error('Failed to delete message:', error);
@@ -441,6 +449,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         await new Promise(resolve => setTimeout(resolve, remainingTime));
       }
       
+      messagesRef.current = response;
       setMessages(response);
       setHasMoreMessages(response.length === 50);
       
@@ -527,8 +536,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           if (!hasTranslation && userLanguageCode !== 'en') {
             // Fetch translation asynchronously
             chatApi.translateMessage(message.id).then(translation => {
-              setMessages(prevMessages => 
-                prevMessages.map(msg => 
+              setMessages(prevMessages => {
+                const newMessages = prevMessages.map(msg => 
                   msg.id === message.id 
                     ? {
                         ...msg,
@@ -538,8 +547,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                           : [translation]
                       }
                     : msg
-                )
-              );
+                );
+                messagesRef.current = newMessages;
+                return newMessages;
+              });
             }).catch(error => {
               // Silently fail for auto-translation - user can manually request if needed
               // Only log if it's not a service unavailable error
@@ -550,15 +561,17 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           }
         }
         
-        return [...prevMessages, message];
+        const newMessages = [...prevMessages, message];
+        messagesRef.current = newMessages;
+        return newMessages;
       });
     }
   }, [contextType, currentChatType, user?.id, user?.language]);
 
   const handleMessageReaction = useCallback((reaction: any) => {
     if (reaction.action === 'removed') {
-      setMessages(prevMessages => 
-        prevMessages.map(message => {
+      setMessages(prevMessages => {
+        const newMessages = prevMessages.map(message => {
           if (message.id === reaction.messageId) {
             return {
               ...message,
@@ -566,11 +579,13 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             };
           }
           return message;
-        })
-      );
+        });
+        messagesRef.current = newMessages;
+        return newMessages;
+      });
     } else {
-      setMessages(prevMessages => 
-        prevMessages.map(message => {
+      setMessages(prevMessages => {
+        const newMessages = prevMessages.map(message => {
           if (message.id === reaction.messageId) {
             const existingReaction = message.reactions.find(r => r.userId === reaction.userId);
             if (existingReaction) {
@@ -588,14 +603,16 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             }
           }
           return message;
-        })
-      );
+        });
+        messagesRef.current = newMessages;
+        return newMessages;
+      });
     }
   }, []);
 
   const handleReadReceipt = useCallback((readReceipt: any) => {
-    setMessages(prevMessages => 
-      prevMessages.map(message => {
+    setMessages(prevMessages => {
+      const newMessages = prevMessages.map(message => {
         if (message.id === readReceipt.messageId) {
           const existingReceipt = message.readReceipts.find(r => r.userId === readReceipt.userId);
           if (!existingReceipt) {
@@ -606,14 +623,18 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           }
         }
         return message;
-      })
-    );
+      });
+      messagesRef.current = newMessages;
+      return newMessages;
+    });
   }, []);
 
   const handleMessageDeleted = useCallback((data: { messageId: string }) => {
-    setMessages(prevMessages => 
-      prevMessages.filter(message => message.id !== data.messageId)
-    );
+    setMessages(prevMessages => {
+      const newMessages = prevMessages.filter(message => message.id !== data.messageId);
+      messagesRef.current = newMessages;
+      return newMessages;
+    });
   }, []);
 
   useEffect(() => {
@@ -622,6 +643,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setBug(null);
       setUserChat(null);
       setMessages([]);
+      messagesRef.current = [];
       setPage(1);
       setHasMoreMessages(true);
       setIsLoadingMessages(true);
@@ -792,8 +814,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
     // Handle sync after reconnection
     const handleSyncRequired = () => {
-      if (messages.length > 0) {
-        const lastMessage = messages[messages.length - 1];
+      const currentMessages = messagesRef.current;
+      if (currentMessages.length > 0) {
+        const lastMessage = currentMessages[currentMessages.length - 1];
         socketService.syncMessages(contextType as 'GAME' | 'BUG' | 'USER', id, lastMessage.id);
       }
     };
@@ -833,7 +856,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       socketService.off('chat:deleted', handleUnifiedDeleted);
       socketService.off('sync-required', handleSyncRequired);
     };
-  }, [id, contextType, user?.id, messages, handleNewMessage, handleMessageReaction, handleReadReceipt, handleMessageDeleted]);
+  }, [id, contextType, user?.id, handleNewMessage, handleMessageReaction, handleReadReceipt, handleMessageDeleted]);
 
   useEffect(() => {
     if (justLoadedOlderMessagesRef.current) {

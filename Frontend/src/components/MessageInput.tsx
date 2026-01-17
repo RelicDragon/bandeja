@@ -180,7 +180,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       )}
       {replyTo && (
         <ReplyPreview
-          replyTo={replyTo.replyTo || {
+          replyTo={{
             id: replyTo.id,
             content: replyTo.content,
             sender: replyTo.sender || { id: 'system', firstName: 'System' }

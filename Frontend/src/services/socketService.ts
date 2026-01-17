@@ -63,6 +63,8 @@ class SocketService {
   private networkListenersSetup = false;
   private isOffline = false;
   private networkUnsubscribe: (() => void) | null = null;
+  private eventSubscribers: Map<string, Set<(...args: any[]) => void>> = new Map();
+  private socketListeners: Map<string, (...args: any[]) => void> = new Map();
 
   constructor() {
     // Don't auto-connect in constructor - let components trigger connection when needed
@@ -166,6 +168,8 @@ class SocketService {
       this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
+      // Clear socket listeners since they're tied to the old socket instance
+      this.socketListeners.clear();
     }
 
     const serverUrl = isCapacitor() 
@@ -179,10 +183,10 @@ class SocketService {
       path: '/socket.io/',
       transports: ['websocket', 'polling'],
       autoConnect: true,
-      reconnection: true,
-      reconnectionAttempts: 3,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
+      reconnection: false,
+      reconnectionAttempts: 0,
+      reconnectionDelay: 0,
+      reconnectionDelayMax: 0,
       timeout: 5000
     });
 
@@ -196,6 +200,8 @@ class SocketService {
       console.log('[SocketService] Socket.IO connected, socket ID:', this.socket?.id);
       this.isConnecting = false;
       this.reconnectAttempts = 0;
+      // Re-register socket listeners for all active subscriptions
+      this.reregisterSocketListeners();
       // Only start heartbeat if online
       const isOnline = useNetworkStore.getState().isOnline;
       if (!this.isOffline && isOnline) {
@@ -209,20 +215,11 @@ class SocketService {
       this.isConnecting = false;
       this.stopHeartbeat();
       
-      if (reason === 'io server disconnect') {
+      // Only reconnect for unintentional disconnects
+      // 'io client disconnect' means we explicitly disconnected, so don't reconnect
+      if (reason !== 'io client disconnect') {
         this.handleReconnect();
       }
-    });
-
-    this.socket.on('reconnect', () => {
-      console.log('[SocketService] Reconnected, checking for missed messages');
-      // Only start heartbeat if online
-      const isOnline = useNetworkStore.getState().isOnline;
-      if (!this.isOffline && isOnline) {
-        this.startHeartbeat();
-      }
-      this.rejoinActiveChatRooms();
-      this.handleReconnectionSync();
     });
 
     this.socket.on('pong', () => {
@@ -270,20 +267,29 @@ class SocketService {
       return;
     }
 
-    // Don't start heartbeat if offline
     const isOnline = useNetworkStore.getState().isOnline;
     if (this.isOffline || !isOnline) {
       console.log('[SocketService] Skipping heartbeat start - offline');
       return;
     }
 
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.warn('[SocketService] Max reconnection attempts reached, stopping heartbeat');
+      return;
+    }
+
     this.lastPongTime = Date.now();
     
     this.heartbeatInterval = setInterval(() => {
-      // Skip heartbeat if offline
       const isOnline = useNetworkStore.getState().isOnline;
       if (this.isOffline || !isOnline) {
         console.log('[SocketService] Heartbeat: Skipping - offline');
+        return;
+      }
+
+      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        console.warn('[SocketService] Heartbeat: Max attempts reached, stopping');
+        this.stopHeartbeat();
         return;
       }
 
@@ -293,17 +299,15 @@ class SocketService {
         return;
       }
 
-      const timeSinceLastPong = Date.now() - this.lastPongTime;
-      if (timeSinceLastPong > this.heartbeatTimeoutMs * 2) {
-        console.warn('[SocketService] Heartbeat: No pong received for too long, reconnecting');
-        this.handleReconnect();
-        return;
+      // Clear any existing timeout before setting a new one
+      if (this.heartbeatTimeout) {
+        clearTimeout(this.heartbeatTimeout);
+        this.heartbeatTimeout = null;
       }
 
       this.socket.emit('ping', { timestamp: Date.now() });
       
       this.heartbeatTimeout = setTimeout(() => {
-        // Check if still online before handling timeout
         const isOnline = useNetworkStore.getState().isOnline;
         if (this.isOffline || !isOnline) {
           return;
@@ -376,12 +380,14 @@ class SocketService {
     }
 
     // Prevent multiple simultaneous reconnection attempts
-    if (this.reconnectTimeoutId || this.isConnecting) {
+    if (this.reconnectTimeoutId || this.isConnecting || (this.socket && this.socket.connected)) {
+      console.log('[SocketService] Reconnection already in progress or connected, skipping');
       return;
     }
     
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max reconnection attempts reached');
+      this.stopHeartbeat();
       return;
     }
 
@@ -392,9 +398,9 @@ class SocketService {
     
     this.reconnectTimeoutId = setTimeout(() => {
       this.reconnectTimeoutId = null;
-      // Check if still online before connecting
+      // Check if still online and not already connected before connecting
       const isOnline = useNetworkStore.getState().isOnline;
-      if (!this.isOffline && isOnline) {
+      if (!this.isOffline && isOnline && (!this.socket || !this.socket.connected)) {
         this.connect();
       }
     }, delay);
@@ -554,21 +560,119 @@ class SocketService {
     }
   }
 
-  // Listen to events
+  // Re-register socket listeners after reconnection
+  private reregisterSocketListeners() {
+    if (!this.socket) return;
+
+    for (const [eventKey, subscribers] of this.eventSubscribers.entries()) {
+      if (subscribers.size > 0 && !this.socketListeners.has(eventKey)) {
+        const socketListener = ((data: any) => {
+          const subs = this.eventSubscribers.get(eventKey);
+          if (subs) {
+            subs.forEach(cb => {
+              try {
+                cb(data);
+              } catch (error) {
+                console.error(`[SocketService] Error in subscriber callback for ${eventKey}:`, error);
+              }
+            });
+          }
+        }) as any;
+
+        this.socket.on(eventKey as keyof SocketEvents, socketListener);
+        this.socketListeners.set(eventKey, socketListener);
+        console.log(`[SocketService] Re-registered socket listener for event: ${eventKey}`);
+      }
+    }
+  }
+
+  // Listen to events - uses multiplexer pattern (one socket listener dispatches to multiple subscribers)
   public on<K extends keyof SocketEvents>(event: K, callback: SocketEvents[K]) {
     this.ensureConnection();
     if (!this.socket) {
       console.warn(`[SocketService] Cannot listen to ${event}: socket not initialized`);
       return;
     }
-    console.log(`[SocketService] Adding listener for event: ${event}`);
-    this.socket.on(event, callback as any);
+
+    const eventKey = event as string;
+    
+    // Get or create subscriber set for this event
+    if (!this.eventSubscribers.has(eventKey)) {
+      this.eventSubscribers.set(eventKey, new Set());
+    }
+
+    const subscribers = this.eventSubscribers.get(eventKey)!;
+    
+    // Check if callback already subscribed
+    if (subscribers.has(callback as (...args: any[]) => void)) {
+      console.log(`[SocketService] Callback already subscribed to ${event}, skipping`);
+      return;
+    }
+
+    // Add callback to subscribers
+    subscribers.add(callback as (...args: any[]) => void);
+
+    // If this is the first subscriber, create the socket listener
+    if (!this.socketListeners.has(eventKey)) {
+      const socketListener = ((data: any) => {
+        const subs = this.eventSubscribers.get(eventKey);
+        if (subs) {
+          // Dispatch to all subscribers
+          subs.forEach(cb => {
+            try {
+              cb(data);
+            } catch (error) {
+              console.error(`[SocketService] Error in subscriber callback for ${eventKey}:`, error);
+            }
+          });
+        }
+      }) as any;
+
+      this.socket.on(event, socketListener);
+      this.socketListeners.set(eventKey, socketListener);
+      console.log(`[SocketService] Created socket listener for event: ${event}`);
+    }
+
+    console.log(`[SocketService] Added subscriber to event: ${event} (${subscribers.size} total)`);
   }
 
   // Remove event listener
   public off<K extends keyof SocketEvents>(event: K, callback?: SocketEvents[K]) {
-    if (!this.socket) return;
-    this.socket.off(event, callback as any);
+    const eventKey = event as string;
+    const subscribers = this.eventSubscribers.get(eventKey);
+    
+    if (!subscribers) return;
+
+    if (callback) {
+      // Remove specific callback
+      subscribers.delete(callback as (...args: any[]) => void);
+      
+      // If no more subscribers, remove socket listener (if socket exists)
+      if (subscribers.size === 0) {
+        if (this.socket) {
+          const socketListener = this.socketListeners.get(eventKey);
+          if (socketListener) {
+            this.socket.removeAllListeners(event);
+            this.socketListeners.delete(eventKey);
+            console.log(`[SocketService] Removed socket listener for event: ${event} (no more subscribers)`);
+          }
+        }
+        this.eventSubscribers.delete(eventKey);
+      } else {
+        console.log(`[SocketService] Removed subscriber from event: ${event} (${subscribers.size} remaining)`);
+      }
+    } else {
+      // Remove all subscribers and socket listener
+      if (this.socket) {
+        const socketListener = this.socketListeners.get(eventKey);
+        if (socketListener) {
+          this.socket.removeAllListeners(event);
+          this.socketListeners.delete(eventKey);
+        }
+      }
+      this.eventSubscribers.delete(eventKey);
+      console.log(`[SocketService] Removed all subscribers and listener for event: ${event}`);
+    }
   }
 
   // Emit typing indicator
@@ -601,6 +705,8 @@ class SocketService {
     this.stopHeartbeat();
     this.activeChatRooms.clear();
     this.isRejoining = false;
+    this.eventSubscribers.clear();
+    this.socketListeners.clear();
     
     if (this.reconnectTimeoutId) {
       clearTimeout(this.reconnectTimeoutId);
@@ -669,14 +775,6 @@ class SocketService {
       contextId,
       lastMessageId
     });
-  }
-
-  /**
-   * Handle reconnection sync
-   */
-  private handleReconnectionSync() {
-    // This will be called by components that need to sync
-    this.emit('reconnect', {});
   }
 
   /**
