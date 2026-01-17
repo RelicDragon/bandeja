@@ -355,6 +355,7 @@ export class TransactionService {
 
     const whereClause: any = {
       isActive: true,
+      wallet: 0,
       NOT: {
         phone: BANDEJA_BANK_IDENTIFIER,
       },
@@ -393,12 +394,13 @@ export class TransactionService {
       } catch (error) {
         results.failed++;
         const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown';
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         results.errors.push({
           userId: user.id,
           userName,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: errorMessage,
         });
-        console.error(`Failed to drop coins to user ${user.id}:`, error);
+        console.error(`[dropCoins] Failed to drop coins to user ${user.id} (${userName}):`, errorMessage);
       }
     }
 
