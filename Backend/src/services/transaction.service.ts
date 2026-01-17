@@ -2,6 +2,7 @@ import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { TransactionType } from '@prisma/client';
 import SocketService from './socket.service';
+import notificationService from './notification.service';
 
 const BANDEJA_BANK_IDENTIFIER = 'BANDEJA_BANK';
 
@@ -212,6 +213,35 @@ export class TransactionService {
       }
     }
 
+    // Send notifications
+    try {
+      const isBandejaBankFrom = transaction.transaction.fromUser?.phone === BANDEJA_BANK_IDENTIFIER || finalFromUserId === bandejaBankId;
+      const isBandejaBankTo = transaction.transaction.toUser?.phone === BANDEJA_BANK_IDENTIFIER || finalToUserId === bandejaBankId;
+
+      if (type === TransactionType.TRANSFER) {
+        // Notify sender
+        if (finalFromUserId && !isBandejaBankFrom) {
+          await notificationService.sendTransactionNotification(transaction.transaction.id, finalFromUserId, true);
+        }
+        // Notify receiver
+        if (finalToUserId && !isBandejaBankTo) {
+          await notificationService.sendTransactionNotification(transaction.transaction.id, finalToUserId, false);
+        }
+      } else if (type === TransactionType.NEW_COIN || type === TransactionType.REFUND) {
+        // Notify receiver
+        if (finalToUserId && !isBandejaBankTo) {
+          await notificationService.sendTransactionNotification(transaction.transaction.id, finalToUserId, false);
+        }
+      } else if (type === TransactionType.PURCHASE) {
+        // Notify sender
+        if (finalFromUserId && !isBandejaBankFrom) {
+          await notificationService.sendTransactionNotification(transaction.transaction.id, finalFromUserId, true);
+        }
+      }
+    } catch (error) {
+      console.error('[TransactionService] Failed to send transaction notifications:', error);
+    }
+
     return transaction.transaction;
   }
 
@@ -335,6 +365,67 @@ export class TransactionService {
       firstName: user.firstName,
       lastName: user.lastName,
     };
+  }
+
+  static async dropCoins(amount: number, description?: string, cityId?: string) {
+    if (!amount || amount <= 0 || !Number.isInteger(amount)) {
+      throw new ApiError(400, 'Amount must be a positive integer');
+    }
+
+    const whereClause: any = {
+      isActive: true,
+      NOT: {
+        phone: BANDEJA_BANK_IDENTIFIER,
+      },
+    };
+
+    if (cityId) {
+      whereClause.currentCityId = cityId;
+    }
+
+    const users = await prisma.user.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+
+    const results = {
+      totalUsers: users.length,
+      successful: 0,
+      failed: 0,
+      errors: [] as Array<{ userId: string; userName: string; error: string }>,
+    };
+
+    for (const user of users) {
+      try {
+        await TransactionService.createTransaction({
+          type: TransactionType.NEW_COIN,
+          toUserId: user.id,
+          transactionRows: [
+            {
+              name: description || 'Admin coin drop',
+              price: amount,
+              qty: 1,
+            },
+          ],
+        });
+        results.successful++;
+      } catch (error) {
+        results.failed++;
+        const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown';
+        results.errors.push({
+          userId: user.id,
+          userName,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+        console.error(`Failed to drop coins to user ${user.id}:`, error);
+      }
+    }
+
+    return results;
   }
 }
 

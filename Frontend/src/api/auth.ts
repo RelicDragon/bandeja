@@ -52,5 +52,27 @@ export const authApi = {
     const response = await api.post<ApiResponse<LoginResponse>>('/telegram/verify-otp', data);
     return response.data;
   },
+
+  registerApple: async (data: {
+    identityToken: string;
+    nonce: string;
+    firstName?: string;
+    lastName?: string;
+    language?: string;
+    gender?: string;
+    genderIsSet?: boolean;
+    preferredHandLeft?: boolean;
+    preferredHandRight?: boolean;
+    preferredCourtSideLeft?: boolean;
+    preferredCourtSideRight?: boolean;
+  }) => {
+    const response = await api.post<ApiResponse<LoginResponse>>('/auth/register/apple', data);
+    return response.data;
+  },
+
+  loginApple: async (data: { identityToken: string; nonce: string; language?: string; firstName?: string; lastName?: string }) => {
+    const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/apple', data);
+    return response.data;
+  },
 };
 

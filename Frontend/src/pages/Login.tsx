@@ -7,6 +7,9 @@ import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { config } from '@/config/media';
 import { Send, Phone, AlertCircle } from 'lucide-react';
+import { signInWithApple } from '@/services/appleAuth.service';
+import { isIOS } from '@/utils/capacitor';
+import { AppleIcon } from '@/components/AppleIcon';
 
 export const Login = () => {
   const { t } = useTranslation();
@@ -125,6 +128,129 @@ export const Login = () => {
     const telegramId = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
     localStorage.setItem('telegramId', telegramId);
     window.open(config.telegramBotUrl, '_blank');
+  };
+
+  const handleAppleSignIn = async () => {
+    if (!isIOS()) {
+      setError(t('auth.appleSignInOnlyIOS'));
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await signInWithApple();
+      
+      if (!result) {
+        setLoading(false);
+        return;
+      }
+
+      const { result: appleResult, nonce } = result;
+      const language = localStorage.getItem('language') || 'en';
+
+      let response;
+      try {
+        const firstName = appleResult.user?.name?.firstName;
+        const lastName = appleResult.user?.name?.lastName;
+        
+        response = await authApi.loginApple({
+          identityToken: appleResult.identityToken,
+          nonce,
+          language,
+          firstName,
+          lastName,
+        });
+      } catch (loginErr: any) {
+        if (loginErr?.response?.status === 401) {
+          const firstName = appleResult.user?.name?.firstName;
+          const lastName = appleResult.user?.name?.lastName;
+
+          try {
+            response = await authApi.registerApple({
+              identityToken: appleResult.identityToken,
+              nonce,
+              firstName,
+              lastName,
+              language,
+            });
+          } catch (registerErr: any) {
+            if (registerErr?.response?.status === 400) {
+              const errorMessage = registerErr?.response?.data?.message || '';
+              if (errorMessage.includes('appleAccountAlreadyExists') || errorMessage.includes('Apple account already exists')) {
+                const firstName = appleResult.user?.name?.firstName;
+                const lastName = appleResult.user?.name?.lastName;
+                
+                response = await authApi.loginApple({
+                  identityToken: appleResult.identityToken,
+                  nonce,
+                  language,
+                  firstName,
+                  lastName,
+                });
+              } else {
+                throw registerErr;
+              }
+            } else {
+              throw registerErr;
+            }
+          }
+        } else {
+          throw loginErr;
+        }
+      }
+
+      await setAuth(response.data.user, response.data.token);
+
+      if (!response.data.user.currentCity) {
+        navigate('/select-city');
+      } else {
+        navigate('/');
+      }
+    } catch (err: any) {
+      // Check if it's a cancellation error that slipped through
+      const errorMessage = String(err?.message || '');
+      const errorCode = String(err?.code || err?.errorCode || '');
+      const errorString = (errorMessage + errorCode).toLowerCase();
+      
+      if (errorString.includes('1001') || 
+          errorString.includes('cancel') || 
+          errorString.includes('operation couldn\'t be completed')) {
+        // User cancelled - don't show error
+        setLoading(false);
+        return;
+      }
+      
+      let errorMsg = '';
+      
+      if (err?.response?.data?.message) {
+        const key = err.response.data.message;
+        errorMsg = t(key) !== key ? t(key) : key;
+      } else if (err?.response?.data) {
+        errorMsg = JSON.stringify(err.response.data);
+      } else if (err?.response) {
+        errorMsg = `Error ${err.response.status}: ${err.response.statusText}`;
+      } else if (err?.code === 'ERR_NETWORK' || err?.code === 'ECONNABORTED') {
+        errorMsg = 'Network unavailable';
+      } else if (err?.message && err.message !== 'Network Error') {
+        errorMsg = err.message;
+      } else {
+        errorMsg = t('errors.generic');
+      }
+      
+      if (import.meta.env.DEV) {
+        const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';
+        const method = err?.config?.method?.toUpperCase() || 'unknown';
+        const errorCode = err?.code || 'no code';
+        const errorMessage = err?.message || 'no message';
+        setError(`${errorMsg} | ${method} ${requestUrl} | Code: ${errorCode} | ${errorMessage}`);
+      } else {
+        setError(errorMsg);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -265,6 +391,38 @@ export const Login = () => {
             ) : t('auth.login')}
           </Button>
         </form>
+      )}
+
+      {/* Apple Sign In Button (iOS only) */}
+      {isIOS() && (
+        <div className="mt-6">
+          <div className="relative flex items-center">
+            <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+            <span className="px-4 text-sm text-slate-500 dark:text-slate-400">{t('auth.or')}</span>
+            <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+          </div>
+          <Button
+            type="button"
+            onClick={handleAppleSignIn}
+            className="w-full h-12 mt-6 text-base font-medium bg-black hover:bg-gray-800 text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black"
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                {t('app.loading')}
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <AppleIcon size={18} />
+                {t('auth.appleSignIn')}
+              </span>
+            )}
+          </Button>
+        </div>
       )}
 
       {/* Register Link */}

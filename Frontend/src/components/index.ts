@@ -63,3 +63,4 @@ export * from './NotificationSettingsModal';
 export * from './RefreshIndicator';
 export * from './AddToCalendar';
 export * from './AppVersionModal';
+export * from './AppleIcon';

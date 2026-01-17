@@ -39,5 +39,8 @@ export const config = {
   openai: {
     apiKey: process.env.OPENAI_API_KEY || '',
   },
+  apple: {
+    clientId: process.env.APPLE_CLIENT_ID || 'com.funified.bandeja',
+  },
 };
 

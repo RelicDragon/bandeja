@@ -15,4 +15,7 @@ export const config = {
   
   // Telegram bot URL
   telegramBotUrl: import.meta.env.VITE_TELEGRAM_BOT_URL || 'https://t.me/bandeja_padel_dev_bot',
+  
+  // Apple Sign In
+  appleClientId: import.meta.env.VITE_APPLE_CLIENT_ID || 'com.funified.bandeja',
 };

@@ -5,6 +5,7 @@ interface JwtPayload {
   userId: string;
   phone?: string;
   telegramId?: string;
+  appleId?: string;
   isAdmin?: boolean;
 }
 

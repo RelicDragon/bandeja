@@ -11,6 +11,7 @@
     "increment-sw": "node scripts/increment-sw-version.js"
   },
   "dependencies": {
+    "@capacitor-community/apple-sign-in": "^7.1.0",
     "@capacitor/android": "^8.0.1",
     "@capacitor/app": "^8.0.0",
     "@capacitor/camera": "^8.0.0",

@@ -13,6 +13,9 @@ model User {
   email                      String?              @unique
   telegramId                 String?              @unique
   telegramUsername           String?
+  appleSub                   String?              @unique
+  appleEmail                 String?
+  appleEmailVerified         Boolean              @default(false)
   firstName                  String?
   lastName                   String?
   avatar                     String?
@@ -50,6 +53,7 @@ model User {
   sendTelegramInvites        Boolean              @default(true)
   sendTelegramDirectMessages Boolean              @default(true)
   sendTelegramReminders      Boolean              @default(true)
+  sendTelegramWalletNotifications Boolean         @default(true)
   chatMessages               ChatMessage[]
   participateInGames         GameParticipant[]    @relation("ParticipantUser")
   userChats1                 UserChat[]           @relation("UserChat1")
@@ -84,6 +88,7 @@ model User {
   sendPushInvites            Boolean              @default(true)
   sendPushDirectMessages     Boolean              @default(true)
   sendPushReminders          Boolean              @default(true)
+  sendPushWalletNotifications Boolean             @default(true)
   pushTokens                 PushToken[]
   messageReports             MessageReport[]      @relation("MessageReportReporter")
   blockedUsers               BlockedUser[]        @relation("UserBlocked")
@@ -679,6 +684,7 @@ model BlockedUser {
 enum AuthProvider {
   PHONE
   TELEGRAM
+  APPLE
 }
 
 enum Gender {

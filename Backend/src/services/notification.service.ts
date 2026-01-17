@@ -15,6 +15,7 @@ import { createGameResultsPushNotification } from './push/notifications/game-res
 import { createLeagueRoundStartPushNotification } from './push/notifications/league-round-start-push.notification';
 import { createNewGamePushNotification } from './push/notifications/new-game-push.notification';
 import { createBetResolvedPushNotification, createBetNeedsReviewPushNotification } from './push/notifications/bet-resolved-push.notification';
+import { createTransactionPushNotification } from './push/notifications/transaction-push.notification';
 
 class NotificationService {
   async sendNotification(request: UnifiedNotificationRequest) {
@@ -28,10 +29,12 @@ class NotificationService {
         sendTelegramInvites: true,
         sendTelegramDirectMessages: true,
         sendTelegramReminders: true,
+        sendTelegramWalletNotifications: true,
         sendPushMessages: true,
         sendPushInvites: true,
         sendPushDirectMessages: true,
         sendPushReminders: true,
+        sendPushWalletNotifications: true,
       }
     });
 
@@ -633,6 +636,23 @@ class NotificationService {
     }
   }
 
+  async sendTransactionNotification(transactionId: string, userId: string, isSender: boolean) {
+    try {
+      const payload = await createTransactionPushNotification(transactionId, userId, isSender);
+      if (payload) {
+        await this.sendNotification({
+          userId,
+          type: NotificationType.TRANSACTION,
+          payload
+        });
+      }
+
+      await telegramNotificationService.sendTransactionNotification(transactionId, userId, isSender);
+    } catch (error) {
+      console.error(`Failed to send transaction notification to user ${userId}:`, error);
+    }
+  }
+
   private shouldSendViaTelegram(user: any, type: NotificationType, preferTelegram: boolean): boolean {
     if (preferTelegram) return true;
 
@@ -643,6 +663,8 @@ class NotificationService {
         return user.sendTelegramDirectMessages;
       case NotificationType.GAME_REMINDER:
         return user.sendTelegramReminders;
+      case NotificationType.TRANSACTION:
+        return user.sendTelegramWalletNotifications;
       case NotificationType.GAME_CHAT:
       case NotificationType.BUG_CHAT:
       case NotificationType.GROUP_CHAT:
@@ -665,6 +687,8 @@ class NotificationService {
         return user.sendPushDirectMessages;
       case NotificationType.GAME_REMINDER:
         return user.sendPushReminders;
+      case NotificationType.TRANSACTION:
+        return user.sendPushWalletNotifications;
       case NotificationType.GAME_CHAT:
       case NotificationType.BUG_CHAT:
       case NotificationType.GROUP_CHAT:

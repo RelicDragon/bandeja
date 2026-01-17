@@ -1,4 +1,4 @@
-export type AuthProvider = 'PHONE' | 'TELEGRAM';
+export type AuthProvider = 'PHONE' | 'TELEGRAM' | 'APPLE';
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'WINNER_COURT' | 'CUSTOM';
 export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'BAR' | 'TRAINING';
@@ -33,6 +33,9 @@ export interface User extends BasicUser {
   email?: string;
   telegramId?: string;
   telegramUsername?: string;
+  appleSub?: string;
+  appleEmail?: string;
+  appleEmailVerified?: boolean;
   originalAvatar?: string | null;
   authProvider: AuthProvider;
   currentCityId?: string;
@@ -59,10 +62,12 @@ export interface User extends BasicUser {
   sendTelegramInvites?: boolean;
   sendTelegramDirectMessages?: boolean;
   sendTelegramReminders?: boolean;
+  sendTelegramWalletNotifications?: boolean;
   sendPushMessages?: boolean;
   sendPushInvites?: boolean;
   sendPushDirectMessages?: boolean;
   sendPushReminders?: boolean;
+  sendPushWalletNotifications?: boolean;
   wallet?: number;
   blockedUserIds?: string[];
 }

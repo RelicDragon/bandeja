@@ -29,6 +29,7 @@ import {
   cleanupOldFiles,
   getStorageStats,
   emitCoins,
+  dropCoins,
   getAllMessageReports,
   updateMessageReportStatus,
   getAllAppVersions,
@@ -74,6 +75,7 @@ router.post('/media/cleanup', requireAdmin, cleanupOldFiles);
 router.get('/media/stats', requireAdmin, getStorageStats);
 
 router.post('/users/:userId/emit-coins', requireAdmin, emitCoins);
+router.post('/coins/drop', requireAdmin, dropCoins);
 
 router.get('/message-reports', requireAdmin, getAllMessageReports);
 router.patch('/message-reports/:reportId/status', requireAdmin, updateMessageReportStatus);

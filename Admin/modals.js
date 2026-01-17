@@ -470,6 +470,52 @@ async function handleEmitCoinsSubmit(e) {
     }
 }
 
+function dropCoinsModal() {
+    showModal('dropCoinsModal');
+    const cityFilter = document.getElementById('globalCityFilter');
+    const selectedCity = cityFilter?.options[cityFilter.selectedIndex]?.text;
+    const targetText = selectedCity && selectedCity !== 'All Cities' 
+        ? `All users in ${selectedCity}` 
+        : 'All users';
+    document.getElementById('dropCoinsTarget').textContent = targetText;
+    document.getElementById('dropCoinAmount').value = '';
+    document.getElementById('dropCoinDescription').value = '';
+}
+
+async function handleDropCoinsSubmit(e) {
+    e.preventDefault();
+    const amount = parseInt(document.getElementById('dropCoinAmount').value);
+    const description = document.getElementById('dropCoinDescription').value;
+
+    if (!amount || amount <= 0) {
+        alert('Error: Amount must be a positive integer');
+        return;
+    }
+
+    const cityId = selectedCityId || '';
+    const queryParams = cityId ? `?cityId=${cityId}` : '';
+
+    if (!confirm(`Are you sure you want to drop ${amount} coins to all users? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await apiRequest(`/admin/coins/drop${queryParams}`, {
+            method: 'POST',
+            body: JSON.stringify({ amount, description: description || undefined }),
+        });
+        closeModal('dropCoinsModal');
+        if (response.data) {
+            alert(`${response.message}\n\nSuccessful: ${response.data.successful}\nFailed: ${response.data.failed}\nTotal: ${response.data.totalUsers}`);
+        } else {
+            alert('Successfully dropped coins');
+        }
+        loadStats();
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
 window.closeModal = closeModal;
 window.openModal = openModal;
 window.createCityModal = createCityModal;
@@ -491,4 +537,6 @@ window.resetPasswordModal = resetPasswordModal;
 window.handleResetPasswordSubmit = handleResetPasswordSubmit;
 window.emitCoinsModal = emitCoinsModal;
 window.handleEmitCoinsSubmit = handleEmitCoinsSubmit;
+window.dropCoinsModal = dropCoinsModal;
+window.handleDropCoinsSubmit = handleDropCoinsSubmit;
 

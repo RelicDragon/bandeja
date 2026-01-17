@@ -7,7 +7,8 @@ export enum NotificationType {
   GAME_SYSTEM_MESSAGE = 'GAME_SYSTEM_MESSAGE',
   GAME_REMINDER = 'GAME_REMINDER',
   GAME_RESULTS = 'GAME_RESULTS',
-  NEW_GAME = 'NEW_GAME'
+  NEW_GAME = 'NEW_GAME',
+  TRANSACTION = 'TRANSACTION'
 }
 
 export interface NotificationAction {
@@ -25,6 +26,7 @@ export interface NotificationData {
   messageId?: string;
   userChatId?: string;
   groupChannelId?: string;
+  transactionId?: string;
 }
 
 export interface NotificationPayload {
@@ -50,8 +52,10 @@ export interface NotificationPreferences {
   sendTelegramInvites?: boolean;
   sendTelegramDirectMessages?: boolean;
   sendTelegramReminders?: boolean;
+  sendTelegramWalletNotifications?: boolean;
   sendPushMessages?: boolean;
   sendPushInvites?: boolean;
   sendPushDirectMessages?: boolean;
   sendPushReminders?: boolean;
+  sendPushWalletNotifications?: boolean;
 }

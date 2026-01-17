@@ -5,6 +5,8 @@ PODS:
     - Capacitor
   - CapacitorCamera (8.0.0):
     - Capacitor
+  - CapacitorCommunityAppleSignIn (7.1.0):
+    - Capacitor
   - CapacitorCordova (8.0.0)
   - CapacitorFilesystem (8.0.0):
     - Capacitor
@@ -27,6 +29,7 @@ DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
   - "CapacitorCamera (from `../../node_modules/@capacitor/camera`)"
+  - "CapacitorCommunityAppleSignIn (from `../../node_modules/@capacitor-community/apple-sign-in`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
@@ -47,6 +50,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/app"
   CapacitorCamera:
     :path: "../../node_modules/@capacitor/camera"
+  CapacitorCommunityAppleSignIn:
+    :path: "../../node_modules/@capacitor-community/apple-sign-in"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorFilesystem:
@@ -68,6 +73,7 @@ SPEC CHECKSUMS:
   Capacitor: 341ff7cf652ec695d1a8ebf604db448ac7b6d635
   CapacitorApp: 3963a84197280757b84f126afd1520a85ae3b092
   CapacitorCamera: 592acb7ab9fb748e2d8571eb03af30ec4e1ace12
+  CapacitorCommunityAppleSignIn: 271cb2860576fd2961508bbfa7a82117d93eadca
   CapacitorCordova: 5dc3912d25ef770a3fe0f431bb65c9fbfa2e92f9
   CapacitorFilesystem: 2cb7c29536024668f333266a2177f8c10bbd9c98
   CapacitorKeyboard: d7868c079a4d5277a3deca27a10a488fcbbb8b69
@@ -78,6 +84,6 @@ SPEC CHECKSUMS:
   EbarooniCapacitorCalendar: c028d8beba204fb145ee52a6697ac50998b5bec7
   IONFilesystemLib: 89258b8e3e85465da93127d25d7ce37f977e8a6f
 
-PODFILE CHECKSUM: 902c97a5216747ab7fc31d49b96be6b69816a372
+PODFILE CHECKSUM: e11ab1b45e80a87b14ad58378cce407b89ceed1b
 
 COCOAPODS: 1.16.2

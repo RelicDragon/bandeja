@@ -517,6 +517,37 @@ export const emitCoins = asyncHandler(async (req: AuthRequest, res: Response) =>
   });
 });
 
+export const dropCoins = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { amount, description } = req.body;
+  const { cityId } = req.query;
+
+  if (!amount) {
+    return res.status(400).json({
+      success: false,
+      message: 'Amount is required',
+    });
+  }
+
+  if (amount <= 0 || !Number.isInteger(amount)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Amount must be a positive integer',
+    });
+  }
+
+  const results = await TransactionService.dropCoins(
+    amount,
+    description,
+    cityId as string | undefined
+  );
+
+  res.status(200).json({
+    success: true,
+    data: results,
+    message: `Coins dropped to ${results.successful} out of ${results.totalUsers} users`,
+  });
+});
+
 export const getAllMessageReports = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { status } = req.query;
 

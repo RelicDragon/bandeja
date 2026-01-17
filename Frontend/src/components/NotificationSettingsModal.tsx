@@ -30,10 +30,12 @@ export const NotificationSettingsModal = ({
   const [sendTelegramInvites, setSendTelegramInvites] = useState(false);
   const [sendTelegramDirectMessages, setSendTelegramDirectMessages] = useState(false);
   const [sendTelegramReminders, setSendTelegramReminders] = useState(false);
+  const [sendTelegramWalletNotifications, setSendTelegramWalletNotifications] = useState(false);
   const [sendPushMessages, setSendPushMessages] = useState(false);
   const [sendPushInvites, setSendPushInvites] = useState(false);
   const [sendPushDirectMessages, setSendPushDirectMessages] = useState(false);
   const [sendPushReminders, setSendPushReminders] = useState(false);
+  const [sendPushWalletNotifications, setSendPushWalletNotifications] = useState(false);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -41,10 +43,12 @@ export const NotificationSettingsModal = ({
       setSendTelegramInvites(user.sendTelegramInvites ?? true);
       setSendTelegramDirectMessages(user.sendTelegramDirectMessages ?? true);
       setSendTelegramReminders(user.sendTelegramReminders ?? true);
+      setSendTelegramWalletNotifications(user.sendTelegramWalletNotifications ?? true);
       setSendPushMessages(user.sendPushMessages ?? true);
       setSendPushInvites(user.sendPushInvites ?? true);
       setSendPushDirectMessages(user.sendPushDirectMessages ?? true);
       setSendPushReminders(user.sendPushReminders ?? true);
+      setSendPushWalletNotifications(user.sendPushWalletNotifications ?? true);
     }
   }, [isOpen, user]);
 
@@ -54,10 +58,12 @@ export const NotificationSettingsModal = ({
       setSendTelegramInvites(user.sendTelegramInvites ?? true);
       setSendTelegramDirectMessages(user.sendTelegramDirectMessages ?? true);
       setSendTelegramReminders(user.sendTelegramReminders ?? true);
+      setSendTelegramWalletNotifications(user.sendTelegramWalletNotifications ?? true);
       setSendPushMessages(user.sendPushMessages ?? true);
       setSendPushInvites(user.sendPushInvites ?? true);
       setSendPushDirectMessages(user.sendPushDirectMessages ?? true);
       setSendPushReminders(user.sendPushReminders ?? true);
+      setSendPushWalletNotifications(user.sendPushWalletNotifications ?? true);
     }
   };
 
@@ -83,10 +89,12 @@ export const NotificationSettingsModal = ({
         sendTelegramInvites,
         sendTelegramDirectMessages,
         sendTelegramReminders,
+        sendTelegramWalletNotifications,
         sendPushMessages,
         sendPushInvites,
         sendPushDirectMessages,
         sendPushReminders,
+        sendPushWalletNotifications,
       });
       onUpdate(response.data);
       toast.success(t('profile.notificationSettingsSaved'));
@@ -207,6 +215,12 @@ export const NotificationSettingsModal = ({
                 checked={sendPushReminders}
                 onChange={setSendPushReminders}
               />
+              <NotificationToggle
+                label={t('profile.walletNotifications') || 'Wallet Notifications'}
+                description={t('profile.walletNotificationsDescription') || 'Receive notifications for wallet transactions'}
+                checked={sendPushWalletNotifications}
+                onChange={setSendPushWalletNotifications}
+              />
             </div>
           )}
 
@@ -237,6 +251,12 @@ export const NotificationSettingsModal = ({
                     description={t('profile.sendTelegramRemindersDescription') || 'Get notified in Telegram 2 hours before your games, tournaments, or training bars start'}
                     checked={sendTelegramReminders}
                     onChange={setSendTelegramReminders}
+                  />
+                  <NotificationToggle
+                    label={t('profile.walletNotifications') || 'Wallet Notifications'}
+                    description={t('profile.walletNotificationsDescription') || 'Receive notifications for wallet transactions'}
+                    checked={sendTelegramWalletNotifications}
+                    onChange={setSendTelegramWalletNotifications}
                   />
                 </>
               ) : (

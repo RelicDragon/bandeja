@@ -41,5 +41,27 @@ router.post(
   authController.loginWithTelegram
 );
 
+router.post(
+  '/register/apple',
+  validate([
+    body('identityToken').notEmpty().isString().withMessage('Identity token is required'),
+    body('nonce').notEmpty().isString().isLength({ min: 1 }).withMessage('Nonce is required'),
+    body('firstName').optional().isString().isLength({ max: 100 }).withMessage('First name must be a string with max 100 characters'),
+    body('lastName').optional().isString().isLength({ max: 100 }).withMessage('Last name must be a string with max 100 characters'),
+  ]),
+  authController.registerWithApple
+);
+
+router.post(
+  '/login/apple',
+  validate([
+    body('identityToken').notEmpty().isString().withMessage('Identity token is required'),
+    body('nonce').notEmpty().isString().isLength({ min: 1 }).withMessage('Nonce is required'),
+    body('firstName').optional().isString().isLength({ max: 100 }).withMessage('First name must be a string with max 100 characters'),
+    body('lastName').optional().isString().isLength({ max: 100 }).withMessage('Last name must be a string with max 100 characters'),
+  ]),
+  authController.loginWithApple
+);
+
 export default router;
 

@@ -10,6 +10,7 @@ import { sendLeagueRoundStartNotification } from './notifications/league-round-s
 import { sendGameReminderNotification } from './notifications/game-reminder.notification';
 import { sendNewGameNotification } from './notifications/new-game.notification';
 import { sendBetResolvedNotification, sendBetNeedsReviewNotification } from './notifications/bet-resolved.notification';
+import { sendTransactionNotification as sendTransactionNotificationFunc } from './notifications/transaction.notification';
 
 class TelegramNotificationService {
   private bot: Bot | null = null;
@@ -79,6 +80,11 @@ class TelegramNotificationService {
   async sendBetNeedsReviewNotification(betId: string, userId: string) {
     if (!this.bot) return;
     await sendBetNeedsReviewNotification(this.bot.api, betId, userId);
+  }
+
+  async sendTransactionNotification(transactionId: string, userId: string, isSender: boolean) {
+    if (!this.bot) return;
+    await sendTransactionNotificationFunc(this.bot.api, transactionId, userId, isSender);
   }
 }
 
