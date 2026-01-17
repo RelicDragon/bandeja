@@ -8,6 +8,7 @@ const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION',
 import { bugsApi } from '@/api';
 import { toast } from 'react-hot-toast';
 import { X } from 'lucide-react';
+import { isCapacitor, isIOS, isAndroid, getAppInfo, getCapacitorPlatform } from '@/utils/capacitor';
 
 interface BugModalProps {
   isOpen: boolean;
@@ -30,6 +31,26 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
     };
   }, [isOpen]);
 
+  const getPlatformInfo = async (): Promise<string> => {
+    if (!isCapacitor()) {
+      return 'web-app';
+    }
+
+    try {
+      const appInfo = await getAppInfo();
+      if (!appInfo) {
+        const platform = isIOS() ? 'iOS' : isAndroid() ? 'Android' : getCapacitorPlatform() || 'app';
+        return `${platform} (unknown)`;
+      }
+
+      const platform = isIOS() ? 'iOS' : isAndroid() ? 'Android' : appInfo.platform;
+      return `${platform} ${appInfo.version} (${appInfo.buildNumber})`;
+    } catch (error) {
+      const platform = isIOS() ? 'iOS' : isAndroid() ? 'Android' : getCapacitorPlatform() || 'app';
+      return `${platform} (unknown)`;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -40,7 +61,9 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
 
     setIsSubmitting(true);
     try {
-      await bugsApi.createBug({ text: text.trim(), bugType });
+      const platformInfo = await getPlatformInfo();
+      const bugText = `${text.trim()}\n${platformInfo}`;
+      await bugsApi.createBug({ text: bugText, bugType });
       toast.success(t('bug.created'));
       setText('');
       setBugType('BUG');
