@@ -3,6 +3,7 @@ import { ApiError } from '../utils/ApiError';
 import { TransactionType } from '@prisma/client';
 import SocketService from './socket.service';
 import notificationService from './notification.service';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 
 const BANDEJA_BANK_IDENTIFIER = 'BANDEJA_BANK';
 
@@ -144,16 +145,14 @@ export class TransactionService {
           },
           fromUser: {
             select: {
-              id: true,
-              firstName: true,
-              lastName: true,
+              ...USER_SELECT_FIELDS,
+              phone: true,
             },
           },
           toUser: {
             select: {
-              id: true,
-              firstName: true,
-              lastName: true,
+              ...USER_SELECT_FIELDS,
+              phone: true,
             },
           },
         },
@@ -263,18 +262,10 @@ export class TransactionService {
             },
           },
           fromUser: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
+            select: USER_SELECT_FIELDS,
           },
           toUser: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
+            select: USER_SELECT_FIELDS,
           },
         },
         orderBy: {
@@ -314,18 +305,10 @@ export class TransactionService {
           },
         },
         fromUser: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          select: USER_SELECT_FIELDS,
         },
         toUser: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          select: USER_SELECT_FIELDS,
         },
       },
     });
@@ -348,10 +331,8 @@ export class TransactionService {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
-        id: true,
+        ...USER_SELECT_FIELDS,
         wallet: true,
-        firstName: true,
-        lastName: true,
       },
     });
 
@@ -385,11 +366,7 @@ export class TransactionService {
 
     const users = await prisma.user.findMany({
       where: whereClause,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-      },
+      select: USER_SELECT_FIELDS,
     });
 
     const results = {
