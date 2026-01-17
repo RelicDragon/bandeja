@@ -221,6 +221,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               disabled={isDisabledForChannel || isLoading}
               game={game}
               bug={bug}
+              groupChannel={groupChannel}
               userChatId={userChatId}
               contextType={contextType}
               chatType={chatType}

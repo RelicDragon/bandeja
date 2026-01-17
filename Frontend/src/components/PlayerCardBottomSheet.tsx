@@ -356,7 +356,10 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
             )}
             {stats && !isCurrentUser && (
               <button
-                onClick={() => setShowLevelView(true)}
+                onClick={() => {
+                  setShowAvatarView(false);
+                  setShowLevelView(true);
+                }}
                 className="px-4 py-2 rounded-xl text-white transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                 title={t('playerCard.levelHistory')}
               >
@@ -449,10 +452,14 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                       isBlocked={isBlocked}
                       onAvatarClick={() => {
                         if (stats.user.originalAvatar) {
+                          setShowLevelView(false);
                           setShowAvatarView(true);
                         }
                       }}
-                      onLevelClick={() => setShowLevelView(true)}
+                      onLevelClick={() => {
+                        setShowAvatarView(false);
+                        setShowLevelView(true);
+                      }}
                       gamesStatsTab={gamesStatsTab}
                       onGamesStatsTabChange={setGamesStatsTab}
                       onTelegramClick={() => {

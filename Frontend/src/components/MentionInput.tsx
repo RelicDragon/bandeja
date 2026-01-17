@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { MentionsInput, Mention, SuggestionDataItem, MentionData } from 'react-mentions';
-import { ChatContextType } from '@/api/chat';
+import { ChatContextType, GroupChannel } from '@/api/chat';
 import { Game, Bug, BasicUser } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { PlayerAvatar } from './PlayerAvatar';
@@ -17,6 +17,7 @@ interface MentionInputProps {
   disabled?: boolean;
   game?: Game | null;
   bug?: Bug | null;
+  groupChannel?: GroupChannel | null;
   userChatId?: string;
   contextType: ChatContextType;
   chatType?: string;
@@ -32,6 +33,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   disabled = false,
   game,
   bug,
+  groupChannel,
   userChatId: _userChatId,
   contextType,
   chatType = 'PUBLIC',
@@ -67,7 +69,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       const normalizedChatType = chatType ? normalizeChatType(chatType as any) : 'PUBLIC';
 
       if (normalizedChatType === 'PUBLIC') {
-        game.participants.forEach(p => {
+        game.participants?.forEach(p => {
           if (p.user && !userIds.has(p.user.id)) {
             userIds.add(p.user.id);
             users.push({
@@ -87,7 +89,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         });
       } else if (normalizedChatType === 'ADMINS') {
         game.participants
-          .filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
+          ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
           .forEach(p => {
             if (p.user && !userIds.has(p.user.id)) {
               userIds.add(p.user.id);
@@ -99,6 +101,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           });
       }
 
+      console.log('[MentionInput] GAME mentionableUsers:', users.length, users);
       return users;
     } else if (contextType === 'BUG' && bug) {
       const users: MentionableUser[] = [];
@@ -123,12 +126,27 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       });
 
       return users;
+    } else if (contextType === 'GROUP' && groupChannel) {
+      const users: MentionableUser[] = [];
+      const userIds = new Set<string>();
+
+      groupChannel.participants?.forEach(p => {
+        if (p.user && !userIds.has(p.user.id)) {
+          userIds.add(p.user.id);
+          users.push({
+            ...p.user,
+            display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+          });
+        }
+      });
+
+      return users;
     } else if (contextType === 'USER') {
       return [];
     }
 
     return [];
-  }, [contextType, game, bug, chatType]);
+  }, [contextType, game, bug, groupChannel, chatType]);
 
   const handleChange = (_e: any, newValue: string, _newPlainTextValue: string, mentions: MentionData[]) => {
     const ids = mentions.map(m => m.id);
@@ -136,6 +154,19 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   };
 
   const searchUsers = (query: string, callback: (items: SuggestionDataItem[]) => void) => {
+    console.log('[MentionInput] searchUsers called with query:', query, 'mentionableUsers count:', mentionableUsers.length);
+    
+    if (!query || query.trim() === '') {
+      const suggestions: SuggestionDataItem[] = mentionableUsers.map(user => ({
+        id: user.id,
+        display: user.display,
+        user: user,
+      }));
+      console.log('[MentionInput] Returning all suggestions:', suggestions.length);
+      callback(suggestions);
+      return;
+    }
+
     const filtered = mentionableUsers.filter(user => {
       const display = user.display;
       const firstName = user.firstName || '';
@@ -149,6 +180,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       user: user,
     }));
 
+    console.log('[MentionInput] Returning filtered suggestions:', suggestions.length);
     callback(suggestions);
   };
 
@@ -208,13 +240,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         overflowY: 'auto' as const,
         borderRadius: '8px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        zIndex: 9999,
+        zIndex: 10000,
         width: `${suggestionsWidth}px`,
-        position: 'fixed' as const,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        bottom: '100%',
-        marginBottom: '4px',
       },
       item: {
         padding: '8px 12px',
@@ -246,6 +273,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         borderColor: '#4b5563',
         color: '#f3f4f6',
         width: `${suggestionsWidth}px`,
+        zIndex: 10000,
       },
       item: {
         ...customStyle.suggestions.item,

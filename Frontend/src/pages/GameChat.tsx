@@ -1238,7 +1238,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           </div>
         ) : canAccessChat ? (
           !isChannelParticipantOnly ? (
-            <div className="relative overflow-hidden">
+            <div className="relative overflow-visible">
               <div 
                 className={`transition-opacity duration-300 ease-in-out ${
                   isSendingMessage ? 'opacity-0 invisible' : 'opacity-100 visible'
@@ -1261,7 +1261,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 />
               </div>
               {isSendingMessage && (
-                <div className="absolute inset-0 bg-white dark:bg-gray-800 p-4 flex items-center justify-center">
+                <div className="absolute inset-0 bg-white dark:bg-gray-800 p-4 flex items-center justify-center z-50">
                   <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                     <span className="text-sm">{t('common.sending')}</span>
