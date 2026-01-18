@@ -146,7 +146,7 @@ export const GameSubscriptionsContent = () => {
   const formatTimeString = (time: string): string => {
     if (!time) return '';
     if (time === '24:00') {
-      return displaySettings.hour12 ? '12:00am' : '24:00';
+      return displaySettings.hour12 ? '12:00pm' : '24:00';
     }
     const [hours, minutes] = time.split(':').map(Number);
     if (displaySettings.hour12) {
@@ -211,8 +211,24 @@ export const GameSubscriptionsContent = () => {
 
             return (
               <Card key={subscription.id} className="space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 space-y-2">
+                <div className="relative pr-2">
+                  <div className="absolute top-0 right-0 flex gap-2">
+                    <button
+                      onClick={() => setEditingId(subscription.id)}
+                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      title={t('gameSubscriptions.editSubscription') || 'Edit'}
+                    >
+                      <Edit2 size={18} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(subscription.id)}
+                      className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                      title={t('gameSubscriptions.deleteSubscription') || 'Delete'}
+                    >
+                      <Trash2 size={18} className="text-red-600 dark:text-red-400" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <MapPin size={16} className="text-gray-600 dark:text-gray-400 flex-shrink-0" />
                       <span className="text-sm text-gray-900 dark:text-white">
@@ -273,13 +289,9 @@ export const GameSubscriptionsContent = () => {
                           {t('gameSubscriptions.timeRange')}:{' '}
                         </span>
                         <span className="text-sm text-gray-900 dark:text-white">
-                          {subscription.startTime
-                            ? formatTimeString(subscription.startTime)
-                            : '...'}{' '}
+                          {formatTimeString(subscription.startTime || '00:00')}{' '}
                           -{' '}
-                          {subscription.endTime
-                            ? formatTimeString(subscription.endTime)
-                            : '...'}
+                          {formatTimeString(subscription.endTime || '24:00')}
                         </span>
                       </div>
                     )}
@@ -308,23 +320,6 @@ export const GameSubscriptionsContent = () => {
                         </span>
                       </div>
                     )}
-                  </div>
-
-                  <div className="flex gap-2 ml-4">
-                    <button
-                      onClick={() => setEditingId(subscription.id)}
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                      title={t('gameSubscriptions.editSubscription') || 'Edit'}
-                    >
-                      <Edit2 size={18} className="text-gray-600 dark:text-gray-400" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(subscription.id)}
-                      className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                      title={t('gameSubscriptions.deleteSubscription') || 'Delete'}
-                    >
-                      <Trash2 size={18} className="text-red-600 dark:text-red-400" />
-                    </button>
                   </div>
                 </div>
               </Card>
