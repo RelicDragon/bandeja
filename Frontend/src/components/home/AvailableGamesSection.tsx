@@ -35,6 +35,7 @@ export const AvailableGamesSection = ({
   const [listViewStartDate, setListViewStartDate] = useState<Date>(new Date());
   const [userFilter, setUserFilter] = useState(false);
   const [trainingFilter, setTrainingFilter] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const setSelectedDateForCreateGame = useHeaderStore((state) => state.setSelectedDateForCreateGame);
   const lastDateRangeRef = useRef<{ start: string; end: string } | null>(null);
 
@@ -46,20 +47,40 @@ export const AvailableGamesSection = ({
       if (filters.activeTab) {
         setFindViewMode(filters.activeTab);
       }
+      
+      if (filters.selectedDate) {
+        const restoredDate = new Date(filters.selectedDate);
+        if (!isNaN(restoredDate.getTime())) {
+          setSelectedDate(restoredDate);
+        }
+      }
+      
+      if (filters.listViewStartDate) {
+        const restoredDate = new Date(filters.listViewStartDate);
+        if (!isNaN(restoredDate.getTime())) {
+          setListViewStartDate(restoredDate);
+        }
+      }
+      
+      setIsInitialized(true);
     };
     loadFilters();
   }, [setFindViewMode]);
 
   useEffect(() => {
+    if (!isInitialized) return;
+    
     const saveFilters = async () => {
       await setGameFilters({
         userFilter,
         trainingFilter,
         activeTab: findViewMode,
+        selectedDate: findViewMode === 'calendar' ? selectedDate.toISOString() : undefined,
+        listViewStartDate: findViewMode === 'list' ? listViewStartDate.toISOString() : undefined,
       });
     };
     saveFilters();
-  }, [userFilter, trainingFilter, findViewMode]);
+  }, [isInitialized, userFilter, trainingFilter, findViewMode, selectedDate, listViewStartDate]);
 
   useEffect(() => {
     console.log('AvailableGamesSection - storing date for create game:', selectedDate);
@@ -90,22 +111,25 @@ export const AvailableGamesSection = ({
   };
 
   useEffect(() => {
-    if (findViewMode === 'list' && onDateRangeChange) {
-      const start = startOfDay(listViewStartDate);
-      const end = startOfDay(addDays(listViewStartDate, 6));
-      const startStr = format(start, 'yyyy-MM-dd');
-      const endStr = format(end, 'yyyy-MM-dd');
-      
-      if (!lastDateRangeRef.current || 
-          lastDateRangeRef.current.start !== startStr || 
-          lastDateRangeRef.current.end !== endStr) {
-        lastDateRangeRef.current = { start: startStr, end: endStr };
-        onDateRangeChange(start, end);
+    if (!isInitialized || findViewMode !== 'list' || !onDateRangeChange) {
+      if (findViewMode === 'calendar') {
+        lastDateRangeRef.current = null;
       }
-    } else if (findViewMode === 'calendar') {
-      lastDateRangeRef.current = null;
+      return;
     }
-  }, [findViewMode, listViewStartDate, onDateRangeChange]);
+    
+    const start = startOfDay(listViewStartDate);
+    const end = startOfDay(addDays(listViewStartDate, 6));
+    const startStr = format(start, 'yyyy-MM-dd');
+    const endStr = format(end, 'yyyy-MM-dd');
+    
+    if (!lastDateRangeRef.current || 
+        lastDateRangeRef.current.start !== startStr || 
+        lastDateRangeRef.current.end !== endStr) {
+      lastDateRangeRef.current = { start: startStr, end: endStr };
+      onDateRangeChange(start, end);
+    }
+  }, [isInitialized, findViewMode, listViewStartDate, onDateRangeChange]);
 
   const getFilteredGames = () => {
     if (findViewMode === 'calendar') {

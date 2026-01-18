@@ -34,7 +34,9 @@ export const Header = () => {
   const handleBackClick = () => {
     setIsAnimating(true);
     
-    if (currentPage === 'gameDetails' && locationState?.fromLeagueSeasonGameId) {
+    if (currentPage === 'gameDetails') {
+      navigate(-1);
+    } else if (locationState?.fromLeagueSeasonGameId) {
       setCurrentPage('gameDetails');
       navigate(`/games/${locationState.fromLeagueSeasonGameId}`, { replace: true });
     } else {

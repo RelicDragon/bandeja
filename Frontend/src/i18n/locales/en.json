@@ -1304,6 +1304,7 @@
     "guest": "Guest",
     "noParticipants": "No participants",
     "joinChatToSend": "Join Chat",
+    "joinChannel": "Join Channel",
     "leave": "Leave chat",
     "leaveConfirmation": "Are you sure you want to leave this chat?",
     "blockedByUser": "This user has blocked you. You cannot send messages to them.",

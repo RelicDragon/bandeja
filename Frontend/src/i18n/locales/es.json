@@ -1258,6 +1258,7 @@
     "guest": "Invitado",
     "noParticipants": "Sin participantes",
     "joinChatToSend": "Unirse al Chat",
+    "joinChannel": "Unirse al Canal",
     "leave": "Salir del chat",
     "leaveConfirmation": "¿Estás seguro de que quieres salir de este chat?",
     "blockedByUser": "Este usuario te ha bloqueado. No puedes enviarle mensajes.",
