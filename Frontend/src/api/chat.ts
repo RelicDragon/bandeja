@@ -2,6 +2,8 @@ import api from './axios';
 import { ApiResponse, Game, ChatType, BasicUser } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 
+export type { ChatType };
+
 export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
 export type ChatContextType = 'GAME' | 'BUG' | 'USER' | 'GROUP';
 
