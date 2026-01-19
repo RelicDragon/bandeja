@@ -9,6 +9,8 @@ import { config } from './config/env';
 
 const app: Application = express();
 
+app.set('trust proxy', ['10.0.0.0/8', '127.0.0.1', '::1']);
+
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: "cross-origin" }
