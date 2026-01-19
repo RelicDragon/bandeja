@@ -405,7 +405,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                   className={`flex items-start select-none ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')}`}
                 >
                   <div
-                    className={`px-4 py-2 rounded-lg shadow-sm relative min-w-[120px] ${
+                    className={`px-4 ${hasTranslation ? 'pt-2 pb-4' : 'py-2'} rounded-lg shadow-sm relative min-w-[120px] ${
                       isChannel
                         ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
                         : isOwnMessage
