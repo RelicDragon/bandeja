@@ -186,13 +186,13 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                         : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-gray-900 dark:text-gray-100">
                           {t('gameResults.matchLabel')} #{match.matchNumber}
                         </span>
                         {match.sets && match.sets.length > 0 && (
-                          <div className="flex gap-1.5">
+                          <div className="flex gap-1.5 flex-wrap">
                             {match.sets.map((set, setIndex) => (
                               <span
                                 key={setIndex}
