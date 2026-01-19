@@ -19,7 +19,6 @@ import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
 import { isUserGameAdminOrOwner, isGroupChannelOwner, isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { normalizeChatType } from '@/utils/chatType';
-import { extractLanguageCode } from '@/utils/language';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users } from 'lucide-react';
 import { GroupChannelParticipantsModal } from '@/components/chat/GroupChannelParticipantsModal';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
@@ -536,46 +535,12 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           }
         }
         
-        // Auto-fetch translation if message has content but no translation for user's language
-        if (message.content && message.content.trim() && user?.language && message.senderId !== user.id) {
-          const userLanguageCode = extractLanguageCode(user.language).toLowerCase();
-          const hasTranslation = message.translation?.languageCode.toLowerCase() === userLanguageCode ||
-            message.translations?.some(t => t.languageCode.toLowerCase() === userLanguageCode);
-          
-          if (!hasTranslation && userLanguageCode !== 'en') {
-            // Fetch translation asynchronously
-            chatApi.translateMessage(message.id).then(translation => {
-              setMessages(prevMessages => {
-                const newMessages = prevMessages.map(msg => 
-                  msg.id === message.id 
-                    ? {
-                        ...msg,
-                        translation,
-                        translations: msg.translations 
-                          ? [...msg.translations.filter(t => t.languageCode !== translation.languageCode), translation]
-                          : [translation]
-                      }
-                    : msg
-                );
-                messagesRef.current = newMessages;
-                return newMessages;
-              });
-            }).catch(error => {
-              // Silently fail for auto-translation - user can manually request if needed
-              // Only log if it's not a service unavailable error
-              if (error?.response?.status !== 503) {
-                console.debug('Failed to auto-translate message:', error);
-              }
-            });
-          }
-        }
-        
         const newMessages = [...prevMessages, message];
         messagesRef.current = newMessages;
         return newMessages;
       });
     }
-  }, [contextType, currentChatType, user?.id, user?.language]);
+  }, [contextType, currentChatType, user?.id]);
 
   const handleMessageReaction = useCallback((reaction: any) => {
     if (reaction.action === 'removed') {
