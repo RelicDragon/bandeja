@@ -419,7 +419,7 @@ export const GameCard = ({
 
       {/* Collapsed view - Single row */}
       {isCollapsed && (
-        <div className={`text-sm pb-4 text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 ${game.entityType === 'LEAGUE_SEASON' ? 'flex flex-col gap-2 -mt-3' : game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : mainPhotoUrl ? 'flex gap-4' : 'flex items-center gap-4'}`}>
+        <div className={`text-sm pb-4 text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-0 ${game.entityType === 'LEAGUE_SEASON' ? 'flex flex-col gap-2 -mt-1' : game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : mainPhotoUrl ? 'flex gap-4' : 'flex items-center gap-4'}`}>
           {game.entityType === 'LEAGUE_SEASON' ? (
             <>
               <div className="text-sm font-semibold text-gray-900 dark:text-white">

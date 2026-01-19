@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
 import { X, Search } from 'lucide-react';
 import { PlayerAvatar } from '../PlayerAvatar';
 import { GameParticipant } from '@/types';
 import { matchesSearch } from '@/utils/transliteration';
+import { BaseModal } from '@/components';
 
 interface TeamPlayerSelectorProps {
   gameParticipants: GameParticipant[];
@@ -23,13 +23,14 @@ export const TeamPlayerSelector = ({
 }: TeamPlayerSelectorProps) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isOpen, setIsOpen] = useState(true);
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+  const handleClose = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
 
   const filteredParticipants = useMemo(() => {
     let filtered = gameParticipants.filter(p => p.isPlaying);
@@ -51,35 +52,24 @@ export const TeamPlayerSelector = ({
 
   const handlePlayerClick = (playerId: string) => {
     onConfirm(playerId);
-    onClose();
+    handleClose();
   };
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      onClick={onClose}
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      isBasic
+      modalId="team-player-selector"
+      showCloseButton={false}
+      closeOnBackdropClick={true}
     >
-      <div
-        className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-md flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-        style={{ height: '80vh', maxHeight: '600px' }}
-      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {title}
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <X size={20} className="text-gray-500 dark:text-gray-400" />
@@ -133,8 +123,6 @@ export const TeamPlayerSelector = ({
             ))}
           </div>
         )}
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };

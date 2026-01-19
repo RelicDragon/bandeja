@@ -1,6 +1,6 @@
-import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Club } from '@/types';
+import { BaseModal } from '@/components/BaseModal';
 
 interface ClubModalProps {
   isOpen: boolean;
@@ -12,8 +12,6 @@ interface ClubModalProps {
 
 export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: ClubModalProps) => {
   const { t } = useTranslation();
-  
-  if (!isOpen) return null;
 
   const handleSelect = (id: string) => {
     onSelect(id);
@@ -21,32 +19,16 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      onClick={(e) => e.stopPropagation()}
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      isBasic
+      modalId="club-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div 
-        className="absolute inset-0 bg-black/50" 
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }} 
-      />
-      <div 
-        className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-[70vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('createGame.selectClub')}</h3>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
         <div className="overflow-y-auto flex-1 p-4">
           {clubs.length === 0 ? (
@@ -73,7 +55,6 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 };

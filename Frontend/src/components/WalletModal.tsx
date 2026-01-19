@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
-import { motion } from 'framer-motion';
-import { X, Send, ArrowUp, ArrowDown, Wallet as WalletIcon } from 'lucide-react';
+import { Send, ArrowUp, ArrowDown, Wallet as WalletIcon } from 'lucide-react';
 import { transactionsApi, Transaction, Wallet } from '@/api/transactions';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from './Button';
 import { PlayerListModal } from './PlayerListModal';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { PlayerCardBottomSheet } from './PlayerCardBottomSheet';
+import { BaseModal } from './BaseModal';
 
 interface WalletModalProps {
   onClose: () => void;
@@ -24,13 +23,6 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
   const [showPlayerList, setShowPlayerList] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [viewPlayerId, setViewPlayerId] = useState<string | null>(null);
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -129,58 +121,21 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
     }
   };
 
-  return createPortal(
+  return (
     <>
-      <motion.div
-        key="modal-container"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-        onClick={onClose}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
+      <BaseModal 
+        isOpen={!showPlayerList && !selectedPlayerId && !viewPlayerId} 
+        onClose={onClose} 
+        isBasic 
+        modalId="wallet-modal"
+        showCloseButton={true}
+        closeOnBackdropClick={true}
       >
-        <motion.div
-          key="backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="absolute inset-0"
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
-          }}
-        />
-        <motion.div
-          key="modal-content"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col relative z-10"
-          onClick={(e) => e.stopPropagation()}
-          style={{ height: '85vh', maxHeight: '700px' }}
-        >
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <WalletIcon size={24} className="text-primary-600 dark:text-primary-400" />
               {t('wallet.title') || 'Wallet'}
             </h2>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <X size={20} className="text-gray-500 dark:text-gray-400" />
-            </button>
           </div>
 
           {loading ? (
@@ -277,8 +232,7 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
               </div>
             </>
           )}
-        </motion.div>
-      </motion.div>
+      </BaseModal>
 
       {showPlayerList && (
         <PlayerListModal
@@ -303,8 +257,7 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
           onClose={() => setViewPlayerId(null)}
         />
       )}
-    </>,
-    document.body
+    </>
   );
 };
 

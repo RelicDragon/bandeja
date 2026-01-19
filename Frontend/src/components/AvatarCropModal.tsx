@@ -4,6 +4,7 @@ import Cropper from 'react-easy-crop';
 import { Button } from './Button';
 import { X, Loader2 } from 'lucide-react';
 import { getCircularCroppedImg } from '../utils/cropUtils';
+import { BaseModal } from '@/components/BaseModal';
 
 interface AvatarCropModalProps {
   imageFile: File;
@@ -30,6 +31,14 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
   } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>('');
+  const [isOpen, setIsOpen] = useState(true);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      onCancel();
+    }, 300);
+  };
 
   useEffect(() => {
     const url = URL.createObjectURL(imageFile);
@@ -38,13 +47,6 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
       URL.revokeObjectURL(url);
     };
   }, [imageFile]);
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
 
   const onCropComplete = useCallback((_: any, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -129,30 +131,20 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
     }
   }, [croppedAreaPixels, rotation, imageUrl, imageFile.name, onCrop]);
 
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && !isProcessing && !isUploading) {
-      onCancel();
-    }
-  }, [isProcessing, isUploading, onCancel]);
-
   return (
-    <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      onClick={handleBackdropClick}
-      style={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
-      }}
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      isBasic={false}
+      forceBackdrop={true}
+      modalId="avatar-crop-modal"
+      showCloseButton={false}
+      closeOnBackdropClick={!isProcessing && !isUploading}
     >
-      <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden"
-        style={{ height: '80vh' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative w-full h-full">
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <div className="relative w-full max-w-3xl h-[90vh] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
           <button
-            onClick={onCancel}
+            onClick={handleClose}
             disabled={isProcessing || isUploading}
             className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={t('common.close')}
@@ -160,7 +152,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
             <X size={20} className="text-gray-700 dark:text-gray-300" />
           </button>
 
-          <div className="w-full h-full">
+          <div className="absolute inset-0">
             <Cropper
               image={imageUrl}
               crop={crop}
@@ -173,13 +165,6 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
               onCropComplete={onCropComplete}
               onZoomChange={setZoom}
               onRotationChange={setRotation}
-              style={{
-                containerStyle: {
-                  width: '100%',
-                  height: '100%',
-                  position: 'relative',
-                },
-              }}
             />
           </div>
 
@@ -187,7 +172,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
             <div className="flex gap-3 justify-center max-w-md mx-auto">
               <Button
                 variant="secondary"
-                onClick={onCancel}
+                onClick={handleClose}
                 className="flex-1 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-sm"
                 disabled={isProcessing || isUploading}
               >
@@ -211,6 +196,6 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </BaseModal>
   );
 };

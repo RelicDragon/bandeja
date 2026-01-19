@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Game, Club, EntityType } from '@/types';
 import { addHours } from 'date-fns';
 import { GameStartSection } from '@/components/createGame/GameStartSection';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
+import { BaseModal } from '@/components/BaseModal';
 
 interface TimeDurationModalProps {
   isOpen: boolean;
@@ -17,7 +16,6 @@ interface TimeDurationModalProps {
 
 export const TimeDurationModal = ({ isOpen, onClose, game, clubs, onSave }: TimeDurationModalProps) => {
   const { t } = useTranslation();
-  const [isClosing, setIsClosing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -68,31 +66,14 @@ export const TimeDurationModal = ({ isOpen, onClose, game, clubs, onSave }: Time
       setSelectedDate(initialValues.initialDate);
       setSelectedTime(initialValues.initialTime);
       setDuration(initialValues.initialDuration);
-      setIsClosing(false);
-      document.body.style.overflow = 'hidden';
       
       setTimeout(() => {
         setDisableAutoAdjust(false);
       }, 200);
     } else if (!isOpen) {
-      document.body.style.overflow = '';
       setDisableAutoAdjust(true);
     }
-
-    return () => {
-      if (!isOpen) {
-        document.body.style.overflow = '';
-      }
-    };
   }, [isOpen, initialValues, setSelectedDate, setSelectedTime, setDuration]);
-
-  const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsClosing(false);
-      onClose();
-    }, 200);
-  };
 
   const getDurationLabel = (dur: number) => {
     if (dur === Math.floor(dur)) {
@@ -117,7 +98,7 @@ export const TimeDurationModal = ({ isOpen, onClose, game, clubs, onSave }: Time
       const endTime = addHours(startTime, duration);
 
       await onSave({ startTime, endTime });
-      handleClose();
+      onClose();
     } catch (error) {
       console.error('Error saving time/duration:', error);
     } finally {
@@ -125,34 +106,21 @@ export const TimeDurationModal = ({ isOpen, onClose, game, clubs, onSave }: Time
     }
   };
 
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div
-      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-opacity duration-200 ${
-        isClosing ? 'opacity-0' : 'opacity-100'
-      }`}
-      onClick={handleClose}
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      isBasic
+      modalId="time-duration-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      <div
-        className={`relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] flex flex-col transition-transform duration-200 ${
-          isClosing ? 'scale-95' : 'scale-100'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {game.entityType === 'TOURNAMENT' ? t('createGame.gameStartTournament') :
              game.entityType === 'LEAGUE' ? t('createGame.gameStartLeague') :
              t('createGame.gameStart')}
           </h2>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
         <div className="overflow-y-auto flex-1 p-4">
@@ -193,7 +161,7 @@ export const TimeDurationModal = ({ isOpen, onClose, game, clubs, onSave }: Time
 
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
           <button
-            onClick={handleClose}
+            onClick={onClose}
             disabled={isSaving}
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
           >
@@ -207,9 +175,7 @@ export const TimeDurationModal = ({ isOpen, onClose, game, clubs, onSave }: Time
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
         </div>
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };
 

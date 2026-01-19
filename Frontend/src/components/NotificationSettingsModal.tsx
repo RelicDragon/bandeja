@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import { ToggleSwitch, Button } from '@/components';
 import { User } from '@/types';
 import { usersApi } from '@/api';
 import toast from 'react-hot-toast';
+import { BaseModal } from './BaseModal';
 
 interface NotificationSettingsModalProps {
   isOpen: boolean;
@@ -67,17 +66,6 @@ export const NotificationSettingsModal = ({
     }
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -111,8 +99,6 @@ export const NotificationSettingsModal = ({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   const NotificationToggle = ({
     label,
     description,
@@ -139,30 +125,19 @@ export const NotificationSettingsModal = ({
     </div>
   );
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      onClick={handleCancel}
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
-      }}
+  return (
+    <BaseModal 
+      isOpen={isOpen} 
+      onClose={handleCancel} 
+      isBasic 
+      modalId="notification-settings-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {t('profile.notificationSettings') || 'Notification Settings'}
           </h2>
-          <button
-            onClick={handleCancel}
-            className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
         <div className="flex border-b border-gray-200 dark:border-gray-700">
@@ -292,8 +267,6 @@ export const NotificationSettingsModal = ({
             {isSaving ? (t('common.saving') || 'Saving...') : (t('common.save') || 'Save')}
           </Button>
         </div>
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };

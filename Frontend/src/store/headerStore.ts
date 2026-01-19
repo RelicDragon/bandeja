@@ -5,7 +5,6 @@ export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 interface HeaderState {
   pendingInvites: number;
   unreadMessages: number;
-  showGameTypeModal: boolean;
   isNewInviteAnimating: boolean;
   syncStatus: SyncStatus;
   selectedDateForCreateGame: Date | null;
@@ -17,7 +16,6 @@ interface HeaderState {
   pastGamesUnreadCount: number;
   setPendingInvites: (count: number) => void;
   setUnreadMessages: (count: number) => void;
-  setShowGameTypeModal: (show: boolean) => void;
   triggerNewInviteAnimation: () => void;
   setSyncStatus: (status: SyncStatus) => void;
   setSelectedDateForCreateGame: (date: Date | null) => void;
@@ -32,7 +30,6 @@ interface HeaderState {
 export const useHeaderStore = create<HeaderState>((set) => ({
   pendingInvites: 0,
   unreadMessages: 0,
-  showGameTypeModal: false,
   isNewInviteAnimating: false,
   syncStatus: 'IDLE',
   selectedDateForCreateGame: null,
@@ -44,7 +41,6 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   pastGamesUnreadCount: 0,
   setPendingInvites: (count) => set({ pendingInvites: count }),
   setUnreadMessages: (count) => set({ unreadMessages: count }),
-  setShowGameTypeModal: (show) => set({ showGameTypeModal: show }),
   triggerNewInviteAnimation: () => {
     set({ isNewInviteAnimating: true });
     // Reset animation after it completes

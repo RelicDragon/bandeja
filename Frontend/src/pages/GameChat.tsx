@@ -22,6 +22,7 @@ import { normalizeChatType } from '@/utils/chatType';
 import { extractLanguageCode } from '@/utils/language';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users } from 'lucide-react';
 import { GroupChannelParticipantsModal } from '@/components/chat/GroupChannelParticipantsModal';
+import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 
 interface LocationState {
   initialChatType?: ChatType;
@@ -119,6 +120,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       };
     }
   }, [setBottomTabsVisible, isEmbedded]);
+
+  useBackButtonHandler(() => {
+    navigate(-1);
+    return true;
+  });
 
   const loadContext = useCallback(async () => {
     if (!id) return null;

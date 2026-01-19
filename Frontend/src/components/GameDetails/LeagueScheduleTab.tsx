@@ -401,6 +401,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
 
       {showGroupModal && (
         <GroupCreationModal
+          isOpen={showGroupModal}
           participantCount={participantCount}
           onSelect={handleCreateGroups}
           onClose={() => setShowGroupModal(false)}

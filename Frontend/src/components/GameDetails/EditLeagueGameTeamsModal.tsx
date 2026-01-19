@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
-import { X, Trash2, RefreshCw, UserPlus, Check } from 'lucide-react';
-import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection, ConfirmationModal } from '@/components';
+import { Trash2, RefreshCw, UserPlus, Check } from 'lucide-react';
+import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection, ConfirmationModal, BaseModal } from '@/components';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { Game, Club, Court, EntityType, BasicUser } from '@/types';
 import { gamesApi, leaguesApi, invitesApi, LeagueStanding, clubsApi, courtsApi } from '@/api';
@@ -31,7 +30,6 @@ export const EditLeagueGameTeamsModal = ({
 }: EditLeagueGameTeamsModalProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const [isClosing, setIsClosing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
   const [loading, setLoading] = useState(true);
@@ -188,7 +186,6 @@ export const EditLeagueGameTeamsModal = ({
       const shouldInitialize = gameIdRef.current !== game.id;
       if (shouldInitialize) {
         gameIdRef.current = game.id;
-        setIsClosing(false);
         setActiveTab('teams');
         setIsEditingTime(false);
         fetchStandings();
@@ -201,17 +198,12 @@ export const EditLeagueGameTeamsModal = ({
         });
       }
       setTimeManuallySelected(false);
-      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = '';
       if (!isOpen && gameIdRef.current === game.id) {
         gameIdRef.current = null;
         gameCourtIdRef.current = undefined;
       }
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen, game.id, game.clubId, fetchStandings, initializeTeams, fetchClubs, initializeGameData, fetchCourts]);
 
   useEffect(() => {
@@ -268,14 +260,9 @@ export const EditLeagueGameTeamsModal = ({
     }
   }, [t]);
 
-
   const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      onClose();
-      setIsClosing(false);
-      setSelectingPlayerFor(null);
-    }, 200);
+    onClose();
+    setSelectingPlayerFor(null);
   };
 
   const handleRemoveTime = async () => {
@@ -509,8 +496,6 @@ export const EditLeagueGameTeamsModal = ({
     return [...team1Players, ...team2Players].some(p => p?.id === playerId);
   };
 
-  if (!isOpen && !isClosing) return null;
-
   const renderPlayerSlot = (player: BasicUser | null, team: 1 | 2, slot: 0 | 1) => {
     return (
       <div className="flex flex-col items-center">
@@ -557,7 +542,7 @@ export const EditLeagueGameTeamsModal = ({
 
   const isModalOverlayLocked = isClubModalOpen || isCourtModalOpen;
 
-  const handleBackdropClick = () => {
+  const handleModalClose = () => {
     if (isModalOverlayLocked) return;
     if (selectingPlayerFor) {
       setSelectingPlayerFor(null);
@@ -566,31 +551,19 @@ export const EditLeagueGameTeamsModal = ({
     handleClose();
   };
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      onClick={handleBackdropClick}
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
-      }}
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleModalClose}
+      isBasic
+      modalId="edit-league-game-teams-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={!isModalOverlayLocked && !selectingPlayerFor}
     >
-      <div
-        className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-3xl flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxHeight: '90vh' }}
-      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {t('gameDetails.editTeams')}
           </h2>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
         <div className="p-6 overflow-y-auto flex-1">
@@ -599,10 +572,7 @@ export const EditLeagueGameTeamsModal = ({
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
             </div>
           ) : selectingPlayerFor ? (
-            <div
-              className="transform transition-all duration-300 ease-in-out"
-              style={{ animation: 'slideIn 0.3s ease-out' }}
-            >
+            <div>
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                   {t('gameDetails.selectPlayer')}
@@ -655,10 +625,7 @@ export const EditLeagueGameTeamsModal = ({
               </div>
             </div>
           ) : (
-            <div
-              className="transform transition-all duration-300 ease-in-out"
-              style={{ animation: 'slideIn 0.3s ease-out' }}
-            >
+            <div>
               {/* Tab Navigation */}
               <div className="flex border-b border-gray-200 dark:border-gray-700">
                 <button
@@ -869,20 +836,6 @@ export const EditLeagueGameTeamsModal = ({
             </button>
           </div>
         )}
-      </div>
-
-      <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateX(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-      `}</style>
 
       {isClubModalOpen && (
         <ClubModal
@@ -922,7 +875,6 @@ export const EditLeagueGameTeamsModal = ({
         cancelText={t('common.cancel') || 'Cancel'}
         confirmVariant="danger"
       />
-    </div>,
-    document.body
+    </BaseModal>
   );
 };

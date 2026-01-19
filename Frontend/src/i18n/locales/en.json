@@ -1007,7 +1007,9 @@
     "kickAllPreferNotToSayMessage": "Are you sure you want to remove all {{count}} player(s) without gender specified? This action cannot be undone.",
     "addPhoto": "Add Photo",
     "photoAdded": "Photo added to game chat",
+    "photosAdded": "{{count}} photo(s) added",
     "photoUploadFailed": "Failed to upload photo",
+    "somePhotosFailed": "{{count}} photo(s) failed to upload",
     "mainPhotoUpdated": "Main photo updated",
     "mainPhotoUpdateFailed": "Failed to update main photo",
     "photos": "Photos",
@@ -1308,6 +1310,9 @@
     "leave": "Leave chat",
     "leaveConfirmation": "Are you sure you want to leave this chat?",
     "blockedByUser": "This user has blocked you. You cannot send messages to them.",
+    "invalidImageType": "Invalid image type. Please select a valid image file.",
+    "photoPickFailed": "Failed to pick photos",
+    "someImagesFailed": "{{count}} image(s) failed to upload",
     "types": {
       "PUBLIC": "General",
       "PRIVATE": "Participants",
@@ -1509,6 +1514,19 @@
       "loseSet": "Lose a set",
       "streak30": "Win 3-0 in a match",
       "streak21": "Win 2-1 in a match"
+    }
+  },
+  "permissions": {
+    "openSettings": "Open Settings",
+    "photos": {
+      "title": "Photo Access Required",
+      "description": "To attach photos, we need access to your photo library.",
+      "denied": "Photo access is currently denied. Please enable it in your device settings to attach photos."
+    },
+    "camera": {
+      "title": "Camera Access Required",
+      "description": "To take photos, we need access to your camera.",
+      "denied": "Camera access is currently denied. Please enable it in your device settings to take photos."
     }
   }
 }

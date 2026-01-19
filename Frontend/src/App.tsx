@@ -17,6 +17,7 @@ import { isProfileComplete } from './utils/userValidation';
 import { usersApi } from './api';
 import { PlayerCardModalManager } from './components/PlayerCardModalManager';
 import { ToastProvider } from './components/ToastProvider';
+import { PermissionModalProvider } from './components/PermissionModalProvider';
 import { OfflineBanner } from './components/OfflineBanner';
 import { headerService } from './services/headerService';
 import { socketService } from './services/socketService';
@@ -28,6 +29,7 @@ import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersist
 import { useDeepLink } from './hooks/useDeepLink';
 import { extractLanguageCode } from './utils/displayPreferences';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
+import { backButtonService } from './services/backButtonService';
 import i18n from './i18n/config';
 import './i18n/config';
 
@@ -58,6 +60,7 @@ function AppContent() {
       if (isAndroid()) {
         document.body.classList.add('capacitor-android');
       }
+      backButtonService.initialize();
     }
     
     const cleanup = initNetworkListener();
@@ -71,6 +74,9 @@ function AppContent() {
     return () => {
       cleanup();
       clearTimeout(timer);
+      if (isCapacitor()) {
+        backButtonService.cleanup();
+      }
     };
   }, [finishInitializing]);
 
@@ -232,6 +238,7 @@ function AppContent() {
         />
       )}
       <ToastProvider>
+        <PermissionModalProvider />
         <PlayerCardModalManager>
           <Routes>
         <Route

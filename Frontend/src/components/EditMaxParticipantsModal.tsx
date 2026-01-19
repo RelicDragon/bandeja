@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
-import { X, Trash2, RotateCw } from 'lucide-react';
+import { Trash2, RotateCw } from 'lucide-react';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { gamesApi } from '@/api/games';
@@ -13,6 +12,7 @@ import { Select } from './Select';
 import { ConfirmationModal } from './ConfirmationModal';
 import { Game, GenderTeam } from '@/types';
 import { useAuthStore } from '@/store/authStore';
+import { BaseModal } from './BaseModal';
 
 interface EditMaxParticipantsModalProps {
   isOpen: boolean;
@@ -38,7 +38,6 @@ export const EditMaxParticipantsModal = ({
   ]);
   const [genderTeams, setGenderTeams] = useState<GenderTeam>(game.genderTeams ?? 'ANY');
   const [isSaving, setIsSaving] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
   const [removedPlayerIds, setRemovedPlayerIds] = useState<Set<string>>(new Set());
   const [originalParticipants, setOriginalParticipants] = useState<typeof game.participants>([]);
   const [confirmationModal, setConfirmationModal] = useState<{
@@ -51,21 +50,9 @@ export const EditMaxParticipantsModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
       setNewMaxParticipants(game.maxParticipants);
       setLevelRange([game.minLevel ?? 1.0, game.maxLevel ?? 7.0]);
       setGenderTeams(game.genderTeams ?? 'ANY');
-      setIsClosing(false);
       setRemovedPlayerIds(new Set());
       setOriginalParticipants(game.participants.filter(p => p.isPlaying));
       setIsEditingMaxParticipants(false);
@@ -79,11 +66,7 @@ export const EditMaxParticipantsModal = ({
   }, [isOpen, game.participants]);
 
   const handleClose = useCallback(() => {
-    setIsClosing(true);
-    setTimeout(() => {
-      onClose();
-      setIsClosing(false);
-    }, 200);
+    onClose();
   }, [onClose]);
 
   const playingParticipants = originalParticipants.filter(p => !removedPlayerIds.has(p.userId));
@@ -288,41 +271,19 @@ export const EditMaxParticipantsModal = ({
     }
   }, [confirmationModal, nonMaleParticipants, nonFemaleParticipants, preferNotToSayParticipants, game.id, user?.id, onKickUser, onUpdate, t]);
 
-  if (!isOpen && !isClosing) return null;
-
-  return createPortal(
-    <div 
-      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-opacity duration-200 ${
-        isClosing ? 'opacity-0' : 'opacity-100'
-      }`}
-      onClick={handleClose}
-      style={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
+  return (
+    <BaseModal 
+      isOpen={isOpen && !confirmationModal.isOpen} 
+      onClose={handleClose} 
+      isBasic 
+      modalId="edit-max-participants-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div
-        className={`bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-md flex flex-col transition-all duration-200 max-h-[90vh] ${
-          isClosing ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {t('gameDetails.editParticipants', { defaultValue: 'Edit Participants' })}
           </h2>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
         <div className="overflow-y-auto p-4 space-y-4">
@@ -723,7 +684,6 @@ export const EditMaxParticipantsModal = ({
             </Button>
           </div>
         </div>
-      </div>
 
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
@@ -753,8 +713,7 @@ export const EditMaxParticipantsModal = ({
         onConfirm={handleKickAllNonCompliant}
         onClose={() => setConfirmationModal({ isOpen: false, type: 'NON_MALE', count: 0 })}
       />
-    </div>,
-    document.body
+    </BaseModal>
   );
 };
 

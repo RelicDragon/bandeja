@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Loader2, UserPlus, ChevronDown, Check, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Trash2, Loader2, UserPlus, ChevronDown, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PlayerAvatar } from '@/components';
 import { leaguesApi, LeagueGroupManagementPayload, LeagueStanding } from '@/api/leagues';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
+import { BaseModal } from '@/components/BaseModal';
 
 const RENAME_DEBOUNCE_MS = 800;
 
@@ -55,14 +54,8 @@ export const LeagueGroupEditorModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
       fetchGroups();
-    } else {
-      document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen, fetchGroups]);
 
   useEffect(() => {
@@ -299,20 +292,15 @@ export const LeagueGroupEditorModal = ({
     return null;
   };
 
-  if (!isOpen) {
-    return null;
-  }
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-      onClick={onClose}
+  return (
+    <BaseModal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      isBasic 
+      modalId="league-group-editor-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col max-h-[95vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -322,12 +310,6 @@ export const LeagueGroupEditorModal = ({
               {t('gameDetails.manageGroupsDescription')}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
         <div className="border-b border-gray-200 dark:border-gray-800">
@@ -585,13 +567,10 @@ export const LeagueGroupEditorModal = ({
                     </p>
                   </div>
 
-                  <motion.div layout className="space-y-3">
-                    <AnimatePresence initial={false}>
+                  <div className="space-y-3">
                       {data?.groups.map((group, index) => (
-                        <motion.div
+                        <div
                           key={group.id}
-                          layout
-                          transition={{ type: 'spring', stiffness: 400, damping: 40 }}
                           className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm"
                         >
                         <div className="flex flex-col gap-1">
@@ -630,10 +609,9 @@ export const LeagueGroupEditorModal = ({
                         <div className="text-sm text-gray-500 dark:text-gray-400">
                           {index === 0 ? t('gameDetails.bestGroup') : index === data.groups.length - 1 ? t('gameDetails.worstGroup') : ''}
                         </div>
-                        </motion.div>
+                        </div>
                       ))}
-                    </AnimatePresence>
-                  </motion.div>
+                  </div>
 
                   <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-800">
                     <button
@@ -650,9 +628,7 @@ export const LeagueGroupEditorModal = ({
             </>
           )}
         </div>
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };
 

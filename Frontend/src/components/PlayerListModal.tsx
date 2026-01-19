@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
-import { X, Check, Search } from 'lucide-react';
+import { Check, Search } from 'lucide-react';
 import { BasicUser } from '@/types';
 import { invitesApi } from '@/api';
 import { gamesApi } from '@/api/games';
@@ -12,6 +11,7 @@ import { PlayerAvatar } from './PlayerAvatar';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { matchesSearch } from '@/utils/transliteration';
+import { BaseModal } from '@/components';
 
 interface PlayerListModalProps {
   gameId?: string;
@@ -44,13 +44,15 @@ export const PlayerListModal = ({
   const [inviting, setInviting] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>(preSelectedIds);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isOpen, setIsOpen] = useState(true);
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+  const handleClose = () => {
+    setIsOpen(false);
+    // Wait for animation to complete before calling onClose
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
 
   useEffect(() => {
     const loadPlayers = async () => {
@@ -153,7 +155,7 @@ export const PlayerListModal = ({
     // If no gameId, just return selected IDs without sending
     if (!gameId) {
       onConfirm?.(selectedIds);
-      onClose();
+      handleClose();
       return;
     }
 
@@ -170,7 +172,7 @@ export const PlayerListModal = ({
       
       onInviteSent?.();
       onConfirm?.(selectedIds);
-      onClose();
+      handleClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
     } finally {
@@ -178,80 +180,64 @@ export const PlayerListModal = ({
     }
   };
 
-  return createPortal(
-    <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4" 
-      onClick={onClose}
-      style={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      isBasic
+      modalId="player-list-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div
-        className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-md flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-        style={{ height: '80vh', maxHeight: '600px' }}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {title || (multiSelect ? t('games.invitePlayers') : t('games.invitePlayer'))}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          {title || (multiSelect ? t('games.invitePlayers') : t('games.invitePlayer'))}
+        </h2>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12 flex-shrink-0">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
         </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-12 flex-shrink-0">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          </div>
-        ) : (
-          <>
-            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-              <div className="relative">
-                <Search 
-                  size={20} 
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('common.search') || 'Search...'}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
+      ) : (
+        <>
+          <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+            <div className="relative">
+              <Search 
+                size={20} 
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('common.search') || 'Search...'}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
             </div>
+          </div>
 
+          <div className="flex-1 overflow-y-auto min-h-0">
             {players.length === 0 ? (
-              <div className="flex items-center justify-center py-12 flex-1">
+              <div className="flex items-center justify-center py-12">
                 <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
               </div>
             ) : filteredPlayers.length === 0 ? (
-              <div className="flex items-center justify-center py-12 flex-1">
+              <div className="flex items-center justify-center py-12">
                 <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
               </div>
             ) : (
-              <div className="overflow-y-auto flex-1 min-h-0">
-                {filteredPlayers.map((player) => {
+              filteredPlayers.map((player) => {
                 const isSelected = selectedIds.includes(player.id);
                 
                 return (
                   <div
                     key={player.id}
-                    className={`flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-b-0 ${
+                    className={`flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-b-0 ${
                       isSelected ? 'bg-primary-50 dark:bg-primary-900/20' : ''
                     }`}
                     onClick={() => handlePlayerClick(player.id)}
+                    style={{ transition: 'background-color 0.15s ease-out' }}
                   >
                     <div className="flex-shrink-0">
                       <PlayerAvatar 
@@ -282,55 +268,54 @@ export const PlayerListModal = ({
 
                     <div className="flex-shrink-0">
                       <div
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                           isSelected
                             ? 'bg-primary-600 border-primary-600'
                             : 'border-gray-300 dark:border-gray-600'
                         }`}
+                        style={{ transition: 'background-color 0.15s ease-out, border-color 0.15s ease-out' }}
                       >
                         {isSelected && <Check size={16} className="text-white" />}
                       </div>
                     </div>
                   </div>
                 );
-              })}
-              </div>
+              })
             )}
+          </div>
 
-            {filteredPlayers.length > 0 && (
-              <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
-                <div className="flex gap-2">
-                  <Button
-                    onClick={onClose}
-                    variant="outline"
-                    className="flex-1"
-                    disabled={inviting === 'confirming'}
-                  >
-                    {t('common.cancel')}
-                  </Button>
-                  <Button
-                    onClick={handleConfirm}
-                    className="flex-1"
-                    disabled={selectedIds.length === 0 || inviting === 'confirming'}
-                  >
-                    {inviting === 'confirming' ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        {t('common.sending') || 'Sending...'}
-                      </div>
-                    ) : (
-                      <>
-                        {t('common.confirm')} {multiSelect && selectedIds.length > 0 && `(${selectedIds.length})`}
-                      </>
-                    )}
-                  </Button>
-                </div>
+          {filteredPlayers.length > 0 && (
+            <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleClose}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={inviting === 'confirming'}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  onClick={handleConfirm}
+                  className="flex-1"
+                  disabled={selectedIds.length === 0 || inviting === 'confirming'}
+                >
+                  {inviting === 'confirming' ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      {t('common.sending') || 'Sending...'}
+                    </div>
+                  ) : (
+                    <>
+                      {t('common.confirm')} {multiSelect && selectedIds.length > 0 && `(${selectedIds.length})`}
+                    </>
+                  )}
+                </Button>
               </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>,
-    document.body
+            </div>
+          )}
+        </>
+      )}
+    </BaseModal>
   );
 };

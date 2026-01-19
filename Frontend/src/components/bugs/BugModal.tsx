@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
 import { Button, Select } from '@/components';
 import { BugType } from '@/types';
 
 const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
 import { bugsApi } from '@/api';
 import { toast } from 'react-hot-toast';
-import { X } from 'lucide-react';
 import { isCapacitor, isIOS, isAndroid, getAppInfo, getCapacitorPlatform } from '@/utils/capacitor';
+import { BaseModal } from '@/components/BaseModal';
 
 interface BugModalProps {
   isOpen: boolean;
@@ -21,15 +20,6 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
   const [text, setText] = useState('');
   const [bugType, setBugType] = useState<BugType>('BUG');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
 
   const getPlatformInfo = async (): Promise<string> => {
     if (!isCapacitor()) {
@@ -82,33 +72,17 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
     onClose();
   };
 
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-         onClick={onClose}
-         style={{
-           backgroundColor: 'rgba(0, 0, 0, 0.6)',
-           backdropFilter: 'blur(4px)',
-           WebkitBackdropFilter: 'blur(4px)',
-           position: 'fixed',
-           top: 0,
-           left: 0,
-           right: 0,
-           bottom: 0,
-         }}>
-      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4"
-           onClick={(e) => e.stopPropagation()}>
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      isBasic
+      modalId="bug-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
+    >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('bug.addBug')}</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            className="p-1"
-          >
-            <X className="w-5 h-5" />
-          </Button>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -162,8 +136,6 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
             </Button>
           </div>
         </form>
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };

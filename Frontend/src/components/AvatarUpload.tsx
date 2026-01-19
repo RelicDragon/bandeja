@@ -2,8 +2,10 @@ import React, { useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Upload, User, X, Camera } from 'lucide-react';
+import { Upload, User, Camera } from 'lucide-react';
 import { AvatarCropModal } from './AvatarCropModal';
+import { pickImages } from '@/utils/photoCapture';
+import { isCapacitor } from '@/utils/capacitor';
 
 interface AvatarUploadProps {
   currentAvatar?: string;
@@ -16,7 +18,6 @@ interface AvatarUploadProps {
 export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   currentAvatar,
   onUpload,
-  onRemove,
   disabled = false,
   isGameAvatar = false,
 }) => {
@@ -97,26 +98,27 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
     e.target.value = '';
   }, [handleFileSelect]);
 
-  const handleRemoveAvatar = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!onRemove || disabled || isUploading) return;
-    
-    setIsUploading(true);
-    try {
-      await onRemove();
-    } catch (error) {
-      console.error('Remove failed:', error);
-      toast.error(t('profile.removeFailed'));
-    } finally {
-      setIsUploading(false);
-    }
-  }, [onRemove, disabled, isUploading, t]);
+  const handleClick = useCallback(async () => {
+    if (disabled || isUploading) return;
 
-  const handleClick = useCallback(() => {
-    if (!disabled && !isUploading) {
+    if (isCapacitor()) {
+      try {
+        const result = await pickImages(1);
+        if (result && result.files.length > 0) {
+          handleFileSelect(result.files[0]);
+        }
+      } catch (error: any) {
+        console.error('Error picking image:', error);
+        if (error.message?.includes('too large')) {
+          toast.error(error.message);
+        } else {
+          toast.error(t('profile.photoPickFailed') || 'Failed to pick photo');
+        }
+      }
+    } else {
       fileInputRef.current?.click();
     }
-  }, [disabled, isUploading]);
+  }, [disabled, isUploading, handleFileSelect, t]);
 
   return (
     <>
@@ -127,6 +129,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
             ${isDragging ? 'ring-4 ring-primary-500 ring-opacity-50 scale-105' : ''}
             ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-90'}
           `}
+          style={{ boxShadow: '0 20px 40px -12px rgba(0, 0, 0, 0.5)' }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -161,16 +164,6 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
             </div>
           )}
         </div>
-
-        {currentAvatar && onRemove && !disabled && !isUploading && (
-          <button
-            onClick={handleRemoveAvatar}
-            className="absolute -top-1 -right-9 w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl z-10"
-            title={t('profile.removeAvatar')}
-          >
-            <X size={14} />
-          </button>
-        )}
       </div>
 
       <input

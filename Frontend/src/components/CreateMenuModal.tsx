@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash, X } from 'lucide-react';
 import { EntityType } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { CreateGroupChannelForm } from './chat/CreateGroupChannelForm';
+import { BaseModal } from '@/components';
 
 interface CreateMenuModalProps {
   isOpen: boolean;
@@ -30,7 +30,6 @@ export const CreateMenuModal = ({
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
   const [position, setPosition] = useState({ top: 0, right: 0 });
@@ -80,49 +79,15 @@ export const CreateMenuModal = ({
   }, [isOpen, buttonRef]);
 
   useEffect(() => {
-    if (isOpen) {
-      const originalStyle = window.getComputedStyle(document.body).overflow;
-      const originalPaddingRight = document.body.style.paddingRight;
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      
-      document.body.style.overflow = 'hidden';
-      if (scrollbarWidth > 0) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
-      }
-      
-      return () => {
-        document.body.style.overflow = originalStyle;
-        document.body.style.paddingRight = originalPaddingRight;
-      };
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        if (buttonRef?.current && buttonRef.current.contains(event.target as Node)) {
-          return;
-        }
-        setIsAnimatingOut(true);
-        setTimeout(() => {
-          onClose();
-          setIsAnimatingOut(false);
-          setShouldRender(false);
-        }, 200);
-      }
-    };
-
     if (isOpen && !showChatForm) {
       setShouldRender(true);
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
     } else {
       setShouldRender(false);
     }
-  }, [isOpen, onClose, buttonRef, showChatForm]);
+  }, [isOpen, showChatForm]);
 
-  if (showChatForm && chatFormType && typeof document !== 'undefined') {
-    return createPortal(
+  if (showChatForm && chatFormType) {
+    return (
       <CreateGroupChannelForm
         isChannel={chatFormType === 'channel'}
         onClose={onChatFormClose || onClose}
@@ -134,12 +99,11 @@ export const CreateMenuModal = ({
             onClose();
           }
         }}
-      />,
-      document.body
+      />
     );
   }
 
-  if (!isOpen || !shouldRender || typeof document === 'undefined') return null;
+  if (!isOpen || !shouldRender) return null;
 
   const handleSelectGameType = (type: EntityType) => {
     setIsExiting(true);
@@ -181,36 +145,25 @@ export const CreateMenuModal = ({
   const handleClose = () => {
     setIsExiting(true);
     setTimeout(() => {
-      setIsAnimatingOut(true);
-      setTimeout(() => {
-        onClose();
-        setIsAnimatingOut(false);
-        setIsExiting(false);
-        setShouldRender(false);
-      }, 200);
+      onClose();
+      setIsExiting(false);
+      setShouldRender(false);
     }, 400);
   };
 
-  return createPortal(
-    <>
-      <div 
-        className={`fixed inset-0 bg-black/20 z-[9998] ${isAnimatingOut || isExiting ? 'animate-blur-out' : 'animate-blur-in'}`}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            setIsAnimatingOut(true);
-            setTimeout(() => {
-              onClose();
-              setIsAnimatingOut(false);
-              setShouldRender(false);
-            }, 200);
-          }
-        }}
-        style={{ pointerEvents: 'auto' }}
-      />
-      
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      isBasic={false}
+      forceBackdrop={true}
+      modalId="create-menu-modal"
+      showCloseButton={false}
+      closeOnBackdropClick={true}
+    >
       <div 
         ref={containerRef} 
-        className="fixed z-[9999]"
+        className="fixed"
         style={{
           top: `${position.top}px`,
           right: `${position.right}px`
@@ -288,7 +241,6 @@ export const CreateMenuModal = ({
           </button>
         </div>
       </div>
-    </>,
-    document.body
+    </BaseModal>
   );
 };

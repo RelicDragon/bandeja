@@ -69,6 +69,7 @@ export const GameResultsModals = ({
     const modalContent = effectiveHorizontalLayout ? (
       <HorizontalScoreEntryModal
         key={`horizontal-${modal.matchId}-${modal.setIndex}`}
+        isOpen={true}
         match={match}
         setIndex={modal.setIndex}
         players={players}
@@ -86,6 +87,7 @@ export const GameResultsModals = ({
       />
     ) : (
       <SetResultModal
+        isOpen={true}
         match={match}
         setIndex={modal.setIndex}
         players={players}
@@ -209,6 +211,7 @@ export const GameResultsModals = ({
   if (modal.type === 'explanation' && typeof document !== 'undefined') {
     return createPortal(
       <OutcomeExplanationModal
+        key={`explanation-${modal.explanation.userId || 'default'}`}
         explanation={modal.explanation}
         playerName={modal.playerName}
         levelBefore={modal.levelBefore}

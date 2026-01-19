@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { X, Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus, XCircle } from 'lucide-react';
-import { Button, Card, PlayerAvatar } from '@/components';
+import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus, XCircle } from 'lucide-react';
+import { Button, PlayerAvatar } from '@/components';
 import { GroupChannel, GroupChannelParticipant, GroupChannelInvite } from '@/api/chat';
 import { chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { GroupChannelInviteModal } from './GroupChannelInviteModal';
 import { matchesSearch } from '@/utils/transliteration';
 import { formatRelativeTime } from '@/utils/dateFormat';
+import { BaseModal } from '@/components/BaseModal';
 
 interface GroupChannelParticipantsModalProps {
   groupChannel: GroupChannel;
@@ -38,13 +38,6 @@ export const GroupChannelParticipantsModal = ({
   const currentUserParticipant = participants.find(p => p.userId === user?.id);
   const isOwner = currentUserParticipant?.role === 'OWNER';
   const isAdmin = currentUserParticipant?.role === 'ADMIN';
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -201,34 +194,20 @@ export const GroupChannelParticipantsModal = ({
 
   return (
     <>
-      {createPortal(
-        <div
-          className="fixed inset-0 z-[9999] bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={onClose}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          }}
-        >
-          <Card
-            className="w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <BaseModal
+        isOpen={!showInviteModal}
+        onClose={onClose}
+        isBasic
+        modalId="group-channel-participants-modal"
+        showCloseButton={true}
+        closeOnBackdropClick={true}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {groupChannel.isChannel 
                   ? t('chat.channelMembers', { defaultValue: 'Channel Members' })
                   : t('chat.groupMembers', { defaultValue: 'Group Members' })}
               </h2>
-              <button
-                onClick={onClose}
-                className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <X size={20} className="text-gray-500 dark:text-gray-400" />
-              </button>
             </div>
 
             <div className="flex border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
@@ -450,10 +429,7 @@ export const GroupChannelParticipantsModal = ({
                 )}
               </div>
             )}
-          </Card>
-        </div>,
-        document.body
-      )}
+        </BaseModal>
 
       {showInviteModal && (
         <GroupChannelInviteModal

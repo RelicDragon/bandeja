@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@/types';
+import { BaseModal } from '@/components/BaseModal';
+import { AnimatedTabs } from '@/components/AnimatedTabs';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface GameSetupModalProps {
   isOpen: boolean;
@@ -70,36 +71,15 @@ export const GameSetupModal = ({
   const [pointsPerLoose, setPointsPerLoose] = useState(initialValues?.pointsPerLoose ?? 0);
   const [pointsPerTie, setPointsPerTie] = useState(initialValues?.pointsPerTie ?? 0);
   const [ballsInGames, setBallsInGames] = useState(initialValues?.ballsInGames ?? false);
-  const [isAnimating, setIsAnimating] = useState(false);
 
   const SET_PRESETS = [16, 21, 24, 32];
   const TEAM_PRESETS = [7, 15, 20];
-
-  useEffect(() => {
-    if (isOpen) {
-      setIsAnimating(true);
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
 
   useEffect(() => {
     if (matchGenerationType === 'HANDMADE' || matchGenerationType === 'FIXED') {
       setProhibitMatchesEditing(false);
     }
   }, [matchGenerationType]);
-
-  const handleClose = () => {
-    setIsAnimating(false);
-    setTimeout(() => {
-      onClose();
-    }, 300);
-  };
 
   const handleConfirm = () => {
     onConfirm({
@@ -115,7 +95,7 @@ export const GameSetupModal = ({
       pointsPerTie,
       ballsInGames,
     });
-    handleClose();
+    onClose();
   };
 
   const handleCustomSetPoints = (value: string) => {
@@ -164,76 +144,44 @@ export const GameSetupModal = ({
     return t('gameResults.startGame');
   };
 
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all duration-300"
-      style={{
-        opacity: isAnimating ? 1 : 0,
-        pointerEvents: 'auto',
-      }}
-      onClick={handleClose}
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      isBasic
+      modalId="game-setup-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full mx-4 transform transition-all duration-300 border border-gray-200 dark:border-gray-700"
-        style={{
-          transform: isAnimating ? 'scale(1)' : 'scale(0.95)',
-          opacity: isAnimating ? 1 : 0,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="p-8">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
               {t('gameResults.setupGame')}
             </h2>
-            <button
-              onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all hover:rotate-90 duration-300 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <X size={20} />
-            </button>
           </div>
 
-          <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveTab('general')}
-                className={`px-3 py-1.5 text-sm font-medium transition-all duration-200 border-b-2 ${
-                  activeTab === 'general'
-                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-              >
-                {t('gameResults.general')}
-              </button>
-              <button
-                onClick={() => setActiveTab('winner')}
-                className={`px-3 py-1.5 text-sm font-medium transition-all duration-200 border-b-2 ${
-                  activeTab === 'winner'
-                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-              >
-                {t('gameResults.winner')}
-              </button>
-              <button
-                onClick={() => setActiveTab('matches')}
-                className={`px-3 py-1.5 text-sm font-medium transition-all duration-200 border-b-2 ${
-                  activeTab === 'matches'
-                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-              >
-                {t('gameResults.matches')}
-              </button>
-            </div>
+          <div className="mb-4">
+            <AnimatedTabs
+              tabs={[
+                { id: 'general', label: t('gameResults.general') },
+                { id: 'winner', label: t('gameResults.winner') },
+                { id: 'matches', label: t('gameResults.matches') },
+              ]}
+              activeTab={activeTab}
+              onTabChange={(tab) => setActiveTab(tab as 'general' | 'winner' | 'matches')}
+              variant="underline"
+            />
           </div>
 
           <div className="space-y-6">
-            {activeTab === 'general' && (
-              <>
+            <AnimatePresence mode="wait">
+              {activeTab === 'general' && (
+                <motion.div
+                  key="general"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                >
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     {t('gameResults.fixedNumberOfSets')}
@@ -405,11 +353,17 @@ export const GameSetupModal = ({
                 {ballsInGames ? t('gameResults.ballsInGamesNoteOn') : t('gameResults.ballsInGamesNoteOff')}
               </p>
             </div>
-              </>
-            )}
+                </motion.div>
+              )}
 
-            {activeTab === 'winner' && (
-              <>
+              {activeTab === 'winner' && (
+                <motion.div
+                  key="winner"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                >
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     {t('gameResults.winnerOfMatch')}
@@ -523,15 +477,21 @@ export const GameSetupModal = ({
                     ))}
                   </div>
                 </div>
-              </>
-            )}
+                </motion.div>
+              )}
 
-            {activeTab === 'matches' && (
-              <>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    {t('gameResults.matchGenerationType')}
-                  </label>
+              {activeTab === 'matches' && (
+                <motion.div
+                  key="matches"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                >
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      {t('gameResults.matchGenerationType')}
+                    </label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => {
@@ -662,13 +622,14 @@ export const GameSetupModal = ({
                     </div>
                   </div>
                 )}
-              </>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex gap-3">
             <button
-              onClick={handleClose}
+              onClick={onClose}
               className="flex-1 px-4 py-2.5 text-sm rounded-lg font-semibold transition-all duration-200 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105"
             >
               {t('common.cancel')}
@@ -682,10 +643,7 @@ export const GameSetupModal = ({
               </button>
             )}
           </div>
-        </div>
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };
 

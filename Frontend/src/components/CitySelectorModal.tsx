@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import { citiesApi } from '@/api';
 import { City } from '@/types';
+import { BaseModal } from '@/components/BaseModal';
 
 interface CitySelectorModalProps {
   isOpen: boolean;
@@ -33,25 +33,22 @@ export const CitySelectorModal = ({ isOpen, onClose, selectedId, onSelect }: Cit
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const handleSelect = (id: string) => {
     onSelect(id);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-[70vh] flex flex-col">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      isBasic
+      modalId="city-selector-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
+    >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('createLeague.selectCity')}</h3>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
         <div className="overflow-y-auto flex-1 p-4">
           {loading ? (
@@ -89,8 +86,7 @@ export const CitySelectorModal = ({ isOpen, onClose, selectedId, onSelect }: Cit
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 };
 

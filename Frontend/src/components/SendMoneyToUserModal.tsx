@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
-import { X, Minus, Plus } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import { transactionsApi } from '@/api/transactions';
 import { usersApi } from '@/api/users';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
+import { BaseModal } from '@/components';
 
 interface SendMoneyToUserModalProps {
   toUserId: string;
@@ -28,13 +28,14 @@ export const SendMoneyToUserModal = ({
   const [wallet, setWallet] = useState<number>(0);
   const [showNumberPicker, setShowNumberPicker] = useState(false);
   const [manualInput, setManualInput] = useState('');
+  const [isOpen, setIsOpen] = useState(true);
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+  const handleClose = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -109,7 +110,7 @@ export const SendMoneyToUserModal = ({
       await transactionsApi.transferCoins(toUserId, amount, message || undefined);
       toast.success(t('wallet.transferSuccess') || 'Transfer successful');
       onTransferComplete?.();
-      onClose();
+      handleClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
     } finally {
@@ -123,59 +124,36 @@ export const SendMoneyToUserModal = ({
   const numberPickerOptions = Array.from({ length: Math.min(wallet, 100) }, (_, i) => i + 1);
 
   if (loading) {
-    return createPortal(
-      <div
-        className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
-        onClick={onClose}
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(4px)',
-          WebkitBackdropFilter: 'blur(4px)',
-        }}
+    return (
+      <BaseModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        isBasic
+        modalId="send-money-to-user-modal-loading"
+        showCloseButton={false}
+        closeOnBackdropClick={true}
       >
-        <div
-          className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl p-8"
-          onClick={(e) => e.stopPropagation()}
-        >
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        </div>
-      </div>,
-      document.body
+      </BaseModal>
     );
   }
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
-      onClick={onClose}
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      isBasic
+      modalId="send-money-to-user-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div
-        className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-md flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {t('wallet.sendCoins') || 'Send Coins'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
-        </div>
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          {t('wallet.sendCoins') || 'Send Coins'}
+        </h2>
+      </div>
 
-        <div className="p-4">
+      <div className="p-4">
           {toUser && (
             <div className="mb-6 flex items-center justify-center">
               <PlayerAvatar
@@ -317,12 +295,12 @@ export const SendMoneyToUserModal = ({
           </div>
           </>
           )}
-        </div>
+      </div>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
           <div className="flex gap-2">
             <Button
-              onClick={onClose}
+              onClick={handleClose}
               variant="outline"
               className="flex-1"
               disabled={transferring}
@@ -345,9 +323,7 @@ export const SendMoneyToUserModal = ({
             </Button>
           </div>
         </div>
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };
 

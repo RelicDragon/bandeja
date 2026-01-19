@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Club, Court, Game } from '@/types';
 import { ClubModal } from '@/components/ClubModal';
@@ -8,6 +6,7 @@ import { CourtModal } from '@/components/CourtModal';
 import { ToggleSwitch } from '@/components';
 import { courtsApi } from '@/api';
 import toast from 'react-hot-toast';
+import { BaseModal } from '@/components/BaseModal';
 
 interface LocationModalProps {
   isOpen: boolean;
@@ -21,7 +20,6 @@ interface LocationModalProps {
 
 export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, onCourtsChange }: LocationModalProps) => {
   const { t } = useTranslation();
-  const [isClosing, setIsClosing] = useState(false);
   const [clubId, setClubId] = useState(game.clubId || '');
   const [courtId, setCourtId] = useState(game.courtId || '');
   const [hasBookedCourt, setHasBookedCourt] = useState(game.hasBookedCourt || false);
@@ -53,20 +51,9 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
         setModalCourts(courts);
         lastFetchedClubIdRef.current = '';
       }
-      setIsClosing(false);
-    }
-    
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
     }
     
     prevIsOpenRef.current = isOpen;
-
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen, game.clubId, game.courtId, game.hasBookedCourt, courts]);
 
   useEffect(() => {
@@ -141,11 +128,7 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
   }, [clubId, isOpen, onCourtsChange]);
 
   const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsClosing(false);
-      onClose();
-    }, 200);
+    onClose();
   };
 
   const handleSave = async () => {
@@ -181,33 +164,20 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
 
   const locationLabel = game?.entityType === 'LEAGUE_SEASON' ? t('createGame.locationLeague') : t('createGame.location');
 
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div
-      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-opacity duration-200 ${
-        isClosing ? 'opacity-0' : 'opacity-100'
-      }`}
-      onClick={handleClose}
+  return (
+    <BaseModal 
+      isOpen={isOpen && !isClubModalOpen && !isCourtModalOpen} 
+      onClose={handleClose} 
+      isBasic 
+      modalId="location-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      <div
-        className={`relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] flex flex-col transition-transform duration-200 ${
-          isClosing ? 'scale-95' : 'scale-100'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{locationLabel}</h2>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
-        </div>
+      <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{locationLabel}</h2>
+      </div>
 
-        <div className="overflow-y-auto flex-1 p-6 space-y-4">
+      <div className="overflow-y-auto flex-1 p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('createGame.selectClub')}
@@ -252,9 +222,9 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
               />
             </div>
           )}
-        </div>
+      </div>
 
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
+      <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={handleClose}
             disabled={isSaving}
@@ -269,10 +239,9 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
           >
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
-        </div>
       </div>
 
-      {isClubModalOpen && createPortal(
+      {isClubModalOpen && (
         <div 
           className="fixed inset-0 z-[10000]" 
           style={{ pointerEvents: 'auto' }}
@@ -290,8 +259,7 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
               setIsClubModalOpen(false);
             }}
           />
-        </div>,
-        document.body
+        </div>
       )}
 
       {isCourtModalOpen && (
@@ -311,8 +279,7 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
           entityType={game.entityType}
         />
       )}
-    </div>,
-    document.body
+    </BaseModal>
   );
 };
 

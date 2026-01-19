@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
-import { X, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { BasicUser } from '@/types';
 import { chatApi } from '@/api/chat';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { usePlayersStore } from '@/store/playersStore';
 import { matchesSearch } from '@/utils/transliteration';
+import { BaseModal } from '@/components/BaseModal';
 
 interface GroupChannelInviteModalProps {
   groupChannelId: string;
@@ -28,13 +28,14 @@ export const GroupChannelInviteModal = ({
   const [loading, setLoading] = useState(true);
   const [inviting, setInviting] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isOpen, setIsOpen] = useState(true);
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+  const handleClose = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
 
   useEffect(() => {
     const loadPlayers = async () => {
@@ -86,33 +87,19 @@ export const GroupChannelInviteModal = ({
     }
   };
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      isBasic
+      modalId="group-channel-invite-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div
-        className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-md flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-        style={{ height: '80vh', maxHeight: '600px' }}
-      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {t('chat.inviteUser', { defaultValue: 'Invite User' })}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
@@ -174,8 +161,6 @@ export const GroupChannelInviteModal = ({
             )}
           </div>
         )}
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };

@@ -3,16 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AnimatePresence } from 'framer-motion';
-import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, LundaAccountModal, WalletModal, NotificationSettingsModal, ConfirmationModal } from '@/components';
+import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
 import { BlockedUsersSection } from '@/components/BlockedUsersSection';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useNavigationStore } from '@/store/navigationStore';
-import { usersApi, citiesApi, mediaApi, lundaApi } from '@/api';
+import { usersApi, citiesApi, mediaApi } from '@/api';
 import { City, Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2 } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X } from 'lucide-react';
 import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -46,20 +46,12 @@ export const ProfileContent = () => {
   const [cities, setCities] = useState<City[]>([]);
   const [showCityModal, setShowCityModal] = useState(false);
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
-  const [showLundaModal, setShowLundaModal] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
-  const [lundaStatus, setLundaStatus] = useState<{
-    hasCookie: boolean;
-    hasProfile: boolean;
-    lastSync: string | null;
-  } | null>(null);
-  const [isLoadingLundaStatus, setIsLoadingLundaStatus] = useState(true);
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [nameError, setNameError] = useState('');
   const [nameValidationStatus, setNameValidationStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
@@ -136,17 +128,6 @@ export const ProfileContent = () => {
       }
     };
 
-    const fetchLundaStatus = async () => {
-      try {
-        const response = await lundaApi.getStatus();
-        setLundaStatus(response);
-      } catch (error) {
-        console.error('Failed to fetch Lunda status:', error);
-      } finally {
-        setIsLoadingLundaStatus(false);
-      }
-    };
-
     const loadAppInfo = async () => {
       if (isCapacitor()) {
         const info = await getAppInfo();
@@ -165,7 +146,6 @@ export const ProfileContent = () => {
     } else {
       setIsLoadingProfile(false);
     }
-    fetchLundaStatus();
     loadAppInfo();
   }, [updateUser, user]);
 
@@ -347,8 +327,6 @@ export const ProfileContent = () => {
     try {
       const response = await usersApi.getProfile();
       updateUser(response.data);
-      const statusResponse = await lundaApi.getStatus();
-      setLundaStatus(statusResponse);
     } catch (error) {
       console.error('Failed to refresh profile:', error);
     }
@@ -395,22 +373,33 @@ export const ProfileContent = () => {
             <AvatarUpload
               currentAvatar={user?.avatar || undefined}
               onUpload={handleAvatarUpload}
-              onRemove={handleAvatarRemove}
               disabled={false}
             />
             {!isLoadingProfile && user?.wallet !== undefined && (
               <button
                 onClick={() => setShowWalletModal(true)}
-                className="absolute top-0 -left-10 bg-primary-600 dark:bg-primary-500 text-white px-2 py-1 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 z-10 hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors cursor-pointer"
+                className="absolute top-0 -left-10 bg-primary-600 dark:bg-primary-500 text-white px-2 py-1 rounded-full font-bold text-sm flex items-center gap-1 z-10 hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors cursor-pointer"
+                style={{ boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}
               >
                 <Wallet size={14} className="text-white" />
                 <span>{user.wallet}</span>
               </button>
             )}
+            {!isLoadingProfile && user?.avatar && (
+              <button
+                onClick={handleAvatarRemove}
+                className="absolute top-0 -right-8 w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors duration-200 z-10"
+                style={{ boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}
+                title={t('profile.removeAvatar')}
+              >
+                <X size={14} />
+              </button>
+            )}
             {!isLoadingProfile && user?.originalAvatar && (
               <button
                 onClick={() => setShowFullscreenAvatar(true)}
-                className="absolute top-0 -right-1 w-7 h-7 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl z-10"
+                className="absolute top-8 -right-8 w-7 h-7 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors duration-200 z-10"
+                style={{ boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}
                 title={t('profile.viewOriginalAvatar')}
               >
                 <Eye size={14} />
@@ -590,78 +579,6 @@ export const ProfileContent = () => {
             </Button>
           </div>
         </Card>
-
-        {i18n.language === 'ru' && (
-          <Card>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Lunda
-            </h2>
-            <div className="space-y-4">
-              {isLoadingLundaStatus ? (
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Загрузка...
-                </p>
-              ) : lundaStatus?.hasCookie ? (
-                <>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">
-                    {lundaStatus.hasProfile
-                      ? 'Аккаунт Lunda подключен'
-                      : 'Авторизация выполнена. Получите данные профиля'}
-                    {lundaStatus.lastSync && (
-                      <span className="block text-xs mt-1 text-gray-500 dark:text-gray-500">
-                        Последняя синхронизация: {new Date(lundaStatus.lastSync).toLocaleString('ru-RU')}
-                      </span>
-                    )}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={async () => {
-                        setIsUpdatingProfile(true);
-                        try {
-                          await lundaApi.getProfile({});
-                          const response = await usersApi.getProfile();
-                          updateUser(response.data);
-                          const statusResponse = await lundaApi.getStatus();
-                          setLundaStatus(statusResponse);
-                          toast.success('Данные из Lunda успешно обновлены');
-                        } catch (error: any) {
-                          toast.error(error.response?.data?.message || 'Ошибка обновления данных');
-                        } finally {
-                          setIsUpdatingProfile(false);
-                        }
-                      }}
-                      className="flex-1"
-                      variant="primary"
-                      disabled={isUpdatingProfile}
-                    >
-                      {isUpdatingProfile ? 'Обновление...' : 'Обновить профиль'}
-                    </Button>
-                    <Button
-                      onClick={() => setShowLundaModal(true)}
-                      className="flex-1"
-                      variant="secondary"
-                    >
-                      Авторизоваться снова
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">
-                    Подключите аккаунт Lunda Padel для синхронизации данных
-                  </p>
-                  <Button
-                    onClick={() => setShowLundaModal(true)}
-                    className="w-full"
-                    variant="secondary"
-                  >
-                    Получить информацию из Lunda
-                  </Button>
-                </>
-              )}
-            </div>
-          </Card>
-        )}
 
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
@@ -874,24 +791,7 @@ export const ProfileContent = () => {
         <FullscreenImageViewer
           imageUrl={user.originalAvatar || ''}
           onClose={() => setShowFullscreenAvatar(false)}
-        />
-      )}
-
-      {showLundaModal && (
-        <LundaAccountModal
-          onClose={() => setShowLundaModal(false)}
-          onSuccess={async () => {
-            setShowLundaModal(false);
-            try {
-              const response = await usersApi.getProfile();
-              updateUser(response.data);
-              const statusResponse = await lundaApi.getStatus();
-              setLundaStatus(statusResponse);
-              toast.success('Данные из Lunda успешно синхронизированы');
-            } catch (error) {
-              console.error('Failed to refresh user profile:', error);
-            }
-          }}
+          isOpen={showFullscreenAvatar}
         />
       )}
 

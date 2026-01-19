@@ -48,9 +48,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
 
-    <!-- Media permissions for Android 13+ -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <!-- Note: READ_MEDIA_IMAGES and READ_MEDIA_VIDEO removed - using system Photo Picker which doesn't require these permissions -->
 
     <!-- Calendar permissions -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />

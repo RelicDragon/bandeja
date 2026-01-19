@@ -687,6 +687,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         <FullscreenImageViewer
           imageUrl={fullscreenImage}
           onClose={() => setFullscreenImage(null)}
+          isOpen={!!fullscreenImage}
         />
       )}
     </>

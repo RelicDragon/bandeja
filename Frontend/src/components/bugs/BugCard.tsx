@@ -358,6 +358,7 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
         <FullscreenImageViewer
           imageUrl={fullscreenImage}
           onClose={() => setFullscreenImage(null)}
+          isOpen={!!fullscreenImage}
         />
       )}
     </Card>

@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
-import { CalendarDays, Download, ExternalLink, X } from 'lucide-react';
+import { CalendarDays, Download, ExternalLink } from 'lucide-react';
 import { buildGoogleCalendarUrl, downloadIcsEvent, addToNativeCalendar, type CalendarEventInput } from '@/utils/calendar';
 import { isCapacitor } from '@/utils/capacitor';
 import toast from 'react-hot-toast';
+import { BaseModal } from '@/components/BaseModal';
 
 interface AddToCalendarModalProps {
   isOpen: boolean;
@@ -35,16 +35,16 @@ export const AddToCalendarModal = ({ isOpen, onClose, event, filename }: AddToCa
     }
   };
 
-  if (!isOpen) return null;
-
   if (isNative) {
-    return createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm pointer-events-auto" onClick={onClose} />
-        <div
-          className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 mx-4 max-w-md w-full border border-gray-200 dark:border-gray-800 pointer-events-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
+    return (
+      <BaseModal
+        isOpen={isOpen}
+        onClose={onClose}
+        isBasic
+        modalId="add-to-calendar-modal"
+        showCloseButton={true}
+        closeOnBackdropClick={true}
+      >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <CalendarDays size={18} className="text-primary-600 dark:text-primary-400" />
@@ -52,9 +52,6 @@ export const AddToCalendarModal = ({ isOpen, onClose, event, filename }: AddToCa
                 {t('gameDetails.addToCalendar')}
               </h3>
             </div>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <X size={20} className="text-gray-500 dark:text-gray-400" />
-            </button>
           </div>
 
           <div className="mb-5">
@@ -84,29 +81,26 @@ export const AddToCalendarModal = ({ isOpen, onClose, event, filename }: AddToCa
               {t('common.close')}
             </button>
           </div>
-        </div>
-      </div>,
-      document.body
+      </BaseModal>
     );
   }
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm pointer-events-auto" onClick={onClose} />
-      <div
-        className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 mx-4 max-w-md w-full border border-gray-200 dark:border-gray-800 pointer-events-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-4">
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      isBasic
+      modalId="add-to-calendar-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
+    >
+      <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <CalendarDays size={18} className="text-primary-600 dark:text-primary-400" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               {t('gameDetails.addToCalendar')}
             </h3>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
         <div className="mb-5">
@@ -146,9 +140,7 @@ export const AddToCalendarModal = ({ isOpen, onClose, event, filename }: AddToCa
             {t('common.close')}
           </button>
         </div>
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };
 

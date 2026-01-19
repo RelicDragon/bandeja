@@ -562,6 +562,7 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
         <FullscreenImageViewer
           imageUrl={fullscreenImage}
           onClose={() => setFullscreenImage(null)}
+          isOpen={!!fullscreenImage}
         />
       )}
     </>

@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { OutcomeExplanation } from '@/api/results';
+import { BaseModal } from '@/components/BaseModal';
 
 interface OutcomeExplanationModalProps {
   explanation: OutcomeExplanation;
@@ -12,13 +13,14 @@ interface OutcomeExplanationModalProps {
 
 export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, onClose }: OutcomeExplanationModalProps) => {
   const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(true);
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+  const handleClose = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
 
   const getLevelChangeColor = (change: number) => {
     if (change > 0) return 'text-green-600 dark:text-green-400';
@@ -85,18 +87,18 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
   const sortedRounds = Object.keys(groupedMatches).map(Number).sort((a, b) => a - b);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fadeIn">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      isBasic
+      modalId="outcome-explanation-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
+    >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
             {t('gameResults.explanationTitle')}: {playerName}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-          >
-            <X size={20} className="text-gray-600 dark:text-gray-400" />
-          </button>
         </div>
 
         <div className="p-4 overflow-y-auto max-h-[calc(90vh-8rem)]">
@@ -381,8 +383,7 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 };
 

@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Coins } from 'lucide-react';
+import { Coins } from 'lucide-react';
 import { Game, BetCondition, PredefinedCondition, Bet } from '@/types';
 import { betsApi } from '@/api/bets';
 import { transactionsApi } from '@/api/transactions';
 import toast from 'react-hot-toast';
 import { Select } from '@/components';
+import { BaseModal } from '@/components/BaseModal';
+import { AnimatedTabs } from '@/components/AnimatedTabs';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface CreateBetModalProps {
   isOpen: boolean;
@@ -52,7 +54,6 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
       const loadWallet = async () => {
         try {
           const response = await transactionsApi.getWallet();
@@ -79,16 +80,8 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
       } else {
         setEntityId('');
       }
-    } else {
-      document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen, bet]);
-
-
-  if (!isOpen) return null;
 
   const handleSubmit = async () => {
     if (conditionType === 'CUSTOM' && !customCondition.trim()) {
@@ -183,65 +176,43 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
     }
   };
 
-  return createPortal(
-    <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      onClick={onClose}
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      isBasic
+      modalId="create-bet-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div 
-        className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {isEditMode ? t('bets.edit', { defaultValue: 'Edit Bet' }) : t('bets.create', { defaultValue: 'Create Bet' })}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
         <div className="px-6 pt-4">
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-            <button
-              onClick={() => setActiveTab('condition')}
-              className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                activeTab === 'condition'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {t('bets.conditionLabel', { defaultValue: 'Condition' })}
-            </button>
-            <button
-              onClick={() => setActiveTab('stake')}
-              className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                activeTab === 'stake'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {t('bets.stake', { defaultValue: 'Stake' })}
-            </button>
-          </div>
+          <AnimatedTabs
+            tabs={[
+              { id: 'condition', label: t('bets.conditionLabel', { defaultValue: 'Condition' }) },
+              { id: 'stake', label: t('bets.stake', { defaultValue: 'Stake' }) },
+            ]}
+            activeTab={activeTab}
+            onTabChange={(tab) => setActiveTab(tab as 'condition' | 'stake')}
+            variant="pills"
+          />
         </div>
 
         <div className="p-6 space-y-4">
-          {activeTab === 'condition' && (
-            <>
+          <AnimatePresence mode="wait">
+            {activeTab === 'condition' && (
+              <motion.div
+                key="condition"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+              >
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                   {t('bets.conditionType', { defaultValue: 'Condition Type' })}
@@ -301,11 +272,17 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
                   placeholder={t('bets.selectUser', { defaultValue: 'Select User' })}
                 />
               </div>
-            </>
-          )}
+              </motion.div>
+            )}
 
-          {activeTab === 'stake' && (
-            <>
+            {activeTab === 'stake' && (
+              <motion.div
+                key="stake"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+              >
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                   {t('bets.stake', { defaultValue: 'Stake' })}
@@ -416,8 +393,9 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
                   />
                 )}
               </div>
-            </>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="flex gap-2 pt-4">
             <button
@@ -438,8 +416,6 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
             </button>
           </div>
         </div>
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };

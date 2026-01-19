@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Loader2 } from 'lucide-react';
-import { Card, Button } from '@/components';
+import { Loader2 } from 'lucide-react';
+import { Button } from '@/components';
 import { BasicUser } from '@/types';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { BaseModal } from '@/components/BaseModal';
 
 interface EditLevelModalProps {
   isOpen: boolean;
@@ -29,19 +29,22 @@ export const EditLevelModal = ({
   const [saving, setSaving] = useState(false);
   const [showConfirmDecrease, setShowConfirmDecrease] = useState(false);
   const [pendingLevel, setPendingLevel] = useState<number | null>(null);
+  const [internalIsOpen, setInternalIsOpen] = useState(isOpen);
 
   useEffect(() => {
     if (isOpen) {
+      setInternalIsOpen(true);
       setLevel(currentLevel);
       setReliability(currentReliability);
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen, currentLevel, currentReliability]);
+
+  const handleClose = () => {
+    setInternalIsOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
 
   const handleLevelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLevel = parseFloat(e.target.value);
@@ -72,7 +75,7 @@ export const EditLevelModal = ({
     setSaving(true);
     try {
       await onSave(level, reliability);
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Failed to save level:', error);
     } finally {
@@ -83,29 +86,20 @@ export const EditLevelModal = ({
   const isReliabilityDisabled = currentReliability >= 70;
   const clampedLevel = Math.min(4.0, Math.max(1.0, level));
 
-  if (!isOpen) return null;
-
-  return createPortal(
+  return (
     <>
-      <div
-        className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-3"
-        onClick={onClose}
+      <BaseModal 
+        isOpen={internalIsOpen && !showConfirmDecrease} 
+        onClose={handleClose} 
+        isBasic 
+        modalId="edit-level-modal"
+        showCloseButton={true}
+        closeOnBackdropClick={true}
       >
-        <Card
-          className="w-full max-w-md flex flex-col bg-white dark:bg-slate-900 rounded-xl shadow-2xl"
-          style={{ maxHeight: 'calc(100vh - 24px)', overflow: 'hidden' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               {t('training.editLevel')}
             </h2>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <X size={18} className="text-slate-500 dark:text-slate-400" />
-            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto" style={{ minHeight: 0, overflowX: 'hidden' }}>
@@ -198,7 +192,7 @@ export const EditLevelModal = ({
           </div>
 
           <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
-            <Button onClick={onClose} variant="outline" disabled={saving} size="md">
+            <Button onClick={handleClose} variant="outline" disabled={saving} size="md">
               {t('common.cancel')}
             </Button>
             <Button onClick={handleSave} variant="primary" disabled={saving} size="md">
@@ -212,8 +206,7 @@ export const EditLevelModal = ({
               )}
             </Button>
           </div>
-        </Card>
-      </div>
+      </BaseModal>
 
       <ConfirmationModal
         isOpen={showConfirmDecrease}
@@ -228,7 +221,6 @@ export const EditLevelModal = ({
         onConfirm={handleConfirmDecrease}
         onClose={handleCancelDecrease}
       />
-    </>,
-    document.body
+    </>
   );
 };

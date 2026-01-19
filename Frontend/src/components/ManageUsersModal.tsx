@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Crown, Shield, User, UserX, ArrowRightLeft } from 'lucide-react';
-import { Button, Card, PlayerAvatar } from '@/components';
+import { Crown, Shield, User, UserX, ArrowRightLeft } from 'lucide-react';
+import { Button, PlayerAvatar } from '@/components';
 import { Game, GameParticipant } from '@/types';
 import { useAuthStore } from '@/store/authStore';
+import { BaseModal } from '@/components/BaseModal';
 
 interface ManageUsersModalProps {
   game: Game;
@@ -19,13 +19,14 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const selectedItemRef = useRef<HTMLDivElement | null>(null);
+  const [isOpen, setIsOpen] = useState(true);
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+  const handleClose = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
 
   useEffect(() => {
     if (selectedUserId && selectedItemRef.current && scrollContainerRef.current) {
@@ -95,32 +96,19 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
     }
   };
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
-    >
-      <Card
-        className="w-full max-w-md max-h-[80vh] overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      isBasic
+      modalId="manage-users-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {t('games.managePlayers')}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
         <div ref={scrollContainerRef} className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
@@ -201,8 +189,6 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
             </div>
           )}
         </div>
-      </Card>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };

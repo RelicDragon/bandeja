@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Home } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Home } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Court, EntityType } from '@/types';
+import { BaseModal } from '@/components/BaseModal';
 
 interface CourtModalProps {
   isOpen: boolean;
@@ -16,59 +16,41 @@ interface CourtModalProps {
 
 export const CourtModal = ({ isOpen, onClose, courts, selectedId, onSelect, entityType, showNotBookedOption = true }: CourtModalProps) => {
   const { t } = useTranslation();
-  
+  const [internalIsOpen, setInternalIsOpen] = useState(isOpen);
+
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      setInternalIsOpen(true);
     }
-
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  const handleClose = () => {
+    setInternalIsOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
 
   const handleSelect = (id: string) => {
     onSelect(id);
-    onClose();
+    handleClose();
   };
 
   const isBar = entityType === 'BAR';
   const selectText = isBar ? t('createGame.selectHall') : t('createGame.selectCourt');
   const noAvailableText = isBar ? t('createGame.noHallsAvailable') : t('createGame.noCourtsAvailable');
 
-  return createPortal(
-    <div 
-      className="fixed inset-0 z-[10000] flex items-center justify-center"
-      style={{ pointerEvents: 'auto' }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClose();
-      }}
+  return (
+    <BaseModal
+      isOpen={internalIsOpen}
+      onClose={handleClose}
+      isBasic
+      modalId="court-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        style={{ pointerEvents: 'auto' }}
-      />
-      <div 
-        className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-[70vh] flex flex-col"
-        style={{ pointerEvents: 'auto' }}
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{selectText}</h3>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
         <div className="overflow-y-auto scrollbar-auto flex-1 p-4">
           {courts.length === 0 ? (
@@ -121,9 +103,7 @@ export const CourtModal = ({ isOpen, onClose, courts, selectedId, onSelect, enti
             </div>
           )}
         </div>
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };
 

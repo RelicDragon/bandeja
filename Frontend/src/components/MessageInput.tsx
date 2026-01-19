@@ -10,6 +10,8 @@ import { ReplyPreview } from './ReplyPreview';
 import { MentionInput } from './MentionInput';
 import { Image, X } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { pickImages } from '@/utils/photoCapture';
+import { isCapacitor } from '@/utils/capacitor';
 
 interface MessageInputProps {
   gameId?: string;
@@ -82,6 +84,37 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     setSelectedImages(prev => [...prev, ...imageFiles]);
   };
 
+  const handleImageButtonClick = async () => {
+    if (isDisabledForChannel || isLoading) return;
+
+    if (isCapacitor()) {
+      try {
+        const result = await pickImages(10);
+        if (result && result.files.length > 0) {
+          const validFiles = result.files.filter(file => 
+            file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024
+          );
+
+          if (validFiles.length === 0) {
+            toast.error(t('chat.invalidImageType'));
+            return;
+          }
+
+          setSelectedImages(prev => [...prev, ...validFiles]);
+        }
+      } catch (error: any) {
+        console.error('Error picking images:', error);
+        if (error.message?.includes('too large')) {
+          toast.error(error.message);
+        } else {
+          toast.error(t('chat.photoPickFailed') || 'Failed to pick photos');
+        }
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
   const removeImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
@@ -98,19 +131,43 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       try {
         const response = await mediaApi.uploadChatImage(file, targetId, contextType);
         return {
+          success: true as const,
           originalUrl: response.originalUrl,
           thumbnailUrl: response.thumbnailUrl
         };
       } catch (error) {
         console.error('Failed to upload image:', error);
-        throw error;
+        return {
+          success: false as const,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
       }
     });
 
-    const results = await Promise.all(uploadPromises);
+    const results = await Promise.allSettled(uploadPromises);
+    
+    const successful = results
+      .filter((result): result is PromiseFulfilledResult<{ success: true; originalUrl: string; thumbnailUrl: string }> => 
+        result.status === 'fulfilled' && result.value.success === true
+      )
+      .map(result => result.value);
+
+    const failed = results.filter(result => 
+      result.status === 'rejected' || 
+      (result.status === 'fulfilled' && result.value.success === false)
+    );
+
+    if (failed.length > 0) {
+      console.warn(`${failed.length} image(s) failed to upload`);
+      if (successful.length === 0) {
+        throw new Error('All images failed to upload');
+      }
+      toast.error(t('chat.someImagesFailed') || `${failed.length} image(s) failed to upload`);
+    }
+
     return {
-      originalUrls: results.map(r => r.originalUrl),
-      thumbnailUrls: results.map(r => r.thumbnailUrl)
+      originalUrls: successful.map(r => r.originalUrl),
+      thumbnailUrls: successful.map(r => r.thumbnailUrl)
     };
   };
 
@@ -236,7 +293,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             <div className="absolute bottom-1 right-1.5 flex items-center gap-1 z-10">
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleImageButtonClick}
                 disabled={isDisabledForChannel || isLoading}
                 className="w-8 h-8 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >

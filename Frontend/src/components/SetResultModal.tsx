@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Trash2, Minus, Plus } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Trash2, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser } from '@/types';
+import { BaseModal } from './BaseModal';
 
 interface SetResultModalProps {
   match: Match;
@@ -18,6 +18,7 @@ interface SetResultModalProps {
   onRemove?: (matchId: string, setIndex: number) => void;
   onClose: () => void;
   canRemove?: boolean;
+  isOpen: boolean;
 }
 
 export const SetResultModal = ({
@@ -31,6 +32,7 @@ export const SetResultModal = ({
   onRemove,
   onClose,
   canRemove = false,
+  isOpen,
 }: SetResultModalProps) => {
   const { t } = useTranslation();
   const currentSet = match.sets[setIndex] || { teamA: 0, teamB: 0 };
@@ -42,13 +44,6 @@ export const SetResultModal = ({
     setTeamAScore(currentSet.teamA);
     setTeamBScore(currentSet.teamB);
   }, [currentSet.teamA, currentSet.teamB]);
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
 
   const handleTeamAScoreChange = (newScore: number) => {
     const minScore = 0;
@@ -108,47 +103,26 @@ export const SetResultModal = ({
   const isTeamBWinning = teamBScore > teamAScore;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
+    <BaseModal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      isBasic 
+      modalId="set-result-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-md"
-        onClick={onClose}
-      />
-      <motion.div
-        initial={{ scale: 0.95, y: 20, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.9, y: 30, opacity: 0 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className="relative bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 md:p-5 mx-2 sm:mx-4 max-w-2xl w-full border border-gray-200/50 dark:border-gray-700/50"
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-600/5 rounded-2xl sm:rounded-3xl pointer-events-none" />
-        
-        <div className="relative">
-          <div className="flex items-center justify-between mb-3 sm:mb-5 md:mb-8">
-            <div>
-              <h3 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                {fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')}
-              </h3>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-110 active:scale-95 group"
-            >
-              <X size={18} className="sm:w-5 sm:h-5 text-gray-600 dark:text-gray-300 group-hover:rotate-90 transition-transform duration-300" />
-            </button>
-          </div>
-          
-          <div className="relative mb-3 sm:mb-5 md:mb-8">
-            <div className={`transition-all duration-500 ${!isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-600/5 rounded-2xl sm:rounded-3xl pointer-events-none" />
+      
+      <div className="flex items-center justify-between mb-3 sm:mb-5 md:mb-8 p-3 sm:p-4 md:p-5">
+        <div>
+          <h3 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+            {fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')}
+          </h3>
+        </div>
+      </div>
+      
+      <div className="relative mb-3 sm:mb-5 md:mb-8 px-3 sm:px-4 md:px-5">
+        <div className={`transition-all duration-500 ${!isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
               <div className="flex flex-col items-center gap-4 sm:gap-6 md:gap-8">
                 <div className="w-full flex flex-row items-center gap-3 sm:gap-4 md:gap-6">
                   <div className="flex-1 relative">
@@ -252,9 +226,9 @@ export const SetResultModal = ({
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <div className={`transition-all duration-500 ${isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
+        </div>
+        
+        <div className={`transition-all duration-500 ${isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
               <div className="flex flex-col items-center gap-3 sm:gap-5 md:gap-8">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-primary-600/10 rounded-xl sm:rounded-2xl blur-lg sm:blur-xl" />
@@ -286,35 +260,33 @@ export const SetResultModal = ({
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-          
-          <div className="flex gap-2 sm:gap-3 pt-8">
-            <Button
-              onClick={onClose}
-              variant="outline"
-              className="flex-1 h-10 sm:h-11 md:h-12 rounded-xl font-semibold hover:scale-105 active:scale-95 transition-all duration-200 text-sm sm:text-base"
-            >
-              {t('common.cancel')}
-            </Button>
-            {canRemove && onRemove && (
-              <Button
-                onClick={handleRemove}
-                variant="outline"
-                className="px-3 sm:px-4 h-10 sm:h-11 md:h-12 rounded-xl text-red-600 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-600 dark:hover:bg-red-900/20 hover:scale-105 active:scale-95 transition-all duration-200"
-              >
-                <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
-              </Button>
-            )}
-            <Button
-              onClick={handleSave}
-              className="flex-1 h-10 sm:h-11 md:h-12 rounded-xl font-semibold bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 text-sm sm:text-base"
-            >
-              {t('common.save')}
-            </Button>
-          </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+      
+      <div className="flex gap-2 sm:gap-3 pt-8 px-3 sm:px-4 md:px-5 pb-3 sm:pb-4 md:pb-5">
+        <Button
+          onClick={onClose}
+          variant="outline"
+          className="flex-1 h-10 sm:h-11 md:h-12 rounded-xl font-semibold hover:scale-105 active:scale-95 transition-all duration-200 text-sm sm:text-base"
+        >
+          {t('common.cancel')}
+        </Button>
+        {canRemove && onRemove && (
+          <Button
+            onClick={handleRemove}
+            variant="outline"
+            className="px-3 sm:px-4 h-10 sm:h-11 md:h-12 rounded-xl text-red-600 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-600 dark:hover:bg-red-900/20 hover:scale-105 active:scale-95 transition-all duration-200"
+          >
+            <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
+          </Button>
+        )}
+        <Button
+          onClick={handleSave}
+          className="flex-1 h-10 sm:h-11 md:h-12 rounded-xl font-semibold bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 text-sm sm:text-base"
+        >
+          {t('common.save')}
+        </Button>
+      </div>
+    </BaseModal>
   );
 };

@@ -7,6 +7,7 @@ import { clubsApi, citiesApi } from '@/api';
 import { leaguesApi } from '@/api/leagues';
 import { mediaApi } from '@/api/media';
 import { Club, City, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@/types';
+import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 
 export const CreateLeague = () => {
   const { t } = useTranslation();
@@ -75,6 +76,11 @@ export const CreateLeague = () => {
     };
     fetchClubs();
   }, [selectedCityId]);
+
+  useBackButtonHandler(() => {
+    navigate('/', { replace: true });
+    return true;
+  });
 
   const handleSeasonSetupConfirm = (params: {
     fixedNumberOfSets: number;

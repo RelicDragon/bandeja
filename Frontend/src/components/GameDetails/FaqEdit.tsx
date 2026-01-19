@@ -190,7 +190,7 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
                 className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20 text-white font-medium"
               >
                 <Plus size={18} />
-                {t('faq.add', { defaultValue: 'Add Question' })}
+                {t('common.create')}
               </button>
             </div>
           )}

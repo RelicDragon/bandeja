@@ -4,6 +4,7 @@ import { Bell, ArrowLeft } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import {
   HomeHeaderContent,
   GameDetailsHeaderContent,
@@ -30,6 +31,8 @@ export const Header = () => {
   useEffect(() => {
     previousPageRef.current = currentPage;
   }, [currentPage]);
+
+  useBackButtonHandler();
 
   const handleBackClick = () => {
     setIsAnimating(true);

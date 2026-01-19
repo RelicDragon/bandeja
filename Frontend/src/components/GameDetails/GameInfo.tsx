@@ -15,6 +15,7 @@ import { EditGameTextModal } from './EditGameTextModal';
 import { EditGamePriceModal } from './EditGamePriceModal';
 import { isCapacitor } from '@/utils/capacitor';
 import { addToNativeCalendar } from '@/utils/calendar';
+import { Share } from '@capacitor/share';
 import {
   Calendar,
   MapPin,
@@ -77,7 +78,7 @@ export const GameInfo = ({
   const displaySettings = user ? resolveDisplaySettings(user) : null;
   const showTags = game.entityType !== 'LEAGUE';
   const [showShareModal, setShowShareModal] = useState(false);
-  const [shareData, setShareData] = useState({ url: '', title: '', text: '' });
+  const [shareData, setShareData] = useState({ url: '' });
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showEditGameTextModal, setShowEditGameTextModal] = useState(false);
   const [showEditGamePriceModal, setShowEditGamePriceModal] = useState(false);
@@ -157,27 +158,24 @@ export const GameInfo = ({
 
   const handleShare = async () => {
     const shareUrl = getShareUrl();
-    const clubName = game.court?.club?.name || game.club?.name || '';
 
-    const shareParts = [];
-    if (game.entityType !== 'GAME') {
-      shareParts.push(t(`games.entityTypes.${game.entityType}`));
+    if (isCapacitor()) {
+      try {
+        await Share.share({
+          url: shareUrl,
+        });
+        return;
+      } catch (error) {
+        if ((error as Error).name === 'AbortError') {
+          return;
+        }
+        console.error('Error sharing:', error);
+      }
     }
-    if (game.name) {
-      shareParts.push(game.name);
-    }
-    if (clubName) {
-      shareParts.push(clubName);
-    }
-
-    const shareTitle = shareParts.join(' - ');
-    const shareText = `${shareTitle} - ${formatDate(game.startTime, 'PPP')}`;
 
     if (navigator.share && (window.isSecureContext || location.protocol === 'https:')) {
       try {
         await navigator.share({
-          title: shareTitle,
-          text: shareText,
           url: shareUrl,
         });
         return;
@@ -199,7 +197,7 @@ export const GameInfo = ({
       }
     }
 
-    setShareData({ url: shareUrl, title: shareTitle, text: shareText });
+    setShareData({ url: shareUrl });
     setShowShareModal(true);
   };
 
@@ -903,7 +901,6 @@ export const GameInfo = ({
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         shareUrl={shareData.url}
-        shareText={shareData.text}
       />
       {calendarEvent && (
         <AddToCalendarModal
@@ -917,6 +914,7 @@ export const GameInfo = ({
         <FullscreenImageViewer
           imageUrl={game.originalAvatar || ''}
           onClose={() => setShowFullscreenAvatar(false)}
+          isOpen={showFullscreenAvatar}
         />
       )}
       <EditGameTextModal

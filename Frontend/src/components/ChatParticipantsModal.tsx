@@ -3,9 +3,10 @@ import { X } from 'lucide-react';
 import { Game, ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { PlayerAvatar } from './PlayerAvatar';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { gamesApi } from '@/api/games';
 import { useAuthStore } from '@/store/authStore';
+import { BaseModal } from '@/components/BaseModal';
 
 interface ChatParticipantsModalProps {
   game: Game;
@@ -17,25 +18,11 @@ interface ChatParticipantsModalProps {
 export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChatType = 'PUBLIC' }: ChatParticipantsModalProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
-
-  useEffect(() => {
-    // Start animation on mount
-    setIsVisible(true);
-    
-    // Clean up animation state after animation completes
-    const timer = setTimeout(() => {
-      // Animation cleanup if needed
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, []);
+  const [isOpen, setIsOpen] = useState(true);
 
   const handleClose = () => {
-    setIsVisible(false);
-    
-    // Call onClose after animation completes
+    setIsOpen(false);
     setTimeout(() => {
       onClose();
     }, 300);
@@ -70,7 +57,7 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
     try {
       await gamesApi.leave(game.id);
       onGuestLeave?.();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Failed to leave as guest:', error);
     } finally {
@@ -79,21 +66,15 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
   };
 
   return (
-    <div 
-      className={`fixed inset-0 z-[9999] flex items-start justify-center bg-black/50 backdrop-blur-sm transition-all duration-300 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      }`}
-      onClick={handleClose}
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      isBasic
+      modalId="chat-participants-modal"
+      showCloseButton={false}
+      closeOnBackdropClick={true}
     >
-      <div 
-        className={`bg-white dark:bg-gray-800 rounded-b-2xl shadow-xl m-0 w-full max-w-md max-h-[80vh] overflow-y-auto transition-all duration-300 transform ${
-          isVisible 
-            ? 'translate-y-0 opacity-100 scale-100' 
-            : '-translate-y-full opacity-0 scale-95'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 rounded-b-2xl">
+      <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 rounded-b-2xl">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {t('chat.participants')}
@@ -124,20 +105,13 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
               <p className="text-gray-600 dark:text-gray-400">{t('chat.noParticipants')}</p>
             </div>
           ) : (
-            allParticipants.map((participant, index) => {
+            allParticipants.map((participant) => {
               const isVisibleForChat = isParticipantVisibleForChatType(participant);
               
               return (
                 <div
                   key={participant.id}
-                  className={`flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-300 ${
-                    isVisible 
-                      ? 'opacity-100 translate-x-0' 
-                      : 'opacity-0 translate-x-4'
-                  } ${!isVisibleForChat ? 'opacity-50' : ''}`}
-                  style={{
-                    transitionDelay: isVisible ? `${index * 50}ms` : '0ms'
-                  }}
+                  className={`flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg ${!isVisibleForChat ? 'opacity-50' : ''}`}
                 >
                   <div className={`flex-shrink-0 ${!isVisibleForChat ? 'grayscale' : ''}`}>
                     <PlayerAvatar 
@@ -204,7 +178,6 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
             })
           )}
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 };

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, Button } from './';
+import { Button } from './';
 import { citiesApi, usersApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { City } from '@/types';
+import { BaseModal } from '@/components/BaseModal';
 
 interface CityModalProps {
   isOpen: boolean;
@@ -57,17 +58,22 @@ export const CityModal = ({ isOpen, onClose }: CityModalProps) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <Card className="max-w-md w-full max-h-96 overflow-y-auto">
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      isBasic
+      modalId="city-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
+      >
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 p-4">
           {t('profile.changeCity')}
         </h3>
         
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg">
+        <div className="px-4 max-h-96 overflow-y-auto">
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg">
             {error}
           </div>
         )}
@@ -98,17 +104,17 @@ export const CityModal = ({ isOpen, onClose }: CityModalProps) => {
               </button>
             ))}
           </div>
-        )}
+          )}
+        </div>
 
         <Button
           variant="secondary"
           onClick={onClose}
-          className="w-full mt-4"
+          className="w-full mt-4 mx-4 mb-4"
           disabled={submitting}
         >
           {t('common.cancel')}
         </Button>
-      </Card>
-    </div>
+    </BaseModal>
   );
 };

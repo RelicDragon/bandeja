@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, useMotionValueEvent } from 'framer-motion';
 import { X, Beer, Star, ArrowLeft, Send, MessageCircle, Ban, Check, LineChart, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +17,7 @@ import { ConfirmationModal } from './ConfirmationModal';
 import { Button } from './Button';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
+import { BaseModal } from './BaseModal';
 import toast from 'react-hot-toast';
 
 interface PlayerCardBottomSheetProps {
@@ -44,33 +45,21 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [blockingUser, setBlockingUser] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const isCurrentUser = playerId === user?.id;
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const y = useMotionValue(0);
+  const springConfig = { damping: 30, stiffness: 300 };
+  const ySpring = useSpring(y, springConfig);
+  
+  // Calculate dynamic blur and opacity based on drag position
+  const maxBlur = 8;
+  const maxDrag = typeof window !== 'undefined' ? window.innerHeight * 0.3 : 300;
+  const blurValue = useTransform(ySpring, [0, maxDrag], [maxBlur, 0], { clamp: true });
+  const backdropOpacity = useTransform(ySpring, [0, maxDrag], [1, 0.3], { clamp: true });
+  const [backdropBlur, setBackdropBlur] = useState(maxBlur);
 
-  // Disable background scrolling and interactions when modal is open
-  useEffect(() => {
-    if (playerId) {
-      // Prevent background scrolling
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      
-      // Prevent touch events on background
-      document.body.style.touchAction = 'none';
-    } else {
-      // Restore scrolling when modal is closed
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.touchAction = '';
-    }
-
-    // Cleanup function to restore scrolling
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.touchAction = '';
-    };
-  }, [playerId]);
+  useMotionValueEvent(blurValue, 'change', (latest) => {
+    setBackdropBlur(latest);
+  });
 
   useEffect(() => {
     if (!playerId) return;
@@ -81,6 +70,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     setShowAvatarView(false);
     setShowLevelView(false);
     setShowSendMoneyModal(false);
+    y.set(0);
 
     const fetchStats = async () => {
       try {
@@ -100,7 +90,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     };
 
     fetchStats();
-  }, [playerId, isCurrentUser]);
+  }, [playerId, isCurrentUser, y]);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -145,22 +135,6 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     };
   }, [playerId, handleClose, isClosingViaBack]);
 
-  const handleDrag = (_event: any, info: PanInfo) => {
-    setDragY(info.offset.y);
-  };
-
-  const handleDragEnd = (_event: any, info: PanInfo) => {
-    const threshold = 100;
-    const velocity = info.velocity.y;
-    
-    // Allow closing if dragged down more than threshold or with high velocity
-    if (info.offset.y > threshold || velocity > 200) {
-      handleClose();
-    } else {
-      // Spring back to original position with animation
-      setDragY(0);
-    }
-  };
 
   const handleToggleFavorite = async () => {
     if (!playerId || !stats || isBlocked) return;
@@ -242,155 +216,186 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     }
   };
 
-  if (!playerId) return null;
-
-  // Calculate dynamic blur based on drag position
-  const maxBlur = 8;
-  const maxDrag = window.innerHeight * 0.3; // Maximum drag distance for full deblur
-  const blurValue = Math.max(0, maxBlur - (dragY / maxDrag) * maxBlur);
-
   return (
-    <AnimatePresence>
+    <>
       {!showSendMoneyModal && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[99999]"
-          onClick={handleClose}
-          style={{ 
-            pointerEvents: 'auto',
-            touchAction: 'none',
-            userSelect: 'none',
-            WebkitUserSelect: 'none',
-            MozUserSelect: 'none',
-            msUserSelect: 'none'
-          }}
+        <BaseModal
+          isOpen={!!playerId}
+          onClose={handleClose}
+          isBasic={false}
+          modalId="player-card-bottom-sheet"
+          showCloseButton={false}
+          closeOnBackdropClick={true}
         >
-        <motion.div
-          initial={{ backdropFilter: 'blur(0px)' }}
-          animate={{ backdropFilter: isClosing ? 'blur(0px)' : `blur(${blurValue}px)` }}
-          exit={{ backdropFilter: 'blur(0px)' }}
-          transition={isClosing ? { duration: 0.3 } : dragY === 0 ? { 
-            type: 'spring', 
-            damping: 25, 
-            stiffness: 400, 
-            duration: 0.3 
-          } : { duration: 0 }}
-          className="absolute inset-0 bg-black/50"
-          style={{
-            pointerEvents: 'auto',
-            touchAction: 'none',
-            userSelect: 'none',
-            WebkitUserSelect: 'none',
-            MozUserSelect: 'none',
-            msUserSelect: 'none'
-          }}
-        />
-        
-        <motion.div
-          initial={{ y: '100%' }}
-          animate={{ y: isClosing ? '100%' : dragY }}
-          exit={{ y: '100%' }}
-          transition={dragY === 0 ? {
-            type: 'spring',
-            damping: 25,
-            stiffness: 400,
-            duration: 0.3
-          } : {
-            type: 'spring',
-            damping: 30,
-            stiffness: 300,
-            duration: 0.4
-          }}
-          drag="y"
-          dragConstraints={{ top: 0, bottom: window.innerHeight * 0.9 }}
-          dragElastic={{ top: 0, bottom: 0.2 }}
-          dragMomentum={false}
-          dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
-          onDrag={handleDrag}
-          onDragEnd={handleDragEnd}
-          className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl max-h-[75vh] overflow-hidden max-w-[428px] mx-auto"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="h-8 w-full cursor-grab active:cursor-grabbing" />
-          
-          <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-            {showLevelView ? (
-              <>
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setShowLevelView(false)}
-                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
-                  </button>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                    {t('playerCard.levelHistory')}
-                  </h2>
-                </div>
-                <button
-                  onClick={handleClose}
-                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          <AnimatePresence>
+            {playerId && (
+              <motion.div
+                className="fixed inset-0"
+                onClick={handleClose}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <motion.div
+                  className="absolute inset-0 bg-black/50"
+                  style={{
+                    opacity: backdropOpacity,
+                    backdropFilter: `blur(${backdropBlur}px)`,
+                    WebkitBackdropFilter: `blur(${backdropBlur}px)`,
+                    transition: dragY === 0 ? 'backdrop-filter 0.1s' : 'none',
+                  }}
+                />
+                
+                <motion.div
+                  ref={sheetRef}
+                  className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl max-h-[75vh] overflow-hidden max-w-[428px] mx-auto"
+                  style={{
+                    y: ySpring,
+                    paddingBottom: 'env(safe-area-inset-bottom)',
+                  }}
+                  initial={{ y: '100%' }}
+                  animate={{ y: isClosing ? '100%' : 0 }}
+                  exit={{ y: '100%' }}
+                  transition={{
+                    type: 'spring',
+                    damping: 30,
+                    stiffness: 300,
+                  }}
+                  drag="y"
+                  dragConstraints={{ top: 0, bottom: 0 }}
+                  dragElastic={{ top: 0, bottom: 0.3 }}
+                  onDrag={(_, info) => {
+                    const dragAmount = info.offset.y;
+                    setDragY(dragAmount);
+                  }}
+                  onDragEnd={(_, info) => {
+                    const threshold = 100;
+                    const velocity = info.velocity.y;
+                    if (info.offset.y > threshold || velocity > 500) {
+                      handleClose();
+                    } else {
+                      y.set(0);
+                      setDragY(0);
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <X size={20} className="text-gray-600 dark:text-gray-300" />
-                </button>
-              </>
-            ) : (
-              <div className="flex gap-2 items-center ml-auto">
+              <div className="h-8 w-full cursor-grab active:cursor-grabbing touch-none" />
+          
+          <motion.div
+            className="absolute top-4 left-4 right-4 flex items-center justify-between z-10"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <AnimatePresence mode="wait">
+              {showLevelView ? (
+                <motion.div
+                  key="level-header"
+                  className="flex items-center justify-between w-full"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="flex items-center gap-4">
+                    <motion.button
+                      onClick={() => setShowLevelView(false)}
+                      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
+                    </motion.button>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                      {t('playerCard.levelHistory')}
+                    </h2>
+                  </div>
+                  <motion.button
+                    onClick={handleClose}
+                    className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <X size={20} className="text-gray-600 dark:text-gray-300" />
+                  </motion.button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="main-header"
+                  className="flex gap-2 items-center ml-auto"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                >
             {stats && !isCurrentUser && (
-              <button
+              <motion.button
                 onClick={isBlocked ? handleBlockUser : () => setShowBlockConfirmation(true)}
                 disabled={blockingUser}
-                className={`px-4 py-2 rounded-xl text-white transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                className={`px-4 py-2 rounded-xl text-white flex items-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${
                   isBlocked 
                     ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' 
                     : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
                 }`}
                 title={isBlocked ? t('playerCard.unblockUser') : t('playerCard.blockUser')}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               >
                 {isBlocked ? <Check size={18} /> : <Ban size={18} className="scale-x-[-1]" />}
-              </button>
+              </motion.button>
             )}
             {stats && !isCurrentUser && (
-              <button
+              <motion.button
                 onClick={() => {
                   setShowAvatarView(false);
                   setShowLevelView(true);
                 }}
-                className="px-4 py-2 rounded-xl text-white transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                className="px-4 py-2 rounded-xl text-white flex items-center gap-2 shadow-md bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                 title={t('playerCard.levelHistory')}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               >
                 <LineChart size={18} />
-              </button>
+              </motion.button>
             )}
             {stats && !isCurrentUser && (
-              <Button
-                onClick={handleStartChat}
-                disabled={startingChat || isBlocked}
-                variant="primary"
-                size="sm"
-                className="flex items-center gap-2"
-                title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('nav.chat')}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               >
-                <MessageCircle size={16} />
-                {t('nav.chat')}
-              </Button>
+                <Button
+                  onClick={handleStartChat}
+                  disabled={startingChat || isBlocked}
+                  variant="primary"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('nav.chat')}
+                >
+                  <MessageCircle size={16} />
+                  {t('nav.chat')}
+                </Button>
+              </motion.div>
             )}
             {stats && !isCurrentUser && (
-              <button
+              <motion.button
                 onClick={handleToggleFavorite}
                 disabled={isBlocked}
-                className={`p-2.5 rounded-xl backdrop-blur-sm transition-all duration-200 shadow-sm border transition-all duration-200 ${
+                className={`p-2.5 rounded-xl backdrop-blur-sm shadow-sm border ${
                   isBlocked
                     ? 'opacity-50 cursor-not-allowed bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50'
                     : stats.user.isFavorite
-                    ? 'bg-yellow-500 dark:bg-yellow-600 border-yellow-400 dark:border-yellow-500 hover:bg-yellow-600 dark:hover:bg-yellow-700 hover:shadow-md hover:scale-105 active:scale-95'
-                    : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md hover:scale-105 active:scale-95'
+                    ? 'bg-yellow-500 dark:bg-yellow-600 border-yellow-400 dark:border-yellow-500 hover:bg-yellow-600 dark:hover:bg-yellow-700'
+                    : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800'
                 }`}
                 title={isBlocked ? t('playerCard.userBlockedCannotFavorite') : (stats.user.isFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites'))}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               >
                 <Star
                   size={20}
@@ -399,92 +404,107 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                     : 'text-gray-400 hover:text-yellow-500 transition-colors'
                   }
                 />
-              </button>
+              </motion.button>
             )}
-            <button
+            <motion.button
               onClick={handleClose}
-              className="p-2.5 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 border border-gray-200/50 dark:border-gray-700/50"
+              className="p-2.5 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <X size={20} className="text-gray-600 dark:text-gray-300" />
-            </button>
-              </div>
-            )}
-          </div>
+            </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
-          <div className="overflow-y-auto max-h-[calc(75vh-20px)] pt-4">
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <Loading />
+              <div className="overflow-y-auto max-h-[calc(75vh-20px)] pt-4">
+                <AnimatePresence mode="wait">
+                  {loading ? (
+                    <motion.div
+                      key="loading"
+                      className="flex items-center justify-center h-64"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Loading />
+                    </motion.div>
+                  ) : stats ? (
+                    <>
+                      {showAvatarView && stats.user.originalAvatar ? (
+                        <motion.div
+                          key="avatar"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        >
+                          <PlayerAvatarView stats={stats} onBack={() => setShowAvatarView(false)} />
+                        </motion.div>
+                      ) : showLevelView ? (
+                        <motion.div
+                          key="level"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        >
+                          <LevelHistoryView stats={stats} padding="p-6" tabDarkBgClass="dark:bg-gray-700/50" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="content"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 20 }}
+                          transition={{ duration: 0.3, ease: 'easeOut' }}
+                        >
+                          <PlayerCardContent 
+                            stats={stats} 
+                            t={t} 
+                            isBlocked={isBlocked}
+                            onAvatarClick={() => {
+                              if (stats.user.originalAvatar) {
+                                setShowLevelView(false);
+                                setShowAvatarView(true);
+                              }
+                            }}
+                            onLevelClick={() => {
+                              setShowAvatarView(false);
+                              setShowLevelView(true);
+                            }}
+                            gamesStatsTab={gamesStatsTab}
+                            onGamesStatsTabChange={setGamesStatsTab}
+                            onTelegramClick={() => {
+                              const getTelegramUrl = () => {
+                                if (stats.user.telegramUsername) {
+                                  return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
+                                }
+                                if (stats.user.telegramId) {
+                                  return `tg://user?id=${stats.user.telegramId}`;
+                                }
+                                return null;
+                              };
+                              const telegramUrl = getTelegramUrl();
+                              if (telegramUrl && !isBlocked) {
+                                window.open(telegramUrl, '_blank');
+                              }
+                            }}
+                          />
+                        </motion.div>
+                      )}
+                    </>
+                  ) : null}
+                </AnimatePresence>
               </div>
-            ) : stats ? (
-              <AnimatePresence mode="wait">
-                {showAvatarView && stats.user.originalAvatar ? (
-                  <motion.div
-                    key="avatar-view"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
-                  >
-                    <PlayerAvatarView stats={stats} onBack={() => setShowAvatarView(false)} />
-                  </motion.div>
-                ) : showLevelView ? (
-                  <motion.div
-                    key="level-view"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
-                  >
-                    <LevelHistoryView stats={stats} padding="p-6" tabDarkBgClass="dark:bg-gray-700/50" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="player-card"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
-                  >
-                    <PlayerCardContent 
-                      stats={stats} 
-                      t={t} 
-                      isBlocked={isBlocked}
-                      onAvatarClick={() => {
-                        if (stats.user.originalAvatar) {
-                          setShowLevelView(false);
-                          setShowAvatarView(true);
-                        }
-                      }}
-                      onLevelClick={() => {
-                        setShowAvatarView(false);
-                        setShowLevelView(true);
-                      }}
-                      gamesStatsTab={gamesStatsTab}
-                      onGamesStatsTabChange={setGamesStatsTab}
-                      onTelegramClick={() => {
-                        const getTelegramUrl = () => {
-                          if (stats.user.telegramUsername) {
-                            return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
-                          }
-                          if (stats.user.telegramId) {
-                            return `tg://user?id=${stats.user.telegramId}`;
-                          }
-                          return null;
-                        };
-                        const telegramUrl = getTelegramUrl();
-                        if (telegramUrl && !isBlocked) {
-                          window.open(telegramUrl, '_blank');
-                        }
-                      }}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            ) : null}
-          </div>
-        </motion.div>
-      </motion.div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </BaseModal>
       )}
 
       {showSendMoneyModal && playerId && (
@@ -509,7 +529,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           onClose={() => setShowBlockConfirmation(false)}
         />
       )}
-    </AnimatePresence>
+    </>
   );
 };
 
@@ -530,18 +550,44 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, g
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const hasTelegram = !!(user.telegramId || user.telegramUsername);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.3,
+        ease: [0.4, 0, 0.2, 1] as const,
+      },
+    },
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1, duration: 0.3 }}
       className="p-6 space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
     >
-      <div className={`relative h-48 rounded-2xl ${
-        isBlocked 
-          ? 'bg-gradient-to-br from-red-500 to-red-700 dark:from-red-600 dark:to-red-800' 
-          : 'bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800'
-      }`}>
+      <motion.div
+        className={`relative h-48 rounded-2xl ${
+          isBlocked 
+            ? 'bg-gradient-to-br from-red-500 to-red-700 dark:from-red-600 dark:to-red-800' 
+            : 'bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800'
+        }`}
+        variants={itemVariants}
+      >
         <div className="absolute inset-0 flex items-center justify-center gap-6">
           <div className="relative">
             {user.originalAvatar ? (
@@ -654,9 +700,12 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, g
             <Send size={12} className="text-white flex-shrink-0" />
           </button>
         )}
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <motion.div
+        className="grid grid-cols-2 gap-4"
+        variants={itemVariants}
+      >
         <button
           onClick={onLevelClick}
           className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
@@ -671,17 +720,22 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, g
           <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.followingCount}</div>
           <div className="text-sm text-gray-600 dark:text-gray-400">{t('playerCard.following') || 'Following'}</div>
         </button>
-      </div>
+      </motion.div>
 
-      <GamesStatsSection
+      <motion.div variants={itemVariants}>
+        <GamesStatsSection
         stats={stats.gamesStats}
         activeTab={gamesStatsTab}
         onTabChange={onGamesStatsTabChange}
         onLevelClick={onLevelClick}
         darkBgClass="dark:bg-gray-700/50"
       />
+      </motion.div>
 
-      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+      <motion.div
+        className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4"
+        variants={itemVariants}
+      >
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
@@ -714,8 +768,7 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, g
             </div>
           </div>
         </div>
-      </div>
-
+      </motion.div>
     </motion.div>
   );
 };

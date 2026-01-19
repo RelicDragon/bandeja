@@ -2,6 +2,7 @@ import { AlertTriangle, ServerCrash, Smartphone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ConflictOp } from '@/types/ops';
 import { Button } from '@/components';
+import { BaseModal } from '@/components/BaseModal';
 
 interface ConflictResolutionModalProps {
   isOpen: boolean;
@@ -22,8 +23,6 @@ export const ConflictResolutionModal = ({
 }: ConflictResolutionModalProps) => {
   const { t } = useTranslation();
 
-  if (!isOpen) return null;
-
   const formatPath = (path: string) => {
     return path.split('/').filter(Boolean).join(' > ');
   };
@@ -35,8 +34,14 @@ export const ConflictResolutionModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden border border-gray-200 dark:border-gray-700">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      isBasic
+      modalId="conflict-resolution-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
+    >
         {/* Header */}
         <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 p-6">
           <div className="flex items-center gap-3">
@@ -180,8 +185,7 @@ export const ConflictResolutionModal = ({
             </p>
           </div>
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 };
 

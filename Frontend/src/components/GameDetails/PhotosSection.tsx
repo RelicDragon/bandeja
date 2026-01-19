@@ -11,6 +11,8 @@ import { isUserGameAdminOrOwner } from '@/utils/gameResults';
 import { Camera } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { pickImages } from '@/utils/photoCapture';
+import { isCapacitor } from '@/utils/capacitor';
 
 interface PhotosSectionProps {
   game: Game;
@@ -113,10 +115,10 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     };
   }, [game.id, game.status]);
 
-  const handlePhotoSelect = async (files: FileList | null) => {
+  const handlePhotoSelect = async (files: File[]) => {
     if (!files || files.length === 0 || isUploadingPhoto || !game.id) return;
 
-    const imageFiles = Array.from(files).filter(file => 
+    const imageFiles = files.filter(file => 
       file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024
     );
 
@@ -126,33 +128,74 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     }
 
     setIsUploadingPhoto(true);
+    let successCount = 0;
+    let failCount = 0;
+
     try {
       for (const file of imageFiles) {
-        const uploadResponse = await mediaApi.uploadChatImage(file, game.id, 'GAME');
-        
-        await chatApi.createMessage({
-          gameId: game.id,
-          chatType: 'PHOTOS',
-          mediaUrls: [uploadResponse.originalUrl],
-          thumbnailUrls: [uploadResponse.thumbnailUrl],
-        });
+        try {
+          const uploadResponse = await mediaApi.uploadChatImage(file, game.id, 'GAME');
+          
+          await chatApi.createMessage({
+            gameId: game.id,
+            chatType: 'PHOTOS',
+            mediaUrls: [uploadResponse.originalUrl],
+            thumbnailUrls: [uploadResponse.thumbnailUrl],
+          });
+          
+          successCount++;
+        } catch (error) {
+          console.error(`Failed to upload photo ${file.name}:`, error);
+          failCount++;
+        }
       }
 
-      toast.success(t('gameDetails.photoAdded'));
-      await loadPhotos();
+      if (successCount > 0) {
+        const successMessage = successCount === 1 
+          ? t('gameDetails.photoAdded') 
+          : t('gameDetails.photosAdded', { count: successCount }) || `${successCount} photo(s) added`;
+        toast.success(successMessage);
+        await loadPhotos();
+      }
+      
+      if (failCount > 0) {
+        const failMessage = failCount === 1
+          ? t('gameDetails.photoUploadFailed')
+          : t('gameDetails.somePhotosFailed', { count: failCount }) || `${failCount} photo(s) failed to upload`;
+        toast.error(failMessage);
+      }
     } catch (error) {
-      console.error('Failed to upload photo:', error);
-      toast.error(t('gameDetails.photoUploadFailed'));
+      console.error('Failed to upload photos:', error);
+      if (successCount === 0) {
+        toast.error(t('gameDetails.photoUploadFailed'));
+      }
     } finally {
       setIsUploadingPhoto(false);
     }
   };
 
-  const handlePhotoCapture = (e: React.MouseEvent) => {
+  const handlePhotoCapture = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isUploadingPhoto || !game.id) return;
-    fileInputRef.current?.click();
+
+    if (isCapacitor()) {
+      try {
+        const result = await pickImages(10);
+        if (result && result.files.length > 0) {
+          await handlePhotoSelect(result.files);
+        }
+      } catch (error: any) {
+        console.error('Error picking images:', error);
+        if (error.message?.includes('too large')) {
+          toast.error(error.message);
+        } else {
+          toast.error(t('gameDetails.photoPickFailed') || 'Failed to pick photos');
+        }
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleImageClick = (imageUrl: string) => {
@@ -324,6 +367,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
             <FullscreenImageViewer
               imageUrl={fullscreenImage}
               onClose={() => setFullscreenImage(null)}
+              isOpen={!!fullscreenImage}
             />
           )}
         </>
@@ -333,7 +377,12 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
         type="file"
         accept="image/*"
         multiple
-        onChange={(e) => handlePhotoSelect(e.target.files)}
+        onChange={(e) => {
+          const files = e.target.files;
+          if (files) {
+            handlePhotoSelect(Array.from(files));
+          }
+        }}
         className="hidden"
       />
     </>

@@ -962,7 +962,9 @@
     "kickAllPreferNotToSayMessage": "¿Estás seguro de que quieres eliminar a todos los {{count}} jugador(es) sin género especificado? Esta acción no se puede deshacer.",
     "addPhoto": "Añadir Foto",
     "photoAdded": "Foto añadida al chat del juego",
+    "photosAdded": "{{count}} foto(s) añadida(s)",
     "photoUploadFailed": "Error al subir la foto",
+    "somePhotosFailed": "{{count}} foto(s) falló(aron) al subir",
     "mainPhotoUpdated": "Foto principal actualizada",
     "mainPhotoUpdateFailed": "Error al actualizar la foto principal",
     "photos": "Fotos",
@@ -1262,6 +1264,9 @@
     "leave": "Salir del chat",
     "leaveConfirmation": "¿Estás seguro de que quieres salir de este chat?",
     "blockedByUser": "Este usuario te ha bloqueado. No puedes enviarle mensajes.",
+    "invalidImageType": "Tipo de imagen inválido. Por favor selecciona un archivo de imagen válido.",
+    "photoPickFailed": "Error al seleccionar fotos",
+    "someImagesFailed": "{{count}} imagen(es) falló(aron) al subir",
     "types": {
       "PUBLIC": "General",
       "PRIVATE": "Participantes",
@@ -1430,6 +1435,19 @@
       "loseSet": "Perder un set",
       "streak30": "Ganar 3-0 en un partido",
       "streak21": "Ganar 2-1 en un partido"
+    }
+  },
+  "permissions": {
+    "openSettings": "Abrir Configuración",
+    "photos": {
+      "title": "Acceso a Fotos Requerido",
+      "description": "Para adjuntar fotos, necesitamos acceso a tu biblioteca de fotos.",
+      "denied": "El acceso a fotos está actualmente denegado. Por favor, habilítalo en la configuración de tu dispositivo para adjuntar fotos."
+    },
+    "camera": {
+      "title": "Acceso a Cámara Requerido",
+      "description": "Para tomar fotos, necesitamos acceso a tu cámara.",
+      "denied": "El acceso a la cámara está actualmente denegado. Por favor, habilítalo en la configuración de tu dispositivo para tomar fotos."
     }
   }
 }

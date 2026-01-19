@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Game, GameType } from '@/types';
 import { Select } from '@/components';
 import { gamesApi } from '@/api';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import toast from 'react-hot-toast';
+import { BaseModal } from '@/components/BaseModal';
 
 interface EditGameTextModalProps {
   isOpen: boolean;
@@ -17,7 +17,6 @@ interface EditGameTextModalProps {
 
 export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditGameTextModalProps) => {
   const { t } = useTranslation();
-  const [isClosing, setIsClosing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -28,25 +27,11 @@ export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditG
       setName(game.name || '');
       setDescription(game.description || '');
       setGameType(game.gameType || 'CLASSIC');
-      setIsClosing(false);
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
     }
-
-    return () => {
-      if (!isOpen) {
-        document.body.style.overflow = '';
-      }
-    };
   }, [isOpen, game.name, game.description, game.gameType]);
 
   const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsClosing(false);
-      onClose();
-    }, 200);
+    onClose();
   };
 
   const handleSave = async () => {
@@ -100,30 +85,19 @@ export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditG
   const commentsPlaceholder = t(isLeagueSeason ? 'createGame.commentsPlaceholderLeague' : 'createGame.commentsPlaceholder');
   const gameTypeLabel = t(isLeagueSeason ? 'createGame.gameTypeLeague' : 'createGame.gameType');
 
-  return createPortal(
-    <div
-      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-opacity duration-200 ${
-        isClosing ? 'opacity-0' : 'opacity-100'
-      }`}
-      onClick={handleClose}
+  return (
+    <BaseModal 
+      isOpen={isOpen} 
+      onClose={handleClose} 
+      isBasic 
+      modalId="edit-game-text-modal"
+      showCloseButton={true}
+      closeOnBackdropClick={true}
     >
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      <div
-        className={`relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] flex flex-col transition-transform duration-200 ${
-          isClosing ? 'scale-95' : 'scale-100'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {t('common.edit')}
           </h2>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
         </div>
 
         <div className="overflow-y-auto flex-1 p-6 space-y-4">
@@ -205,8 +179,6 @@ export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditG
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
         </div>
-      </div>
-    </div>,
-    document.body
+    </BaseModal>
   );
 };
