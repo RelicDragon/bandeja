@@ -27,7 +27,7 @@ export const PlayerAvatarView: React.FC<PlayerAvatarViewProps> = ({ stats, onBac
         {user.originalAvatar ? (
           <img
             src={user.originalAvatar || ''}
-            alt={`${user.firstName} ${user.lastName}`}
+            alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'}
             className="max-w-full max-h-[60vh] object-contain shadow-2xl border-8 border-white dark:border-gray-800 rounded-2xl"
           />
         ) : (

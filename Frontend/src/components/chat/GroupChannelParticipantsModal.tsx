@@ -168,7 +168,7 @@ export const GroupChannelParticipantsModal = ({
     }
     return participants.filter((p) =>
       matchesSearch(
-        `${p.user.firstName} ${p.user.lastName}`,
+        `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim(),
         searchQuery
       )
     );
@@ -180,11 +180,11 @@ export const GroupChannelParticipantsModal = ({
     }
     return invites.filter((invite) =>
       matchesSearch(
-        `${invite.receiver.firstName} ${invite.receiver.lastName}`,
+        `${invite.receiver.firstName || ''} ${invite.receiver.lastName || ''}`.trim(),
         searchQuery
       ) ||
       matchesSearch(
-        `${invite.sender.firstName} ${invite.sender.lastName}`,
+        `${invite.sender.firstName || ''} ${invite.sender.lastName || ''}`.trim(),
         searchQuery
       )
     );

@@ -163,7 +163,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
             <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
               <img
                 src={player.avatar || ''}
-                alt={`${player.firstName} ${player.lastName}`}
+                alt={`${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player'}
                 className="w-full h-full object-cover"
               />
             </div>

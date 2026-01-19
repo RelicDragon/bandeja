@@ -72,7 +72,7 @@ export const BugMessageItem: React.FC<BugMessageItemProps> = ({
       return 'System';
     }
     if (message.sender?.firstName && message.sender?.lastName) {
-      return `${message.sender.firstName} ${message.sender.lastName}`;
+      return `${message.sender.firstName || ''} ${message.sender.lastName || ''}`.trim();
     }
     return message.sender?.firstName || 'Unknown';
   };

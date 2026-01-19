@@ -24,7 +24,7 @@ export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
   const getSenderName = () => {
     if (!replyTo.sender) return 'System';
     if (replyTo.sender.firstName && replyTo.sender.lastName) {
-      return `${replyTo.sender.firstName} ${replyTo.sender.lastName}`;
+      return `${replyTo.sender.firstName || ''} ${replyTo.sender.lastName || ''}`.trim();
     }
     return replyTo.sender.firstName || 'Unknown';
   };

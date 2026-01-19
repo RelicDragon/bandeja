@@ -96,7 +96,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       return 'System';
     }
     if (currentMessage.sender?.firstName && currentMessage.sender?.lastName) {
-      return `${currentMessage.sender.firstName} ${currentMessage.sender.lastName}`;
+      return `${currentMessage.sender.firstName || ''} ${currentMessage.sender.lastName || ''}`.trim();
     }
     return currentMessage.sender?.firstName || 'Unknown';
   };

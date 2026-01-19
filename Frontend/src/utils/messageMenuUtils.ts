@@ -16,11 +16,11 @@ export const formatFullDateTime = (dateString: string, user?: User | null): stri
 
 export const getUserDisplayName = (user: { firstName?: string; lastName?: string }): string => {
   if (user.firstName && user.lastName) {
-    return `${user.firstName} ${user.lastName}`;
+    return `${user.firstName || ''} ${user.lastName || ''}`.trim();
   } else if (user.firstName) {
-    return user.firstName;
+    return user.firstName || '';
   } else if (user.lastName) {
-    return user.lastName;
+    return user.lastName || '';
   }
   return 'Unknown User';
 };

@@ -976,7 +976,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       return bug.text.length > 25 ? `${bug.text.substring(0, 23)}...` : bug.text;
     } else if (contextType === 'USER' && userChat) {
       const otherUser = userChat.user1Id === user?.id ? userChat.user2 : userChat.user1;
-      return `${otherUser.firstName} ${otherUser.lastName}`;
+      return `${otherUser.firstName || ''} ${otherUser.lastName || ''}`.trim() || 'Unknown';
     } else if (contextType === 'GROUP' && groupChannel) {
       return groupChannel.name;
     }

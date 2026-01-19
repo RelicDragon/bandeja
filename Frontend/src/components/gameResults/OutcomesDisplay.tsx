@@ -32,7 +32,7 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
     setLoadingUserId(outcome.userId);
     try {
       const explanation = await getOutcomeExplanation(gameId, outcome.userId);
-      onExplanationClick(explanation, `${outcome.user.firstName} ${outcome.user.lastName}`, outcome.levelBefore);
+      onExplanationClick(explanation, `${outcome.user.firstName || ''} ${outcome.user.lastName || ''}`.trim() || 'Unknown', outcome.levelBefore);
     } catch (error) {
       console.error('Failed to load explanation:', error);
     } finally {

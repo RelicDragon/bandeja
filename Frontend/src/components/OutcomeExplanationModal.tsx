@@ -58,9 +58,11 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
     return change > 0 ? `+${formatted}` : formatted;
   };
 
-  const renderPlayerNames = (players: Array<{ firstName?: string; lastName?: string; level: number }>) => {
+  const renderPlayerNames = (players: Array<{ firstName?: string | null; lastName?: string | null; level: number }>) => {
     return players.map((p, index) => {
-      const name = `${p.firstName || ''} ${p.lastName || ''}`.trim();
+      const firstName = p.firstName && p.firstName !== 'null' ? p.firstName : '';
+      const lastName = p.lastName && p.lastName !== 'null' ? p.lastName : '';
+      const name = `${firstName} ${lastName}`.trim();
       const levelColor = p.level > levelBefore 
         ? 'text-green-600 dark:text-green-400' 
         : p.level < levelBefore 
@@ -69,7 +71,7 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
       
       return (
         <span key={index}>
-          {name} <span className={`text-[10px] ${levelColor}`}>({formatNumber(p.level)})</span>
+          {name || 'Unknown'} <span className={`text-[10px] ${levelColor}`}>({formatNumber(p.level)})</span>
           {index < players.length - 1 && ', '}
         </span>
       );
@@ -97,7 +99,7 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
     >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            {t('gameResults.explanationTitle')}: {playerName}
+            {t('gameResults.explanationTitle')}: {playerName && playerName !== 'null' ? playerName : 'Unknown'}
           </h2>
         </div>
 

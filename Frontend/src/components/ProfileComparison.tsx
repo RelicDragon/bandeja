@@ -78,7 +78,7 @@ export const ProfileComparison = () => {
                   {currentUser?.avatar ? (
                     <img
                       src={currentUser.avatar || ''}
-                      alt={`${currentUser.firstName} ${currentUser.lastName}`}
+                      alt={`${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || 'User'}
                       className="w-16 h-16 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-lg mx-auto"
                     />
                   ) : (
@@ -88,7 +88,7 @@ export const ProfileComparison = () => {
                   )}
                 </div>
                 <div className="text-white text-sm font-semibold">
-                  {currentUser?.firstName} {currentUser?.lastName}
+                  {[currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(' ') || 'Unknown'}
                 </div>
               </div>
               
@@ -102,7 +102,7 @@ export const ProfileComparison = () => {
                   {selectedPlayer.avatar ? (
                     <img
                       src={selectedPlayer.avatar || ''}
-                      alt={`${selectedPlayer.firstName} ${selectedPlayer.lastName}`}
+                      alt={`${selectedPlayer.firstName || ''} ${selectedPlayer.lastName || ''}`.trim() || 'Player'}
                       className="w-16 h-16 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-lg mx-auto"
                     />
                   ) : (

@@ -521,7 +521,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         <ConfirmationModal
           isOpen={showBlockConfirmation}
           title={t('playerCard.blockUser')}
-          message={t('playerCard.blockUserConfirmation', { name: stats.user.firstName }) || `Are you sure you want to block ${stats.user.firstName}? You won't be able to see their messages or interact with them.`}
+          message={t('playerCard.blockUserConfirmation', { name: stats.user.firstName || '' }) || `Are you sure you want to block ${stats.user.firstName || ''}? You won't be able to see their messages or interact with them.`}
           confirmText={t('playerCard.block')}
           cancelText={t('common.cancel')}
           confirmVariant="danger"
@@ -598,7 +598,7 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, g
                 {user.avatar ? (
                   <img
                     src={user.avatar || ''}
-                    alt={`${user.firstName} ${user.lastName}`}
+                    alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'}
                     className={`w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
                   />
                 ) : (

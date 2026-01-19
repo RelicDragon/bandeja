@@ -138,7 +138,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
                 {user.avatar ? (
                   <img
                     src={user.avatar || ''}
-                    alt={`${user.firstName} ${user.lastName}`}
+                    alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'}
                     className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
                   />
                 ) : (

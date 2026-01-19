@@ -63,7 +63,7 @@ export const GroupChannelInviteModal = ({
 
     return players.filter((player) =>
       matchesSearch(
-        `${player.firstName} ${player.lastName}`,
+        `${player.firstName || ''} ${player.lastName || ''}`.trim(),
         searchQuery
       )
     );
