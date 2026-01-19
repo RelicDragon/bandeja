@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -329,6 +329,7 @@ export const GameDetailsContent = () => {
       const gameResponse = await gamesApi.getById(id);
       setGame(gameResponse.data);
     } catch (error: any) {
+      console.error('Failed to join game:', error);
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
@@ -410,7 +411,16 @@ export const GameDetailsContent = () => {
   const isUserOwner = userParticipant?.role === 'OWNER';
   const hasPendingInvite = myInvites.length > 0;
   const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') || false;
-  const isInJoinQueue = game?.joinQueues?.some(q => q.userId === user?.id && q.status === 'PENDING') || false;
+  // TODO: Remove after 2025-02-02 - Backward compatibility: check both old joinQueues and new non-playing participants
+  const isInJoinQueue = useMemo(() => {
+    if (!game || !user?.id) return false;
+    
+    const userParticipant = game.participants.find(p => p.userId === user.id);
+    const isNonPlayingParticipant = userParticipant && !userParticipant.isPlaying && userParticipant.role === 'PARTICIPANT';
+    const isInOldQueue = game.joinQueues?.some(q => q.userId === user.id && q.status === 'PENDING') || false;
+    
+    return isNonPlayingParticipant || isInOldQueue;
+  }, [game?.participants, game?.joinQueues, user?.id]);
   const isOwner = game && user ? isUserGameAdminOrOwner(game, user.id) : false;
   const canAccessChat = isParticipant || hasPendingInvite || isGuest || isOwner || game?.isPublic || game?.entityType === 'BAR' || game?.entityType === 'LEAGUE' || false;
   const canEdit = isOwner || user?.isAdmin || false;
@@ -449,6 +459,20 @@ export const GameDetailsContent = () => {
       await gamesApi.declineJoinQueue(id, queueUserId);
       const response = await gamesApi.getById(id);
       setGame(response.data);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    }
+  };
+
+  const handleCancelJoinQueue = async () => {
+    if (!id) return;
+
+    try {
+      await gamesApi.cancelJoinQueue(id);
+      const response = await gamesApi.getById(id);
+      setGame(response.data);
+      toast.success(t('games.joinRequestCanceled', { defaultValue: 'Join request canceled' }));
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
@@ -1121,6 +1145,7 @@ export const GameDetailsContent = () => {
                 onCancelInvite={handleCancelInvite}
                 onAcceptJoinQueue={handleAcceptJoinQueue}
                 onDeclineJoinQueue={handleDeclineJoinQueue}
+                onCancelJoinQueue={handleCancelJoinQueue}
                 onShowPlayerList={(gender) => {
                   setPlayerListGender(gender);
                   setShowPlayerList(true);

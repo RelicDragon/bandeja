@@ -13,6 +13,7 @@ import { MessageReportService } from '../services/chat/messageReport.service';
 import { UnreadObjectsService } from '../services/chat/unreadObjects.service';
 import { ChatMuteService } from '../services/chat/chatMute.service';
 import { TranslationService } from '../services/chat/translation.service';
+import { DraftService } from '../services/chat/draft.service';
 import prisma from '../config/database';
 
 export const createSystemMessage = async (contextId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC, chatContextType: ChatContextType = ChatContextType.GAME) => {
@@ -1023,5 +1024,108 @@ export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequ
   res.json({
     success: true,
     data: result
+  });
+});
+
+export const saveDraft = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { chatContextType, contextId, chatType = ChatType.PUBLIC, content, mentionIds = [] } = req.body;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!chatContextType || !contextId) {
+    throw new ApiError(400, 'chatContextType and contextId are required');
+  }
+
+  if (content && typeof content !== 'string') {
+    throw new ApiError(400, 'Content must be a string');
+  }
+
+  if (!Array.isArray(mentionIds)) {
+    throw new ApiError(400, 'mentionIds must be an array');
+  }
+
+  const draft = await DraftService.saveDraft(
+    userId,
+    chatContextType as ChatContextType,
+    contextId,
+    chatType as ChatType,
+    content,
+    mentionIds
+  );
+
+  res.json({
+    success: true,
+    data: draft
+  });
+});
+
+export const getDraft = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { chatContextType, contextId, chatType = ChatType.PUBLIC } = req.query;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!chatContextType || !contextId) {
+    throw new ApiError(400, 'chatContextType and contextId are required');
+  }
+
+  const draft = await DraftService.getDraft(
+    userId,
+    chatContextType as ChatContextType,
+    contextId as string,
+    chatType as ChatType
+  );
+
+  res.json({
+    success: true,
+    data: draft
+  });
+});
+
+export const getUserDrafts = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
+
+  const result = await DraftService.getUserDrafts(userId, page, limit);
+
+  res.json({
+    success: true,
+    data: result.drafts,
+    pagination: result.pagination
+  });
+});
+
+export const deleteDraft = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { chatContextType, contextId, chatType = ChatType.PUBLIC } = req.body;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!chatContextType || !contextId) {
+    throw new ApiError(400, 'chatContextType and contextId are required');
+  }
+
+  await DraftService.deleteDraft(
+    userId,
+    chatContextType as ChatContextType,
+    contextId,
+    chatType as ChatType
+  );
+
+  res.json({
+    success: true
   });
 });

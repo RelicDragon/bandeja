@@ -223,6 +223,8 @@
     "addedToJoinQueue": "Додато на листу чекања",
     "joinRequestAccepted": "Захтев за придруживање прихваћен",
     "joinRequestDeclined": "Захтев за придруживање одбијен",
+    "joinRequestCanceled": "Захтев за придруживање отказан",
+    "cancelJoinRequest": "Откажи захтев",
     "alreadyInJoinQueue": "Већ сте на листи чекања",
     "notAuthorizedToAcceptJoinQueue": "Нисте овлашћени да прихватите захтеве са листе чекања",
     "notAuthorizedToDeclineJoinQueue": "Нисте овлашћени да одбијете захтеве са листе чекања",
@@ -1074,6 +1076,7 @@
     "create": "Креирај",
     "save": "Сачувај",
     "delete": "Обриши",
+    "deleting": "Брисање...",
     "edit": "Уреди",
     "close": "Затвори",
     "leave": "Напусти",
@@ -1152,7 +1155,9 @@
     "games": {
       "cannotJoin": "Не може се придружити игри",
       "cannotAddPlayer": "Не може се додати играч у игру",
-      "alreadyParticipant": "Корисник је већ учесник"
+      "alreadyParticipant": "Корисник је већ учесник",
+      "cannotJoinArchivedOrFinished": "Не може се придружити архивираној или завршеној игри",
+      "directJoinNotAllowed": "Директно придруживање није дозвољено за ову игру"
     },
     "bugs": {
       "notFound": "Грешка није пронађена",
@@ -1247,6 +1252,7 @@
       "USER_JOINED_JOIN_QUEUE": "{{userName}} захтевао да се придружи игри",
       "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} се придружио игри",
       "USER_DECLINED_JOIN_QUEUE": "{{userName}} захтев за придруживање је одбијен",
+      "USER_CANCELED_JOIN_QUEUE": "{{userName}} отказао свој захтев за придруживање",
       "BUG_STATUS_CHANGED": "Статус грешке промењен на {{status}}",
       "BUG_TYPE_CHANGED": "Тип грешке промењен на {{type}}",
       "GAME_CLUB_CHANGED": "Локација игре промењена на {{clubName}}",

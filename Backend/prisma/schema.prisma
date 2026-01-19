@@ -102,6 +102,7 @@ model User {
   betsAccepted                Bet[]                @relation("BetAcceptor")
   betsWon                     Bet[]                @relation("BetWinner")
   messageTranslations         MessageTranslation[]
+  chatDrafts                  ChatDraft[]
 
   @@index([phone])
   @@index([telegramId])
@@ -598,6 +599,24 @@ model ChatMute {
   @@unique([userId, chatContextType, contextId])
   @@index([userId])
   @@index([chatContextType, contextId])
+}
+
+model ChatDraft {
+  id              String          @id @default(cuid())
+  userId          String
+  chatContextType ChatContextType
+  contextId       String
+  chatType        ChatType        @default(PUBLIC)
+  content         String?
+  mentionIds      String[]
+  updatedAt       DateTime        @updatedAt
+  createdAt       DateTime        @default(now())
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chatContextType, contextId, chatType])
+  @@index([userId])
+  @@index([chatContextType, contextId])
+  @@index([updatedAt])
 }
 
 model MessageReaction {

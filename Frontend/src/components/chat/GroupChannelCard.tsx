@@ -1,5 +1,5 @@
 import { formatRelativeTime } from '@/utils/dateFormat';
-import { GroupChannel } from '@/api/chat';
+import { GroupChannel, ChatDraft } from '@/api/chat';
 import { Users, Hash } from 'lucide-react';
 
 interface GroupChannelCardProps {
@@ -7,14 +7,22 @@ interface GroupChannelCardProps {
   unreadCount?: number;
   onClick: () => void;
   isSelected?: boolean;
+  draft?: ChatDraft | null;
 }
 
-export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSelected }: GroupChannelCardProps) => {
+export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSelected, draft }: GroupChannelCardProps) => {
   const displayName = groupChannel.name;
   const lastMessage = groupChannel.lastMessage;
-  const lastMessageText = lastMessage?.content 
-    ? (lastMessage.content.length > 50 ? lastMessage.content.substring(0, 50) + '...' : lastMessage.content)
-    : '';
+  
+  const lastMessageTime = lastMessage ? new Date(lastMessage.createdAt).getTime() : 0;
+  const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
+  const showDraft = draft && (draftTime > lastMessageTime || !lastMessage);
+  
+  const lastMessageText = showDraft
+    ? (draft?.content ? (draft.content.length > 50 ? draft.content.substring(0, 50) + '...' : draft.content) : '')
+    : (lastMessage?.content 
+        ? (lastMessage.content.length > 50 ? lastMessage.content.substring(0, 50) + '...' : lastMessage.content)
+        : '');
 
   return (
     <div
@@ -59,7 +67,16 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
             )}
           </div>
           
-          {lastMessage ? (
+          {showDraft ? (
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400 italic truncate flex-1">
+                {lastMessageText.trim() ? `Draft: ${lastMessageText}` : 'Draft:'}
+              </p>
+              <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                {formatRelativeTime(draft!.updatedAt)}
+              </span>
+            </div>
+          ) : lastMessage ? (
             <div className="flex items-center gap-2">
               <p className="text-sm text-gray-600 dark:text-gray-400 truncate flex-1">
                 {lastMessage.sender && (

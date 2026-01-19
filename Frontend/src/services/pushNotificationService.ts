@@ -2,6 +2,7 @@ import { PushNotifications, PushNotificationSchema, ActionPerformed, Token } fro
 import { Capacitor } from '@capacitor/core';
 import api from '@/api/axios';
 import { invitesApi } from '@/api/invites';
+import { navigationService } from './navigationService';
 
 interface NotificationData {
   type: string;
@@ -13,6 +14,7 @@ interface NotificationData {
     chatType?: string;
     messageId?: string;
     userChatId?: string;
+    groupChannelId?: string;
   };
 }
 
@@ -101,21 +103,46 @@ class PushNotificationService {
     }
   }
 
+  private normalizeNotificationData(rawData: any): NotificationData | null {
+    if (!rawData || typeof rawData !== 'object') {
+      return null;
+    }
+
+    // Handle iOS structure: { type: "GAME_CHAT", data: { gameId: "123" } }
+    if (rawData.type && rawData.data && typeof rawData.data === 'object') {
+      return {
+        type: rawData.type,
+        data: rawData.data
+      };
+    }
+
+    // Handle Android flattened structure: { type: "GAME_CHAT", gameId: "123", ... }
+    if (rawData.type) {
+      const { type, ...rest } = rawData;
+      return {
+        type,
+        data: rest
+      };
+    }
+
+    return null;
+  }
+
   private async handleNotificationAction(action: ActionPerformed) {
     const { actionId, notification } = action;
-    const data = notification.data as NotificationData;
+    const normalizedData = this.normalizeNotificationData(notification.data);
 
-    if (!data || !data.type) {
-      console.error('Invalid notification data');
+    if (!normalizedData || !normalizedData.type) {
+      console.error('Invalid notification data:', notification.data);
       return;
     }
 
     if (actionId === 'tap') {
-      await this.handleNotificationTap(data);
+      await this.handleNotificationTap(normalizedData);
     } else if (actionId === 'accept') {
-      await this.handleAcceptInvite(data);
+      await this.handleAcceptInvite(normalizedData);
     } else if (actionId === 'decline') {
-      await this.handleDeclineInvite(data);
+      await this.handleDeclineInvite(normalizedData);
     }
   }
 
@@ -128,20 +155,30 @@ class PushNotificationService {
       case 'GAME_SYSTEM_MESSAGE':
       case 'GAME_REMINDER':
       case 'GAME_RESULTS':
+      case 'NEW_GAME':
         if (payload?.gameId) {
-          this.navigateToGame(payload.gameId);
+          const openChat = type === 'GAME_CHAT';
+          navigationService.navigateToGame(payload.gameId, openChat);
         }
         break;
 
       case 'BUG_CHAT':
         if (payload?.bugId) {
-          this.navigateToBug(payload.bugId);
+          navigationService.navigateToBugChat(payload.bugId);
+        } else {
+          navigationService.navigateToBugsList();
         }
         break;
 
       case 'USER_CHAT':
-        if (payload?.userId) {
-          this.navigateToUserChat(payload.userId);
+        if (payload?.userChatId) {
+          navigationService.navigateToUserChat(payload.userChatId);
+        }
+        break;
+
+      case 'GROUP_CHAT':
+        if (payload?.groupChannelId) {
+          navigationService.navigateToGroupChat(payload.groupChannelId);
         }
         break;
 
@@ -161,7 +198,7 @@ class PushNotificationService {
       console.log('✅ Invite accepted');
       
       if (data.data.gameId) {
-        this.navigateToGame(data.data.gameId);
+        navigationService.navigateToGame(data.data.gameId);
       }
     } catch (error) {
       console.error('❌ Failed to accept invite:', error);
@@ -182,17 +219,6 @@ class PushNotificationService {
     }
   }
 
-  private navigateToGame(gameId: string) {
-    window.location.href = `/games/${gameId}`;
-  }
-
-  private navigateToBug(_bugId: string) {
-    window.location.href = `/bugs`;
-  }
-
-  private navigateToUserChat(_userId: string) {
-    window.location.href = `/`;
-  }
 
   async removeToken() {
     try {

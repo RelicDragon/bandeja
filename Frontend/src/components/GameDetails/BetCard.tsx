@@ -74,7 +74,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
     try {
       await betsApi.cancel(bet.id);
       onBetUpdate({ ...bet, status: 'CANCELLED' });
-      toast.success(t('bets.cancelled', { defaultValue: 'Bet cancelled' }));
+      toast.success(t('bets.cancelled', { defaultValue: 'Challenge cancelled' }));
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic', { defaultValue: 'An error occurred' }));
     }
@@ -287,7 +287,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
                   disabled={!hasEnoughCoins || isLoadingWallet}
                   className="w-full px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {t('bets.accept', { defaultValue: 'Accept Bet' })}
+                  {t('bets.accept', { defaultValue: 'Accept Challenge' })}
                 </button>
               </>
             )}

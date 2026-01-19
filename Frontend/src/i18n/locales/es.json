@@ -222,6 +222,8 @@
     "addedToJoinQueue": "Agregado a la lista de espera",
     "joinRequestAccepted": "Solicitud de unión aceptada",
     "joinRequestDeclined": "Solicitud de unión rechazada",
+    "joinRequestCanceled": "Solicitud de unión cancelada",
+    "cancelJoinRequest": "Cancelar solicitud",
     "alreadyInJoinQueue": "Ya estás en la lista de espera",
     "notAuthorizedToAcceptJoinQueue": "No autorizado para aceptar solicitudes de lista de espera",
     "notAuthorizedToDeclineJoinQueue": "No autorizado para rechazar solicitudes de lista de espera",
@@ -1063,6 +1065,7 @@
     "create": "Crear",
     "save": "Guardar",
     "delete": "Eliminar",
+    "deleting": "Eliminando...",
     "edit": "Editar",
     "close": "Cerrar",
     "leave": "Dejar",
@@ -1141,7 +1144,9 @@
     "games": {
       "cannotJoin": "No se puede unir al juego",
       "cannotAddPlayer": "No se puede agregar jugador al juego",
-      "alreadyParticipant": "El usuario ya es un participante"
+      "alreadyParticipant": "El usuario ya es un participante",
+      "cannotJoinArchivedOrFinished": "No se puede unir a un juego archivado o finalizado",
+      "directJoinNotAllowed": "No se permite unirse directamente a este juego"
     },
     "bugs": {
       "notFound": "Error no encontrado",
@@ -1236,6 +1241,7 @@
       "USER_JOINED_JOIN_QUEUE": "{{userName}} solicitó unirse al juego",
       "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} se unió al juego",
       "USER_DECLINED_JOIN_QUEUE": "{{userName}} solicitud de unión fue rechazada",
+      "USER_CANCELED_JOIN_QUEUE": "{{userName}} canceló su solicitud de unión",
       "BUG_STATUS_CHANGED": "Estado del error cambiado a {{status}}",
       "BUG_TYPE_CHANGED": "Tipo del error cambiado a {{type}}",
       "GAME_CLUB_CHANGED": "Ubicación del juego cambiada a {{clubName}}",

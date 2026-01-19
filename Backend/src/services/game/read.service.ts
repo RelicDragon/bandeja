@@ -43,6 +43,7 @@ export const getGameInclude = () => ({
       },
     },
   },
+  // TODO: Remove after 2025-02-02 - Backward compatibility: include JoinQueue
   joinQueues: {
     where: {
       status: InviteStatus.PENDING,
@@ -176,6 +177,43 @@ export const getGameInclude = () => ({
   },
 });
 
+// TODO: Remove after 2025-02-02 - Backward compatibility: compute joinQueues from participants
+export function computeJoinQueuesFromParticipants(game: any): any[] {
+  const nonPlayingParticipants = game.participants?.filter(
+    (p: any) => !p.isPlaying && p.role === 'PARTICIPANT'
+  ) || [];
+  
+  // Merge with old joinQueues for backward compatibility
+  const oldJoinQueues = game.joinQueues || [];
+  
+  // Create map to avoid duplicates
+  const queueMap = new Map();
+  
+  // Add non-playing participants
+  nonPlayingParticipants.forEach((p: any) => {
+    queueMap.set(p.userId, {
+      id: p.id,
+      userId: p.userId,
+      gameId: p.gameId,
+      status: 'PENDING' as const,
+      createdAt: p.joinedAt,
+      updatedAt: p.joinedAt,
+      user: p.user,
+    });
+  });
+  
+  // Add old joinQueues that don't have corresponding participants
+  oldJoinQueues.forEach((jq: any) => {
+    if (!queueMap.has(jq.userId)) {
+      queueMap.set(jq.userId, jq);
+    }
+  });
+  
+  return Array.from(queueMap.values()).sort((a, b) => 
+    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+}
+
 export class GameReadService {
   static async getGameById(id: string, userId?: string, skipRestrictions: boolean = false) {
     const game = await prisma.game.findUnique({
@@ -223,6 +261,8 @@ export class GameReadService {
     return {
       ...game,
       isClubFavorite,
+      // TODO: Remove after 2025-02-02 - Backward compatibility: compute joinQueues from participants
+      joinQueues: computeJoinQueuesFromParticipants(game),
     };
   }
 

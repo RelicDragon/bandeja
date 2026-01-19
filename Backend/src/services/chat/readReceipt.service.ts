@@ -16,7 +16,7 @@ export class ReadReceiptService {
 
     // Validate access based on context type
     if (message.chatContextType === 'GAME') {
-      await MessageService.validateGameAccess(message.contextId, userId);
+      await MessageService.validateGameAccess(message.contextId, userId, message.chatType);
     } else if (message.chatContextType === 'BUG') {
       await MessageService.validateBugAccess(message.contextId, userId);
     } else if (message.chatContextType === 'USER') {
@@ -199,7 +199,7 @@ export class ReadReceiptService {
   }
 
   static async getGameUnreadCount(gameId: string, userId: string) {
-    const { participant, game } = await MessageService.validateGameAccess(gameId, userId);
+    const { participant, game } = await MessageService.validateGameAccess(gameId, userId, 'PUBLIC');
 
     const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
       gameId,
@@ -368,7 +368,8 @@ export class ReadReceiptService {
   }
 
   static async markAllMessagesAsRead(gameId: string, userId: string, chatTypes: string[] = []) {
-    const { participant } = await MessageService.validateGameAccess(gameId, userId);
+    const chatTypeForValidation = chatTypes.length > 0 && chatTypes.includes('PUBLIC') ? 'PUBLIC' : chatTypes[0] || 'PUBLIC';
+    const { participant } = await MessageService.validateGameAccess(gameId, userId, chatTypeForValidation as any);
 
     const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
       gameId,

@@ -136,6 +136,11 @@ export const gamesApi = {
     return response.data;
   },
 
+  cancelJoinQueue: async (id: string) => {
+    const response = await api.post<ApiResponse<void>>(`/games/${id}/cancel-join-queue`);
+    return response.data;
+  },
+
   getBookedCourts: async (params: {
     clubId: string;
     startDate?: string;

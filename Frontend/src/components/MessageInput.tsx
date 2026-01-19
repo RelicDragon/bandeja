@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { chatApi, CreateMessageRequest, ChatMessage, ChatContextType, GroupChannel } from '@/api/chat';
@@ -51,12 +51,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const saveDraftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasLoadedDraftRef = useRef(false);
 
   const contextType: ChatContextType = gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER';
+  const finalContextId = gameId || bugId || userChatId || groupChannelId;
 
   const isChannelOwner = groupChannel?.isChannel && user && groupChannel ? isGroupChannelOwner(groupChannel, user.id) : false;
   const isChannelNonOwner = groupChannel?.isChannel && !isChannelOwner;
   const isDisabledForChannel = isChannelNonOwner || disabled;
+
+  const isValidImage = (file: File): boolean => {
+    return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
+  };
 
   const imagePreviewUrls = useMemo(() => {
     return selectedImages.map(file => URL.createObjectURL(file));
@@ -68,13 +75,119 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     };
   }, [imagePreviewUrls]);
 
+  const saveDraft = useCallback(async (content: string, mentionIds: string[]) => {
+    if (!finalContextId || !user?.id) return;
+
+    const trimmedContent = content?.trim();
+    if (!trimmedContent && mentionIds.length === 0) {
+      return;
+    }
+
+    try {
+      const savedDraft = await chatApi.saveDraft({
+        chatContextType: contextType,
+        contextId: finalContextId,
+        chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
+        content: trimmedContent || undefined,
+        mentionIds: mentionIds.length > 0 ? mentionIds : undefined
+      });
+      
+      window.dispatchEvent(new CustomEvent('draft-updated', {
+        detail: {
+          draft: savedDraft,
+          chatContextType: contextType,
+          contextId: finalContextId
+        }
+      }));
+    } catch (error) {
+      console.error('Failed to save draft:', error);
+    }
+  }, [finalContextId, user?.id, contextType, chatType, userChatId]);
+
+  const debouncedSaveDraft = useCallback((content: string, mentionIds: string[]) => {
+    if (saveDraftTimeoutRef.current) {
+      clearTimeout(saveDraftTimeoutRef.current);
+    }
+
+    saveDraftTimeoutRef.current = setTimeout(() => {
+      saveDraft(content, mentionIds);
+      saveDraftTimeoutRef.current = null;
+    }, 800);
+  }, [saveDraft]);
+
+  const messageRef = useRef(message);
+  const mentionIdsRef = useRef(mentionIds);
+
+  useEffect(() => {
+    messageRef.current = message;
+    mentionIdsRef.current = mentionIds;
+  }, [message, mentionIds]);
+
+  const loadDraft = useCallback(async () => {
+    if (!finalContextId || !user?.id || hasLoadedDraftRef.current) return;
+
+    hasLoadedDraftRef.current = true;
+
+    if (saveDraftTimeoutRef.current) {
+      clearTimeout(saveDraftTimeoutRef.current);
+      saveDraftTimeoutRef.current = null;
+    }
+
+    try {
+      const draft = await chatApi.getDraft(
+        contextType,
+        finalContextId,
+        userChatId ? 'PUBLIC' : normalizeChatType(chatType)
+      );
+
+      if (draft) {
+        const hasUserTyped = messageRef.current.trim().length > 0 || mentionIdsRef.current.length > 0;
+        if (!hasUserTyped) {
+          setMessage(draft.content || '');
+          setMentionIds(draft.mentionIds || []);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load draft:', error);
+    }
+  }, [finalContextId, user?.id, contextType, chatType, userChatId]);
+
+  useEffect(() => {
+    if (saveDraftTimeoutRef.current) {
+      clearTimeout(saveDraftTimeoutRef.current);
+      saveDraftTimeoutRef.current = null;
+    }
+    hasLoadedDraftRef.current = false;
+    setMessage('');
+    setMentionIds([]);
+    loadDraft();
+  }, [finalContextId, contextType, chatType, loadDraft]);
+
+  useEffect(() => {
+    return () => {
+      if (saveDraftTimeoutRef.current) {
+        clearTimeout(saveDraftTimeoutRef.current);
+        saveDraftTimeoutRef.current = null;
+        
+        if (finalContextId && user?.id) {
+          const currentMessage = messageRef.current?.trim();
+          const currentMentionIds = mentionIdsRef.current || [];
+          
+          if (currentMessage || currentMentionIds.length > 0) {
+            saveDraft(currentMessage || '', currentMentionIds).catch(error => {
+              console.error('Failed to save draft on unmount:', error);
+            });
+          }
+        }
+      }
+    };
+  }, [finalContextId, user?.id, saveDraft]);
+
 
   const handleImageSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    const imageFiles = Array.from(files).filter(file => 
-      file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024 // 10MB limit
-    );
+    const imageFiles = Array.from(files).filter(isValidImage);
 
     if (imageFiles.length === 0) {
       toast.error(t('chat.invalidImageType'));
@@ -91,9 +204,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       try {
         const result = await pickImages(10);
         if (result && result.files.length > 0) {
-          const validFiles = result.files.filter(file => 
-            file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024
-          );
+          const validFiles = result.files.filter(isValidImage);
 
           if (validFiles.length === 0) {
             toast.error(t('chat.invalidImageType'));
@@ -124,8 +235,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
     const targetId = gameId || bugId || userChatId || groupChannelId;
     if (!targetId) return { originalUrls: [], thumbnailUrls: [] };
-
-    const contextType = gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER';
 
     const uploadPromises = selectedImages.map(async (file) => {
       try {
@@ -174,13 +283,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleMessageChange = (newValue: string, newMentionIds: string[]) => {
     setMessage(newValue);
     setMentionIds(newMentionIds);
+    debouncedSaveDraft(newValue, newMentionIds);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!message.trim() && selectedImages.length === 0) || isLoading || isDisabledForChannel) return;
 
-    const finalContextId = gameId || bugId || userChatId || groupChannelId;
     if (!finalContextId) {
       console.error('[MessageInput] Missing contextId:', { gameId, bugId, userChatId, groupChannelId });
       toast.error(t('chat.missingContextId') || 'Missing chat context');
@@ -210,9 +319,34 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       console.log('[MessageInput] Sending message:', messageData);
       await chatApi.createMessage(messageData);
 
+      if (saveDraftTimeoutRef.current) {
+        clearTimeout(saveDraftTimeoutRef.current);
+        saveDraftTimeoutRef.current = null;
+      }
+
+      if (finalContextId && user?.id) {
+        try {
+          await chatApi.deleteDraft(
+            contextType,
+            finalContextId,
+            userChatId ? 'PUBLIC' : normalizeChatType(chatType)
+          );
+          
+          window.dispatchEvent(new CustomEvent('draft-deleted', {
+            detail: {
+              chatContextType: contextType,
+              contextId: finalContextId
+            }
+          }));
+        } catch (error) {
+          console.error('Failed to delete draft:', error);
+        }
+      }
+
       setMessage('');
       setMentionIds([]);
       setSelectedImages([]);
+      hasLoadedDraftRef.current = false;
       onCancelReply?.();
     } catch (error) {
       console.error('Failed to send message:', error);

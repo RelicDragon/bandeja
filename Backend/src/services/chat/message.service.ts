@@ -8,9 +8,10 @@ import { UserChatService } from './userChat.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { TranslationService } from './translation.service';
 import { ReadReceiptService } from './readReceipt.service';
+import { DraftService } from './draft.service';
 
 export class MessageService {
-  static async validateGameAccess(gameId: string, userId: string) {
+  static async validateGameAccess(gameId: string, userId: string, chatType?: ChatType) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       include: {
@@ -28,6 +29,12 @@ export class MessageService {
 
     if (!game) {
       throw new ApiError(404, 'Game not found');
+    }
+
+    // PUBLIC chat is accessible to anyone
+    if (chatType === ChatType.PUBLIC) {
+      const participant = game.participants[0];
+      return { game, isParticipant: !!participant, hasPendingInvite: false, isPublicGame: game.isPublic, participant };
     }
 
     const isDirectParticipant = game.participants.length > 0;
@@ -259,7 +266,7 @@ export class MessageService {
     let game, participant, bug, userChat, groupChannel;
     
     if (chatContextType === 'GAME') {
-      const result = await this.validateGameAccess(contextId, senderId);
+      const result = await this.validateGameAccess(contextId, senderId, chatType);
       game = result.game;
       participant = result.participant;
       await this.validateChatTypeAccess(participant, chatType, game, senderId, contextId);
@@ -405,6 +412,17 @@ export class MessageService {
       notificationService.sendGroupChatNotification(message, groupChannel, message.sender, []).catch(error => {
         console.error('Failed to send notification:', error);
       });
+    }
+
+    try {
+      await DraftService.deleteDraft(
+        data.senderId,
+        data.chatContextType,
+        data.contextId,
+        data.chatType
+      );
+    } catch (error) {
+      console.error('Failed to delete draft in createMessage:', error);
     }
 
     return message;
@@ -591,6 +609,17 @@ export class MessageService {
         }, 2000); // Wait 2 seconds for socket delivery
       }
     }
+
+    try {
+      await DraftService.deleteDraft(
+        data.senderId,
+        data.chatContextType,
+        data.contextId,
+        data.chatType
+      );
+    } catch (error) {
+      console.error('Failed to delete draft in createMessageWithEvent:', error);
+    }
     
     return message;
   }
@@ -609,7 +638,7 @@ export class MessageService {
 
     // Validate access based on context type
     if (chatContextType === 'GAME') {
-      const { participant, game } = await this.validateGameAccess(contextId, userId);
+      const { participant, game } = await this.validateGameAccess(contextId, userId, chatType);
       await this.validateChatTypeAccess(participant, chatType, game, userId, contextId);
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
@@ -653,7 +682,7 @@ export class MessageService {
   ) {
     // Validate access based on context type
     if (chatContextType === 'GAME') {
-      const { participant, game } = await this.validateGameAccess(contextId, userId);
+      const { participant, game } = await this.validateGameAccess(contextId, userId, chatType);
       await this.validateChatTypeAccess(participant, chatType, game, userId, contextId);
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
@@ -700,7 +729,7 @@ export class MessageService {
 
     // Validate access based on context type
     if (message.chatContextType === 'GAME') {
-      await this.validateGameAccess(message.contextId, userId);
+      await this.validateGameAccess(message.contextId, userId, message.chatType);
     } else if (message.chatContextType === 'BUG') {
       await this.validateBugAccess(message.contextId, userId, true);
     } else if (message.chatContextType === 'USER') {
@@ -754,7 +783,7 @@ export class MessageService {
 
     // Validate access based on context type
     if (message.chatContextType === 'GAME') {
-      await this.validateGameAccess(message.contextId, userId);
+      await this.validateGameAccess(message.contextId, userId, message.chatType);
     } else if (message.chatContextType === 'BUG') {
       await this.validateBugAccess(message.contextId, userId, true);
     } else if (message.chatContextType === 'USER') {

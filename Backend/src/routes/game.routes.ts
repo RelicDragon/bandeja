@@ -121,5 +121,11 @@ router.post(
   gameController.declineJoinQueue
 );
 
+router.post(
+  '/:id/cancel-join-queue',
+  authenticate,
+  gameController.cancelJoinQueue
+);
+
 export default router;
 

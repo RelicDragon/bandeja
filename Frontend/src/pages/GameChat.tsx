@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { chatApi, ChatMessage, ChatContextType, UserChat as UserChatType } from '@/api/chat';
@@ -92,7 +92,16 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const isAdminOrOwner = game && user ? isUserGameAdminOrOwner(game, user.id) : (userParticipant?.role === 'ADMIN' || userParticipant?.role === 'OWNER');
   const hasPendingInvite = game?.invites?.some(invite => invite.receiverId === user?.id) ?? false;
   const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') ?? false;
-  const isInJoinQueue = game?.joinQueues?.some(q => q.userId === user?.id && q.status === 'PENDING') ?? false;
+  // TODO: Remove after 2025-02-02 - Backward compatibility: check both old joinQueues and new non-playing participants
+  const isInJoinQueue = useMemo(() => {
+    if (!game || !user?.id) return false;
+    
+    const userParticipant = game.participants.find(p => p.userId === user.id);
+    const isNonPlayingParticipant = userParticipant && !userParticipant.isPlaying && userParticipant.role === 'PARTICIPANT';
+    const isInOldQueue = game.joinQueues?.some(q => q.userId === user.id && q.status === 'PENDING') || false;
+    
+    return isNonPlayingParticipant || isInOldQueue;
+  }, [game?.participants, game?.joinQueues, user?.id]);
   const playingCount = game?.participants.filter(p => p.isPlaying).length ?? 0;
   const hasUnoccupiedSlots = game ? (game.entityType === 'BAR' || playingCount < game.maxParticipants) : false;
   
@@ -352,7 +361,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setIsJoiningAsGuest(true);
       try {
         await gamesApi.join(id);
-        await loadContext();
+        const updatedContext = await loadContext();
+        if (updatedContext && contextType === 'GAME') {
+          setGame(updatedContext as Game);
+        }
       } catch (error) {
         console.error('Failed to join game:', error);
       } finally {
@@ -1245,7 +1257,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             </div>
           ) : null
         ) : (
-          !(contextType === 'GAME' && isInJoinQueue) && (
+          !(contextType === 'GAME' && isInJoinQueue) && !(contextType === 'GAME' && game && (game.status === 'FINISHED' || game.status === 'ARCHIVED')) && (
             <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
               <div className="flex items-center justify-center">
                 <button

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { ProtectedRoute, AppLoadingScreen, NoInternetScreen, AppVersionModal } from './components';
 
@@ -30,11 +30,13 @@ import { useDeepLink } from './hooks/useDeepLink';
 import { extractLanguageCode } from './utils/displayPreferences';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import { backButtonService } from './services/backButtonService';
+import { navigationService } from './services/navigationService';
 import i18n from './i18n/config';
 import './i18n/config';
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const isInitializing = useAuthStore((state) => state.isInitializing);
@@ -47,6 +49,10 @@ function AppContent() {
   const { versionCheck, isChecking: isCheckingVersion } = useAppVersionCheck();
   
   useDeepLink();
+
+  useEffect(() => {
+    navigationService.initialize(navigate);
+  }, [navigate]);
 
   useEffect(() => {
     restoreAuthIfNeeded();

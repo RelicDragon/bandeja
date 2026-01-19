@@ -15,7 +15,7 @@ export class ReactionService {
 
     // Validate access based on context type
     if (message.chatContextType === 'GAME') {
-      await MessageService.validateGameAccess(message.contextId, userId);
+      await MessageService.validateGameAccess(message.contextId, userId, message.chatType);
     } else if (message.chatContextType === 'BUG') {
       await MessageService.validateBugAccess(message.contextId, userId, true);
     } else if (message.chatContextType === 'USER') {
@@ -85,7 +85,7 @@ export class ReactionService {
 
     // Validate access based on context type
     if (message.chatContextType === 'GAME') {
-      await MessageService.validateGameAccess(message.contextId, userId);
+      await MessageService.validateGameAccess(message.contextId, userId, message.chatType);
     } else if (message.chatContextType === 'BUG') {
       await MessageService.validateBugAccess(message.contextId, userId, true);
     } else if (message.chatContextType === 'USER') {

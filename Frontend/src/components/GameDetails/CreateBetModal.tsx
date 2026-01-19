@@ -90,7 +90,7 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
     }
 
     if (!entityId) {
-      toast.error(t('bets.selectEntity', { defaultValue: 'Please select who this bet applies to' }));
+      toast.error(t('bets.selectEntity', { defaultValue: 'Please select who this challenge applies to' }));
       return;
     }
 
@@ -141,7 +141,7 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
         });
 
         onBetUpdated?.(response.data);
-        toast.success(t('bets.updated', { defaultValue: 'Bet updated!' }));
+        toast.success(t('bets.updated', { defaultValue: 'Challenge updated!' }));
       } else {
         const response = await betsApi.create({
           gameId: game.id,
@@ -155,7 +155,7 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
         });
 
         onBetCreated?.(response.data);
-        toast.success(t('bets.created', { defaultValue: 'Bet created!' }));
+        toast.success(t('bets.created', { defaultValue: 'Challenge created!' }));
         
         // Reset form
         setStakeCoins(1);
@@ -187,7 +187,7 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
     >
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {isEditMode ? t('bets.edit', { defaultValue: 'Edit Bet' }) : t('bets.create', { defaultValue: 'Create Bet' })}
+            {isEditMode ? t('bets.edit', { defaultValue: 'Edit Challenge' }) : t('bets.create', { defaultValue: 'Create Challenge' })}
           </h2>
         </div>
 

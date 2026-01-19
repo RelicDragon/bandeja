@@ -51,8 +51,8 @@ export async function createBetResolvedPushNotification(
   const gameName = bet.game.name ? bet.game.name : t(`games.gameTypes.${bet.game.gameType}`, lang);
 
   const title = isWinner 
-    ? t('telegram.betWon', lang) || 'Bet Won!'
-    : t('telegram.betLost', lang) || 'Bet Lost';
+    ? t('telegram.betWon', lang) || 'Challenge Won!'
+    : t('telegram.betLost', lang) || 'Challenge Lost';
 
   let body = `${gameName}`;
   if (gameInfo.place) {
@@ -124,12 +124,12 @@ export async function createBetNeedsReviewPushNotification(
   const gameInfo = await formatGameInfoForUser(bet.game, user.currentCityId, lang);
   const gameName = bet.game.name ? bet.game.name : t(`games.gameTypes.${bet.game.gameType}`, lang);
 
-  const title = t('telegram.betNeedsReview', lang) || 'Bet Needs Review';
+  const title = t('telegram.betNeedsReview', lang) || 'Challenge Needs Review';
   let body = `${gameName}`;
   if (gameInfo.place) {
     body += ` - ${gameInfo.place}`;
   }
-  body += `\n${t('telegram.betNeedsReviewDescription', lang) || 'Your bet requires manual review due to a resolution error.'}`;
+  body += `\n${t('telegram.betNeedsReviewDescription', lang) || 'Your challenge requires manual review due to a resolution error.'}`;
 
   return {
     type: NotificationType.GAME_SYSTEM_MESSAGE,

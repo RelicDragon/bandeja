@@ -130,6 +130,26 @@ export interface GroupChannelInvite {
   groupChannel: GroupChannel;
 }
 
+export interface ChatDraft {
+  id: string;
+  userId: string;
+  chatContextType: ChatContextType;
+  contextId: string;
+  chatType: ChatType;
+  content?: string;
+  mentionIds: string[];
+  updatedAt: string;
+  createdAt: string;
+}
+
+export interface SaveDraftRequest {
+  chatContextType: ChatContextType;
+  contextId: string;
+  chatType?: ChatType;
+  content?: string;
+  mentionIds?: string[];
+}
+
 export const chatApi = {
   createMessage: async (data: CreateMessageRequest) => {
     const normalizedData = {
@@ -142,24 +162,6 @@ export const chatApi = {
 
   getGameMessages: async (gameId: string, page = 1, limit = 50, chatType: ChatType = 'PUBLIC') => {
     const normalizedChatType = normalizeChatType(chatType);
-    
-    if (normalizedChatType === 'PUBLIC') {
-      const [publicResponse, privateResponse] = await Promise.all([
-        api.get<ApiResponse<ChatMessage[]>>(`/chat/games/${gameId}/messages`, {
-          params: { page, limit, chatType: 'PUBLIC' }
-        }),
-        api.get<ApiResponse<ChatMessage[]>>(`/chat/games/${gameId}/messages`, {
-          params: { page, limit, chatType: 'PRIVATE' }
-        }).catch(() => ({ data: { data: [] } }))
-      ]);
-      
-      const allMessages = [...publicResponse.data.data, ...privateResponse.data.data];
-      const sortedMessages = allMessages.sort((a, b) => 
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-      
-      return sortedMessages.slice(0, limit);
-    }
     
     const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/games/${gameId}/messages`, {
       params: { page, limit, chatType: normalizedChatType }
@@ -494,5 +496,39 @@ export const chatApi = {
       `/chat/messages/${messageId}/translate`
     );
     return response.data.data;
+  },
+
+  saveDraft: async (data: SaveDraftRequest) => {
+    const response = await api.post<ApiResponse<ChatDraft>>('/chat/drafts', {
+      ...data,
+      chatType: data.chatType ? normalizeChatType(data.chatType) : 'PUBLIC'
+    });
+    return response.data.data;
+  },
+
+  getDraft: async (chatContextType: ChatContextType, contextId: string, chatType: ChatType = 'PUBLIC') => {
+    const normalizedChatType = normalizeChatType(chatType);
+    const response = await api.get<ApiResponse<ChatDraft | null>>('/chat/drafts', {
+      params: { chatContextType, contextId, chatType: normalizedChatType }
+    });
+    return response.data.data;
+  },
+
+  getUserDrafts: async (page: number = 1, limit: number = 50) => {
+    const response = await api.get<ApiResponse<ChatDraft[]>>('/chat/drafts/all', {
+      params: { page, limit }
+    });
+    return {
+      drafts: response.data.data,
+      pagination: (response.data as any).pagination
+    };
+  },
+
+  deleteDraft: async (chatContextType: ChatContextType, contextId: string, chatType: ChatType = 'PUBLIC') => {
+    const normalizedChatType = normalizeChatType(chatType);
+    const response = await api.delete<ApiResponse<void>>('/chat/drafts', {
+      data: { chatContextType, contextId, chatType: normalizedChatType }
+    });
+    return response.data;
   },
 };

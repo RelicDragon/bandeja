@@ -99,7 +99,7 @@ export const BetSection = ({ game }: BetSectionProps) => {
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20"
-                title={t('bets.createBet', { defaultValue: 'Create Bet' })}
+                title={t('bets.createBet', { defaultValue: 'Create Challenge' })}
               >
                 <Plus size={18} className="text-white" />
                 <span className="text-white text-sm font-medium">{t('common.create', { defaultValue: 'Create' })}</span>
@@ -109,7 +109,7 @@ export const BetSection = ({ game }: BetSectionProps) => {
 
           {bets.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              {t('bets.noBets', { defaultValue: 'No bets yet. Be the first to create one!' })}
+              {t('bets.noBets', { defaultValue: 'No challenges yet. Be the first to create one!' })}
             </div>
           ) : (
             <div className="space-y-3">

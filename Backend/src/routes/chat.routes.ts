@@ -35,14 +35,27 @@ import {
   isChatMuted,
   confirmMessageReceipt,
   getMissedMessages,
-  markAllMessagesAsReadForContext
+  markAllMessagesAsReadForContext,
+  saveDraft,
+  getDraft,
+  getUserDrafts,
+  deleteDraft
 } from '../controllers/chat.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
 router.use(authenticate);
+
+const draftLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 30,
+  message: 'Too many draft requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 router.post(
   '/messages',
@@ -202,6 +215,51 @@ router.post(
     body('chatTypes').optional().isArray().withMessage('chatTypes must be an array')
   ]),
   markAllMessagesAsReadForContext
+);
+
+router.post(
+  '/drafts',
+  draftLimiter,
+  validate([
+    body('chatContextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid chat context type'),
+    body('contextId').notEmpty().withMessage('Context ID is required'),
+    body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type'),
+    body('content').optional().isString().isLength({ max: 10000 }).withMessage('Content must be a string and cannot exceed 10000 characters'),
+    body('mentionIds').optional().isArray().isLength({ max: 50 }).withMessage('Mention IDs must be an array with maximum 50 items')
+  ]),
+  saveDraft
+);
+
+router.get(
+  '/drafts',
+  draftLimiter,
+  validate([
+    query('chatContextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid chat context type'),
+    query('contextId').notEmpty().withMessage('Context ID is required'),
+    query('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type')
+  ]),
+  getDraft
+);
+
+router.get(
+  '/drafts/all',
+  draftLimiter,
+  validate([
+    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100')
+  ]),
+  getUserDrafts
+);
+
+router.delete(
+  '/drafts',
+  draftLimiter,
+  validate([
+    body('chatContextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid chat context type'),
+    body('contextId').notEmpty().withMessage('Context ID is required'),
+    body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type')
+  ]),
+  deleteDraft
 );
 
 export default router;

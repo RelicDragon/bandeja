@@ -1,5 +1,7 @@
 package com.funified.bandeja;
 
+import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -8,6 +10,20 @@ import androidx.core.view.WindowCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        Context context = newBase;
+        if (newBase != null) {
+            Configuration configuration = newBase.getResources().getConfiguration();
+            if (configuration.fontScale > 1.2f) {
+                Configuration newConfiguration = new Configuration(configuration);
+                newConfiguration.fontScale = 1.2f;
+                context = newBase.createConfigurationContext(newConfiguration);
+            }
+        }
+        super.attachBaseContext(context);
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

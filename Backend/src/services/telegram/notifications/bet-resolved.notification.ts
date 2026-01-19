@@ -61,8 +61,8 @@ export async function sendBetResolvedNotification(
     const clubName = bet.game.court?.club?.name || bet.game.club?.name;
 
     const title = isWinner 
-      ? t('telegram.betWon', lang) || '🎉 Bet Won!'
-      : t('telegram.betLost', lang) || '❌ Bet Lost';
+      ? t('telegram.betWon', lang) || '🎉 Challenge Won!'
+      : t('telegram.betLost', lang) || '❌ Challenge Lost';
 
     let message = `${title}\n\n`;
     message += `🎮 ${escapeMarkdown(gameName)}\n`;
@@ -147,7 +147,7 @@ export async function sendBetNeedsReviewNotification(
     const gameName = bet.game.name ? bet.game.name : t(`games.gameTypes.${bet.game.gameType}`, lang);
     const clubName = bet.game.court?.club?.name || bet.game.club?.name;
 
-    const title = t('telegram.betNeedsReview', lang) || '⚠️ Bet Needs Review';
+    const title = t('telegram.betNeedsReview', lang) || '⚠️ Challenge Needs Review';
     let message = `${title}\n\n`;
     message += `🎮 ${escapeMarkdown(gameName)}\n`;
     
@@ -156,7 +156,7 @@ export async function sendBetNeedsReviewNotification(
     }
     
     message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
-    message += `\n${escapeMarkdown(t('telegram.betNeedsReviewDescription', lang) || 'Your bet requires manual review due to a resolution error.')}`;
+    message += `\n${escapeMarkdown(t('telegram.betNeedsReviewDescription', lang) || 'Your challenge requires manual review due to a resolution error.')}`;
 
     const buttons = [[
       {

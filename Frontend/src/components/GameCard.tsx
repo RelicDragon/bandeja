@@ -886,7 +886,7 @@ export const GameCard = ({
           </div>
         </div>
 
-        {showJoinButton && onJoin && game.status !== 'ARCHIVED' && game.resultsStatus === 'NONE' && game.entityType !== 'LEAGUE' && !isParticipant && !hasMyInvites && !isInJoinQueue && (
+        {showJoinButton && onJoin && game.status !== 'ARCHIVED' && game.status !== 'FINISHED' && game.resultsStatus === 'NONE' && game.entityType !== 'LEAGUE' && !isParticipant && !hasMyInvites && !isInJoinQueue && (
           <div className="mt-0 mb-4">
             {hasUnoccupiedSlots ? (
               <Button

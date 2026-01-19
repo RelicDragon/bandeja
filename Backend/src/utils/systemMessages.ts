@@ -9,6 +9,7 @@ export enum SystemMessageType {
   USER_JOINED_JOIN_QUEUE = 'USER_JOINED_JOIN_QUEUE',
   USER_ACCEPTED_JOIN_QUEUE = 'USER_ACCEPTED_JOIN_QUEUE',
   USER_DECLINED_JOIN_QUEUE = 'USER_DECLINED_JOIN_QUEUE',
+  USER_CANCELED_JOIN_QUEUE = 'USER_CANCELED_JOIN_QUEUE',
   USER_KICKED = 'USER_KICKED',
   USER_PROMOTED_TO_ADMIN = 'USER_PROMOTED_TO_ADMIN',
   USER_REVOKED_ADMIN = 'USER_REVOKED_ADMIN',
@@ -74,6 +75,11 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
   [SystemMessageType.USER_DECLINED_JOIN_QUEUE]: {
     type: SystemMessageType.USER_DECLINED_JOIN_QUEUE,
     template: '{{userName}} join request was declined',
+    variables: ['userName']
+  },
+  [SystemMessageType.USER_CANCELED_JOIN_QUEUE]: {
+    type: SystemMessageType.USER_CANCELED_JOIN_QUEUE,
+    template: '{{userName}} canceled their join request',
     variables: ['userName']
   },
   [SystemMessageType.USER_KICKED]: {

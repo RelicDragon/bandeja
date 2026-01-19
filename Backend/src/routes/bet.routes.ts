@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
-import { authenticate, canAccessGame } from '../middleware/auth';
+import { authenticate, optionalAuth } from '../middleware/auth';
 import * as betController from '../controllers/bet.controller';
 
 const router = Router();
 
-router.get('/game/:gameId', authenticate, canAccessGame, betController.getGameBets);
+router.get('/game/:gameId', optionalAuth, betController.getGameBets);
 
 router.post(
   '/',

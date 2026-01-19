@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
 import { Game, Invite, JoinQueue } from '@/types';
 import { Users, UserPlus, Sliders, CheckCircle, XCircle, Edit3, LayoutGrid, List } from 'lucide-react';
@@ -28,6 +28,7 @@ interface GameParticipantsProps {
   onCancelInvite: (inviteId: string) => void;
   onAcceptJoinQueue: (userId: string) => void;
   onDeclineJoinQueue: (userId: string) => void;
+  onCancelJoinQueue?: () => void;
   onShowPlayerList: (gender?: 'MALE' | 'FEMALE') => void;
   onShowManageUsers: () => void;
   onEditMaxParticipants?: () => void;
@@ -56,12 +57,43 @@ export const GameParticipants = ({
   onCancelInvite,
   onAcceptJoinQueue,
   onDeclineJoinQueue,
+  onCancelJoinQueue,
   onShowPlayerList,
   onShowManageUsers,
   onEditMaxParticipants,
 }: GameParticipantsProps) => {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
+
+  // TODO: Remove after 2025-02-02 - Backward compatibility: compute joinQueues from participants
+  const computedJoinQueues = useMemo(() => {
+    // NEW: Get from non-playing participants
+    const fromParticipants = game?.participants
+      ?.filter(p => !p.isPlaying && p.role === 'PARTICIPANT')
+      .map(p => ({
+        id: (p as any).id || `${game.id}-${p.userId}`,
+        userId: p.userId,
+        gameId: game.id,
+        status: 'PENDING' as const,
+        createdAt: p.joinedAt,
+        user: p.user,
+      })) || [];
+    
+    // TODO: Remove after 2025-02-02 - Backward compatibility: merge with old joinQueues
+    const oldJoinQueues = joinQueues || [];
+    
+    // Merge and deduplicate
+    const queueMap = new Map();
+    [...fromParticipants, ...oldJoinQueues].forEach(q => {
+      if (!queueMap.has(q.userId)) {
+        queueMap.set(q.userId, q);
+      }
+    });
+    
+    return Array.from(queueMap.values()).sort((a, b) => 
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+  }, [game?.participants, joinQueues]);
 
   const playingOwnersAndAdmins = game.participants.filter(
     p => p.isPlaying && (p.role === 'OWNER' || p.role === 'ADMIN')
@@ -149,7 +181,7 @@ export const GameParticipants = ({
             ))}
           </div>
         )}
-        {!isParticipant && hasUnoccupiedSlots && myInvites.length === 0 && !isInJoinQueue && (
+        {!isUserPlaying && !isInJoinQueue && hasUnoccupiedSlots && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
           <Button
             onClick={onJoin}
             size="lg"
@@ -159,7 +191,7 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        {!isParticipant && !hasUnoccupiedSlots && myInvites.length === 0 && !isInJoinQueue && (
+        {!isUserPlaying && !isInJoinQueue && !hasUnoccupiedSlots && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
           <Button
             onClick={onJoin}
             size="lg"
@@ -171,12 +203,33 @@ export const GameParticipants = ({
         )}
         {isInJoinQueue && (
           <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
               {t('games.inQueue', { defaultValue: 'You are in the waiting list. Waiting for approval...' })}
             </p>
+            {onCancelJoinQueue && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={onCancelJoinQueue}
+                className="w-full flex items-center justify-center gap-1.5"
+              >
+                <XCircle size={16} />
+                {t('games.cancelJoinRequest', { defaultValue: 'Cancel request' })}
+              </Button>
+            )}
           </div>
         )}
-        {(isGuest || (isOwner && !isUserPlaying)) && hasUnoccupiedSlots && (
+        {isInJoinQueue && game.allowDirectJoin && hasUnoccupiedSlots && (
+          <Button
+            onClick={onAddToGame}
+            size="lg"
+            className="w-full flex items-center justify-center"
+          >
+            <UserPlus size={20} className="mr-2" />
+            {t('createGame.addMeToGame')}
+          </Button>
+        )}
+        {(isGuest || (isOwner && !isUserPlaying)) && hasUnoccupiedSlots && !isInJoinQueue && (
           <Button
             onClick={onAddToGame}
             size="lg"
@@ -426,13 +479,13 @@ export const GameParticipants = ({
             />
           </div>
         )}
-        {joinQueues.length > 0 && (
+        {computedJoinQueues.length > 0 && (
           <div className="mt-4">
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('games.joinQueue', { defaultValue: 'Join Queue' })}
             </h3>
             <div className="space-y-2">
-              {joinQueues.map((queue) => (
+              {computedJoinQueues.map((queue) => (
                 <div
                   key={queue.id}
                   className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"

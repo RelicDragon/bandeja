@@ -4,7 +4,6 @@ import { AuthRequest } from '../middleware/auth';
 import { ApiError } from '../utils/ApiError';
 import { GameService } from '../services/game/game.service';
 import { ParticipantService } from '../services/game/participant.service';
-import { JoinQueueService } from '../services/game/joinQueue.service';
 import { AdminService } from '../services/game/admin.service';
 import { OwnershipService } from '../services/game/ownership.service';
 import { BookedCourtsService } from '../services/game/bookedCourts.service';
@@ -196,7 +195,9 @@ export const transferOwnership = asyncHandler(async (req: AuthRequest, res: Resp
 export const acceptJoinQueue = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { userId } = req.body;
-  const message = await JoinQueueService.acceptJoinQueue(id, req.userId!, userId);
+  
+  // TODO: Remove after 2025-02-02 - Use ParticipantService directly
+  const message = await ParticipantService.acceptNonPlayingParticipant(id, req.userId!, userId);
 
   res.json({
     success: true,
@@ -207,7 +208,21 @@ export const acceptJoinQueue = asyncHandler(async (req: AuthRequest, res: Respon
 export const declineJoinQueue = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { userId } = req.body;
-  const message = await JoinQueueService.declineJoinQueue(id, req.userId!, userId);
+  
+  // TODO: Remove after 2025-02-02 - Use ParticipantService directly
+  const message = await ParticipantService.declineNonPlayingParticipant(id, req.userId!, userId);
+
+  res.json({
+    success: true,
+    message,
+  });
+});
+
+export const cancelJoinQueue = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  
+  // TODO: Remove after 2025-02-02 - Use ParticipantService directly
+  const message = await ParticipantService.cancelNonPlayingParticipant(id, req.userId!);
 
   res.json({
     success: true,

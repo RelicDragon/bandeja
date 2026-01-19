@@ -2,10 +2,22 @@ import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import { BetService } from '../services/bets/bet.service';
+import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 
 export const getGameBets = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
+  
+  // Verify game exists
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: { id: true },
+  });
+
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+
   const bets = await BetService.getGameBets(gameId);
   res.json({ success: true, data: bets });
 });
