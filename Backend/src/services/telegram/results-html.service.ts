@@ -178,7 +178,6 @@ export function generateResultsHTML(game: Game, language: string = 'en-US'): str
     return group.outcomes.map((outcome) => {
       const avatarUrl = getAvatarUrl(outcome.user.avatar);
       const levelColor = getLevelColor(outcome.user.level);
-      const positionIcon = getPositionIcon(group.place, outcome.isWinner);
       const ringColor = getRingColor(group.place, outcome.isWinner);
       const changeColor = getChangeColor(outcome.levelChange);
       const changeIcon = getChangeIcon(outcome.levelChange);
@@ -202,7 +201,7 @@ export function generateResultsHTML(game: Game, language: string = 'en-US'): str
         <div class="outcome-card" style="border-color: ${ringColor};">
           <div class="outcome-content">
             <div class="position-section">
-              ${positionIcon ? `<span class="position-icon">${positionIcon}</span>` : `<span class="position-number">${group.place}</span>`}
+              <span class="position-number">${group.place}</span>
             </div>
             <div class="avatar-section">
               ${avatarUrl 

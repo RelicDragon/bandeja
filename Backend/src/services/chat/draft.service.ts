@@ -122,23 +122,14 @@ export class DraftService {
     contextId: string,
     chatType: ChatType
   ) {
-    try {
-      await prisma.chatDraft.delete({
-        where: {
-          userId_chatContextType_contextId_chatType: {
-            userId,
-            chatContextType,
-            contextId,
-            chatType
-          }
-        }
-      });
-    } catch (error: any) {
-      if (error.code === 'P2025') {
-        return;
+    await prisma.chatDraft.deleteMany({
+      where: {
+        userId,
+        chatContextType,
+        contextId,
+        chatType
       }
-      throw error;
-    }
+    });
   }
 
   static async clearDraft(

@@ -42,5 +42,8 @@ export const config = {
   apple: {
     clientId: process.env.APPLE_CLIENT_ID || 'com.funified.bandeja',
   },
+  puppeteer: {
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+  },
 };
 
