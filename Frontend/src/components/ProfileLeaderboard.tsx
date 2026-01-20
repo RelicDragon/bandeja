@@ -1,6 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search } from 'lucide-react';
+import { Search, ChevronDown, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import transliterate from '@sindresorhus/transliterate';
 import { rankingApi, LeaderboardEntry } from '@/api/ranking';
 import { Loading } from './Loading';
 import { PlayerAvatar } from './PlayerAvatar';
@@ -15,6 +17,8 @@ export const ProfileLeaderboard = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const userRowRef = useRef<HTMLTableRowElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +46,32 @@ export const ProfileLeaderboard = () => {
   };
 
   const scrollToUser = () => {
+    // If user is filtered out, clear search first
+    const userInFiltered = filteredLeaderboard.some(entry => entry.id === user?.id);
+    if (!userInFiltered && searchQuery) {
+      setSearchQuery('');
+      // Wait for re-render, then scroll
+      setTimeout(() => {
+        if (userRowRef.current) {
+          const row = userRowRef.current;
+          requestAnimationFrame(() => {
+            const rowRect = row.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            const rowHeight = rowRect.height;
+            const scrollY = window.scrollY;
+            const rowTop = rowRect.top + scrollY;
+            const targetScroll = rowTop - (windowHeight / 2) + (rowHeight / 2);
+            
+            window.scrollTo({
+              top: targetScroll,
+              behavior: 'smooth',
+            });
+          });
+        }
+      }, 100);
+      return;
+    }
+    
     if (userRowRef.current) {
       const row = userRowRef.current;
       requestAnimationFrame(() => {
@@ -59,6 +89,23 @@ export const ProfileLeaderboard = () => {
       });
     }
   };
+
+  const normalizeString = (str: string) => {
+    return transliterate(str).toLowerCase();
+  };
+
+  const filteredLeaderboard = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return leaderboard;
+    }
+    
+    const normalized = normalizeString(searchQuery);
+    
+    return leaderboard.filter((entry) => {
+      const fullName = `${entry.firstName || ''} ${entry.lastName || ''}`.trim();
+      return normalizeString(fullName).includes(normalized);
+    });
+  }, [leaderboard, searchQuery]);
 
   const userRank = leaderboard.find(entry => entry.id === user?.id)?.rank;
 
@@ -172,7 +219,7 @@ export const ProfileLeaderboard = () => {
           </tr>
         </thead>
         <tbody>
-          {leaderboard.map((entry) => {
+          {filteredLeaderboard.map((entry) => {
             const isCurrentUser = entry.id === user?.id;
             const displayValue = leaderboardType === 'games'
               ? (entry.gamesCount ?? 0).toString()
@@ -249,18 +296,82 @@ export const ProfileLeaderboard = () => {
 
   const cityName = user?.currentCity?.name || 'City';
 
+  const handleSearchFocus = () => {
+    setIsSearchFocused(true);
+  };
+
+  const handleSearchBlur = () => {
+    if (!searchQuery) {
+      setIsSearchFocused(false);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setIsSearchFocused(false);
+  };
+
   return (
     <div className="space-y-4">
       {userRank && (
-        <button
-          onClick={scrollToUser}
-          className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
-        >
-          <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
-            {t('profile.myPlace', { rank: userRank, defaultValue: 'My place: {{rank}}' })}
-          </span>
-          <Search size={18} className="text-primary-600 dark:text-primary-400" />
-        </button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            onClick={scrollToUser}
+            layout
+            className={`flex items-center justify-between gap-2 ${isSearchFocused ? 'px-0' : 'px-4'} py-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors overflow-hidden`}
+            animate={{
+              opacity: isSearchFocused ? 0 : 1,
+              scale: isSearchFocused ? 0.95 : 1,
+            }}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 30,
+            }}
+            style={{
+              flex: isSearchFocused ? '0 0 0' : '1 1 0',
+              minWidth: isSearchFocused ? 0 : undefined,
+              pointerEvents: isSearchFocused ? 'none' : 'auto',
+            }}
+          >
+            <span className="text-sm font-medium text-primary-700 dark:text-primary-300 whitespace-nowrap">
+              {t('profile.myPlace', { rank: userRank, defaultValue: 'My place: {{rank}}' })}
+            </span>
+            <ChevronDown size={18} className="text-primary-600 dark:text-primary-400 flex-shrink-0" />
+          </motion.button>
+          <motion.div
+            layout
+            className="relative"
+            animate={{
+              flex: isSearchFocused ? '2 1 0' : '1 1 0',
+            }}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 30,
+            }}
+          >
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+            <input
+              type="text"
+              placeholder={t('chat.search', { defaultValue: 'Search' })}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
+              className="w-full pl-10 pr-10 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            />
+            {searchQuery && (
+              <button
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Clear search"
+              >
+                <X size={16} className="text-gray-400 dark:text-gray-500" />
+              </button>
+            )}
+          </motion.div>
+        </div>
       )}
       <div ref={filtersRef} className={`space-y-4 ${areFiltersSticky ? 'opacity-0 pointer-events-none' : ''}`}>
         {leaderboardType === 'games' && (

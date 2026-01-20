@@ -15,7 +15,7 @@ import { Bug, BasicUser } from '@/types';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
-import { MessageCircle, Search } from 'lucide-react';
+import { MessageCircle, Search, X } from 'lucide-react';
 import { ChatMessage } from '@/api/chat';
 import { socketService } from '@/services/socketService';
 
@@ -315,6 +315,12 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       fetchChatsForFilter(chatsFilter);
     }
   }, [fetchChatsForFilter, chatsFilter]);
+
+  useEffect(() => {
+    if (chatsFilter !== 'users') {
+      setSearchQuery('');
+    }
+  }, [chatsFilter]);
 
   const updateChatDraft = useCallback((
     prevChats: ChatItem[],
@@ -673,8 +679,17 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                 placeholder={t('chat.search', { defaultValue: 'Search' })}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                className="w-full pl-10 pr-10 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X size={16} className="text-gray-400 dark:text-gray-500" />
+                </button>
+              )}
             </div>
           </div>
         )}
