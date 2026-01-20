@@ -30,6 +30,7 @@ export const BaseModal = ({
   const [isAnimating, setIsAnimating] = useState(false);
   const modalIdRef = useRef(modalId || `modal-${Date.now()}-${Math.random()}`);
   const [zIndex, setZIndex] = useState(9999);
+  const justOpenedRef = useRef(false);
 
   useBackButtonModal(isOpen, onClose, modalIdRef.current);
 
@@ -41,19 +42,49 @@ export const BaseModal = ({
       setIsClosing(false);
       setIsAnimating(false);
       document.body.style.overflow = 'hidden';
+      justOpenedRef.current = true;
+      setTimeout(() => {
+        justOpenedRef.current = false;
+      }, 100);
+      
+      const haltEvents = (e: Event) => {
+        e.stopPropagation();
+        e.preventDefault();
+      };
+      
+      const events = ['touchstart', 'touchend', 'touchmove', 'mousedown', 'mouseup', 'click', 'pointerdown', 'pointerup'];
+      events.forEach(eventType => {
+        document.addEventListener(eventType, haltEvents, { capture: true, passive: false });
+      });
+      
+      const cleanup = setTimeout(() => {
+        events.forEach(eventType => {
+          document.removeEventListener(eventType, haltEvents, { capture: true });
+        });
+      }, 200);
       
       if (isBasic) {
-        // Small delay to ensure initial state renders before animating in
         const timer = setTimeout(() => {
           setIsAnimating(true);
         }, 10);
-        return () => clearTimeout(timer);
+        return () => {
+          clearTimeout(timer);
+          clearTimeout(cleanup);
+          events.forEach(eventType => {
+            document.removeEventListener(eventType, haltEvents, { capture: true });
+          });
+        };
       } else {
         setIsAnimating(true);
+        return () => {
+          clearTimeout(cleanup);
+          events.forEach(eventType => {
+            document.removeEventListener(eventType, haltEvents, { capture: true });
+          });
+        };
       }
     } else if (shouldRender) {
       if (isBasic) {
-        // Start exit animation
         setIsClosing(true);
         const timeout = setTimeout(() => {
           setShouldRender(false);
@@ -82,7 +113,7 @@ export const BaseModal = ({
   }, []);
 
   const handleBackdropClick = () => {
-    if (closeOnBackdropClick) {
+    if (closeOnBackdropClick && !justOpenedRef.current) {
       onClose();
     }
   };

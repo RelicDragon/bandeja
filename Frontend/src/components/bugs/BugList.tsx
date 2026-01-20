@@ -51,6 +51,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   const [nextIndex, setNextIndex] = useState(1);
   const [isAnimating, setIsAnimating] = useState(false);
   const hasInitializedTab = useRef(false);
+  const touchHandledRef = useRef(false);
 
   const animatedTexts = useMemo(() => [
     t('bug.addBug'),
@@ -245,13 +246,22 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     setAllBugs(prev => prev.filter(bug => bug.id !== bugId));
   };
 
-  const handleAddBugClick = () => {
+  const handleAddBugClick = (e: React.MouseEvent) => {
+    if (touchHandledRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      touchHandledRef.current = false;
+      return;
+    }
     setShowAddModal(true);
   };
 
-  const handleAddBugTouch = (e: React.TouchEvent) => {
-    e.preventDefault();
+  const handleAddBugTouch = () => {
+    touchHandledRef.current = true;
     setShowAddModal(true);
+    setTimeout(() => {
+      touchHandledRef.current = false;
+    }, 300);
   };
 
   const AddBugCard = () => (
