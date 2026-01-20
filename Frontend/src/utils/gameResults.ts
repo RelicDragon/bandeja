@@ -264,3 +264,159 @@ export const validateSetIndexAgainstFixed = (
   }
   return null;
 };
+
+/**
+ * Determines if a set is the last set in a match
+ * 
+ * @param setIndex - The index of the set to check
+ * @param sets - Array of all sets in the match
+ * @param fixedNumberOfSets - The fixed number of sets (0 if not fixed)
+ * @param setBeingUpdated - Optional: the set data being updated (to account for updates in progress)
+ * @returns boolean indicating if this is the last set
+ */
+export const isLastSet = (
+  setIndex: number,
+  sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>,
+  fixedNumberOfSets: number,
+  setBeingUpdated?: { teamA: number; teamB: number; isTieBreak?: boolean }
+): boolean => {
+  if (fixedNumberOfSets > 0) {
+    return setIndex === fixedNumberOfSets - 1;
+  }
+
+  // For dynamic sets, find the last set with scores
+  // Create effective sets array with updated data if provided
+  const effectiveSets = sets.map((set, idx) => {
+    if (idx === setIndex && setBeingUpdated) {
+      return setBeingUpdated;
+    }
+    return set;
+  });
+
+  // Find all valid sets (with scores > 0)
+  const validSetIndices: number[] = [];
+  for (let i = 0; i < effectiveSets.length; i++) {
+    const set = effectiveSets[i];
+    if (set.teamA > 0 || set.teamB > 0) {
+      validSetIndices.push(i);
+    }
+  }
+
+  // If no valid sets exist, the first set (index 0) is considered the last set
+  if (validSetIndices.length === 0) {
+    return setIndex === 0;
+  }
+
+  // The last set is the highest index among valid sets
+  const lastValidSetIndex = Math.max(...validSetIndices);
+  return setIndex === lastValidSetIndex;
+};
+
+/**
+ * Checks if previous sets are equally won by both teams
+ * 
+ * @param setIndex - The index of the set to check
+ * @param sets - Array of all sets in the match
+ * @param setBeingUpdated - Optional: the set data being updated
+ * @returns boolean indicating if previous sets are tied
+ */
+const arePreviousSetsTied = (
+  setIndex: number,
+  sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>,
+  setBeingUpdated?: { teamA: number; teamB: number; isTieBreak?: boolean }
+): boolean => {
+  if (setIndex < 2) {
+    return false; // Need at least 2 previous sets (0 and 1) for 3rd set (index 2)
+  }
+
+  // Create effective sets array with updated data if provided
+  const effectiveSets = sets.map((set, idx) => {
+    if (idx === setIndex && setBeingUpdated) {
+      return setBeingUpdated;
+    }
+    return set;
+  });
+
+  let teamAWins = 0;
+  let teamBWins = 0;
+
+  // Count wins in previous sets (before setIndex)
+  for (let i = 0; i < setIndex; i++) {
+    const set = effectiveSets[i];
+    if (set && (set.teamA > 0 || set.teamB > 0)) {
+      if (set.teamA > set.teamB) {
+        teamAWins++;
+      } else if (set.teamB > set.teamA) {
+        teamBWins++;
+      }
+    }
+  }
+
+  return teamAWins === teamBWins;
+};
+
+/**
+ * Validates TieBreak rules for a set
+ * 
+ * @param setIndex - The index of the set
+ * @param sets - Array of all sets in the match
+ * @param fixedNumberOfSets - The fixed number of sets (0 if not fixed)
+ * @param isTieBreak - Whether this set is being marked as a tiebreak
+ * @param ballsInGames - Whether the game uses balls in games (required for tiebreak)
+ * @param setBeingUpdated - Optional: the set data being updated
+ * @returns Error message if invalid, null if valid
+ */
+export const validateTieBreak = (
+  setIndex: number,
+  sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>,
+  fixedNumberOfSets: number,
+  isTieBreak: boolean,
+  ballsInGames: boolean,
+  setBeingUpdated?: { teamA: number; teamB: number; isTieBreak?: boolean }
+): string | null => {
+  if (!isTieBreak) {
+    return null; // No validation needed if not setting tiebreak
+  }
+
+  if (!ballsInGames) {
+    return 'TieBreak can only be set when ballsInGames is enabled';
+  }
+
+  // Check if this is an odd set starting from 3rd (setIndex 2, 4, 6, 8)
+  // 3rd set = index 2, 5th set = index 4, 7th set = index 6, 9th set = index 8
+  const isOddSetFromThird = setIndex >= 2 && (setIndex - 2) % 2 === 0;
+  if (!isOddSetFromThird) {
+    return 'TieBreak can only be set on the 3rd, 5th, 7th, or 9th set';
+  }
+
+  // Check if previous sets are equally won by both teams
+  if (!arePreviousSetsTied(setIndex, sets, setBeingUpdated)) {
+    return 'TieBreak can only be set when previous sets are equally won by both teams';
+  }
+
+  // Check if scores are equal (tiebreak cannot have equal scores)
+  const currentSet = setBeingUpdated || sets[setIndex];
+  if (currentSet && currentSet.teamA === currentSet.teamB && (currentSet.teamA > 0 || currentSet.teamB > 0)) {
+    return 'TieBreak sets cannot have equal scores';
+  }
+
+  // Check if this is the last set
+  if (!isLastSet(setIndex, sets, fixedNumberOfSets, setBeingUpdated)) {
+    return 'TieBreak can only be set on the last set of a match';
+  }
+
+  // Check if there's already a tiebreak in another set
+  const hasExistingTieBreak = sets.some((set, idx) => {
+    if (idx === setIndex) {
+      // Skip the set being updated, but check if it was previously a tiebreak
+      return false;
+    }
+    return set.isTieBreak === true;
+  });
+
+  if (hasExistingTieBreak) {
+    return 'Only one TieBreak can exist per match';
+  }
+
+  return null;
+};

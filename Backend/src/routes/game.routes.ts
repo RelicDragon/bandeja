@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
-import { authenticate, optionalAuth, canEditGame, requireGamePermission } from '../middleware/auth';
+import { authenticate, optionalAuth, canEditGame, canAccessGame, requireGamePermission } from '../middleware/auth';
 import { ParticipantRole } from '@prisma/client';
 import * as gameController from '../controllers/game.controller';
 
@@ -125,6 +125,13 @@ router.post(
   '/:id/cancel-join-queue',
   authenticate,
   gameController.cancelJoinQueue
+);
+
+router.post(
+  '/:id/send-results-to-telegram',
+  authenticate,
+  canAccessGame,
+  gameController.sendResultsToTelegram
 );
 
 export default router;

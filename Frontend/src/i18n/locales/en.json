@@ -321,6 +321,7 @@
     "sets": "Sets",
     "setResult": "Set Result",
     "matchResult": "Match Result",
+    "tieBreak": "TieBreak",
     "addMatch": "Add Match",
     "availablePlayers": "Available Players",
     "enterResults": "Enter Results",
@@ -356,6 +357,11 @@
     "finishBarTitle": "Finish Bar?",
     "finishTrainingTitle": "Finish Training?",
     "editGameTitle": "Edit Game Results?",
+    "sendResultsToTelegram": "Send results to Telegram chat",
+    "sendingToTelegram": "Sending...",
+    "resultsSentToTelegram": "Results sent to Telegram successfully",
+    "sendToTelegramFailed": "Failed to send results to Telegram",
+    "preparingTelegramMessage": "Wait for a while, we are preparing message for you. You can close this game.",
     "editTournamentTitle": "Edit Tournament Results?",
     "editBarTitle": "Edit Bar Results?",
     "editTrainingTitle": "Edit Training Results?",
@@ -478,7 +484,12 @@
     "resultsEntryStarted": "Results entry started",
     "gameReset": "Game reset successfully",
     "resetGameTitle": "Reset Game Results",
-    "resetConfirmationMessage": "Are you sure you want to reset all game results? This action cannot be undone."
+    "resetConfirmationMessage": "Are you sure you want to reset all game results? This action cannot be undone.",
+    "confirmAnnouncedGame": {
+      "title": "Game Not Started Yet",
+      "message": "This game is still in ANNOUNCED status. Are you sure you want to start entering results now?",
+      "confirm": "Yes, Continue"
+    }
   },
   "invites": {
     "title": "Invites",

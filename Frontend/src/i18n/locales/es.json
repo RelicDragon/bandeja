@@ -321,6 +321,7 @@
     "sets": "Sets",
     "setResult": "Resultado del Set",
     "matchResult": "Resultado del Partido",
+    "tieBreak": "Desempate",
     "addMatch": "Añadir Partido",
     "availablePlayers": "Jugadores Disponibles",
     "enterResults": "Ingresar Resultados",
@@ -356,6 +357,11 @@
     "finishBarTitle": "¿Finalizar bar?",
     "finishTrainingTitle": "¿Finalizar entrenamiento?",
     "editGameTitle": "¿Editar resultados del juego?",
+    "sendResultsToTelegram": "Enviar resultados al chat de Telegram",
+    "sendingToTelegram": "Enviando...",
+    "resultsSentToTelegram": "Resultados enviados a Telegram exitosamente",
+    "sendToTelegramFailed": "Error al enviar resultados a Telegram",
+    "preparingTelegramMessage": "Espere un momento, estamos preparando el mensaje para usted. Puede cerrar este juego.",
     "editTournamentTitle": "¿Editar resultados del torneo?",
     "editBarTitle": "¿Editar resultados del bar?",
     "editTrainingTitle": "¿Editar resultados del entrenamiento?",
@@ -471,7 +477,12 @@
     "resultsEntryStarted": "Entrada de resultados iniciada",
     "gameReset": "Juego reiniciado exitosamente",
     "resetGameTitle": "Reiniciar Resultados del Juego",
-    "resetConfirmationMessage": "¿Estás seguro de que quieres reiniciar todos los resultados del juego? Esta acción no se puede deshacer."
+    "resetConfirmationMessage": "¿Estás seguro de que quieres reiniciar todos los resultados del juego? Esta acción no se puede deshacer.",
+    "confirmAnnouncedGame": {
+      "title": "El juego aún no ha comenzado",
+      "message": "Este juego todavía está en estado ANUNCIADO. ¿Estás seguro de que quieres comenzar a ingresar resultados ahora?",
+      "confirm": "Sí, continuar"
+    }
   },
   "invites": {
     "title": "Invitaciones",

@@ -227,6 +227,7 @@ export interface Game {
   ballsInGames?: boolean;
   photosCount?: number;
   mainPhotoId?: string | null;
+  resultsSentToTelegram?: boolean;
   isClubFavorite?: boolean;
   priceTotal?: number | null;
   priceType?: PriceType;

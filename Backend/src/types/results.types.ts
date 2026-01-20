@@ -2,6 +2,7 @@ export interface SetData {
   setNumber: number;
   teamAScore: number;
   teamBScore: number;
+  isTieBreak?: boolean;
 }
 
 export interface TeamData {

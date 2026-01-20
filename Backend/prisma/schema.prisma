@@ -243,6 +243,7 @@ model Game {
   mediaUrls              String[]
   photosCount            Int                 @default(0)
   mainPhotoId            String?
+  resultsSentToTelegram  Boolean             @default(false)
   parentId               String?
   leagueRoundId          String?
   leagueGroupId          String?
@@ -427,6 +428,7 @@ model Set {
   setNumber  Int
   teamAScore Int      @default(0)
   teamBScore Int      @default(0)
+  isTieBreak Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)

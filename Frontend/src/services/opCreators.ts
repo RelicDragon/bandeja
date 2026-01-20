@@ -42,8 +42,8 @@ export class OpCreator {
 
   addMatch(matchId: string, roundId: string, fixedNumberOfSets?: number): Op {
     const initialSets = fixedNumberOfSets && fixedNumberOfSets > 0
-      ? Array.from({ length: fixedNumberOfSets }, () => ({ id: createId(), teamA: 0, teamB: 0 }))
-      : [{ id: createId(), teamA: 0, teamB: 0 }];
+      ? Array.from({ length: fixedNumberOfSets }, () => ({ id: createId(), teamA: 0, teamB: 0, isTieBreak: false }))
+      : [{ id: createId(), teamA: 0, teamB: 0, isTieBreak: false }];
     return this.createOp(`/rounds/${roundId}/matches`, 'add', { id: matchId, teamA: [], teamB: [], sets: initialSets });
   }
 

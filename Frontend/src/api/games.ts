@@ -149,6 +149,11 @@ export const gamesApi = {
   }) => {
     const response = await api.get<ApiResponse<BookedCourtSlot[]> & { isLoadingExternalSlots?: boolean }>('/games/booked-courts', { params });
     return response.data;
+  },
+
+  sendResultsToTelegram: async (id: string) => {
+    const response = await api.post<ApiResponse<void>>(`/games/${id}/send-results-to-telegram`);
+    return response.data;
   }
 };
 

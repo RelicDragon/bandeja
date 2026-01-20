@@ -7,6 +7,11 @@ import { ParticipantService } from '../services/game/participant.service';
 import { AdminService } from '../services/game/admin.service';
 import { OwnershipService } from '../services/game/ownership.service';
 import { BookedCourtsService } from '../services/game/bookedCourts.service';
+import { ResultsTelegramService } from '../services/telegram/results-telegram.service';
+import { generateResultsImage } from '../services/telegram/results-image.service';
+import telegramBotService from '../services/telegram/bot.service';
+import { getGameInclude } from '../services/game/read.service';
+import prisma from '../config/database';
 
 export const createGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const game = await GameService.createGame(req.body, req.userId!);
@@ -249,3 +254,89 @@ export const getBookedCourts = asyncHandler(async (req: AuthRequest, res: Respon
   });
 });
 
+export const sendResultsToTelegram = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const gameInclude = getGameInclude();
+  const game = await prisma.game.findUnique({
+    where: { id },
+    include: {
+      ...gameInclude,
+      city: {
+        select: {
+          id: true,
+          name: true,
+          telegramGroupId: true,
+          telegramPinnedLanguage: true,
+        },
+      },
+    } as any,
+  });
+
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+
+  if (game.resultsSentToTelegram) {
+    throw new ApiError(400, 'Results have already been sent to Telegram');
+  }
+
+  const city = game.city as unknown as { id: string; telegramGroupId: string | null; telegramPinnedLanguage: string | null };
+  if (!city.telegramGroupId) {
+    throw new ApiError(400, 'City does not have a Telegram group configured');
+  }
+
+  if (game.photosCount === 0 && !game.mainPhotoId) {
+    throw new ApiError(400, 'Game must have at least one photo');
+  }
+
+  const hasResults = ResultsTelegramService.checkResultsEntered(game);
+  if (!hasResults) {
+    throw new ApiError(400, 'Game must have at least one round with one match with non-zero scores');
+  }
+
+  if (!game.outcomes || game.outcomes.length === 0) {
+    throw new ApiError(400, 'Game must have outcomes calculated');
+  }
+
+  const bot = telegramBotService.getBot();
+  if (!bot) {
+    throw new ApiError(503, 'Telegram bot is not available');
+  }
+
+  // Start background work and return immediately
+  setImmediate(async () => {
+    try {
+      const language = city.telegramPinnedLanguage || 'en-US';
+      const summaryText = await ResultsTelegramService.generateResultsSummary(game, language);
+      const mainPhotoUrl = await ResultsTelegramService.getMainPhotoUrl(game);
+
+      const imageBuffer = await generateResultsImage({
+        id: game.id,
+        affectsRating: game.affectsRating || false,
+        outcomes: game.outcomes,
+        hasFixedTeams: game.hasFixedTeams || false,
+        genderTeams: game.genderTeams || 'ANY',
+      }, language);
+
+      await ResultsTelegramService.sendResultsToTelegram(
+        bot.api,
+        id,
+        imageBuffer,
+        mainPhotoUrl,
+        summaryText
+      );
+    } catch (error: any) {
+      console.error('Background Telegram send failed:', error);
+    }
+  });
+
+  res.json({
+    success: true,
+    message: 'Sending results to Telegram',
+  });
+});

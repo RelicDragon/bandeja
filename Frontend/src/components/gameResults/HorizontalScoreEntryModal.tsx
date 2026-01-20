@@ -14,7 +14,7 @@ interface HorizontalScoreEntryModalProps {
   maxTotalPointsPerSet?: number;
   maxPointsPerTeam?: number;
   fixedNumberOfSets?: number;
-  onSave: (matchId: string, setIndex: number, teamAScore: number, teamBScore: number) => void;
+  onSave: (matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => void;
   onRemove?: (matchId: string, setIndex: number) => void;
   onClose: () => void;
   canRemove?: boolean;
@@ -35,7 +35,7 @@ export const HorizontalScoreEntryModal = ({
   isOpen,
 }: HorizontalScoreEntryModalProps) => {
   const { t } = useTranslation();
-  const currentSet = match.sets[setIndex] || { teamA: 0, teamB: 0 };
+  const currentSet = match.sets[setIndex] || { teamA: 0, teamB: 0, isTieBreak: false };
   const [teamAScore, setTeamAScore] = useState(currentSet.teamA);
   const [teamBScore, setTeamBScore] = useState(currentSet.teamB);
   const [numberPickerTeam, setNumberPickerTeam] = useState<'teamA' | 'teamB' | null>(null);
@@ -66,7 +66,7 @@ export const HorizontalScoreEntryModal = ({
   };
 
   const handleSave = () => {
-    onSave(match.id, setIndex, teamAScore, teamBScore);
+    onSave(match.id, setIndex, teamAScore, teamBScore, false);
     onClose();
   };
 

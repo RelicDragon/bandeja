@@ -101,7 +101,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     const isInOldQueue = game.joinQueues?.some(q => q.userId === user.id && q.status === 'PENDING') || false;
     
     return isNonPlayingParticipant || isInOldQueue;
-  }, [game?.participants, game?.joinQueues, user?.id]);
+  }, [game, user?.id]);
   const playingCount = game?.participants.filter(p => p.isPlaying).length ?? 0;
   const hasUnoccupiedSlots = game ? (game.entityType === 'BAR' || playingCount < game.maxParticipants) : false;
   

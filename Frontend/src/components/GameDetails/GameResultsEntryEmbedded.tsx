@@ -13,7 +13,7 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 import { useOfflineMessage } from '@/hooks/useOfflineMessage';
 import { useGameResultsTabs } from '@/hooks/useGameResultsTabs';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
-import { validateSetIndex, validateSetScores, validateSetIndexAgainstFixed, isUserGameAdminOrOwner } from '@/utils/gameResults';
+import { validateSetIndex, validateSetScores, validateSetIndexAgainstFixed, isUserGameAdminOrOwner, isLastSet, validateTieBreak } from '@/utils/gameResults';
 import { 
   RoundCard,
   AvailablePlayersFooter, 
@@ -25,6 +25,7 @@ import { getRestartText, getFinishText, getAvailablePlayers, canEnterResults } f
 import { GameResultsTabs } from './GameResultsTabs';
 import { OfflineBanner } from './OfflineBanner';
 import { GameResultsModals } from './GameResultsModals';
+import { Send, Edit } from 'lucide-react';
 
 interface GameResultsEntryEmbeddedProps {
   game: Game;
@@ -45,6 +46,9 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   const { loading, setLoadingState } = useLoadingState();
   const { showOfflineMessage, toggleMessage } = useOfflineMessage(engine.serverProblem);
   const mountedRef = useRef(false);
+  const [isSendingToTelegram, setIsSendingToTelegram] = useState(false);
+  const [hasInitiatedTelegramSend, setHasInitiatedTelegramSend] = useState(false);
+  const resultsContainerRef = useRef<HTMLDivElement>(null);
 
   const currentGame = useMemo(() => {
     if (!engine.game) return game;
@@ -93,6 +97,56 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   const showEditButton = canEdit && !isEditingResults && isFinalStatus && 
     isResultsEntryMode && currentGame?.status !== 'ARCHIVED';
 
+  const hasResultsEntered = useMemo(() => {
+    if (!rounds || rounds.length === 0) return false;
+    return rounds.some(round =>
+      round.matches && round.matches.some(match =>
+        match.sets && match.sets.some(set =>
+          set.teamA > 0 || set.teamB > 0
+        )
+      )
+    );
+  }, [rounds]);
+
+  const showSendToTelegramButton = useMemo(() => {
+    if (!currentGame || !hasResultsEntered) return false;
+    if (currentGame.resultsSentToTelegram) return false;
+    if (hasInitiatedTelegramSend) return false;
+    if (!currentGame.city?.telegramGroupId) return false;
+    if ((currentGame.photosCount || 0) === 0 && !currentGame.mainPhotoId) return false;
+    return true;
+  }, [currentGame, hasResultsEntered, hasInitiatedTelegramSend]);
+
+  const showTelegramSendingHint = useMemo(() => {
+    if (!currentGame) return false;
+    if (currentGame.resultsSentToTelegram) return false;
+    return hasInitiatedTelegramSend;
+  }, [currentGame, hasInitiatedTelegramSend]);
+
+  const handleSendToTelegram = () => {
+    if (!currentGame || isSendingToTelegram || hasInitiatedTelegramSend) return;
+
+    if (currentGame.resultsStatus !== 'FINAL') {
+      toast.error(t('gameResults.sendToTelegramFailed') || 'Game must be finalized before sending results to Telegram');
+      return;
+    }
+
+    setIsSendingToTelegram(true);
+    
+    gamesApi.sendResultsToTelegram(currentGame.id)
+      .then(() => {
+        setHasInitiatedTelegramSend(true);
+      })
+      .catch((error: any) => {
+        console.error('Failed to send results to Telegram:', error);
+        const errorMessage = error?.response?.data?.message || error?.message || t('gameResults.sendToTelegramFailed') || 'Failed to send results to Telegram';
+        toast.error(errorMessage);
+      })
+      .finally(() => {
+        setIsSendingToTelegram(false);
+      });
+  };
+
   useEffect(() => {
     const checkServerProblem = async () => {
       try {
@@ -131,6 +185,14 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
       }
     }
   }, [game, engine.initialized, engine.game, engine]);
+
+  useEffect(() => {
+    if (!currentGame) return;
+    
+    if (currentGame.resultsSentToTelegram) {
+      setHasInitiatedTelegramSend(false);
+    }
+  }, [currentGame]);
 
   useEffect(() => {
     const matches = rounds.length > 0 ? rounds[0].matches || [] : [];
@@ -234,7 +296,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
     await engine.addPlayerToTeam(roundId, matchId, team, draggedPlayer);
   };
 
-  const updateSetResult = async (roundId: string, matchId: string, setIndex: number, teamAScore: number, teamBScore: number) => {
+  const updateSetResult = async (roundId: string, matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => {
     const setIndexError = validateSetIndex(setIndex);
     if (setIndexError) {
       console.error(setIndexError, setIndex);
@@ -290,21 +352,53 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
       
       if (fixedNumberOfSets > 0) {
         while (newSets.length < fixedNumberOfSets && newSets.length <= setIndex) {
-          newSets.push({ teamA: 0, teamB: 0 });
+          newSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
         }
         if (newSets.length > fixedNumberOfSets) {
           newSets.splice(fixedNumberOfSets);
         }
       } else {
         while (newSets.length <= setIndex) {
-          newSets.push({ teamA: 0, teamB: 0 });
+          newSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
         }
       }
       
-      newSets[setIndex] = { teamA: teamAScore, teamB: teamBScore };
+      const setBeingUpdated = { teamA: teamAScore, teamB: teamBScore, isTieBreak: isTieBreak || false };
+      const lastSetCheck = isLastSet(setIndex, newSets, fixedNumberOfSets, setBeingUpdated);
       
-      if (fixedNumberOfSets === 0 && setIndex === newSets.length - 1 && (teamAScore > 0 || teamBScore > 0)) {
-        newSets.push({ teamA: 0, teamB: 0 });
+      // Validate that tiebreak sets cannot have equal scores
+      if (isTieBreak && teamAScore === teamBScore && (teamAScore > 0 || teamBScore > 0)) {
+        toast.error('TieBreak sets cannot have equal scores');
+        return;
+      }
+      
+      const tieBreakError = validateTieBreak(
+        setIndex,
+        newSets,
+        fixedNumberOfSets,
+        isTieBreak || false,
+        currentGameState?.ballsInGames || false,
+        setBeingUpdated
+      );
+
+      if (tieBreakError) {
+        console.error('TieBreak validation error:', tieBreakError);
+        toast.error(tieBreakError);
+        return;
+      }
+      
+      const finalIsTieBreak = isTieBreak && lastSetCheck ? true : false;
+      
+      newSets[setIndex] = { teamA: teamAScore, teamB: teamBScore, isTieBreak: finalIsTieBreak };
+      
+      for (let i = 0; i < newSets.length; i++) {
+        if (i !== setIndex && newSets[i].isTieBreak) {
+          newSets[i] = { ...newSets[i], isTieBreak: false };
+        }
+      }
+      
+      if (fixedNumberOfSets === 0 && setIndex === newSets.length - 1 && (teamAScore > 0 || teamBScore > 0) && !finalIsTieBreak) {
+        newSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
       }
       
       await engine.updateMatch(roundId, matchId, {
@@ -655,6 +749,30 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
         isSyncing={loading.syncing}
       />
 
+      {showSendToTelegramButton && (
+        <div className="mb-6 flex justify-center px-4">
+          <button
+            onClick={handleSendToTelegram}
+            disabled={isSendingToTelegram}
+            className="group relative px-4 sm:px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 via-blue-600 to-blue-600 hover:from-blue-600 hover:via-blue-700 hover:to-blue-700 text-white font-semibold text-sm sm:text-base shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-600/40 transition-all duration-300 ease-in-out disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:shadow-lg disabled:hover:shadow-blue-500/30 flex items-center justify-center gap-2.5 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+          >
+            <Send size={18} className="transition-transform duration-300 group-hover:translate-x-0.5 flex-shrink-0" />
+            <span className="text-center leading-tight whitespace-normal break-words max-w-[200px]">{t('gameResults.sendResultsToTelegram') || 'Send results to Telegram chat'}</span>
+          </button>
+        </div>
+      )}
+
+      {showTelegramSendingHint && (
+        <div className="mb-6 flex justify-center px-4">
+          <div className="px-4 sm:px-6 py-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200 text-sm sm:text-base flex items-center gap-2.5 max-w-md">
+            <div className="w-5 h-5 bg-blue-600 dark:bg-blue-400 rounded-full flex-shrink-0 animate-bounce" />
+            <span className="text-center leading-tight">
+              {t('gameResults.preparingTelegramMessage') || 'Wait for a while, we are preparing message for you. You can close this game.'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {isResultsEntryMode && (
         <GameResultsTabs
           activeTab={activeTab}
@@ -665,20 +783,23 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
 
       <div>
         {currentGame?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
-          <OutcomesDisplay 
-            outcomes={currentGame.outcomes || []} 
-            affectsRating={currentGame.affectsRating} 
-            gameId={currentGame.id}
-            hasFixedTeams={currentGame.hasFixedTeams || false}
-            genderTeams={(currentGame.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'}
-            onExplanationClick={(explanation, playerName, levelBefore) => {
-              openModal({ type: 'explanation', explanation, playerName, levelBefore });
-            }}
-          />
+          <div>
+            <OutcomesDisplay 
+              outcomes={currentGame.outcomes || []} 
+              affectsRating={currentGame.affectsRating} 
+              gameId={currentGame.id}
+              hasFixedTeams={currentGame.hasFixedTeams || false}
+              genderTeams={(currentGame.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'}
+              onExplanationClick={(explanation, playerName, levelBefore) => {
+                openModal({ type: 'explanation', explanation, playerName, levelBefore });
+              }}
+            />
+          </div>
         ) : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
           <PlayerStatsPanel game={currentGame as NonNullable<typeof currentGame>} rounds={rounds} />
         ) : (
           <div 
+            ref={resultsContainerRef}
             className={`space-y-1 w-full scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-gray-300 dark:hover:scrollbar-thumb-gray-600 ${
               dragAndDrop.isDragging ? 'overflow-hidden' : ''
             } pb-4`}
@@ -829,9 +950,19 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
           <button
             onClick={() => openModal({ type: 'edit' })}
             disabled={loading.editing}
-            className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-blue-500 hover:bg-blue-600 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-blue-500 hover:bg-blue-600 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading.editing ? t('common.loading') : t('gameResults.editResults')}
+            {loading.editing ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                <span>{t('common.loading')}</span>
+              </>
+            ) : (
+              <>
+                <Edit size={18} className="flex-shrink-0" />
+                <span>{t('gameResults.editResults')}</span>
+              </>
+            )}
           </button>
         </div>
       )}

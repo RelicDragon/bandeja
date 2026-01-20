@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, Minus, Plus } from 'lucide-react';
+import { Trash2, Minus, Plus, Zap } from 'lucide-react';
 import { Button } from '@/components';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser } from '@/types';
 import { BaseModal } from './BaseModal';
+import { isLastSet, validateTieBreak } from '@/utils/gameResults';
 
 interface SetResultModalProps {
   match: Match;
@@ -14,7 +15,8 @@ interface SetResultModalProps {
   maxTotalPointsPerSet?: number;
   maxPointsPerTeam?: number;
   fixedNumberOfSets?: number;
-  onSave: (matchId: string, setIndex: number, teamAScore: number, teamBScore: number) => void;
+  ballsInGames?: boolean;
+  onSave: (matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => void;
   onRemove?: (matchId: string, setIndex: number) => void;
   onClose: () => void;
   canRemove?: boolean;
@@ -28,6 +30,7 @@ export const SetResultModal = ({
   maxTotalPointsPerSet,
   maxPointsPerTeam,
   fixedNumberOfSets,
+  ballsInGames = false,
   onSave,
   onRemove,
   onClose,
@@ -35,38 +38,128 @@ export const SetResultModal = ({
   isOpen,
 }: SetResultModalProps) => {
   const { t } = useTranslation();
-  const currentSet = match.sets[setIndex] || { teamA: 0, teamB: 0 };
+  const currentSet = match.sets[setIndex] || { teamA: 0, teamB: 0, isTieBreak: false };
   const [teamAScore, setTeamAScore] = useState(currentSet.teamA);
   const [teamBScore, setTeamBScore] = useState(currentSet.teamB);
+  const [isTieBreak, setIsTieBreak] = useState(currentSet.isTieBreak || false);
   const [numberPickerTeam, setNumberPickerTeam] = useState<'teamA' | 'teamB' | null>(null);
+  const prevIsTieBreakRef = useRef(isTieBreak);
 
   useEffect(() => {
     setTeamAScore(currentSet.teamA);
     setTeamBScore(currentSet.teamB);
-  }, [currentSet.teamA, currentSet.teamB]);
+    const newIsTieBreak = currentSet.isTieBreak || false;
+    setIsTieBreak(newIsTieBreak);
+    prevIsTieBreakRef.current = newIsTieBreak;
+  }, [currentSet.teamA, currentSet.teamB, currentSet.isTieBreak]);
+
+  // Prevent equal scores when tiebreak is enabled
+  useEffect(() => {
+    // Only adjust when tiebreak is toggled ON (not when it's already on)
+    if (isTieBreak && !prevIsTieBreakRef.current && teamAScore === teamBScore && teamAScore > 0) {
+      // Adjust teamA score by 1 to make them different
+      setTeamAScore(teamAScore + 1);
+    }
+    prevIsTieBreakRef.current = isTieBreak;
+  }, [isTieBreak, teamAScore, teamBScore]);
 
   const handleTeamAScoreChange = (newScore: number) => {
     const minScore = 0;
     const maxScore = maxTotalPointsPerSet && maxTotalPointsPerSet > 0 ? maxTotalPointsPerSet : 48;
-    const clampedScore = Math.max(minScore, Math.min(newScore, maxScore));
+    let clampedScore = Math.max(minScore, Math.min(newScore, maxScore));
+    
+    // Prevent equal scores in tiebreak
+    if (isTieBreak && clampedScore === teamBScore) {
+      // If trying to set equal score, adjust by 1
+      if (clampedScore < maxScore) {
+        clampedScore = clampedScore + 1;
+      } else if (clampedScore > 0) {
+        clampedScore = clampedScore - 1;
+      } else {
+        return; // Cannot adjust, skip
+      }
+    }
+    
     setTeamAScore(clampedScore);
+    
     if (maxTotalPointsPerSet && maxTotalPointsPerSet > 0) {
-      setTeamBScore(Math.max(0, maxTotalPointsPerSet - clampedScore));
+      let newTeamBScore = Math.max(0, maxTotalPointsPerSet - clampedScore);
+      // Prevent equal scores in tiebreak
+      if (isTieBreak && newTeamBScore === clampedScore) {
+        if (newTeamBScore > 0) {
+          newTeamBScore = newTeamBScore - 1;
+        } else {
+          // Adjust teamA instead
+          setTeamAScore(clampedScore - 1);
+          return;
+        }
+      }
+      setTeamBScore(newTeamBScore);
     }
   };
 
   const handleTeamBScoreChange = (newScore: number) => {
     const minScore = 0;
     const maxScore = maxTotalPointsPerSet && maxTotalPointsPerSet > 0 ? maxTotalPointsPerSet : 48;
-    const clampedScore = Math.max(minScore, Math.min(newScore, maxScore));
+    let clampedScore = Math.max(minScore, Math.min(newScore, maxScore));
+    
+    // Prevent equal scores in tiebreak
+    if (isTieBreak && clampedScore === teamAScore) {
+      // If trying to set equal score, adjust by 1
+      if (clampedScore < maxScore) {
+        clampedScore = clampedScore + 1;
+      } else if (clampedScore > 0) {
+        clampedScore = clampedScore - 1;
+      } else {
+        return; // Cannot adjust, skip
+      }
+    }
+    
     setTeamBScore(clampedScore);
+    
     if (maxTotalPointsPerSet && maxTotalPointsPerSet > 0) {
-      setTeamAScore(Math.max(0, maxTotalPointsPerSet - clampedScore));
+      let newTeamAScore = Math.max(0, maxTotalPointsPerSet - clampedScore);
+      // Prevent equal scores in tiebreak
+      if (isTieBreak && newTeamAScore === clampedScore) {
+        if (newTeamAScore > 0) {
+          newTeamAScore = newTeamAScore - 1;
+        } else {
+          // Adjust teamB instead
+          setTeamBScore(clampedScore - 1);
+          return;
+        }
+      }
+      setTeamAScore(newTeamAScore);
     }
   };
 
   const handleSave = () => {
-    onSave(match.id, setIndex, teamAScore, teamBScore);
+    const setBeingUpdated = { teamA: teamAScore, teamB: teamBScore, isTieBreak };
+    const lastSetCheck = isLastSet(setIndex, match.sets, fixedNumberOfSets || 0, setBeingUpdated);
+    
+    const finalIsTieBreak = showTieBreakToggle && lastSetCheck ? isTieBreak : false;
+    
+    // Validate that tiebreak sets cannot have equal scores
+    if (finalIsTieBreak && teamAScore === teamBScore) {
+      console.error('TieBreak sets cannot have equal scores');
+      return;
+    }
+    
+    const tieBreakError = validateTieBreak(
+      setIndex,
+      match.sets,
+      fixedNumberOfSets || 0,
+      finalIsTieBreak,
+      ballsInGames,
+      setBeingUpdated
+    );
+
+    if (tieBreakError) {
+      console.error('TieBreak validation error:', tieBreakError);
+      return;
+    }
+
+    onSave(match.id, setIndex, teamAScore, teamBScore, finalIsTieBreak);
     onClose();
   };
 
@@ -85,7 +178,17 @@ export const SetResultModal = ({
     maxPointsPerTeam && maxPointsPerTeam > 0 ? maxPointsPerTeam : 32,
     32
   );
-  const numberOptions = Array.from({ length: maxNumber + 1 }, (_, i) => i);
+  
+  // Filter out options that would result in equal scores when tiebreak is enabled
+  const numberOptions = Array.from({ length: maxNumber + 1 }, (_, i) => i).filter((number) => {
+    if (!isTieBreak) return true;
+    if (numberPickerTeam === 'teamA') {
+      return number !== teamBScore;
+    } else if (numberPickerTeam === 'teamB') {
+      return number !== teamAScore;
+    }
+    return true;
+  });
 
   const handleNumberSelect = (number: number) => {
     if (numberPickerTeam === 'teamA') {
@@ -101,6 +204,36 @@ export const SetResultModal = ({
   const currentScore = numberPickerTeam === 'teamA' ? teamAScore : numberPickerTeam === 'teamB' ? teamBScore : 0;
   const isTeamAWinning = teamAScore > teamBScore;
   const isTeamBWinning = teamBScore > teamAScore;
+  
+  const setBeingUpdated = { teamA: teamAScore, teamB: teamBScore, isTieBreak };
+  const lastSetCheck = isLastSet(setIndex, match.sets, fixedNumberOfSets || 0, setBeingUpdated);
+  const hasExistingTieBreak = match.sets.some((set, idx) => idx !== setIndex && set.isTieBreak);
+  
+  // Check if this is an odd set starting from 3rd (setIndex 2, 4, 6, 8)
+  const isOddSetFromThird = setIndex >= 2 && (setIndex - 2) % 2 === 0;
+  
+  // Check if previous sets are equally won by both teams
+  const arePreviousSetsTied = () => {
+    if (setIndex < 2) return false;
+    
+    let teamAWins = 0;
+    let teamBWins = 0;
+    
+    for (let i = 0; i < setIndex; i++) {
+      const set = match.sets[i];
+      if (set && (set.teamA > 0 || set.teamB > 0)) {
+        if (set.teamA > set.teamB) {
+          teamAWins++;
+        } else if (set.teamB > set.teamA) {
+          teamBWins++;
+        }
+      }
+    }
+    
+    return teamAWins === teamBWins;
+  };
+  
+  const showTieBreakToggle = isOddSetFromThird && arePreviousSetsTied() && lastSetCheck && ballsInGames && !hasExistingTieBreak;
 
   return (
     <BaseModal 
@@ -263,7 +396,43 @@ export const SetResultModal = ({
         </div>
       </div>
       
-      <div className="flex gap-2 sm:gap-3 pt-8 px-3 sm:px-4 md:px-5 pb-3 sm:pb-4 md:pb-5">
+      {showTieBreakToggle && (
+        <div className="px-3 sm:px-4 md:px-5 pb-3 sm:pb-4 md:pb-5">
+          <div className="flex items-center justify-center gap-3 p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <Zap 
+                className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-300 ${
+                  isTieBreak 
+                    ? 'text-yellow-500 dark:text-yellow-400' 
+                    : 'text-gray-400 dark:text-gray-500'
+                }`}
+              />
+              <span className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">
+                {t('gameResults.tieBreak') || 'TieBreak'}
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isTieBreak}
+                onClick={() => setIsTieBreak(!isTieBreak)}
+                className={`relative inline-flex h-6 w-11 sm:h-7 sm:w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                  isTieBreak
+                    ? 'bg-gradient-to-r from-primary-500 to-primary-600'
+                    : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
+                    isTieBreak ? 'translate-x-6 sm:translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </label>
+          </div>
+        </div>
+      )}
+      
+      <div className="flex gap-2 sm:gap-3 pt-4 px-3 sm:px-4 md:px-5 pb-3 sm:pb-4 md:pb-5">
         <Button
           onClick={onClose}
           variant="outline"
@@ -282,7 +451,8 @@ export const SetResultModal = ({
         )}
         <Button
           onClick={handleSave}
-          className="flex-1 h-10 sm:h-11 md:h-12 rounded-xl font-semibold bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 text-sm sm:text-base"
+          disabled={isTieBreak && teamAScore === teamBScore}
+          className="flex-1 h-10 sm:h-11 md:h-12 rounded-xl font-semibold bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {t('common.save')}
         </Button>

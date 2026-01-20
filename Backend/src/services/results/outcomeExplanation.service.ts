@@ -45,6 +45,7 @@ interface SetExplanation {
   levelChange: number;
   userScore: number;
   opponentScore: number;
+  isTieBreak?: boolean;
 }
 
 interface MatchExplanation {
@@ -210,9 +211,9 @@ export async function getOutcomeExplanation(
 
       const setScores = validSets.map(set => {
         if (userTeam.teamNumber === 1) {
-          return { teamAScore: set.teamAScore, teamBScore: set.teamBScore };
+          return { teamAScore: set.teamAScore, teamBScore: set.teamBScore, isTieBreak: set.isTieBreak || false };
         } else {
-          return { teamAScore: set.teamBScore, teamBScore: set.teamAScore };
+          return { teamAScore: set.teamBScore, teamBScore: set.teamAScore, isTieBreak: set.isTieBreak || false };
         }
       });
 
@@ -257,6 +258,7 @@ export async function getOutcomeExplanation(
           levelChange: 0,
           userScore: userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore,
           opponentScore: userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore,
+          isTieBreak: set.isTieBreak || false,
         });
       }
 

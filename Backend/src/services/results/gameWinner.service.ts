@@ -562,6 +562,18 @@ export async function updateGameOutcomes(
           },
         },
       },
+      fixedTeams: {
+        include: {
+          players: {
+            include: {
+              user: {
+                select: { id: true },
+              },
+            },
+          },
+        },
+        orderBy: { teamNumber: 'asc' },
+      },
     },
   });
 
@@ -660,6 +672,87 @@ export async function updateGameOutcomes(
     return positionMap;
   };
 
+  interface TeamScore {
+    teamId: string;
+    teamNumber: number;
+    playerIds: string[];
+    matchesWon: number;
+    wins: number;
+    ties: number;
+    losses: number;
+    totalPoints: number;
+    scoresDelta: number;
+    pointsEarned: number;
+  }
+
+  const compareTeams = (a: TeamScore, b: TeamScore): number => {
+    switch (winnerOfGame) {
+      case WinnerOfGame.BY_MATCHES_WON:
+        const matchesDiff = b.matchesWon - a.matchesWon;
+        if (matchesDiff !== 0) return matchesDiff;
+        
+        const tiesDiff = b.ties - a.ties;
+        if (tiesDiff !== 0) return tiesDiff;
+        
+        const scoresDeltaDiff = b.scoresDelta - a.scoresDelta;
+        if (scoresDeltaDiff !== 0) return scoresDeltaDiff;
+        
+        return 0;
+      
+      case WinnerOfGame.BY_POINTS:
+        const pointsDiff = b.pointsEarned - a.pointsEarned;
+        if (pointsDiff !== 0) return pointsDiff;
+        
+        const matchesDiff2 = b.matchesWon - a.matchesWon;
+        if (matchesDiff2 !== 0) return matchesDiff2;
+        
+        const tiesDiff2 = b.ties - a.ties;
+        if (tiesDiff2 !== 0) return tiesDiff2;
+        
+        const scoresDeltaDiff2 = b.scoresDelta - a.scoresDelta;
+        if (scoresDeltaDiff2 !== 0) return scoresDeltaDiff2;
+        
+        return 0;
+      
+      case WinnerOfGame.BY_SCORES_DELTA:
+        const deltasDiff = b.scoresDelta - a.scoresDelta;
+        if (deltasDiff !== 0) return deltasDiff;
+        
+        const matchesDiff3 = b.matchesWon - a.matchesWon;
+        if (matchesDiff3 !== 0) return matchesDiff3;
+        
+        const tiesDiff3 = b.ties - a.ties;
+        if (tiesDiff3 !== 0) return tiesDiff3;
+        
+        return 0;
+      
+      default:
+        const defaultDiff = b.matchesWon - a.matchesWon;
+        if (defaultDiff !== 0) return defaultDiff;
+        return b.scoresDelta - a.scoresDelta;
+    }
+  };
+
+  const areTeamsTied = (a: TeamScore, b: TeamScore): boolean => {
+    if (
+      a.wins !== b.wins ||
+      a.ties !== b.ties ||
+      a.losses !== b.losses ||
+      a.matchesWon !== b.matchesWon ||
+      a.scoresDelta !== b.scoresDelta
+    ) {
+      return false;
+    }
+
+    if (winnerOfGame === WinnerOfGame.BY_POINTS) {
+      if (a.pointsEarned !== b.pointsEarned) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   let winnerUserIds: Set<string> = new Set(winners);
   let playerPositionMap: Map<string, number> | null = null;
   let sortedPlayers: PlayerGameScore[];
@@ -721,6 +814,92 @@ export async function updateGameOutcomes(
       }
     }
     console.log(`[UPDATE GAME OUTCOMES] MIX_PAIRS mode: Assigning positions in pairs`);
+  } else if (game.hasFixedTeams && game.fixedTeams && game.fixedTeams.length > 0) {
+    console.log(`[UPDATE GAME OUTCOMES] Fixed teams mode: Grouping players by fixed teams`);
+    
+    const teamScoresMap = new Map<string, TeamScore>();
+    
+    for (const fixedTeam of game.fixedTeams) {
+      const teamPlayerIds = fixedTeam.players.map(p => p.userId);
+      const teamPlayerScores = teamPlayerIds
+        .map(userId => playerScores.get(userId))
+        .filter((score): score is PlayerGameScore => score !== undefined);
+      
+      if (teamPlayerScores.length === 0) {
+        console.warn(`[UPDATE GAME OUTCOMES] Team ${fixedTeam.id} (teamNumber: ${fixedTeam.teamNumber}) has no players with scores, skipping`);
+        continue;
+      }
+      
+      if (teamPlayerScores.length < teamPlayerIds.length) {
+        const missingPlayers = teamPlayerIds.filter(id => !playerScores.has(id));
+        console.warn(`[UPDATE GAME OUTCOMES] Team ${fixedTeam.id} (teamNumber: ${fixedTeam.teamNumber}) has ${teamPlayerScores.length}/${teamPlayerIds.length} players with scores. Missing players: ${missingPlayers.join(', ')}`);
+      }
+      
+      const teamScore: TeamScore = {
+        teamId: fixedTeam.id,
+        teamNumber: fixedTeam.teamNumber,
+        playerIds: teamPlayerIds,
+        matchesWon: Math.max(...teamPlayerScores.map(p => p.matchesWon)),
+        wins: Math.max(...teamPlayerScores.map(p => p.wins)),
+        ties: Math.max(...teamPlayerScores.map(p => p.ties)),
+        losses: Math.max(...teamPlayerScores.map(p => p.losses)),
+        totalPoints: teamPlayerScores.reduce((sum, p) => sum + p.totalPoints, 0),
+        scoresDelta: teamPlayerScores.reduce((sum, p) => sum + p.scoresDelta, 0),
+        pointsEarned: teamPlayerScores.reduce((sum, p) => sum + calculatePointsEarned(p, pointsPerWin, pointsPerTie, pointsPerLoose), 0),
+      };
+      
+      teamScoresMap.set(fixedTeam.id, teamScore);
+    }
+    
+    const sortedTeams = Array.from(teamScoresMap.values()).sort(compareTeams);
+    
+    const teamPositionMap = new Map<string, number>();
+    let currentPosition = 1;
+    let i = 0;
+    
+    while (i < sortedTeams.length) {
+      const tiedGroup: TeamScore[] = [sortedTeams[i]];
+      let j = i + 1;
+      
+      while (j < sortedTeams.length && areTeamsTied(sortedTeams[i], sortedTeams[j])) {
+        tiedGroup.push(sortedTeams[j]);
+        j++;
+      }
+      
+      for (const team of tiedGroup) {
+        teamPositionMap.set(team.teamId, currentPosition);
+      }
+      
+      currentPosition += 1;
+      i = j;
+    }
+    
+    playerPositionMap = new Map<string, number>();
+    sortedPlayers = [];
+    
+    for (const team of sortedTeams) {
+      const position = teamPositionMap.get(team.teamId) ?? sortedTeams.length;
+      
+      for (const playerId of team.playerIds) {
+        const playerScore = playerScores.get(playerId);
+        if (playerScore) {
+          playerPositionMap.set(playerId, position);
+          sortedPlayers.push(playerScore);
+        } else {
+          console.warn(`[UPDATE GAME OUTCOMES] Player ${playerId} in team ${team.teamId} (teamNumber: ${team.teamNumber}) has no score, cannot assign position`);
+        }
+      }
+      
+      if (position === 1) {
+        for (const playerId of team.playerIds) {
+          if (playerScores.has(playerId)) {
+            winnerUserIds.add(playerId);
+          }
+        }
+      }
+    }
+    
+    console.log(`[UPDATE GAME OUTCOMES] Fixed teams mode: Assigned positions to ${playerPositionMap.size} players across ${sortedTeams.length} teams`);
   } else {
     sortedPlayers = sortPlayers(Array.from(playerScores.values()));
   }
@@ -730,6 +909,19 @@ export async function updateGameOutcomes(
       const position = playerPositionMap.get(playerScore.userId);
       if (position === undefined) {
         console.log(`[UPDATE GAME OUTCOMES] Warning: Position not found for player ${playerScore.userId} in MIX_PAIRS mode, skipping`);
+        continue;
+      }
+      const isWinner = winnerUserIds.has(playerScore.userId);
+      const pointsEarned = calculatePointsEarned(playerScore, pointsPerWin, pointsPerTie, pointsPerLoose);
+      console.log(`[UPDATE GAME OUTCOMES] Position ${position}: Player ${playerScore.userId} (isWinner=${isWinner}), wins=${playerScore.wins}, ties=${playerScore.ties}, losses=${playerScore.losses}, pointsEarned=${pointsEarned}, matchesWon=${playerScore.matchesWon}, totalPoints=${playerScore.totalPoints}, scoresDelta=${playerScore.scoresDelta}`);
+
+      await upsertGameOutcome(tx, gameId, playerScore, position, isWinner, pointsEarned);
+    }
+  } else if (game.hasFixedTeams && playerPositionMap) {
+    for (const playerScore of sortedPlayers) {
+      const position = playerPositionMap.get(playerScore.userId);
+      if (position === undefined) {
+        console.log(`[UPDATE GAME OUTCOMES] Warning: Position not found for player ${playerScore.userId} in fixed teams mode, skipping`);
         continue;
       }
       const isWinner = winnerUserIds.has(playerScore.userId);

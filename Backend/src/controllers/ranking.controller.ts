@@ -5,54 +5,7 @@ import prisma from '../config/database';
 import { getLevelName } from '../utils/playerLevels';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { ResultsStatus } from '@prisma/client';
-
-const calculateRanks = (users: any[], isGames: boolean, isSocial: boolean): Map<string, number> => {
-  const rankMap = new Map<string, number>();
-  if (users.length === 0) return rankMap;
-
-  let currentRank = 1;
-  let i = 0;
-  
-  while (i < users.length) {
-    const currentEntry = users[i];
-    let tieGroupSize = 1;
-    
-    while (i + tieGroupSize < users.length) {
-      const nextEntry = users[i + tieGroupSize];
-      let isTie = false;
-      
-      if (isGames) {
-        isTie = 
-          currentEntry.gamesCount === nextEntry.gamesCount &&
-          currentEntry.reliability === nextEntry.reliability &&
-          currentEntry.level === nextEntry.level &&
-          currentEntry.totalPoints === nextEntry.totalPoints;
-      } else {
-        const currentValue = isSocial ? currentEntry.socialLevel : currentEntry.level;
-        const nextValue = isSocial ? nextEntry.socialLevel : nextEntry.level;
-        isTie = 
-          currentValue === nextValue &&
-          currentEntry.reliability === nextEntry.reliability &&
-          currentEntry.totalPoints === nextEntry.totalPoints;
-      }
-      
-      if (isTie) {
-        tieGroupSize++;
-      } else {
-        break;
-      }
-    }
-    
-    for (let j = 0; j < tieGroupSize; j++) {
-      rankMap.set(users[i + j].id, currentRank);
-    }
-    
-    i += tieGroupSize;
-    currentRank += tieGroupSize;
-  }
-  
-  return rankMap;
-};
+import { calculateRanks } from '../services/ranking.service';
 
 const getLastGameRatingChanges = async (userIds: string[], isSocial: boolean): Promise<Record<string, number | null>> => {
   const changes: Record<string, number | null> = {};

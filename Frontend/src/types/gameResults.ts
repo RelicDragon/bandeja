@@ -2,6 +2,7 @@ export interface SetResult {
   id?: string;
   teamA: number;
   teamB: number;
+  isTieBreak?: boolean;
 }
 
 export interface Match {

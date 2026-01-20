@@ -322,6 +322,7 @@
     "sets": "Сеты",
     "setResult": "Результат Сета",
     "matchResult": "Результат Матча",
+    "tieBreak": "Тай-брейк",
     "addMatch": "Добавить Матч",
     "availablePlayers": "Доступные Игроки",
     "enterResults": "Ввести Результаты",
@@ -357,6 +358,11 @@
     "finishBarTitle": "Завершить бар?",
     "finishTrainingTitle": "Завершить тренировку?",
     "editGameTitle": "Редактировать результаты игры?",
+    "sendResultsToTelegram": "Отправить результаты в Telegram чат",
+    "sendingToTelegram": "Отправка...",
+    "resultsSentToTelegram": "Результаты успешно отправлены в Telegram",
+    "sendToTelegramFailed": "Не удалось отправить результаты в Telegram",
+    "preparingTelegramMessage": "Подождите немного, мы готовим сообщение для вас. Вы можете закрыть эту игру.",
     "editTournamentTitle": "Редактировать результаты турнира?",
     "editBarTitle": "Редактировать результаты бара?",
     "editTrainingTitle": "Редактировать результаты тренировки?",
@@ -481,7 +487,12 @@
     "resultsEntryStarted": "Ввод результатов начат",
     "gameReset": "Игра успешно сброшена",
     "resetGameTitle": "Сбросить Результаты Игры",
-    "resetConfirmationMessage": "Вы уверены, что хотите сбросить все результаты игры? Это действие нельзя отменить."
+    "resetConfirmationMessage": "Вы уверены, что хотите сбросить все результаты игры? Это действие нельзя отменить.",
+    "confirmAnnouncedGame": {
+      "title": "Игра еще не началась",
+      "message": "Эта игра все еще в статусе ОБЪЯВЛЕНА. Вы уверены, что хотите начать вводить результаты сейчас?",
+      "confirm": "Да, продолжить"
+    }
   },
   "invites": {
     "title": "Приглашения",

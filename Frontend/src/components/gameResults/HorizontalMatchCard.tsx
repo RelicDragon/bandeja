@@ -54,13 +54,13 @@ export const HorizontalMatchCard = ({
   const effectiveIsPresetGame = isPresetGame || prohibitMatchesEditing;
   const effectiveIsEditing = prohibitMatchesEditing ? false : isEditing;
   const displaySets = fixedNumberOfSets && fixedNumberOfSets > 0
-    ? Array.from({ length: fixedNumberOfSets }, (_, i) => match.sets[i] || { teamA: 0, teamB: 0 })
+    ? Array.from({ length: fixedNumberOfSets }, (_, i) => match.sets[i] || { teamA: 0, teamB: 0, isTieBreak: false })
     : (() => {
         const sets = [...match.sets];
         if (sets.length > 0) {
           const lastSet = sets[sets.length - 1];
-          if (lastSet.teamA > 0 || lastSet.teamB > 0) {
-            sets.push({ teamA: 0, teamB: 0 });
+          if ((lastSet.teamA > 0 || lastSet.teamB > 0) && !lastSet.isTieBreak) {
+            sets.push({ teamA: 0, teamB: 0, isTieBreak: false });
           }
         }
         return sets;

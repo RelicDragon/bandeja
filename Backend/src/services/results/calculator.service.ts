@@ -17,6 +17,7 @@ interface TeamScore {
 interface SetScore {
   teamAScore: number;
   teamBScore: number;
+  isTieBreak?: boolean;
 }
 
 interface MatchResultData {

@@ -5,7 +5,7 @@ import { Round, Match, GameState } from '@/types/gameResults';
 import { ResultsStorage, LocalResults } from './resultsStorage';
 import { resultsApi } from '@/api/results';
 import { gamesApi } from '@/api';
-import { isUserGameAdminOrOwner, isUserGameParticipant, validateSetScores, validateSetIndexAgainstFixed } from '@/utils/gameResults';
+import { isUserGameAdminOrOwner, isUserGameParticipant, validateSetScores, validateSetIndexAgainstFixed, validateTieBreak } from '@/utils/gameResults';
 import { RoundGenerator } from './roundGenerator';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
@@ -395,8 +395,8 @@ class GameResultsEngineClass {
     const newMatchId = matchId || createId();
     const fixedNumberOfSets = state.game?.fixedNumberOfSets;
     const initialSets = fixedNumberOfSets && fixedNumberOfSets > 0
-      ? Array.from({ length: fixedNumberOfSets }, () => ({ teamA: 0, teamB: 0 }))
-      : [{ teamA: 0, teamB: 0 }];
+      ? Array.from({ length: fixedNumberOfSets }, () => ({ teamA: 0, teamB: 0, isTieBreak: false }))
+      : [{ teamA: 0, teamB: 0, isTieBreak: false }];
 
     const newMatch: Match = {
       id: newMatchId,
@@ -542,7 +542,7 @@ class GameResultsEngineClass {
   async updateMatch(roundId: string, matchId: string, match: {
     teamA: string[];
     teamB: string[];
-    sets: Array<{ teamA: number; teamB: number }>;
+    sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>;
     courtId?: string;
   }): Promise<void> {
     const state = this.getState();
@@ -586,6 +586,20 @@ class GameResultsEngineClass {
         const indexError = validateSetIndexAgainstFixed(i, fixedNumberOfSets);
         if (indexError) {
           throw new Error(indexError);
+        }
+
+        // Validate TieBreak rules
+        if (set.isTieBreak) {
+          const tieBreakError = validateTieBreak(
+            i,
+            match.sets,
+            fixedNumberOfSets,
+            set.isTieBreak,
+            state.game.ballsInGames || false
+          );
+          if (tieBreakError) {
+            throw new Error(tieBreakError);
+          }
         }
       }
 
@@ -724,8 +738,8 @@ class GameResultsEngineClass {
           }
             
             const sets = match.sets && Array.isArray(match.sets) && match.sets.length > 0
-              ? match.sets.map((s: any) => ({ teamA: s.teamAScore || 0, teamB: s.teamBScore || 0 }))
-              : [{ teamA: 0, teamB: 0 }];
+              ? match.sets.map((s: any) => ({ teamA: s.teamAScore || 0, teamB: s.teamBScore || 0, isTieBreak: s.isTieBreak || false }))
+              : [{ teamA: 0, teamB: 0, isTieBreak: false }];
             
             let winnerTeam: 'teamA' | 'teamB' | null = null;
             if (match.winnerId) {

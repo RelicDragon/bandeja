@@ -28,8 +28,10 @@ export const LeagueFixedTeamsSection = ({ game }: LeagueFixedTeamsSectionProps) 
   if (isFinal && game.outcomes && game.outcomes.length > 0) {
     const teamAOutcomes = game.outcomes.filter((o) => teamAPlayerIds.includes(o.user?.id || ''));
     const teamBOutcomes = game.outcomes.filter((o) => teamBPlayerIds.includes(o.user?.id || ''));
-    const teamAWins = teamAOutcomes.reduce((sum, o) => sum + (o.wins || 0), 0);
-    const teamBWins = teamBOutcomes.reduce((sum, o) => sum + (o.wins || 0), 0);
+    
+    // For fixed teams, all players have identical stats, so just take the first player's wins
+    const teamAWins = teamAOutcomes.length > 0 ? (teamAOutcomes[0].wins || 0) : 0;
+    const teamBWins = teamBOutcomes.length > 0 ? (teamBOutcomes[0].wins || 0) : 0;
 
     if (teamAWins > teamBWins) {
       winner = 'teamA';

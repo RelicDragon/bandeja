@@ -12,7 +12,7 @@ interface MatchResult {
   isDraw?: boolean;
   scoreDelta?: number;
   opponentsLevel: number;
-  setScores?: Array<{ teamAScore: number; teamBScore: number }>;
+  setScores?: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }>;
 }
 
 interface RatingUpdate {
@@ -35,20 +35,20 @@ const CLOSE_MATCH_THRESHOLD = 3;
 const BLOWOUT_THRESHOLD = 15;
 
 export function calculateEnduranceCoefficient(
-  setScores: Array<{ teamAScore: number; teamBScore: number }> | undefined,
+  setScores: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }> | undefined,
   ballsInGames: boolean
 ): number {
   if (!setScores || setScores.length === 0) {
     return 1;
   }
 
-  const sum = setScores.reduce((total, set) => total + set.teamAScore + set.teamBScore, 0);
+  const sum = setScores.reduce((total, set) => {
+    const setTotal = set.teamAScore + set.teamBScore;
+    const effectiveBallsInGames = ballsInGames && !set.isTieBreak;
+    return total + (effectiveBallsInGames ? setTotal * 5 : setTotal);
+  }, 0);
   
   let coefficient = sum / 20;
-  
-  if (ballsInGames) {
-    coefficient *= 5;
-  }
   
   return coefficient;
 }

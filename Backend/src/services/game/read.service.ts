@@ -9,6 +9,7 @@ export const getGameInclude = () => ({
       id: true,
       name: true,
       country: true,
+      telegramGroupId: true,
     },
   },
   club: {
@@ -53,7 +54,7 @@ export const getGameInclude = () => ({
         select: USER_SELECT_FIELDS,
       },
     },
-    orderBy: { createdAt: 'asc' },
+    orderBy: { createdAt: 'asc' as const },
   },
   outcomes: {
     include: {
@@ -61,7 +62,7 @@ export const getGameInclude = () => ({
         select: USER_SELECT_FIELDS,
       },
     },
-    orderBy: { position: 'asc' },
+    orderBy: { position: 'asc' as const },
   },
   rounds: {
     include: {
@@ -97,7 +98,7 @@ export const getGameInclude = () => ({
         },
       },
     },
-    orderBy: { teamNumber: 'asc' },
+    orderBy: { teamNumber: 'asc' as const },
   },
   gameCourts: {
     include: {
@@ -113,7 +114,7 @@ export const getGameInclude = () => ({
         },
       },
     },
-    orderBy: { order: 'asc' },
+    orderBy: { order: 'asc' as const },
   },
   leagueSeason: {
     include: {
@@ -337,6 +338,7 @@ export class GameReadService {
             id: true,
             name: true,
             country: true,
+            telegramGroupId: true,
           },
         },
         club: {

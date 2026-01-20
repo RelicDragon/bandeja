@@ -62,8 +62,9 @@ export const LeagueGameCard = ({
     const teamAOutcomes = game.outcomes.filter(o => teamAPlayerIds.includes(o.user?.id));
     const teamBOutcomes = game.outcomes.filter(o => teamBPlayerIds.includes(o.user?.id));
     
-    const teamAWins = teamAOutcomes.reduce((sum, o) => sum + (o.wins || 0), 0);
-    const teamBWins = teamBOutcomes.reduce((sum, o) => sum + (o.wins || 0), 0);
+    // For fixed teams, all players have identical stats, so just take the first player's wins
+    const teamAWins = teamAOutcomes.length > 0 ? (teamAOutcomes[0].wins || 0) : 0;
+    const teamBWins = teamBOutcomes.length > 0 ? (teamBOutcomes[0].wins || 0) : 0;
     
     if (teamAWins > teamBWins) {
       winner = 'teamA';
@@ -166,7 +167,7 @@ export const LeagueGameCard = ({
   };
 
   return (
-    <div className="relative pl-2 pt-2 pb-6 pr-12 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="relative pl-2 pt-2 pb-6 pr-2 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       {game.leagueGroup && (
         <div
           className="absolute left-0 top-0 bottom-0 w-1"
@@ -241,6 +242,9 @@ export const LeagueGameCard = ({
                       className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                     >
                       {set.teamAScore}:{set.teamBScore}
+                      {set.isTieBreak && (
+                        <span className="ml-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">TB</span>
+                      )}
                     </div>
                   );
                 }) || []

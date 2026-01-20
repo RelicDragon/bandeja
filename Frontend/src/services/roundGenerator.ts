@@ -23,8 +23,8 @@ export class RoundGenerator {
     const { matchGenerationType } = this.options.game;
     const fixedNumberOfSets = this.options.fixedNumberOfSets || 0;
     const initialSets = fixedNumberOfSets > 0
-      ? Array.from({ length: fixedNumberOfSets }, () => ({ teamA: 0, teamB: 0 }))
-      : [{ teamA: 0, teamB: 0 }];
+      ? Array.from({ length: fixedNumberOfSets }, () => ({ teamA: 0, teamB: 0, isTieBreak: false }))
+      : [{ teamA: 0, teamB: 0, isTieBreak: false }];
     
     if (!matchGenerationType || matchGenerationType === 'HANDMADE') {
       return this.generateHandmadeRound(initialSets);

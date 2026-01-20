@@ -23,35 +23,44 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
   const isMixPairsWithoutFixedTeams = !game.hasFixedTeams && game.genderTeams === 'MIX_PAIRS';
 
   const groupedStandings = useMemo(() => {
-    if (!isMixPairsWithoutFixedTeams) {
-      return standings.map(standing => ({
-        place: standing.place,
-        standings: [standing],
-      }));
+    if (isMixPairsWithoutFixedTeams) {
+      const maleStandings = standings.filter(s => s.user.gender === 'MALE');
+      const femaleStandings = standings.filter(s => s.user.gender === 'FEMALE');
+      const maxPairs = Math.max(maleStandings.length, femaleStandings.length);
+
+      const groups: Array<{ place: number; standings: typeof standings }> = [];
+      for (let i = 0; i < maxPairs; i++) {
+        const place = i + 1;
+        const pair: typeof standings = [];
+        
+        if (i < maleStandings.length) {
+          pair.push(maleStandings[i]);
+        }
+        if (i < femaleStandings.length) {
+          pair.push(femaleStandings[i]);
+        }
+
+        if (pair.length > 0) {
+          groups.push({ place, standings: pair });
+        }
+      }
+
+      return groups;
     }
 
-    const maleStandings = standings.filter(s => s.user.gender === 'MALE');
-    const femaleStandings = standings.filter(s => s.user.gender === 'FEMALE');
-    const maxPairs = Math.max(maleStandings.length, femaleStandings.length);
-
-    const groups: Array<{ place: number; standings: typeof standings }> = [];
-    for (let i = 0; i < maxPairs; i++) {
-      const place = i + 1;
-      const pair: typeof standings = [];
-      
-      if (i < maleStandings.length) {
-        pair.push(maleStandings[i]);
+    // Group by position for fixed teams and regular games
+    const placeMap = new Map<number, typeof standings>();
+    standings.forEach(standing => {
+      const place = standing.place;
+      if (!placeMap.has(place)) {
+        placeMap.set(place, []);
       }
-      if (i < femaleStandings.length) {
-        pair.push(femaleStandings[i]);
-      }
+      placeMap.get(place)!.push(standing);
+    });
 
-      if (pair.length > 0) {
-        groups.push({ place, standings: pair });
-      }
-    }
-
-    return groups;
+    return Array.from(placeMap.entries())
+      .map(([place, standings]) => ({ place, standings }))
+      .sort((a, b) => a.place - b.place);
   }, [standings, isMixPairsWithoutFixedTeams]);
 
   if (standings.length === 0) {

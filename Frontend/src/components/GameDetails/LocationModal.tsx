@@ -166,12 +166,12 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
 
   return (
     <BaseModal 
-      isOpen={isOpen && !isClubModalOpen && !isCourtModalOpen} 
+      isOpen={isOpen} 
       onClose={handleClose} 
       isBasic 
       modalId="location-modal"
       showCloseButton={true}
-      closeOnBackdropClick={true}
+      closeOnBackdropClick={!isClubModalOpen && !isCourtModalOpen}
     >
       <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{locationLabel}</h2>
@@ -241,44 +241,34 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
           </button>
       </div>
 
-      {isClubModalOpen && (
-        <div 
-          className="fixed inset-0 z-[10000]" 
-          style={{ pointerEvents: 'auto' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <ClubModal
-            isOpen={isClubModalOpen}
-            onClose={() => setIsClubModalOpen(false)}
-            clubs={clubs}
-            selectedId={clubId}
-            onSelect={(id) => {
-              setClubId(id);
-              setCourtId('');
-              setHasBookedCourt(false);
-              setIsClubModalOpen(false);
-            }}
-          />
-        </div>
-      )}
+      <ClubModal
+        isOpen={isClubModalOpen}
+        onClose={() => setIsClubModalOpen(false)}
+        clubs={clubs}
+        selectedId={clubId}
+        onSelect={(id) => {
+          setClubId(id);
+          setCourtId('');
+          setHasBookedCourt(false);
+          setIsClubModalOpen(false);
+        }}
+      />
 
-      {isCourtModalOpen && (
-        <CourtModal
-          isOpen={isCourtModalOpen}
-          onClose={() => setIsCourtModalOpen(false)}
-          courts={modalCourts}
-          selectedId={courtId || 'notBooked'}
-            onSelect={(id) => {
-              const newCourtId = id === 'notBooked' ? '' : id;
-              setCourtId(newCourtId);
-              if (!newCourtId) {
-                setHasBookedCourt(false);
-              }
-              setIsCourtModalOpen(false);
-            }}
-          entityType={game.entityType}
-        />
-      )}
+      <CourtModal
+        isOpen={isCourtModalOpen}
+        onClose={() => setIsCourtModalOpen(false)}
+        courts={modalCourts}
+        selectedId={courtId || 'notBooked'}
+        onSelect={(id) => {
+          const newCourtId = id === 'notBooked' ? '' : id;
+          setCourtId(newCourtId);
+          if (!newCourtId) {
+            setHasBookedCourt(false);
+          }
+          setIsCourtModalOpen(false);
+        }}
+        entityType={game.entityType}
+      />
     </BaseModal>
   );
 };

@@ -180,6 +180,16 @@ export const GameDetailsContent = () => {
             };
           }
           
+          // Preserve fixedTeams if they exist in prevGame but not in updatedGame
+          if (prevGame.hasFixedTeams && prevGame.fixedTeams && prevGame.fixedTeams.length > 0) {
+            if (!updatedGame.fixedTeams || updatedGame.fixedTeams.length === 0) {
+              return {
+                ...updatedGame,
+                fixedTeams: prevGame.fixedTeams,
+              };
+            }
+          }
+          
           return updatedGame;
         });
       }
@@ -420,7 +430,7 @@ export const GameDetailsContent = () => {
     const isInOldQueue = game.joinQueues?.some(q => q.userId === user.id && q.status === 'PENDING') || false;
     
     return isNonPlayingParticipant || isInOldQueue;
-  }, [game?.participants, game?.joinQueues, user?.id]);
+  }, [game, user?.id]);
   const isOwner = game && user ? isUserGameAdminOrOwner(game, user.id) : false;
   const canAccessChat = isParticipant || hasPendingInvite || isGuest || isOwner || game?.isPublic || game?.entityType === 'BAR' || game?.entityType === 'LEAGUE' || false;
   const canEdit = isOwner || user?.isAdmin || false;

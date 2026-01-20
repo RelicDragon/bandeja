@@ -56,26 +56,26 @@ export const MatchCard = ({
   const canEnterScores = effectiveIsEditing || (effectiveIsPresetGame && canEditResults);
   
   const displaySets = fixedNumberOfSets && fixedNumberOfSets > 0
-    ? Array.from({ length: fixedNumberOfSets }, (_, i) => match.sets[i] || { teamA: 0, teamB: 0 })
+    ? Array.from({ length: fixedNumberOfSets }, (_, i) => match.sets[i] || { teamA: 0, teamB: 0, isTieBreak: false })
     : (() => {
         const sets = [...match.sets];
         
         if (canEnterScores) {
           // When we can enter scores, always ensure there's a trailing 0:0 set for adding scores
           if (sets.length === 0) {
-            sets.push({ teamA: 0, teamB: 0 });
+            sets.push({ teamA: 0, teamB: 0, isTieBreak: false });
           } else {
             const lastSet = sets[sets.length - 1];
-            if (lastSet.teamA > 0 || lastSet.teamB > 0) {
-              sets.push({ teamA: 0, teamB: 0 });
+            if ((lastSet.teamA > 0 || lastSet.teamB > 0) && !lastSet.isTieBreak) {
+              sets.push({ teamA: 0, teamB: 0, isTieBreak: false });
             }
           }
         } else {
           // When not entering scores, only add trailing 0:0 if last set has scores
           if (sets.length > 0) {
             const lastSet = sets[sets.length - 1];
-            if (lastSet.teamA > 0 || lastSet.teamB > 0) {
-              sets.push({ teamA: 0, teamB: 0 });
+            if ((lastSet.teamA > 0 || lastSet.teamB > 0) && !lastSet.isTieBreak) {
+              sets.push({ teamA: 0, teamB: 0, isTieBreak: false });
             }
           }
         }
@@ -263,6 +263,11 @@ export const MatchCard = ({
                             {set.teamA}
                           </span>
                         </div>
+                        {set.isTieBreak && (
+                          <span className="absolute -top-1 -right-1 text-[8px] sm:text-[9px] font-bold text-primary-600 dark:text-primary-400 bg-white dark:bg-gray-800 px-1 rounded">
+                            TB
+                          </span>
+                        )}
                   </button>
                     )}
                 </div>
@@ -343,6 +348,11 @@ export const MatchCard = ({
                             {set.teamB}
                           </span>
                         </div>
+                        {set.isTieBreak && (
+                          <span className="absolute -top-1 -right-1 text-[8px] sm:text-[9px] font-bold text-primary-600 dark:text-primary-400 bg-white dark:bg-gray-800 px-1 rounded">
+                            TB
+                          </span>
+                        )}
                   </button>
                     )}
                 </div>

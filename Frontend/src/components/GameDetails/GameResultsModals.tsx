@@ -18,7 +18,7 @@ interface GameResultsModalsProps {
   expandedRoundId: string | null;
   effectiveHorizontalLayout: boolean;
   onClose: () => void;
-  onUpdateSetResult: (roundId: string, matchId: string, setIndex: number, teamAScore: number, teamBScore: number) => Promise<void>;
+  onUpdateSetResult: (roundId: string, matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => Promise<void>;
   onRemoveSet: (roundId: string, matchId: string, setIndex: number) => Promise<void>;
   onPlayerSelect: (playerId: string) => Promise<void>;
   onCourtSelect: (courtId: string) => Promise<void>;
@@ -76,8 +76,8 @@ export const GameResultsModals = ({
         maxTotalPointsPerSet={currentGame?.maxTotalPointsPerSet}
         maxPointsPerTeam={currentGame?.maxPointsPerTeam}
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}
-        onSave={(matchId, setIndex, teamAScore, teamBScore) => {
-          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore);
+        onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak) => {
+          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak);
         }}
         onRemove={(matchId, setIndex) => {
           onRemoveSet(modal.roundId, matchId, setIndex);
@@ -94,8 +94,9 @@ export const GameResultsModals = ({
         maxTotalPointsPerSet={currentGame?.maxTotalPointsPerSet}
         maxPointsPerTeam={currentGame?.maxPointsPerTeam}
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}
-        onSave={(matchId, setIndex, teamAScore, teamBScore) => {
-          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore);
+        ballsInGames={currentGame?.ballsInGames || false}
+        onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak) => {
+          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak);
         }}
         onRemove={(matchId, setIndex) => {
           onRemoveSet(modal.roundId, matchId, setIndex);

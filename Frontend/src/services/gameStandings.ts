@@ -525,6 +525,194 @@ export function calculateGameStandings(
     return interleavedStandings;
   }
 
+  if (game.hasFixedTeams && game.fixedTeams && game.fixedTeams.length > 0) {
+    interface TeamScore {
+      teamId: string;
+      teamNumber: number;
+      playerIds: string[];
+      matchesWon: number;
+      wins: number;
+      ties: number;
+      losses: number;
+      totalPoints: number;
+      scoresDelta: number;
+      pointsEarned: number;
+    }
+
+    const teamScoresMap = new Map<string, TeamScore>();
+
+    for (const fixedTeam of game.fixedTeams) {
+      const teamPlayerIds = fixedTeam.players.map(p => p.userId);
+      const teamPlayerStandings = standings.filter(s => teamPlayerIds.includes(s.user.id));
+      
+      if (teamPlayerStandings.length === 0) {
+        console.warn(`[CALCULATE GAME STANDINGS] Team ${fixedTeam.id} (teamNumber: ${fixedTeam.teamNumber}) has no players with standings, skipping`);
+        continue;
+      }
+
+      const teamPlayerStats = teamPlayerStandings
+        .map(s => playerStatsMap.get(s.user.id))
+        .filter((stats): stats is PlayerStats => stats !== undefined);
+
+      if (teamPlayerStats.length === 0) {
+        console.warn(`[CALCULATE GAME STANDINGS] Team ${fixedTeam.id} (teamNumber: ${fixedTeam.teamNumber}) has no players with stats, skipping`);
+        continue;
+      }
+      
+      if (teamPlayerStats.length < teamPlayerIds.length) {
+        const missingPlayers = teamPlayerIds.filter(id => !standings.some(s => s.user.id === id));
+        console.warn(`[CALCULATE GAME STANDINGS] Team ${fixedTeam.id} (teamNumber: ${fixedTeam.teamNumber}) has ${teamPlayerStats.length}/${teamPlayerIds.length} players with stats. Missing players: ${missingPlayers.join(', ')}`);
+      }
+
+      const teamScore: TeamScore = {
+        teamId: fixedTeam.id,
+        teamNumber: fixedTeam.teamNumber,
+        playerIds: teamPlayerIds,
+        matchesWon: Math.max(...teamPlayerStats.map(s => s.matchesWon)),
+        wins: Math.max(...teamPlayerStats.map(s => s.wins)),
+        ties: Math.max(...teamPlayerStats.map(s => s.ties)),
+        losses: Math.max(...teamPlayerStats.map(s => s.losses)),
+        totalPoints: teamPlayerStats.reduce((sum, s) => sum + s.scoresMade, 0),
+        scoresDelta: teamPlayerStats.reduce((sum, s) => sum + s.scoresDelta, 0),
+        pointsEarned: teamPlayerStats.reduce((sum, s) => {
+          return sum + (s.wins * pointsPerWin + s.ties * pointsPerTie + s.losses * pointsPerLoose);
+        }, 0),
+      };
+
+      teamScoresMap.set(fixedTeam.id, teamScore);
+    }
+
+    const compareTeams = (a: TeamScore, b: TeamScore): number => {
+      switch (winnerOfGame) {
+        case 'BY_MATCHES_WON': {
+          const matchesDiff = b.matchesWon - a.matchesWon;
+          if (matchesDiff !== 0) return matchesDiff;
+          
+          const tiesDiff = b.ties - a.ties;
+          if (tiesDiff !== 0) return tiesDiff;
+          
+          const scoresDeltaDiff = b.scoresDelta - a.scoresDelta;
+          if (scoresDeltaDiff !== 0) return scoresDeltaDiff;
+          
+          return 0;
+        }
+        
+        case 'BY_POINTS': {
+          const pointsDiff = b.pointsEarned - a.pointsEarned;
+          if (pointsDiff !== 0) return pointsDiff;
+          
+          const matchesDiff2 = b.matchesWon - a.matchesWon;
+          if (matchesDiff2 !== 0) return matchesDiff2;
+          
+          const tiesDiff2 = b.ties - a.ties;
+          if (tiesDiff2 !== 0) return tiesDiff2;
+          
+          const scoresDeltaDiff2 = b.scoresDelta - a.scoresDelta;
+          if (scoresDeltaDiff2 !== 0) return scoresDeltaDiff2;
+          
+          return 0;
+        }
+        
+        case 'BY_SCORES_DELTA': {
+          const deltasDiff = b.scoresDelta - a.scoresDelta;
+          if (deltasDiff !== 0) return deltasDiff;
+          
+          const matchesDiff3 = b.matchesWon - a.matchesWon;
+          if (matchesDiff3 !== 0) return matchesDiff3;
+          
+          const tiesDiff3 = b.ties - a.ties;
+          if (tiesDiff3 !== 0) return tiesDiff3;
+          
+          return 0;
+        }
+        
+        default: {
+          const defaultDiff = b.matchesWon - a.matchesWon;
+          if (defaultDiff !== 0) return defaultDiff;
+          return b.scoresDelta - a.scoresDelta;
+        }
+      }
+    };
+
+    const areTeamsTied = (a: TeamScore, b: TeamScore): boolean => {
+      if (
+        a.wins !== b.wins ||
+        a.ties !== b.ties ||
+        a.losses !== b.losses ||
+        a.matchesWon !== b.matchesWon ||
+        a.scoresDelta !== b.scoresDelta
+      ) {
+        return false;
+      }
+
+      if (winnerOfGame === 'BY_POINTS') {
+        if (a.pointsEarned !== b.pointsEarned) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+
+    const sortedTeams = Array.from(teamScoresMap.values()).sort(compareTeams);
+
+    const teamPositionMap = new Map<string, number>();
+    let currentPosition = 1;
+    let i = 0;
+
+    while (i < sortedTeams.length) {
+      const tiedGroup: TeamScore[] = [sortedTeams[i]];
+      let j = i + 1;
+
+      while (j < sortedTeams.length && areTeamsTied(sortedTeams[i], sortedTeams[j])) {
+        tiedGroup.push(sortedTeams[j]);
+        j++;
+      }
+
+      for (const team of tiedGroup) {
+        teamPositionMap.set(team.teamId, currentPosition);
+      }
+
+      currentPosition += 1;
+      i = j;
+    }
+
+    for (const team of sortedTeams) {
+      const position = teamPositionMap.get(team.teamId) ?? sortedTeams.length;
+
+      for (const playerId of team.playerIds) {
+        const standing = standings.find(s => s.user.id === playerId);
+        if (standing) {
+          standing.place = position;
+        } else {
+          console.warn(`[CALCULATE GAME STANDINGS] Player ${playerId} in team ${team.teamId} (teamNumber: ${team.teamNumber}) has no standing, cannot assign position`);
+        }
+      }
+    }
+
+    standings.sort((a, b) => {
+      if (a.place !== b.place) {
+        return a.place - b.place;
+      }
+      const aStats = playerStatsMap.get(a.user.id);
+      const bStats = playerStatsMap.get(b.user.id);
+      if (!aStats || !bStats) return 0;
+      return compareStandings(
+        a,
+        b,
+        aStats,
+        bStats,
+        winnerOfGame,
+        h2hMap,
+        pointsPerWin,
+        pointsPerTie,
+        pointsPerLoose
+      );
+    });
+
+    return standings;
+  }
+
   standings.sort((a, b) => {
     const aStats = playerStatsMap.get(a.user.id);
     const bStats = playerStatsMap.get(b.user.id);

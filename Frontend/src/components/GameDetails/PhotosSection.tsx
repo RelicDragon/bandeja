@@ -156,6 +156,16 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
           : t('gameDetails.photosAdded', { count: successCount }) || `${successCount} photo(s) added`;
         toast.success(successMessage);
         await loadPhotos();
+        if (onGameUpdate && game.id) {
+          try {
+            const updatedGameResponse = await gamesApi.getById(game.id);
+            if (updatedGameResponse.data) {
+              onGameUpdate(updatedGameResponse.data);
+            }
+          } catch (error) {
+            console.error('Failed to fetch updated game:', error);
+          }
+        }
       }
       
       if (failCount > 0) {
@@ -211,10 +221,13 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     
     setIsUpdatingMainPhoto(true);
     try {
-      const response = await gamesApi.update(game.id, { mainPhotoId: messageId });
-      setMainPhotoId(response.data.mainPhotoId);
-      if (onGameUpdate && response.data) {
-        onGameUpdate(response.data);
+      await gamesApi.update(game.id, { mainPhotoId: messageId });
+      if (onGameUpdate && game.id) {
+        const updatedGameResponse = await gamesApi.getById(game.id);
+        if (updatedGameResponse.data) {
+          setMainPhotoId(updatedGameResponse.data.mainPhotoId);
+          onGameUpdate(updatedGameResponse.data);
+        }
       }
       if (!silent) {
         toast.success(t('gameDetails.mainPhotoUpdated'));
@@ -303,7 +316,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
           <Card>
             <div className="p-0">
               <div className="overflow-x-auto -mx-0.5 px-0.5">
-                <div className="flex gap-3 pb-0.5">
+                <div className="flex gap-3 pb-2">
                   {photos.map((message, messageIndex) => 
                     message.mediaUrls?.map((mediaUrl, mediaIndex) => {
                       const thumbnailUrl = getThumbnailUrl(message, mediaIndex);

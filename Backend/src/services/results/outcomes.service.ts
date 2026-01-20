@@ -80,6 +80,7 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
         const sets = validSets.map(set => ({
           teamAScore: set.teamAScore,
           teamBScore: set.teamBScore,
+          isTieBreak: set.isTieBreak || false,
         }));
 
         return {

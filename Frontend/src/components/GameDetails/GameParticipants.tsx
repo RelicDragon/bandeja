@@ -93,7 +93,7 @@ export const GameParticipants = ({
     return Array.from(queueMap.values()).sort((a, b) => 
       new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
-  }, [game?.participants, joinQueues]);
+  }, [game?.participants, game?.id, joinQueues]);
 
   const playingOwnersAndAdmins = game.participants.filter(
     p => p.isPlaying && (p.role === 'OWNER' || p.role === 'ADMIN')

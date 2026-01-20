@@ -205,6 +205,9 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                                 }`}
                               >
                                 {set.userScore}-{set.opponentScore}
+                                {set.isTieBreak && (
+                                  <span className="ml-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">TB</span>
+                                )}
                               </span>
                             ))}
                           </div>
@@ -283,6 +286,9 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                               </span>
                               <span className={`font-semibold ${set.isWinner ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                 {set.userScore} - {set.opponentScore}
+                                {set.isTieBreak && (
+                                  <span className="ml-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">TB</span>
+                                )}
                               </span>
                             </div>
                             <span className={`font-semibold ${getLevelChangeColor(set.levelChange)}`}>

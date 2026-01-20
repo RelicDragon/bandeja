@@ -322,6 +322,7 @@
     "sets": "Сетови",
     "setResult": "Резултат Сета",
     "matchResult": "Резултат Меча",
+    "tieBreak": "Тай-брејк",
     "addMatch": "Додај Меч",
     "availablePlayers": "Доступни Играчи",
     "enterResults": "Унети Резултате",
@@ -357,6 +358,11 @@
     "finishBarTitle": "Заврши бар?",
     "finishTrainingTitle": "Заврши тренинг?",
     "editGameTitle": "Уреди резултате игре?",
+    "sendResultsToTelegram": "Пошаљи резултате у Telegram чат",
+    "sendingToTelegram": "Слање...",
+    "resultsSentToTelegram": "Резултати су успешно послати у Telegram",
+    "sendToTelegramFailed": "Неуспешно слање резултата у Telegram",
+    "preparingTelegramMessage": "Сачекајте мало, припремамо поруку за вас. Можете затворити ову игру.",
     "editTournamentTitle": "Уреди резултате турнира?",
     "editBarTitle": "Уреди резултате бара?",
     "editTrainingTitle": "Уреди резултате тренинга?",
@@ -474,7 +480,12 @@
     "resultsEntryStarted": "Унос резултата започет",
     "gameReset": "Игра успешно ресетована",
     "resetGameTitle": "Ресетуј Резултате Игре",
-    "resetConfirmationMessage": "Да ли сте сигурни да желите да ресетујете све резултате игре? Ова акција се не може поништити."
+    "resetConfirmationMessage": "Да ли сте сигурни да желите да ресетујете све резултате игре? Ова акција се не може поништити.",
+    "confirmAnnouncedGame": {
+      "title": "Игра још није почела",
+      "message": "Ова игра је још увек у статусу ОБЈАВЉЕНА. Да ли сте сигурни да желите да почнете да уносите резултате сада?",
+      "confirm": "Да, настави"
+    }
   },
   "invites": {
     "title": "Позиви",
