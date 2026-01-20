@@ -38,44 +38,45 @@ export const BaseModal = ({
     if (isOpen) {
       const z = modalZIndexService.registerModal(modalIdRef.current);
       setZIndex(z);
-      setShouldRender(true);
       setIsClosing(false);
       setIsAnimating(false);
+      setShouldRender(true);
       document.body.style.overflow = 'hidden';
-      justOpenedRef.current = true;
-      setTimeout(() => {
-        justOpenedRef.current = false;
-      }, 100);
       
+      justOpenedRef.current = true;
       const haltEvents = (e: Event) => {
-        e.stopPropagation();
-        e.preventDefault();
+        if (justOpenedRef.current) {
+          e.stopPropagation();
+          e.preventDefault();
+        }
       };
       
-      const events = ['touchstart', 'touchend', 'touchmove', 'mousedown', 'mouseup', 'click', 'pointerdown', 'pointerup'];
+      const events = ['touchstart', 'touchend', 'click'];
       events.forEach(eventType => {
         document.addEventListener(eventType, haltEvents, { capture: true, passive: false });
       });
       
       const cleanup = setTimeout(() => {
+        justOpenedRef.current = false;
         events.forEach(eventType => {
           document.removeEventListener(eventType, haltEvents, { capture: true });
         });
-      }, 200);
+      }, 100);
       
       if (isBasic) {
-        const timer = setTimeout(() => {
+        requestAnimationFrame(() => {
           setIsAnimating(true);
-        }, 10);
+        });
         return () => {
-          clearTimeout(timer);
           clearTimeout(cleanup);
           events.forEach(eventType => {
             document.removeEventListener(eventType, haltEvents, { capture: true });
           });
         };
       } else {
-        setIsAnimating(true);
+        requestAnimationFrame(() => {
+          setIsAnimating(true);
+        });
         return () => {
           clearTimeout(cleanup);
           events.forEach(eventType => {
