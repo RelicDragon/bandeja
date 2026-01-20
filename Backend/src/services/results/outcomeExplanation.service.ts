@@ -163,6 +163,7 @@ export async function getOutcomeExplanation(
   const matches: MatchExplanation[] = [];
   let totalLevelChange = 0;
   let matchesPlayed = 0;
+  let setsPlayed = 0;
   let wins = 0;
   let losses = 0;
   let draws = 0;
@@ -266,6 +267,7 @@ export async function getOutcomeExplanation(
       matchLevelChange = rawMatchLevelChange;
       currentLevel = currentLevel + rawMatchLevelChange;
       matchesPlayed += 1;
+      setsPlayed += validSets.length;
 
       totalLevelChange += rawMatchLevelChange;
 
@@ -296,7 +298,7 @@ export async function getOutcomeExplanation(
     opponentLevels.length > 0 ? opponentLevels.reduce((sum: number, l: number) => sum + l, 0) / opponentLevels.length : 0;
 
   const startingLevel = existingOutcome?.levelBefore ?? user.level;
-  const totalReliabilityChange = existingOutcome?.reliabilityChange ?? (matchesPlayed * RELIABILITY_INCREMENT);
+  const totalReliabilityChange = existingOutcome?.reliabilityChange ?? (setsPlayed * RELIABILITY_INCREMENT);
   
   const clampedReliability = Math.max(0.0, Math.min(100.0, startingReliability));
   const reliabilityCoefficient = Math.max(0.05, Math.exp(-0.15 * Math.pow(clampedReliability, 0.68)));

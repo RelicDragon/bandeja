@@ -52,6 +52,7 @@ export interface RoundOutcomeResult {
 interface PlayerChanges {
   levelChange: number;
   matchesPlayed: number;
+  setsPlayed: number;
   wins: number;
   ties: number;
   losses: number;
@@ -67,6 +68,7 @@ function initializePlayerChanges(players: PlayerData[], includeTotal: boolean = 
     changes[player.userId] = {
       levelChange: 0,
       matchesPlayed: 0,
+      setsPlayed: 0,
       wins: 0,
       ties: 0,
       losses: 0,
@@ -113,8 +115,7 @@ function buildGameOutcome(
   pointsPerTie: number,
   pointsPerLoose: number
 ): GameOutcomeResult {
-  const normalMatches = changes.matchesPlayed - changes.betterTeamButLost;
-  const reliabilityChange = (normalMatches * RELIABILITY_INCREMENT) - (changes.betterTeamButLost * RELIABILITY_INCREMENT);
+  const reliabilityChange = changes.setsPlayed * RELIABILITY_INCREMENT;
   
   return {
     userId,
@@ -191,6 +192,7 @@ export function calculateByMatchesWonOutcomes(
         roundPlayerOutcomes[player.userId] += update.levelChange;
         playerTotalChanges[player.userId].levelChange += update.levelChange;
         playerTotalChanges[player.userId].matchesPlayed += 1;
+        playerTotalChanges[player.userId].setsPlayed += validSets.length;
         playerTotalChanges[player.userId].scoresMade += teamAScore;
         playerTotalChanges[player.userId].scoresLost += teamBScore;
         updateWinLossTie(playerTotalChanges[player.userId], teamAWins, teamBWins, isTie);
@@ -219,6 +221,7 @@ export function calculateByMatchesWonOutcomes(
         roundPlayerOutcomes[player.userId] += update.levelChange;
         playerTotalChanges[player.userId].levelChange += update.levelChange;
         playerTotalChanges[player.userId].matchesPlayed += 1;
+        playerTotalChanges[player.userId].setsPlayed += validSets.length;
         playerTotalChanges[player.userId].scoresMade += teamBScore;
         playerTotalChanges[player.userId].scoresLost += teamAScore;
         updateWinLossTie(playerTotalChanges[player.userId], teamBWins, teamAWins, isTie);
@@ -321,6 +324,7 @@ export function calculateByPointsOutcomes(
         roundPlayerOutcomes[playerId] += update.levelChange;
         playerTotalChanges[playerId].levelChange += update.levelChange;
         playerTotalChanges[playerId].matchesPlayed += 1;
+        playerTotalChanges[playerId].setsPlayed += validSets.length;
         playerTotalChanges[playerId].totalScore! += teamA.score;
         playerTotalChanges[playerId].scoresMade += teamA.score;
         playerTotalChanges[playerId].scoresLost += teamB.score;
@@ -353,6 +357,7 @@ export function calculateByPointsOutcomes(
         roundPlayerOutcomes[playerId] += update.levelChange;
         playerTotalChanges[playerId].levelChange += update.levelChange;
         playerTotalChanges[playerId].matchesPlayed += 1;
+        playerTotalChanges[playerId].setsPlayed += validSets.length;
         playerTotalChanges[playerId].totalScore! += teamB.score;
         playerTotalChanges[playerId].scoresMade += teamB.score;
         playerTotalChanges[playerId].scoresLost += teamA.score;
@@ -456,6 +461,7 @@ export function calculateByScoresDeltaOutcomes(
         roundPlayerOutcomes[playerId] += update.levelChange;
         playerTotalChanges[playerId].levelChange += update.levelChange;
         playerTotalChanges[playerId].matchesPlayed += 1;
+        playerTotalChanges[playerId].setsPlayed += validSets.length;
         playerTotalChanges[playerId].totalScore! += teamA.score;
         playerTotalChanges[playerId].scoresMade += teamA.score;
         playerTotalChanges[playerId].scoresLost += teamB.score;
@@ -488,6 +494,7 @@ export function calculateByScoresDeltaOutcomes(
         roundPlayerOutcomes[playerId] += update.levelChange;
         playerTotalChanges[playerId].levelChange += update.levelChange;
         playerTotalChanges[playerId].matchesPlayed += 1;
+        playerTotalChanges[playerId].setsPlayed += validSets.length;
         playerTotalChanges[playerId].totalScore! += teamB.score;
         playerTotalChanges[playerId].scoresMade += teamB.score;
         playerTotalChanges[playerId].scoresLost += teamA.score;
