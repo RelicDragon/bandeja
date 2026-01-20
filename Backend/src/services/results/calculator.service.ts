@@ -58,6 +58,7 @@ interface PlayerChanges {
   scoresMade: number;
   scoresLost: number;
   totalScore?: number;
+  betterTeamButLost: number;
 }
 
 function initializePlayerChanges(players: PlayerData[], includeTotal: boolean = false): Record<string, PlayerChanges> {
@@ -71,6 +72,7 @@ function initializePlayerChanges(players: PlayerData[], includeTotal: boolean = 
       losses: 0,
       scoresMade: 0,
       scoresLost: 0,
+      betterTeamButLost: 0,
     };
     if (includeTotal) {
       changes[player.userId].totalScore = 0;
@@ -111,10 +113,13 @@ function buildGameOutcome(
   pointsPerTie: number,
   pointsPerLoose: number
 ): GameOutcomeResult {
+  const normalMatches = changes.matchesPlayed - changes.betterTeamButLost;
+  const reliabilityChange = (normalMatches * RELIABILITY_INCREMENT) - (changes.betterTeamButLost * RELIABILITY_INCREMENT);
+  
   return {
     userId,
     levelChange: changes.levelChange,
-    reliabilityChange: changes.matchesPlayed * RELIABILITY_INCREMENT,
+    reliabilityChange,
     pointsEarned: calculatePointsEarned(changes, pointsPerWin, pointsPerTie, pointsPerLoose),
     isWinner: index === 0,
     position: index + 1,
@@ -189,6 +194,10 @@ export function calculateByMatchesWonOutcomes(
         playerTotalChanges[player.userId].scoresMade += teamAScore;
         playerTotalChanges[player.userId].scoresLost += teamBScore;
         updateWinLossTie(playerTotalChanges[player.userId], teamAWins, teamBWins, isTie);
+        
+        if (teamAAvgLevel > teamBAvgLevel && teamBWins) {
+          playerTotalChanges[player.userId].betterTeamButLost += 1;
+        }
       }
 
       for (const player of teamBPlayers) {
@@ -213,6 +222,10 @@ export function calculateByMatchesWonOutcomes(
         playerTotalChanges[player.userId].scoresMade += teamBScore;
         playerTotalChanges[player.userId].scoresLost += teamAScore;
         updateWinLossTie(playerTotalChanges[player.userId], teamBWins, teamAWins, isTie);
+        
+        if (teamBAvgLevel > teamAAvgLevel && teamAWins) {
+          playerTotalChanges[player.userId].betterTeamButLost += 1;
+        }
       }
     }
 
@@ -312,6 +325,10 @@ export function calculateByPointsOutcomes(
         playerTotalChanges[playerId].scoresMade += teamA.score;
         playerTotalChanges[playerId].scoresLost += teamB.score;
         updateWinLossTie(playerTotalChanges[playerId], teamAWins, teamBWins, isTie);
+        
+        if (teamAAvgLevel > teamBAvgLevel && teamBWins) {
+          playerTotalChanges[playerId].betterTeamButLost += 1;
+        }
       }
 
       for (const playerId of teamB.playerIds) {
@@ -340,6 +357,10 @@ export function calculateByPointsOutcomes(
         playerTotalChanges[playerId].scoresMade += teamB.score;
         playerTotalChanges[playerId].scoresLost += teamA.score;
         updateWinLossTie(playerTotalChanges[playerId], teamBWins, teamAWins, isTie);
+        
+        if (teamBAvgLevel > teamAAvgLevel && teamAWins) {
+          playerTotalChanges[playerId].betterTeamButLost += 1;
+        }
       }
     }
 
@@ -439,6 +460,10 @@ export function calculateByScoresDeltaOutcomes(
         playerTotalChanges[playerId].scoresMade += teamA.score;
         playerTotalChanges[playerId].scoresLost += teamB.score;
         updateWinLossTie(playerTotalChanges[playerId], teamAWins, teamBWins, isTie);
+        
+        if (teamAAvgLevel > teamBAvgLevel && teamBWins) {
+          playerTotalChanges[playerId].betterTeamButLost += 1;
+        }
       }
 
       for (const playerId of teamB.playerIds) {
@@ -467,6 +492,10 @@ export function calculateByScoresDeltaOutcomes(
         playerTotalChanges[playerId].scoresMade += teamB.score;
         playerTotalChanges[playerId].scoresLost += teamA.score;
         updateWinLossTie(playerTotalChanges[playerId], teamBWins, teamAWins, isTie);
+        
+        if (teamBAvgLevel > teamAAvgLevel && teamAWins) {
+          playerTotalChanges[playerId].betterTeamButLost += 1;
+        }
       }
     }
 

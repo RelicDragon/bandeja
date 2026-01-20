@@ -138,6 +138,7 @@ export async function getOutcomeExplanation(
       levelChange: true,
       reliabilityBefore: true,
       reliabilityAfter: true,
+      reliabilityChange: true,
     },
   });
 
@@ -295,7 +296,7 @@ export async function getOutcomeExplanation(
     opponentLevels.length > 0 ? opponentLevels.reduce((sum: number, l: number) => sum + l, 0) / opponentLevels.length : 0;
 
   const startingLevel = existingOutcome?.levelBefore ?? user.level;
-  const totalReliabilityChange = matchesPlayed * RELIABILITY_INCREMENT;
+  const totalReliabilityChange = existingOutcome?.reliabilityChange ?? (matchesPlayed * RELIABILITY_INCREMENT);
   
   const clampedReliability = Math.max(0.0, Math.min(100.0, startingReliability));
   const reliabilityCoefficient = Math.max(0.05, Math.exp(-0.15 * Math.pow(clampedReliability, 0.68)));

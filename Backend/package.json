@@ -12,7 +12,6 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "lint": "eslint src --ext .ts",
-    "update-reliability": "ts-node update-reliability.ts",
     "migrate-to-s3": "ts-node scripts/migrate-to-s3.ts"
   },
   "keywords": [
