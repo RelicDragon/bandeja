@@ -151,8 +151,15 @@ export const gamesApi = {
     return response.data;
   },
 
-  sendResultsToTelegram: async (id: string) => {
-    const response = await api.post<ApiResponse<void>>(`/games/${id}/send-results-to-telegram`);
+  prepareTelegramSummary: async (id: string) => {
+    const response = await api.get<ApiResponse<{ summary: string }>>(`/games/${id}/prepare-telegram-summary`);
+    return response.data;
+  },
+
+  sendResultsToTelegram: async (id: string, summaryText: string) => {
+    const response = await api.post<ApiResponse<void>>(`/games/${id}/send-results-to-telegram`, 
+      { summaryText }
+    );
     return response.data;
   }
 };

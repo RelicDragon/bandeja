@@ -448,6 +448,42 @@ body {
   animation: spin-slow 8s linear infinite;
 }
 
+@keyframes wavy-dots {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
+
+.wavy-dot-1 {
+  animation: wavy-dots 1.4s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.wavy-dot-2 {
+  animation: wavy-dots 1.4s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.wavy-dot-3 {
+  animation: wavy-dots 1.4s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+.wavy-dot-4 {
+  animation: wavy-dots 1.4s ease-in-out infinite;
+  animation-delay: 0.6s;
+}
+
+.wavy-dot-5 {
+  animation: wavy-dots 1.4s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
 .animate-fade-in {
   animation: fade-in 0.5s ease-out;
 }

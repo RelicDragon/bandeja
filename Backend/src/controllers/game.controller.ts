@@ -254,16 +254,10 @@ export const getBookedCourts = asyncHandler(async (req: AuthRequest, res: Respon
   });
 });
 
-export const sendResultsToTelegram = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { id } = req.params;
-
-  if (!req.userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
+const validateGameForTelegram = async (gameId: string, userId: string) => {
   const gameInclude = getGameInclude();
   const game = await prisma.game.findUnique({
-    where: { id },
+    where: { id: gameId },
     include: {
       ...gameInclude,
       city: {
@@ -308,35 +302,70 @@ export const sendResultsToTelegram = asyncHandler(async (req: AuthRequest, res: 
     throw new ApiError(503, 'Telegram bot is not available');
   }
 
-  // Start background work and return immediately
-  setImmediate(async () => {
-    try {
-      const language = city.telegramPinnedLanguage || 'en-US';
-      const summaryText = await ResultsTelegramService.generateResultsSummary(game, language);
-      const mainPhotoUrl = await ResultsTelegramService.getMainPhotoUrl(game);
+  return { game, city, bot };
+};
 
-      const imageBuffer = await generateResultsImage({
-        id: game.id,
-        affectsRating: game.affectsRating || false,
-        outcomes: game.outcomes,
-        hasFixedTeams: game.hasFixedTeams || false,
-        genderTeams: game.genderTeams || 'ANY',
-      }, language);
+export const prepareTelegramSummary = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
 
-      await ResultsTelegramService.sendResultsToTelegram(
-        bot.api,
-        id,
-        imageBuffer,
-        mainPhotoUrl,
-        summaryText
-      );
-    } catch (error: any) {
-      console.error('Background Telegram send failed:', error);
-    }
-  });
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const { game, city } = await validateGameForTelegram(id, req.userId!);
+
+  const language = city.telegramPinnedLanguage || 'en-US';
+  const summary = await ResultsTelegramService.generateResultsSummary(game, language);
 
   res.json({
     success: true,
-    message: 'Sending results to Telegram',
+    data: { summary },
+  });
+});
+
+export const sendResultsToTelegram = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { summaryText } = req.body;
+
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const { game, city, bot } = await validateGameForTelegram(id, req.userId!);
+
+  const language = city.telegramPinnedLanguage || 'en-US';
+  
+  let finalSummaryText: string;
+  if (summaryText && typeof summaryText === 'string' && summaryText.trim()) {
+    const trimmed = summaryText.trim();
+    if (trimmed.length > 1024) {
+      throw new ApiError(400, 'Summary text exceeds maximum length of 1024 characters');
+    }
+    finalSummaryText = trimmed;
+  } else {
+    finalSummaryText = await ResultsTelegramService.generateResultsSummary(game, language);
+  }
+
+  const mainPhotoUrl = await ResultsTelegramService.getMainPhotoUrl(game);
+
+  const imageBuffer = await generateResultsImage({
+    id: game.id,
+    affectsRating: game.affectsRating || false,
+    outcomes: game.outcomes,
+    hasFixedTeams: game.hasFixedTeams || false,
+    genderTeams: game.genderTeams || 'ANY',
+  }, language);
+
+  await ResultsTelegramService.sendResultsToTelegram(
+    bot.api,
+    id,
+    imageBuffer,
+    mainPhotoUrl,
+    finalSummaryText
+  );
+
+  res.json({
+    success: true,
+    message: 'Results sent to Telegram successfully',
   });
 });

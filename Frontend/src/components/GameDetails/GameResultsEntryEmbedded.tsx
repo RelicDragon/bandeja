@@ -25,6 +25,7 @@ import { getRestartText, getFinishText, getAvailablePlayers, canEnterResults } f
 import { GameResultsTabs } from './GameResultsTabs';
 import { OfflineBanner } from './OfflineBanner';
 import { GameResultsModals } from './GameResultsModals';
+import { TelegramSummaryModal } from './TelegramSummaryModal';
 import { Send, Edit } from 'lucide-react';
 
 interface GameResultsEntryEmbeddedProps {
@@ -47,7 +48,8 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   const { showOfflineMessage, toggleMessage } = useOfflineMessage(engine.serverProblem);
   const mountedRef = useRef(false);
   const [isSendingToTelegram, setIsSendingToTelegram] = useState(false);
-  const [hasInitiatedTelegramSend, setHasInitiatedTelegramSend] = useState(false);
+  const [isTelegramSummaryModalOpen, setIsTelegramSummaryModalOpen] = useState(false);
+  const [telegramSummary, setTelegramSummary] = useState('');
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
   const currentGame = useMemo(() => {
@@ -111,20 +113,13 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   const showSendToTelegramButton = useMemo(() => {
     if (!currentGame || !hasResultsEntered) return false;
     if (currentGame.resultsSentToTelegram) return false;
-    if (hasInitiatedTelegramSend) return false;
     if (!currentGame.city?.telegramGroupId) return false;
     if ((currentGame.photosCount || 0) === 0 && !currentGame.mainPhotoId) return false;
     return true;
-  }, [currentGame, hasResultsEntered, hasInitiatedTelegramSend]);
+  }, [currentGame, hasResultsEntered]);
 
-  const showTelegramSendingHint = useMemo(() => {
-    if (!currentGame) return false;
-    if (currentGame.resultsSentToTelegram) return false;
-    return hasInitiatedTelegramSend;
-  }, [currentGame, hasInitiatedTelegramSend]);
-
-  const handleSendToTelegram = () => {
-    if (!currentGame || isSendingToTelegram || hasInitiatedTelegramSend) return;
+  const handleSendToTelegram = async () => {
+    if (!currentGame || isSendingToTelegram) return;
 
     if (currentGame.resultsStatus !== 'FINAL') {
       toast.error(t('gameResults.sendToTelegramFailed') || 'Game must be finalized before sending results to Telegram');
@@ -133,18 +128,34 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
 
     setIsSendingToTelegram(true);
     
-    gamesApi.sendResultsToTelegram(currentGame.id)
-      .then(() => {
-        setHasInitiatedTelegramSend(true);
-      })
-      .catch((error: any) => {
-        console.error('Failed to send results to Telegram:', error);
-        const errorMessage = error?.response?.data?.message || error?.message || t('gameResults.sendToTelegramFailed') || 'Failed to send results to Telegram';
-        toast.error(errorMessage);
-      })
-      .finally(() => {
-        setIsSendingToTelegram(false);
-      });
+    try {
+      const response = await gamesApi.prepareTelegramSummary(currentGame.id);
+      if (response.data?.summary) {
+        setTelegramSummary(response.data.summary);
+        setIsTelegramSummaryModalOpen(true);
+      } else {
+        throw new Error('No summary received');
+      }
+    } catch (error: any) {
+      console.error('Failed to prepare Telegram summary:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 
+        t('gameResults.prepareTextFailed') || 'Failed to prepare text';
+      toast.error(errorMessage);
+    } finally {
+      setIsSendingToTelegram(false);
+    }
+  };
+
+  const handleSendSummaryToTelegram = async (summaryText: string) => {
+    if (!currentGame) return;
+
+    await gamesApi.sendResultsToTelegram(currentGame.id, summaryText);
+    setIsTelegramSummaryModalOpen(false);
+    
+    onGameUpdate({
+      ...currentGame,
+      resultsSentToTelegram: true,
+    });
   };
 
   useEffect(() => {
@@ -186,13 +197,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
     }
   }, [game, engine.initialized, engine.game, engine]);
 
-  useEffect(() => {
-    if (!currentGame) return;
-    
-    if (currentGame.resultsSentToTelegram) {
-      setHasInitiatedTelegramSend(false);
-    }
-  }, [currentGame]);
 
   useEffect(() => {
     const matches = rounds.length > 0 ? rounds[0].matches || [] : [];
@@ -754,24 +758,29 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
           <button
             onClick={handleSendToTelegram}
             disabled={isSendingToTelegram}
-            className="group relative px-4 sm:px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 via-blue-600 to-blue-600 hover:from-blue-600 hover:via-blue-700 hover:to-blue-700 text-white font-semibold text-sm sm:text-base shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-600/40 transition-all duration-300 ease-in-out disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:shadow-lg disabled:hover:shadow-blue-500/30 flex items-center justify-center gap-2.5 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+            className={`group relative px-4 sm:px-6 py-3 rounded-xl text-white font-semibold text-sm sm:text-base shadow-lg transition-all duration-300 ease-in-out flex items-center justify-center gap-2.5 transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 min-w-[200px] min-h-[48px] ${
+              isSendingToTelegram
+                ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-blue-600 shadow-blue-500/30 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-500 via-blue-600 to-blue-600 hover:from-blue-600 hover:via-blue-700 hover:to-blue-700 shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-600/40 hover:scale-[1.02] active:scale-[0.98]'
+            }`}
           >
-            <Send size={18} className="transition-transform duration-300 group-hover:translate-x-0.5 flex-shrink-0" />
-            <span className="text-center leading-tight whitespace-normal break-words max-w-[200px]">{t('gameResults.sendResultsToTelegram') || 'Send results to Telegram chat'}</span>
+            <div className="relative flex items-center justify-center w-full h-full">
+              <div className={`flex items-center gap-2.5 transition-opacity duration-300 ease-in-out ${isSendingToTelegram ? 'opacity-0 absolute' : 'opacity-100'}`}>
+                <Send size={18} className="transition-transform duration-300 group-hover:translate-x-0.5 flex-shrink-0" />
+                <span className="text-center leading-tight whitespace-normal break-words max-w-[200px]">{t('gameResults.sendResultsToTelegram') || 'Send results to Telegram chat'}</span>
+              </div>
+              <div className={`flex items-center gap-1.5 transition-opacity duration-300 ease-in-out ${isSendingToTelegram ? 'opacity-100' : 'opacity-0 absolute'}`}>
+                <span className="w-2 h-2 bg-white rounded-full wavy-dot-1"></span>
+                <span className="w-2 h-2 bg-white rounded-full wavy-dot-2"></span>
+                <span className="w-2 h-2 bg-white rounded-full wavy-dot-3"></span>
+                <span className="w-2 h-2 bg-white rounded-full wavy-dot-4"></span>
+                <span className="w-2 h-2 bg-white rounded-full wavy-dot-5"></span>
+              </div>
+            </div>
           </button>
         </div>
       )}
 
-      {showTelegramSendingHint && (
-        <div className="mb-6 flex justify-center px-4">
-          <div className="px-4 sm:px-6 py-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200 text-sm sm:text-base flex items-center gap-2.5 max-w-md">
-            <div className="w-5 h-5 bg-blue-600 dark:bg-blue-400 rounded-full flex-shrink-0 animate-bounce" />
-            <span className="text-center leading-tight">
-              {t('gameResults.preparingTelegramMessage') || 'Wait for a while, we are preparing message for you. You can close this game.'}
-            </span>
-          </div>
-        </div>
-      )}
 
       {isResultsEntryMode && (
         <GameResultsTabs
@@ -802,7 +811,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
             ref={resultsContainerRef}
             className={`space-y-1 w-full scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-gray-300 dark:hover:scrollbar-thumb-gray-600 ${
               dragAndDrop.isDragging ? 'overflow-hidden' : ''
-            } pb-4`}
+            } ${isSendingToTelegram ? 'pointer-events-none opacity-60' : ''} pb-4 transition-opacity duration-300`}
             onDragOver={dragAndDrop.handleDragOver}
             onClick={handleContainerClick}
           >
@@ -815,10 +824,10 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
                   players={players}
                   isPresetGame={isPresetGame}
                   isExpanded={expandedRoundId === round.id}
-                  canEditResults={canEdit && isEditingResults && isResultsEntryMode}
+                  canEditResults={canEdit && isEditingResults && isResultsEntryMode && !isSendingToTelegram}
                   editingMatchId={editingMatchId}
                   draggedPlayer={dragAndDrop.draggedPlayer}
-                  showDeleteButton={rounds.length > 1 && canEdit && isEditingResults}
+                  showDeleteButton={rounds.length > 1 && canEdit && isEditingResults && !isSendingToTelegram}
                   hideFrame={false}
                   onRemoveRound={() => engine.removeRound(round.id)}
                   onToggleExpand={() => {
@@ -868,7 +877,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
                 />
               ))}
               
-              {canEdit && isEditingResults && (
+              {canEdit && isEditingResults && !isSendingToTelegram && (
                 <div className="flex justify-center">
                   <button
                     onClick={async () => {
@@ -883,7 +892,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
                 </div>
               )}
 
-              {!isPresetGame && !currentGame?.prohibitMatchesEditing && editingMatchId && canEdit && isEditingResults && expandedRoundId && (() => {
+              {!isPresetGame && !currentGame?.prohibitMatchesEditing && editingMatchId && canEdit && isEditingResults && !isSendingToTelegram && expandedRoundId && (() => {
                 const expandedRound = rounds.find(r => r.id === expandedRoundId);
                 const editingMatch = expandedRound?.matches.find(m => m.id === editingMatchId);
                 const roundMatches = expandedRound?.matches || [];
@@ -938,7 +947,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
         <div className="flex justify-center pt-2">
           <button
             onClick={() => openModal({ type: 'finish' })}
-            disabled={loading.saving}
+            disabled={loading.saving || isSendingToTelegram}
             className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           >
             {loading.saving ? t('common.loading') : getFinishText(currentGame, t)}
@@ -949,7 +958,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
         <div className="flex justify-center pt-2">
           <button
             onClick={() => openModal({ type: 'edit' })}
-            disabled={loading.editing}
+            disabled={loading.editing || isSendingToTelegram}
             className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-blue-500 hover:bg-blue-600 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading.editing ? (
@@ -970,13 +979,21 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
         <div className="flex justify-center gap-2 pt-2">
           <button
             onClick={() => openModal({ type: 'restart' })}
-            disabled={loading.restarting}
+            disabled={loading.restarting || isSendingToTelegram}
             className="px-4 py-2 text-sm rounded-lg font-medium transition-colors bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading.restarting ? t('common.loading') : getRestartText(currentGame, t)}
           </button>
         </div>
       )}
+
+      <TelegramSummaryModal
+        isOpen={isTelegramSummaryModalOpen}
+        onClose={() => setIsTelegramSummaryModalOpen(false)}
+        gameId={currentGame?.id || ''}
+        initialSummary={telegramSummary}
+        onSend={handleSendSummaryToTelegram}
+      />
     </>
   );
 };

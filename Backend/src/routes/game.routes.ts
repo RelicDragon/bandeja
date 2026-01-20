@@ -127,6 +127,13 @@ router.post(
   gameController.cancelJoinQueue
 );
 
+router.get(
+  '/:id/prepare-telegram-summary',
+  authenticate,
+  canAccessGame,
+  gameController.prepareTelegramSummary
+);
+
 router.post(
   '/:id/send-results-to-telegram',
   authenticate,
