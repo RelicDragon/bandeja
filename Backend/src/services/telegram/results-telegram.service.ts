@@ -87,8 +87,12 @@ export class ResultsTelegramService {
         const socialLevel = p.user?.socialLevel ? p.user.socialLevel.toFixed(2) : 'N/A';
         const cityRank = cityRankMap.get(p.userId);
         const gamesLast30Days = gamesInLast30DaysMap.get(p.userId) || 0;
+        const gender = p.user?.gender;
         
         let info = `<${name}> (level: ${level}, social level: ${socialLevel}`;
+        if (gender === 'MALE' || gender === 'FEMALE') {
+          info += `, gender: ${gender}`;
+        }
         if (cityRank) {
           info += `, city rank: #${cityRank}`;
         }
@@ -220,7 +224,16 @@ export class ResultsTelegramService {
       timeInfo = `The game took place on ${gameDate} at ${gameTime}. `;
     }
     
-    const prompt = `Give me a summary of match in informal manner for a group of friends. Start your summary with "Hello, ${cityName}!" or similar greeting and proceed with the summary starting from newline. ${timeInfo}${locationInfo}${contextInfo}They played Padel game. Game participants are: ${participants}. This game results are: ${resultsText}. Return strictly only the summary. Make it a little funny but still informative. Use if you want additional information about users.`;
+    let genderInfo = '';
+    if (game.genderTeams === 'MEN') {
+      genderInfo = 'This was a MALE game. ';
+    } else if (game.genderTeams === 'WOMEN') {
+      genderInfo = 'This was a FEMALE game. ';
+    } else if (game.genderTeams === 'MIX_PAIRS') {
+      genderInfo = 'This was a mixed pairs game (MALE and FEMALE players). ';
+    }
+    
+    const prompt = `Give me a summary of match in informal manner for a group of friends. Start your summary with "Hello, ${cityName}!" or similar greeting and proceed with the summary starting from newline. ${timeInfo}${locationInfo}${contextInfo}${genderInfo}They played Padel game. Game participants are: ${participants}. This game results are: ${resultsText}. Return strictly only the summary. Make it a little funny but still informative. Use if you want additional information about users.`;
 
     if (!config.openai.apiKey) {
       throw new ApiError(503, 'OpenAI service is not configured');

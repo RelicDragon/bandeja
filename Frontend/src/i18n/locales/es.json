@@ -311,7 +311,9 @@
     "evenPlayersRequired": "Se requiere número par de Jugadores",
     "fixedTeamsNeedEvenPlayers": "Los equipos fijos requieren un número par de jugadores para crear equipos equilibrados",
     "waitingForPlayers": "Esperando a Todos los Jugadores",
-    "allPlayersMustJoin": "Todos los jugadores invitados deben unirse al juego antes de configurar equipos fijos"
+    "allPlayersMustJoin": "Todos los jugadores invitados deben unirse al juego antes de configurar equipos fijos",
+    "male": "Hombres",
+    "female": "Mujeres"
   },
   "gameResults": {
     "title": "Ingresar Resultados del Juego",

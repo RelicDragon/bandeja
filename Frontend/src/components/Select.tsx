@@ -136,7 +136,7 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
         <div
           ref={dropdownRef}
           data-select-dropdown
-          className="fixed z-[10000] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
+          className="fixed z-[20000] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
           style={{
             top: dropdownPosition.top,
             left: dropdownPosition.left,

@@ -311,7 +311,9 @@
     "evenPlayersRequired": "Even number of Players required",
     "fixedTeamsNeedEvenPlayers": "Fixed teams require an even number of players to create balanced teams",
     "waitingForPlayers": "Waiting for All Players",
-    "allPlayersMustJoin": "All invited players must join the game before setting up fixed teams"
+    "allPlayersMustJoin": "All invited players must join the game before setting up fixed teams",
+    "male": "Males",
+    "female": "Females"
   },
   "gameResults": {
     "title": "Enter Game Results",

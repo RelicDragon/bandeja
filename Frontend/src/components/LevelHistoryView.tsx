@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, Beer, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { UserStats, usersApi, LevelHistoryItem } from '@/api/users';
 import { gamesApi } from '@/api/games';
 import { canUserSeeGame } from '@/utils/gameResults';
@@ -10,7 +10,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { LevelHistoryTabController } from './LevelHistoryTabController';
 import { PlayerAvatar } from './PlayerAvatar';
 import { formatDate, formatSmartRelativeTime } from '@/utils/dateFormat';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Dot } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 const TennisBallIcon = () => (
   <svg
@@ -43,6 +43,8 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
   const [showingPrivateMessage, setShowingPrivateMessage] = useState<string | null>(null);
   const [levelChangeEvents, setLevelChangeEvents] = useState<LevelHistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'10' | '30' | 'all'>('10');
+  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
+  const itemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     const fetchLevelChanges = async () => {
@@ -123,8 +125,23 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
       level: item.levelAfter,
       date: formatDate(item.createdAt, 'PP'),
       fullDate: item.createdAt,
+      itemId: item.id,
     }));
   }, [currentHistory]);
+
+  const handleChartDotClick = (data: { itemId: string; index: number }) => {
+    if (!data.itemId || !itemRefs.current[data.itemId]) return;
+    
+    setHighlightedItemId(data.itemId);
+    itemRefs.current[data.itemId]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+    
+    setTimeout(() => {
+      setHighlightedItemId(null);
+    }, 2000);
+  };
 
   return (
     <div className={`${padding} space-y-3`}>
@@ -243,7 +260,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={chartData}
-                  margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                  margin={{ top: 5, right: 5, left: 20, bottom: 5 }}
                   style={{ outline: 'none' }}
                   tabIndex={-1}
                 >
@@ -271,12 +288,22 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 shadow-lg">
+                          <div 
+                            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 shadow-lg cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const data = payload[0].payload as { itemId: string; index: number };
+                              handleChartDotClick(data);
+                            }}
+                          >
                             <p className="text-sm font-medium text-gray-900 dark:text-white">
                               {payload[0].payload.date}
                             </p>
                             <p className="text-sm text-gray-600 dark:text-gray-300">
                               {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}: {payload[0].value?.toFixed(2)}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {t('playerCard.clickToView') || 'Click to view game'}
                             </p>
                           </div>
                         );
@@ -290,16 +317,89 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
                     stroke={showSocialLevel ? "rgb(251, 191, 36)" : "rgb(59, 130, 246)"}
                     strokeWidth={2}
                     fill={showSocialLevel ? "url(#socialLevelGradient)" : "url(#levelGradient)"}
-                    dot={({ cx, cy }) => (
-                      <Dot
-                        cx={cx}
-                        cy={cy}
-                        r={4}
-                        fill={showSocialLevel ? "rgb(251, 191, 36)" : "rgb(59, 130, 246)"}
-                        stroke="none"
-                      />
-                    )}
-                    activeDot={{ r: 6 }}
+                    dot={({ cx, cy, payload }) => {
+                      if (cx == null || cy == null || !payload) return null;
+                      const data = payload as { itemId: string; index: number };
+                      if (!data?.itemId) return null;
+                      
+                      const handleClick = (e: React.MouseEvent<SVGCircleElement> | React.TouchEvent<SVGCircleElement>) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleChartDotClick(data);
+                      };
+                      
+                      return (
+                        <g>
+                          <circle
+                            cx={cx}
+                            cy={cy}
+                            r={4}
+                            fill={showSocialLevel ? "rgb(251, 191, 36)" : "rgb(59, 130, 246)"}
+                            stroke="none"
+                            style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                            onClick={handleClick}
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                            }}
+                            onTouchEnd={handleClick}
+                          />
+                          <circle
+                            cx={cx}
+                            cy={cy}
+                            r={18}
+                            fill="transparent"
+                            stroke="transparent"
+                            strokeWidth={0}
+                            style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                            onClick={handleClick}
+                            onTouchEnd={handleClick}
+                          />
+                        </g>
+                      );
+                    }}
+                    activeDot={({ cx, cy, payload }) => {
+                      if (cx == null || cy == null || !payload) return null;
+                      const data = payload as { itemId: string; index: number };
+                      if (!data?.itemId) return null;
+                      
+                      const handleClick = (e: React.MouseEvent<SVGCircleElement> | React.TouchEvent<SVGCircleElement>) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleChartDotClick(data);
+                      };
+                      
+                      return (
+                        <g>
+                          <circle
+                            cx={cx}
+                            cy={cy}
+                            r={6}
+                            fill={showSocialLevel ? "rgb(251, 191, 36)" : "rgb(59, 130, 246)"}
+                            stroke="white"
+                            strokeWidth={2}
+                            style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                            onClick={handleClick}
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                            }}
+                            onTouchEnd={handleClick}
+                          />
+                          <circle
+                            cx={cx}
+                            cy={cy}
+                            r={20}
+                            fill="transparent"
+                            stroke="transparent"
+                            strokeWidth={0}
+                            style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                            onClick={handleClick}
+                            onTouchEnd={handleClick}
+                          />
+                        </g>
+                      );
+                    }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -322,9 +422,34 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
             {currentHistory.slice().reverse().map((item) => (
               <motion.div
                 key={item.id}
+                ref={(el) => {
+                  itemRefs.current[item.id] = el;
+                }}
                 initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+                animate={{ 
+                  opacity: 1, 
+                  x: 0,
+                  scale: highlightedItemId === item.id ? 0.95 : 1,
+                  y: highlightedItemId === item.id ? -4 : 0,
+                }}
+                transition={{ 
+                  duration: 0.3,
+                  scale: { 
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 15,
+                  },
+                  y: {
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 15,
+                  }
+                }}
+                className={`rounded-lg p-2.5 cursor-pointer transition-colors relative overflow-hidden ${
+                  highlightedItemId === item.id 
+                    ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500 dark:ring-primary-400 shadow-lg' 
+                    : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
                 onClick={() => handleRatingChangeClick(item)}
               >
                 <AnimatePresence mode="wait">
@@ -348,25 +473,25 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ duration: 0.3 }}
-                      className="flex items-center justify-between"
+                      className="flex items-center justify-between gap-3 min-w-0"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
+                        <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                           {formatDate(item.createdAt, 'PP')}
                         </span>
                         {item.eventType && (
-                          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
                             {t(`playerCard.eventType.${item.eventType}`)}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-gray-700 dark:text-gray-300 font-medium">
+                      <div className="flex items-center gap-0.5 flex-shrink-0">
+                        <span className="text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
                           {item.levelBefore.toFixed(2)} → {item.levelAfter.toFixed(2)}
                         </span>
-                        <div className={`flex items-center ${item.levelChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          {item.levelChange >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
-                          <span className="font-semibold ml-1">
+                        <div className={`flex items-center whitespace-nowrap ${item.levelChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {item.levelChange >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                          <span className="font-semibold text-xs">
                             {item.levelChange >= 0 ? '+' : ''}{item.levelChange.toFixed(2)}
                           </span>
                         </div>
