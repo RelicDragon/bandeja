@@ -604,7 +604,7 @@ export const GameInfo = ({
   }, [game]);
 
   return (
-    <Card className={`relative transition-all duration-300 ease-in-out ${isCollapsed ? '-translate-y-0 z-[5] -mb-4' : 'translate-y-0 z-auto mb-2'} ${getEntityGradient()}`}>
+    <Card className={`relative transition-all duration-300 ease-in-out ${isCollapsed ? '-translate-y-0 z-[5] -mb-2' : 'translate-y-0 z-auto mb-2 min-h-[200px]'} ${getEntityGradient()}`}>
       <div className="absolute right-4 z-20">
         <div className="relative flex flex-col items-end gap-2">
           <div className={`flex flex-col gap-2 transition-all duration-300 ease-in-out ${
@@ -650,8 +650,8 @@ export const GameInfo = ({
           </div>
           <button
             onClick={() => setIsCollapsed(prev => !prev)}
-            className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 ease-in-out ${
-              isCollapsed ? 'absolute top-2 right-0' : 'relative'
+            className={`p-2 mt-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 ease-in-out ${
+              isCollapsed ? 'absolute' : 'relative'
             }`}
             title={isCollapsed ? t('common.expand') : t('common.collapse')}
           >

@@ -7,6 +7,43 @@ import { TranslationService } from '../chat/translation.service';
 import OpenAI from 'openai';
 import { escapeHTML } from './utils';
 import { RankingService } from '../ranking.service';
+import { getUserTimezoneFromCityId, formatDateInTimezone, convertToUserTimezone } from '../user-timezone.service';
+import { format } from 'date-fns';
+import { enUS } from 'date-fns/locale/en-US';
+import { ru } from 'date-fns/locale/ru';
+import { sr } from 'date-fns/locale/sr';
+import { es } from 'date-fns/locale/es';
+
+const localeMap: Record<string, any> = {
+  en: enUS,
+  ru: ru,
+  sr: sr,
+  es: es,
+};
+
+function getRelativeDateLabel(date: Date | string, timezone: string, lang: string): string {
+  const zonedDate = convertToUserTimezone(date, timezone);
+  const now = new Date();
+  const nowZoned = convertToUserTimezone(now, timezone);
+  
+  const dateOnly = new Date(zonedDate.getFullYear(), zonedDate.getMonth(), zonedDate.getDate());
+  const todayOnly = new Date(nowZoned.getFullYear(), nowZoned.getMonth(), nowZoned.getDate());
+  
+  const diffTime = todayOnly.getTime() - dateOnly.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  
+  const locale = localeMap[lang] || enUS;
+  
+  if (diffDays === 0) {
+    return 'today';
+  } else if (diffDays === 1) {
+    return 'yesterday';
+  } else if (diffDays === 2) {
+    return '2 days ago';
+  } else {
+    return format(zonedDate, 'MMM d', { locale });
+  }
+}
 
 export class ResultsTelegramService {
   static checkResultsEntered(game: any): boolean {
@@ -111,8 +148,79 @@ export class ResultsTelegramService {
     };
     const targetLanguageName = languageNames[languageCode] || 'English';
 
+    const cityTimezone = await getUserTimezoneFromCityId(cityId);
+    
+    let gameDate = '';
+    let gameTime = '';
+    if (game.startTime) {
+      gameDate = getRelativeDateLabel(game.startTime, cityTimezone, languageCode);
+      gameTime = await formatDateInTimezone(game.startTime, 'HH:mm', cityTimezone, languageCode);
+    }
+    
+    const clubName = game.court?.club?.name || game.club?.name || null;
+    
     const cityName = game.city?.name || 'friends';
-    const prompt = `Give me a summary of match in informal manner for a group of friends. Start your summary with "Hello, ${cityName}!" or similar greeting and proceed with the summary starting from newline. They played Padel game. Game participants are: ${participants}. This game results are: ${resultsText}. Return strictly only the summary. Make it a little funny but still informative. Use if you want additional information about users.`;
+    const entityType = game.entityType || 'GAME';
+    
+    let contextInfo = '';
+    if (entityType === 'BAR') {
+      contextInfo = `This was a bar event where they had a great time together. `;
+    } else if (entityType === 'TRAINING') {
+      const trainer = game.participants?.find((p: any) => p.role === 'OWNER');
+      const trainerName = trainer?.user 
+        ? `${trainer.user.firstName || ''} ${trainer.user.lastName || ''}`.trim()
+        : null;
+      
+      let trainingContext = 'This was a training session. ';
+      if (trainerName) {
+        trainingContext += `Trainer: ${trainerName}. `;
+      }
+      contextInfo = trainingContext;
+    } else if (entityType === 'LEAGUE') {
+      const leagueName = game.leagueSeason?.league?.name || game.parent?.leagueSeason?.league?.name;
+      const seasonName = game.leagueSeason?.game?.name || game.parent?.leagueSeason?.game?.name;
+      const roundNumber = game.leagueRound?.orderIndex;
+      const groupName = game.leagueGroup?.name;
+      
+      let leagueContext = 'This game was part of a league competition. ';
+      if (leagueName) {
+        leagueContext += `League name: ${leagueName}. `;
+      }
+      if (seasonName) {
+        leagueContext += `Season name: ${seasonName}. `;
+      }
+      if (roundNumber !== undefined && roundNumber !== null) {
+        leagueContext += `Round number: ${roundNumber}. `;
+      }
+      if (groupName) {
+        leagueContext += `Group: ${groupName}. `;
+      }
+      contextInfo = leagueContext;
+    } else if (entityType === 'LEAGUE_SEASON') {
+      const leagueName = game.leagueSeason?.league?.name;
+      const seasonName = game.leagueSeason?.game?.name;
+      
+      let leagueContext = 'This game was part of a league season. ';
+      if (leagueName) {
+        leagueContext += `League name: ${leagueName}. `;
+      }
+      if (seasonName) {
+        leagueContext += `Season name: ${seasonName}. `;
+      }
+      contextInfo = leagueContext;
+    }
+    
+    let locationInfo = '';
+    if (clubName) {
+      locationInfo = `The game was held at ${clubName} club. `;
+    }
+    
+    let timeInfo = '';
+    if (gameDate && gameTime) {
+      timeInfo = `The game took place on ${gameDate} at ${gameTime}. `;
+    }
+    
+    const prompt = `Give me a summary of match in informal manner for a group of friends. Start your summary with "Hello, ${cityName}!" or similar greeting and proceed with the summary starting from newline. ${timeInfo}${locationInfo}${contextInfo}They played Padel game. Game participants are: ${participants}. This game results are: ${resultsText}. Return strictly only the summary. Make it a little funny but still informative. Use if you want additional information about users.`;
 
     if (!config.openai.apiKey) {
       throw new ApiError(503, 'OpenAI service is not configured');
