@@ -329,13 +329,6 @@ export class UnreadObjectsService {
     }
 
     // 4. Get group channels with unread messages
-    const userForGroups = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { currentCityId: true }
-    });
-
-    const userCityId = userForGroups?.currentCityId;
-
     const groupChannels = await prisma.groupChannel.findMany({
       where: {
         participants: {
