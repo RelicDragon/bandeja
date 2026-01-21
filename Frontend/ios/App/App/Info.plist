@@ -33,6 +33,16 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>This app needs access to your calendar to add game events.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>This app needs access to your calendar to add game events.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>This app needs access to add events to your calendar.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to your camera to capture photos during games.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to upload and share photos from your games.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
@@ -51,19 +61,15 @@
 	<false/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs access to your photo library to upload and share photos from your games.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>This app needs access to your camera to capture photos during games.</string>
-	<key>NSCalendarsUsageDescription</key>
-	<string>This app needs access to your calendar to add game events.</string>
-	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>This app needs access to your calendar to add game events.</string>
-	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
-	<string>This app needs access to add events to your calendar.</string>
 </dict>
 </plist>

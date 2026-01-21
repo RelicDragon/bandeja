@@ -29,10 +29,10 @@ type ChatItem =
   | { type: 'channel'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number };
 
 interface ChatListProps {
-  onChatSelect?: (chatId: string, chatType: 'user' | 'bug' | 'group') => void;
+  onChatSelect?: (chatId: string, chatType: 'user' | 'bug' | 'group' | 'channel') => void;
   isDesktop?: boolean;
   selectedChatId?: string | null;
-  selectedChatType?: 'user' | 'bug' | 'group' | null;
+  selectedChatType?: 'user' | 'bug' | 'group' | 'channel' | null;
 }
 
 const calculateLastMessageDate = (
@@ -527,7 +527,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     disabled: loading || isDesktop,
   });
 
-  const handleChatClick = (chatId: string, chatType: 'user' | 'bug' | 'group') => {
+  const handleChatClick = (chatId: string, chatType: 'user' | 'bug' | 'group' | 'channel') => {
     if (onChatSelect) {
       onChatSelect(chatId, chatType);
     }
@@ -750,13 +750,14 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             );
           } else if (chat.type === 'group' || chat.type === 'channel') {
             const key = `${chat.type}-${chat.data.id}`;
-            const isSelected = selectedChatType === 'group' && selectedChatId === chat.data.id;
+            const chatTypeForNavigation = chat.type === 'channel' ? 'channel' : 'group';
+            const isSelected = (selectedChatType === 'group' || selectedChatType === 'channel') && selectedChatId === chat.data.id;
             return (
               <div key={key} className={`border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                 <GroupChannelCard
                   groupChannel={chat.data}
                   unreadCount={chat.unreadCount}
-                  onClick={() => handleChatClick(chat.data.id, 'group')}
+                  onClick={() => handleChatClick(chat.data.id, chatTypeForNavigation)}
                   isSelected={isSelected}
                   draft={chat.type === 'group' ? chat.draft : undefined}
                 />

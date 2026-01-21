@@ -5,6 +5,7 @@ import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
+import { useAuthStore } from '@/store/authStore';
 import {
   HomeHeaderContent,
   GameDetailsHeaderContent,
@@ -21,10 +22,13 @@ export const Header = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const user = useAuthStore((state) => state.user);
   const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
   const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications } = useNavigationStore();
   
   const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
+  const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
+  const shouldHideHeader = !user && isGameDetailsPage;
 
   const previousPageRef = useRef(currentPage);
 
@@ -57,6 +61,10 @@ export const Header = () => {
     navigate('/', { replace: true });
     setTimeout(() => setIsAnimating(false), 300);
   };
+
+  if (shouldHideHeader) {
+    return null;
+  }
 
   return (
     <>

@@ -461,6 +461,55 @@ export class GroupChannelService {
       }
     });
 
+    // Send invitation message to user-chat
+    try {
+      const { UserChatService } = await import('./userChat.service');
+      const { MessageService } = await import('./message.service');
+      const { TranslationService } = await import('./translation.service');
+      const { t } = await import('../../utils/translations');
+      const { config } = await import('../../config/env');
+      const { ChatType } = await import('@prisma/client');
+
+      // Get or create user-chat between sender and receiver
+      const userChat = await UserChatService.getOrCreateChatWithUser(senderId, receiverId);
+
+      // Get receiver's language
+      const receiver = await prisma.user.findUnique({
+        where: { id: receiverId },
+        select: { language: true }
+      });
+
+      const receiverLanguage = receiver?.language || 'en';
+      const languageCode = TranslationService.extractLanguageCode(receiverLanguage);
+
+      // Get sender display name
+      const senderDisplayName = getUserDisplayName(invite.sender.firstName, invite.sender.lastName);
+
+      // Build channel URL
+      const channelUrl = `${config.frontendUrl}/group-chat/${groupChannelId}`;
+
+      // Translate invitation message
+      const inviteMessageTemplate = t('chat.channelInviteMessage', languageCode);
+      const inviteMessage = inviteMessageTemplate
+        .replace(/\{\{senderName\}\}/g, senderDisplayName)
+        .replace(/\{\{channelName\}\}/g, groupChannel.name)
+        .replace(/\{\{channelUrl\}\}/g, channelUrl);
+
+      // Send message as sender to receiver in their user-chat
+      await MessageService.createMessage({
+        chatContextType: 'USER',
+        contextId: userChat.id,
+        senderId: senderId,
+        content: inviteMessage,
+        mediaUrls: [],
+        chatType: ChatType.PUBLIC,
+        mentionIds: []
+      });
+    } catch (error) {
+      console.error('Failed to send invitation message to user-chat:', error);
+      // Don't fail the invite creation if message sending fails
+    }
+
     return invite;
   }
 

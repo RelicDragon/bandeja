@@ -64,6 +64,7 @@ export const GameParticipants = ({
 }: GameParticipantsProps) => {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
+  const isUnauthorized = !userId;
 
   // TODO: Remove after 2025-02-02 - Backward compatibility: compute joinQueues from participants
   const computedJoinQueues = useMemo(() => {
@@ -143,7 +144,7 @@ export const GameParticipants = ({
         </div>
       </div>
       <div className="space-y-4">
-        {myInvites.length > 0 && (
+        {!isUnauthorized && myInvites.length > 0 && (
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             {myInvites.map((invite) => (
               <div key={invite.id} className="space-y-3">
@@ -181,7 +182,7 @@ export const GameParticipants = ({
             ))}
           </div>
         )}
-        {!isUserPlaying && !isInJoinQueue && hasUnoccupiedSlots && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
+        {!isUnauthorized && !isUserPlaying && !isInJoinQueue && hasUnoccupiedSlots && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
           <Button
             onClick={onJoin}
             size="lg"
@@ -191,7 +192,7 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        {!isUserPlaying && !isInJoinQueue && !hasUnoccupiedSlots && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
+        {!isUnauthorized && !isUserPlaying && !isInJoinQueue && !hasUnoccupiedSlots && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
           <Button
             onClick={onJoin}
             size="lg"
@@ -201,7 +202,7 @@ export const GameParticipants = ({
             {t('games.joinTheQueue')}
           </Button>
         )}
-        {isInJoinQueue && (
+        {!isUnauthorized && isInJoinQueue && (
           <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
               {t('games.inQueue', { defaultValue: 'You are in the waiting list. Waiting for approval...' })}
@@ -219,7 +220,7 @@ export const GameParticipants = ({
             )}
           </div>
         )}
-        {isInJoinQueue && game.allowDirectJoin && hasUnoccupiedSlots && (
+        {!isUnauthorized && isInJoinQueue && game.allowDirectJoin && hasUnoccupiedSlots && (
           <Button
             onClick={onAddToGame}
             size="lg"
@@ -229,7 +230,7 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        {(isGuest || (isOwner && !isUserPlaying)) && hasUnoccupiedSlots && !isInJoinQueue && (
+        {!isUnauthorized && (isGuest || (isOwner && !isUserPlaying)) && hasUnoccupiedSlots && !isInJoinQueue && (
           <Button
             onClick={onAddToGame}
             size="lg"
@@ -290,8 +291,8 @@ export const GameParticipants = ({
                             <PlayerAvatar
                               player={participant.user}
                               isCurrentUser={participant.user.id === userId}
-                              removable={participant.user.id === userId}
-                              onRemoveClick={participant.user.id === userId ? onLeave : undefined}
+                              removable={!isUnauthorized && participant.user.id === userId}
+                              onRemoveClick={!isUnauthorized && participant.user.id === userId ? onLeave : undefined}
                               role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
                               extrasmall={true}
                               showName={false}
@@ -304,7 +305,7 @@ export const GameParticipants = ({
                             </div>
                           </div>
                         ))}
-                        {carousel1EmptySlots > 0 && canInvitePlayers && (
+                        {carousel1EmptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                           <button
                             onClick={() => onShowPlayerList('MALE')}
                             className="w-full p-3 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
@@ -330,8 +331,8 @@ export const GameParticipants = ({
                             <PlayerAvatar
                               player={participant.user}
                               isCurrentUser={participant.user.id === userId}
-                              removable={participant.user.id === userId}
-                              onRemoveClick={participant.user.id === userId ? onLeave : undefined}
+                              removable={!isUnauthorized && participant.user.id === userId}
+                              onRemoveClick={!isUnauthorized && participant.user.id === userId ? onLeave : undefined}
                               role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
                               extrasmall={true}
                               showName={false}
@@ -344,7 +345,7 @@ export const GameParticipants = ({
                             </div>
                           </div>
                         ))}
-                        {carousel2EmptySlots > 0 && canInvitePlayers && (
+                        {carousel2EmptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                           <button
                             onClick={() => onShowPlayerList('FEMALE')}
                             className="w-full p-3 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
@@ -383,7 +384,7 @@ export const GameParticipants = ({
                         </div>
                       </div>
                     ))}
-                    {emptySlots > 0 && canInvitePlayers && (
+                    {emptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                       <button
                         onClick={() => onShowPlayerList()}
                         className="w-full p-3 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
@@ -410,9 +411,9 @@ export const GameParticipants = ({
                 genderCount={carousel1Participants.length}
                 userId={userId}
                 shouldShowCrowns={shouldShowCrowns}
-                canInvitePlayers={canInvitePlayers}
-                onLeave={onLeave}
-                onShowPlayerList={onShowPlayerList}
+                canInvitePlayers={!isUnauthorized && canInvitePlayers}
+                onLeave={!isUnauthorized ? onLeave : undefined}
+                onShowPlayerList={!isUnauthorized ? onShowPlayerList : undefined}
               />
               {isMix && (
                 <PlayersCarousel
@@ -423,17 +424,17 @@ export const GameParticipants = ({
                   genderCount={carousel2Participants.length}
                   userId={userId}
                   shouldShowCrowns={shouldShowCrowns}
-                  canInvitePlayers={canInvitePlayers}
-                  onLeave={onLeave}
-                  onShowPlayerList={onShowPlayerList}
+                  canInvitePlayers={!isUnauthorized && canInvitePlayers}
+                  onLeave={!isUnauthorized ? onLeave : undefined}
+                  onShowPlayerList={!isUnauthorized ? onShowPlayerList : undefined}
                 />
               )}
             </div>
           );
         })()}
         {(() => {
-          const showInviteButton = (isOwner || (game.anyoneCanInvite && isParticipant)) && !isFull;
-          const showManageButton = isOwner && canViewSettings;
+          const showInviteButton = !isUnauthorized && (isOwner || (game.anyoneCanInvite && isParticipant)) && !isFull;
+          const showManageButton = !isUnauthorized && isOwner && canViewSettings;
           const buttonCount = (showInviteButton ? 1 : 0) + (showManageButton ? 1 : 0);
           
           if (buttonCount === 0) return null;
@@ -470,7 +471,7 @@ export const GameParticipants = ({
             </div>
           );
         })()}
-        {gameInvites.length > 0 && (
+        {!isUnauthorized && gameInvites.length > 0 && (
           <div className="mt-4">
             <InvitesList
               invites={gameInvites}
@@ -479,7 +480,7 @@ export const GameParticipants = ({
             />
           </div>
         )}
-        {computedJoinQueues.length > 0 && (
+        {!isUnauthorized && computedJoinQueues.length > 0 && (
           <div className="mt-4">
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('games.joinQueue', { defaultValue: 'Join Queue' })}

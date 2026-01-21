@@ -32,7 +32,7 @@ interface LocationState {
 interface GameChatProps {
   isEmbedded?: boolean;
   chatId?: string;
-  chatType?: 'user' | 'bug' | 'game' | 'group';
+  chatType?: 'user' | 'bug' | 'game' | 'group' | 'channel';
 }
 
 export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: propChatId, chatType: propChatType }) => {
@@ -41,17 +41,17 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
-  const { setBottomTabsVisible } = useNavigationStore();
+  const { setBottomTabsVisible, setChatsFilter } = useNavigationStore();
   
   const id = isEmbedded ? propChatId : paramId;
   
   const locationState = location.state as LocationState | null;
   const contextType: ChatContextType = isEmbedded 
-    ? (propChatType === 'user' ? 'USER' : propChatType === 'bug' ? 'BUG' : propChatType === 'group' ? 'GROUP' : 'GAME')
+    ? (propChatType === 'user' ? 'USER' : propChatType === 'bug' ? 'BUG' : (propChatType === 'group' || propChatType === 'channel') ? 'GROUP' : 'GAME')
     : (locationState?.contextType || 
       (location.pathname.includes('/bugs/') ? 'BUG' : 
        location.pathname.includes('/user-chat/') ? 'USER' :
-       location.pathname.includes('/group-chat/') ? 'GROUP' : 'GAME'));
+       (location.pathname.includes('/group-chat/') || location.pathname.includes('/channel-chat/')) ? 'GROUP' : 'GAME'));
   const initialChatType = locationState?.initialChatType;
   
   const [game, setGame] = useState<Game | null>(null);
@@ -134,6 +134,22 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     return true;
   });
 
+  useEffect(() => {
+    if (!isEmbedded && !isLoadingContext && !game && !bug && !userChat && !groupChannel) {
+      if (contextType === 'USER') {
+        setChatsFilter('users');
+        navigate('/chats', { replace: true });
+      } else if (contextType === 'GROUP') {
+        setChatsFilter('channels');
+        navigate('/chats', { replace: true });
+      } else if (contextType === 'BUG') {
+        navigate('/bugs', { replace: true });
+      } else if (contextType === 'GAME') {
+        navigate('/', { replace: true });
+      }
+    }
+  }, [isEmbedded, isLoadingContext, game, bug, userChat, groupChannel, contextType, navigate, setChatsFilter]);
+
   const loadContext = useCallback(async () => {
     if (!id) return null;
     
@@ -186,13 +202,23 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     } catch (error) {
       console.error('Failed to load context:', error);
       if (!isEmbedded) {
-        navigate(contextType === 'BUG' ? '/bugs' : contextType === 'GROUP' ? '/chats' : '/');
+        if (contextType === 'BUG') {
+          navigate('/bugs', { replace: true });
+        } else if (contextType === 'GROUP') {
+          setChatsFilter('channels');
+          navigate('/chats', { replace: true });
+        } else if (contextType === 'USER') {
+          setChatsFilter('users');
+          navigate('/chats', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       }
       return null;
     } finally {
       setIsLoadingContext(false);
     }
-  }, [id, contextType, navigate, userChat, user?.id, isEmbedded]);
+  }, [id, contextType, navigate, userChat, user?.id, isEmbedded, setChatsFilter]);
 
   const loadMessages = useCallback(async (pageNum = 1, append = false) => {
     if (!id) return;
@@ -906,26 +932,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     );
   }
 
-  if (!game && !bug && !userChat && !groupChannel && !isLoadingContext) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            {contextType === 'BUG' ? 'Bug not found' : contextType === 'USER' ? 'Chat not found' : contextType === 'GROUP' ? 'Group/Channel not found' : 'Game not found'}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {contextType === 'BUG' ? "The bug you're looking for doesn't exist." : contextType === 'USER' ? "The chat you're looking for doesn't exist." : contextType === 'GROUP' ? "The group/channel you're looking for doesn't exist." : "The game you're looking for doesn't exist."}
-          </p>
-          <button
-            onClick={() => navigate(contextType === 'BUG' ? '/bugs' : contextType === 'GROUP' ? '/chats' : '/')}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            {contextType === 'BUG' ? 'Go to Bugs' : contextType === 'GROUP' ? 'Go to Chats' : 'Go Home'}
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (!canViewPublicChat) {
     return (
@@ -1002,7 +1008,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const showLoadingHeader = isEmbedded && isLoadingContext;
 
   return (
-    <div ref={chatContainerRef} className={`chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'}`}>
+    <div ref={chatContainerRef} className={`chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden overflow-x-hidden ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'}`}>
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: isEmbedded ? '0' : 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           {showLoadingHeader ? (
@@ -1194,7 +1200,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         )}
       </header>
 
-      <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden overflow-x-hidden relative">
         <MessageList
           messages={messages}
           onAddReaction={handleAddReaction}

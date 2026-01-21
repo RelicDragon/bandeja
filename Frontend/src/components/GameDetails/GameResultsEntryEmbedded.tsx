@@ -40,7 +40,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   
   const engine = useGameResultsEngine({
     gameId: canInitialize === true ? game.id : undefined,
-    userId: canInitialize === true ? user?.id : undefined,
+    userId: canInitialize === true ? (user?.id || '') : undefined,
   });
 
   const { modal, openModal, closeModal } = useModalManager();
@@ -690,7 +690,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
     );
   }
 
-  if ((engineLoading || !engine.initialized) && canInitialize && modal?.type !== 'syncConflict') {
+  if ((engineLoading || !engine.initialized) && canInitialize && modal?.type !== 'syncConflict' && user) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
         <div className="text-center">

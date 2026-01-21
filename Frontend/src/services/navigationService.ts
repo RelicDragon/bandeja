@@ -95,8 +95,23 @@ class NavigationService {
 
     this.setAnimatingState();
     store.setCurrentPage('chats');
-    store.setChatsFilter('channels');
+    store.setChatsFilter('users');
     this.navigate!(`/group-chat/${groupChannelId}`, { replace: true });
+  }
+
+  navigateToChannelChat(channelId: string) {
+    if (!this.ensureInitialized() || !channelId) {
+      console.error('Cannot navigate to channel chat: invalid channelId or service not initialized');
+      return;
+    }
+
+    const store = this.getStore();
+    if (!store) return;
+
+    this.setAnimatingState();
+    store.setCurrentPage('chats');
+    store.setChatsFilter('channels');
+    this.navigate!(`/channel-chat/${channelId}`, { replace: true });
   }
 
   navigateToBugsList() {

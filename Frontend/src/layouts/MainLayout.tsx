@@ -1,41 +1,49 @@
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { useNavigationStore } from '@/store/navigationStore';
+import { useAuthStore } from '@/store/authStore';
+import { useDesktop } from '@/hooks/useDesktop';
 
 interface MainLayoutProps {
   children: ReactNode;
 }
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
-  const { bottomTabsVisible, currentPage } = useNavigationStore();
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
-  
-  useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const location = useLocation();
+  const user = useAuthStore((state) => state.user);
+  const { bottomTabsVisible, currentPage, chatsFilter } = useNavigationStore();
+  const isDesktop = useDesktop();
+  const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
+  const shouldHideHeader = !user && isGameDetailsPage;
 
   const isDesktopChats = isDesktop && currentPage === 'chats';
-  const shouldAddBottomPadding = bottomTabsVisible && !isDesktopChats;
+  const isDesktopBugs = isDesktop && currentPage === 'bugs';
+  const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') || 
+                                 location.pathname.includes('/group-chat/') || 
+                                 location.pathname.includes('/channel-chat/') || 
+                                 (location.pathname.includes('/bugs/') && location.pathname.includes('/chat'));
+  const isOnBugsListPage = chatsFilter === 'bugs' && !isOnSpecificChatRoute;
+  const isDesktopChatsSplitView = isDesktopChats && !isOnBugsListPage;
+  const isDesktopBugsSplitView = isDesktopBugs;
+  const shouldAddBottomPadding = bottomTabsVisible && !isDesktopChats && !isDesktopBugs;
   
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="relative z-50">
-        <Header />
-      </div>
+      {!shouldHideHeader && (
+        <div className="relative z-50">
+          <Header />
+        </div>
+      )}
       <main 
         style={{ 
-          paddingTop: `calc(4rem + env(safe-area-inset-top))`, 
+          paddingTop: shouldHideHeader ? '0' : ((isDesktopChatsSplitView || isDesktopBugsSplitView) ? '0' : `calc(4rem + env(safe-area-inset-top))`), 
           paddingBottom: shouldAddBottomPadding ? 'calc(5rem + env(safe-area-inset-bottom))' : '1.5rem',
-          paddingLeft: `max(0.5rem, env(safe-area-inset-left))`,
-          paddingRight: `max(0.5rem, env(safe-area-inset-right))`
+          paddingLeft: (isDesktopChatsSplitView || isDesktopBugsSplitView) ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
+          paddingRight: (isDesktopChatsSplitView || isDesktopBugsSplitView) ? '0' : `max(0.5rem, env(safe-area-inset-right))`
         }}
       >
-        <div className="container mx-auto px-2 py-4">{children}</div>
+        {(isDesktopChatsSplitView || isDesktopBugsSplitView) ? children : <div className="container mx-auto px-2 py-4">{children}</div>}
       </main>
     </div>
   );

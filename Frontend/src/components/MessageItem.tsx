@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChatMessage } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { UnifiedMessageMenu } from './UnifiedMessageMenu';
@@ -12,6 +13,7 @@ import { parseSystemMessage, useSystemMessageTranslation } from '@/utils/systemM
 import { FullscreenImageViewer } from './FullscreenImageViewer';
 import { ReportMessageModal } from './ReportMessageModal';
 import { parseMentions } from '@/utils/parseMentions';
+import { parseUrls } from '@/utils/parseUrls';
 import { extractLanguageCode } from '@/utils/language';
 
 interface ContextMenuState {
@@ -50,6 +52,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   isChannel = false,
 }) => {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const { translateSystemMessage } = useSystemMessageTranslation();
   const messageRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,7 +78,23 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     ? translateSystemMessage(systemMessageData)
     : currentMessage.content;
 
-  const parsedContent = isSystemMessage ? null : parseMentions(displayContent);
+  const parseContentWithMentionsAndUrls = (text: string) => {
+    const mentionParts = parseMentions(text);
+    const result: Array<{ type: 'mention' | 'url' | 'text'; content: string; userId?: string; display?: string; url?: string; displayText?: string }> = [];
+    
+    mentionParts.forEach(part => {
+      if (part.type === 'mention') {
+        result.push(part);
+      } else {
+        const urlParts = parseUrls(part.content);
+        result.push(...urlParts);
+      }
+    });
+    
+    return result;
+  };
+
+  const parsedContent = isSystemMessage ? null : parseContentWithMentionsAndUrls(displayContent);
 
   const userLanguageCode = user?.language ? extractLanguageCode(user.language).toLowerCase() : 'en';
   
@@ -89,7 +108,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   
   const hasTranslation = matchingTranslation && 
     matchingTranslation.languageCode.toLowerCase() === userLanguageCode;
-  const translationContent = hasTranslation && matchingTranslation ? parseMentions(matchingTranslation.translation) : null;
+  const translationContent = hasTranslation && matchingTranslation ? parseContentWithMentionsAndUrls(matchingTranslation.translation) : null;
 
   const getSenderName = () => {
     if (isSystemMessage) {
@@ -141,6 +160,26 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     }
   };
 
+  const getImageGridLayout = (count: number) => {
+    if (count === 1) {
+      return { gridTemplateColumns: '1fr', gridTemplateRows: 'auto', gap: '0', singleImage: true };
+    } else if (count === 2) {
+      return { gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto', gap: '0' };
+    } else if (count === 3) {
+      return { 
+        gridTemplateColumns: '1fr 1fr', 
+        gridTemplateRows: 'auto auto',
+        gap: '0',
+        firstImageSpan: true
+      };
+    } else if (count === 4) {
+      return { gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto auto', gap: '0' };
+    } else if (count >= 5 && count <= 6) {
+      return { gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'auto auto', gap: '0' };
+    } else {
+      return { gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'auto', gap: '0' };
+    }
+  };
 
   const handleCopyMessage = (message: ChatMessage) => {
     navigator.clipboard.writeText(message.content);
@@ -234,16 +273,33 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   }, [currentMessage.id, currentMessage.senderId, isOwnMessage, observeMessage, unobserveMessage]);
 
   useEffect(() => {
-    // Add native DOM event listeners to prevent context menu and handle long press
     const messageElement = messageRef.current;
     if (!messageElement) return;
 
-    // Find the message bubble element (the actual content bubble)
-    const messageBubble = messageElement.querySelector('[class*="px-4 py-2 rounded-lg"]') as HTMLElement;
-    // Find the reaction button
-    const reactionButton = messageElement.querySelector('button[class*="hover:bg-gray-100"]') as HTMLElement;
+    const messageBubble = messageElement.querySelector('[data-message-bubble="true"]') as HTMLElement;
+    const reactionButton = messageElement.querySelector('[data-reaction-button="true"]') as HTMLElement;
     
-    if (!messageBubble && !reactionButton) return;
+    if (!messageBubble) return;
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let menuWasOpened = false;
+    const scrollThreshold = 10;
+
+    const clearTimer = () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    };
+
+    const stopEventIfMenuOpened = (e: Event) => {
+      if (menuWasOpened) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }
+    };
 
     const preventContextMenu = (e: Event) => {
       e.preventDefault();
@@ -251,93 +307,99 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     };
 
     const handleMouseDown = (e: MouseEvent) => {
+      menuWasOpened = false;
       const clientX = e.clientX;
       const clientY = e.clientY;
       
       longPressTimer.current = setTimeout(() => {
+        menuWasOpened = true;
         onOpenContextMenu(currentMessage.id, { x: clientX, y: clientY });
       }, 500);
     };
 
-    const handleMouseUp = () => {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
+    const handleMouseUp = (e: MouseEvent) => {
+      clearTimer();
+      stopEventIfMenuOpened(e);
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      if (menuWasOpened) {
+        stopEventIfMenuOpened(e);
+        menuWasOpened = false;
       }
     };
 
     const handleMouseLeave = () => {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
-      }
+      clearTimer();
     };
 
     const handleTouchStart = (e: TouchEvent) => {
+      menuWasOpened = false;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
       const clientX = e.touches[0].clientX;
       const clientY = e.touches[0].clientY;
       
       longPressTimer.current = setTimeout(() => {
+        menuWasOpened = true;
         onOpenContextMenu(currentMessage.id, { x: clientX, y: clientY });
       }, 500);
     };
 
-    const handleTouchEnd = () => {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!longPressTimer.current) return;
+      
+      const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+      const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+      
+      if (deltaX > scrollThreshold || deltaY > scrollThreshold) {
+        clearTimer();
       }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      clearTimer();
+      stopEventIfMenuOpened(e);
     };
 
     const handleTouchCancel = () => {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
-      }
+      clearTimer();
     };
 
-    // Only prevent context menu on the entire message element
+    const eventConfigs = [
+      { event: 'mousedown', handler: handleMouseDown, options: { passive: true } },
+      { event: 'mouseup', handler: handleMouseUp, options: { passive: false, capture: true } },
+      { event: 'click', handler: handleClick, options: { passive: false, capture: true } },
+      { event: 'mouseleave', handler: handleMouseLeave, options: { passive: true } },
+      { event: 'touchstart', handler: handleTouchStart, options: { passive: true } },
+      { event: 'touchmove', handler: handleTouchMove, options: { passive: true } },
+      { event: 'touchend', handler: handleTouchEnd, options: { passive: false, capture: true } },
+      { event: 'touchcancel', handler: handleTouchCancel, options: { passive: true } },
+    ];
+
+    const attachListeners = (element: HTMLElement) => {
+      eventConfigs.forEach(({ event, handler, options }) => {
+        element.addEventListener(event, handler as EventListener, options);
+      });
+    };
+
+    const detachListeners = (element: HTMLElement) => {
+      eventConfigs.forEach(({ event, handler, options }) => {
+        element.removeEventListener(event, handler as EventListener, options);
+      });
+    };
+
     messageElement.addEventListener('contextmenu', preventContextMenu, { passive: false });
-    
-    // Add long press handlers to the message bubble content
-    if (messageBubble) {
-      messageBubble.addEventListener('mousedown', handleMouseDown, { passive: true });
-      messageBubble.addEventListener('mouseup', handleMouseUp, { passive: true });
-      messageBubble.addEventListener('mouseleave', handleMouseLeave, { passive: true });
-      messageBubble.addEventListener('touchstart', handleTouchStart, { passive: true });
-      messageBubble.addEventListener('touchend', handleTouchEnd, { passive: true });
-      messageBubble.addEventListener('touchcancel', handleTouchCancel, { passive: true });
-    }
-    
-    // Add long press handlers to the reaction button
+    attachListeners(messageBubble);
     if (reactionButton) {
-      reactionButton.addEventListener('mousedown', handleMouseDown, { passive: true });
-      reactionButton.addEventListener('mouseup', handleMouseUp, { passive: true });
-      reactionButton.addEventListener('mouseleave', handleMouseLeave, { passive: true });
-      reactionButton.addEventListener('touchstart', handleTouchStart, { passive: true });
-      reactionButton.addEventListener('touchend', handleTouchEnd, { passive: true });
-      reactionButton.addEventListener('touchcancel', handleTouchCancel, { passive: true });
+      attachListeners(reactionButton);
     }
 
     return () => {
       messageElement.removeEventListener('contextmenu', preventContextMenu);
-      
-      if (messageBubble) {
-        messageBubble.removeEventListener('mousedown', handleMouseDown);
-        messageBubble.removeEventListener('mouseup', handleMouseUp);
-        messageBubble.removeEventListener('mouseleave', handleMouseLeave);
-        messageBubble.removeEventListener('touchstart', handleTouchStart);
-        messageBubble.removeEventListener('touchend', handleTouchEnd);
-        messageBubble.removeEventListener('touchcancel', handleTouchCancel);
-      }
-      
+      detachListeners(messageBubble);
       if (reactionButton) {
-        reactionButton.removeEventListener('mousedown', handleMouseDown);
-        reactionButton.removeEventListener('mouseup', handleMouseUp);
-        reactionButton.removeEventListener('mouseleave', handleMouseLeave);
-        reactionButton.removeEventListener('touchstart', handleTouchStart);
-        reactionButton.removeEventListener('touchend', handleTouchEnd);
-        reactionButton.removeEventListener('touchcancel', handleTouchCancel);
+        detachListeners(reactionButton);
       }
     };
   }, [currentMessage.id, onOpenContextMenu]);
@@ -356,7 +418,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       ) : (
         <div
           ref={messageRef}
-          className={`group flex select-none ${isChannel ? 'justify-start' : (isOwnMessage ? 'justify-end' : 'justify-start')} mb-4 relative transition-all duration-300 ease-out ${
+          className={`group flex select-none ${isChannel ? 'justify-start' : (isOwnMessage ? 'justify-end' : 'justify-start')} mb-4 relative transition-all duration-300 ease-out overflow-x-hidden ${
             isDeleting 
               ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' 
               : 'opacity-100 scale-100 translate-y-0'
@@ -364,7 +426,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         >
           
           <div className={`flex ${isChannel ? 'w-full max-w-full' : 'max-w-[85%]'} ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')}`}>
-            {(!isOwnMessage || isChannel) && (
+            {!isChannel && !isOwnMessage && (
               <div className="flex-shrink-0 mr-3 self-center">
                 <button
                   onClick={(e) => {
@@ -388,7 +450,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             )}
             
             <div className={`flex flex-col ${isChannel ? 'items-start flex-1' : (isOwnMessage ? 'items-end' : 'items-start')}`}>
-              {(isChannel || !isOwnMessage) && (
+              {!isChannel && !isOwnMessage && (
                 <span className="text-xs text-gray-500 dark:text-gray-400 mb-0.5 px-2">{getSenderName()}</span>
               )}
               
@@ -405,7 +467,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                   className={`flex items-start select-none ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')}`}
                 >
                   <div
-                    className={`px-4 ${hasTranslation ? 'pt-2 pb-4' : 'py-2'} rounded-lg shadow-sm relative min-w-[120px] ${
+                    data-message-bubble="true"
+                    className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? '' : 'px-4'} ${hasTranslation ? 'pt-2 pb-4' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && currentMessage.content ? 'pt-0 pb-2' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'py-0' : 'py-2'))} rounded-lg shadow-sm relative min-w-[120px] overflow-hidden ${
                       isChannel
                         ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
                         : isOwnMessage
@@ -413,10 +476,187 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                           : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
                     }`}
                   >
-                    {hasTranslation ? (
-                      <div className="space-y-2">
-                        <div className="pb-2 border-b border-gray-300 dark:border-gray-600">
-                          <p className="text-sm whitespace-pre-wrap break-words pr-12">
+                    {/* Images first - Telegram style */}
+                    {currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && (
+                      <div 
+                        className="w-full"
+                        style={{
+                          display: 'grid',
+                          ...getImageGridLayout(currentMessage.mediaUrls.length),
+                          marginBottom: currentMessage.content ? '8px' : '0',
+                        }}
+                      >
+                        {currentMessage.mediaUrls.map((url, index) => {
+                          const layout = getImageGridLayout(currentMessage.mediaUrls.length);
+                          const isFirstInThreeLayout = layout.firstImageSpan && index === 0;
+                          const isSingleImage = layout.singleImage;
+                          
+                          return (
+                            <div
+                              key={index}
+                              className="relative overflow-hidden"
+                              style={{
+                                gridColumn: isFirstInThreeLayout ? '1 / -1' : 'auto',
+                                aspectRatio: isSingleImage ? undefined : (isFirstInThreeLayout ? '16/9' : '1'),
+                                maxHeight: isSingleImage ? '400px' : undefined,
+                                cursor: 'pointer',
+                              }}
+                              onClick={() => handleImageClick(url)}
+                            >
+                              <img
+                                src={getThumbnailUrl(index)}
+                                alt={`Media ${index + 1}`}
+                                className={isSingleImage ? "w-full h-auto object-cover" : "w-full h-full object-cover"}
+                                style={{ display: 'block', maxHeight: isSingleImage ? '400px' : undefined }}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Text content after images */}
+                    {currentMessage.content && (
+                      <div className="px-4">
+                        {hasTranslation ? (
+                          <div className="space-y-2">
+                            <div className="pb-2 border-b border-gray-300 dark:border-gray-600">
+                              <p className="text-sm whitespace-pre-wrap break-words pr-12">
+                                {parsedContent ? (
+                                  parsedContent.map((part, index) => {
+                                    if (part.type === 'mention') {
+                                      const isMentioned = currentMessage.mentionIds?.includes(part.userId || '') || user?.id === part.userId;
+                                      return (
+                                        <span
+                                          key={index}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (part.userId) {
+                                              setSelectedMentionUserId(part.userId);
+                                            }
+                                          }}
+                                          className={`font-semibold cursor-pointer hover:underline ${
+                                            isChannel
+                                              ? isMentioned
+                                                ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
+                                                : 'text-blue-600 dark:text-blue-400'
+                                              : isOwnMessage
+                                                ? isMentioned
+                                                  ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
+                                                  : 'text-blue-100'
+                                                : isMentioned
+                                                  ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
+                                                  : 'text-blue-600 dark:text-blue-400'
+                                          }`}
+                                        >
+                                          @{part.display}
+                                        </span>
+                                      );
+                                    } else if (part.type === 'url') {
+                                      return (
+                                        <a
+                                          key={index}
+                                          href={part.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (part.url && (part.url.includes(window.location.origin) || part.url.includes('bandeja.me') || part.url.includes('localhost'))) {
+                                              e.preventDefault();
+                                              try {
+                                                const urlObj = new URL(part.url);
+                                                navigate(urlObj.pathname + urlObj.search + urlObj.hash);
+                                              } catch {
+                                                window.open(part.url, '_blank');
+                                              }
+                                            }
+                                          }}
+                                          className={`underline ${
+                                            isChannel
+                                              ? 'text-blue-600 dark:text-blue-400'
+                                              : isOwnMessage
+                                                ? 'text-blue-100'
+                                                : 'text-blue-600 dark:text-blue-400'
+                                          }`}
+                                        >
+                                          {part.displayText || part.content}
+                                        </a>
+                                      );
+                                    }
+                                    return <span key={index}>{part.content}</span>;
+                                  })
+                                ) : (
+                                  <span>{displayContent}</span>
+                                )}
+                              </p>
+                            </div>
+                            <div className={`${isChannel ? 'text-gray-600 dark:text-gray-400' : (isOwnMessage ? 'text-blue-50' : 'text-gray-600 dark:text-gray-400')}`}>
+                              <p className="text-sm whitespace-pre-wrap break-words pr-12">
+                                {translationContent ? (
+                                  translationContent.map((part, index) => {
+                                    if (part.type === 'mention') {
+                                      const isMentioned = currentMessage.mentionIds?.includes(part.userId || '') || user?.id === part.userId;
+                                      return (
+                                        <span
+                                          key={index}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (part.userId) {
+                                              setSelectedMentionUserId(part.userId);
+                                            }
+                                          }}
+                                          className={`font-semibold cursor-pointer hover:underline ${
+                                            isOwnMessage
+                                              ? isMentioned
+                                                ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
+                                                : 'text-blue-50'
+                                              : isMentioned
+                                                ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
+                                                : 'text-blue-600 dark:text-blue-400'
+                                          }`}
+                                        >
+                                          @{part.display}
+                                        </span>
+                                      );
+                                    } else if (part.type === 'url') {
+                                      return (
+                                        <a
+                                          key={index}
+                                          href={part.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (part.url && (part.url.includes(window.location.origin) || part.url.includes('bandeja.me') || part.url.includes('localhost'))) {
+                                              e.preventDefault();
+                                              try {
+                                                const urlObj = new URL(part.url);
+                                                navigate(urlObj.pathname + urlObj.search + urlObj.hash);
+                                              } catch {
+                                                window.open(part.url, '_blank');
+                                              }
+                                            }
+                                          }}
+                                          className={`underline ${
+                                            isOwnMessage
+                                              ? 'text-blue-50'
+                                              : 'text-blue-600 dark:text-blue-400'
+                                          }`}
+                                        >
+                                          {part.displayText || part.content}
+                                        </a>
+                                      );
+                                    }
+                                    return <span key={index}>{part.content}</span>;
+                                  })
+                                ) : (
+                                  <span>{currentMessage.translation?.translation}</span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm whitespace-pre-wrap break-words pr-12 pb-3">
                             {parsedContent ? (
                               parsedContent.map((part, index) => {
                                 if (part.type === 'mention') {
@@ -447,108 +687,44 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                       @{part.display}
                                     </span>
                                   );
-                                }
-                                return <span key={index}>{part.content}</span>;
-                              })
-                            ) : (
-                              <span>{displayContent}</span>
-                            )}
-                          </p>
-                        </div>
-                        <div className={`${isChannel ? 'text-gray-600 dark:text-gray-400' : (isOwnMessage ? 'text-blue-50' : 'text-gray-600 dark:text-gray-400')}`}>
-                          <p className="text-sm whitespace-pre-wrap break-words pr-12">
-                            {translationContent ? (
-                              translationContent.map((part, index) => {
-                                if (part.type === 'mention') {
-                                  const isMentioned = currentMessage.mentionIds?.includes(part.userId || '') || user?.id === part.userId;
+                                } else if (part.type === 'url') {
                                   return (
-                                    <span
+                                    <a
                                       key={index}
+                                      href={part.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        if (part.userId) {
-                                          setSelectedMentionUserId(part.userId);
+                                        if (part.url && (part.url.includes(window.location.origin) || part.url.includes('bandeja.me') || part.url.includes('localhost'))) {
+                                          e.preventDefault();
+                                          try {
+                                            const urlObj = new URL(part.url);
+                                            window.location.href = urlObj.pathname + urlObj.search + urlObj.hash;
+                                          } catch {
+                                            window.open(part.url, '_blank');
+                                          }
                                         }
                                       }}
-                                      className={`font-semibold cursor-pointer hover:underline ${
-                                        isOwnMessage
-                                          ? isMentioned
-                                            ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
-                                            : 'text-blue-50'
-                                          : isMentioned
-                                          ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
-                                          : 'text-blue-600 dark:text-blue-400'
+                                      className={`underline ${
+                                        isChannel
+                                          ? 'text-blue-600 dark:text-blue-400'
+                                          : isOwnMessage
+                                            ? 'text-blue-100'
+                                            : 'text-blue-600 dark:text-blue-400'
                                       }`}
                                     >
-                                      @{part.display}
-                                    </span>
+                                      {part.displayText || part.content}
+                                    </a>
                                   );
                                 }
                                 return <span key={index}>{part.content}</span>;
                               })
                             ) : (
-                              <span>{currentMessage.translation?.translation}</span>
+                              displayContent
                             )}
                           </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm whitespace-pre-wrap break-words pr-12 pb-3">
-                        {parsedContent ? (
-                          parsedContent.map((part, index) => {
-                            if (part.type === 'mention') {
-                              const isMentioned = currentMessage.mentionIds?.includes(part.userId || '') || user?.id === part.userId;
-                              return (
-                                <span
-                                  key={index}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (part.userId) {
-                                      setSelectedMentionUserId(part.userId);
-                                    }
-                                  }}
-                                      className={`font-semibold cursor-pointer hover:underline ${
-                                        isChannel
-                                          ? isMentioned
-                                            ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
-                                            : 'text-blue-600 dark:text-blue-400'
-                                          : isOwnMessage
-                                            ? isMentioned
-                                              ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
-                                              : 'text-blue-100'
-                                            : isMentioned
-                                              ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
-                                              : 'text-blue-600 dark:text-blue-400'
-                                      }`}
-                                >
-                                  @{part.display}
-                                </span>
-                              );
-                            }
-                            return <span key={index}>{part.content}</span>;
-                          })
-                      ) : (
-                        displayContent
-                      )}
-                    </p>
-                    )}
-                    
-                    {currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && (
-                      <div className="mt-2 space-y-2">
-                        {currentMessage.mediaUrls.map((url, index) => (
-                          <div key={index} className="rounded-lg overflow-hidden">
-                            <div
-                              onClick={() => handleImageClick(url)}
-                              className="cursor-pointer hover:opacity-90 transition-opacity"
-                            >
-                              <img
-                                src={getThumbnailUrl(index)}
-                                alt={`Media ${index + 1}`}
-                                className="max-w-full h-auto rounded-lg max-h-64 object-cover"
-                              />
-                            </div>
-                          </div>
-                        ))}
+                        )}
                       </div>
                     )}
                     
@@ -594,6 +770,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                   <div className={`flex items-center gap-1 ${isOwnMessage ? 'flex-row-reverse mr-1' : 'flex-row ml-1'} self-center`}>
                     {/* Simple reaction display */}
                     <button 
+                      data-reaction-button="true"
                       onClick={handleQuickReaction}
                       className="relative flex flex-col items-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-1 transition-colors"
                     >

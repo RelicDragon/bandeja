@@ -22,9 +22,20 @@ interface BugCardProps {
   unreadCount?: number;
   onUpdate?: () => void;
   onDelete?: (bugId: string) => void;
+  onBugSelect?: (bugId: string) => void;
+  isDesktop?: boolean;
+  isSelected?: boolean;
 }
 
-export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardProps) => {
+export const BugCard = ({ 
+  bug, 
+  unreadCount = 0, 
+  onUpdate, 
+  onDelete,
+  onBugSelect,
+  isDesktop = false,
+  isSelected = false
+}: BugCardProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -141,7 +152,11 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
   };
 
   const handleOpenChat = () => {
-    navigate(`/bugs/${bug.id}/chat`);
+    if (isDesktop && onBugSelect) {
+      onBugSelect(bug.id);
+    } else {
+      navigate(`/bugs/${bug.id}/chat`);
+    }
   };
 
   const getThumbnailUrl = (index: number): string => {
@@ -161,7 +176,7 @@ export const BugCard = ({ bug, unreadCount = 0, onUpdate, onDelete }: BugCardPro
   const isArchived = bug.status === 'ARCHIVED';
 
   return (
-    <Card className={`p-4 mb-3 relative ${isArchived ? 'opacity-60 bg-gray-50 dark:bg-gray-800/30' : ''}`}>
+    <Card className={`p-4 mb-3 relative ${isArchived ? 'opacity-60 bg-gray-50 dark:bg-gray-800/30' : ''} ${isSelected && isDesktop ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
       <div className="flex items-start">
         <div className="flex-1 ">
           <div className="flex items-center gap-2 mb-1">

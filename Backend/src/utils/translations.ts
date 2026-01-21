@@ -120,6 +120,7 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.transactionDescription': 'Description',
     'telegram.viewWallet': 'View Wallet',
     'telegram.unknown': 'Unknown',
+    'chat.channelInviteMessage': '{{senderName}} invites you to join {{channelName}}. {{channelUrl}}',
   },
   ru: {
     'createGame.today': 'Сегодня',
@@ -229,6 +230,7 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.transactionDescription': 'Описание',
     'telegram.viewWallet': 'Посмотреть кошелек',
     'telegram.unknown': 'Неизвестно',
+    'chat.channelInviteMessage': '{{senderName}} приглашает вас присоединиться к {{channelName}}. {{channelUrl}}',
   },
   sr: {
     'createGame.today': 'Данас',
@@ -338,6 +340,7 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.transactionDescription': 'Опис',
     'telegram.viewWallet': 'Погледај новчаник',
     'telegram.unknown': 'Непознато',
+    'chat.channelInviteMessage': '{{senderName}} вас позива да се придружите {{channelName}}. {{channelUrl}}',
   },
   es: {
     'createGame.today': 'Hoy',
@@ -447,6 +450,7 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.transactionDescription': 'Descripción',
     'telegram.viewWallet': 'Ver billetera',
     'telegram.unknown': 'Desconocido',
+    'chat.channelInviteMessage': '{{senderName}} te invita a unirte a {{channelName}}. {{channelUrl}}',
   },
 };
 

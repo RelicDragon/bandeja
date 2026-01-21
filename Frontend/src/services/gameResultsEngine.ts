@@ -64,13 +64,26 @@ class GameResultsEngineClass {
 
     try {
       const [gameResponse, localResults, serverProblem] = await Promise.all([
-        gamesApi.getById(gameId).catch(() => null),
+        gamesApi.getById(gameId).catch((error: any) => {
+          // Silently handle 401 errors (unauthorized) - expected when user is not authenticated
+          if (error?.response?.status === 401) {
+            return null;
+          }
+          return null;
+        }),
         ResultsStorage.getResults(gameId),
         ResultsStorage.getServerProblem(gameId),
       ]);
 
       if (!gameResponse) {
-        throw new Error('Game not found');
+        // If no game response (e.g., 401), set initialized to false and return
+        useGameResultsStore.setState({ 
+          initialized: false, 
+          loading: false,
+          game: null,
+          canEdit: false,
+        });
+        return;
       }
 
       const game = gameResponse.data;

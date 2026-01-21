@@ -347,7 +347,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                 {isBlocked ? <Check size={18} /> : <Ban size={18} className="scale-x-[-1]" />}
               </motion.button>
             )}
-            {stats && !isCurrentUser && (
+            {stats && (
               <motion.button
                 onClick={() => {
                   setShowAvatarView(false);

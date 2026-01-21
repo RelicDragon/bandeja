@@ -162,7 +162,7 @@ export const BaseModal = ({
           onClick={(e) => e.stopPropagation()}
         >
           
-          <div className="bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 md:p-8 max-w-2xl w-full border border-gray-200/50 dark:border-gray-700/50 max-h-[95vh] overflow-hidden flex flex-col mx-auto">
+          <div className="relative bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 md:p-8 max-w-2xl w-full border border-gray-200/50 dark:border-gray-700/50 max-h-[95vh] overflow-hidden flex flex-col mx-auto">
             {showCloseButton && (
               <button
                 onClick={onClose}

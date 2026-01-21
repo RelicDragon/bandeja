@@ -183,7 +183,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   return (
     <div
       ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto scrollbar-auto bg-gray-50 dark:bg-gray-800 p-4 space-y-1 min-h-0 overscroll-contain"
+      className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto bg-gray-50 dark:bg-gray-800 p-4 space-y-1 min-h-0 overscroll-contain"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       {hasMoreMessages && !isInitialLoad && onLoadMore && shouldRenderButton && (

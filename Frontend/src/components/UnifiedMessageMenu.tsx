@@ -314,7 +314,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     <>
       {/* Blur backdrop */}
       <div 
-        className="fixed inset-0 bg-black/30 backdrop-blur-md z-[9998] pointer-events-auto"
+        className="fixed inset-0 bg-black/30 backdrop-blur-md z-[9998] pointer-events-auto transition-opacity duration-150"
+        style={{ opacity: isInitialRender ? 0 : 1 }}
         onClick={onClose}
       />
 

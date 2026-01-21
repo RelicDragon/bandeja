@@ -24,18 +24,21 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
   const serverProblem = useGameResultsStore((state) => state.serverProblem);
 
   useEffect(() => {
-    if (!gameId || !userId) return;
+    if (!gameId) return;
     
     const currentGameId = gameId;
-    const currentUserId = userId;
+    const currentUserId = userId || '';
     
     const state = GameResultsEngine.getState();
-    const needsInit = !state.initialized || state.gameId !== gameId || state.userId !== userId;
+    const needsInit = !state.initialized || state.gameId !== gameId || state.userId !== currentUserId;
     
     if (needsInit) {
-      GameResultsEngine.initialize(gameId, userId, t).catch((err) => {
-        console.error('Failed to initialize GameResultsEngine:', err);
-        setError(err.message || 'Failed to initialize');
+      GameResultsEngine.initialize(gameId, currentUserId, t).catch((err) => {
+        // Silently handle 401 errors (unauthorized) - expected when user is not authenticated
+        if (err?.response?.status !== 401) {
+          console.error('Failed to initialize GameResultsEngine:', err);
+          setError(err.message || 'Failed to initialize');
+        }
       });
     }
 

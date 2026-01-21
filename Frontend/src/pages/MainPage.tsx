@@ -1,11 +1,13 @@
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { useNavigationStore } from '@/store/navigationStore';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { useDesktop } from '@/hooks/useDesktop';
 import { MyTab } from './MyTab';
 import { FindTab } from './FindTab';
 import { ChatsTab } from './ChatsTab';
+import { BugsTab } from './BugsTab';
 import { LeaderboardTab } from './LeaderboardTab';
 import { ProfileTab } from './ProfileTab';
 import { GameDetailsContent } from './GameDetails';
@@ -13,19 +15,10 @@ import { GameSubscriptionsContent } from './GameSubscriptions';
 
 export const MainPage = () => {
   const location = useLocation();
-  const { currentPage, setCurrentPage, setIsAnimating, bottomTabsVisible, chatsFilter } = useNavigationStore();
+  const { currentPage, setCurrentPage, setIsAnimating, bottomTabsVisible, chatsFilter, setChatsFilter } = useNavigationStore();
   const previousPathnameRef = useRef(location.pathname);
   const isInitialMountRef = useRef(true);
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const isDesktop = useDesktop();
 
   useEffect(() => {
     const path = location.pathname;
@@ -49,6 +42,19 @@ export const MainPage = () => {
         setCurrentPage('gameSubscriptions');
       } else if (path.startsWith('/games/') && !path.includes('/chat')) {
         setCurrentPage('gameDetails');
+      } else if (path === '/bugs') {
+        setCurrentPage('bugs');
+      } else if (path.includes('/bugs/') && path.includes('/chat')) {
+        setCurrentPage('bugs');
+      } else if (path.includes('/user-chat/')) {
+        setCurrentPage('chats');
+        setChatsFilter('users');
+      } else if (path.includes('/group-chat/')) {
+        setCurrentPage('chats');
+        setChatsFilter('users');
+      } else if (path.includes('/channel-chat/')) {
+        setCurrentPage('chats');
+        setChatsFilter('channels');
       } else if (path === '/') {
         setCurrentPage('my');
       }
@@ -60,7 +66,7 @@ export const MainPage = () => {
       previousPathnameRef.current = path;
       isInitialMountRef.current = false;
     }
-  }, [location.pathname, setCurrentPage, setIsAnimating]);
+  }, [location.pathname, setCurrentPage, setIsAnimating, setChatsFilter]);
 
   const renderContent = useMemo(() => {
     switch (currentPage) {
@@ -70,6 +76,8 @@ export const MainPage = () => {
         return <FindTab />;
       case 'chats':
         return <ChatsTab />;
+      case 'bugs':
+        return <BugsTab />;
       case 'leaderboard':
         return <LeaderboardTab />;
       case 'profile':
@@ -83,8 +91,17 @@ export const MainPage = () => {
     }
   }, [currentPage]);
 
-  if (currentPage === 'chats') {
-    const showBottomTabBar = bottomTabsVisible && (!isDesktop || chatsFilter === 'bugs');
+  const isChatPage = currentPage === 'chats';
+  const isBugsPage = currentPage === 'bugs';
+  const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') || 
+                                 location.pathname.includes('/group-chat/') || 
+                                 location.pathname.includes('/channel-chat/') || 
+                                 (location.pathname.includes('/bugs/') && location.pathname.includes('/chat'));
+  const shouldShowChatsSplitView = isChatPage && (isDesktop || !isOnSpecificChatRoute);
+  const shouldShowBugsSplitView = isBugsPage && (isDesktop || !isOnSpecificChatRoute);
+  const showBottomTabBar = bottomTabsVisible && (!isDesktop || (isChatPage && chatsFilter === 'bugs'));
+
+  if (isChatPage && shouldShowChatsSplitView) {
     return (
       <MainLayout>
         <ChatsTab />
@@ -92,6 +109,23 @@ export const MainPage = () => {
       </MainLayout>
     );
   }
+
+  if (isBugsPage && shouldShowBugsSplitView) {
+    return (
+      <MainLayout>
+        <BugsTab />
+        {showBottomTabBar && <BottomTabBar />}
+      </MainLayout>
+    );
+  }
+
+  if ((isChatPage || isBugsPage) && !isDesktop && isOnSpecificChatRoute) {
+    if (isBugsPage) {
+      return <BugsTab />;
+    }
+    return <ChatsTab />;
+  }
+
   return (
     <MainLayout>
       <div className="relative px-2 overflow-hidden" style={{ paddingBottom: bottomTabsVisible ? '5rem' : '0' }}>

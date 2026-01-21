@@ -1,15 +1,45 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus, XCircle } from 'lucide-react';
+import { Crown, Shield, User, UserX, ArrowRightLeft, Search, XCircle, Check, X } from 'lucide-react';
 import { Button, PlayerAvatar } from '@/components';
 import { GroupChannel, GroupChannelParticipant, GroupChannelInvite } from '@/api/chat';
 import { chatApi } from '@/api/chat';
+import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
-import { GroupChannelInviteModal } from './GroupChannelInviteModal';
 import { matchesSearch } from '@/utils/transliteration';
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { BaseModal } from '@/components/BaseModal';
+import { BasicUser } from '@/types';
+
+const buttonTransitionStyle = `
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translateX(10px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+  @keyframes fadeOutSlide {
+    from {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(-10px) scale(0.9);
+    }
+  }
+  .button-container-enter {
+    animation: fadeInSlide 0.3s ease-in-out forwards;
+  }
+  .button-container-exit {
+    animation: fadeOutSlide 0.3s ease-in-out forwards;
+  }
+`;
 
 interface GroupChannelParticipantsModalProps {
   groupChannel: GroupChannel;
@@ -30,14 +60,22 @@ export const GroupChannelParticipantsModal = ({
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [showInviteModal, setShowInviteModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [allUsers, setAllUsers] = useState<BasicUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const originalOrderRef = useRef<Map<string, number>>(new Map());
+  const [confirmingPlayerId, setConfirmingPlayerId] = useState<string | null>(null);
+  const [invitingPlayerId, setInvitingPlayerId] = useState<string | null>(null);
+  const [exitingPlayerId, setExitingPlayerId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const selectedItemRef = useRef<HTMLDivElement | null>(null);
 
-  const currentUserParticipant = participants.find(p => p.userId === user?.id);
-  const isOwner = currentUserParticipant?.role === 'OWNER';
-  const isAdmin = currentUserParticipant?.role === 'ADMIN';
+  const currentUserParticipant = useMemo(
+    () => participants.find(p => p.userId === user?.id),
+    [participants, user?.id]
+  );
+  const isOwner = useMemo(() => currentUserParticipant?.role === 'OWNER', [currentUserParticipant]);
+  const isAdmin = useMemo(() => currentUserParticipant?.role === 'ADMIN', [currentUserParticipant]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -58,6 +96,31 @@ export const GroupChannelParticipantsModal = ({
       setLoading(false);
     }
   }, [groupChannel.id, t]);
+
+  const loadAllUsers = useCallback(async () => {
+    if (activeTab !== 'invites') return;
+    
+    setLoadingUsers(true);
+    try {
+      const response = await usersApi.getInvitablePlayers();
+      const allPlayers = response.data || [];
+      const participantIds = new Set(participants.map(p => p.userId));
+      const filtered = allPlayers.filter((player) => !participantIds.has(player.id));
+      setAllUsers(filtered);
+      originalOrderRef.current = new Map(filtered.map((user, index) => [user.id, index]));
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      toast.error(t('chat.failedToLoadUsers', { defaultValue: 'Failed to load users' }));
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, [activeTab, participants, t]);
+
+  useEffect(() => {
+    if (activeTab === 'invites') {
+      loadAllUsers();
+    }
+  }, [activeTab, loadAllUsers]);
 
   useEffect(() => {
     loadData();
@@ -148,10 +211,30 @@ export const GroupChannelParticipantsModal = ({
   };
 
   const handleCancelInvite = async (inviteId: string) => {
+    const invite = invites.find(inv => inv.id === inviteId);
+    if (!invite) return;
+    
     try {
       await chatApi.cancelInvite(inviteId);
+      
+      setInvites(prev => prev.filter(inv => inv.id !== inviteId));
+      
+      if (!allUsers.find(u => u.id === invite.receiverId)) {
+        const originalIndex = originalOrderRef.current.get(invite.receiverId) ?? allUsers.length;
+        setAllUsers(prev => {
+          const newUsers = [...prev, invite.receiver];
+          return newUsers.sort((a, b) => {
+            const indexA = originalOrderRef.current.get(a.id) ?? Infinity;
+            const indexB = originalOrderRef.current.get(b.id) ?? Infinity;
+            return indexA - indexB;
+          });
+        });
+        if (!originalOrderRef.current.has(invite.receiverId)) {
+          originalOrderRef.current.set(invite.receiverId, originalIndex);
+        }
+      }
+      
       toast.success(t('chat.inviteCancelled', { defaultValue: 'Invite cancelled' }));
-      await loadData();
       onUpdate?.();
     } catch (error: any) {
       console.error('Failed to cancel invite:', error);
@@ -166,43 +249,106 @@ export const GroupChannelParticipantsModal = ({
     if (!searchQuery.trim()) {
       return participants;
     }
+    const query = searchQuery.trim();
     return participants.filter((p) =>
-      matchesSearch(
-        `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim(),
-        searchQuery
-      )
+      matchesSearch(query, `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim())
     );
   }, [participants, searchQuery]);
 
-  const filteredInvites = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return invites;
-    }
-    return invites.filter((invite) =>
-      matchesSearch(
-        `${invite.receiver.firstName || ''} ${invite.receiver.lastName || ''}`.trim(),
-        searchQuery
-      ) ||
-      matchesSearch(
-        `${invite.sender.firstName || ''} ${invite.sender.lastName || ''}`.trim(),
-        searchQuery
-      )
-    );
-  }, [invites, searchQuery]);
+  const inviteMap = useMemo(() => 
+    new Map(invites.map(inv => [inv.receiverId, inv])),
+    [invites]
+  );
 
-  const existingParticipantIds = participants.map(p => p.userId);
+  const getInviteForUser = useCallback((userId: string): GroupChannelInvite | undefined => {
+    return inviteMap.get(userId);
+  }, [inviteMap]);
+
+  const allUsersWithInvites = useMemo(() => {
+    const allUsersMap = new Map(allUsers.map(user => [user.id, user]));
+    const allUserIds = new Set([...allUsers.map(u => u.id), ...invites.map(inv => inv.receiverId)]);
+    
+    return Array.from(allUserIds)
+      .map(id => ({
+        user: inviteMap.get(id)?.receiver || allUsersMap.get(id)!,
+        originalIndex: originalOrderRef.current.get(id) ?? Infinity
+      }))
+      .sort((a, b) => a.originalIndex - b.originalIndex)
+      .map(item => item.user);
+  }, [allUsers, invites, inviteMap]);
+
+  const filteredAllUsers = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return allUsersWithInvites;
+    }
+    const query = searchQuery.trim();
+    return allUsersWithInvites.filter((user) =>
+      matchesSearch(query, `${user.firstName || ''} ${user.lastName || ''}`.trim())
+    );
+  }, [allUsersWithInvites, searchQuery]);
+
+  const handlePlayerClick = (playerId: string) => {
+    const invite = getInviteForUser(playerId);
+    if (invite) {
+      return;
+    }
+    if (confirmingPlayerId === playerId) {
+      setExitingPlayerId(playerId);
+      setTimeout(() => {
+        setConfirmingPlayerId(null);
+        setExitingPlayerId(null);
+      }, 300);
+      return;
+    }
+    setConfirmingPlayerId(playerId);
+  };
+
+  const handleConfirmInvite = async (playerId: string) => {
+    setConfirmingPlayerId(null);
+    setInvitingPlayerId(playerId);
+    
+    try {
+      const response = await chatApi.inviteUser(groupChannel.id, { receiverId: playerId });
+      
+      setInvites(prev => [...prev, response.data]);
+      
+      setAllUsers(prev => prev.filter(u => u.id !== playerId));
+      
+      onUpdate?.();
+      toast.success(t('chat.inviteSent', { defaultValue: 'Invite sent successfully' }));
+    } catch (error: any) {
+      console.error('Failed to send invite:', error);
+      toast.error(
+        error?.response?.data?.message || 
+        t('chat.inviteError', { defaultValue: 'Failed to send invite' })
+      );
+    } finally {
+      setInvitingPlayerId(null);
+    }
+  };
+
+  const handleCancelInviteConfirm = () => {
+    if (confirmingPlayerId) {
+      setExitingPlayerId(confirmingPlayerId);
+      setTimeout(() => {
+        setConfirmingPlayerId(null);
+        setExitingPlayerId(null);
+      }, 300);
+    }
+  };
 
   return (
     <>
+      <style>{buttonTransitionStyle}</style>
       <BaseModal
-        isOpen={!showInviteModal}
+        isOpen={true}
         onClose={onClose}
         isBasic
         modalId="group-channel-participants-modal"
         showCloseButton={true}
         closeOnBackdropClick={true}
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {groupChannel.isChannel 
                   ? t('chat.channelMembers', { defaultValue: 'Channel Members' })
@@ -211,42 +357,35 @@ export const GroupChannelParticipantsModal = ({
             </div>
 
             <div className="flex border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-              <button
-                onClick={() => {
-                  setActiveTab('participants');
-                  setSearchQuery('');
-                }}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'participants'
-                    ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-              >
-                {t('chat.participants', { defaultValue: 'Participants' })}
-                {participants.length > 0 && (
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 rounded-full">
-                    {participants.length}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('invites');
-                  setSearchQuery('');
-                }}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'invites'
-                    ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-              >
-                {t('chat.invites', { defaultValue: 'Invites' })}
-                {invites.length > 0 && (
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 rounded-full">
-                    {invites.length}
-                  </span>
-                )}
-              </button>
+              {(['participants', 'invites'] as const).map((tab) => {
+                const isActive = activeTab === tab;
+                const count = tab === 'participants' ? participants.length : invites.length;
+                const label = tab === 'participants' 
+                  ? t('chat.participants', { defaultValue: 'Participants' })
+                  : t('chat.invites', { defaultValue: 'Invites' });
+                
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      setActiveTab(tab);
+                      setSearchQuery('');
+                    }}
+                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    {label}
+                    {count > 0 && (
+                      <span className="ml-2 px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 rounded-full">
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
@@ -257,7 +396,7 @@ export const GroupChannelParticipantsModal = ({
                   placeholder={
                     activeTab === 'participants'
                       ? t('chat.searchParticipants', { defaultValue: 'Search participants...' })
-                      : t('chat.searchInvites', { defaultValue: 'Search invites...' })
+                      : t('chat.searchUsers', { defaultValue: 'Search users...' })
                   }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -266,25 +405,13 @@ export const GroupChannelParticipantsModal = ({
               </div>
             </div>
 
-            {activeTab === 'invites' && isAdmin && (
-              <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <button
-                  onClick={() => setShowInviteModal(true)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
-                >
-                  <UserPlus size={16} />
-                  {t('chat.inviteUser', { defaultValue: 'Invite User' })}
-                </button>
-              </div>
-            )}
-
             {loading ? (
               <div className="flex items-center justify-center py-12 flex-1">
                 <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : (
               <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-                {activeTab === 'participants' ? (
+                {activeTab === 'participants' && (
                   <>
                     {filteredParticipants.length === 0 ? (
                       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -340,7 +467,7 @@ export const GroupChannelParticipantsModal = ({
                                   </span>
                                 </div>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  Level {participant.user.level.toFixed(1)}
+                                  {t('games.level', { defaultValue: 'Level' })} {participant.user.level.toFixed(1)}
                                 </p>
                               </div>
                             </div>
@@ -376,51 +503,113 @@ export const GroupChannelParticipantsModal = ({
                       })
                     )}
                   </>
-                ) : (
+                )}
+                {activeTab === 'invites' && (
                   <>
-                    {filteredInvites.length === 0 ? (
+                    {loadingUsers ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : filteredAllUsers.length === 0 ? (
                       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <UserPlus size={48} className="mx-auto mb-4 opacity-50" />
-                        <p>{t('chat.noInvites', { defaultValue: 'No pending invites' })}</p>
+                        <User size={48} className="mx-auto mb-4 opacity-50" />
+                        <p>{t('chat.noUsersFound', { defaultValue: 'No users found' })}</p>
                       </div>
                     ) : (
-                      filteredInvites.map((invite) => {
-                        const isSender = invite.senderId === user?.id;
-                        const canCancel = (isOwner || isAdmin) || isSender;
+                      filteredAllUsers.map((player) => {
+                        const invite = getInviteForUser(player.id);
+                        const isConfirming = confirmingPlayerId === player.id;
+                        const isInviting = invitingPlayerId === player.id;
+                        const isSender = invite?.senderId === user?.id;
+                        const canCancel = invite && ((isOwner || isAdmin) || isSender);
 
                         return (
                           <div
-                            key={invite.id}
-                            className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+                            key={player.id}
+                            className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                              isConfirming
+                                ? 'bg-primary-50 dark:bg-primary-900/20'
+                                : invite
+                                ? 'bg-gray-50 dark:bg-gray-800/50'
+                                : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                            }`}
                           >
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <PlayerAvatar
-                                player={invite.receiver}
-                                showName={false}
-                                smallLayout={true}
-                                fullHideName={true}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-900 dark:text-white truncate">
-                                  {invite.receiver.firstName} {invite.receiver.lastName}
+                            <PlayerAvatar
+                              player={player}
+                              showName={false}
+                              smallLayout={true}
+                              fullHideName={true}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 dark:text-white truncate">
+                                {player.firstName} {player.lastName}
+                              </p>
+                              {!invite && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  {t('games.level', { defaultValue: 'Level' })} {player.level.toFixed(1)}
                                 </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {t('chat.invitedBy', { defaultValue: 'Invited by' })} {invite.sender.firstName} {invite.sender.lastName}
-                                </p>
-                                <p className="text-xs text-gray-400 dark:text-gray-500">
-                                  {formatRelativeTime(invite.createdAt)}
-                                </p>
-                              </div>
+                              )}
+                              {invite && (
+                                <>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    {t('chat.invitedBy', { defaultValue: 'Invited by' })} {invite.sender.firstName} {invite.sender.lastName}
+                                  </p>
+                                  <p className="text-xs text-primary-600 dark:text-primary-400">
+                                    {formatRelativeTime(invite.createdAt)}
+                                  </p>
+                                </>
+                              )}
                             </div>
-                            {canCancel && (
-                              <button
-                                onClick={() => handleCancelInvite(invite.id)}
-                                className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                title={t('chat.cancelInvite', { defaultValue: 'Cancel invite' })}
-                              >
-                                <XCircle size={18} />
-                              </button>
-                            )}
+                            <div className="flex items-center min-w-[120px] justify-end">
+                              {invite ? (
+                                canCancel && (
+                                  <button
+                                    onClick={() => handleCancelInvite(invite.id)}
+                                    className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-300 ease-in-out"
+                                    title={t('chat.cancelInvite', { defaultValue: 'Cancel invite' })}
+                                  >
+                                    <XCircle size={18} />
+                                  </button>
+                                )
+                              ) : isConfirming ? (
+                                <div 
+                                  className={`flex items-center gap-2 ${
+                                    exitingPlayerId === player.id ? 'button-container-exit' : 'button-container-enter'
+                                  }`}
+                                >
+                                  <button
+                                    onClick={() => handleConfirmInvite(player.id)}
+                                    disabled={isInviting}
+                                    className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95"
+                                    aria-label="Confirm"
+                                  >
+                                    {isInviting ? (
+                                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                      <Check size={18} />
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={handleCancelInviteConfirm}
+                                    disabled={isInviting}
+                                    className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95"
+                                    aria-label="Cancel"
+                                  >
+                                    <X size={18} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => handlePlayerClick(player.id)}
+                                  disabled={isInviting}
+                                  className={`px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out text-sm font-medium transform hover:scale-105 active:scale-95 ${
+                                    exitingPlayerId === player.id ? 'button-container-enter' : ''
+                                  }`}
+                                >
+                                  {t('chat.invite', { defaultValue: 'Invite' })}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         );
                       })
@@ -430,19 +619,6 @@ export const GroupChannelParticipantsModal = ({
               </div>
             )}
         </BaseModal>
-
-      {showInviteModal && (
-        <GroupChannelInviteModal
-          groupChannelId={groupChannel.id}
-          onClose={() => setShowInviteModal(false)}
-          onInviteSent={() => {
-            loadData();
-            setShowInviteModal(false);
-            onUpdate?.();
-          }}
-          existingParticipantIds={existingParticipantIds}
-        />
-      )}
     </>
   );
 };

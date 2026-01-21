@@ -1083,7 +1083,7 @@ export const GameDetailsContent = () => {
     if (!isLeagueSeason || activeTab === 'general') {
       return (
         <>
-          {isLeague && game.hasFixedTeams && (
+          {user && isLeague && game.hasFixedTeams && (
             <LeagueFixedTeamsSection game={game} />
           )}
 
@@ -1109,28 +1109,15 @@ export const GameDetailsContent = () => {
             <PhotosSection game={game} onGameUpdate={setGame} />
           )}
 
-          {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
-            <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} />
-          )}
-
-          {game.entityType === 'TRAINING' && game.resultsStatus === 'FINAL' && (
-            <TrainingResultsSection
-              game={game}
-              user={user}
-              onUpdateParticipantLevel={handleUpdateParticipantLevel}
-              onUndoTraining={handleUndoTraining}
-            />
-          )}
-
-          {game.entityType === 'BAR' && game.resultsStatus === 'FINAL' && (
-            <BarParticipantsList gameId={game.id} participants={game.participants} />
-          )}
-
           {!user && (
             <PublicGamePrompt />
           )}
 
-          {!isLeague && game.resultsStatus === 'NONE' && user && (
+          {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
+            <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} />
+          )}
+
+          {!isLeague && game.resultsStatus === 'NONE' && (
             <>
               <GameParticipants
                 game={game}
@@ -1166,9 +1153,22 @@ export const GameDetailsContent = () => {
             </>
           )}
 
-          <BetSection game={game} onGameUpdate={setGame} />
+          {user && game.entityType === 'TRAINING' && game.resultsStatus === 'FINAL' && (
+            <TrainingResultsSection
+              game={game}
+              user={user}
+              onUpdateParticipantLevel={handleUpdateParticipantLevel}
+              onUndoTraining={handleUndoTraining}
+            />
+          )}
 
-          {!isLeague && canViewSettings && (
+          {user && game.entityType === 'BAR' && game.resultsStatus === 'FINAL' && (
+            <BarParticipantsList gameId={game.id} participants={game.participants} />
+          )}
+
+          {user && <BetSection game={game} onGameUpdate={setGame} />}
+
+          {user && !isLeague && canViewSettings && (
             <div id="game-settings">
               <GameSettings
                 game={game}
@@ -1188,21 +1188,21 @@ export const GameDetailsContent = () => {
             </div>
           )}
 
-          {!isLeague && canViewSettings && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
+          {user && !isLeague && canViewSettings && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
             <GameSetup
               onOpenSetup={() => setIsGameSetupModalOpen(true)}
               canEdit={canEdit}
             />
           )}
 
-          {isLeagueSeason && canEdit && (
+          {user && isLeagueSeason && canEdit && (
             <FaqEdit 
               gameId={game.id} 
               onFaqsChange={handleFaqsChange}
             />
           )}
 
-          {game.maxParticipants > 4 && game.resultsStatus === 'NONE' && game.entityType !== 'BAR' && (
+          {user && game.maxParticipants > 4 && game.resultsStatus === 'NONE' && game.entityType !== 'BAR' && (
             <MultipleCourtsSelector
               gameId={game.id}
               courts={courts}
@@ -1219,7 +1219,7 @@ export const GameDetailsContent = () => {
             />
           )}
 
-          {!isLeague && game.hasFixedTeams && (
+          {user && !isLeague && game.hasFixedTeams && (
             <FixedTeamsManagement
               key={`fixed-teams-${game.id}`}
               game={game}
@@ -1243,7 +1243,7 @@ export const GameDetailsContent = () => {
             </Card>
           )}
 
-          {isParticipant && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && game.resultsStatus !== 'FINAL' && (
+          {user && isParticipant && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && game.resultsStatus !== 'FINAL' && (
             <Card>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -1301,7 +1301,7 @@ export const GameDetailsContent = () => {
             </Card>
           )}
 
-          {canEdit && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && (
+          {user && canEdit && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && (
             <Card>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -1374,7 +1374,7 @@ export const GameDetailsContent = () => {
             </Card>
           )}
 
-          {canDeleteGame() && (
+          {user && canDeleteGame() && (
             <Card>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -1397,15 +1397,15 @@ export const GameDetailsContent = () => {
       );
     }
 
-    if (activeTab === 'schedule') {
+    if (user && activeTab === 'schedule') {
       return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} />;
     }
 
-    if (activeTab === 'standings') {
+    if (user && activeTab === 'standings') {
       return <LeagueStandingsTab leagueSeasonId={game.id} hasFixedTeams={game.hasFixedTeams || false} />;
     }
 
-    if (activeTab === 'faq') {
+    if (user && activeTab === 'faq') {
       return <FaqTab gameId={game.id} />;
     }
 
@@ -1426,7 +1426,7 @@ export const GameDetailsContent = () => {
         }}
       >
       <div className="max-w-2xl mx-auto space-y-4 overflow-visible">
-        {isLeagueSeason && (
+        {user && isLeagueSeason && (
         <div className="flex border-b border-gray-200 dark:border-gray-700 rounded-xl">
           <button
             onClick={() => setActiveTab('general')}

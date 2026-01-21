@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Card, Loading, ToggleSwitch, Select } from '@/components';
 import { BugCard } from './BugCard';
 import { Bug, BugStatus, BugType } from '@/types';
@@ -15,14 +16,23 @@ import { useAuthStore } from '@/store/authStore';
 
 interface BugListProps {
   isVisible?: boolean;
+  onBugSelect?: (bugId: string) => void;
+  isDesktop?: boolean;
+  selectedBugId?: string | null;
 }
 
 const STORAGE_KEY = 'bugs-filters';
 const IDB_TAB_KEY = 'padelpulse-bugs-active-tab';
 
-export const BugList = ({ isVisible = true }: BugListProps) => {
+export const BugList = ({ 
+  isVisible = true, 
+  onBugSelect,
+  isDesktop = false,
+  selectedBugId = null
+}: BugListProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [allBugs, setAllBugs] = useState<Bug[]>([]);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
@@ -246,6 +256,14 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     setAllBugs(prev => prev.filter(bug => bug.id !== bugId));
   };
 
+  const handleBugCardClick = useCallback((bugId: string) => {
+    if (isDesktop && onBugSelect) {
+      onBugSelect(bugId);
+    } else {
+      navigate(`/bugs/${bugId}/chat`);
+    }
+  }, [isDesktop, onBugSelect, navigate]);
+
   const handleAddBugClick = (e: React.MouseEvent) => {
     if (touchHandledRef.current) {
       e.preventDefault();
@@ -261,7 +279,14 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
     setShowAddModal(true);
     setTimeout(() => {
       touchHandledRef.current = false;
-    }, 300);
+    }, 500);
+  };
+
+  const handleAddBugTouchEnd = (e: React.TouchEvent) => {
+    if (touchHandledRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
   };
 
   const AddBugCard = () => (
@@ -269,6 +294,7 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
       className="p-6 mb-4 border-dashed border-2 border-gray-300 hover:border-blue-400 transition-colors cursor-pointer"
       onClick={handleAddBugClick}
       onTouchStart={handleAddBugTouch}
+      onTouchEnd={handleAddBugTouchEnd}
     >
       <div className="flex items-center justify-center text-gray-500 hover:text-blue-600">
         <Plus className="w-6 h-6 mr-2" />
@@ -313,10 +339,10 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <p className="text-xs text-gray-500 mb-6">{t('bug.description')}</p>
+    <div className={isDesktop ? "h-full overflow-y-auto px-3 py-4" : "max-w-4xl mx-auto"}>
+      {!isDesktop && <p className="text-xs text-gray-500 mb-6">{t('bug.description')}</p>}
 
-      <div className="mb-4">
+      <div className={isDesktop ? "mb-4 sticky top-0 bg-white dark:bg-gray-900 z-10 pb-4 border-b border-gray-200 dark:border-gray-700" : "mb-4"}>
         <div className="flex flex-wrap gap-2 items-center mb-4">
           <Select
             options={statusOptions}
@@ -383,6 +409,9 @@ export const BugList = ({ isVisible = true }: BugListProps) => {
               unreadCount={unreadCounts[bug.id] || 0}
               onUpdate={handleBugUpdated}
               onDelete={handleBugDeleted}
+              onBugSelect={handleBugCardClick}
+              isDesktop={isDesktop}
+              isSelected={selectedBugId === bug.id}
             />
           ))}
           {hasMore && filters.status === 'ARCHIVED' && (

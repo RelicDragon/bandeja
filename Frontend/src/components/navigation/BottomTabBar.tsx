@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useAuthStore } from '@/store/authStore';
 import { useChatUnreadCounts } from '@/hooks/useChatUnreadCounts';
-import { useMemo, useRef, useState, useEffect } from 'react';
+import { useDesktop } from '@/hooks/useDesktop';
+import { useMemo, useRef } from 'react';
 
 interface BottomTabBarProps {
   containerPosition?: boolean;
@@ -19,17 +20,10 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   const chatsUnread = counts.users + counts.bugs + counts.channels;
   const user = useAuthStore((state) => state.user);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+  const isDesktop = useDesktop();
   
   const shouldCenterOnDesktop = isDesktop && currentPage === 'chats' && chatsFilter === 'bugs';
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const shouldAnimateToLeft = isDesktop && (currentPage === 'bugs' || (currentPage === 'chats' && chatsFilter !== 'bugs'));
 
   const tabs = useMemo(() => [
     {
@@ -73,7 +67,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   return (
     <motion.div 
       layoutId={isDesktop ? "bottom-tab-bar" : undefined}
-      className={containerPosition && !shouldCenterOnDesktop ? "absolute bottom-0 left-0 right-0 z-50" : "fixed bottom-0 left-0 right-0 z-50"}
+      className={containerPosition && shouldAnimateToLeft ? "absolute bottom-0 left-0 right-0 z-50" : "fixed bottom-0 left-0 right-0 z-50"}
       style={{ paddingBottom: `max(${isDesktop ? '1rem' : '0.5rem'}, env(safe-area-inset-bottom))` }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >

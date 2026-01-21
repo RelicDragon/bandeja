@@ -6,6 +6,9 @@ import { useRef, useEffect, useState } from 'react';
 import { GenderIndicator } from './GenderIndicator';
 import { useAppModeStore } from '@/store/appModeStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
+import { useAuthStore } from '@/store/authStore';
+import { BaseModal } from './BaseModal';
+import { PublicGamePrompt } from './GameDetails/PublicGamePrompt';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface PlayerAvatarProps {
@@ -31,8 +34,10 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
   const { openPlayerCard } = usePlayerCardModal();
   const { mode: appMode } = useAppModeStore();
   const isFavorite = useFavoritesStore((state) => player ? state.isFavorite(player.id) : false);
+  const user = useAuthStore((state) => state.user);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -155,7 +160,11 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            openPlayerCard(player.id);
+            if (!user) {
+              setShowAuthModal(true);
+            } else {
+              openPlayerCard(player.id);
+            }
           }}
           className={`relative ${sizeClasses.avatar} rounded-full ${draggable ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 transition-opacity flex-shrink-0 p-0 border-0 ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
         >
@@ -279,6 +288,13 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
           </div>
         </div>
       )}
+      <BaseModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        isBasic={true}
+      >
+        <PublicGamePrompt />
+      </BaseModal>
     </div>
   );
 };

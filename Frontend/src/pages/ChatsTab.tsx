@@ -7,15 +7,16 @@ import { MessageCircle } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { BugsTab } from './BugsTab';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
-import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { SplitViewLeftPanel, SplitViewRightPanel } from '@/components/SplitViewPanels';
+import { useDesktop } from '@/hooks/useDesktop';
 
 export const ChatsTab = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+  const isDesktop = useDesktop();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [selectedChatType, setSelectedChatType] = useState<'user' | 'bug' | 'group' | null>(null);
+  const [selectedChatType, setSelectedChatType] = useState<'user' | 'bug' | 'group' | 'channel' | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { setIsAnimating, chatsFilter, bottomTabsVisible } = useNavigationStore();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -38,76 +39,80 @@ export const ChatsTab = () => {
   }, []);
 
   useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout;
-    
-    const handleResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        const newIsDesktop = window.innerWidth >= 768;
-        setIsDesktop(newIsDesktop);
-        
-        if (!newIsDesktop && selectedChatIdRef.current) {
-          setSelectedChatId(null);
-          setSelectedChatType(null);
-        }
-      }, 150);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(resizeTimeout);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isDesktop) return;
-    
     const path = location.pathname;
-    const currentSelectedChatId = selectedChatIdRef.current;
+    
+    let newChatId: string | null = null;
+    let newChatType: 'user' | 'bug' | 'group' | 'channel' | null = null;
+    let shouldUpdate = false;
     
     if (path.includes('/user-chat/')) {
       const chatId = path.split('/user-chat/')[1]?.split('/')[0];
-      if (chatId && chatId !== currentSelectedChatId) {
-        setSelectedChatId(chatId);
-        setSelectedChatType('user');
+      if (chatId) {
+        if (chatId !== selectedChatId || selectedChatType !== 'user') {
+          newChatId = chatId;
+          newChatType = 'user';
+          shouldUpdate = true;
+        }
       }
     } else if (path.includes('/bugs/') && path.includes('/chat')) {
       const match = path.match(/\/bugs\/([^/]+)\/chat/);
-      if (match && match[1] && match[1] !== currentSelectedChatId) {
-        setSelectedChatId(match[1]);
-        setSelectedChatType('bug');
+      if (match && match[1]) {
+        if (match[1] !== selectedChatId || selectedChatType !== 'bug') {
+          newChatId = match[1];
+          newChatType = 'bug';
+          shouldUpdate = true;
+        }
       }
     } else if (path.includes('/group-chat/')) {
       const chatId = path.split('/group-chat/')[1]?.split('/')[0];
-      if (chatId && chatId !== currentSelectedChatId) {
-        setSelectedChatId(chatId);
-        setSelectedChatType('group');
+      if (chatId) {
+        if (chatId !== selectedChatId || selectedChatType !== 'group') {
+          newChatId = chatId;
+          newChatType = 'group';
+          shouldUpdate = true;
+        }
       }
-    } else if (!path.includes('/user-chat/') && !path.includes('/bugs/') && !path.includes('/group-chat/')) {
-      if (currentSelectedChatId !== null) {
-        setSelectedChatId(null);
-        setSelectedChatType(null);
+    } else if (path.includes('/channel-chat/')) {
+      const chatId = path.split('/channel-chat/')[1]?.split('/')[0];
+      if (chatId) {
+        if (chatId !== selectedChatId || selectedChatType !== 'channel') {
+          newChatId = chatId;
+          newChatType = 'channel';
+          shouldUpdate = true;
+        }
+      }
+    } else if (path === '/chats') {
+      if (selectedChatId !== null) {
+        newChatId = null;
+        newChatType = null;
+        shouldUpdate = true;
       }
     }
-  }, [location.pathname, isDesktop]);
+    
+    if (shouldUpdate) {
+      setSelectedChatId(newChatId);
+      setSelectedChatType(newChatType);
+    }
+  }, [location.pathname, selectedChatId, selectedChatType]);
 
   useEffect(() => {
-    if (chatsFilter === 'bugs') {
+    if (chatsFilter === 'bugs' && !location.pathname.includes('/bugs/')) {
       setSelectedChatId(null);
       setSelectedChatType(null);
     }
-  }, [chatsFilter]);
+  }, [chatsFilter, location.pathname]);
 
-  const getChatPath = useCallback((chatId: string, chatType: 'user' | 'bug' | 'group') => {
+  const getChatPath = useCallback((chatId: string, chatType: 'user' | 'bug' | 'group' | 'channel') => {
     return chatType === 'user' 
       ? `/user-chat/${chatId}`
       : chatType === 'bug'
       ? `/bugs/${chatId}/chat`
+      : chatType === 'channel'
+      ? `/channel-chat/${chatId}`
       : `/group-chat/${chatId}`;
   }, []);
 
-  const handleChatSelect = useCallback((chatId: string, chatType: 'user' | 'bug' | 'group') => {
+  const handleChatSelect = useCallback((chatId: string, chatType: 'user' | 'bug' | 'group' | 'channel') => {
     if (isDesktop) {
       if (selectedChatId === chatId && selectedChatType === chatType) {
         return;
@@ -123,12 +128,7 @@ export const ChatsTab = () => {
         setSelectedChatType(chatType);
         
         const path = getChatPath(chatId, chatType);
-        
-        try {
-          navigate(path, { replace: true });
-        } catch (error) {
-          console.error('Navigation failed:', error);
-        }
+        navigate(path, { replace: true });
         
         timeoutRef.current = setTimeout(() => {
           setIsTransitioning(false);
@@ -168,36 +168,29 @@ export const ChatsTab = () => {
   ), [t]);
 
   const leftPanel = useMemo(() => (
-    <div className="h-full border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col relative">
-      <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-        <ChatList onChatSelect={handleChatSelect} isDesktop={true} selectedChatId={selectedChatId} selectedChatType={selectedChatType} />
-      </div>
-      {bottomTabsVisible && (
-        <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-          <BottomTabBar containerPosition={true} />
-        </div>
-      )}
-    </div>
+    <SplitViewLeftPanel bottomTabsVisible={bottomTabsVisible}>
+      <ChatList onChatSelect={handleChatSelect} isDesktop={true} selectedChatId={selectedChatId} selectedChatType={selectedChatType} />
+    </SplitViewLeftPanel>
   ), [handleChatSelect, selectedChatId, selectedChatType, bottomTabsVisible]);
 
   const rightPanel = useMemo(() => (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 relative">
-      {selectedChatId && selectedChatType ? (
-        <div className={`absolute inset-0 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-          <GameChat
-            key={`${selectedChatType}-${selectedChatId}`}
-            isEmbedded={true}
-            chatId={selectedChatId}
-            chatType={selectedChatType}
-          />
-        </div>
-      ) : (
-        emptyState
-      )}
-    </div>
+    <SplitViewRightPanel 
+      selectedId={selectedChatId && selectedChatType ? `${selectedChatType}-${selectedChatId}` : null}
+      isTransitioning={isTransitioning}
+      emptyState={emptyState}
+    >
+      <GameChat
+        key={`${selectedChatType}-${selectedChatId}`}
+        isEmbedded={true}
+        chatId={selectedChatId!}
+        chatType={selectedChatType!}
+      />
+    </SplitViewRightPanel>
   ), [selectedChatId, selectedChatType, isTransitioning, emptyState]);
 
-  if (chatsFilter === 'bugs') {
+  const isOnBugsListPage = chatsFilter === 'bugs' && !location.pathname.includes('/bugs/');
+  
+  if (isOnBugsListPage) {
     return <BugsTab />;
   }
 
@@ -212,6 +205,16 @@ export const ChatsTab = () => {
           rightPanel={rightPanel}
         />
       </div>
+    );
+  }
+
+  if (selectedChatId && selectedChatType) {
+    return (
+      <GameChat
+        isEmbedded={false}
+        chatId={selectedChatId}
+        chatType={selectedChatType}
+      />
     );
   }
 

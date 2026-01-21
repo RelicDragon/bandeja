@@ -303,7 +303,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
                               {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}: {payload[0].value?.toFixed(2)}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {t('playerCard.clickToView') || 'Click to view game'}
+                              {t('playerCard.clickToView')}
                             </p>
                           </div>
                         );

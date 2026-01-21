@@ -13,6 +13,10 @@ import { useAuthStore } from '@/store/authStore';
 import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
 
+const isValidImage = (file: File): boolean => {
+  return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
+};
+
 interface MessageInputProps {
   gameId?: string;
   bugId?: string;
@@ -50,6 +54,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [mentionIds, setMentionIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const saveDraftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasLoadedDraftRef = useRef(false);
@@ -60,10 +65,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const isChannelOwner = groupChannel?.isChannel && user && groupChannel ? isGroupChannelOwner(groupChannel, user.id) : false;
   const isChannelNonOwner = groupChannel?.isChannel && !isChannelOwner;
   const isDisabledForChannel = isChannelNonOwner || disabled;
-
-  const isValidImage = (file: File): boolean => {
-    return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
-  };
 
   const imagePreviewUrls = useMemo(() => {
     return selectedImages.map(file => URL.createObjectURL(file));
@@ -196,6 +197,75 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
     setSelectedImages(prev => [...prev, ...imageFiles]);
   };
+
+  const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
+    if (isDisabledForChannel || isLoading) return;
+
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageFiles: File[] = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file && isValidImage(file)) {
+          imageFiles.push(file);
+        }
+      }
+    }
+
+    if (imageFiles.length > 0) {
+      e.preventDefault();
+      setSelectedImages(prev => [...prev, ...imageFiles]);
+    }
+  }, [isDisabledForChannel, isLoading]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (isDisabledForChannel || isLoading) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragOver(true);
+    }
+  }, [isDisabledForChannel, isLoading]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setIsDragOver(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    if (isDisabledForChannel || isLoading) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+
+    const imageFiles = Array.from(files).filter(isValidImage);
+
+    if (imageFiles.length === 0) {
+      toast.error(t('chat.invalidImageType'));
+      return;
+    }
+
+    setSelectedImages(prev => [...prev, ...imageFiles]);
+  }, [isDisabledForChannel, isLoading, t]);
 
   const handleImageButtonClick = async () => {
     if (isDisabledForChannel || isLoading) return;
@@ -363,7 +433,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 overflow-visible">
+    <div 
+      className={`bg-white dark:bg-gray-800 p-4 overflow-visible transition-colors ${
+        isDragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-400 border-dashed' : ''
+      }`}
+      onPaste={handlePaste}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {isChannelNonOwner && (
         <div className="mb-3 px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-sm text-yellow-800 dark:text-yellow-200">
           {t('chat.onlyOwnerCanPost', { defaultValue: 'Only the channel owner can post messages' })}
@@ -383,9 +461,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       )}
 
       {selectedImages.length > 0 && (
-        <div className="mb-3 flex gap-2 overflow-x-auto">
+        <div className="mb-3 flex gap-2 overflow-x-auto overflow-y-visible pb-1">
           {imagePreviewUrls.map((url, index) => (
-            <div key={index} className="relative flex-shrink-0">
+            <div key={index} className="relative flex-shrink-0 pt-1 pr-1">
               <img
                 src={url}
                 alt={`Preview ${index + 1}`}
@@ -393,9 +471,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               />
               <button
                 onClick={() => removeImage(index)}
-                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                className="absolute top-0 right-0 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm z-10"
               >
-                <X size={12} />
+                <X size={16} />
               </button>
             </div>
           ))}

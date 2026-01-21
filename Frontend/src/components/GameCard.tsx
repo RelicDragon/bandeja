@@ -67,7 +67,7 @@ export const GameCard = ({
 
   useEffect(() => {
     const loadMainPhoto = async () => {
-      if (!game.mainPhotoId || !game.id || game.status === 'ANNOUNCED') {
+      if (!game.mainPhotoId || !game.id || game.status === 'ANNOUNCED' || !user) {
         setMainPhotoUrl(null);
         return;
       }
@@ -84,14 +84,17 @@ export const GameCard = ({
         } else {
           setMainPhotoUrl(null);
         }
-      } catch (error) {
-        console.error('Failed to load main photo:', error);
+      } catch (error: any) {
+        // Silently handle 401 errors (unauthorized) - expected when user is not authenticated
+        if (error?.response?.status !== 401) {
+          console.error('Failed to load main photo:', error);
+        }
         setMainPhotoUrl(null);
       }
     };
 
     loadMainPhoto();
-  }, [game.mainPhotoId, game.id, game.status]);
+  }, [game.mainPhotoId, game.id, game.status, user]);
 
   const isParticipant = game.participants.some(p => p.userId === user?.id && p.isPlaying);
   const isUserParticipant = game.participants.some(p => p.userId === user?.id);

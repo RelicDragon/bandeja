@@ -38,7 +38,10 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   }, [game.mainPhotoId]);
 
   const loadPhotos = useCallback(async () => {
-    if (!game.id) return;
+    if (!game.id || !user) {
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     try {
@@ -62,18 +65,23 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
       
       setPhotos(allMessages);
       hasAttemptedSetMainPhoto.current = false;
-    } catch (error) {
-      console.error('Failed to load photos:', error);
+    } catch (error: any) {
+      // Silently handle 401 errors (unauthorized) - expected when user is not authenticated
+      if (error?.response?.status !== 401) {
+        console.error('Failed to load photos:', error);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [game.id]);
+  }, [game.id, user]);
 
   useEffect(() => {
-    if (game.status !== 'ANNOUNCED') {
+    if (game.status !== 'ANNOUNCED' && user) {
       loadPhotos();
+    } else if (!user) {
+      setIsLoading(false);
     }
-  }, [game.status, loadPhotos]);
+  }, [game.status, loadPhotos, user]);
 
   useEffect(() => {
     if (!game.id || game.status === 'ANNOUNCED') return;
@@ -267,6 +275,10 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   };
 
   if (game.status === 'ANNOUNCED') {
+    return null;
+  }
+
+  if (!user) {
     return null;
   }
 

@@ -473,7 +473,7 @@ function AppContent() {
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                  <GameChat />
+                  <MainPage />
                 </Suspense>
               )}
             </ProtectedRoute>
@@ -481,7 +481,17 @@ function AppContent() {
         />
         <Route
           path="/user-chat/:id"
-          element={<GameChat />}
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/group-chat/:id"
@@ -491,7 +501,21 @@ function AppContent() {
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                  <GameChat />
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/channel-chat/:id"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
                 </Suspense>
               )}
             </ProtectedRoute>
