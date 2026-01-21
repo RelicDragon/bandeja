@@ -59,13 +59,6 @@ function getLevelColor(level: number): string {
   return '#a855f7';
 }
 
-function getPositionIcon(position: number | null, isWinner: boolean): string {
-  if (isWinner || position === 1) return '🏆';
-  if (position === 2) return '🥈';
-  if (position === 3) return '🥉';
-  return '';
-}
-
 function formatChange(change: number): string {
   return change > 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
 }

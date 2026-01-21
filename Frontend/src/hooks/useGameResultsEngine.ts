@@ -45,7 +45,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     const handleResultsUpdated = (data: { gameId: string }) => {
       if (data.gameId === gameId) {
         console.log(`[GameResultsEngine] Received results-updated notification for game ${gameId}`);
-        GameResultsEngine.initialize(gameId, userId, t).catch((err) => {
+        GameResultsEngine.initialize(gameId, userId || '', t).catch((err) => {
           console.error('Failed to reload results:', err);
         });
       }

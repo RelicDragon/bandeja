@@ -28,11 +28,13 @@ type ChatItem =
   | { type: 'group'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number; draft?: ChatDraft | null }
   | { type: 'channel'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number };
 
+export type ChatType = 'user' | 'bug' | 'group' | 'channel';
+
 interface ChatListProps {
-  onChatSelect?: (chatId: string, chatType: 'user' | 'bug' | 'group' | 'channel') => void;
+  onChatSelect?: (chatId: string, chatType: ChatType) => void;
   isDesktop?: boolean;
   selectedChatId?: string | null;
-  selectedChatType?: 'user' | 'bug' | 'group' | 'channel' | null;
+  selectedChatType?: ChatType | null;
 }
 
 const calculateLastMessageDate = (
@@ -527,7 +529,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     disabled: loading || isDesktop,
   });
 
-  const handleChatClick = (chatId: string, chatType: 'user' | 'bug' | 'group' | 'channel') => {
+  const handleChatClick = (chatId: string, chatType: ChatType) => {
     if (onChatSelect) {
       onChatSelect(chatId, chatType);
     }

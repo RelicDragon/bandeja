@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChatList } from '@/components/chat/ChatList';
+import { ChatList, ChatType } from '@/components/chat/ChatList';
 import { GameChat } from './GameChat';
 import { MessageCircle } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -16,7 +16,7 @@ export const ChatsTab = () => {
   const location = useLocation();
   const isDesktop = useDesktop();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [selectedChatType, setSelectedChatType] = useState<'user' | 'bug' | 'group' | 'channel' | null>(null);
+  const [selectedChatType, setSelectedChatType] = useState<ChatType | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { setIsAnimating, chatsFilter, bottomTabsVisible } = useNavigationStore();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -42,7 +42,7 @@ export const ChatsTab = () => {
     const path = location.pathname;
     
     let newChatId: string | null = null;
-    let newChatType: 'user' | 'bug' | 'group' | 'channel' | null = null;
+    let newChatType: ChatType | null = null;
     let shouldUpdate = false;
     
     if (path.includes('/user-chat/')) {
@@ -102,7 +102,7 @@ export const ChatsTab = () => {
     }
   }, [chatsFilter, location.pathname]);
 
-  const getChatPath = useCallback((chatId: string, chatType: 'user' | 'bug' | 'group' | 'channel') => {
+  const getChatPath = useCallback((chatId: string, chatType: ChatType) => {
     return chatType === 'user' 
       ? `/user-chat/${chatId}`
       : chatType === 'bug'
@@ -112,7 +112,7 @@ export const ChatsTab = () => {
       : `/group-chat/${chatId}`;
   }, []);
 
-  const handleChatSelect = useCallback((chatId: string, chatType: 'user' | 'bug' | 'group' | 'channel') => {
+  const handleChatSelect = useCallback((chatId: string, chatType: ChatType) => {
     if (isDesktop) {
       if (selectedChatId === chatId && selectedChatType === chatType) {
         return;

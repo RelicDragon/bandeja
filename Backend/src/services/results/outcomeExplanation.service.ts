@@ -162,7 +162,6 @@ export async function getOutcomeExplanation(
 
   const matches: MatchExplanation[] = [];
   let totalLevelChange = 0;
-  let matchesPlayed = 0;
   let setsPlayed = 0;
   let wins = 0;
   let losses = 0;
@@ -266,7 +265,6 @@ export async function getOutcomeExplanation(
 
       matchLevelChange = rawMatchLevelChange;
       currentLevel = currentLevel + rawMatchLevelChange;
-      matchesPlayed += 1;
       setsPlayed += validSets.length;
 
       totalLevelChange += rawMatchLevelChange;

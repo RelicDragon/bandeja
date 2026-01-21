@@ -22,7 +22,6 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const isDesktop = useDesktop();
   
-  const shouldCenterOnDesktop = isDesktop && currentPage === 'chats' && chatsFilter === 'bugs';
   const shouldAnimateToLeft = isDesktop && (currentPage === 'bugs' || (currentPage === 'chats' && chatsFilter !== 'bugs'));
 
   const tabs = useMemo(() => [

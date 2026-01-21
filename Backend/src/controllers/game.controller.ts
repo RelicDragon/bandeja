@@ -254,7 +254,7 @@ export const getBookedCourts = asyncHandler(async (req: AuthRequest, res: Respon
   });
 });
 
-const validateGameForTelegram = async (gameId: string, userId: string) => {
+const validateGameForTelegram = async (gameId: string, _userId: string) => {
   const gameInclude = getGameInclude();
   const game = await prisma.game.findUnique({
     where: { id: gameId },
