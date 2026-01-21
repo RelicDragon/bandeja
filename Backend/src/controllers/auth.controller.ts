@@ -8,6 +8,7 @@ import { AuthProvider } from '@prisma/client';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 import { verifyAppleIdentityToken } from '../services/apple/appleAuth.service';
 import { verifyGoogleIdToken } from '../services/google/googleAuth.service';
+import { AuthRequest } from '../middleware/auth';
 
 export const registerWithPhone = asyncHandler(async (req: Request, res: Response) => {
   const { phone, password, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
@@ -309,6 +310,10 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
     throw new ApiError(403, 'auth.accountInactive');
   }
 
+  if (!user.appleSub) {
+    throw new ApiError(403, 'auth.appleAccountNotLinked');
+  }
+
   const updateData: any = {};
   
   if (language) {
@@ -509,8 +514,8 @@ export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) 
     throw new ApiError(403, 'auth.accountInactive');
   }
 
-  if (user.authProvider !== AuthProvider.GOOGLE) {
-    throw new ApiError(403, 'auth.invalidAuthProvider');
+  if (!user.googleId) {
+    throw new ApiError(403, 'auth.googleAccountNotLinked');
   }
 
   const updateData: any = {};
@@ -608,5 +613,241 @@ export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) 
       user,
       token,
     },
+  });
+});
+
+export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { identityToken, nonce } = req.body;
+
+  if (!identityToken) {
+    throw new ApiError(400, 'auth.identityTokenRequired');
+  }
+
+  if (!req.userId) {
+    throw new ApiError(401, 'Authentication required');
+  }
+
+  const appleToken = await verifyAppleIdentityToken(identityToken, nonce);
+  const appleSub = appleToken.sub;
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { id: true, appleSub: true, email: true, appleEmail: true },
+  });
+
+  if (!currentUser) {
+    throw new ApiError(404, 'errors.userNotFound');
+  }
+
+  if (currentUser.appleSub) {
+    throw new ApiError(400, 'auth.appleAccountAlreadyLinked');
+  }
+
+  const existingAppleUser = await prisma.user.findUnique({
+    where: { appleSub },
+  });
+
+  if (existingAppleUser && existingAppleUser.id !== req.userId) {
+    throw new ApiError(400, 'auth.appleAccountAlreadyLinkedToAnotherUser');
+  }
+
+  const emailToUse = appleToken.email || undefined;
+  const updateData: any = {
+    appleSub,
+    appleEmail: emailToUse,
+    appleEmailVerified: emailToUse ? (appleToken.email_verified || false) : false,
+  };
+
+  if (emailToUse) {
+    const existingEmail = await prisma.user.findUnique({
+      where: { email: emailToUse },
+    });
+    
+    if (!existingEmail || existingEmail.id === req.userId) {
+      if (!currentUser.email) {
+        updateData.email = emailToUse;
+      }
+    }
+  }
+
+  const user = await prisma.user.update({
+    where: { id: req.userId },
+    data: updateData,
+    select: PROFILE_SELECT_FIELDS,
+  });
+
+  res.json({
+    success: true,
+    data: { user },
+  });
+});
+
+export const unlinkApple = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) {
+    throw new ApiError(401, 'Authentication required');
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { id: true, appleSub: true, authProvider: true, phone: true, telegramId: true, googleId: true },
+  });
+
+  if (!currentUser) {
+    throw new ApiError(404, 'errors.userNotFound');
+  }
+
+  if (!currentUser.appleSub) {
+    throw new ApiError(400, 'auth.appleAccountNotLinked');
+  }
+
+  const hasOtherAuthMethods = !!(currentUser.phone || currentUser.telegramId || currentUser.googleId);
+  
+  if (!hasOtherAuthMethods) {
+    throw new ApiError(400, 'auth.cannotUnlinkLastAuthMethod');
+  }
+
+  const updateData: any = {
+    appleSub: null,
+    appleEmail: null,
+    appleEmailVerified: false,
+  };
+
+  if (currentUser.authProvider === AuthProvider.APPLE) {
+    if (currentUser.phone) {
+      updateData.authProvider = AuthProvider.PHONE;
+    } else if (currentUser.telegramId) {
+      updateData.authProvider = AuthProvider.TELEGRAM;
+    } else if (currentUser.googleId) {
+      updateData.authProvider = AuthProvider.GOOGLE;
+    }
+  }
+
+  const user = await prisma.user.update({
+    where: { id: req.userId },
+    data: updateData,
+    select: PROFILE_SELECT_FIELDS,
+  });
+
+  res.json({
+    success: true,
+    data: { user },
+  });
+});
+
+export const linkGoogle = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    throw new ApiError(400, 'auth.googleIdTokenRequired');
+  }
+
+  if (!req.userId) {
+    throw new ApiError(401, 'Authentication required');
+  }
+
+  const googleToken = await verifyGoogleIdToken(idToken);
+  const googleId = googleToken.sub;
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { id: true, googleId: true, email: true, googleEmail: true },
+  });
+
+  if (!currentUser) {
+    throw new ApiError(404, 'errors.userNotFound');
+  }
+
+  if (currentUser.googleId) {
+    throw new ApiError(400, 'auth.googleAccountAlreadyLinked');
+  }
+
+  const existingGoogleUser = await prisma.user.findUnique({
+    where: { googleId },
+  });
+
+  if (existingGoogleUser && existingGoogleUser.id !== req.userId) {
+    throw new ApiError(400, 'auth.googleAccountAlreadyLinkedToAnotherUser');
+  }
+
+  const emailToUse = googleToken.email || undefined;
+  const updateData: any = {
+    googleId,
+    googleEmail: emailToUse,
+    googleEmailVerified: emailToUse ? (googleToken.email_verified || false) : false,
+  };
+
+  if (emailToUse) {
+    const existingEmail = await prisma.user.findUnique({
+      where: { email: emailToUse },
+    });
+    
+    if (!existingEmail || existingEmail.id === req.userId) {
+      if (!currentUser.email) {
+        updateData.email = emailToUse;
+      }
+    }
+  }
+
+  const user = await prisma.user.update({
+    where: { id: req.userId },
+    data: updateData,
+    select: PROFILE_SELECT_FIELDS,
+  });
+
+  res.json({
+    success: true,
+    data: { user },
+  });
+});
+
+export const unlinkGoogle = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) {
+    throw new ApiError(401, 'Authentication required');
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { id: true, googleId: true, authProvider: true, phone: true, telegramId: true, appleSub: true },
+  });
+
+  if (!currentUser) {
+    throw new ApiError(404, 'errors.userNotFound');
+  }
+
+  if (!currentUser.googleId) {
+    throw new ApiError(400, 'auth.googleAccountNotLinked');
+  }
+
+  const hasOtherAuthMethods = !!(currentUser.phone || currentUser.telegramId || currentUser.appleSub);
+  
+  if (!hasOtherAuthMethods) {
+    throw new ApiError(400, 'auth.cannotUnlinkLastAuthMethod');
+  }
+
+  const updateData: any = {
+    googleId: null,
+    googleEmail: null,
+    googleEmailVerified: false,
+  };
+
+  if (currentUser.authProvider === AuthProvider.GOOGLE) {
+    if (currentUser.phone) {
+      updateData.authProvider = AuthProvider.PHONE;
+    } else if (currentUser.telegramId) {
+      updateData.authProvider = AuthProvider.TELEGRAM;
+    } else if (currentUser.appleSub) {
+      updateData.authProvider = AuthProvider.APPLE;
+    }
+  }
+
+  const user = await prisma.user.update({
+    where: { id: req.userId },
+    data: updateData,
+    select: PROFILE_SELECT_FIELDS,
+  });
+
+  res.json({
+    success: true,
+    data: { user },
   });
 });

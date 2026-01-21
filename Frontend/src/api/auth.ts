@@ -100,5 +100,30 @@ export const authApi = {
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/google', data);
     return response.data;
   },
+
+  linkApple: async (data: {
+    identityToken: string;
+    nonce: string;
+  }) => {
+    const response = await api.post<ApiResponse<{ user: any }>>('/auth/link/apple', data);
+    return response.data;
+  },
+
+  unlinkApple: async () => {
+    const response = await api.post<ApiResponse<{ user: any }>>('/auth/unlink/apple');
+    return response.data;
+  },
+
+  linkGoogle: async (data: {
+    idToken: string;
+  }) => {
+    const response = await api.post<ApiResponse<{ user: any }>>('/auth/link/google', data);
+    return response.data;
+  },
+
+  unlinkGoogle: async () => {
+    const response = await api.post<ApiResponse<{ user: any }>>('/auth/unlink/google');
+    return response.data;
+  },
 };
 

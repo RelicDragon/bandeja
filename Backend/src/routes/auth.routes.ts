@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
+import { authenticate } from '../middleware/auth';
 import * as authController from '../controllers/auth.controller';
 
 const router = Router();
@@ -77,6 +78,37 @@ router.post(
     body('idToken').notEmpty().isString().withMessage('Google ID token is required'),
   ]),
   authController.loginWithGoogle
+);
+
+router.post(
+  '/link/apple',
+  authenticate,
+  validate([
+    body('identityToken').notEmpty().isString().withMessage('Identity token is required'),
+    body('nonce').notEmpty().isString().isLength({ min: 1 }).withMessage('Nonce is required'),
+  ]),
+  authController.linkApple
+);
+
+router.post(
+  '/unlink/apple',
+  authenticate,
+  authController.unlinkApple
+);
+
+router.post(
+  '/link/google',
+  authenticate,
+  validate([
+    body('idToken').notEmpty().isString().withMessage('Google ID token is required'),
+  ]),
+  authController.linkGoogle
+);
+
+router.post(
+  '/unlink/google',
+  authenticate,
+  authController.unlinkGoogle
 );
 
 export default router;

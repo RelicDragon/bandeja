@@ -10,7 +10,9 @@ import { BlockedUsersSection } from '@/components/BlockedUsersSection';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useNavigationStore } from '@/store/navigationStore';
-import { usersApi, citiesApi, mediaApi } from '@/api';
+import { usersApi, citiesApi, mediaApi, authApi } from '@/api';
+import { signInWithApple } from '@/services/appleAuth.service';
+import { signInWithGoogle } from '@/services/googleAuth.service';
 import { City, Gender, User } from '@/types';
 import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X } from 'lucide-react';
 import { hasValidUsername } from '@/utils/userValidation';
@@ -54,6 +56,12 @@ export const ProfileContent = () => {
   const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
   const [nameError, setNameError] = useState('');
   const [nameValidationStatus, setNameValidationStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [isLinkingApple, setIsLinkingApple] = useState(false);
+  const [isLinkingGoogle, setIsLinkingGoogle] = useState(false);
+  const [isUnlinkingApple, setIsUnlinkingApple] = useState(false);
+  const [isUnlinkingGoogle, setIsUnlinkingGoogle] = useState(false);
+  const [showUnlinkAppleModal, setShowUnlinkAppleModal] = useState(false);
+  const [showUnlinkGoogleModal, setShowUnlinkGoogleModal] = useState(false);
 
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -278,6 +286,85 @@ export const ProfileContent = () => {
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
       setIsDeletingUser(false);
+    }
+  };
+
+  const handleLinkApple = async () => {
+    try {
+      setIsLinkingApple(true);
+      const result = await signInWithApple();
+      
+      if (!result) {
+        setIsLinkingApple(false);
+        return;
+      }
+
+      const response = await authApi.linkApple({
+        identityToken: result.result.identityToken,
+        nonce: result.nonce,
+      });
+
+      updateUser(response.data.user);
+      toast.success(t('profile.appleLinked') || 'Apple account linked successfully');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || t('errors.generic');
+      toast.error(t(errorMessage) !== errorMessage ? t(errorMessage) : errorMessage);
+    } finally {
+      setIsLinkingApple(false);
+    }
+  };
+
+  const handleUnlinkApple = async () => {
+    try {
+      setIsUnlinkingApple(true);
+      const response = await authApi.unlinkApple();
+      updateUser(response.data.user);
+      toast.success(t('profile.appleUnlinked') || 'Apple account unlinked successfully');
+      setShowUnlinkAppleModal(false);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || t('errors.generic');
+      toast.error(t(errorMessage) !== errorMessage ? t(errorMessage) : errorMessage);
+    } finally {
+      setIsUnlinkingApple(false);
+    }
+  };
+
+  const handleLinkGoogle = async () => {
+    try {
+      setIsLinkingGoogle(true);
+      const result = await signInWithGoogle();
+      
+      if (!result || !result.idToken) {
+        setIsLinkingGoogle(false);
+        return;
+      }
+
+      const response = await authApi.linkGoogle({
+        idToken: result.idToken,
+      });
+
+      updateUser(response.data.user);
+      toast.success(t('profile.googleLinked') || 'Google account linked successfully');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || t('errors.generic');
+      toast.error(t(errorMessage) !== errorMessage ? t(errorMessage) : errorMessage);
+    } finally {
+      setIsLinkingGoogle(false);
+    }
+  };
+
+  const handleUnlinkGoogle = async () => {
+    try {
+      setIsUnlinkingGoogle(true);
+      const response = await authApi.unlinkGoogle();
+      updateUser(response.data.user);
+      toast.success(t('profile.googleUnlinked') || 'Google account unlinked successfully');
+      setShowUnlinkGoogleModal(false);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || t('errors.generic');
+      toast.error(t(errorMessage) !== errorMessage ? t(errorMessage) : errorMessage);
+    } finally {
+      setIsUnlinkingGoogle(false);
     }
   };
 
@@ -567,6 +654,110 @@ export const ProfileContent = () => {
 
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            {t('profile.apple') || 'Apple'}
+          </h2>
+          <div className="space-y-4">
+            {user?.appleSub ? (
+              <div className="space-y-3">
+                <Input
+                  label={t('profile.appleAccount') || 'Apple Account'}
+                  value={user.appleEmail || t('profile.linked') || 'Linked'}
+                  disabled
+                />
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowUnlinkAppleModal(true)}
+                  disabled={isUnlinkingApple}
+                  className="w-full"
+                >
+                  {isUnlinkingApple ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" size={16} />
+                      {t('profile.unlinking') || 'Unlinking...'}
+                    </>
+                  ) : (
+                    t('profile.unlinkApple') || 'Unlink Apple'
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-4">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  {t('profile.appleNotLinked') || 'Apple account not linked'}
+                </p>
+                <Button
+                  onClick={handleLinkApple}
+                  disabled={isLinkingApple}
+                  className="w-full"
+                >
+                  {isLinkingApple ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" size={16} />
+                      {t('profile.linking') || 'Linking...'}
+                    </>
+                  ) : (
+                    t('profile.linkApple') || 'Link Apple'
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            {t('profile.google') || 'Google'}
+          </h2>
+          <div className="space-y-4">
+            {user?.googleId ? (
+              <div className="space-y-3">
+                <Input
+                  label={t('profile.googleAccount') || 'Google Account'}
+                  value={user.googleEmail || t('profile.linked') || 'Linked'}
+                  disabled
+                />
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowUnlinkGoogleModal(true)}
+                  disabled={isUnlinkingGoogle}
+                  className="w-full"
+                >
+                  {isUnlinkingGoogle ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" size={16} />
+                      {t('profile.unlinking') || 'Unlinking...'}
+                    </>
+                  ) : (
+                    t('profile.unlinkGoogle') || 'Unlink Google'
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-4">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  {t('profile.googleNotLinked') || 'Google account not linked'}
+                </p>
+                <Button
+                  onClick={handleLinkGoogle}
+                  disabled={isLinkingGoogle}
+                  className="w-full"
+                >
+                  {isLinkingGoogle ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" size={16} />
+                      {t('profile.linking') || 'Linking...'}
+                    </>
+                  ) : (
+                    t('profile.linkGoogle') || 'Link Google'
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.notificationSettings') || 'Notification Settings'}
           </h2>
           <div className="space-y-4">
@@ -819,6 +1010,30 @@ export const ProfileContent = () => {
         confirmText={t('profile.deleteUserConfirm')}
         cancelText={t('common.cancel')}
         confirmVariant="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={showUnlinkAppleModal}
+        onClose={() => setShowUnlinkAppleModal(false)}
+        onConfirm={handleUnlinkApple}
+        title={t('profile.unlinkApple') || 'Unlink Apple Account'}
+        message={t('profile.unlinkAppleConfirmation') || 'Are you sure you want to unlink your Apple account? You will no longer be able to sign in with Apple.'}
+        confirmText={t('profile.unlink') || 'Unlink'}
+        cancelText={t('common.cancel')}
+        confirmVariant="secondary"
+        isLoading={isUnlinkingApple}
+      />
+
+      <ConfirmationModal
+        isOpen={showUnlinkGoogleModal}
+        onClose={() => setShowUnlinkGoogleModal(false)}
+        onConfirm={handleUnlinkGoogle}
+        title={t('profile.unlinkGoogle') || 'Unlink Google Account'}
+        message={t('profile.unlinkGoogleConfirmation') || 'Are you sure you want to unlink your Google account? You will no longer be able to sign in with Google.'}
+        confirmText={t('profile.unlink') || 'Unlink'}
+        cancelText={t('common.cancel')}
+        confirmVariant="secondary"
+        isLoading={isUnlinkingGoogle}
       />
 
       <div className="mt-8 text-center space-y-2">
