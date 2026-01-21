@@ -22,6 +22,7 @@ import { normalizeChatType } from '@/utils/chatType';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users } from 'lucide-react';
 import { GroupChannelParticipantsModal } from '@/components/chat/GroupChannelParticipantsModal';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
+import { canNavigateBack } from '@/utils/navigation';
 
 interface LocationState {
   initialChatType?: ChatType;
@@ -130,7 +131,21 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   }, [setBottomTabsVisible, isEmbedded]);
 
   useBackButtonHandler(() => {
-    navigate(-1);
+    if (canNavigateBack()) {
+      navigate(-1);
+    } else {
+      if (contextType === 'USER') {
+        setChatsFilter('users');
+        navigate('/chats', { replace: true });
+      } else if (contextType === 'GROUP') {
+        setChatsFilter('channels');
+        navigate('/chats', { replace: true });
+      } else if (contextType === 'BUG') {
+        navigate('/bugs', { replace: true });
+      } else if (contextType === 'GAME') {
+        navigate('/', { replace: true });
+      }
+    }
     return true;
   });
 
@@ -431,7 +446,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       if (contextType === 'GAME') {
         await gamesApi.leave(id);
         await loadContext();
-        navigate(-1);
+        if (canNavigateBack()) {
+          navigate(-1);
+        } else {
+          navigate('/', { replace: true });
+        }
       } else if (contextType === 'BUG') {
         await bugsApi.leaveChat(id);
         await loadContext();
@@ -901,7 +920,23 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => navigate(-1)}
+                onClick={() => {
+                  if (canNavigateBack()) {
+                    navigate(-1);
+                  } else {
+                    if (contextType === 'USER') {
+                      setChatsFilter('users');
+                      navigate('/chats', { replace: true });
+                    } else if (contextType === 'GROUP') {
+                      setChatsFilter('channels');
+                      navigate('/chats', { replace: true });
+                    } else if (contextType === 'BUG') {
+                      navigate('/bugs', { replace: true });
+                    } else if (contextType === 'GAME') {
+                      navigate('/', { replace: true });
+                    }
+                  }
+                }}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
@@ -1024,7 +1059,23 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 {!isEmbedded && (
                   <button
-                    onClick={() => navigate(-1)}
+                    onClick={() => {
+                      if (canNavigateBack()) {
+                        navigate(-1);
+                      } else {
+                        if (contextType === 'USER') {
+                          setChatsFilter('users');
+                          navigate('/chats', { replace: true });
+                        } else if (contextType === 'GROUP') {
+                          setChatsFilter('channels');
+                          navigate('/chats', { replace: true });
+                        } else if (contextType === 'BUG') {
+                          navigate('/bugs', { replace: true });
+                        } else if (contextType === 'GAME') {
+                          navigate('/', { replace: true });
+                        }
+                      }
+                    }}
                     className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
                   >
                     <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />

@@ -6,6 +6,7 @@ import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { useAuthStore } from '@/store/authStore';
+import { canNavigateBack } from '@/utils/navigation';
 import {
   HomeHeaderContent,
   GameDetailsHeaderContent,
@@ -42,7 +43,12 @@ export const Header = () => {
     setIsAnimating(true);
     
     if (currentPage === 'gameDetails') {
-      navigate(-1);
+      if (canNavigateBack()) {
+        navigate(-1);
+      } else {
+        setCurrentPage('my');
+        navigate('/', { replace: true });
+      }
     } else if (locationState?.fromLeagueSeasonGameId) {
       setCurrentPage('gameDetails');
       navigate(`/games/${locationState.fromLeagueSeasonGameId}`, { replace: true });

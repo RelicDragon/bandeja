@@ -339,10 +339,11 @@ export const BugList = ({
   }
 
   return (
-    <div className={isDesktop ? "h-full overflow-y-auto px-3 py-4" : "max-w-4xl mx-auto"}>
-      {!isDesktop && <p className="text-xs text-gray-500 mb-6">{t('bug.description')}</p>}
+    <div className={isDesktop ? "overflow-y-auto scrollbar-auto h-full bg-white dark:bg-gray-900 flex flex-col min-h-0 pb-20" : "max-w-4xl mx-auto"}>
+      <div className={isDesktop ? "px-3 py-4" : ""}>
+        {!isDesktop && <p className="text-xs text-gray-500 mb-6">{t('bug.description')}</p>}
 
-      <div className={isDesktop ? "mb-4 sticky top-0 bg-white dark:bg-gray-900 z-10 pb-4 border-b border-gray-200 dark:border-gray-700" : "mb-4"}>
+        <div className={isDesktop ? "mb-4 sticky top-0 bg-white dark:bg-gray-900 z-10 pb-4 border-b border-gray-200 dark:border-gray-700" : "mb-4"}>
         <div className="flex flex-wrap gap-2 items-center mb-4">
           <Select
             options={statusOptions}
@@ -390,49 +391,50 @@ export const BugList = ({
             </div>
           </div>
         )}
-      </div>
-
-      {filteredBugs.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-gray-500">{t('bug.noBugs')}</p>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {[...filteredBugs].sort((a, b) => {
-            if (a.status === 'ARCHIVED' && b.status !== 'ARCHIVED') return 1;
-            if (a.status !== 'ARCHIVED' && b.status === 'ARCHIVED') return -1;
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-          }).map((bug) => (
-            <BugCard
-              key={bug.id}
-              bug={bug}
-              unreadCount={unreadCounts[bug.id] || 0}
-              onUpdate={handleBugUpdated}
-              onDelete={handleBugDeleted}
-              onBugSelect={handleBugCardClick}
-              isDesktop={isDesktop}
-              isSelected={selectedBugId === bug.id}
-            />
-          ))}
-          {hasMore && filters.status === 'ARCHIVED' && (
-            <div className="flex justify-center pt-4">
-              <button
-                onClick={loadMore}
-                disabled={loadingMore}
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loadingMore ? t('common.loading') || 'Loading...' : t('home.loadMore')}
-              </button>
-            </div>
-          )}
         </div>
-      )}
 
-      <BugModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSuccess={handleBugCreated}
-      />
+        {filteredBugs.length === 0 ? (
+          <Card className="p-8 text-center">
+            <p className="text-gray-500">{t('bug.noBugs')}</p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {[...filteredBugs].sort((a, b) => {
+              if (a.status === 'ARCHIVED' && b.status !== 'ARCHIVED') return 1;
+              if (a.status !== 'ARCHIVED' && b.status === 'ARCHIVED') return -1;
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            }).map((bug) => (
+              <BugCard
+                key={bug.id}
+                bug={bug}
+                unreadCount={unreadCounts[bug.id] || 0}
+                onUpdate={handleBugUpdated}
+                onDelete={handleBugDeleted}
+                onBugSelect={handleBugCardClick}
+                isDesktop={isDesktop}
+                isSelected={selectedBugId === bug.id}
+              />
+            ))}
+            {hasMore && filters.status === 'ARCHIVED' && (
+              <div className="flex justify-center pt-4">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loadingMore ? t('common.loading') || 'Loading...' : t('home.loadMore')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <BugModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onSuccess={handleBugCreated}
+        />
+      </div>
     </div>
   );
 };

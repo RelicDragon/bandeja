@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, lazy, Suspense, useState } from 'react';
+import { useEffect, lazy, Suspense, useState, useRef } from 'react';
 import { ProtectedRoute, AppLoadingScreen, NoInternetScreen, AppVersionModal } from './components';
 
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
@@ -31,6 +31,7 @@ import { extractLanguageCode } from './utils/displayPreferences';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import { backButtonService } from './services/backButtonService';
 import { navigationService } from './services/navigationService';
+import { markNavigation } from './utils/navigation';
 import i18n from './i18n/config';
 import './i18n/config';
 
@@ -53,6 +54,14 @@ function AppContent() {
   useEffect(() => {
     navigationService.initialize(navigate);
   }, [navigate]);
+
+  const previousPathnameRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (previousPathnameRef.current !== null && previousPathnameRef.current !== location.pathname) {
+      markNavigation();
+    }
+    previousPathnameRef.current = location.pathname;
+  }, [location.pathname]);
 
   useEffect(() => {
     restoreAuthIfNeeded();

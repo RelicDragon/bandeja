@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { backButtonService } from '@/services/backButtonService';
 import { useNavigationStore } from '@/store/navigationStore';
+import { canNavigateBack } from '@/utils/navigation';
 
 type BackHandler = () => boolean | void;
 
@@ -16,7 +17,12 @@ export const useBackButtonHandler = (handler?: BackHandler) => {
     const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
     
     if (currentPage === 'gameDetails') {
-      navigate(-1);
+      if (canNavigateBack()) {
+        navigate(-1);
+      } else {
+        setCurrentPage('my');
+        navigate('/', { replace: true });
+      }
     } else if (locationState?.fromLeagueSeasonGameId) {
       setCurrentPage('gameDetails');
       navigate(`/games/${locationState.fromLeagueSeasonGameId}`, { replace: true });
