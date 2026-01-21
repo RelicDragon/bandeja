@@ -55,7 +55,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isMultiline, setIsMultiline] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
   const saveDraftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasLoadedDraftRef = useRef(false);
 
@@ -81,6 +83,22 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
     const trimmedContent = content?.trim();
     if (!trimmedContent && mentionIds.length === 0) {
+      try {
+        await chatApi.deleteDraft(
+          contextType,
+          finalContextId,
+          userChatId ? 'PUBLIC' : normalizeChatType(chatType)
+        );
+        
+        window.dispatchEvent(new CustomEvent('draft-deleted', {
+          detail: {
+            chatContextType: contextType,
+            contextId: finalContextId
+          }
+        }));
+      } catch (error) {
+        console.error('Failed to delete draft:', error);
+      }
       return;
     }
 
@@ -116,6 +134,36 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }, 800);
   }, [saveDraft]);
 
+  const updateMultilineState = useCallback(() => {
+    requestAnimationFrame(() => {
+      if (inputContainerRef.current) {
+        const textarea = inputContainerRef.current.querySelector('textarea');
+        if (textarea) {
+          const computedStyle = window.getComputedStyle(textarea);
+          const lineHeight = parseFloat(computedStyle.lineHeight);
+          
+          if (lineHeight && lineHeight > 0) {
+            const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+            const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+            const scrollHeight = textarea.scrollHeight;
+            const contentHeight = scrollHeight - paddingTop - paddingBottom;
+            const rowCount = Math.ceil(contentHeight / lineHeight);
+            setIsMultiline(rowCount > 2);
+          } else {
+            const fontSize = parseFloat(computedStyle.fontSize) || 14;
+            const estimatedLineHeight = fontSize * 1.5;
+            const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+            const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+            const scrollHeight = textarea.scrollHeight;
+            const contentHeight = scrollHeight - paddingTop - paddingBottom;
+            const rowCount = Math.ceil(contentHeight / estimatedLineHeight);
+            setIsMultiline(rowCount > 2);
+          }
+        }
+      }
+    });
+  }, []);
+
   const messageRef = useRef(message);
   const mentionIdsRef = useRef(mentionIds);
 
@@ -146,12 +194,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         if (!hasUserTyped) {
           setMessage(draft.content || '');
           setMentionIds(draft.mentionIds || []);
+          setTimeout(() => updateMultilineState(), 100);
         }
       }
     } catch (error) {
       console.error('Failed to load draft:', error);
     }
-  }, [finalContextId, user?.id, contextType, chatType, userChatId]);
+  }, [finalContextId, user?.id, contextType, chatType, userChatId, updateMultilineState]);
 
   useEffect(() => {
     if (saveDraftTimeoutRef.current) {
@@ -163,6 +212,27 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     setMentionIds([]);
     loadDraft();
   }, [finalContextId, contextType, chatType, loadDraft]);
+
+  useEffect(() => {
+    updateMultilineState();
+  }, [message, selectedImages, updateMultilineState]);
+
+  useEffect(() => {
+    if (!inputContainerRef.current) return;
+
+    const textarea = inputContainerRef.current.querySelector('textarea');
+    if (!textarea) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateMultilineState();
+    });
+
+    resizeObserver.observe(textarea);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [updateMultilineState]);
 
   useEffect(() => {
     return () => {
@@ -354,6 +424,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     setMessage(newValue);
     setMentionIds(newMentionIds);
     debouncedSaveDraft(newValue, newMentionIds);
+    updateMultilineState();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -417,6 +488,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       setMentionIds([]);
       setSelectedImages([]);
       hasLoadedDraftRef.current = false;
+      setTimeout(() => updateMultilineState(), 100);
       onCancelReply?.();
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -434,9 +506,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <div 
-      className={`bg-white dark:bg-gray-800 p-4 overflow-visible transition-colors ${
-        isDragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-400 border-dashed' : ''
-      }`}
+      className="p-3 overflow-visible"
       onPaste={handlePaste}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -481,8 +551,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       )}
       
       <form onSubmit={handleSubmit} className="relative overflow-visible">
-        <div className="relative overflow-visible">
-          <div className="relative overflow-visible">
+        <div className={`relative overflow-visible bg-white dark:bg-gray-800 md:bg-opacity-100 md:dark:bg-opacity-100 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${
+          isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
+        }`}>
+          <div ref={inputContainerRef} className="relative overflow-visible">
             <MentionInput
               value={message}
               onChange={handleMessageChange}
@@ -502,41 +574,46 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               }}
             />
             
-            <div className="absolute bottom-1 right-1.5 flex items-center gap-1 z-10">
-              <button
-                type="button"
-                onClick={handleImageButtonClick}
-                disabled={isDisabledForChannel || isLoading}
-                className="w-8 h-8 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <Image size={16} />
-              </button>
-              
-              <button
-                type="submit"
-                disabled={(!message.trim() && selectedImages.length === 0) || isLoading || isDisabledForChannel}
-                className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
-                aria-label={isLoading ? t('common.sending') : t('chat.messages.sendMessage')}
-              >
-                {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleImageButtonClick}
+              disabled={isDisabledForChannel || isLoading}
+              className="absolute w-9 h-9 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110 hover:bg-gray-200 dark:hover:bg-gray-600 shadow-lg z-10"
+              style={{
+                right: isMultiline ? '8px' : '54px',
+                top: isMultiline ? 'auto' : 'auto',
+                bottom: isMultiline ? '4px' : '8px',
+                transform: isMultiline ? 'translateY(-44px)' : 'translateY(0)',
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1), right 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
+              <Image size={18} />
+            </button>
+            
+            <button
+              type="submit"
+              disabled={(!message.trim() && selectedImages.length === 0) || isLoading || isDisabledForChannel}
+              className="absolute bottom-0.5 right-1 w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_4px_24px_rgba(59,130,246,0.6),0_8px_48px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_32px_rgba(59,130,246,0.7),0_12px_56px_rgba(59,130,246,0.5)] hover:scale-105 z-10"
+              aria-label={isLoading ? t('common.sending') : t('chat.messages.sendMessage')}
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                  />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
       </form>

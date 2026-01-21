@@ -3,11 +3,13 @@ import App from './App';
 import './index.css';
 import { setupCapacitor, setupBrowserKeyboardDetection } from './utils/capacitorSetup';
 import { isCapacitor } from './utils/capacitor';
+import { initializeSocialLogin } from './services/socialLoginInit.service';
 
 const CACHE_VERSION = 'v1';
 
 setupCapacitor();
 setupBrowserKeyboardDetection();
+initializeSocialLogin();
 
 // Only use service worker in web browsers, not in Capacitor apps
 if ('serviceWorker' in navigator && !isCapacitor()) {

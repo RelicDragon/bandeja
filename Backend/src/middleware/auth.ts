@@ -38,10 +38,13 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
         phone: true,
         email: true,
         telegramId: true,
+        googleId: true,
+        appleSub: true,
         isActive: true,
         isAdmin: true,
         isTrainer: true,
         currentCityId: true,
+        authProvider: true,
       },
     });
 

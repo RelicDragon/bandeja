@@ -1218,13 +1218,87 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           disableReadTracking={contextType === 'USER'}
           isChannel={isChannel}
         />
+        
+        {(!isInitialLoad || isEmbedded) && (
+        <div className="md:hidden absolute bottom-0 left-0 right-0 z-40 pointer-events-none" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        {isBlockedByUser && contextType === 'USER' ? (
+          <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))', background: 'transparent' }}>
+            <div className="text-sm text-center text-gray-700 dark:text-gray-300 rounded-[20px] px-4 py-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)]">
+              {t('chat.blockedByUser')}
+            </div>
+          </div>
+        ) : canAccessChat ? (
+          !isChannelParticipantOnly ? (
+            <div className="relative overflow-visible pointer-events-auto" style={{ background: 'transparent' }}>
+              <div 
+                className={`transition-opacity duration-300 ease-in-out ${
+                  isSendingMessage ? 'opacity-0 invisible' : 'opacity-100 visible'
+                }`}
+              >
+                <MessageInput
+                  gameId={contextType === 'GAME' ? id : undefined}
+                  bugId={contextType === 'BUG' ? id : undefined}
+                  userChatId={contextType === 'USER' ? (id || userChat?.id) : undefined}
+                  groupChannelId={contextType === 'GROUP' ? id : undefined}
+                  game={game}
+                  bug={bug}
+                  groupChannel={groupChannel}
+                  onMessageSent={handleMessageSent}
+                  disabled={false}
+                  replyTo={replyTo}
+                  onCancelReply={handleCancelReply}
+                  onScrollToMessage={handleScrollToMessage}
+                  chatType={currentChatType}
+                />
+              </div>
+              {isSendingMessage && (
+                <div className="absolute inset-0 p-4 flex items-center justify-center z-50 rounded-[24px] m-3 bg-white/95 dark:bg-gray-800/95 shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)]">
+                  <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm font-medium">{t('common.sending')}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null
+        ) : (
+          !(contextType === 'GAME' && isInJoinQueue) && !(contextType === 'GAME' && game && (game.status === 'FINISHED' || game.status === 'ARCHIVED')) && (
+            <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))', background: 'transparent' }}>
+              <div className="flex items-center justify-center" style={{ background: 'transparent' }}>
+                <button
+                  onClick={handleJoinAsGuest}
+                  disabled={isJoiningAsGuest}
+                  className="w-full px-6 py-3.5 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-[20px] hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_24px_rgba(59,130,246,0.5)] hover:scale-[1.02] font-medium"
+                >
+                  {isJoiningAsGuest ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      {t('common.loading')}
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle size={20} />
+                      {contextType === 'GAME' && !hasUnoccupiedSlots
+                        ? t('games.joinTheQueue')
+                        : contextType === 'GROUP' && isChannel 
+                        ? t('chat.joinChannel')
+                        : t('chat.joinChatToSend')}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )
+        )}
+        </div>
+        )}
       </main>
 
       {(!isInitialLoad || isEmbedded) && (
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <footer className="hidden md:block flex-shrink-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {isBlockedByUser && contextType === 'USER' ? (
-          <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
-            <div className="text-sm text-center text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-3">
+          <div className="px-4 py-3" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+            <div className="text-sm text-center text-gray-700 dark:text-gray-300 rounded-[20px] px-4 py-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700">
               {t('chat.blockedByUser')}
             </div>
           </div>
@@ -1253,10 +1327,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 />
               </div>
               {isSendingMessage && (
-                <div className="absolute inset-0 bg-white dark:bg-gray-800 p-4 flex items-center justify-center z-50">
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                <div className="absolute inset-0 p-4 flex items-center justify-center z-50 bg-white/95 dark:bg-gray-800/95">
+                  <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                     <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm">{t('common.sending')}</span>
+                    <span className="text-sm font-medium">{t('common.sending')}</span>
                   </div>
                 </div>
               )}
@@ -1264,12 +1338,12 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           ) : null
         ) : (
           !(contextType === 'GAME' && isInJoinQueue) && !(contextType === 'GAME' && game && (game.status === 'FINISHED' || game.status === 'ARCHIVED')) && (
-            <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+            <div className="px-4 py-3" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
               <div className="flex items-center justify-center">
                 <button
                   onClick={handleJoinAsGuest}
                   disabled={isJoiningAsGuest}
-                  className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full px-6 py-3 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
                 >
                   {isJoiningAsGuest ? (
                     <>

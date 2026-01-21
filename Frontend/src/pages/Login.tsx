@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import { config } from '@/config/media';
 import { Send, Phone, AlertCircle } from 'lucide-react';
 import { signInWithApple } from '@/services/appleAuth.service';
+import { signInWithGoogle } from '@/services/googleAuth.service';
 import { isIOS } from '@/utils/capacitor';
 import { AppleIcon } from '@/components/AppleIcon';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
@@ -254,6 +255,112 @@ export const Login = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await signInWithGoogle();
+      
+      if (!result) {
+        setLoading(false);
+        return;
+      }
+
+      const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
+      const profile = result.profile;
+
+      let response;
+      try {
+        response = await authApi.loginGoogle({
+          idToken: result.idToken,
+          language: normalizedLanguage,
+          firstName: profile?.givenName,
+          lastName: profile?.familyName,
+        });
+      } catch (loginErr: any) {
+        if (loginErr?.response?.status === 401) {
+          try {
+            response = await authApi.registerGoogle({
+              idToken: result.idToken,
+              firstName: profile?.givenName,
+              lastName: profile?.familyName,
+              language: normalizedLanguage,
+            });
+          } catch (registerErr: any) {
+            if (registerErr?.response?.status === 400) {
+              const errorMessage = registerErr?.response?.data?.message || '';
+              if (errorMessage.includes('already exists')) {
+                response = await authApi.loginGoogle({
+                  idToken: result.idToken,
+                  language: normalizedLanguage,
+                  firstName: profile?.givenName,
+                  lastName: profile?.familyName,
+                });
+              } else {
+                throw registerErr;
+              }
+            } else {
+              throw registerErr;
+            }
+          }
+        } else if (loginErr?.response?.status === 403) {
+          throw loginErr;
+        } else {
+          throw loginErr;
+        }
+      }
+
+      await setAuth(response.data.user, response.data.token);
+
+      if (!response.data.user.currentCity) {
+        navigate('/select-city');
+      } else {
+        navigate('/');
+      }
+    } catch (err: any) {
+      const errorMessage = String(err?.message || '');
+      const errorCode = String(err?.code || err?.errorCode || '');
+      const errorString = (errorMessage + errorCode).toLowerCase();
+      
+      if (errorString.includes('cancel') || 
+          errorString.includes('cancelled') || 
+          errorString.includes('dismissed')) {
+        setLoading(false);
+        return;
+      }
+      
+      let errorMsg = '';
+      
+      if (err?.response?.data?.message) {
+        const key = err.response.data.message;
+        errorMsg = t(key) !== key ? t(key) : key;
+      } else if (err?.response?.data) {
+        errorMsg = JSON.stringify(err.response.data);
+      } else if (err?.response) {
+        errorMsg = `Error ${err.response.status}: ${err.response.statusText}`;
+      } else if (err?.code === 'ERR_NETWORK' || err?.code === 'ECONNABORTED') {
+        errorMsg = 'Network unavailable';
+      } else if (err?.message && err.message !== 'Network Error') {
+        errorMsg = err.message;
+      } else {
+        errorMsg = t('errors.generic');
+      }
+      
+      if (import.meta.env.DEV) {
+        const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';
+        const method = err?.config?.method?.toUpperCase() || 'unknown';
+        const errorCode = err?.code || 'no code';
+        const errorMessage = err?.message || 'no message';
+        setError(`${errorMsg} | ${method} ${requestUrl} | Code: ${errorCode} | ${errorMessage}`);
+      } else {
+        setError(errorMsg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthLayout>
       <h2 className="text-2xl font-semibold text-center text-slate-800 dark:text-white mb-2">
@@ -394,18 +501,51 @@ export const Login = () => {
         </form>
       )}
 
-      {/* Apple Sign In Button (iOS only) */}
-      {isIOS() && (
-        <div className="mt-6">
-          <div className="relative flex items-center">
-            <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
-            <span className="px-4 text-sm text-slate-500 dark:text-slate-400">{t('auth.or')}</span>
-            <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
-          </div>
+      {/* Social Sign In Buttons */}
+      <div className="mt-6">
+        <div className="relative flex items-center">
+          <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+          <span className="px-4 text-sm text-slate-500 dark:text-slate-400">{t('auth.or')}</span>
+          <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+        </div>
+        
+        {/* Google Sign In Button */}
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={handleGoogleSignIn}
+          className="w-full h-12 mt-6 text-base font-medium !bg-gray-50 hover:!bg-gray-100 !text-slate-900 !border-2 !border-slate-300 dark:!bg-slate-600 dark:hover:!bg-slate-500 dark:!text-slate-100 dark:!border-slate-500 !shadow-md"
+          disabled={loading}
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              {t('app.loading')}
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                <g fill="none" fillRule="evenodd">
+                  <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                  <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+                  <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.958H.957C.348 6.173 0 7.55 0 9c0 1.45.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                  <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                </g>
+              </svg>
+              {t('auth.googleSignIn')}
+            </span>
+          )}
+        </Button>
+
+        {/* Apple Sign In Button (iOS only) */}
+        {isIOS() && (
           <Button
             type="button"
             onClick={handleAppleSignIn}
-            className="w-full h-12 mt-6 text-base font-medium bg-black hover:bg-gray-800 text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black"
+            className="w-full h-12 mt-4 text-base font-medium bg-black hover:bg-gray-800 text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black"
             disabled={loading}
           >
             {loading ? (
@@ -423,8 +563,8 @@ export const Login = () => {
               </span>
             )}
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Register Link */}
       {loginType === 'phone' && (

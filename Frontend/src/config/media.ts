@@ -18,4 +18,9 @@ export const config = {
   
   // Apple Sign In
   appleClientId: import.meta.env.VITE_APPLE_CLIENT_ID || 'com.funified.bandeja',
+  
+  // Google Sign In
+  googleWebClientId: import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || '',
+  googleIOSClientId: import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID || '',
+  googleAndroidClientId: import.meta.env.VITE_GOOGLE_ANDROID_CLIENT_ID || '',
 };

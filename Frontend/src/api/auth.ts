@@ -74,5 +74,31 @@ export const authApi = {
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/apple', data);
     return response.data;
   },
+
+  registerGoogle: async (data: {
+    idToken: string;
+    firstName?: string;
+    lastName?: string;
+    language?: string;
+    gender?: string;
+    genderIsSet?: boolean;
+    preferredHandLeft?: boolean;
+    preferredHandRight?: boolean;
+    preferredCourtSideLeft?: boolean;
+    preferredCourtSideRight?: boolean;
+  }) => {
+    const response = await api.post<ApiResponse<LoginResponse>>('/auth/register/google', data);
+    return response.data;
+  },
+
+  loginGoogle: async (data: { 
+    idToken: string; 
+    language?: string; 
+    firstName?: string; 
+    lastName?: string;
+  }) => {
+    const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/google', data);
+    return response.data;
+  },
 };
 

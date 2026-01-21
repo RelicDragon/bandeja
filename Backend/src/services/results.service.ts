@@ -179,7 +179,7 @@ export async function deleteGameResults(gameId: string) {
 
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
-      select: { startTime: true, endTime: true, cityId: true },
+      select: { startTime: true, endTime: true, cityId: true, timeIsSet: true },
     });
     
     if (updatedGame) {
@@ -197,6 +197,7 @@ export async function deleteGameResults(gameId: string) {
             startTime: updatedGame.startTime,
             endTime: updatedGame.endTime,
             resultsStatus: 'NONE',
+            timeIsSet: updatedGame.timeIsSet,
           }, cityTimezone),
         },
       });
@@ -303,7 +304,7 @@ export async function resetGameResults(gameId: string) {
 
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
-      select: { startTime: true, endTime: true, cityId: true },
+      select: { startTime: true, endTime: true, cityId: true, timeIsSet: true },
     });
     
     if (updatedGame) {
@@ -321,6 +322,7 @@ export async function resetGameResults(gameId: string) {
             startTime: updatedGame.startTime,
             endTime: updatedGame.endTime,
             resultsStatus: 'NONE',
+            timeIsSet: updatedGame.timeIsSet,
           }, cityTimezone),
         },
       });
@@ -387,7 +389,7 @@ export async function editGameResults(gameId: string) {
 
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
-      select: { startTime: true, endTime: true, cityId: true },
+      select: { startTime: true, endTime: true, cityId: true, timeIsSet: true },
     });
     
     if (updatedGame) {
@@ -402,6 +404,7 @@ export async function editGameResults(gameId: string) {
             startTime: updatedGame.startTime,
             endTime: updatedGame.endTime,
             resultsStatus: 'IN_PROGRESS',
+            timeIsSet: updatedGame.timeIsSet,
           }, cityTimezone),
         },
       });

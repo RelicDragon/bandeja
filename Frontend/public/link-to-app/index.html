@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bandeja</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #333;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 24px;
+      padding: 48px 32px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1a1a1a;
+    }
+    
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+    
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .store-button {
+      display: block;
+      text-decoration: none;
+      transition: transform 0.2s, opacity 0.2s;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .store-button:hover {
+      transform: scale(1.02);
+      opacity: 0.9;
+    }
+    
+    .store-button:active {
+      transform: scale(0.98);
+    }
+    
+    .store-button img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+    }
+    
+    .web-button {
+      display: block;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    
+    .web-button:hover {
+      transform: scale(1.02);
+      opacity: 0.9;
+    }
+    
+    .web-button:active {
+      transform: scale(0.98);
+    }
+    
+    .tip {
+      color: #888;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #eee;
+    }
+    
+    .loading {
+      display: none;
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 24px;
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 32px 24px;
+      }
+      
+      h1 {
+        font-size: 28px;
+      }
+      
+      .logo {
+        width: 64px;
+        height: 64px;
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">B</div>
+    <h1 id="title">Opening…</h1>
+    <p class="subtitle" id="subtitle">If nothing happens, choose your platform:</p>
+    <div class="loading" id="loading">Redirecting...</div>
+    
+    <div class="buttons">
+      <a id="ios" href="https://apps.apple.com/app/bandeja/id6756632318" class="store-button">
+        <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1704067200" alt="Download on the App Store" />
+      </a>
+      <a id="android" href="https://play.google.com/store/apps/details?id=com.funified.bandeja" class="store-button">
+        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" />
+      </a>
+      <a id="web" href="https://bandeja.me" class="web-button">Open Web App</a>
+    </div>
+    
+    <p class="tip" id="tip">Tip: If you scanned a QR code inside an in-app browser, tap the button above.</p>
+  </div>
+
+  <script>
+    (function () {
+      const translations = {
+        en: {
+          title: 'Opening…',
+          subtitle: 'If nothing happens, choose your platform:',
+          webButton: 'Open Web App',
+          tip: 'Tip: If you scanned a QR code inside an in-app browser, tap the button above.',
+          loading: 'Redirecting...'
+        },
+        ru: {
+          title: 'Открытие…',
+          subtitle: 'Если ничего не происходит, выберите вашу платформу:',
+          webButton: 'Открыть веб-приложение',
+          tip: 'Совет: Если вы отсканировали QR-код во встроенном браузере, нажмите кнопку выше.',
+          loading: 'Перенаправление...'
+        },
+        sr: {
+          title: 'Otvaranje…',
+          subtitle: 'Ako se ništa ne dešava, izaberite vašu platformu:',
+          webButton: 'Otvori web aplikaciju',
+          tip: 'Savet: Ako ste skenirali QR kod u ugrađenom pregledaču, pritisnite dugme iznad.',
+          loading: 'Preusmeravanje...'
+        },
+        es: {
+          title: 'Abriendo…',
+          subtitle: 'Si no pasa nada, elige tu plataforma:',
+          webButton: 'Abrir aplicación web',
+          tip: 'Consejo: Si escaneaste un código QR dentro de un navegador integrado, toca el botón de arriba.',
+          loading: 'Redirigiendo...'
+        }
+      };
+      
+      const storeBadges = {
+        en: {
+          ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1704067200',
+          android: 'https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png'
+        },
+        ru: {
+          ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/ru-ru?size=250x83&releaseDate=1704067200',
+          android: 'https://play.google.com/intl/ru/badges/static/images/badges/ru_badge_web_generic.png'
+        },
+        sr: {
+          ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1704067200',
+          android: 'https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png'
+        },
+        es: {
+          ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/es-es?size=250x83&releaseDate=1704067200',
+          android: 'https://play.google.com/intl/es/badges/static/images/badges/es_badge_web_generic.png'
+        }
+      };
+      
+      function detectLanguage() {
+        const browserLang = navigator.language || navigator.userLanguage || 'en';
+        const langCode = browserLang.split('-')[0].toLowerCase();
+        
+        if (translations[langCode]) {
+          return langCode;
+        }
+        
+        const fullLang = browserLang.toLowerCase();
+        if (fullLang.startsWith('ru')) return 'ru';
+        if (fullLang.startsWith('sr')) return 'sr';
+        if (fullLang.startsWith('es')) return 'es';
+        
+        return 'en';
+      }
+      
+      function setLanguage(lang) {
+        const t = translations[lang];
+        const badges = storeBadges[lang];
+        
+        document.getElementById('title').textContent = t.title;
+        document.getElementById('subtitle').textContent = t.subtitle;
+        document.getElementById('web').textContent = t.webButton;
+        document.getElementById('tip').textContent = t.tip;
+        document.getElementById('loading').textContent = t.loading;
+        
+        document.getElementById('ios').querySelector('img').src = badges.ios;
+        document.getElementById('ios').querySelector('img').alt = lang === 'ru' ? 'Загрузить в App Store' : 
+                                                                  lang === 'sr' ? 'Preuzmi u App Store' :
+                                                                  lang === 'es' ? 'Descargar en App Store' :
+                                                                  'Download on the App Store';
+        
+        document.getElementById('android').querySelector('img').src = badges.android;
+        document.getElementById('android').querySelector('img').alt = lang === 'ru' ? 'Получить в Google Play' :
+                                                                       lang === 'sr' ? 'Preuzmi na Google Play' :
+                                                                       lang === 'es' ? 'Consíguelo en Google Play' :
+                                                                       'Get it on Google Play';
+        
+        document.documentElement.lang = lang;
+      }
+      
+      const lang = detectLanguage();
+      setLanguage(lang);
+      
+      const ua = navigator.userAgent || "";
+      const isAndroid = /Android/i.test(ua);
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+      
+      const iosUrl = document.getElementById("ios").href;
+      const androidUrl = document.getElementById("android").href;
+      const webUrl = document.getElementById("web").href;
+      
+      let redirected = false;
+      
+      function redirect() {
+        if (redirected) return;
+        redirected = true;
+        
+        const target = isIOS ? iosUrl : (isAndroid ? androidUrl : webUrl);
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('subtitle').style.display = 'none';
+        
+        setTimeout(() => {
+          window.location.replace(target);
+        }, 300);
+      }
+      
+      setTimeout(redirect, 500);
+    })();
+  </script>
+</body>
+</html>

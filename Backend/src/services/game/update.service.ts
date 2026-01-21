@@ -214,10 +214,12 @@ export class GameUpdateService {
       
       const cityTimezone = await getUserTimezoneFromCityId(currentGameWithCityId?.cityId ?? null);
       
+      const timeIsSet = updateData.timeIsSet !== undefined ? updateData.timeIsSet : currentGame.timeIsSet;
       updateData.status = calculateGameStatus({
         startTime: newStartTime,
         endTime: newEndTime,
         resultsStatus: currentGame.resultsStatus,
+        timeIsSet,
       }, cityTimezone);
       if (data.startTime !== undefined) {
         updateData.startTime = newStartTime;
@@ -244,6 +246,7 @@ export class GameUpdateService {
           startTime,
           endTime,
           resultsStatus,
+          timeIsSet: true,
         }, cityTimezone);
       }
     }

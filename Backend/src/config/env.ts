@@ -42,6 +42,11 @@ export const config = {
   apple: {
     clientId: process.env.APPLE_CLIENT_ID || 'com.funified.bandeja',
   },
+  google: {
+    webClientId: process.env.GOOGLE_WEB_CLIENT_ID || '',
+    iosClientId: process.env.GOOGLE_IOS_CLIENT_ID || '',
+    androidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID || '',
+  },
   puppeteer: {
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
   },

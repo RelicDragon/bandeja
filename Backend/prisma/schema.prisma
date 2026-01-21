@@ -16,6 +16,9 @@ model User {
   appleSub                   String?              @unique
   appleEmail                 String?
   appleEmailVerified         Boolean              @default(false)
+  googleId                   String?              @unique
+  googleEmail                String?
+  googleEmailVerified        Boolean              @default(false)
   firstName                  String?
   lastName                   String?
   avatar                     String?
@@ -706,6 +709,7 @@ enum AuthProvider {
   PHONE
   TELEGRAM
   APPLE
+  GOOGLE
 }
 
 enum Gender {

@@ -24,6 +24,7 @@
     "@capacitor/push-notifications": "^8.0.0",
     "@capacitor/share": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
+    "@capgo/capacitor-social-login": "^8.2.16",
     "@ebarooni/capacitor-calendar": "^8.0.0",
     "@paralleldrive/cuid2": "^3.0.4",
     "@sindresorhus/transliterate": "^2.3.1",

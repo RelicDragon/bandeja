@@ -280,7 +280,7 @@ export async function applyGameOutcomes(
 
   const updatedGame = await tx.game.findUnique({
     where: { id: gameId },
-    select: { startTime: true, endTime: true, resultsStatus: true, cityId: true },
+    select: { startTime: true, endTime: true, resultsStatus: true, cityId: true, timeIsSet: true },
   });
 
   if (updatedGame) {
@@ -296,6 +296,7 @@ export async function applyGameOutcomes(
           startTime: updatedGame.startTime,
           endTime: updatedGame.endTime,
           resultsStatus: 'FINAL',
+          timeIsSet: updatedGame.timeIsSet,
         }, cityTimezone),
       },
     });

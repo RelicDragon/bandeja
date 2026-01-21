@@ -63,5 +63,21 @@ router.post(
   authController.loginWithApple
 );
 
+router.post(
+  '/register/google',
+  validate([
+    body('idToken').notEmpty().isString().withMessage('Google ID token is required'),
+  ]),
+  authController.registerWithGoogle
+);
+
+router.post(
+  '/login/google',
+  validate([
+    body('idToken').notEmpty().isString().withMessage('Google ID token is required'),
+  ]),
+  authController.loginWithGoogle
+);
+
 export default router;
 

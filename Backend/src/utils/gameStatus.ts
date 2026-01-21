@@ -8,9 +8,14 @@ export const calculateGameStatus = (
     startTime: Date;
     endTime: Date;
     resultsStatus: string;
+    timeIsSet?: boolean;
   },
   clubTimezone?: string
 ): GameStatus => {
+  if (game.timeIsSet === false) {
+    return 'ANNOUNCED';
+  }
+
   const now = new Date();
   const startTime = new Date(game.startTime);
   const endTime = new Date(game.endTime);

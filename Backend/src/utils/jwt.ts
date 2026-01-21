@@ -6,6 +6,7 @@ interface JwtPayload {
   phone?: string;
   telegramId?: string;
   appleId?: string;
+  googleId?: string;
   isAdmin?: boolean;
 }
 

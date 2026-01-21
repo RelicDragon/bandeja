@@ -32,9 +32,17 @@ export class GameStatusScheduler {
       
       const games = await prisma.game.findMany({
         where: {
-          status: {
-            not: 'ARCHIVED',
-          },
+          OR: [
+            {
+              status: {
+                not: 'ARCHIVED',
+              },
+            },
+            {
+              status: 'ARCHIVED',
+              timeIsSet: false,
+            },
+          ],
         },
         select: {
           id: true,
