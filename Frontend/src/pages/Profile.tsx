@@ -1018,10 +1018,9 @@ export const ProfileContent = () => {
         onConfirm={handleUnlinkApple}
         title={t('profile.unlinkApple') || 'Unlink Apple Account'}
         message={t('profile.unlinkAppleConfirmation') || 'Are you sure you want to unlink your Apple account? You will no longer be able to sign in with Apple.'}
-        confirmText={t('profile.unlink') || 'Unlink'}
+        confirmText={isUnlinkingApple ? (t('profile.unlinking') || 'Unlinking...') : (t('profile.unlink') || 'Unlink')}
         cancelText={t('common.cancel')}
-        confirmVariant="secondary"
-        isLoading={isUnlinkingApple}
+        confirmVariant="primary"
       />
 
       <ConfirmationModal
@@ -1030,10 +1029,9 @@ export const ProfileContent = () => {
         onConfirm={handleUnlinkGoogle}
         title={t('profile.unlinkGoogle') || 'Unlink Google Account'}
         message={t('profile.unlinkGoogleConfirmation') || 'Are you sure you want to unlink your Google account? You will no longer be able to sign in with Google.'}
-        confirmText={t('profile.unlink') || 'Unlink'}
+        confirmText={isUnlinkingGoogle ? (t('profile.unlinking') || 'Unlinking...') : (t('profile.unlink') || 'Unlink')}
         cancelText={t('common.cancel')}
-        confirmVariant="secondary"
-        isLoading={isUnlinkingGoogle}
+        confirmVariant="primary"
       />
 
       <div className="mt-8 text-center space-y-2">
