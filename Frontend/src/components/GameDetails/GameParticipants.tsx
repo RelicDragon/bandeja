@@ -210,9 +210,8 @@ export const GameParticipants = ({
             {onCancelJoinQueue && (
               <Button
                 size="sm"
-                variant="secondary"
                 onClick={onCancelJoinQueue}
-                className="w-full flex items-center justify-center gap-1.5"
+                className="w-full flex items-center justify-center gap-1.5 bg-gradient-to-br from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 text-white border-0 shadow-[0_4px_12px_rgba(239,68,68,0.3)] hover:shadow-[0_6px_16px_rgba(239,68,68,0.4)] hover:scale-[1.02] transition-all duration-200 font-medium rounded-lg"
               >
                 <XCircle size={16} />
                 {t('games.cancelJoinRequest', { defaultValue: 'Cancel request' })}
