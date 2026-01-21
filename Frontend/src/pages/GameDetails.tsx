@@ -1229,7 +1229,7 @@ export const GameDetailsContent = () => {
             />
           )}
 
-          {game.resultsStatus === 'NONE' && game && user && canUserEditResults(game, user) && game.entityType !== 'BAR' && (
+          {game.resultsStatus === 'NONE' && game && user && canUserEditResults(game, user) && game.entityType !== 'BAR' && !isLeagueSeason && (
             <Card className="overflow-hidden">
               <button
                 onClick={game.entityType === 'TRAINING' ? handleFinishTraining : handleStartResultsEntry}

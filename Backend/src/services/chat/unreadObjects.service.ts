@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { ParticipantRole } from '@prisma/client';
+import { ChatMuteService } from './chatMute.service';
 
 export interface UnreadObjectsResult {
   games: Array<{
@@ -337,32 +338,12 @@ export class UnreadObjectsService {
 
     const groupChannels = await prisma.groupChannel.findMany({
       where: {
-        OR: [
-          {
-            isChannel: false,
-            participants: {
-              some: {
-                userId,
-                hidden: false
-              }
-            }
-          },
-          {
-            isChannel: true,
-            ...(userCityId ? { cityId: userCityId } : {}),
-            OR: [
-              {
-                participants: {
-                  some: {
-                    userId,
-                    hidden: false
-                  }
-                }
-              },
-              { isPublic: true }
-            ]
+        participants: {
+          some: {
+            userId,
+            hidden: false
           }
-        ]
+        }
       },
       include: {
         participants: {
@@ -377,6 +358,12 @@ export class UnreadObjectsService {
     });
 
     for (const groupChannel of groupChannels) {
+      // Skip muted channels
+      const isMuted = await ChatMuteService.isChatMuted(userId, 'GROUP', groupChannel.id);
+      if (isMuted) {
+        continue;
+      }
+
       const groupChannelUnreadCount = await prisma.chatMessage.count({
         where: {
           chatContextType: 'GROUP',

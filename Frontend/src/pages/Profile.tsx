@@ -20,7 +20,8 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { extractLanguageCode, normalizeLanguageForProfile } from '@/utils/displayPreferences';
-import { isCapacitor, getAppInfo } from '@/utils/capacitor';
+import { isCapacitor, getAppInfo, isIOS } from '@/utils/capacitor';
+import { AppleIcon } from '@/components/AppleIcon';
 
 export const ProfileContent = () => {
   const { t, i18n } = useTranslation();
@@ -514,6 +515,7 @@ export const ProfileContent = () => {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.personalInfo')}
@@ -627,147 +629,176 @@ export const ProfileContent = () => {
         </Card>
 
         <Card>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            {t('profile.telegram')}
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+            {t('profile.connectedAccounts') || 'Connected Accounts'}
           </h2>
           <div className="space-y-4">
-            {user?.telegramUsername ? (
-              <Input
-                label={t('profile.telegramUsername')}
-                value={`@${user.telegramUsername}`}
-                disabled
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center py-4">
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {t('profile.telegramNotLinked')}
-                </p>
-                <Button 
-                  onClick={() => window.open('https://t.me/PadelPulseBot', '_blank')}
-                >
-                  {t('profile.linkTelegram')}
-                </Button>
+            {/* Apple */}
+            {(user?.appleSub || isIOS()) && (
+              <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-black dark:bg-white flex items-center justify-center flex-shrink-0">
+                    <AppleIcon size={20} className="text-white dark:text-black" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {t('profile.apple') || 'Apple'}
+                    </div>
+                    {user?.appleSub ? (
+                      <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        {user.appleEmail || t('profile.linked') || 'Linked'}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500 dark:text-gray-500">
+                        {t('profile.appleNotLinked') || 'Apple account not linked'}
+                      </div>
+                    )}
+                  </div>
+                  {user?.appleSub && (
+                    <Check className="text-green-600 dark:text-green-400 flex-shrink-0" size={20} />
+                  )}
+                </div>
+                {user?.appleSub ? (
+                  <div className="flex justify-end">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowUnlinkAppleModal(true)}
+                      disabled={isUnlinkingApple}
+                      size="sm"
+                    >
+                      {isUnlinkingApple ? (
+                        <Loader2 className="animate-spin" size={16} />
+                      ) : (
+                        t('profile.unlinkApple') || 'Unlink'
+                      )}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={handleLinkApple}
+                    disabled={isLinkingApple}
+                    className="w-full h-10 text-sm font-medium bg-black hover:bg-gray-800 text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black"
+                  >
+                    {isLinkingApple ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <AppleIcon size={16} />
+                        {t('profile.linkApple') || 'Link Apple'}
+                      </span>
+                    )}
+                  </Button>
+                )}
               </div>
             )}
-          </div>
-        </Card>
 
-        <Card>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            {t('profile.apple') || 'Apple'}
-          </h2>
-          <div className="space-y-4">
-            {user?.appleSub ? (
-              <div className="space-y-3">
-                <Input
-                  label={t('profile.appleAccount') || 'Apple Account'}
-                  value={user.appleEmail || t('profile.linked') || 'Linked'}
-                  disabled
-                />
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowUnlinkAppleModal(true)}
-                  disabled={isUnlinkingApple}
-                  className="w-full"
-                >
-                  {isUnlinkingApple ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2" size={16} />
-                      {t('profile.unlinking') || 'Unlinking...'}
-                    </>
+            {/* Google */}
+            <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                    <g fill="none" fillRule="evenodd">
+                      <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+                      <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.958H.957C.348 6.173 0 7.55 0 9c0 1.45.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                    </g>
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {t('profile.google') || 'Google'}
+                  </div>
+                  {user?.googleId ? (
+                    <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                      {user.googleEmail || t('profile.linked') || 'Linked'}
+                    </div>
                   ) : (
-                    t('profile.unlinkApple') || 'Unlink Apple'
+                    <div className="text-sm text-gray-500 dark:text-gray-500">
+                      {t('profile.googleNotLinked') || 'Google account not linked'}
+                    </div>
                   )}
-                </Button>
+                </div>
+                {user?.googleId && (
+                  <Check className="text-green-600 dark:text-green-400 flex-shrink-0" size={20} />
+                )}
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-4">
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {t('profile.appleNotLinked') || 'Apple account not linked'}
-                </p>
-                <Button
-                  onClick={handleLinkApple}
-                  disabled={isLinkingApple}
-                  className="w-full"
-                >
-                  {isLinkingApple ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2" size={16} />
-                      {t('profile.linking') || 'Linking...'}
-                    </>
-                  ) : (
-                    t('profile.linkApple') || 'Link Apple'
-                  )}
-                </Button>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        <Card>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            {t('profile.google') || 'Google'}
-          </h2>
-          <div className="space-y-4">
-            {user?.googleId ? (
-              <div className="space-y-3">
-                <Input
-                  label={t('profile.googleAccount') || 'Google Account'}
-                  value={user.googleEmail || t('profile.linked') || 'Linked'}
-                  disabled
-                />
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowUnlinkGoogleModal(true)}
-                  disabled={isUnlinkingGoogle}
-                  className="w-full"
-                >
-                  {isUnlinkingGoogle ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2" size={16} />
-                      {t('profile.unlinking') || 'Unlinking...'}
-                    </>
-                  ) : (
-                    t('profile.unlinkGoogle') || 'Unlink Google'
-                  )}
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-4">
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {t('profile.googleNotLinked') || 'Google account not linked'}
-                </p>
+              {user?.googleId ? (
+                <div className="flex justify-end">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowUnlinkGoogleModal(true)}
+                    disabled={isUnlinkingGoogle}
+                    size="sm"
+                  >
+                    {isUnlinkingGoogle ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      t('profile.unlinkGoogle') || 'Unlink'
+                    )}
+                  </Button>
+                </div>
+              ) : (
                 <Button
                   onClick={handleLinkGoogle}
                   disabled={isLinkingGoogle}
-                  className="w-full"
+                  className="w-full h-10 text-sm font-medium !bg-gray-50 hover:!bg-gray-100 !text-slate-900 !border-2 !border-slate-300 dark:!bg-slate-600 dark:hover:!bg-slate-500 dark:!text-slate-100 dark:!border-slate-500 !shadow-md"
                 >
                   {isLinkingGoogle ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2" size={16} />
-                      {t('profile.linking') || 'Linking...'}
-                    </>
+                    <Loader2 className="animate-spin" size={16} />
                   ) : (
-                    t('profile.linkGoogle') || 'Link Google'
+                    <span className="flex items-center justify-center gap-2">
+                      <svg width="16" height="16" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                        <g fill="none" fillRule="evenodd">
+                          <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+                          <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.958H.957C.348 6.173 0 7.55 0 9c0 1.45.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                        </g>
+                      </svg>
+                      {t('profile.linkGoogle') || 'Link Google'}
+                    </span>
                   )}
                 </Button>
-              </div>
-            )}
-          </div>
-        </Card>
+              )}
+            </div>
 
-        <Card>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            {t('profile.notificationSettings') || 'Notification Settings'}
-          </h2>
-          <div className="space-y-4">
-            <Button
-              variant="secondary"
-              onClick={() => setShowNotificationModal(true)}
-              className="w-full"
-            >
-              {t('profile.controlNotifications') || 'Control Notifications'}
-            </Button>
+            {/* Telegram */}
+            <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 2L11 13"/>
+                    <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {t('profile.telegram')}
+                  </div>
+                  {user?.telegramUsername ? (
+                    <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                      @{user.telegramUsername}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 dark:text-gray-500">
+                      {t('profile.telegramNotLinked')}
+                    </div>
+                  )}
+                </div>
+                {user?.telegramUsername && (
+                  <Check className="text-green-600 dark:text-green-400 flex-shrink-0" size={20} />
+                )}
+              </div>
+              {!user?.telegramUsername && (
+                <Button
+                  onClick={() => window.open('https://t.me/PadelPulseBot', '_blank')}
+                  className="w-full h-10 text-sm font-medium"
+                >
+                  {t('profile.linkTelegram')}
+                </Button>
+              )}
+            </div>
           </div>
         </Card>
 
@@ -885,6 +916,21 @@ export const ProfileContent = () => {
 
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            {t('profile.notificationSettings') || 'Notification Settings'}
+          </h2>
+          <div className="space-y-4">
+            <Button
+              variant="secondary"
+              onClick={() => setShowNotificationModal(true)}
+              className="w-full"
+            >
+              {t('profile.controlNotifications') || 'Control Notifications'}
+            </Button>
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.city')}
           </h2>
           <div className="flex items-center justify-between">
@@ -903,6 +949,7 @@ export const ProfileContent = () => {
         {user?.blockedUserIds && user.blockedUserIds.length > 0 && (
           <BlockedUsersSection />
         )}
+        </div>
 
         <Card>
           <div className="space-y-4">

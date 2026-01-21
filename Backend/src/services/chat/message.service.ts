@@ -9,6 +9,7 @@ import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePerm
 import { TranslationService } from './translation.service';
 import { ReadReceiptService } from './readReceipt.service';
 import { DraftService } from './draft.service';
+import { ChatMuteService } from './chatMute.service';
 
 export class MessageService {
   static async validateGameAccess(gameId: string, userId: string, chatType?: ChatType) {
@@ -565,10 +566,19 @@ export class MessageService {
 
       // Emit unread count updates immediately to all recipients (not just undelivered)
       // This ensures badge updates even when users are not in the room
+      // Filter out muted users for GROUP channels
       if (recipients.length > 0) {
         setTimeout(async () => {
           for (const userId of recipients) {
             try {
+              // Skip muted users for GROUP channels
+              if (data.chatContextType === 'GROUP') {
+                const isMuted = await ChatMuteService.isChatMuted(userId, 'GROUP', data.contextId);
+                if (isMuted) {
+                  continue;
+                }
+              }
+              
               const unreadCount = await ReadReceiptService.getUnreadCountForContext(
                 data.chatContextType,
                 data.contextId,
