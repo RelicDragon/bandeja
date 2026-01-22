@@ -226,16 +226,14 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
     }
   }
 
+  // Only use name/email provided by Apple - never require user input
+  // Apple provides name only on first sign-in, email is in identity token
   const sanitizedFirstName = firstName ? firstName.trim().slice(0, 100) : undefined;
   const sanitizedLastName = lastName ? lastName.trim().slice(0, 100) : undefined;
-
-  if (sanitizedFirstName || sanitizedLastName) {
-    const trimmedFirst = sanitizedFirstName || '';
-    const trimmedLast = sanitizedLastName || '';
-    if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
-      throw new ApiError(400, 'auth.nameMinLength');
-    }
-  }
+  
+  // For Apple Sign In, we accept whatever Apple provides without validation
+  // This complies with Apple's guidelines: never require users to provide
+  // information that Apple already provides
 
   let validatedLanguage = language;
   if (language) {

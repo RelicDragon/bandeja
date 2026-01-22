@@ -152,11 +152,13 @@ export const Login = () => {
       const { result: appleResult, nonce } = result;
       const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
 
+      // Only use name/email provided by Apple - never prompt user for this information
+      // Apple provides name only on first sign-in, email is in identity token
+      const firstName = appleResult.user?.name?.firstName || undefined;
+      const lastName = appleResult.user?.name?.lastName || undefined;
+
       let response;
       try {
-        const firstName = appleResult.user?.name?.firstName;
-        const lastName = appleResult.user?.name?.lastName;
-        
         response = await authApi.loginApple({
           identityToken: appleResult.identityToken,
           nonce,
@@ -166,9 +168,6 @@ export const Login = () => {
         });
       } catch (loginErr: any) {
         if (loginErr?.response?.status === 401) {
-          const firstName = appleResult.user?.name?.firstName;
-          const lastName = appleResult.user?.name?.lastName;
-
           try {
             response = await authApi.registerApple({
               identityToken: appleResult.identityToken,
@@ -181,9 +180,6 @@ export const Login = () => {
             if (registerErr?.response?.status === 400) {
               const errorMessage = registerErr?.response?.data?.message || '';
               if (errorMessage.includes('appleAccountAlreadyExists') || errorMessage.includes('Apple account already exists')) {
-                const firstName = appleResult.user?.name?.firstName;
-                const lastName = appleResult.user?.name?.lastName;
-                
                 response = await authApi.loginApple({
                   identityToken: appleResult.identityToken,
                   nonce,
