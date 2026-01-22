@@ -1,6 +1,6 @@
 import * as cron from 'node-cron';
 import prisma from '../config/database';
-import { calculateGameStatus } from '../utils/gameStatus';
+import { calculateGameStatus, isResultsBasedEntityType } from '../utils/gameStatus';
 import { deleteInvitesForStartedGame, deleteInvitesForArchivedGame } from '../controllers/invite.controller';
 import { EntityType } from '@prisma/client';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
@@ -53,6 +53,7 @@ export class GameStatusScheduler {
           entityType: true,
           cityId: true,
           timeIsSet: true,
+          finishedDate: true,
         },
       });
 
@@ -76,6 +77,13 @@ export class GameStatusScheduler {
           if (
             game.entityType === EntityType.LEAGUE_SEASON &&
             (newStatus === 'FINISHED' || newStatus === 'ARCHIVED')
+          ) {
+            continue;
+          }
+
+          if (
+            isResultsBasedEntityType(game.entityType) &&
+            newStatus === 'FINISHED'
           ) {
             continue;
           }

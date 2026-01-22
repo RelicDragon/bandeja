@@ -220,6 +220,7 @@ export class GameUpdateService {
         endTime: newEndTime,
         resultsStatus: currentGame.resultsStatus,
         timeIsSet,
+        entityType: currentGame.entityType,
       }, cityTimezone);
       if (data.startTime !== undefined) {
         updateData.startTime = newStartTime;
@@ -242,11 +243,16 @@ export class GameUpdateService {
         const endTime = updateData.endTime ? new Date(updateData.endTime) : currentGameWithCityId.endTime;
         const resultsStatus = updateData.resultsStatus !== undefined ? updateData.resultsStatus : currentGameWithCityId.resultsStatus;
         
+        if (!currentGame) {
+          throw new ApiError(404, 'Game not found');
+        }
+        
         updateData.status = calculateGameStatus({
           startTime,
           endTime,
           resultsStatus,
           timeIsSet: true,
+          entityType: currentGame.entityType,
         }, cityTimezone);
       }
     }

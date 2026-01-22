@@ -280,25 +280,42 @@ export async function applyGameOutcomes(
 
   const updatedGame = await tx.game.findUnique({
     where: { id: gameId },
-    select: { startTime: true, endTime: true, resultsStatus: true, cityId: true, timeIsSet: true },
+    select: { startTime: true, endTime: true, resultsStatus: true, cityId: true, timeIsSet: true, entityType: true, finishedDate: true },
   });
 
   if (updatedGame) {
     const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
-    const { calculateGameStatus } = await import('../../utils/gameStatus');
+    const { calculateGameStatus, isResultsBasedEntityType } = await import('../../utils/gameStatus');
     const previousResultsStatus = updatedGame.resultsStatus;
+    
+    const isResultsBased = isResultsBasedEntityType(updatedGame.entityType);
+    const isFirstTimeFinal = previousResultsStatus !== 'FINAL';
+    
+    const updateData: {
+      resultsStatus: 'FINAL';
+      status: 'FINISHED' | 'ANNOUNCED' | 'STARTED' | 'ARCHIVED';
+      finishedDate?: Date;
+    } = {
+      resultsStatus: 'FINAL',
+      status: 'FINISHED',
+    };
+    
+    if (isResultsBased && isFirstTimeFinal) {
+      updateData.finishedDate = new Date();
+    } else if (!isResultsBased) {
+      updateData.status = calculateGameStatus({
+        startTime: updatedGame.startTime,
+        endTime: updatedGame.endTime,
+        resultsStatus: 'FINAL',
+        timeIsSet: updatedGame.timeIsSet,
+        finishedDate: updatedGame.finishedDate,
+        entityType: updatedGame.entityType,
+      }, cityTimezone);
+    }
     
     await tx.game.update({
       where: { id: gameId },
-      data: {
-        resultsStatus: 'FINAL',
-        status: calculateGameStatus({
-          startTime: updatedGame.startTime,
-          endTime: updatedGame.endTime,
-          resultsStatus: 'FINAL',
-          timeIsSet: updatedGame.timeIsSet,
-        }, cityTimezone),
-      },
+      data: updateData,
     });
 
     if (previousResultsStatus !== 'FINAL' && game.affectsRating) {

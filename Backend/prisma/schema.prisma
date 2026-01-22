@@ -251,6 +251,7 @@ model Game {
   leagueRoundId          String?
   leagueGroupId          String?
   timeIsSet              Boolean             @default(false)
+  finishedDate           DateTime?
   priceTotal             Float?
   priceType              PriceType           @default(NOT_KNOWN)
   priceCurrency          PriceCurrency?

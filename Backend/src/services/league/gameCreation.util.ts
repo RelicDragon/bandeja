@@ -86,6 +86,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
         endTime,
         resultsStatus: 'NONE',
         timeIsSet: false,
+        entityType: EntityType.LEAGUE,
       }, cityTimezone),
       participants: {
         create: participantUserIds.map(userId => ({

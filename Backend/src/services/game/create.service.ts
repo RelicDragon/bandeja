@@ -161,6 +161,7 @@ export class GameCreateService {
           endTime,
           resultsStatus: 'NONE',
           timeIsSet: data.timeIsSet ?? false,
+          entityType: entityType,
         }, cityTimezone),
         participants: {
           create: {

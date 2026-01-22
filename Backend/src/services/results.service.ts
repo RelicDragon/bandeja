@@ -179,7 +179,7 @@ export async function deleteGameResults(gameId: string) {
 
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
-      select: { startTime: true, endTime: true, cityId: true, timeIsSet: true },
+      select: { startTime: true, endTime: true, cityId: true, timeIsSet: true, entityType: true },
     });
     
     if (updatedGame) {
@@ -198,6 +198,7 @@ export async function deleteGameResults(gameId: string) {
             endTime: updatedGame.endTime,
             resultsStatus: 'NONE',
             timeIsSet: updatedGame.timeIsSet,
+            entityType: updatedGame.entityType,
           }, cityTimezone),
         },
       });
@@ -304,7 +305,7 @@ export async function resetGameResults(gameId: string) {
 
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
-      select: { startTime: true, endTime: true, cityId: true, timeIsSet: true },
+      select: { startTime: true, endTime: true, cityId: true, timeIsSet: true, entityType: true },
     });
     
     if (updatedGame) {
@@ -323,6 +324,7 @@ export async function resetGameResults(gameId: string) {
             endTime: updatedGame.endTime,
             resultsStatus: 'NONE',
             timeIsSet: updatedGame.timeIsSet,
+            entityType: updatedGame.entityType,
           }, cityTimezone),
         },
       });
@@ -387,28 +389,29 @@ export async function editGameResults(gameId: string) {
       },
     });
 
-    const updatedGame = await tx.game.findUnique({
-      where: { id: gameId },
-      select: { startTime: true, endTime: true, cityId: true, timeIsSet: true },
-    });
-    
-    if (updatedGame) {
-      const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
-      
-      const { calculateGameStatus } = await import('../utils/gameStatus');
-      await tx.game.update({
+      const updatedGame = await tx.game.findUnique({
         where: { id: gameId },
-        data: {
-          resultsStatus: 'IN_PROGRESS',
-          status: calculateGameStatus({
-            startTime: updatedGame.startTime,
-            endTime: updatedGame.endTime,
-            resultsStatus: 'IN_PROGRESS',
-            timeIsSet: updatedGame.timeIsSet,
-          }, cityTimezone),
-        },
+        select: { startTime: true, endTime: true, cityId: true, timeIsSet: true, entityType: true },
       });
-    }
+      
+      if (updatedGame) {
+        const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
+        
+        const { calculateGameStatus } = await import('../utils/gameStatus');
+        await tx.game.update({
+          where: { id: gameId },
+          data: {
+            resultsStatus: 'IN_PROGRESS',
+            status: calculateGameStatus({
+              startTime: updatedGame.startTime,
+              endTime: updatedGame.endTime,
+              resultsStatus: 'IN_PROGRESS',
+              timeIsSet: updatedGame.timeIsSet,
+              entityType: updatedGame.entityType,
+            }, cityTimezone),
+          },
+        });
+      }
   });
 }
 

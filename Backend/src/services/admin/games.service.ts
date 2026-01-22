@@ -344,7 +344,7 @@ export class AdminGamesService {
 
       const updatedGame = await tx.game.findUnique({
         where: { id: gameId },
-        select: { startTime: true, endTime: true, cityId: true, timeIsSet: true },
+        select: { startTime: true, endTime: true, cityId: true, timeIsSet: true, entityType: true },
       });
       
       if (updatedGame) {
@@ -362,6 +362,7 @@ export class AdminGamesService {
               endTime: updatedGame.endTime,
               resultsStatus: 'NONE',
               timeIsSet: updatedGame.timeIsSet,
+              entityType: updatedGame.entityType,
             }, cityTimezone),
           },
         });

@@ -5,6 +5,7 @@ import { EntityType, LevelChangeEventType } from '@prisma/client';
 export async function finishTraining(gameId: string, _userId: string): Promise<void> {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
+    select: { id: true, entityType: true, resultsStatus: true },
   });
 
   if (!game) {
@@ -15,10 +16,14 @@ export async function finishTraining(gameId: string, _userId: string): Promise<v
     throw new ApiError(400, 'This endpoint is only for training games');
   }
 
+  const isFirstTimeFinal = game.resultsStatus !== 'FINAL';
+  
   await prisma.game.update({
     where: { id: gameId },
     data: {
       resultsStatus: 'FINAL',
+      status: 'FINISHED',
+      ...(isFirstTimeFinal && { finishedDate: new Date() }),
     },
   });
 }

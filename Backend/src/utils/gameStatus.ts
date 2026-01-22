@@ -1,7 +1,14 @@
 import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { startOfDay, addDays } from 'date-fns';
+import { EntityType } from '@prisma/client';
 
 type GameStatus = 'ANNOUNCED' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
+
+const RESULTS_BASED_ENTITY_TYPES: readonly EntityType[] = [EntityType.GAME, EntityType.LEAGUE, EntityType.TOURNAMENT, EntityType.TRAINING];
+
+export const isResultsBasedEntityType = (entityType: EntityType): boolean => {
+  return RESULTS_BASED_ENTITY_TYPES.includes(entityType);
+};
 
 export const calculateGameStatus = (
   game: {
@@ -9,6 +16,8 @@ export const calculateGameStatus = (
     endTime: Date;
     resultsStatus: string;
     timeIsSet?: boolean;
+    finishedDate?: Date | null;
+    entityType: EntityType;
   },
   clubTimezone?: string
 ): GameStatus => {
@@ -23,17 +32,25 @@ export const calculateGameStatus = (
   const hoursUntilStart = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
   const hoursSinceEnd = (now.getTime() - endTime.getTime()) / (1000 * 60 * 60);
   
+  const isResultsBased = isResultsBasedEntityType(game.entityType);
+  
   let shouldArchive = false;
   
-  if (clubTimezone) {
-    const endTimeInTimezone = toZonedTime(endTime, clubTimezone);
-    const endDatePlusTwoDays = addDays(endTimeInTimezone, 2);
-    const nextDayMidnight = startOfDay(endDatePlusTwoDays);
-    const archiveTimeUTC = fromZonedTime(nextDayMidnight, clubTimezone);
-    
-    shouldArchive = now >= archiveTimeUTC;
+  if (isResultsBased && game.finishedDate) {
+    const finishedDate = new Date(game.finishedDate);
+    const hoursSinceFinished = (now.getTime() - finishedDate.getTime()) / (1000 * 60 * 60);
+    shouldArchive = hoursSinceFinished >= 24;
   } else {
-    shouldArchive = hoursSinceEnd > 48;
+    if (clubTimezone) {
+      const endTimeInTimezone = toZonedTime(endTime, clubTimezone);
+      const endDatePlusTwoDays = addDays(endTimeInTimezone, 2);
+      const nextDayMidnight = startOfDay(endDatePlusTwoDays);
+      const archiveTimeUTC = fromZonedTime(nextDayMidnight, clubTimezone);
+      
+      shouldArchive = now >= archiveTimeUTC;
+    } else {
+      shouldArchive = hoursSinceEnd > 48;
+    }
   }
   
   if (shouldArchive) {
