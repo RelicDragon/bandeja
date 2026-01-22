@@ -1,11 +1,13 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": ["delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"],
     "target": {
       "namespace": "android_app",
       "package_name": "com.funified.bandeja",
       "sha256_cert_fingerprints": [
-        "80:D3:AC:CB:24:7E:5D:AE:56:BA:3F:B0:F9:84:C2:36:76:83:EA:22:90:23:45:9C:45:35:48:08:44:D7:2D:03"
+        "80:D3:AC:CB:24:7E:5D:AE:56:BA:3F:B0:F9:84:C2:36:76:83:EA:22:90:23:45:9C:45:35:48:08:44:D7:2D:03",
+        "9E:A7:A7:E3:0E:C3:B0:83:10:63:3F:D3:F1:2D:F9:2F:94:B4:0C:2B:C7:00:04:D3:11:38:49:5C:27:1B:A8:B6"
       ]
     }
   }
