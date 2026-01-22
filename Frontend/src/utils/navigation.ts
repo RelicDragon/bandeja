@@ -63,11 +63,13 @@ interface LocationState {
   fromLeagueSeasonGameId?: string;
 }
 
+type PageType = 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions';
+
 interface HandleBackNavigationParams {
   pathname: string;
   locationState: LocationState | null;
   navigate: NavigateFunction;
-  setCurrentPage?: (page: string) => void;
+  setCurrentPage?: (page: PageType) => void;
   setChatsFilter?: (filter: 'users' | 'bugs' | 'channels') => void;
   contextType?: 'USER' | 'BUG' | 'GAME' | 'GROUP';
   gameId?: string;

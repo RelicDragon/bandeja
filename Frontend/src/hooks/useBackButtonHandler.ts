@@ -9,10 +9,16 @@ type BackHandler = () => boolean | void;
 export const useBackButtonHandler = (handler?: BackHandler) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
+  const { setCurrentPage, setIsAnimating } = useNavigationStore();
 
   useEffect(() => {
-    backButtonService.setNavigate(navigate);
+    backButtonService.setNavigate((path: string | number, options?: { replace?: boolean }) => {
+      if (typeof path === 'number') {
+        navigate(path);
+      } else {
+        navigate(path, options);
+      }
+    });
   }, [navigate]);
 
   const defaultHandler = useCallback(() => {

@@ -27,7 +27,6 @@ export const Header = () => {
   const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
   const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications } = useNavigationStore();
   
-  const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const shouldHideHeader = !user && isGameDetailsPage;
 
