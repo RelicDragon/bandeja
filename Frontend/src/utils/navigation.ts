@@ -1,5 +1,4 @@
 import { NavigateFunction } from 'react-router-dom';
-import { isCapacitor } from './capacitor';
 
 const NAVIGATION_TRACK_KEY = 'app_navigation_tracked';
 
@@ -9,58 +8,21 @@ export const markNavigation = (): void => {
 
 export const canNavigateBack = (): boolean => {
   if (window.history.length <= 1) {
-    console.log('[canNavigateBack] History length <= 1, returning false');
     return false;
   }
   
   const hasNavigatedWithinApp = sessionStorage.getItem(NAVIGATION_TRACK_KEY) === 'true';
   
   if (!hasNavigatedWithinApp) {
-    console.log('[canNavigateBack] No navigation tracking, returning false');
     return false;
   }
   
-  const isNativeApp = isCapacitor();
-  
-  if (isNativeApp) {
-    // In Capacitor apps, referrer might be empty, but if we have navigation tracking
-    // and history length > 1, it's safe to navigate back within the app
-    console.log('[canNavigateBack] Capacitor app detected, using navigation tracking only');
-    return true;
-  }
-  
-  // For web browsers, check referrer to ensure we're not going to browser pages
-  const referrer = document.referrer;
-  if (!referrer) {
-    console.log('[canNavigateBack] No referrer, returning false');
-    return false;
-  }
-  
-  try {
-    const referrerUrl = new URL(referrer);
-    const currentUrl = new URL(window.location.href);
-    
-    if (referrerUrl.origin !== currentUrl.origin) {
-      console.log(`[canNavigateBack] Referrer origin (${referrerUrl.origin}) !== current origin (${currentUrl.origin}), returning false`);
-      return false;
-    }
-    
-    // Check for browser-specific pages (chrome://, about:, etc.)
-    if (referrerUrl.protocol === 'chrome:' || referrerUrl.protocol === 'about:' || referrerUrl.href === 'about:blank' || referrerUrl.href.includes('new-tab-page')) {
-      console.log(`[canNavigateBack] Referrer is browser page (${referrerUrl.href}), returning false`);
-      return false;
-    }
-  } catch (error) {
-    console.log(`[canNavigateBack] Error parsing referrer: ${error}, returning false`);
-    return false;
-  }
-  
-  console.log('[canNavigateBack] All checks passed, returning true');
   return true;
 };
 
 interface LocationState {
   fromLeagueSeasonGameId?: string;
+  fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions';
 }
 
 type PageType = 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions';
@@ -117,6 +79,30 @@ export const handleBackNavigation = (params: HandleBackNavigationParams): void =
       }
       targetPath = `/games/${locationState.fromLeagueSeasonGameId} (from league)`;
       navigate(`/games/${locationState.fromLeagueSeasonGameId}`, { replace: true });
+    } else if (locationState?.fromPage) {
+      const fromPage = locationState.fromPage;
+      if (setCurrentPage) {
+        setCurrentPage(fromPage);
+      }
+      if (fromPage === 'find') {
+        targetPath = '/find';
+        navigate('/find', { replace: true });
+      } else if (fromPage === 'chats') {
+        targetPath = '/chats';
+        navigate('/chats', { replace: true });
+      } else if (fromPage === 'bugs') {
+        targetPath = '/bugs';
+        navigate('/bugs', { replace: true });
+      } else if (fromPage === 'profile') {
+        targetPath = '/profile';
+        navigate('/profile', { replace: true });
+      } else if (fromPage === 'leaderboard') {
+        targetPath = '/leaderboard';
+        navigate('/leaderboard', { replace: true });
+      } else {
+        targetPath = '/';
+        navigate('/', { replace: true });
+      }
     } else {
       if (setCurrentPage) {
         setCurrentPage('my');
@@ -130,6 +116,30 @@ export const handleBackNavigation = (params: HandleBackNavigationParams): void =
     }
     targetPath = `/games/${locationState.fromLeagueSeasonGameId} (from league)`;
     navigate(`/games/${locationState.fromLeagueSeasonGameId}`, { replace: true });
+  } else if (locationState?.fromPage) {
+    const fromPage = locationState.fromPage;
+    if (setCurrentPage) {
+      setCurrentPage(fromPage);
+    }
+    if (fromPage === 'find') {
+      targetPath = '/find';
+      navigate('/find', { replace: true });
+    } else if (fromPage === 'chats') {
+      targetPath = '/chats';
+      navigate('/chats', { replace: true });
+    } else if (fromPage === 'bugs') {
+      targetPath = '/bugs';
+      navigate('/bugs', { replace: true });
+    } else if (fromPage === 'profile') {
+      targetPath = '/profile';
+      navigate('/profile', { replace: true });
+    } else if (fromPage === 'leaderboard') {
+      targetPath = '/leaderboard';
+      navigate('/leaderboard', { replace: true });
+    } else {
+      targetPath = '/';
+      navigate('/', { replace: true });
+    }
   } else {
     if (setCurrentPage) {
       setCurrentPage('my');

@@ -26,7 +26,7 @@ export const useBackButtonHandler = (handler?: BackHandler) => {
     
     handleBackNavigation({
       pathname: location.pathname,
-      locationState: location.state as { fromLeagueSeasonGameId?: string } | null,
+      locationState: location.state as { fromLeagueSeasonGameId?: string; fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' } | null,
       navigate,
       setCurrentPage,
     });

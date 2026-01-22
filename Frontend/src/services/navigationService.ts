@@ -48,10 +48,11 @@ class NavigationService {
     if (!store) return;
 
     this.setAnimatingState();
+    const previousPage = store.currentPage;
     store.setCurrentPage('gameDetails');
     
     const path = openChat ? `/games/${gameId}/chat` : `/games/${gameId}`;
-    this.navigate!(path, { replace: true });
+    this.navigate!(path, { replace: true, state: { fromPage: previousPage } });
   }
 
   navigateToUserChat(userChatId: string) {

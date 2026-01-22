@@ -41,7 +41,7 @@ export const GameCard = ({
 }: GameCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { setCurrentPage, setIsAnimating } = useNavigationStore();
+  const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
   const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
   const [isCollapsing, setIsCollapsing] = useState(false);
   const expandedContentRef = useRef<HTMLDivElement>(null);
@@ -150,8 +150,9 @@ export const GameCard = ({
       onClick();
     } else {
       setIsAnimating(true);
+      const previousPage = currentPage;
       setCurrentPage('gameDetails');
-      navigate(`/games/${game.id}`);
+      navigate(`/games/${game.id}`, { state: { fromPage: previousPage } });
       setTimeout(() => setIsAnimating(false), 300);
     }
   };

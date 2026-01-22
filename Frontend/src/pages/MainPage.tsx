@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { useNavigationStore } from '@/store/navigationStore';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
@@ -15,6 +15,7 @@ import { GameSubscriptionsContent } from './GameSubscriptions';
 
 export const MainPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentPage, setCurrentPage, setIsAnimating, bottomTabsVisible, chatsFilter, setChatsFilter } = useNavigationStore();
   const previousPathnameRef = useRef(location.pathname);
   const isInitialMountRef = useRef(true);
@@ -24,6 +25,7 @@ export const MainPage = () => {
     const path = location.pathname;
     const previousPath = previousPathnameRef.current;
     const isPathChanged = path !== previousPath;
+    const locationState = location.state as { fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' } | null;
 
     if (isPathChanged || isInitialMountRef.current) {
       if (isPathChanged) {
@@ -56,6 +58,19 @@ export const MainPage = () => {
         setCurrentPage('chats');
         setChatsFilter('channels');
       } else if (path === '/') {
+        if (locationState?.fromPage && previousPath?.startsWith('/games/')) {
+          setCurrentPage(locationState.fromPage);
+          if (locationState.fromPage === 'find') {
+            setIsAnimating(true);
+            setTimeout(() => {
+              navigate('/find', { replace: true });
+              setIsAnimating(false);
+            }, 0);
+          }
+        } else {
+          setCurrentPage('my');
+        }
+      } else {
         setCurrentPage('my');
       }
 
@@ -66,7 +81,7 @@ export const MainPage = () => {
       previousPathnameRef.current = path;
       isInitialMountRef.current = false;
     }
-  }, [location.pathname, setCurrentPage, setIsAnimating, setChatsFilter]);
+  }, [location.pathname, location.state, setCurrentPage, setIsAnimating, setChatsFilter, navigate]);
 
   const renderContent = useMemo(() => {
     switch (currentPage) {
