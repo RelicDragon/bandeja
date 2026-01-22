@@ -19,6 +19,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { BaseModal } from './BaseModal';
 import toast from 'react-hot-toast';
+import { canNavigateBack } from '@/utils/navigation';
 
 interface PlayerCardBottomSheetProps {
   playerId: string | null;
@@ -127,7 +128,9 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
       // Remove the history state if modal closes normally (not via back button)
       if (window.history.state?.playerCardOpen && playerId && !isClosingViaBack) {
         try {
-          window.history.back();
+          if (canNavigateBack()) {
+            window.history.back();
+          }
         } catch (error) {
           // Ignore errors if history is not available
         }

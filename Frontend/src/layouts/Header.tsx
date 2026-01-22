@@ -6,7 +6,7 @@ import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { useAuthStore } from '@/store/authStore';
-import { canNavigateBack } from '@/utils/navigation';
+import { handleBackNavigation } from '@/utils/navigation';
 import {
   HomeHeaderContent,
   GameDetailsHeaderContent,
@@ -42,20 +42,12 @@ export const Header = () => {
   const handleBackClick = () => {
     setIsAnimating(true);
     
-    if (currentPage === 'gameDetails') {
-      if (canNavigateBack()) {
-        navigate(-1);
-      } else {
-        setCurrentPage('my');
-        navigate('/', { replace: true });
-      }
-    } else if (locationState?.fromLeagueSeasonGameId) {
-      setCurrentPage('gameDetails');
-      navigate(`/games/${locationState.fromLeagueSeasonGameId}`, { replace: true });
-    } else {
-      setCurrentPage('my');
-      navigate('/', { replace: true });
-    }
+    handleBackNavigation({
+      pathname: location.pathname,
+      locationState: location.state as { fromLeagueSeasonGameId?: string } | null,
+      navigate,
+      setCurrentPage,
+    });
     
     setTimeout(() => setIsAnimating(false), 300);
   };

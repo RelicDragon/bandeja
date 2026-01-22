@@ -1,5 +1,6 @@
 import { App } from '@capacitor/app';
 import { isAndroid } from '@/utils/capacitor';
+import { canNavigateBack } from '@/utils/navigation';
 
 type ModalCloseHandler = () => void;
 type PageBackHandler = () => boolean | void;
@@ -10,6 +11,11 @@ class BackButtonService {
   private listenerHandle: any = null;
   private isInitialized = false;
   private isHandling = false;
+  private navigate: ((path: string | number, options?: { replace?: boolean }) => void) | null = null;
+
+  setNavigate(navigateFn: (path: string | number, options?: { replace?: boolean }) => void) {
+    this.navigate = navigateFn;
+  }
 
   initialize() {
     if (this.isInitialized || !isAndroid()) return;
@@ -43,6 +49,10 @@ class BackButtonService {
       if (this.pageHandler) {
         try {
           const handled = this.pageHandler();
+          if (handled === true || handled === undefined) {
+            this.isHandling = false;
+            return;
+          }
           if (handled === false) {
             this.isHandling = false;
             return;
@@ -62,17 +72,30 @@ class BackButtonService {
 
   private defaultBackNavigation() {
     try {
-      if (window.history.length > 1) {
-        window.history.back();
+      if (canNavigateBack() && this.navigate) {
+        this.navigate(-1);
       } else {
-        App.exitApp();
+        if (this.navigate) {
+          this.navigate('/', { replace: true });
+        } else {
+          App.exitApp();
+        }
       }
     } catch (error) {
       console.error('Error in default back navigation:', error);
       try {
-        App.exitApp();
-      } catch (exitError) {
-        console.error('Error exiting app:', exitError);
+        if (this.navigate) {
+          this.navigate('/', { replace: true });
+        } else {
+          App.exitApp();
+        }
+      } catch (fallbackError) {
+        console.error('Error in fallback navigation:', fallbackError);
+        try {
+          App.exitApp();
+        } catch (exitError) {
+          console.error('Error exiting app:', exitError);
+        }
       }
     }
   }

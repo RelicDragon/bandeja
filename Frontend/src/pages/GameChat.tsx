@@ -22,7 +22,7 @@ import { normalizeChatType } from '@/utils/chatType';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users } from 'lucide-react';
 import { GroupChannelParticipantsModal } from '@/components/chat/GroupChannelParticipantsModal';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
-import { canNavigateBack } from '@/utils/navigation';
+import { handleBackNavigation } from '@/utils/navigation';
 
 interface LocationState {
   initialChatType?: ChatType;
@@ -131,21 +131,17 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   }, [setBottomTabsVisible, isEmbedded]);
 
   useBackButtonHandler(() => {
-    if (canNavigateBack()) {
-      navigate(-1);
-    } else {
-      if (contextType === 'USER') {
-        setChatsFilter('users');
-        navigate('/chats', { replace: true });
-      } else if (contextType === 'GROUP') {
-        setChatsFilter('channels');
-        navigate('/chats', { replace: true });
-      } else if (contextType === 'BUG') {
-        navigate('/bugs', { replace: true });
-      } else if (contextType === 'GAME') {
-        navigate('/', { replace: true });
-      }
-    }
+    const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
+    
+    handleBackNavigation({
+      pathname: location.pathname,
+      locationState,
+      navigate,
+      setChatsFilter,
+      contextType,
+      gameId: id,
+    });
+    
     return true;
   });
 
@@ -446,11 +442,14 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       if (contextType === 'GAME') {
         await gamesApi.leave(id);
         await loadContext();
-        if (canNavigateBack()) {
-          navigate(-1);
-        } else {
-          navigate('/', { replace: true });
-        }
+        const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
+        handleBackNavigation({
+          pathname: location.pathname,
+          locationState,
+          navigate,
+          contextType: 'GAME',
+          gameId: id,
+        });
       } else if (contextType === 'BUG') {
         await bugsApi.leaveChat(id);
         await loadContext();
@@ -921,21 +920,15 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
-                  if (canNavigateBack()) {
-                    navigate(-1);
-                  } else {
-                    if (contextType === 'USER') {
-                      setChatsFilter('users');
-                      navigate('/chats', { replace: true });
-                    } else if (contextType === 'GROUP') {
-                      setChatsFilter('channels');
-                      navigate('/chats', { replace: true });
-                    } else if (contextType === 'BUG') {
-                      navigate('/bugs', { replace: true });
-                    } else if (contextType === 'GAME') {
-                      navigate('/', { replace: true });
-                    }
-                  }
+                  const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
+                  handleBackNavigation({
+                    pathname: location.pathname,
+                    locationState,
+                    navigate,
+                    setChatsFilter,
+                    contextType,
+                    gameId: id,
+                  });
                 }}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
@@ -1060,21 +1053,15 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 {!isEmbedded && (
                   <button
                     onClick={() => {
-                      if (canNavigateBack()) {
-                        navigate(-1);
-                      } else {
-                        if (contextType === 'USER') {
-                          setChatsFilter('users');
-                          navigate('/chats', { replace: true });
-                        } else if (contextType === 'GROUP') {
-                          setChatsFilter('channels');
-                          navigate('/chats', { replace: true });
-                        } else if (contextType === 'BUG') {
-                          navigate('/bugs', { replace: true });
-                        } else if (contextType === 'GAME') {
-                          navigate('/', { replace: true });
-                        }
-                      }
+                      const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
+                      handleBackNavigation({
+                        pathname: location.pathname,
+                        locationState,
+                        navigate,
+                        setChatsFilter,
+                        contextType,
+                        gameId: id,
+                      });
                     }}
                     className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
                   >

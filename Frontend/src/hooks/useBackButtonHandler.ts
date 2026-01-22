@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { backButtonService } from '@/services/backButtonService';
 import { useNavigationStore } from '@/store/navigationStore';
-import { canNavigateBack } from '@/utils/navigation';
+import { handleBackNavigation } from '@/utils/navigation';
 
 type BackHandler = () => boolean | void;
 
@@ -11,28 +11,23 @@ export const useBackButtonHandler = (handler?: BackHandler) => {
   const navigate = useNavigate();
   const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
 
+  useEffect(() => {
+    backButtonService.setNavigate(navigate);
+  }, [navigate]);
+
   const defaultHandler = useCallback(() => {
     setIsAnimating(true);
     
-    const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
-    
-    if (currentPage === 'gameDetails') {
-      if (canNavigateBack()) {
-        navigate(-1);
-      } else {
-        setCurrentPage('my');
-        navigate('/', { replace: true });
-      }
-    } else if (locationState?.fromLeagueSeasonGameId) {
-      setCurrentPage('gameDetails');
-      navigate(`/games/${locationState.fromLeagueSeasonGameId}`, { replace: true });
-    } else {
-      setCurrentPage('my');
-      navigate('/', { replace: true });
-    }
+    handleBackNavigation({
+      pathname: location.pathname,
+      locationState: location.state as { fromLeagueSeasonGameId?: string } | null,
+      navigate,
+      setCurrentPage,
+    });
     
     setTimeout(() => setIsAnimating(false), 300);
-  }, [location.state, currentPage, navigate, setCurrentPage, setIsAnimating]);
+    return true;
+  }, [location.pathname, location.state, navigate, setCurrentPage, setIsAnimating]);
 
   useEffect(() => {
     if (handler) {
