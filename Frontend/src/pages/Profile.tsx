@@ -915,7 +915,7 @@ export const ProfileContent = () => {
             <div>
               <Button
                 variant="primary"
-                onClick={() => window.open('/character', '_blank')}
+                onClick={() => (window.location.href = '/character')}
                 className="w-full flex items-center justify-center gap-2 rounded-xl"
               >
                 <UserCircle size={16} />
