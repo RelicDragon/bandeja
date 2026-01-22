@@ -14,7 +14,7 @@ import { usersApi, citiesApi, mediaApi, authApi } from '@/api';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
 import { City, Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X, UserCircle } from 'lucide-react';
 import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -911,6 +911,17 @@ export const ProfileContent = () => {
                 onChange={(value) => handleChangeWeekStart(value as 'auto' | 'monday' | 'sunday')}
               />
             </div>
+
+            <div>
+              <Button
+                variant="primary"
+                onClick={() => window.open('/character', '_blank')}
+                className="w-full flex items-center justify-center gap-2 rounded-xl"
+              >
+                <UserCircle size={16} />
+                {t('profile.characterGenerator') || 'Character Generator'}
+              </Button>
+            </div>
           </div>
         </Card>
 
@@ -920,9 +931,9 @@ export const ProfileContent = () => {
           </h2>
           <div className="space-y-4">
             <Button
-              variant="secondary"
+              variant="primary"
               onClick={() => setShowNotificationModal(true)}
-              className="w-full"
+              className="w-full rounded-xl"
             >
               {t('profile.controlNotifications') || 'Control Notifications'}
             </Button>

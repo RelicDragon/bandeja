@@ -730,7 +730,8 @@
     "monday": "Lunes",
     "sunday": "Domingo",
     "timeFormat12h": "12 horas",
-    "timeFormat24h": "24 horas"
+    "timeFormat24h": "24 horas",
+    "characterGenerator": "Generador de Personajes"
   },
   "createGame": {
     "title": "Crear juego",
