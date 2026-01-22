@@ -5,7 +5,7 @@
       {
         "appID": "N9634A623Q.com.funified.bandeja",
         "paths": [
-          "/games/*"
+          "*"
         ]
       }
     ]

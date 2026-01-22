@@ -13,11 +13,81 @@ export const useDeepLink = () => {
     const handleDeepLink = (urlString: string) => {
       try {
         const url = new URL(urlString);
-        if (url.hostname === 'bandeja.me' && url.pathname.startsWith('/games/')) {
-          const gameId = url.pathname.split('/games/')[1]?.split('/')[0];
-          if (gameId) {
-            navigate(`/games/${gameId}`, { replace: true });
+        if (url.hostname !== 'bandeja.me') return;
+
+        const pathname = url.pathname;
+        
+        // Games routes
+        if (pathname.startsWith('/games/')) {
+          const parts = pathname.split('/').filter(Boolean);
+          if (parts.length >= 2) {
+            const gameId = parts[1];
+            if (parts.length === 3 && parts[2] === 'chat') {
+              navigate(`/games/${gameId}/chat`, { replace: true });
+            } else {
+              navigate(`/games/${gameId}`, { replace: true });
+            }
+            return;
           }
+        }
+        
+        // Chat routes
+        if (pathname.startsWith('/user-chat/')) {
+          const id = pathname.split('/user-chat/')[1]?.split('/')[0];
+          if (id) {
+            navigate(`/user-chat/${id}`, { replace: true });
+            return;
+          }
+        }
+        
+        if (pathname.startsWith('/group-chat/')) {
+          const id = pathname.split('/group-chat/')[1]?.split('/')[0];
+          if (id) {
+            navigate(`/group-chat/${id}`, { replace: true });
+            return;
+          }
+        }
+        
+        if (pathname.startsWith('/channel-chat/')) {
+          const id = pathname.split('/channel-chat/')[1]?.split('/')[0];
+          if (id) {
+            navigate(`/channel-chat/${id}`, { replace: true });
+            return;
+          }
+        }
+        
+        // Bugs routes
+        if (pathname.startsWith('/bugs/')) {
+          const parts = pathname.split('/').filter(Boolean);
+          if (parts.length >= 2) {
+            const bugId = parts[1];
+            if (parts.length === 3 && parts[2] === 'chat') {
+              navigate(`/bugs/${bugId}/chat`, { replace: true });
+              return;
+            }
+          }
+        }
+        
+        // Simple routes (no parameters)
+        const simpleRoutes: Record<string, string> = {
+          '/find': '/find',
+          '/chats': '/chats',
+          '/profile': '/profile',
+          '/leaderboard': '/leaderboard',
+          '/bugs': '/bugs',
+          '/game-subscriptions': '/game-subscriptions',
+          '/create-game': '/create-game',
+          '/create-league': '/create-league',
+          '/login': '/login',
+          '/register': '/register',
+          '/select-city': '/select-city',
+          '/complete-profile': '/complete-profile',
+          '/': '/'
+        };
+        
+        if (simpleRoutes[pathname]) {
+          navigate(simpleRoutes[pathname], { replace: true });
+          return;
         }
       } catch (error) {
         console.error('Error handling deep link:', error);
