@@ -52,7 +52,26 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
       state: nonce,
       nonce: hashedNonce,
     });
-    console.log('[APPLE_AUTH] Apple authorization response received');
+    console.log('[APPLE_AUTH] Apple authorization response received:', {
+      hasResponse: !!result.response,
+      hasIdentityToken: !!result.response?.identityToken,
+      hasAuthorizationCode: !!result.response?.authorizationCode,
+      identityTokenLength: result.response?.identityToken?.length || 0,
+      identityTokenPreview: result.response?.identityToken ? result.response.identityToken.substring(0, 50) + '...' : undefined,
+      authorizationCodeLength: result.response?.authorizationCode?.length || 0,
+      authorizationCodePreview: result.response?.authorizationCode ? result.response.authorizationCode.substring(0, 50) + '...' : undefined,
+      hasUser: !!result.response?.user,
+      userType: typeof result.response?.user,
+      userEmail: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) ? (result.response.user as any).email : undefined,
+      userName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) ? (result.response.user as any).name : undefined,
+      fullResponseStructure: {
+        response: result.response ? {
+          identityToken: result.response.identityToken ? '[REDACTED - length: ' + result.response.identityToken.length + ']' : undefined,
+          authorizationCode: result.response.authorizationCode ? '[REDACTED - length: ' + result.response.authorizationCode.length + ']' : undefined,
+          user: result.response.user,
+        } : undefined,
+      },
+    });
 
     if (!result.response?.identityToken) {
       console.error('[APPLE_AUTH] No identity token received from Apple');
