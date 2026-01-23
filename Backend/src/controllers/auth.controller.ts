@@ -194,6 +194,17 @@ export const loginWithTelegram = asyncHandler(async (req: Request, res: Response
 
 export const registerWithApple = asyncHandler(async (req: Request, res: Response) => {
   console.log('[APPLE_REGISTER] registerWithApple called');
+  console.log('[APPLE_REGISTER] Request body received:', {
+    hasIdentityToken: !!req.body.identityToken,
+    identityTokenLength: req.body.identityToken?.length || 0,
+    identityTokenPreview: req.body.identityToken ? req.body.identityToken.substring(0, 50) + '...' : undefined,
+    hasNonce: !!req.body.nonce,
+    nonceLength: req.body.nonce?.length || 0,
+    hasFirstName: !!req.body.firstName,
+    hasLastName: !!req.body.lastName,
+    language: req.body.language,
+    gender: req.body.gender,
+  });
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   const { identityToken, nonce, firstName, lastName, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
@@ -206,7 +217,16 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
   console.log('[APPLE_REGISTER] Verifying Apple identity token');
   const appleToken = await verifyAppleIdentityToken(identityToken, nonce);
   const appleSub = appleToken.sub;
-  console.log('[APPLE_REGISTER] Apple token verified, sub:', appleSub.substring(0, 8) + '...', 'email:', appleToken.email || 'none');
+  console.log('[APPLE_REGISTER] Apple token verified, full decoded token:', {
+    sub: appleToken.sub,
+    email: appleToken.email || 'none',
+    email_verified: appleToken.email_verified || false,
+    iss: appleToken.iss,
+    aud: appleToken.aud,
+    exp: appleToken.exp,
+    iat: appleToken.iat,
+    hasNonce: !!appleToken.nonce,
+  });
 
   const existingUser = await prisma.user.findUnique({
     where: { appleSub },
@@ -298,6 +318,16 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
 
 export const loginWithApple = asyncHandler(async (req: Request, res: Response) => {
   console.log('[APPLE_LOGIN] loginWithApple called');
+  console.log('[APPLE_LOGIN] Request body received:', {
+    hasIdentityToken: !!req.body.identityToken,
+    identityTokenLength: req.body.identityToken?.length || 0,
+    identityTokenPreview: req.body.identityToken ? req.body.identityToken.substring(0, 50) + '...' : undefined,
+    hasNonce: !!req.body.nonce,
+    nonceLength: req.body.nonce?.length || 0,
+    language: req.body.language,
+    hasFirstName: !!req.body.firstName,
+    hasLastName: !!req.body.lastName,
+  });
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   const { identityToken, nonce, language, firstName, lastName } = req.body;
@@ -310,7 +340,16 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
   console.log('[APPLE_LOGIN] Verifying Apple identity token');
   const appleToken = await verifyAppleIdentityToken(identityToken, nonce);
   const appleSub = appleToken.sub;
-  console.log('[APPLE_LOGIN] Apple token verified, sub:', appleSub.substring(0, 8) + '...', 'email:', appleToken.email || 'none');
+  console.log('[APPLE_LOGIN] Apple token verified, full decoded token:', {
+    sub: appleToken.sub,
+    email: appleToken.email || 'none',
+    email_verified: appleToken.email_verified || false,
+    iss: appleToken.iss,
+    aud: appleToken.aud,
+    exp: appleToken.exp,
+    iat: appleToken.iat,
+    hasNonce: !!appleToken.nonce,
+  });
 
   let user = await prisma.user.findUnique({
     where: { appleSub },
@@ -647,6 +686,13 @@ export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) 
 
 export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) => {
   console.log('[APPLE_LINK] linkApple called, userId:', req.userId);
+  console.log('[APPLE_LINK] Request body received:', {
+    hasIdentityToken: !!req.body.identityToken,
+    identityTokenLength: req.body.identityToken?.length || 0,
+    identityTokenPreview: req.body.identityToken ? req.body.identityToken.substring(0, 50) + '...' : undefined,
+    hasNonce: !!req.body.nonce,
+    nonceLength: req.body.nonce?.length || 0,
+  });
   const { identityToken, nonce } = req.body;
 
   if (!identityToken) {
@@ -662,7 +708,16 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
   console.log('[APPLE_LINK] Verifying Apple identity token');
   const appleToken = await verifyAppleIdentityToken(identityToken, nonce);
   const appleSub = appleToken.sub;
-  console.log('[APPLE_LINK] Apple token verified, sub:', appleSub.substring(0, 8) + '...', 'email:', appleToken.email || 'none');
+  console.log('[APPLE_LINK] Apple token verified, full decoded token:', {
+    sub: appleToken.sub,
+    email: appleToken.email || 'none',
+    email_verified: appleToken.email_verified || false,
+    iss: appleToken.iss,
+    aud: appleToken.aud,
+    exp: appleToken.exp,
+    iat: appleToken.iat,
+    hasNonce: !!appleToken.nonce,
+  });
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },

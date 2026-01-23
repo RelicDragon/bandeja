@@ -350,6 +350,7 @@ export const sendResultsToTelegram = asyncHandler(async (req: AuthRequest, res: 
     outcomes: game.outcomes,
     hasFixedTeams: game.hasFixedTeams || false,
     genderTeams: game.genderTeams || 'ANY',
+    rounds: game.rounds,
   }, language);
 
   await ResultsTelegramService.sendResultsToTelegram(

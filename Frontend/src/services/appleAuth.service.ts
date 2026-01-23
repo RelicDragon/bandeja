@@ -52,7 +52,14 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
       state: nonce,
       nonce: hashedNonce,
     });
-    console.log('[APPLE_AUTH] Apple authorization response received:', {
+    console.log('[APPLE_AUTH] Apple authorization response received - full response structure:', JSON.stringify({
+      response: result.response ? {
+        identityToken: result.response.identityToken ? '[REDACTED - length: ' + result.response.identityToken.length + ']' : undefined,
+        authorizationCode: result.response.authorizationCode ? '[REDACTED - length: ' + result.response.authorizationCode.length + ']' : undefined,
+        user: result.response.user,
+      } : undefined,
+    }, null, 2));
+    console.log('[APPLE_AUTH] Apple authorization response details:', {
       hasResponse: !!result.response,
       hasIdentityToken: !!result.response?.identityToken,
       hasAuthorizationCode: !!result.response?.authorizationCode,
@@ -64,13 +71,8 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
       userType: typeof result.response?.user,
       userEmail: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) ? (result.response.user as any).email : undefined,
       userName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) ? (result.response.user as any).name : undefined,
-      fullResponseStructure: {
-        response: result.response ? {
-          identityToken: result.response.identityToken ? '[REDACTED - length: ' + result.response.identityToken.length + ']' : undefined,
-          authorizationCode: result.response.authorizationCode ? '[REDACTED - length: ' + result.response.authorizationCode.length + ']' : undefined,
-          user: result.response.user,
-        } : undefined,
-      },
+      userFirstName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) && (result.response.user as any).name ? (result.response.user as any).name.firstName : undefined,
+      userLastName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) && (result.response.user as any).name ? (result.response.user as any).name.lastName : undefined,
     });
 
     if (!result.response?.identityToken) {

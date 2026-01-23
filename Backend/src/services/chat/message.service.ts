@@ -12,7 +12,7 @@ import { DraftService } from './draft.service';
 import { ChatMuteService } from './chatMute.service';
 
 export class MessageService {
-  static async validateGameAccess(gameId: string, userId: string, chatType?: ChatType) {
+  static async validateGameAccess(gameId: string, userId: string) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       include: {
@@ -275,7 +275,7 @@ export class MessageService {
     let game, participant, bug, userChat, groupChannel;
     
     if (chatContextType === 'GAME') {
-      const result = await this.validateGameAccess(contextId, senderId, chatType);
+      const result = await this.validateGameAccess(contextId, senderId);
       game = result.game;
       participant = result.participant;
       await this.validateChatTypeAccess(participant, chatType, game, senderId, contextId, true);
@@ -656,7 +656,7 @@ export class MessageService {
 
     // Validate access based on context type
     if (chatContextType === 'GAME') {
-      const { participant, game } = await this.validateGameAccess(contextId, userId, chatType);
+      const { participant, game } = await this.validateGameAccess(contextId, userId);
       await this.validateChatTypeAccess(participant, chatType, game, userId, contextId, false);
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
@@ -700,7 +700,7 @@ export class MessageService {
   ) {
     // Validate access based on context type
     if (chatContextType === 'GAME') {
-      const { participant, game } = await this.validateGameAccess(contextId, userId, chatType);
+      const { participant, game } = await this.validateGameAccess(contextId, userId);
       await this.validateChatTypeAccess(participant, chatType, game, userId, contextId, false);
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
@@ -747,7 +747,7 @@ export class MessageService {
 
     // Validate access based on context type
     if (message.chatContextType === 'GAME') {
-      const { participant, game } = await this.validateGameAccess(message.contextId, userId, message.chatType);
+      const { participant, game } = await this.validateGameAccess(message.contextId, userId);
       await this.validateChatTypeAccess(participant, message.chatType, game, userId, message.contextId, false);
     } else if (message.chatContextType === 'BUG') {
       await this.validateBugAccess(message.contextId, userId, true);
@@ -802,7 +802,7 @@ export class MessageService {
 
     // Validate access based on context type
     if (message.chatContextType === 'GAME') {
-      const { participant, game } = await this.validateGameAccess(message.contextId, userId, message.chatType);
+      const { participant, game } = await this.validateGameAccess(message.contextId, userId);
       await this.validateChatTypeAccess(participant, message.chatType, game, userId, message.contextId, false);
     } else if (message.chatContextType === 'BUG') {
       await this.validateBugAccess(message.contextId, userId, true);

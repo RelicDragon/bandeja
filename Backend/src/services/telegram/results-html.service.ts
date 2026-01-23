@@ -33,6 +33,16 @@ interface Game {
   outcomes: GameOutcome[];
   hasFixedTeams?: boolean;
   genderTeams?: string;
+  rounds?: Array<{
+    matches?: Array<{
+      teams?: Array<{
+        players?: Array<{
+          userId?: string;
+          user?: { id: string };
+        }>;
+      }>;
+    }>;
+  }>;
 }
 
 function getAvatarUrl(avatar: string | null): string {
@@ -137,19 +147,96 @@ export function generateResultsHTML(game: Game, language: string = 'en-US'): str
   let groupedOutcomes: Array<{ place: number; outcomes: GameOutcome[] }> = [];
   
   if (isMixPairsWithoutFixedTeams) {
-    const maleOutcomes = outcomes.filter(o => o.user?.gender === 'MALE');
-    const femaleOutcomes = outcomes.filter(o => o.user?.gender === 'FEMALE');
-    const maxPairs = Math.max(maleOutcomes.length, femaleOutcomes.length);
+    const actualPairs = new Map<string, Set<string>>();
     
-    for (let i = 0; i < maxPairs; i++) {
-      const place = i + 1;
-      const pair: GameOutcome[] = [];
-      if (i < maleOutcomes.length) pair.push(maleOutcomes[i]);
-      if (i < femaleOutcomes.length) pair.push(femaleOutcomes[i]);
-      if (pair.length > 0) {
-        groupedOutcomes.push({ place, outcomes: pair });
+    if (game.rounds && game.rounds.length > 0) {
+      for (const round of game.rounds) {
+        if (!round.matches) continue;
+        for (const match of round.matches) {
+          if (!match.teams) continue;
+          
+          for (const team of match.teams) {
+            if (!team.players || team.players.length < 2) continue;
+            
+            const playerIds = team.players
+              .map((p: any) => p.userId || p.user?.id)
+              .filter(Boolean);
+            
+            if (playerIds.length === 2) {
+              const [p1, p2] = playerIds;
+              if (!actualPairs.has(p1)) actualPairs.set(p1, new Set());
+              if (!actualPairs.has(p2)) actualPairs.set(p2, new Set());
+              actualPairs.get(p1)!.add(p2);
+              actualPairs.get(p2)!.add(p1);
+            }
+          }
+        }
       }
     }
+    
+    const usedOutcomes = new Set<string>();
+    const maleOutcomes = outcomes.filter(o => o.user?.gender === 'MALE');
+    const femaleOutcomes = outcomes.filter(o => o.user?.gender === 'FEMALE');
+    
+    let place = 1;
+    
+    for (const maleOutcome of maleOutcomes) {
+      if (usedOutcomes.has(maleOutcome.userId)) continue;
+      
+      const malePartners = actualPairs.get(maleOutcome.userId);
+      if (malePartners && malePartners.size > 0) {
+        const matchingFemale = femaleOutcomes.find(
+          f => !usedOutcomes.has(f.userId) && malePartners.has(f.userId)
+        );
+        
+        if (matchingFemale) {
+          groupedOutcomes.push({
+            place: place++,
+            outcomes: [maleOutcome, matchingFemale]
+          });
+          usedOutcomes.add(maleOutcome.userId);
+          usedOutcomes.add(matchingFemale.userId);
+          continue;
+        }
+      }
+      
+      const remainingFemales = femaleOutcomes.filter(f => !usedOutcomes.has(f.userId));
+      if (remainingFemales.length > 0) {
+        const femaleOutcome = remainingFemales[0];
+        groupedOutcomes.push({
+          place: place++,
+          outcomes: [maleOutcome, femaleOutcome]
+        });
+        usedOutcomes.add(maleOutcome.userId);
+        usedOutcomes.add(femaleOutcome.userId);
+      } else {
+        groupedOutcomes.push({
+          place: place++,
+          outcomes: [maleOutcome]
+        });
+        usedOutcomes.add(maleOutcome.userId);
+      }
+    }
+    
+    for (const femaleOutcome of femaleOutcomes) {
+      if (!usedOutcomes.has(femaleOutcome.userId)) {
+        groupedOutcomes.push({
+          place: place++,
+          outcomes: [femaleOutcome]
+        });
+        usedOutcomes.add(femaleOutcome.userId);
+      }
+    }
+    
+    groupedOutcomes.sort((a, b) => {
+      const aAvgPosition = a.outcomes.reduce((sum, o) => sum + (o.position || 999), 0) / a.outcomes.length;
+      const bAvgPosition = b.outcomes.reduce((sum, o) => sum + (o.position || 999), 0) / b.outcomes.length;
+      return aAvgPosition - bAvgPosition;
+    });
+    
+    groupedOutcomes.forEach((group, index) => {
+      group.place = index + 1;
+    });
   } else {
     const placeMap = new Map<number, GameOutcome[]>();
     outcomes.forEach((outcome, index) => {

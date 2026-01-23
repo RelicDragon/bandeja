@@ -98,7 +98,6 @@ export const GameCard = ({
 
   const isParticipant = game.participants.some(p => p.userId === user?.id && p.isPlaying);
   const isUserParticipant = game.participants.some(p => p.userId === user?.id);
-  const hasPendingInvite = game.invites?.some(invite => invite.receiverId === user?.id);
   const isGuest = game.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN');
   const canAccessChat = true;
   const isLeagueSeasonGame = game.entityType === 'LEAGUE_SEASON';

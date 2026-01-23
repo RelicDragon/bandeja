@@ -484,7 +484,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setIsLeavingChat(false);
       setShowLeaveConfirmation(false);
     }
-  }, [id, contextType, isLeavingChat, loadContext, navigate, isChannel]);
+  }, [id, contextType, isLeavingChat, loadContext, navigate, isChannel, location.pathname, location.state]);
 
   const handleToggleMute = useCallback(async () => {
     if (!id || isTogglingMute) return;

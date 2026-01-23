@@ -102,6 +102,16 @@ export async function verifyAppleIdentityToken(
         }
 
         const token = decoded as AppleIdentityToken;
+        console.log('[APPLE_VERIFY] Token decoded successfully, full decoded payload:', {
+          sub: token.sub,
+          email: token.email || 'none',
+          email_verified: token.email_verified || false,
+          iss: token.iss,
+          aud: token.aud,
+          exp: token.exp,
+          iat: token.iat,
+          nonce: token.nonce ? token.nonce.substring(0, 16) + '...' : 'none',
+        });
         console.log('[APPLE_VERIFY] Token decoded, validating fields');
 
         if (!token.sub || typeof token.sub !== 'string') {

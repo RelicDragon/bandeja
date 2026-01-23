@@ -419,7 +419,6 @@ export const GameDetailsContent = () => {
   const userParticipant = game?.participants.find((p) => p.userId === user?.id);
   const isUserPlaying = userParticipant?.isPlaying || false;
   const isUserOwner = userParticipant?.role === 'OWNER';
-  const hasPendingInvite = myInvites.length > 0;
   const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') || false;
   // TODO: Remove after 2025-02-02 - Backward compatibility: check both old joinQueues and new non-playing participants
   const isInJoinQueue = useMemo(() => {

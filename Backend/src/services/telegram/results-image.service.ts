@@ -8,6 +8,7 @@ interface Game {
   outcomes: any[];
   hasFixedTeams?: boolean;
   genderTeams?: string;
+  rounds?: any[];
 }
 
 export async function generateResultsImage(game: Game, language: string = 'en-US'): Promise<Buffer> {
