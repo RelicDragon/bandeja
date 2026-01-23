@@ -157,6 +157,12 @@ export const Login = () => {
       const firstName = appleResult.user?.name?.firstName || undefined;
       const lastName = appleResult.user?.name?.lastName || undefined;
 
+      console.log('[Login] Extracted names from Apple:', {
+        firstName,
+        lastName,
+        appleUser: appleResult.user,
+      });
+
       let response;
       try {
         response = await authApi.loginApple({
@@ -198,6 +204,15 @@ export const Login = () => {
           throw loginErr;
         }
       }
+
+      console.log('[Apple Sign-In] User data received:', {
+        firstName: response.data.user.firstName,
+        lastName: response.data.user.lastName,
+        email: response.data.user.email,
+        appleEmail: response.data.user.appleEmail,
+        authProvider: response.data.user.authProvider,
+        appleSub: response.data.user.appleSub,
+      });
 
       await setAuth(response.data.user, response.data.token);
 

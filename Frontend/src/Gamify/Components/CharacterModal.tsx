@@ -8,15 +8,13 @@ interface CharacterModalProps {
   animationName: string;
   idleBoringAnimations?: string[];
   onLoad?: () => void;
-  onModelCenter?: (center: THREE.Vector3) => void;
 }
 
 export const CharacterModal = ({ 
   modelPath, 
   animationName, 
   idleBoringAnimations = [],
-  onLoad, 
-  onModelCenter 
+  onLoad
 }: CharacterModalProps) => {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF(modelPath);
@@ -77,28 +75,18 @@ export const CharacterModal = ({
         materialsRef.current = materials;
       }
       
-      const calculateAndNotify = () => {
-        if (!group.current) return;
-        
-        const box = new THREE.Box3().setFromObject(scene);
-        const center = new THREE.Vector3();
-        box.getCenter(center);
-        
-        if (onModelCenter) {
-          onModelCenter(center);
-        }
-        
+      if (animations && animations.length > 0) {
+        console.log('Available animations:', animations.map(anim => anim.name));
+      }
+      
+      requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setOpacity(1);
           onLoad?.();
         });
-      };
-      
-      requestAnimationFrame(() => {
-        requestAnimationFrame(calculateAndNotify);
       });
     }
-  }, [scene, onLoad, onModelCenter]);
+  }, [scene, onLoad, animations]);
 
   useEffect(() => {
     if (actions && animationName && actions[animationName]) {
@@ -159,13 +147,6 @@ export const CharacterModal = ({
         
         previousTimeRef.current = currentTime;
       }
-    }
-
-    if (group.current && scene && onModelCenter) {
-      const box = new THREE.Box3().setFromObject(scene);
-      const center = new THREE.Vector3();
-      box.getCenter(center);
-      onModelCenter(center);
     }
   });
 

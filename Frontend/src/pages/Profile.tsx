@@ -52,6 +52,7 @@ export const ProfileContent = () => {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+  const [showSecondDeleteConfirmation, setShowSecondDeleteConfirmation] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
@@ -201,6 +202,11 @@ export const ProfileContent = () => {
   };
 
   const handleEmailChange = (value: string) => {
+    // Prevent email changes for Apple-authenticated users if email came from Apple
+    // This complies with Apple's guidelines: never require users to provide information Apple already provides
+    if (user?.authProvider === 'APPLE' && user?.appleEmail) {
+      return;
+    }
     setEmail(value);
     debouncedUpdate({ email: value || undefined });
   };
@@ -284,6 +290,11 @@ export const ProfileContent = () => {
     navigate('/login');
   };
 
+  const handleFirstDeleteConfirmation = () => {
+    setShowDeleteUserModal(false);
+    setShowSecondDeleteConfirmation(true);
+  };
+
   const handleDeleteUser = async () => {
     try {
       setIsDeletingUser(true);
@@ -294,6 +305,7 @@ export const ProfileContent = () => {
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
       setIsDeletingUser(false);
+      setShowSecondDeleteConfirmation(false);
     }
   };
 
@@ -564,15 +576,25 @@ export const ProfileContent = () => {
                 </div>
               )}
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {t('profile.nameRequirement')}
-            </p>
-            <Input
-              label={t('auth.email')}
-              type="email"
-              value={email}
-              onChange={(e) => handleEmailChange(e.target.value)}
-            />
+            {!(user?.authProvider === 'APPLE' || user?.appleSub) && (
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {t('profile.nameRequirement')}
+              </p>
+            )}
+            <div>
+              <Input
+                label={t('auth.email')}
+                type="email"
+                value={email}
+                onChange={(e) => handleEmailChange(e.target.value)}
+                disabled={user?.authProvider === 'APPLE' && !!user?.appleEmail}
+              />
+              {user?.authProvider === 'APPLE' && user?.appleEmail && (
+                <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+                  {t('profile.appleEmailReadOnly') || 'Email is managed by Apple and cannot be changed'}
+                </p>
+              )}
+            </div>
             {(!user?.genderIsSet || !genderIsSet) ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1069,10 +1091,21 @@ export const ProfileContent = () => {
       <ConfirmationModal
         isOpen={showDeleteUserModal}
         onClose={() => setShowDeleteUserModal(false)}
-        onConfirm={handleDeleteUser}
+        onConfirm={handleFirstDeleteConfirmation}
         title={t('profile.deleteUserTitle')}
         message={t('profile.deleteUserMessage')}
         confirmText={t('profile.deleteUserConfirm')}
+        cancelText={t('common.cancel')}
+        confirmVariant="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={showSecondDeleteConfirmation}
+        onClose={() => setShowSecondDeleteConfirmation(false)}
+        onConfirm={handleDeleteUser}
+        title={t('profile.deleteUserSecondTitle')}
+        message={t('profile.deleteUserSecondMessage')}
+        confirmText={t('profile.deleteUserSecondConfirm')}
         cancelText={t('common.cancel')}
         confirmVariant="danger"
       />

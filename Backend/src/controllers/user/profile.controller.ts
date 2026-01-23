@@ -51,8 +51,14 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: { avatar: true, originalAvatar: true, firstName: true, lastName: true }
+    select: { avatar: true, originalAvatar: true, firstName: true, lastName: true, authProvider: true, appleSub: true, appleEmail: true }
   });
+
+  // Prevent email changes for Apple-authenticated users if email came from Apple
+  // This complies with Apple's guidelines: never require users to provide information Apple already provides
+  if (email !== undefined && currentUser?.authProvider === 'APPLE' && currentUser?.appleEmail) {
+    throw new ApiError(400, 'Email cannot be changed for Apple-authenticated accounts');
+  }
 
   if (firstName !== undefined || lastName !== undefined) {
     const newFirstName = firstName !== undefined ? firstName : currentUser?.firstName || '';
@@ -60,8 +66,15 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     const trimmedFirst = (newFirstName || '').trim();
     const trimmedLast = (newLastName || '').trim();
 
-    if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
-      throw new ApiError(400, 'At least one name must have at least 3 characters');
+    // For Apple-authenticated users, allow empty names since Apple may not provide them
+    // This complies with Apple's guidelines: never require information Apple already provides
+    const isAppleAuth = currentUser?.authProvider === 'APPLE' || currentUser?.appleSub;
+    const isEmpty = trimmedFirst.length === 0 && trimmedLast.length === 0;
+
+    if (!isAppleAuth || !isEmpty) {
+      if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
+        throw new ApiError(400, 'At least one name must have at least 3 characters');
+      }
     }
   }
 
@@ -171,6 +184,12 @@ export const deleteUser = asyncHandler(async (req: AuthRequest, res: Response) =
       email: null,
       telegramId: null,
       telegramUsername: null,
+      appleSub: null,
+      appleEmail: null,
+      appleEmailVerified: false,
+      googleId: null,
+      googleEmail: null,
+      googleEmailVerified: false,
       firstName: '###DELETED',
       lastName: null,
       passwordHash: null,

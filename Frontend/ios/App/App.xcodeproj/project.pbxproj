@@ -365,7 +365,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports-games";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 0.88.9;
+				MARKETING_VERSION = 0.88.14;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -397,7 +397,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports-games";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 0.88.9;
+				MARKETING_VERSION = 0.88.14;
 				PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/layouts/AuthLayout';
@@ -13,8 +13,9 @@ export const CompleteProfile = () => {
   const navigate = useNavigate();
   const { user, updateUser } = useAuthStore();
 
-  const [firstName, setFirstName] = useState(user?.firstName || '');
-  const [lastName, setLastName] = useState(user?.lastName || '');
+  // Always use the latest user object values - no local state initialization
+  const firstName = user?.firstName || '';
+  const lastName = user?.lastName || '';
   const [gender, setGender] = useState<Gender>(user?.gender || 'PREFER_NOT_TO_SAY');
   const [preferNotToSayAcknowledged, setPreferNotToSayAcknowledged] = useState(
     user?.gender === 'PREFER_NOT_TO_SAY' && user?.genderIsSet === true
@@ -22,11 +23,26 @@ export const CompleteProfile = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const isValidName = () => {
-    const trimmedFirst = firstName.trim();
-    const trimmedLast = lastName.trim();
-    return trimmedFirst.length >= 3 || trimmedLast.length >= 3;
-  };
+  // Sync gender state when user object changes
+  useEffect(() => {
+    if (user) {
+      console.log('[CompleteProfile] User object:', {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        gender: user.gender,
+        genderIsSet: user.genderIsSet,
+        authProvider: user.authProvider,
+        appleSub: user.appleSub,
+      });
+      
+      if (user.gender) {
+        setGender(user.gender);
+      }
+      if (user.gender === 'PREFER_NOT_TO_SAY' && user.genderIsSet) {
+        setPreferNotToSayAcknowledged(true);
+      }
+    }
+  }, [user]);
 
   const isValidGender = () => {
     if (gender === 'PREFER_NOT_TO_SAY') {
@@ -37,7 +53,8 @@ export const CompleteProfile = () => {
   };
 
   const isValid = () => {
-    return isValidName() && isValidGender();
+    // Names are managed by Apple - only validate gender
+    return isValidGender();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,8 +71,6 @@ export const CompleteProfile = () => {
     try {
       const genderIsSet = gender === 'MALE' || gender === 'FEMALE' || (gender === 'PREFER_NOT_TO_SAY' && preferNotToSayAcknowledged);
       const response = await usersApi.updateProfile({
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
         gender,
         genderIsSet,
       });
@@ -89,15 +104,19 @@ export const CompleteProfile = () => {
           <Input
             label={t('auth.firstName')}
             value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            onChange={() => {}}
             placeholder={t('auth.firstName')}
+            disabled
+            className="opacity-75"
           />
 
           <Input
             label={t('auth.lastName')}
             value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            onChange={() => {}}
             placeholder={t('auth.lastName')}
+            disabled
+            className="opacity-75"
           />
 
           <div>
@@ -136,11 +155,9 @@ export const CompleteProfile = () => {
             )}
           </div>
 
-          {!isValidName() && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {t('profile.nameRequirement')}
-            </p>
-          )}
+          <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+            {t('profile.appleNamesInfo') || 'Names are provided by Apple and cannot be changed here'}
+          </p>
         </div>
 
         <Button type="submit" className="w-full" disabled={!isValid() || submitting}>

@@ -1,14 +1,17 @@
 import { useState, useEffect, Suspense, useRef, useCallback, useMemo } from 'react';
-import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Environment, Sparkles, ContactShadows, Html } from '@react-three/drei';
 import { CharacterModal } from '../Components/CharacterModal';
 import { CharacterSelectors } from '../Components/CharacterSelectors';
 import { Effects } from '../Components/Effects';
 import { usePreloadModels } from '../hooks/usePreloadModels';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from 'react-i18next';
 import { Loader2, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
+import { handleBackNavigation } from '@/utils/navigation';
+import { useNavigationStore } from '@/store/navigationStore';
 import * as THREE from 'three';
 
 interface GameData {
@@ -35,49 +38,43 @@ function LoadingSpinner() {
   );
 }
 
-function CameraController({ target, isModelLoaded }: { target: THREE.Vector3; isModelLoaded: boolean }) {
-  const { camera } = useThree();
-  const controlsRef = useRef<any>(null);
-  const lastValidTarget = useRef<THREE.Vector3 | null>(null);
-  const initialTarget = useMemo(() => new THREE.Vector3(0, 1, 0), []);
-
-  const isValidTarget = useMemo(() => {
-    if (!target) return false;
-    const hasNonZero = Math.abs(target.x) > 0.001 || Math.abs(target.y) > 0.001 || Math.abs(target.z) > 0.001;
-    return hasNonZero;
-  }, [target]);
+function SceneWrapper({ 
+  children, 
+  onModelRef 
+}: { 
+  children: React.ReactNode; 
+  onModelRef: (ref: THREE.Group | null) => void;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
-    if (isModelLoaded && isValidTarget) {
-      const newTarget = target.clone();
-      lastValidTarget.current = newTarget;
-    } else if (!isModelLoaded) {
-      lastValidTarget.current = null;
-    }
-  }, [target, isModelLoaded, isValidTarget]);
+    onModelRef(groupRef.current);
+  }, [onModelRef]);
+
+  return <group ref={groupRef} position={[0, -1, 0]}>{children}</group>;
+}
+
+function CameraController({ modelRef }: { modelRef: THREE.Group | null }) {
+  const controlsRef = useRef<any>(null);
+  const defaultTarget = useMemo(() => new THREE.Vector3(0, 0, 0), []);
 
   useFrame(() => {
-    if (controlsRef.current && isModelLoaded && isValidTarget && target) {
-      const currentTarget = target.clone();
-      
-      if (lastValidTarget.current) {
-        controlsRef.current.target.lerp(currentTarget, 0.1);
-      } else {
-        controlsRef.current.target.copy(currentTarget);
-        lastValidTarget.current = currentTarget.clone();
-      }
-      
-      if (camera) {
-        camera.lookAt(currentTarget);
-      }
-    }
-    
-    if (controlsRef.current) {
-      controlsRef.current.update();
-    }
-  });
+    if (!controlsRef.current) return;
 
-  const safeTarget = lastValidTarget.current || initialTarget;
+    let targetVec = defaultTarget;
+    
+    if (modelRef) {
+      const box = new THREE.Box3().setFromObject(modelRef);
+      if (!box.isEmpty()) {
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+        targetVec = center;
+      }
+    }
+
+    controlsRef.current.target.lerp(targetVec, 0.1);
+    controlsRef.current.update();
+  });
 
   return (
     <OrbitControls
@@ -86,15 +83,16 @@ function CameraController({ target, isModelLoaded }: { target: THREE.Vector3; is
       minDistance={3}
       maxDistance={8}
       maxPolarAngle={Math.PI / 2}
-      target={safeTarget}
     />
   );
 }
 
 export const CharCreation = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const { setCurrentPage, setIsAnimating } = useNavigationStore();
   const { isPreloading, preloadProgress } = usePreloadModels();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [selectedRace, setSelectedRace] = useState<string>('');
@@ -102,8 +100,23 @@ export const CharCreation = () => {
   const [isLoadingGameData, setIsLoadingGameData] = useState(true);
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [previousModelPath, setPreviousModelPath] = useState<string>('');
-  const [modelCenter, setModelCenter] = useState<THREE.Vector3>(new THREE.Vector3(0, 0, 0));
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
+  const [modelGroupRef, setModelGroupRef] = useState<THREE.Group | null>(null);
+
+  useBackButtonHandler();
+
+  const handleBackClick = () => {
+    setIsAnimating(true);
+    
+    handleBackNavigation({
+      pathname: location.pathname,
+      locationState: location.state as { fromLeagueSeasonGameId?: string; fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' } | null,
+      navigate,
+      setCurrentPage,
+    });
+    
+    setTimeout(() => setIsAnimating(false), 300);
+  };
 
   useEffect(() => {
     setIsLoadingGameData(true);
@@ -148,11 +161,6 @@ export const CharCreation = () => {
     setIsModelLoading(false);
   }, []);
 
-  const handleModelCenter = useCallback((center: THREE.Vector3) => {
-    const adjustedCenter = new THREE.Vector3(center.x, center.y - 1, center.z);
-    setModelCenter(adjustedCenter);
-  }, []);
-
   const isLoading = isLoadingGameData || isPreloading;
 
   if (isLoading) {
@@ -182,7 +190,7 @@ export const CharCreation = () => {
     <div className="fixed inset-0 bg-black">
       <div className="wc3-header">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBackClick}
           className="wc3-back-button"
         >
           <ArrowLeft size={18} />
@@ -215,7 +223,7 @@ export const CharCreation = () => {
           intensity={1} 
         />
 
-        <group position={[0, -1, 0]}>
+        <SceneWrapper onModelRef={setModelGroupRef}>
           {selectedClassData ? (
             <Suspense fallback={<LoadingSpinner />}>
               <CharacterModal 
@@ -224,7 +232,6 @@ export const CharCreation = () => {
                 animationName={selectedClassData.anim_idle}
                 idleBoringAnimations={idleBoringAnimations}
                 onLoad={handleModelLoad}
-                onModelCenter={handleModelCenter}
               />
             </Suspense>
           ) : null}
@@ -242,7 +249,7 @@ export const CharCreation = () => {
             resolution={256} 
             color="#000" 
           />
-        </group>
+        </SceneWrapper>
 
         <Sparkles 
           count={100} 
@@ -254,7 +261,7 @@ export const CharCreation = () => {
         />
         
         <Environment preset="night" />
-        <CameraController target={modelCenter} isModelLoaded={!isModelLoading} />
+        <CameraController modelRef={modelGroupRef} />
         <Effects />
       </Canvas>
 
