@@ -2,7 +2,7 @@ import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { ChatType, ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
+import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser, formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
@@ -86,8 +86,9 @@ export async function sendGameChatNotification(
         ]];
 
         const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
+        const trimmedMessage = trimTextForTelegram(finalMessage, false);
         
-        await api.sendMessage(user.telegramId, finalMessage, options);
+        await api.sendMessage(user.telegramId, trimmedMessage, options);
       } catch (error) {
         console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
       }
@@ -160,8 +161,9 @@ export async function sendGameChatNotification(
         ]];
 
         const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
+        const trimmedMessage = trimTextForTelegram(finalMessage, false);
         
-        await api.sendMessage(user.telegramId, finalMessage, options);
+        await api.sendMessage(user.telegramId, trimmedMessage, options);
       } catch (error) {
         console.error(`Failed to send Telegram notification to parent game admin ${user.id}:`, error);
       }

@@ -5,7 +5,7 @@ import { ApiError } from '../../utils/ApiError';
 import { config } from '../../config/env';
 import { TranslationService } from '../chat/translation.service';
 import OpenAI from 'openai';
-import { escapeHTML } from './utils';
+import { escapeHTML, trimTextForTelegram } from './utils';
 import { RankingService } from '../ranking.service';
 import { getUserTimezoneFromCityId, formatDateInTimezone, convertToUserTimezone } from '../user-timezone.service';
 import { format } from 'date-fns';
@@ -370,43 +370,69 @@ export class ResultsTelegramService {
     try {
       const resultsImageFile = new InputFile(resultsImageBuffer, 'results.jpg');
 
-      // Escape HTML in summary text and truncate to Telegram's 4096 character limit
       const escapedSummary = escapeHTML(summaryText);
-      const maxCaptionLength = 4096;
-      const finalCaption = escapedSummary.length > maxCaptionLength 
-        ? escapedSummary.substring(0, maxCaptionLength - 3) + '...'
-        : escapedSummary;
 
-      if (mainPhotoUrl) {
-        try {
-          const mainPhotoBuffer = await this.downloadImageAsBuffer(mainPhotoUrl);
-          const mainPhotoFile = new InputFile(mainPhotoBuffer, 'main-photo.jpg');
+      if (escapedSummary.length > 1024) {
+        if (mainPhotoUrl) {
+          try {
+            const mainPhotoBuffer = await this.downloadImageAsBuffer(mainPhotoUrl);
+            const mainPhotoFile = new InputFile(mainPhotoBuffer, 'main-photo.jpg');
 
-          await api.sendMediaGroup(chatId, [
-            {
-              type: 'photo',
-              media: resultsImageFile,
+            await api.sendMediaGroup(chatId, [
+              {
+                type: 'photo',
+                media: resultsImageFile,
+              },
+              {
+                type: 'photo',
+                media: mainPhotoFile,
+              },
+            ]);
+          } catch (photoError: any) {
+            console.warn('Failed to download main photo, sending results only:', photoError);
+            await api.sendPhoto(chatId, resultsImageFile);
+          }
+        } else {
+          await api.sendPhoto(chatId, resultsImageFile);
+        }
+
+        const trimmedText = trimTextForTelegram(escapedSummary, false);
+        await api.sendMessage(chatId, trimmedText, {
+          parse_mode: 'HTML',
+        });
+      } else {
+        const finalCaption = escapedSummary;
+
+        if (mainPhotoUrl) {
+          try {
+            const mainPhotoBuffer = await this.downloadImageAsBuffer(mainPhotoUrl);
+            const mainPhotoFile = new InputFile(mainPhotoBuffer, 'main-photo.jpg');
+
+            await api.sendMediaGroup(chatId, [
+              {
+                type: 'photo',
+                media: resultsImageFile,
+                caption: finalCaption,
+                parse_mode: 'HTML',
+              },
+              {
+                type: 'photo',
+                media: mainPhotoFile,
+              },
+            ]);
+          } catch (photoError: any) {
+            console.warn('Failed to download main photo, sending results only:', photoError);
+            await api.sendPhoto(chatId, resultsImageFile, {
               caption: finalCaption,
               parse_mode: 'HTML',
-            },
-            {
-              type: 'photo',
-              media: mainPhotoFile,
-            },
-          ]);
-        } catch (photoError: any) {
-          console.warn('Failed to download main photo, sending results only:', photoError);
-          // Fall back to sending only results image
+            });
+          }
+        } else {
           await api.sendPhoto(chatId, resultsImageFile, {
             caption: finalCaption,
             parse_mode: 'HTML',
           });
         }
-      } else {
-        await api.sendPhoto(chatId, resultsImageFile, {
-          caption: finalCaption,
-          parse_mode: 'HTML',
-        });
       }
 
       await prisma.game.update({

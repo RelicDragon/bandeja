@@ -84,3 +84,8 @@ export async function getUserLanguageFromTelegramId(
   return getUserLanguage(user?.language, telegramLanguageCode);
 }
 
+export function trimTextForTelegram(text: string, hasPhoto: boolean): string {
+  const maxLength = hasPhoto ? 1024 : 4096;
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength - 3) + '...';
+}

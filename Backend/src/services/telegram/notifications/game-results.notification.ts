@@ -2,7 +2,7 @@ import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
+import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser } from '../../shared/notification-base';
 
@@ -248,10 +248,11 @@ export async function sendGameFinishedNotification(
   ]];
 
   const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
+  const trimmedMessage = trimTextForTelegram(finalMessage, false);
 
   try {
     console.log(`[GAME RESULTS NOTIFICATION] Sending message to telegram ID ${participant.user.telegramId}`);
-    await api.sendMessage(participant.user.telegramId, finalMessage, options);
+    await api.sendMessage(participant.user.telegramId, trimmedMessage, options);
     console.log(`[GAME RESULTS NOTIFICATION] Message sent successfully to user ${userId}`);
   } catch (error) {
     console.error(`[GAME RESULTS NOTIFICATION] Failed to send Telegram game results notification to user ${userId}:`, error);

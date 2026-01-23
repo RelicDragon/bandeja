@@ -1,7 +1,7 @@
 import { Api } from 'grammy';
 import { ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
+import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
@@ -48,8 +48,9 @@ export async function sendUserChatNotification(
     ]];
 
     const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
+    const trimmedMessage = trimTextForTelegram(finalMessage, false);
     
-    await api.sendMessage(recipient.telegramId, finalMessage, options);
+    await api.sendMessage(recipient.telegramId, trimmedMessage, options);
   } catch (error) {
     console.error(`Failed to send Telegram notification to user ${recipient.id}:`, error);
   }
