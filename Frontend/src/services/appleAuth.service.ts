@@ -52,6 +52,15 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
       state: nonce,
       nonce: hashedNonce,
     });
+    console.log('[APPLE_AUTH] Raw Apple response received:', JSON.stringify(result, null, 2));
+    console.log('[APPLE_AUTH] Raw Apple response (parsed):', {
+      resultType: typeof result,
+      resultKeys: result ? Object.keys(result) : [],
+      hasResponse: !!result?.response,
+      responseType: typeof result?.response,
+      responseKeys: result?.response ? Object.keys(result.response) : [],
+      fullResult: result,
+    });
     console.log('[APPLE_AUTH] Apple authorization response received - full response structure:', JSON.stringify({
       response: result.response ? {
         identityToken: result.response.identityToken ? '[REDACTED - length: ' + result.response.identityToken.length + ']' : undefined,
