@@ -80,7 +80,8 @@
     "appleTokenInvalidIssuedAt": "Token de Apple inválido: tiempo de emisión faltante o inválido",
     "appleTokenNonceMissing": "Validación de nonce fallida: el token no contiene nonce",
     "appleTokenNonceMismatch": "Nonce no coincide",
-    "appleTokenNonceRequired": "Validación de nonce requerida: el token contiene nonce pero no se proporcionó ninguno"
+    "appleTokenNonceRequired": "Validación de nonce requerida: el token contiene nonce pero no se proporcionó ninguno",
+    "nameProvidedByApple": "Nombre proporcionado por Apple"
   },
   "nav": {
     "home": "Inicio",

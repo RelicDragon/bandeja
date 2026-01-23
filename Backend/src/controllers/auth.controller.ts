@@ -228,22 +228,12 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
 
   // Only use name/email provided by Apple - never require user input
   // Apple provides name only on first sign-in, email is in identity token
-  // IMPORTANT: Save names immediately without validation - Apple only provides them once!
-  // Convert empty strings to null, but save any non-empty value Apple provides
-  const sanitizedFirstName = firstName ? (firstName.trim().slice(0, 100) || null) : null;
-  const sanitizedLastName = lastName ? (lastName.trim().slice(0, 100) || null) : null;
-  
-  console.log('[Apple Register] Names from Apple:', {
-    rawFirstName: firstName,
-    rawLastName: lastName,
-    sanitizedFirstName,
-    sanitizedLastName,
-  });
+  const sanitizedFirstName = firstName ? firstName.trim().slice(0, 100) : undefined;
+  const sanitizedLastName = lastName ? lastName.trim().slice(0, 100) : undefined;
   
   // For Apple Sign In, we accept whatever Apple provides without validation
   // This complies with Apple's guidelines: never require users to provide
   // information that Apple already provides
-  // We save names immediately because Apple only provides them on first sign-in
 
   let validatedLanguage = language;
   if (language) {
@@ -261,8 +251,8 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
       appleSub,
       appleEmail: emailToUse,
       appleEmailVerified: emailToUse ? (appleToken.email_verified || false) : false,
-      firstName: sanitizedFirstName,
-      lastName: sanitizedLastName,
+      firstName: sanitizedFirstName || undefined,
+      lastName: sanitizedLastName || undefined,
       email: emailToUse,
       language: validatedLanguage,
       gender: gender || undefined,
@@ -332,23 +322,32 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
     }
   }
 
-  // IMPORTANT: Save names from Apple immediately without validation
-  // Apple only provides names on first sign-in, so we must save them right away
   if (firstName && !user.firstName) {
-    updateData.firstName = firstName.trim().slice(0, 100);
+    const sanitizedFirstName = firstName.trim().slice(0, 100);
+    if (sanitizedFirstName.length >= 3 || (user.lastName && user.lastName.trim().length >= 3)) {
+      updateData.firstName = sanitizedFirstName;
+    }
   }
 
   if (lastName && !user.lastName) {
-    updateData.lastName = lastName.trim().slice(0, 100);
+    const sanitizedLastName = lastName.trim().slice(0, 100);
+    const currentFirstName = updateData.firstName || user.firstName || '';
+    if (sanitizedLastName.length >= 3 || (currentFirstName && currentFirstName.trim().length >= 3)) {
+      updateData.lastName = sanitizedLastName;
+    }
   }
 
-  console.log('[Apple Login] Updating user with names:', {
-    firstName,
-    lastName,
-    currentUserFirstName: user.firstName,
-    currentUserLastName: user.lastName,
-    updateData,
-  });
+  if (updateData.firstName !== undefined || updateData.lastName !== undefined) {
+    const finalFirstName = updateData.firstName !== undefined ? updateData.firstName : (user.firstName || '');
+    const finalLastName = updateData.lastName !== undefined ? updateData.lastName : (user.lastName || '');
+    const trimmedFirst = finalFirstName.trim();
+    const trimmedLast = finalLastName.trim();
+    
+    if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
+      delete updateData.firstName;
+      delete updateData.lastName;
+    }
+  }
 
   if (appleToken.email) {
     if (!user.appleEmail) {

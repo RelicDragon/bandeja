@@ -202,11 +202,6 @@ export const ProfileContent = () => {
   };
 
   const handleEmailChange = (value: string) => {
-    // Prevent email changes for Apple-authenticated users if email came from Apple
-    // This complies with Apple's guidelines: never require users to provide information Apple already provides
-    if (user?.authProvider === 'APPLE' && user?.appleEmail) {
-      return;
-    }
     setEmail(value);
     debouncedUpdate({ email: value || undefined });
   };
@@ -576,25 +571,15 @@ export const ProfileContent = () => {
                 </div>
               )}
             </div>
-            {!(user?.authProvider === 'APPLE' || user?.appleSub) && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {t('profile.nameRequirement')}
-              </p>
-            )}
-            <div>
-              <Input
-                label={t('auth.email')}
-                type="email"
-                value={email}
-                onChange={(e) => handleEmailChange(e.target.value)}
-                disabled={user?.authProvider === 'APPLE' && !!user?.appleEmail}
-              />
-              {user?.authProvider === 'APPLE' && user?.appleEmail && (
-                <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-                  {t('profile.appleEmailReadOnly') || 'Email is managed by Apple and cannot be changed'}
-                </p>
-              )}
-            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {t('profile.nameRequirement')}
+            </p>
+            <Input
+              label={t('auth.email')}
+              type="email"
+              value={email}
+              onChange={(e) => handleEmailChange(e.target.value)}
+            />
             {(!user?.genderIsSet || !genderIsSet) ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

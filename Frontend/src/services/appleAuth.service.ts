@@ -49,13 +49,6 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
     }
 
     const userData = result.response.user;
-    console.log('[Apple Auth] Raw response from Apple:', {
-      userData,
-      hasUser: !!userData,
-      userName: (userData as any)?.name,
-      userEmail: (userData as any)?.email,
-    });
-
     const normalizedUser = typeof userData === 'object' && userData !== null && !Array.isArray(userData)
       ? {
           email: (userData as any).email,
@@ -65,8 +58,6 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
           } : undefined,
         }
       : {};
-
-    console.log('[Apple Auth] Normalized user data:', normalizedUser);
 
     return {
       result: {

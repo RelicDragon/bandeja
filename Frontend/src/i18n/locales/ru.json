@@ -80,7 +80,8 @@
     "appleTokenInvalidIssuedAt": "Неверный токен Apple: отсутствует или неверное время выдачи",
     "appleTokenNonceMissing": "Ошибка проверки nonce: токен не содержит nonce",
     "appleTokenNonceMismatch": "Несоответствие nonce",
-    "appleTokenNonceRequired": "Требуется проверка nonce: токен содержит nonce, но он не был предоставлен"
+    "appleTokenNonceRequired": "Требуется проверка nonce: токен содержит nonce, но он не был предоставлен",
+    "nameProvidedByApple": "Имя предоставлено Apple"
   },
   "nav": {
     "home": "Главная",

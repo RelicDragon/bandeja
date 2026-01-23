@@ -80,7 +80,8 @@
     "appleTokenInvalidIssuedAt": "Invalid Apple token: missing or invalid issued at time",
     "appleTokenNonceMissing": "Nonce validation failed: token does not contain nonce",
     "appleTokenNonceMismatch": "Nonce mismatch",
-    "appleTokenNonceRequired": "Nonce validation required: token contains nonce but none was provided"
+    "appleTokenNonceRequired": "Nonce validation required: token contains nonce but none was provided",
+    "nameProvidedByApple": "Name provided by Apple"
   },
   "nav": {
     "home": "Home",
@@ -648,7 +649,6 @@
     "appleUnlinked": "Apple account unlinked successfully",
     "googleUnlinked": "Google account unlinked successfully",
     "unlinkAppleConfirmation": "Are you sure you want to unlink your Apple account? You will no longer be able to sign in with Apple.",
-    "appleEmailReadOnly": "Email is managed by Apple and cannot be changed",
     "unlinkGoogleConfirmation": "Are you sure you want to unlink your Google account? You will no longer be able to sign in with Google.",
     "linking": "Linking...",
     "unlinking": "Unlinking...",

@@ -80,7 +80,8 @@
     "appleTokenInvalidIssuedAt": "Неважећи Apple токен: недостаје или неважеће време издавања",
     "appleTokenNonceMissing": "Грешка валидације nonce: токен не садржи nonce",
     "appleTokenNonceMismatch": "Неусклађеност nonce",
-    "appleTokenNonceRequired": "Потребна валидација nonce: токен садржи nonce, али није обезбеђен"
+    "appleTokenNonceRequired": "Потребна валидација nonce: токен садржи nonce, али није обезбеђен",
+    "nameProvidedByApple": "Име обезбеђено од Apple-а"
   },
   "nav": {
     "home": "Почетна",
