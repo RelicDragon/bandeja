@@ -305,42 +305,54 @@ export const ProfileContent = () => {
   };
 
   const handleLinkApple = async () => {
+    console.log('[APPLE_LINK] handleLinkApple called');
     try {
       setIsLinkingApple(true);
+      console.log('[APPLE_LINK] Calling signInWithApple');
       const result = await signInWithApple();
       
       if (!result) {
+        console.log('[APPLE_LINK] signInWithApple returned null (user cancelled)');
         setIsLinkingApple(false);
         return;
       }
 
+      console.log('[APPLE_LINK] Apple sign-in successful, calling linkApple API');
       const response = await authApi.linkApple({
         identityToken: result.result.identityToken,
         nonce: result.nonce,
       });
 
+      console.log('[APPLE_LINK] Apple account linked successfully');
       updateUser(response.data.user);
       toast.success(t('profile.appleLinked') || 'Apple account linked successfully');
     } catch (error: any) {
+      console.error('[APPLE_LINK] Error linking Apple account:', error);
       const errorMessage = error.response?.data?.message || error.message || t('errors.generic');
       toast.error(t(errorMessage) !== errorMessage ? t(errorMessage) : errorMessage);
     } finally {
       setIsLinkingApple(false);
+      console.log('[APPLE_LINK] handleLinkApple completed');
     }
   };
 
   const handleUnlinkApple = async () => {
+    console.log('[APPLE_UNLINK] handleUnlinkApple called');
     try {
       setIsUnlinkingApple(true);
+      console.log('[APPLE_UNLINK] Calling unlinkApple API');
       const response = await authApi.unlinkApple();
+      console.log('[APPLE_UNLINK] Apple account unlinked successfully');
       updateUser(response.data.user);
       toast.success(t('profile.appleUnlinked') || 'Apple account unlinked successfully');
       setShowUnlinkAppleModal(false);
     } catch (error: any) {
+      console.error('[APPLE_UNLINK] Error unlinking Apple account:', error);
       const errorMessage = error.response?.data?.message || error.message || t('errors.generic');
       toast.error(t(errorMessage) !== errorMessage ? t(errorMessage) : errorMessage);
     } finally {
       setIsUnlinkingApple(false);
+      console.log('[APPLE_UNLINK] handleUnlinkApple completed');
     }
   };
 

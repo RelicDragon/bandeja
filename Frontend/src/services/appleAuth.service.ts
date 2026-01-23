@@ -28,14 +28,23 @@ async function sha256(message: string): Promise<string> {
 }
 
 export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonce: string } | null> {
+  console.log('[APPLE_AUTH] Starting Apple sign-in process');
+  
   if (!isIOS()) {
+    console.log('[APPLE_AUTH] Not iOS device, returning null');
     return null;
   }
 
   try {
+    console.log('[APPLE_AUTH] Generating nonce');
     const nonce = generateNonce();
+    console.log('[APPLE_AUTH] Nonce generated:', nonce.substring(0, 8) + '...');
+    
+    console.log('[APPLE_AUTH] Hashing nonce');
     const hashedNonce = await sha256(nonce);
+    console.log('[APPLE_AUTH] Hashed nonce:', hashedNonce.substring(0, 16) + '...');
 
+    console.log('[APPLE_AUTH] Calling SignInWithApple.authorize with clientId:', config.appleClientId);
     const result = await SignInWithApple.authorize({
       clientId: config.appleClientId,
       redirectURI: 'https://bandeja.me',
@@ -43,10 +52,13 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
       state: nonce,
       nonce: hashedNonce,
     });
+    console.log('[APPLE_AUTH] Apple authorization response received');
 
     if (!result.response?.identityToken) {
+      console.error('[APPLE_AUTH] No identity token received from Apple');
       throw new Error('No identity token received from Apple');
     }
+    console.log('[APPLE_AUTH] Identity token received, length:', result.response.identityToken.length);
 
     const userData = result.response.user;
     const normalizedUser = typeof userData === 'object' && userData !== null && !Array.isArray(userData)
@@ -58,7 +70,13 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
           } : undefined,
         }
       : {};
+    console.log('[APPLE_AUTH] User data normalized:', {
+      hasEmail: !!normalizedUser.email,
+      hasFirstName: !!normalizedUser.name?.firstName,
+      hasLastName: !!normalizedUser.name?.lastName,
+    });
 
+    console.log('[APPLE_AUTH] Apple sign-in successful');
     return {
       result: {
         identityToken: result.response.identityToken,
@@ -71,6 +89,12 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
     const errorMessage = error?.message || error?.code || '';
     const errorCode = error?.code || error?.errorCode || '';
     const errorString = String(errorMessage) + String(errorCode);
+    
+    console.error('[APPLE_AUTH] Error during Apple sign-in:', {
+      message: errorMessage,
+      code: errorCode,
+      errorString,
+    });
     
     // Check for cancellation patterns including error 1001
     const canceledMessages = [
@@ -89,8 +113,10 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
     );
     
     if (isCancelled) {
+      console.log('[APPLE_AUTH] User cancelled Apple sign-in');
       return null; // Silently handle cancellation - no error shown
     }
+    console.error('[APPLE_AUTH] Throwing error:', error);
     throw error;
   }
 }

@@ -66,12 +66,16 @@ export const authApi = {
     preferredCourtSideLeft?: boolean;
     preferredCourtSideRight?: boolean;
   }) => {
+    console.log('[APPLE_API] registerApple called', { hasIdentityToken: !!data.identityToken, hasNonce: !!data.nonce, language: data.language });
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/register/apple', data);
+    console.log('[APPLE_API] registerApple response received');
     return response.data;
   },
 
   loginApple: async (data: { identityToken: string; nonce: string; language?: string; firstName?: string; lastName?: string }) => {
+    console.log('[APPLE_API] loginApple called', { hasIdentityToken: !!data.identityToken, hasNonce: !!data.nonce, language: data.language });
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/apple', data);
+    console.log('[APPLE_API] loginApple response received');
     return response.data;
   },
 
@@ -105,12 +109,16 @@ export const authApi = {
     identityToken: string;
     nonce: string;
   }) => {
+    console.log('[APPLE_API] linkApple called', { hasIdentityToken: !!data.identityToken, hasNonce: !!data.nonce });
     const response = await api.post<ApiResponse<{ user: any }>>('/auth/link/apple', data);
+    console.log('[APPLE_API] linkApple response received');
     return response.data;
   },
 
   unlinkApple: async () => {
+    console.log('[APPLE_API] unlinkApple called');
     const response = await api.post<ApiResponse<{ user: any }>>('/auth/unlink/apple');
+    console.log('[APPLE_API] unlinkApple response received');
     return response.data;
   },
 

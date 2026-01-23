@@ -193,32 +193,39 @@ export const loginWithTelegram = asyncHandler(async (req: Request, res: Response
 });
 
 export const registerWithApple = asyncHandler(async (req: Request, res: Response) => {
+  console.log('[APPLE_REGISTER] registerWithApple called');
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   const { identityToken, nonce, firstName, lastName, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
 
   if (!identityToken) {
+    console.error('[APPLE_REGISTER] Missing identityToken');
     throw new ApiError(400, 'auth.identityTokenRequired');
   }
 
+  console.log('[APPLE_REGISTER] Verifying Apple identity token');
   const appleToken = await verifyAppleIdentityToken(identityToken, nonce);
   const appleSub = appleToken.sub;
+  console.log('[APPLE_REGISTER] Apple token verified, sub:', appleSub.substring(0, 8) + '...', 'email:', appleToken.email || 'none');
 
   const existingUser = await prisma.user.findUnique({
     where: { appleSub },
   });
 
   if (existingUser) {
+    console.log('[APPLE_REGISTER] User with appleSub already exists');
     throw new ApiError(400, 'auth.appleAccountAlreadyExists');
   }
 
   const emailToUse = appleToken.email || undefined;
   
   if (emailToUse) {
+    console.log('[APPLE_REGISTER] Checking for existing email:', emailToUse);
     const existingEmail = await prisma.user.findUnique({
       where: { email: emailToUse },
     });
     if (existingEmail) {
+      console.log('[APPLE_REGISTER] Email already exists, has appleSub:', !!existingEmail.appleSub);
       if (existingEmail.appleSub) {
         throw new ApiError(400, 'auth.appleAccountAlreadyExists');
       }
@@ -230,6 +237,7 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
   // Apple provides name only on first sign-in, email is in identity token
   const sanitizedFirstName = firstName ? firstName.trim().slice(0, 100) : undefined;
   const sanitizedLastName = lastName ? lastName.trim().slice(0, 100) : undefined;
+  console.log('[APPLE_REGISTER] User data:', { hasFirstName: !!sanitizedFirstName, hasLastName: !!sanitizedLastName, language });
   
   // For Apple Sign In, we accept whatever Apple provides without validation
   // This complies with Apple's guidelines: never require users to provide
@@ -246,6 +254,7 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
 
   let user;
   try {
+    console.log('[APPLE_REGISTER] Creating user');
     user = await prisma.user.create({
     data: {
       appleSub,
@@ -265,7 +274,9 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
     },
     select: PROFILE_SELECT_FIELDS,
     });
+    console.log('[APPLE_REGISTER] User created successfully, id:', user.id);
   } catch (createError: any) {
+    console.error('[APPLE_REGISTER] Error creating user:', createError);
     if (createError.code === 'P2002' && createError.meta?.target?.includes('appleSub')) {
       throw new ApiError(400, 'auth.appleAccountAlreadyExists');
     }
@@ -275,8 +286,10 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
     throw createError;
   }
 
+  console.log('[APPLE_REGISTER] Generating token');
   const token = generateToken({ userId: user.id, appleId: appleSub });
 
+  console.log('[APPLE_REGISTER] Registration successful');
   res.status(201).json({
     success: true,
     data: { user, token },
@@ -284,16 +297,20 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
 });
 
 export const loginWithApple = asyncHandler(async (req: Request, res: Response) => {
+  console.log('[APPLE_LOGIN] loginWithApple called');
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   const { identityToken, nonce, language, firstName, lastName } = req.body;
 
   if (!identityToken) {
+    console.error('[APPLE_LOGIN] Missing identityToken');
     throw new ApiError(400, 'auth.identityTokenRequired');
   }
 
+  console.log('[APPLE_LOGIN] Verifying Apple identity token');
   const appleToken = await verifyAppleIdentityToken(identityToken, nonce);
   const appleSub = appleToken.sub;
+  console.log('[APPLE_LOGIN] Apple token verified, sub:', appleSub.substring(0, 8) + '...', 'email:', appleToken.email || 'none');
 
   let user = await prisma.user.findUnique({
     where: { appleSub },
@@ -301,14 +318,19 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
   });
 
   if (!user) {
+    console.log('[APPLE_LOGIN] User not found for appleSub');
     throw new ApiError(401, 'errors.userNotFound');
   }
 
+  console.log('[APPLE_LOGIN] User found, id:', user.id, 'isActive:', user.isActive, 'hasAppleSub:', !!user.appleSub);
+
   if (!user.isActive) {
+    console.log('[APPLE_LOGIN] User account is inactive');
     throw new ApiError(403, 'auth.accountInactive');
   }
 
   if (!user.appleSub) {
+    console.log('[APPLE_LOGIN] User does not have appleSub linked');
     throw new ApiError(403, 'auth.appleAccountNotLinked');
   }
 
@@ -319,6 +341,7 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
     const languageCode = language.toLowerCase().split('-')[0];
     if (supportedLanguages.includes(languageCode)) {
       updateData.language = language;
+      console.log('[APPLE_LOGIN] Updating language to:', language);
     }
   }
 
@@ -326,6 +349,7 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
     const sanitizedFirstName = firstName.trim().slice(0, 100);
     if (sanitizedFirstName.length >= 3 || (user.lastName && user.lastName.trim().length >= 3)) {
       updateData.firstName = sanitizedFirstName;
+      console.log('[APPLE_LOGIN] Updating firstName');
     }
   }
 
@@ -334,6 +358,7 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
     const currentFirstName = updateData.firstName || user.firstName || '';
     if (sanitizedLastName.length >= 3 || (currentFirstName && currentFirstName.trim().length >= 3)) {
       updateData.lastName = sanitizedLastName;
+      console.log('[APPLE_LOGIN] Updating lastName');
     }
   }
 
@@ -351,6 +376,7 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
 
   if (appleToken.email) {
     if (!user.appleEmail) {
+      console.log('[APPLE_LOGIN] User has no appleEmail, setting from token');
       const emailConflict = await prisma.user.findUnique({
         where: { email: appleToken.email },
       });
@@ -362,6 +388,7 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
         updateData.email = appleToken.email;
       }
     } else if (appleToken.email !== user.appleEmail) {
+      console.log('[APPLE_LOGIN] Apple email changed, updating');
       const emailConflict = await prisma.user.findUnique({
         where: { email: appleToken.email },
       });
@@ -373,11 +400,13 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
         updateData.email = appleToken.email;
       }
     } else if (appleToken.email_verified && !user.appleEmailVerified) {
+      console.log('[APPLE_LOGIN] Email verification status changed');
       updateData.appleEmailVerified = true;
     }
   }
 
   if (Object.keys(updateData).length > 0) {
+    console.log('[APPLE_LOGIN] Updating user with data:', Object.keys(updateData));
     user = await prisma.user.update({
       where: { id: user.id },
       data: updateData,
@@ -385,8 +414,10 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
     });
   }
 
+  console.log('[APPLE_LOGIN] Generating token');
   const token = generateToken({ userId: user.id, appleId: appleSub });
 
+  console.log('[APPLE_LOGIN] Login successful');
   res.json({
     success: true,
     data: {
@@ -615,18 +646,23 @@ export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) 
 });
 
 export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) => {
+  console.log('[APPLE_LINK] linkApple called, userId:', req.userId);
   const { identityToken, nonce } = req.body;
 
   if (!identityToken) {
+    console.error('[APPLE_LINK] Missing identityToken');
     throw new ApiError(400, 'auth.identityTokenRequired');
   }
 
   if (!req.userId) {
+    console.error('[APPLE_LINK] Missing userId');
     throw new ApiError(401, 'Authentication required');
   }
 
+  console.log('[APPLE_LINK] Verifying Apple identity token');
   const appleToken = await verifyAppleIdentityToken(identityToken, nonce);
   const appleSub = appleToken.sub;
+  console.log('[APPLE_LINK] Apple token verified, sub:', appleSub.substring(0, 8) + '...', 'email:', appleToken.email || 'none');
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
@@ -634,10 +670,12 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
   });
 
   if (!currentUser) {
+    console.log('[APPLE_LINK] Current user not found');
     throw new ApiError(404, 'errors.userNotFound');
   }
 
   if (currentUser.appleSub) {
+    console.log('[APPLE_LINK] User already has appleSub linked');
     throw new ApiError(400, 'auth.appleAccountAlreadyLinked');
   }
 
@@ -646,6 +684,7 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
   });
 
   if (existingAppleUser && existingAppleUser.id !== req.userId) {
+    console.log('[APPLE_LINK] Apple account already linked to another user');
     throw new ApiError(400, 'auth.appleAccountAlreadyLinkedToAnotherUser');
   }
 
@@ -657,6 +696,7 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
   };
 
   if (emailToUse) {
+    console.log('[APPLE_LINK] Checking email conflict:', emailToUse);
     const existingEmail = await prisma.user.findUnique({
       where: { email: emailToUse },
     });
@@ -664,16 +704,19 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
     if (!existingEmail || existingEmail.id === req.userId) {
       if (!currentUser.email) {
         updateData.email = emailToUse;
+        console.log('[APPLE_LINK] Setting email from Apple token');
       }
     }
   }
 
+  console.log('[APPLE_LINK] Updating user with Apple account');
   const user = await prisma.user.update({
     where: { id: req.userId },
     data: updateData,
     select: PROFILE_SELECT_FIELDS,
   });
 
+  console.log('[APPLE_LINK] Apple account linked successfully');
   res.json({
     success: true,
     data: { user },
@@ -681,7 +724,10 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
 });
 
 export const unlinkApple = asyncHandler(async (req: AuthRequest, res: Response) => {
+  console.log('[APPLE_UNLINK] unlinkApple called, userId:', req.userId);
+  
   if (!req.userId) {
+    console.error('[APPLE_UNLINK] Missing userId');
     throw new ApiError(401, 'Authentication required');
   }
 
@@ -691,16 +737,20 @@ export const unlinkApple = asyncHandler(async (req: AuthRequest, res: Response) 
   });
 
   if (!currentUser) {
+    console.log('[APPLE_UNLINK] Current user not found');
     throw new ApiError(404, 'errors.userNotFound');
   }
 
   if (!currentUser.appleSub) {
+    console.log('[APPLE_UNLINK] User does not have appleSub linked');
     throw new ApiError(400, 'auth.appleAccountNotLinked');
   }
 
   const hasOtherAuthMethods = !!(currentUser.phone || currentUser.telegramId || currentUser.googleId);
+  console.log('[APPLE_UNLINK] Has other auth methods:', hasOtherAuthMethods, { phone: !!currentUser.phone, telegramId: !!currentUser.telegramId, googleId: !!currentUser.googleId });
   
   if (!hasOtherAuthMethods) {
+    console.log('[APPLE_UNLINK] Cannot unlink last auth method');
     throw new ApiError(400, 'auth.cannotUnlinkLastAuthMethod');
   }
 
@@ -711,21 +761,27 @@ export const unlinkApple = asyncHandler(async (req: AuthRequest, res: Response) 
   };
 
   if (currentUser.authProvider === AuthProvider.APPLE) {
+    console.log('[APPLE_UNLINK] Current auth provider is APPLE, switching provider');
     if (currentUser.phone) {
       updateData.authProvider = AuthProvider.PHONE;
+      console.log('[APPLE_UNLINK] Switching to PHONE provider');
     } else if (currentUser.telegramId) {
       updateData.authProvider = AuthProvider.TELEGRAM;
+      console.log('[APPLE_UNLINK] Switching to TELEGRAM provider');
     } else if (currentUser.googleId) {
       updateData.authProvider = AuthProvider.GOOGLE;
+      console.log('[APPLE_UNLINK] Switching to GOOGLE provider');
     }
   }
 
+  console.log('[APPLE_UNLINK] Updating user to unlink Apple account');
   const user = await prisma.user.update({
     where: { id: req.userId },
     data: updateData,
     select: PROFILE_SELECT_FIELDS,
   });
 
+  console.log('[APPLE_UNLINK] Apple account unlinked successfully');
   res.json({
     success: true,
     data: { user },

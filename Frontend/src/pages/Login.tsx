@@ -133,32 +133,42 @@ export const Login = () => {
   };
 
   const handleAppleSignIn = async () => {
+    console.log('[APPLE_LOGIN] handleAppleSignIn called');
+    
     if (!isIOS()) {
+      console.log('[APPLE_LOGIN] Not iOS device, showing error');
       setError(t('auth.appleSignInOnlyIOS'));
       return;
     }
 
     setLoading(true);
     setError('');
+    console.log('[APPLE_LOGIN] Starting Apple sign-in flow');
 
     try {
+      console.log('[APPLE_LOGIN] Calling signInWithApple');
       const result = await signInWithApple();
       
       if (!result) {
+        console.log('[APPLE_LOGIN] signInWithApple returned null (user cancelled)');
         setLoading(false);
         return;
       }
 
+      console.log('[APPLE_LOGIN] Apple sign-in successful, processing result');
       const { result: appleResult, nonce } = result;
       const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
+      console.log('[APPLE_LOGIN] Language:', normalizedLanguage);
 
       // Only use name/email provided by Apple - never prompt user for this information
       // Apple provides name only on first sign-in, email is in identity token
       const firstName = appleResult.user?.name?.firstName || undefined;
       const lastName = appleResult.user?.name?.lastName || undefined;
+      console.log('[APPLE_LOGIN] User data:', { hasFirstName: !!firstName, hasLastName: !!lastName });
 
       let response;
       try {
+        console.log('[APPLE_LOGIN] Attempting login with Apple');
         response = await authApi.loginApple({
           identityToken: appleResult.identityToken,
           nonce,
@@ -166,8 +176,11 @@ export const Login = () => {
           firstName,
           lastName,
         });
+        console.log('[APPLE_LOGIN] Login successful');
       } catch (loginErr: any) {
+        console.log('[APPLE_LOGIN] Login failed, status:', loginErr?.response?.status);
         if (loginErr?.response?.status === 401) {
+          console.log('[APPLE_LOGIN] User not found, attempting registration');
           try {
             response = await authApi.registerApple({
               identityToken: appleResult.identityToken,
@@ -176,10 +189,14 @@ export const Login = () => {
               lastName,
               language: normalizedLanguage,
             });
+            console.log('[APPLE_LOGIN] Registration successful');
           } catch (registerErr: any) {
+            console.error('[APPLE_LOGIN] Registration failed, status:', registerErr?.response?.status);
             if (registerErr?.response?.status === 400) {
               const errorMessage = registerErr?.response?.data?.message || '';
+              console.log('[APPLE_LOGIN] Registration error:', errorMessage);
               if (errorMessage.includes('appleAccountAlreadyExists') || errorMessage.includes('Apple account already exists')) {
+                console.log('[APPLE_LOGIN] Account already exists, retrying login');
                 response = await authApi.loginApple({
                   identityToken: appleResult.identityToken,
                   nonce,
@@ -187,6 +204,7 @@ export const Login = () => {
                   firstName,
                   lastName,
                 });
+                console.log('[APPLE_LOGIN] Retry login successful');
               } else {
                 throw registerErr;
               }
@@ -199,14 +217,19 @@ export const Login = () => {
         }
       }
 
+      console.log('[APPLE_LOGIN] Setting auth state');
       await setAuth(response.data.user, response.data.token);
 
       if (!response.data.user.currentCity) {
+        console.log('[APPLE_LOGIN] No city set, navigating to select-city');
         navigate('/select-city');
       } else {
+        console.log('[APPLE_LOGIN] City set, navigating to home');
         navigate('/');
       }
     } catch (err: any) {
+      console.error('[APPLE_LOGIN] Error in handleAppleSignIn:', err);
+      
       // Check if it's a cancellation error that slipped through
       const errorMessage = String(err?.message || '');
       const errorCode = String(err?.code || err?.errorCode || '');
@@ -215,7 +238,7 @@ export const Login = () => {
       if (errorString.includes('1001') || 
           errorString.includes('cancel') || 
           errorString.includes('operation couldn\'t be completed')) {
-        // User cancelled - don't show error
+        console.log('[APPLE_LOGIN] User cancelled, not showing error');
         setLoading(false);
         return;
       }
@@ -237,6 +260,8 @@ export const Login = () => {
         errorMsg = t('errors.generic');
       }
       
+      console.error('[APPLE_LOGIN] Final error message:', errorMsg);
+      
       if (import.meta.env.DEV) {
         const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';
         const method = err?.config?.method?.toUpperCase() || 'unknown';
@@ -248,6 +273,7 @@ export const Login = () => {
       }
     } finally {
       setLoading(false);
+      console.log('[APPLE_LOGIN] handleAppleSignIn completed');
     }
   };
 
