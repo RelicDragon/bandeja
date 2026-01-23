@@ -5,7 +5,7 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 import { Button, Input, Select } from '@/components';
 import { usersApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
-import { hasValidUsername } from '@/utils/userValidation';
+import { isProfileComplete } from '@/utils/userValidation';
 import { Gender } from '@/types';
 
 export const CompleteProfile = () => {
@@ -13,8 +13,13 @@ export const CompleteProfile = () => {
   const navigate = useNavigate();
   const { user, updateUser } = useAuthStore();
 
-  const hasAppleSignIn = !!user?.appleSub;
-  const appleProvidedName = hasAppleSignIn && (user?.firstName || user?.lastName);
+  // Only exempt from name/email requirement if PRIMARY auth provider is Apple
+  // Users can have multiple auth providers linked, but we only exempt those
+  // whose primary authProvider is Apple (not those who just have appleSub linked)
+  const hasAppleSignIn = user?.authProvider === 'APPLE';
+  // For users whose PRIMARY auth provider is Apple, never show name/email fields
+  // per Apple guidelines. Apple provides this information through Authentication
+  // Services framework and we should not require users to provide it again.
 
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
@@ -26,7 +31,8 @@ export const CompleteProfile = () => {
   const [error, setError] = useState('');
 
   const isValidName = () => {
-    if (appleProvidedName) {
+    // Apple Sign In users don't need to provide name/email
+    if (hasAppleSignIn) {
       return true;
     }
     const trimmedFirst = firstName.trim();
@@ -68,7 +74,7 @@ export const CompleteProfile = () => {
 
       updateUser(response.data);
 
-      if (hasValidUsername(response.data)) {
+      if (isProfileComplete(response.data)) {
         navigate('/');
       }
     } catch (err: any) {
@@ -92,23 +98,25 @@ export const CompleteProfile = () => {
 
       <form onSubmit={handleSubmit}>
         <div className="space-y-4 mb-6">
-          {appleProvidedName ? (
+          {hasAppleSignIn ? (
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-800 dark:text-blue-300 mb-2">
-                {t('auth.nameProvidedByApple')}
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                {t('auth.nameProvidedByApple') || 'Your account information is provided by Apple Sign In.'}
               </p>
-              <div className="space-y-2">
-                {firstName && (
-                  <p className="text-gray-900 dark:text-white">
-                    <span className="font-medium">{t('auth.firstName')}:</span> {firstName}
-                  </p>
-                )}
-                {lastName && (
-                  <p className="text-gray-900 dark:text-white">
-                    <span className="font-medium">{t('auth.lastName')}:</span> {lastName}
-                  </p>
-                )}
-              </div>
+              {(firstName || lastName) && (
+                <div className="space-y-2 mt-2">
+                  {firstName && (
+                    <p className="text-gray-900 dark:text-white">
+                      <span className="font-medium">{t('auth.firstName')}:</span> {firstName}
+                    </p>
+                  )}
+                  {lastName && (
+                    <p className="text-gray-900 dark:text-white">
+                      <span className="font-medium">{t('auth.lastName')}:</span> {lastName}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <>
