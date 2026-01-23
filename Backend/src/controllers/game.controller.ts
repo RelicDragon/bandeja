@@ -338,8 +338,8 @@ export const sendResultsToTelegram = asyncHandler(async (req: AuthRequest, res: 
   let finalSummaryText: string;
   if (summaryText && typeof summaryText === 'string' && summaryText.trim()) {
     const trimmed = summaryText.trim();
-    if (trimmed.length > 1024) {
-      throw new ApiError(400, 'Summary text exceeds maximum length of 1024 characters');
+    if (trimmed.length > 4096) {
+      throw new ApiError(400, 'Summary text exceeds maximum length of 4096 characters');
     }
     finalSummaryText = trimmed;
   } else {

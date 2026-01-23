@@ -117,8 +117,29 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const isChannel = contextType === 'GROUP' && groupChannel?.isChannel;
   const isChannelParticipantOnly = isChannel && isChannelParticipant && !isChannelAdminOrOwner;
   
-  const canAccessChat = contextType === 'USER' || (contextType === 'BUG' && canWriteBugChat) || (contextType === 'GAME' && (isParticipant || hasPendingInvite || isGuest || isAdminOrOwner)) || (contextType === 'GROUP' && (isChannelParticipant || !isChannel));
-  const canViewPublicChat = contextType === 'USER' || contextType === 'BUG' || contextType === 'GROUP' || canAccessChat || game?.isPublic;
+  const canAccessChat = contextType === 'USER' || 
+    (contextType === 'BUG' && canWriteBugChat) || 
+    (contextType === 'GAME' && (currentChatType === 'PUBLIC' || isParticipant || hasPendingInvite || isGuest || isAdminOrOwner)) || 
+    (contextType === 'GROUP' && (isChannelParticipant || !isChannel));
+  
+  const canWriteGameChat = useMemo(() => {
+    if (contextType !== 'GAME' || !game || !user?.id) return false;
+    
+    if (currentChatType === 'PUBLIC') {
+      const isParentParticipant = game.parent?.participants?.some(p => p.userId === user.id) ?? false;
+      return isParticipant || isAdminOrOwner || isParentParticipant;
+    } else if (currentChatType === 'ADMINS') {
+      return isAdminOrOwner;
+    } else if (currentChatType === 'PRIVATE') {
+      return isPlayingParticipant || isAdminOrOwner;
+    } else if (currentChatType === 'PHOTOS') {
+      const isParentParticipant = game.parent?.participants?.some(p => p.userId === user.id) ?? false;
+      return isParticipant || isAdminOrOwner || isParentParticipant;
+    }
+    return false;
+  }, [contextType, game, user?.id, currentChatType, isParticipant, isAdminOrOwner, isPlayingParticipant]);
+  
+  const canViewPublicChat = contextType === 'USER' || contextType === 'BUG' || contextType === 'GROUP' || (contextType === 'GAME' && currentChatType === 'PUBLIC') || canAccessChat;
   const isCurrentUserGuest = game?.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying && participant.role !== 'OWNER' && participant.role !== 'ADMIN') ?? false;
 
   useEffect(() => {
@@ -1282,7 +1303,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                   bug={bug}
                   groupChannel={groupChannel}
                   onMessageSent={handleMessageSent}
-                  disabled={false}
+                  disabled={contextType === 'GAME' ? !canWriteGameChat : false}
                   replyTo={replyTo}
                   onCancelReply={handleCancelReply}
                   onScrollToMessage={handleScrollToMessage}
@@ -1357,7 +1378,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                   bug={bug}
                   groupChannel={groupChannel}
                   onMessageSent={handleMessageSent}
-                  disabled={false}
+                  disabled={contextType === 'GAME' ? !canWriteGameChat : false}
                   replyTo={replyTo}
                   onCancelReply={handleCancelReply}
                   onScrollToMessage={handleScrollToMessage}

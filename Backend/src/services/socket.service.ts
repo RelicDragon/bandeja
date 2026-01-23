@@ -97,35 +97,13 @@ class SocketService {
         try {
           if (!socket.userId) return;
 
-          // Verify user has access to this game
           const game = await prisma.game.findUnique({
-            where: { id: gameId },
-            include: {
-              participants: {
-                where: { userId: socket.userId }
-              },
-              invites: {
-                where: { 
-                  receiverId: socket.userId,
-                  status: 'PENDING'
-                }
-              },
-            }
+            where: { id: gameId }
           });
 
           if (!game) {
             console.log(`[SocketService] User ${socket.userId} tried to join non-existent game room ${gameId}`);
             socket.emit('error', { message: 'Game not found' });
-            return;
-          }
-
-          const isParticipant = game.participants.length > 0;
-          const hasPendingInvite = game.invites.length > 0;
-          const isPublicGame = game.isPublic;
-
-          if (!isParticipant && !hasPendingInvite && !isPublicGame) {
-            console.log(`[SocketService] User ${socket.userId} denied access to game room ${gameId}`);
-            socket.emit('error', { message: 'Access denied to game chat' });
             return;
           }
 

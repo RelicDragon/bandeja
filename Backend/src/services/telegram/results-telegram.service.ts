@@ -370,9 +370,9 @@ export class ResultsTelegramService {
     try {
       const resultsImageFile = new InputFile(resultsImageBuffer, 'results.jpg');
 
-      // Escape HTML in summary text and truncate to Telegram's 1024 character limit
+      // Escape HTML in summary text and truncate to Telegram's 4096 character limit
       const escapedSummary = escapeHTML(summaryText);
-      const maxCaptionLength = 1024;
+      const maxCaptionLength = 4096;
       const finalCaption = escapedSummary.length > maxCaptionLength 
         ? escapedSummary.substring(0, maxCaptionLength - 3) + '...'
         : escapedSummary;

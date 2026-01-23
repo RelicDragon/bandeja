@@ -432,7 +432,7 @@ export const GameDetailsContent = () => {
     return isNonPlayingParticipant || isInOldQueue;
   }, [game, user?.id]);
   const isOwner = game && user ? isUserGameAdminOrOwner(game, user.id) : false;
-  const canAccessChat = isParticipant || hasPendingInvite || isGuest || isOwner || game?.isPublic || game?.entityType === 'BAR' || game?.entityType === 'LEAGUE' || false;
+  const canAccessChat = true;
   const canEdit = isOwner || user?.isAdmin || false;
   const canViewSettings = game?.resultsStatus === 'NONE' && canEdit && game.status !== 'ARCHIVED';
   const isFull = game ? game.entityType !== 'BAR' && game.participants.filter(p => p.isPlaying).length >= game.maxParticipants : false;
