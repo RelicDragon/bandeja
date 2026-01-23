@@ -17,9 +17,8 @@ export const CompleteProfile = () => {
   // Users can have multiple auth providers linked, but we only exempt those
   // whose primary authProvider is Apple (not those who just have appleSub linked)
   const hasAppleSignIn = user?.authProvider === 'APPLE';
-  // For users whose PRIMARY auth provider is Apple, never show name/email fields
-  // per Apple guidelines. Apple provides this information through Authentication
-  // Services framework and we should not require users to provide it again.
+  const hasName = !!(user?.firstName || user?.lastName);
+  const showAppleMessage = hasAppleSignIn && hasName;
 
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
@@ -31,8 +30,8 @@ export const CompleteProfile = () => {
   const [error, setError] = useState('');
 
   const isValidName = () => {
-    // Apple Sign In users don't need to provide name/email
-    if (hasAppleSignIn) {
+    // Apple Sign In users with existing name don't need to provide name/email
+    if (showAppleMessage) {
       return true;
     }
     const trimmedFirst = firstName.trim();
@@ -98,7 +97,7 @@ export const CompleteProfile = () => {
 
       <form onSubmit={handleSubmit}>
         <div className="space-y-4 mb-6">
-          {hasAppleSignIn ? (
+          {showAppleMessage ? (
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-sm text-blue-800 dark:text-blue-300">
                 {t('auth.nameProvidedByApple') || 'Your account information is provided by Apple Sign In.'}

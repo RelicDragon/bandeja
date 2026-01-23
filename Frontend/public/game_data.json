@@ -26,7 +26,8 @@
           "class": "Knight",
           "model": "models/char/knight.glb",
           "modelType": "glb",
-          "anim_idle": "Idle"
+          "anim_idle": "Idle",
+          "anim_idle_boring": ["SwordAndShieldIdle", "SwordAndShieldBlock"]
         }
       ]
     }
