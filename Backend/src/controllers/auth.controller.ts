@@ -255,8 +255,24 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
 
   // Only use name/email provided by Apple - never require user input
   // Apple provides name only on first sign-in, email is in identity token
+  console.log('[APPLE_REGISTER] Extracting firstName/lastName from request body:', {
+    rawFirstName: firstName || null,
+    rawLastName: lastName || null,
+    firstNameType: typeof firstName,
+    lastNameType: typeof lastName,
+    firstNameLength: firstName?.length || 0,
+    lastNameLength: lastName?.length || 0,
+  });
   const sanitizedFirstName = firstName ? firstName.trim().slice(0, 100) : undefined;
   const sanitizedLastName = lastName ? lastName.trim().slice(0, 100) : undefined;
+  console.log('[APPLE_REGISTER] Sanitized firstName/lastName:', {
+    sanitizedFirstName: sanitizedFirstName || null,
+    sanitizedLastName: sanitizedLastName || null,
+    sanitizedFirstNameLength: sanitizedFirstName?.length || 0,
+    sanitizedLastNameLength: sanitizedLastName?.length || 0,
+    willUseFirstName: !!sanitizedFirstName,
+    willUseLastName: !!sanitizedLastName,
+  });
   console.log('[APPLE_REGISTER] User data:', { hasFirstName: !!sanitizedFirstName, hasLastName: !!sanitizedLastName, language });
   
   // For Apple Sign In, we accept whatever Apple provides without validation
@@ -384,20 +400,42 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
     }
   }
 
+  console.log('[APPLE_LOGIN] Extracting firstName/lastName from request body:', {
+    rawFirstName: firstName || null,
+    rawLastName: lastName || null,
+    firstNameType: typeof firstName,
+    lastNameType: typeof lastName,
+    firstNameLength: firstName?.length || 0,
+    lastNameLength: lastName?.length || 0,
+    currentUserFirstName: user.firstName || null,
+    currentUserLastName: user.lastName || null,
+  });
+
   if (firstName && !user.firstName) {
     const sanitizedFirstName = firstName.trim().slice(0, 100);
+    console.log('[APPLE_LOGIN] Processing firstName update:', {
+      sanitizedFirstName: sanitizedFirstName || null,
+      sanitizedFirstNameLength: sanitizedFirstName.length,
+      willUpdate: sanitizedFirstName.length >= 3 || (user.lastName && user.lastName.trim().length >= 3),
+    });
     if (sanitizedFirstName.length >= 3 || (user.lastName && user.lastName.trim().length >= 3)) {
       updateData.firstName = sanitizedFirstName;
-      console.log('[APPLE_LOGIN] Updating firstName');
+      console.log('[APPLE_LOGIN] Updating firstName to:', sanitizedFirstName);
     }
   }
 
   if (lastName && !user.lastName) {
     const sanitizedLastName = lastName.trim().slice(0, 100);
     const currentFirstName = updateData.firstName || user.firstName || '';
+    console.log('[APPLE_LOGIN] Processing lastName update:', {
+      sanitizedLastName: sanitizedLastName || null,
+      sanitizedLastNameLength: sanitizedLastName.length,
+      currentFirstName: currentFirstName || null,
+      willUpdate: sanitizedLastName.length >= 3 || (currentFirstName && currentFirstName.trim().length >= 3),
+    });
     if (sanitizedLastName.length >= 3 || (currentFirstName && currentFirstName.trim().length >= 3)) {
       updateData.lastName = sanitizedLastName;
-      console.log('[APPLE_LOGIN] Updating lastName');
+      console.log('[APPLE_LOGIN] Updating lastName to:', sanitizedLastName);
     }
   }
 

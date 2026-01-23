@@ -162,9 +162,23 @@ export const Login = () => {
 
       // Only use name/email provided by Apple - never prompt user for this information
       // Apple provides name only on first sign-in, email is in identity token
+      console.log('[APPLE_LOGIN] Extracting firstName/lastName from appleResult:', {
+        hasUser: !!appleResult.user,
+        hasName: !!appleResult.user?.name,
+        nameObject: appleResult.user?.name,
+        rawFirstName: appleResult.user?.name?.firstName,
+        rawLastName: appleResult.user?.name?.lastName,
+      });
       const firstName = appleResult.user?.name?.firstName || undefined;
       const lastName = appleResult.user?.name?.lastName || undefined;
-      console.log('[APPLE_LOGIN] User data:', { hasFirstName: !!firstName, hasLastName: !!lastName });
+      console.log('[APPLE_LOGIN] Extracted user data:', {
+        firstName: firstName || null,
+        lastName: lastName || null,
+        firstNameLength: firstName?.length || 0,
+        lastNameLength: lastName?.length || 0,
+        hasFirstName: !!firstName,
+        hasLastName: !!lastName,
+      });
 
       let response;
       try {

@@ -82,6 +82,18 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
     console.log('[APPLE_AUTH] Identity token received, length:', result.response.identityToken.length);
 
     const userData = result.response.user;
+    console.log('[APPLE_AUTH] Raw userData from Apple:', {
+      userDataType: typeof userData,
+      isObject: typeof userData === 'object',
+      isNull: userData === null,
+      isArray: Array.isArray(userData),
+      rawUserData: userData,
+      hasEmail: userData && typeof userData === 'object' && !Array.isArray(userData) ? !!(userData as any).email : false,
+      hasName: userData && typeof userData === 'object' && !Array.isArray(userData) ? !!(userData as any).name : false,
+      nameType: userData && typeof userData === 'object' && !Array.isArray(userData) ? typeof (userData as any).name : 'N/A',
+      nameValue: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).name : 'N/A',
+    });
+    
     const normalizedUser = typeof userData === 'object' && userData !== null && !Array.isArray(userData)
       ? {
           email: (userData as any).email,
@@ -91,10 +103,22 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
           } : undefined,
         }
       : {};
+    
+    console.log('[APPLE_AUTH] Extracting firstName/lastName from Apple response:', {
+      rawNameObject: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).name : null,
+      extractedFirstName: normalizedUser.name?.firstName || null,
+      extractedLastName: normalizedUser.name?.lastName || null,
+      firstNameLength: normalizedUser.name?.firstName?.length || 0,
+      lastNameLength: normalizedUser.name?.lastName?.length || 0,
+    });
+    
     console.log('[APPLE_AUTH] User data normalized:', {
       hasEmail: !!normalizedUser.email,
+      email: normalizedUser.email || null,
       hasFirstName: !!normalizedUser.name?.firstName,
+      firstName: normalizedUser.name?.firstName || null,
       hasLastName: !!normalizedUser.name?.lastName,
+      lastName: normalizedUser.name?.lastName || null,
     });
 
     console.log('[APPLE_AUTH] Apple sign-in successful');
