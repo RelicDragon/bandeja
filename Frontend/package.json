@@ -27,6 +27,9 @@
     "@capgo/capacitor-social-login": "^8.2.16",
     "@ebarooni/capacitor-calendar": "^8.0.0",
     "@paralleldrive/cuid2": "^3.0.4",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
+    "@react-three/postprocessing": "^3.0.4",
     "@sindresorhus/transliterate": "^2.3.1",
     "axios": "^1.6.2",
     "bootstrap-icons": "^1.13.1",
@@ -52,6 +55,7 @@
     "recharts": "^3.4.1",
     "socket.io-client": "^4.8.1",
     "tailwindcss-animate": "^1.0.7",
+    "three": "^0.182.0",
     "zustand": "^4.4.7"
   },
   "devDependencies": {

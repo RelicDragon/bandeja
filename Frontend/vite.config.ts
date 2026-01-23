@@ -41,11 +41,6 @@ export default defineConfig({
         changeOrigin: true,
         ws: true,
       },
-      '/character': {
-        target: 'http://localhost:4950',
-        changeOrigin: true,
-        rewrite: (path) => path,
-      },
     },
     // Reduce HMR polling to reduce requests
     hmr: {

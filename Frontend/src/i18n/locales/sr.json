@@ -735,7 +735,8 @@
     "sunday": "Недеља",
     "timeFormat12h": "12-часовни",
     "timeFormat24h": "24-часовни",
-    "characterGenerator": "Генератор карактера"
+    "characterGenerator": "Генератор карактера",
+    "characterCreation": "Креирање карактера"
   },
   "createGame": {
     "title": "Креирај игру",

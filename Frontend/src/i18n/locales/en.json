@@ -738,7 +738,8 @@
     "sunday": "Sunday",
     "timeFormat12h": "12-hour",
     "timeFormat24h": "24-hour",
-    "characterGenerator": "Character Generator"
+    "characterGenerator": "Character Generator",
+    "characterCreation": "Character Creation"
   },
   "createGame": {
     "title": "Create Game",

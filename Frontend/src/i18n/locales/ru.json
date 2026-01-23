@@ -741,7 +741,8 @@
     "sunday": "Воскресенье",
     "timeFormat12h": "12-часовой",
     "timeFormat24h": "24-часовой",
-    "characterGenerator": "Генератор персонажей"
+    "characterGenerator": "Генератор персонажей",
+    "characterCreation": "Создание персонажа"
   },
   "createGame": {
     "title": "Создать игру",

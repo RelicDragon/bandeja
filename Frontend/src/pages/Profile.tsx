@@ -922,11 +922,11 @@ export const ProfileContent = () => {
             <div>
               <Button
                 variant="primary"
-                onClick={() => (window.location.href = '/character')}
+                onClick={() => navigate('/character')}
                 className="w-full flex items-center justify-center gap-2 rounded-xl"
               >
                 <UserCircle size={16} />
-                {t('profile.characterGenerator') || 'Character Generator'}
+                {t('profile.characterCreation') || 'Character Creation'}
               </Button>
             </div>
           </div>
