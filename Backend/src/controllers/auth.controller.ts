@@ -194,6 +194,7 @@ export const loginWithTelegram = asyncHandler(async (req: Request, res: Response
 
 export const registerWithApple = asyncHandler(async (req: Request, res: Response) => {
   console.log('[APPLE_REGISTER] registerWithApple called');
+  console.log('req.body', req.body);
   console.log('[APPLE_REGISTER] Request body received:', {
     hasIdentityToken: !!req.body.identityToken,
     identityTokenLength: req.body.identityToken?.length || 0,
