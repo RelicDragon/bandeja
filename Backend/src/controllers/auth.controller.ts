@@ -335,6 +335,7 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
 
 export const loginWithApple = asyncHandler(async (req: Request, res: Response) => {
   console.log('[APPLE_LOGIN] loginWithApple called');
+  console.log('[APPLE_LOGIN] Original request body:', JSON.stringify(req.body, null, 2));
   console.log('[APPLE_LOGIN] Request body received:', {
     hasIdentityToken: !!req.body.identityToken,
     identityTokenLength: req.body.identityToken?.length || 0,
