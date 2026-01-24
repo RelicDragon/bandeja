@@ -82,6 +82,8 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
       userName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) ? (result.response.user as any).name : undefined,
       userFirstName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) && (result.response.user as any).name ? (result.response.user as any).name.firstName : undefined,
       userLastName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) && (result.response.user as any).name ? (result.response.user as any).name.lastName : undefined,
+      userGivenName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) ? (result.response.user as any).given_name || (result.response.user as any).givenName : undefined,
+      userFamilyName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) ? (result.response.user as any).family_name || (result.response.user as any).familyName : undefined,
     });
 
     if (!result.response?.identityToken) {
@@ -101,24 +103,57 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
       hasName: userData && typeof userData === 'object' && !Array.isArray(userData) ? !!(userData as any).name : false,
       nameType: userData && typeof userData === 'object' && !Array.isArray(userData) ? typeof (userData as any).name : 'N/A',
       nameValue: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).name : 'N/A',
+      hasGivenName: userData && typeof userData === 'object' && !Array.isArray(userData) ? !!(userData as any).given_name || !!(userData as any).givenName : false,
+      hasFamilyName: userData && typeof userData === 'object' && !Array.isArray(userData) ? !!(userData as any).family_name || !!(userData as any).familyName : false,
+      givenName: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).given_name || (userData as any).givenName : undefined,
+      familyName: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).family_name || (userData as any).familyName : undefined,
     });
+    
+    // Extract firstName/lastName from multiple possible formats
+    let extractedFirstName: string | undefined;
+    let extractedLastName: string | undefined;
+    
+    if (userData && typeof userData === 'object' && !Array.isArray(userData)) {
+      // Check for given_name/family_name (Apple's native format)
+      if ((userData as any).given_name) {
+        extractedFirstName = (userData as any).given_name;
+      } else if ((userData as any).givenName) {
+        extractedFirstName = (userData as any).givenName;
+      } else if ((userData as any).name?.givenName) {
+        extractedFirstName = (userData as any).name.givenName;
+      } else if ((userData as any).name?.firstName) {
+        extractedFirstName = (userData as any).name.firstName;
+      }
+      
+      if ((userData as any).family_name) {
+        extractedLastName = (userData as any).family_name;
+      } else if ((userData as any).familyName) {
+        extractedLastName = (userData as any).familyName;
+      } else if ((userData as any).name?.familyName) {
+        extractedLastName = (userData as any).name.familyName;
+      } else if ((userData as any).name?.lastName) {
+        extractedLastName = (userData as any).name.lastName;
+      }
+    }
     
     const normalizedUser = typeof userData === 'object' && userData !== null && !Array.isArray(userData)
       ? {
           email: (userData as any).email,
-          name: (userData as any).name ? {
-            firstName: (userData as any).name?.firstName,
-            lastName: (userData as any).name?.lastName,
+          name: extractedFirstName || extractedLastName ? {
+            firstName: extractedFirstName,
+            lastName: extractedLastName,
           } : undefined,
         }
       : {};
     
     console.log('[APPLE_AUTH] Extracting firstName/lastName from Apple response:', {
       rawNameObject: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).name : null,
-      extractedFirstName: normalizedUser.name?.firstName || null,
-      extractedLastName: normalizedUser.name?.lastName || null,
-      firstNameLength: normalizedUser.name?.firstName?.length || 0,
-      lastNameLength: normalizedUser.name?.lastName?.length || 0,
+      hasGivenName: !!(userData && typeof userData === 'object' && !Array.isArray(userData) && ((userData as any).given_name || (userData as any).givenName)),
+      hasFamilyName: !!(userData && typeof userData === 'object' && !Array.isArray(userData) && ((userData as any).family_name || (userData as any).familyName)),
+      extractedFirstName: extractedFirstName || null,
+      extractedLastName: extractedLastName || null,
+      firstNameLength: extractedFirstName?.length || 0,
+      lastNameLength: extractedLastName?.length || 0,
     });
     
     console.log('[APPLE_AUTH] User data normalized:', {
