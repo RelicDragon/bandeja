@@ -27,6 +27,31 @@ async function sha256(message: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+function extractAppleNames(userData: any): { firstName?: string; lastName?: string } {
+  if (!userData || typeof userData !== 'object' || Array.isArray(userData)) {
+    return {};
+  }
+
+  const firstNamePaths = [
+    userData.given_name,
+    userData.givenName,
+    userData.name?.givenName,
+    userData.name?.firstName,
+  ];
+
+  const lastNamePaths = [
+    userData.family_name,
+    userData.familyName,
+    userData.name?.familyName,
+    userData.name?.lastName,
+  ];
+
+  const firstName = firstNamePaths.find(val => val) || undefined;
+  const lastName = lastNamePaths.find(val => val) || undefined;
+
+  return { firstName, lastName };
+}
+
 export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonce: string } | null> {
   console.log('[APPLE_AUTH] Starting Apple sign-in process');
   
@@ -109,32 +134,7 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
       familyName: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).family_name || (userData as any).familyName : undefined,
     });
     
-    // Extract firstName/lastName from multiple possible formats
-    let extractedFirstName: string | undefined;
-    let extractedLastName: string | undefined;
-    
-    if (userData && typeof userData === 'object' && !Array.isArray(userData)) {
-      // Check for given_name/family_name (Apple's native format)
-      if ((userData as any).given_name) {
-        extractedFirstName = (userData as any).given_name;
-      } else if ((userData as any).givenName) {
-        extractedFirstName = (userData as any).givenName;
-      } else if ((userData as any).name?.givenName) {
-        extractedFirstName = (userData as any).name.givenName;
-      } else if ((userData as any).name?.firstName) {
-        extractedFirstName = (userData as any).name.firstName;
-      }
-      
-      if ((userData as any).family_name) {
-        extractedLastName = (userData as any).family_name;
-      } else if ((userData as any).familyName) {
-        extractedLastName = (userData as any).familyName;
-      } else if ((userData as any).name?.familyName) {
-        extractedLastName = (userData as any).name.familyName;
-      } else if ((userData as any).name?.lastName) {
-        extractedLastName = (userData as any).name.lastName;
-      }
-    }
+    const { firstName: extractedFirstName, lastName: extractedLastName } = extractAppleNames(userData);
     
     const normalizedUser = typeof userData === 'object' && userData !== null && !Array.isArray(userData)
       ? {
@@ -148,8 +148,6 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
     
     console.log('[APPLE_AUTH] Extracting firstName/lastName from Apple response:', {
       rawNameObject: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).name : null,
-      hasGivenName: !!(userData && typeof userData === 'object' && !Array.isArray(userData) && ((userData as any).given_name || (userData as any).givenName)),
-      hasFamilyName: !!(userData && typeof userData === 'object' && !Array.isArray(userData) && ((userData as any).family_name || (userData as any).familyName)),
       extractedFirstName: extractedFirstName || null,
       extractedLastName: extractedLastName || null,
       firstNameLength: extractedFirstName?.length || 0,
