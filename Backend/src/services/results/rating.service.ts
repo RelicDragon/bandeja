@@ -31,6 +31,10 @@ const MAX_MULTIPLIER = 3.0;
 const CLOSE_MATCH_THRESHOLD = 3;
 const BLOWOUT_THRESHOLD = 15;
 
+const ELO_SCALING_FACTOR = 1.7;
+const HIGH_LEVEL_THRESHOLD = 5.0;
+const MAX_ACHIEVABLE_LEVEL = 6.8;
+
 export function calculateEnduranceCoefficient(
   setScores: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }> | undefined,
   ballsInGames: boolean
@@ -48,6 +52,42 @@ export function calculateEnduranceCoefficient(
   let coefficient = sum / 20;
   
   return coefficient;
+}
+
+export function calculateReliabilityChange(
+  setScores: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }> | undefined,
+  ballsInGames: boolean
+): number {
+  if (!setScores || setScores.length === 0) {
+    return 0;
+  }
+
+  const sum = setScores.reduce((total, set) => {
+    const setTotal = set.teamAScore + set.teamBScore;
+    const effectiveBallsInGames = ballsInGames && !set.isTieBreak;
+    return total + (effectiveBallsInGames ? setTotal * 5 : setTotal);
+  }, 0);
+  
+  const reliabilityChange = sum / 150;
+  
+  return reliabilityChange;
+}
+
+function calculateExpectedWinProbability(playerLevel: number, opponentLevel: number): number {
+  const levelDifference = opponentLevel - playerLevel;
+  return 1 / (1 + Math.pow(10, levelDifference / ELO_SCALING_FACTOR));
+}
+
+function calculateHighLevelDampening(playerLevel: number, isGaining: boolean): number {
+  if (!isGaining || playerLevel < HIGH_LEVEL_THRESHOLD) {
+    return 1.0;
+  }
+  
+  const progressAboveThreshold = playerLevel - HIGH_LEVEL_THRESHOLD;
+  const maxProgress = MAX_ACHIEVABLE_LEVEL - HIGH_LEVEL_THRESHOLD;
+  const ratio = Math.min(1.0, progressAboveThreshold / maxProgress);
+  
+  return Math.exp(-3.5 * ratio);
 }
 
 function calculateDifferentialMultiplier(setScores: Array<{ teamAScore: number; teamBScore: number }>): { multiplier: number; totalPointDifferential: number } {
@@ -82,22 +122,21 @@ export function calculateRatingUpdate(
   matchResult: MatchResult,
   ballsInGames: boolean = false
 ): RatingUpdate {
-  const levelDifference = matchResult.opponentsLevel - playerStats.level;
+  const expectedWinProbability = calculateExpectedWinProbability(playerStats.level, matchResult.opponentsLevel);
   
-  let baseLevelChange: number;
+  let actualScore: number;
   if (matchResult.isDraw) {
-    baseLevelChange = BASE_LEVEL_CHANGE * (levelDifference / 10) * 0.5;
+    actualScore = 0.5;
   } else if (matchResult.isWinner) {
-    baseLevelChange = Math.min(
-      BASE_LEVEL_CHANGE * (1 + levelDifference / 10),
-      MAX_LEVEL_CHANGE
-    );
+    actualScore = 1.0;
   } else {
-    baseLevelChange = Math.max(
-      -BASE_LEVEL_CHANGE * (1 - levelDifference / 10),
-      -MAX_LEVEL_CHANGE
-    );
+    actualScore = 0.0;
   }
+
+  const performanceDifference = actualScore - expectedWinProbability;
+  
+  const K_FACTOR = 10.0;
+  let baseLevelChange = K_FACTOR * BASE_LEVEL_CHANGE * performanceDifference;
 
   let multiplier = 1.0;
   let totalPointDifferential: number | undefined = undefined;
@@ -116,6 +155,9 @@ export function calculateRatingUpdate(
   const clampedReliability = Math.max(0.0, Math.min(100.0, playerStats.reliability));
   const reliabilityCoefficient = Math.max(0.05, Math.exp(-0.15 * Math.pow(clampedReliability, 0.68)));
   levelChange = levelChange * reliabilityCoefficient;
+
+  const highLevelDampening = calculateHighLevelDampening(playerStats.level, levelChange > 0);
+  levelChange = levelChange * highLevelDampening;
 
   levelChange = Math.max(-MAX_LEVEL_CHANGE, Math.min(MAX_LEVEL_CHANGE, levelChange));
 

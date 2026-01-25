@@ -1,4 +1,4 @@
-import { calculateRatingUpdate, RELIABILITY_INCREMENT } from './rating.service';
+import { calculateRatingUpdate, calculateReliabilityChange } from './rating.service';
 
 interface PlayerData {
   userId: string;
@@ -60,6 +60,7 @@ interface PlayerChanges {
   scoresLost: number;
   totalScore?: number;
   betterTeamButLost: number;
+  allSets: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }>;
 }
 
 function initializePlayerChanges(players: PlayerData[], includeTotal: boolean = false): Record<string, PlayerChanges> {
@@ -75,6 +76,7 @@ function initializePlayerChanges(players: PlayerData[], includeTotal: boolean = 
       scoresMade: 0,
       scoresLost: 0,
       betterTeamButLost: 0,
+      allSets: [],
     };
     if (includeTotal) {
       changes[player.userId].totalScore = 0;
@@ -113,9 +115,10 @@ function buildGameOutcome(
   index: number,
   pointsPerWin: number,
   pointsPerTie: number,
-  pointsPerLoose: number
+  pointsPerLoose: number,
+  ballsInGames: boolean
 ): GameOutcomeResult {
-  const reliabilityChange = changes.setsPlayed * RELIABILITY_INCREMENT;
+  const reliabilityChange = calculateReliabilityChange(changes.allSets, ballsInGames);
   
   return {
     userId,
@@ -195,6 +198,7 @@ export function calculateByMatchesWonOutcomes(
         playerTotalChanges[player.userId].setsPlayed += validSets.length;
         playerTotalChanges[player.userId].scoresMade += teamAScore;
         playerTotalChanges[player.userId].scoresLost += teamBScore;
+        playerTotalChanges[player.userId].allSets.push(...validSets);
         updateWinLossTie(playerTotalChanges[player.userId], teamAWins, teamBWins, isTie);
         
         if (teamAAvgLevel > teamBAvgLevel && teamBWins) {
@@ -224,6 +228,7 @@ export function calculateByMatchesWonOutcomes(
         playerTotalChanges[player.userId].setsPlayed += validSets.length;
         playerTotalChanges[player.userId].scoresMade += teamBScore;
         playerTotalChanges[player.userId].scoresLost += teamAScore;
+        playerTotalChanges[player.userId].allSets.push(...validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore, isTieBreak: s.isTieBreak })));
         updateWinLossTie(playerTotalChanges[player.userId], teamBWins, teamAWins, isTie);
         
         if (teamBAvgLevel > teamAAvgLevel && teamAWins) {
@@ -251,7 +256,7 @@ export function calculateByMatchesWonOutcomes(
     });
 
   const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) => 
-    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose)
+    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ballsInGames)
   );
 
   return { gameOutcomes, roundOutcomes };
@@ -388,7 +393,7 @@ export function calculateByPointsOutcomes(
     });
 
   const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) =>
-    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose)
+    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ballsInGames)
   );
 
   return { gameOutcomes, roundOutcomes };
@@ -465,6 +470,7 @@ export function calculateByScoresDeltaOutcomes(
         playerTotalChanges[playerId].totalScore! += teamA.score;
         playerTotalChanges[playerId].scoresMade += teamA.score;
         playerTotalChanges[playerId].scoresLost += teamB.score;
+        playerTotalChanges[playerId].allSets.push(...validSets);
         updateWinLossTie(playerTotalChanges[playerId], teamAWins, teamBWins, isTie);
         
         if (teamAAvgLevel > teamBAvgLevel && teamBWins) {
@@ -498,6 +504,7 @@ export function calculateByScoresDeltaOutcomes(
         playerTotalChanges[playerId].totalScore! += teamB.score;
         playerTotalChanges[playerId].scoresMade += teamB.score;
         playerTotalChanges[playerId].scoresLost += teamA.score;
+        playerTotalChanges[playerId].allSets.push(...validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore, isTieBreak: s.isTieBreak })));
         updateWinLossTie(playerTotalChanges[playerId], teamBWins, teamAWins, isTie);
         
         if (teamBAvgLevel > teamAAvgLevel && teamAWins) {
@@ -525,7 +532,7 @@ export function calculateByScoresDeltaOutcomes(
     });
 
   const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) =>
-    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose)
+    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ballsInGames)
   );
 
   return { gameOutcomes, roundOutcomes };
