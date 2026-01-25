@@ -167,6 +167,9 @@ export const EditMaxParticipantsModal = ({
     if (game.entityType === 'TOURNAMENT') {
       return 32;
     }
+    if (game.entityType === 'GAME') {
+      return 12;
+    }
     return 8;
   }, [game.entityType]);
 
@@ -175,6 +178,9 @@ export const EditMaxParticipantsModal = ({
   const validOptions = useMemo(() => {
     if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE_SEASON') {
       return Array.from({ length: 13 }, (_, i) => 8 + i * 2);
+    }
+    if (game.entityType === 'GAME') {
+      return [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     }
     return [2, 3, 4, 5, 6, 7, 8];
   }, [game.entityType]);
