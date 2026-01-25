@@ -49,7 +49,7 @@ export function calculateEnduranceCoefficient(
     return total + (effectiveBallsInGames ? setTotal * 5 : setTotal);
   }, 0);
   
-  let coefficient = sum / 20;
+  let coefficient = sum / 20 / 5;
   
   return coefficient;
 }

@@ -109,7 +109,7 @@ export const ParticipantsSection = ({
                entityType === 'LEAGUE' ? t('createGame.numberOfParticipantsLeague') :
                t('createGame.numberOfParticipants')}
             </label>
-            <div className={`grid gap-2 ${entityType === 'TOURNAMENT' ? 'grid-cols-7' : 'grid-cols-7'}`}>
+            <div className={`grid gap-2 ${entityType === 'TOURNAMENT' ? 'grid-cols-7' : 'grid-cols-6'}`}>
               {entityType === 'TOURNAMENT' ? (
                 Array.from({ length: 13 }, (_, i) => 8 + i * 2).map((num) => (
                   <button
