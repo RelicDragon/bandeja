@@ -14,6 +14,18 @@ export interface AppleAuthResult {
   };
 }
 
+// Actual Capacitor plugin response structure
+interface CapacitorAppleSignInResponse {
+  response: {
+    user: string | null;         // User ID string
+    email: string | null;
+    givenName: string | null;    // First name
+    familyName: string | null;   // Last name
+    identityToken: string;
+    authorizationCode: string;
+  };
+}
+
 function generateNonce(): string {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);
@@ -27,27 +39,15 @@ async function sha256(message: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function extractAppleNames(userData: any): { firstName?: string; lastName?: string } {
-  if (!userData || typeof userData !== 'object' || Array.isArray(userData)) {
+function extractAppleNames(responseData: any): { firstName?: string; lastName?: string } {
+  // Names come directly from the Capacitor plugin response object
+  // The plugin returns: { response: { givenName, familyName, ... } }
+  if (!responseData || typeof responseData !== 'object') {
     return {};
   }
 
-  const firstNamePaths = [
-    userData.given_name,
-    userData.givenName,
-    userData.name?.givenName,
-    userData.name?.firstName,
-  ];
-
-  const lastNamePaths = [
-    userData.family_name,
-    userData.familyName,
-    userData.name?.familyName,
-    userData.name?.lastName,
-  ];
-
-  const firstName = firstNamePaths.find(val => val) || undefined;
-  const lastName = lastNamePaths.find(val => val) || undefined;
+  const firstName = responseData.givenName || undefined;
+  const lastName = responseData.familyName || undefined;
 
   return { firstName, lastName };
 }
@@ -76,39 +76,16 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
       scopes: 'email name',
       state: nonce,
       nonce: hashedNonce,
-    });
-    console.log('[APPLE_AUTH] Raw Apple response received:', JSON.stringify(result, null, 2));
-    console.log('[APPLE_AUTH] Raw Apple response (parsed):', {
-      resultType: typeof result,
-      resultKeys: result ? Object.keys(result) : [],
-      hasResponse: !!result?.response,
-      responseType: typeof result?.response,
-      responseKeys: result?.response ? Object.keys(result.response) : [],
-      fullResult: result,
-    });
-    console.log('[APPLE_AUTH] Apple authorization response received - full response structure:', JSON.stringify({
-      response: result.response ? {
-        identityToken: result.response.identityToken ? '[REDACTED - length: ' + result.response.identityToken.length + ']' : undefined,
-        authorizationCode: result.response.authorizationCode ? '[REDACTED - length: ' + result.response.authorizationCode.length + ']' : undefined,
-        user: result.response.user,
-      } : undefined,
-    }, null, 2));
-    console.log('[APPLE_AUTH] Apple authorization response details:', {
+    }) as CapacitorAppleSignInResponse;
+    
+    console.log('[APPLE_AUTH] Apple authorization response received:', {
       hasResponse: !!result.response,
       hasIdentityToken: !!result.response?.identityToken,
-      hasAuthorizationCode: !!result.response?.authorizationCode,
       identityTokenLength: result.response?.identityToken?.length || 0,
-      identityTokenPreview: result.response?.identityToken ? result.response.identityToken.substring(0, 50) + '...' : undefined,
-      authorizationCodeLength: result.response?.authorizationCode?.length || 0,
-      authorizationCodePreview: result.response?.authorizationCode ? result.response.authorizationCode.substring(0, 50) + '...' : undefined,
-      hasUser: !!result.response?.user,
-      userType: typeof result.response?.user,
-      userEmail: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) ? (result.response.user as any).email : undefined,
-      userName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) ? (result.response.user as any).name : undefined,
-      userFirstName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) && (result.response.user as any).name ? (result.response.user as any).name.firstName : undefined,
-      userLastName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) && (result.response.user as any).name ? (result.response.user as any).name.lastName : undefined,
-      userGivenName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) ? (result.response.user as any).given_name || (result.response.user as any).givenName : undefined,
-      userFamilyName: result.response?.user && typeof result.response.user === 'object' && !Array.isArray(result.response.user) ? (result.response.user as any).family_name || (result.response.user as any).familyName : undefined,
+      userId: result.response?.user || null,
+      email: result.response?.email || null,
+      givenName: result.response?.givenName || null,
+      familyName: result.response?.familyName || null,
     });
 
     if (!result.response?.identityToken) {
@@ -117,42 +94,24 @@ export async function signInWithApple(): Promise<{ result: AppleAuthResult; nonc
     }
     console.log('[APPLE_AUTH] Identity token received, length:', result.response.identityToken.length);
 
-    const userData = result.response.user;
-    console.log('[APPLE_AUTH] Raw userData from Apple:', {
-      userDataType: typeof userData,
-      isObject: typeof userData === 'object',
-      isNull: userData === null,
-      isArray: Array.isArray(userData),
-      rawUserData: userData,
-      hasEmail: userData && typeof userData === 'object' && !Array.isArray(userData) ? !!(userData as any).email : false,
-      hasName: userData && typeof userData === 'object' && !Array.isArray(userData) ? !!(userData as any).name : false,
-      nameType: userData && typeof userData === 'object' && !Array.isArray(userData) ? typeof (userData as any).name : 'N/A',
-      nameValue: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).name : 'N/A',
-      hasGivenName: userData && typeof userData === 'object' && !Array.isArray(userData) ? !!(userData as any).given_name || !!(userData as any).givenName : false,
-      hasFamilyName: userData && typeof userData === 'object' && !Array.isArray(userData) ? !!(userData as any).family_name || !!(userData as any).familyName : false,
-      givenName: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).given_name || (userData as any).givenName : undefined,
-      familyName: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).family_name || (userData as any).familyName : undefined,
-    });
+    // Extract names from response (givenName, familyName are directly on response object)
+    const { firstName: extractedFirstName, lastName: extractedLastName } = extractAppleNames(result.response);
     
-    const { firstName: extractedFirstName, lastName: extractedLastName } = extractAppleNames(userData);
-    
-    const normalizedUser = typeof userData === 'object' && userData !== null && !Array.isArray(userData)
-      ? {
-          email: (userData as any).email,
-          name: extractedFirstName || extractedLastName ? {
-            firstName: extractedFirstName,
-            lastName: extractedLastName,
-          } : undefined,
-        }
-      : {};
-    
-    console.log('[APPLE_AUTH] Extracting firstName/lastName from Apple response:', {
-      rawNameObject: userData && typeof userData === 'object' && !Array.isArray(userData) ? (userData as any).name : null,
+    console.log('[APPLE_AUTH] Extracted names from Apple response:', {
       extractedFirstName: extractedFirstName || null,
       extractedLastName: extractedLastName || null,
       firstNameLength: extractedFirstName?.length || 0,
       lastNameLength: extractedLastName?.length || 0,
     });
+    
+    // Email is also directly on response object
+    const normalizedUser = {
+      email: result.response.email || undefined,
+      name: extractedFirstName || extractedLastName ? {
+        firstName: extractedFirstName,
+        lastName: extractedLastName,
+      } : undefined,
+    };
     
     console.log('[APPLE_AUTH] User data normalized:', {
       hasEmail: !!normalizedUser.email,

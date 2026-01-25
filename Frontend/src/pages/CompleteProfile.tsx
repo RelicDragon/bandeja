@@ -13,12 +13,10 @@ export const CompleteProfile = () => {
   const navigate = useNavigate();
   const { user, updateUser } = useAuthStore();
 
-  // Only exempt from name/email requirement if PRIMARY auth provider is Apple
-  // Users can have multiple auth providers linked, but we only exempt those
-  // whose primary authProvider is Apple (not those who just have appleSub linked)
+  // Apple Sign In users should NEVER be asked to provide name/email
+  // per Apple's Human Interface Guidelines (Guideline 4.0)
+  // This information is provided by Authentication Services framework
   const hasAppleSignIn = user?.authProvider === 'APPLE';
-  const hasName = !!(user?.firstName || user?.lastName);
-  const showAppleMessage = hasAppleSignIn && hasName;
 
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
@@ -30,8 +28,8 @@ export const CompleteProfile = () => {
   const [error, setError] = useState('');
 
   const isValidName = () => {
-    // Apple Sign In users with existing name don't need to provide name/email
-    if (showAppleMessage) {
+    // Apple Sign In users NEVER need to provide name/email per Apple guidelines
+    if (hasAppleSignIn) {
       return true;
     }
     const trimmedFirst = firstName.trim();
@@ -97,20 +95,23 @@ export const CompleteProfile = () => {
 
       <form onSubmit={handleSubmit}>
         <div className="space-y-4 mb-6">
-          {showAppleMessage ? (
+          {hasAppleSignIn ? (
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-800 dark:text-blue-300">
-                {t('auth.nameProvidedByApple') || 'Your account information is provided by Apple Sign In.'}
+              <p className="text-sm text-blue-800 dark:text-blue-300 mb-2">
+                {t('auth.signedInWithApple') || 'You are signed in with Apple.'}
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-400">
+                {t('auth.appleAccountInfo') || 'Your account information is managed by Apple Sign In and does not require additional input.'}
               </p>
               {(firstName || lastName) && (
-                <div className="space-y-2 mt-2">
+                <div className="space-y-1 mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
                   {firstName && (
-                    <p className="text-gray-900 dark:text-white">
+                    <p className="text-sm text-gray-900 dark:text-white">
                       <span className="font-medium">{t('auth.firstName')}:</span> {firstName}
                     </p>
                   )}
                   {lastName && (
-                    <p className="text-gray-900 dark:text-white">
+                    <p className="text-sm text-gray-900 dark:text-white">
                       <span className="font-medium">{t('auth.lastName')}:</span> {lastName}
                     </p>
                   )}
