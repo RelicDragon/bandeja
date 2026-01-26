@@ -1460,7 +1460,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             )}
           </div>
         ) : (
-          !(contextType === 'GAME' && isInJoinQueue) && !(contextType === 'GAME' && game && (game.status === 'FINISHED' || game.status === 'ARCHIVED')) && (
+          !(contextType === 'GAME' && isInJoinQueue) && !(contextType === 'GAME' && game && (game.status === 'FINISHED' || game.status === 'ARCHIVED')) && !(contextType === 'GROUP' && isChannelParticipant) && (
             <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))', background: 'transparent' }}>
               <div className="flex items-center justify-center" style={{ background: 'transparent' }}>
                 {contextType === 'GROUP' && groupChannel ? (
@@ -1540,7 +1540,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             )}
           </div>
         ) : (
-          !(contextType === 'GAME' && isInJoinQueue) && !(contextType === 'GAME' && game && (game.status === 'FINISHED' || game.status === 'ARCHIVED')) && (
+          !(contextType === 'GAME' && isInJoinQueue) && !(contextType === 'GAME' && game && (game.status === 'FINISHED' || game.status === 'ARCHIVED')) && !(contextType === 'GROUP' && isChannelParticipant) && (
             <div className="px-4 py-3" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
               <div className="flex items-center justify-center">
                 <button
