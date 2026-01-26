@@ -47,7 +47,7 @@ export const navigationRoutes: RouteConfig[] = [
   // Game chat routes
   {
     pattern: /^\/games\/([^/]+)\/chat$/,
-    fallback: (pathname) => {
+    fallback: (pathname, _state) => {
       const match = pathname.match(/^\/games\/([^/]+)\/chat$/);
       return match ? `/games/${match[1]}` : '/';
     },

@@ -12,13 +12,7 @@ export const useBackButtonHandler = (handler?: BackHandler) => {
   const { setCurrentPage, setIsAnimating } = useNavigationStore();
 
   useEffect(() => {
-    backButtonService.setNavigate((path: string | number, options?: { replace?: boolean }) => {
-      if (typeof path === 'number') {
-        navigate(path);
-      } else {
-        navigate(path, options);
-      }
-    });
+    backButtonService.setNavigate(navigate);
   }, [navigate]);
 
   const defaultHandler = useCallback(() => {
