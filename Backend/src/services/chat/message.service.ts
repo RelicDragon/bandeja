@@ -123,12 +123,15 @@ export class MessageService {
       throw new ApiError(403, 'You are not a participant in this group/channel');
     }
 
-    // For writing: Channel = only owner, Group = owner or participant
-    const canWrite = isOwner || (groupChannel.isChannel ? false : isParticipant);
+    // For writing: Channel = owner or admin, Group = any participant
+    const isAdmin = userParticipant?.role === ParticipantRole.ADMIN;
+    const canWrite = groupChannel.isChannel 
+      ? (isOwner || isAdmin)
+      : isParticipant;
 
     if (requireWriteAccess && !canWrite) {
       throw new ApiError(403, groupChannel.isChannel 
-        ? 'Only owner can post in channels' 
+        ? 'Only owner or admin can post in channels' 
         : 'You must be a participant to post');
     }
 
@@ -157,8 +160,12 @@ export class MessageService {
       return;
     }
 
-    if (chatType === ChatType.PRIVATE && (!participant || !participant.isPlaying) && !isParentGameAdminOrOwner) {
-      throw new ApiError(403, 'Only playing participants can access private chat');
+    if (chatType === ChatType.PRIVATE) {
+      const isDirectPlayingParticipant = participant && participant.isPlaying;
+      const isDirectAdminOrOwner = participant && (participant.role === 'OWNER' || participant.role === 'ADMIN');
+      if (!isDirectPlayingParticipant && !isDirectAdminOrOwner && !isParentGameAdminOrOwner) {
+        throw new ApiError(403, 'Only playing participants, admins, and owners can access private chat');
+      }
     }
 
     if (chatType === ChatType.ADMINS) {

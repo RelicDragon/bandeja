@@ -5,6 +5,7 @@ import { EntityType } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { CreateGroupChannelForm } from './chat/CreateGroupChannelForm';
 import { BaseModal } from '@/components';
+import { navigationService } from '@/services/navigationService';
 
 interface CreateMenuModalProps {
   isOpen: boolean;
@@ -91,12 +92,18 @@ export const CreateMenuModal = ({
       <CreateGroupChannelForm
         isChannel={chatFormType === 'channel'}
         onClose={onChatFormClose || onClose}
-        onSuccess={() => {
+        onSuccess={(groupChannel) => {
           window.dispatchEvent(new CustomEvent('refresh-chat-list'));
           if (onChatFormClose) {
             onChatFormClose();
           } else {
             onClose();
+          }
+          
+          if (groupChannel.isChannel) {
+            navigationService.navigateToChannelChat(groupChannel.id);
+          } else {
+            navigationService.navigateToGroupChat(groupChannel.id);
           }
         }}
       />

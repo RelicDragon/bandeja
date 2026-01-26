@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, Beer, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UserStats, usersApi, LevelHistoryItem } from '@/api/users';
 import { gamesApi } from '@/api/games';
 import { canUserSeeGame } from '@/utils/gameResults';
@@ -35,6 +36,7 @@ interface LevelHistoryViewProps {
 
 export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const currentUser = useAuthStore((state) => state.user);
   const { setCurrentPage, setIsAnimating } = useNavigationStore();
   const { user } = stats;
@@ -76,7 +78,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
       if (canUserSeeGame(game, currentUser)) {
         setIsAnimating(true);
         setCurrentPage('gameDetails');
-        window.location.href = `/games/${item.gameId}`;
+        navigate(`/games/${item.gameId}`);
       } else {
         setShowingPrivateMessage(item.id);
         setTimeout(() => {

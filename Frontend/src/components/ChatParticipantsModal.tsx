@@ -74,7 +74,8 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
       showCloseButton={false}
       closeOnBackdropClick={true}
     >
-      <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 rounded-b-2xl">
+      <div className="flex flex-col h-full max-h-[80vh]">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {t('chat.participants')}
@@ -99,7 +100,7 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
           </div>
         </div>
 
-        <div className="p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto scrollbar-auto p-3 space-y-2">
           {allParticipants.length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <p className="text-gray-600 dark:text-gray-400">{t('chat.noParticipants')}</p>
@@ -118,6 +119,7 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
                       player={participant}
                       smallLayout={true}
                       showName={false}
+                      fullHideName={true}
                     />
                   </div>
 
@@ -178,6 +180,7 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
             })
           )}
         </div>
+      </div>
     </BaseModal>
   );
 };

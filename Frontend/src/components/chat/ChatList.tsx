@@ -673,7 +673,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         }}
       >
         {chatsFilter === 'users' && (
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
               <input

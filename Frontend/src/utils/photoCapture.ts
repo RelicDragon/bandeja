@@ -150,8 +150,6 @@ export async function pickImages(
         const permissionCheck = await checkPhotoPermission();
         
         if (permissionCheck.status === 'denied') {
-          // On Android, Photo Picker doesn't require READ_MEDIA_IMAGES, so we can still proceed
-          // On iOS, we need permission, so show modal
           if (isIOS()) {
             console.warn('Photo permission denied. User needs to grant in settings.');
             permissionService.showPermissionModal('photos', () => {
@@ -159,7 +157,6 @@ export async function pickImages(
             });
             return null;
           }
-          // On Android, continue to try Photo Picker anyway
         }
         
         if (permissionCheck.canRequest) {
@@ -167,12 +164,12 @@ export async function pickImages(
           if (requestResult.status !== 'granted' && requestResult.status !== 'limited') {
             if (requestResult.status === 'denied') {
               if (isIOS()) {
+                console.warn('Photo permission denied by user.');
                 permissionService.showPermissionModal('photos', () => {
                   pickImages(maxImages).catch(console.error);
                 });
                 return null;
               }
-              // On Android, continue to try Photo Picker anyway
             } else {
               // Status is 'prompt' - on Android we can still try, on iOS we need permission
               if (isIOS()) {
@@ -228,25 +225,53 @@ export async function pickImages(
           if (error.message?.includes('User cancelled') || error.message?.includes('canceled')) {
             return null;
           }
+          if (error.message?.includes('permission') || error.message?.includes('Permission') || error.message?.includes('denied')) {
+            console.warn('Permission denied when opening picker');
+            permissionService.showPermissionModal('photos', () => {
+              pickImages(maxImages).catch(console.error);
+            });
+            return null;
+          }
           console.warn('pickImages failed, falling back to single selection:', error);
         }
       }
       
-      const image = await Camera.getPhoto({
-        quality: 90,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Photos,
-      });
+      try {
+        const image = await Camera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Photos,
+        });
 
-      if (!image.dataUrl) {
-        return null;
+        if (!image.dataUrl) {
+          return null;
+        }
+
+        const file = await convertImageToFile(image, 0);
+        return { files: [file] };
+      } catch (error: any) {
+        if (error.message?.includes('User cancelled') || error.message?.includes('canceled')) {
+          return null;
+        }
+        if (error.message?.includes('permission') || error.message?.includes('Permission') || error.message?.includes('denied')) {
+          console.warn('Permission denied when opening picker');
+          permissionService.showPermissionModal('photos', () => {
+            pickImages(maxImages).catch(console.error);
+          });
+          return null;
+        }
+        throw error;
       }
-
-      const file = await convertImageToFile(image, 0);
-      return { files: [file] };
     } catch (error: any) {
       if (error.message?.includes('User cancelled') || error.message?.includes('canceled')) {
+        return null;
+      }
+      if (error.message?.includes('permission') || error.message?.includes('Permission') || error.message?.includes('denied')) {
+        console.warn('Permission denied when opening picker');
+        permissionService.showPermissionModal('photos', () => {
+          pickImages(maxImages).catch(console.error);
+        });
         return null;
       }
       console.error('Error picking images:', error);

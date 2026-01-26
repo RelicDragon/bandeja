@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState, useRef } from 'react';
 import { ProtectedRoute, AppLoadingScreen, NoInternetScreen, AppVersionModal } from './components';
+import { NavigationErrorBoundary } from './components/NavigationErrorBoundary';
 
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
 const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })));
@@ -555,9 +556,11 @@ function AppContent() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <NavigationErrorBoundary fallbackPath="/">
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </NavigationErrorBoundary>
   );
 }
 

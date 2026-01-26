@@ -666,7 +666,7 @@ export const GameDetailsContent = () => {
       setGame(response.data);
       
       if (action === 'transfer-ownership') {
-        window.location.reload();
+        toast.success(t('game.ownershipTransferred') || 'Ownership transferred successfully');
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
@@ -1024,7 +1024,11 @@ export const GameDetailsContent = () => {
     
     setIsLeaving(true);
     try {
-      await gamesApi.togglePlayingStatus(id, false);
+      if (isUserOwner) {
+        await gamesApi.togglePlayingStatus(id, false);
+      } else {
+        await gamesApi.leave(id);
+      }
       const response = await gamesApi.getById(id);
       setGame(response.data);
       toast.success(t(getLeftGameText(game?.entityType || 'GAME')));

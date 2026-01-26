@@ -129,7 +129,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
       if (window.history.state?.playerCardOpen && playerId && !isClosingViaBack) {
         try {
           if (canNavigateBack()) {
-            window.history.back();
+            navigate(-1);
           }
         } catch (error) {
           // Ignore errors if history is not available

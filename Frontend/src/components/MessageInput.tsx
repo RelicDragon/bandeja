@@ -5,9 +5,10 @@ import { chatApi, CreateMessageRequest, ChatMessage, ChatContextType, GroupChann
 import { mediaApi } from '@/api/media';
 import { ChatType, Game, Bug } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
-import { isGroupChannelOwner } from '@/utils/gameResults';
+import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { ReplyPreview } from './ReplyPreview';
 import { MentionInput } from './MentionInput';
+import { JoinGroupChannelButton } from './JoinGroupChannelButton';
 import { Image, X } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { pickImages } from '@/utils/photoCapture';
@@ -34,6 +35,7 @@ interface MessageInputProps {
   onCancelReply?: () => void;
   onScrollToMessage?: (messageId: string) => void;
   chatType?: ChatType;
+  onGroupChannelUpdate?: () => void | Promise<void>;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
@@ -50,6 +52,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onCancelReply,
   onScrollToMessage,
   chatType = 'PUBLIC',
+  onGroupChannelUpdate,
 }) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
@@ -68,9 +71,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const contextType: ChatContextType = gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER';
   const finalContextId = gameId || bugId || userChatId || groupChannelId;
 
-  const isChannelOwner = groupChannel?.isChannel && user && groupChannel ? isGroupChannelOwner(groupChannel, user.id) : false;
-  const isChannelNonOwner = groupChannel?.isChannel && !isChannelOwner;
-  const isDisabledForChannel = isChannelNonOwner || disabled;
+  const isChannel = groupChannel?.isChannel ?? false;
+  const isGroup = groupChannel && !isChannel;
+  const isChannelAdminOrOwner = isChannel && user && groupChannel ? isGroupChannelAdminOrOwner(groupChannel, user.id) : false;
+  const isChannelParticipant = groupChannel?.isParticipant ?? false;
+  const canWrite = isChannel ? isChannelAdminOrOwner : (isGroup ? isChannelParticipant : true);
+  const shouldShowJoinButton = isChannel && !isChannelAdminOrOwner && !isChannelParticipant;
+  const isDisabled = (!canWrite) || disabled;
 
   const imagePreviewUrls = useMemo(() => {
     return selectedImages.map(file => URL.createObjectURL(file));
@@ -357,7 +364,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
-    if (isDisabledForChannel || isLoading) return;
+    if (isDisabled || isLoading) return;
 
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -379,10 +386,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       e.preventDefault();
       setSelectedImages(prev => [...prev, ...imageFiles]);
     }
-  }, [isDisabledForChannel, isLoading]);
+  }, [isDisabled, isLoading]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    if (isDisabledForChannel || isLoading) return;
+    if (isDisabled || isLoading) return;
     
     e.preventDefault();
     e.stopPropagation();
@@ -390,7 +397,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     if (e.dataTransfer.types.includes('Files')) {
       setIsDragOver(true);
     }
-  }, [isDisabledForChannel, isLoading]);
+  }, [isDisabled, isLoading]);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -406,7 +413,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
-    if (isDisabledForChannel || isLoading) return;
+    if (isDisabled || isLoading) return;
 
     e.preventDefault();
     e.stopPropagation();
@@ -423,10 +430,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
 
     setSelectedImages(prev => [...prev, ...imageFiles]);
-  }, [isDisabledForChannel, isLoading, t]);
+  }, [isDisabled, isLoading, t]);
 
   const handleImageButtonClick = async () => {
-    if (isDisabledForChannel || isLoading) return;
+    if (isDisabled || isLoading) return;
 
     if (isCapacitor()) {
       try {
@@ -517,7 +524,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!message.trim() && selectedImages.length === 0) || isLoading || isDisabledForChannel) return;
+    if ((!message.trim() && selectedImages.length === 0) || isLoading || isDisabled) return;
 
     if (!finalContextId) {
       console.error('[MessageInput] Missing contextId:', { gameId, bugId, userChatId, groupChannelId });
@@ -592,6 +599,36 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  const handleJoinChannel = async () => {
+    if (!groupChannelId || !groupChannel) return;
+    setIsLoading(true);
+    try {
+      await chatApi.joinGroupChannel(groupChannelId);
+      if (onGroupChannelUpdate) {
+        await onGroupChannelUpdate();
+      }
+      onMessageSent();
+    } catch (error) {
+      console.error('Failed to join channel:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (shouldShowJoinButton && groupChannel) {
+    return (
+      <div className="p-3 overflow-visible">
+        <div className="flex items-center justify-center">
+          <JoinGroupChannelButton
+            groupChannel={groupChannel}
+            onJoin={handleJoinChannel}
+            isLoading={isLoading}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       className="p-3 overflow-visible"
@@ -600,11 +637,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {isChannelNonOwner && (
-        <div className="mb-3 px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-sm text-yellow-800 dark:text-yellow-200">
-          {t('chat.onlyOwnerCanPost', { defaultValue: 'Only the channel owner can post messages' })}
-        </div>
-      )}
       {replyTo && (
         <ReplyPreview
           replyTo={{
@@ -647,7 +679,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               value={message}
               onChange={handleMessageChange}
               placeholder={t('chat.messages.typeMessage')}
-              disabled={isDisabledForChannel || isLoading}
+              disabled={isDisabled || isLoading}
               game={game}
               bug={bug}
               groupChannel={groupChannel}
@@ -665,7 +697,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             <button
               type="button"
               onClick={handleImageButtonClick}
-              disabled={isDisabledForChannel || isLoading}
+              disabled={isDisabled || isLoading}
               className="absolute w-9 h-9 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110 hover:bg-gray-200 dark:hover:bg-gray-600 shadow-lg z-10"
               style={{
                 right: isMultiline ? '8px' : '54px',
@@ -680,7 +712,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             
             <button
               type="submit"
-              disabled={(!message.trim() && selectedImages.length === 0) || isLoading || isDisabledForChannel}
+              disabled={(!message.trim() && selectedImages.length === 0) || isLoading || isDisabled}
               className="absolute bottom-0.5 right-1 w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_4px_24px_rgba(59,130,246,0.6),0_8px_48px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_32px_rgba(59,130,246,0.7),0_12px_56px_rgba(59,130,246,0.5)] hover:scale-105 z-10"
               aria-label={isLoading ? t('common.sending') : t('chat.messages.sendMessage')}
             >

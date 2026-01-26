@@ -120,6 +120,8 @@ export const useAuthStore = create<AuthState>((set) => {
       try {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        // Clear any old sessionStorage keys (legacy cleanup)
+        sessionStorage.removeItem('app_navigation_tracked');
         set({ user: null, token: null, isAuthenticated: false });
       } catch (error) {
         console.error('Error clearing auth from localStorage:', error);

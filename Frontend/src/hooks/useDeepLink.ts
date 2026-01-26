@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { App } from '@capacitor/app';
 import { isCapacitor } from '@/utils/capacitor';
+import { navigateWithTracking } from '@/utils/navigation';
 
 export const useDeepLink = () => {
   const navigate = useNavigate();
@@ -23,9 +24,9 @@ export const useDeepLink = () => {
           if (parts.length >= 2) {
             const gameId = parts[1];
             if (parts.length === 3 && parts[2] === 'chat') {
-              navigate(`/games/${gameId}/chat`, { replace: true });
+              navigateWithTracking(navigate, `/games/${gameId}/chat`, { replace: true });
             } else {
-              navigate(`/games/${gameId}`, { replace: true });
+              navigateWithTracking(navigate, `/games/${gameId}`, { replace: true });
             }
             return;
           }
@@ -35,7 +36,7 @@ export const useDeepLink = () => {
         if (pathname.startsWith('/user-chat/')) {
           const id = pathname.split('/user-chat/')[1]?.split('/')[0];
           if (id) {
-            navigate(`/user-chat/${id}`, { replace: true });
+            navigateWithTracking(navigate, `/user-chat/${id}`, { replace: true });
             return;
           }
         }
@@ -43,7 +44,7 @@ export const useDeepLink = () => {
         if (pathname.startsWith('/group-chat/')) {
           const id = pathname.split('/group-chat/')[1]?.split('/')[0];
           if (id) {
-            navigate(`/group-chat/${id}`, { replace: true });
+            navigateWithTracking(navigate, `/group-chat/${id}`, { replace: true });
             return;
           }
         }
@@ -51,7 +52,7 @@ export const useDeepLink = () => {
         if (pathname.startsWith('/channel-chat/')) {
           const id = pathname.split('/channel-chat/')[1]?.split('/')[0];
           if (id) {
-            navigate(`/channel-chat/${id}`, { replace: true });
+            navigateWithTracking(navigate, `/channel-chat/${id}`, { replace: true });
             return;
           }
         }
@@ -62,7 +63,7 @@ export const useDeepLink = () => {
           if (parts.length >= 2) {
             const bugId = parts[1];
             if (parts.length === 3 && parts[2] === 'chat') {
-              navigate(`/bugs/${bugId}/chat`, { replace: true });
+              navigateWithTracking(navigate, `/bugs/${bugId}/chat`, { replace: true });
               return;
             }
           }
@@ -86,7 +87,7 @@ export const useDeepLink = () => {
         };
         
         if (simpleRoutes[pathname]) {
-          navigate(simpleRoutes[pathname], { replace: true });
+          navigateWithTracking(navigate, simpleRoutes[pathname], { replace: true });
           return;
         }
       } catch (error) {

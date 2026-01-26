@@ -408,7 +408,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       {isSystemMessage ? (
         <div className="flex justify-center mb-4">
           <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2 max-w-[80%]">
-            <p className="text-xs text-gray-600 dark:text-gray-300 text-center">{displayContent}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-300 text-center whitespace-pre-wrap break-words break-all overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{displayContent}</p>
             <span className="text-[10px] text-gray-400 dark:text-gray-500 block text-center mt-1">
               {formatMessageTime(currentMessage.createdAt)}
             </span>
@@ -417,14 +417,14 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       ) : (
         <div
           ref={messageRef}
-          className={`group flex select-none ${isChannel ? 'justify-start' : (isOwnMessage ? 'justify-end' : 'justify-start')} mb-4 relative transition-all duration-300 ease-out overflow-x-hidden ${
+          className={`group flex select-none ${isChannel ? 'justify-start' : (isOwnMessage ? 'justify-end' : 'justify-start')} mb-4 relative transition-all duration-300 ease-out overflow-visible ${
             isDeleting 
               ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' 
               : 'opacity-100 scale-100 translate-y-0'
           }`}
         >
           
-          <div className={`flex ${isChannel ? 'w-full max-w-full' : 'max-w-[85%]'} ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')}`}>
+          <div className={`flex ${isChannel ? 'w-full max-w-full' : 'max-w-[85%]'} ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')} overflow-visible`}>
             {!isChannel && !isOwnMessage && (
               <div className="flex-shrink-0 mr-3 self-center">
                 <button
@@ -448,12 +448,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               </div>
             )}
             
-            <div className={`flex flex-col ${isChannel ? 'items-start flex-1' : (isOwnMessage ? 'items-end' : 'items-start')}`}>
+            <div className={`flex flex-col ${isChannel ? 'items-start flex-1' : (isOwnMessage ? 'items-end' : 'items-start')} overflow-visible`}>
               {!isChannel && !isOwnMessage && (
                 <span className="text-xs text-gray-500 dark:text-gray-400 mb-0.5 px-2">{getSenderName()}</span>
               )}
               
-              <div className="relative">
+              <div className="relative overflow-visible">
                 {currentMessage.replyTo && (
                   <ReplyPreview
                     replyTo={currentMessage.replyTo}
@@ -463,11 +463,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 )}
                 
                 <div 
-                  className={`flex items-start select-none ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')}`}
+                  className={`flex items-start select-none ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')} overflow-visible`}
                 >
                   <div
                     data-message-bubble="true"
-                    className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? '' : 'px-4'} ${hasTranslation ? 'pt-2 pb-4' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && currentMessage.content ? 'pt-0 pb-2' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'py-0' : 'py-2'))} rounded-lg shadow-sm relative min-w-[120px] overflow-hidden ${
+                    className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? '' : 'px-4'} ${hasTranslation ? 'pt-2 pb-4' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && currentMessage.content ? 'pt-0 pb-2' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'py-0' : 'py-2'))} rounded-lg shadow-sm relative min-w-[120px] overflow-visible ${
                       isChannel
                         ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
                         : isOwnMessage
@@ -516,11 +516,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
                     {/* Text content after images */}
                     {currentMessage.content && (
-                      <div className={currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'px-4' : ''}>
+                      <div className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'px-4' : ''} overflow-visible`}>
                         {hasTranslation ? (
                           <div className="space-y-2">
                             <div className="pb-2 border-b border-gray-300 dark:border-gray-600">
-                              <p className="text-sm whitespace-pre-wrap break-words pr-12">
+                              <p className="text-sm whitespace-pre-wrap break-words break-all pr-12 overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                                 {parsedContent ? (
                                   parsedContent.map((part, index) => {
                                     if (part.type === 'mention') {
@@ -590,7 +590,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                               </p>
                             </div>
                             <div className={`${isChannel ? 'text-gray-600 dark:text-gray-400' : (isOwnMessage ? 'text-blue-50' : 'text-gray-600 dark:text-gray-400')}`}>
-                              <p className="text-sm whitespace-pre-wrap break-words pr-12">
+                              <p className="text-sm whitespace-pre-wrap break-words break-all pr-12 overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                                 {translationContent ? (
                                   translationContent.map((part, index) => {
                                     if (part.type === 'mention') {
@@ -655,7 +655,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                             </div>
                           </div>
                         ) : (
-                          <p className="text-sm whitespace-pre-wrap break-words pr-12 pb-3">
+                          <p className="text-sm whitespace-pre-wrap break-words break-all pr-12 pb-3 overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                             {parsedContent ? (
                               parsedContent.map((part, index) => {
                                 if (part.type === 'mention') {
@@ -699,7 +699,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                           e.preventDefault();
                                           try {
                                             const urlObj = new URL(part.url);
-                                            window.location.href = urlObj.pathname + urlObj.search + urlObj.hash;
+                                            navigate(urlObj.pathname + urlObj.search + urlObj.hash);
                                           } catch {
                                             window.open(part.url, '_blank');
                                           }
@@ -748,7 +748,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                   
                   {/* Reply counter positioned absolutely under bubble */}
                   {hasReplies() && (
-                    <div className={`absolute top-[calc(100%-2px)] ${isOwnMessage ? 'right-1' : 'left-2'} z-10`}>
+                    <div className={`absolute top-[calc(100%-2px)] ${isOwnMessage ? 'right-1' : 'left-2'} z-10 overflow-visible`}>
                       <button
                         onClick={handleScrollToReplies}
                         className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[9px] transition-colors ${

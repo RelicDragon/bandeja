@@ -21,6 +21,7 @@ import { isUserGameAdminOrOwner, isGroupChannelOwner, isGroupChannelAdminOrOwner
 import { normalizeChatType } from '@/utils/chatType';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users, Hash } from 'lucide-react';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
+import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBackNavigation } from '@/utils/navigation';
 
@@ -122,11 +123,28 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const isChannel = contextType === 'GROUP' && groupChannel?.isChannel;
   const isChannelParticipantOnly = isChannel && isChannelParticipant && !isChannelAdminOrOwner;
   
-  const canWriteGroupChat = contextType === 'GROUP' && groupChannel && isChannelParticipant;
+  const canWriteGroupChat = useMemo(() => {
+    if (contextType !== 'GROUP' || !groupChannel || !user?.id) return false;
+    
+    if (isChannel) {
+      return isChannelAdminOrOwner;
+    } else {
+      return isChannelParticipant;
+    }
+  }, [contextType, groupChannel, user?.id, isChannel, isChannelAdminOrOwner, isChannelParticipant]);
   
   const canAccessChat = contextType === 'USER' || 
-    (contextType === 'BUG' && canWriteBugChat) || 
-    (contextType === 'GAME' && (currentChatType === 'PUBLIC' || isParticipant || hasPendingInvite || isGuest || isAdminOrOwner)) || 
+    contextType === 'BUG' || 
+    (contextType === 'GAME' && (
+      currentChatType === 'PUBLIC' || 
+      currentChatType === 'PHOTOS' ||
+      (currentChatType === 'PRIVATE' && (isPlayingParticipant || isAdminOrOwner)) ||
+      (currentChatType === 'ADMINS' && isAdminOrOwner) ||
+      isParticipant || 
+      hasPendingInvite || 
+      isGuest || 
+      isAdminOrOwner
+    )) || 
     (contextType === 'GROUP' && (isChannelParticipant || (isChannel && groupChannel?.isPublic)));
   
   const canWriteGameChat = useMemo(() => {
@@ -145,6 +163,14 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     }
     return false;
   }, [contextType, game, user?.id, currentChatType, isParticipant, isAdminOrOwner, isPlayingParticipant]);
+  
+  const canWriteChat = useMemo(() => {
+    if (contextType === 'GAME') return canWriteGameChat;
+    if (contextType === 'GROUP') return canWriteGroupChat;
+    if (contextType === 'BUG') return canWriteBugChat;
+    if (contextType === 'USER') return true;
+    return false;
+  }, [contextType, canWriteGameChat, canWriteGroupChat, canWriteBugChat]);
   
   const canViewPublicChat = contextType === 'USER' || contextType === 'BUG' || contextType === 'GROUP' || (contextType === 'GAME' && currentChatType === 'PUBLIC') || canAccessChat;
   const isCurrentUserGuest = game?.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying && participant.role !== 'OWNER' && participant.role !== 'ADMIN') ?? false;
@@ -1309,7 +1335,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           )}
         </div>
 
-        {!showLoadingHeader && contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || isAdminOrOwner || (game?.status && game.status !== 'ANNOUNCED')) && (
+        {!showLoadingHeader && contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || isAdminOrOwner || (game?.status && game.status !== 'ANNOUNCED')) && getAvailableChatTypes().length > 1 && (
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div className="max-w-2xl mx-auto px-4" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
               <div className="flex justify-center space-x-1 py-2">
@@ -1400,67 +1426,70 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               {t('chat.blockedByUser')}
             </div>
           </div>
-        ) : canAccessChat ? (
-          !isChannelParticipantOnly ? (
-            <div className="relative overflow-visible pointer-events-auto" style={{ background: 'transparent' }}>
-              <div 
-                className={`transition-opacity duration-300 ease-in-out ${
-                  isSendingMessage ? 'opacity-0 invisible' : 'opacity-100 visible'
-                }`}
-              >
-                <MessageInput
-                  gameId={contextType === 'GAME' ? id : undefined}
-                  bugId={contextType === 'BUG' ? id : undefined}
-                  userChatId={contextType === 'USER' ? (id || userChat?.id) : undefined}
-                  groupChannelId={contextType === 'GROUP' ? id : undefined}
-                  game={game}
-                  bug={bug}
-                  groupChannel={groupChannel}
-                  onMessageSent={handleMessageSent}
-                  disabled={contextType === 'GAME' ? !canWriteGameChat : (contextType === 'GROUP' ? !canWriteGroupChat : false)}
-                  replyTo={replyTo}
-                  onCancelReply={handleCancelReply}
-                  onScrollToMessage={handleScrollToMessage}
-                  chatType={currentChatType}
-                />
-              </div>
-              {isSendingMessage && (
-                <div className="absolute inset-0 p-4 flex items-center justify-center z-50 rounded-[24px] m-3 bg-white/95 dark:bg-gray-800/95 shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)]">
-                  <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm font-medium">{t('common.sending')}</span>
-                  </div>
-                </div>
-              )}
+        ) : canAccessChat && canWriteChat && !isChannelParticipantOnly ? (
+          <div className="relative overflow-visible pointer-events-auto" style={{ background: 'transparent' }}>
+            <div 
+              className={`transition-opacity duration-300 ease-in-out ${
+                isSendingMessage ? 'opacity-0 invisible' : 'opacity-100 visible'
+              }`}
+            >
+              <MessageInput
+                gameId={contextType === 'GAME' ? id : undefined}
+                bugId={contextType === 'BUG' ? id : undefined}
+                userChatId={contextType === 'USER' ? (id || userChat?.id) : undefined}
+                groupChannelId={contextType === 'GROUP' ? id : undefined}
+                game={game}
+                bug={bug}
+                groupChannel={groupChannel}
+                onMessageSent={handleMessageSent}
+                disabled={false}
+                replyTo={replyTo}
+                onCancelReply={handleCancelReply}
+                onScrollToMessage={handleScrollToMessage}
+                chatType={currentChatType}
+                onGroupChannelUpdate={contextType === 'GROUP' ? loadContext : undefined}
+              />
             </div>
-          ) : null
+            {isSendingMessage && (
+              <div className="absolute inset-0 p-4 flex items-center justify-center z-50 rounded-[24px] m-3 bg-white/95 dark:bg-gray-800/95 shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)]">
+                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm font-medium">{t('common.sending')}</span>
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           !(contextType === 'GAME' && isInJoinQueue) && !(contextType === 'GAME' && game && (game.status === 'FINISHED' || game.status === 'ARCHIVED')) && (
             <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))', background: 'transparent' }}>
               <div className="flex items-center justify-center" style={{ background: 'transparent' }}>
-                <button
-                  onClick={handleJoinAsGuest}
-                  disabled={isJoiningAsGuest}
-                  className="w-full px-6 py-3.5 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-[20px] hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_24px_rgba(59,130,246,0.5)] hover:scale-[1.02] font-medium"
-                >
-                  {isJoiningAsGuest ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      {t('common.loading')}
-                    </>
-                  ) : (
-                    <>
-                      <MessageCircle size={20} />
-                      {contextType === 'GAME' && !hasUnoccupiedSlots
-                        ? t('games.joinTheQueue')
-                        : contextType === 'GROUP' && isChannel 
-                        ? t('chat.joinChannel')
-                        : contextType === 'GROUP' && !isChannel
-                        ? t('chat.joinGroup')
-                        : t('chat.joinChatToSend')}
-                    </>
-                  )}
-                </button>
+                {contextType === 'GROUP' && groupChannel ? (
+                  <JoinGroupChannelButton
+                    groupChannel={groupChannel}
+                    onJoin={handleJoinAsGuest}
+                    isLoading={isJoiningAsGuest}
+                  />
+                ) : (
+                  <button
+                    onClick={handleJoinAsGuest}
+                    disabled={isJoiningAsGuest}
+                    className="w-full px-6 py-3.5 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-[20px] hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_24px_rgba(59,130,246,0.5)] hover:scale-[1.02] font-medium"
+                  >
+                    {isJoiningAsGuest ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        {t('common.loading')}
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle size={20} />
+                        {contextType === 'GAME' && !hasUnoccupiedSlots
+                          ? t('games.joinTheQueue')
+                          : t('chat.joinChatToSend')}
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           )
@@ -1477,40 +1506,39 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               {t('chat.blockedByUser')}
             </div>
           </div>
-        ) : canAccessChat ? (
-          !isChannelParticipantOnly ? (
-            <div className="relative overflow-visible">
-              <div 
-                className={`transition-opacity duration-300 ease-in-out ${
-                  isSendingMessage ? 'opacity-0 invisible' : 'opacity-100 visible'
-                }`}
-              >
-                <MessageInput
-                  gameId={contextType === 'GAME' ? id : undefined}
-                  bugId={contextType === 'BUG' ? id : undefined}
-                  userChatId={contextType === 'USER' ? (id || userChat?.id) : undefined}
-                  groupChannelId={contextType === 'GROUP' ? id : undefined}
-                  game={game}
-                  bug={bug}
-                  groupChannel={groupChannel}
-                  onMessageSent={handleMessageSent}
-                  disabled={contextType === 'GAME' ? !canWriteGameChat : (contextType === 'GROUP' ? !canWriteGroupChat : false)}
-                  replyTo={replyTo}
-                  onCancelReply={handleCancelReply}
-                  onScrollToMessage={handleScrollToMessage}
-                  chatType={currentChatType}
-                />
-              </div>
-              {isSendingMessage && (
-                <div className="absolute inset-0 p-4 flex items-center justify-center z-50 bg-white/95 dark:bg-gray-800/95">
-                  <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm font-medium">{t('common.sending')}</span>
-                  </div>
-                </div>
-              )}
+        ) : canAccessChat && canWriteChat && !isChannelParticipantOnly ? (
+          <div className="relative overflow-visible">
+            <div 
+              className={`transition-opacity duration-300 ease-in-out ${
+                isSendingMessage ? 'opacity-0 invisible' : 'opacity-100 visible'
+              }`}
+            >
+              <MessageInput
+                gameId={contextType === 'GAME' ? id : undefined}
+                bugId={contextType === 'BUG' ? id : undefined}
+                userChatId={contextType === 'USER' ? (id || userChat?.id) : undefined}
+                groupChannelId={contextType === 'GROUP' ? id : undefined}
+                game={game}
+                bug={bug}
+                groupChannel={groupChannel}
+                onMessageSent={handleMessageSent}
+                disabled={false}
+                replyTo={replyTo}
+                onCancelReply={handleCancelReply}
+                onScrollToMessage={handleScrollToMessage}
+                chatType={currentChatType}
+                onGroupChannelUpdate={contextType === 'GROUP' ? loadContext : undefined}
+              />
             </div>
-          ) : null
+            {isSendingMessage && (
+              <div className="absolute inset-0 p-4 flex items-center justify-center z-50 bg-white/95 dark:bg-gray-800/95">
+                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm font-medium">{t('common.sending')}</span>
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           !(contextType === 'GAME' && isInJoinQueue) && !(contextType === 'GAME' && game && (game.status === 'FINISHED' || game.status === 'ARCHIVED')) && (
             <div className="px-4 py-3" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>

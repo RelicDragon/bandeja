@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus, LogIn } from 'lucide-react';
+import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus } from 'lucide-react';
 import { Button, PlayerAvatar, AvatarUpload } from '@/components';
+import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
 import { GroupChannel, GroupChannelParticipant } from '@/api/chat';
 import { chatApi } from '@/api/chat';
 import { mediaApi } from '@/api/media';
@@ -326,27 +327,11 @@ export const GroupChannelSettings = ({
           )}
 
           {!isParticipant && (
-            <Button
-              onClick={handleJoin}
-              variant="primary"
-              size="lg"
-              disabled={isJoining}
-              className="w-full flex items-center justify-center gap-2"
-            >
-              {isJoining ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {t('chat.joining', { defaultValue: 'Joining...' })}
-                </>
-              ) : (
-                <>
-                  <LogIn size={20} />
-                  {groupChannelData.isChannel 
-                    ? t('chat.joinChannel', { defaultValue: 'Join Channel' })
-                    : t('chat.joinGroup', { defaultValue: 'Join Group' })}
-                </>
-              )}
-            </Button>
+            <JoinGroupChannelButton
+              groupChannel={groupChannelData}
+              onJoin={handleJoin}
+              isLoading={isJoining}
+            />
           )}
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">

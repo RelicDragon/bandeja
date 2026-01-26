@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Users, Hash } from 'lucide-react';
 import { CreateGroupChannelForm } from './CreateGroupChannelForm';
 import { BaseModal } from '@/components/BaseModal';
+import { navigationService } from '@/services/navigationService';
 
 interface CreateGroupChannelModalProps {
   isOpen: boolean;
@@ -23,11 +24,17 @@ export const CreateGroupChannelModal = ({ isOpen, onClose, onCreated }: CreateGr
     setSelectedType(null);
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = (groupChannel: any) => {
     if (onCreated) {
       onCreated();
     }
     handleFormClose();
+    
+    if (groupChannel.isChannel) {
+      navigationService.navigateToChannelChat(groupChannel.id);
+    } else {
+      navigationService.navigateToGroupChat(groupChannel.id);
+    }
   };
 
   if (selectedType) {

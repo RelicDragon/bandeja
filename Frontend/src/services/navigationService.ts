@@ -1,5 +1,6 @@
 import { NavigateFunction } from 'react-router-dom';
 import { useNavigationStore } from '@/store/navigationStore';
+import { navigateWithTracking } from '@/utils/navigation';
 
 type NavigationStore = ReturnType<typeof useNavigationStore.getState>;
 
@@ -52,7 +53,7 @@ class NavigationService {
     store.setCurrentPage('gameDetails');
     
     const path = openChat ? `/games/${gameId}/chat` : `/games/${gameId}`;
-    this.navigate!(path, { replace: true, state: { fromPage: previousPage } });
+    navigateWithTracking(this.navigate!, path, { replace: true, state: { fromPage: previousPage } });
   }
 
   navigateToUserChat(userChatId: string) {
@@ -67,7 +68,7 @@ class NavigationService {
     this.setAnimatingState();
     store.setCurrentPage('chats');
     store.setChatsFilter('users');
-    this.navigate!(`/user-chat/${userChatId}`, { replace: true });
+    navigateWithTracking(this.navigate!, `/user-chat/${userChatId}`, { replace: true });
   }
 
   navigateToBugChat(bugId: string) {
@@ -82,7 +83,7 @@ class NavigationService {
     this.setAnimatingState();
     store.setCurrentPage('chats');
     store.setChatsFilter('bugs');
-    this.navigate!(`/bugs/${bugId}/chat`, { replace: true });
+    navigateWithTracking(this.navigate!, `/bugs/${bugId}/chat`, { replace: true });
   }
 
   navigateToGroupChat(groupChannelId: string) {
@@ -97,7 +98,7 @@ class NavigationService {
     this.setAnimatingState();
     store.setCurrentPage('chats');
     store.setChatsFilter('users');
-    this.navigate!(`/group-chat/${groupChannelId}`, { replace: true });
+    navigateWithTracking(this.navigate!, `/group-chat/${groupChannelId}`, { replace: true });
   }
 
   navigateToChannelChat(channelId: string) {
@@ -112,7 +113,7 @@ class NavigationService {
     this.setAnimatingState();
     store.setCurrentPage('chats');
     store.setChatsFilter('channels');
-    this.navigate!(`/channel-chat/${channelId}`, { replace: true });
+    navigateWithTracking(this.navigate!, `/channel-chat/${channelId}`, { replace: true });
   }
 
   navigateToBugsList() {
@@ -127,7 +128,7 @@ class NavigationService {
     this.setAnimatingState();
     store.setCurrentPage('chats');
     store.setChatsFilter('bugs');
-    this.navigate!('/bugs', { replace: true });
+    navigateWithTracking(this.navigate!, '/bugs', { replace: true });
   }
 }
 

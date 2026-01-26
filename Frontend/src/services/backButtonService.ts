@@ -1,6 +1,8 @@
 import { App } from '@capacitor/app';
 import { isAndroid } from '@/utils/capacitor';
-import { canNavigateBack } from '@/utils/navigation';
+import { canNavigateBack, navigateWithTracking } from '@/utils/navigation';
+import toast from 'react-hot-toast';
+import i18n from '@/i18n/config';
 
 type ModalCloseHandler = () => void;
 type PageBackHandler = () => boolean | void;
@@ -12,6 +14,8 @@ class BackButtonService {
   private isInitialized = false;
   private isHandling = false;
   private navigate: ((path: string | number, options?: { replace?: boolean }) => void) | null = null;
+  private lastBackPress: number = 0;
+  private readonly DOUBLE_PRESS_DELAY = 2000;
 
   setNavigate(navigateFn: (path: string | number, options?: { replace?: boolean }) => void) {
     this.navigate = navigateFn;
@@ -72,11 +76,35 @@ class BackButtonService {
 
   private defaultBackNavigation() {
     try {
+      const isOnHomePage = window.location.pathname === '/' || 
+                           window.location.pathname === '';
+      
+      // Double-press to exit on home page (Android UX pattern)
+      if (isOnHomePage) {
+        const now = Date.now();
+        if (now - this.lastBackPress < this.DOUBLE_PRESS_DELAY) {
+          // Second press within delay - exit app
+          App.exitApp();
+          return;
+        } else {
+          // First press - show message and wait for second press
+          this.lastBackPress = now;
+          const message = i18n.t('common.pressBackAgainToExit', { defaultValue: 'Press back again to exit' });
+          toast(message, {
+            duration: this.DOUBLE_PRESS_DELAY,
+            position: 'bottom-center',
+            icon: '👋',
+          });
+          return;
+        }
+      }
+      
+      // Not on home page - normal back navigation
       if (canNavigateBack() && this.navigate) {
         this.navigate(-1);
       } else {
         if (this.navigate) {
-          this.navigate('/', { replace: true });
+          navigateWithTracking(this.navigate, '/', { replace: true });
         } else {
           App.exitApp();
         }
@@ -85,7 +113,7 @@ class BackButtonService {
       console.error('Error in default back navigation:', error);
       try {
         if (this.navigate) {
-          this.navigate('/', { replace: true });
+          navigateWithTracking(this.navigate, '/', { replace: true });
         } else {
           App.exitApp();
         }

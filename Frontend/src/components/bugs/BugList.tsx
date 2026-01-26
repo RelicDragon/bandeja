@@ -343,7 +343,7 @@ export const BugList = ({
       <div className={isDesktop ? "px-3 py-4" : ""}>
         {!isDesktop && <p className="text-xs text-gray-500 mb-6">{t('bug.description')}</p>}
 
-        <div className={isDesktop ? "mb-4 sticky top-0 bg-white dark:bg-gray-900 z-10 pb-4 border-b border-gray-200 dark:border-gray-700" : "mb-4"}>
+        <div className="mb-4">
         <div className="flex flex-wrap gap-2 items-center mb-4">
           <Select
             options={statusOptions}
@@ -373,22 +373,25 @@ export const BugList = ({
         <AddBugCard />
 
         {availableTypes.length > 0 && (
-          <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex gap-2 overflow-x-auto">
-              {availableTypes.map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setActiveTab(type)}
-                  className={`px-3 py-1.5 text-sm font-medium transition-all duration-200 border-b-2 whitespace-nowrap ${
-                    activeTab === type
-                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                >
-                  {t(`bug.types.${type}`)}
-                </button>
-              ))}
-            </div>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {availableTypes.map((type) => (
+              <button
+                key={type}
+                onClick={() => setActiveTab(type)}
+                className={`px-3 py-1.5 text-sm font-medium transition-all duration-200 rounded-full whitespace-nowrap min-h-[32px] flex items-center justify-center ${
+                  activeTab === type
+                    ? 'bg-primary-500 text-white dark:bg-primary-600 dark:text-white'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+                style={{
+                  boxShadow: activeTab === type 
+                    ? '0 0 0 2px rgba(59, 130, 246, 0.3), 0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(59, 130, 246, 0.2)'
+                    : '0 0 0 2px transparent, 0 0 0 0 transparent, 0 0 0 0 transparent'
+                }}
+              >
+                {t(`bug.types.${type}`)}
+              </button>
+            ))}
           </div>
         )}
         </div>

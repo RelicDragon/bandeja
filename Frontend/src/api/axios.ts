@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { isCapacitor } from '@/utils/capacitor';
 import { processDeletedUsers } from '@/utils/deletedUserHandler';
+import { useAuthStore } from '@/store/authStore';
 
 const getBaseURL = () => {
   if (isCapacitor()) {
@@ -51,9 +52,7 @@ api.interceptors.response.use(
       const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
       const isPublicGamePage = window.location.pathname.startsWith('/games/');
       if (!isAuthPage && !isPublicGamePage) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        useAuthStore.getState().logout();
       }
     }
     return Promise.reject(error);

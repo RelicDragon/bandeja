@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Users, Hash } from 'lucide-react';
-import { chatApi } from '@/api/chat';
+import { chatApi, GroupChannel } from '@/api/chat';
 import toast from 'react-hot-toast';
 import { BaseModal } from '@/components/BaseModal';
 
 interface CreateGroupChannelFormProps {
   isChannel: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (groupChannel: GroupChannel) => void;
 }
 
 export const CreateGroupChannelForm = ({ isChannel, onClose, onSuccess }: CreateGroupChannelFormProps) => {
@@ -39,7 +39,7 @@ export const CreateGroupChannelForm = ({ isChannel, onClose, onSuccess }: Create
 
     setLoading(true);
     try {
-      await chatApi.createGroupChannel({
+      const response = await chatApi.createGroupChannel({
         name: name.trim(),
         isChannel,
         isPublic: true
@@ -52,7 +52,7 @@ export const CreateGroupChannelForm = ({ isChannel, onClose, onSuccess }: Create
       );
       
       setName('');
-      onSuccess();
+      onSuccess(response.data);
     } catch (error: any) {
       console.error('Failed to create group/channel:', error);
       toast.error(
