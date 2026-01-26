@@ -93,10 +93,17 @@ export function createCallbackHandler(
             }
 
             try {
-              await ctx.api.editMessageText(chat.id, query.message.message_id, updatedMessage, {
-                parse_mode: parseMode,
-                reply_markup: result.success ? { inline_keyboard: [] } : query.message.reply_markup
-              });
+              const newReplyMarkup = result.success ? { inline_keyboard: [] } : query.message.reply_markup;
+              const hasContentChanged = originalMessage !== updatedMessage;
+              const hasMarkupChanged = result.success && query.message.reply_markup && 
+                JSON.stringify(query.message.reply_markup) !== JSON.stringify(newReplyMarkup);
+              
+              if (hasContentChanged || hasMarkupChanged) {
+                await ctx.api.editMessageText(chat.id, query.message.message_id, updatedMessage, {
+                  parse_mode: parseMode,
+                  reply_markup: newReplyMarkup
+                });
+              }
             } catch (editError) {
               console.error('Failed to edit invite message:', editError);
             }

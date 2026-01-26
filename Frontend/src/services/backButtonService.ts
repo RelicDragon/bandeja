@@ -1,4 +1,5 @@
 import { App } from '@capacitor/app';
+import { NavigateFunction } from 'react-router-dom';
 import { isAndroid } from '@/utils/capacitor';
 import { canNavigateBack, navigateWithTracking } from '@/utils/navigation';
 import toast from 'react-hot-toast';
@@ -13,11 +14,11 @@ class BackButtonService {
   private listenerHandle: any = null;
   private isInitialized = false;
   private isHandling = false;
-  private navigate: ((path: string | number, options?: { replace?: boolean }) => void) | null = null;
+  private navigate: NavigateFunction | null = null;
   private lastBackPress: number = 0;
   private readonly DOUBLE_PRESS_DELAY = 2000;
 
-  setNavigate(navigateFn: (path: string | number, options?: { replace?: boolean }) => void) {
+  setNavigate(navigateFn: NavigateFunction) {
     this.navigate = navigateFn;
   }
 

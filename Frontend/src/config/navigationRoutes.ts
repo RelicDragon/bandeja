@@ -58,7 +58,7 @@ export const navigationRoutes: RouteConfig[] = [
   // Game details routes (with state handling)
   {
     pattern: /^\/games\/[^/]+$/,
-    fallback: (pathname, state) => {
+    fallback: (_pathname, state) => {
       if (state?.fromLeagueSeasonGameId) {
         return `/games/${state.fromLeagueSeasonGameId}`;
       }

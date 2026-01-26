@@ -10,8 +10,8 @@ const prisma = globalForPrisma.prisma ?? new PrismaClient({
 if (!globalForPrisma.prisma) {
   globalForPrisma.prisma = prisma;
   
-  if (EventEmitter.defaultMaxListeners < 20) {
-    EventEmitter.defaultMaxListeners = 20;
+  if (EventEmitter.defaultMaxListeners < 50) {
+    EventEmitter.defaultMaxListeners = 50;
   }
 }
 

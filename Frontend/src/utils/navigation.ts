@@ -88,7 +88,7 @@ const navigateBackSafely = (navigate: NavigateFunction): void => {
 };
 
 export const handleBackNavigation = (params: HandleBackNavigationParams): void => {
-  const { pathname, locationState, navigate, setCurrentPage, setChatsFilter, contextType, gameId } = params;
+  const { pathname, locationState, navigate, setCurrentPage, setChatsFilter } = params;
   
   if (canNavigateBack()) {
     console.log('[handleBackNavigation] Using browser history: navigate(-1)');

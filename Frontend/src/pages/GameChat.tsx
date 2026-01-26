@@ -1447,7 +1447,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 onCancelReply={handleCancelReply}
                 onScrollToMessage={handleScrollToMessage}
                 chatType={currentChatType}
-                onGroupChannelUpdate={contextType === 'GROUP' ? loadContext : undefined}
+                onGroupChannelUpdate={contextType === 'GROUP' ? () => { loadContext(); } : undefined}
               />
             </div>
             {isSendingMessage && (
@@ -1527,7 +1527,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 onCancelReply={handleCancelReply}
                 onScrollToMessage={handleScrollToMessage}
                 chatType={currentChatType}
-                onGroupChannelUpdate={contextType === 'GROUP' ? loadContext : undefined}
+                onGroupChannelUpdate={contextType === 'GROUP' ? () => { loadContext(); } : undefined}
               />
             </div>
             {isSendingMessage && (
