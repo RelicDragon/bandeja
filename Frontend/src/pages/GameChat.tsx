@@ -19,8 +19,8 @@ import { formatDate } from '@/utils/dateFormat';
 import { socketService } from '@/services/socketService';
 import { isUserGameAdminOrOwner, isGroupChannelOwner, isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { normalizeChatType } from '@/utils/chatType';
-import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users } from 'lucide-react';
-import { GroupChannelParticipantsModal } from '@/components/chat/GroupChannelParticipantsModal';
+import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users, Hash } from 'lucide-react';
+import { GroupChannelParticipantsPage } from '@/pages/GroupChannelParticipantsPage';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBackNavigation } from '@/utils/navigation';
 
@@ -59,6 +59,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [bug, setBug] = useState<Bug | null>(null);
   const [userChat, setUserChat] = useState<UserChatType | null>(locationState?.chat || null);
   const [groupChannel, setGroupChannel] = useState<any>(null);
+  const [groupChannelParticipantsCount, setGroupChannelParticipantsCount] = useState<number>(0);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSwitchingChatType, setIsSwitchingChatType] = useState(false);
@@ -67,6 +68,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
+  const [showParticipantsPage, setShowParticipantsPage] = useState(false);
+  const [isParticipantsPageAnimating, setIsParticipantsPageAnimating] = useState(false);
   const [isJoiningAsGuest, setIsJoiningAsGuest] = useState(false);
   const [currentChatType, setCurrentChatType] = useState<ChatType>(initialChatType || 'PUBLIC');
   const [isLoadingContext, setIsLoadingContext] = useState(!isEmbedded);
@@ -117,10 +120,12 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const isChannel = contextType === 'GROUP' && groupChannel?.isChannel;
   const isChannelParticipantOnly = isChannel && isChannelParticipant && !isChannelAdminOrOwner;
   
+  const canWriteGroupChat = contextType === 'GROUP' && groupChannel && isChannelParticipant;
+  
   const canAccessChat = contextType === 'USER' || 
     (contextType === 'BUG' && canWriteBugChat) || 
     (contextType === 'GAME' && (currentChatType === 'PUBLIC' || isParticipant || hasPendingInvite || isGuest || isAdminOrOwner)) || 
-    (contextType === 'GROUP' && (isChannelParticipant || !isChannel));
+    (contextType === 'GROUP' && (isChannelParticipant || (isChannel && groupChannel?.isPublic)));
   
   const canWriteGameChat = useMemo(() => {
     if (contextType !== 'GAME' || !game || !user?.id) return false;
@@ -228,6 +233,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       } else if (contextType === 'GROUP') {
         const response = await chatApi.getGroupChannelById(id);
         setGroupChannel(response.data);
+        setGroupChannelParticipantsCount(response.data.participantsCount || 0);
         return response.data;
       }
       return null;
@@ -438,18 +444,18 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       } finally {
         setIsJoiningAsGuest(false);
       }
-    } else if (contextType === 'GROUP' && isChannel) {
+    } else if (contextType === 'GROUP') {
       setIsJoiningAsGuest(true);
       try {
         await chatApi.joinGroupChannel(id);
         await loadContext();
       } catch (error) {
-        console.error('Failed to join channel:', error);
+        console.error('Failed to join group/channel:', error);
       } finally {
         setIsJoiningAsGuest(false);
       }
     }
-  }, [id, contextType, loadContext, isChannel]);
+  }, [id, contextType, loadContext]);
 
   const handleGuestLeave = useCallback(async () => {
     await loadContext();
@@ -474,9 +480,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       } else if (contextType === 'BUG') {
         await bugsApi.leaveChat(id);
         await loadContext();
-      } else if (contextType === 'GROUP' && isChannel) {
+      } else if (contextType === 'GROUP') {
         await chatApi.leaveGroupChannel(id);
         await loadContext();
+        setChatsFilter('channels');
+        navigate('/chats', { replace: true });
       }
     } catch (error) {
       console.error('Failed to leave chat:', error);
@@ -1023,6 +1031,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       return `${formatDate(game.startTime, 'PPP')} • ${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`;
     } else if (contextType === 'BUG' && bug) {
       return `${formatDate(bug.createdAt, 'PPP')} • ${t(`bug.types.${bug.bugType}`)} • ${t(`bug.statuses.${bug.status}`)}`;
+    } else if (contextType === 'GROUP' && groupChannel) {
+      return t('chat.participants', { count: groupChannelParticipantsCount });
     }
     return null;
   };
@@ -1049,6 +1059,29 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           )}
         </div>
       );
+    } else if (contextType === 'GROUP' && groupChannel) {
+      return (
+        <button
+          onClick={() => setShowParticipantsModal(true)}
+          className="flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          {groupChannel.avatar ? (
+            <img
+              src={groupChannel.avatar}
+              alt={groupChannel.name}
+              className="w-10 h-10 rounded-full object-cover shadow-lg dark:shadow-[0_0_8px_rgba(251,191,36,0.5),0_0_16px_rgba(251,191,36,0.3)]"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shadow-lg dark:shadow-[0_0_8px_rgba(251,191,36,0.5),0_0_16px_rgba(251,191,36,0.3)]">
+              {groupChannel.isChannel ? (
+                <Hash className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              ) : (
+                <Users className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              )}
+            </div>
+          )}
+        </button>
+      );
     }
     return null;
   };
@@ -1057,7 +1090,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const showLoadingHeader = isEmbedded && isLoadingContext;
 
   return (
-    <div ref={chatContainerRef} className={`chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden overflow-x-hidden ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'}`}>
+    <>
+    <div ref={chatContainerRef} className={`chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden overflow-x-hidden ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'} ${showParticipantsPage ? 'hidden' : ''}`}>
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: isEmbedded ? '0' : 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           {showLoadingHeader ? (
@@ -1093,7 +1127,20 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 <div className="min-w-0 flex-1">
                   <h1 className={`${contextType === 'BUG' ? 'text-base' : 'text-lg'} font-semibold text-gray-900 dark:text-white flex items-center gap-2 whitespace-nowrap overflow-hidden`}>
                     {contextType === 'BUG' && <BugIcon size={16} className="text-red-500 flex-shrink-0" />}
-                    <span className="truncate">{getTitle()}</span>
+                    <span 
+                      className={`truncate ${contextType === 'GROUP' ? 'cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors' : ''}`}
+                      onClick={contextType === 'GROUP' ? () => {
+                        setShowParticipantsPage(true);
+                        setIsParticipantsPageAnimating(true);
+                        requestAnimationFrame(() => {
+                          requestAnimationFrame(() => {
+                            setIsParticipantsPageAnimating(false);
+                          });
+                        });
+                      } : undefined}
+                    >
+                      {getTitle()}
+                    </span>
                   </h1>
                   {getSubtitle() && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -1205,18 +1252,28 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                   )}
                 </button>
               )}
-              {isChannelParticipant && !isChannelOwner && isChannel && (
+              {isChannelParticipant && !isChannelOwner && (
                 <button
                   onClick={() => setShowLeaveConfirmation(true)}
                   className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
-                  title={t('chat.leaveChannel', { defaultValue: 'Leave Channel' })}
+                  title={groupChannel.isChannel 
+                    ? t('chat.leaveChannel', { defaultValue: 'Leave Channel' })
+                    : t('chat.leaveGroup', { defaultValue: 'Leave Group' })}
                 >
                   <LogOut size={20} className="text-red-600 dark:text-red-400" />
                 </button>
               )}
               {isChannelOwner && (
                 <button
-                  onClick={() => setShowParticipantsModal(true)}
+                  onClick={() => {
+                    setShowParticipantsPage(true);
+                    setIsParticipantsPageAnimating(true);
+                    requestAnimationFrame(() => {
+                      requestAnimationFrame(() => {
+                        setIsParticipantsPageAnimating(false);
+                      });
+                    });
+                  }}
                   className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   title={groupChannel.isChannel 
                     ? t('chat.viewChannelMembers', { defaultValue: 'View channel members' })
@@ -1303,7 +1360,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                   bug={bug}
                   groupChannel={groupChannel}
                   onMessageSent={handleMessageSent}
-                  disabled={contextType === 'GAME' ? !canWriteGameChat : false}
+                  disabled={contextType === 'GAME' ? !canWriteGameChat : (contextType === 'GROUP' ? !canWriteGroupChat : false)}
                   replyTo={replyTo}
                   onCancelReply={handleCancelReply}
                   onScrollToMessage={handleScrollToMessage}
@@ -1341,6 +1398,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                         ? t('games.joinTheQueue')
                         : contextType === 'GROUP' && isChannel 
                         ? t('chat.joinChannel')
+                        : contextType === 'GROUP' && !isChannel
+                        ? t('chat.joinGroup')
                         : t('chat.joinChatToSend')}
                     </>
                   )}
@@ -1378,7 +1437,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                   bug={bug}
                   groupChannel={groupChannel}
                   onMessageSent={handleMessageSent}
-                  disabled={contextType === 'GAME' ? !canWriteGameChat : false}
+                  disabled={contextType === 'GAME' ? !canWriteGameChat : (contextType === 'GROUP' ? !canWriteGroupChat : false)}
                   replyTo={replyTo}
                   onCancelReply={handleCancelReply}
                   onScrollToMessage={handleScrollToMessage}
@@ -1416,6 +1475,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                         ? t('games.joinTheQueue')
                         : contextType === 'GROUP' && isChannel 
                         ? t('chat.joinChannel')
+                        : contextType === 'GROUP' && !isChannel
+                        ? t('chat.joinGroup')
                         : t('chat.joinChatToSend')}
                     </>
                   )}
@@ -1427,18 +1488,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       </footer>
       )}
 
-      {contextType === 'GROUP' && showParticipantsModal && groupChannel && (
-        <GroupChannelParticipantsModal
-          groupChannel={groupChannel}
-          onClose={() => setShowParticipantsModal(false)}
-          onUpdate={async () => {
-            if (id) {
-              const updated = await chatApi.getGroupChannelById(id);
-              setGroupChannel(updated.data);
-            }
-          }}
-        />
-      )}
       {contextType === 'GAME' && showParticipantsModal && game && (
         <ChatParticipantsModal
           game={game}
@@ -1448,7 +1497,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         />
       )}
 
-      {(contextType === 'GAME' || contextType === 'BUG' || (contextType === 'GROUP' && isChannel)) && (
+      {(contextType === 'GAME' || contextType === 'BUG' || contextType === 'GROUP') && (
         <ConfirmationModal
           isOpen={showLeaveConfirmation}
           title={t('chat.leave')}
@@ -1461,5 +1510,41 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         />
       )}
     </div>
+
+    {contextType === 'GROUP' && (showParticipantsPage || isParticipantsPageAnimating) && groupChannel && (
+      <div 
+        className={`fixed inset-0 z-50 transition-transform duration-300 ease-in-out ${
+          showParticipantsPage && !isParticipantsPageAnimating
+            ? 'translate-x-0'
+            : 'translate-x-full'
+        }`}
+        onTransitionEnd={() => {
+          if (isParticipantsPageAnimating && !showParticipantsPage) {
+            setIsParticipantsPageAnimating(false);
+          }
+        }}
+      >
+        <GroupChannelParticipantsPage
+          groupChannel={groupChannel}
+          onBack={() => {
+            setIsParticipantsPageAnimating(true);
+            setTimeout(() => {
+              setShowParticipantsPage(false);
+            }, 300);
+          }}
+          onParticipantsCountChange={(count) => {
+            setGroupChannelParticipantsCount(count);
+          }}
+          onUpdate={async () => {
+            if (id) {
+              const updated = await chatApi.getGroupChannelById(id);
+              setGroupChannel(updated.data);
+              setGroupChannelParticipantsCount(updated.data.participantsCount || 0);
+            }
+          }}
+        />
+      </div>
+    )}
+    </>
   );
 };

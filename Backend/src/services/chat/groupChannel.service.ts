@@ -3,7 +3,8 @@ import { ApiError } from '../../utils/ApiError';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { createSystemMessage } from '../../controllers/chat.controller';
-import { ChatContextType, ParticipantRole, InviteStatus } from '@prisma/client';
+import { ChatContextType, ParticipantRole, InviteStatus, ChatType } from '@prisma/client';
+import { MessageService } from './message.service';
 
 export class GroupChannelService {
   static async getGroupChannelOwner(groupChannelId: string) {
@@ -68,6 +69,7 @@ export class GroupChannelService {
         isChannel: data.isChannel,
         isPublic: data.isPublic,
         cityId: cityId,
+        participantsCount: 1,
       }
     });
 
@@ -77,6 +79,17 @@ export class GroupChannelService {
         userId: data.ownerId,
         role: ParticipantRole.OWNER
       }
+    });
+
+    await MessageService.createMessage({
+      chatContextType: ChatContextType.GROUP,
+      contextId: groupChannel.id,
+      senderId: data.ownerId,
+      content: 'Group created',
+      mediaUrls: [],
+      chatType: ChatType.PUBLIC
+    }).catch(error => {
+      console.error('Failed to send "Group created" message:', error);
     });
 
     return groupChannel;
@@ -226,6 +239,7 @@ export class GroupChannelService {
     data: {
       name?: string;
       avatar?: string;
+      originalAvatar?: string;
       isChannel?: boolean;
       isPublic?: boolean;
     }
@@ -238,9 +252,9 @@ export class GroupChannelService {
       throw new ApiError(404, 'Group/Channel not found');
     }
 
-    const isOwner = await this.isGroupChannelOwner(groupChannelId, userId);
-    if (!isOwner) {
-      throw new ApiError(403, 'Only owner can update group/channel');
+    const isAdminOrOwner = await this.isGroupChannelAdminOrOwner(groupChannelId, userId);
+    if (!isAdminOrOwner) {
+      throw new ApiError(403, 'Only owner or admin can update group/channel');
     }
 
     const updated = await prisma.groupChannel.update({
@@ -307,6 +321,15 @@ export class GroupChannelService {
       }
     });
 
+    await prisma.groupChannel.update({
+      where: { id: groupChannelId },
+      data: {
+        participantsCount: {
+          increment: 1
+        }
+      }
+    });
+
     if (!groupChannel.isChannel) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -361,6 +384,15 @@ export class GroupChannelService {
         groupChannelId_userId: {
           groupChannelId,
           userId
+        }
+      }
+    });
+
+    await prisma.groupChannel.update({
+      where: { id: groupChannelId },
+      data: {
+        participantsCount: {
+          decrement: 1
         }
       }
     });
@@ -552,6 +584,15 @@ export class GroupChannelService {
       }
     });
 
+    await prisma.groupChannel.update({
+      where: { id: invite.groupChannelId },
+      data: {
+        participantsCount: {
+          increment: 1
+        }
+      }
+    });
+
     if (!invite.groupChannel.isChannel) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -664,8 +705,8 @@ export class GroupChannelService {
       }
     });
 
-    if (!userParticipant) {
-      throw new ApiError(403, 'Only participants can view participants');
+    if (!userParticipant && !groupChannel.isPublic) {
+      throw new ApiError(403, 'Only participants can view participants of private groups/channels');
     }
 
     const participants = await prisma.groupChannelParticipant.findMany({
@@ -870,6 +911,15 @@ export class GroupChannelService {
         groupChannelId_userId: {
           groupChannelId,
           userId: targetUserId
+        }
+      }
+    });
+
+    await prisma.groupChannel.update({
+      where: { id: groupChannelId },
+      data: {
+        participantsCount: {
+          decrement: 1
         }
       }
     });

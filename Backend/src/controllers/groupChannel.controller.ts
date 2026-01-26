@@ -79,7 +79,7 @@ export const getGroupChannelById = asyncHandler(async (req: AuthRequest, res: Re
 
 export const updateGroupChannel = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { name, avatar, isChannel, isPublic } = req.body;
+  const { name, avatar, originalAvatar, isChannel, isPublic } = req.body;
   const userId = req.userId;
 
   if (!userId) {
@@ -97,6 +97,7 @@ export const updateGroupChannel = asyncHandler(async (req: AuthRequest, res: Res
   const updated = await GroupChannelService.updateGroupChannel(id, userId, {
     name: name?.trim(),
     avatar,
+    originalAvatar,
     isChannel,
     isPublic
   });

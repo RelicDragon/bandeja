@@ -97,8 +97,10 @@ export interface GroupChannel {
   id: string;
   name: string;
   avatar?: string;
+  originalAvatar?: string;
   isChannel: boolean;
   isPublic: boolean;
+  participantsCount: number;
   createdAt: string;
   updatedAt: string;
   participants?: GroupChannelParticipant[];
@@ -352,7 +354,7 @@ export const chatApi = {
     return response.data;
   },
 
-  updateGroupChannel: async (id: string, data: { name?: string; avatar?: string; isChannel?: boolean; isPublic?: boolean }) => {
+  updateGroupChannel: async (id: string, data: { name?: string; avatar?: string; originalAvatar?: string; isChannel?: boolean; isPublic?: boolean }) => {
     const response = await api.put<ApiResponse<GroupChannel>>(`/group-channels/${id}`, data);
     return response.data;
   },

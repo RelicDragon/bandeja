@@ -5,6 +5,7 @@ import { body } from 'express-validator';
 import { 
   uploadAvatar, 
   uploadGameAvatar,
+  uploadGroupChannelAvatar,
   uploadChatImage, 
   uploadChatDocument, 
   uploadGameMedia, 
@@ -31,6 +32,15 @@ router.post(
   ]),
   canEditGame,
   uploadGameAvatar
+);
+
+router.post(
+  '/upload/group-channel/avatar',
+  uploadAvatarFiles,
+  validate([
+    body('groupChannelId').notEmpty().withMessage('Group channel ID is required')
+  ]),
+  uploadGroupChannelAvatar
 );
 
 router.post(

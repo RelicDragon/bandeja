@@ -55,6 +55,22 @@ export const mediaApi = {
     return response.data.data;
   },
 
+  uploadGroupChannelAvatar: async (groupChannelId: string, avatarFile: File, originalFile: File): Promise<MediaUploadResponse> => {
+    const formData = new FormData();
+    formData.append('avatar', avatarFile);
+    formData.append('original', originalFile);
+    formData.append('groupChannelId', groupChannelId);
+
+    const response = await api.post<ApiResponse<MediaUploadResponse>>('/media/upload/group-channel/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    return response.data.data;
+  },
+
+
   uploadChatImage: async (imageFile: File, contextId: string, contextType?: 'GAME' | 'BUG' | 'USER' | 'GROUP'): Promise<ChatImageUploadResponse> => {
     const formData = new FormData();
     formData.append('image', imageFile);

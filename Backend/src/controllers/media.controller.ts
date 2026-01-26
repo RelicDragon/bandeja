@@ -8,6 +8,7 @@ import prisma from '../config/database';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { ParticipantRole } from '@prisma/client';
 import { MessageService } from '../services/chat/message.service';
+import { GroupChannelService } from '../services/chat/groupChannel.service';
 
 const storage = multer.memoryStorage();
 
@@ -43,6 +44,92 @@ export const uploadAvatarFiles = multer({
   { name: 'original', maxCount: 1 }
 ]);
 
+type AvatarEntityType = 'user' | 'game' | 'groupChannel';
+
+interface AvatarEntity {
+  avatar: string | null;
+  originalAvatar: string | null;
+}
+
+async function uploadAvatarForEntity(
+  entityType: AvatarEntityType,
+  entityId: string,
+  userId: string,
+  originalFile: Express.Multer.File
+): Promise<{ avatarPath: string; originalPath: string; avatarSize: { width: number; height: number }; originalSize: { width: number; height: number } }> {
+  let entity: AvatarEntity | null = null;
+
+  switch (entityType) {
+    case 'user':
+      entity = await prisma.user.findUnique({
+        where: { id: entityId },
+        select: { avatar: true, originalAvatar: true }
+      });
+      break;
+    case 'game':
+      entity = await prisma.game.findUnique({
+        where: { id: entityId },
+        select: { avatar: true, originalAvatar: true }
+      });
+      break;
+    case 'groupChannel':
+      const groupChannel = await prisma.groupChannel.findUnique({
+        where: { id: entityId },
+        select: { avatar: true, originalAvatar: true }
+      });
+      entity = groupChannel;
+      break;
+  }
+
+  if (!entity) {
+    throw new ApiError(404, `${entityType} not found`);
+  }
+
+  if (entity.avatar) {
+    await ImageProcessor.deleteFile(entity.avatar);
+  }
+  if (entity.originalAvatar) {
+    await ImageProcessor.deleteFile(entity.originalAvatar);
+  }
+
+  const result = await ImageProcessor.processAvatar(originalFile.buffer, originalFile.originalname);
+
+  if (!result.avatarPath || !result.avatarSize) {
+    throw new ApiError(500, 'Failed to process avatar');
+  }
+
+  switch (entityType) {
+    case 'user':
+      await prisma.user.update({
+        where: { id: entityId },
+        data: { avatar: result.avatarPath, originalAvatar: result.originalPath }
+      });
+      break;
+    case 'game':
+      await prisma.game.update({
+        where: { id: entityId },
+        data: { avatar: result.avatarPath, originalAvatar: result.originalPath }
+      });
+      break;
+    case 'groupChannel':
+      await prisma.groupChannel.update({
+        where: { id: entityId },
+        data: { 
+          avatar: result.avatarPath, 
+          originalAvatar: result.originalPath 
+        }
+      });
+      break;
+  }
+
+  return {
+    avatarPath: result.avatarPath,
+    originalPath: result.originalPath,
+    avatarSize: result.avatarSize,
+    originalSize: result.originalSize
+  };
+}
+
 export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
   console.log('Upload avatar request files:', req.files);
   console.log('Upload avatar request body:', req.body);
@@ -57,32 +144,8 @@ export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response)
     throw new ApiError(401, 'Unauthorized');
   }
 
-  // Delete old avatars if exist
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { avatar: true, originalAvatar: true }
-  });
-
-  if (user?.avatar) {
-    await ImageProcessor.deleteFile(user.avatar);
-  }
-  if (user?.originalAvatar) {
-    await ImageProcessor.deleteFile(user.originalAvatar);
-  }
-
   const originalFile = Array.isArray((req.files as any).original) ? (req.files as any).original[0] : (req.files as any).original;
-
-  // Process avatar using ImageProcessor
-  const result = await ImageProcessor.processAvatar(originalFile.buffer, originalFile.originalname);
-
-  // Update user avatars in database
-  await prisma.user.update({
-    where: { id: userId },
-    data: { 
-      avatar: result.avatarPath,
-      originalAvatar: result.originalPath
-    }
-  });
+  const result = await uploadAvatarForEntity('user', userId, userId, originalFile);
 
   res.status(200).json({
     success: true,
@@ -107,41 +170,51 @@ export const uploadGameAvatar = asyncHandler(async (req: AuthRequest, res: Respo
   }
 
   const { gameId } = req.body;
-
-  // Get old avatars for deletion
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    select: {
-      avatar: true,
-      originalAvatar: true,
-    }
-  });
-
-  // Delete old avatars if exist
-  if (game?.avatar) {
-    await ImageProcessor.deleteFile(game.avatar);
-  }
-  if (game?.originalAvatar) {
-    await ImageProcessor.deleteFile(game.originalAvatar);
+  if (!gameId) {
+    throw new ApiError(400, 'Game ID is required');
   }
 
   const originalFile = Array.isArray((req.files as any).original) ? (req.files as any).original[0] : (req.files as any).original;
-
-  // Process avatar using ImageProcessor
-  const result = await ImageProcessor.processAvatar(originalFile.buffer, originalFile.originalname);
-
-  // Update game avatars in database
-  await prisma.game.update({
-    where: { id: gameId },
-    data: { 
-      avatar: result.avatarPath,
-      originalAvatar: result.originalPath
-    }
-  });
+  const result = await uploadAvatarForEntity('game', gameId, userId, originalFile);
 
   res.status(200).json({
     success: true,
     message: 'Game avatar uploaded successfully',
+    data: {
+      avatarUrl: result.avatarPath,
+      originalAvatarUrl: result.originalPath,
+      avatarSize: result.avatarSize,
+      originalSize: result.originalSize
+    }
+  });
+});
+
+export const uploadGroupChannelAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.files || !(req.files as any).avatar || !(req.files as any).original) {
+    throw new ApiError(400, 'Both avatar and original image files are required');
+  }
+
+  const userId = req.userId;
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const { groupChannelId } = req.body;
+  if (!groupChannelId) {
+    throw new ApiError(400, 'Group channel ID is required');
+  }
+
+  const isAdminOrOwner = await GroupChannelService.isGroupChannelAdminOrOwner(groupChannelId, userId);
+  if (!isAdminOrOwner) {
+    throw new ApiError(403, 'Only owner or admin can upload group/channel avatar');
+  }
+
+  const originalFile = Array.isArray((req.files as any).original) ? (req.files as any).original[0] : (req.files as any).original;
+  const result = await uploadAvatarForEntity('groupChannel', groupChannelId, userId, originalFile);
+
+  res.status(200).json({
+    success: true,
+    message: 'Group/Channel avatar uploaded successfully',
     data: {
       avatarUrl: result.avatarPath,
       originalAvatarUrl: result.originalPath,

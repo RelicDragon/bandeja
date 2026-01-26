@@ -55,6 +55,23 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
 
   const sizeClasses = getSizeClasses();
 
+  const getGlowStyle = () => {
+    if (!isFavorite) return undefined;
+    if (extrasmall) {
+      return {
+        boxShadow: '0 0 8px rgba(234, 179, 8, 0.6), 0 0 11px rgba(234, 179, 8, 0.4), 0 0 14px rgba(234, 179, 8, 0.2)'
+      };
+    }
+    if (smallLayout) {
+      return {
+        boxShadow: '0 0 12px rgba(234, 179, 8, 0.6), 0 0 17px rgba(234, 179, 8, 0.4), 0 0 21px rgba(234, 179, 8, 0.2)'
+      };
+    }
+    return {
+      boxShadow: '0 0 16px rgba(234, 179, 8, 0.6), 0 0 22px rgba(234, 179, 8, 0.4), 0 0 28px rgba(234, 179, 8, 0.2)'
+    };
+  };
+
   const interpolateColor = (start: [number, number, number], end: [number, number, number], t: number): [number, number, number] => {
     return [
       Math.round(start[0] + (end[0] - start[0]) * t),
@@ -150,8 +167,14 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
   const initials = `${player.firstName?.[0] || ''}${player.lastName?.[0] || ''}`.toUpperCase();
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative">
+    <div className="flex flex-col items-center overflow-visible">
+      <div className="relative overflow-visible">
+        {isFavorite && (
+          <div
+            className={`absolute top-0 left-0 ${sizeClasses.avatar} rounded-full pointer-events-none z-0`}
+            style={getGlowStyle()}
+          />
+        )}
         <button
           ref={buttonRef}
           draggable={draggable}
@@ -166,7 +189,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
               openPlayerCard(player.id);
             }
           }}
-          className={`relative ${sizeClasses.avatar} rounded-full ${draggable ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 transition-opacity flex-shrink-0 p-0 border-0 ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
+          className={`relative z-10 ${sizeClasses.avatar} rounded-full ${draggable ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 transition-opacity flex-shrink-0 p-0 border-0 ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
         >
           {player.avatar ? (
             <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">

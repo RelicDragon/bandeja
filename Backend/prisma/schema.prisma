@@ -828,9 +828,11 @@ model GroupChannel {
   id            String                  @id @default(cuid())
   name          String
   avatar        String?
+  originalAvatar String?
   cityId        String?
   isChannel     Boolean                 @default(false)
   isPublic      Boolean                 @default(true)
+  participantsCount Int                  @default(0)
   createdAt     DateTime                @default(now())
   updatedAt     DateTime                @updatedAt
   city          City?                   @relation("GroupChannelCity", fields: [cityId], references: [id], onDelete: SetNull)
