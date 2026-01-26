@@ -101,7 +101,9 @@ export const handleBackNavigation = (params: HandleBackNavigationParams): void =
   
   if (matchedRoute) {
     const fallback = typeof matchedRoute.fallback === 'function'
-      ? matchedRoute.fallback(pathname, locationState)
+      ? matchedRoute.fallback.length === 1
+        ? matchedRoute.fallback(locationState)
+        : matchedRoute.fallback(pathname, locationState)
       : matchedRoute.fallback;
     
     // Set filter if specified
