@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatMessage } from '@/api/chat';
 import { AnimatedMessageItem } from './AnimatedMessageItem';
-import { MessageSkeletonList } from './MessageSkeleton';
 import { useContextMenuManager } from '@/hooks/useContextMenuManager';
 import { ArrowUp } from 'lucide-react';
 
@@ -142,10 +141,12 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [hasMoreMessages, isInitialLoad]);
 
   if (isLoadingMessages || isSwitchingChatType || isInitialLoad) {
-    return <MessageSkeletonList />;
+    return (
+      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4 space-y-1 min-h-0" />
+    );
   }
 
-  if (messages.length === 0) {
+  if (messages.length === 0 && !isLoadingMessages && !isInitialLoad) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800">
         <div className="text-center">

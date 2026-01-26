@@ -63,8 +63,8 @@ function calculateMatchWinner(
   }
 
   // BY_SCORES (default)
-  const totalScoreA = validSets.reduce((sum, set) => sum + set.teamA, 0);
-  const totalScoreB = validSets.reduce((sum, set) => sum + set.teamB, 0);
+  const totalScoreA = validSets.reduce((sum: number, set) => sum + set.teamA, 0);
+  const totalScoreB = validSets.reduce((sum: number, set) => sum + set.teamB, 0);
 
   if (totalScoreA > totalScoreB) return 'teamA';
   if (totalScoreB > totalScoreA) return 'teamB';
@@ -107,8 +107,8 @@ function calculatePlayerStats(
       }
 
       const matchWinner = calculateMatchWinner(match, winnerOfMatch);
-      const totalScoreA = validSets.reduce((sum, set) => sum + set.teamA, 0);
-      const totalScoreB = validSets.reduce((sum, set) => sum + set.teamB, 0);
+      const totalScoreA = validSets.reduce((sum: number, set) => sum + set.teamA, 0);
+      const totalScoreB = validSets.reduce((sum: number, set) => sum + set.teamB, 0);
 
       if (isInTeamA) {
         stats.scoresMade += totalScoreA;
@@ -572,9 +572,9 @@ export function calculateGameStandings(
         wins: Math.max(...teamPlayerStats.map(s => s.wins)),
         ties: Math.max(...teamPlayerStats.map(s => s.ties)),
         losses: Math.max(...teamPlayerStats.map(s => s.losses)),
-        totalPoints: teamPlayerStats.reduce((sum, s) => sum + s.scoresMade, 0),
-        scoresDelta: teamPlayerStats.reduce((sum, s) => sum + s.scoresDelta, 0),
-        pointsEarned: teamPlayerStats.reduce((sum, s) => {
+        totalPoints: teamPlayerStats.reduce((sum: number, s) => sum + s.scoresMade, 0),
+        scoresDelta: teamPlayerStats.reduce((sum: number, s) => sum + s.scoresDelta, 0),
+        pointsEarned: teamPlayerStats.reduce((sum: number, s) => {
           return sum + (s.wins * pointsPerWin + s.ties * pointsPerTie + s.losses * pointsPerLoose);
         }, 0),
       };

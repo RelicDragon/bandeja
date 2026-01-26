@@ -81,7 +81,9 @@
     "appleTokenNonceMissing": "Грешка валидације nonce: токен не садржи nonce",
     "appleTokenNonceMismatch": "Неусклађеност nonce",
     "appleTokenNonceRequired": "Потребна валидација nonce: токен садржи nonce, али није обезбеђен",
-    "nameProvidedByApple": "Име обезбеђено од Apple-а"
+    "nameProvidedByApple": "Име обезбеђено од Apple-а",
+    "signedInWithApple": "Пријављени сте преко Apple-а.",
+    "appleAccountInfo": "Информације о вашем налогу управљају се преко Apple Sign In и не захтевају додатни унос."
   },
   "nav": {
     "home": "Почетна",

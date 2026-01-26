@@ -81,7 +81,9 @@
     "appleTokenNonceMissing": "Nonce validation failed: token does not contain nonce",
     "appleTokenNonceMismatch": "Nonce mismatch",
     "appleTokenNonceRequired": "Nonce validation required: token contains nonce but none was provided",
-    "nameProvidedByApple": "Name provided by Apple"
+    "nameProvidedByApple": "Name provided by Apple",
+    "signedInWithApple": "You are signed in with Apple.",
+    "appleAccountInfo": "Your account information is managed by Apple Sign In and does not require additional input."
   },
   "nav": {
     "home": "Home",

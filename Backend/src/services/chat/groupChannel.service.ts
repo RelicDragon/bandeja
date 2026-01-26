@@ -99,14 +99,7 @@ export class GroupChannelService {
     const groupChannel = await prisma.groupChannel.findUnique({
       where: { id: groupChannelId },
       include: {
-        participants: userId ? {
-          where: { userId },
-          include: {
-            user: {
-              select: USER_SELECT_FIELDS
-            }
-          }
-        } : {
+        participants: {
           include: {
             user: {
               select: USER_SELECT_FIELDS
@@ -188,8 +181,7 @@ export class GroupChannelService {
         const lastMessage = await prisma.chatMessage.findFirst({
           where: {
             chatContextType: 'GROUP',
-            contextId: gc.id,
-            senderId: { not: null }
+            contextId: gc.id
           },
           orderBy: { createdAt: 'desc' },
           include: {

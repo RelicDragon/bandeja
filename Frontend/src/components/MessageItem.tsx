@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChatMessage } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { UnifiedMessageMenu } from './UnifiedMessageMenu';
@@ -9,7 +10,7 @@ import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { PlayerCardBottomSheet } from './PlayerCardBottomSheet';
-import { parseSystemMessage, useSystemMessageTranslation } from '@/utils/systemMessages';
+import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { FullscreenImageViewer } from './FullscreenImageViewer';
 import { ReportMessageModal } from './ReportMessageModal';
 import { parseMentions } from '@/utils/parseMentions';
@@ -53,7 +54,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 }) => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const { translateSystemMessage } = useSystemMessageTranslation();
+  const { t } = useTranslation();
   const messageRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -72,10 +73,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     setCurrentMessage(message);
   }, [message]);
 
-  // Parse system message data
-  const systemMessageData = isSystemMessage ? parseSystemMessage(currentMessage.content) : null;
-  const displayContent = systemMessageData 
-    ? translateSystemMessage(systemMessageData)
+  const displayContent = isSystemMessage
+    ? formatSystemMessageForDisplay(currentMessage.content, t)
     : currentMessage.content;
 
   const parseContentWithMentionsAndUrls = (text: string) => {
@@ -517,7 +516,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
                     {/* Text content after images */}
                     {currentMessage.content && (
-                      <div className="px-4">
+                      <div className={currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'px-4' : ''}>
                         {hasTranslation ? (
                           <div className="space-y-2">
                             <div className="pb-2 border-b border-gray-300 dark:border-gray-600">

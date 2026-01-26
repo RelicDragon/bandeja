@@ -43,8 +43,8 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
 
   useEffect(() => {
     // Fade in with staggered delay based on index, starting earlier for parallel transition
-    const baseDelay = 100; // Start fading in after 200ms
-    const staggerDelay = Math.min(index * 40, 400); // Max 800ms stagger
+    const baseDelay = 20; // Start fading in after 200ms
+    const staggerDelay = Math.min(index * 10, 100); // Max 800ms stagger
     const totalDelay = baseDelay + staggerDelay;
     
     const timer = setTimeout(() => {

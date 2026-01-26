@@ -1,29 +1,26 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Crown, Shield, User, UserX, ArrowRightLeft, Search, Users, Hash, UserPlus, LogIn } from 'lucide-react';
+import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus, LogIn } from 'lucide-react';
 import { Button, PlayerAvatar, AvatarUpload } from '@/components';
 import { GroupChannel, GroupChannelParticipant } from '@/api/chat';
 import { chatApi } from '@/api/chat';
 import { mediaApi } from '@/api/media';
 import { useAuthStore } from '@/store/authStore';
 import { matchesSearch } from '@/utils/transliteration';
-import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { GroupChannelInvitesModal } from '@/components/chat/GroupChannelInvitesModal';
 
-interface GroupChannelParticipantsPageProps {
+interface GroupChannelSettingsProps {
   groupChannel: GroupChannel;
-  onBack: () => void;
   onUpdate?: () => void;
   onParticipantsCountChange?: (count: number) => void;
 }
 
-export const GroupChannelParticipantsPage = ({
+export const GroupChannelSettings = ({
   groupChannel,
-  onBack,
   onUpdate,
   onParticipantsCountChange
-}: GroupChannelParticipantsPageProps) => {
+}: GroupChannelSettingsProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const [participants, setParticipants] = useState<GroupChannelParticipant[]>([]);
@@ -49,10 +46,6 @@ export const GroupChannelParticipantsPage = ({
   const canEdit = isOwner || isAdmin;
   const isParticipant = useMemo(() => !!currentUserParticipant || groupChannelData.isParticipant, [currentUserParticipant, groupChannelData.isParticipant]);
 
-  useBackButtonHandler(() => {
-    onBack();
-    return true;
-  });
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -268,47 +261,8 @@ export const GroupChannelParticipantsPage = ({
   }, [participants, searchQuery]);
 
   return (
-    <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden z-50">
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <button
-              onClick={onBack}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
-            >
-              <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
-            </button>
-            <div className="flex-shrink-0">
-              {groupChannelData.avatar ? (
-                <img
-                  src={groupChannelData.avatar}
-                  alt={groupChannelData.name}
-                  className="w-10 h-10 rounded-full object-cover shadow-lg dark:shadow-[0_0_8px_rgba(251,191,36,0.5),0_0_16px_rgba(251,191,36,0.3)]"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shadow-lg dark:shadow-[0_0_8px_rgba(251,191,36,0.5),0_0_16px_rgba(251,191,36,0.3)]">
-                  {groupChannelData.isChannel ? (
-                    <Hash className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                  ) : (
-                    <Users className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                {groupChannelData.name}
-              </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {t('chat.participants', { count: groupChannelData.participantsCount || 0 })}
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 overflow-y-auto" ref={scrollContainerRef}>
-        <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+    <div className="h-full overflow-y-auto bg-gray-50 dark:bg-gray-900" ref={scrollContainerRef}>
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
           <div className="space-y-6">
             <div className="flex justify-center">
               <AvatarUpload
@@ -505,7 +459,6 @@ export const GroupChannelParticipantsPage = ({
             )}
           </div>
         </div>
-      </main>
 
       {showInvitesModal && (
         <GroupChannelInvitesModal

@@ -20,7 +20,7 @@ import { socketService } from '@/services/socketService';
 import { isUserGameAdminOrOwner, isGroupChannelOwner, isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { normalizeChatType } from '@/utils/chatType';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users, Hash } from 'lucide-react';
-import { GroupChannelParticipantsPage } from '@/pages/GroupChannelParticipantsPage';
+import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBackNavigation } from '@/utils/navigation';
 
@@ -89,6 +89,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const isLoadingRef = useRef(false);
   const previousIdRef = useRef<string | undefined>(undefined);
   const messagesRef = useRef<ChatMessage[]>([]);
+  const loadingIdRef = useRef<string | undefined>(undefined);
+  const hasLoadedRef = useRef(false);
 
   const userParticipant = game?.participants.find(p => p.userId === user?.id);
   const isParticipant = !!userParticipant;
@@ -157,6 +159,14 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   }, [setBottomTabsVisible, isEmbedded]);
 
   useBackButtonHandler(() => {
+    if (showParticipantsPage) {
+      setIsParticipantsPageAnimating(true);
+      setTimeout(() => {
+        setShowParticipantsPage(false);
+      }, 300);
+      return true;
+    }
+    
     const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
     
     handleBackNavigation({
@@ -258,6 +268,25 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     }
   }, [id, contextType, navigate, userChat, user?.id, isEmbedded, setChatsFilter]);
 
+  const scrollToBottom = useCallback(() => {
+    const scroll = () => {
+      if (chatContainerRef.current) {
+        const messagesContainer = chatContainerRef.current.querySelector('.overflow-y-auto') as HTMLElement;
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }
+    };
+    
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scroll();
+        setTimeout(scroll, 50);
+        setTimeout(scroll, 150);
+      });
+    });
+  }, []);
+
   const loadMessages = useCallback(async (pageNum = 1, append = false) => {
     if (!id) return;
     
@@ -287,19 +316,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       } else {
         messagesRef.current = response;
         setMessages(response);
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            if (chatContainerRef.current) {
-              const messagesContainer = chatContainerRef.current.querySelector('.overflow-y-auto') as HTMLElement;
-              if (messagesContainer) {
-                messagesContainer.scrollTo({
-                  top: messagesContainer.scrollHeight,
-                  behavior: 'smooth'
-                });
-              }
-            }
-          });
-        });
+        scrollToBottom();
       }
       
       setHasMoreMessages(response.length === 50);
@@ -318,7 +335,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         setIsInitialLoad(false);
       }
     }
-  }, [id, contextType, currentChatType, isEmbedded]);
+  }, [id, contextType, currentChatType, isEmbedded, scrollToBottom]);
 
   const loadMoreMessages = useCallback(async () => {
     if (!hasMoreMessages || isLoadingMore) return;
@@ -492,7 +509,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setIsLeavingChat(false);
       setShowLeaveConfirmation(false);
     }
-  }, [id, contextType, isLeavingChat, loadContext, navigate, isChannel, location.pathname, location.state]);
+  }, [id, contextType, isLeavingChat, loadContext, navigate, location.pathname, location.state, setChatsFilter]);
 
   const handleToggleMute = useCallback(async () => {
     if (!id || isTogglingMute) return;
@@ -546,17 +563,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setMessages(response);
       setHasMoreMessages(response.length === 50);
       
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const messagesContainer = document.querySelector('.overflow-y-auto');
-          if (messagesContainer) {
-            messagesContainer.scrollTo({
-              top: messagesContainer.scrollHeight,
-              behavior: 'smooth'
-            });
-          }
-        });
-      });
+      scrollToBottom();
     } catch (error) {
       console.error('Failed to load messages:', error);
     } finally {
@@ -564,7 +571,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setIsLoadingMessages(false);
       setIsInitialLoad(false);
     }
-  }, [currentChatType, contextType, id, user?.id]);
+  }, [currentChatType, contextType, id, user?.id, scrollToBottom]);
 
   const getAvailableChatTypes = useCallback((): ChatType[] => {
     if (contextType !== 'GAME') return ['PUBLIC'];
@@ -716,132 +723,142 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setCurrentChatType('PUBLIC');
       setHasSetDefaultChatType(false);
       previousIdRef.current = id;
+      loadingIdRef.current = undefined;
+      hasLoadedRef.current = false;
+      isLoadingRef.current = false;
     }
   }, [id, isEmbedded]);
 
   useEffect(() => {
     const loadData = async () => {
       if (!id || !user?.id) return;
-      if (isLoadingRef.current) return;
       
+      const currentLoadId = `${id}-${contextType}`;
+      if (loadingIdRef.current === currentLoadId && hasLoadedRef.current) return;
+      if (isLoadingRef.current && loadingIdRef.current === currentLoadId) return;
+      
+      loadingIdRef.current = currentLoadId;
       isLoadingRef.current = true;
+      hasLoadedRef.current = false;
       setIsInitialLoad(true);
       setIsLoadingMessages(true);
       
-      const loadedContext = await loadContext();
-      
-      if (contextType === 'USER' && userChat && user?.id) {
-        const otherUserId = userChat.user1Id === user.id ? userChat.user2Id : userChat.user1Id;
-        if (otherUserId) {
-          try {
-            const blockedBy = await blockedUsersApi.checkIfBlockedByUser(otherUserId);
-            setIsBlockedByUser(blockedBy);
-          } catch (error) {
-            console.error('Failed to check if blocked by user:', error);
+      try {
+        const loadedContext = await loadContext();
+        
+        if (contextType === 'USER' && userChat && user?.id) {
+          const otherUserId = userChat.user1Id === user.id ? userChat.user2Id : userChat.user1Id;
+          if (otherUserId) {
+            try {
+              const blockedBy = await blockedUsersApi.checkIfBlockedByUser(otherUserId);
+              setIsBlockedByUser(blockedBy);
+            } catch (error) {
+              console.error('Failed to check if blocked by user:', error);
+            }
           }
         }
-      }
 
-      try {
-        const muteStatus = await chatApi.isChatMuted(contextType, id);
-        setIsMuted(muteStatus.isMuted);
-      } catch (error) {
-        console.error('Failed to check mute status:', error);
-      }
-      
-      let targetChatType = currentChatType;
-      
-      if (!hasSetDefaultChatType && !initialChatType && contextType === 'GAME' && loadedContext) {
-        targetChatType = 'PUBLIC';
-        setCurrentChatType('PUBLIC');
-        setHasSetDefaultChatType(true);
-      }
-      
-      if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
-        if (currentChatType !== initialChatType) {
-          await handleChatTypeChange(initialChatType);
-        } else {
-          await loadMessages();
+        try {
+          const muteStatus = await chatApi.isChatMuted(contextType, id);
+          setIsMuted(muteStatus.isMuted);
+        } catch (error) {
+          console.error('Failed to check mute status:', error);
         }
-      } else if (targetChatType !== currentChatType) {
-        await handleChatTypeChange(targetChatType);
-      } else {
+        
+        if (!hasSetDefaultChatType && !initialChatType && contextType === 'GAME' && loadedContext) {
+          if (currentChatType !== 'PUBLIC') {
+            setCurrentChatType('PUBLIC');
+          }
+          setHasSetDefaultChatType(true);
+        }
+        
+        if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
+          if (currentChatType !== initialChatType) {
+            await handleChatTypeChange(initialChatType);
+            return;
+          }
+        }
+        
         await loadMessages();
-      }
-      
-      // Mark all messages as read when chat is opened (for all chat types)
-      try {
-        if (contextType === 'GAME' && loadedContext) {
-          const loadedGame = loadedContext as Game;
-          const loadedUserParticipant = loadedGame.participants.find(p => p.userId === user.id);
-          const loadedIsParticipant = !!loadedUserParticipant;
-          const loadedIsAdminOrOwner = loadedUserParticipant?.role === 'ADMIN' || loadedUserParticipant?.role === 'OWNER';
-          const loadedHasPendingInvite = loadedGame.invites?.some(invite => invite.receiverId === user.id) ?? false;
-          const loadedIsGuest = loadedGame.participants.some(p => p.userId === user.id && !p.isPlaying) ?? false;
-          
-          if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
-            const availableChatTypes: ChatType[] = [];
-            if (loadedGame.status && loadedGame.status !== 'ANNOUNCED') {
-              availableChatTypes.push('PHOTOS');
-            }
-            availableChatTypes.push('PUBLIC');
-            if (loadedIsParticipant && loadedIsAdminOrOwner) {
-              availableChatTypes.push('ADMINS');
-            }
+        
+        // Mark all messages as read when chat is opened (for all chat types)
+        try {
+          if (contextType === 'GAME' && loadedContext) {
+            const loadedGame = loadedContext as Game;
+            const loadedUserParticipant = loadedGame.participants.find(p => p.userId === user.id);
+            const loadedIsParticipant = !!loadedUserParticipant;
+            const loadedIsAdminOrOwner = loadedUserParticipant?.role === 'ADMIN' || loadedUserParticipant?.role === 'OWNER';
+            const loadedHasPendingInvite = loadedGame.invites?.some(invite => invite.receiverId === user.id) ?? false;
+            const loadedIsGuest = loadedGame.participants.some(p => p.userId === user.id && !p.isPlaying) ?? false;
             
-            const gameUnreadResponse = await chatApi.getGameUnreadCount(id);
-            const gameUnreadCount = gameUnreadResponse.data.count || 0;
-            
-            await chatApi.markAllMessagesAsReadForContext('GAME', id, availableChatTypes);
+            if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
+              const availableChatTypes: ChatType[] = [];
+              if (loadedGame.status && loadedGame.status !== 'ANNOUNCED') {
+                availableChatTypes.push('PHOTOS');
+              }
+              availableChatTypes.push('PUBLIC');
+              if (loadedIsParticipant && loadedIsAdminOrOwner) {
+                availableChatTypes.push('ADMINS');
+              }
+              
+              const markReadResponse = await chatApi.markAllMessagesAsReadForContext('GAME', id, availableChatTypes);
+              const markedCount = markReadResponse.data?.count || 0;
+              
+              const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+              const newCount = Math.max(0, unreadMessages - markedCount);
+              setUnreadMessages(newCount);
+              
+              window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
+            }
+          } else if (contextType === 'USER' && id) {
+            const markReadResponse = await chatApi.markAllMessagesAsReadForContext('USER', id);
+            const markedCount = markReadResponse.data?.count || 0;
             
             const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-            const newCount = Math.max(0, unreadMessages - gameUnreadCount);
+            const newCount = Math.max(0, unreadMessages - markedCount);
             setUnreadMessages(newCount);
+            
+            const { updateUnreadCount } = usePlayersStore.getState();
+            updateUnreadCount(id, () => 0);
+            
+            window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
+          } else if (contextType === 'BUG' && id) {
+            const markReadResponse = await chatApi.markAllBugMessagesAsRead(id);
+            const markedCount = markReadResponse.data?.count || 0;
+            
+            const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+            const newCount = Math.max(0, unreadMessages - markedCount);
+            setUnreadMessages(newCount);
+            
+            window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
+          } else if (contextType === 'GROUP' && id) {
+            const markReadResponse = await chatApi.markGroupChannelAsRead(id);
+            const markedCount = markReadResponse.data?.count || 0;
+            
+            const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+            const newCount = Math.max(0, unreadMessages - markedCount);
+            setUnreadMessages(newCount);
+            
+            window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
           }
-        } else if (contextType === 'USER' && id) {
-          const userChatUnreadResponse = await chatApi.getUserChatUnreadCount(id);
-          const userChatUnreadCount = userChatUnreadResponse.data.count || 0;
-          
-          await chatApi.markAllMessagesAsReadForContext('USER', id);
-          
-          const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-          const newCount = Math.max(0, unreadMessages - userChatUnreadCount);
-          setUnreadMessages(newCount);
-          
-          const { updateUnreadCount } = usePlayersStore.getState();
-          updateUnreadCount(id, () => 0);
-        } else if (contextType === 'BUG' && id) {
-          const bugUnreadResponse = await chatApi.getBugUnreadCount(id);
-          const bugUnreadCount = bugUnreadResponse.data.count || 0;
-          
-          await chatApi.markAllBugMessagesAsRead(id);
-          
-          const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-          const newCount = Math.max(0, unreadMessages - bugUnreadCount);
-          setUnreadMessages(newCount);
-        } else if (contextType === 'GROUP' && id) {
-          const groupUnreadResponse = await chatApi.getGroupChannelUnreadCount(id);
-          const groupUnreadCount = groupUnreadResponse.data.count || 0;
-          
-          await chatApi.markGroupChannelAsRead(id);
-          
-          const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-          const newCount = Math.max(0, unreadMessages - groupUnreadCount);
-          setUnreadMessages(newCount);
+        } catch (error) {
+          console.error('Failed to mark all messages as read:', error);
         }
-      } catch (error) {
-        console.error('Failed to mark all messages as read:', error);
+        
+        hasLoadedRef.current = true;
+      } finally {
+        isLoadingRef.current = false;
       }
-      
-      isLoadingRef.current = false;
     };
     
     loadData();
     
     return () => {
-      isLoadingRef.current = false;
+      if (loadingIdRef.current === `${id}-${contextType}`) {
+        isLoadingRef.current = false;
+      }
     };
-  }, [loadContext, loadMessages, id, user?.id, initialChatType, currentChatType, handleChatTypeChange, contextType, userChat, hasSetDefaultChatType]);
+  }, [id, user?.id, contextType, initialChatType, currentChatType, handleChatTypeChange, hasSetDefaultChatType, loadContext, loadMessages, userChat]);
 
   useEffect(() => {
     if (!id) return;
@@ -923,23 +940,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     }
     
     if (!isLoadingMessages && !isSwitchingChatType && !isLoadingMore && !isInitialLoad && messages.length > 0) {
-      const scrollToBottom = () => {
-        if (chatContainerRef.current) {
-          const messagesContainer = chatContainerRef.current.querySelector('.overflow-y-auto') as HTMLElement;
-          if (messagesContainer) {
-            messagesContainer.scrollTo({
-              top: messagesContainer.scrollHeight,
-              behavior: 'smooth'
-            });
-          }
-        }
-      };
-      
-      requestAnimationFrame(() => {
-        requestAnimationFrame(scrollToBottom);
-      });
+      scrollToBottom();
     }
-  }, [isLoadingMessages, isSwitchingChatType, isLoadingMore, isInitialLoad, messages.length]);
+  }, [isLoadingMessages, isSwitchingChatType, isLoadingMore, isInitialLoad, messages.length, scrollToBottom]);
 
   if (isLoadingContext && !isEmbedded) {
     return (
@@ -963,7 +966,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               >
                 <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
               </button>
-              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
             </div>
           </div>
         </header>
@@ -1062,7 +1065,15 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     } else if (contextType === 'GROUP' && groupChannel) {
       return (
         <button
-          onClick={() => setShowParticipantsModal(true)}
+          onClick={() => {
+            setShowParticipantsPage(true);
+            setIsParticipantsPageAnimating(true);
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                setIsParticipantsPageAnimating(false);
+              });
+            });
+          }}
           className="flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
         >
           {groupChannel.avatar ? (
@@ -1096,10 +1107,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           {showLoadingHeader ? (
             <div className="flex items-center gap-3 w-full">
-              <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
+              <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full" />
               <div className="flex-1">
-                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1" />
-                <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-1" />
+                <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
               </div>
             </div>
           ) : (
@@ -1108,6 +1119,14 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 {!isEmbedded && (
                   <button
                     onClick={() => {
+                      if (showParticipantsPage) {
+                        setIsParticipantsPageAnimating(true);
+                        setTimeout(() => {
+                          setShowParticipantsPage(false);
+                        }, 300);
+                        return;
+                      }
+                      
                       const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
                       handleBackNavigation({
                         pathname: location.pathname,
@@ -1122,6 +1141,27 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                   >
                     <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
                   </button>
+                )}
+                {contextType === 'GROUP' && (
+                  <div
+                    className={`hidden md:block transition-all duration-300 ease-in-out ${
+                      showParticipantsPage || isParticipantsPageAnimating
+                        ? 'opacity-100 translate-x-0 w-auto'
+                        : 'opacity-0 translate-x-4 w-0 pointer-events-none'
+                    }`}
+                  >
+                    <button
+                      onClick={() => {
+                        setIsParticipantsPageAnimating(true);
+                        setTimeout(() => {
+                          setShowParticipantsPage(false);
+                        }, 300);
+                      }}
+                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+                    >
+                      <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
+                    </button>
+                  </div>
                 )}
                 {contextType !== 'BUG' && <div className="flex-shrink-0">{getIcon()}</div>}
                 <div className="min-w-0 flex-1">
@@ -1263,25 +1303,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                   <LogOut size={20} className="text-red-600 dark:text-red-400" />
                 </button>
               )}
-              {isChannelOwner && (
-                <button
-                  onClick={() => {
-                    setShowParticipantsPage(true);
-                    setIsParticipantsPageAnimating(true);
-                    requestAnimationFrame(() => {
-                      requestAnimationFrame(() => {
-                        setIsParticipantsPageAnimating(false);
-                      });
-                    });
-                  }}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  title={groupChannel.isChannel 
-                    ? t('chat.viewChannelMembers', { defaultValue: 'View channel members' })
-                    : t('chat.viewGroupMembers', { defaultValue: 'View group members' })}
-                >
-                  <Users size={20} className="text-gray-600 dark:text-gray-400" />
-                </button>
-              )}
             </div>
           )}
             </>
@@ -1317,6 +1338,41 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       </header>
 
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden overflow-x-hidden relative">
+        {contextType === 'GROUP' && (showParticipantsPage || isParticipantsPageAnimating) && groupChannel && (
+          <div 
+            className={`absolute inset-0 h-full transition-all duration-300 ease-in-out bg-gray-50 dark:bg-gray-900 ${
+              showParticipantsPage && !isParticipantsPageAnimating
+                ? 'opacity-100 translate-x-0 z-10'
+                : 'opacity-0 translate-x-full z-0 pointer-events-none'
+            }`}
+            onTransitionEnd={() => {
+              if (isParticipantsPageAnimating && !showParticipantsPage) {
+                setIsParticipantsPageAnimating(false);
+              }
+            }}
+          >
+            <GroupChannelSettings
+              groupChannel={groupChannel}
+              onParticipantsCountChange={(count) => {
+                setGroupChannelParticipantsCount(count);
+              }}
+              onUpdate={async () => {
+                if (id) {
+                  const updated = await chatApi.getGroupChannelById(id);
+                  setGroupChannel(updated.data);
+                  setGroupChannelParticipantsCount(updated.data.participantsCount || 0);
+                }
+              }}
+            />
+          </div>
+        )}
+        <div
+          className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ease-in-out ${
+            showParticipantsPage || isParticipantsPageAnimating
+              ? 'opacity-0 -translate-x-full'
+              : 'opacity-100 translate-x-0'
+          }`}
+        >
         <MessageList
           messages={messages}
           onAddReaction={handleAddReaction}
@@ -1334,8 +1390,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           disableReadTracking={contextType === 'USER'}
           isChannel={isChannel}
         />
+        </div>
         
-        {(!isInitialLoad || isEmbedded) && (
+        {(!isInitialLoad || isEmbedded) && !(contextType === 'GROUP' && (showParticipantsPage || isParticipantsPageAnimating)) && (
         <div className="md:hidden absolute bottom-0 left-0 right-0 z-40 pointer-events-none" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {isBlockedByUser && contextType === 'USER' ? (
           <div className="px-4 py-3 animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))', background: 'transparent' }}>
@@ -1412,7 +1469,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         )}
       </main>
 
-      {(!isInitialLoad || isEmbedded) && (
+      {(!isInitialLoad || isEmbedded) && !(contextType === 'GROUP' && (showParticipantsPage || isParticipantsPageAnimating)) && (
       <footer className="hidden md:block flex-shrink-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {isBlockedByUser && contextType === 'USER' ? (
           <div className="px-4 py-3" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
@@ -1511,40 +1568,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       )}
     </div>
 
-    {contextType === 'GROUP' && (showParticipantsPage || isParticipantsPageAnimating) && groupChannel && (
-      <div 
-        className={`fixed inset-0 z-50 transition-transform duration-300 ease-in-out ${
-          showParticipantsPage && !isParticipantsPageAnimating
-            ? 'translate-x-0'
-            : 'translate-x-full'
-        }`}
-        onTransitionEnd={() => {
-          if (isParticipantsPageAnimating && !showParticipantsPage) {
-            setIsParticipantsPageAnimating(false);
-          }
-        }}
-      >
-        <GroupChannelParticipantsPage
-          groupChannel={groupChannel}
-          onBack={() => {
-            setIsParticipantsPageAnimating(true);
-            setTimeout(() => {
-              setShowParticipantsPage(false);
-            }, 300);
-          }}
-          onParticipantsCountChange={(count) => {
-            setGroupChannelParticipantsCount(count);
-          }}
-          onUpdate={async () => {
-            if (id) {
-              const updated = await chatApi.getGroupChannelById(id);
-              setGroupChannel(updated.data);
-              setGroupChannelParticipantsCount(updated.data.participantsCount || 0);
-            }
-          }}
-        />
-      </div>
-    )}
     </>
   );
 };

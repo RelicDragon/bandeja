@@ -8,7 +8,7 @@ export const ChatsTabController = () => {
   const { chatsFilter, setChatsFilter } = useNavigationStore();
   const { counts } = useChatUnreadCounts();
   const unreadCounts = usePlayersStore((state) => state.unreadCounts);
-  const userChatsCount = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
+  const userChatsCount = Object.values(unreadCounts).reduce((sum: number, count: number) => sum + count, 0);
 
   return (
     <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">

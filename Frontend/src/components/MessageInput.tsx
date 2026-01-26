@@ -17,6 +17,9 @@ const isValidImage = (file: File): boolean => {
   return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
 };
 
+const draftLoadingCache = new Map<string, Promise<any>>();
+const loadedDraftsCache = new Set<string>();
+
 interface MessageInputProps {
   gameId?: string;
   bugId?: string;
@@ -60,6 +63,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const saveDraftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasLoadedDraftRef = useRef(false);
+  const loadingDraftKeyRef = useRef<string | null>(null);
 
   const contextType: ChatContextType = gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER';
   const finalContextId = gameId || bugId || userChatId || groupChannelId;
@@ -173,8 +177,51 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   }, [message, mentionIds]);
 
   const loadDraft = useCallback(async () => {
-    if (!finalContextId || !user?.id || hasLoadedDraftRef.current) return;
+    if (!finalContextId || !user?.id) return;
 
+    const draftKey = `${contextType}-${finalContextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
+    
+    if (loadedDraftsCache.has(draftKey)) {
+      const cachedPromise = draftLoadingCache.get(draftKey);
+      if (cachedPromise) {
+        try {
+          const draft = await cachedPromise;
+          if (draft) {
+            const hasUserTyped = messageRef.current.trim().length > 0 || mentionIdsRef.current.length > 0;
+            if (!hasUserTyped) {
+              setMessage(draft.content || '');
+              setMentionIds(draft.mentionIds || []);
+              setTimeout(() => updateMultilineState(), 100);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load draft from cache:', error);
+        }
+      }
+      return;
+    }
+
+    if (draftLoadingCache.has(draftKey)) {
+      const existingPromise = draftLoadingCache.get(draftKey);
+      if (existingPromise) {
+        try {
+          const draft = await existingPromise;
+          if (draft) {
+            const hasUserTyped = messageRef.current.trim().length > 0 || mentionIdsRef.current.length > 0;
+            if (!hasUserTyped) {
+              setMessage(draft.content || '');
+              setMentionIds(draft.mentionIds || []);
+              setTimeout(() => updateMultilineState(), 100);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load draft:', error);
+        }
+      }
+      return;
+    }
+
+    loadingDraftKeyRef.current = draftKey;
     hasLoadedDraftRef.current = true;
 
     if (saveDraftTimeoutRef.current) {
@@ -182,13 +229,26 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       saveDraftTimeoutRef.current = null;
     }
 
-    try {
-      const draft = await chatApi.getDraft(
-        contextType,
-        finalContextId,
-        userChatId ? 'PUBLIC' : normalizeChatType(chatType)
-      );
+    const draftPromise = chatApi.getDraft(
+      contextType,
+      finalContextId,
+      userChatId ? 'PUBLIC' : normalizeChatType(chatType)
+    ).then(draft => {
+      loadedDraftsCache.add(draftKey);
+      setTimeout(() => {
+        draftLoadingCache.delete(draftKey);
+        loadedDraftsCache.delete(draftKey);
+      }, 5000);
+      return draft;
+    }).catch(error => {
+      draftLoadingCache.delete(draftKey);
+      throw error;
+    });
 
+    draftLoadingCache.set(draftKey, draftPromise);
+
+    try {
+      const draft = await draftPromise;
       if (draft) {
         const hasUserTyped = messageRef.current.trim().length > 0 || mentionIdsRef.current.length > 0;
         if (!hasUserTyped) {
@@ -207,11 +267,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       clearTimeout(saveDraftTimeoutRef.current);
       saveDraftTimeoutRef.current = null;
     }
-    hasLoadedDraftRef.current = false;
+    const draftKey = `${contextType}-${finalContextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
+    if (loadingDraftKeyRef.current !== draftKey) {
+      hasLoadedDraftRef.current = false;
+      loadedDraftsCache.delete(draftKey);
+    }
     setMessage('');
     setMentionIds([]);
     loadDraft();
-  }, [finalContextId, contextType, chatType, loadDraft]);
+  }, [finalContextId, contextType, chatType, loadDraft, userChatId]);
 
   useEffect(() => {
     updateMultilineState();
@@ -233,6 +297,30 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       resizeObserver.disconnect();
     };
   }, [updateMultilineState]);
+
+  useEffect(() => {
+    const handleDraftUpdated = (event: CustomEvent) => {
+      const { chatContextType, contextId } = event.detail;
+      const draftKey = `${chatContextType}-${contextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
+      loadedDraftsCache.delete(draftKey);
+      draftLoadingCache.delete(draftKey);
+    };
+
+    const handleDraftDeleted = (event: CustomEvent) => {
+      const { chatContextType, contextId } = event.detail;
+      const draftKey = `${chatContextType}-${contextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
+      loadedDraftsCache.delete(draftKey);
+      draftLoadingCache.delete(draftKey);
+    };
+
+    window.addEventListener('draft-updated', handleDraftUpdated as EventListener);
+    window.addEventListener('draft-deleted', handleDraftDeleted as EventListener);
+
+    return () => {
+      window.removeEventListener('draft-updated', handleDraftUpdated as EventListener);
+      window.removeEventListener('draft-deleted', handleDraftDeleted as EventListener);
+    };
+  }, [contextType, finalContextId, chatType, userChatId]);
 
   useEffect(() => {
     return () => {

@@ -137,11 +137,11 @@ export const MyTab = () => {
   const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(pastGames, pastGamesUnreadCounts), [pastGames, pastGamesUnreadCounts]);
 
   const myGamesTotalUnread = useMemo(() => {
-    return Object.values(gamesUnreadCounts).reduce((sum, count) => sum + count, 0);
+    return Object.values(gamesUnreadCounts).reduce((sum: number, count: number) => sum + count, 0);
   }, [gamesUnreadCounts]);
 
   const pastGamesTotalUnread = useMemo(() => {
-    return Object.values(pastGamesUnreadCounts).reduce((sum, count) => sum + count, 0);
+    return Object.values(pastGamesUnreadCounts).reduce((sum: number, count: number) => sum + count, 0);
   }, [pastGamesUnreadCounts]);
 
   const [totalGamesUnreadCount, setTotalGamesUnreadCount] = useState<number>(0);
@@ -151,7 +151,7 @@ export const MyTab = () => {
       if (!user?.id) return;
       try {
         const response = await chatApi.getUnreadObjects();
-        const totalGamesUnread = response.data.games.reduce((sum: number, item: any) => sum + item.unreadCount, 0);
+        const totalGamesUnread = response.data.games.reduce((sum: number, item: { game: unknown; unreadCount: number }) => sum + item.unreadCount, 0);
         setTotalGamesUnreadCount(totalGamesUnread);
       } catch (error) {
         console.error('Failed to fetch total games unread count:', error);

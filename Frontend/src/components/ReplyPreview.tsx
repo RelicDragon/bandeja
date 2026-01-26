@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatMessage } from '@/api/chat';
+import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 
 type ReplyToType = ChatMessage['replyTo'];
 
@@ -35,6 +36,8 @@ export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
     }
   };
 
+  const displayContent = convertMentionsToPlaintext(replyTo.content || '');
+
   return (
     <div className={`bg-gray-50 dark:bg-gray-700 border-l-4 border-green-500 p-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${className}`}>
       <div className="flex items-start justify-between gap-2">
@@ -43,7 +46,7 @@ export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
             {getSenderName()}:
           </div>
           <div className="text-sm text-gray-700 dark:text-gray-100 break-words whitespace-pre-wrap min-w-0">
-            {replyTo.content}
+            {displayContent}
           </div>
         </div>
         {onCancel && (

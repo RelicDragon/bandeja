@@ -879,3 +879,19 @@ input[type="range"].slider:disabled::-moz-range-thumb {
   transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* React Mentions Suggestions Overrides */
+.mention-input-wrapper div[style*="position: absolute"],
+.mention-input-wrapper div[style*="position: fixed"] {
+  background-color: transparent !important;
+  z-index: 9999 !important;
+}
+
+.mention-input-wrapper div[style*="position: absolute"] > div,
+.mention-input-wrapper div[style*="position: fixed"] > div {
+  background-color: transparent !important;
+}
+
+.mention-input-wrapper div[style*="maxHeight"] {
+  z-index: 9999 !important;
+}

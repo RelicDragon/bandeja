@@ -30,9 +30,10 @@ interface LevelHistoryViewProps {
   stats: UserStats;
   padding?: 'p-6' | 'p-0';
   tabDarkBgClass?: string;
+  hideUserCard?: boolean;
 }
 
-export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: LevelHistoryViewProps) => {
+export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const currentUser = useAuthStore((state) => state.user);
   const { setCurrentPage, setIsAnimating } = useNavigationStore();
@@ -145,17 +146,31 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
 
   return (
     <div className={`${padding} space-y-3`}>
-      <div className="relative">
-        <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-4 text-center relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2">
-            {user.originalAvatar ? (
-              <button
-                className="cursor-pointer hover:opacity-90 transition-opacity"
-              >
-                {user.avatar ? (
+      {!hideUserCard && (
+        <>
+          <div className="relative">
+            <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-4 text-center relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                {user.originalAvatar ? (
+                  <button
+                    className="cursor-pointer hover:opacity-90 transition-opacity"
+                  >
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar || ''}
+                        alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'}
+                        className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-4xl border-4 border-white dark:border-gray-800 shadow-xl">
+                        {initials}
+                      </div>
+                    )}
+                  </button>
+                ) : user.avatar ? (
                   <img
                     src={user.avatar || ''}
-                    alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'}
+                    alt={`${user.firstName} ${user.lastName}`}
                     className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
                   />
                 ) : (
@@ -163,46 +178,34 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
                     {initials}
                   </div>
                 )}
-              </button>
-            ) : user.avatar ? (
-              <img
-                src={user.avatar || ''}
-                alt={`${user.firstName} ${user.lastName}`}
-                className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-4xl border-4 border-white dark:border-gray-800 shadow-xl">
-                {initials}
               </div>
-            )}
-          </div>
-          <div className="text-white text-sm mb-1">
-            {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}
-          </div>
-          <div className="text-white text-6xl font-bold pb-6">
-            {showSocialLevel ? user.socialLevel.toFixed(2) : user.level.toFixed(2)}
-          </div>
-          {!showSocialLevel && (
-            <div className="absolute bottom-3 right-3 text-white/80 text-xs">
-              {t('rating.reliability')}: {user.reliability.toFixed(0)}%
+              <div className="text-white text-sm mb-1">
+                {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}
+              </div>
+              <div className="text-white text-6xl font-bold pb-6">
+                {showSocialLevel ? user.socialLevel.toFixed(2) : user.level.toFixed(2)}
+              </div>
+              {!showSocialLevel && (
+                <div className="absolute bottom-3 right-3 text-white/80 text-xs">
+                  {t('rating.reliability')}: {user.reliability.toFixed(0)}%
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <button
-          onClick={handleToggle}
-          className="absolute top-3 right-3 w-8 h-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-md hover:shadow-lg transition-transform duration-200 flex items-center justify-center"
-          style={{ transform: isToggleAnimating ? 'scale(1.3)' : 'scale(1)' }}
-          title={showSocialLevel ? t('playerCard.switchToLevel') : t('playerCard.switchToSocialLevel')}
-        >
-          {showSocialLevel ? (
-            <TennisBallIcon />
-          ) : (
-            <Beer size={20} className="text-amber-600" />
-          )}
-        </button>
-      </div>
+            <button
+              onClick={handleToggle}
+              className="absolute top-3 right-3 w-8 h-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-md hover:shadow-lg transition-transform duration-200 flex items-center justify-center"
+              style={{ transform: isToggleAnimating ? 'scale(1.3)' : 'scale(1)' }}
+              title={showSocialLevel ? t('playerCard.switchToLevel') : t('playerCard.switchToSocialLevel')}
+            >
+              {showSocialLevel ? (
+                <TennisBallIcon />
+              ) : (
+                <Beer size={20} className="text-amber-600" />
+              )}
+            </button>
+          </div>
 
-      {!showSocialLevel && user.approvedLevel && user.approvedBy && (
+          {!showSocialLevel && user.approvedLevel && user.approvedBy && (
         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-2">
           <div className="flex flex-col items-center gap-2">
             <div className="bg-yellow-500 dark:bg-yellow-600 text-white px-2 py-0.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-2">
@@ -223,6 +226,8 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass }: Lev
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
 
       {currentHistory.length > 0 ? (

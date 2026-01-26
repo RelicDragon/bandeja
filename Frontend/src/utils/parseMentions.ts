@@ -39,3 +39,6 @@ export function parseMentions(text: string): ParsedMention[] {
   return parts.length > 0 ? parts : [{ type: 'text', content: text }];
 }
 
+export function convertMentionsToPlaintext(text: string): string {
+  return text.replace(/@\[([^\]]+)\]\([^)]+\)/g, '@$1');
+}

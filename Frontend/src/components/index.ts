@@ -25,7 +25,6 @@ export * from './InvitesList';
 export * from './MessageItem';
 export * from './MessageInput';
 export * from './MessageList';
-export * from './MessageSkeleton';
 export * from './AnimatedMessageItem';
 export * from './GameCard';
 export * from './GameStatusIcon';

@@ -7,6 +7,10 @@ export type { ChatType };
 export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
 export type ChatContextType = 'GAME' | 'BUG' | 'USER' | 'GROUP';
 
+const unreadCountCache = new Map<string, { data: any; timestamp: number }>();
+const UNREAD_COUNT_CACHE_TTL = 1000;
+let unreadCountPromise: Promise<any> | null = null;
+
 export interface ChatMessage {
   id: string;
   chatContextType: ChatContextType;
@@ -199,8 +203,31 @@ export const chatApi = {
   },
 
   getUnreadCount: async () => {
-    const response = await api.get<ApiResponse<{ count: number }>>('/chat/unread-count');
-    return response.data;
+    const cacheKey = 'unread-count-global';
+    const cached = unreadCountCache.get(cacheKey);
+    const now = Date.now();
+
+    if (cached && (now - cached.timestamp) < UNREAD_COUNT_CACHE_TTL) {
+      return cached.data;
+    }
+
+    if (unreadCountPromise) {
+      return unreadCountPromise;
+    }
+
+    unreadCountPromise = api.get<ApiResponse<{ count: number }>>('/chat/unread-count').then(response => {
+      unreadCountCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
+      setTimeout(() => {
+        unreadCountCache.delete(cacheKey);
+        unreadCountPromise = null;
+      }, UNREAD_COUNT_CACHE_TTL);
+      return response.data;
+    }).catch(error => {
+      unreadCountPromise = null;
+      throw error;
+    });
+
+    return unreadCountPromise;
   },
 
   getUnreadObjects: async () => {

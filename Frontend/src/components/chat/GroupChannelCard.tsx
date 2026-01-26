@@ -5,6 +5,8 @@ import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { convertMentionsToPlaintext } from '@/utils/parseMentions';
+import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 
 interface GroupChannelCardProps {
   groupChannel: GroupChannel;
@@ -103,8 +105,23 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
           }
 
           if (lastMessage) {
-            const lastMessageText = lastMessage.content 
-              ? (lastMessage.content.length > 50 ? lastMessage.content.substring(0, 50) + '...' : lastMessage.content)
+            const isSystemMessage = !lastMessage.senderId;
+            let plaintextContent = '';
+            
+            if (isSystemMessage) {
+              const formattedSystemMessage = formatSystemMessageForDisplay(
+                lastMessage.content || '',
+                t
+              );
+              plaintextContent = convertMentionsToPlaintext(formattedSystemMessage);
+            } else {
+              plaintextContent = lastMessage.content 
+                ? convertMentionsToPlaintext(lastMessage.content)
+                : '';
+            }
+            
+            const lastMessageText = plaintextContent 
+              ? (plaintextContent.length > 50 ? plaintextContent.substring(0, 50) + '...' : plaintextContent)
               : '';
             return (
               <div className="flex items-center justify-between">
@@ -118,7 +135,7 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
                     </span>
                   ) : (
                     <>
-                      {lastMessage.sender && (
+                      {!isSystemMessage && lastMessage.sender && (
                         <span className="font-medium">
                           {lastMessage.sender.firstName} {lastMessage.sender.lastName}:{' '}
                         </span>

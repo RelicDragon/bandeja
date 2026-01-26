@@ -6,6 +6,8 @@ import { UserChat, ChatDraft } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useMemo } from 'react';
+import { convertMentionsToPlaintext } from '@/utils/parseMentions';
+import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 
 interface UserChatCardProps {
   chat: UserChat;
@@ -99,6 +101,21 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
           }
 
           if (chat.lastMessage) {
+            const isSystemMessage = !chat.lastMessage.senderId;
+            let displayContent = '';
+            
+            if (isSystemMessage) {
+              const formattedSystemMessage = formatSystemMessageForDisplay(
+                chat.lastMessage.content || '',
+                t
+              );
+              displayContent = convertMentionsToPlaintext(formattedSystemMessage);
+            } else {
+              displayContent = chat.lastMessage.content 
+                ? convertMentionsToPlaintext(chat.lastMessage.content)
+                : '';
+            }
+            
             return (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 pr-2">
@@ -110,7 +127,7 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
                       {t('chat.photo')}
                     </span>
                   ) : (
-                    chat.lastMessage.content || t('chat.noMessage')
+                    displayContent || t('chat.noMessage')
                   )}
                 </p>
                 {unreadCount > 0 && (

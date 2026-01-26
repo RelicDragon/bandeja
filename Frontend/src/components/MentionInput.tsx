@@ -87,8 +87,90 @@ export const MentionInput: React.FC<MentionInputProps> = ({
             });
           }
         });
+        
+        game.parent?.participants
+          ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
+          .forEach(p => {
+            if (p.user && !userIds.has(p.user.id)) {
+              userIds.add(p.user.id);
+              users.push({
+                ...p.user,
+                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+              });
+            }
+          });
       } else if (normalizedChatType === 'ADMINS') {
         game.participants
+          ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
+          .forEach(p => {
+            if (p.user && !userIds.has(p.user.id)) {
+              userIds.add(p.user.id);
+              users.push({
+                ...p.user,
+                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+              });
+            }
+          });
+        
+        game.parent?.participants
+          ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
+          .forEach(p => {
+            if (p.user && !userIds.has(p.user.id)) {
+              userIds.add(p.user.id);
+              users.push({
+                ...p.user,
+                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+              });
+            }
+          });
+      } else if (normalizedChatType === 'PRIVATE') {
+        game.participants
+          ?.filter(p => p.isPlaying)
+          .forEach(p => {
+            if (p.user && !userIds.has(p.user.id)) {
+              userIds.add(p.user.id);
+              users.push({
+                ...p.user,
+                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+              });
+            }
+          });
+        
+        game.participants
+          ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
+          .forEach(p => {
+            if (p.user && !userIds.has(p.user.id)) {
+              userIds.add(p.user.id);
+              users.push({
+                ...p.user,
+                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+              });
+            }
+          });
+        
+        game.parent?.participants
+          ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
+          .forEach(p => {
+            if (p.user && !userIds.has(p.user.id)) {
+              userIds.add(p.user.id);
+              users.push({
+                ...p.user,
+                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+              });
+            }
+          });
+      } else if (normalizedChatType === 'PHOTOS') {
+        game.participants?.forEach(p => {
+          if (p.user && !userIds.has(p.user.id)) {
+            userIds.add(p.user.id);
+            users.push({
+              ...p.user,
+              display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+            });
+          }
+        });
+        
+        game.parent?.participants
           ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
           .forEach(p => {
             if (p.user && !userIds.has(p.user.id)) {
@@ -241,6 +323,10 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       },
     },
     suggestions: {
+      container: {
+        backgroundColor: 'transparent',
+        zIndex: 99999,
+      },
       list: {
         backgroundColor: 'white',
         border: '1px solid rgba(0,0,0,0.15)',
@@ -249,8 +335,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         overflowY: 'auto' as const,
         borderRadius: '8px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        zIndex: 10000,
         width: `${suggestionsWidth}px`,
+        position: 'relative' as const,
       },
       item: {
         padding: '8px 12px',
@@ -274,14 +360,17 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       },
     },
     suggestions: {
-      ...customStyle.suggestions,
+      container: {
+        backgroundColor: 'transparent',
+        zIndex: 99999,
+      },
       list: {
         ...customStyle.suggestions.list,
         backgroundColor: '#374151',
         borderColor: '#4b5563',
         color: '#f3f4f6',
         width: `${suggestionsWidth}px`,
-        zIndex: 10000,
+        position: 'relative' as const,
       },
       item: {
         ...customStyle.suggestions.item,
@@ -297,7 +386,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const finalStyle = isDark ? darkStyle : customStyle;
 
   return (
-    <div ref={containerRef} className={className}>
+    <div ref={containerRef} className={`mention-input-wrapper ${className}`}>
       <MentionsInput
         value={value}
         onChange={handleChange}

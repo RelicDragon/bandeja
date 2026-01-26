@@ -81,7 +81,9 @@
     "appleTokenNonceMissing": "Ошибка проверки nonce: токен не содержит nonce",
     "appleTokenNonceMismatch": "Несоответствие nonce",
     "appleTokenNonceRequired": "Требуется проверка nonce: токен содержит nonce, но он не был предоставлен",
-    "nameProvidedByApple": "Имя предоставлено Apple"
+    "nameProvidedByApple": "Имя предоставлено Apple",
+    "signedInWithApple": "Вы вошли через Apple.",
+    "appleAccountInfo": "Информация вашего аккаунта управляется через Apple Sign In и не требует дополнительного ввода."
   },
   "nav": {
     "home": "Главная",
