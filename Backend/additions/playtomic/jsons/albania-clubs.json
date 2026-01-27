@@ -1,0 +1,316 @@
+[
+  {
+    "tenant_id": "51c4211d-ad1d-4b11-86fc-8f367c249e18",
+    "tenant_name": "Albania Padel Group",
+    "slug": "albania-padel-group",
+    "address": {
+      "street": "DR RURALE 1",
+      "postal_code": "1001",
+      "city": "STERMAS",
+      "sub_administrative_area": "STERMAS",
+      "administrative_area": "STERMAS",
+      "country": "Albania",
+      "country_code": "AL",
+      "coordinate": {
+        "lat": 41.270782,
+        "lon": 19.836825
+      },
+      "timezone": "Europe/Tirane"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/51c4211d-ad1d-4b11-86fc-8f367c249e18/albaniapadelgroup_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/51c4211d-ad1d-4b11-86fc-8f367c249e18/albaniapadelgroup_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/51c4211d-ad1d-4b11-86fc-8f367c249e18/albaniapadelgroup_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/51c4211d-ad1d-4b11-86fc-8f367c249e18/albaniapadelgroup_0004"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+355696063006",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "\n\n\n",
+      "FACILITY_VENDING_MACHINE": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "true"
+    },
+    "resources": [],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [],
+    "communications_language": "en_US",
+    "description": ""
+  },
+  {
+    "tenant_id": "bcd961ee-b916-4718-a5b2-8f676cca7498",
+    "tenant_name": "The Padel Republic",
+    "slug": "the-padel-republic",
+    "address": {
+      "street": "Barbas, Komuna Petrele",
+      "postal_code": "1034",
+      "city": "Tiranë",
+      "sub_administrative_area": "Tirana",
+      "administrative_area": "Tirana County",
+      "country": "Albania",
+      "country_code": "AL",
+      "coordinate": {
+        "lat": 41.27062946,
+        "lon": 19.90756738
+      },
+      "timezone": "Europe/Tirane"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1751467221/pro/tenants/bcd961ee-b916-4718-a5b2-8f676cca7498/1751467220355.jpg"
+    ],
+    "properties": {
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "The Padel Republic is a padel and multisport club. At our club you can find 3 outdoor and 2 covered padel courts, a volleyball and basketball court, an outdoor fitness, a relax zone and an amazing padel community. \nAll you need is the love of the game, the rest is already here!\n# becomeafellow",
+      "WEBSITE_URL": "https://thepadelrepublic.al/en/home/",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+355 692884994"
+    },
+    "resources": [
+      {
+        "resourceId": "5ddf8c4e-c24b-45c0-a18c-251d3bfb710a",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f3410693-060a-43f3-92d3-2b2b132e9e63",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "29528388-edae-445c-97d5-5758fa87a6f5",
+        "name": "Padel 3 - Roofed outdoor",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "13c08e63-7369-48ca-8c64-fd03a1f66633",
+        "name": "Padel 4 - Roofed outdoor",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ebc1ec27-5967-461c-b346-5ebe89fd3f33",
+        "name": "Padel 5 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "a2229bec-ed21-423e-88b5-5a1d53c0f85c",
+        "name": "Volleyball Court 1",
+        "sport": "VOLLEYBALL",
+        "features": [
+          "outdoor",
+          "rubber"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:30"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:30"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:30"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:30"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:30"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "VOLLEYBALL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  The Padel Republic is a padel and multisport club. At our club you can find 3 outdoor and 2 covered padel courts, a volleyball and basketball court, an outdoor fitness, a relax zone and an amazing padel community.\n  All you need is the love of the game, the rest is already here!\n</p>\n<p class=\"text-xl font-bold text-primary-160 my-2\">becomeafellow</p>\n"
+  },
+  {
+    "tenant_id": "19c2ccd5-efbf-46ea-aad5-79faadfe1a06",
+    "tenant_name": "Acinque Ice Arena",
+    "slug": "acinque-ice-arena",
+    "address": {
+      "street": "Via Francesco Albani, 33, Varese Va, Italy",
+      "postal_code": "21100",
+      "city": "Varese",
+      "sub_administrative_area": "Provincia di Varese",
+      "administrative_area": "Lombardia",
+      "country": "Italia",
+      "country_code": "IT",
+      "coordinate": {
+        "lat": 45.8326763,
+        "lon": 8.8253741
+      },
+      "timezone": "Europe/Rome"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1678272075/pro/tenants/19c2ccd5-efbf-46ea-aad5-79faadfe1a06/1678272074669.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1678272078/pro/tenants/19c2ccd5-efbf-46ea-aad5-79faadfe1a06/1678272076943.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1678272080/pro/tenants/19c2ccd5-efbf-46ea-aad5-79faadfe1a06/1678272079444.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1678272082/pro/tenants/19c2ccd5-efbf-46ea-aad5-79faadfe1a06/1678272081453.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Centro sportivo dotato di due campi da padel scoperti.\n\nPrenotazione Campo Padel scoperto n° 1 fissa da Lunedì a Venerdì dopo le 18.00. Slot prenotazione 18.00 e 19.30. Prenotazione libera dalle 9 alle 18\n\nPrenotazione Campo Padel scoperto n° 2  fissa da Lunedì a Venerdì dopo le 18.15. Slot prenotazione 18.15 e 19.45. Prenotazione libera dalle 9 alle 18.15\n\nSabato prenotazione libera dalle 9 alle 17.30.\n\nDomenica prenotazione fissa  campo n° 1 e 2, slot 9.00 e 10.30\n\nLa struttura comprende anche una palestra fitness di oltre 500 mq. Con due sale corsi.\n\nIl tutto all'interno di nuovissimo centro appena riammodernato con piscine coperte e palaghiaccio. \n\nBar-tavola fredda e parcheggio.\n\nN.B. Ricordiamo, anche per ragioni di sicurezza, che l'accesso alla padel arena è riservato esclusivamente ai giocatori che hanno prenotato il campo e non a pubblico o spettatori. ",
+      "WEBSITE_URL": "https://www.acinqueicearena.com/",
+      "CONTACT_PHONE": "+39 03321575576",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "d5ffed00-d736-407a-ab44-86a61fb70101",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "95f13505-8e24-43bf-a71e-baa29f042152",
+        "name": "Campo 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "76f2c865-a73b-4664-9b8a-3197ad8c9b66",
+        "name": "Campo 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "21:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "21:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "13:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "13:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "21:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "17:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "it",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Centro sportivo dotato di due campi da padel scoperti.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Prenotazione Campo Padel scoperto n° 1 fissa da Lunedì a Venerdì dopo le 18.00. Slot prenotazione 18.00 e 19.30. Prenotazione libera dalle 9 alle 18</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Prenotazione Campo Padel scoperto n° 2 fissa da Lunedì a Venerdì dopo le 18.15. Slot prenotazione 18.15 e 19.45. Prenotazione libera dalle 9 alle 18.15</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Sabato prenotazione libera dalle 9 alle 17.30.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Domenica prenotazione fissa campo n° 1 e 2, slot 9.00 e 10.30</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">La struttura comprende anche una palestra fitness di oltre 500 mq. Con due sale corsi.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Il tutto all'interno di nuovissimo centro appena riammodernato con piscine coperte e palaghiaccio.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Bar-tavola fredda e parcheggio.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">N.B. Ricordiamo, anche per ragioni di sicurezza, che l'accesso alla padel arena è riservato esclusivamente ai giocatori che hanno prenotato il campo e non a pubblico o spettatori.</p>\n"
+  }
+]

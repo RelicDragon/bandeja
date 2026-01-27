@@ -1,0 +1,445 @@
+[
+  {
+    "tenant_id": "dc408d91-0a53-4680-80eb-8cd2a97fe33f",
+    "tenant_name": "Padel Center Banús",
+    "slug": "padel-center-banus",
+    "address": {
+      "street": "Calle Ana de Austria , 1",
+      "postal_code": "29660",
+      "city": "Marbella",
+      "sub_administrative_area": "Málaga",
+      "administrative_area": "Andalucía",
+      "country": "España",
+      "country_code": "ES",
+      "coordinate": {
+        "lat": 36.4856886,
+        "lon": -4.9734302
+      },
+      "timezone": "Europe/Madrid"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1734362638/pro/tenants/dc408d91-0a53-4680-80eb-8cd2a97fe33f/1734362637744.jpg"
+    ],
+    "properties": {
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_WIFI": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+34 690146703",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_LOCKERS": "false",
+      "WEBSITE_URL": "",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_RESTAURANT": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "8bd74467-78a0-4580-8fa9-aa39d3d413f1",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c10b1249-ccf2-4f4c-b33d-f0ea936aba07",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "cc36dca4-2ce1-45fa-8b95-437abc5c1883",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "625f8692-87f5-4278-8d00-1f710d129ddf",
+        "name": "Padel 4/ Pista Central",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "es",
+    "description": ""
+  },
+  {
+    "tenant_id": "69ad7f2b-4eb6-4a2b-bc7b-28b9037faac9",
+    "tenant_name": "TENNIS CLUB BADALONA",
+    "slug": "tennis-club-badalona",
+    "address": {
+      "street": "Avinguda Joan d'Àustria 58",
+      "postal_code": "08915",
+      "city": "Badalona",
+      "sub_administrative_area": "Barcelona",
+      "administrative_area": "Catalunya",
+      "country": "España",
+      "country_code": "ES",
+      "coordinate": {
+        "lat": 41.46561515,
+        "lon": 2.24498241
+      },
+      "timezone": "Europe/Madrid"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1736265038/pro/tenants/69ad7f2b-4eb6-4a2b-bc7b-28b9037faac9/1736265037443.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1736265039/pro/tenants/69ad7f2b-4eb6-4a2b-bc7b-28b9037faac9/1736265038990.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1736265041/pro/tenants/69ad7f2b-4eb6-4a2b-bc7b-28b9037faac9/1736265040898.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1736265043/pro/tenants/69ad7f2b-4eb6-4a2b-bc7b-28b9037faac9/1736265042965.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1736265045/pro/tenants/69ad7f2b-4eb6-4a2b-bc7b-28b9037faac9/1736265044732.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1736265049/pro/tenants/69ad7f2b-4eb6-4a2b-bc7b-28b9037faac9/1736265048519.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1736265051/pro/tenants/69ad7f2b-4eb6-4a2b-bc7b-28b9037faac9/1736265050611.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "WEBSITE_URL": "https://tennisclubbadalona.es/",
+      "CONTACT_PHONE": "+34 631003023",
+      "DETAILS_PAGE_DESCRIPTION": "Bienvenido/a a #elteuclub!\nEn el Tennis Club Badalona encontraras la mejor oferta de la zona en deportes de raqueta complementándolo con un nuevo gimnasio y un servicio de restauración. \nDurante los meses de verano la mejor piscina de Badalona te esta esperando, ¿Te apuntas?"
+    },
+    "resources": [
+      {
+        "resourceId": "de479e04-fe3d-4eae-8ac1-19c9a6802de2",
+        "name": "Padel ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "76039d5f-f19c-4d85-8549-97a231b3084f",
+        "name": "Padel ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d2f42d50-cc26-4b91-9da4-71c525352252",
+        "name": "Padel ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "02d3130c-4f95-45ec-b13a-a5efbc427359",
+        "name": "Padel ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "666c0ef1-cb92-4a10-9be5-9315478118c5",
+        "name": "Padel ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1197e6bb-5e5b-4b76-9ba9-477be3072639",
+        "name": "Padel ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f251a05e-f0e3-4d2b-b5e0-9d3f7abdf068",
+        "name": "Padel ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b20437e5-42f7-418e-9a78-7684feb7417b",
+        "name": "Padel ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9e536c4b-67b6-43e9-96e9-487f3f97d7c7",
+        "name": "Padel ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0dffa881-4c94-494f-bdce-e72da443c813",
+        "name": "Padel ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1eaa28cb-213a-46b0-b4ad-5b297d294be6",
+        "name": "Pistas de Tenis ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "638248e9-7994-497c-94f9-b15f6f15b610",
+        "name": "Pistas de Tenis ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "992d6302-ab72-42b5-92b8-5dd9ec759800",
+        "name": "Pistas de Tenis ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "d705792e-e8be-4753-a207-7bd0e6724b62",
+        "name": "Pistas de Tenis ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "bdd74fa0-d0a9-4217-9b94-d2b119a02e9e",
+        "name": "Pistas de Tenis ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "071f19e2-cce5-4f64-b967-722f040d1b51",
+        "name": "Pistas de Tenis ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "ed5eb9d6-45f7-42a1-88af-ab0f92dbc3a5",
+        "name": "Pistas de Tenis ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "7246ed92-5ac9-42cc-9a0b-1c899a021502",
+        "name": "Pistas de Tenis ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "0879975c-aac6-40c9-a691-934ae49e6850",
+        "name": "Pistas de Tenis ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "dd22936e-876e-446b-9a41-c1cba5e89c66",
+        "name": "Pickleball 1",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "75e4c794-4c88-47d4-85bb-f5d42f74ec74",
+        "name": "Pickleball 2",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "3519dbd4-25a1-4275-8ce4-0348a4fce3d8",
+        "name": "Pickleball 3",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "6650aa1b-084b-42cb-a1e0-97775d7e2779",
+        "name": "Pickleball 4",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS",
+      "PICKLEBALL"
+    ],
+    "communications_language": "es",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Bienvenido/a a #elteuclub!\n  En el Tennis Club Badalona encontraras la mejor oferta de la zona en deportes de raqueta complementándolo con un nuevo gimnasio y un servicio de restauración.\n  Durante los meses de verano la mejor piscina de Badalona te esta esperando, ¿Te apuntas?\n</p>\n"
+  }
+]

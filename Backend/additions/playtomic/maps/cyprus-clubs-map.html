@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>Total locations: 70</strong>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = [{"lat":34.6751755,"lng":32.9792591,"name":"Padel Magic Cyprus"},{"lat":34.98459121,"lng":33.95321479,"name":"Padel Paradise Cyprus"},{"lat":35.0093616,"lng":33.99603,"name":"Ballers Club Cyprus"},{"lat":34.8048829,"lng":32.50883717,"name":"Minthis Resort Sports Grounds"},{"lat":34.8974591,"lng":33.5788929,"name":"Alpha Padel Club@Alpha Sports Centre"},{"lat":35.0120718,"lng":34.0562252,"name":"Capo Bay Padel & Pickleball Club"},{"lat":34.6860379,"lng":33.0139479,"name":"Padel Point Club"},{"lat":34.82735539,"lng":32.39000269,"name":"Queen's Bay Hotel - Padel by the Sea"},{"lat":35.1229119,"lng":33.3655405,"name":"mywelpad padel center @ Nicosia"},{"lat":34.73562724,"lng":33.00850041,"name":"THE TENNIS & PADEL ACADEMY LIMASSOL"},{"lat":34.70246932,"lng":33.02377439,"name":"goAll Padel Centers Limassol"},{"lat":34.64962333,"lng":32.72028706,"name":"Columbia Beach Resort "},{"lat":35.00792962,"lng":34.0609724,"name":"Padel by the sea, Protaras"},{"lat":35.15717027,"lng":33.33877212,"name":"The GCS Sports Centre"},{"lat":35.01512324,"lng":34.05321957,"name":"Sunrise Beach Hotel"},{"lat":34.781023,"lng":32.42414071,"name":"Park Of Colors"},{"lat":34.66937437,"lng":32.72213833,"name":"Green Hills Padel Club - Pissouri "},{"lat":35.16390404,"lng":33.3446421,"name":"Eleon Padbol"},{"lat":34.70437976,"lng":33.02445875,"name":"Koutrouzas Tennis Academy"},{"lat":35.10425812,"lng":33.36974109,"name":"Padel Park CY"},{"lat":35.1370757,"lng":33.2003292,"name":"Olympion Padel"},{"lat":34.7010614,"lng":33.0983913,"name":"Atlantica Oasis Hotel"},{"lat":34.9116891,"lng":33.6073291,"name":"Fivestar Sports Center"},{"lat":34.82602297,"lng":33.39814495,"name":"PADEL HOOD "},{"lat":34.8160375,"lng":33.3562656,"name":"MVP Padelzone"},{"lat":35.15121875,"lng":33.35588399,"name":"Strovolos Sports Center"},{"lat":34.990656,"lng":33.982409,"name":"Ayia Napa Padel Club"},{"lat":34.960811,"lng":33.632777,"name":"Bautheac Padel Arena"},{"lat":34.9179137,"lng":33.573393,"name":"LARNACA PADEL CLUB"},{"lat":35.0256684,"lng":33.4089164,"name":"Smash Padel World Ltd"},{"lat":35.12147865,"lng":33.26042355,"name":"Spazio Padel"},{"lat":34.94081483,"lng":33.60027946,"name":"Transition Padel Hub"},{"lat":34.7387597,"lng":32.9884799,"name":"Heritage Sports"},{"lat":34.70024693,"lng":32.99342464,"name":"Smash Padel and Tennis Academy"},{"lat":35.12882675,"lng":33.32379066,"name":"goAll Padel Centers Nicosia"},{"lat":35.05519545,"lng":34.00584158,"name":"Kapparis Padel Club"},{"lat":34.9876702,"lng":33.85098472,"name":"Wembley Park Athletic Center, Xylofagou"},{"lat":35.1640484,"lng":33.3449433,"name":"Social Padel Club x ELEON "},{"lat":34.73331672,"lng":33.22705867,"name":"SQEasy Club"},{"lat":34.7111925,"lng":33.02459208,"name":"Padel Syndicate"},{"lat":34.70747114,"lng":33.1193828,"name":"Padel Arena Limassol"},{"lat":34.66432794,"lng":33.01669835,"name":"4U PADEL"},{"lat":34.7093124,"lng":33.087556,"name":"NAIS Sports Club"},{"lat":34.8160388,"lng":32.4144124,"name":"Wembley Sports Center"},{"lat":34.91191808,"lng":33.5732696,"name":"Padeland by Etheras "},{"lat":34.7797778,"lng":32.44566005,"name":"block25"},{"lat":34.76620891,"lng":32.91300925,"name":"GN Sporting Club Alassa"},{"lat":35.1487234,"lng":33.375505,"name":"NICOSIA PADEL CLUB"},{"lat":34.69234686,"lng":32.97673401,"name":"The Padel Hub"},{"lat":35.06420735,"lng":33.35250497,"name":"LA CASA DE PADEL-NICOSIA"},{"lat":34.9182222,"lng":33.6200625,"name":"American Academy Larnaca - Sports Centre "},{"lat":34.7137206,"lng":33.1745756,"name":"Parklane Resort & Spa Padel "},{"lat":35.035937,"lng":34.035925,"name":"Golden Coast Padel & Tennis, Protaras "},{"lat":34.73663,"lng":33.08334,"name":"Green Padel Club"},{"lat":34.96528095,"lng":33.62699837,"name":"PadBox Club Larnaka"},{"lat":34.66339222,"lng":32.99201757,"name":"Padel Temple "},{"lat":35.0199316,"lng":33.4136625,"name":"Courts Mania Cy"},{"lat":35.15527615,"lng":33.33918144,"name":"Masters Tennis Academy"},{"lat":34.64969299,"lng":32.99338227,"name":"Marcos Baghdatis Tennis Academy"},{"lat":34.72511708,"lng":33.19516664,"name":"Palm Padel "},{"lat":34.7137206,"lng":33.1745756,"name":"Parklane Resort & Spa Padel "},{"lat":35.035937,"lng":34.035925,"name":"Golden Coast Padel & Tennis, Protaras "},{"lat":34.73663,"lng":33.08334,"name":"Green Padel Club"},{"lat":34.96528095,"lng":33.62699837,"name":"PadBox Club Larnaka"},{"lat":34.66339222,"lng":32.99201757,"name":"Padel Temple "},{"lat":35.0199316,"lng":33.4136625,"name":"Courts Mania Cy"},{"lat":35.15527615,"lng":33.33918144,"name":"Masters Tennis Academy"},{"lat":35.15482159,"lng":33.3510699,"name":"Max Tennis School Academy"},{"lat":34.9802043,"lng":33.9438874,"name":"Marina Padel Court"},{"lat":35.0449364,"lng":33.4033378,"name":"Premium Padel Center, Nicosia"}];
+        const center = [34.89634426485715, 33.30398993114285];
+
+        const map = L.map('map').setView(center, 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        locations.forEach((location) => {
+            const marker = L.marker([location.lat, location.lng]).addTo(map);
+            marker.bindPopup(`<strong>${location.name}</strong><br>Lat: ${location.lat}<br>Lng: ${location.lng}`);
+        });
+    </script>
+</body>
+</html>

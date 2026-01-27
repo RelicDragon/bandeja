@@ -1,6 +1,6 @@
 import { MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { CitySelectorModal, ClubModal } from '@/components';
+import { CityModal, ClubModal } from '@/components';
 import { Club, City } from '@/types';
 
 interface LeagueLocationSectionProps {
@@ -38,7 +38,7 @@ export const LeagueLocationSection = ({
 
   return (
     <>
-      <CitySelectorModal
+      <CityModal
         isOpen={isCityModalOpen}
         onClose={onCloseCityModal}
         selectedId={selectedCityId}

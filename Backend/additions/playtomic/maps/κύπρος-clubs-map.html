@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>Total locations: 7</strong>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = [{"lat":34.854868,"lng":33.604038,"name":"Padel Up Herodotou Tennis Academy, Larnaca"},{"lat":34.86663903,"lng":32.37397912,"name":"Neos Padel Club"},{"lat":34.80482049,"lng":32.43729028,"name":"Fair Game Sport Center "},{"lat":34.7421546,"lng":32.44660327,"name":"Alana Sports Center"},{"lat":34.66987831,"lng":33.02541196,"name":"Sporting Club Lemesou"},{"lat":35.13112765,"lng":33.35765442,"name":"Cityfields Padel"},{"lat":35.1463343,"lng":33.3154425,"name":"National Tennis Center "}];
+        const center = [34.887974625714286, 32.93720279285714];
+
+        const map = L.map('map').setView(center, 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        locations.forEach((location) => {
+            const marker = L.marker([location.lat, location.lng]).addTo(map);
+            marker.bindPopup(`<strong>${location.name}</strong><br>Lat: ${location.lat}<br>Lng: ${location.lng}`);
+        });
+    </script>
+</body>
+</html>

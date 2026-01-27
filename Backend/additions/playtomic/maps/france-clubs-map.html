@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>Total locations: 41</strong>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = [{"lat":48.91460769,"lng":2.30592549,"name":"CASA PADEL ASNIERES"},{"lat":48.8298304,"lng":2.3047983,"name":"PADEL 15"},{"lat":48.8742397,"lng":2.3888057,"name":"Paris Padel"},{"lat":48.8109523,"lng":2.12013243,"name":"Royal Padel Club - Versailles"},{"lat":48.52931236,"lng":2.66291372,"name":"TC Melun"},{"lat":50.6585811,"lng":3.149571,"name":"Chantilly Club"},{"lat":49.3876156,"lng":2.3981437,"name":"Club Tennis Clermontois"},{"lat":49.3805735,"lng":2.43972387,"name":"Au Fil des Courts"},{"lat":50.62781558,"lng":2.97511099,"name":"Padel District Lille"},{"lat":48.9254343,"lng":2.356291,"name":"Rpadel"},{"lat":48.3701766,"lng":2.8396769,"name":"Moret Padel"},{"lat":48.92912374,"lng":2.34524538,"name":"CASA PADEL SAINT-DENIS"},{"lat":48.2546063,"lng":3.2756433,"name":"Padel Sphere"},{"lat":43.56016262,"lng":4.09949876,"name":"My Center La Grande Motte "},{"lat":43.717942,"lng":4.180456,"name":"Gora Sports Club"},{"lat":43.1665221,"lng":2.9933517,"name":"Set Padel"},{"lat":43.2439107,"lng":6.5510031,"name":"My Center Cogolin"},{"lat":48.7147406,"lng":7.8092368,"name":"Tennis Padel Weyersheim"},{"lat":43.53251073,"lng":3.92937136,"name":"My Center Palavas"},{"lat":43.98501166,"lng":4.87664459,"name":"PALAREA AVIGNON"},{"lat":43.45516665,"lng":6.78792596,"name":"Crazy Pickle Club x UGolf Tennis Valescure"},{"lat":16.2512485,"lng":-61.5192312,"name":"Padel Dugazon"},{"lat":43.6215605,"lng":1.4125962,"name":"CASA PADEL STADE TOULOUSAIN"},{"lat":46.212764,"lng":5.308853,"name":"GRINTA"},{"lat":48.6569451,"lng":7.727829,"name":"CASA PADEL VENDENHEIM"},{"lat":45.77485836,"lng":4.90956786,"name":"Lyon V&V Padel"},{"lat":46.4753682,"lng":-1.7532579,"name":"La Folie"},{"lat":47.791381,"lng":7.30686,"name":"CASA PADEL KINGERSHEIM"},{"lat":43.4481759,"lng":5.350922,"name":"La Pista Padel Club - Cabriès"},{"lat":48.6434552,"lng":7.7603417,"name":"TC PADEL REICHSTETT"},{"lat":49.3466776,"lng":0.0928621,"name":"DAMA - Touques"},{"lat":46.54754364,"lng":3.3438943,"name":"Super Padel 03"},{"lat":49.21450154,"lng":6.00876757,"name":"Padel Paradise"},{"lat":48.6434552,"lng":7.7603417,"name":"TC PADEL REICHSTETT"},{"lat":43.6993231,"lng":4.6334936,"name":"ARENA SPORT CENTER"},{"lat":42.623268,"lng":18.1959296,"name":"Padel Dubrovnik"},{"lat":41.3531783,"lng":2.1447943,"name":"Edificio Landmark"},{"lat":38.98639779,"lng":-8.97242723,"name":"JC PADEL CENTER"},{"lat":-28.7533455,"lng":24.7735599,"name":"Docs Padel and Pickleball"},{"lat":-27.77770209,"lng":24.79624342,"name":"Jubilee Padel, Coffee Zone & Food Station"},{"lat":-28.78257184,"lng":24.73435298,"name":"AP Padel Kimberley"}];
+        const center = [40.33769070073171, 3.8733112914634145];
+
+        const map = L.map('map').setView(center, 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        locations.forEach((location) => {
+            const marker = L.marker([location.lat, location.lng]).addTo(map);
+            marker.bindPopup(`<strong>${location.name}</strong><br>Lat: ${location.lat}<br>Lng: ${location.lng}`);
+        });
+    </script>
+</body>
+</html>

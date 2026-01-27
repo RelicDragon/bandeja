@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>Total locations: 9</strong>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = [{"lat":42.57783,"lng":18.21738,"name":"PadelPro - Cavtat"},{"lat":42.6511102,"lng":18.0606996,"name":"Dubrovnik Padel Klub Palace"},{"lat":45.80381683,"lng":16.0664583,"name":"Padel Embassy"},{"lat":42.623268,"lng":18.1959296,"name":"Padel Dubrovnik"},{"lat":45.8332455,"lng":15.8825392,"name":"Padel&pickleball Academy"},{"lat":44.83785009,"lng":13.83494628,"name":"Pula Padel & Pickleball Verudela"},{"lat":45.8056227,"lng":16.2332605,"name":"Master Padel Club "},{"lat":45.541485,"lng":18.757536,"name":"Pannonian Padel "},{"lat":45.7796818,"lng":15.9668302,"name":"Padel.hr"}];
+        const center = [44.60599001333334, 16.80173107555556];
+
+        const map = L.map('map').setView(center, 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        locations.forEach((location) => {
+            const marker = L.marker([location.lat, location.lng]).addTo(map);
+            marker.bindPopup(`<strong>${location.name}</strong><br>Lat: ${location.lat}<br>Lng: ${location.lng}`);
+        });
+    </script>
+</body>
+</html>

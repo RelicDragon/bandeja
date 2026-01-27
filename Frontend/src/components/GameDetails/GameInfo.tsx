@@ -36,6 +36,7 @@ import {
   ChevronRight,
   Banknote,
   CalendarPlus,
+  Plane,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -262,6 +263,9 @@ export const GameInfo = ({
   const playingParticipants = game.participants?.filter(p => p.isPlaying) ?? [];
   const shouldShowTiming = game.entityType !== 'LEAGUE_SEASON';
   const canShowEdit = game.resultsStatus === 'NONE' && game.status !== 'ARCHIVED';
+  const userCityId = user?.currentCity?.id || user?.currentCityId;
+  const gameCityId = game.city?.id;
+  const isDifferentCity = Boolean(gameCityId && userCityId && gameCityId !== userCityId);
 
   const renderName = () => {
     const titleClass = isCollapsed 
@@ -668,6 +672,12 @@ export const GameInfo = ({
       )}
       {isCollapsed && (
         <div className="mb-3 relative z-10">
+          {isDifferentCity && game.city?.name && (
+            <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
+              <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
+              <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{game.city.name}</span>
+            </div>
+          )}
           {renderName()}
           {renderTags()}
         </div>
@@ -692,6 +702,12 @@ export const GameInfo = ({
                 <GameAvatar avatar={game.avatar} extralarge={true} alt={game.name || t('gameDetails.gameAvatar')} />
               </button>
             </div>
+          </div>
+        )}
+        {isDifferentCity && game.city?.name && (
+          <div className="inline-flex items-center gap-1.5 mb-3 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
+            <Plane size={14} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
+            <span className="text-sm font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{game.city.name}</span>
           </div>
         )}
         <div className="flex items-start justify-between mb-4">

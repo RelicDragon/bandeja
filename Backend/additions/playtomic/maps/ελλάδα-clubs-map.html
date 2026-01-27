@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>Total locations: 5</strong>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = [{"lat":37.42291531,"lng":25.31938256,"name":"Mykonos Padel"},{"lat":37.09482706,"lng":25.24331277,"name":"Aegean Tennis and Padel Centre"},{"lat":37.7164332,"lng":24.0464375,"name":"Champion Padel Club Lavrio"},{"lat":35.04684602,"lng":24.87605836,"name":"South Padel Club"},{"lat":35.372854,"lng":24.54629328,"name":"Baseline Sports Tennis & Padel Club"}];
+        const center = [36.530775117999994, 24.806296894];
+
+        const map = L.map('map').setView(center, 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        locations.forEach((location) => {
+            const marker = L.marker([location.lat, location.lng]).addTo(map);
+            marker.bindPopup(`<strong>${location.name}</strong><br>Lat: ${location.lat}<br>Lng: ${location.lng}`);
+        });
+    </script>
+</body>
+</html>

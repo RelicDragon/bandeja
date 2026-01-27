@@ -1,0 +1,656 @@
+[
+  {
+    "tenant_id": "876035ee-b9cb-4d86-949c-37e1b4bb12eb",
+    "tenant_name": "Premier Padel Füred",
+    "slug": "premier-padel-fured",
+    "address": {
+      "street": "Forrás Sportpark Nagyfenyödülő",
+      "postal_code": "8230",
+      "city": "Balatonfüred",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Hungary",
+      "country_code": "HU",
+      "coordinate": {
+        "lat": 46.9401613,
+        "lon": 17.8607568
+      },
+      "timezone": "Europe/Budapest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1692104445/pro/tenants/876035ee-b9cb-4d86-949c-37e1b4bb12eb/1692104444769.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1692104446/pro/tenants/876035ee-b9cb-4d86-949c-37e1b4bb12eb/1692104446317.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "The first padel club at the Balaton lake! We have 2 outdoor glass courts, a full time coach and a relax / bar area as well as the opportunity to purchase padel goods on site! ",
+      "WEBSITE_URL": "https://www.premierpadel.hu/",
+      "CONTACT_PHONE": "+36 300840999",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "818e03f0-e613-450e-bed8-f02d7c3084a8;fd3ff006-1f95-4801-bab5-131ed74c0988;be6f008b-7567-4c6b-9339-1d5a6881b30d;30c6e2b9-db46-4c52-8dd1-69e607080864;849d94b9-5f3d-4aa6-be14-5d23010afb28;22545a8e-a053-4a0f-b6ec-140ed5108d26",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "9af9751c-4ef0-4b15-8b39-13bfdf35c817",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d466d4d6-8698-4501-bf4c-ffc5f8fdba87",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">The first padel club at the Balaton lake! We have 2 outdoor glass courts, a full time coach and a relax / bar area as well as the opportunity to purchase padel goods on site!</p>\n"
+  },
+  {
+    "tenant_id": "0f5e6585-1026-4383-b306-d14816b93063",
+    "tenant_name": "Premier Padel Nagyret",
+    "slug": "premier-padel-nagyret",
+    "address": {
+      "street": "Nagyret u. 22",
+      "postal_code": "1029",
+      "city": "Budapest",
+      "sub_administrative_area": "Budapest",
+      "administrative_area": "Budapest",
+      "country": "Hungary",
+      "country_code": "HU",
+      "coordinate": {
+        "lat": 47.5448851,
+        "lon": 18.952374
+      },
+      "timezone": "Europe/Budapest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1732119375/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732119374497.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732119377/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732119376769.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732119379/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732119378481.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732119381/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732119380351.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732119382/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732119381989.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732119384/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732119383727.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732119386/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732119385683.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732119388/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732119387167.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732119472/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732119471101.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732119507/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732119506663.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732119519/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732119518360.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732120774/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732120773963.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732121004/pro/tenants/0f5e6585-1026-4383-b306-d14816b93063/1732121003811.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_CAFETERIA": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "744f589f-1468-413d-907d-a1e346d3f07e;5c9e4366-5e2b-4732-a121-ff5f537e4cdb;77ff7734-2a62-4a7f-a17a-205ce3a7b934;bdc0e545-7845-449a-8bde-64c14d937621;e2809fbf-d70b-4465-a672-068aeb4a29b9;2791c7e2-843b-4777-b5e6-781727f447d4;ac549323-b0a5-4289-99a5-4f9911fd0288;b24fd9c7-2ccd-4199-ac4f-1735692632e0;c0c31f1e-7583-4003-90dc-a74d32428ece;2aabe246-e1b1-4829-83a5-0875c4a29b09;0061365a-e2f5-49ae-ad7f-b44620bc2554;3724c6c8-f1cc-44e6-adce-9c5715a7fd02;2da27285-6cd0-4820-9405-6f093328f6a6",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "WEBSITE_URL": "https://www.premierpadel.hu/kapcsolat/",
+      "CONTACT_PHONE": "+36 301949580",
+      "DETAILS_PAGE_DESCRIPTION": "Fantastic scenery and location in the valley of Nagyrét in the II/A district in Budapest. We have 4 glass courts out of which two are covered and heated. Our venue is part of a country club that offers tennis courts, padball courts, a fitness club, a wellness spa, a 5-a-side football pitch, and a top-notch Italian restaurant"
+    },
+    "resources": [
+      {
+        "resourceId": "1215fecb-4ac6-42a0-8ac0-31c42974028d",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4e8c4a4c-9e81-48c1-8f60-105f3ef77407",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a4f3cd95-dc5a-4acc-8008-dcb190ac624b",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "39cd665f-5b1e-49b5-b7fb-9a80ac9998de",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Fantastic scenery and location in the valley of Nagyrét in the II/A district in Budapest. We have 4 glass courts out of which two are covered and heated. Our venue is part of a country club that offers tennis courts, padball courts, a fitness club, a wellness spa, a 5-a-side football pitch, and a top-notch Italian restaurant</p>\n"
+  },
+  {
+    "tenant_id": "223f1572-8f75-4bca-b56f-24cc9bdea16a",
+    "tenant_name": "GS Tenisz&Padel Club",
+    "slug": "gs-teniszpadel-club",
+    "address": {
+      "street": "Királyok útja 323",
+      "postal_code": "1039",
+      "city": "Budapest",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Hungary",
+      "country_code": "HU",
+      "coordinate": {
+        "lat": 47.6075096,
+        "lon": 19.0704144
+      },
+      "timezone": "Europe/Budapest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1714636171/pro/tenants/223f1572-8f75-4bca-b56f-24cc9bdea16a/1714636170151.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1723287584/pro/tenants/223f1572-8f75-4bca-b56f-24cc9bdea16a/1723287584144.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1723287615/pro/tenants/223f1572-8f75-4bca-b56f-24cc9bdea16a/1723287614510.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1723287659/pro/tenants/223f1572-8f75-4bca-b56f-24cc9bdea16a/1723287658880.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1723287702/pro/tenants/223f1572-8f75-4bca-b56f-24cc9bdea16a/1723287701932.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to GS Tenisz&Padel Club, Budapest's foremost destination for padel enthusiasts. Nestled along the picturesque Római-part, our club boasts the city's most stunning facilities, featuring two indoor and two outdoor panoramic courts .",
+      "FACILITY_LOCKERS": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "WEBSITE_URL": "https://www.gsteniszclub.hu/",
+      "CONTACT_PHONE": "+36 301222980",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true"
+    },
+    "resources": [],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [],
+    "communications_language": "es",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Welcome to GS Tenisz&#x26;Padel Club, Budapest's foremost destination for padel enthusiasts. Nestled along the picturesque Római-part, our club boasts the city's most stunning facilities, featuring two indoor and two outdoor panoramic courts .</p>\n"
+  },
+  {
+    "tenant_id": "7d47ba78-0759-407f-af14-d3a70cf5d080",
+    "tenant_name": "BVSC Padel club|First club in Pest!",
+    "slug": "bvsc-padel-clubfirst-club-in-pest",
+    "address": {
+      "street": "Tatai u. 85.",
+      "postal_code": "1142",
+      "city": "Budapest",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Hungary",
+      "country_code": "HU",
+      "coordinate": {
+        "lat": 47.5389446,
+        "lon": 19.0937661
+      },
+      "timezone": "Europe/Budapest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1725346067/pro/tenants/7d47ba78-0759-407f-af14-d3a70cf5d080/1725346066784.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1725347343/pro/tenants/7d47ba78-0759-407f-af14-d3a70cf5d080/1725347342386.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1725347346/pro/tenants/7d47ba78-0759-407f-af14-d3a70cf5d080/1725347345263.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "The BVSC Padel club is located in the heart of the city, in an internationally recognized multi-sports complex. The Padel club was inaugurated in September 2022 and includes 4 outdoor courts.\nBVSC Padel is a team of professional coaches who provides courses for adults and children. You will find a reception, a bar, a fitness room, lockers and sauna.",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.facebook.com/BVSC-Padel-Klub-108832455304794",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+36 704197314",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "afdbf716-c4a5-435f-ada7-988d4ccb82ab",
+        "name": "Court 2.",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "375baaad-45a9-4428-99ff-c0ad177eda49",
+        "name": "Court 3.",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "04e15750-13ea-47d8-9162-9321ddcac1d2",
+        "name": "Court 4.",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  The BVSC Padel club is located in the heart of the city, in an internationally recognized multi-sports complex. The Padel club was inaugurated in September 2022 and includes 4 outdoor courts.\n  BVSC Padel is a team of professional coaches who provides courses for adults and children. You will find a reception, a bar, a fitness room, lockers and sauna.\n</p>\n"
+  },
+  {
+    "tenant_id": "7fdf6d93-551b-4d08-91e5-aadeddef3966",
+    "tenant_name": "Padel Master Debrecen",
+    "slug": "padel-master-debrecen",
+    "address": {
+      "street": "Zsibogó köz  5",
+      "postal_code": "4034",
+      "city": "Debrecen",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Hungary",
+      "country_code": "HU",
+      "coordinate": {
+        "lat": 47.52467721,
+        "lon": 21.64850828
+      },
+      "timezone": "Europe/Budapest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1766337759/pro/tenants/7fdf6d93-551b-4d08-91e5-aadeddef3966/1766337757871.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "CONTACT_PHONE": "+36 705630539",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Debrecen első padel klubja, ahol az életstílus találkozik a padellel. Nálunk megtalálod a közösségedet, legyél akár megszállott profi vagy lelkes kezdő. Csarnokunkban három double és egy single pályával várunk. Ingyenes parkolás, büfé, shop és öltözők biztosítják a kényelmedet. Gondoskodunk a felszerelésről, bérelhetsz vagy akár vásárolhatsz is ütőket és labdákat. A meccs után maradj egy kicsit, élvezd közösségi programjainkat és ismerkedj meg új emberekkel.\nJátssz, ismerkedj, és tartozz közénk!\nRáadásul a felszerelés miatt sem kell aggódnod, mert **ingyenes ütő- és labdabérlést biztosítunk.**\n\nDebrecen’s first padel club, where lifestyle meets padel. With us, you will find your community whether you are a dedicated pro or an enthusiastic beginner. Our indoor hall features three double courts and one single court. Free parking, snack bar, shop, and locker rooms ensure your comfort. We have got your equipment covered too, you can rent or even purchase rackets and balls.After your match, stay a bit longer, enjoy our community events, and meet new people.\nPlay, connect, and belong!\nNo need to worry about equipment either, as we provide **free racket and ball rental**.",
+      "FACILITY_LOCKERS": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padelmasterdebrecen/",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "c86c643c-e877-4f6e-91e3-accd90288edf",
+        "name": "Double court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cdb74b6c-02ac-434d-baa1-6ee3492c5c6a",
+        "name": "Double court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "237b07c9-c1ca-459f-86eb-803b6ef88980",
+        "name": "Double court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b675a1c2-5fbd-42e5-b16c-19f954275be9",
+        "name": "Single court 4 (2 player)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Debrecen első padel klubja, ahol az életstílus találkozik a padellel. Nálunk megtalálod a közösségedet, legyél akár megszállott profi vagy lelkes kezdő. Csarnokunkban három double és egy single pályával várunk. Ingyenes parkolás, büfé, shop és öltözők biztosítják a kényelmedet. Gondoskodunk a felszerelésről, bérelhetsz vagy akár vásárolhatsz is ütőket és labdákat. A meccs után maradj egy kicsit, élvezd közösségi programjainkat és ismerkedj meg új emberekkel.\n  Játssz, ismerkedj, és tartozz közénk!\n  Ráadásul a felszerelés miatt sem kell aggódnod, mert <strong class=\"font-semibold text-primary-100\">ingyenes ütő- és labdabérlést biztosítunk.</strong>\n</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Debrecen’s first padel club, where lifestyle meets padel. With us, you will find your community whether you are a dedicated pro or an enthusiastic beginner. Our indoor hall features three double courts and one single court. Free parking, snack bar, shop, and locker rooms ensure your comfort. We have got your equipment covered too, you can rent or even purchase rackets and balls.After your match, stay a bit longer, enjoy our community events, and meet new people.\n  Play, connect, and belong!\n  No need to worry about equipment either, as we provide <strong class=\"font-semibold text-primary-100\">free racket and ball rental</strong>.\n</p>\n"
+  },
+  {
+    "tenant_id": "ca9caf4c-b32e-4b3b-b1cd-4c6022a1f8b6",
+    "tenant_name": "Padel King Savoya",
+    "slug": "padel-king-savoya",
+    "address": {
+      "street": "Hunyadi János út 162",
+      "postal_code": "1116",
+      "city": "Budapest",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Hungary",
+      "country_code": "HU",
+      "coordinate": {
+        "lat": 47.43345331,
+        "lon": 19.04481824
+      },
+      "timezone": "Europe/Budapest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1766997264/pro/tenants/ca9caf4c-b32e-4b3b-b1cd-4c6022a1f8b6/1766997264130.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_CAFETERIA": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "3fc4628e-5a13-4038-b881-ffba06c87e16;e021b5de-5653-41ce-bc06-82f6e6aa0868",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "",
+      "CONTACT_PHONE": "+36 300121489",
+      "DETAILS_PAGE_DESCRIPTION": "Látogass el Magyarország legnagyobb beltéri padelklubjába 6 pályával, 3 színben, 12 méter belmagassággal!\nCsatlakozzatok a Padel King Savoya hivatalos messenger csoportjába:\nhttps://m.me/cm/AbaML1KbcwWcHgwT/?send_source=cm%3Acopy_invite_link"
+    },
+    "resources": [
+      {
+        "resourceId": "063d7765-5d1b-42da-bbf4-94ff14a1c1ee",
+        "name": "Ace Court 1 (Blue)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f3126d99-07cf-4781-b9e2-f63fcd5a449d",
+        "name": "Court 2 (Blue)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5dc72136-5372-4a35-9ac1-f1b947270f52",
+        "name": "Court 3 (Blue)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "984f0756-2d3f-400b-83bf-8bbb83b48b75",
+        "name": "Court 4 (Blue)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "33c040d2-7aa2-4cea-ba77-b4d3c6dbe52e",
+        "name": "King Court 5 (Black)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "68f9811a-b478-41e6-a26a-1375989f0186",
+        "name": "Queen Court 6 (Pink)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Látogass el Magyarország legnagyobb beltéri padelklubjába 6 pályával, 3 színben, 12 méter belmagassággal!\n  Csatlakozzatok a Padel King Savoya hivatalos messenger csoportjába:\n  https://m.me/cm/AbaML1KbcwWcHgwT/?send_source=cm%3Acopy_invite_link\n</p>\n"
+  }
+]

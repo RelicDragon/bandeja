@@ -10,8 +10,9 @@ import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { useNavigationStore } from '@/store/navigationStore';
+import { useAuthStore } from '@/store/authStore';
 import { chatApi } from '@/api/chat';
-import { Calendar, MapPin, Users, MessageCircle, ChevronRight, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star } from 'lucide-react';
+import { Calendar, MapPin, Users, MessageCircle, ChevronRight, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star, Plane } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
@@ -42,6 +43,8 @@ export const GameCard = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
+  const authUser = useAuthStore((state) => state.user);
+  const effectiveUser = user || authUser;
   const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
   const [isCollapsing, setIsCollapsing] = useState(false);
   const expandedContentRef = useRef<HTMLDivElement>(null);
@@ -96,23 +99,23 @@ export const GameCard = ({
     loadMainPhoto();
   }, [game.mainPhotoId, game.id, game.status, user]);
 
-  const isParticipant = game.participants.some(p => p.userId === user?.id && p.isPlaying);
-  const isUserParticipant = game.participants.some(p => p.userId === user?.id);
-  const isGuest = game.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN');
+  const isParticipant = game.participants.some(p => p.userId === effectiveUser?.id && p.isPlaying);
+  const isUserParticipant = game.participants.some(p => p.userId === effectiveUser?.id);
+  const isGuest = game.participants.some(p => p.userId === effectiveUser?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN');
   const canAccessChat = true;
   const isLeagueSeasonGame = game.entityType === 'LEAGUE_SEASON';
   const shouldShowTiming = !isLeagueSeasonGame;
-  const displaySettings = user ? resolveDisplaySettings(user) : null;
+  const displaySettings = effectiveUser ? resolveDisplaySettings(effectiveUser) : null;
 
   const playingCount = game.participants.filter(p => p.isPlaying).length;
   const hasUnoccupiedSlots = game.entityType === 'BAR' || playingCount < game.maxParticipants;
-  const hasMyInvites = game.invites?.some(invite => invite.receiverId === user?.id) || false;
-  const isInJoinQueue = game.joinQueues?.some(q => q.userId === user?.id && q.status === 'PENDING') || false;
+  const hasMyInvites = game.invites?.some(invite => invite.receiverId === effectiveUser?.id) || false;
+  const isInJoinQueue = game.joinQueues?.some(q => q.userId === effectiveUser?.id && q.status === 'PENDING') || false;
 
   const hasOtherTags = (game.photosCount ?? 0) > 0 ||
     !game.isPublic ||
     (game.genderTeams && game.genderTeams !== 'ANY') ||
-    game.participants.some(p => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)) ||
+    game.participants.some(p => p.userId === effectiveUser?.id && ['OWNER', 'ADMIN'].includes(p.role)) ||
     game.entityType !== 'GAME' ||
     isGuest ||
     !game.affectsRating ||
@@ -124,6 +127,9 @@ export const GameCard = ({
     game.name;
 
   const shouldMoveIconsToTitle = hasVisibleGameName && !hasOtherTags;
+  const userCityId = effectiveUser?.currentCity?.id || effectiveUser?.currentCityId;
+  const gameCityId = game.city?.id;
+  const isDifferentCity = Boolean(gameCityId && userCityId && gameCityId !== userCityId);
 
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -234,6 +240,12 @@ export const GameCard = ({
       )}
       {/* Header - Always visible */}
       <div className={`${!(isCollapsed && game.entityType === 'LEAGUE_SEASON') ? 'mb-3' : ''} relative z-10`}>
+        {isDifferentCity && game.city?.name && (
+          <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
+            <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
+            <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{game.city.name}</span>
+          </div>
+        )}
         {!(isCollapsed && game.entityType === 'LEAGUE_SEASON') && (
           <>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-20 flex items-center gap-2">
@@ -346,7 +358,7 @@ export const GameCard = ({
             </div>
           )}
           {game.participants.some(
-            (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
+            (p) => p.userId === effectiveUser?.id && ['OWNER', 'ADMIN'].includes(p.role)
           ) && (
             <span className="px-2 py-1 text-xs font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
               {t('games.owner')}
@@ -881,7 +893,7 @@ export const GameCard = ({
             <div className="relative -mx-0 flex-1 w-full">
               <PlayersCarousel
                 participants={game.participants.filter(p => p.isPlaying)}
-                userId={user?.id}
+                userId={effectiveUser?.id}
                 shouldShowCrowns={true}
                 autoHideNames={true}
               />

@@ -1,0 +1,689 @@
+[
+  {
+    "tenant_id": "288589fd-0ec3-46fa-9c8e-f51ff6bff2be",
+    "tenant_name": "Mykonos Padel",
+    "slug": "mykonos-padel",
+    "address": {
+      "street": "Korfos Mykonos",
+      "postal_code": "84600",
+      "city": "Mykonos",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 37.42291531,
+        "lon": 25.31938256
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/288589fd-0ec3-46fa-9c8e-f51ff6bff2be/mykonos-padel_0001"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+30 6975532515",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "https://padelmykonos.com/"
+    },
+    "resources": [
+      {
+        "resourceId": "740a6495-b158-488e-821c-4c627456eee7",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "863cd173-0763-4754-9106-2e8749ded822",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3edc574c-9ab4-49bd-adc5-7ee1faf5219e",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "800746ae-2550-435b-8e8d-c83eaa279b8b",
+    "tenant_name": "Aegean Tennis and Padel Centre",
+    "slug": "aegean-tennis-and-padel-centre",
+    "address": {
+      "street": "Naousa Ysterni",
+      "postal_code": "84401",
+      "city": "Paros",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 37.09482706,
+        "lon": 25.24331277
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1710752999/pro/tenants/800746ae-2550-435b-8e8d-c83eaa279b8b/1710752998698.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+30 6938628300",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Set on the Beautiful island of Paros Greece Aegean Tennis center features 3 tennis courts, two padel courts and 4 dedicated pickleball courts. We have free wifi, free parking, a shop if you need to buy rackets, shoes or clothes, coffee and snacks. There are both men's and women's locker rooms with showers. We provide you and your playing partners with complimentary rackets for every sport if you don't have your own with you. Tennis and Padel lessons are also available for kids and adults. Pickleball, Padel and Tennis camps are available all year round!",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_STORE": "true",
+      "WEBSITE_URL": "https://www.aegeantenniscentre.com/"
+    },
+    "resources": [
+      {
+        "resourceId": "ed0c5d79-3b4c-46ba-a6f6-ce320d72d8ef",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5a21953c-bbdc-4f6c-beae-26b4ea196473",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1bb9b910-2d56-45b1-9263-ffb5c1a3667f",
+        "name": "Tennis 2",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "6110c5f1-b4f8-40a1-8667-eed9a4d5a7a1",
+        "name": "Tennis 3",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "7ce783f6-4970-4bc9-b329-2da6a9ce15cf",
+        "name": "Tennis 4",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "0df2a773-50f1-4c19-a824-d439f9af4c7f",
+        "name": "Pickleball 1",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "6379a3c1-0258-4741-a484-ebcf4f2c3005",
+        "name": "Pickleball 2",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "01a61ee3-ad09-4c5d-a411-ba43a99ac591",
+        "name": "Pickleball 3",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "8cf516e2-ca94-4936-b456-f193a54e999b",
+        "name": "Pickleball 4",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS",
+      "PICKLEBALL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Set on the Beautiful island of Paros Greece Aegean Tennis center features 3 tennis courts, two padel courts and 4 dedicated pickleball courts. We have free wifi, free parking, a shop if you need to buy rackets, shoes or clothes, coffee and snacks. There are both men's and women's locker rooms with showers. We provide you and your playing partners with complimentary rackets for every sport if you don't have your own with you. Tennis and Padel lessons are also available for kids and adults. Pickleball, Padel and Tennis camps are available all year round!</p>\n"
+  },
+  {
+    "tenant_id": "ddc64195-6f60-46c0-9e0e-d0815a9407d4",
+    "tenant_name": "Champion Padel Club Lavrio",
+    "slug": "champion-padel-club-lavrio",
+    "address": {
+      "street": "Ano Oria",
+      "postal_code": "19500",
+      "city": "Λαύριο",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 37.7164332,
+        "lon": 24.0464375
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ddc64195-6f60-46c0-9e0e-d0815a9407d4/champion-padel-club-lavrio_0001"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+30 2292069102",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "true",
+      "WEBSITE_URL": "championpadelclub",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ce044e03-ebed-4852-836c-b15fd2ea411a",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c1dc8ce3-ab17-478d-a14f-895a31519920",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "15043efc-b977-42b0-b36c-d1eed06e8926",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0cc81760-e133-4612-b9a3-b8f37cdaeee4",
+        "name": "Basketball 4",
+        "sport": "BASKETBALL",
+        "features": [
+          "outdoor",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "585dc490-a3a7-49b5-a408-d1917f0519cc",
+        "name": "Football7 5",
+        "sport": "FOOTBALL7",
+        "features": [
+          "outdoor",
+          "synthetic_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "17:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "17:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "17:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "FOOTBALL7",
+      "BASKETBALL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "bb3a3b38-9119-4dbe-9866-271bc42fe58e",
+    "tenant_name": "South Padel Club",
+    "slug": "south-padel-club",
+    "address": {
+      "street": "-",
+      "postal_code": "70400",
+      "city": "Μοίρες",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 35.04684602,
+        "lon": 24.87605836
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245589/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245588131.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245591/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245591125.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245594/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245593477.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245595/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245594435.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245599/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245598567.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245599/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245599120.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245601/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245601115.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245607/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245606094.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "South Padel Club @Mires\nthe first padel club in south Crete",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.southpadel.gr",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+30 6936644812",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "a26d064c-e361-4f97-af81-938710ee1916",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "29d4ecdd-5328-4ea0-abf6-a7d73c8ec67a",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "82d911b8-9a8c-4118-b08c-8927a49ef254",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d6acd5bf-a415-4d3a-9b43-c18996f2d547",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  South Padel Club @Mires\n  the first padel club in south Crete\n</p>\n"
+  },
+  {
+    "tenant_id": "f4f5e411-3b3a-406e-b585-0603f0ca40b6",
+    "tenant_name": "Baseline Sports Tennis & Padel Club",
+    "slug": "baseline-sports-tennis-padel-club",
+    "address": {
+      "street": "Adelianos Kampos Opposite Aquila Rithymna Beach Hotel",
+      "postal_code": "74100",
+      "city": "Ρέθυμνο",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 35.372854,
+        "lon": 24.54629328
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1767515819/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767515818385.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767515823/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767515822150.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767515826/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767515826077.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767515834/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767515833848.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767516045/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767516044343.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767597142/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767597141555.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**Tennis & Padel Club based in Rethymno, Crete, Greece.**\nBaseline Sports offers a complete experience, combining modern courts, quality facilities, and an active player community. From first-time players to competitive athletes, we create the right setting to improve your game, enjoy every match, and connect with others who share the same passion.\nWe are **open daily, Monday to Sunday, from 08:00 in the morning until 23:00 in the evening.**\nBecome part of Baseline Sports and experience the sport at its best.\n* Instagram Page: @baseline.rethymno\n* Facebook Page: Baseline Sports\n* WhatsApp: +30 697 415 3221\n* Viber: +30 697 415 3221\n",
+      "CONTACT_PHONE": "+30 2831074770",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_WIFI": "true",
+      "WEBSITE_URL": "https://baselinesports.gr/index.php/en/"
+    },
+    "resources": [
+      {
+        "resourceId": "cb973df3-f162-48ff-9e06-af0c40011873",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "40c9b0c8-f8c7-414b-8e5d-1427bd745780",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6eff3b8e-6c45-4083-9564-cd83c63ce324",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9a2ccff1-a50a-4f0d-8c32-7d189579dc0a",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "efd15936-1d6a-4e71-84d6-dc5f3c9336cd",
+        "name": "Tennis 5",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "641efb58-120c-420f-8856-7a9e3172d03b",
+        "name": "Tennis 6",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "b0655ce8-8a39-4638-86ae-499c7769a180",
+        "name": "Tennis 7",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "5681b18a-d0f6-43ae-85b2-fb19211690be",
+        "name": "Pickleball 8",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "be4a1439-47e5-4527-a374-98733d3b7ef6",
+        "name": "Table Tennis 1",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "outdoor",
+          "standard"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "17:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "17:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "17:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "17:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "17:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "17:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "17:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS",
+      "PICKLEBALL",
+      "TABLE_TENNIS"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  <strong class=\"font-semibold text-primary-100\">Tennis &#x26; Padel Club based in Rethymno, Crete, Greece.</strong>\n  Baseline Sports offers a complete experience, combining modern courts, quality facilities, and an active player community. From first-time players to competitive athletes, we create the right setting to improve your game, enjoy every match, and connect with others who share the same passion.\n  We are <strong class=\"font-semibold text-primary-100\">open daily, Monday to Sunday, from 08:00 in the morning until 23:00 in the evening.</strong>\n  Become part of Baseline Sports and experience the sport at its best.\n</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">Instagram Page: @baseline.rethymno</li>\n  <li class=\"mb-0.5\">Facebook Page: Baseline Sports</li>\n  <li class=\"mb-0.5\">WhatsApp: +30 697 415 3221</li>\n  <li class=\"mb-0.5\">Viber: +30 697 415 3221</li>\n</ul>\n"
+  }
+]

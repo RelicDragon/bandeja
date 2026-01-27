@@ -1,12 +1,9 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Beer, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserStats, usersApi, LevelHistoryItem } from '@/api/users';
-import { gamesApi } from '@/api/games';
-import { canUserSeeGame } from '@/utils/gameResults';
-import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { LevelHistoryTabController } from './LevelHistoryTabController';
 import { PlayerAvatar } from './PlayerAvatar';
@@ -37,13 +34,11 @@ interface LevelHistoryViewProps {
 export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const currentUser = useAuthStore((state) => state.user);
   const { setCurrentPage, setIsAnimating } = useNavigationStore();
   const { user } = stats;
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const [showSocialLevel, setShowSocialLevel] = useState(false);
   const [isToggleAnimating, setIsToggleAnimating] = useState(false);
-  const [showingPrivateMessage, setShowingPrivateMessage] = useState<string | null>(null);
   const [levelChangeEvents, setLevelChangeEvents] = useState<LevelHistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'10' | '30' | 'all'>('10');
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
@@ -68,29 +63,11 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
     setTimeout(() => setIsToggleAnimating(false), 200);
   };
 
-  const handleRatingChangeClick = async (item: { id: string; gameId: string }) => {
+  const handleRatingChangeClick = (item: { id: string; gameId: string }) => {
     if (!item.gameId) return;
-
-    try {
-      const response = await gamesApi.getById(item.gameId);
-      const game = response.data;
-
-      if (canUserSeeGame(game, currentUser)) {
-        setIsAnimating(true);
-        setCurrentPage('gameDetails');
-        navigate(`/games/${item.gameId}`);
-      } else {
-        setShowingPrivateMessage(item.id);
-        setTimeout(() => {
-          setShowingPrivateMessage(null);
-        }, 2000);
-      }
-    } catch (error) {
-      setShowingPrivateMessage(item.id);
-      setTimeout(() => {
-        setShowingPrivateMessage(null);
-      }, 2000);
-    }
+    setIsAnimating(true);
+    setCurrentPage('gameDetails');
+    navigate(`/games/${item.gameId}`);
   };
 
   const allMergedHistory = useMemo(() => {
@@ -459,53 +436,29 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                 }`}
                 onClick={() => handleRatingChangeClick(item)}
               >
-                <AnimatePresence mode="wait">
-                  {showingPrivateMessage === item.id ? (
-                    <motion.div
-                      key="private-message"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.3 }}
-                      className="flex items-center justify-center h-full absolute inset-0"
-                    >
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {t('playerCard.gameIsPrivate')}
+                <div className="flex items-center justify-between gap-3 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
+                    <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                      {formatDate(item.createdAt, 'PP')}
+                    </span>
+                    {item.eventType && (
+                      <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
+                        {t(`playerCard.eventType.${item.eventType}`)}
                       </span>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="rating-change"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.3 }}
-                      className="flex items-center justify-between gap-3 min-w-0"
-                    >
-                      <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
-                        <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                          {formatDate(item.createdAt, 'PP')}
-                        </span>
-                        {item.eventType && (
-                          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
-                            {t(`playerCard.eventType.${item.eventType}`)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-0.5 flex-shrink-0">
-                        <span className="text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
-                          {item.levelBefore.toFixed(2)} → {item.levelAfter.toFixed(2)}
-                        </span>
-                        <div className={`flex items-center whitespace-nowrap ${item.levelChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          {item.levelChange >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                          <span className="font-semibold text-xs">
-                            {item.levelChange >= 0 ? '+' : ''}{item.levelChange.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <span className="text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
+                      {item.levelBefore.toFixed(2)} → {item.levelAfter.toFixed(2)}
+                    </span>
+                    <div className={`flex items-center whitespace-nowrap ${item.levelChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                      {item.levelChange >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                      <span className="font-semibold text-xs">
+                        {item.levelChange >= 0 ? '+' : ''}{item.levelChange.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>

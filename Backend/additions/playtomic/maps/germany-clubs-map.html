@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>Total locations: 45</strong>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = [{"lat":-29.81049953,"lng":30.87653045,"name":"SSC Padel Court"},{"lat":47.67531462,"lng":9.14434453,"name":"AYWANA Padel am Bodensee - Konstanz"},{"lat":40.8262876,"lng":14.1675222,"name":"San Germano Padel & More"},{"lat":52.48524874,"lng":13.49731839,"name":"Padel Fc"},{"lat":48.13558,"lng":11.69263,"name":"ISPO Munich - Padel Village"},{"lat":48.0823677,"lng":9.2269983,"name":"TC Sigmaringen"},{"lat":53.037901,"lng":8.624566,"name":"Vamos! Padelhalle Delmenhorst (bei Bremen)"},{"lat":48.1078249,"lng":11.7833325,"name":"Padelon München "},{"lat":47.76417285,"lng":9.20080045,"name":"Tennishalle Altbirnau"},{"lat":47.7392414,"lng":8.9802552,"name":"Sportpark Mettnau / 2 Outdoor Courts ab Dezember verfügbar"},{"lat":48.217253,"lng":11.8077275,"name":"Padel München- Ost (Finsing) BattleKart"},{"lat":48.18085729,"lng":11.63001695,"name":"Scheck Club Tennis"},{"lat":53.5714306,"lng":10.0175305,"name":"Aspria Hamburg Uhlenhorst "},{"lat":53.575325,"lng":10.0746053,"name":"mitte — the cabrio | wandsbek"},{"lat":51.2461825,"lng":6.7095569,"name":"mitte — bøhler | soft opening"},{"lat":47.7538602,"lng":9.188611,"name":"TC 1902 Überlingen"},{"lat":49.46485741,"lng":8.49533672,"name":"maba! padel Mannheim GmbH"},{"lat":53.60067941,"lng":7.17393132,"name":"Tennis an der Nordsee"},{"lat":52.5200191,"lng":13.2859645,"name":"mitte — charlotte | charlottenburg"},{"lat":48.0791599,"lng":9.8802801,"name":"TC Ringschnait"},{"lat":52.2721442,"lng":7.9213713,"name":"Tennishalle Lotte"},{"lat":53.6508196,"lng":10.0542454,"name":"Aspria Hamburg Alstertal"},{"lat":54.2680069,"lng":10.0708129,"name":"Padelon Kiel"},{"lat":50.1633297,"lng":8.6879282,"name":"Sportpark Frankfurt"},{"lat":54.33317472,"lng":8.77969325,"name":"Nordsee Padel Garding & Sankt Peter Ording"},{"lat":47.7652668,"lng":9.2013283,"name":"Tennisclub Altbirnau e.V."},{"lat":53.5664433,"lng":9.9207232,"name":"mitte — dolce vita | altona"},{"lat":49.4978088,"lng":8.3998126,"name":"Padelbase Ludwigshafen"},{"lat":52.53349368,"lng":13.38439631,"name":"BeachMitte"},{"lat":48.7894229,"lng":11.5131055,"name":"Padel Haus"},{"lat":48.1815154,"lng":10.7473052,"name":"TSV Schwabmünchen"},{"lat":50.0698346,"lng":8.8641768,"name":"TCAW Obertshausen"},{"lat":47.5948637,"lng":8.3000879,"name":"TC Kuessaberg"},{"lat":47.6500092,"lng":8.5819232,"name":"TC Jestetten"},{"lat":52.223016,"lng":8.0750421,"name":"Racket Republic Harderberg"},{"lat":52.2649,"lng":8.0719094,"name":"Racket Republic Osnabrück"},{"lat":54.2749493,"lng":9.6540217,"name":"Padelon Rendsburg"},{"lat":51.7357037,"lng":6.6007417,"name":"HELI PADEL "},{"lat":51.41277611,"lng":6.87159957,"name":"Papito Padel"},{"lat":47.7748284,"lng":9.6158925,"name":"TC Ravensburg"},{"lat":49.1778175,"lng":8.6276632,"name":"Gärtner Sportpark"},{"lat":51.4730157,"lng":6.829699,"name":"mitte — b4 | soft opening"},{"lat":48.9616198,"lng":9.2098039,"name":"TC Pleidelsheim"},{"lat":53.8206856,"lng":9.9694175,"name":"Padel Passion"},{"lat":-26.0299215,"lng":28.0392049,"name":"Africa Padel GCC"}];
+        const center = [46.8373019511111, 10.476661429777778];
+
+        const map = L.map('map').setView(center, 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        locations.forEach((location) => {
+            const marker = L.marker([location.lat, location.lng]).addTo(map);
+            marker.bindPopup(`<strong>${location.name}</strong><br>Lat: ${location.lat}<br>Lng: ${location.lng}`);
+        });
+    </script>
+</body>
+</html>

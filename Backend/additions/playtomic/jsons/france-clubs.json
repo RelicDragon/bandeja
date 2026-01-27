@@ -1,0 +1,5394 @@
+[
+  {
+    "tenant_id": "0628edc6-3447-4d87-ad90-5b89f5ce1dd9",
+    "tenant_name": "CASA PADEL ASNIERES",
+    "slug": "casa-padel-asnieres",
+    "address": {
+      "street": "19 rue du jardin modèle",
+      "postal_code": "92600",
+      "city": "Asnières-sur-Seine",
+      "sub_administrative_area": "Hauts-de-Seine",
+      "administrative_area": "Île-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.91460769,
+        "lon": 2.30592549
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1764777527/pro/tenants/0628edc6-3447-4d87-ad90-5b89f5ce1dd9/1764777526932.jpg"
+    ],
+    "properties": {
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "WEBSITE_URL": "https://casapadel.fr/#asnieres",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "CONTACT_PHONE": "+33 185781979"
+    },
+    "resources": [
+      {
+        "resourceId": "89440b06-d454-48fa-aa3f-5634f29f4f00",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e932608b-a444-459f-bac4-3cc853c29677",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "21898e99-4885-4384-8be3-f65da42a0441",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0873c509-2f16-4fea-bd45-50939d9b8b2f",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "59239e7e-1991-4b0d-8fa9-546073191b61",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "104fe0c3-36af-47f1-ab7c-93ea65b994b4",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "bca2f888-e306-4c54-9927-e45006c1ba89",
+        "name": "Padel 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": ""
+  },
+  {
+    "tenant_id": "1191f8b5-ea25-4153-89fb-997b6ec5b053",
+    "tenant_name": "PADEL 15",
+    "slug": "padel-15",
+    "address": {
+      "street": "115 rue castagnary",
+      "postal_code": "75015",
+      "city": "Paris",
+      "sub_administrative_area": "Paris",
+      "administrative_area": "Île-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.8298304,
+        "lon": 2.3047983
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1765822618/pro/tenants/1191f8b5-ea25-4153-89fb-997b6ec5b053/1765822618247.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+33 145315876",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "087afe1f-fc0f-41d5-a6af-23a31094669a;19179fa2-73fc-41f0-93bf-84d757ce022e;08fd6cc9-e327-4bdf-a2dd-0ce79458cd23",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "true",
+      "WEBSITE_URL": "https://www.padel15.fr/",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_RESTAURANT": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "e886b382-ea0a-4258-8b53-81b1aceb06a6",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6a600bdd-9134-4680-a987-5ea3f77d4bb0",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": ""
+  },
+  {
+    "tenant_id": "25bf0a66-043e-433d-93fa-56f5dbc6b3ce",
+    "tenant_name": "Paris Padel",
+    "slug": "paris-padel",
+    "address": {
+      "street": "340 Rue des Pyrénées",
+      "postal_code": "75020",
+      "city": "Paris",
+      "sub_administrative_area": "Département de Paris",
+      "administrative_area": "Île-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.8742397,
+        "lon": 2.3888057
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1756718138/pro/tenants/25bf0a66-043e-433d-93fa-56f5dbc6b3ce/1756718137741.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756718454/pro/tenants/25bf0a66-043e-433d-93fa-56f5dbc6b3ce/1756718454088.jpg"
+    ],
+    "properties": {
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "e89365e7-9a2f-4397-be70-88f37912dd53",
+      "IS_CAB_MEMBER": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**Réservez votre terrain **!\nAu sein de **Paris Padel**, situé à 2 pas des stations Jourdain et Pyrénées, vous trouverez un complexe sportif unique situé en plein coeur de Paris :\n* Un terrain de Padel aux prestations exclusives (10 mètres de hauteur sous plafond, du dégagement sur les côtés)\n* Un terrain de Badminton\n\n\nBon à savoir : Location/vente de matériel / distributeur automatique sur place pour l'achat de balles et de boissons. (Pensez à vous munir d'une CB)\nUn systême de location de raquettes est également disponible  sur place\nPour plus d'informations, contactez-nous au 0780952256 !",
+      "WEBSITE_URL": "https://instagram.com/paris_padel_?igshid=YmMyMTA2M2Y=",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "CONTACT_PHONE": "+33 780952256"
+    },
+    "resources": [
+      {
+        "resourceId": "0bfbf8d8-0581-47dc-b000-24a9f3378643",
+        "name": "Padel Pyrénées",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  **Réservez votre terrain **!\n  Au sein de <strong class=\"font-semibold text-primary-100\">Paris Padel</strong>, situé à 2 pas des stations Jourdain et Pyrénées, vous trouverez un complexe sportif unique situé en plein coeur de Paris :\n</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">Un terrain de Padel aux prestations exclusives (10 mètres de hauteur sous plafond, du dégagement sur les côtés)</li>\n  <li class=\"mb-0.5\">Un terrain de Badminton</li>\n</ul>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Bon à savoir : Location/vente de matériel / distributeur automatique sur place pour l'achat de balles et de boissons. (Pensez à vous munir d'une CB)\n  Un systême de location de raquettes est également disponible sur place\n  Pour plus d'informations, contactez-nous au 0780952256 !\n</p>\n"
+  },
+  {
+    "tenant_id": "49bf96dc-c361-40c2-b8f1-e0871bcbb9b3",
+    "tenant_name": "Royal Padel Club - Versailles",
+    "slug": "royal-padel-club-versailles",
+    "address": {
+      "street": "1 boulevard de la reine - Waldorf Astoria Trianon Palace",
+      "postal_code": "78000",
+      "city": "Versailles",
+      "sub_administrative_area": "Yvelines",
+      "administrative_area": "Île-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.8109523,
+        "lon": 2.12013243
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1721654311/pro/tenants/49bf96dc-c361-40c2-b8f1-e0871bcbb9b3/1721654310861.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1721654336/pro/tenants/49bf96dc-c361-40c2-b8f1-e0871bcbb9b3/1721654336051.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1738000000/pro/tenants/49bf96dc-c361-40c2-b8f1-e0871bcbb9b3/1738000000105.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "SHOW_AVAILABILITY_GRID": "false",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+33 756811011",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "WEBSITE_URL": "https://playtomic.io/royal-padel-club-versailles/49bf96dc-c361-40c2-b8f1-e0871bcbb9b3",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_PLAYPARK": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Une expérience sportive unique dans un cadre d'exception",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "d0711578-efb5-4cdd-9fcb-7d6ee34fbbd0",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6e6e6dfb-0e11-4f0d-b51e-20e27915c4e8",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ed2b736d-b71c-47a3-b659-ea99f0f81051",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Une expérience sportive unique dans un cadre d'exception</p>\n"
+  },
+  {
+    "tenant_id": "51b02a03-a8e0-413a-95cc-265318f81086",
+    "tenant_name": "TC Melun",
+    "slug": "tc-melun",
+    "address": {
+      "street": "Avenue de la 7eme Division Blindée Américaine",
+      "postal_code": "77000",
+      "city": "Melun",
+      "sub_administrative_area": "Seine-et-Marne",
+      "administrative_area": "Île-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.52931236,
+        "lon": 2.66291372
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1766139996/pro/tenants/51b02a03-a8e0-413a-95cc-265318f81086/1766139995942.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1766139998/pro/tenants/51b02a03-a8e0-413a-95cc-265318f81086/1766139997401.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "f018f34d-0803-4ff8-96f8-3b9cb9e5673d;55a80487-5877-4e9d-a840-242c84504843;ff81b97c-aba6-4792-88b3-bbe74ec5ff8e",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Bienvenue sur Playtomic – TC Melun Padel \nOuverture des réservations : à partir du 02 Février\n\nÀ très vite sur les pistes ! ",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+33 164391541",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "4e9062c8-571d-4720-8950-8731ab914f62",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e9cd12cb-5f9e-41aa-b5b6-591b46768578",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8e4b3c57-5204-40dd-bcd2-93e547f08ed8",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1d654014-dc87-4076-adfc-df0a3868aa77",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Bienvenue sur Playtomic – TC Melun Padel\n  Ouverture des réservations : à partir du 02 Février\n</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">À très vite sur les pistes !</p>\n"
+  },
+  {
+    "tenant_id": "6960cee6-f7cd-4678-8a23-79db7d239af4",
+    "tenant_name": "Chantilly Club",
+    "slug": "le-chantilly-club",
+    "address": {
+      "street": "1 rue hoche",
+      "postal_code": "59491",
+      "city": "Villeneuve-d'Ascq",
+      "sub_administrative_area": "Nord",
+      "administrative_area": "Hauts-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 50.6585811,
+        "lon": 3.149571
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1767286435/pro/tenants/6960cee6-f7cd-4678-8a23-79db7d239af4/1767286434598.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "CONTACT_PHONE": "+33 682828303",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://chantilly-club.onepage.me/",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Le Chantilly Club à Villeneuve-d’Ascq est un lieu hybride mêlant sport, loisirs et convivialité. On y trouve plusieurs activités sportives comme le padel, le badminton ou encore la pétanque, mais aussi des jeux de flipper qui ajoutent une touche rétro et fun. Le club dispose également d’un bar-restaurant et d’espaces de détente, ce qui en fait un endroit apprécié autant pour pratiquer une activité que pour passer un bon moment entre amis ou lors d’événements."
+    },
+    "resources": [
+      {
+        "resourceId": "539705df-fae3-4d49-9f6e-c8496be8d199",
+        "name": "Court Playtomic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "675f8806-369d-4909-953f-1573c5959bb1",
+        "name": "Court Willem ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2469b277-1b04-4ab6-a320-7926a2d77e7f",
+        "name": "Le Bois",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8355021e-9db3-4a98-8db5-d0630caf0f08",
+        "name": "La Niche",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b7bda83b-5bf2-4c84-bb5a-4d9c0693786b",
+        "name": "Padel 1 contre 1 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "08a77eb6-7cf8-4a5d-a530-fdd71c55d198",
+        "name": "Badminton 1",
+        "sport": "BADMINTON",
+        "features": [
+          "indoor"
+        ]
+      },
+      {
+        "resourceId": "7d1119af-7495-4afc-9476-278a497e438d",
+        "name": "Basket 1V1",
+        "sport": "BASKETBALL",
+        "features": [
+          "indoor",
+          "rubber"
+        ]
+      },
+      {
+        "resourceId": "ba6ce065-89b4-4450-b665-beacd4d5f5b1",
+        "name": "Padel Ado  1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "edd593b4-efb1-44d6-ac8f-2b5583a97a2f",
+        "name": "Kids Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "20:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "20:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "BADMINTON",
+      "BASKETBALL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Le Chantilly Club à Villeneuve-d’Ascq est un lieu hybride mêlant sport, loisirs et convivialité. On y trouve plusieurs activités sportives comme le padel, le badminton ou encore la pétanque, mais aussi des jeux de flipper qui ajoutent une touche rétro et fun. Le club dispose également d’un bar-restaurant et d’espaces de détente, ce qui en fait un endroit apprécié autant pour pratiquer une activité que pour passer un bon moment entre amis ou lors d’événements.</p>\n"
+  },
+  {
+    "tenant_id": "a3d766bc-1786-4664-bbe9-cfbbeae7da62",
+    "tenant_name": "Club Tennis Clermontois",
+    "slug": "club-tennis-clermontois",
+    "address": {
+      "street": "65 Rue Wenceslas Coutellier",
+      "postal_code": "60600",
+      "city": "Clermont",
+      "sub_administrative_area": "Oise",
+      "administrative_area": "Hauts-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 49.3876156,
+        "lon": 2.3981437
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1759440284/pro/tenants/a3d766bc-1786-4664-bbe9-cfbbeae7da62/1759440283990.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "3 pistes de Padel\n1 clubHouse (bar restauration rapide, TV, WIFI)\nVestiaires, douches, sanitaires\nParking",
+      "WEBSITE_URL": "https://www.instagram.com/club.tennis.clermontois",
+      "CONTACT_PHONE": "+33 340500200",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "944e422d-4749-49ed-922a-029d1c9f6876",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "c39813a8-b092-420b-b2c0-13f5ae6be2cf",
+        "name": "Piste 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b9eb049d-5d34-4185-9250-8f0443f1d559",
+        "name": "Piste 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9e73d01a-3ea5-4dca-941c-4d3d2597e4ec",
+        "name": "Piste 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  3 pistes de Padel\n  1 clubHouse (bar restauration rapide, TV, WIFI)\n  Vestiaires, douches, sanitaires\n  Parking\n</p>\n"
+  },
+  {
+    "tenant_id": "b39237d0-5a4b-486a-a979-8c4414176a7e",
+    "tenant_name": "Au Fil des Courts",
+    "slug": "au-fil-des-courts",
+    "address": {
+      "street": "2 rue Guy Boulet",
+      "postal_code": "60840",
+      "city": "Breuil-le-Sec",
+      "sub_administrative_area": "Oise",
+      "administrative_area": "Hauts-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 49.3805735,
+        "lon": 2.43972387
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1759528164/pro/tenants/b39237d0-5a4b-486a-a979-8c4414176a7e/1759528163261.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1759528165/pro/tenants/b39237d0-5a4b-486a-a979-8c4414176a7e/1759528164645.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1759528166/pro/tenants/b39237d0-5a4b-486a-a979-8c4414176a7e/1759528165962.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1759528167/pro/tenants/b39237d0-5a4b-486a-a979-8c4414176a7e/1759528167237.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1759528169/pro/tenants/b39237d0-5a4b-486a-a979-8c4414176a7e/1759528168483.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1759528170/pro/tenants/b39237d0-5a4b-486a-a979-8c4414176a7e/1759528169750.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1759528173/pro/tenants/b39237d0-5a4b-486a-a979-8c4414176a7e/1759528172474.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1766928454/pro/tenants/b39237d0-5a4b-486a-a979-8c4414176a7e/1766928453596.jpg"
+    ],
+    "properties": {
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_WIFI": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_DESCRIPTION": "**Votre Club Au Fil des Courts, vous accueille sur deux terrains couverts, à Breuil-le-Sec (60).** \nSon infrastructure moderne, composées de terrains panoramiques, **ouvert 7 jours sur 7**, vous permettra de vous epanouir pleinement. \n**Un parking privé** et sécurisé vous apporte une tranquillité d'esprit pendant le jeu. \n**Des vestiaires femmes et hommes séparés** sont à disposition, pour votre confort, comprenant douches et casiers.\n**Un espace Club House** sera prochainement disponible pour vous detendre et partager entre amis.\n**La location de matériels** est disponible, sans reservation au prealable.\n\n_Suivez notre actualité sur les reseaux sociaux du club, ou le site internet : _\n_- Instagram : @aufildescourts_\n_- Facebook : Au Fil des Courts_\n_- Site web : www.aufildescourts.com_",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "CONTACT_PHONE": "+33 679444524",
+      "DETAILS_PAGE_TITLE": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "WEBSITE_URL": "https://www.aufildescourts.com",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "d1346b7b-db01-49ba-b577-2cc96d4a9842;cb6aef5f-7c83-48a9-8498-5ee93a40861a",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_LOCKERS": "false",
+      "ALLOWS_CASH_PAYMENT": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "537bd7e9-12a9-45bb-8c99-ed6449195acf",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1a9151d3-fb77-4e9c-a73b-cd3ffd64241d",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "288035d2-03d5-4b6d-b607-84f436a50365",
+        "name": "Padel 3 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "bc336f59-8ad2-4a8e-a6de-77263d24b796",
+        "name": "Padel 4 - Pink",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b913d441-bac3-4ed3-a91e-95e4a0164ecb",
+        "name": "Padel 5 - indiv",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "20:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "12:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  <strong class=\"font-semibold text-primary-100\">Votre Club Au Fil des Courts, vous accueille sur deux terrains couverts, à Breuil-le-Sec (60).</strong>\n  Son infrastructure moderne, composées de terrains panoramiques, <strong class=\"font-semibold text-primary-100\">ouvert 7 jours sur 7</strong>, vous permettra de vous epanouir pleinement.\n  <strong class=\"font-semibold text-primary-100\">Un parking privé</strong> et sécurisé vous apporte une tranquillité d'esprit pendant le jeu.\n  <strong class=\"font-semibold text-primary-100\">Des vestiaires femmes et hommes séparés</strong> sont à disposition, pour votre confort, comprenant douches et casiers.\n  <strong class=\"font-semibold text-primary-100\">Un espace Club House</strong> sera prochainement disponible pour vous detendre et partager entre amis.\n  <strong class=\"font-semibold text-primary-100\">La location de matériels</strong> est disponible, sans reservation au prealable.\n</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  _Suivez notre actualité sur les reseaux sociaux du club, ou le site internet : _\n  <em class=\"italic\">- Instagram : @aufildescourts</em>\n  <em class=\"italic\">- Facebook : Au Fil des Courts</em>\n  <em class=\"italic\">- Site web : www.aufildescourts.com</em>\n</p>\n"
+  },
+  {
+    "tenant_id": "719905e5-de9f-4645-b347-0d5b138bcce0",
+    "tenant_name": "Padel District Lille",
+    "slug": "padel-district-lille",
+    "address": {
+      "street": "Avenue de la Boutillerie",
+      "postal_code": "59320",
+      "city": "Sequedin",
+      "sub_administrative_area": "Nord",
+      "administrative_area": "Hauts-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 50.62781558,
+        "lon": 2.97511099
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1751970297/pro/tenants/719905e5-de9f-4645-b347-0d5b138bcce0/1751970296609.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756800490/pro/tenants/719905e5-de9f-4645-b347-0d5b138bcce0/1756800489796.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756814150/pro/tenants/719905e5-de9f-4645-b347-0d5b138bcce0/1756814149371.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Bienvenue sur la page du plus grand club des Hauts-de-France, Padel District !\nNous proposons 9 pistes de qualité premium en Indoor, avec une isolation renforcée et une hauteur sous plafond de 9m afin de vous faire profiter de conditions de jeu idéales. \nConvivialité garantie avec notre sportsbar/restaurant animé par notre équipe de passionnés !\nAu plaisir de vous voir !",
+      "WEBSITE_URL": "https://www.instagram.com/padeldistrict_lille?igsh=MWM5cWN4dWRud21sdQ%3D%3D&utm_source=qr",
+      "CONTACT_PHONE": "+33 366598760",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "e6f50a11-cfa8-4eca-bea8-3338ce171672;be14a3d9-5331-4935-954a-e263433a76c8",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "f8b1f8f8-99d5-4d94-8a2a-a135b41f6449",
+        "name": "La Boca",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ce0abc33-ed62-4872-8fbb-351e78cc8f9f",
+        "name": "Soweto",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a8af52f2-9e54-42cc-ba22-f1640f2da37f",
+        "name": "Shibuya",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "692fbb6c-f646-453b-99bd-cc3ec83d0fde",
+        "name": "Camden",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "232fd0e3-527f-44dd-ac71-66acb343ee8c",
+        "name": "Gran Via",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e60d03fc-bcb8-4053-8db8-2ac4b6a20608",
+        "name": "Grand Place ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7ed7c26a-d1c8-456b-8041-83531046652c",
+        "name": "Champs Elysées",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2d7273cf-b884-4cf4-8b4b-1e0967beecc3",
+        "name": "Broadway",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2041d50d-0274-4ac5-b7ea-b3625812f8f7",
+        "name": "Copacabana",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Bienvenue sur la page du plus grand club des Hauts-de-France, Padel District !\n  Nous proposons 9 pistes de qualité premium en Indoor, avec une isolation renforcée et une hauteur sous plafond de 9m afin de vous faire profiter de conditions de jeu idéales.\n  Convivialité garantie avec notre sportsbar/restaurant animé par notre équipe de passionnés !\n  Au plaisir de vous voir !\n</p>\n"
+  },
+  {
+    "tenant_id": "ed652309-7b5e-467f-8ff1-7c34a1c1dc2c",
+    "tenant_name": "Rpadel",
+    "slug": "rpadel-active",
+    "address": {
+      "street": "377 Avenue du Président Wilson",
+      "postal_code": "93210",
+      "city": "Saint-Denis",
+      "sub_administrative_area": "",
+      "administrative_area": "Île-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.9254343,
+        "lon": 2.356291
+      },
+      "timezone": "Europe/Madrid"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ed652309-7b5e-467f-8ff1-7c34a1c1dc2c/rpadel_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ed652309-7b5e-467f-8ff1-7c34a1c1dc2c/rpadel_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ed652309-7b5e-467f-8ff1-7c34a1c1dc2c/rpadel_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ed652309-7b5e-467f-8ff1-7c34a1c1dc2c/rpadel_0004"
+    ],
+    "properties": {
+      "SPORT_PICKLEBALL": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT": "false",
+      "SPORT_TENNIS": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "SYLTEK_CUSTOMER_TYPE_855;SYLTEK_CUSTOMER_TYPE_657",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "WEBSITE_URL": "https://www.rpadel.com"
+    },
+    "resources": [
+      {
+        "resourceId": "363faed6-259f-42a2-beb3-d75c5b9c942e",
+        "name": "1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f96bd992-c5c3-46d9-8e5c-8f695fe7d98e",
+        "name": "Pickleball",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "ffc33892-ba0c-4fc5-983d-941635b82ee6",
+        "name": "2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ea43e318-994a-4d24-9969-77f420d3e924",
+        "name": "3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "fa06d088-6749-4841-99fa-fdecaa5f4205",
+        "name": "4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "60ff6c44-baaa-4cb9-a994-270ebcd870d1",
+        "name": "5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9af609b1-3e4c-41a8-93da-7c073e4c4218",
+        "name": "6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS"
+    ],
+    "communications_language": "fr_FR",
+    "description": ""
+  },
+  {
+    "tenant_id": "7f3d8837-576a-4896-8610-28f75c07b334",
+    "tenant_name": "Moret Padel",
+    "slug": "moret-padel",
+    "address": {
+      "street": "5 Rue des Vignes ",
+      "postal_code": "77250",
+      "city": "Moret-Loing-et-Orvanne",
+      "sub_administrative_area": "Seine-et-Marne",
+      "administrative_area": "Île-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.3701766,
+        "lon": 2.8396769
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1743671700/pro/tenants/7f3d8837-576a-4896-8610-28f75c07b334/1743671698906.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1768230186/pro/tenants/7f3d8837-576a-4896-8610-28f75c07b334/1768230185345.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+33 756975136",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "dac5325a-e006-4080-9c01-63df3ccb504f;b480a20a-fd28-45f4-8394-7bc9fafb7b59;9df8e797-988a-441e-9a22-c8a3fc90bc19",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_STORE": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "WEBSITE_URL": "https://www.citypadel.fr/moretpadel",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Moret Padel : votre club de sport de raquettes à Moret-Loing-et-Orvanne !\n* 2 pistes de padel \n* 1 terrain de badminton / pickleball \n* 1 bar / espace détente / retransmission d'événements sportifs\n\n\nLe club loue des raquettes et vend des balles sur place à l'aide d'un distributeur automatique au tarif de 3 € / raquette pour 2h et 7 € la boite de 3 balles.",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0"
+    },
+    "resources": [
+      {
+        "resourceId": "eebc3eb2-42b0-4373-b323-25ef1d7e89ac",
+        "name": "Padel 1 - Groupe Maurin Renault DPL",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8f648197-81cd-4f31-bf73-3f5df5910804",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b8d1f05b-9363-4515-821a-840bdb11e852",
+        "name": "Badminton",
+        "sport": "BADMINTON",
+        "features": [
+          "indoor"
+        ]
+      },
+      {
+        "resourceId": "4638b436-dc66-4c6e-8f73-fc0d275bda7c",
+        "name": "Pickleball",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "double",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "BADMINTON",
+      "PICKLEBALL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Moret Padel : votre club de sport de raquettes à Moret-Loing-et-Orvanne !</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">2 pistes de padel</li>\n  <li class=\"mb-0.5\">1 terrain de badminton / pickleball</li>\n  <li class=\"mb-0.5\">1 bar / espace détente / retransmission d'événements sportifs</li>\n</ul>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Le club loue des raquettes et vend des balles sur place à l'aide d'un distributeur automatique au tarif de 3 € / raquette pour 2h et 7 € la boite de 3 balles.</p>\n"
+  },
+  {
+    "tenant_id": "d04b7959-3840-4894-a8bd-8f57d30b2eff",
+    "tenant_name": "CASA PADEL SAINT-DENIS",
+    "slug": "casa-padel-saint-denis",
+    "address": {
+      "street": "103 rue charles michel",
+      "postal_code": "93200",
+      "city": "Saint-Denis",
+      "sub_administrative_area": "Seine-Saint-Denis",
+      "administrative_area": "Île-de-France",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.92912374,
+        "lon": 2.34524538
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1764777319/pro/tenants/d04b7959-3840-4894-a8bd-8f57d30b2eff/1764777318797.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "CONTACT_PHONE": "+33 184214900",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "true",
+      "WEBSITE_URL": "https://casapadel.fr/#saintdenis",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "b32eaa1f-4591-453b-ac94-85b140f87ced",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "88d4d5f2-ec8a-4001-93d4-5bc39a3c6893",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0f2289b3-1ebc-4e9a-875f-5d7b2f01e701",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1b4de572-672d-4072-91c1-802384925861",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e02f2e4c-4005-46c9-9d64-9eee2d17a77a",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f962023e-162c-49ee-8be8-851951f93403",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "db5d707c-337e-40a3-b12a-3cc32be554ab",
+        "name": "Padel 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "eb236fd2-b2e1-4ae3-95be-9048ac4bc0a9",
+        "name": "Padel 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6d70da3a-6a02-49ff-b958-0548ae674b80",
+        "name": "Padel 9",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "58249d40-0c45-4a5b-bb0b-756b7a7df64a",
+        "name": "Padel 10",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d3a5851c-9874-4988-8946-faf71de6a33a",
+        "name": "Padel 11",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8e44f148-10a4-4a07-8fca-633183fc0d12",
+        "name": "Padel 12",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": ""
+  },
+  {
+    "tenant_id": "f9301225-aa68-49ca-a984-691abf282d5b",
+    "tenant_name": "Padel Sphere",
+    "slug": "padel-sphere",
+    "address": {
+      "street": "2 Rue de Bourgogne",
+      "postal_code": "89140",
+      "city": "Cuy",
+      "sub_administrative_area": "Yonne",
+      "administrative_area": "Bourgogne-Franche-Comté",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.2546063,
+        "lon": 3.2756433
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1744457779/pro/tenants/f9301225-aa68-49ca-a984-691abf282d5b/1744457779306.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_VENDING_MACHINE": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Vos terrains de padel premium à Cuy, près de Sens (89).",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_TITLE": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "CONTACT_PHONE": "+33 365671601",
+      "FACILITY_SNACK_BAR": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "52a4b716-585b-4816-b7ae-f167f9b22380",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_RESTAURANT": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_CAFETERIA": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "WEBSITE_URL": "http://padel-sphere.com/"
+    },
+    "resources": [
+      {
+        "resourceId": "066fb582-89b3-4c83-96d9-0a07f685d960",
+        "name": "AXA - Viard/Bandonny/Leitao",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "359e8474-35c6-473a-a555-fde185cdc2b5",
+        "name": "Agence Moove",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d8b79ebd-4d59-4997-8224-5f101aaf56ea",
+        "name": "Jussieu Secours - Sens",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "fb559516-64ca-4427-8781-42a3adda5a1e",
+        "name": "Brasserie Larché",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Vos terrains de padel premium à Cuy, près de Sens (89).</p>\n"
+  },
+  {
+    "tenant_id": "0c12d529-2895-4817-93d8-80ed5c0494c3",
+    "tenant_name": "My Center La Grande Motte ",
+    "slug": "my-center-la-grande-motte",
+    "address": {
+      "street": "La Plaine des Jeux, Route du Grau du Roi",
+      "postal_code": "34280",
+      "city": "La Grande-Motte",
+      "sub_administrative_area": "Hérault",
+      "administrative_area": "Occitanie",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 43.56016262,
+        "lon": 4.09949876
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760530122/pro/tenants/0c12d529-2895-4817-93d8-80ed5c0494c3/1760530120864.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760530140/pro/tenants/0c12d529-2895-4817-93d8-80ed5c0494c3/1760530139316.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760530366/pro/tenants/0c12d529-2895-4817-93d8-80ed5c0494c3/1760530365353.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "4 pistes de padel outdoor\nRestaurant\nPiscine \nParking",
+      "CONTACT_PHONE": "+33 683934325",
+      "WEBSITE_URL": "https://mycenterpadel.fr"
+    },
+    "resources": [
+      {
+        "resourceId": "52227add-460c-4740-84d8-c54a59853f9e",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b1eaf7a9-2a47-45cd-9e28-5b4a1f2fe9b7",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "747b6aff-d8b4-41ea-a999-89bb8947d13f",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "23baf1d5-7ac6-4156-b23d-a5f39fc1c847",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:30",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  4 pistes de padel outdoor\n  Restaurant\n  Piscine\n  Parking\n</p>\n"
+  },
+  {
+    "tenant_id": "300d2624-b59d-4493-830b-2a4f79c79049",
+    "tenant_name": "Gora Sports Club",
+    "slug": "gora-sport-club",
+    "address": {
+      "street": "3 avenue des plages, Gallargues-le-Montueux, Francia",
+      "postal_code": "30660",
+      "city": "Gallargues-le-Montueux",
+      "sub_administrative_area": "Gard",
+      "administrative_area": "Occitanie",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 43.717942,
+        "lon": 4.180456
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1764528239/pro/tenants/300d2624-b59d-4493-830b-2a4f79c79049/1764528238716.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**GORA SPORTS CLUB — Gallargues-le-Montueux**\n➡8 pistes de padel (2 indoor + 6 outdoor)\n➡1 terrain de Five\n➡Salle de sport & préparation physique\n➡Club-house & café  \n➡Restauration",
+      "WEBSITE_URL": "goraclub.fr",
+      "CONTACT_PHONE": "+33 645182646",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ddb8ba8e-3f45-4663-9838-3de452846834",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "311e0e56-3a56-48b2-9762-00946fa8cc8f",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a3e367bf-b3d6-4a6c-8b73-f71c003ae252",
+        "name": "Indoor 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9078f3dd-d934-49c5-8a47-cc13490212a0",
+        "name": "Indoor 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  <strong class=\"font-semibold text-primary-100\">GORA SPORTS CLUB — Gallargues-le-Montueux</strong>\n  ➡8 pistes de padel (2 indoor + 6 outdoor)\n  ➡1 terrain de Five\n  ➡Salle de sport &#x26; préparation physique\n  ➡Club-house &#x26; café<br>➡Restauration\n</p>\n"
+  },
+  {
+    "tenant_id": "3041e0a5-2e6a-4f65-955b-a4729ad393c6",
+    "tenant_name": "Set Padel",
+    "slug": "set-padel",
+    "address": {
+      "street": "Rue de Saint Germain",
+      "postal_code": "11100",
+      "city": "Narbonne",
+      "sub_administrative_area": "Aude",
+      "administrative_area": "Occitanie",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 43.1665221,
+        "lon": 2.9933517
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1749055553/pro/tenants/3041e0a5-2e6a-4f65-955b-a4729ad393c6/1749055552453.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1749055558/pro/tenants/3041e0a5-2e6a-4f65-955b-a4729ad393c6/1749055557144.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1749055560/pro/tenants/3041e0a5-2e6a-4f65-955b-a4729ad393c6/1749055560085.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1749055562/pro/tenants/3041e0a5-2e6a-4f65-955b-a4729ad393c6/1749055561808.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1749055564/pro/tenants/3041e0a5-2e6a-4f65-955b-a4729ad393c6/1749055563958.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1749055568/pro/tenants/3041e0a5-2e6a-4f65-955b-a4729ad393c6/1749055567552.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1749055654/pro/tenants/3041e0a5-2e6a-4f65-955b-a4729ad393c6/1749055653902.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "CONTACT_PHONE": "+33 786087731",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "61f3c5ce-1c28-4e21-9b33-c7f74e950ed6;a9b07d4a-6251-4a45-9b96-b2a6524f33fa;9208a34b-8951-4e6c-b957-e89c2d9cab31",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "À Narbonne, le **Set Pade**l est l’adresse _incontournable_ pour jouer, progresser et vivre le padel dans une ambiance conviviale et sportive.\n\nAvec **6 terrains indoor **dernière génération, **13m de hauteur** et un espace de 2 000 m2 le **tout climatisé** . Le club accueille joueurs débutants comme confirmés. \nStages, cours, tournois FFT (P25 à P1500) et FIP. Tout est pensé pour faciliter le jeu et le partage.\n\nSur place, notre restaurant propose une cuisine maison à base de produits frais, une carte qui change quotidiennement, et des plats signatures comme le tartare au couteau.\n\nLe Set Padel, c’est aussi des événements d’envergure comme le FIP Silver Côte du Midi du 8 au 13 juillet, avec food truck, animations, concerts et jeux concours.\n**Set Padel**\n**Sports - Food - Events**",
+      "FACILITY_LOCKERS": "false",
+      "WEBSITE_URL": "https://www.setpadel.fr/",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_RESTAURANT": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "63b7d36f-b4c9-498e-a7b1-660b2943e5d7",
+        "name": "Court Côté Cigale - 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "01951913-d17e-4e2e-91b6-328aaf9bc0fc",
+        "name": "Court BMW Eden Auto - 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7efddc10-a741-4c37-af78-afdbe248d178",
+        "name": "Court Pinol Levage - 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9b263dd6-860e-4892-94e7-33ad52500eef",
+        "name": "Court TPL - 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f708b0d3-72e0-4678-bbde-8875a0a1a4f1",
+        "name": "Court Cadence - 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "523ca6cc-9f06-428b-8ee9-fdfcfb9c4ae1",
+        "name": "Court Bastide Ambulance - 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">À Narbonne, le <strong class=\"font-semibold text-primary-100\">Set Pade</strong>l est l’adresse <em class=\"italic\">incontournable</em> pour jouer, progresser et vivre le padel dans une ambiance conviviale et sportive.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Avec **6 terrains indoor **dernière génération, <strong class=\"font-semibold text-primary-100\">13m de hauteur</strong> et un espace de 2 000 m2 le <strong class=\"font-semibold text-primary-100\">tout climatisé</strong> . Le club accueille joueurs débutants comme confirmés.\n  Stages, cours, tournois FFT (P25 à P1500) et FIP. Tout est pensé pour faciliter le jeu et le partage.\n</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Sur place, notre restaurant propose une cuisine maison à base de produits frais, une carte qui change quotidiennement, et des plats signatures comme le tartare au couteau.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Le Set Padel, c’est aussi des événements d’envergure comme le FIP Silver Côte du Midi du 8 au 13 juillet, avec food truck, animations, concerts et jeux concours.\n  <strong class=\"font-semibold text-primary-100\">Set Padel</strong>\n  <strong class=\"font-semibold text-primary-100\">Sports - Food - Events</strong>\n</p>\n"
+  },
+  {
+    "tenant_id": "354ded9b-4ba1-4a0d-aea3-b21828c6b1a9",
+    "tenant_name": "My Center Cogolin",
+    "slug": "my-center-cogolin",
+    "address": {
+      "street": "215 Chemin des Pasquiers",
+      "postal_code": "83310",
+      "city": "Cogolin",
+      "sub_administrative_area": "Var",
+      "administrative_area": "Provence-Alpes-Côte d'Azur",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 43.2439107,
+        "lon": 6.5510031
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760456364/pro/tenants/354ded9b-4ba1-4a0d-aea3-b21828c6b1a9/1760456363889.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760456402/pro/tenants/354ded9b-4ba1-4a0d-aea3-b21828c6b1a9/1760456401229.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760456425/pro/tenants/354ded9b-4ba1-4a0d-aea3-b21828c6b1a9/1760456425243.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "4 pistas outdoor\n6 terrains de tennis\nClubhouse 7/7",
+      "WEBSITE_URL": "https://mycenterpadel.fr/",
+      "CONTACT_PHONE": "+33 494546116",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "d5de1ac4-5eef-4791-8ef4-3b31e98f8fa0",
+        "name": "Pista 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f1c915a5-c458-4b8a-a23b-0baf4a0b37f4",
+        "name": "Pista 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5aa746d1-ceed-4bf9-9e5e-6e034b6aaa4d",
+        "name": "Pista 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "85b67856-7d28-459a-b81d-95f94f05e97d",
+        "name": "Pista 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0a66948b-e825-4d45-a55e-d0868b520686",
+        "name": "Tennis 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "3f5df7b2-6e07-4b82-8e10-3f32f57e1adb",
+        "name": "Tennis 2",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "2ea87750-3885-4b6b-8a57-c2bb7b4e84b5",
+        "name": "Tennis 3",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "cdfa320c-3fd2-4514-a70d-740d4a1d17fb",
+        "name": "Tennis 4",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "3528d33a-3570-4c70-a381-de61d698d58d",
+        "name": "Tennis 5 synthétique",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "a41fcc44-e603-48c8-b1cd-1a028a00b03b",
+        "name": "Tennis 6 synthétique",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  4 pistas outdoor\n  6 terrains de tennis\n  Clubhouse 7/7\n</p>\n"
+  },
+  {
+    "tenant_id": "176c097a-8fdf-4939-94d4-da4227e51b54",
+    "tenant_name": "Tennis Padel Weyersheim",
+    "slug": "tennis-padel-weyersheim",
+    "address": {
+      "street": "9 Rue des Prés",
+      "postal_code": "67720",
+      "city": "Weyersheim",
+      "sub_administrative_area": "Bas-Rhin",
+      "administrative_area": "Grand Est",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.7147406,
+        "lon": 7.8092368
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1709216799/pro/tenants/176c097a-8fdf-4939-94d4-da4227e51b54/1709216799053.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1709216802/pro/tenants/176c097a-8fdf-4939-94d4-da4227e51b54/1709216801428.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1711133056/pro/tenants/176c097a-8fdf-4939-94d4-da4227e51b54/1711133055861.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1711133058/pro/tenants/176c097a-8fdf-4939-94d4-da4227e51b54/1711133057593.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "true",
+      "CONTACT_PHONE": "+33 680659092",
+      "FACILITY_SNACK_BAR": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "0990f488-8a9f-42c9-b688-cec923e6d8a9",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**Profitez de 2 pistes de padel extérieures de dernière génération ! **\nConçues pour offrir une expérience de jeu optimale, elles sont équipées de surfaces synthétiques de haute qualité favorisant un jeu rapide et dynamique. Parfaites pour les joueurs de tous niveaux désireux de découvrir ou de se perfectionner au padel.\n**Courts de Tennis :** \nNos 3 courts de tennis comprennent 2 courts extérieurs et 1 court couvert, permettant le jeu par tous les temps. La surface de jeu est sélectionnée pour son équilibre entre confort et performance.\nQue vous soyez à la recherche de compétition ou simplement de plaisir de jeu, **le club de Weyersheim** est votre destination idéale pour le tennis et le padel.",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "https://tenup.fft.fr/club/55670212"
+    },
+    "resources": [
+      {
+        "resourceId": "41d6815b-dca6-46f8-9db7-445bd0434a32",
+        "name": "Piste CARCE TOITURE ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e3b4ea2a-183c-4183-b6b3-94e82f536f7f",
+        "name": "Piste ADOM Optic Hoerdt",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  **Profitez de 2 pistes de padel extérieures de dernière génération ! **\n  Conçues pour offrir une expérience de jeu optimale, elles sont équipées de surfaces synthétiques de haute qualité favorisant un jeu rapide et dynamique. Parfaites pour les joueurs de tous niveaux désireux de découvrir ou de se perfectionner au padel.\n  <strong class=\"font-semibold text-primary-100\">Courts de Tennis :</strong>\n  Nos 3 courts de tennis comprennent 2 courts extérieurs et 1 court couvert, permettant le jeu par tous les temps. La surface de jeu est sélectionnée pour son équilibre entre confort et performance.\n  Que vous soyez à la recherche de compétition ou simplement de plaisir de jeu, <strong class=\"font-semibold text-primary-100\">le club de Weyersheim</strong> est votre destination idéale pour le tennis et le padel.\n</p>\n"
+  },
+  {
+    "tenant_id": "21de5706-2ecf-4b83-a4b7-793ce4754226",
+    "tenant_name": "My Center Palavas",
+    "slug": "my-center-palavas",
+    "address": {
+      "street": "Avenue de L'abbe brocardi, Plaine des Jeux",
+      "postal_code": "34250",
+      "city": "Palavas-les-Flots",
+      "sub_administrative_area": "Hérault",
+      "administrative_area": "Occitanie",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 43.53251073,
+        "lon": 3.92937136
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760530574/pro/tenants/21de5706-2ecf-4b83-a4b7-793ce4754226/1760530573536.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760532382/pro/tenants/21de5706-2ecf-4b83-a4b7-793ce4754226/1760532381641.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760532385/pro/tenants/21de5706-2ecf-4b83-a4b7-793ce4754226/1760532384100.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760532562/pro/tenants/21de5706-2ecf-4b83-a4b7-793ce4754226/1760532561262.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760532564/pro/tenants/21de5706-2ecf-4b83-a4b7-793ce4754226/1760532563185.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760532565/pro/tenants/21de5706-2ecf-4b83-a4b7-793ce4754226/1760532565055.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "10 pistes de padel dont 4 pistes indoor\n5 terrains de tennis\nBadminton\nClubhouse ",
+      "WEBSITE_URL": "mycenterpadel.fr",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+33 977385482",
+      "FACILITY_LOCKERS": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "9648579b-94e9-4300-a4b1-15fe65c6cf5d",
+        "name": "BMW / Grim (indoor)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "55413024-ab7c-4aa5-890a-f0c21f4f887d",
+        "name": "Pista 3 C MENUISERIE (Indoor)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "643351c4-3d03-441d-84b7-706d53395d75",
+        "name": "Pista 3(Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9c2c800c-bb9c-49d4-84e2-97ea2c223a01",
+        "name": "Pista UNION MATERIAUX (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "13f7cd71-de60-4c8f-a7a3-b2b71bede6f6",
+        "name": "Pista 9 (outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e6b15603-ac8b-4ce3-b47e-24b87133515c",
+        "name": "Pista 10 (outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a9efa7ae-6e47-45ad-b31a-7cbad484ac74",
+        "name": "Pista CUPRA (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a5bf4b1d-6ac9-433e-b431-d2e2b8ebba2f",
+        "name": "Pista IGUAL (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "dfa517fd-b483-4cbf-8bb1-352049f645e8",
+        "name": "FORD / GRIM (Indoor)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "376818fa-399d-4fca-8e5f-ad0d475cc505",
+        "name": "Central PROMECIA (Indoor)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "03f9ee70-e514-4ec5-b0e0-e0f6e8be8b18",
+        "name": "Terre battue Synthétique 1 (Avec éclairage)",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      },
+      {
+        "resourceId": "e3887412-1741-4fb6-a663-ab38ad861bf6",
+        "name": "Terre battue Synthétique 2 (Avec éclairage)",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      },
+      {
+        "resourceId": "7b0c1226-1645-434d-8eed-6a5f573720dd",
+        "name": "Central (Avec éclairage)",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      },
+      {
+        "resourceId": "de853d2f-e607-410b-b404-6defcc045220",
+        "name": "Dur 1 (Avec éclairage)",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      },
+      {
+        "resourceId": "f011c108-5931-483a-a25d-b50690e94bc3",
+        "name": "Dur 2 (Avec éclairage)",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      },
+      {
+        "resourceId": "482df5ae-f0cb-423d-b1c5-7b17b3739764",
+        "name": "Badminton T1",
+        "sport": "BADMINTON",
+        "features": [
+          "indoor"
+        ]
+      },
+      {
+        "resourceId": "1b096ebe-3ae7-4885-afe9-21c69a9a6d8e",
+        "name": "Badminton T2",
+        "sport": "BADMINTON",
+        "features": [
+          "indoor"
+        ]
+      },
+      {
+        "resourceId": "2c7b13f9-7a65-4d24-acfc-5194a5743860",
+        "name": "Badminton T3",
+        "sport": "BADMINTON",
+        "features": [
+          "indoor"
+        ]
+      },
+      {
+        "resourceId": "75b7d88b-5127-4081-bd77-e7d4804c9544",
+        "name": "Badminton T4",
+        "sport": "BADMINTON",
+        "features": [
+          "indoor"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:30",
+        "closing_time": "00:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS",
+      "BADMINTON"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  10 pistes de padel dont 4 pistes indoor\n  5 terrains de tennis\n  Badminton\n  Clubhouse\n</p>\n"
+  },
+  {
+    "tenant_id": "225d49fb-6f11-4683-8f17-c9eec342e14c",
+    "tenant_name": "PALAREA AVIGNON",
+    "slug": "palarea-avignon",
+    "address": {
+      "street": "Chemin du Canal",
+      "postal_code": "84130",
+      "city": "Le Pontet",
+      "sub_administrative_area": "Vaucluse",
+      "administrative_area": "Provence-Alpes-Côte d'Azur",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 43.98501166,
+        "lon": 4.87664459
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1764071202/pro/tenants/225d49fb-6f11-4683-8f17-c9eec342e14c/1764071201424.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "WEBSITE_URL": "",
+      "CONTACT_PHONE": "+33 684955702",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "c70394fc-d850-4c67-b7c1-47740201d1ba",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "8d3c2194-4be0-4c19-bd6a-ccd94b98b563",
+        "name": "Panoramique 1 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "83b6edf7-c486-4f9a-95b0-fcdd55c863f7",
+        "name": "Panoramique 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c27d4948-df17-4988-84d8-f86e8ac14e88",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e9af32b7-411b-4bfb-b3c6-78b1f934272e",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0581d28f-1448-4008-9523-f0af8c3f0dff",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3fa3eae5-c463-4c5a-9812-9724764d72ab",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e92db02c-618a-41dc-937c-873a8e52697d",
+        "name": "Basketball 1",
+        "sport": "BASKETBALL",
+        "features": [
+          "indoor",
+          "rubber"
+        ]
+      },
+      {
+        "resourceId": "7ff36a4d-7e1b-4274-a89e-2d28a90a816e",
+        "name": "Basketball 2",
+        "sport": "BASKETBALL",
+        "features": [
+          "indoor",
+          "rubber"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "BASKETBALL"
+    ],
+    "communications_language": "fr",
+    "description": ""
+  },
+  {
+    "tenant_id": "267dd3d9-f316-44b5-a961-fa7d8e746492",
+    "tenant_name": "Crazy Pickle Club x UGolf Tennis Valescure",
+    "slug": "crazy-pickle-club-x-ugolf-tennis-valescure",
+    "address": {
+      "street": "725 avenue des Golfs",
+      "postal_code": "83700",
+      "city": "Saint-Raphaël",
+      "sub_administrative_area": "Var",
+      "administrative_area": "Provence-Alpes-Côte d'Azur",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 43.45516665,
+        "lon": 6.78792596
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1722957835/pro/tenants/267dd3d9-f316-44b5-a961-fa7d8e746492/1722957834751.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_STORE": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "RDV AU PRINTEMPS 2025 ☀️\nLe **Crazy Pickle Club** s'associe au U**Golf et Tennis Club de Valescure** pour vous proposer **2 terrains de pickleball Outdoor** dans un cadre d'exception à Saint-Raphaël !\n**Que vous soyez 2 ou 4**, venez jouer et tester ce sport de raquette fun et accessible à tous venu des US !\n**Les raquettes et les balles sont fournies**. Rdv au secrétariat du Golf pour les récupérer.\nLes règles du pickleball sont affichées sur les terrains, plus d'excuse !",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "WEBSITE_URL": "https://www.crazypickleclub.com/",
+      "FACILITY_LOCKERS": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_PLAYPARK": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_RESTAURANT": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+33 494824046"
+    },
+    "resources": [
+      {
+        "resourceId": "39682b22-68a2-4ffb-a34d-f09045aa3428",
+        "name": "Terrain 1 - Simple",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "single",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "e0d5aef9-bed4-4cb5-a40f-2deba141c953",
+        "name": "Terrain 1 - Double",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "cec69fe3-cbd8-4388-beac-d6025a38ec87",
+        "name": "Terrain 2 - Simple",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "single",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "e529c656-da48-4d85-99eb-a50598d41515",
+        "name": "Terrain 2 - Double",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {},
+    "sport_ids": [
+      "PICKLEBALL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  RDV AU PRINTEMPS 2025 ☀️\n  Le <strong class=\"font-semibold text-primary-100\">Crazy Pickle Club</strong> s'associe au U<strong class=\"font-semibold text-primary-100\">Golf et Tennis Club de Valescure</strong> pour vous proposer <strong class=\"font-semibold text-primary-100\">2 terrains de pickleball Outdoor</strong> dans un cadre d'exception à Saint-Raphaël !\n  <strong class=\"font-semibold text-primary-100\">Que vous soyez 2 ou 4</strong>, venez jouer et tester ce sport de raquette fun et accessible à tous venu des US !\n  <strong class=\"font-semibold text-primary-100\">Les raquettes et les balles sont fournies</strong>. Rdv au secrétariat du Golf pour les récupérer.\n  Les règles du pickleball sont affichées sur les terrains, plus d'excuse !\n</p>\n"
+  },
+  {
+    "tenant_id": "4cda6431-1c50-42dd-a45e-c0d3ee612cda",
+    "tenant_name": "Padel Dugazon",
+    "slug": "padel-dugazon",
+    "address": {
+      "street": "Lot. Dugazon de Bourgogne",
+      "postal_code": "97139",
+      "city": "Les Abymes",
+      "sub_administrative_area": "Guadeloupe",
+      "administrative_area": "Guadeloupe",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 16.2512485,
+        "lon": -61.5192312
+      },
+      "timezone": "America/Guadeloupe"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1761753280/pro/tenants/4cda6431-1c50-42dd-a45e-c0d3ee612cda/1761753279524.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Notre espace PADEL est composé de 3 Terrains de PADEL, dernière génération, d'un espace d'accueil et de détente. Nous sommes heureux de vous accueillir de 6h à 22h30, pour les réservations. Notre accueil détente est ouvert tous les jours du lundi au vendredi de 16h à 22h30. Le Mercredi de 7h à 14h et de 16h à 23h. Les week end et jours fériés en fonction des réservations.\nVous n'avez pas votre raquette, nous pouvons vous en prêter !\nNous organisons de nombreux tournois et animations...contactez nous.",
+      "WEBSITE_URL": "https://www.dugazonsportingclub.com/",
+      "CONTACT_PHONE": "+590 690290531",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "3a591aa8-da0b-4956-8285-2d442e91a49b",
+        "name": "Court Jardiland",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "347d0730-4d6a-461b-a8c8-41afd20bec7b",
+        "name": "Court Europhone",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "dae9abd6-f358-4f6e-86ea-b465c3b1f4a4",
+        "name": "Court System Lease",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Notre espace PADEL est composé de 3 Terrains de PADEL, dernière génération, d'un espace d'accueil et de détente. Nous sommes heureux de vous accueillir de 6h à 22h30, pour les réservations. Notre accueil détente est ouvert tous les jours du lundi au vendredi de 16h à 22h30. Le Mercredi de 7h à 14h et de 16h à 23h. Les week end et jours fériés en fonction des réservations.\n  Vous n'avez pas votre raquette, nous pouvons vous en prêter !\n  Nous organisons de nombreux tournois et animations...contactez nous.\n</p>\n"
+  },
+  {
+    "tenant_id": "429efc4f-0a75-4707-bb6c-3459092e54f8",
+    "tenant_name": "CASA PADEL STADE TOULOUSAIN",
+    "slug": "casa-padel-stade-toulousain",
+    "address": {
+      "street": "116 rue des Troènes",
+      "postal_code": "31200",
+      "city": "Toulouse",
+      "sub_administrative_area": "Haute-Garonne",
+      "administrative_area": "Occitanie",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 43.6215605,
+        "lon": 1.4125962
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/429efc4f-0a75-4707-bb6c-3459092e54f8/casa-padel-stade-toulousain_0001"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://casapadel.fr/#toulousain",
+      "CONTACT_PHONE": "+33 534402424",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "7799ed8c-d6dc-45a4-9428-64d477577b36",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "536f8013-bf82-4de5-a18d-a29ebd73a936",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a4d75aaf-be35-476b-a5dc-d138571c050d",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1898d5c9-330a-4dd8-a994-e180b52ad209",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": ""
+  },
+  {
+    "tenant_id": "57cb4edd-7f56-4722-afcb-252586970b6c",
+    "tenant_name": "GRINTA",
+    "slug": "grinta",
+    "address": {
+      "street": "Allée des sports",
+      "postal_code": "01250",
+      "city": "Jasseron",
+      "sub_administrative_area": "Ain",
+      "administrative_area": "Auvergne-Rhône-Alpes",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 46.212764,
+        "lon": 5.308853
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1764326112/pro/tenants/57cb4edd-7f56-4722-afcb-252586970b6c/1764326112189.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1764331888/pro/tenants/57cb4edd-7f56-4722-afcb-252586970b6c/1764331887756.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "a1d92a28-bca0-4c42-bb24-f5b1d1b56593;cab7a515-370a-4c5d-8888-170459c7dd21",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://www.grinta.club/",
+      "CONTACT_PHONE": "+33 ",
+      "DETAILS_PAGE_DESCRIPTION": "**Quand les trajectoires se croisent, la magie opère**\n\nGrinta, c’est plus qu’un centre de padel. C’est un état d’esprit, une énergie qui traverse les terrains, les discussions, les rencontres et les verres partagés après l’effort.\nIci, chaque point compte, chaque geste raconte quelque chose : la volonté de progresser, la joie d’être ensemble, la fierté d’aller un peu plus loin.\n\nCette envie — cette grinta — c’est ce qui relie tous ceux qui franchissent nos portes, qu’ils viennent jouer, se détendre ou créer du lien.\n\nEntre sport et convivialité, performance et plaisir, Grinta réunit ce que le padel a de plus fort : la dimension humaine. C’est un lieu où l’on se dépasse, mais jamais seul ; où l’on célèbre autant la victoire que le partage ; où le collectif est au cœur de chaque échange.\n\nNé dans le Revermont, Grinta puise dans son environnement la force du relief, la chaleur du Sud et la sincérité du local. Un lieu vivant, ouvert, élégant, qui cultive l’idée simple mais essentielle que le sport est avant tout une rencontre — avec les autres, avec soi-même, et avec ce qui nous pousse à avancer.\n\nSuivez-nous:\n\nInstagram : https://www.instagram.com/grintarena\n\nFacebook : https://www.facebook.com/share/1G1kPuf8gj/?mibextid=wwXIfr\n\nLinkedIn : https://www.linkedin.com/company/grinta-padel/\n\n\nGroupe WhatsApp (tous niveaux) : https://chat.whatsapp.com/J1Id4vFcnpW1FgTp8kEnIz"
+    },
+    "resources": [
+      {
+        "resourceId": "71e952d3-ba82-47e2-86c7-dbb9907c0c54",
+        "name": "Piste 1 - DSP : Département Social et Paye",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cce73393-ae39-4088-9689-3cbba31a1c30",
+        "name": "Piste 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ec23816f-4983-4b1f-9c96-d2e6811188ba",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\"><strong class=\"font-semibold text-primary-100\">Quand les trajectoires se croisent, la magie opère</strong></p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Grinta, c’est plus qu’un centre de padel. C’est un état d’esprit, une énergie qui traverse les terrains, les discussions, les rencontres et les verres partagés après l’effort.\n  Ici, chaque point compte, chaque geste raconte quelque chose : la volonté de progresser, la joie d’être ensemble, la fierté d’aller un peu plus loin.\n</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Cette envie — cette grinta — c’est ce qui relie tous ceux qui franchissent nos portes, qu’ils viennent jouer, se détendre ou créer du lien.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Entre sport et convivialité, performance et plaisir, Grinta réunit ce que le padel a de plus fort : la dimension humaine. C’est un lieu où l’on se dépasse, mais jamais seul ; où l’on célèbre autant la victoire que le partage ; où le collectif est au cœur de chaque échange.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Né dans le Revermont, Grinta puise dans son environnement la force du relief, la chaleur du Sud et la sincérité du local. Un lieu vivant, ouvert, élégant, qui cultive l’idée simple mais essentielle que le sport est avant tout une rencontre — avec les autres, avec soi-même, et avec ce qui nous pousse à avancer.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Suivez-nous:</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Instagram : https://www.instagram.com/grintarena</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Facebook : https://www.facebook.com/share/1G1kPuf8gj/?mibextid=wwXIfr</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">LinkedIn : https://www.linkedin.com/company/grinta-padel/</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Groupe WhatsApp (tous niveaux) : https://chat.whatsapp.com/J1Id4vFcnpW1FgTp8kEnIz</p>\n"
+  },
+  {
+    "tenant_id": "53d059c8-180a-4cf5-9028-1ade0deb4e24",
+    "tenant_name": "CASA PADEL VENDENHEIM",
+    "slug": "casa-padel-vendenheim",
+    "address": {
+      "street": "Chemin départemental 64",
+      "postal_code": "67550",
+      "city": "Vendenheim",
+      "sub_administrative_area": "Bas-Rhin",
+      "administrative_area": "Grand Est",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.6569451,
+        "lon": 7.727829
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1764777662/pro/tenants/53d059c8-180a-4cf5-9028-1ade0deb4e24/1764777662326.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "587b3388-5602-4580-be25-49ed1caa836c",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+33 367610120",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "https://casapadel.fr/#vendenheim",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "b0a9f3f5-083a-4197-aa2a-79bf73a4d057",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a95dd6fb-e533-446c-ab1f-3f83849b370c",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "bb9cac76-c0c0-49b6-92d0-180c274e028c",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6f40b4a1-b104-493d-8a33-32dfb026e0c4",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "91943a00-ab7d-43ca-8404-483f6c424ba7",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ba2fe3bf-b577-4a8d-aac0-04a60d7c7214",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4fca5155-bde9-4c30-93e3-618780e8ae7b",
+        "name": "Padel 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1b7512e7-4391-443d-b819-1ae4ca5c4160",
+        "name": "Padel 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": ""
+  },
+  {
+    "tenant_id": "69c3c74d-750f-429d-8a7a-1be59f682622",
+    "tenant_name": "Lyon V&V Padel",
+    "slug": "lyon-vv-padel",
+    "address": {
+      "street": "11 impasse Fréderic Chopin",
+      "postal_code": "69256",
+      "city": "Vaulx-en-Velin",
+      "sub_administrative_area": "Rhône",
+      "administrative_area": "Auvergne-Rhône-Alpes",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 45.77485836,
+        "lon": 4.90956786
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1757070289/pro/tenants/69c3c74d-750f-429d-8a7a-1be59f682622/1757070289119.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757070291/pro/tenants/69c3c74d-750f-429d-8a7a-1be59f682622/1757070290639.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757070293/pro/tenants/69c3c74d-750f-429d-8a7a-1be59f682622/1757070292432.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757070295/pro/tenants/69c3c74d-750f-429d-8a7a-1be59f682622/1757070294527.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757070297/pro/tenants/69c3c74d-750f-429d-8a7a-1be59f682622/1757070297160.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://www.instagram.com/lyonpadelvv/",
+      "CONTACT_PHONE": "+33 756924487",
+      "DETAILS_PAGE_DESCRIPTION": "Lyon Padel V&V\nLyon Padel Vaulx-en-Velin, ton nouveau club de Padel !\n•    3 pistes de Padel \n•    Un bar\n•    Cours, tournois\nOuverture mi-aout, suivez nous !"
+    },
+    "resources": [
+      {
+        "resourceId": "974059bb-cd1b-493d-baf5-23682c4daeeb",
+        "name": "Padel 1 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c1115674-fae4-4d89-af4c-39d01bda9c87",
+        "name": "Padel 2 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "820e4b84-a223-45a3-84ab-ef5c47332d7a",
+        "name": "Padel 3 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Lyon Padel V&#x26;V\n  Lyon Padel Vaulx-en-Velin, ton nouveau club de Padel !\n  • 3 pistes de Padel\n  • Un bar\n  • Cours, tournois\n  Ouverture mi-aout, suivez nous !\n</p>\n"
+  },
+  {
+    "tenant_id": "61f93aad-f878-426a-9695-9bb9866dd5d5",
+    "tenant_name": "La Folie",
+    "slug": "la-folie",
+    "address": {
+      "street": "2 avenue Nina d'Asty",
+      "postal_code": "85180",
+      "city": "Les Sables-d'Olonne",
+      "sub_administrative_area": "Vendée",
+      "administrative_area": "Pays de la Loire",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 46.4753682,
+        "lon": -1.7532579
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1750851359/pro/tenants/61f93aad-f878-426a-9695-9bb9866dd5d5/1750851358283.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750851362/pro/tenants/61f93aad-f878-426a-9695-9bb9866dd5d5/1750851361236.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "false",
+      "DETAILS_PAGE_DESCRIPTION": "**La Folie**, c’est bien plus qu’un simple lieu de sport : c’est un véritable espace de convivialité en bord de mer ! Entre terrains de **padel** et de **pickleball**, bar animé, restaurant savoureux, guinguette festive et lounge détendu, chacun y trouve son bonheur. Que vous veniez transpirer, trinquer ou simplement chiller, La Folie est l’endroit parfait pour partager de bons moments… ensemble.",
+      "WEBSITE_URL": "https://www.restaurantfoliebeach.com/",
+      "CONTACT_PHONE": "+33 251236971",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "252a8de1-a062-41a4-b8a7-2359a288ad90",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ef603535-fba9-43d4-9aea-22caea9a131d",
+        "name": "Pickleball 1",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "9576cdec-8778-42df-b444-6b7535b91a19",
+        "name": "Pickleball 2",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "PICKLEBALL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\"><strong class=\"font-semibold text-primary-100\">La Folie</strong>, c’est bien plus qu’un simple lieu de sport : c’est un véritable espace de convivialité en bord de mer ! Entre terrains de <strong class=\"font-semibold text-primary-100\">padel</strong> et de <strong class=\"font-semibold text-primary-100\">pickleball</strong>, bar animé, restaurant savoureux, guinguette festive et lounge détendu, chacun y trouve son bonheur. Que vous veniez transpirer, trinquer ou simplement chiller, La Folie est l’endroit parfait pour partager de bons moments… ensemble.</p>\n"
+  },
+  {
+    "tenant_id": "64c2410b-764d-470c-bd4c-3da8d3ff03fe",
+    "tenant_name": "CASA PADEL KINGERSHEIM",
+    "slug": "casa-padel-kingersheim",
+    "address": {
+      "street": "10 Rue du Bigarreau",
+      "postal_code": "68260",
+      "city": "Kingersheim",
+      "sub_administrative_area": "Haut-Rhin",
+      "administrative_area": "Grand Est",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 47.791381,
+        "lon": 7.30686
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1764777607/pro/tenants/64c2410b-764d-470c-bd4c-3da8d3ff03fe/1764777606488.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "WEBSITE_URL": "https://casapadel.fr/#kingersheim",
+      "CONTACT_PHONE": "+33 389509126",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "b7b195ac-3da5-4f40-b122-445c49ee903a",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "7f1faaa5-2588-4de7-a437-f6cb04bfb19d",
+        "name": "Citevents (Piste 1)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1a7771e4-927a-4cd5-b5b1-2d3cade8776d",
+        "name": "Pool68 (Piste 2)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "45881d40-2dd2-4b97-bb33-3a186a4ec02e",
+        "name": "Les Violettes (Piste 3)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "262db78f-d27b-413e-8910-8de1369e085b",
+        "name": "Bacio (Piste 4)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "551f8a85-a3de-48e3-bf7a-7fc981604da1",
+        "name": "Flor FM (Piste 5)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "866fe7f8-5df1-4629-98ce-b069c3f28dc8",
+        "name": "Ferm’ital / Allemann Bois (Piste 6)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "cfd2cab8-ddf1-4c0d-b374-79c8a6b05540",
+        "name": "Quick Epil (Piste 7)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9b709acb-4d58-4187-bf82-2b85552220b0",
+        "name": "ADC Innovations (Piste 8)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5d1ae5d7-a4dc-4cce-a270-21a429d60960",
+        "name": "Piste 9",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "bdebd900-f3fd-4741-844f-8803ab78ec22",
+        "name": "Piste 10",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8fa404e7-1bea-4896-9c50-5a54f5ff5c89",
+        "name": "L'Alsace (Piste 11)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "cb07c634-e577-4266-acfb-2bdf58380262",
+        "name": "Piste Single 12",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f2d4f7a2-0125-4e09-a10d-bae675fa4573",
+        "name": "Piste Single 13",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": ""
+  },
+  {
+    "tenant_id": "284940f3-2474-4757-8bdc-f946e71b288a",
+    "tenant_name": "La Pista Padel Club - Cabriès",
+    "slug": "la-pista-padel",
+    "address": {
+      "street": "408 allée du golf",
+      "postal_code": "13480",
+      "city": "Cabriès",
+      "sub_administrative_area": "Bouches-du-Rhône",
+      "administrative_area": "Provence-Alpes-Côte d'Azur",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 43.4481759,
+        "lon": 5.350922
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1745227163/pro/tenants/284940f3-2474-4757-8bdc-f946e71b288a/1745227162417.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+33 615487998",
+      "FACILITY_SNACK_BAR": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "ba0d2b40-a652-4464-b305-342fa8c27621",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Situé dans un **cadre naturel exceptionnel de 2,7 hectares**, La Pista Padel Club est **LE club de padel de Cabriès** ! \n\nUn lieu unique dédié au **padel **: que vous soyez un joueur passionné, un amateur curieux ou simplement en quête de moments de détente et de convivialité en famille ou entre amis, notre club vous offre des infrastructures modernes, des prestations de qualité et une ambiance chaleureuse. \n\n**La Pista Padel**, c’est aussi un complexe multi loisirs où vous pourrez vous détendre avec une journée multi activités : un combo padel / piscine ? Et oui, c’est possible à la Pista ! Pour plus d'informations, rendez-vous sur www.lapistapadel.fr\n\nSuivez-nous: \n* Instagram : https://www.instagram.com/lapistapadelclub\n* Facebook : https://www.facebook.com/share/1HgBVp1n15/?mibextid=wwXIfr\n* TikTok : https://www.tiktok.com/@lapistapadelclub?_t=ZN-8vDpe0HRvEM&_r=1\n* LinkedIn : https://www.linkedin.com/company/la-pista-padel-club/\n\n\nGroupes WhatsApp:\n* Niv. 1-2 (0,5-1,5 Playtomic) : https://chat.whatsapp.com/Fj6il9ozntlKdjihcJ2za2\n* Niv. 3-4 (1,5-2,5 Playtomic) : https://chat.whatsapp.com/HAfbsEjmwBY3Wbny44Vrgw\n* Niv. 5-6 (2,5-4,5 Playtomic) : https://chat.whatsapp.com/HN70UnzwQe7Gdgty0Jz1MZ\n* Niv. 7-8 (4,5-7,0 Playtomic) : https://chat.whatsapp.com/L7aVUBHbFMyDHY5NAFvRDw\n* Girls Power : https://chat.whatsapp.com/F8qFgcP90pOAJU3oW8LduZ\n",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "https://www.lapistapadel.fr"
+    },
+    "resources": [
+      {
+        "resourceId": "4fc80def-bc59-44d8-8530-d0bfb430c256",
+        "name": "Pista Centrale 1 - Alianza Padel Business Club",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "324bf781-58b2-4de5-a49c-96905f9b0f3e",
+        "name": "Pista Centrale 2 - Reel IT Groupe",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f06266b5-f496-48f0-b1ef-f78570376927",
+        "name": "Pista 3 - HR LEVAGE",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "aecb77c3-1206-4f23-897e-b44202b8e43f",
+        "name": "Pista 4 - Lockroy Construction",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d0f81bb1-0abd-4440-a729-6b85e0e7ebf4",
+        "name": "Pista 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c38e9d8a-420c-47ec-a239-a48e8a31386e",
+        "name": "Pista 6 - AddixGroup",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6672fad0-6c84-4d3e-ae83-ffc517a79e6d",
+        "name": "Pista 7 - Mercedes-Benz Aix | de Willermin",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ec720793-9dd6-49b4-aa7e-dc9350bb6ca6",
+        "name": "Pista 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1795e210-3d9a-41c3-822b-68b81f8a1865",
+        "name": "Pista 9",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ac074043-2dc4-4b5a-9e0c-0fdf32d2059e",
+        "name": "Pista 10 - BMW moto store Aix",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6360123e-74c9-4393-9e37-9f55938d17ee",
+        "name": "Pista 11",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0e020a8c-dbbc-4bf4-87d1-184e8c066b35",
+        "name": "Pista 12 (Extérieur)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7645d7e7-487b-4fef-aac1-c4f53e434ebc",
+        "name": "Pista 13 (Extérieur)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5446fa3b-dcb7-47e0-a0c7-0104f705e70e",
+        "name": "Pista 14 (Extérieur)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "94f89c88-b9df-4ba8-8077-83b7d73548de",
+        "name": "Pista 15 (Extérieur)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Situé dans un <strong class=\"font-semibold text-primary-100\">cadre naturel exceptionnel de 2,7 hectares</strong>, La Pista Padel Club est <strong class=\"font-semibold text-primary-100\">LE club de padel de Cabriès</strong> !</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Un lieu unique dédié au **padel **: que vous soyez un joueur passionné, un amateur curieux ou simplement en quête de moments de détente et de convivialité en famille ou entre amis, notre club vous offre des infrastructures modernes, des prestations de qualité et une ambiance chaleureuse.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\"><strong class=\"font-semibold text-primary-100\">La Pista Padel</strong>, c’est aussi un complexe multi loisirs où vous pourrez vous détendre avec une journée multi activités : un combo padel / piscine ? Et oui, c’est possible à la Pista ! Pour plus d'informations, rendez-vous sur www.lapistapadel.fr</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Suivez-nous:</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">Instagram : https://www.instagram.com/lapistapadelclub</li>\n  <li class=\"mb-0.5\">Facebook : https://www.facebook.com/share/1HgBVp1n15/?mibextid=wwXIfr</li>\n  <li class=\"mb-0.5\">TikTok : https://www.tiktok.com/@lapistapadelclub?_t=ZN-8vDpe0HRvEM&#x26;_r=1</li>\n  <li class=\"mb-0.5\">LinkedIn : https://www.linkedin.com/company/la-pista-padel-club/</li>\n</ul>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Groupes WhatsApp:</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">Niv. 1-2 (0,5-1,5 Playtomic) : https://chat.whatsapp.com/Fj6il9ozntlKdjihcJ2za2</li>\n  <li class=\"mb-0.5\">Niv. 3-4 (1,5-2,5 Playtomic) : https://chat.whatsapp.com/HAfbsEjmwBY3Wbny44Vrgw</li>\n  <li class=\"mb-0.5\">Niv. 5-6 (2,5-4,5 Playtomic) : https://chat.whatsapp.com/HN70UnzwQe7Gdgty0Jz1MZ</li>\n  <li class=\"mb-0.5\">Niv. 7-8 (4,5-7,0 Playtomic) : https://chat.whatsapp.com/L7aVUBHbFMyDHY5NAFvRDw</li>\n  <li class=\"mb-0.5\">Girls Power : https://chat.whatsapp.com/F8qFgcP90pOAJU3oW8LduZ</li>\n</ul>\n"
+  },
+  {
+    "tenant_id": "a94f36e2-21fc-4710-8737-375cee805798",
+    "tenant_name": "TC PADEL REICHSTETT",
+    "slug": "tc-padel-reichstett",
+    "address": {
+      "street": "Rue de Picardie",
+      "postal_code": "67116",
+      "city": "Reichstett",
+      "sub_administrative_area": "Bas-Rhin",
+      "administrative_area": "Grand Est",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.6434552,
+        "lon": 7.7603417
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1643133248/pro/tenants/a94f36e2-21fc-4710-8737-375cee805798/1643133247716.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1643133385/pro/tenants/a94f36e2-21fc-4710-8737-375cee805798/1643133384621.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1643133393/pro/tenants/a94f36e2-21fc-4710-8737-375cee805798/1643133392814.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1643133432/pro/tenants/a94f36e2-21fc-4710-8737-375cee805798/1643133431389.jpg"
+    ],
+    "properties": {
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "92032705-8835-4cfb-b75e-39bac30d3ae7;495f166c-1168-4e09-acec-c7f9f485654a;01bf9846-8ebf-42b4-983e-1adfcbcad6a5;e669ea86-0dbf-4bc8-b880-c1494c503d85;24219dae-1ed4-4069-ab37-c53d7f346e68;94ab1bde-43f3-4e54-ad39-9ad9084a14c3;740413c1-89b0-49ef-af57-f6a1e0c1d873;817d6d3c-a09d-4f54-b110-98d6a4e31c23;44f8a415-7192-45a9-ad12-d9db97afd22f;eb1235be-c5b7-405f-979a-75f1dc9f93ae;5a6b2e7a-8447-4e8f-9982-0442453d06bb;5e57b60a-8994-41b8-ad48-80fe579f2730;f55174d3-a96c-4288-b861-bdafccea5ff9;33004f5d-b968-4865-9d4c-45356434ad17;c55056f0-1050-4539-99db-5cc90dffc08b;74a3a553-8f1e-4f25-8ea3-02867773f9e6;914ad193-a9bb-4e2d-b82d-f3381bd7c6ed",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "A 8 km au nord de Strasbourg, le club est situé au sein du complexe sportif dans un environnement fort agréable à proximité du plan d'eau avec baignade et pêche. \nSes installations sont exceptionnelles : 8 courts !\n* 2 courts de PADEL extérieur SLAMCOURT \n* 2 courts de PADEL couverts ou semi couverts en été  \"Henri Leconte Padel Club\"\n* 2 courts de tennis  couverts en résine. \n* 3 courts en terre battue artificielles éclairés. \n* Vous disposerez d'une Ecole de Tennis et de PADEL dirigée par un moniteur diplômé comprenant aussi une section \"Mini-Tennis\"  \"MIni Padel\" et un \"Club Junior\". \n* Vous pourrez également profiter d'un Club-House chauffé avec vue sur les courts couverts équipé de vestiaires avec douches Dames et Messieurs et d'un exceptionnel  bar accueillant et convivial. \n",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://club.fft.fr/tennis.reichstett/55670050_a/cms/index_public.php?us_action=show_note_site&login_off=1&ui_id_site=1",
+      "CONTACT_PHONE": "+33 388203476",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "f9008ff1-6044-4513-a732-a058a28bc6f7",
+        "name": "PADEL 1 couvert",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7c56c541-d69d-43e4-af51-416a02219923",
+        "name": "Padel 2 couvert",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1b56a3a8-ec73-4da6-8273-efb6f3373974",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "53fecf58-fd98-4000-8f7c-994f528f4d87",
+        "name": "Le C ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  A 8 km au nord de Strasbourg, le club est situé au sein du complexe sportif dans un environnement fort agréable à proximité du plan d'eau avec baignade et pêche.\n  Ses installations sont exceptionnelles : 8 courts !\n</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">2 courts de PADEL extérieur SLAMCOURT</li>\n  <li class=\"mb-0.5\">2 courts de PADEL couverts ou semi couverts en été \"Henri Leconte Padel Club\"</li>\n  <li class=\"mb-0.5\">2 courts de tennis couverts en résine.</li>\n  <li class=\"mb-0.5\">3 courts en terre battue artificielles éclairés.</li>\n  <li class=\"mb-0.5\">Vous disposerez d'une Ecole de Tennis et de PADEL dirigée par un moniteur diplômé comprenant aussi une section \"Mini-Tennis\" \"MIni Padel\" et un \"Club Junior\".</li>\n  <li class=\"mb-0.5\">Vous pourrez également profiter d'un Club-House chauffé avec vue sur les courts couverts équipé de vestiaires avec douches Dames et Messieurs et d'un exceptionnel bar accueillant et convivial.</li>\n</ul>\n"
+  },
+  {
+    "tenant_id": "ed9542cb-db6c-45a2-af35-037c3ece37d6",
+    "tenant_name": "DAMA - Touques",
+    "slug": "dama-touques",
+    "address": {
+      "street": "Chemin de la Briqueterie",
+      "postal_code": "14800",
+      "city": "Touques",
+      "sub_administrative_area": "Calvados",
+      "administrative_area": "Normandie",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 49.3466776,
+        "lon": 0.0928621
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1682688268/pro/tenants/ed9542cb-db6c-45a2-af35-037c3ece37d6/1682688267712.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682688279/pro/tenants/ed9542cb-db6c-45a2-af35-037c3ece37d6/1682688278089.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "CONTACT_PHONE": "+33 214749577",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://damafactory.fr",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Retrouvez chez DAMA 2 terrains flambant neufs, dernière génération, en extérieur.\nNous vous proposons également des cours seul ou à plusieurs avec notre professeur! \nDAMA dispose également d'un bar avec petite restauration et d'une terrasse plein soleil toute au long de l'année."
+    },
+    "resources": [
+      {
+        "resourceId": "d48204a1-9273-411c-b7f6-533fee775b91",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f13be59b-b359-4b67-8afa-a896cde5ff36",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "21:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "10:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "10:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Retrouvez chez DAMA 2 terrains flambant neufs, dernière génération, en extérieur.\n  Nous vous proposons également des cours seul ou à plusieurs avec notre professeur!\n  DAMA dispose également d'un bar avec petite restauration et d'une terrasse plein soleil toute au long de l'année.\n</p>\n"
+  },
+  {
+    "tenant_id": "c45ac4cd-50b6-44f2-821e-45532d6d6aa6",
+    "tenant_name": "Super Padel 03",
+    "slug": "super-padel-03",
+    "address": {
+      "street": "Parc de la Mothe",
+      "postal_code": "03400",
+      "city": "Yzeure",
+      "sub_administrative_area": "Allier",
+      "administrative_area": "Auvergne-Rhône-Alpes",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 46.54754364,
+        "lon": 3.3438943
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1758019857/pro/tenants/c45ac4cd-50b6-44f2-821e-45532d6d6aa6/1758019857073.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Le premier club de padel de l'agglomération de Moulins-Yzeure-Avermes. \n**2 pistes double, 1 piste simple**\nLocation de raquettes sur place, vente de balles, snacks & boissons.",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "http://www.superpadel03.fr",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+33 672667454",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": ""
+    },
+    "resources": [
+      {
+        "resourceId": "f389c516-a64a-4cd7-8875-946c44df6c35",
+        "name": "Piste 1 vs 1 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a6c91412-2759-47ef-8214-cd51d9a70d3a",
+        "name": "Piste 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:30",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Le premier club de padel de l'agglomération de Moulins-Yzeure-Avermes.\n  <strong class=\"font-semibold text-primary-100\">2 pistes double, 1 piste simple</strong>\n  Location de raquettes sur place, vente de balles, snacks &#x26; boissons.\n</p>\n"
+  },
+  {
+    "tenant_id": "ce31176f-17eb-4d63-bba1-0019958828af",
+    "tenant_name": "Padel Paradise",
+    "slug": "padel-paradise-metz",
+    "address": {
+      "street": "91 bis rue de la mine",
+      "postal_code": "57860",
+      "city": "Montois-la-Montagne",
+      "sub_administrative_area": "Moselle",
+      "administrative_area": "Grand Est",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 49.21450154,
+        "lon": 6.00876757
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1756928840/pro/tenants/ce31176f-17eb-4d63-bba1-0019958828af/1756928840301.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756929364/pro/tenants/ce31176f-17eb-4d63-bba1-0019958828af/1756929364272.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "",
+      "CONTACT_PHONE": "+33 387720040",
+      "DETAILS_PAGE_DESCRIPTION": "Centre de Padel indoor à Montois-la-Montagne.\n2 terrains de double et 1 terrain de simple.\nVestiaires hommes et vestiaires femmes, chauffés avec cabines de douche.\nClub-house, cosy et convivial, vente de snacking et de boissons alcoolisés et non-alcoolisées"
+    },
+    "resources": [
+      {
+        "resourceId": "32dcb1ca-7962-4c91-8f39-ef06e9dd1552",
+        "name": "Terrain de Padel 1 double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2dfaf727-2bbc-48ee-b572-91555a7c958d",
+        "name": "Terrain de Padel 2 double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c0d936b3-cb19-440d-afe3-57cad2df88f9",
+        "name": "Terrain de Padel 3 simple",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "11:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "20:00"
+      },
+      "THURSDAY": {
+        "opening_time": "11:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Centre de Padel indoor à Montois-la-Montagne.\n  2 terrains de double et 1 terrain de simple.\n  Vestiaires hommes et vestiaires femmes, chauffés avec cabines de douche.\n  Club-house, cosy et convivial, vente de snacking et de boissons alcoolisés et non-alcoolisées\n</p>\n"
+  },
+  {
+    "tenant_id": "a94f36e2-21fc-4710-8737-375cee805798",
+    "tenant_name": "TC PADEL REICHSTETT",
+    "slug": "tc-padel-reichstett",
+    "address": {
+      "street": "Rue de Picardie",
+      "postal_code": "67116",
+      "city": "Reichstett",
+      "sub_administrative_area": "Bas-Rhin",
+      "administrative_area": "Grand Est",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 48.6434552,
+        "lon": 7.7603417
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1643133248/pro/tenants/a94f36e2-21fc-4710-8737-375cee805798/1643133247716.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1643133385/pro/tenants/a94f36e2-21fc-4710-8737-375cee805798/1643133384621.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1643133393/pro/tenants/a94f36e2-21fc-4710-8737-375cee805798/1643133392814.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1643133432/pro/tenants/a94f36e2-21fc-4710-8737-375cee805798/1643133431389.jpg"
+    ],
+    "properties": {
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "92032705-8835-4cfb-b75e-39bac30d3ae7;495f166c-1168-4e09-acec-c7f9f485654a;01bf9846-8ebf-42b4-983e-1adfcbcad6a5;e669ea86-0dbf-4bc8-b880-c1494c503d85;24219dae-1ed4-4069-ab37-c53d7f346e68;94ab1bde-43f3-4e54-ad39-9ad9084a14c3;740413c1-89b0-49ef-af57-f6a1e0c1d873;817d6d3c-a09d-4f54-b110-98d6a4e31c23;44f8a415-7192-45a9-ad12-d9db97afd22f;eb1235be-c5b7-405f-979a-75f1dc9f93ae;5a6b2e7a-8447-4e8f-9982-0442453d06bb;5e57b60a-8994-41b8-ad48-80fe579f2730;f55174d3-a96c-4288-b861-bdafccea5ff9;33004f5d-b968-4865-9d4c-45356434ad17;c55056f0-1050-4539-99db-5cc90dffc08b;74a3a553-8f1e-4f25-8ea3-02867773f9e6;914ad193-a9bb-4e2d-b82d-f3381bd7c6ed",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "A 8 km au nord de Strasbourg, le club est situé au sein du complexe sportif dans un environnement fort agréable à proximité du plan d'eau avec baignade et pêche. \nSes installations sont exceptionnelles : 8 courts !\n* 2 courts de PADEL extérieur SLAMCOURT \n* 2 courts de PADEL couverts ou semi couverts en été  \"Henri Leconte Padel Club\"\n* 2 courts de tennis  couverts en résine. \n* 3 courts en terre battue artificielles éclairés. \n* Vous disposerez d'une Ecole de Tennis et de PADEL dirigée par un moniteur diplômé comprenant aussi une section \"Mini-Tennis\"  \"MIni Padel\" et un \"Club Junior\". \n* Vous pourrez également profiter d'un Club-House chauffé avec vue sur les courts couverts équipé de vestiaires avec douches Dames et Messieurs et d'un exceptionnel  bar accueillant et convivial. \n",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://club.fft.fr/tennis.reichstett/55670050_a/cms/index_public.php?us_action=show_note_site&login_off=1&ui_id_site=1",
+      "CONTACT_PHONE": "+33 388203476",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "f9008ff1-6044-4513-a732-a058a28bc6f7",
+        "name": "PADEL 1 couvert",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7c56c541-d69d-43e4-af51-416a02219923",
+        "name": "Padel 2 couvert",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1b56a3a8-ec73-4da6-8273-efb6f3373974",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "53fecf58-fd98-4000-8f7c-994f528f4d87",
+        "name": "Le C ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  A 8 km au nord de Strasbourg, le club est situé au sein du complexe sportif dans un environnement fort agréable à proximité du plan d'eau avec baignade et pêche.\n  Ses installations sont exceptionnelles : 8 courts !\n</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">2 courts de PADEL extérieur SLAMCOURT</li>\n  <li class=\"mb-0.5\">2 courts de PADEL couverts ou semi couverts en été \"Henri Leconte Padel Club\"</li>\n  <li class=\"mb-0.5\">2 courts de tennis couverts en résine.</li>\n  <li class=\"mb-0.5\">3 courts en terre battue artificielles éclairés.</li>\n  <li class=\"mb-0.5\">Vous disposerez d'une Ecole de Tennis et de PADEL dirigée par un moniteur diplômé comprenant aussi une section \"Mini-Tennis\" \"MIni Padel\" et un \"Club Junior\".</li>\n  <li class=\"mb-0.5\">Vous pourrez également profiter d'un Club-House chauffé avec vue sur les courts couverts équipé de vestiaires avec douches Dames et Messieurs et d'un exceptionnel bar accueillant et convivial.</li>\n</ul>\n"
+  },
+  {
+    "tenant_id": "f156a155-d475-4587-bfa4-c6e1329837b1",
+    "tenant_name": "ARENA SPORT CENTER",
+    "slug": "arena-sport-center",
+    "address": {
+      "street": "7 rue Galilée",
+      "postal_code": "13200",
+      "city": "Arles",
+      "sub_administrative_area": "Bouches-du-Rhône",
+      "administrative_area": "Provence-Alpes-Côte d'Azur",
+      "country": "France",
+      "country_code": "FR",
+      "coordinate": {
+        "lat": 43.6993231,
+        "lon": 4.6334936
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1755716867/pro/tenants/f156a155-d475-4587-bfa4-c6e1329837b1/1755716866946.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "",
+      "CONTACT_PHONE": "+33 786487440",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "4fb2573f-d3da-4f02-b695-2f10892551d1",
+        "name": "PADEL 1 INTERIEUR",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1aebd125-3dce-408d-9068-4f00f63c369e",
+        "name": "PADEL 2 INTERIEUR",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "72ac5bf9-58df-44c3-947a-c765535282bb",
+        "name": "PADEL 3 EXTERIEUR",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6d086ff9-3b14-4990-b6c4-a8e189ddcc05",
+        "name": "PADEL 4 EXTERIEUR",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9d0dccda-0983-4536-a28b-46fb3c925e43",
+        "name": "FOOT 1",
+        "sport": "FUTSAL",
+        "features": [
+          "indoor",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "13f669d9-b1f4-4789-be9a-8b194cadd5b2",
+        "name": "FOOT 2",
+        "sport": "FUTSAL",
+        "features": [
+          "indoor",
+          "synthetic_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:30",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:30",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "FUTSAL"
+    ],
+    "communications_language": "fr",
+    "description": ""
+  },
+  {
+    "tenant_id": "3faa1b54-27dc-4bcb-9d99-7bdc9aeb6fdf",
+    "tenant_name": "Padel Dubrovnik",
+    "slug": "padel-dubrovnik",
+    "address": {
+      "street": " Šetalište Dr. Franje Tuđmana 17",
+      "postal_code": "20207",
+      "city": "Srebreno",
+      "sub_administrative_area": "Općina Župa Dubrovačka",
+      "administrative_area": "Dubrovačko-neretvanska županija",
+      "country": "Croatia",
+      "country_code": "HR",
+      "coordinate": {
+        "lat": 42.623268,
+        "lon": 18.1959296
+      },
+      "timezone": "Europe/Zagreb"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1741713672/pro/tenants/3faa1b54-27dc-4bcb-9d99-7bdc9aeb6fdf/1741713671548.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_FREE_PARKING": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "75a1ef85-2f88-42ec-bcb4-13a8e292faa8",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PLAYPARK": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "true",
+      "CONTACT_PHONE": "+385 992089525",
+      "DETAILS_PAGE_TITLE": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "946efd9b-f713-4938-b563-5380399a97f4",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4f5e9249-59c4-4451-ba8e-d8bd5c385632",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "345e6f13-8c14-48a7-b5db-b0fc3e2b5626",
+    "tenant_name": "Edificio Landmark",
+    "slug": "edificio-landmark",
+    "address": {
+      "street": "Pg. de la Zona Franca, 28-38",
+      "postal_code": "08038",
+      "city": "Barcelona",
+      "sub_administrative_area": "Barcelona",
+      "administrative_area": "Catalunya",
+      "country": "España",
+      "country_code": "ES",
+      "coordinate": {
+        "lat": 41.3531783,
+        "lon": 2.1447943
+      },
+      "timezone": "Europe/Madrid"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1716805681/pro/tenants/345e6f13-8c14-48a7-b5db-b0fc3e2b5626/1716805680404.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716805685/pro/tenants/345e6f13-8c14-48a7-b5db-b0fc3e2b5626/1716805683484.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "¡Bienvenidos al exclusivo complejo de pádel del Edificio Landmark!\n\nEl Edificio Landmark dispone de 4 modernas pistas de pádel exteriores diseñadas para brindar una experiencia deportiva de primer nivel y exclusiva para los usuarios de las empresas instaladas en el edificio. \n\n**Beneficios para usuarios de Edificio Landmark:**\n______\n* **Acceso exclusivo:** Todos los usuarios de oficinas dentro del edificio, pueden disfrutar de un acceso prioritario y tarifas preferenciales, facilitando la integración del deporte en su rutina diaria.\n* **Reservas flexibles:** Sistema de reservas en línea fácil y rápido, permitiendo planificar tus partidos con antelación y sin complicaciones.\n* Servicios adicionales: Contamos con vestuarios, duchas y zonas de descanso, ofreciendo una experiencia completa y cómoda para todos los jugadores.\n\n______\n**Ven y descubre la diferencia**\n\nTe invitamos a visitar nuestras instalaciones y vivir la experiencia de jugar en nuestras excepcionales pistas de pádel. ¡Reserva tu turno hoy y lleva tu pasión por el pádel al siguiente nivel!\n\nPara más información y reservas, accede a la APP del Edificio y descubre las pistas en el apartado de servicios. ¡Esperamos verte pronto en la pista!",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://edificiolandmark.com/",
+      "FACILITY_FREE_PARKING": "false",
+      "CONTACT_PHONE": "+34 933191973",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "17bc0af6-a281-4841-a7a6-edee0b37f7c1",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "a5cdb85b-516c-4c3f-8291-b3f801af09e3",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3fcad7af-f1fa-417d-bfaf-50dbb70ca8eb",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "179362cf-d2a0-44fe-b4b7-13db44c7c708",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "381504e0-c2bd-4399-a180-8236a2b9aac5",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "13:00",
+        "closing_time": "20:00"
+      },
+      "TUESDAY": {
+        "opening_time": "13:00",
+        "closing_time": "20:00"
+      },
+      "THURSDAY": {
+        "opening_time": "13:00",
+        "closing_time": "20:00"
+      },
+      "MONDAY": {
+        "opening_time": "13:00",
+        "closing_time": "20:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "13:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "es",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">¡Bienvenidos al exclusivo complejo de pádel del Edificio Landmark!</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">El Edificio Landmark dispone de 4 modernas pistas de pádel exteriores diseñadas para brindar una experiencia deportiva de primer nivel y exclusiva para los usuarios de las empresas instaladas en el edificio.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\"><strong class=\"font-semibold text-primary-100\">Beneficios para usuarios de Edificio Landmark:</strong></p>\n<hr>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\"><strong class=\"font-semibold text-primary-100\">Acceso exclusivo:</strong> Todos los usuarios de oficinas dentro del edificio, pueden disfrutar de un acceso prioritario y tarifas preferenciales, facilitando la integración del deporte en su rutina diaria.</li>\n  <li class=\"mb-0.5\"><strong class=\"font-semibold text-primary-100\">Reservas flexibles:</strong> Sistema de reservas en línea fácil y rápido, permitiendo planificar tus partidos con antelación y sin complicaciones.</li>\n  <li class=\"mb-0.5\">Servicios adicionales: Contamos con vestuarios, duchas y zonas de descanso, ofreciendo una experiencia completa y cómoda para todos los jugadores.</li>\n</ul>\n<hr>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\"><strong class=\"font-semibold text-primary-100\">Ven y descubre la diferencia</strong></p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Te invitamos a visitar nuestras instalaciones y vivir la experiencia de jugar en nuestras excepcionales pistas de pádel. ¡Reserva tu turno hoy y lleva tu pasión por el pádel al siguiente nivel!</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Para más información y reservas, accede a la APP del Edificio y descubre las pistas en el apartado de servicios. ¡Esperamos verte pronto en la pista!</p>\n"
+  },
+  {
+    "tenant_id": "309d9831-a280-498d-96cd-b23c885f8967",
+    "tenant_name": "JC PADEL CENTER",
+    "slug": "jc-padel-center",
+    "address": {
+      "street": "COMPLEXO DESPORTIVO JUVENTUDE DA CASTENHEIRA RUA ANTONIO DA CONCEIÇAO DINIZ",
+      "postal_code": "2600-609",
+      "city": "Castanheira do Ribatejo",
+      "sub_administrative_area": "Vila Franca de Xira",
+      "administrative_area": "Lisboa",
+      "country": "Portugal",
+      "country_code": "PT",
+      "coordinate": {
+        "lat": 38.98639779,
+        "lon": -8.97242723
+      },
+      "timezone": "Europe/Lisbon"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1728463673/pro/tenants/309d9831-a280-498d-96cd-b23c885f8967/1728463673081.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1728463676/pro/tenants/309d9831-a280-498d-96cd-b23c885f8967/1728463674830.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1728551155/pro/tenants/309d9831-a280-498d-96cd-b23c885f8967/1728551154347.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1728551170/pro/tenants/309d9831-a280-498d-96cd-b23c885f8967/1728551170258.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1728551184/pro/tenants/309d9831-a280-498d-96cd-b23c885f8967/1728551183892.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1728551197/pro/tenants/309d9831-a280-498d-96cd-b23c885f8967/1728551196777.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1728551263/pro/tenants/309d9831-a280-498d-96cd-b23c885f8967/1728551263216.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1728551276/pro/tenants/309d9831-a280-498d-96cd-b23c885f8967/1728551276067.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1728551292/pro/tenants/309d9831-a280-498d-96cd-b23c885f8967/1728551291513.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1728551302/pro/tenants/309d9831-a280-498d-96cd-b23c885f8967/1728551302198.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "WEBSITE_URL": "https://www.instagram.com/jc_padel_center_/profilecard/?igsh=a3V3N2g4NW9-xa3g2",
+      "FACILITY_FREE_PARKING": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+351 963660986",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PLAYPARK": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "6880fcf1-31b8-4228-b188-7a1a2606e3c2",
+        "name": "CAMPO GRUPO VARELA+",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5c53c518-094f-45be-add7-fe5b2b5869f5",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:30",
+        "closing_time": "21:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:30",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:30",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:30",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:30",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "pt",
+    "description": ""
+  },
+  {
+    "tenant_id": "2864b37f-bdeb-43bb-a5fa-2d2de3a9f2a3",
+    "tenant_name": "Docs Padel and Pickleball",
+    "slug": "docs-padel-and-pickleball",
+    "address": {
+      "street": "Carrington Road, Klisser",
+      "postal_code": "8301",
+      "city": "Kimberley",
+      "sub_administrative_area": "Frances Baard District Municipality",
+      "administrative_area": "Northern Cape",
+      "country": "South Africa",
+      "country_code": "ZA",
+      "coordinate": {
+        "lat": -28.7533455,
+        "lon": 24.7735599
+      },
+      "timezone": "Africa/Johannesburg"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1730987204/pro/tenants/2864b37f-bdeb-43bb-a5fa-2d2de3a9f2a3/1730987204164.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_PLAYPARK": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_STORE": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "a63accee-a540-4689-9064-1753fba4d883",
+      "DETAILS_PAGE_DESCRIPTION": "**Opening soon...**\nBe sure to join as at Docs Padel and Pickleball, where every player has a chance to shine!\nLocated At Park tennis club, In Carrington Rd.",
+      "WEBSITE_URL": "",
+      "FACILITY_LOCKERS": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+27 647709169"
+    },
+    "resources": [
+      {
+        "resourceId": "118e6094-7906-47d2-9485-828b2124ca7e",
+        "name": "Dash",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b50708a1-92d9-4ce8-9e8a-028561f95af3",
+        "name": "Rory",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cf2efb87-717d-4451-bf27-6f1b27893899",
+        "name": "Koda",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f76138b9-0313-4e42-83a5-bf23b87aba14",
+        "name": "Pickleball 1",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "28547c13-36a1-491c-8e68-fc41c83cf069",
+        "name": "Pickleball 2",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "5d3254e6-e97a-4aad-ba88-89e6377a8fe7",
+        "name": "Pickleball 3",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "380022e4-0a3a-4ea7-b3ff-094aac680e6d",
+        "name": "Pickleball 4",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "e59ca8e3-75b3-4fc6-b82a-a169d200e5e3",
+        "name": "Golf Simulator 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "PICKLEBALL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  <strong class=\"font-semibold text-primary-100\">Opening soon...</strong>\n  Be sure to join as at Docs Padel and Pickleball, where every player has a chance to shine!\n  Located At Park tennis club, In Carrington Rd.\n</p>\n"
+  },
+  {
+    "tenant_id": "b5146a1a-e646-43c4-8921-80472ce215c8",
+    "tenant_name": "Jubilee Padel, Coffee Zone & Food Station",
+    "slug": "jubilee-padel-coffee-zone-food-station",
+    "address": {
+      "street": "Perseel 3G5, New Road",
+      "postal_code": "8570",
+      "city": "Hartswater",
+      "sub_administrative_area": "Frances Baard District Municipality",
+      "administrative_area": "Northern Cape",
+      "country": "South Africa",
+      "country_code": "ZA",
+      "coordinate": {
+        "lat": -27.77770209,
+        "lon": 24.79624342
+      },
+      "timezone": "Africa/Johannesburg"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1713541322/pro/tenants/b5146a1a-e646-43c4-8921-80472ce215c8/1713541321231.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1723473633/pro/tenants/b5146a1a-e646-43c4-8921-80472ce215c8/1723473632396.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1765740962/pro/tenants/b5146a1a-e646-43c4-8921-80472ce215c8/1765740961528.jpg"
+    ],
+    "properties": {
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_WIFI": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "c34750e3-52b6-4c7d-b304-6fd7e8bca090",
+      "IS_CAB_MEMBER": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Game, Set, Match",
+      "WEBSITE_URL": "Google - Jubilee Padel",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+27 718811283"
+    },
+    "resources": [
+      {
+        "resourceId": "e16fb642-8b58-4ee6-b476-b62b852047fa",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Game, Set, Match</p>\n"
+  },
+  {
+    "tenant_id": "f8ca80c8-cdd6-4f1b-b315-58bda507cf25",
+    "tenant_name": "AP Padel Kimberley",
+    "slug": "ap-padel-kimberley",
+    "address": {
+      "street": "Landbou Rd &, Memorial Rd, South Ridge, Kimberley, 8301",
+      "postal_code": "8301",
+      "city": "Kimberley",
+      "sub_administrative_area": "Frances Baard District Municipality",
+      "administrative_area": "Northern Cape",
+      "country": "South Africa",
+      "country_code": "ZA",
+      "coordinate": {
+        "lat": -28.78257184,
+        "lon": 24.73435298
+      },
+      "timezone": "Africa/Johannesburg"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1714420907/pro/tenants/f8ca80c8-cdd6-4f1b-b315-58bda507cf25/1714420907018.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+27 663320584",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "2 Padel Courts Available",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": ""
+    },
+    "resources": [
+      {
+        "resourceId": "f4d4c617-4c13-4bd9-8b10-ee037e9d8444",
+        "name": "Eureka",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d70adaac-5396-43ce-9e54-eba25bad3238",
+        "name": "Excelsior",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">2 Padel Courts Available</p>\n"
+  }
+]

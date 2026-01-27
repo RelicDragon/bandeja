@@ -1,0 +1,727 @@
+[
+  {
+    "tenant_id": "aa220ad4-e9e6-431a-bcea-48d7e619ca14",
+    "tenant_name": "Padel Up Herodotou Tennis Academy, Larnaca",
+    "slug": "padel-up-herodotou-tennis-academy-larnaca",
+    "address": {
+      "street": "37 Agias Marinas",
+      "postal_code": "2032",
+      "city": "Larnaca",
+      "sub_administrative_area": "",
+      "administrative_area": "Κύπρος",
+      "country": "Cyprus",
+      "country_code": "CY",
+      "coordinate": {
+        "lat": 34.854868,
+        "lon": 33.604038
+      },
+      "timezone": "Asia/Nicosia"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1680254571/pro/tenants/aa220ad4-e9e6-431a-bcea-48d7e619ca14/1680254570700.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "HERODOTOU\nTENNIS ACADEMY\nMENEOU LARNACA\n2 outdoor courts\nWarm - up area\nCoach training\nKids academies\nCoffee corner\nApparel shop\nChanging rooms with lockers and showers",
+      "WEBSITE_URL": "https://www.mywelpad.com/centers",
+      "CONTACT_PHONE": "+357 770008817",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "04702924-dd6a-4fe6-8747-ec8206e9c8bc;9c42e8e6-3c9d-4262-a508-ae67d15db82f;f3b0be29-5304-4e85-b419-f2f2d6a4a403;949171c5-ce7f-42c8-9282-7bb01f497ef9;ffa603aa-f328-4d77-af8f-981ebdd80bc7",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "01e4f6e7-800d-4a55-987c-7f74b4327fcb",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9f83f975-de5c-4d4b-a64c-577f5648bce8",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  HERODOTOU\n  TENNIS ACADEMY\n  MENEOU LARNACA\n  2 outdoor courts\n  Warm - up area\n  Coach training\n  Kids academies\n  Coffee corner\n  Apparel shop\n  Changing rooms with lockers and showers\n</p>\n"
+  },
+  {
+    "tenant_id": "64a878d5-683e-4628-9d70-bec8e6b08963",
+    "tenant_name": "Neos Padel Club",
+    "slug": "neos-padel-club",
+    "address": {
+      "street": "38 Agridiotissas",
+      "postal_code": "8560",
+      "city": "Πέγεια",
+      "sub_administrative_area": "",
+      "administrative_area": "Πάφος",
+      "country": "Κύπρος",
+      "country_code": "CY",
+      "coordinate": {
+        "lat": 34.86663903,
+        "lon": 32.37397912
+      },
+      "timezone": "Asia/Nicosia"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1738239634/pro/tenants/64a878d5-683e-4628-9d70-bec8e6b08963/1738239633280.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1738260275/pro/tenants/64a878d5-683e-4628-9d70-bec8e6b08963/1738260274370.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1738260871/pro/tenants/64a878d5-683e-4628-9d70-bec8e6b08963/1738260870535.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_PLAYPARK": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "b911cb33-d6c9-400d-a346-519ee2dbe4a4;f06966c2-7b8c-4766-b4da-3d6b4cac1b1c",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to **Neos Padel Club**!\n\nLocated in Pegeia, we offer top-quality padel courts for players of all levels. Whether you are a beginner or a pro, you will love our vibrant community, friendly atmosphere, and well-maintained courts.\nBook your game, connect with other players, and enjoy the ultimate padel experience with us.** **\n_*__*_\n_**Let's play**__**!**_",
+      "WEBSITE_URL": "https://www.instagram.com/neos_padel_club?igsh=dWc4OXN2djJiOHd3",
+      "FACILITY_LOCKERS": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+357 96334389"
+    },
+    "resources": [
+      {
+        "resourceId": "db2d276f-2d50-4aeb-89f8-bd2d08969c05",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cf880340-3c30-48cf-a649-03f3d1173583",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Welcome to <strong class=\"font-semibold text-primary-100\">Neos Padel Club</strong>!</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Located in Pegeia, we offer top-quality padel courts for players of all levels. Whether you are a beginner or a pro, you will love our vibrant community, friendly atmosphere, and well-maintained courts.\n  Book your game, connect with other players, and enjoy the ultimate padel experience with us.** **\n  <em class=\"italic\"><em class=\"italic\">__</em></em>\n  <em class=\"italic\"><strong class=\"font-semibold text-primary-100\">Let's play</strong>__<strong class=\"font-semibold text-primary-100\">!</strong></em>\n</p>\n"
+  },
+  {
+    "tenant_id": "a3e520f4-8f6f-4ce7-8799-adbccfbd6264",
+    "tenant_name": "Fair Game Sport Center ",
+    "slug": "fair-game-sport-center",
+    "address": {
+      "street": "Kosta Spyrou 105",
+      "postal_code": "8270",
+      "city": "Τρεμιθούσα",
+      "sub_administrative_area": "",
+      "administrative_area": "Πάφος",
+      "country": "Κύπρος",
+      "country_code": "CY",
+      "coordinate": {
+        "lat": 34.80482049,
+        "lon": 32.43729028
+      },
+      "timezone": "Asia/Nicosia"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1731673862/pro/tenants/a3e520f4-8f6f-4ce7-8799-adbccfbd6264/1731673861530.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_CAFETERIA": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://m.facebook.com/fairgamesportcenter/",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "CONTACT_PHONE": "+357 99540237",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Premium Padel Court",
+      "DETAILS_PAGE_VERSION": "2.0.0"
+    },
+    "resources": [
+      {
+        "resourceId": "2309badb-e528-4240-b671-c952998c1342",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Premium Padel Court</p>\n"
+  },
+  {
+    "tenant_id": "c549871a-d618-4d84-bc31-fdb19d6eddfa",
+    "tenant_name": "Alana Sports Center",
+    "slug": "alana-sports-center",
+    "address": {
+      "street": "eratous 1",
+      "postal_code": "8201",
+      "city": "Paphos",
+      "sub_administrative_area": "",
+      "administrative_area": "Πάφος",
+      "country": "Κύπρος",
+      "country_code": "CY",
+      "coordinate": {
+        "lat": 34.7421546,
+        "lon": 32.44660327
+      },
+      "timezone": "Asia/Nicosia"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1723350230/pro/tenants/c549871a-d618-4d84-bc31-fdb19d6eddfa/1723350229847.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757742738/pro/tenants/c549871a-d618-4d84-bc31-fdb19d6eddfa/1757742737346.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757743468/pro/tenants/c549871a-d618-4d84-bc31-fdb19d6eddfa/1757743467645.jpg"
+    ],
+    "properties": {
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+357 99212212",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_STORE": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "3 Padel Courts\n2 Mini Football Pitches\n_• Παρτυ Γενεθλιων (Parties) • Εκδηλώσεις (Events)_",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_LOCKERS": "true",
+      "WEBSITE_URL": "https://www.instagram.com/alana_sportscenter/",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_RESTAURANT": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "4701f85f-697a-498b-9c6c-d67172818c7d",
+        "name": "Padel Court 1 (Acrylic Turf)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d6faef09-6094-476a-9707-8fe13cc19e46",
+        "name": "Padel Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "332acdac-4100-44dd-bf31-33994064a272",
+        "name": "Padel Court 3 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "15:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "15:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "15:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "15:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "15:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  3 Padel Courts\n  2 Mini Football Pitches\n  <em class=\"italic\">• Παρτυ Γενεθλιων (Parties) • Εκδηλώσεις (Events)</em>\n</p>\n"
+  },
+  {
+    "tenant_id": "e77e23e8-d68e-4f69-968e-ca2b648bb9f2",
+    "tenant_name": "Sporting Club Lemesou",
+    "slug": "sporting-club-lemesou",
+    "address": {
+      "street": "Georgiou Thirotou 15",
+      "postal_code": "3012",
+      "city": "Λεμεσός",
+      "sub_administrative_area": "",
+      "administrative_area": "Λεμεσός",
+      "country": "Κύπρος",
+      "country_code": "CY",
+      "coordinate": {
+        "lat": 34.66987831,
+        "lon": 33.02541196
+      },
+      "timezone": "Asia/Nicosia"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1689929606/pro/tenants/e77e23e8-d68e-4f69-968e-ca2b648bb9f2/1689929605617.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "CONTACT_PHONE": "+357 96446723",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "http://limassolsportingclub.com/",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ebd340ef-9bc7-4e97-a367-24fc73eefad5",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f8537f62-bc5b-4ff2-b0dd-4dfc7687ff3d",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:30",
+        "closing_time": "19:30"
+      },
+      "SATURDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "f6f1f29a-30f1-43a3-b63c-d78474998445",
+    "tenant_name": "Cityfields Padel",
+    "slug": "cityfields-padel",
+    "address": {
+      "street": "Iosif hatziosif 113",
+      "postal_code": "2035",
+      "city": "Στρόβολος",
+      "sub_administrative_area": "Δήμος Στροβόλου",
+      "administrative_area": "Λευκωσία",
+      "country": "Κύπρος",
+      "country_code": "CY",
+      "coordinate": {
+        "lat": 35.13112765,
+        "lon": 33.35765442
+      },
+      "timezone": "Asia/Nicosia"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1755006436/pro/tenants/f6f1f29a-30f1-43a3-b63c-d78474998445/1755006435575.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1755082041/pro/tenants/f6f1f29a-30f1-43a3-b63c-d78474998445/1755082040499.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "CONTACT_PHONE": "+357 99727797",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "WEBSITE_URL": "https://www.cityfields.com.cy"
+    },
+    "resources": [
+      {
+        "resourceId": "a480359a-7be7-4095-89f7-6105d0ad91d2",
+        "name": "Kawacom's Padel",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1744f769-d531-4d5d-bcaa-dd34e8569748",
+        "name": "Heineken Padel",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0b63f35c-16a1-47fc-b0cf-b7b3f6beb274",
+        "name": "Bikos ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "11:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "cf94e77b-68e5-4acb-a0c4-64c62f50d073",
+    "tenant_name": "National Tennis Center ",
+    "slug": "national-tennis-center",
+    "address": {
+      "street": "Makarios Athletic Center Avenue, Egnomi",
+      "postal_code": "2400",
+      "city": "Nicosia",
+      "sub_administrative_area": "",
+      "administrative_area": "Λευκωσία",
+      "country": "Κύπρος",
+      "country_code": "CY",
+      "coordinate": {
+        "lat": 35.1463343,
+        "lon": 33.3154425
+      },
+      "timezone": "Asia/Nicosia"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/cf94e77b-68e5-4acb-a0c4-64c62f50d073/national-tennis-center-_0001"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "false",
+      "CONTACT_PHONE": "+357 99212410",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "48baff71-f4c9-402a-968a-b7b9c8c7499e",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "The Cyprus Tennis Federation\nThe Cyprus Tennis Federation was founded in 1951.\nIt officially represents the sport in Cyprus under the rules of the International Tennis Federation, and the European Tennis Federation\nThe Cyprus Tennis Federation is a member of the European Tennis Federation the International Tennis Federation and the Cyprus Olympic Committee since 1984.\nIts terms of reference are very wide and incorporate powers, rights, and authority as well as obligations and liabilities with regards to the sport of tennis in Cyprus.",
+      "FACILITY_LOCKERS": "false",
+      "WEBSITE_URL": "https://www.tennis.com.cy/el/page/home",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "19a6b24c-6197-4519-be02-e4719cd5dfc2",
+        "name": "AdTech Arena",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "77996c29-5b8e-4551-936d-f706c4f96ca5",
+        "name": "Tennis 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "5abeb558-8142-433d-af4e-3dd31922ad42",
+        "name": "Tennis 2",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "70c784bd-de93-4f7c-9329-42f8ad22a233",
+        "name": "Tennis 3",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "20:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "19:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "20:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "20:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "20:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "20:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  The Cyprus Tennis Federation\n  The Cyprus Tennis Federation was founded in 1951.\n  It officially represents the sport in Cyprus under the rules of the International Tennis Federation, and the European Tennis Federation\n  The Cyprus Tennis Federation is a member of the European Tennis Federation the International Tennis Federation and the Cyprus Olympic Committee since 1984.\n  Its terms of reference are very wide and incorporate powers, rights, and authority as well as obligations and liabilities with regards to the sport of tennis in Cyprus.\n</p>\n"
+  }
+]

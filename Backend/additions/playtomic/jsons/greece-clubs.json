@@ -1,0 +1,126 @@
+[
+  {
+    "tenant_id": "98988d7c-d7f6-4ed0-b09d-ea57c2564922",
+    "tenant_name": "PLAYFIELD",
+    "slug": "playfield",
+    "address": {
+      "street": "Naousa - Asteras",
+      "postal_code": "84401",
+      "city": "Paros",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Greece",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 37.0792929,
+        "lon": 25.24408149
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1756823398/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756823397804.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756830134/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756830133570.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756830146/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756830140926.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756832245/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756832244170.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756894476/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756894475530.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756894483/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756894482318.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756894490/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756894488724.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756894498/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756894496805.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756894506/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756894504012.jpg"
+    ],
+    "properties": {
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "WEBSITE_URL": "https://playfield.gr/el/Playfield-Paidotopos-Paros",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+30 6946506146"
+    },
+    "resources": [
+      {
+        "resourceId": "9d959600-1a87-4418-abfe-b9c5d39cd0f0",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ce9f2405-a02f-4621-bc4a-5ba69be3293a",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "42417f44-362b-4e94-b45a-0afe84f8f143",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "21579932-ea02-4656-9195-d7d432d3d0ce",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "20:30"
+      },
+      "MONDAY": {
+        "opening_time": "11:00",
+        "closing_time": "20:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "20:30"
+      },
+      "SUNDAY": {
+        "opening_time": "11:00",
+        "closing_time": "20:30"
+      },
+      "FRIDAY": {
+        "opening_time": "11:00",
+        "closing_time": "20:30"
+      },
+      "SATURDAY": {
+        "opening_time": "11:00",
+        "closing_time": "20:30"
+      },
+      "THURSDAY": {
+        "opening_time": "11:00",
+        "closing_time": "20:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  }
+]

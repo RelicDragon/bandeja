@@ -1,0 +1,1084 @@
+[
+  {
+    "tenant_id": "ae661caf-c802-4cd3-9ae7-bd792366d142",
+    "tenant_name": "PadelPro - Cavtat",
+    "slug": "padelpro-cavtat",
+    "address": {
+      "street": "Hotel Croatia, Frankopanska ul",
+      "postal_code": "20210",
+      "city": "Cavtat",
+      "sub_administrative_area": "Općina Konavle",
+      "administrative_area": "Dubrovačko-neretvanska županija",
+      "country": "Croatia",
+      "country_code": "HR",
+      "coordinate": {
+        "lat": 42.57783,
+        "lon": 18.21738
+      },
+      "timezone": "Europe/Zagreb"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1730126307/pro/tenants/ae661caf-c802-4cd3-9ae7-bd792366d142/1730126306524.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1730126362/pro/tenants/ae661caf-c802-4cd3-9ae7-bd792366d142/1730126361622.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1730126365/pro/tenants/ae661caf-c802-4cd3-9ae7-bd792366d142/1730126364021.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "false",
+      "DETAILS_PAGE_DESCRIPTION": "3 Amazing padel courts set in the beautiful grounds of Hotel Croatia in Cavtat.  Come and join us!",
+      "WEBSITE_URL": "https://www.facebook.com/share/1AzYHxJi6y/?mibextid=LQQJ4d",
+      "DETAILS_PAGE_TITLE": "",
+      "CONTACT_PHONE": "+385 98525303",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_CAFETERIA": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_SNACK_BAR": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_STORE": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "c5db001a-5f5f-4991-869b-ef85c3736084;1a0373a2-399e-4c08-9007-b1204a8d07b6;c1f88049-d3ba-47e9-89a9-944b10d274ec;f47c963d-d3aa-4688-beb4-02d874baad6d",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_WIFI": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "39af362c-f517-43a6-bd80-0bdaa1ae8a5a",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "46a6afa8-c814-4a01-8ba6-a7130cd2c834",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6899cae3-dd09-4606-afc6-0af63f407401",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">3 Amazing padel courts set in the beautiful grounds of Hotel Croatia in Cavtat. Come and join us!</p>\n"
+  },
+  {
+    "tenant_id": "08a93453-4a01-4752-8966-1e027614c427",
+    "tenant_name": "Dubrovnik Padel Klub Palace",
+    "slug": "padel-center-dubrovnik",
+    "address": {
+      "street": "Massarykov put 20",
+      "postal_code": "20000",
+      "city": "Dubrovnik",
+      "sub_administrative_area": "Grad Dubrovnik",
+      "administrative_area": "Dubrovačko-neretvanska županija",
+      "country": "Croatia",
+      "country_code": "HR",
+      "coordinate": {
+        "lat": 42.6511102,
+        "lon": 18.0606996
+      },
+      "timezone": "Europe/Zagreb"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1747050468/pro/tenants/08a93453-4a01-4752-8966-1e027614c427/1747050468199.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+385 998284765",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": ""
+    },
+    "resources": [
+      {
+        "resourceId": "cfc3d00a-ec71-4e38-951d-095dd79a46f2",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "2ea46d91-f7ed-4e4a-aa5c-392ee5995ad9",
+    "tenant_name": "Padel Embassy",
+    "slug": "padel-embassy",
+    "address": {
+      "street": "Slavonska avenija 17",
+      "postal_code": "10000",
+      "city": "Zagreb",
+      "sub_administrative_area": "Grad Zagreb",
+      "administrative_area": "Grad Zagreb",
+      "country": "Croatia",
+      "country_code": "HR",
+      "coordinate": {
+        "lat": 45.80381683,
+        "lon": 16.0664583
+      },
+      "timezone": "Europe/Zagreb"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1734457305/pro/tenants/2ea46d91-f7ed-4e4a-aa5c-392ee5995ad9/1734457304176.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1734457377/pro/tenants/2ea46d91-f7ed-4e4a-aa5c-392ee5995ad9/1734457376367.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1734457380/pro/tenants/2ea46d91-f7ed-4e4a-aa5c-392ee5995ad9/1734457379169.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1734457382/pro/tenants/2ea46d91-f7ed-4e4a-aa5c-392ee5995ad9/1734457381499.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.padelembassy.com/",
+      "FACILITY_FREE_PARKING": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "0661131d-5b14-4abd-acb4-feea6de2baf3;5fc30302-85c8-4135-91d3-15ee86f96020;a5e22bdb-e2c1-449c-a60d-6b639e667a9b;054407b7-7995-4a8b-afa8-9a0e0ed6fc86;6d66c0c4-2f03-4393-8dd4-b12e973ef51d",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PLAYPARK": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Your premier destination for padel in Zagreb! Enjoy our full panoramic courts, curved lighting for uninterrupted play, and texturized turf for optimal grip. Join us for thrilling matches, expert training, and a vibrant community.",
+      "FACILITY_VENDING_MACHINE": "false",
+      "CONTACT_PHONE": "+385 993043333",
+      "DETAILS_PAGE_TITLE": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_CAFETERIA": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "ad3c913a-1aa5-4238-a959-e7bce2e5bfe7",
+        "name": "Court 1 /// Cupra",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1d83c405-4c10-41c1-8dbd-937b2a7a975b",
+        "name": "Court 2 /// La Roche-Posay",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c4243806-ff18-4739-88c8-4abd11366e38",
+        "name": "Court 3 /// Estrella Galicia",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7fee4036-04e5-49aa-adb1-bcc0e727916a",
+        "name": "Court 4 /// Samsung Galaxy Watch8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4873ec1f-c6be-4303-97fd-f46ad7925431",
+        "name": "Court 5 /// Single",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Your premier destination for padel in Zagreb! Enjoy our full panoramic courts, curved lighting for uninterrupted play, and texturized turf for optimal grip. Join us for thrilling matches, expert training, and a vibrant community.</p>\n"
+  },
+  {
+    "tenant_id": "3faa1b54-27dc-4bcb-9d99-7bdc9aeb6fdf",
+    "tenant_name": "Padel Dubrovnik",
+    "slug": "padel-dubrovnik",
+    "address": {
+      "street": " Šetalište Dr. Franje Tuđmana 17",
+      "postal_code": "20207",
+      "city": "Srebreno",
+      "sub_administrative_area": "Općina Župa Dubrovačka",
+      "administrative_area": "Dubrovačko-neretvanska županija",
+      "country": "Croatia",
+      "country_code": "HR",
+      "coordinate": {
+        "lat": 42.623268,
+        "lon": 18.1959296
+      },
+      "timezone": "Europe/Zagreb"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1741713672/pro/tenants/3faa1b54-27dc-4bcb-9d99-7bdc9aeb6fdf/1741713671548.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_VENDING_MACHINE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_TITLE": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "CONTACT_PHONE": "+385 992089525",
+      "FACILITY_SNACK_BAR": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "75a1ef85-2f88-42ec-bcb4-13a8e292faa8",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_CAFETERIA": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "WEBSITE_URL": ""
+    },
+    "resources": [
+      {
+        "resourceId": "946efd9b-f713-4938-b563-5380399a97f4",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4f5e9249-59c4-4451-ba8e-d8bd5c385632",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "a1f1bcb5-3f4c-4aa7-beb4-d525b39164d2",
+    "tenant_name": "Padel&pickleball Academy",
+    "slug": "pp-academy",
+    "address": {
+      "street": "Borcec 44",
+      "postal_code": "10000",
+      "city": "Zagreb",
+      "sub_administrative_area": "Grad Zagreb",
+      "administrative_area": "Grad Zagreb",
+      "country": "Croatia",
+      "country_code": "HR",
+      "coordinate": {
+        "lat": 45.8332455,
+        "lon": 15.8825392
+      },
+      "timezone": "Europe/Zagreb"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1747739374/pro/tenants/a1f1bcb5-3f4c-4aa7-beb4-d525b39164d2/1747739374084.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_PLAYPARK": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+385 00000",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "59785c02-df74-4898-8c51-e800fc521e6c",
+        "name": "Padel 1 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8fcafcda-42c3-4499-a836-076c7ce9524e",
+        "name": " Padel 2 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5ed65107-b63f-4956-8e18-58643ee6f557",
+        "name": "Pickleball 1",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "single",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "d7c5aff5-f48a-424c-9aee-8606ca235459",
+        "name": "Padel 3 - Single ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e16174fc-5754-4859-98b1-0a9cd06d4006",
+        "name": "Pickleball 2",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "single",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "d39c1b59-35f1-4f21-b209-ab32ec0431a5",
+        "name": "Pickleball 3",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "single",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "090a331f-7eda-4e20-a0f4-e8438e8f5d64",
+        "name": "Pickleball 4",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "single",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "PICKLEBALL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "6fc1e76b-92ec-4c62-8b8f-dcf5b0475036",
+    "tenant_name": "Pula Padel & Pickleball Verudela",
+    "slug": "pula-padel-pickleball-verudela",
+    "address": {
+      "street": "Verudela 9",
+      "postal_code": "52100",
+      "city": "Pula",
+      "sub_administrative_area": "Grad Pula",
+      "administrative_area": "Istarska županija",
+      "country": "Croatia",
+      "country_code": "HR",
+      "coordinate": {
+        "lat": 44.83785009,
+        "lon": 13.83494628
+      },
+      "timezone": "Europe/Zagreb"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1750344952/pro/tenants/6fc1e76b-92ec-4c62-8b8f-dcf5b0475036/1750344951896.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750344960/pro/tenants/6fc1e76b-92ec-4c62-8b8f-dcf5b0475036/1750344959025.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750344965/pro/tenants/6fc1e76b-92ec-4c62-8b8f-dcf5b0475036/1750344964697.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750344970/pro/tenants/6fc1e76b-92ec-4c62-8b8f-dcf5b0475036/1750344969643.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750344976/pro/tenants/6fc1e76b-92ec-4c62-8b8f-dcf5b0475036/1750344975022.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750344979/pro/tenants/6fc1e76b-92ec-4c62-8b8f-dcf5b0475036/1750344978147.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750344984/pro/tenants/6fc1e76b-92ec-4c62-8b8f-dcf5b0475036/1750344983590.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750344989/pro/tenants/6fc1e76b-92ec-4c62-8b8f-dcf5b0475036/1750344987760.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750359446/pro/tenants/6fc1e76b-92ec-4c62-8b8f-dcf5b0475036/1750359445680.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750359477/pro/tenants/6fc1e76b-92ec-4c62-8b8f-dcf5b0475036/1750359476227.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750359594/pro/tenants/6fc1e76b-92ec-4c62-8b8f-dcf5b0475036/1750359593706.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+385 991660905",
+      "DETAILS_PAGE_TITLE": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "3eb2d32d-d6d2-4e5b-95c4-ad9eb3d28b9b;177eaca7-ca13-44a8-966c-ad54bf79b6aa;3c6bd454-c33c-4a3c-a627-38b555a1b076;0b328059-176b-4af6-818f-45bb7742cb32;c5d54349-c856-48ec-8242-adfbed8c69ad;8b73146d-942b-4845-a277-95ee08532c17;2aece4e1-4650-40e4-916c-c5d330c0f9e8;3c9fdc38-c68b-4284-97a7-30f25084011e;4421f510-e9bb-412a-80d3-03ce535b61f9;b14df2f5-4308-4057-97b7-16785b9b7ae5;972f6a76-99f7-4c04-a496-6ea6d9ff5f84",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Pula Padel & Pickleball– the first Padel & Pickleball club in Croatia. \nWe are delighted to offer our brand new padel and pickleball courts to everyone in our beatiful venue in Pula Croatia - Verudela. \nThe club is located on a beautiful peninsula called Verudela in the midst of the best beachs, hotels, bars and restaurants in Pula. \nCourt Rentals: Enjoy playing on our top-quality courts, available for booking at your convenience.\nClub Events: Participate in tournaments, competitions, and club events that we regularly host.",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_WIFI": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_STORE": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_LOCKERS": "true",
+      "WEBSITE_URL": "https://www.instagram.com/pulapadel/",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PLAYPARK": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "fb5477fd-ab94-4209-b43b-2779cc03c6e0",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f716946b-0341-4541-9e65-701cd26417a5",
+        "name": "Pickleball 1 ",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "d1c04a12-1bea-49bc-a32e-4784c97b80ab",
+        "name": "Padel 2 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b5519f38-f1de-4fdd-a925-8eeb3916b2e8",
+        "name": "Padel 3 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "PICKLEBALL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Welcome to Pula Padel &#x26; Pickleball– the first Padel &#x26; Pickleball club in Croatia.\n  We are delighted to offer our brand new padel and pickleball courts to everyone in our beatiful venue in Pula Croatia - Verudela.\n  The club is located on a beautiful peninsula called Verudela in the midst of the best beachs, hotels, bars and restaurants in Pula.\n  Court Rentals: Enjoy playing on our top-quality courts, available for booking at your convenience.\n  Club Events: Participate in tournaments, competitions, and club events that we regularly host.\n</p>\n"
+  },
+  {
+    "tenant_id": "82724b23-f2c6-4386-ac56-1355a1bcb025",
+    "tenant_name": "Master Padel Club ",
+    "slug": "master-padel-club",
+    "address": {
+      "street": "Josipa Zorića 2",
+      "postal_code": "10370",
+      "city": "Dugo Selo",
+      "sub_administrative_area": "Grad Dugo Selo",
+      "administrative_area": "Zagrebačka županija",
+      "country": "Croatia",
+      "country_code": "HR",
+      "coordinate": {
+        "lat": 45.8056227,
+        "lon": 16.2332605
+      },
+      "timezone": "Europe/Zagreb"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1752062260/pro/tenants/82724b23-f2c6-4386-ac56-1355a1bcb025/1752062260205.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1752062292/pro/tenants/82724b23-f2c6-4386-ac56-1355a1bcb025/1752062291749.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1752579570/pro/tenants/82724b23-f2c6-4386-ac56-1355a1bcb025/1752579569629.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1752579574/pro/tenants/82724b23-f2c6-4386-ac56-1355a1bcb025/1752579573616.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "www.b100.hr",
+      "CONTACT_PHONE": "+385 912626325",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CAFETERIA": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "828646da-2911-4915-aef0-b1cce8b9151d",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d2860954-43a0-4c29-9604-14f0363384b6",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "bc8f5a13-1afa-4c94-90fa-a0116bcf7de9",
+    "tenant_name": "Pannonian Padel ",
+    "slug": "pannonian-padel",
+    "address": {
+      "street": "Vukovarska cesta 432d",
+      "postal_code": "31000",
+      "city": "Osijek",
+      "sub_administrative_area": "Grad Osijek",
+      "administrative_area": "Osječko-baranjska županija",
+      "country": "Croatia",
+      "country_code": "HR",
+      "coordinate": {
+        "lat": 45.541485,
+        "lon": 18.757536
+      },
+      "timezone": "Europe/Zagreb"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760542396/pro/tenants/bc8f5a13-1afa-4c94-90fa-a0116bcf7de9/1760542395402.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "3fb1f86e-d715-49e6-9a02-ec65f8cb7ca9",
+      "FACILITY_SNACK_BAR": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Your ultimate padel destination in Osijek! Step into our modern sports center featuring 4 premium indoor courts, designed for play all year round, no matter the weather. Enjoy top-quality conditions, expert coaching, and a welcoming community that brings players together — from beginners to seasoned competitors",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "CONTACT_PHONE": "+385 914441777",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "https://www.instagram.com/pannonianpadel/",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "5774c0ff-bb9f-4113-852f-aac4167ac4e7",
+        "name": "Teren 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b786943e-34be-442d-8eed-cb7dad9da27c",
+        "name": "Teren 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e77aef34-6aba-47fe-96fa-f0d630efe93d",
+        "name": "Teren 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7552f97d-d1e0-4399-a0c3-ca4c27647eca",
+        "name": "Teren 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "14:30",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "14:30",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "14:30",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "14:30",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "14:30",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Your ultimate padel destination in Osijek! Step into our modern sports center featuring 4 premium indoor courts, designed for play all year round, no matter the weather. Enjoy top-quality conditions, expert coaching, and a welcoming community that brings players together — from beginners to seasoned competitors</p>\n"
+  },
+  {
+    "tenant_id": "da7877d5-43b3-11e8-8674-52540049669c",
+    "tenant_name": "Padel.hr",
+    "slug": "padel-hr",
+    "address": {
+      "street": "Avenija Dubrovnik 15 Paviljon 10",
+      "postal_code": "10000",
+      "city": "Zagreb",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Croatia",
+      "country_code": "HR",
+      "coordinate": {
+        "lat": 45.7796818,
+        "lon": 15.9668302
+      },
+      "timezone": "Europe/Madrid"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7877d5-43b3-11e8-8674-52540049669c/padelhr_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7877d5-43b3-11e8-8674-52540049669c/padelhr_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7877d5-43b3-11e8-8674-52540049669c/padelhr_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7877d5-43b3-11e8-8674-52540049669c/padelhr_0004"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+385 99 396 7039",
+      "WEBSITE_URL": "https://padel.hr",
+      "SHOW_AVAILABILITY_GRID": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "8cb0f5df-cdf4-4bc4-afb4-6c120e1c2e8e",
+        "name": "Padel 1 Borotalco",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "c08f7f55-c22f-4d34-9a56-5abd7737ef45",
+        "name": "Padel 2 Cedevita",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "fc910d46-018b-495e-9cfa-242374368fa1",
+        "name": "Padel 3 Heineken",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ab8606a6-b0d1-4c5e-8785-4126546a4374",
+        "name": "Padel 4 Rozi",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c7d856bb-74c7-4da7-b927-c3522079a241",
+        "name": "Padel 5 Plavi",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "478b7fa2-c020-4ef4-89d9-fd8e937ac96f",
+        "name": "Padel 6 CUPRA",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d2ac9794-fe70-4fc4-bcc4-25322f57986c",
+        "name": "Padel 7 Narancasti",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "19685f14-e16c-410d-b389-719a304b9042",
+        "name": "Padel 8 Zeleni",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_GB",
+    "description": ""
+  }
+]

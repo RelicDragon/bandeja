@@ -1,0 +1,1571 @@
+[
+  {
+    "tenant_id": "3566f5fd-3800-4d84-a821-721d9d3b842c",
+    "tenant_name": "Svelvik Tennisklubb",
+    "slug": "svelvik-tennisklubb-svelvik",
+    "address": {
+      "street": "Blåbærstien 3",
+      "postal_code": "3060",
+      "city": "Svelvik",
+      "sub_administrative_area": "Drammen",
+      "administrative_area": "Viken",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 59.6259238,
+        "lon": 10.3969464
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1647439079/pro/tenants/3566f5fd-3800-4d84-a821-721d9d3b842c/1647439078687.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1647553850/pro/tenants/3566f5fd-3800-4d84-a821-721d9d3b842c/1647553849482.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1763468781/pro/tenants/3566f5fd-3800-4d84-a821-721d9d3b842c/1763468780687.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_DESCRIPTION": "Svelvik Tennisklubb er en aktiv og sosial klubb med tennis, padel og bordtennis. 4 hardcourt tennis baner (tre utendørs og én innendørs). 2 utendørs padel baner og 1 dobbel og 1 singel innendørs padel baner. 4 innendørs bordtennisbord. Vi tilbyr også tennisskole 4 dager i uken for både barn og voksne. ",
+      "IS_CAB_MEMBER": "true",
+      "WEBSITE_URL": "https://svelviktennis.no/",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+47 9486135",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "4e391364-8af1-424e-99bf-ea9f27a9d479;c0b1a956-cc54-4f2c-8021-8a2bddc40064;024d2574-f823-40c7-ad45-a90ae1d0291b;9a1f1163-fd3a-4f27-b1c0-e880321c77e3",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "0f9cd874-41d6-4a1a-ad07-8160ae436ff0",
+        "name": "Sponsor? Singel inne",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9285de2b-8e28-441e-9a91-0a7b615b2f4e",
+        "name": "PCS Double inne Padel",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "447ed8c9-d5c0-4d83-b0b4-0824f14ffb52",
+        "name": "Adax inne",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "double",
+          "quick"
+        ]
+      },
+      {
+        "resourceId": "0b175a5f-c2bb-45da-be6f-37175a832d15",
+        "name": "Sponsor? Bordtennis 1",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "indoor",
+          "standard"
+        ]
+      },
+      {
+        "resourceId": "0ad395e0-92ea-43da-8e8e-aa2aee2a0f5b",
+        "name": "Bordtennis 2",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "indoor",
+          "standard"
+        ]
+      },
+      {
+        "resourceId": "1b819be8-9e94-4445-958e-a4b7d07133e8",
+        "name": "Bordtennis 3",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "indoor",
+          "standard"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS",
+      "TABLE_TENNIS"
+    ],
+    "communications_language": "nb",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Svelvik Tennisklubb er en aktiv og sosial klubb med tennis, padel og bordtennis. 4 hardcourt tennis baner (tre utendørs og én innendørs). 2 utendørs padel baner og 1 dobbel og 1 singel innendørs padel baner. 4 innendørs bordtennisbord. Vi tilbyr også tennisskole 4 dager i uken for både barn og voksne.</p>\n"
+  },
+  {
+    "tenant_id": "358547d7-94a5-4939-b55c-fc38cadf7c40",
+    "tenant_name": "Padelon Lade",
+    "slug": "padelon-lade",
+    "address": {
+      "street": "Haakon VIIs gate 6",
+      "postal_code": "7041",
+      "city": "Trondheim",
+      "sub_administrative_area": "Trondheim",
+      "administrative_area": "Trøndelag",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 63.44282038,
+        "lon": 10.45606931
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1706031113/pro/tenants/358547d7-94a5-4939-b55c-fc38cadf7c40/1706031112718.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padelon Lade har 3 dobbel baner og en singlebane!",
+      "WEBSITE_URL": "https://www.padelon.no/",
+      "CONTACT_PHONE": "+47 73100277",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "3ef06e92-1c0b-4f59-9410-5f384152730c",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2d07a04b-6369-44cd-a2ed-108fa6842694",
+        "name": "Privatmegleren banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "29d4dec7-c1d1-4a2a-a56e-fbde82b07f96",
+        "name": "Padelon Bane 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1459e2b6-2ffa-43e8-8821-1929736f0ec7",
+        "name": "AHA Eiendom banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0a45a3c9-21cc-42a1-9738-361d16c28f60",
+        "name": "Padelon Bane 1 SINGEL",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "nb",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padelon Lade har 3 dobbel baner og en singlebane!</p>\n"
+  },
+  {
+    "tenant_id": "127d889a-5738-4fbe-a9e9-5fe0f99bbd83",
+    "tenant_name": "Padel House Larvik, Hegdal",
+    "slug": "padel-house-larvik-hegdal",
+    "address": {
+      "street": "Hegdalringen 16",
+      "postal_code": "3261",
+      "city": "Larvik",
+      "sub_administrative_area": "Larvik",
+      "administrative_area": "Vestfold og Telemark",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 59.0641786,
+        "lon": 10.0834938
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1653390593/pro/tenants/127d889a-5738-4fbe-a9e9-5fe0f99bbd83/1653390592972.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "CONTACT_PHONE": "+47 70310063",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "www.padelhouse.no",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Du finner oss i freshe og innbydende lokaler på Hegdalringen 16.\nHos oss kan du leie racket for kr 50,-, dette gjøres på plass hos oss. Baller kan du kjøpe i ballmaskinen.\nVi har fem dobbel-baner og en singel-bane.\nHer er det 9 meter fra gulv og helt opp i taket. Det gir deg en flott spilleopplevelse.\nVår stilfulle lounge gir rom for hyggelig padel snakk og sosialt samvær. Her kan du få kjøpt drikke og snacks.\nHer har vi også to golf simulatorer. \nVi har også en pro-shop med både klær, racket og sko"
+    },
+    "resources": [
+      {
+        "resourceId": "7e33904e-d764-4018-8e87-0a4bd7e9e0b5",
+        "name": "1 Komplett Montasje",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ff8f4db8-fc4b-443c-b785-53291004b519",
+        "name": "2 Reis",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2794328a-0e06-495f-81b1-2b726f32b306",
+        "name": "3 Full Funksjon (Single)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3639f268-f17a-4f5e-b7be-896743f7841e",
+        "name": "4 JA Bolig",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "67c670f2-91bc-44fb-9dd6-6da69fe12329",
+        "name": "5 ASKO",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "35aeaa27-3eae-42ef-9e87-ad8c1485b4d2",
+        "name": " 6 AVONOVA",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "05:30",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "05:30",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "05:30",
+        "closing_time": "02:00"
+      },
+      "THURSDAY": {
+        "opening_time": "05:30",
+        "closing_time": "02:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "05:30",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "05:30",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "05:30",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "05:30",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "nb",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Du finner oss i freshe og innbydende lokaler på Hegdalringen 16.\n  Hos oss kan du leie racket for kr 50,-, dette gjøres på plass hos oss. Baller kan du kjøpe i ballmaskinen.\n  Vi har fem dobbel-baner og en singel-bane.\n  Her er det 9 meter fra gulv og helt opp i taket. Det gir deg en flott spilleopplevelse.\n  Vår stilfulle lounge gir rom for hyggelig padel snakk og sosialt samvær. Her kan du få kjøpt drikke og snacks.\n  Her har vi også to golf simulatorer.\n  Vi har også en pro-shop med både klær, racket og sko\n</p>\n"
+  },
+  {
+    "tenant_id": "4b418609-9f88-4798-a205-0b11f4ea96b5",
+    "tenant_name": "Padelon Golfsimulator",
+    "slug": "padelon-golfsimulator",
+    "address": {
+      "street": "Fossegrenda 9",
+      "postal_code": "7038",
+      "city": "Trondheim",
+      "sub_administrative_area": "Trondheim",
+      "administrative_area": "Trøndelag",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 63.387403,
+        "lon": 10.3998575
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1650954714/pro/tenants/4b418609-9f88-4798-a205-0b11f4ea96b5/1650954714296.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1650954716/pro/tenants/4b418609-9f88-4798-a205-0b11f4ea96b5/1650954715863.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1650954718/pro/tenants/4b418609-9f88-4798-a205-0b11f4ea96b5/1650954718228.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1650954719/pro/tenants/4b418609-9f88-4798-a205-0b11f4ea96b5/1650954719327.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+47 73100277",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "www.padelon.no/golf/",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "8dc501ca-aae7-4491-a86e-bc8cf9e1a0f1;d2984aa2-0f59-4715-80e7-eeee84fb9c36;f4138915-0453-4666-bb5c-4ce9c644addf",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padelon Trondheim har 3 nye golfsimulatorer av typen Trackman 4"
+    },
+    "resources": [
+      {
+        "resourceId": "ae4e3e31-4dfd-421b-a691-adbdf465a1bd",
+        "name": "Golfsimulator 1",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "697ea9a8-b071-4c94-93bf-641df810ecad",
+        "name": "Golfsimulator 2",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "2c3bee38-e074-4bb7-987a-2c26d98a60e7",
+        "name": "Golfsimulator 3",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "double",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PICKLEBALL"
+    ],
+    "communications_language": "nb",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padelon Trondheim har 3 nye golfsimulatorer av typen Trackman 4</p>\n"
+  },
+  {
+    "tenant_id": "4c5f5244-b4ef-479a-b5b5-3cf08ed1717c",
+    "tenant_name": "Padel House Larvik, Golfbanen",
+    "slug": "padel-house-larvik-golfbanen",
+    "address": {
+      "street": "Stavernsveien 232",
+      "postal_code": "3267",
+      "city": "Larvik",
+      "sub_administrative_area": "Larvik",
+      "administrative_area": "Vestfold og Telemark",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 59.0641786,
+        "lon": 10.0834938
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1648805408/pro/tenants/4c5f5244-b4ef-479a-b5b5-3cf08ed1717c/1648805407898.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "false",
+      "CONTACT_PHONE": "+47 70310063",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Velkommen til de vakreste ute- padelbanene.\nPå Larvik Golfklubb, mellom Stavern og Larvik, finner du to double baner ute i herlig natur. \nSpill padel i fantastiske omgivelser og ta deg en velfortjent mat eller drikkepause i golfbanes egen cafe. \nRacketer kan leies i egen Pro-shop og der får du også kjøpt baller. ",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "www.padelhouse.no ",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "c6543da2-f282-4bd4-aed2-2fd538f29185",
+        "name": "1 Stavernfestivalen ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9049a853-b431-4884-b70b-9ea23c0d6a10",
+        "name": "2 Komplett Montasje",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "nb",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Velkommen til de vakreste ute- padelbanene.\n  På Larvik Golfklubb, mellom Stavern og Larvik, finner du to double baner ute i herlig natur.\n  Spill padel i fantastiske omgivelser og ta deg en velfortjent mat eller drikkepause i golfbanes egen cafe.\n  Racketer kan leies i egen Pro-shop og der får du også kjøpt baller.\n</p>\n"
+  },
+  {
+    "tenant_id": "2d16f2b0-b864-43ac-96a5-f06dc69faa79",
+    "tenant_name": "Just Golf Lyngdal",
+    "slug": "just-golf-lyngdal",
+    "address": {
+      "street": "Industriveien 3",
+      "postal_code": "4580",
+      "city": "Lyngdal",
+      "sub_administrative_area": "Lyngdal",
+      "administrative_area": "Agder",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 58.1363825,
+        "lon": 7.0426754
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1741083277/pro/tenants/2d16f2b0-b864-43ac-96a5-f06dc69faa79/1741083277070.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "false",
+      "CONTACT_PHONE": "+47 91360046",
+      "FACILITY_SNACK_BAR": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_STORE": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "WEBSITE_URL": "https://www.justpadel.no"
+    },
+    "resources": [
+      {
+        "resourceId": "3a9d4501-7613-4f8b-869b-5a7430da5f49",
+        "name": "GOLF 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "078ed88e-6b30-44f4-9870-2499201f7c4b",
+        "name": "GOLF 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "817624f8-632d-4039-8895-0d334fafcd6e",
+    "tenant_name": "Golfsimulator innendørs på Hegdal",
+    "slug": "golf-house-larvik-hegdal",
+    "address": {
+      "street": "Hegdalringen 16",
+      "postal_code": "3261 ",
+      "city": "Larvik",
+      "sub_administrative_area": "Larvik",
+      "administrative_area": "Vestfold og Telemark",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 59.0641786,
+        "lon": 10.0834938
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1674164672/pro/tenants/817624f8-632d-4039-8895-0d334fafcd6e/1674164671660.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "41f90f8f-3113-47c5-a60a-e4319782f983;38684adf-5742-49f2-b156-bb6f59637f56;af51329a-2c80-45c6-aa3d-a9c458a31b44;c8bd2cc2-2c31-45c1-ac20-e4acf3da4aaf;4516c4b9-bd65-417b-a13a-115a828cfb95;1346ac6d-90b3-4088-b576-1dfd40e09d68",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "CONTACT_PHONE": "+47 98817643",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "www.padelhouse.no/golf-house",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "fc70562b-fe8b-420f-874d-b049fae974bb",
+        "name": " Trackman 1: Golf House Trackman no 1",
+        "sport": "CRICKET",
+        "features": [
+          "indoor",
+          "artificial_grass"
+        ]
+      },
+      {
+        "resourceId": "9d2839b7-c914-420f-800f-31582c6933ca",
+        "name": "Trackman 2: Avonova ",
+        "sport": "CRICKET",
+        "features": [
+          "indoor",
+          "artificial_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "CRICKET"
+    ],
+    "communications_language": "nb",
+    "description": ""
+  },
+  {
+    "tenant_id": "95f2f7c1-35ff-43b7-8da0-ca826801dee3",
+    "tenant_name": "Padelzone ",
+    "slug": "padelzone",
+    "address": {
+      "street": "Spjotnesvegen 39",
+      "postal_code": "4645",
+      "city": "Kristiansand",
+      "sub_administrative_area": "Kristiansand",
+      "administrative_area": "Agder",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 58.160973,
+        "lon": 7.8267145
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1623843363/pro/tenants/95f2f7c1-35ff-43b7-8da0-ca826801dee3/1623843363278.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "5ddd3154-15eb-4bd7-9884-e1d07752e451",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "false",
+      "CONTACT_PHONE": "+47 45797777",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "WEBSITE_URL": "scanturf.no",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "4146529f-14ab-4f4f-a749-1b32abea1a77",
+        "name": "Søgne og Greipstad Sparebank-banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "972aec37-4fd7-475b-a3d6-3cfd04302458",
+        "name": "Bademiljø, Olto VVS-banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d6c787fb-22a1-43d8-90af-5797443a91a2",
+        "name": "FS Mur-banen (singel-bane)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "998c64b0-944a-48a1-8fac-0a80395d485a",
+    "tenant_name": "Sør Padel",
+    "slug": "sor-padel",
+    "address": {
+      "street": "Kristian Birkelandsvei 16",
+      "postal_code": "4820",
+      "city": "Froland",
+      "sub_administrative_area": "Froland kommune",
+      "administrative_area": "Agder",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 58.4955685,
+        "lon": 8.6466056
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1625473869/pro/tenants/998c64b0-944a-48a1-8fac-0a80395d485a/1625473869153.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+47 97626766",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DETAILS_PAGE_DESCRIPTION": "**Bli bitt av basillen du også.** \nPadel  er verdens raskes voksende idrettsgren, og det ikke uten grunn. Padel-tennis er motiverende da spillet gir umiddelbar følelse av mestring, selv for dem helt uten forkunnskap eller erfaring med racketsport eller andre idrettsgrener. \nNorges første rene utendørs Padelanlegg ligger på Blakstad, 7 min fra E18 ved Arendal/ Stoa, og er eneste Padelanlegg mellom Kristiansand og Larvik.\nVi tilbyr 3 flotte Panoramabaner, hvorav en er singelbane og 2 er doble. I vår lounge kan du nyte en kaffekopp eller brus og snacks mens du venter på din banetid, eller ser vennene dine spille. \nDu kan leie racket og baller hos oss, eller kjøpe direkte i loungen og fra vår webshop. Du kan også finne mer utstyr på vår web-side: \n**sørpadel.com**\nPadelfrelste entusiaster kan se frem til både turneringer, frokost-padel og jentekvelder (uten menn altså..). \nKai Risholt er disponibel for instruksjon og det kan bestilles egne eksklusive treningstider med ham.\n**Kom til Blakstad i Froland for et hyggelig Padel-game i det fri************! **\n**Idrettsglede for deg også************!**",
+      "FACILITY_VENDING_MACHINE": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "1e5cfa47-f241-478c-bf57-1267c0ca95ed;c50b2b76-8aac-4c84-85de-51f440688de1;ffe90fca-9847-469b-b506-1f5bef9b0920",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "post@sorpadel.no"
+    },
+    "resources": [],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "04:00",
+        "closing_time": "03:30"
+      },
+      "TUESDAY": {
+        "opening_time": "04:00",
+        "closing_time": "03:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "04:00",
+        "closing_time": "03:30"
+      },
+      "SATURDAY": {
+        "opening_time": "04:00",
+        "closing_time": "03:30"
+      },
+      "THURSDAY": {
+        "opening_time": "04:00",
+        "closing_time": "03:30"
+      },
+      "FRIDAY": {
+        "opening_time": "04:00",
+        "closing_time": "03:30"
+      },
+      "MONDAY": {
+        "opening_time": "04:00",
+        "closing_time": "03:30"
+      }
+    },
+    "sport_ids": [],
+    "communications_language": "nb",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  <strong class=\"font-semibold text-primary-100\">Bli bitt av basillen du også.</strong>\n  Padel er verdens raskes voksende idrettsgren, og det ikke uten grunn. Padel-tennis er motiverende da spillet gir umiddelbar følelse av mestring, selv for dem helt uten forkunnskap eller erfaring med racketsport eller andre idrettsgrener.\n  Norges første rene utendørs Padelanlegg ligger på Blakstad, 7 min fra E18 ved Arendal/ Stoa, og er eneste Padelanlegg mellom Kristiansand og Larvik.\n  Vi tilbyr 3 flotte Panoramabaner, hvorav en er singelbane og 2 er doble. I vår lounge kan du nyte en kaffekopp eller brus og snacks mens du venter på din banetid, eller ser vennene dine spille.\n  Du kan leie racket og baller hos oss, eller kjøpe direkte i loungen og fra vår webshop. Du kan også finne mer utstyr på vår web-side:\n  <strong class=\"font-semibold text-primary-100\">sørpadel.com</strong>\n  Padelfrelste entusiaster kan se frem til både turneringer, frokost-padel og jentekvelder (uten menn altså..).\n  Kai Risholt er disponibel for instruksjon og det kan bestilles egne eksklusive treningstider med ham.\n  <strong class=\"font-semibold text-primary-100\">Kom til Blakstad i Froland for et hyggelig Padel-game i det fri</strong>**********! **\n  <strong class=\"font-semibold text-primary-100\">Idrettsglede for deg også</strong>**********!**\n</p>\n"
+  },
+  {
+    "tenant_id": "761c6a71-a514-48d5-9957-79a89fe173ad",
+    "tenant_name": "Kristiansund Padel",
+    "slug": "kristiansund-padel",
+    "address": {
+      "street": "Bytesteinen 1",
+      "postal_code": "6517",
+      "city": "Kristiansund",
+      "sub_administrative_area": "Kristiansund",
+      "administrative_area": "Møre og Romsdal",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 63.1094262,
+        "lon": 7.7886569
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1640085195/pro/tenants/761c6a71-a514-48d5-9957-79a89fe173ad/1640085195118.jpg"
+    ],
+    "properties": {
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "5c8f41ab-b238-42af-b53c-2919fdcdfe46;084ab73e-f93d-47be-939c-191847e2285f",
+      "DETAILS_PAGE_DESCRIPTION": "Verdens raskest voksende sport er etablert i Kristiansund!\nVi har 3 dobbel baner og 1 singel bane.\nBook din bane nå!",
+      "WEBSITE_URL": "https://www.kristiansundpadel.no/",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+47 92236519"
+    },
+    "resources": [
+      {
+        "resourceId": "990923e7-07bc-4eed-a6c5-4c03bde58ac6",
+        "name": "Eggedosis｜1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7050b7d8-f6f5-4c10-af94-293ab5ad14c3",
+        "name": "Carlsen UR – Certina｜2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7d54cac2-074f-4352-903c-3850428e0218",
+        "name": "NEAS TennisKids｜3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "539ee62c-aed3-46a3-8ac5-f9e1b66ad73d",
+        "name": "Single  Bane | 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "nb",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Verdens raskest voksende sport er etablert i Kristiansund!\n  Vi har 3 dobbel baner og 1 singel bane.\n  Book din bane nå!\n</p>\n"
+  },
+  {
+    "tenant_id": "5a767e7f-5671-49a1-8efe-aee35ef65887",
+    "tenant_name": "Karmøy Padel",
+    "slug": "karmoy-padel-avaldsnes",
+    "address": {
+      "street": "Helganesveien 34",
+      "postal_code": "4262",
+      "city": "Avaldsnes",
+      "sub_administrative_area": "Avaldsnes",
+      "administrative_area": "Avaldsnes",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 59.34111,
+        "lon": 5.270864
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1701336132/pro/tenants/5a767e7f-5671-49a1-8efe-aee35ef65887/1701336131922.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "10d61fd5-cd56-4d8d-9c6f-0da4f6c36ce9",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://www.karmoypadel.no",
+      "CONTACT_PHONE": "+47 98822402",
+      "DETAILS_PAGE_DESCRIPTION": ""
+    },
+    "resources": [
+      {
+        "resourceId": "301e20d9-8f75-453e-ac2b-777e04dab4fa",
+        "name": "Møller Bil 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ac6d4ec6-381a-49f7-8c52-1632a0c3d08b",
+        "name": "SEAM Banen 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "014244a3-9f57-4200-a2e1-3036db4cfe3a",
+        "name": "Haugaland Kraft 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b60927d3-87c1-4dcc-9a21-654ced832f66",
+        "name": "Haugaland Padelklubb 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "5aebd992-3722-4f1b-848f-7c843a819790",
+    "tenant_name": "Padelon Haugesund",
+    "slug": "padelon-haugesund",
+    "address": {
+      "street": "Norevegen 36",
+      "postal_code": "5542",
+      "city": "Haugesund",
+      "sub_administrative_area": "Karmøy",
+      "administrative_area": "Rogaland",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 59.384572,
+        "lon": 5.3106803
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1637263779/pro/tenants/5aebd992-3722-4f1b-848f-7c843a819790/1637263778269.jpg"
+    ],
+    "properties": {
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "2452c7ed-aab2-4c6c-a45f-73dabbcdb7fd;c2f4b467-9824-4ea5-b697-e858ffe21fca;c473f434-4e7a-4f06-bd29-73f20ffe4b2d;cf22acc7-ef45-4f02-aa1b-df3411c27348;77737aaa-0eb4-44c5-a76b-6e637daef5ab;633c680b-e279-40a8-9543-0d76e77e867d;b26b906a-edb4-4b18-973e-ffa6ed660e8f",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Velkommen til Padelon Haugesund!\n\n7 padelbaner",
+      "WEBSITE_URL": "https://padelon.no",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+4790723802"
+    },
+    "resources": [
+      {
+        "resourceId": "0ecd249c-5762-42f5-ab95-e456cf7a6b4c",
+        "name": "Wee.no",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9dfa9242-6bef-4b9c-b05c-6fae38e7fa25",
+        "name": "EMP Secure banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "fecdf97e-4c60-4729-a216-64f793394541",
+        "name": "Promo 1 banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7bbfd80d-09c8-443b-80dc-d00dec363a7b",
+        "name": "Haugaland Malersevice AS",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a0429ce0-4900-4892-b2bd-7e2f9a6bd6d6",
+        "name": "Paxon banen ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "35d2f5bf-2499-43b2-b905-34feae77b838",
+        "name": "Nordlo banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8af4295e-6f5c-4193-ae2f-4f99d1b9070b",
+        "name": "Scale AQ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "02:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "05:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "05:00",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "05:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "05:00",
+        "closing_time": "02:00"
+      },
+      "THURSDAY": {
+        "opening_time": "05:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "nb",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Velkommen til Padelon Haugesund!</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">7 padelbaner</p>\n"
+  },
+  {
+    "tenant_id": "8a4c36dd-91c4-4f91-ab40-05fde6a98798",
+    "tenant_name": "Padelon Fossegrenda",
+    "slug": "padelon-fossegrenda",
+    "address": {
+      "street": "Fossegrenda 9",
+      "postal_code": "7038",
+      "city": "Trondheim",
+      "sub_administrative_area": "Trondheim",
+      "administrative_area": "Trøndelag",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 63.387403,
+        "lon": 10.3998575
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1648729979/pro/tenants/8a4c36dd-91c4-4f91-ab40-05fde6a98798/1648729978431.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+47 73100277",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://www.padelon.no/",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "21836df1-2494-4654-9c69-0895fa75aced",
+      "FACILITY_STORE": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padelon Fossegrenda har 4 dobbel baner, 2 singel baner, 1 cageballbane, 3 Trackman golfsimulatorer, 2 bordtennisbord og fuzzball."
+    },
+    "resources": [
+      {
+        "resourceId": "5ec72c22-f1ac-4707-9b0e-7d0fa35db906",
+        "name": "Padelon Bane 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5a287370-d8f6-4c45-9113-ab1b5909100d",
+        "name": "Tempe Blikk Banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6efc6d5d-a804-4404-a8e2-4d52739cff9d",
+        "name": "Boreal Banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6e162b5a-2136-43be-bfa6-00cc6d284f54",
+        "name": "Trondheim Regnskapskontor Banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "530a8769-449d-4d0c-a50d-c121f90f33b2",
+        "name": "Expoline Banen SINGEL",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e966fa92-6db9-4c70-927d-b6105050dce3",
+        "name": "PK Service Banen SINGEL",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "22dbd881-cc8f-4a2d-bff3-0d0e18030edf",
+        "name": "Dragonet ballmaskin for oppvarming/øving 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "nb",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padelon Fossegrenda har 4 dobbel baner, 2 singel baner, 1 cageballbane, 3 Trackman golfsimulatorer, 2 bordtennisbord og fuzzball.</p>\n"
+  },
+  {
+    "tenant_id": "90e40740-472f-4ade-bdd3-ce8d6880a367",
+    "tenant_name": "Cageball@Padelon",
+    "slug": "cageballpadelon",
+    "address": {
+      "street": "Fossegrenda 9",
+      "postal_code": "7038",
+      "city": "Trondheim",
+      "sub_administrative_area": "Trondheim",
+      "administrative_area": "Trøndelag",
+      "country": "Norway",
+      "country_code": "NO",
+      "coordinate": {
+        "lat": 63.387403,
+        "lon": 10.3998575
+      },
+      "timezone": "Europe/Oslo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1645650341/pro/tenants/90e40740-472f-4ade-bdd3-ce8d6880a367/1645650339872.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1645650355/pro/tenants/90e40740-472f-4ade-bdd3-ce8d6880a367/1645650354283.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "I Fossegrenda 9 har vi en super cageball-bane!\n20 * 12 meter ",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://www.padelon.no/aktiviteter-fossegrenda",
+      "CONTACT_PHONE": "+47 73100277",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "ce963cd3-a51d-4e64-bfc7-066e55573079",
+        "name": "Padelon Cageball",
+        "sport": "FOOTBALL_OTHERS",
+        "features": [
+          "indoor",
+          "football11",
+          "synthetic_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "FOOTBALL_OTHERS"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  I Fossegrenda 9 har vi en super cageball-bane!\n  20 * 12 meter\n</p>\n"
+  }
+]

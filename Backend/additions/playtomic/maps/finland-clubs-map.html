@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>Total locations: 123</strong>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = [{"lat":60.1912513,"lng":24.8752162,"name":"Kalastajatorpan Tennisklubi"},{"lat":61.57028338,"lng":21.51692259,"name":"Padel Imperium • Yyteri"},{"lat":60.3955824,"lng":25.1083872,"name":"Padel & Golfkamari"},{"lat":60.8064928,"lng":21.4157375,"name":"Padel Uusikaupunki Urheilukeskus"},{"lat":62.98267179,"lng":27.72136004,"name":"Padel Vision - Toivala"},{"lat":62.2475404,"lng":25.6788041,"name":"Buugi"},{"lat":61.696587,"lng":27.2507257,"name":"Padel Michel"},{"lat":60.1274511,"lng":23.5440883,"name":"Fiskarsin Tenniskerho ry"},{"lat":64.6751227,"lng":24.4823304,"name":"Padelpallo.fi"},{"lat":61.90883558,"lng":29.27890908,"name":"Padel Zone Kerimäki ulkokenttä"},{"lat":63.63875348,"lng":22.52147941,"name":"Pörkenäs Padel Club, Pietarsaari "},{"lat":61.140107,"lng":21.5631155,"name":"Superpadel Rauma"},{"lat":59.9413998,"lng":23.7260502,"name":"Suomen Ulkopadel Tammisaari"},{"lat":63.08838,"lng":21.5899698,"name":"Vaasa Sportpark"},{"lat":60.40881824,"lng":25.69308722,"name":"Padel Arena Porvoo"},{"lat":61.421962,"lng":23.7548503,"name":"Padel Sääksjärvi"},{"lat":62.61946255,"lng":22.42076157,"name":"Bueno Padel Kurikka"},{"lat":60.98934238,"lng":25.70644721,"name":"Lahti Padel Areena"},{"lat":62.22631166,"lng":25.80539855,"name":"Padel Adder Kartano, Jyväskylä"},{"lat":60.46004232,"lng":26.92372683,"name":"Padel Kotka"},{"lat":62.874322,"lng":27.6617674,"name":"Padel Bellanpuisto"},{"lat":60.37893759,"lng":25.24937614,"name":"Suursuon Tennisseura"},{"lat":60.23133968,"lng":25.03688455,"name":"Superpadel Latokartano "},{"lat":62.26485215,"lng":24.70419092,"name":"JupLa Padel Club"},{"lat":59.9761406,"lng":23.8820105,"name":"Barösund Padel"},{"lat":61.48282225,"lng":23.57311798,"name":"Padel247"},{"lat":62.615175,"lng":25.715475,"name":"Hiekkanurmikenttä Liikuntapuisto"},{"lat":62.23731936,"lng":23.76060434,"name":"Padel Club Virrat"},{"lat":61.064707,"lng":28.20455023,"name":"Padel Zone Lappeenranta ulkokentät"},{"lat":62.61393286,"lng":25.71187622,"name":"Äänekosken Tennishalli"},{"lat":62.98267179,"lng":27.72136004,"name":"Padel Vision - Toivala"},{"lat":62.61393286,"lng":25.71187622,"name":"Äänekosken Tennishalli"},{"lat":60.3857953,"lng":25.1451726,"name":"XO Center"},{"lat":64.22637328,"lng":27.71671761,"name":"Padelson"},{"lat":61.140107,"lng":21.5631155,"name":"Superpadel Rauma"},{"lat":59.9413998,"lng":23.7260502,"name":"Suomen Ulkopadel Tammisaari"},{"lat":63.08838,"lng":21.5899698,"name":"Vaasa Sportpark"},{"lat":60.40881824,"lng":25.69308722,"name":"Padel Arena Porvoo"},{"lat":61.421962,"lng":23.7548503,"name":"Padel Sääksjärvi"},{"lat":62.61946255,"lng":22.42076157,"name":"Bueno Padel Kurikka"},{"lat":62.8727874,"lng":27.6688041,"name":"Beebee Padel"},{"lat":61.8734594,"lng":28.87420251,"name":"Padel Zone Savonlinna Ulkokentät"},{"lat":64.111111,"lng":25.22222,"name":"Entinen Padel UNO EI KÄYTÖSSÄ"},{"lat":60.4841121,"lng":22.3975789,"name":"Padel Lieto"},{"lat":61.4728382,"lng":24.0357151,"name":"Mansen Tennis Oy"},{"lat":60.06947116,"lng":23.67799092,"name":"Karis Padel"},{"lat":60.27690047,"lng":24.74421396,"name":"Superpadel Ringside"},{"lat":59.90916897,"lng":23.29084768,"name":"Predium padel & tennis"},{"lat":60.3518172,"lng":25.6242653,"name":"Kartano Padel Porvoo - Ulkokenttä Haikkoo"},{"lat":66.51938606,"lng":25.74478128,"name":"PIHA Padel&Baari"},{"lat":62.555056,"lng":25.864102,"name":"Suojarinne"},{"lat":63.10923967,"lng":21.66050439,"name":"GolfStudio Vaasa"},{"lat":62.971914,"lng":23.034271,"name":"LatoAreena"},{"lat":62.2483171,"lng":25.77467992,"name":"Padel Keskisuomalainen"},{"lat":60.44446771,"lng":26.23640295,"name":"LTK- Casinopuiston kentät"},{"lat":60.07618252,"lng":24.28514331,"name":"Pickala Padel"},{"lat":59.92257953,"lng":22.40916448,"name":"KASNÄS PADEL OCH TENNIS"},{"lat":60.3036717,"lng":25.0503028,"name":"Hiekkaharjun Tenniskeskus"},{"lat":60.3448783,"lng":25.0260579,"name":"Padel & Golf Plaza"},{"lat":61.48282225,"lng":23.57311798,"name":"Padel247"},{"lat":64.111111,"lng":25.22222,"name":"Entinen Padel UNO EI KÄYTÖSSÄ"},{"lat":60.4841121,"lng":22.3975789,"name":"Padel Lieto"},{"lat":61.4728382,"lng":24.0357151,"name":"Mansen Tennis Oy"},{"lat":60.06947116,"lng":23.67799092,"name":"Karis Padel"},{"lat":60.27690047,"lng":24.74421396,"name":"Superpadel Ringside"},{"lat":59.90916897,"lng":23.29084768,"name":"Predium padel & tennis"},{"lat":62.3001126,"lng":27.1617958,"name":"Padel Kunnonkeskus"},{"lat":64.21261643,"lng":27.77604793,"name":"Padelareena Sartek"},{"lat":60.4289149,"lng":24.2040318,"name":"Hills by GoGolf Padel"},{"lat":62.4111469,"lng":25.9615091,"name":"Laukaan sataman padel-kenttä"},{"lat":62.31262462,"lng":27.89217721,"name":"Padel Zone Varkaus ulkokentät"},{"lat":62.8745571,"lng":27.6619516,"name":"Padel Club Kuopio"},{"lat":61.4741472,"lng":21.7698598,"name":"Porin Tennishalli"},{"lat":61.48038394,"lng":23.70341539,"name":"Perdel Padel Club"},{"lat":60.3774522,"lng":23.0594441,"name":"Wiurila Padel"},{"lat":65.7381192,"lng":24.5548791,"name":"Padel Lappi - Kemi"},{"lat":60.6135132,"lng":24.67667362,"name":"Kytäjä Padel"},{"lat":61.18752767,"lng":28.74413708,"name":"Padel Imatra"},{"lat":60.21368342,"lng":24.76241251,"name":"Tennismesta"},{"lat":60.38299743,"lng":23.14296589,"name":"Open Padel Salo"},{"lat":59.92257953,"lng":22.40916448,"name":"KASNÄS PADEL OCH TENNIS"},{"lat":60.3036717,"lng":25.0503028,"name":"Hiekkaharjun Tenniskeskus"},{"lat":60.3448783,"lng":25.0260579,"name":"Padel & Golf Plaza"},{"lat":61.14212069,"lng":21.48078006,"name":"Padel Club Rauma"},{"lat":60.04351712,"lng":22.66818074,"name":"Kemiönsaaren Padel"},{"lat":60.07653849,"lng":24.28535051,"name":"Pickala Tennis"},{"lat":62.2606613,"lng":21.3598751,"name":"Suomen Ulkopadel Kristiinankaupunki"},{"lat":61.806933,"lng":22.40164357,"name":"Padelix Kankaanpää"},{"lat":60.4378097,"lng":24.9503552,"name":"Padel Farmi Rusutjärvi on "},{"lat":65.73745354,"lng":24.55310932,"name":"Karihaaran Verkkopalloseura "},{"lat":60.63061122,"lng":24.82969481,"name":"Padel Sveitsi"},{"lat":60.15337524,"lng":24.93151143,"name":"PadelCenter Hernesaari"},{"lat":60.6197053,"lng":25.3076944,"name":"Mäntsälä Padel"},{"lat":61.2010902,"lng":28.7370491,"name":"Imatran Tennis"},{"lat":62.3872295,"lng":25.672763,"name":"Padel Tikka"},{"lat":60.74281349,"lng":24.76454536,"name":"Padel King Riihimäki"},{"lat":62.78430559,"lng":22.90412805,"name":"Bueno Padel Seinäjoki"},{"lat":62.2543892,"lng":25.7579479,"name":"Kankaan padel"},{"lat":60.5691785,"lng":27.2743117,"name":"Suomen Ulkopadel Hamina"},{"lat":62.216187,"lng":25.717608,"name":"Padel Adder Keljo, Jyväskylä"},{"lat":62.2605914,"lng":25.776402,"name":"Padel Adder Seppälä, Jyväskylä"},{"lat":61.18575605,"lng":22.69717493,"name":"Padelix Huittinen"},{"lat":60.7989231,"lng":25.7110847,"name":"PadelMesta"},{"lat":61.4881779,"lng":21.7641058,"name":"Liikuntakeskus Momentum"},{"lat":60.79672126,"lng":21.40466388,"name":"Padel Uusikaupunki"},{"lat":61.86739642,"lng":25.19293255,"name":"Padel Adder Seppola, Jämsä"},{"lat":63.5346227,"lng":22.5458485,"name":"Nykarleby Padel"},{"lat":61.35383474,"lng":22.91972948,"name":"Padelix Sastamala"},{"lat":61.20112067,"lng":27.67377356,"name":"Olkkolan Hovi Padel"},{"lat":60.9687446,"lng":25.64766152,"name":"Padel Laune"},{"lat":61.56228403,"lng":25.18558155,"name":"Padel Kuhmoinen"},{"lat":61.8650883,"lng":28.9217156,"name":"Padel Zone Savonlinna Sisäkentät"},{"lat":64.9937639,"lng":25.4446377,"name":"GOS Group Areena / Poropadel Limingantulli"},{"lat":61.4741472,"lng":21.7698598,"name":"Pori Padel x Festum Areena  / Isomäki"},{"lat":62.31881289,"lng":27.84888199,"name":"Padel Zone Varkaus sisähalli"},{"lat":61.0382886,"lng":28.1313747,"name":"Padel ZUNO Lentokentäntie"},{"lat":60.79549991,"lng":23.64395093,"name":"Everypadel Oy"},{"lat":61.5022021,"lng":23.6208377,"name":"Golfsimulaattori / Padel West"},{"lat":60.2735821,"lng":24.9799463,"name":"Superpadel Siltamäki"},{"lat":62.88559455,"lng":27.69788983,"name":"Padel Väinölänniemi"},{"lat":62.2543892,"lng":25.7579479,"name":"Kankaan padel"},{"lat":60.5691785,"lng":27.2743117,"name":"Suomen Ulkopadel Hamina"},{"lat":62.216187,"lng":25.717608,"name":"Padel Adder Keljo, Jyväskylä"}];
+        const center = [61.590864913577235, 24.789954553333335];
+
+        const map = L.map('map').setView(center, 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        locations.forEach((location) => {
+            const marker = L.marker([location.lat, location.lng]).addTo(map);
+            marker.bindPopup(`<strong>${location.name}</strong><br>Lat: ${location.lat}<br>Lng: ${location.lng}`);
+        });
+    </script>
+</body>
+</html>

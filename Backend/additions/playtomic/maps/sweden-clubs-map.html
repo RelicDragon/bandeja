@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>Total locations: 116</strong>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = [{"lat":58.36554213,"lng":16.8233339,"name":"Ängens Padel"},{"lat":56.69818314,"lng":16.32746984,"name":"Hansa Active GOLF"},{"lat":58.6860196,"lng":13.8240389,"name":"Padelcenter Mariestad"},{"lat":57.6675723,"lng":15.87370268,"name":"Vimmerby TK"},{"lat":59.384648,"lng":16.677625,"name":"Jäders If Padelcourt"},{"lat":57.2373225,"lng":16.02776907,"name":"Berga TK"},{"lat":59.56087046,"lng":16.11156874,"name":"Sillsta Padel "},{"lat":56.51872019,"lng":14.98896611,"name":"Tingsryd Padel "},{"lat":56.9577147,"lng":12.3650699,"name":"Rosendals Tennisklubb  "},{"lat":58.3146939,"lng":14.2949035,"name":"Hjo Padel"},{"lat":60.576709,"lng":17.450464,"name":"Älvkarleby"},{"lat":56.6545843,"lng":16.5384044,"name":"Färjestadens padel"},{"lat":56.75272249,"lng":15.27661367,"name":"Glasriket Padel BIKUPAN (Lessebo)"},{"lat":58.3913371,"lng":13.57931741,"name":"Axvall Padel"},{"lat":55.9291162,"lng":13.97008153,"name":"Axonahallen"},{"lat":56.0124355,"lng":14.1234019,"name":"N Padel Kristianstad"},{"lat":57.93126668,"lng":12.52250536,"name":"Alingsås Tennisklubb "},{"lat":58.3744957,"lng":13.4250161,"name":"Padel Petersburg"},{"lat":58.70703626,"lng":12.45657657,"name":"Padel Center Mellerud"},{"lat":56.7519116,"lng":14.903291,"name":"Ingelstad Idrottsklubb"},{"lat":63.02322878,"lng":18.64205064,"name":"Höga Kusten Padel"},{"lat":58.49383,"lng":15.07307,"name":"Padelladan"},{"lat":55.62103651,"lng":14.2750514,"name":"Österlens Golfklubb"},{"lat":55.71244736,"lng":13.35235831,"name":"Södra Sandby Tennisklubb"},{"lat":55.51178919,"lng":14.33838962,"name":"Branteviks Padel"},{"lat":59.2847758,"lng":18.7436614,"name":"Runmarö TK"},{"lat":56.65899181,"lng":16.50843781,"name":"Björnhovda Padel"},{"lat":64.68308269,"lng":21.21913947,"name":"Kurjovikens Padel"},{"lat":58.7111577,"lng":13.8333603,"name":"Carins Padel "},{"lat":55.374877,"lng":13.17967,"name":"Padelcenter Fitness Force"},{"lat":64.68308269,"lng":21.21913947,"name":"Kurjovikens Padel"},{"lat":58.7111577,"lng":13.8333603,"name":"Carins Padel "},{"lat":55.374877,"lng":13.17967,"name":"Padelcenter Fitness Force"},{"lat":64.7625255,"lng":20.9677341,"name":"Skellefteå Tennisklubb - ICA Maxi Tennis & Padel Center"},{"lat":58.3146939,"lng":14.2949035,"name":"Hjo Padel"},{"lat":60.576709,"lng":17.450464,"name":"Älvkarleby"},{"lat":56.6545843,"lng":16.5384044,"name":"Färjestadens padel"},{"lat":56.26923,"lng":16.39723,"name":"Grönhögen Padel & Sportcenter"},{"lat":58.46903177,"lng":13.42452131,"name":"Padel Lundsbrunn"},{"lat":57.71914615,"lng":14.80297693,"name":"Annebergs GIF"},{"lat":59.45198658,"lng":16.32166312,"name":"Kvicksund Water Court"},{"lat":55.92277208,"lng":14.2735227,"name":"Åhus Padelcourt på Kristianstads Golfklubb & Destination"},{"lat":58.34965732,"lng":14.049922,"name":"Värsås Sportcenter"},{"lat":56.14286382,"lng":13.40377261,"name":"Allstar Padel & Gym "},{"lat":56.720611,"lng":14.718504,"name":"Kalvsviks Padel"},{"lat":57.268008,"lng":16.457323,"name":"Oskarshamns Padelklubb"},{"lat":77.54094,"lng":5.20467,"name":"Best Club Ever"},{"lat":55.9290977,"lng":13.9697543,"name":"PadelXone i Tollarp"},{"lat":56.45583638,"lng":13.58841443,"name":"Markaryds Bowlinghall AB"},{"lat":58.412557,"lng":13.8474718,"name":"Skövde Tennisförening "},{"lat":58.69175891,"lng":14.11775173,"name":"Töreboda PadelCenter"},{"lat":56.0084756,"lng":14.1057323,"name":"DoPadel SocialClub"},{"lat":56.02582163,"lng":14.19290415,"name":"LePadel"},{"lat":55.397221,"lng":12.8647121,"name":"Falsterbo Resort"},{"lat":56.74671,"lng":15.2814287,"name":"Glasriket Padel DJURHULT (Lessebo)"},{"lat":56.0124355,"lng":14.1234019,"name":"N Padel Kristianstad"},{"lat":57.93126668,"lng":12.52250536,"name":"Alingsås Tennisklubb "},{"lat":58.3744957,"lng":13.4250161,"name":"Padel Petersburg"},{"lat":56.538438,"lng":14.814491,"name":"Urdavallen"},{"lat":58.16459844,"lng":13.56319045,"name":"Falköpings Tennisklubb"},{"lat":62.54881979,"lng":12.52313194,"name":"Funäsdalen Padelcenter"},{"lat":58.0230955,"lng":14.9532417,"name":"Crane Padel Arena"},{"lat":56.538438,"lng":14.814491,"name":"Urdavallen"},{"lat":58.16459844,"lng":13.56319045,"name":"Falköpings Tennisklubb"},{"lat":58.888197,"lng":14.0133294,"name":"Padel Askevik"},{"lat":57.07401867,"lng":16.47578113,"name":"Ostkustens Padelbana Mönsterås"},{"lat":59.5094081,"lng":16.0241888,"name":"Macksta Padel"},{"lat":58.3735608,"lng":13.4567647,"name":"Skara Padel "},{"lat":57.37817094,"lng":16.55586544,"name":"Figeholm Padel"},{"lat":57.90949617,"lng":16.69905463,"name":"Loftahammars GK"},{"lat":63.34230426,"lng":14.23798518,"name":"Hallströms Padel"},{"lat":58.4936659,"lng":13.1939952,"name":"Padelgaraget Lidköping"},{"lat":56.62762563,"lng":16.65976743,"name":"Bläsinge Padel och Fritid"},{"lat":59.45061,"lng":16.4305857,"name":"Seaside Padel"},{"lat":57.9257653,"lng":13.8590734,"name":"Mullsjö Padel"},{"lat":59.13545586,"lng":16.69860194,"name":"Grinda Gårds Padel"},{"lat":58.0201243,"lng":13.5700797,"name":"Åsarps Padel"},{"lat":62.27515958,"lng":17.36022286,"name":"Klockarbergets TK"},{"lat":58.61794568,"lng":13.38651255,"name":"Hellekis Padel"},{"lat":56.348738,"lng":14.584288,"name":"Sportängen"},{"lat":57.16186424,"lng":16.45920637,"name":"Påskallaviks Tennis och Padelklubb"},{"lat":58.4171333,"lng":14.1694871,"name":"Tibro TK"},{"lat":56.14286382,"lng":13.40377261,"name":"Allstar Padel & Gym "},{"lat":56.720611,"lng":14.718504,"name":"Kalvsviks Padel"},{"lat":57.268008,"lng":16.457323,"name":"Oskarshamns Padelklubb"},{"lat":77.54094,"lng":5.20467,"name":"Best Club Ever"},{"lat":58.1697023,"lng":13.9560636,"name":"Tidaholms TK"},{"lat":57.391916,"lng":14.680413,"name":"Hofgårds Padel Sävsjö"},{"lat":56.9618617,"lng":16.3968861,"name":"Ålem Solberga Padel"},{"lat":58.0201243,"lng":13.5700797,"name":"Åsarps Padel"},{"lat":62.27515958,"lng":17.36022286,"name":"Klockarbergets TK"},{"lat":56.6463965,"lng":16.4994979,"name":"Ziwa Padel"},{"lat":57.8550442,"lng":18.7652199,"name":"Kappelshamns Veranda"},{"lat":56.7415535,"lng":15.2700204,"name":"Team Edberg Padel "},{"lat":57.8269104,"lng":14.8231653,"name":"ASK Padel"},{"lat":56.314004,"lng":14.144967,"name":"Glimma Padel"},{"lat":59.37920643,"lng":16.49728248,"name":"Padel Sports Club Eskilstuna"},{"lat":58.705737,"lng":13.8384487,"name":"Mariestads TK"},{"lat":56.6718298,"lng":12.8529638,"name":"Halmstad Tennishall"},{"lat":59.03599847,"lng":12.2308355,"name":"JL Padelcourt"},{"lat":58.0230955,"lng":14.9532417,"name":"Crane Padel Arena"},{"lat":58.61794568,"lng":13.38651255,"name":"Hellekis Padel"},{"lat":58.5333106,"lng":15.0771414,"name":"Motala padel arena"},{"lat":57.6473431,"lng":18.3279212,"name":"Hangaren Social Club"},{"lat":56.81393936,"lng":13.907868,"name":"Padel Club Ljungby"},{"lat":59.400598,"lng":15.865271,"name":"Arboga Padel"},{"lat":62.02386453,"lng":17.40657521,"name":"Sörfjärdens Padel Golfklubb"},{"lat":56.64801007,"lng":16.16235895,"name":"Krankelösa Padel"},{"lat":56.6721384,"lng":15.3719272,"name":"Skruvs IF"},{"lat":56.348738,"lng":14.584288,"name":"Sportängen"},{"lat":57.16186424,"lng":16.45920637,"name":"Påskallaviks Tennis och Padelklubb"},{"lat":58.4171333,"lng":14.1694871,"name":"Tibro TK"},{"lat":59.05517193,"lng":16.56527512,"name":"Flens Padelcenter"},{"lat":56.06380926,"lng":14.49160045,"name":"Bromölla Padel Court"},{"lat":59.25270496,"lng":17.09564632,"name":"GAMLA STATIONEN"},{"lat":57.90488253,"lng":15.20546007,"name":"Asby IF"}];
+        const center = [58.36763206775863, 14.940248494827587];
+
+        const map = L.map('map').setView(center, 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        locations.forEach((location) => {
+            const marker = L.marker([location.lat, location.lng]).addTo(map);
+            marker.bindPopup(`<strong>${location.name}</strong><br>Lat: ${location.lat}<br>Lng: ${location.lng}`);
+        });
+    </script>
+</body>
+</html>

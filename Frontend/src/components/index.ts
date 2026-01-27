@@ -43,7 +43,6 @@ export * from './headerContent';
 export * from './ToggleSwitch';
 export * from './createGame';
 export * from './createLeague';
-export * from './CitySelectorModal';
 export * from './OTPInput';
 export * from './LanguageSelector';
 export * from './ThemeSelector';

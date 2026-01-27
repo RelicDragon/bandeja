@@ -469,19 +469,6 @@ export class GameReadService {
       ]
     };
 
-    const cityIdToFilter = userCityId;
-    if (cityIdToFilter) {
-      where.cityId = cityIdToFilter;
-    } else {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { currentCityId: true, isAdmin: true }
-      });
-      if (user && user.currentCityId && !user.isAdmin) {
-        where.cityId = user.currentCityId;
-      }
-    }
-
     const games = await prisma.game.findMany({
       where,
       include: getGameInclude() as any,
@@ -508,19 +495,6 @@ export class GameReadService {
       status: 'ARCHIVED',
       startTime: { lt: today }
     };
-
-    const cityIdToFilter = userCityId;
-    if (cityIdToFilter) {
-      where.cityId = cityIdToFilter;
-    } else {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { currentCityId: true, isAdmin: true }
-      });
-      if (user && user.currentCityId && !user.isAdmin) {
-        where.cityId = user.currentCityId;
-      }
-    }
 
     const games = await prisma.game.findMany({
       where,

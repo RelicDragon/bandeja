@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>Total locations: 56</strong>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = [{"lat":51.8850276,"lng":5.6109854,"name":"Padelclub Druten"},{"lat":52.5170576,"lng":4.9852586,"name":"Padel Indoor Purmerend "},{"lat":52.2511123,"lng":6.3032577,"name":"Padelife Deventer"},{"lat":52.3910189,"lng":4.8509004,"name":"PLAYERSHOME 2"},{"lat":52.1907529,"lng":5.134593,"name":"Hyline Club"},{"lat":51.98206681,"lng":5.0909212,"name":"Padel Club Vianen"},{"lat":52.03022403,"lng":5.09154498,"name":"Padel Fabrique | Nieuwegein"},{"lat":51.98764832,"lng":4.3294063,"name":"Full Speed Padel Delft"},{"lat":52.0429838,"lng":4.3338608,"name":"Plaza Padel Rijswijk"},{"lat":52.33460801,"lng":4.77115501,"name":"Padelpoints Badhoevedorp"},{"lat":51.99556897,"lng":4.36451191,"name":"Padel City "},{"lat":51.3777265,"lng":5.7120775,"name":"Casa de Padel Someren"},{"lat":52.29039488,"lng":4.66573207,"name":"Padelclub Hoofddorp "},{"lat":52.0129551,"lng":5.0543329,"name":"Padel2Go IJsselstein BV"},{"lat":51.9695343,"lng":6.7241124,"name":"Indoor Padel Winterswijk (Opening Soon!)"},{"lat":52.0560866,"lng":4.3297463,"name":"Estate Padel Club"},{"lat":52.3430714,"lng":4.8289517,"name":"B. Amsterdam padel (powered by PadelCasa)"},{"lat":51.8553063,"lng":5.8402042,"name":"Padel Club Nijmegen"},{"lat":52.2280739,"lng":5.4653042,"name":"Padelcentrum Bol Nijkerk"},{"lat":51.86087482,"lng":6.47961803,"name":"HC Indoor Padel Achterhoek"},{"lat":52.005678,"lng":5.92971254,"name":"Arnhem - Valkenhuizen - Padel - 5x5 Speedsoccer"},{"lat":52.5172608,"lng":5.0396444,"name":"Padelcentrum Bol Edam"},{"lat":52.249756,"lng":6.211455,"name":"Deventer Padel - De Scheg"},{"lat":51.9761083,"lng":5.787333,"name":"TPV Duno - Padel"},{"lat":52.39511346,"lng":4.66963267,"name":"PADEL25 Haarlem - INDOOR"},{"lat":52.227683,"lng":5.973027,"name":"Apeldoorn Padel"},{"lat":51.68270963,"lng":5.05953839,"name":"Plaza Padel Waalwijk"},{"lat":52.6105822,"lng":4.7020841,"name":"Plaza Padel Heiloo"},{"lat":51.9280893,"lng":4.6046291,"name":"Padelclub L Oeuf"},{"lat":52.47904672,"lng":4.66780536,"name":"Clubhouse - Padel & Ping Pong"},{"lat":52.29039488,"lng":4.66573207,"name":"Padelclub Hoofddorp "},{"lat":52.2775059,"lng":4.8369668,"name":"Padel Mate Club NTC Amstelveen "},{"lat":52.3430714,"lng":4.8289517,"name":"B. Amsterdam padel (powered by PadelCasa)"},{"lat":51.9933657,"lng":4.5435447,"name":"Padelife Rottemeren"},{"lat":52.6682551,"lng":5.1184924,"name":"Padel Mate Club Hoorn (Oosterblokker)"},{"lat":51.88299353,"lng":5.10287329,"name":"Padelclub Asperen"},{"lat":52.01803491,"lng":4.53593275,"name":"Focus Padel Plaza"},{"lat":51.91009162,"lng":4.54489751,"name":"Rive Club Padel at Rivium District Capelle aan den IJssel"},{"lat":52.1871231,"lng":4.4993235,"name":"Dekker Warmond Leiden"},{"lat":52.2389267,"lng":6.8340121,"name":"Plaza Padel Enschede"},{"lat":52.227683,"lng":5.973027,"name":"Apeldoorn Padel"},{"lat":51.68270963,"lng":5.05953839,"name":"Plaza Padel Waalwijk"},{"lat":52.6105822,"lng":4.7020841,"name":"Plaza Padel Heiloo"},{"lat":51.4842126,"lng":4.9505494,"name":"Padel Club Alphen (Noord Brabant)"},{"lat":51.99524151,"lng":4.33229935,"name":"Allround Padel Club"},{"lat":52.3902426,"lng":4.8256488,"name":"Plaza Padel Amsterdam"},{"lat":52.2564271,"lng":5.2394714,"name":"Plaza Padel Laren"},{"lat":52.1032265,"lng":4.35539802,"name":"Nieuw Marlot"},{"lat":52.5320631,"lng":6.0871674,"name":"PadelZwolle"},{"lat":52.37156038,"lng":4.66096646,"name":"WePadel Haarlem"},{"lat":52.45556478,"lng":4.80829414,"name":"Padelclub Zaandam"},{"lat":52.4111782,"lng":4.8789782,"name":"NDSM Padel"},{"lat":51.94755039,"lng":4.43500899,"name":"Padel City Fletcher Airport (gratis parkeren)"},{"lat":52.276383,"lng":6.160573,"name":"Deventer Padel - Borgele"},{"lat":52.2817825,"lng":4.83503426,"name":"Padel Mate Club Amstelveen "},{"lat":52.3259983,"lng":4.9269842,"name":"XNRGY "}];
+        const center = [52.157790876428564, 5.113447965892859];
+
+        const map = L.map('map').setView(center, 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        locations.forEach((location) => {
+            const marker = L.marker([location.lat, location.lng]).addTo(map);
+            marker.bindPopup(`<strong>${location.name}</strong><br>Lat: ${location.lat}<br>Lng: ${location.lng}`);
+        });
+    </script>
+</body>
+</html>

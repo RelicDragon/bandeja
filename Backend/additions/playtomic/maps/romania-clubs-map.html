@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>Total locations: 28</strong>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = [{"lat":43.749054,"lng":11.2391887,"name":"Porta Romana Padel Club"},{"lat":46.7513113,"lng":23.5925148,"name":"CDP9 | Calea Turzii"},{"lat":44.229523,"lng":28.6250938,"name":"Padel Tenis Club Idu Mamaia"},{"lat":44.25931507,"lng":28.6179552,"name":"PADEL CLUB CONSTANTA MAMAIA"},{"lat":44.17593646,"lng":28.58603827,"name":"Palas Arena "},{"lat":46.77941779,"lng":23.65656386,"name":"CDP3 | Orastiei"},{"lat":44.44503737,"lng":26.04132001,"name":"PADEL JOY - SEMA PARC"},{"lat":46.77994956,"lng":23.6607942,"name":"SMASH SPORTS CENTER | Cluj-Napoca"},{"lat":44.478899,"lng":26.085566,"name":"Padelmania Herastrau"},{"lat":44.419742,"lng":26.150894,"name":"Padelmania Parklake"},{"lat":44.4214844,"lng":26.0704934,"name":"Padel World Royal"},{"lat":44.5437289,"lng":26.16180602,"name":"Zum Padel"},{"lat":47.651573,"lng":26.20667,"name":"Padel Ground "},{"lat":44.4916756,"lng":26.09223294,"name":"Padel Hub Bucharest "},{"lat":44.37613175,"lng":26.12598116,"name":"PADEL JOY - BERCENI"},{"lat":44.43130002,"lng":25.96703186,"name":"Padel World Vest"},{"lat":44.5671874,"lng":26.0835112,"name":"Power Padel Club"},{"lat":44.47602896,"lng":26.05212948,"name":"European Tennis School"},{"lat":46.74615809,"lng":23.45119536,"name":"MAT PADEL"},{"lat":44.44216303,"lng":26.04754968,"name":"Magic SMASH Club "},{"lat":44.404346,"lng":26.111822,"name":"Daimon Club "},{"lat":44.4489539,"lng":26.13445857,"name":"ONYX Padel Club"},{"lat":45.67965097,"lng":25.63653059,"name":"Padel Palace Coresi"},{"lat":44.4770685,"lng":26.0631628,"name":"AEROSQUASH"},{"lat":44.469804,"lng":26.11396977,"name":"Padel Y Cerveza"},{"lat":44.1983052,"lng":28.6409542,"name":"Elite Padel "},{"lat":45.62931764,"lng":25.62332453,"name":"Padel Palace Roman"},{"lat":41.736864,"lng":2.623394,"name":"Pàdel Hostalric"}];
+        const center = [44.830711675357136, 24.695076657142856];
+
+        const map = L.map('map').setView(center, 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        locations.forEach((location) => {
+            const marker = L.marker([location.lat, location.lng]).addTo(map);
+            marker.bindPopup(`<strong>${location.name}</strong><br>Lat: ${location.lat}<br>Lng: ${location.lng}`);
+        });
+    </script>
+</body>
+</html>

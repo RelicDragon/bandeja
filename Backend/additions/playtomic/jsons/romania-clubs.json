@@ -1,0 +1,3321 @@
+[
+  {
+    "tenant_id": "0670908f-0223-4d01-88fe-d0d377ee7e2f",
+    "tenant_name": "Porta Romana Padel Club",
+    "slug": "porta-romana-padel-club",
+    "address": {
+      "street": "Via Stefano Borgonovo",
+      "postal_code": "50125",
+      "city": "Firenze",
+      "sub_administrative_area": "Città Metropolitana di Firenze",
+      "administrative_area": "Toscana",
+      "country": "Italia",
+      "country_code": "IT",
+      "coordinate": {
+        "lat": 43.749054,
+        "lon": 11.2391887
+      },
+      "timezone": "Europe/Rome"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1659620947/pro/tenants/0670908f-0223-4d01-88fe-d0d377ee7e2f/1659620947308.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1659620952/pro/tenants/0670908f-0223-4d01-88fe-d0d377ee7e2f/1659620951187.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1659620953/pro/tenants/0670908f-0223-4d01-88fe-d0d377ee7e2f/1659620952940.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1659620959/pro/tenants/0670908f-0223-4d01-88fe-d0d377ee7e2f/1659620958878.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_WIFI": "false",
+      "CONTACT_PHONE": "+39 3884357171",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "I nostri campi su fondo drenante e moquette fibrillata, sono al top. In caso di pioggia in mezz'ora sono già agibili.\nCon l'apertura a Giugno della Pizzeria, non c'è posto più piacevole a Firenze.\nUna partita fra amici, una doccia a scroscio (anche se non vicinissime in attesa delle nuove a bordo campo) ed una bella Pizza, sono il massimo.\nIl nuovo corpo insegnante vi aspetta per esperienze fantastiche. \nBuon Padel a tutti",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "4cde8220-03fa-4c15-9c1c-e0d73ec112b5",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "91fc806f-bb0e-4a2c-93e9-e9206f149111",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  I nostri campi su fondo drenante e moquette fibrillata, sono al top. In caso di pioggia in mezz'ora sono già agibili.\n  Con l'apertura a Giugno della Pizzeria, non c'è posto più piacevole a Firenze.\n  Una partita fra amici, una doccia a scroscio (anche se non vicinissime in attesa delle nuove a bordo campo) ed una bella Pizza, sono il massimo.\n  Il nuovo corpo insegnante vi aspetta per esperienze fantastiche.\n  Buon Padel a tutti\n</p>\n"
+  },
+  {
+    "tenant_id": "33fb4022-1f98-4503-a353-91c93f21d1b3",
+    "tenant_name": "CDP9 | Calea Turzii",
+    "slug": "casa-de-padel-cluj-napoca",
+    "address": {
+      "street": "Calea Turzii 160",
+      "postal_code": "400347",
+      "city": "Cluj-Napoca",
+      "sub_administrative_area": "Municipiu Cluj-napoca",
+      "administrative_area": "Județul Cluj",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 46.7513113,
+        "lon": 23.5925148
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1755753299/pro/tenants/33fb4022-1f98-4503-a353-91c93f21d1b3/1755753298658.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://instagram.com/casadepadel.cluj?igshid=YTQwZjQ0NmI0OA==",
+      "FACILITY_FREE_PARKING": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "1ed01e07-adba-4c6f-b517-453af84c30b0",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PLAYPARK": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Nine State-of-the-art indoor courts equipped with high-quality Padel playing surface.\nAmple spacing between courts to ensure a comfortable playing environment.\nComfortable lounges and viewing areas for players and spectators.\nCafé or refreshment area for socializing and relaxation.",
+      "FACILITY_VENDING_MACHINE": "true",
+      "CONTACT_PHONE": "+40 743626463",
+      "DETAILS_PAGE_TITLE": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "e6a9d5ed-46a7-437d-8ea7-83dd5d18ba16",
+        "name": "Cupra Central ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "98e206fd-dcdc-42b2-a203-f2f1ce4e6cfe",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "153bff48-d62a-415e-b0bd-1a4d94d397e7",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5e281a31-5f72-43d2-8ce8-8d0d2a4080e9",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "433007ed-b433-4ba6-bf4e-d1b07b69699f",
+        "name": "Padel 4 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1a65aff3-75b1-4145-b24d-b1260c8b1415",
+        "name": "Padel 5 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2b0693f2-7e29-4d92-b3d3-f7915d5e813e",
+        "name": "Padel 6 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e0338041-6ed9-497b-8c67-2d2efb7023d4",
+        "name": "Padel 7 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "038e5e45-87b6-4c7b-9115-c5fb5b6f1f4b",
+        "name": "Padel 8 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Nine State-of-the-art indoor courts equipped with high-quality Padel playing surface.\n  Ample spacing between courts to ensure a comfortable playing environment.\n  Comfortable lounges and viewing areas for players and spectators.\n  Café or refreshment area for socializing and relaxation.\n</p>\n"
+  },
+  {
+    "tenant_id": "01777165-370c-4ed2-85bf-65d97d490476",
+    "tenant_name": "Padel Tenis Club Idu Mamaia",
+    "slug": "padel-tenis-club-idu-mamaia",
+    "address": {
+      "street": "Bulevardul Mamaia 402",
+      "postal_code": "900001",
+      "city": "Constanța",
+      "sub_administrative_area": "Municipiul Constanța",
+      "administrative_area": "Județul Constanța",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.229523,
+        "lon": 28.6250938
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1764000773/pro/tenants/01777165-370c-4ed2-85bf-65d97d490476/1764000771336.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1764000867/pro/tenants/01777165-370c-4ed2-85bf-65d97d490476/1764000866383.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1764001110/pro/tenants/01777165-370c-4ed2-85bf-65d97d490476/1764001109386.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1764001154/pro/tenants/01777165-370c-4ed2-85bf-65d97d490476/1764001153343.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1764001188/pro/tenants/01777165-370c-4ed2-85bf-65d97d490476/1764001187188.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1764001552/pro/tenants/01777165-370c-4ed2-85bf-65d97d490476/1764001551657.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1764001626/pro/tenants/01777165-370c-4ed2-85bf-65d97d490476/1764001625067.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1764001659/pro/tenants/01777165-370c-4ed2-85bf-65d97d490476/1764001658263.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1764001716/pro/tenants/01777165-370c-4ed2-85bf-65d97d490476/1764001715833.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+40 241831225",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Tenis Club Idu Mamaia\nPlay by the water at Mamaia’s premier racket hub. We offer 3 super-panoramic padel courts—including 1 indoor for all-weather matches—plus 6 tennis courts and a gym. Enjoy private parking, free Wi-Fi, comfy lounge areas, and snack bars. After your session, soak up the unbeatable view over Lake Siutghiol. Perfect for casual hits, training, or competitive play. Book now on Playtomic!",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://www.tenisclubidu.ro/"
+    },
+    "resources": [
+      {
+        "resourceId": "d8a95239-7057-4da3-94cf-ce0fb60ed5db",
+        "name": "OUTDOOR Super-Panoramic 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b8b08cac-61a6-4bfa-a4be-2456adb6c46a",
+        "name": "OUTDOOR Super-Panoramic 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "16d19f9d-2dfc-42a8-a339-87101f15a3e3",
+        "name": "INDOOR Super-Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0e6796d9-5de7-4e10-bb5c-2507bc871dac",
+        "name": "Table Tennis (Ping-Pong) 1",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "indoor",
+          "standard"
+        ]
+      },
+      {
+        "resourceId": "4ffecd41-6be4-495e-8f46-2aa1d1195c6b",
+        "name": "Table Tennis (Ping-Pong) 2",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "indoor",
+          "standard"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "06:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "06:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "06:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "06:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "06:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "06:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "06:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TABLE_TENNIS"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Padel Tenis Club Idu Mamaia\n  Play by the water at Mamaia’s premier racket hub. We offer 3 super-panoramic padel courts—including 1 indoor for all-weather matches—plus 6 tennis courts and a gym. Enjoy private parking, free Wi-Fi, comfy lounge areas, and snack bars. After your session, soak up the unbeatable view over Lake Siutghiol. Perfect for casual hits, training, or competitive play. Book now on Playtomic!\n</p>\n"
+  },
+  {
+    "tenant_id": "3d51e0ce-f617-4611-9185-bb3824114083",
+    "tenant_name": "PADEL CLUB CONSTANTA MAMAIA",
+    "slug": "padel-club-constanta-mamaia",
+    "address": {
+      "street": "BULEVARDUL MAMAIA 505 Teren Comandor",
+      "postal_code": "900001",
+      "city": "Constanța",
+      "sub_administrative_area": "Municipiul Constanța",
+      "administrative_area": "Județul Constanța",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.25931507,
+        "lon": 28.6179552
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1712267245/pro/tenants/3d51e0ce-f617-4611-9185-bb3824114083/1712267244507.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1712267513/pro/tenants/3d51e0ce-f617-4611-9185-bb3824114083/1712267512640.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1729015865/pro/tenants/3d51e0ce-f617-4611-9185-bb3824114083/1729015864552.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1729018068/pro/tenants/3d51e0ce-f617-4611-9185-bb3824114083/1729018067112.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1747689625/pro/tenants/3d51e0ce-f617-4611-9185-bb3824114083/1747689624461.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1747689627/pro/tenants/3d51e0ce-f617-4611-9185-bb3824114083/1747689626272.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1747689628/pro/tenants/3d51e0ce-f617-4611-9185-bb3824114083/1747689627842.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1747689630/pro/tenants/3d51e0ce-f617-4611-9185-bb3824114083/1747689629664.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1753917903/pro/tenants/3d51e0ce-f617-4611-9185-bb3824114083/1753917902657.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1753919988/pro/tenants/3d51e0ce-f617-4611-9185-bb3824114083/1753919987112.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "true",
+      "CONTACT_PHONE": "+40 744133670",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Primul club public de padel din Constanța. 3 terenuri de padel cu gazon de ultimă generație. Trei terenuri de tenis, toate iluminate. Organizăm lecții de tenis și padel cu antrenori profesioniști din Italia.\nFirst public padel club in Consanta. 3 Padel courts with new generation grass. Tre tennis courts all with light. We organize tennis and padel lessons with professional coach from Italy.",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://www.padelclubconstanta.ro/"
+    },
+    "resources": [
+      {
+        "resourceId": "aa40d54a-7a3a-4d1c-aecb-e8c3a0aa1937",
+        "name": "Padel 3 lac",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "86267d33-ef07-4fc1-8ee9-3d04df9cd03b",
+        "name": "Padel 2 central",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6c3a8ac0-6b3e-480c-9b68-e0554c62844a",
+        "name": "Padel 1 Bulevard",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Primul club public de padel din Constanța. 3 terenuri de padel cu gazon de ultimă generație. Trei terenuri de tenis, toate iluminate. Organizăm lecții de tenis și padel cu antrenori profesioniști din Italia.\n  First public padel club in Consanta. 3 Padel courts with new generation grass. Tre tennis courts all with light. We organize tennis and padel lessons with professional coach from Italy.\n</p>\n"
+  },
+  {
+    "tenant_id": "48fafaf7-b4ea-43a4-a481-fce4c0817646",
+    "tenant_name": "Palas Arena ",
+    "slug": "palas-arena",
+    "address": {
+      "street": "Strada Crisului 20",
+      "postal_code": "900329",
+      "city": "Constanța",
+      "sub_administrative_area": "Constanta",
+      "administrative_area": "Constanța",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.17593646,
+        "lon": 28.58603827
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1757600055/pro/tenants/48fafaf7-b4ea-43a4-a481-fce4c0817646/1757600054226.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757600814/pro/tenants/48fafaf7-b4ea-43a4-a481-fce4c0817646/1757600813386.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+40 722497394",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": ""
+    },
+    "resources": [
+      {
+        "resourceId": "426cc4db-a065-4e13-b456-b332f4c410e0",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "4bb0bbd2-65ee-4e4f-80b1-fb51997eff6f",
+    "tenant_name": "CDP3 | Orastiei",
+    "slug": "cdp3-orastiei",
+    "address": {
+      "street": "Orastiei 10",
+      "postal_code": "400398",
+      "city": "Cluj-Napoca",
+      "sub_administrative_area": "Cluj - Napoca",
+      "administrative_area": "Cluj County",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 46.77941779,
+        "lon": 23.65656386
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1758055204/pro/tenants/4bb0bbd2-65ee-4e4f-80b1-fb51997eff6f/1758055203597.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Three premium indoor courts with professional padel playing surface.\n\nGenerous court layout designed for enjoyable and dynamic gameplay.\n\nCozy lounge and viewing zone offering comfort for both players and spectators.",
+      "CONTACT_PHONE": "+40 743626463",
+      "WEBSITE_URL": "https://instagram.com/casadepadel.cluj?igshid=YTQwZjQ0NmI0OA=="
+    },
+    "resources": [
+      {
+        "resourceId": "69b47df0-99dd-4e57-996b-05bd1293649b",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "fe97429c-a895-4076-bc82-c4abd7d88873",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "02072516-0605-4ca8-a07b-ecfc9ab0c8db",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Three premium indoor courts with professional padel playing surface.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Generous court layout designed for enjoyable and dynamic gameplay.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Cozy lounge and viewing zone offering comfort for both players and spectators.</p>\n"
+  },
+  {
+    "tenant_id": "4e25feb6-c707-40de-b8e3-ed10bf42ec1e",
+    "tenant_name": "PADEL JOY - SEMA PARC",
+    "slug": "padel-joy-academy",
+    "address": {
+      "street": "Splaiul Independentei 319",
+      "postal_code": "060044",
+      "city": "Bucharest",
+      "sub_administrative_area": "Bucharest",
+      "administrative_area": "Bucharest",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.44503737,
+        "lon": 26.04132001
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1711915892/pro/tenants/4e25feb6-c707-40de-b8e3-ed10bf42ec1e/1711915891319.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_PLAYPARK": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_STORE": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "3809fe3c-127c-40c3-8744-422f6ef272b8",
+      "DETAILS_PAGE_DESCRIPTION": "Vrei sa te distrezi si sa faci miscare in acelasi timp? \nPadel-ul este sportul care imbina perfect aceste criterii. Adaptat atat pentru jucatorii fara experienta si fara pregatire fizica, cat si pentru cei avansati, padel-ul imbina distractia cu miscarea si iesirile IN AER LIBER.\nPadel-ul imparte multe dintre reguli cu tenisul, jocul sau \"inrudit\". Mai jos sunt cateva caracteristici distinctive:\nSe joaca doar in echipe de cate 2 jucatori (la dublu)\nServiciul se efectueaza de la nivelul soldului pe diagonala\nJucatorul poate returna mingea si dupa ce aceasta a ricosat din pereti, dar inainte sa atinga solul a doua oara.\nDetalii: www.padeljoy.ro",
+      "WEBSITE_URL": "www.padeljoy.ro ",
+      "FACILITY_LOCKERS": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+40 722166699"
+    },
+    "resources": [
+      {
+        "resourceId": "1f8388d8-84f8-427e-b6ad-fcdbb2b9c936",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6e07843b-8264-4fa8-aee7-8894f6f9a665",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "fc1f0b35-5e6f-4981-bfeb-8ab7cac9d143",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Vrei sa te distrezi si sa faci miscare in acelasi timp?\n  Padel-ul este sportul care imbina perfect aceste criterii. Adaptat atat pentru jucatorii fara experienta si fara pregatire fizica, cat si pentru cei avansati, padel-ul imbina distractia cu miscarea si iesirile IN AER LIBER.\n  Padel-ul imparte multe dintre reguli cu tenisul, jocul sau \"inrudit\". Mai jos sunt cateva caracteristici distinctive:\n  Se joaca doar in echipe de cate 2 jucatori (la dublu)\n  Serviciul se efectueaza de la nivelul soldului pe diagonala\n  Jucatorul poate returna mingea si dupa ce aceasta a ricosat din pereti, dar inainte sa atinga solul a doua oara.\n  Detalii: www.padeljoy.ro\n</p>\n"
+  },
+  {
+    "tenant_id": "41edc169-6465-47ef-829a-84b663f19c96",
+    "tenant_name": "SMASH SPORTS CENTER | Cluj-Napoca",
+    "slug": "smash-sports-center",
+    "address": {
+      "street": "Strada Orastiei 10, TRC PARK, D39",
+      "postal_code": "400394",
+      "city": "Cluj-Napoca",
+      "sub_administrative_area": "Municipiu Cluj-napoca",
+      "administrative_area": "Județul Cluj",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 46.77994956,
+        "lon": 23.6607942
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1758196754/pro/tenants/41edc169-6465-47ef-829a-84b663f19c96/1758196753677.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1761496655/pro/tenants/41edc169-6465-47ef-829a-84b663f19c96/1761496654394.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1761496673/pro/tenants/41edc169-6465-47ef-829a-84b663f19c96/1761496671927.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1761496698/pro/tenants/41edc169-6465-47ef-829a-84b663f19c96/1761496694535.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1761496720/pro/tenants/41edc169-6465-47ef-829a-84b663f19c96/1761496718871.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1761497736/pro/tenants/41edc169-6465-47ef-829a-84b663f19c96/1761497735339.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1761497754/pro/tenants/41edc169-6465-47ef-829a-84b663f19c96/1761497753298.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1761498381/pro/tenants/41edc169-6465-47ef-829a-84b663f19c96/1761498379669.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+40 752170631",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "6e2ae102-8661-4323-9281-d2fe312cf41b;0c44c30b-f1f6-47ea-86ba-5e9da459afbc",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Cel mai mare și modern club de padel acoperit din Cluj-Napoca! \nDescoperă cele 7 terenuri premium de padel precum și alte sporturi ca teqball și padbol. Deschis pentru toată lumea, de la jucători începători până la cei profesioniști. Experimentați emoția sportului, distracției și comunității într-un singur loc!\nNu deții o rachetă sau mingi? Nu-ți face griji, vei beneficia de acces gratuit la rachete și mingi oferite în locația noastră!\nSMASH ON!",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://smashsportscenter.ro/"
+    },
+    "resources": [
+      {
+        "resourceId": "839ab3cc-f90d-4e0c-ae0f-20aed52df1a9",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d51c2dc7-fc13-454c-b810-002dbfb8b858",
+        "name": "Padel Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ad5d5328-3b5b-42a0-83e8-a296cd495058",
+        "name": "Padel Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d3c46d02-e3d1-4a12-a452-50caff0295fa",
+        "name": "Padel Court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3e3edb89-da16-4c16-ac6b-42273d864ecd",
+        "name": "Padel Court 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cfb680d2-6792-4d67-bb86-9f7ca4fefd9a",
+        "name": "Padel Court 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "76714e36-f93a-4726-b46e-64eee92bb513",
+        "name": "The SMASH Court ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6c380095-57c5-43c7-a6fd-35227a323729",
+        "name": "Fotbal-Tenis",
+        "sport": "PADBOL",
+        "features": [
+          "indoor",
+          "double"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "PADBOL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Cel mai mare și modern club de padel acoperit din Cluj-Napoca!\n  Descoperă cele 7 terenuri premium de padel precum și alte sporturi ca teqball și padbol. Deschis pentru toată lumea, de la jucători începători până la cei profesioniști. Experimentați emoția sportului, distracției și comunității într-un singur loc!\n  Nu deții o rachetă sau mingi? Nu-ți face griji, vei beneficia de acces gratuit la rachete și mingi oferite în locația noastră!\n  SMASH ON!\n</p>\n"
+  },
+  {
+    "tenant_id": "66a2674b-c7e7-4b40-9a80-5a2780f5885e",
+    "tenant_name": "Padelmania Herastrau",
+    "slug": "padelmania-herastrau",
+    "address": {
+      "street": "Șoseaua Nordului 7-9",
+      "postal_code": "077190",
+      "city": "București",
+      "sub_administrative_area": "București",
+      "administrative_area": "București",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.478899,
+        "lon": 26.085566
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/66a2674b-c7e7-4b40-9a80-5a2780f5885e/padelmania_0001"
+    ],
+    "properties": {
+      "SPORT_PADEL": "true",
+      "CONTACT_PHONE": "+40722188959",
+      "FACILITY_SNACK_BAR": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Founded in 2013, PadelMania is the first and largest padel club in Romania, with over 200 active players. Perfectly located in the heart of Herastrau Park, our club boasts three padel courts and a bar for you to enjoy the important after-game rituals. We offer a wide range of services, from court rentals, mixers and private lessons, to corporate team building activities and tournaments.\n\n",
+      "FACILITY_STORE": "true",
+      "RESERVATION_CONFIRMATION_TENANT_MESSAGE": "The reception is currently closed and will reopen on March 1st. The keys for the covered court and the locker room can be found in a lockbox next to the locker room. To get the code for the lockbox please call +40722188959. Rackets can also be rented using PlayTomic and can be found in the locker room together with second hand balls. New balls cannot be purchased during the off-season.\n\nPlease do not forget to lock the court and locker room and switch off the lights once you finish your match.\n\nThank you and enjoy!",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://padelmania.ro"
+    },
+    "resources": [
+      {
+        "resourceId": "eed3595b-15b7-45f2-a831-c5f95694e29c",
+        "name": "Blue Court (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "240d18ba-c23e-4e94-960a-95b3b0ed2750",
+        "name": "Green Court (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a43f9a73-1887-4b96-8758-878ac2c99946",
+        "name": "Covered Blue Court (Outdoor - Covered)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ba7d1321-ae85-47b4-b1aa-6f3041dc08c3",
+        "name": "Drop Shot Panoramic 3 (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "109b0975-f742-4741-812a-2a792774bb4d",
+        "name": "Drop Shot Panoramic 2 (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4ad3d199-b498-444e-a654-b65da39f8394",
+        "name": "Drop Shot SuperPanoramic 1 (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Founded in 2013, PadelMania is the first and largest padel club in Romania, with over 200 active players. Perfectly located in the heart of Herastrau Park, our club boasts three padel courts and a bar for you to enjoy the important after-game rituals. We offer a wide range of services, from court rentals, mixers and private lessons, to corporate team building activities and tournaments.</p>\n"
+  },
+  {
+    "tenant_id": "6fbeeb94-27e2-4e9d-9751-61a2aeec457b",
+    "tenant_name": "Padelmania Parklake",
+    "slug": "padelmania-parklake",
+    "address": {
+      "street": "Str. Liviu Rebreanu 4",
+      "postal_code": "031749",
+      "city": "București",
+      "sub_administrative_area": "București",
+      "administrative_area": "București",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.419742,
+        "lon": 26.150894
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/6fbeeb94-27e2-4e9d-9751-61a2aeec457b/padelmaniaparklake_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/6fbeeb94-27e2-4e9d-9751-61a2aeec457b/padelmaniaparklake_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/6fbeeb94-27e2-4e9d-9751-61a2aeec457b/padelmaniaparklake_0003"
+    ],
+    "properties": {
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "ParkLake Shopping Center este un complex comercial unic, proiectat conform ultimelor standarde de urbanism și arhitectură, într-un cadru natural, primitor, în imediata apropiere a parcului și lacului Titan. ParkLake aduce împreună natura și familia, fiind astfel unul dintre cele mai inovatoare centre comerciale din Bucureşti ce își invită în permanență clientii să trăiască o experiență unică.\n\n\n\nFondat in 2013, PadelMania este primul si cel mai mare club de padel din Romania, cu peste 200 de jucatori activi. Clubul ofera o gama larga de servicii, de la inchirieri si lectii private, pana la activitati de team building si turnee oficiale.\"\n“ Pentru rezervarea terenurilor:\n1. Descărcați aplicația Playtomic\n2. Creați un cont de utilizator și înregistrați-vă ca utilizator\n3. Căutați PadelMania ParkLake în aplicatie.\n4. Selectați data/ora dorita\n5. Adauga rachete de închiriat daca este nevoie\n6. Plătiți online direct prin aplicatie.\n7. Ridicati cheia si rachetele de la Info Desk din interiorul ParkLake Shopping Center.8. Jucati iar apoi returnati cheia si rachetele la Info Desk\nDistractie Placuta!\"",
+      "WEBSITE_URL": "https://www.padelmania.ro",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "RESERVATION_CONFIRMATION_TENANT_MESSAGE": "Va multumim pentru rezervarea facuta. Pentru check-in, va asteptam la ParkLake Info Desk, in apropierea terenurilor de padel) cu 10 minute inainte de inceperea rezervarii. Rezervarea poate fi anulata cu pana la 36h inainte de ora de incepere, orice anulare cu mai putin de 36h aduce cu ea o penzalizare de 100% din pretul chiriei. In cazul in care ploua, suma v-a fi returnata integral.\nEchipament1. Rachete: Rachetele pot fi închiriate doar prin aplicatia PlayTomic odată cu rezervarea terenului. Dupa plata integrala a terenului, nu mai pot fi adaugate rachete.2. Mingi: Chiria terenului include si 3 mingi jucate. Deocamdata nu oferim mingi noi spre vanzare in ParkLake.\nDistractie Placuta!\"",
+      "CONTACT_PHONE": "+40 722 188 959"
+    },
+    "resources": [
+      {
+        "resourceId": "0e69f09c-ef36-4d15-8921-6d718eab49af",
+        "name": "Court 1 - Padel (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "57efaea2-9511-4728-b566-4128db1b1203",
+        "name": "Court 2 - Padel (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "800d625d-e2bb-468a-bce5-611292902ef9",
+        "name": "Court 3 - Padel (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "10:30",
+        "closing_time": "21:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "10:30",
+        "closing_time": "21:30"
+      },
+      "MONDAY": {
+        "opening_time": "10:30",
+        "closing_time": "21:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "10:30",
+        "closing_time": "21:30"
+      },
+      "SUNDAY": {
+        "opening_time": "10:30",
+        "closing_time": "21:30"
+      },
+      "FRIDAY": {
+        "opening_time": "10:30",
+        "closing_time": "21:30"
+      },
+      "SATURDAY": {
+        "opening_time": "10:30",
+        "closing_time": "21:30"
+      },
+      "THURSDAY": {
+        "opening_time": "10:30",
+        "closing_time": "21:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "FOOTBALL_OTHERS"
+    ],
+    "communications_language": "en_US",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">ParkLake Shopping Center este un complex comercial unic, proiectat conform ultimelor standarde de urbanism și arhitectură, într-un cadru natural, primitor, în imediata apropiere a parcului și lacului Titan. ParkLake aduce împreună natura și familia, fiind astfel unul dintre cele mai inovatoare centre comerciale din Bucureşti ce își invită în permanență clientii să trăiască o experiență unică.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Fondat in 2013, PadelMania este primul si cel mai mare club de padel din Romania, cu peste 200 de jucatori activi. Clubul ofera o gama larga de servicii, de la inchirieri si lectii private, pana la activitati de team building si turnee oficiale.\"\n  “ Pentru rezervarea terenurilor:\n</p>\n<ol class=\"list-decimal pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">Descărcați aplicația Playtomic</li>\n  <li class=\"mb-0.5\">Creați un cont de utilizator și înregistrați-vă ca utilizator</li>\n  <li class=\"mb-0.5\">Căutați PadelMania ParkLake în aplicatie.</li>\n  <li class=\"mb-0.5\">Selectați data/ora dorita</li>\n  <li class=\"mb-0.5\">Adauga rachete de închiriat daca este nevoie</li>\n  <li class=\"mb-0.5\">Plătiți online direct prin aplicatie.</li>\n  <li class=\"mb-0.5\">\n    Ridicati cheia si rachetele de la Info Desk din interiorul ParkLake Shopping Center.8. Jucati iar apoi returnati cheia si rachetele la Info Desk\n    Distractie Placuta!\"\n  </li>\n</ol>\n"
+  },
+  {
+    "tenant_id": "712a3789-06e2-4e6e-bb66-81017710daaa",
+    "tenant_name": "Padel World Royal",
+    "slug": "padel-world-royal",
+    "address": {
+      "street": "Strada Progresului 90-100",
+      "postal_code": "050696",
+      "city": "București",
+      "sub_administrative_area": "Municipiul București",
+      "administrative_area": "București",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.4214844,
+        "lon": 26.0704934
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1741966718/pro/tenants/712a3789-06e2-4e6e-bb66-81017710daaa/1741966717766.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_PLAYPARK": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "IS_CAB_MEMBER": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Padel World Royal is an all-indoor padel club with modern changing rooms, hot showers, and a cozy cafeteria for post-match breaks. Court rentals include used balls, but do not include rackets. If you need one, racket rental is 25 lei per racket for the entire duration of your match session. Book your court, bring your energy, and we’ll handle the rest!\n\nPadel World Royal este un club de padel 100% indoor, cu vestiare moderne, dușuri și o cafenea primitoare pentru pauzele de după meci. Închirierea terenului include mingi folosite, însă nu include rachete. Dacă ai nevoie, poți închiria racheta la 25 lei/rachetă pentru toată durata sesiunii tale de joc. Rezervă terenul, vino cu energie, iar de restul ne ocupăm noi!",
+      "WEBSITE_URL": "",
+      "FACILITY_LOCKERS": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_AVAILABILITY_GRID": "false",
+      "CONTACT_PHONE": "+40 758071071"
+    },
+    "resources": [
+      {
+        "resourceId": "5458e37c-fcc8-43b5-9109-a0b252151196",
+        "name": "Delsey Paris Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c6bb2bdb-5ff5-4f54-8271-bb6cfa5ae4cc",
+        "name": "Queen's Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ef4ab591-c82f-4737-8507-79fc1cec7601",
+        "name": "Prince Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a1e42d3b-91d1-4dfa-be12-2b4a4f84b1d6",
+        "name": "Crown Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "208ff5d1-cfbd-4345-b6dd-0e05f7a6de2f",
+        "name": "Victory Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cff43c85-ed84-421d-b657-0112cd9509e3",
+        "name": "Mirano Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padel World Royal is an all-indoor padel club with modern changing rooms, hot showers, and a cozy cafeteria for post-match breaks. Court rentals include used balls, but do not include rackets. If you need one, racket rental is 25 lei per racket for the entire duration of your match session. Book your court, bring your energy, and we’ll handle the rest!</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padel World Royal este un club de padel 100% indoor, cu vestiare moderne, dușuri și o cafenea primitoare pentru pauzele de după meci. Închirierea terenului include mingi folosite, însă nu include rachete. Dacă ai nevoie, poți închiria racheta la 25 lei/rachetă pentru toată durata sesiunii tale de joc. Rezervă terenul, vino cu energie, iar de restul ne ocupăm noi!</p>\n"
+  },
+  {
+    "tenant_id": "4ee97780-104d-438c-a2bc-87f97b7524ea",
+    "tenant_name": "Zum Padel",
+    "slug": "zum-padel",
+    "address": {
+      "street": "Tunari, str. Teiului, no 78",
+      "postal_code": "077180",
+      "city": "Bucharest",
+      "sub_administrative_area": "Comuna Tunari",
+      "administrative_area": "Județul Ilfov",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.5437289,
+        "lon": 26.16180602
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1747925387/pro/tenants/4ee97780-104d-438c-a2bc-87f97b7524ea/1747925386541.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "true",
+      "CONTACT_PHONE": "+40 728400885",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Modern Padel Club in the North of Bucharest. Amazing courts, with Mondo Premier Supercourt X3. Nice bar, friendly stuff. ",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "82841e23-002f-451e-8c2a-3a6dfed1d613;70594705-92dd-4192-a6c9-606e8420c185",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "http://www.padel.zumzet.ro"
+    },
+    "resources": [
+      {
+        "resourceId": "1a58985b-0c86-4321-91c3-f30df1e7d977",
+        "name": "T1 - Central Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5d37407a-71e3-4794-b72d-a3d9bd1e2c44",
+        "name": "T2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "00848126-d597-49dc-9c35-8c289a81a29d",
+        "name": "T3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ff5da4bd-0330-4c78-a919-117890aa3927",
+        "name": "T4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5b382f02-c3fe-48b0-861e-055fa8fd4589",
+        "name": "T5",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d2face89-10ac-43ff-98bc-459558741bd5",
+        "name": "T6",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Modern Padel Club in the North of Bucharest. Amazing courts, with Mondo Premier Supercourt X3. Nice bar, friendly stuff.</p>\n"
+  },
+  {
+    "tenant_id": "520d09f1-f7db-466c-869c-4221debfebb6",
+    "tenant_name": "Padel Ground ",
+    "slug": "padel-ground-romania",
+    "address": {
+      "street": "Humorului, FN 47.",
+      "postal_code": "727525",
+      "city": "Șcheia",
+      "sub_administrative_area": "Comuna Șcheia",
+      "administrative_area": "Județul Suceava",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 47.651573,
+        "lon": 26.20667
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760885162/pro/tenants/520d09f1-f7db-466c-869c-4221debfebb6/1760885161633.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "e5635f0e-47e3-4738-944c-8adbec097795;f931f02d-44e1-4d68-9103-53fa81515d4a",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Play Hard Stay Grounded",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+40 743252245",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "WEBSITE_URL": "https://www.padelground.ro/",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "e8807a2f-3571-4e55-8d72-e33e34d20c9c",
+        "name": "Court 1 | CUPRA",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d5f1c7fb-5465-4424-987f-ab0c040af923",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e25a5df9-81d0-4bd3-bf85-4950c9905169",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Play Hard Stay Grounded</p>\n"
+  },
+  {
+    "tenant_id": "7941cf44-666b-4a26-8778-d80bbe704612",
+    "tenant_name": "Padel Hub Bucharest ",
+    "slug": "padel-hub-bucharest",
+    "address": {
+      "street": "Biharia 26",
+      "postal_code": "013981",
+      "city": "Bucharest",
+      "sub_administrative_area": "Bucharest",
+      "administrative_area": "Bucharest",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.4916756,
+        "lon": 26.09223294
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1749827191/pro/tenants/7941cf44-666b-4a26-8778-d80bbe704612/1749827191018.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+40 724319385",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://www.padelhub.ro",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "a661842e-09f3-4ac5-a581-1ae99cea89eb",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Hub   – Premium indoor padel club in the heart of Bucharest\nWelcome to Padel Hub – a modern indoor club featuring 4 top-quality courts, fully equipped locker rooms, a stylish lounge & bar, and a vibrant community for players of all levels.\nWe host open matches, private coaching, and corporate events.\nConveniently located in Bucharest with easy access & parking \nChill out after your game in our social area\nBook your next match directly through the app – see you on court!"
+    },
+    "resources": [
+      {
+        "resourceId": "b5b5f915-dd31-4ca6-bb1a-f6b4d2f19afc",
+        "name": "Padel Hub 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "43e1b680-2ba0-47da-867c-0c7159254ffb",
+        "name": "Padel Hub 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c6269908-1926-4a4a-a10f-05cb52108481",
+        "name": "Padel Hub 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f8690b47-f2a0-4f72-88eb-0abc0b66bdf5",
+        "name": "Padel Hub 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Padel Hub – Premium indoor padel club in the heart of Bucharest\n  Welcome to Padel Hub – a modern indoor club featuring 4 top-quality courts, fully equipped locker rooms, a stylish lounge &#x26; bar, and a vibrant community for players of all levels.\n  We host open matches, private coaching, and corporate events.\n  Conveniently located in Bucharest with easy access &#x26; parking\n  Chill out after your game in our social area\n  Book your next match directly through the app – see you on court!\n</p>\n"
+  },
+  {
+    "tenant_id": "7c26b8e0-d59e-4a75-b6d3-4e791799b6fd",
+    "tenant_name": "PADEL JOY - BERCENI",
+    "slug": "padel-joy-berceni",
+    "address": {
+      "street": " str. Intrarea Binelui nr. 1A, Sector 4",
+      "postal_code": "042159",
+      "city": "Bucharest",
+      "sub_administrative_area": "Bucharest",
+      "administrative_area": "Bucharest",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.37613175,
+        "lon": 26.12598116
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1766322765/pro/tenants/7c26b8e0-d59e-4a75-b6d3-4e791799b6fd/1766322765043.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Vrei sa te distrezi si sa faci miscare in acelasi timp in clubul nostru de padel cu 4 terenuri INDOOR?\nPadel-ul este sportul care imbina perfect aceste criterii. Adaptat atat pentru jucatorii fara experienta si fara pregatire fizica, cat si pentru cei avansati.\nPadel-ul imparte multe dintre reguli cu tenisul, jocul sau \"inrudit\". Mai jos sunt cateva caracteristici distinctive:\nSe joaca doar in echipe de cate 2 jucatori (la dublu)\nServiciul se efectueaza de la nivelul soldului pe diagonala\nJucatorul poate returna mingea si dupa ce aceasta a ricosat din pereti, dar inainte sa atinga solul a doua oara.\nDetalii: www.padeljoy.ro",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+40 772200941"
+    },
+    "resources": [
+      {
+        "resourceId": "21e17a9e-f260-43b3-8c49-82d52744264f",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7b55ca0e-f910-49e5-8712-6810594f87d4",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3edaadfd-e95f-4081-8960-5f36d9e958dd",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "edd1e031-62dc-43af-b263-408152753b91",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Vrei sa te distrezi si sa faci miscare in acelasi timp in clubul nostru de padel cu 4 terenuri INDOOR?\n  Padel-ul este sportul care imbina perfect aceste criterii. Adaptat atat pentru jucatorii fara experienta si fara pregatire fizica, cat si pentru cei avansati.\n  Padel-ul imparte multe dintre reguli cu tenisul, jocul sau \"inrudit\". Mai jos sunt cateva caracteristici distinctive:\n  Se joaca doar in echipe de cate 2 jucatori (la dublu)\n  Serviciul se efectueaza de la nivelul soldului pe diagonala\n  Jucatorul poate returna mingea si dupa ce aceasta a ricosat din pereti, dar inainte sa atinga solul a doua oara.\n  Detalii: www.padeljoy.ro\n</p>\n"
+  },
+  {
+    "tenant_id": "c3bac63b-c10f-479d-bdea-d2df1ee9396b",
+    "tenant_name": "Padel World Vest",
+    "slug": "padel-world-vest",
+    "address": {
+      "street": "Sos de centura nr 80",
+      "postal_code": "077099",
+      "city": "Bucharest",
+      "sub_administrative_area": "Bucharest",
+      "administrative_area": "Bucharest",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.43130002,
+        "lon": 25.96703186
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1701123347/pro/tenants/c3bac63b-c10f-479d-bdea-d2df1ee9396b/1701123346536.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "8ab68487-4210-4d46-bcad-0226b30e817f",
+      "FACILITY_SNACK_BAR": "true",
+      "SHOW_AVAILABILITY_GRID": "false",
+      "DETAILS_PAGE_DESCRIPTION": "The biggest indoor club in Bucharest with a unique park like decoration and a big coffeshop with and impressive spectators area.",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+40 758071071",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "true",
+      "IS_CAB_MEMBER": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "www.padelworld.ro",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "53b55367-9f2a-4b69-b45b-057d9dd1c58a",
+        "name": "Fountain Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6727778b-8cb0-49d0-b8af-a50432a48c61",
+        "name": "Gladiator Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f4a1d696-0e65-49db-a68c-cae74ace5a5f",
+        "name": "Palm Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">The biggest indoor club in Bucharest with a unique park like decoration and a big coffeshop with and impressive spectators area.</p>\n"
+  },
+  {
+    "tenant_id": "dadff8db-6609-4adf-a5ac-11b0a904cf54",
+    "tenant_name": "Power Padel Club",
+    "slug": "power-tenis-club",
+    "address": {
+      "street": "Strada Drumul Gării Otopeni Nr. 4",
+      "postal_code": "075100",
+      "city": "Otopeni",
+      "sub_administrative_area": "Otopeni",
+      "administrative_area": "Ilfov County",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.5671874,
+        "lon": 26.0835112
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1747849505/pro/tenants/dadff8db-6609-4adf-a5ac-11b0a904cf54/1747849504652.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1747905607/pro/tenants/dadff8db-6609-4adf-a5ac-11b0a904cf54/1747905606780.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1747905611/pro/tenants/dadff8db-6609-4adf-a5ac-11b0a904cf54/1747905610356.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "WEBSITE_URL": "www.powertenisclub.ro",
+      "CONTACT_PHONE": "+40 744661120",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "3d5c1dd3-4ce5-4f9d-a2d8-5529479791cb",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a978bfd1-e560-4cc1-aa56-58c9e70f83fc",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "19:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "19:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "ee969505-64e3-4761-b435-0d502287a7b3",
+    "tenant_name": "European Tennis School",
+    "slug": "european-tennis-school",
+    "address": {
+      "street": "100 Carpati",
+      "postal_code": "012321",
+      "city": "Bucharest",
+      "sub_administrative_area": "Bucharest",
+      "administrative_area": "Bucharest",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.47602896,
+        "lon": 26.05212948
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1722339808/pro/tenants/ee969505-64e3-4761-b435-0d502287a7b3/1722339807808.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1722411692/pro/tenants/ee969505-64e3-4761-b435-0d502287a7b3/1722411691613.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1722411724/pro/tenants/ee969505-64e3-4761-b435-0d502287a7b3/1722411723640.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1722411752/pro/tenants/ee969505-64e3-4761-b435-0d502287a7b3/1722411751608.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1722411776/pro/tenants/ee969505-64e3-4761-b435-0d502287a7b3/1722411775470.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "SHOW_AVAILABILITY_GRID": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Club linistit si inconjurat de natura in Nordul Capitalei, cu toate facilitatile necesare.",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "CONTACT_PHONE": "+40 722206416",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "contact@scoalaeuropeanadetenis.ro",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "60ed040a-0ea8-43ac-9636-0b29bd530c0b",
+        "name": "Scoala Europeana de Tenis 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Club linistit si inconjurat de natura in Nordul Capitalei, cu toate facilitatile necesare.</p>\n"
+  },
+  {
+    "tenant_id": "d0f446a6-0830-48d4-8faa-d578b0f98004",
+    "tenant_name": "MAT PADEL",
+    "slug": "mat",
+    "address": {
+      "street": "DN1/E60 KM489+055",
+      "postal_code": "407280",
+      "city": "Florești",
+      "sub_administrative_area": "Florești",
+      "administrative_area": "Cluj County",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 46.74615809,
+        "lon": 23.45119536
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760988763/pro/tenants/d0f446a6-0830-48d4-8faa-d578b0f98004/1760988763252.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760988849/pro/tenants/d0f446a6-0830-48d4-8faa-d578b0f98004/1760988849375.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "CONTACT_PHONE": "+40 745502090",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "WEBSITE_URL": "https://matpadel.ro/",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "edf5cb21-df91-4cd5-a7bf-897e62d46bb6",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**MAT PADEL este noul club premium din zona Cluj–Florești, dedicat 100% pasionaților de padel. Punem la dispoziție 5 terenuri super panoramice indoor, inclusiv singurul teren mov de competiție din România, vestiare moderne, lounge și bar.**\n**Program 09:00–24:00, 7 zile pe săptămână.**\n**Hai să joci padel la un nou nivel************!**"
+    },
+    "resources": [
+      {
+        "resourceId": "1affc565-d857-4e9f-90c5-f4d02a2d61da",
+        "name": "Padel 1 – Super Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7a2f070b-f8f4-42c2-8683-1eefda672f3f",
+        "name": "Padel 2 – Super Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "efe980e3-7ee4-43ef-b2d2-b36b14c0adb5",
+        "name": "Padel 3 – Super Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e83d05d1-44bf-4269-9ea1-c64bee9f3c53",
+        "name": "Padel 4 – Super Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d7a260ef-c897-4424-9b7f-a04f8f7a5ddf",
+        "name": "Padel 5 – Central Court ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  <strong class=\"font-semibold text-primary-100\">MAT PADEL este noul club premium din zona Cluj–Florești, dedicat 100% pasionaților de padel. Punem la dispoziție 5 terenuri super panoramice indoor, inclusiv singurul teren mov de competiție din România, vestiare moderne, lounge și bar.</strong>\n  <strong class=\"font-semibold text-primary-100\">Program 09:00–24:00, 7 zile pe săptămână.</strong>\n  <strong class=\"font-semibold text-primary-100\">Hai să joci padel la un nou nivel</strong>**********!**\n</p>\n"
+  },
+  {
+    "tenant_id": "c861bf6b-a99f-469e-ba77-3b7e352c86c3",
+    "tenant_name": "Magic SMASH Club ",
+    "slug": "magic-padel",
+    "address": {
+      "street": "Splaiul independentei,319, Sema Parc",
+      "postal_code": "060044",
+      "city": "București",
+      "sub_administrative_area": "Municipiul București",
+      "administrative_area": "București",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.44216303,
+        "lon": 26.04754968
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1753339576/pro/tenants/c861bf6b-a99f-469e-ba77-3b7e352c86c3/1753339575830.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "CONTACT_PHONE": "+40 706499958",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://magicsmash.ro/",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Magic SMASH Club – padel indoor la cele mai înalte standarde\nFostul Magic Padel devine Magic SMASH Club, un club premium de padel din București, cu 5 terenuri indoor panoramice, situat la doar 3 minute de stația de metrou Petrache Poenaru, în incinta Sema Parc.\nTerenurile sunt de ultimă generație, cu suprafață omologată pentru competiții internaționale, identică cu cea folosită de jucători din topul mondial.\nClubul oferă:\nSistem complet de climatizare pentru confort optim tot timpul anului\nRezervare online prin Playtomic, cu opțiune de matchmaking pentru jucători solo sau echipe incomplete\nVestiare moderne, cu dușuri și toalete\nBar cu băuturi răcoritoare\nLoc de joacă pentru copii și magazin cu articole sportive dedicate padelului\nMagic SMASH Club este alegerea ideală pentru jucători de toate nivelurile care caută performanță, confort și accesibilitate, într-un cadru profesionist."
+    },
+    "resources": [
+      {
+        "resourceId": "6a1ac74d-a8a4-484c-9f1f-5cab1582fffe",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5c3f6e82-1e0a-4608-93be-c6f99f0214b4",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7b0460f9-6c87-4529-9b0f-3f3018c98618",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7069acaf-49f8-460c-a252-4962fbb32251",
+        "name": "Court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5915f66b-a1f5-4a69-9c34-ae9c2cfc2d4d",
+        "name": "Court 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Magic SMASH Club – padel indoor la cele mai înalte standarde\n  Fostul Magic Padel devine Magic SMASH Club, un club premium de padel din București, cu 5 terenuri indoor panoramice, situat la doar 3 minute de stația de metrou Petrache Poenaru, în incinta Sema Parc.\n  Terenurile sunt de ultimă generație, cu suprafață omologată pentru competiții internaționale, identică cu cea folosită de jucători din topul mondial.\n  Clubul oferă:\n  Sistem complet de climatizare pentru confort optim tot timpul anului\n  Rezervare online prin Playtomic, cu opțiune de matchmaking pentru jucători solo sau echipe incomplete\n  Vestiare moderne, cu dușuri și toalete\n  Bar cu băuturi răcoritoare\n  Loc de joacă pentru copii și magazin cu articole sportive dedicate padelului\n  Magic SMASH Club este alegerea ideală pentru jucători de toate nivelurile care caută performanță, confort și accesibilitate, într-un cadru profesionist.\n</p>\n"
+  },
+  {
+    "tenant_id": "ca132f85-5974-4553-a012-2abf5ae7a380",
+    "tenant_name": "Daimon Club ",
+    "slug": "daimon-club",
+    "address": {
+      "street": "Calea Piscului 10 ",
+      "postal_code": "040354",
+      "city": "Bucharest",
+      "sub_administrative_area": "Bucharest",
+      "administrative_area": "Bucharest",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.404346,
+        "lon": 26.111822
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1758723627/pro/tenants/ca132f85-5974-4553-a012-2abf5ae7a380/1758723626304.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758723634/pro/tenants/ca132f85-5974-4553-a012-2abf5ae7a380/1758723633235.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758723637/pro/tenants/ca132f85-5974-4553-a012-2abf5ae7a380/1758723636589.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758802990/pro/tenants/ca132f85-5974-4553-a012-2abf5ae7a380/1758802989095.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758802994/pro/tenants/ca132f85-5974-4553-a012-2abf5ae7a380/1758802994194.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758802998/pro/tenants/ca132f85-5974-4553-a012-2abf5ae7a380/1758802997505.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758802999/pro/tenants/ca132f85-5974-4553-a012-2abf5ae7a380/1758802999004.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758803001/pro/tenants/ca132f85-5974-4553-a012-2abf5ae7a380/1758803000852.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_RESTAURANT": "true",
+      "WEBSITE_URL": "https://www.daimonclub.ro/",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+40 723998266",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Daimon Club este cel mai mare complex sportiv și de relaxare din sudul Capitalei, situat lângă Parcul Tineretului.\nLa noi găsești 3 terenuri de padel outdoor cu nocturnă, vestiare moderne și posibilitatea de a închiria palete și mingi – tot ce ai nevoie pentru un joc reușit, fie că vii cu prietenii sau participi la competiții.\nPe lângă padel, Daimon Club îți oferă o gamă completă de servicii: tenis de câmp, fotbal, fitness & aerobic, înot (piscină interioară și cursuri pentru copii și adulți), piscină exterioară de vară, saună și masaj. Este locul unde sportul, sănătatea și relaxarea se îmbină perfect.\nComplexul include și o zonă gastronomică – Daimon Trattoria Social,  Pool Bar – dar și 6 saloane elegante pentru evenimente private și corporate. Pentru cei mici, organizăm Școala de Vară Daimon, cursuri sportive și activități specifice copiilor.\nDaimon Club este mai mult decât un loc pentru sport – este o comunitate activă, un spațiu unde te poți bucura de energie, socializare și experiențe de neuitat.",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "65b198ee-ba50-4a2c-9a93-0dfa7ea8ad46",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e43ae78a-04e0-49ee-bbf0-871cd700efec",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0d27970b-fc38-4d3b-995b-94c900b5ce21",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Daimon Club este cel mai mare complex sportiv și de relaxare din sudul Capitalei, situat lângă Parcul Tineretului.\n  La noi găsești 3 terenuri de padel outdoor cu nocturnă, vestiare moderne și posibilitatea de a închiria palete și mingi – tot ce ai nevoie pentru un joc reușit, fie că vii cu prietenii sau participi la competiții.\n  Pe lângă padel, Daimon Club îți oferă o gamă completă de servicii: tenis de câmp, fotbal, fitness &#x26; aerobic, înot (piscină interioară și cursuri pentru copii și adulți), piscină exterioară de vară, saună și masaj. Este locul unde sportul, sănătatea și relaxarea se îmbină perfect.\n  Complexul include și o zonă gastronomică – Daimon Trattoria Social, Pool Bar – dar și 6 saloane elegante pentru evenimente private și corporate. Pentru cei mici, organizăm Școala de Vară Daimon, cursuri sportive și activități specifice copiilor.\n  Daimon Club este mai mult decât un loc pentru sport – este o comunitate activă, un spațiu unde te poți bucura de energie, socializare și experiențe de neuitat.\n</p>\n"
+  },
+  {
+    "tenant_id": "ca61b936-5982-490a-b52c-b8900e6fbf8e",
+    "tenant_name": "ONYX Padel Club",
+    "slug": "padeltime-nextlocation",
+    "address": {
+      "street": "Soseaua Pantelimon nr 1",
+      "postal_code": "021591",
+      "city": "București",
+      "sub_administrative_area": "Municipiul București",
+      "administrative_area": "București",
+      "country": "Romania",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.4489539,
+        "lon": 26.13445857
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1757340354/pro/tenants/ca61b936-5982-490a-b52c-b8900e6fbf8e/1757340353069.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757573186/pro/tenants/ca61b936-5982-490a-b52c-b8900e6fbf8e/1757573185804.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757573188/pro/tenants/ca61b936-5982-490a-b52c-b8900e6fbf8e/1757573187276.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757573505/pro/tenants/ca61b936-5982-490a-b52c-b8900e6fbf8e/1757573504549.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757795320/pro/tenants/ca61b936-5982-490a-b52c-b8900e6fbf8e/1757795319434.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1757795420/pro/tenants/ca61b936-5982-490a-b52c-b8900e6fbf8e/1757795419606.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://www.instagram.com/onyxpadelclub/",
+      "CONTACT_PHONE": "+40 746714714",
+      "DETAILS_PAGE_DESCRIPTION": "Padel passion. Elevated."
+    },
+    "resources": [
+      {
+        "resourceId": "61633cc1-700a-4d39-b588-43eef8fd770c",
+        "name": "Black 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "93ee25e0-70a4-492c-8710-95061f2f104e",
+        "name": "Blue 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e7434c9b-1ad7-4f3e-8723-f4e118063a59",
+        "name": "Blue 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6c8897f2-4fb7-41f1-bf8b-1a71b0eed14c",
+        "name": "Black 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padel passion. Elevated.</p>\n"
+  },
+  {
+    "tenant_id": "1f02701d-6ea6-4e48-8b55-9f9d309dd969",
+    "tenant_name": "Padel Palace Coresi",
+    "slug": "padel-palace-coresi",
+    "address": {
+      "street": "Narciselor 50",
+      "postal_code": "500419",
+      "city": "Brașov",
+      "sub_administrative_area": "Municipiu Brașov",
+      "administrative_area": "Județul Brașov",
+      "country": "România",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 45.67965097,
+        "lon": 25.63653059
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1768327694/pro/tenants/1f02701d-6ea6-4e48-8b55-9f9d309dd969/1768327693445.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Palace Coresi este un centru modern de padel indoor din Brașov, situat în zona Coresi, cu 5 terenuri indoor de dublu și 1 teren indoor de single, o comunitate activă de jucători și condiții excelente pentru antrenamente și competiții.",
+      "WEBSITE_URL": "",
+      "CONTACT_PHONE": "+40 59991991",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "22c45570-8b0c-4854-a0d1-2d8bff18daa9",
+        "name": "Padel 1 - Panoramic ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "82fb1599-06a5-4fef-b2b8-46d16acc63d7",
+        "name": "Padel 2 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8cd69498-8913-47ba-bc2c-a27f560061a3",
+        "name": "Padel 3 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "aa027cbc-ae52-4c9c-b81b-15c4843b2cf4",
+        "name": "Padel 4  - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "01953efe-2655-404e-b15e-cd8f026f4bbe",
+        "name": "Padel 5 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cab67d09-ba60-44e6-9034-21c0f280de4e",
+        "name": "Padel 6 - Single",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "15:30",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "15:30",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "15:30",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:30",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "15:30",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "15:30",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:30",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padel Palace Coresi este un centru modern de padel indoor din Brașov, situat în zona Coresi, cu 5 terenuri indoor de dublu și 1 teren indoor de single, o comunitate activă de jucători și condiții excelente pentru antrenamente și competiții.</p>\n"
+  },
+  {
+    "tenant_id": "23e67f10-9a57-4714-befa-17c0545919d2",
+    "tenant_name": "AEROSQUASH",
+    "slug": "aerosquash",
+    "address": {
+      "street": "BD. MARASTI 63-65",
+      "postal_code": "061715",
+      "city": "București",
+      "sub_administrative_area": "Municipiul București",
+      "administrative_area": "București",
+      "country": "România",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.4770685,
+        "lon": 26.0631628
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1682075838/pro/tenants/23e67f10-9a57-4714-befa-17c0545919d2/1682075837952.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "WEBSITE_URL": "https://www.aerosquash.ro",
+      "CONTACT_PHONE": "+40 731333330",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_RESTAURANT": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "af0ce363-e749-4d23-a55d-374b6361fc14",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "0a9d6789-f96f-4597-97aa-63ca20be8ff0",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "ee2f86bf-ac19-4114-9c3a-51321a9590e0",
+    "tenant_name": "Padel Y Cerveza",
+    "slug": "padel-y-cerveza",
+    "address": {
+      "street": "Str Oltețului Nr. 30",
+      "postal_code": "023817",
+      "city": "București",
+      "sub_administrative_area": "Municipiul București",
+      "administrative_area": "București",
+      "country": "România",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.469804,
+        "lon": 26.11396977
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1693118736/pro/tenants/ee2f86bf-ac19-4114-9c3a-51321a9590e0/1693118735390.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "9efba73f-3e47-44bb-8267-6ed6aab8e055",
+      "DETAILS_PAGE_DESCRIPTION": "Padel, Pickleball Y Cerveza",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "CONTACT_PHONE": "+40 740777755",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "PadelYCerveza.ro",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "b3ccdf7a-4161-4dc1-af24-391e11ef8fb0",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "55e0aebd-8a25-47de-90df-1177bf4e1a9b",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "57d1f537-374f-4c40-99ab-15e1ec7e990f",
+        "name": "Pickleball 1",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "PICKLEBALL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padel, Pickleball Y Cerveza</p>\n"
+  },
+  {
+    "tenant_id": "e182764d-816c-4463-8574-7b304a4362d4",
+    "tenant_name": "Elite Padel ",
+    "slug": "elite-padel-constanza",
+    "address": {
+      "street": "Strada Panait Cerna 22",
+      "postal_code": "900630",
+      "city": "Constanța",
+      "sub_administrative_area": "Municipiul Constanța",
+      "administrative_area": "Județul Constanța",
+      "country": "România",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 44.1983052,
+        "lon": 28.6409542
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1755683779/pro/tenants/e182764d-816c-4463-8574-7b304a4362d4/1755683777813.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1755683796/pro/tenants/e182764d-816c-4463-8574-7b304a4362d4/1755683795284.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1755683947/pro/tenants/e182764d-816c-4463-8574-7b304a4362d4/1755683946319.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+40 750472466",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "8a25986a-5bca-4c08-ab59-07b90794d1ef;0547cb05-78d7-4325-a1a5-016866c4b0ac;42d9cb9e-7176-4037-abeb-4e4de7b8330a;4424ce92-99fa-45d7-9ab9-f7d64399baa7",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_STORE": "true",
+      "WEBSITE_URL": "elitepadel.club"
+    },
+    "resources": [
+      {
+        "resourceId": "4f55c5c9-5315-49d9-ab9f-48cdcdb3c041",
+        "name": "Teren 5",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cacd03bc-e6aa-42bf-89e0-e69f91e3b673",
+        "name": "Teren 6",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c2713db1-5e0d-4f30-93bc-e9822c0d84c7",
+        "name": "Teren 7",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "e64e74a6-884c-4641-9b08-96734fb59b56",
+    "tenant_name": "Padel Palace Roman",
+    "slug": "padel-palace-roman",
+    "address": {
+      "street": "Platforma Roman - intrare stație Panselelor, Strada Panselelor 2",
+      "postal_code": "500419",
+      "city": "Brașov",
+      "sub_administrative_area": "Municipiu Brașov",
+      "administrative_area": "Județul Brașov",
+      "country": "România",
+      "country_code": "RO",
+      "coordinate": {
+        "lat": 45.62931764,
+        "lon": 25.62332453
+      },
+      "timezone": "Europe/Bucharest"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1768816232/pro/tenants/e64e74a6-884c-4641-9b08-96734fb59b56/1768816231288.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "CONTACT_PHONE": "+40 748700600",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Palace Roman este un centru modern dedicat pasionaților de padel, care oferă condiții excelente pentru joc, antrenamente și competiții, indiferent de sezon.\nLocația dispune de 3 terenuri de padel indoor, ideale pentru joc pe tot parcursul anului, indiferent de condițiile meteo, precum și 2 terenuri outdoor, perfecte pentru antrenamente și meciuri în aer liber.\nLa Padel Palace Roman vei găsi o comunitate activă, antrenori dedicați, facilități moderne și o atmosferă prietenoasă, orientată spre performanță și plăcerea jocului.\nIndiferent dacă ești la început de drum sau jucător avansat, Padel Palace Roman este locul unde padelul prinde viață."
+    },
+    "resources": [
+      {
+        "resourceId": "f48489d9-6240-461b-a894-12b253d6c697",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "13de485d-1d1a-4298-8f77-64a2ccb02a11",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2633fda6-4ba7-42d1-8376-ede405100cb1",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Padel Palace Roman este un centru modern dedicat pasionaților de padel, care oferă condiții excelente pentru joc, antrenamente și competiții, indiferent de sezon.\n  Locația dispune de 3 terenuri de padel indoor, ideale pentru joc pe tot parcursul anului, indiferent de condițiile meteo, precum și 2 terenuri outdoor, perfecte pentru antrenamente și meciuri în aer liber.\n  La Padel Palace Roman vei găsi o comunitate activă, antrenori dedicați, facilități moderne și o atmosferă prietenoasă, orientată spre performanță și plăcerea jocului.\n  Indiferent dacă ești la început de drum sau jucător avansat, Padel Palace Roman este locul unde padelul prinde viață.\n</p>\n"
+  },
+  {
+    "tenant_id": "69614451-8be0-4c8c-a398-e15d9a9875ad",
+    "tenant_name": "Pàdel Hostalric",
+    "slug": "padel-hostalric",
+    "address": {
+      "street": "Vía Romana s/n Zona Esportiva Hostalric",
+      "postal_code": "17450",
+      "city": "Hostalric",
+      "sub_administrative_area": "Girona",
+      "administrative_area": "Catalunya",
+      "country": "España",
+      "country_code": "ES",
+      "coordinate": {
+        "lat": 41.736864,
+        "lon": 2.623394
+      },
+      "timezone": "Europe/Madrid"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1762340188/pro/tenants/69614451-8be0-4c8c-a398-e15d9a9875ad/1762340188351.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1762507233/pro/tenants/69614451-8be0-4c8c-a398-e15d9a9875ad/1762507232553.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1762507285/pro/tenants/69614451-8be0-4c8c-a398-e15d9a9875ad/1762507284370.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1762507354/pro/tenants/69614451-8be0-4c8c-a398-e15d9a9875ad/1762507353764.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "cd2b12f4-6abf-4038-bc3d-485c5cd38c95;26cf44c6-50ff-4936-ae16-ca7052fd36bf;41d0c9eb-4b1c-4e36-b6f7-378ea60c635d;acef6e8b-fd3f-4961-8170-aed3341aeda0",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**El Padel Hostalric, una referencia deportiva en Girona**\n\nEl Padel Hostalric es uno de los mejores centros de Girona. Pocos recintos en la zona congregan una oferta deportiva tan amplia como lo hace esta instalación. En ella reina, sobre todo, el pádel, un deporte que se consolida en la ciudad gracias al trabajo de todos los profesionales que trabajan en este club.\n\nPara todos los amantes de la pala, disponen de unas modernas instalaciones que constan de 6 pistas de padel\n\n**Mucho más que pádel**\n\nEn el Padel Hostalric podrás inscribirte a torneos y participar en sus quedadas habituales. Realizan múltiples actividades al cabo del año por lo que conocerás a otros adeptos a la pala. Además, ponen a tu disposición su escuela de pádel con clases individuales y colectivas a las que puedes apuntarte para mejorar tu nivel en muy poco tiempo.\n\nAdemás dispone de Parking gratuito, vestuarios, cafetería, tienda especializada y alquiler de material, zona infantil,etc\n\n**Ubicación y horarios del Padel Hostalric**\n\nEsta instalación está ubicada en Vía Romana s/n Zona Esportiva Hostalric,\nCP: 17450 Girona y permanece abierta de lunes a domingo\n\n**Playtomic es la mejor opción para reservar tu pista**\n\nSi estás pensando en jugar un partido de pádel en Padel Hostalric podrás reservar tu pista, en menos de un minuto, gracias a Playtomic. Ya sea vía web o app, accederás a la disponibilidad en tiempo real del centro. ¡Tú eliges el día y la hora!\n\nAdemás, si eres nuevo usuario y te registras ahora, tendrás un descuento de bienvenida para usar en tu primera reserva.",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+34637755032",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "true",
+      "WEBSITE_URL": "https://www.padelhostalric.com/",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_TITLE": "Reserva pista en Padel Hostalric con Playtomic",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "c7bd8eb3-d3bf-40b5-b0f7-d90b3e1754db",
+        "name": "PNEUMÀTICS BLAI (1)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "99dfa25c-534d-4db7-be4f-c977039810c5",
+        "name": "LIVEBIKES (2)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "81596684-3f8f-42d7-8af5-7c41e8a36384",
+        "name": "ORIMAR TRUCKS (3)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6c22da0e-935b-4a5b-bdfc-7be64a09cc16",
+        "name": "LA CORBADORA (4)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c970b87f-7f76-435d-9622-759a152d2e4a",
+        "name": "RECUMAS (5)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "41827ee7-953e-4dd7-8702-d98bb2a0db97",
+        "name": "ONTIME TORDERA(6)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "es",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\"><strong class=\"font-semibold text-primary-100\">El Padel Hostalric, una referencia deportiva en Girona</strong></p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">El Padel Hostalric es uno de los mejores centros de Girona. Pocos recintos en la zona congregan una oferta deportiva tan amplia como lo hace esta instalación. En ella reina, sobre todo, el pádel, un deporte que se consolida en la ciudad gracias al trabajo de todos los profesionales que trabajan en este club.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Para todos los amantes de la pala, disponen de unas modernas instalaciones que constan de 6 pistas de padel</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\"><strong class=\"font-semibold text-primary-100\">Mucho más que pádel</strong></p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">En el Padel Hostalric podrás inscribirte a torneos y participar en sus quedadas habituales. Realizan múltiples actividades al cabo del año por lo que conocerás a otros adeptos a la pala. Además, ponen a tu disposición su escuela de pádel con clases individuales y colectivas a las que puedes apuntarte para mejorar tu nivel en muy poco tiempo.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Además dispone de Parking gratuito, vestuarios, cafetería, tienda especializada y alquiler de material, zona infantil,etc</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\"><strong class=\"font-semibold text-primary-100\">Ubicación y horarios del Padel Hostalric</strong></p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Esta instalación está ubicada en Vía Romana s/n Zona Esportiva Hostalric,\n  CP: 17450 Girona y permanece abierta de lunes a domingo\n</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\"><strong class=\"font-semibold text-primary-100\">Playtomic es la mejor opción para reservar tu pista</strong></p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Si estás pensando en jugar un partido de pádel en Padel Hostalric podrás reservar tu pista, en menos de un minuto, gracias a Playtomic. Ya sea vía web o app, accederás a la disponibilidad en tiempo real del centro. ¡Tú eliges el día y la hora!</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Además, si eres nuevo usuario y te registras ahora, tendrás un descuento de bienvenida para usar en tu primera reserva.</p>\n"
+  }
+]

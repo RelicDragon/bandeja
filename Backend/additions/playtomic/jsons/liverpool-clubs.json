@@ -1,0 +1,323 @@
+[
+  {
+    "tenant_id": "91dece7a-1efc-4c82-887a-7401bfd0629b",
+    "tenant_name": "Ignite Padel - West Derby",
+    "slug": "ignite-padel",
+    "address": {
+      "street": "433 Queens Drive (Vagabonds Lawn Tennis)",
+      "postal_code": "L13 0AG",
+      "city": "Liverpool",
+      "sub_administrative_area": "Merseyside",
+      "administrative_area": "England",
+      "country": "United Kingdom",
+      "country_code": "GB",
+      "coordinate": {
+        "lat": 53.42262015,
+        "lon": -2.91327886
+      },
+      "timezone": "Europe/London"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1749674652/pro/tenants/91dece7a-1efc-4c82-887a-7401bfd0629b/1749674651975.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_TITLE": "",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "https://www.instagram.com/ignitepadeluk",
+      "FACILITY_CAFETERIA": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "12bcdd45-0d38-4611-a4f1-7472541c3c6e;1fd8ee64-2670-41f7-9344-3b885950d801;c7d0a3f8-e384-428b-a2db-9ecef996eb2b",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_STORE": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "* Queens Drive, Vagabonds Tennis - 6 Padel Courts - Head & Bullpadel Rackets Supplied For Free\n* Children under 16 MUST be supervised by an adult\n",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+44 01515599670"
+    },
+    "resources": [
+      {
+        "resourceId": "59f36ac2-4b93-4a61-b527-0b88c8eb1f08",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e0e19ede-5836-48c6-8f1c-641368801723",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8bbe735c-ffe7-4cf6-a847-074119ba3f67",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5c41370f-0e34-4023-a7b8-d58631c5dbfc",
+        "name": "Court 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "534bf4c3-bfb7-4a9a-9558-e20ad3d375e6",
+        "name": "Court 5",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9be20f02-a11b-4a3c-98c1-da49937975fa",
+        "name": "Centre Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">Queens Drive, Vagabonds Tennis - 6 Padel Courts - Head &#x26; Bullpadel Rackets Supplied For Free</li>\n  <li class=\"mb-0.5\">Children under 16 MUST be supervised by an adult</li>\n</ul>\n"
+  },
+  {
+    "tenant_id": "9bb1d698-6a9a-4f05-9d51-d152ed4616e4",
+    "tenant_name": "Ignite Padel - Speke ",
+    "slug": "ignite-padel-speke",
+    "address": {
+      "street": "14 Stirling Road",
+      "postal_code": "L24 1AG",
+      "city": "Liverpool",
+      "sub_administrative_area": "Merseyside",
+      "administrative_area": "England",
+      "country": "United Kingdom",
+      "country_code": "GB",
+      "coordinate": {
+        "lat": 53.34277262,
+        "lon": -2.86106196
+      },
+      "timezone": "Europe/London"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760614572/pro/tenants/9bb1d698-6a9a-4f05-9d51-d152ed4616e4/1760614572227.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.instagram.com/ignitepadeluk/?hl=en",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+44 01518291505",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "034835f8-37cf-414d-b176-b84c72adb011",
+        "name": "Indoor Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7617e7d8-4204-40f5-8a36-83f55ef922a8",
+        "name": "Indoor Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1d3817bb-824f-4844-a226-b51d3cc605a6",
+        "name": "Indoor Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "98ca0ab9-93f8-4398-a4cd-4f5539b04e24",
+        "name": "Indoor Court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0c7912ea-4a1c-4825-8b33-8900342b8282",
+        "name": "Indoor Court 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1df23675-d782-4b31-a6ae-34047df0eb30",
+        "name": "Indoor Court 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5a234ddd-1690-4f51-a992-d761108e2a94",
+        "name": "Outdoor Court 7 (Canopys Coming 2026!)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "55f8b0b4-f0fc-4fb3-a037-3892a36a162e",
+        "name": "Outdoor Court 8 (Canopys Coming 2026!)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "4c15036b-6bd6-4c4b-9814-b6d02fcf24c3",
+        "name": "Outdoor Court 9 (Canopys Coming 2026!)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "cc10216a-9231-4830-a41d-7e09dbde33aa",
+        "name": "Outdoor Court 10 (Canopys Coming 2026!)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  }
+]

@@ -1,0 +1,146 @@
+[
+  {
+    "tenant_id": "44daf4ed-c949-47f0-850a-1ed48bbd4fc7",
+    "tenant_name": "Lime Padel Park",
+    "slug": "lime-padel",
+    "address": {
+      "street": "Neofytou Chatzilampri",
+      "postal_code": "8310",
+      "city": "Geroskipou",
+      "sub_administrative_area": "Dimos Anatolikis Pafou",
+      "administrative_area": "Pafos",
+      "country": "Кипр",
+      "country_code": "CY",
+      "coordinate": {
+        "lat": 34.7498651,
+        "lon": 32.47207563
+      },
+      "timezone": "Asia/Nicosia"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1753180013/pro/tenants/44daf4ed-c949-47f0-850a-1ed48bbd4fc7/1753180012491.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1753180098/pro/tenants/44daf4ed-c949-47f0-850a-1ed48bbd4fc7/1753180096645.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1753180108/pro/tenants/44daf4ed-c949-47f0-850a-1ed48bbd4fc7/1753180107451.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1753180119/pro/tenants/44daf4ed-c949-47f0-850a-1ed48bbd4fc7/1753180118797.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Lime Padel Club is a new sports destination in Paphos, with 6 professional PPA courts by Padel Galis - the same surfaces used in top international tournaments. The club is open to all levels, with training, match bookings and events. On-site: RAY cafe, WAY Store - padel and bike shop, plus showers, lockers and parking. A space built for the growing padel community in Cyprus.",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+357 99047488",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "a8bc40c0-db18-4af0-a94a-e08d6c26ea9e;9a94e4c2-02d1-42d8-8aeb-0695ed25b28a;7e25d4f9-69d8-45ca-915c-4e9f29dd42f2;a4eb9610-9960-4cfa-b8cb-7dd713b9894b;800b2cef-2ebc-4861-a8b6-24420de2a8d4",
+      "FACILITY_SNACK_BAR": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "c16ea32f-a4d3-4c4c-954d-af2d1e09b466",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ff4540e9-05ba-4c6e-b509-62f20f8affa7",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "11c92b9b-4711-4289-9b9f-75547fcc909d",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9655e970-1a28-4571-a44e-4f4f9f0f8f3c",
+        "name": "Court 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d236dadb-b497-4bd0-8189-b68ccc1c0f3f",
+        "name": "Court 5",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8b43043b-a2fd-4dd1-847b-1b3c54042555",
+        "name": "Court 6",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Lime Padel Club is a new sports destination in Paphos, with 6 professional PPA courts by Padel Galis - the same surfaces used in top international tournaments. The club is open to all levels, with training, match bookings and events. On-site: RAY cafe, WAY Store - padel and bike shop, plus showers, lockers and parking. A space built for the growing padel community in Cyprus.</p>\n"
+  }
+]

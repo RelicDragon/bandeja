@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>Total locations: 30</strong>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = [{"lat":47.449379,"lng":8.5246018,"name":"Padel Club Switzerland - Rümlang"},{"lat":47.5219315,"lng":8.5256559,"name":"Padel Club Switzerland - Bülach"},{"lat":46.4877928,"lng":9.9075667,"name":"Hotel Walther Pontresina / St. Moritz Engadin"},{"lat":47.2738615,"lng":8.8235454,"name":"Padelwerk, Bubikon"},{"lat":46.372557,"lng":8.9717587,"name":"THE PADEL LAB"},{"lat":47.531698,"lng":7.7024778,"name":"PlayPadelPratteln"},{"lat":47.54332544,"lng":7.60875519,"name":"Union Sport x Pickleball Hub Basel"},{"lat":47.520012,"lng":7.568045,"name":"Dynamo Padel Bottmingen"},{"lat":47.04243903,"lng":8.35038709,"name":"The Lakehouse @ Hermitage Hotel Lucerne"},{"lat":47.3178953,"lng":7.9740311,"name":"Padelwerk Safenwil"},{"lat":46.2866515,"lng":7.4470007,"name":"Alaïa Club"},{"lat":46.5285853,"lng":6.5999575,"name":"Vaudoise aréna"},{"lat":47.53576396,"lng":7.60824271,"name":"Padel Basel - Dreispitz"},{"lat":47.7158595,"lng":8.63242,"name":"Padel Vibez"},{"lat":47.08806192,"lng":8.25089221,"name":"Padelta Luzern, Rothenburg"},{"lat":47.3543947,"lng":8.50723399,"name":"Traglufthallen Frauental"},{"lat":47.11064314,"lng":7.31450981,"name":"Padel House Studen"},{"lat":47.3934004,"lng":8.06384797,"name":"PadelHub Aarau"},{"lat":47.1892102,"lng":8.8395855,"name":"Padelwerk Altendorf"},{"lat":47.4019863,"lng":8.4462313,"name":"PDL Zurich"},{"lat":47.57077991,"lng":7.59814107,"name":"Lido Sports Club | Erlenmatt"},{"lat":47.5795109,"lng":7.5868078,"name":"Union Padel – Hafen Basel"},{"lat":47.4994425,"lng":7.7172394,"name":"Padel Frenkendorf"},{"lat":47.195658,"lng":7.6140497,"name":"Padelwerk Subingen"},{"lat":47.57475013,"lng":7.58929554,"name":"Padel Basel - Klybeck"},{"lat":46.0170886,"lng":8.9374831,"name":"A-CLUB PADEL ARENA (ATLANTIDE SA)"},{"lat":46.2314336,"lng":7.3783136,"name":"Rackets Academy - Sion"},{"lat":46.23526727,"lng":6.1167685,"name":"GVA Padel (MP Sports SA)"},{"lat":47.238353,"lng":8.638239,"name":"Padelarena Wädenswil"},{"lat":46.1970724,"lng":6.1969731,"name":"Padel Station"}];
+        const center = [47.100160159999994, 7.968001906000001];
+
+        const map = L.map('map').setView(center, 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        locations.forEach((location) => {
+            const marker = L.marker([location.lat, location.lng]).addTo(map);
+            marker.bindPopup(`<strong>${location.name}</strong><br>Lat: ${location.lat}<br>Lng: ${location.lng}`);
+        });
+    </script>
+</body>
+</html>

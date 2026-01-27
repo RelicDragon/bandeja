@@ -1,0 +1,3657 @@
+[
+  {
+    "tenant_id": "cbbe539c-9dc8-4d50-975f-00b9b4f58087",
+    "tenant_name": "Padel Club Switzerland - Rümlang",
+    "slug": "padel-club-switzerland",
+    "address": {
+      "street": "Schützenstrasse 22",
+      "postal_code": "8153",
+      "city": "Rümlang",
+      "sub_administrative_area": "Bezirk Dielsdorf",
+      "administrative_area": "Zürich",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.449379,
+        "lon": 8.5246018
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1746815827/pro/tenants/cbbe539c-9dc8-4d50-975f-00b9b4f58087/1746815826520.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1746815837/pro/tenants/cbbe539c-9dc8-4d50-975f-00b9b4f58087/1746815836586.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1746815907/pro/tenants/cbbe539c-9dc8-4d50-975f-00b9b4f58087/1746815906539.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+41 766221473",
+      "DETAILS_PAGE_TITLE": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "aee1e52a-bfac-4ad2-b8a7-7ae45306199e;2d79b204-ba2f-4324-8046-982d6afc6e8a;d00f99d5-76d9-4764-be81-5937b9ed9820;ec7993ba-0c2c-423c-802c-1d3a4afb3c0a;3f3c28c4-153f-4de2-8971-d438343fc532",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_WIFI": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_LOCKERS": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padelclubswitzerland?igsh=bmViN3FpZHI0MHJx&utm_source=qr",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PLAYPARK": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "7ee1ac0d-d2a7-4401-a096-7a7c6c691c2a",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cb4618a0-a526-4ac1-a154-effea2cda2c2",
+        "name": "Sandholzer Immobilien - Padel Court 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4ca6c1f1-fbb6-481f-aefc-dd2de8f70e38",
+        "name": "Ball Machine (court not incl.) ",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": ""
+  },
+  {
+    "tenant_id": "de1bd385-7d17-4f95-b1dc-681aff740c93",
+    "tenant_name": "Padel Club Switzerland - Bülach",
+    "slug": "padel-club-switzerland-bulach",
+    "address": {
+      "street": "Hochfelderstrasse 75 ",
+      "postal_code": "8180",
+      "city": "Bülach",
+      "sub_administrative_area": "Bülach",
+      "administrative_area": "Zürich",
+      "country": "Suiza",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.5219315,
+        "lon": 8.5256559
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1768915182/pro/tenants/de1bd385-7d17-4f95-b1dc-681aff740c93/1768915181317.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "CONTACT_PHONE": "+41 766221473",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "true",
+      "WEBSITE_URL": "https://padelclubswitzerland.ch/",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_RESTAURANT": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "512c2188-ffa6-42d7-bd50-f014246eaa5b",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "44987a20-3afb-4293-8c4f-9a8707008e57",
+        "name": "Bülach Süd Center - Court 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b7629755-290a-4002-90b1-b298785af6fe",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7a1daf02-c530-43b4-b10d-ddd94a516ad1",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "83b51ebb-bc4f-4a0f-9535-8f5188de39ff",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "221b51b7-c9d5-4646-8cb5-baa1ef5b01bb",
+        "name": "Ball Machine (court not incl.)  1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": ""
+  },
+  {
+    "tenant_id": "0eb6300a-f5f8-4155-9efb-66522f51a6c6",
+    "tenant_name": "Hotel Walther Pontresina / St. Moritz Engadin",
+    "slug": "hotel-walther",
+    "address": {
+      "street": "Via Maistra 215",
+      "postal_code": "7504",
+      "city": "Pontresina",
+      "sub_administrative_area": "Distretto di Maloggia",
+      "administrative_area": "Grigioni",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 46.4877928,
+        "lon": 9.9075667
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1751477822/pro/tenants/0eb6300a-f5f8-4155-9efb-66522f51a6c6/1751477821593.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751715835/pro/tenants/0eb6300a-f5f8-4155-9efb-66522f51a6c6/1751715833838.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751715839/pro/tenants/0eb6300a-f5f8-4155-9efb-66522f51a6c6/1751715838410.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751715851/pro/tenants/0eb6300a-f5f8-4155-9efb-66522f51a6c6/1751715850435.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751715855/pro/tenants/0eb6300a-f5f8-4155-9efb-66522f51a6c6/1751715854143.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751715857/pro/tenants/0eb6300a-f5f8-4155-9efb-66522f51a6c6/1751715856983.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751715863/pro/tenants/0eb6300a-f5f8-4155-9efb-66522f51a6c6/1751715861956.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751715867/pro/tenants/0eb6300a-f5f8-4155-9efb-66522f51a6c6/1751715866348.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751715952/pro/tenants/0eb6300a-f5f8-4155-9efb-66522f51a6c6/1751715951650.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "**Willkommen** auf dem Account der Hotel Walther Pontresina / St.Moritz Tennis- und Padelcourts! Sie können über unsere Plattform sowohl die 2 Sandtennisplätze wie auch den neuen Outdoor Padelcourt online buchen. Für Tennis- und Padelunterricht kontaktieren Sie die Tennisschule St. Moritz - Silvaplana (Powered by GR Engadin) Tel. +41 81 834 30 55 oder die Hotelrezeption Tel. +41 81 839 36 36. Viel Vergnügen – geniessen Sie spannende Ballwechsel in geselliger Runde – und haben Sie aktiv Spass.\n**Benvenuti** all'account dell albergo Walther a Pontresina/St. Moritz! Tramite la nostra piattaforma puoi prenotare online campi da tennis e padel. Nonché lezioni di tennis e padel con la Tennis School St. Moritz – Silvaplana Tel. +41 81 834 30 55 oppure la reception dell’ albergo Walther Tel. +41 81 839 36 36. Vi auguriamo buon divertimento, tanto sole e aria di montagna.\n**Welcome **to the Hotel Walther Pontresina / St. Moritz tennis and padel courts account! You can use our platform to book tennis and padel courts in Pontresina. Further lessons at our partner Tennis School St. Moritz – Silvaplana by phone +41 81 834 30 55 or call the hotel Walther reception at +41 81 839 36 36. We wish you lots of fun, sunshine, and good vibes.",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.hotelwalther.ch ",
+      "CONTACT_PHONE": "+41 818393636",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "fd0d5540-018d-4ebc-8d00-28227799c7d0",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "58f921e3-c39f-4d05-8ae7-0dade5b3e988",
+        "name": "Tennis 1 ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "ed506b70-c0c0-4712-b774-505c218877b7",
+        "name": "Tennis 2  ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS"
+    ],
+    "communications_language": "de",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  <strong class=\"font-semibold text-primary-100\">Willkommen</strong> auf dem Account der Hotel Walther Pontresina / St.Moritz Tennis- und Padelcourts! Sie können über unsere Plattform sowohl die 2 Sandtennisplätze wie auch den neuen Outdoor Padelcourt online buchen. Für Tennis- und Padelunterricht kontaktieren Sie die Tennisschule St. Moritz - Silvaplana (Powered by GR Engadin) Tel. +41 81 834 30 55 oder die Hotelrezeption Tel. +41 81 839 36 36. Viel Vergnügen – geniessen Sie spannende Ballwechsel in geselliger Runde – und haben Sie aktiv Spass.\n  <strong class=\"font-semibold text-primary-100\">Benvenuti</strong> all'account dell albergo Walther a Pontresina/St. Moritz! Tramite la nostra piattaforma puoi prenotare online campi da tennis e padel. Nonché lezioni di tennis e padel con la Tennis School St. Moritz – Silvaplana Tel. +41 81 834 30 55 oppure la reception dell’ albergo Walther Tel. +41 81 839 36 36. Vi auguriamo buon divertimento, tanto sole e aria di montagna.\n  **Welcome **to the Hotel Walther Pontresina / St. Moritz tennis and padel courts account! You can use our platform to book tennis and padel courts in Pontresina. Further lessons at our partner Tennis School St. Moritz – Silvaplana by phone +41 81 834 30 55 or call the hotel Walther reception at +41 81 839 36 36. We wish you lots of fun, sunshine, and good vibes.\n</p>\n"
+  },
+  {
+    "tenant_id": "02decd84-f829-4c64-8cc0-bff45add6ed0",
+    "tenant_name": "Padelwerk, Bubikon",
+    "slug": "padelwerk-bubikon",
+    "address": {
+      "street": "Höslistraße 14",
+      "postal_code": "8608",
+      "city": "Bubikon",
+      "sub_administrative_area": "Hinwil",
+      "administrative_area": "Zürich",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.2738615,
+        "lon": 8.8235454
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1725700731/pro/tenants/02decd84-f829-4c64-8cc0-bff45add6ed0/1725700730986.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1725700744/pro/tenants/02decd84-f829-4c64-8cc0-bff45add6ed0/1725700743744.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1725700752/pro/tenants/02decd84-f829-4c64-8cc0-bff45add6ed0/1725700752266.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1725700770/pro/tenants/02decd84-f829-4c64-8cc0-bff45add6ed0/1725700769888.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+41 795982020",
+      "DETAILS_PAGE_TITLE": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "ce9db7b5-276a-4ec8-992d-d171c22d4bc5",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padelwerk Bubikon\nWir vermieten folgende Courts:\n* 1 Padelcourt doppel\n* 4 Padelcourts einzel\n* 1 Fussballfeld \n* 1 Pickleballcourt\n",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_WIFI": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_STORE": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_LOCKERS": "true",
+      "WEBSITE_URL": "https://www.padelwerk.ch",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PLAYPARK": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "ffb952f3-c48e-4028-a479-ed13ee426596",
+        "name": "Padel 1 - Doppelcourt",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "53f1cc3b-e88e-4564-9bce-6874b7b33cf4",
+        "name": "Padel 2 - Einzelcourt",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "13d81ee9-3f19-4325-8b2a-aaba291993ae",
+        "name": "AMK Management - Einzelcourt 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "26aeaa80-7a43-4e35-9743-c49bd1de75f8",
+        "name": "KA-EX - Einzelcourt 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "52ed0f10-9ee0-46b9-902b-f8adf873a5f0",
+        "name": "Hankook - Einzelcourt 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0a280f33-09ae-4728-9c58-70939f6b30d3",
+        "name": "Fußball",
+        "sport": "FOOTBALL_OTHERS",
+        "features": [
+          "indoor",
+          "football5",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "0f882df9-0fe1-47d8-aa57-0176a4b543ed",
+        "name": "Pickleball",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "double",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "04:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "04:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "04:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "04:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "04:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "FOOTBALL_OTHERS",
+      "PICKLEBALL"
+    ],
+    "communications_language": "de",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Padelwerk Bubikon\n  Wir vermieten folgende Courts:\n</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">1 Padelcourt doppel</li>\n  <li class=\"mb-0.5\">4 Padelcourts einzel</li>\n  <li class=\"mb-0.5\">1 Fussballfeld</li>\n  <li class=\"mb-0.5\">1 Pickleballcourt</li>\n</ul>\n"
+  },
+  {
+    "tenant_id": "0345155b-5be1-4bff-b597-229249b14f89",
+    "tenant_name": "THE PADEL LAB",
+    "slug": "the-padel-lab",
+    "address": {
+      "street": "via dei borradori 17",
+      "postal_code": "6710",
+      "city": "Biasca",
+      "sub_administrative_area": "Riviera",
+      "administrative_area": "Ticino",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 46.372557,
+        "lon": 8.9717587
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1661429798/pro/tenants/0345155b-5be1-4bff-b597-229249b14f89/1661429798346.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "true",
+      "CONTACT_PHONE": "+41 763256050",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Centro sportivo con 4 campi da padel coperti e 1 scoperto, 1 campo da tennis scoperto e 1 squash coperto",
+      "FACILITY_VENDING_MACHINE": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "www.playtomic.io"
+    },
+    "resources": [
+      {
+        "resourceId": "38a02a38-57a4-4838-80d8-0b99e80d89c0",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4ee41e0a-ff84-4cf0-b593-a19247852365",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b1847430-6765-4f0c-b66a-d4d0723bc3a9",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6d16f02f-6128-405f-a77b-9e840d0b2dc6",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a399cc54-b4a9-4b8c-bee3-781660554e6e",
+        "name": "Padel Infinity  ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5599e725-8fa4-4e39-88a3-910cd59b7568",
+        "name": "SQUASH",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "f4ee10a5-8fe0-4da9-801a-528d6b304d47",
+        "name": "TENNIS ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "synthetic_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS",
+      "SQUASH"
+    ],
+    "communications_language": "it",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Centro sportivo con 4 campi da padel coperti e 1 scoperto, 1 campo da tennis scoperto e 1 squash coperto</p>\n"
+  },
+  {
+    "tenant_id": "1292e3e8-f675-4d1a-b4d7-8e1379e6ab4d",
+    "tenant_name": "PlayPadelPratteln",
+    "slug": "playpadelpratteln",
+    "address": {
+      "street": "Lohagstrasse 16",
+      "postal_code": "4133",
+      "city": "Pratteln",
+      "sub_administrative_area": "Liestal",
+      "administrative_area": "Basel-Landschaft",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.531698,
+        "lon": 7.7024778
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1701712488/pro/tenants/1292e3e8-f675-4d1a-b4d7-8e1379e6ab4d/1701712487703.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+41 618130606",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "www.playpadel.ch"
+    },
+    "resources": [
+      {
+        "resourceId": "a05455eb-54e6-47c0-81f3-bc909cc960fa",
+        "name": "CUPRA",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f10475b9-10bd-45dc-b6cf-30391e774388",
+        "name": "RENNBAHN",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "25e7cd6e-f77c-4d96-b149-e5dc66643b1b",
+        "name": "ALLIANZ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": ""
+  },
+  {
+    "tenant_id": "48bff2eb-0410-47f3-9cb5-4f38d4798a89",
+    "tenant_name": "Union Sport x Pickleball Hub Basel",
+    "slug": "union-pickleball-x-pickleball-hub-basel",
+    "address": {
+      "street": "St. Jakobs-Strasse 200 / Halle 4",
+      "postal_code": "4052",
+      "city": "Basel",
+      "sub_administrative_area": "Basel-Stadt",
+      "administrative_area": "Basel City",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.54332544,
+        "lon": 7.60875519
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1755700351/pro/tenants/48bff2eb-0410-47f3-9cb5-4f38d4798a89/1755700350500.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "CONTACT_PHONE": "+41 614131300",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "www.union-sport.ch",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "5d5b8951-efba-4496-a55b-101423851ac1;b0d79e47-38cf-48e3-8c5c-b9fef532d586;4d34f3da-374e-458d-934b-7adbeb10bc8a",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Access code sent in the booking confirmation email.\nThe historic Bahnhalle 4 in the Wolfareal in Basel is being revitalized for a new sports use! As part of a pop-up project Union Sport and Pickleball Hub are working closely together.\nThis will be one of the largest pickleball hall in Switzerland to date, equipped with five CourtPro Pickleball Courts and an additional single court. There are also 4 table tennis tables available. With its excellent location and accessibility, the Pickleball Center Basel offers perfect conditions for sports, events and meetings.\nPlease Note: \n* For the moment there are no showers in the facility.\n* The venue has no heating. In winter months it can get cold.\n"
+    },
+    "resources": [
+      {
+        "resourceId": "d2b26410-bda5-4ee6-a02d-7baaa6e53405",
+        "name": "Pickleball 1",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "3e967ea5-c9b6-473d-9f45-5e4e3251798f",
+        "name": "Pickleball 2",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "21b29c83-984b-4f9d-a8c2-6baabf0c7fd0",
+        "name": "Pickleball 3",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "6b64e826-f8dd-4159-bbc7-dd0cf3a4aff4",
+        "name": "Pickleball 4",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "c3b1017c-1965-4465-ac13-244608801fe4",
+        "name": "Pickleball Skinny Single Court 6",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "single",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "674daadb-8fdb-467b-b892-5348ffb38f64",
+        "name": "Table 1",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "indoor",
+          "thickness25mm"
+        ]
+      },
+      {
+        "resourceId": "43009cf7-8c9d-441a-a156-a5f78827e3d2",
+        "name": "Table 2",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "indoor",
+          "thickness25mm"
+        ]
+      },
+      {
+        "resourceId": "42231a44-69d2-4db1-b02e-223a0682896f",
+        "name": "Table 3",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "indoor",
+          "thickness25mm"
+        ]
+      },
+      {
+        "resourceId": "d3e108db-75ca-4a28-a48b-1a3fac5cc4b6",
+        "name": "Table 4",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "indoor",
+          "thickness25mm"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PICKLEBALL",
+      "TABLE_TENNIS"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Access code sent in the booking confirmation email.\n  The historic Bahnhalle 4 in the Wolfareal in Basel is being revitalized for a new sports use! As part of a pop-up project Union Sport and Pickleball Hub are working closely together.\n  This will be one of the largest pickleball hall in Switzerland to date, equipped with five CourtPro Pickleball Courts and an additional single court. There are also 4 table tennis tables available. With its excellent location and accessibility, the Pickleball Center Basel offers perfect conditions for sports, events and meetings.\n  Please Note:\n</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">For the moment there are no showers in the facility.</li>\n  <li class=\"mb-0.5\">The venue has no heating. In winter months it can get cold.</li>\n</ul>\n"
+  },
+  {
+    "tenant_id": "4aa4710a-4c92-44c2-bd84-402e20c2564c",
+    "tenant_name": "Dynamo Padel Bottmingen",
+    "slug": "lido-sports-club-bottmingen",
+    "address": {
+      "street": "Therwilerstrasse 56/58",
+      "postal_code": "4103",
+      "city": "Bottmingen",
+      "sub_administrative_area": "Basel-Stadt",
+      "administrative_area": "Basel-Stadt",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.520012,
+        "lon": 7.568045
+      },
+      "timezone": "Europe/Paris"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1726411870/pro/tenants/4aa4710a-4c92-44c2-bd84-402e20c2564c/1726411869721.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Bottmingen: Therwilerstrasse 56/58, 4103 Bottmingen",
+      "WEBSITE_URL": "",
+      "CONTACT_PHONE": "+41 614131300",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "bc0d78f7-14de-438e-8248-4c115d0dc222",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "8b3dd7f6-8fbb-436e-89f8-7c1f175ee89c",
+        "name": "Court Bottmingen",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Bottmingen: Therwilerstrasse 56/58, 4103 Bottmingen</p>\n"
+  },
+  {
+    "tenant_id": "4c853c7e-6e17-428c-9a2f-70f166d664e0",
+    "tenant_name": "The Lakehouse @ Hermitage Hotel Lucerne",
+    "slug": "the-lakehouse",
+    "address": {
+      "street": "Seeburgstrasse 72",
+      "postal_code": "6006",
+      "city": "Luzern",
+      "sub_administrative_area": "Luzern-Stadt",
+      "administrative_area": "Luzern",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.04243903,
+        "lon": 8.35038709
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1759925322/pro/tenants/4c853c7e-6e17-428c-9a2f-70f166d664e0/1759925321898.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1759926192/pro/tenants/4c853c7e-6e17-428c-9a2f-70f166d664e0/1759926191426.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+41 413758181",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Discover The Lakehouse Club at Hotel Hermitage Lucerne — a premier destination for padel and pickleball. Nestled by the lake, our state-of-the-art courts combine world-class facilities with breathtaking views, offering an unmatched sporting and social experience.",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_STORE": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://www.lakehouseclub.ch"
+    },
+    "resources": [
+      {
+        "resourceId": "12d386c8-863c-4f59-a346-4352302d4666",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Discover The Lakehouse Club at Hotel Hermitage Lucerne — a premier destination for padel and pickleball. Nestled by the lake, our state-of-the-art courts combine world-class facilities with breathtaking views, offering an unmatched sporting and social experience.</p>\n"
+  },
+  {
+    "tenant_id": "423189ff-ea39-45e8-aca6-8ff15a469917",
+    "tenant_name": "Padelwerk Safenwil",
+    "slug": "padelwerk-safenwil",
+    "address": {
+      "street": "Striegelstrasse 8",
+      "postal_code": "5745",
+      "city": "Safenwil",
+      "sub_administrative_area": "Zofingen",
+      "administrative_area": "Aargau",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.3178953,
+        "lon": 7.9740311
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/423189ff-ea39-45e8-aca6-8ff15a469917/padelwerk-safenwil_0001"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+41 795982020",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "b0cc2881-df34-4979-b65a-1ad07ff55da1",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "* Doppelcourt Indoor\n",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://www.padelwerk.ch/"
+    },
+    "resources": [
+      {
+        "resourceId": "6f4b71e8-4f1f-4c80-8cb4-b34ffd749ebd",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": "\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">Doppelcourt Indoor</li>\n</ul>\n"
+  },
+  {
+    "tenant_id": "52a63a4e-9633-40ad-b631-06227e1cfd9a",
+    "tenant_name": "Alaïa Club",
+    "slug": "alaia-club",
+    "address": {
+      "street": "Route de Crans 81",
+      "postal_code": "1978",
+      "city": "Lens",
+      "sub_administrative_area": "Sierre",
+      "administrative_area": "Valais",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 46.2866515,
+        "lon": 7.4470007
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1767707977/pro/tenants/52a63a4e-9633-40ad-b631-06227e1cfd9a/1767707976151.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767708000/pro/tenants/52a63a4e-9633-40ad-b631-06227e1cfd9a/1767707999590.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767708645/pro/tenants/52a63a4e-9633-40ad-b631-06227e1cfd9a/1767708644343.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767708646/pro/tenants/52a63a4e-9633-40ad-b631-06227e1cfd9a/1767708645902.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "f125ffac-8d5b-46cc-8060-eae2b6014f44;facc69ef-1263-4bc3-9faa-44ca8a0ab9ea;36d4ab40-4797-461a-8eb1-c590b3b2a16f",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Alaïa Club est le terrain idéal pour les familles comme pour les joueurs aguerris de padel.\nSur place, vous profitez d’un espace arcade, d’un trampoline park intérieur, d’un skatepark extérieur, d’une offre de restauration, et bien sûr : du padel à volonté.\n**Alaïa Club fonctionne avec deux types d’accès :**\n* _Créneaux membres (Alaïa Club Card) :_ accès exclusif en dehors des heures publiques.\n* _Créneaux ouverts :_ accès pour tout le monde\n\n\n**Horaires ouverts au public :**\n* Mercredi : 12h–21h\n* Jeudi : 16h–21h\n* Vendredi : 16h–21h\n* Samedi : 9h–22:30h\n* Dimanche : 9h–20h\n\nAucune réservation possible entre 00h00 et 06h00.\nEn dehors des heures publiques, le club est réservé exclusivement aux membres Alaïa Club.",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+41 275659105",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "alaia.ch/club",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "77c7a23a-3595-445b-9e74-95789c354d93",
+        "name": "Padel 1 - Individuel",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2d8a7862-f485-417e-9c2b-573794ec7226",
+        "name": "Padel 2 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0e591d42-55d9-44a0-abdf-75e4ccea5845",
+        "name": "Padel 3 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4a5af6eb-74f3-4c2c-91ae-31b017fd2585",
+        "name": "Padel 4 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Alaïa Club est le terrain idéal pour les familles comme pour les joueurs aguerris de padel.\n  Sur place, vous profitez d’un espace arcade, d’un trampoline park intérieur, d’un skatepark extérieur, d’une offre de restauration, et bien sûr : du padel à volonté.\n  <strong class=\"font-semibold text-primary-100\">Alaïa Club fonctionne avec deux types d’accès :</strong>\n</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\"><em class=\"italic\">Créneaux membres (Alaïa Club Card) :</em> accès exclusif en dehors des heures publiques.</li>\n  <li class=\"mb-0.5\"><em class=\"italic\">Créneaux ouverts :</em> accès pour tout le monde</li>\n</ul>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\"><strong class=\"font-semibold text-primary-100\">Horaires ouverts au public :</strong></p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">Mercredi : 12h–21h</li>\n  <li class=\"mb-0.5\">Jeudi : 16h–21h</li>\n  <li class=\"mb-0.5\">Vendredi : 16h–21h</li>\n  <li class=\"mb-0.5\">Samedi : 9h–22:30h</li>\n  <li class=\"mb-0.5\">Dimanche : 9h–20h</li>\n</ul>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Aucune réservation possible entre 00h00 et 06h00.\n  En dehors des heures publiques, le club est réservé exclusivement aux membres Alaïa Club.\n</p>\n"
+  },
+  {
+    "tenant_id": "53b5aaf2-7449-4691-96f8-a582ce37144b",
+    "tenant_name": "Vaudoise aréna",
+    "slug": "vaudoise-arena",
+    "address": {
+      "street": "Chemin du viaduc 14",
+      "postal_code": "1008",
+      "city": "Prilly",
+      "sub_administrative_area": "",
+      "administrative_area": "Vaud",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 46.5285853,
+        "lon": 6.5999575
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1741595570/pro/tenants/53b5aaf2-7449-4691-96f8-a582ce37144b/1741595570108.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741595633/pro/tenants/53b5aaf2-7449-4691-96f8-a582ce37144b/1741595632567.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741596205/pro/tenants/53b5aaf2-7449-4691-96f8-a582ce37144b/1741596204853.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741596263/pro/tenants/53b5aaf2-7449-4691-96f8-a582ce37144b/1741596262214.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "a7605186-bc49-494d-ad0e-03b76d17951a;fc9c4478-4d52-411f-bd40-3392362d791b;351a2db1-2900-4072-8df8-c00f2c2c3dd9;dc259f43-0146-45c5-a7a0-7fb0cb53b295",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**Fermeture saisonnière des terrains de padel d'octobre à mars pour laisser place à la patinoire extérieure. **\nRetrouvez les terrains de padel dès avril 2026 jusqu'à la fin septembre 2026. \nA très bientôt ! ",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "CONTACT_PHONE": "+41 213155500",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "WEBSITE_URL": "https://vaudoisearena.ch/centres-sportifs/padel",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "97a1c33c-5720-41ea-bbdf-cd1cbbcc34f4",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "757bacaf-0247-49b3-bf49-4ed5c13b9f45",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  **Fermeture saisonnière des terrains de padel d'octobre à mars pour laisser place à la patinoire extérieure. **\n  Retrouvez les terrains de padel dès avril 2026 jusqu'à la fin septembre 2026.\n  A très bientôt !\n</p>\n"
+  },
+  {
+    "tenant_id": "6641ab61-06ae-449d-be08-d20390c55d1d",
+    "tenant_name": "Padel Basel - Dreispitz",
+    "slug": "padel-basel-dreispitz",
+    "address": {
+      "street": "Lyon-Strasse 11",
+      "postal_code": "4053",
+      "city": "Basel",
+      "sub_administrative_area": "Basel-Stadt",
+      "administrative_area": "Basel-Stadt",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.53576396,
+        "lon": 7.60824271
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1657639916/pro/tenants/6641ab61-06ae-449d-be08-d20390c55d1d/1657639915579.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1657640028/pro/tenants/6641ab61-06ae-449d-be08-d20390c55d1d/1657640027553.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1657640127/pro/tenants/6641ab61-06ae-449d-be08-d20390c55d1d/1657640127033.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+41 610000000",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel in einer charmanten über 100 Jahre alten Holzlagerhalle. Rackets und Bälle sind im Preis inbegriffen.\n---\nPadel in a charming more than 100 years old warehouse. Rackets and balls are incl.",
+      "FACILITY_VENDING_MACHINE": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "8e10f293-818a-4d0a-afe1-ebef027946d7;3250f1ba-233c-4829-8408-e0e3cb7699ef;ccf9cbde-87cd-416b-8936-d474d483c93e",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://www.padel-basel.ch"
+    },
+    "resources": [
+      {
+        "resourceId": "79abd72d-cdbc-4855-84ed-56155e13d522",
+        "name": "Padel Basel - Dreispitz",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": "\n<p class=\"text-lg font-semibold text-primary-100 my-2\">Padel in einer charmanten über 100 Jahre alten Holzlagerhalle. Rackets und Bälle sind im Preis inbegriffen.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padel in a charming more than 100 years old warehouse. Rackets and balls are incl.</p>\n"
+  },
+  {
+    "tenant_id": "941f617b-009f-4589-b613-53607c511073",
+    "tenant_name": "Padel Vibez",
+    "slug": "padel-vibez",
+    "address": {
+      "street": "Mühlentalstrasse 256",
+      "postal_code": "8200",
+      "city": "Schaffhausen",
+      "sub_administrative_area": "Schaffhausen",
+      "administrative_area": "Schaffhausen",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.7158595,
+        "lon": 8.63242
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1741622390/pro/tenants/941f617b-009f-4589-b613-53607c511073/1741622389245.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741622421/pro/tenants/941f617b-009f-4589-b613-53607c511073/1741622420465.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741622717/pro/tenants/941f617b-009f-4589-b613-53607c511073/1741622715989.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "fc3b6993-5bb3-42dd-ab6b-2cd9dfb31614;d589d6d1-3fd7-4b09-a3e7-9268c3f3d4d4",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "CONTACT_PHONE": "+41 763702030",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "@padelvibez",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PLAYPARK": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Vibez Schaffhausen! Ein Padel Center mit 5 Padel Plätzen, mit einer Deckenhöhe von mindestens 9 Meter. Padel Vibez wird zusätzlich Ligen, Mittags-Padel und Frühstücks-Padel, so wie auch Trainingsgruppen für alle Levels anbieten.",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "b96f4e46-2355-4faa-99a1-25b145133265",
+        "name": "Court 1 - Single - Hutter Dynamics",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5174d459-5b12-420a-af61-2a25e752dd5a",
+        "name": "Court 2 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f4643fa9-5e22-49b2-b687-7a445625ddb3",
+        "name": "Court 3 - Iseli + Albrecht",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "cd1bbdbe-d615-4b4d-a0f9-70dd086959d6",
+        "name": "Court 4 - Incrediwear",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "30c275b1-e968-426b-bdba-66dc29147176",
+        "name": "Court 5 - Inow",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padel Vibez Schaffhausen! Ein Padel Center mit 5 Padel Plätzen, mit einer Deckenhöhe von mindestens 9 Meter. Padel Vibez wird zusätzlich Ligen, Mittags-Padel und Frühstücks-Padel, so wie auch Trainingsgruppen für alle Levels anbieten.</p>\n"
+  },
+  {
+    "tenant_id": "997bee27-e98e-40b3-8788-c4d96300c65b",
+    "tenant_name": "Padelta Luzern, Rothenburg",
+    "slug": "padelta-luzern-rothenburg",
+    "address": {
+      "street": "Station-Ost 1",
+      "postal_code": "6023",
+      "city": "Rothenburg",
+      "sub_administrative_area": "Rothenburg",
+      "administrative_area": "Luzern",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.08806192,
+        "lon": 8.25089221
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1754413729/pro/tenants/997bee27-e98e-40b3-8788-c4d96300c65b/1754413728605.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+41 412440040",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**Faszinierender Sport in cooler Location - Willkommen in unserer Padel-Halle in Luzern, Rothenburg.**\n**Wir freuen uns über deinen Besuch**\n\nFascinating sport in a cool location - welcome to our padel venue in Lucerne, Rothenburg.\nWe are looking forward to your visit",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "1607e6ef-3205-4d5a-9760-b59602e1c89a;6677731c-9b46-4342-bf38-790730b663a1;49cbcb54-bb99-4760-9304-85ebca5ee58e;f95397af-7e76-4906-9f99-e76170620eb1;4b25d485-44cb-4d7d-a518-d3aa4e977bc4;bfc5382f-0e0f-428f-8a4f-20417698a6ae;8fb32c78-8aef-4039-ab5c-a7a6794f69fb;2700a0fc-401c-4152-a05c-f8f2c1d75175;1f2ced4f-c97c-44e5-ad95-dd1193533cdf",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://www.padelta.ch"
+    },
+    "resources": [
+      {
+        "resourceId": "f78448fc-0eea-4f26-97ac-5696a5a4fa3b",
+        "name": "Porsche – Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "068a30bd-2b05-45de-b734-3f35327bd784",
+        "name": "Emmi – Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "481b1ef8-f603-4e6a-87fc-2796e1b9610f",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "04c332b3-1d53-4f2c-bc50-ccce3b04c0c1",
+        "name": "KPT – Court 4",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3fdc515d-a55b-4bf5-a32b-8ac97b757a40",
+        "name": "Court 5",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "16:00"
+      },
+      "TUESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "16:00"
+      },
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  <strong class=\"font-semibold text-primary-100\">Faszinierender Sport in cooler Location - Willkommen in unserer Padel-Halle in Luzern, Rothenburg.</strong>\n  <strong class=\"font-semibold text-primary-100\">Wir freuen uns über deinen Besuch</strong>\n</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Fascinating sport in a cool location - welcome to our padel venue in Lucerne, Rothenburg.\n  We are looking forward to your visit\n</p>\n"
+  },
+  {
+    "tenant_id": "b48c3c12-0a0e-4c57-a3fd-1f2d9818a448",
+    "tenant_name": "Traglufthallen Frauental",
+    "slug": "traglufthallen-frauental",
+    "address": {
+      "street": "Hegianwandweg 127",
+      "postal_code": "8045",
+      "city": "Zürich",
+      "sub_administrative_area": "Zürich",
+      "administrative_area": "Zürich",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.3543947,
+        "lon": 8.50723399
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1670437141/pro/tenants/b48c3c12-0a0e-4c57-a3fd-1f2d9818a448/1670437140816.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1670437186/pro/tenants/b48c3c12-0a0e-4c57-a3fd-1f2d9818a448/1670437185442.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1670437189/pro/tenants/b48c3c12-0a0e-4c57-a3fd-1f2d9818a448/1670437188697.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1670437210/pro/tenants/b48c3c12-0a0e-4c57-a3fd-1f2d9818a448/1670437209621.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_DESCRIPTION": "Der Verein Traglufthallen Frauental betreibt 3 Traglufthallen mit insgesamt 6 Sandplätzen auf der städtischen Tennisanlage Frauental. ",
+      "WEBSITE_URL": "https://www.tlhf.ch",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "68760d8d-8525-4b03-87a4-267ca082215a;36b368a2-1ad7-4bf1-a0cf-0b110816719d;766c06dd-c46d-4a12-8147-34c48592e56c;1d18bd10-f6d5-4d22-876a-d4bb53557e5c;7cf2d17e-f295-459b-9aad-3b686949918d;cecb01e5-16cd-425a-9715-c00593ab2f00;2fb947a1-1bdb-4053-b24b-22dde07ac910;5f767db5-efd5-489b-b425-a0b3c59b686e;a4077403-1a99-4ba5-ab32-a8b5e1f7545a;cdf3e5ea-07d5-423f-b702-8eadab96b6b7;58562444-81eb-4c38-830b-9f8994df73eb;f321289c-9532-4e33-afdb-5ae706acd4f0",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "a191f4c9-3950-4c16-acc2-24e7310a28f8",
+        "name": "Platz 1 / Halle 1",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "f5b9ca1b-999a-471e-83f1-c00da63af471",
+        "name": "Platz 2 / Halle 1",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "414572ea-be61-43a9-a80a-eddbebf320b7",
+        "name": "Platz 3 / Halle 2",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "e7da2361-870f-4526-ac57-d545d1dc7485",
+        "name": "Platz 4 / Halle 2",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "fe6875e0-3c59-4a71-ad22-3b71f335f76e",
+        "name": "Platz 5 / Halle 3",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "73e34b71-4365-4a50-a5fd-845cac591afc",
+        "name": "Platz 6 / Halle 3",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "double",
+          "clay"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "de",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Der Verein Traglufthallen Frauental betreibt 3 Traglufthallen mit insgesamt 6 Sandplätzen auf der städtischen Tennisanlage Frauental.</p>\n"
+  },
+  {
+    "tenant_id": "b59b62d4-963e-4d4f-afff-b849a3ff30a4",
+    "tenant_name": "Padel House Studen",
+    "slug": "padel-house-studen",
+    "address": {
+      "street": "Büetigenstrasse 80",
+      "postal_code": "2557",
+      "city": "Studen",
+      "sub_administrative_area": "Seeland District",
+      "administrative_area": "Bern",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.11064314,
+        "lon": 7.31450981
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1716321661/pro/tenants/b59b62d4-963e-4d4f-afff-b849a3ff30a4/1716321660164.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1722072169/pro/tenants/b59b62d4-963e-4d4f-afff-b849a3ff30a4/1722072168672.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**Welcome to the Padel House Studen **\n* 6 premium indoor Padel Courts\n* Academy\n* Tournaments & Events\n* Shop\n* Lounge & Event Spaces\n* Showers & Chaning Rooms\n* Free Parking\n\n",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "IS_CAB_MEMBER": "true",
+      "WEBSITE_URL": "https://www.padel-house.ch",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+41 ",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "a380b076-8da1-46ef-8f74-c2d8a2fcafd7;1ef3f62d-5d17-4b2f-bed6-06e011a554b7;bf677057-9bc0-431d-86c6-7126705f2c49",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_LOCKERS": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "8397e6c9-b0a0-457e-8121-edfcf6e91613",
+        "name": "Court 1 - CERTINA",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b445c810-01ba-4a7f-a63f-e061631026fa",
+        "name": "Court 2 - SWICA",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b92f366c-90b2-4acb-9e74-1085a58641fb",
+        "name": "Court 3 - CUPRA",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3e084047-4939-4bbc-8d0a-8579b5086c6c",
+        "name": "Court 4 - RYF",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "050fda5e-909d-4ed3-bbea-e7dbd88fbdf7",
+        "name": "Court 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e0ac59da-63a6-4f89-991c-59e1ca156715",
+        "name": "Court 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">**Welcome to the Padel House Studen **</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">6 premium indoor Padel Courts</li>\n  <li class=\"mb-0.5\">Academy</li>\n  <li class=\"mb-0.5\">Tournaments &#x26; Events</li>\n  <li class=\"mb-0.5\">Shop</li>\n  <li class=\"mb-0.5\">Lounge &#x26; Event Spaces</li>\n  <li class=\"mb-0.5\">Showers &#x26; Chaning Rooms</li>\n  <li class=\"mb-0.5\">Free Parking</li>\n</ul>\n"
+  },
+  {
+    "tenant_id": "b74d3ef7-4dfb-4052-8108-bc4629485697",
+    "tenant_name": "PadelHub Aarau",
+    "slug": "padelhub-aarau",
+    "address": {
+      "street": "Industriestrasse",
+      "postal_code": "5000",
+      "city": "Aarau",
+      "sub_administrative_area": "Aarau",
+      "administrative_area": "Aargau",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.3934004,
+        "lon": 8.06384797
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1713434430/pro/tenants/b74d3ef7-4dfb-4052-8108-bc4629485697/1713434429805.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1713434434/pro/tenants/b74d3ef7-4dfb-4052-8108-bc4629485697/1713434433434.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Wir sind die erste Padel Anlage in der Stadt Aarau und sind Teil der Zwischennutzung Terrain Sud. \nWir bieten zwei Aussen-Padelplätze, die dazu einladen, spektakuläre Ballwechsel zu spielen und den Trendsport aus Spanien auszuprobieren.\nWir freuen uns auf deinen Besuch! ",
+      "FACILITY_LOCKERS": "false",
+      "WEBSITE_URL": "https://www.padelhub.ch/aarau",
+      "CONTACT_PHONE": "+41 782400288",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "4bb1493d-87c1-405c-b4bf-d58e5cba84e2",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_RESTAURANT": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "00f87a23-817d-4b78-9aab-8ef3a45d288f",
+        "name": "Häusermann AG - Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "cef80dff-bd49-4216-b6ae-5482ed36d8b8",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Wir sind die erste Padel Anlage in der Stadt Aarau und sind Teil der Zwischennutzung Terrain Sud.\n  Wir bieten zwei Aussen-Padelplätze, die dazu einladen, spektakuläre Ballwechsel zu spielen und den Trendsport aus Spanien auszuprobieren.\n  Wir freuen uns auf deinen Besuch!\n</p>\n"
+  },
+  {
+    "tenant_id": "e0a3b37b-f9d0-4110-9461-c73468ad6a50",
+    "tenant_name": "Padelwerk Altendorf",
+    "slug": "padelwerk-altendorf",
+    "address": {
+      "street": "Brügglistrasse 11a",
+      "postal_code": "8852",
+      "city": "Altendorf",
+      "sub_administrative_area": "March",
+      "administrative_area": "Schwyz",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.1892102,
+        "lon": 8.8395855
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/e0a3b37b-f9d0-4110-9461-c73468ad6a50/padelwerk-altendorf_0001"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+41 795982020",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Der Indoor-Standort in Altendorf (SZ) bietet:\n* 2 Doppelcourts\n* 1 Einzelcourt\n* Schlägervermietungs- und Ballverkaufsbox\n* Getränke- und Foodbox\n* Lounge\n* Umziehkabine\n* WC \n* Dusche\n",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://padelwerk.ch/"
+    },
+    "resources": [
+      {
+        "resourceId": "a95e6161-ffa0-4038-b057-b0d7a20f561b",
+        "name": "Padel 1 - Doppelcourt",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "67b81cc6-e447-44ad-af5f-b471281baff4",
+        "name": "Padel 2 - Doppelcourt",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a78bc704-2e76-4db1-a664-526e7cc67a60",
+        "name": "Padel 3 - Einzelcourt",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Der Indoor-Standort in Altendorf (SZ) bietet:</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">2 Doppelcourts</li>\n  <li class=\"mb-0.5\">1 Einzelcourt</li>\n  <li class=\"mb-0.5\">Schlägervermietungs- und Ballverkaufsbox</li>\n  <li class=\"mb-0.5\">Getränke- und Foodbox</li>\n  <li class=\"mb-0.5\">Lounge</li>\n  <li class=\"mb-0.5\">Umziehkabine</li>\n  <li class=\"mb-0.5\">WC</li>\n  <li class=\"mb-0.5\">Dusche</li>\n</ul>\n"
+  },
+  {
+    "tenant_id": "7039d452-331e-4931-ad16-5a21c63cdffe",
+    "tenant_name": "PDL Zurich",
+    "slug": "pdl-zurich",
+    "address": {
+      "street": "Brandstrasse 12",
+      "postal_code": "8952",
+      "city": "Schlieren",
+      "sub_administrative_area": "Dietikon",
+      "administrative_area": "Zürich",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.4019863,
+        "lon": 8.4462313
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1718360080/pro/tenants/7039d452-331e-4931-ad16-5a21c63cdffe/1718360079884.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1718360082/pro/tenants/7039d452-331e-4931-ad16-5a21c63cdffe/1718360081422.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1718360083/pro/tenants/7039d452-331e-4931-ad16-5a21c63cdffe/1718360082915.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1718360085/pro/tenants/7039d452-331e-4931-ad16-5a21c63cdffe/1718360084566.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1718360086/pro/tenants/7039d452-331e-4931-ad16-5a21c63cdffe/1718360085843.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1718360087/pro/tenants/7039d452-331e-4931-ad16-5a21c63cdffe/1718360087249.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1718360089/pro/tenants/7039d452-331e-4931-ad16-5a21c63cdffe/1718360088813.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1718360101/pro/tenants/7039d452-331e-4931-ad16-5a21c63cdffe/1718360100583.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1718360104/pro/tenants/7039d452-331e-4931-ad16-5a21c63cdffe/1718360103609.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1718974668/pro/tenants/7039d452-331e-4931-ad16-5a21c63cdffe/1718974667710.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+41 767860177",
+      "DETAILS_PAGE_TITLE": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "0087df5b-701e-43de-b0bd-7a0adaa5c720;0523847c-5a50-4e62-b561-fb3766d071f5;c205b033-b518-404c-85cc-f0166c29cdf0;6e4b6417-1d58-4a97-9d26-13c3e005f11b;7b68d0c5-bb23-4052-9041-2962e5fad971;7adaa504-fbc7-4b96-8e4b-c08e4206f356",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Rental Rackets & Balls Available\n5 Padel Indoor Courts in Schlieren (Zurich)\nOpen 24/7 - 365 Days \nShowers and Changing Rooms \nLounge with drinks and TV\nFully automated Padel Center",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_WIFI": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_LOCKERS": "true",
+      "WEBSITE_URL": "@pdlzurich",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PLAYPARK": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "dc1fe903-54c9-4fb2-9b75-de0996e929c4",
+        "name": "Court 1 - Die Mobiliar",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "127014fc-268e-4e8f-97a3-16c773095095",
+        "name": "Court 2 - Puerto Mate",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9403420d-840a-43ad-94dc-8bf3a0ef439a",
+        "name": "Court 3 - AMAG Zürich",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a50a2ab0-da29-4d74-bf49-ef22694485fa",
+        "name": "Court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "fa066e5b-2f6a-43da-b7e6-8a6b7c0a6d4e",
+        "name": "Court 5 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "21d17736-6a8e-4ffe-aa53-364c97bcaf0c",
+        "name": "Court 6 - New!",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0164494b-b382-4768-8ddb-d583601623bd",
+        "name": "Court 7 - New!",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f475ad15-5622-4ebd-9ee2-7a8adf77d044",
+        "name": "Court 8 - New!",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "46a73efd-b6a3-47f2-8038-a2f07f0386de",
+        "name": "Hot Sauna Session (NOT a court)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cad89a8a-14ff-4914-821c-d0b6222bf0ff",
+        "name": "Ball Machine (court not included)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Rental Rackets &#x26; Balls Available\n  5 Padel Indoor Courts in Schlieren (Zurich)\n  Open 24/7 - 365 Days\n  Showers and Changing Rooms\n  Lounge with drinks and TV\n  Fully automated Padel Center\n</p>\n"
+  },
+  {
+    "tenant_id": "7414b8af-c8da-4908-9198-7639195dd1eb",
+    "tenant_name": "Lido Sports Club | Erlenmatt",
+    "slug": "lido-sports-club-erlenmatt",
+    "address": {
+      "street": "Riehenring 190",
+      "postal_code": "4058",
+      "city": "Basel",
+      "sub_administrative_area": "Basel-Stadt",
+      "administrative_area": "Basel-Stadt",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.57077991,
+        "lon": 7.59814107
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1727015632/pro/tenants/7414b8af-c8da-4908-9198-7639195dd1eb/1727015632323.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_PLAYPARK": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_STORE": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "d6cb6317-f35e-4264-bb75-61754aca30bc;fc8d7681-a009-4efc-b6cc-8841ba1ebd48",
+      "DETAILS_PAGE_DESCRIPTION": "Outdoor Court in Kleinbasel. \nPlease note, there is no rental equipment, no water and no changing room.",
+      "WEBSITE_URL": "https://www.lidobasel.ch/padeltennis",
+      "FACILITY_LOCKERS": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_CHANGEROOM": "false",
+      "CONTACT_PHONE": "+41 793860502"
+    },
+    "resources": [
+      {
+        "resourceId": "74be0bdc-d0bf-4c40-bfdf-db7f24635400",
+        "name": "ErlePerle",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Outdoor Court in Kleinbasel.\n  Please note, there is no rental equipment, no water and no changing room.\n</p>\n"
+  },
+  {
+    "tenant_id": "9f7fd6e4-dfcd-492e-8199-f155a70778cd",
+    "tenant_name": "Union Padel – Hafen Basel",
+    "slug": "union-padel-hafen-basel",
+    "address": {
+      "street": "Uferstrasse 70",
+      "postal_code": "4057",
+      "city": "Basel",
+      "sub_administrative_area": "Basel-Stadt",
+      "administrative_area": "Basel-Stadt",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.5795109,
+        "lon": 7.5868078
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1739662612/pro/tenants/9f7fd6e4-dfcd-492e-8199-f155a70778cd/1739662612047.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1739662924/pro/tenants/9f7fd6e4-dfcd-492e-8199-f155a70778cd/1739662923267.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1739694068/pro/tenants/9f7fd6e4-dfcd-492e-8199-f155a70778cd/1739694067640.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "At Union Padel, we believe that padel is not just about competition and skills, it’s about making lasting connections and memories. We hope that on court not only epic points are played, but also friendships are initiated. No matter whether you are an absolute beginner or competitive player you are welcome on the court and in our growing padel community.\nOur club is situated inside a large hall in the former Gondrand warehouse at Uferstrasse 70. So come for the game, stay for the people!",
+      "WEBSITE_URL": "https://www.union-sport.ch/",
+      "CONTACT_PHONE": "+41 614131300",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "eb54c9ef-f704-4ba1-a956-2270faa16f93;33485483-2a68-4776-b517-b50ce2e85713;0f3e72d7-7130-4a6c-af0b-eac62aa01ddc",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "d01a5144-ca37-46e9-8e0d-952919d8bc88",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2955c661-9f1a-435c-97ef-69b7a4e40a02",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "499c7280-976b-41f7-9b51-864454b6a66e",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "837e3e6d-bb9f-4479-bf91-1401bf3a236a",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "87e5dd68-40a6-4a18-aca1-aafe8a8633ed",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  At Union Padel, we believe that padel is not just about competition and skills, it’s about making lasting connections and memories. We hope that on court not only epic points are played, but also friendships are initiated. No matter whether you are an absolute beginner or competitive player you are welcome on the court and in our growing padel community.\n  Our club is situated inside a large hall in the former Gondrand warehouse at Uferstrasse 70. So come for the game, stay for the people!\n</p>\n"
+  },
+  {
+    "tenant_id": "ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6",
+    "tenant_name": "Padel Frenkendorf",
+    "slug": "padel-frenkendorf",
+    "address": {
+      "street": "Schützenstrasse 2",
+      "postal_code": "4402",
+      "city": "Frenkendorf",
+      "sub_administrative_area": "Liestal",
+      "administrative_area": "Basel-Landschaft",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.4994425,
+        "lon": 7.7172394
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1682341875/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1682341874890.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682341883/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1682341882310.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682341885/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1682341884337.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682342223/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1682342223097.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682342299/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1682342298861.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682342304/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1682342302090.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682342385/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1682342384589.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682342415/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1682342414971.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682342661/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1682342660449.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1737489223/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1737489222401.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1737489238/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1737489237470.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1737489268/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1737489267316.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1737489699/pro/tenants/ffb13e47-96ab-4c2e-b60f-7e5b8494cfc6/1737489698033.jpg"
+    ],
+    "properties": {
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Willkommen bei Padel Frenkendorf!\nBesuche uns an der Schützenstrasse 2, 4402 Frenkendorf, und genieße ein einzigartiges Padel-Erlebnis. Dir stehen täglich von 09:00 bis 22:00 Uhr insgesamt 3 Outdoor- und 3 wettergeschützte Padelplätze (Semi-Indoor) zur Verfügung.\nFür deinen Komfort bieten wir Duschen, Garderoben und ausreichend Parkplätze direkt vor Ort.\nWir freuen uns darauf, dich bald bei uns begrüßen zu dürfen!",
+      "WEBSITE_URL": "https://www.padelfrenkendorf.ch/",
+      "CONTACT_PHONE": "+41 788643424",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "2bcaa848-5eaa-4ff4-9974-5747acbfe341;6e599e00-4a29-476d-ab85-6c137e176510;9a500c48-545d-4048-a5ee-f4cf24d5c15f",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "487791ac-6553-451d-9088-34d4a1e9a957",
+        "name": "Estrella Galicia Outdoor Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1aef7b67-ab1a-4c4b-8aa9-5ca776a7360c",
+        "name": "Outdoor Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1a0101c0-41fa-44bb-a412-f15ff11fde06",
+        "name": "Allianz Outdoor Court 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f22aa800-3266-4b11-a7fa-c73381774188",
+        "name": "Semi-Indoor Court 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "38678067-2e05-43ba-93c8-c344f6a0e846",
+        "name": "Semi-Indoor Padel Frenkendorf Court 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "29b7edc9-e013-4b21-b95e-92b3dbe3c973",
+        "name": "Semi-Indoor Court 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Willkommen bei Padel Frenkendorf!\n  Besuche uns an der Schützenstrasse 2, 4402 Frenkendorf, und genieße ein einzigartiges Padel-Erlebnis. Dir stehen täglich von 09:00 bis 22:00 Uhr insgesamt 3 Outdoor- und 3 wettergeschützte Padelplätze (Semi-Indoor) zur Verfügung.\n  Für deinen Komfort bieten wir Duschen, Garderoben und ausreichend Parkplätze direkt vor Ort.\n  Wir freuen uns darauf, dich bald bei uns begrüßen zu dürfen!\n</p>\n"
+  },
+  {
+    "tenant_id": "8b938a29-7cd6-4748-b150-e357b23be677",
+    "tenant_name": "Padelwerk Subingen",
+    "slug": "padelwerk-subingen",
+    "address": {
+      "street": "Industriestrasse 19",
+      "postal_code": "4553 Subingen",
+      "city": "Subingen",
+      "sub_administrative_area": "Wasseramt District",
+      "administrative_area": "Solothurn",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.195658,
+        "lon": 7.6140497
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1741515734/pro/tenants/8b938a29-7cd6-4748-b150-e357b23be677/1741515733887.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741515737/pro/tenants/8b938a29-7cd6-4748-b150-e357b23be677/1741515736370.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741515739/pro/tenants/8b938a29-7cd6-4748-b150-e357b23be677/1741515738093.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741515740/pro/tenants/8b938a29-7cd6-4748-b150-e357b23be677/1741515739834.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741515742/pro/tenants/8b938a29-7cd6-4748-b150-e357b23be677/1741515741608.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741515744/pro/tenants/8b938a29-7cd6-4748-b150-e357b23be677/1741515743148.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741515745/pro/tenants/8b938a29-7cd6-4748-b150-e357b23be677/1741515744748.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741515747/pro/tenants/8b938a29-7cd6-4748-b150-e357b23be677/1741515746386.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "* ein Doppelcourt\n* ein Einzelcourt\n",
+      "WEBSITE_URL": "https://www.padelwerk.ch",
+      "CONTACT_PHONE": "+41 795982020",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "eeb6fea7-2229-4efd-8e04-242241cd05a0",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "2a34d4ee-979a-4e1f-a59f-957d5ca448ea",
+        "name": "Padel 1 - Doppelcourt",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "fba476be-5f44-4048-8b99-4b279152479a",
+        "name": "Image Media - Einzelcourt",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "de",
+    "description": "\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">ein Doppelcourt</li>\n  <li class=\"mb-0.5\">ein Einzelcourt</li>\n</ul>\n"
+  },
+  {
+    "tenant_id": "85cf92d1-49b7-46ba-86cd-1d06b0c2981d",
+    "tenant_name": "Padel Basel - Klybeck",
+    "slug": "padel-basel-klybeck",
+    "address": {
+      "street": "Klybeckstr. 141 / Gebäude K-102",
+      "postal_code": "4057 Basel",
+      "city": "Basel",
+      "sub_administrative_area": "Basel-Stadt",
+      "administrative_area": "Basel-Stadt",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.57475013,
+        "lon": 7.58929554
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1657634864/pro/tenants/85cf92d1-49b7-46ba-86cd-1d06b0c2981d/1657634863967.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1658850804/pro/tenants/85cf92d1-49b7-46ba-86cd-1d06b0c2981d/1658850804319.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1658850910/pro/tenants/85cf92d1-49b7-46ba-86cd-1d06b0c2981d/1658850909736.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+41 610000000",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel in einer alten Industriehalle. Ein Court und viel Kultur und Programm darum herum. Rackets und Bälle sind im Preis inbegriffen.\n---\nPadel in an old industrial hall. One court and a lot of culture and program around it. Rackets and balls are incl.\n\nOpen Court every **Tuesday from 7pm**  - Come, play and pay how much as you like!",
+      "FACILITY_VENDING_MACHINE": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "4cc1a4f2-9b0a-4667-84d2-315773ec36b6;9695bd58-271d-4b70-9063-4be8773f0dd6;9134ccb3-f504-4fa5-a685-2fd7e76b5465;e36d08d4-ab3f-4f5d-9b6d-879ff028cb1c",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://www.padel-basel.ch"
+    },
+    "resources": [
+      {
+        "resourceId": "4e27c327-5786-4ea2-ab24-948eab3d1b54",
+        "name": "Padel Basel - Klybeck",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "0b3fa7df-0801-4b77-aa7f-f3bd9549c8df",
+        "name": "Ping Pong 1 - Klybeck",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "indoor",
+          "standard"
+        ]
+      },
+      {
+        "resourceId": "abe6791c-4b67-479d-8027-0ef88eeb29a5",
+        "name": "Ping Pong 2 - Klybeck",
+        "sport": "TABLE_TENNIS",
+        "features": [
+          "indoor",
+          "standard"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TABLE_TENNIS"
+    ],
+    "communications_language": "de",
+    "description": "\n<p class=\"text-lg font-semibold text-primary-100 my-2\">Padel in einer alten Industriehalle. Ein Court und viel Kultur und Programm darum herum. Rackets und Bälle sind im Preis inbegriffen.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padel in an old industrial hall. One court and a lot of culture and program around it. Rackets and balls are incl.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Open Court every <strong class=\"font-semibold text-primary-100\">Tuesday from 7pm</strong> - Come, play and pay how much as you like!</p>\n"
+  },
+  {
+    "tenant_id": "bf91caaf-0232-4049-93d7-6a1be9014cdb",
+    "tenant_name": "A-CLUB PADEL ARENA (ATLANTIDE SA)",
+    "slug": "a-club-padel-arena-atlantide-sa",
+    "address": {
+      "street": "via Centro Sportivo 5",
+      "postal_code": "6942",
+      "city": "Savosa",
+      "sub_administrative_area": "Lugano",
+      "administrative_area": "Ticino",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 46.0170886,
+        "lon": 8.9374831
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1639649973/pro/tenants/bf91caaf-0232-4049-93d7-6a1be9014cdb/1639649973343.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "SHOW_AVAILABILITY_GRID": "false",
+      "DETAILS_PAGE_DESCRIPTION": "**A-CLUB PADEL ARENA** nasce all’interno del centro A-CLUB Fitness & Wellness di Savosa, a due passi da Lugano.\nA-CLUB PADEL ARENA offre **3 CAMPI PADEL** di ultimissima generazione, interamente al coperto per il massimo comfort sia in inverno che in estate!\nSituata a Savosa nei pressi dello svincolo dell’autostrada A2, A-CLUB PADEL ARENA è **comodissima **da raggiungere ed è dotata di **posteggi **sia coperti che scoperti. L’arena è **aperta **tutti i giorni, **7 giorni su 7,** con orario dal lunedì al venerdì dalle 7:00 alle 22:30 e il sabato e la domenica dalle 8:00 alle 20:00.\nNon manca poi la possibilità di **noleggio **del materiale (racchette e palline) per chi si avvicina a questo entusiasmante ed avvincente sport oltre che un Academy con istruttori professionisti sia per i principianti che per chi vuole migliorare la propria tecnica!\nCompletano l’offerta tutti i servizi presenti all’interno di A-CLUB Fitness & Wellness: **3 piscine**, un’**area fitness di 1’600mq**, un **ristorante** **– lounge bar** caffetteria, un’**area wellness & SPA **e un **comodo posteggio** coperto e scoperto",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "CONTACT_PHONE": "+41 919661313",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "https://www.padel-lugano.ch",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "a1fe75cf-c248-44a0-810d-11f089db3bdd",
+        "name": "Campo  1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "13bb2125-0897-4334-a5d7-fa68651d04bb",
+        "name": "Campo  2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "20ea078e-babf-45ff-a006-1d2801f68b53",
+        "name": "Campo  3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "it",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  <strong class=\"font-semibold text-primary-100\">A-CLUB PADEL ARENA</strong> nasce all’interno del centro A-CLUB Fitness &#x26; Wellness di Savosa, a due passi da Lugano.\n  A-CLUB PADEL ARENA offre <strong class=\"font-semibold text-primary-100\">3 CAMPI PADEL</strong> di ultimissima generazione, interamente al coperto per il massimo comfort sia in inverno che in estate!\n  Situata a Savosa nei pressi dello svincolo dell’autostrada A2, A-CLUB PADEL ARENA è **comodissima **da raggiungere ed è dotata di **posteggi **sia coperti che scoperti. L’arena è **aperta **tutti i giorni, <strong class=\"font-semibold text-primary-100\">7 giorni su 7,</strong> con orario dal lunedì al venerdì dalle 7:00 alle 22:30 e il sabato e la domenica dalle 8:00 alle 20:00.\n  Non manca poi la possibilità di **noleggio **del materiale (racchette e palline) per chi si avvicina a questo entusiasmante ed avvincente sport oltre che un Academy con istruttori professionisti sia per i principianti che per chi vuole migliorare la propria tecnica!\n  Completano l’offerta tutti i servizi presenti all’interno di A-CLUB Fitness &#x26; Wellness: <strong class=\"font-semibold text-primary-100\">3 piscine</strong>, un’<strong class=\"font-semibold text-primary-100\">area fitness di 1’600mq</strong>, un <strong class=\"font-semibold text-primary-100\">ristorante</strong> <strong class=\"font-semibold text-primary-100\">– lounge bar</strong> caffetteria, un’**area wellness &#x26; SPA **e un <strong class=\"font-semibold text-primary-100\">comodo posteggio</strong> coperto e scoperto\n</p>\n"
+  },
+  {
+    "tenant_id": "c2ce2a9e-ab52-4191-bf7f-0c0aa70a2701",
+    "tenant_name": "Rackets Academy - Sion",
+    "slug": "rackets-academy-sion",
+    "address": {
+      "street": "Route de Préjeux 16",
+      "postal_code": "1950",
+      "city": "Sion",
+      "sub_administrative_area": "Sion",
+      "administrative_area": "Valais",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 46.2314336,
+        "lon": 7.3783136
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1768217661/pro/tenants/c2ce2a9e-ab52-4191-bf7f-0c0aa70a2701/1768217661166.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Rackets Academy Sion — where passion meets performance. We offer 2 indoor double padel courts and 1 indoor single court. Our academy is designed for players who love the sport—whether you're here to improve your game, compete, or enjoy a drink at the bar. You’ll find top-quality facilities, expert coaching, and a vibrant community. Opening Hours:Courts: 07:00 – 23:30 daily. Bar: 17:00 – 22:00 on weekdays / 10:00 – 18:00 on weekends. We’re committed to giving you the best padel experience in Valais. See you on court!",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://racketsacademy.ch",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+41 762914369",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "0c6ebae5-9d78-4478-8a08-4f22e2436429",
+        "name": "Estrella Galicia 0.0%",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7248bd20-0122-4192-a1e6-129a53b6e640",
+        "name": "Decathlon",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "89e79a4a-10a7-4c6d-ad78-35d81ecc60bb",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Welcome to Rackets Academy Sion — where passion meets performance. We offer 2 indoor double padel courts and 1 indoor single court. Our academy is designed for players who love the sport—whether you're here to improve your game, compete, or enjoy a drink at the bar. You’ll find top-quality facilities, expert coaching, and a vibrant community. Opening Hours:Courts: 07:00 – 23:30 daily. Bar: 17:00 – 22:00 on weekdays / 10:00 – 18:00 on weekends. We’re committed to giving you the best padel experience in Valais. See you on court!</p>\n"
+  },
+  {
+    "tenant_id": "c375fe0e-c147-458d-aaf2-8fca5d88e3e5",
+    "tenant_name": "GVA Padel (MP Sports SA)",
+    "slug": "gva-padel-mp-sports-sa",
+    "address": {
+      "street": "Rte François-Peyrot 30, Halle 5",
+      "postal_code": "1218",
+      "city": "Le Grand-Saconnex",
+      "sub_administrative_area": "Genève",
+      "administrative_area": "Genève",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 46.23526727,
+        "lon": 6.1167685
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1655151145/pro/tenants/c375fe0e-c147-458d-aaf2-8fca5d88e3e5/1655151145185.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "www.gvapadel.ch",
+      "FACILITY_FREE_PARKING": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "b0667504-480b-42c7-af77-f177cada9a37",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PLAYPARK": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "GVA Padel est ouvert du Lundi au vendredi de 11h à 23h et du samedi au dimanche de 8h à 21h30.\nPour toute information, appelez le 076 725 41 96 ou écrivez-nous à info@gvapadel.ch",
+      "FACILITY_VENDING_MACHINE": "false",
+      "CONTACT_PHONE": "+41 767254196",
+      "DETAILS_PAGE_TITLE": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "0efd9b8f-8b9a-4ad0-a1af-8f62d381f9ac",
+        "name": "Court Bandeja",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9c964dac-cdd3-4a21-a809-58e6fdd9b63f",
+        "name": "Court Nonna Mary",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ba8b2775-937a-4deb-9105-312f7fd4ed04",
+        "name": "Court Chiquita",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e00aff10-c898-4390-9c3d-128bd36ad4a0",
+        "name": "Court Por-3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "FRIDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  GVA Padel est ouvert du Lundi au vendredi de 11h à 23h et du samedi au dimanche de 8h à 21h30.\n  Pour toute information, appelez le 076 725 41 96 ou écrivez-nous à info@gvapadel.ch\n</p>\n"
+  },
+  {
+    "tenant_id": "da7a447f-43b3-11e8-8674-52540049669c",
+    "tenant_name": "Padelarena Wädenswil",
+    "slug": "padelarena-wadenswil",
+    "address": {
+      "street": "Zugerstr. 162",
+      "postal_code": "8820",
+      "city": "Wädenswil",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 47.238353,
+        "lon": 8.638239
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7a447f-43b3-11e8-8674-52540049669c/padelarena_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7a447f-43b3-11e8-8674-52540049669c/padelarena_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7a447f-43b3-11e8-8674-52540049669c/padelarena_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7a447f-43b3-11e8-8674-52540049669c/padelarena_0004",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7a447f-43b3-11e8-8674-52540049669c/padelarena_0005",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7a447f-43b3-11e8-8674-52540049669c/padelarena_0006",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7a447f-43b3-11e8-8674-52540049669c/padelarena_0007",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7a447f-43b3-11e8-8674-52540049669c/padelarena_0008",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/da7a447f-43b3-11e8-8674-52540049669c/padelarena_0009"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_TITLE": "Reserva piata de pádel en Padelarena Wädenswil con Playtomic",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "SPORT_FOOTBALL": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "SPORT_BASKETBALL": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "WEBSITE_URL": "https://padelarena.ch",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "SPORT_TENNIS": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Padelarena is the biggest padel center in Switzerland, with 8 indoor courts, 2 golf simulators, a bar, a lounge area, as well as a fitness area.\n\nPadelarena is the #1 junior academy in Switzerland, developing the next generation of Swiss Padel Stars.  ",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "SPORT_OTHERS": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "En la zona sur de Zurich encontrarás una gran alternativa para jugar al pádel: Padelarena-Wädenswill, un club con reservas abiertas todos los días",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+41 438330834",
+      "SPORT_GOLF": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "06000b1a-0242-41d4-bcb6-3c92db8adae2",
+        "name": "Padel 1 - MTR Equipments",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2dc25657-456e-45e8-b6c2-ca568fbf52ac",
+        "name": "Padel 2 - Valiant",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d0137cba-af90-43dd-bdb6-5fa8914a558f",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c01c1247-3506-44cb-9a38-806b1ef568b8",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b6a70243-d34b-4ee5-b42c-3d5041db4cd8",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ba38b897-f4ed-47b1-9bc1-567c4d4886c5",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "db253cba-dcc4-44ec-bbc5-12a1c4aca1ae",
+        "name": "Platz 7 - DasTeam",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e7d129a8-d7ac-41a5-8794-e4d3c8f60524",
+        "name": "Padel 8 - Porsche Zentrum Oberer Zürisee",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padelarena is the biggest padel center in Switzerland, with 8 indoor courts, 2 golf simulators, a bar, a lounge area, as well as a fitness area.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padelarena is the #1 junior academy in Switzerland, developing the next generation of Swiss Padel Stars.</p>\n"
+  },
+  {
+    "tenant_id": "d5e3d9ca-8717-492f-a85e-26a34f0da290",
+    "tenant_name": "Padel Station",
+    "slug": "padel-station1",
+    "address": {
+      "street": "Chemin de la Mousse 18",
+      "postal_code": "1225",
+      "city": "Chêne-Bourg",
+      "sub_administrative_area": "",
+      "administrative_area": "Genève",
+      "country": "Switzerland",
+      "country_code": "CH",
+      "coordinate": {
+        "lat": 46.1970724,
+        "lon": 6.1969731
+      },
+      "timezone": "Europe/Zurich"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1769267882/pro/tenants/d5e3d9ca-8717-492f-a85e-26a34f0da290/1769267881676.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+41 793849753",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://padelstation.ch/",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_WIFI": "false",
+      "DETAILS_PAGE_DESCRIPTION": "* 3 Terrains indoor\n* Parking gratuit\n* A 50m du Ceva (Gare de Chêne-Bourg)\n* Horaires 7/7-7H/23H\n\n\nImplanté au cœur du quartier de Chêne-Bourg, Padel Station met à disposition de la ville un lieu dédié au sport, grâce à l'installation temporaire de trois terrains de padel couverts. Le projet s'inscrit dans une démarche de réemploi et de revalorisation d'espaces délaissés et voues à être démolis.\nAnciennement occupée par la menuiserie - Halle Fragnière, la halle industrielle ouvre provisoirement ses portes au public, durant une phase de transition urbaine, afin de créer un lieu de rencontre, d'activité sportive et de convivialité. \nPadel Station vous souhaite la bienvenue et un excellent jeu !  "
+    },
+    "resources": [
+      {
+        "resourceId": "0225f259-c27d-412c-a0e2-6025e2c90a5d",
+        "name": "Padel A",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f9affa3a-46e7-4eaf-9670-6844f6d150b4",
+        "name": "Padel B",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2b7963f4-2d02-4f94-9c9d-178d10104a7d",
+        "name": "Padel C",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "fr",
+    "description": "\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">3 Terrains indoor</li>\n  <li class=\"mb-0.5\">Parking gratuit</li>\n  <li class=\"mb-0.5\">A 50m du Ceva (Gare de Chêne-Bourg)</li>\n  <li class=\"mb-0.5\">Horaires 7/7-7H/23H</li>\n</ul>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Implanté au cœur du quartier de Chêne-Bourg, Padel Station met à disposition de la ville un lieu dédié au sport, grâce à l'installation temporaire de trois terrains de padel couverts. Le projet s'inscrit dans une démarche de réemploi et de revalorisation d'espaces délaissés et voues à être démolis.\n  Anciennement occupée par la menuiserie - Halle Fragnière, la halle industrielle ouvre provisoirement ses portes au public, durant une phase de transition urbaine, afin de créer un lieu de rencontre, d'activité sportive et de convivialité.\n  Padel Station vous souhaite la bienvenue et un excellent jeu !\n</p>\n"
+  }
+]

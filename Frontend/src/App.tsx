@@ -55,6 +55,7 @@ function AppContent() {
 
   useEffect(() => {
     navigationService.initialize(navigate);
+    backButtonService.setNavigate(navigate);
   }, [navigate]);
 
   const previousPathnameRef = useRef<string | null>(null);

@@ -1,0 +1,896 @@
+[
+  {
+    "tenant_id": "13cb0880-8cf3-48b3-b649-3c4886fbe6cf",
+    "tenant_name": "Skibsby Højene Idrætsforening",
+    "slug": "skibsby-hojene-idraetsforening",
+    "address": {
+      "street": "Vellingshøjvej 380B",
+      "postal_code": "9800",
+      "city": "Hjørring",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Denmark",
+      "country_code": "DK",
+      "coordinate": {
+        "lat": 57.482016,
+        "lon": 9.9962061
+      },
+      "timezone": "Europe/Copenhagen"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1696616932/pro/tenants/13cb0880-8cf3-48b3-b649-3c4886fbe6cf/1696616931804.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "true",
+      "CONTACT_PHONE": "+45 23113827",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "SHI kan byde velkommen til 2 stk udendørs double padel baner og en 11-mands (eller 2 styk 8-mands) fodbold kunstgræsbaner\n**Padel **(bookes i kalenderen herover eller via PlayTomic APP):\n* Der forefindes låne-bat i indgangspartiet til begge baner. BEMÆRK at der selv skal medbringes -padel-bolde da disse IKKE længere sælges fra banerne.\n* Da det er en udendørs bane anbefaler vi at medbringe kasket eller solbriller. \n\n* Den bedste og mest effektive måde at lave reservationer på sker via Playtomic app, som findes både til iOS samt Android. Adgangskoder til banerne, efter reservation, kan findes under \"Profil\" i App´en. Herfra er det også muligt at afbestille en eksisterende reservation. Det gøres ved at vælge den aktuelle reservation og klikke på de 3 prikker i øverste, højre hjørne.\n\n* Adgangskoden er aktiv 10 minutter før starttidspunktet.\n* Eksisterende reservationer kan ændres frem til 1 time inden start. Lyset tænder automatisk om morgen/aften. I dagstimerne vil lyset ikke være aktiveret. \n\n\n**Fodbold:** Timepris 500 kr. Bookes hos kampfordeler Anette Berg Abildgaard på mail kampfordeler@shi-sport.dk eller mobil: 25436899. MobilePay 787258.",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "ab08a89f-761e-45cb-942c-c184e5d4847f;a6be4a6b-7e18-420b-8eae-4b5369883aae;37dca96d-12ab-487c-8805-f5eb380d7810;46bd66a2-700f-45dd-b147-6de636a9a143;2451abc1-c60b-4b4b-ada6-b356d0cc7b65;fad421cf-d95d-4584-b6a6-04b9759406d1;83b93d67-190e-4136-812e-e3142eacbe2b;5235d3c8-603c-4ed4-a0c0-1242d478cbfc;d2962a53-3df0-40ef-be94-e04da63e683f",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://www.shi-sport.dk/"
+    },
+    "resources": [
+      {
+        "resourceId": "4daa8aaf-d207-447a-be46-5efc31fd69c5",
+        "name": "Mestertømreren Banen",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "82553db2-f4b9-4482-bbca-b6f51c358949",
+        "name": "Glaseksperten Banen",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "da",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  SHI kan byde velkommen til 2 stk udendørs double padel baner og en 11-mands (eller 2 styk 8-mands) fodbold kunstgræsbaner\n  **Padel **(bookes i kalenderen herover eller via PlayTomic APP):\n</p>\n<ul class=\"list-disc pl-4 mb-3 text-sm text-primary-80\">\n  <li class=\"mb-0.5\">\n    <p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Der forefindes låne-bat i indgangspartiet til begge baner. BEMÆRK at der selv skal medbringes -padel-bolde da disse IKKE længere sælges fra banerne.</p>\n  </li>\n  <li class=\"mb-0.5\">\n    <p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Da det er en udendørs bane anbefaler vi at medbringe kasket eller solbriller.</p>\n  </li>\n  <li class=\"mb-0.5\">\n    <p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Den bedste og mest effektive måde at lave reservationer på sker via Playtomic app, som findes både til iOS samt Android. Adgangskoder til banerne, efter reservation, kan findes under \"Profil\" i App´en. Herfra er det også muligt at afbestille en eksisterende reservation. Det gøres ved at vælge den aktuelle reservation og klikke på de 3 prikker i øverste, højre hjørne.</p>\n  </li>\n  <li class=\"mb-0.5\">\n    <p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Adgangskoden er aktiv 10 minutter før starttidspunktet.</p>\n  </li>\n  <li class=\"mb-0.5\">\n    <p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Eksisterende reservationer kan ændres frem til 1 time inden start. Lyset tænder automatisk om morgen/aften. I dagstimerne vil lyset ikke være aktiveret.</p>\n  </li>\n</ul>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\"><strong class=\"font-semibold text-primary-100\">Fodbold:</strong> Timepris 500 kr. Bookes hos kampfordeler Anette Berg Abildgaard på mail kampfordeler@shi-sport.dk eller mobil: 25436899. MobilePay 787258.</p>\n"
+  },
+  {
+    "tenant_id": "3ea7289f-7b60-434d-81c9-9b84c7f8e177",
+    "tenant_name": "SamBiosen",
+    "slug": "sambiosen",
+    "address": {
+      "street": "Pillemarksvej 1",
+      "postal_code": "8305",
+      "city": "Samsø",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Denmark",
+      "country_code": "DK",
+      "coordinate": {
+        "lat": 55.8318315,
+        "lon": 10.58428957
+      },
+      "timezone": "Europe/Copenhagen"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1634586365/pro/tenants/3ea7289f-7b60-434d-81c9-9b84c7f8e177/1634586364017.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+45 61723171",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "6c5cc5e5-7977-4ff8-b863-adbce01b91d8;086332cd-4d01-4c98-8770-15fe33ca6998;2f6efb73-4fb7-4a40-94b2-25e976c60379;8c6864e8-0c44-4c56-961f-65f2b1a17eb4;6dfac232-b007-487c-aea1-58b89b53b22d",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Samsøs Panorama Padel bane fra Padel Galis.\nBanen ligger lige ved kultur- og idrætscenteret.\nPillemarksvej 1, Tranebjerg",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "www.sambiosen.dk"
+    },
+    "resources": [
+      {
+        "resourceId": "27ffb309-00a4-4335-8b11-5adfbff17f71",
+        "name": "Padel",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "be581cb4-3a1d-4a67-8f1b-f328970ae351",
+        "name": "Badminton 1",
+        "sport": "BADMINTON",
+        "features": [
+          "indoor"
+        ]
+      },
+      {
+        "resourceId": "5b33e33f-8b64-4cbf-86af-263c4ddb93f6",
+        "name": "Badminton 2",
+        "sport": "BADMINTON",
+        "features": [
+          "indoor"
+        ]
+      },
+      {
+        "resourceId": "9c20cefc-1615-4e47-a427-1d079898cc79",
+        "name": "Badminton 4",
+        "sport": "BADMINTON",
+        "features": [
+          "indoor"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "BADMINTON"
+    ],
+    "communications_language": "da",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Samsøs Panorama Padel bane fra Padel Galis.\n  Banen ligger lige ved kultur- og idrætscenteret.\n  Pillemarksvej 1, Tranebjerg\n</p>\n"
+  },
+  {
+    "tenant_id": "62c9b01c-349e-4504-b6d8-f9d9df69d90d",
+    "tenant_name": "CoreOne Padel",
+    "slug": "coreone-padel",
+    "address": {
+      "street": "Lene Haus Vej 9B",
+      "postal_code": "7430",
+      "city": "Ikast",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Denmark",
+      "country_code": "DK",
+      "coordinate": {
+        "lat": 56.1177818,
+        "lon": 9.1524415
+      },
+      "timezone": "Europe/Copenhagen"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1695814426/pro/tenants/62c9b01c-349e-4504-b6d8-f9d9df69d90d/1695814425656.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+45 97703050",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "593a1afe-205d-4c96-bf48-9bf2bb9179e5",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "CoreOnes private padelbane udelukkende for medarbejdere",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "www.coreone.dk"
+    },
+    "resources": [
+      {
+        "resourceId": "5ef35882-5e42-4ca4-aade-b8a7c83bd1db",
+        "name": "Padel",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "da",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">CoreOnes private padelbane udelukkende for medarbejdere</p>\n"
+  },
+  {
+    "tenant_id": "99edd047-4bac-48d6-80b5-414ab097f093",
+    "tenant_name": "Padel Herlev ",
+    "slug": "padel-herlev",
+    "address": {
+      "street": "Skinderskovvej 31",
+      "postal_code": "2730",
+      "city": "Herlev",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Denmark",
+      "country_code": "DK",
+      "coordinate": {
+        "lat": 55.7456467,
+        "lon": 12.4120709
+      },
+      "timezone": "Europe/Copenhagen"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1649157150/pro/tenants/99edd047-4bac-48d6-80b5-414ab097f093/1649157149702.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Udendørs pay and play padelbaner. Der er to doublebaner på bagsiden af Skinderskovhallen, ud mod Krebsedammen beliggende i naturlige og skovagtige omgivelser.\n• Ved behov for leje af bat (kr. 40 pr. bat) og køb af bolde (kr. 50 for et rør med 3 stk.) venligst kontakt Bjarne (tlf. 20667803) umiddelbart efter timebookingen\n• Græstæppe Mondo Blue Supercourt pålagt i 2022\n• Mulighed for omklædning og bad i Skinderskovhallen\n• Fri parkering ved tilkørsel fra Krebsdammen\n• Drikkevarer kan medbringes\n• Ved spil efter mørkets frembrud tændes banelys automatisk\n",
+      "CONTACT_PHONE": "+45 20667803",
+      "WEBSITE_URL": "http://padeldanmark.dk"
+    },
+    "resources": [
+      {
+        "resourceId": "c954b737-594d-4eb2-b50f-dd9cd693a435",
+        "name": "Bane 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "64537ae1-b4bd-4db6-bc44-76d45b46bb0a",
+        "name": "Bane 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "da",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Udendørs pay and play padelbaner. Der er to doublebaner på bagsiden af Skinderskovhallen, ud mod Krebsedammen beliggende i naturlige og skovagtige omgivelser.\n  • Ved behov for leje af bat (kr. 40 pr. bat) og køb af bolde (kr. 50 for et rør med 3 stk.) venligst kontakt Bjarne (tlf. 20667803) umiddelbart efter timebookingen\n  • Græstæppe Mondo Blue Supercourt pålagt i 2022\n  • Mulighed for omklædning og bad i Skinderskovhallen\n  • Fri parkering ved tilkørsel fra Krebsdammen\n  • Drikkevarer kan medbringes\n  • Ved spil efter mørkets frembrud tændes banelys automatisk\n</p>\n"
+  },
+  {
+    "tenant_id": "b8fe7430-f819-4413-b402-a008f94fc2b5",
+    "tenant_name": "Padelboxen",
+    "slug": "padelboxen",
+    "address": {
+      "street": "Tolderlundsvej 92 ",
+      "postal_code": "5000",
+      "city": "Odense",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Denmark",
+      "country_code": "DK",
+      "coordinate": {
+        "lat": 55.4124246,
+        "lon": 10.3849156
+      },
+      "timezone": "Europe/Copenhagen"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1692610812/pro/tenants/b8fe7430-f819-4413-b402-a008f94fc2b5/1692610812002.jpg"
+    ],
+    "properties": {
+      "IS_CAB_MEMBER": "true",
+      "CONTACT_PHONE": "+45 25393974",
+      "FACILITY_SNACK_BAR": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "f4ca88b3-6f7a-446c-a7d5-bedf3cf533b2;c200b0f2-0eed-409f-b229-d739d4315198;911cc423-2efb-41fd-8181-523fbe636ff1;c0a66ca9-5729-411e-b667-bdb0c3325d05;f7cbf209-a1df-4128-a51b-919272e4336b;beace4e7-57ce-4d70-9b77-38d929a77701;51c5452e-1ab9-4de0-896d-b426251e0b41;1e90dd81-495c-4f2f-8daf-fd84cf057f92;7e53bc78-c9b3-4292-b764-9724afec0709;72fd7706-77b5-49a2-953d-fc2fed5f3266;d8075c97-cbf5-4815-9451-7be09ead206c;af5b4271-5822-49b4-9ce0-205681f02e45;d97dd5b2-6cbb-4592-9b4f-c58b7eb9da38;49ca24db-9e5f-4a2d-9837-58f59d0a664c",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Velkommen til Padelboxen - Odenses fedeste padel-fællesskab.\nVi ligger centralt i Odense ved havnen med 15 Padel Galis baner.\nMEDLEMSKAB:\nFor blot 249 kr. pr. måned kan du spille i 85% af vores åbningstid.\nDu finder medlemskabet her i Playtomic app'en.\nPRIVAT TRÆNING\nVi har mange dygtige privat trænere, Kim Poulsen, Rasmus Okkels, Mathias Gjættermann og  landsholdsspiller, Emil Okkels.\nDu kan booke privat træning direkte med den træner du ønsker, på vores hjemmeside padelboxen.dk eller i vores her i app'en under konkurrencer.\n\nRigtig god fornøjelse!",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "https://www.padelboxen.dk/"
+    },
+    "resources": [
+      {
+        "resourceId": "cfabb00c-38cc-46a5-884d-05af10a5a937",
+        "name": "Bane 1 - Hal 1 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f8ffee84-8b99-4aaf-a092-652b65bd5bb2",
+        "name": "Bane 2 - Hal 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f9d3b2c1-40f9-4ac2-8bd7-4f068cc20a4d",
+        "name": "Bane 3 - Hal 1 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "64650217-2b30-4b5c-b3fb-2f62de543ec5",
+        "name": "Bane 4 - Hal 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c5c1039e-b8d9-49af-a1e0-cbd23e523d10",
+        "name": "Center Court - FAXE KONDI PRO - Hal 2 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1b981a96-e331-4c88-b7f7-d4aa2417ed0b",
+        "name": "Bane 5 - MAESTRO - Hal 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5511387b-f984-4543-935f-1618c8552801",
+        "name": "Bane 6 - Hal 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "652ccf95-0c4c-4e8b-be2e-b0f09f8be387",
+        "name": "Bane 7 - Hal 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b57492c9-2d07-4eb6-9603-be0e291fa0fa",
+        "name": "Bane 8 - Hal 2 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "65802973-d952-4029-bd58-ef0f8f736b08",
+        "name": "Bane 9 - FYNS KØL OG TEKNIK - Hal 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ef6aecc3-48bd-46ea-a93d-a9bcd1488654",
+        "name": "Bane 10 - Hal 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4d5f055e-57bc-4f85-93d0-3ba7845982eb",
+        "name": "Bane 11 - Hal 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "539b5c24-9853-4e8a-aeab-265484989733",
+        "name": "Single 1 - Hal 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a6cfff07-33c4-4c29-a4f4-f9138ce2ed67",
+        "name": "Single 2 - Hal 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2c575ebf-528b-42a8-8f94-5a3a6f83afbe",
+        "name": "Single 3 - Hal 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "da",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Velkommen til Padelboxen - Odenses fedeste padel-fællesskab.\n  Vi ligger centralt i Odense ved havnen med 15 Padel Galis baner.\n  MEDLEMSKAB:\n  For blot 249 kr. pr. måned kan du spille i 85% af vores åbningstid.\n  Du finder medlemskabet her i Playtomic app'en.\n  PRIVAT TRÆNING\n  Vi har mange dygtige privat trænere, Kim Poulsen, Rasmus Okkels, Mathias Gjættermann og landsholdsspiller, Emil Okkels.\n  Du kan booke privat træning direkte med den træner du ønsker, på vores hjemmeside padelboxen.dk eller i vores her i app'en under konkurrencer.\n</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Rigtig god fornøjelse!</p>\n"
+  },
+  {
+    "tenant_id": "d19c9314-2b4c-4118-8c97-f2eb7a02b5f5",
+    "tenant_name": "Padel.dk",
+    "slug": "padel-dk",
+    "address": {
+      "street": "Wichmandsgade 15",
+      "postal_code": "5000",
+      "city": "Odense",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Denmark",
+      "country_code": "DK",
+      "coordinate": {
+        "lat": 55.40227212,
+        "lon": 10.37205662
+      },
+      "timezone": "Europe/Copenhagen"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760620814/pro/tenants/d19c9314-2b4c-4118-8c97-f2eb7a02b5f5/1760620814289.jpg"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "2c385242-d983-4c7b-a8b5-ce2203431c41;a63912ea-236e-4cce-9873-b7b11034a120;3c0e7fad-71e5-4069-8223-559aa80e16ca;76155122-a388-4f13-a7fa-fdf183fb22e4;142eea55-2207-484d-a63a-1b4c56f9ee5b;91114266-3b01-4eb5-a5d3-68506153c4da;6dc0fffa-d951-4023-8556-107c6a79081f;06c12512-f603-4a38-b417-9be8ef522a80;f99278b9-f886-4d5a-bac6-860f1bb907e6;c61079e9-3fbe-40f1-87f6-cd9cc5b917c3;b5391d61-c0b5-422a-9c86-2ade7b49579c;3e657e0f-5167-48dd-966a-4a57eacc55f5;40064d7d-1603-4e68-90cf-c6e9b71349f4",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://padel.dk/",
+      "CONTACT_PHONE": "+45 71908424",
+      "DETAILS_PAGE_DESCRIPTION": "Padel.dk er et hyggeligt og opvarmet padelcenter i hjertet af Odense . I Padel.dk finder du moderne badefaciliteter, café, lounge og en butik, hvor vi tilbyder kendte brands til de billigste priser. Når du spiller er det på certificeret Adidas AFP Panorama baner med Mondo Supercourt XN kunstgræs, som benyttes på World Padel Tour.\nVi har lejebat og bolde som kan købes i caféen.\nVi har åbent mandag til torsdag fra kl. 5 til 23, og fredag, lørdag og søndag fra kl. 5 til 22, og vi står klar til at give dig en fantastisk padeloplevelse.\n\nVi tilbyder privat eller fællestræning til gode priser https://padel.dk/pages/traening \n\nHvis centeret er ubemandet, når du kommer for at spille, kan du komme ind med den tilsendte dørkode.\n\nØnsker din virksomhed at blive en del af vores voksende erhvervsnetværk med træningsmuligheder, tilbyder vi attraktive firmapakker hvor din virksomhed bliver eksponeret.\n\nVi glæder os til at byde dig velkommen hos Padel.dk!"
+    },
+    "resources": [
+      {
+        "resourceId": "88722241-ae34-4170-b6fd-b463b8b9fbec",
+        "name": "Doublebane 1 // Gaerne",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1c7b8753-ee07-4799-990c-dfa4bdf0a19c",
+        "name": "Doublebane 2 // BDL",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "027938a4-7b04-4642-8fbc-4a8e0efd303c",
+        "name": "Doublebane 3 // Faxe Kondi Pro",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ca2ec6f6-5fb6-4ad4-a99e-9813cd756664",
+        "name": "Doublebane 4 // SOFACOMPANY",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c0a54942-0e43-4674-8f43-0dc5666da93f",
+        "name": "Doublebane 5 // Juhl Cycling",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "70ea7077-d442-468b-97a3-31740c763963",
+        "name": "Singlebane 6 // Enervit",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "51b69917-0986-4251-9c59-460162c3c3bf",
+        "name": "Singlebane 7 // Santini",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "21829fea-e102-4b51-a46f-9f2275972064",
+        "name": "Singlebane 8 // De Rosa",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "05:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "05:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "05:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "05:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "da",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  Padel.dk er et hyggeligt og opvarmet padelcenter i hjertet af Odense . I Padel.dk finder du moderne badefaciliteter, café, lounge og en butik, hvor vi tilbyder kendte brands til de billigste priser. Når du spiller er det på certificeret Adidas AFP Panorama baner med Mondo Supercourt XN kunstgræs, som benyttes på World Padel Tour.\n  Vi har lejebat og bolde som kan købes i caféen.\n  Vi har åbent mandag til torsdag fra kl. 5 til 23, og fredag, lørdag og søndag fra kl. 5 til 22, og vi står klar til at give dig en fantastisk padeloplevelse.\n</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Vi tilbyder privat eller fællestræning til gode priser https://padel.dk/pages/traening</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Hvis centeret er ubemandet, når du kommer for at spille, kan du komme ind med den tilsendte dørkode.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Ønsker din virksomhed at blive en del af vores voksende erhvervsnetværk med træningsmuligheder, tilbyder vi attraktive firmapakker hvor din virksomhed bliver eksponeret.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Vi glæder os til at byde dig velkommen hos Padel.dk!</p>\n"
+  },
+  {
+    "tenant_id": "edf46770-8d23-4ea2-b4fa-226ef3a4e46b",
+    "tenant_name": "The Padel Club Espergærde",
+    "slug": "the-padel-club-espergaerde",
+    "address": {
+      "street": "Bybjergvej 22",
+      "postal_code": "3060",
+      "city": "Espergærde",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Danmark",
+      "country_code": "DK",
+      "coordinate": {
+        "lat": 55.9983627,
+        "lon": 12.5239618
+      },
+      "timezone": "Europe/Copenhagen"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1736781022/pro/tenants/edf46770-8d23-4ea2-b4fa-226ef3a4e46b/1736781020962.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1736781314/pro/tenants/edf46770-8d23-4ea2-b4fa-226ef3a4e46b/1736781313807.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1736783025/pro/tenants/edf46770-8d23-4ea2-b4fa-226ef3a4e46b/1736783024180.jpg"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+45 31529926",
+      "FACILITY_SNACK_BAR": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "194a1877-891c-4c78-ad3d-a87c409957d7;f5c82f6c-a006-4763-aa6e-66a24ee92e5b;4a96ee12-675d-4869-a356-8441ac4da7ed;b333447d-6184-4d99-947b-3c6976584f9a;97dc44cd-f21d-48af-b1d4-1b8682967247",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "The Padel Club Espergærde er en state-of-the-art facilitet, bygget specifikt til padel. Centeret er fuldt udstyret med 4 indendørs top-kvalitets World Padel Tour baner med 10 meter til loftet og faciliteter, der gør det til det perfekte sted for padel entusiaster på alle niveauer.\nBeliggende tæt på Espergærde Gymnasium og 2 minutters kørsel fra Helsingør motorvejen vil vi kunne tilbyde café, lounge, padelshop, lækre toilet- samt badefaciliteter, 2 store konferencerum samt balkon på 1. sal med fuld udsigt til banerne og et afslappende lounge-område til efter-spil forfriskninger og til at hænge ud.",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "WEBSITE_URL": "https://thepadelclub.dk/"
+    },
+    "resources": [
+      {
+        "resourceId": "dad2d1f0-1ac8-4581-8e84-5014d98b6d55",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5e550969-1974-414b-b4a0-d2fb9d962948",
+        "name": "Faxe Kondi Pro banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "171bc5f0-b90b-4db8-9aba-8af5e2f6abd5",
+        "name": "Magasin banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a58a9e91-171b-4027-bd02-dd09ea41daac",
+        "name": "Spar Nord banen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "da",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  The Padel Club Espergærde er en state-of-the-art facilitet, bygget specifikt til padel. Centeret er fuldt udstyret med 4 indendørs top-kvalitets World Padel Tour baner med 10 meter til loftet og faciliteter, der gør det til det perfekte sted for padel entusiaster på alle niveauer.\n  Beliggende tæt på Espergærde Gymnasium og 2 minutters kørsel fra Helsingør motorvejen vil vi kunne tilbyde café, lounge, padelshop, lækre toilet- samt badefaciliteter, 2 store konferencerum samt balkon på 1. sal med fuld udsigt til banerne og et afslappende lounge-område til efter-spil forfriskninger og til at hænge ud.\n</p>\n"
+  }
+]
