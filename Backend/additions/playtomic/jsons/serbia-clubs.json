@@ -1,0 +1,2030 @@
+[
+  {
+    "tenant_id": "d072ec50-f027-4011-81c1-bebb3d3003a1",
+    "tenant_name": "Padel Centar Košutnjak",
+    "slug": "padel-centar-kosutnjak",
+    "address": {
+      "street": "Kneza Višeslava 72",
+      "postal_code": "11030",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": 44.7649953,
+        "lon": 20.4289189
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381648955855",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "0b5ee3e9-7f33-43cb-b9a4-8ca41643c4f9",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "b59666b5-3ec6-4202-bf1e-13de46bbd993",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ab578d82-05e3-40f8-8bb3-1c9326a09f20",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Centar Košutnjak offers 3 outdoor padel courts at the Serbian Institute of Sport in Košutnjak, with on-site lockers, showers, and a cafe."
+  },
+  {
+    "tenant_id": "7917d4dc-8171-4cab-9a56-33eb63118b00",
+    "tenant_name": "Padel Bros",
+    "slug": "padel-bros",
+    "address": {
+      "street": "Ada Ciganlija bb",
+      "postal_code": "11030",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381668041441",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "22f62d1a-7c0e-4467-bf32-e4e208a2885d",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f0d4f951-2360-48d6-9be3-5d94df29e0e0",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "8fd40cbe-9971-4415-9ba6-93d53ac36de6",
+        "name": "Padel 3 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "703bf90c-27ad-441a-8f94-bf960e7eb309",
+        "name": "Padel 4 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "2e980ead-7bb3-4e21-a6ae-6f17e04738e0",
+        "name": "Padel 5 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "083cde92-1024-49a0-af6f-467d6da63be8",
+        "name": "Padel 6 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "07ba34fe-5d60-42fb-83d1-9edc8db6d0f0",
+        "name": "Padel 7 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Bros is one of the largest padel centers in the region, featuring 7 world-class courts (4 indoor, 3 outdoor) with professional lighting, a café-bar, pro shop, and even a sauna for players to relax."
+  },
+  {
+    "tenant_id": "bce1005b-050b-43a8-9b5e-59bba9aef3c2",
+    "tenant_name": "Sportsko Selo",
+    "slug": "sportsko-selo",
+    "address": {
+      "street": "Deligradska bb",
+      "postal_code": "11000",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+38162680820",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "cd864738-5c66-4f89-af92-03c236097914",
+        "name": "Padel Court - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Sportsko Selo is a multi-sport complex in central Belgrade (Deligradska Street) that features the first padel court in Serbia, available for booking daily with convenient on-site facilities."
+  },
+  {
+    "tenant_id": "40f3a466-1e48-4c25-bd41-c41cf791c998",
+    "tenant_name": "Vamos Padel Serbia",
+    "slug": "vamos-padel-serbia",
+    "address": {
+      "street": "Ada Ciganlija BB",
+      "postal_code": "11000",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+38163432104",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "699ed61d-1467-4406-bb38-d0ad57f36b67",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "9fd6e853-82de-4764-be7d-752293934fb5",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ede43a57-9364-489b-8cfa-48e50e4134a1",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "692fc56e-15bb-4f29-adfb-faa361468020",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Vamos Padel, established in 2019, is located on the Ada Ciganlija lake island and offers 4 outdoor padel courts in a scenic environment with modern locker rooms and friendly staff."
+  },
+  {
+    "tenant_id": "d650a358-206c-437b-9109-1a1c4f4768a5",
+    "tenant_name": "Loko Padel",
+    "slug": "loko-padel",
+    "address": {
+      "street": "Lole Ribara 1b",
+      "postal_code": "11090",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+38169779885",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "false",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "f366994f-a5ec-4a94-ad19-3de846c0aa1f",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "7f0a43b7-a4fa-4161-9974-c017b6acfefc",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Loko Padel is a smaller padel venue located in the Železnik area of Belgrade with 2 outdoor courts and a laid-back atmosphere (and even a selection of craft beers for players to enjoy)."
+  },
+  {
+    "tenant_id": "8cd62dbc-0a17-4bd2-9533-36ab765d322f",
+    "tenant_name": "Football & Padel Club Coin",
+    "slug": "football-padel-club-coin",
+    "address": {
+      "street": "Milentija Popovića 72 (Blok 23)",
+      "postal_code": "11070",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": 44.80794,
+        "lon": 20.42437
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+38162333063",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "be0ca879-ccaf-42a8-9483-a4fa2b2fa086",
+        "name": "Padel Court - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Football & Padel Club Coin is a sports dome in New Belgrade (Block 23) that houses a padel court alongside small football pitches, offering affordable rates and late-night play."
+  },
+  {
+    "tenant_id": "dad84fd1-c0d7-4d0d-9154-5959383ac5ff",
+    "tenant_name": "Belgrade Squash Club",
+    "slug": "belgrade-squash-club",
+    "address": {
+      "street": "Rajkova 5Z",
+      "postal_code": "11000",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+38162554488",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "a1f0408c-5332-40c7-866b-a5acbf96ec84",
+        "name": "Padel Court - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Belgrade Squash Club, primarily a squash center, added a padel court in 2023 at its location, allowing players to enjoy padel from 8am to 11pm daily alongside the club’s squash facilities and cafe."
+  },
+  {
+    "tenant_id": "6633d735-77df-491f-a82c-23efcc397d42",
+    "tenant_name": "Padel Klub Dorćol",
+    "slug": "padel-klub-dorcol",
+    "address": {
+      "street": "FK GSP Polet, Dunavska 1b",
+      "postal_code": "11000",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381601413149",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "false",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "3bb5733c-63ba-4b11-ae96-817042f15d18",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "e85036e1-bf8c-4d8e-866c-69a4ca9827d3",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "966f6ac1-1a78-4a78-9041-1cc91f049ebe",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "63daf98e-8762-4153-9b82-d31d44a482bc",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Klub Dorćol operates at the FK GSP Polet football grounds in the Dorćol area of Belgrade, offering 4 outdoor padel courts by the Danube river."
+  },
+  {
+    "tenant_id": "82ba3961-36ae-4257-b892-806f16b66459",
+    "tenant_name": "Beogradski Padel Klub",
+    "slug": "beogradski-padel-klub",
+    "address": {
+      "street": "Žorža Klemansoa 41",
+      "postal_code": "11000",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": 44.827536,
+        "lon": 20.473818
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381640019999",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "598fdf86-24e9-4090-8d9a-7e6dc0e435d6",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "a5102de2-a9e9-40c0-8c81-5b86cb83a274",
+        "name": "Padel Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ae5b2e6f-f5e0-40ea-89cf-d803c822e416",
+        "name": "Padel Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "5138bbeb-9b04-483d-96b1-e3de90a2fa0f",
+        "name": "Padel Court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ca322ad8-355e-4bba-b581-e07220ed783d",
+        "name": "Padel Court 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f68d4f3e-1fab-43bd-9d05-98a3fa5af733",
+        "name": "Padel Court 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Beogradski Padel Klub (Belgrade Padel Club) is a 6-court facility near the Danube in Dorćol and is one of the city’s premier padel venues, offering both indoor (covered) courts, a social atmosphere, and extended opening hours."
+  },
+  {
+    "tenant_id": "9a9a3163-318b-4a70-b5b9-16ced24417e0",
+    "tenant_name": "Riverside Padel Center",
+    "slug": "riverside-padel-center",
+    "address": {
+      "street": "Ada Huja BB",
+      "postal_code": "11000",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381640282800",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "false",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "cf4a2b72-73df-47c2-b254-a5528e109e1b",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "01375fb2-7df6-466c-8d76-9e1eb15f9405",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "7c610e24-f184-4595-8b0b-e2606d053ad0",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f635bde3-7c4f-4fd7-8027-8d2a7f5c8456",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Riverside Padel Center is located at Ada Huja by the Danube River in Belgrade, offering 4 outdoor padel courts in a unique riverside setting."
+  },
+  {
+    "tenant_id": "4afb929d-5087-4b71-96e4-8a6a8615b9a4",
+    "tenant_name": "Think Padel",
+    "slug": "think-padel",
+    "address": {
+      "street": "Ada Ciganlija 5",
+      "postal_code": "11030",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381654343430",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "6e7a33e5-7432-4fc9-b6ef-910c566b217f",
+        "name": "Padel 1 - Indoor (Double)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "d0d42d75-df87-42f1-9200-019a260b0cae",
+        "name": "Padel 2 - Indoor (Double)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "4bc454ef-8604-4aa4-ba18-89dab5d5f473",
+        "name": "Padel 3 - Indoor (Double)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "19da64d9-7217-4ce1-882c-8df08b90b8a5",
+        "name": "Padel 4 - Indoor (Single)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "4035741d-f7bb-4327-966d-5e4df4c3cd7b",
+        "name": "Padel 5 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "6b54f7de-97e4-4c79-bdbd-ed8c19ae1bb9",
+        "name": "Padel 6 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "c1659e0a-5a7a-47da-a9e8-19b0e6b7bda0",
+        "name": "Padel 7 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Think Padel is a modern padel club on Ada Ciganlija featuring 7 courts (4 covered courts including 3 doubles and 1 single, plus 3 outdoor courts) along with amenities like new locker rooms, showers, and a cafe."
+  },
+  {
+    "tenant_id": "72acf5a0-b86b-4bcb-975a-2c36fc18ca80",
+    "tenant_name": "Prime Padel Club Kalemegdan",
+    "slug": "prime-padel-club-kalemegdan",
+    "address": {
+      "street": "Kalemegdan Fortress",
+      "postal_code": "11000",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381659211249",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "false",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "2c390a2b-cb26-41a9-a38d-3b123385daf4",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "529ea417-e766-409c-9ead-9717c4f17fe2",
+        "name": "Padel Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Prime Padel Club Kalemegdan is uniquely situated within the historic Kalemegdan Fortress in Belgrade, offering 2 premium outdoor padel courts with a stunning backdrop."
+  },
+  {
+    "tenant_id": "c5a0e9d7-32df-4fa7-8c10-01bd30fa59d2",
+    "tenant_name": "Prime Padel Club Humska",
+    "slug": "prime-padel-club-humska",
+    "address": {
+      "street": "Humska 1 (Partizan Stadium)",
+      "postal_code": "11000",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381658544678",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "0736b23c-9d28-404a-b499-43c342eeb338",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "73d9d368-8685-496f-92e8-5d5649f6b342",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f7c2958a-11eb-4176-95eb-2f2e13d87ec7",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f17229de-2d5a-4c21-a325-b81f362008bc",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "402a4da9-a81b-43c8-a680-199d322c8561",
+        "name": "Padel 5 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "a02b3c6b-7600-4a1b-8921-60a85fd34181",
+        "name": "Padel 6 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Prime Padel Club Humska is located within Partizan Stadium complex, featuring 6 state-of-the-art courts, a café, locker rooms, and an equipment shop, providing a top-notch padel experience in the heart of Belgrade."
+  },
+  {
+    "tenant_id": "4fe3e0b1-5a3c-4b7a-ab94-4b6115b0eec3",
+    "tenant_name": "Padel Centar Belgrade Waterfront",
+    "slug": "padel-centar-belgrade-waterfront",
+    "address": {
+      "street": "BW Waterfront (near Galerija Mall)",
+      "postal_code": "11000",
+      "city": "Belgrade",
+      "sub_administrative_area": "Belgrade",
+      "administrative_area": "Belgrade",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381668383383",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "false",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "533b151e-9ce6-441b-b8f2-98e291881173",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f6396af2-9ce5-4f43-8f88-511d347ed05f",
+        "name": "Padel Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "bc8d2e0b-3c63-4e92-a267-5b120199fe43",
+        "name": "Padel Court 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Centar Belgrade Waterfront opened in 2025 across from Galerija shopping mall (under the Gazela bridge), providing 3 outdoor courts in the city’s new waterfront district."
+  },
+  {
+    "tenant_id": "6648ffa5-6ab2-40d8-a774-e268d6b1ce8a",
+    "tenant_name": "Centar Reket Sportova",
+    "slug": "centar-reket-sportova",
+    "address": {
+      "street": "Novosadskog Sajma 62",
+      "postal_code": "21000",
+      "city": "Novi Sad",
+      "sub_administrative_area": "Novi Sad",
+      "administrative_area": "Vojvodina",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381648814188",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "2e4709db-854b-4897-b824-72caecd88fc2",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "5ed5a031-daca-496e-8ad7-654613dd359c",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "c332db82-0f3d-4978-900b-4acb64335394",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f5e983a2-21f8-4214-9425-796379f26c5d",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "123798a5-eee4-4309-bfb1-3aa3a1e2cb61",
+        "name": "Padel 5 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "9dcff2e2-06df-44ae-aded-e85e2f6e4fbb",
+        "name": "Padel 6 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Centar Reket Sportova in Novi Sad is a racket sports center at the fairgrounds, boasting 6 padel courts (alongside tennis courts) where players can book both day and evening sessions."
+  },
+  {
+    "tenant_id": "57485a8c-8e7b-4c9f-aeef-f763ea87eedc",
+    "tenant_name": "The Padel Novi Sad",
+    "slug": "the-padel-novi-sad",
+    "address": {
+      "street": "Branka Bajića 23",
+      "postal_code": "21000",
+      "city": "Novi Sad",
+      "sub_administrative_area": "Novi Sad",
+      "administrative_area": "Vojvodina",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381604770034",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "false",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "8f3641e3-ff1c-4e41-b70d-9337aab9a6ef",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "9d321aad-a56a-4de9-b733-dbd9b0f7d4df",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "21a46d14-5e0d-4ace-9c2e-829774b0e3a9",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "5ac67440-b0a0-4361-85a2-c4e9930de049",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "The Padel (Novi Sad) opened in 2023 near the Novi Sad Fair (Branka Bajića street), offering 4 padel courts and introducing this fast-growing sport to the local community."
+  },
+  {
+    "tenant_id": "39407a6f-b58d-4620-ba73-66b3ff361f36",
+    "tenant_name": "Padel Balon Novi Sad",
+    "slug": "padel-balon-novi-sad",
+    "address": {
+      "street": "Alibegovac bb",
+      "postal_code": "21000",
+      "city": "Novi Sad",
+      "sub_administrative_area": "Novi Sad",
+      "administrative_area": "Vojvodina",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": 45.223108,
+        "lon": 19.874935
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "false",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "e59307b1-ef29-4161-a065-6b72b67b2c02",
+        "name": "Padel Court - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "24:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "24:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "24:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "24:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "24:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "24:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "24:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "24:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Balon Novi Sad (also known as 021 Padel Arena) is the city’s first indoor padel facility, featuring a covered padel court in a bubble hall, allowing year-round play regardless of weather."
+  },
+  {
+    "tenant_id": "2ed3a071-11a9-41d2-bdea-fd95a2f01231",
+    "tenant_name": "Padel Centar Gravity Subotica",
+    "slug": "padel-centar-gravity-subotica",
+    "address": {
+      "street": "Severna 7",
+      "postal_code": "24000",
+      "city": "Subotica",
+      "sub_administrative_area": "Subotica",
+      "administrative_area": "Vojvodina",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": null,
+        "lon": null
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381606558559",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "29d4350a-ad62-4475-883f-228926a8ef8a",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f8444da4-7fed-4174-8c69-f5ce049d9228",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ceff5b36-bbf2-4560-bfc5-adb70c8f2773",
+        "name": "Padel 3 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "b3489d2f-6627-4569-8840-2a3b16c3a248",
+        "name": "Padel 4 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Centar Gravity, located in Subotica (northern Serbia), is a state-of-the-art padel complex with 4 modern courts (indoors), complete with comfortable changing rooms, a terrace café, free parking, and other amenities."
+  }
+]

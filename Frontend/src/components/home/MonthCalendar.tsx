@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Trophy, Star, Dumbbell } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enUS, ru, es, sr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
@@ -33,6 +34,7 @@ export const MonthCalendar = ({
   onDateRangeChange,
 }: MonthCalendarProps) => {
   const { user } = useAuthStore();
+  const { i18n } = useTranslation();
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(selectedDate));
   const isNavigatingRef = useRef(false);
   const [visibleDays, setVisibleDays] = useState<Set<number>>(new Set());
@@ -41,9 +43,8 @@ export const MonthCalendar = ({
 
   const displaySettings = useMemo(() => user ? resolveDisplaySettings(user) : resolveDisplaySettings(null), [user]);
   const locale = useMemo(() => {
-    const langCode = displaySettings.locale.split('-')[0].toLowerCase();
-    return localeMap[langCode as keyof typeof localeMap] || enUS;
-  }, [displaySettings.locale]);
+    return localeMap[i18n.language as keyof typeof localeMap] || enUS;
+  }, [i18n.language]);
   const weekStartsOn = useMemo(() => displaySettings.weekStart, [displaySettings.weekStart]);
 
   useEffect(() => {
@@ -218,8 +219,8 @@ export const MonthCalendar = ({
         >
           <ChevronLeft size={20} className="text-gray-700 dark:text-gray-300" />
         </button>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {format(currentMonth, 'MMMM yyyy', { locale })}
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
+          {format(currentMonth, 'LLLL yyyy', { locale })}
         </h3>
         <button
           onClick={handleNextMonth}
