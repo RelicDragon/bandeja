@@ -152,7 +152,9 @@ export const gamesApi = {
   },
 
   prepareTelegramSummary: async (id: string) => {
-    const response = await api.get<ApiResponse<{ summary: string }>>(`/games/${id}/prepare-telegram-summary`);
+    const response = await api.get<ApiResponse<{ summary: string }>>(`/games/${id}/prepare-telegram-summary`, {
+      timeout: 20000,
+    });
     return response.data;
   },
 
