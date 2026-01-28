@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Game } from '@/types';
+import { Game, GameOutcome } from '@/types';
 import { Round } from '@/types/gameResults';
-import { calculateGameStandings } from '@/services/gameStandings';
+import { calculateGameStandings, PlayerStanding } from '@/services/gameStandings';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 
 interface PlayerStatsPanelProps {
@@ -10,15 +10,41 @@ interface PlayerStatsPanelProps {
   rounds: Round[];
 }
 
+function standingsFromOutcomes(outcomes: GameOutcome[], isPointsBased: boolean): PlayerStanding[] {
+  const sorted = [...outcomes].sort((a, b) => {
+    if (a.position != null && b.position != null) return a.position - b.position;
+    if (a.position != null && b.position == null) return -1;
+    if (a.position == null && b.position != null) return 1;
+    return b.pointsEarned - a.pointsEarned;
+  });
+  return sorted.map((outcome, index) => ({
+    user: outcome.user,
+    place: outcome.position ?? index + 1,
+    wins: outcome.wins,
+    ties: outcome.ties,
+    losses: outcome.losses,
+    scoresMade: outcome.scoresMade,
+    scoresLost: outcome.scoresLost,
+    points: isPointsBased ? outcome.pointsEarned : 0,
+    roundsWon: 0,
+    matchesWon: outcome.wins,
+    scoresDelta: outcome.scoresMade - outcome.scoresLost,
+  }));
+}
+
 export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
   const { t } = useTranslation();
 
+  const isFinalWithOutcomes = game?.resultsStatus === 'FINAL' && game?.outcomes && game.outcomes.length > 0;
+  const isPointsBased = game?.winnerOfGame === 'BY_POINTS';
+
   const standings = useMemo(() => {
-    if (!game) {
-      return [];
+    if (!game) return [];
+    if (isFinalWithOutcomes) {
+      return standingsFromOutcomes(game.outcomes!, isPointsBased);
     }
     return calculateGameStandings(game, rounds, game.winnerOfGame || 'BY_MATCHES_WON');
-  }, [game, rounds]);
+  }, [game, rounds, isFinalWithOutcomes, isPointsBased]);
 
   const isMixPairsWithoutFixedTeams = !game.hasFixedTeams && game.genderTeams === 'MIX_PAIRS';
 
@@ -71,7 +97,6 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
     );
   }
 
-  const isPointsBased = game.winnerOfGame === 'BY_POINTS';
   const gridCols = isPointsBased ? 'grid-cols-[auto_auto_1fr_1fr_1fr_1fr]' : 'grid-cols-[auto_auto_1fr_1fr_1fr]';
 
   const columns = [

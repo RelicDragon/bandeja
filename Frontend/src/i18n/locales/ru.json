@@ -1240,6 +1240,13 @@
     "viewProfile": "Просмотр профиля",
     "openLink": "Открыть ссылку"
   },
+  "club": {
+    "courtsCount_zero": "Нет кортов",
+    "courtsCount_one": "1 корт",
+    "courtsCount_few": "{{count}} корта",
+    "courtsCount_many": "{{count}} кортов",
+    "courtsCount_other": "{{count}} кортов"
+  },
   "city": {
     "clubsCount_zero": "Нет клубов",
     "clubsCount_one": "1 клуб",

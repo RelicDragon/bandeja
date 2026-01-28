@@ -6,6 +6,7 @@ import * as path from 'path';
 import { Prisma } from '@prisma/client';
 import prisma from '../src/config/database';
 import { normalizeClubName } from '../src/utils/normalizeClubName';
+import { refreshClubCourtsCount } from '../src/utils/refreshClubCourtsCount';
 
 const JSON_DIR = path.join(__dirname, '..', 'additions', 'playtomic', 'jsons');
 const PADEL = 'PADEL';
@@ -195,10 +196,15 @@ async function loadFile(filePath: string): Promise<{
     const padelResources = (pt.resources || []).filter(
       (r) => (r.sport || '').toUpperCase() === PADEL
     );
+    let courtsCreatedForClub = 0;
     for (const res of padelResources) {
       const created = await getOrCreateCourt(club.id, res);
-      if (created) courtsCreated++;
+      if (created) {
+        courtsCreated++;
+        courtsCreatedForClub++;
+      }
     }
+    if (courtsCreatedForClub > 0) await refreshClubCourtsCount(club.id);
   }
 
   return {

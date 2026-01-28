@@ -9,6 +9,7 @@ import { CityMap } from '@/components/CityMap';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { findNearestCity } from '@/utils/nearestCity';
 import { appApi } from '@/api/app';
+import { clubsApi, type ClubMapItem } from '@/api/clubs';
 
 export interface CityListContentProps {
   view: 'country' | 'city';
@@ -33,6 +34,7 @@ export interface CityListContentProps {
   citiesCount?: number;
   className?: string;
   contentClassName?: string;
+  onLocationError?: (message: string) => void;
 }
 
 export const CityListContent = ({
@@ -58,12 +60,14 @@ export const CityListContent = ({
   citiesCount = 0,
   className = '',
   contentClassName = '',
+  onLocationError,
 }: CityListContentProps) => {
   const { t } = useTranslation();
   const isLoading = showingLoading ?? loading;
   const selectedCityRef = useRef<HTMLButtonElement>(null);
   const [allowTransition, setAllowTransition] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [clubs, setClubs] = useState<ClubMapItem[]>([]);
   const [pendingCityId, setPendingCityId] = useState<string | null>(null);
   const [userLocationTarget, setUserLocationTarget] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locating, setLocating] = useState(false);
@@ -73,31 +77,14 @@ export const CityListContent = ({
     if (!showMap) {
       setPendingCityId(null);
       setUserLocationTarget(null);
+      return;
     }
+    let cancelled = false;
+    clubsApi.getForMap().then((res) => {
+      if (!cancelled && res.data) setClubs(res.data);
+    }).catch(() => {});
+    return () => { cancelled = true; };
   }, [showMap]);
-
-  const handleWhereAmI = async () => {
-    setLocating(true);
-    try {
-      const posResult = await getPosition();
-      if (posResult.position) {
-        setUserLocationTarget(posResult.position);
-        const nearest = findNearestCity(filteredMapCities, posResult.position.latitude, posResult.position.longitude);
-        if (nearest) setPendingCityId(nearest.id);
-        return;
-      }
-      const ipLoc = await appApi.getLocation();
-      if (ipLoc) setUserLocationTarget(ipLoc);
-      const posResult2 = await getPosition();
-      if (posResult2.position) {
-        setUserLocationTarget(posResult2.position);
-        const nearest = findNearestCity(filteredMapCities, posResult2.position.latitude, posResult2.position.longitude);
-        if (nearest) setPendingCityId(nearest.id);
-      }
-    } finally {
-      setLocating(false);
-    }
-  };
 
   const mapCities = useMemo(
     () => allCities ?? (view === 'city' ? filteredCitiesForCountry : filteredCountries.flatMap((f) => f.cities)),
@@ -115,6 +102,56 @@ export const CityListContent = ({
         (c.subAdministrativeArea?.toLowerCase().includes(searchLower) ?? false)
     );
   }, [mapCities, searchLower]);
+
+  const locationErrorKeys: Record<string, string> = {
+    permission_denied: 'auth.locationDenied',
+    position_unavailable: 'auth.locationUnavailable',
+    timeout: 'auth.locationTimeout',
+    unsupported: 'auth.locationUnsupported',
+  };
+
+  const handleWhereAmI = async () => {
+    setLocating(true);
+    try {
+      let lat: number;
+      let lon: number;
+      let posResult = await getPosition();
+      if (posResult.position) {
+        lat = posResult.position.latitude;
+        lon = posResult.position.longitude;
+      } else {
+        const ipLoc = await appApi.getLocation();
+        if (ipLoc) {
+          lat = ipLoc.latitude;
+          lon = ipLoc.longitude;
+          setUserLocationTarget(ipLoc);
+        } else {
+          posResult = await getPosition();
+          if (!posResult.position) {
+            const key = locationErrorKeys[posResult.errorCode ?? ''] ?? 'auth.locationUnavailable';
+            onLocationError?.(t(key));
+            return;
+          }
+          lat = posResult.position.latitude;
+          lon = posResult.position.longitude;
+        }
+      }
+      setUserLocationTarget({ latitude: lat, longitude: lon });
+      const nearest = findNearestCity(mapCities, lat, lon);
+      if (nearest) {
+        if (showMap) {
+          setPendingCityId(nearest.id);
+        } else {
+          selectCountry(nearest.country);
+          onCityClick(nearest.id);
+        }
+      } else {
+        onLocationError?.(t('auth.noCityNearby'));
+      }
+    } finally {
+      setLocating(false);
+    }
+  };
 
   useEffect(() => {
     if (pendingCityId && !filteredMapCities.some((c) => c.id === pendingCityId)) setPendingCityId(null);
@@ -157,27 +194,19 @@ export const CityListContent = ({
             </button>
           )}
           <div className="flex-1 min-w-0" />
-          <AnimatePresence>
-            {showMap && (
-              <motion.button
-                type="button"
-                onClick={handleWhereAmI}
-                disabled={locating}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
-                transition={{ duration: 0.2 }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 shrink-0 mr-2 disabled:opacity-60"
-              >
-                {locating ? (
-                  <span className="w-4 h-4 shrink-0 border-2 border-primary-200 dark:border-primary-800 border-t-primary-500 rounded-full animate-spin" />
-                ) : (
-                  <MapPin className="w-4 h-4 shrink-0" strokeWidth={2.25} />
-                )}
-                <span className="text-sm font-medium">{t('city.whereAmI')}</span>
-              </motion.button>
+          <button
+            type="button"
+            onClick={handleWhereAmI}
+            disabled={locating}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 shrink-0 mr-2 disabled:opacity-60"
+          >
+            {locating ? (
+              <span className="w-4 h-4 shrink-0 border-2 border-primary-200 dark:border-primary-800 border-t-primary-500 rounded-full animate-spin" />
+            ) : (
+              <MapPin className="w-4 h-4 shrink-0" strokeWidth={2.25} />
             )}
-          </AnimatePresence>
+            <span className="text-sm font-medium">{t('city.whereAmI')}</span>
+          </button>
           <button
             type="button"
             onClick={() => setShowMap((v) => !v)}
@@ -317,37 +346,44 @@ export const CityListContent = ({
               </div>
             </div>
             <div className="w-1/2 min-w-0 shrink-0 min-h-0 flex flex-col">
-              <CityMap
-                cities={filteredMapCities}
-                currentCityId={selectedCityId}
-                pendingCityId={pendingCityId}
-                onCityClick={(id) => setPendingCityId(id)}
-                onMapClick={() => setPendingCityId(null)}
-                className="flex-1 min-h-[280px]"
-                userLocation={userLocationTarget}
-              />
-              <AnimatePresence>
-                {pendingCityId && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 12 }}
-                    transition={{ duration: 0.2 }}
-                    className="shrink-0 pt-2"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onCityClick(pendingCityId);
-                        setPendingCityId(null);
-                      }}
-                      className="w-full py-2.5 px-8 rounded-xl text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 focus:ring-2 focus:ring-primary-500/30 focus:outline-none transition-colors"
-                    >
-                      {t('city.selectCity')}
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {showMap ? (
+                <>
+                  <CityMap
+                    cities={filteredMapCities}
+                    clubs={clubs}
+                    currentCityId={selectedCityId}
+                    pendingCityId={pendingCityId}
+                    onCityClick={(id) => setPendingCityId(id)}
+                    onMapClick={() => setPendingCityId(null)}
+                    className="flex-1 min-h-[280px]"
+                    userLocation={userLocationTarget}
+                  />
+                  <AnimatePresence>
+                    {pendingCityId && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 12 }}
+                        transition={{ duration: 0.2 }}
+                        className="shrink-0 pt-2"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onCityClick(pendingCityId);
+                            setPendingCityId(null);
+                          }}
+                          className="w-full py-2.5 px-8 rounded-xl text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 focus:ring-2 focus:ring-primary-500/30 focus:outline-none transition-colors"
+                        >
+                          {t('city.selectCity')}
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              ) : (
+                <div className="flex-1 min-h-[280px]" />
+              )}
             </div>
           </div>
         </div>

@@ -6,6 +6,7 @@ import * as clubController from '../controllers/club.controller';
 
 const router = Router();
 
+router.get('/map', optionalAuth, clubController.getClubsForMap);
 router.get('/city/:cityId', optionalAuth, clubController.getClubsByCity);
 
 router.get('/:id', optionalAuth, clubController.getClubById);

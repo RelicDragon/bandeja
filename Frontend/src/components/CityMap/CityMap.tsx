@@ -1,20 +1,31 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { LatLngBoundsLiteral } from 'leaflet';
 import type { City } from '@/types';
+import type { ClubMapItem } from '@/api/clubs';
 import { appApi } from '@/api/app';
 import 'leaflet/dist/leaflet.css';
 
 const LOCATION_RADIUS_KM = 50;
 const DEG_PER_KM = 1 / 111;
 const LOCATION_BOUNDS_DELTA = LOCATION_RADIUS_KM * DEG_PER_KM;
+const MAX_VIEW_KM = 200;
+const HALF_VIEW_DEG = (MAX_VIEW_KM / 2) * DEG_PER_KM;
 
 const DEFAULT_CENTER: [number, number] = [20, 0];
 const DEFAULT_ZOOM = 2;
 const MIN_RADIUS = 8;
 const MAX_RADIUS = 28;
+
+const CLUB_HOUSE_ICON = L.divIcon({
+  className: 'club-house-marker',
+  html: `<div style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:#0ea5e9;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.25);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>`,
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32],
+});
 
 const COUNTRY_COLORS = [
   '#0ea5e9', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#6366f1', '#ef4444', '#14b8a6',
@@ -59,17 +70,33 @@ function radiusInCountry(clubsCount: number, maxInCountry: number): number {
   return Math.round(MIN_RADIUS + ratio * (MAX_RADIUS - MIN_RADIUS));
 }
 
+function clampBoundsToMaxKm(bounds: LatLngBoundsLiteral, maxKm: number): LatLngBoundsLiteral {
+  const [[south, west], [north, east]] = bounds;
+  const centerLat = (south + north) / 2;
+  const centerLng = (west + east) / 2;
+  const latSpanKm = (north - south) * 111;
+  const lngSpanKm = (east - west) * 111;
+  if (latSpanKm <= maxKm && lngSpanKm <= maxKm) return bounds;
+  const halfDeg = (maxKm / 2) * DEG_PER_KM;
+  return [
+    [centerLat - halfDeg, centerLng - halfDeg],
+    [centerLat + halfDeg, centerLng + halfDeg],
+  ];
+}
+
 function FitBounds({ bounds }: { bounds: LatLngBoundsLiteral | null }) {
   const map = useMap();
   useEffect(() => {
     if (!bounds) return;
-    map.fitBounds(bounds, { padding: [24, 24], maxZoom: 12, animate: true });
+    const clamped = clampBoundsToMaxKm(bounds, MAX_VIEW_KM);
+    map.fitBounds(clamped, { padding: [24, 24], maxZoom: 12, animate: true });
   }, [map, bounds]);
   return null;
 }
 
 export interface CityMapProps {
   cities: City[];
+  clubs?: ClubMapItem[];
   currentCityId?: string;
   pendingCityId?: string | null;
   onCityClick?: (cityId: string) => void;
@@ -85,7 +112,7 @@ function MapClickHandler({ onMapClick }: { onMapClick?: () => void }) {
   return null;
 }
 
-export function CityMap({ cities, currentCityId, pendingCityId, onCityClick, onMapClick, className = '', userLocation = null }: CityMapProps) {
+export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCityClick, onMapClick, className = '', userLocation = null }: CityMapProps) {
   const { t } = useTranslation();
   const [locationBounds, setLocationBounds] = useState<LatLngBoundsLiteral | null>(null);
 
@@ -116,19 +143,46 @@ export function CityMap({ cities, currentCityId, pendingCityId, onCityClick, onM
 
   const countryMaxClubs = useMemo(() => radiusByCountry(withCoords), [withCoords]);
 
+  const allPoints = useMemo(() => {
+    const pts: Array<{ lat: number; lng: number }> = [...withCoords.map((c) => ({ lat: c.latitude!, lng: c.longitude! })), ...clubs.map((c) => ({ lat: c.latitude, lng: c.longitude }))];
+    return pts;
+  }, [withCoords, clubs]);
+
   const citiesBounds: LatLngBoundsLiteral | null = useMemo(() => {
-    if (withCoords.length === 0) return null;
-    const lats = withCoords.map((c) => c.latitude!);
-    const lngs = withCoords.map((c) => c.longitude!);
+    if (allPoints.length === 0) return null;
+    const lats = allPoints.map((p) => p.lat);
+    const lngs = allPoints.map((p) => p.lng);
     return [
       [Math.min(...lats), Math.min(...lngs)],
       [Math.max(...lats), Math.max(...lngs)],
     ] as LatLngBoundsLiteral;
-  }, [withCoords]);
+  }, [allPoints]);
 
-  const bounds: LatLngBoundsLiteral | null = userLocationBounds ?? locationBounds ?? citiesBounds;
+  const selectedCityBounds: LatLngBoundsLiteral | null = useMemo(() => {
+    if (!currentCityId || withCoords.length === 0) return null;
+    const city = withCoords.find((c) => c.id === currentCityId);
+    if (!city) return null;
+    return [
+      [city.latitude - HALF_VIEW_DEG, city.longitude - HALF_VIEW_DEG],
+      [city.latitude + HALF_VIEW_DEG, city.longitude + HALF_VIEW_DEG],
+    ] as LatLngBoundsLiteral;
+  }, [currentCityId, withCoords]);
 
-  if (withCoords.length === 0) {
+  const centerOfAllBounds: LatLngBoundsLiteral | null = useMemo(() => {
+    if (!citiesBounds) return null;
+    const [[south, west], [north, east]] = citiesBounds;
+    const centerLat = (south + north) / 2;
+    const centerLng = (west + east) / 2;
+    return [
+      [centerLat - HALF_VIEW_DEG, centerLng - HALF_VIEW_DEG],
+      [centerLat + HALF_VIEW_DEG, centerLng + HALF_VIEW_DEG],
+    ] as LatLngBoundsLiteral;
+  }, [citiesBounds]);
+
+  const bounds: LatLngBoundsLiteral | null =
+    selectedCityBounds ?? userLocationBounds ?? (locationBounds ? clampBoundsToMaxKm(locationBounds, MAX_VIEW_KM) : null) ?? centerOfAllBounds;
+
+  if (withCoords.length === 0 && clubs.length === 0) {
     return (
       <div className={`flex items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm ${className}`}>
         {t('common.noResults')}
@@ -187,6 +241,21 @@ export function CityMap({ cities, currentCityId, pendingCityId, onCityClick, onM
             </CircleMarker>
           );
         })}
+        {clubs.map((club) => (
+          <Marker
+            key={club.id}
+            position={[club.latitude, club.longitude]}
+            icon={CLUB_HOUSE_ICON}
+          >
+            <Popup>
+              <div className="text-sm">
+                <div className="font-semibold text-gray-900 dark:text-white">{club.name}</div>
+                <div className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{club.cityName}, {club.country}</div>
+                <div className="text-gray-600 dark:text-gray-400 mt-0.5">{t('club.courtsCount', { count: club.courtsCount })}</div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );

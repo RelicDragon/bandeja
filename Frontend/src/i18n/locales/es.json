@@ -1185,6 +1185,11 @@
     "viewProfile": "Ver perfil",
     "openLink": "Abrir enlace"
   },
+  "club": {
+    "courtsCount_zero": "Sin pistas",
+    "courtsCount_one": "1 pista",
+    "courtsCount_other": "{{count}} pistas"
+  },
   "city": {
     "clubsCount_zero": "Sin clubes",
     "clubsCount_one": "1 club",

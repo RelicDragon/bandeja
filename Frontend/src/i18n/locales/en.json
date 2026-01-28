@@ -1230,6 +1230,11 @@
     "viewProfile": "View Profile",
     "openLink": "Open Link"
   },
+  "club": {
+    "courtsCount_zero": "No courts",
+    "courtsCount_one": "1 court",
+    "courtsCount_other": "{{count}} courts"
+  },
   "city": {
     "clubsCount_zero": "No clubs",
     "clubsCount_one": "1 club",

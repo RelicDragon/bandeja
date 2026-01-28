@@ -5,6 +5,34 @@ import prisma from '../config/database';
 import { normalizeClubName } from '../utils/normalizeClubName';
 import { refreshCityFromClubs } from '../utils/updateCityCenter';
 
+export const getClubsForMap = asyncHandler(async (_req: Request, res: Response) => {
+  const clubs = await prisma.club.findMany({
+    where: {
+      isActive: true,
+      latitude: { not: null },
+      longitude: { not: null },
+    },
+    select: {
+      id: true,
+      name: true,
+      latitude: true,
+      longitude: true,
+      courtsNumber: true,
+      city: { select: { name: true, country: true } },
+    },
+  });
+  const data = clubs.map((c) => ({
+    id: c.id,
+    name: c.name,
+    latitude: c.latitude!,
+    longitude: c.longitude!,
+    cityName: c.city.name,
+    country: c.city.country,
+    courtsCount: c.courtsNumber,
+  }));
+  res.json({ success: true, data });
+});
+
 export const getClubsByCity = asyncHandler(async (req: Request, res: Response) => {
   const { cityId } = req.params;
   const { entityType } = req.query;

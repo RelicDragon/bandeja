@@ -895,3 +895,8 @@ input[type="range"].slider:disabled::-moz-range-thumb {
 .mention-input-wrapper div[style*="maxHeight"] {
   z-index: 9999 !important;
 }
+
+.club-house-marker.leaflet-marker-icon {
+  background: none !important;
+  border: none !important;
+}

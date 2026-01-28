@@ -20,6 +20,7 @@ router.post(
 );
 
 router.put('/:id', courtController.updateCourt);
+router.delete('/:id', courtController.deleteCourt);
 
 export default router;
 

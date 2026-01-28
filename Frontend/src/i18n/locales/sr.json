@@ -1195,6 +1195,13 @@
     "viewProfile": "Прикажи профил",
     "openLink": "Отвори линк"
   },
+  "club": {
+    "courtsCount_zero": "Нема терена",
+    "courtsCount_one": "1 терен",
+    "courtsCount_few": "{{count}} терена",
+    "courtsCount_many": "{{count}} терена",
+    "courtsCount_other": "{{count}} терена"
+  },
   "city": {
     "clubsCount_zero": "Нема клубова",
     "clubsCount_one": "1 клуб",

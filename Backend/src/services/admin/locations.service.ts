@@ -3,6 +3,7 @@ import prisma from '../../config/database';
 import { COUNTRIES, TIMEZONES, DEFAULT_TIMEZONE } from '../../utils/constants';
 import { normalizeClubName } from '../../utils/normalizeClubName';
 import { refreshCityFromClubs, refreshAllCitiesFromClubs } from '../../utils/updateCityCenter';
+import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
 
 export class AdminLocationsService {
   static async getAllCities() {
@@ -370,6 +371,7 @@ export class AdminLocationsService {
         },
       },
     });
+    await refreshClubCourtsCount(clubId);
 
     return court;
   }
@@ -392,6 +394,12 @@ export class AdminLocationsService {
       pricePerHour,
       isActive,
     } = data;
+
+    const existing = await prisma.court.findUnique({
+      where: { id: courtId },
+      select: { clubId: true },
+    });
+    if (!existing) throw new ApiError(404, 'Court not found');
 
     const court = await prisma.court.update({
       where: { id: courtId },
@@ -418,13 +426,24 @@ export class AdminLocationsService {
       },
     });
 
+    const newClubId = court.clubId;
+    await refreshClubCourtsCount(existing.clubId);
+    if (newClubId !== existing.clubId) await refreshClubCourtsCount(newClubId);
+
     return court;
   }
 
   static async deleteCourt(courtId: string) {
+    const court = await prisma.court.findUnique({
+      where: { id: courtId },
+      select: { clubId: true },
+    });
+    if (!court) throw new ApiError(404, 'Court not found');
+
     await prisma.court.delete({
       where: { id: courtId },
     });
+    await refreshClubCourtsCount(court.clubId);
 
     return { message: 'Court deleted successfully' };
   }

@@ -14,11 +14,23 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * c;
 }
 
+function isValidCoord(lat: number, lon: number): boolean {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lon >= -180 &&
+    lon <= 180
+  );
+}
+
 export function findNearestCity(
   cities: City[],
   latitude: number,
   longitude: number
 ): City | null {
+  if (!isValidCoord(latitude, longitude)) return null;
   const withCoords = cities.filter(
     (c) => c.latitude != null && c.longitude != null
   );

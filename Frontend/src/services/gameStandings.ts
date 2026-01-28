@@ -27,6 +27,11 @@ interface PlayerStats {
   scoresDelta: number;
 }
 
+/**
+ * Match winner for W-T-L stats. Mirrors backend matchWinner.service so in-progress
+ * stats match final outcomes: use winnerId when set, else derive from sets (BY_SCORES
+ * = total points, BY_SETS = sets won); tie when equal and at least one set played.
+ */
 function calculateMatchWinner(
   match: Match,
   winnerOfMatch: WinnerOfMatch = 'BY_SCORES'
