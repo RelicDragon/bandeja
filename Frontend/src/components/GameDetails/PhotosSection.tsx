@@ -5,6 +5,7 @@ import { chatApi, ChatMessage } from '@/api/chat';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { mediaApi } from '@/api/media';
 import { socketService } from '@/services/socketService';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { gamesApi } from '@/api/games';
 import { useAuthStore } from '@/store/authStore';
 import { isUserGameAdminOrOwner } from '@/utils/gameResults';
@@ -100,27 +101,18 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
       setPhotos(prevPhotos => prevPhotos.filter(msg => msg.id !== data.messageId));
     };
 
-    // Unified event handlers
-    const handleUnifiedMessage = (data: { contextType: string; contextId: string; message: any }) => {
-      if (data.contextType === 'GAME' && data.contextId === game.id) {
-        handleNewMessage(data.message);
-      }
-    };
+    const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
+    const lastChatDeleted = useSocketEventsStore((state) => state.lastChatDeleted);
 
-    const handleUnifiedDeleted = (data: { contextType: string; contextId: string; messageId: string }) => {
-      if (data.contextType === 'GAME' && data.contextId === game.id) {
-        handleMessageDeleted({ messageId: data.messageId });
-      }
-    };
+    useEffect(() => {
+      if (!lastChatMessage || lastChatMessage.contextType !== 'GAME' || lastChatMessage.contextId !== game.id) return;
+      handleNewMessage(lastChatMessage.message);
+    }, [lastChatMessage, game.id]);
 
-    // Unified events
-    socketService.on('chat:message', handleUnifiedMessage);
-    socketService.on('chat:deleted', handleUnifiedDeleted);
-
-    return () => {
-      socketService.off('chat:message', handleUnifiedMessage);
-      socketService.off('chat:deleted', handleUnifiedDeleted);
-    };
+    useEffect(() => {
+      if (!lastChatDeleted || lastChatDeleted.contextType !== 'GAME' || lastChatDeleted.contextId !== game.id) return;
+      handleMessageDeleted({ messageId: lastChatDeleted.messageId });
+    }, [lastChatDeleted, game.id]);
   }, [game.id, game.status]);
 
   const handlePhotoSelect = async (files: File[]) => {

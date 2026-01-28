@@ -65,6 +65,7 @@ class SocketService {
   private networkUnsubscribe: (() => void) | null = null;
   private eventSubscribers: Map<string, Set<(...args: any[]) => void>> = new Map();
   private socketListeners: Map<string, (...args: any[]) => void> = new Map();
+  private waitForConnectionListeners: Array<() => void> = [];
 
   constructor() {
     // Don't auto-connect in constructor - let components trigger connection when needed
@@ -165,6 +166,10 @@ class SocketService {
 
     // Clean up existing socket if any
     if (this.socket) {
+      // Clean up waitForConnection listeners
+      this.waitForConnectionListeners.forEach(cleanup => cleanup());
+      this.waitForConnectionListeners = [];
+      
       this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
@@ -211,7 +216,7 @@ class SocketService {
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('Socket.IO disconnected:', reason);
+      console.log('[SocketService] Socket.IO disconnected:', reason);
       this.isConnecting = false;
       this.stopHeartbeat();
       
@@ -230,33 +235,14 @@ class SocketService {
       }
     });
 
-    this.socket.on('sync-required', (data: { timestamp: string }) => {
-      console.log('[SocketService] Server requested sync:', data);
-      // Notify components to sync
-      this.emit('sync-required', data);
-    });
-
     this.socket.on('connect_error', (error) => {
-      console.error('Socket.IO connection error:', error);
+      console.error('[SocketService] Socket.IO connection error:', error);
       this.isConnecting = false;
       this.handleReconnect();
     });
 
     this.socket.on('error', (error) => {
       console.error('[SocketService] Socket.IO error:', error);
-    });
-
-    // Add listener for game-updated events to debug
-    this.socket.on('game-updated', (data: any) => {
-      console.log('[SocketService] Received game-updated event:', data);
-    });
-
-    // Handle wallet-update events
-    this.socket.on('wallet-update', (data: { wallet: number }) => {
-      const { user, updateUser } = useAuthStore.getState();
-      if (user) {
-        updateUser({ ...user, wallet: data.wallet });
-      }
     });
   }
 
@@ -406,7 +392,7 @@ class SocketService {
     }, delay);
   }
 
-  // Ensure connection is established
+  // Ensure connection is established (non-blocking)
   public ensureConnection() {
     if (!this.socket || !this.socket.connected) {
       this.connect();
@@ -420,29 +406,60 @@ class SocketService {
         this.connect();
       }
 
-      if (this.socket && this.socket.connected) {
-        resolve();
-        return;
-      }
-
-      if (!this.socket) {
+      const currentSocket = this.socket;
+      if (!currentSocket) {
         reject(new Error('Socket not initialized'));
         return;
       }
 
-      const timeout = setTimeout(() => {
-        reject(new Error('Connection timeout'));
+      if (currentSocket.connected) {
+        resolve();
+        return;
+      }
+
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      let resolved = false;
+
+      const cleanup = () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        if (currentSocket && !resolved) {
+          currentSocket.off('connect', connectHandler);
+          currentSocket.off('connect_error', errorHandler);
+        }
+        const index = this.waitForConnectionListeners.indexOf(cleanup);
+        if (index > -1) {
+          this.waitForConnectionListeners.splice(index, 1);
+        }
+      };
+
+      const connectHandler = () => {
+        if (resolved) return;
+        resolved = true;
+        cleanup();
+        resolve();
+      };
+
+      const errorHandler = (error: any) => {
+        if (resolved) return;
+        resolved = true;
+        cleanup();
+        reject(error);
+      };
+
+      timeoutId = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          cleanup();
+          reject(new Error('Connection timeout'));
+        }
       }, 10000);
 
-      this.socket.once('connect', () => {
-        clearTimeout(timeout);
-        resolve();
-      });
-
-      this.socket.once('connect_error', (error) => {
-        clearTimeout(timeout);
-        reject(error);
-      });
+      currentSocket.once('connect', connectHandler);
+      currentSocket.once('connect_error', errorHandler);
+      this.waitForConnectionListeners.push(cleanup);
     });
   }
 
@@ -450,97 +467,102 @@ class SocketService {
   public async joinGameRoom(gameId: string) {
     try {
       await this.waitForConnection();
-      if (this.socket) {
+      if (this.socket && this.socket.connected) {
         this.socket.emit('join-game-room', gameId);
+      } else {
+        throw new Error('Socket not connected');
       }
     } catch (error) {
-      console.error('Failed to join game room:', error);
+      console.error(`[SocketService] Failed to join game room ${gameId}:`, error);
+      throw error;
     }
   }
 
   // Leave a game chat room
   public leaveGameRoom(gameId: string) {
-    if (!this.socket) {
-      console.warn('Socket not initialized, cannot leave game room');
+    if (!this.socket || !this.socket.connected) {
+      console.warn('[SocketService] Socket not connected, cannot leave game room');
       return;
     }
 
-    if (this.socket.connected) {
-      this.socket.emit('leave-game-room', gameId);
-    } else {
-      console.warn('Socket not connected, cannot leave game room');
-    }
+    this.socket.emit('leave-game-room', gameId);
   }
 
   // Join a bug chat room
   public async joinBugRoom(bugId: string) {
     try {
       await this.waitForConnection();
-      if (this.socket) {
+      if (this.socket && this.socket.connected) {
         this.socket.emit('join-bug-room', bugId);
+      } else {
+        throw new Error('Socket not connected');
       }
     } catch (error) {
-      console.error('Failed to join bug room:', error);
+      console.error(`[SocketService] Failed to join bug room ${bugId}:`, error);
+      throw error;
     }
   }
 
   // Leave a bug chat room
   public leaveBugRoom(bugId: string) {
-    if (!this.socket) {
-      console.warn('Socket not initialized, cannot leave bug room');
+    if (!this.socket || !this.socket.connected) {
+      console.warn('[SocketService] Socket not connected, cannot leave bug room');
       return;
     }
 
-    if (this.socket.connected) {
-      this.socket.emit('leave-bug-room', bugId);
-    } else {
-      console.warn('Socket not connected, cannot leave bug room');
-    }
+    this.socket.emit('leave-bug-room', bugId);
   }
 
   // Join a user chat room
   public async joinUserChatRoom(chatId: string) {
     try {
       await this.waitForConnection();
-      if (this.socket) {
+      if (this.socket && this.socket.connected) {
         this.socket.emit('join-user-chat-room', chatId);
+      } else {
+        throw new Error('Socket not connected');
       }
     } catch (error) {
-      console.error('Failed to join user chat room:', error);
+      console.error(`[SocketService] Failed to join user chat room ${chatId}:`, error);
+      throw error;
     }
   }
 
   // Leave a user chat room
   public leaveUserChatRoom(chatId: string) {
-    if (!this.socket) {
-      console.warn('Socket not initialized, cannot leave user chat room');
+    if (!this.socket || !this.socket.connected) {
+      console.warn('[SocketService] Socket not connected, cannot leave user chat room');
       return;
     }
 
-    if (this.socket.connected) {
-      this.socket.emit('leave-user-chat-room', chatId);
-    } else {
-      console.warn('Socket not connected, cannot leave user chat room');
-    }
+    this.socket.emit('leave-user-chat-room', chatId);
   }
 
   // ========== UNIFIED CHAT METHODS (NEW) ==========
   // Generic join chat room based on context type
   public async joinChatRoom(contextType: 'GAME' | 'BUG' | 'USER' | 'GROUP', contextId: string) {
     const roomKey = `${contextType}:${contextId}`;
-    this.activeChatRooms.set(roomKey, { contextType, contextId });
     
-    if (contextType === 'GAME') {
-      return this.joinGameRoom(contextId);
-    } else if (contextType === 'BUG') {
-      return this.joinBugRoom(contextId);
-    } else if (contextType === 'USER') {
-      return this.joinUserChatRoom(contextId);
-    } else if (contextType === 'GROUP') {
-      if (!this.socket?.connected) {
-        await this.connect();
+    try {
+      if (contextType === 'GAME') {
+        await this.joinGameRoom(contextId);
+      } else if (contextType === 'BUG') {
+        await this.joinBugRoom(contextId);
+      } else if (contextType === 'USER') {
+        await this.joinUserChatRoom(contextId);
+      } else if (contextType === 'GROUP') {
+        await this.waitForConnection();
+        if (this.socket && this.socket.connected) {
+          this.socket.emit('join-chat-room', { contextType, contextId });
+        } else {
+          throw new Error('Socket not connected');
+        }
       }
-      this.socket?.emit('join-chat-room', { contextType, contextId });
+      // Only add to tracking after successful join
+      this.activeChatRooms.set(roomKey, { contextType, contextId });
+    } catch (error) {
+      console.error(`[SocketService] Failed to join chat room ${contextType}:${contextId}:`, error);
+      throw error;
     }
   }
 
@@ -556,7 +578,11 @@ class SocketService {
     } else if (contextType === 'USER') {
       return this.leaveUserChatRoom(contextId);
     } else if (contextType === 'GROUP') {
-      this.socket?.emit('leave-chat-room', { contextType, contextId });
+      if (!this.socket || !this.socket.connected) {
+        console.warn('[SocketService] Socket not connected, cannot leave group chat room');
+        return;
+      }
+      this.socket.emit('leave-chat-room', { contextType, contextId });
     }
   }
 
@@ -652,7 +678,7 @@ class SocketService {
         if (this.socket) {
           const socketListener = this.socketListeners.get(eventKey);
           if (socketListener) {
-            this.socket.removeAllListeners(event);
+            (this.socket as any).off(event, socketListener);
             this.socketListeners.delete(eventKey);
             console.log(`[SocketService] Removed socket listener for event: ${event} (no more subscribers)`);
           }
@@ -666,7 +692,7 @@ class SocketService {
       if (this.socket) {
         const socketListener = this.socketListeners.get(eventKey);
         if (socketListener) {
-          this.socket.removeAllListeners(event);
+          (this.socket as any).off(event, socketListener);
           this.socketListeners.delete(eventKey);
         }
       }
@@ -677,17 +703,12 @@ class SocketService {
 
   // Emit typing indicator
   public emitTypingIndicator(gameId: string, isTyping: boolean) {
-    this.ensureConnection();
-    if (!this.socket) {
-      console.warn('Socket not initialized, cannot emit typing indicator');
+    if (!this.socket || !this.socket.connected) {
+      console.warn('[SocketService] Socket not connected, cannot emit typing indicator');
       return;
     }
 
-    if (this.socket.connected) {
-      this.socket.emit('typing-indicator', { gameId, isTyping });
-    } else {
-      console.warn('Socket not connected, cannot emit typing indicator');
-    }
+    this.socket.emit('typing-indicator', { gameId, isTyping });
   }
 
   // Check if connected
@@ -707,6 +728,10 @@ class SocketService {
     this.isRejoining = false;
     this.eventSubscribers.clear();
     this.socketListeners.clear();
+    
+    // Clean up waitForConnection listeners
+    this.waitForConnectionListeners.forEach(cleanup => cleanup());
+    this.waitForConnectionListeners = [];
     
     if (this.reconnectTimeoutId) {
       clearTimeout(this.reconnectTimeoutId);
@@ -740,7 +765,10 @@ class SocketService {
    * Acknowledge message receipt via socket
    */
   public acknowledgeMessage(messageId: string, contextType: 'GAME' | 'BUG' | 'USER', contextId: string) {
-    if (!this.socket || !this.socket.connected) return;
+    if (!this.socket || !this.socket.connected) {
+      console.warn('[SocketService] Socket not connected, cannot acknowledge message');
+      return;
+    }
 
     this.socket.emit('chat:message-ack', {
       messageId,
@@ -760,7 +788,7 @@ class SocketService {
         deliveryMethod
       });
     } catch (error) {
-      console.error('Failed to confirm message receipt:', error);
+      console.error('[SocketService] Failed to confirm message receipt:', error);
     }
   }
 
@@ -768,23 +796,16 @@ class SocketService {
    * Request missed messages after reconnection
    */
   public async syncMessages(contextType: 'GAME' | 'BUG' | 'USER', contextId: string, lastMessageId?: string) {
-    if (!this.socket || !this.socket.connected) return;
+    if (!this.socket || !this.socket.connected) {
+      console.warn('[SocketService] Socket not connected, cannot sync messages');
+      return;
+    }
 
     this.socket.emit('sync-messages', {
       contextType,
       contextId,
       lastMessageId
     });
-  }
-
-  /**
-   * Emit custom event (for internal use)
-   */
-  private emit(event: string, data: any) {
-    // This is a simple event emitter pattern
-    if (this.socket) {
-      this.socket.emit(event, data);
-    }
   }
 }
 

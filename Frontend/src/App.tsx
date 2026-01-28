@@ -24,6 +24,7 @@ import { OfflineBanner } from './components/OfflineBanner';
 import { headerService } from './services/headerService';
 import { socketService } from './services/socketService';
 import { useHeaderStore } from './store/headerStore';
+import { useSocketEventsStore } from './store/socketEventsStore';
 import { isCapacitor, isIOS, isAndroid } from './utils/capacitor';
 import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerUtils';
 import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
@@ -68,7 +69,7 @@ function AppContent() {
 
   useEffect(() => {
     restoreAuthIfNeeded();
-    monitorAuthPersistence();
+    const cleanupAuthPersistence = monitorAuthPersistence();
     
     if (isCapacitor()) {
       document.body.classList.add('capacitor-app');
@@ -83,14 +84,13 @@ function AppContent() {
     
     const cleanup = initNetworkListener();
     
-    // Mark initialization as complete
-    // Even if offline, we want the app to finish initializing and show the UI
     const timer = setTimeout(() => {
       finishInitializing();
     }, 500);
     
     return () => {
       cleanup();
+      cleanupAuthPersistence();
       clearTimeout(timer);
       if (isCapacitor()) {
         backButtonService.cleanup();
@@ -143,7 +143,6 @@ function AppContent() {
 
   useEffect(() => {
     if (isAuthenticated && !isInitializing) {
-      // Refresh user profile from backend to ensure all fields are up to date
       if (navigator.onLine) {
         usersApi.getProfile()
           .then((response: { data: any }) => {
@@ -154,11 +153,9 @@ function AppContent() {
           });
       }
 
-      // Delay starting services to avoid blocking initial render
       const timer = setTimeout(() => {
         headerService.startPolling();
         
-        // Only fetch favorites if online
         if (navigator.onLine) {
           fetchFavorites().catch((error) => {
             console.error('Failed to fetch favorites:', error);
@@ -168,41 +165,38 @@ function AppContent() {
 
       return () => {
         clearTimeout(timer);
+        headerService.stopPolling();
       };
+    } else {
+      headerService.stopPolling();
     }
   }, [isAuthenticated, isInitializing, fetchFavorites]);
 
+  const initializeSocketEvents = useSocketEventsStore((state) => state.initialize);
+  const cleanupSocketEvents = useSocketEventsStore((state) => state.cleanup);
+
   useEffect(() => {
     if (isAuthenticated && !isInitializing) {
-      // Set up socket listener for new invites
-      const handleNewInvite = () => {
-        const { setPendingInvites, triggerNewInviteAnimation } = useHeaderStore.getState();
-        // Increment the pending invites count
-        const currentCount = useHeaderStore.getState().pendingInvites;
-        setPendingInvites(currentCount + 1);
-        // Trigger animation for new invite
-        triggerNewInviteAnimation();
-      };
-
-      const handleInviteDeleted = () => {
-        const { setPendingInvites } = useHeaderStore.getState();
-        // Decrement the pending invites count (minimum 0)
-        const currentCount = useHeaderStore.getState().pendingInvites;
-        setPendingInvites(Math.max(0, currentCount - 1));
-      };
-
       const timer = setTimeout(() => {
-        socketService.on('new-invite', handleNewInvite);
-        socketService.on('invite-deleted', handleInviteDeleted);
+        initializeSocketEvents();
       }, 500);
+
+      const handleWalletUpdate = (data: { wallet: number }) => {
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser) {
+          useAuthStore.getState().updateUser({ ...currentUser, wallet: data.wallet });
+        }
+      };
+
+      socketService.on('wallet-update', handleWalletUpdate);
 
       return () => {
         clearTimeout(timer);
-        socketService.off('new-invite', handleNewInvite);
-        socketService.off('invite-deleted', handleInviteDeleted);
+        cleanupSocketEvents();
+        socketService.off('wallet-update', handleWalletUpdate);
       };
     }
-  }, [isAuthenticated, isInitializing]);
+  }, [isAuthenticated, isInitializing, initializeSocketEvents, cleanupSocketEvents]);
 
   useEffect(() => {
     if (versionCheck && versionCheck.status === 'optional_update' && !showOptionalUpdateModal) {

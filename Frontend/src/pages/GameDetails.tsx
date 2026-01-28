@@ -43,6 +43,7 @@ import { trainingApi } from '@/api/training';
 import { faqApi } from '@/api/faq';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
 import { Round } from '@/types/gameResults';
 import { isUserGameAdminOrOwner, canUserEditResults } from '@/utils/gameResults';
@@ -146,64 +147,56 @@ export const GameDetailsContent = () => {
     fetchGame();
   }, [id, user]);
 
+  const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);
+  const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
+
   useEffect(() => {
     if (!id) return;
-
-    // Join game room once for all game-related events (updates, results, bets)
     socketService.joinGameRoom(id);
-
-    const handleInviteDeleted = (data: { inviteId: string; gameId?: string }) => {
-      if (data.gameId === id || !data.gameId) {
-        setMyInvites(prev => prev.filter(inv => inv.id !== data.inviteId));
-        setGameInvites(prev => prev.filter(inv => inv.id !== data.inviteId));
-      }
-    };
-
-    const handleGameUpdated = (data: { gameId: string; senderId: string; game: GameWithResults }) => {
-      if (data.gameId === id && data.senderId !== user?.id) {
-        const updatedGame = data.game;
-        setGame((prevGame) => {
-          if (!prevGame) return updatedGame;
-          
-          // Preserve results data if game has FINAL results
-          // Use updatedGame's data if it exists and is valid, otherwise preserve prevGame's data
-          if (prevGame.resultsStatus === 'FINAL' && updatedGame.resultsStatus === 'FINAL') {
-            const prevGameWithResults = prevGame as GameWithResults;
-            return {
-              ...updatedGame,
-              rounds: (updatedGame.rounds && updatedGame.rounds.length > 0) 
-                ? updatedGame.rounds 
-                : (prevGameWithResults.rounds || updatedGame.rounds),
-              outcomes: (updatedGame.outcomes && updatedGame.outcomes.length > 0)
-                ? updatedGame.outcomes
-                : (prevGame.outcomes || updatedGame.outcomes),
-            };
-          }
-          
-          // Preserve fixedTeams if they exist in prevGame but not in updatedGame
-          if (prevGame.hasFixedTeams && prevGame.fixedTeams && prevGame.fixedTeams.length > 0) {
-            if (!updatedGame.fixedTeams || updatedGame.fixedTeams.length === 0) {
-              return {
-                ...updatedGame,
-                fixedTeams: prevGame.fixedTeams,
-              };
-            }
-          }
-          
-          return updatedGame;
-        });
-      }
-    };
-
-    socketService.on('invite-deleted', handleInviteDeleted);
-    socketService.on('game-updated', handleGameUpdated);
-
     return () => {
-      socketService.off('invite-deleted', handleInviteDeleted);
-      socketService.off('game-updated', handleGameUpdated);
       socketService.leaveGameRoom(id);
     };
-  }, [id, user?.id]);
+  }, [id]);
+
+  useEffect(() => {
+    if (!lastInviteDeleted) return;
+    if (lastInviteDeleted.gameId === id || !lastInviteDeleted.gameId) {
+      setMyInvites(prev => prev.filter(inv => inv.id !== lastInviteDeleted.inviteId));
+      setGameInvites(prev => prev.filter(inv => inv.id !== lastInviteDeleted.inviteId));
+    }
+  }, [lastInviteDeleted, id]);
+
+  useEffect(() => {
+    if (!lastGameUpdate || lastGameUpdate.gameId !== id || lastGameUpdate.senderId === user?.id) return;
+    const updatedGame = lastGameUpdate.game;
+    setGame((prevGame) => {
+      if (!prevGame) return updatedGame;
+      
+      if (prevGame.resultsStatus === 'FINAL' && updatedGame.resultsStatus === 'FINAL') {
+        const prevGameWithResults = prevGame as GameWithResults;
+        return {
+          ...updatedGame,
+          rounds: (updatedGame.rounds && updatedGame.rounds.length > 0) 
+            ? updatedGame.rounds 
+            : (prevGameWithResults.rounds || updatedGame.rounds),
+          outcomes: (updatedGame.outcomes && updatedGame.outcomes.length > 0)
+            ? updatedGame.outcomes
+            : (prevGame.outcomes || updatedGame.outcomes),
+        };
+      }
+      
+      if (prevGame.hasFixedTeams && prevGame.fixedTeams && prevGame.fixedTeams.length > 0) {
+        if (!updatedGame.fixedTeams || updatedGame.fixedTeams.length === 0) {
+          return {
+            ...updatedGame,
+            fixedTeams: prevGame.fixedTeams,
+          };
+        }
+      }
+      
+      return updatedGame;
+    });
+  }, [lastGameUpdate, id, user?.id]);
 
   // Update GameResultsEngine when game state changes (e.g., after finishing)
   useEffect(() => {

@@ -55,14 +55,34 @@ export const restoreAuthIfNeeded = (): void => {
   }
 };
 
-export const monitorAuthPersistence = (): void => {
-  setInterval(() => {
+let authPersistenceInterval: ReturnType<typeof setInterval> | null = null;
+let beforeUnloadHandler: (() => void) | null = null;
+
+export const monitorAuthPersistence = (): (() => void) => {
+  if (authPersistenceInterval) {
+    return () => {};
+  }
+
+  authPersistenceInterval = setInterval(() => {
     backupAuth();
   }, 5 * 60 * 1000);
   
-  window.addEventListener('beforeunload', () => {
+  beforeUnloadHandler = () => {
     backupAuth();
-  });
+  };
+  
+  window.addEventListener('beforeunload', beforeUnloadHandler);
+
+  return () => {
+    if (authPersistenceInterval) {
+      clearInterval(authPersistenceInterval);
+      authPersistenceInterval = null;
+    }
+    if (beforeUnloadHandler) {
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
+      beforeUnloadHandler = null;
+    }
+  };
 };
 
 

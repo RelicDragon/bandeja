@@ -3,7 +3,7 @@ import { invitesApi } from '@/api';
 import { chatApi } from '@/api/chat';
 import { gamesApi } from '@/api';
 import { Game, Invite } from '@/types';
-import { socketService } from '@/services/socketService';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 
 export const useMyGames = (
   user: any,
@@ -101,79 +101,74 @@ export const useMyGames = (
   }, [user?.id, fetchData]);
 
 
+  const lastNewInvite = useSocketEventsStore((state) => state.lastNewInvite);
+  const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);
+  const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
+
   useEffect(() => {
-    const handleNewInvite = (invite: Invite) => {
-      setInvites(prevInvites => {
-        const exists = prevInvites.some(existingInvite => existingInvite.id === invite.id);
-        if (exists) return prevInvites;
-        return [invite, ...prevInvites];
-      });
-    };
+    if (!lastNewInvite) return;
+    setInvites(prevInvites => {
+      const exists = prevInvites.some(existingInvite => existingInvite.id === lastNewInvite.id);
+      if (exists) return prevInvites;
+      return [lastNewInvite, ...prevInvites];
+    });
+  }, [lastNewInvite]);
 
-    const handleInviteDeleted = (data: { inviteId: string; gameId?: string }) => {
-      setInvites(prevInvites => prevInvites.filter(invite => invite.id !== data.inviteId));
-    };
+  useEffect(() => {
+    if (!lastInviteDeleted) return;
+    setInvites(prevInvites => prevInvites.filter(invite => invite.id !== lastInviteDeleted.inviteId));
+  }, [lastInviteDeleted]);
 
-    const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game; forceUpdate?: boolean }) => {
-      if (!data.forceUpdate && data.senderId === user?.id) return;
+  useEffect(() => {
+    if (!lastGameUpdate || (!lastGameUpdate.forceUpdate && lastGameUpdate.senderId === user?.id)) return;
 
-      const updatedGame = data.game;
+    const data = lastGameUpdate;
+    const updatedGame = data.game;
 
-      setGames(prevGames => {
-        const gameIndex = prevGames.findIndex(g => g.id === data.gameId);
-        const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+    setGames(prevGames => {
+      const gameIndex = prevGames.findIndex(g => g.id === data.gameId);
+      const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
 
-        if (gameIndex === -1) {
-          if (!isParticipant) return prevGames;
-
-          const isArchived = updatedGame.status === 'ARCHIVED';
-          if (!isArchived) {
-            const newGames = [...prevGames, updatedGame];
-            return sortGames(newGames);
-          }
-
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const gameDate = new Date(updatedGame.startTime);
-          gameDate.setHours(0, 0, 0, 0);
-          if (gameDate >= today) {
-            const newGames = [...prevGames, updatedGame];
-            return sortGames(newGames);
-          }
-          return prevGames;
-        }
-
-        if (!isParticipant) {
-          return prevGames.filter(g => g.id !== data.gameId);
-        }
+      if (gameIndex === -1) {
+        if (!isParticipant) return prevGames;
 
         const isArchived = updatedGame.status === 'ARCHIVED';
-        if (isArchived) {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const gameDate = new Date(updatedGame.startTime);
-          gameDate.setHours(0, 0, 0, 0);
-          if (gameDate < today) {
-            return prevGames.filter(g => g.id !== data.gameId);
-          }
+        if (!isArchived) {
+          const newGames = [...prevGames, updatedGame];
+          return sortGames(newGames);
         }
 
-        const updatedGames = [...prevGames];
-        updatedGames[gameIndex] = updatedGame;
-        return sortGames(updatedGames);
-      });
-    };
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const gameDate = new Date(updatedGame.startTime);
+        gameDate.setHours(0, 0, 0, 0);
+        if (gameDate >= today) {
+          const newGames = [...prevGames, updatedGame];
+          return sortGames(newGames);
+        }
+        return prevGames;
+      }
 
-    socketService.on('new-invite', handleNewInvite);
-    socketService.on('invite-deleted', handleInviteDeleted);
-    socketService.on('game-updated', handleGameUpdated);
+      if (!isParticipant) {
+        return prevGames.filter(g => g.id !== data.gameId);
+      }
 
-    return () => {
-      socketService.off('new-invite', handleNewInvite);
-      socketService.off('invite-deleted', handleInviteDeleted);
-      socketService.off('game-updated', handleGameUpdated);
-    };
-  }, [user?.id]);
+      const isArchived = updatedGame.status === 'ARCHIVED';
+      if (isArchived) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const gameDate = new Date(updatedGame.startTime);
+        gameDate.setHours(0, 0, 0, 0);
+        if (gameDate < today) {
+          return prevGames.filter(g => g.id !== data.gameId);
+        }
+      }
+
+      const updatedGames = [...prevGames];
+      updatedGames[gameIndex] = updatedGame;
+      return sortGames(updatedGames);
+    });
+  }, [lastGameUpdate, user?.id]);
 
   return {
     games,

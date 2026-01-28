@@ -18,6 +18,7 @@ import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { MessageCircle, Search, X } from 'lucide-react';
 import { ChatMessage } from '@/api/chat';
 import { socketService } from '@/services/socketService';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 
 type ChatItem =
   | { type: 'user'; data: UserChat; lastMessageDate: Date | null; unreadCount: number; otherUser?: BasicUser; draft?: ChatDraft | null }
@@ -507,13 +508,18 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     window.addEventListener('refresh-chat-list', handleRefresh);
     window.addEventListener('draft-updated', handleDraftUpdate);
     window.addEventListener('draft-deleted', handleDraftDelete);
-    socketService.on('chat:message', handleNewMessage);
+    
+    const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
+    
+    useEffect(() => {
+      if (!lastChatMessage) return;
+      handleNewMessage(lastChatMessage);
+    }, [lastChatMessage]);
     
     return () => {
       window.removeEventListener('refresh-chat-list', handleRefresh);
       window.removeEventListener('draft-updated', handleDraftUpdate);
       window.removeEventListener('draft-deleted', handleDraftDelete);
-      socketService.off('chat:message', handleNewMessage);
     };
   }, [fetchChatsForFilter, chatsFilter, updateChatDraft, updateChatMessage]);
 

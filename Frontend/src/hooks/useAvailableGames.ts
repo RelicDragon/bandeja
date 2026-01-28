@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { gamesApi } from '@/api';
 import { Game } from '@/types';
-import { socketService } from '@/services/socketService';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { format } from 'date-fns';
 
 export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) => {
@@ -59,42 +59,37 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) =
     }
   }, [user?.id, startDate, endDate, fetchData]);
 
+  const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
+
   useEffect(() => {
-    const handleGameUpdated = (data: { gameId: string; senderId: string; game: Game; forceUpdate?: boolean }) => {
-      if (!data.forceUpdate && data.senderId === user?.id) return;
+    if (!lastGameUpdate || (!lastGameUpdate.forceUpdate && lastGameUpdate.senderId === user?.id)) return;
 
-      const updatedGame = data.game;
+    const data = lastGameUpdate;
+    const updatedGame = data.game;
 
-      setAvailableGames(prevAvailableGames => {
-        const gameIndex = prevAvailableGames.findIndex(g => g.id === data.gameId);
-        const isPublic = updatedGame.isPublic;
-        const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
-        const isArchived = updatedGame.status === 'ARCHIVED';
-        const shouldShow = isPublic || (isParticipant && !isArchived);
+    setAvailableGames(prevAvailableGames => {
+      const gameIndex = prevAvailableGames.findIndex(g => g.id === data.gameId);
+      const isPublic = updatedGame.isPublic;
+      const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+      const isArchived = updatedGame.status === 'ARCHIVED';
+      const shouldShow = isPublic || (isParticipant && !isArchived);
 
-        if (gameIndex === -1) {
-          if (shouldShow) {
-            return sortGames([...prevAvailableGames, updatedGame]);
-          }
-          return prevAvailableGames;
+      if (gameIndex === -1) {
+        if (shouldShow) {
+          return sortGames([...prevAvailableGames, updatedGame]);
         }
+        return prevAvailableGames;
+      }
 
-        if (!shouldShow) {
-          return prevAvailableGames.filter(g => g.id !== data.gameId);
-        }
+      if (!shouldShow) {
+        return prevAvailableGames.filter(g => g.id !== data.gameId);
+      }
 
-        const updatedGames = [...prevAvailableGames];
-        updatedGames[gameIndex] = updatedGame;
-        return sortGames(updatedGames);
-      });
-    };
-
-    socketService.on('game-updated', handleGameUpdated);
-
-    return () => {
-      socketService.off('game-updated', handleGameUpdated);
-    };
-  }, [user?.id]);
+      const updatedGames = [...prevAvailableGames];
+      updatedGames[gameIndex] = updatedGame;
+      return sortGames(updatedGames);
+    });
+  }, [lastGameUpdate, user?.id]);
 
   return {
     availableGames,

@@ -56,8 +56,8 @@ let initSubscribed = false;
 let socketSubscriptionsSetup = false;
 let newMessageHandler: ((message: NewUserChatMessage) => void) | null = null;
 let readReceiptHandler: ((readReceipt: UserChatReadReceipt) => void) | null = null;
-let unifiedMessageHandler: ((data: { contextType: string; contextId: string; message: any }) => void) | null = null;
-let unifiedReadReceiptHandler: ((data: { contextType: string; contextId: string; readReceipt: any }) => void) | null = null;
+let unifiedMessageHandler: (() => void) | null = null;
+let unifiedReadReceiptHandler: (() => void) | null = null;
 let cleanupPromise: Promise<void> | null = null;
 
 const createDefaultMetadata = (existing?: UserMetadata): UserMetadata => ({
@@ -70,7 +70,7 @@ const setupSocketSubscriptions = () => {
   if (socketSubscriptionsSetup) return;
   socketSubscriptionsSetup = true;
 
-  import('@/services/socketService').then(({ socketService }) => {
+  import('@/store/socketEventsStore').then(({ useSocketEventsStore }) => {
     newMessageHandler = (message: NewUserChatMessage) => {
       console.log('[playersStore] New user chat message received:', message);
       const store = usePlayersStore.getState();
@@ -109,22 +109,27 @@ const setupSocketSubscriptions = () => {
       }
     };
 
-    // Unified event handlers
-    unifiedMessageHandler = (data: { contextType: string; contextId: string; message: any }) => {
-      if (data.contextType === 'USER' && newMessageHandler) {
-        newMessageHandler(data.message);
-      }
-    };
+    // Subscribe to centralized store using store instance
+    let lastChatMessage: any = null;
+    let lastChatReadReceipt: any = null;
 
-    unifiedReadReceiptHandler = (data: { contextType: string; contextId: string; readReceipt: any }) => {
-      if (data.contextType === 'USER' && readReceiptHandler) {
-        readReceiptHandler(data.readReceipt);
+    unifiedMessageHandler = useSocketEventsStore.subscribe((state) => {
+      if (state.lastChatMessage !== lastChatMessage) {
+        lastChatMessage = state.lastChatMessage;
+        if (lastChatMessage && lastChatMessage.contextType === 'USER' && newMessageHandler) {
+          newMessageHandler(lastChatMessage.message);
+        }
       }
-    };
+    });
 
-    // Unified events
-    socketService.on('chat:message', unifiedMessageHandler);
-    socketService.on('chat:read-receipt', unifiedReadReceiptHandler);
+    unifiedReadReceiptHandler = useSocketEventsStore.subscribe((state) => {
+      if (state.lastChatReadReceipt !== lastChatReadReceipt) {
+        lastChatReadReceipt = state.lastChatReadReceipt;
+        if (lastChatReadReceipt && lastChatReadReceipt.contextType === 'USER' && readReceiptHandler) {
+          readReceiptHandler(lastChatReadReceipt.readReceipt);
+        }
+      }
+    });
   });
 };
 
@@ -132,14 +137,14 @@ const cleanupSocketSubscriptions = () => {
   if (!socketSubscriptionsSetup) return;
   if (cleanupPromise) return cleanupPromise;
 
-  cleanupPromise = import('@/services/socketService').then(({ socketService }) => {
-    // Clean up unified event listeners
+  cleanupPromise = Promise.resolve().then(() => {
+    // Clean up unified event listeners (Zustand subscriptions)
     if (unifiedMessageHandler) {
-      socketService.off('chat:message', unifiedMessageHandler);
+      unifiedMessageHandler();
       unifiedMessageHandler = null;
     }
     if (unifiedReadReceiptHandler) {
-      socketService.off('chat:read-receipt', unifiedReadReceiptHandler);
+      unifiedReadReceiptHandler();
       unifiedReadReceiptHandler = null;
     }
     socketSubscriptionsSetup = false;

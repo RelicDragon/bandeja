@@ -7,6 +7,7 @@ import { CreateBetModal } from './CreateBetModal';
 import { Coins, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { socketService } from '@/services/socketService';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 
 interface BetSectionProps {
   game: Game;
@@ -67,17 +68,32 @@ export const BetSection = ({ game }: BetSectionProps) => {
       }
     };
 
-    socketService.on('bet:created', handleBetCreated);
-    socketService.on('bet:updated', handleBetUpdated);
-    socketService.on('bet:deleted', handleBetDeleted);
-    socketService.on('bet:resolved', handleBetResolved);
+    const lastBetCreated = useSocketEventsStore((state) => state.lastBetCreated);
+    const lastBetUpdated = useSocketEventsStore((state) => state.lastBetUpdated);
+    const lastBetDeleted = useSocketEventsStore((state) => state.lastBetDeleted);
+    const lastBetResolved = useSocketEventsStore((state) => state.lastBetResolved);
 
-    return () => {
-      socketService.off('bet:created', handleBetCreated);
-      socketService.off('bet:updated', handleBetUpdated);
-      socketService.off('bet:deleted', handleBetDeleted);
-      socketService.off('bet:resolved', handleBetResolved);
-    };
+    useEffect(() => {
+      if (!lastBetCreated || lastBetCreated.gameId !== game.id) return;
+      setBets(prev => [lastBetCreated.bet, ...prev]);
+    }, [lastBetCreated, game.id]);
+
+    useEffect(() => {
+      if (!lastBetUpdated || lastBetUpdated.gameId !== game.id) return;
+      setBets(prev => prev.map(b => b.id === lastBetUpdated.bet.id ? lastBetUpdated.bet : b));
+    }, [lastBetUpdated, game.id]);
+
+    useEffect(() => {
+      if (!lastBetDeleted || lastBetDeleted.gameId !== game.id) return;
+      setBets(prev => prev.filter(b => b.id !== lastBetDeleted.betId));
+    }, [lastBetDeleted, game.id]);
+
+    useEffect(() => {
+      if (!lastBetResolved || lastBetResolved.gameId !== game.id) return;
+      betsApi.getGameBets(game.id).then(response => {
+        setBets(response.data);
+      }).catch(console.error);
+    }, [lastBetResolved, game.id]);
   }, [game.id]);
 
   if (isLoading) {

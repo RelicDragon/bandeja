@@ -19,6 +19,7 @@ import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
 import { socketService } from '@/services/socketService';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { isUserGameAdminOrOwner, isGroupChannelOwner, isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { normalizeChatType } from '@/utils/chatType';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users, Hash } from 'lucide-react';
@@ -888,79 +889,60 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     };
   }, [id, user?.id, contextType, initialChatType, currentChatType, handleChatTypeChange, hasSetDefaultChatType, loadContext, loadMessages, userChat]);
 
+  const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
+  const lastChatReaction = useSocketEventsStore((state) => state.lastChatReaction);
+  const lastChatReadReceipt = useSocketEventsStore((state) => state.lastChatReadReceipt);
+  const lastChatDeleted = useSocketEventsStore((state) => state.lastChatDeleted);
+  const lastSyncRequired = useSocketEventsStore((state) => state.lastSyncRequired);
+
   useEffect(() => {
     if (!id) return;
-
     const setupSocket = async () => {
       await socketService.joinChatRoom(contextType, id);
     };
-
     setupSocket();
-
-    // Unified event handlers
-    const handleUnifiedMessage = (data: { contextType: string; contextId: string; message: any; messageId?: string; timestamp?: string }) => {
-      if (data.contextType === contextType && data.contextId === id) {
-        handleNewMessage(data.message);
-        
-        // Acknowledge receipt via socket
-        if (data.messageId && data.message?.senderId !== user?.id) {
-          socketService.acknowledgeMessage(
-            data.messageId,
-            contextType as 'GAME' | 'BUG' | 'USER',
-            id
-          );
-          
-          // Also confirm via API for tracking
-          socketService.confirmMessageReceipt(data.messageId, 'socket');
-        }
-      }
-    };
-
-    // Handle sync after reconnection
-    const handleSyncRequired = () => {
-      const currentMessages = messagesRef.current;
-      if (currentMessages.length > 0) {
-        const lastMessage = currentMessages[currentMessages.length - 1];
-        socketService.syncMessages(contextType as 'GAME' | 'BUG' | 'USER', id, lastMessage.id);
-      }
-    };
-
-    const handleUnifiedReaction = (data: { contextType: string; contextId: string; reaction: any }) => {
-      if (data.contextType === contextType && data.contextId === id) {
-        handleMessageReaction(data.reaction);
-      }
-    };
-
-    const handleUnifiedReadReceipt = (data: { contextType: string; contextId: string; readReceipt: any }) => {
-      if (data.contextType === contextType && data.contextId === id) {
-        handleReadReceipt(data.readReceipt);
-      }
-    };
-
-    const handleUnifiedDeleted = (data: { contextType: string; contextId: string; messageId: string }) => {
-      if (data.contextType === contextType && data.contextId === id) {
-        handleMessageDeleted({ messageId: data.messageId });
-      }
-    };
-
-    // Unified events
-    socketService.on('chat:message', handleUnifiedMessage);
-    socketService.on('chat:reaction', handleUnifiedReaction);
-    socketService.on('chat:read-receipt', handleUnifiedReadReceipt);
-    socketService.on('chat:deleted', handleUnifiedDeleted);
-    socketService.on('sync-required', handleSyncRequired);
-
     return () => {
       socketService.leaveChatRoom(contextType, id);
-      
-      // Clean up unified event listeners
-      socketService.off('chat:message', handleUnifiedMessage);
-      socketService.off('chat:reaction', handleUnifiedReaction);
-      socketService.off('chat:read-receipt', handleUnifiedReadReceipt);
-      socketService.off('chat:deleted', handleUnifiedDeleted);
-      socketService.off('sync-required', handleSyncRequired);
     };
-  }, [id, contextType, user?.id, handleNewMessage, handleMessageReaction, handleReadReceipt, handleMessageDeleted]);
+  }, [id, contextType]);
+
+  useEffect(() => {
+    if (!lastChatMessage || lastChatMessage.contextType !== contextType || lastChatMessage.contextId !== id) return;
+    handleNewMessage(lastChatMessage.message);
+    
+    if (lastChatMessage.messageId && lastChatMessage.message?.senderId !== user?.id) {
+      socketService.acknowledgeMessage(
+        lastChatMessage.messageId,
+        contextType as 'GAME' | 'BUG' | 'USER',
+        id
+      );
+      socketService.confirmMessageReceipt(lastChatMessage.messageId, 'socket');
+    }
+  }, [lastChatMessage, contextType, id, user?.id, handleNewMessage]);
+
+  useEffect(() => {
+    if (!lastChatReaction || lastChatReaction.contextType !== contextType || lastChatReaction.contextId !== id) return;
+    handleMessageReaction(lastChatReaction.reaction);
+  }, [lastChatReaction, contextType, id, handleMessageReaction]);
+
+  useEffect(() => {
+    if (!lastChatReadReceipt || lastChatReadReceipt.contextType !== contextType || lastChatReadReceipt.contextId !== id) return;
+    handleReadReceipt(lastChatReadReceipt.readReceipt);
+  }, [lastChatReadReceipt, contextType, id, handleReadReceipt]);
+
+  useEffect(() => {
+    if (!lastChatDeleted || lastChatDeleted.contextType !== contextType || lastChatDeleted.contextId !== id) return;
+    handleMessageDeleted({ messageId: lastChatDeleted.messageId });
+  }, [lastChatDeleted, contextType, id, handleMessageDeleted]);
+
+  useEffect(() => {
+    if (!lastSyncRequired) return;
+    const currentMessages = messagesRef.current;
+    if (currentMessages.length > 0) {
+      const lastMessage = currentMessages[currentMessages.length - 1];
+      socketService.syncMessages(contextType as 'GAME' | 'BUG' | 'USER', id, lastMessage.id);
+    }
+  }, [lastSyncRequired, contextType, id]);
 
   useEffect(() => {
     if (justLoadedOlderMessagesRef.current) {

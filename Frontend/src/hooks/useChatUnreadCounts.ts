@@ -3,7 +3,7 @@ import { chatApi, GroupChannel, ChatMessage, MessageReadReceipt } from '@/api/ch
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
-import { socketService } from '@/services/socketService';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 
 interface ChatUnreadCounts {
   users: number;
@@ -158,30 +158,26 @@ export const useChatUnreadCounts = () => {
   useEffect(() => {
     if (!user?.id) return;
 
-    const handleChatMessage = (data: { contextType: string; contextId: string; message: ChatMessage }) => {
-      if (data.message?.senderId !== user?.id) {
-        debouncedFetch();
-      }
-    };
+    const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
+    const lastChatUnreadCount = useSocketEventsStore((state) => state.lastChatUnreadCount);
+    const lastChatReadReceipt = useSocketEventsStore((state) => state.lastChatReadReceipt);
 
-    const handleUnreadCountUpdate = () => {
+    useEffect(() => {
+      if (!lastChatMessage || lastChatMessage.message?.senderId === user?.id) return;
       debouncedFetch();
-    };
+    }, [lastChatMessage, user?.id]);
 
-    const handleReadReceipt = (data: { contextType: string; contextId: string; readReceipt: MessageReadReceipt }) => {
-      if (data.readReceipt?.userId === user?.id) {
-        debouncedFetch();
-      }
-    };
+    useEffect(() => {
+      if (!lastChatUnreadCount) return;
+      debouncedFetch();
+    }, [lastChatUnreadCount]);
 
-    socketService.on('chat:message', handleChatMessage);
-    socketService.on('chat:unread-count', handleUnreadCountUpdate);
-    socketService.on('chat:read-receipt', handleReadReceipt);
+    useEffect(() => {
+      if (!lastChatReadReceipt || lastChatReadReceipt.readReceipt?.userId !== user?.id) return;
+      debouncedFetch();
+    }, [lastChatReadReceipt, user?.id]);
 
     return () => {
-      socketService.off('chat:message', handleChatMessage);
-      socketService.off('chat:unread-count', handleUnreadCountUpdate);
-      socketService.off('chat:read-receipt', handleReadReceipt);
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { socketService } from '@/services/socketService';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 
 interface UseGameResultsEngineProps {
   gameId: string | undefined;
@@ -23,6 +24,8 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
   const syncStatus = useGameResultsStore((state) => state.syncStatus);
   const serverProblem = useGameResultsStore((state) => state.serverProblem);
 
+  const lastGameResultsUpdated = useSocketEventsStore((state) => state.lastGameResultsUpdated);
+
   useEffect(() => {
     if (!gameId) return;
     
@@ -34,7 +37,6 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     
     if (needsInit) {
       GameResultsEngine.initialize(gameId, currentUserId, t).catch((err) => {
-        // Silently handle 401 errors (unauthorized) - expected when user is not authenticated
         if (err?.response?.status !== 401) {
           console.error('Failed to initialize GameResultsEngine:', err);
           setError(err.message || 'Failed to initialize');
@@ -42,27 +44,24 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
       });
     }
 
-    const handleResultsUpdated = (data: { gameId: string }) => {
-      if (data.gameId === gameId) {
-        console.log(`[GameResultsEngine] Received results-updated notification for game ${gameId}`);
-        GameResultsEngine.initialize(gameId, userId || '', t).catch((err) => {
-          console.error('Failed to reload results:', err);
-        });
-      }
-    };
-
-    socketService.on('game-results-updated', handleResultsUpdated);
     console.log(`[GameResultsEngine] Connected to results stream for game ${gameId}`);
 
     return () => {
       console.log(`[GameResultsEngine] Disconnecting from results stream for game ${gameId}`);
-      socketService.off('game-results-updated', handleResultsUpdated);
       const state = GameResultsEngine.getState();
       if (state.initialized && state.gameId === currentGameId && state.userId === currentUserId) {
         GameResultsEngine.cleanup();
       }
     };
   }, [gameId, userId, t]);
+
+  useEffect(() => {
+    if (!lastGameResultsUpdated || lastGameResultsUpdated.gameId !== gameId) return;
+    console.log(`[GameResultsEngine] Received results-updated notification for game ${gameId}`);
+    GameResultsEngine.initialize(gameId, userId || '', t).catch((err) => {
+      console.error('Failed to reload results:', err);
+    });
+  }, [lastGameResultsUpdated, gameId, userId, t]);
 
   const addRound = useCallback(() => GameResultsEngine.addRound(), []);
   const removeRound = useCallback((roundId: string) => GameResultsEngine.removeRound(roundId, t), [t]);

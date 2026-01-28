@@ -121,12 +121,14 @@ export const setupBrowserKeyboardDetection = () => {
   };
 
   // Set initial height after page load
+  let loadHandler: (() => void) | null = null;
   if (document.readyState === 'complete') {
     setTimeout(updateInitialHeight, 100);
   } else {
-    window.addEventListener('load', () => {
+    loadHandler = () => {
       setTimeout(updateInitialHeight, 100);
-    });
+    };
+    window.addEventListener('load', loadHandler);
   }
 
   // Use Visual Viewport API if available (modern mobile browsers)
@@ -158,6 +160,9 @@ export const setupBrowserKeyboardDetection = () => {
     window.addEventListener('resize', handleOrientationChange);
 
     return () => {
+      if (loadHandler) {
+        window.removeEventListener('load', loadHandler);
+      }
       window.visualViewport?.removeEventListener('resize', handleViewportChange);
       window.visualViewport?.removeEventListener('scroll', handleViewportChange);
       window.removeEventListener('orientationchange', handleOrientationChange);
