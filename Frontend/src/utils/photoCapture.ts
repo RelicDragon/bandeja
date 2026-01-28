@@ -170,11 +170,6 @@ export async function pickImages(
                 });
                 return null;
               }
-            } else {
-              // Status is 'prompt' - on Android we can still try, on iOS we need permission
-              if (isIOS()) {
-                return null;
-              }
             }
           }
         }
@@ -188,7 +183,7 @@ export async function pickImages(
         }
       }
 
-      if (maxImages > 1 && typeof (Camera as any).pickImages === 'function') {
+      if (typeof (Camera as any).pickImages === 'function') {
         try {
           const images = await (Camera as any).pickImages({
             quality: 90,

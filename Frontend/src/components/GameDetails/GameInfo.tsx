@@ -3,7 +3,8 @@ import { Card } from '@/components';
 import { Game } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { useAuthStore } from '@/store/authStore';
-import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
 import { GameStatusIcon } from '@/components';
 import { ShareModal } from '@/components/ShareModal';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
@@ -76,8 +77,43 @@ export const GameInfo = ({
 }: GameInfoProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const displaySettings = user ? resolveDisplaySettings(user) : null;
+  const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
+  const clubTz = getClubTimezone(game);
   const showTags = game.entityType !== 'LEAGUE';
+  const getDateLabelResolved = (date: Date | string, includeComma = true) =>
+    clubTz
+      ? getDateLabelInClubTz(date, clubTz, displaySettings, t) + (includeComma ? ',' : '')
+      : getDateLabelFallback(date, includeComma);
+  const timeDisplay = getGameTimeDisplay({
+    game,
+    displaySettings,
+    startTime: game.startTime,
+    endTime: game.entityType !== 'BAR' ? game.endTime : undefined,
+    kind: 'time',
+    t,
+  });
+  const timeRangeDisplay = getGameTimeDisplay({
+    game,
+    displaySettings,
+    startTime: game.startTime,
+    endTime: game.entityType !== 'BAR' ? game.endTime : undefined,
+    kind: 'timeRange',
+    t,
+  });
+  const weekdayDisplay = getGameTimeDisplay({
+    game,
+    displaySettings,
+    startTime: game.startTime,
+    kind: 'weekday',
+    t,
+  });
+  const longDateDisplay = getGameTimeDisplay({
+    game,
+    displaySettings,
+    startTime: game.startTime,
+    kind: 'longDate',
+    t,
+  });
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState({ url: '' });
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
@@ -234,7 +270,7 @@ export const GameInfo = ({
     }
   };
 
-  const getDateLabel = (date: Date | string, includeComma = true) => {
+  const getDateLabelFallback = (date: Date | string, includeComma = true) => {
     const gameDate = typeof date === 'string' ? new Date(date) : date;
     const today = new Date();
     const tomorrow = new Date(today);
@@ -445,41 +481,33 @@ export const GameInfo = ({
               />
             )}
           </div>
-          <div className="flex flex-col gap-2 flex-1">
-            <div className="flex items-center gap-1">
-              <Calendar size={14} />
-              {game.timeIsSet === false ? (
-                <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
-              ) : (
-                <span>
-                  {getDateLabel(game.startTime, false)}
-                  {shouldShowTiming && (
-                    <>
-                      {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
-                      {`, ${(() => {
-                        const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                        if (durationHours === Math.floor(durationHours)) {
-                          return `${durationHours}${t('common.h')}`;
-                        } else {
-                          const hours = Math.floor(durationHours);
-                          const minutes = Math.round((durationHours % 1) * 60);
-                          return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                        }
-                      })()}`}
-                    </>
-                  )}
-                </span>
-              )}
-            </div>
+          <div className="flex flex-col gap-1 flex-1">
             <div className="flex items-center gap-4">
-              {(game.court?.club || game.club) && (
-                <div className="flex items-center gap-1">
-                  <MapPin size={14} />
-                  <span className="truncate max-w-32">
-                    {game.court?.club?.name || game.club?.name}
+              <div className="flex items-center gap-1">
+                <Calendar size={14} />
+                {game.timeIsSet === false ? (
+                  <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
+                ) : (
+                  <span>
+                    {getDateLabelResolved(game.startTime, false)}
+                    {shouldShowTiming && (
+                      <>
+                        {` ${timeDisplay.primaryText}`}
+                        {`, ${(() => {
+                          const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                          if (durationHours === Math.floor(durationHours)) {
+                            return `${durationHours}${t('common.h')}`;
+                          } else {
+                            const hours = Math.floor(durationHours);
+                            const minutes = Math.round((durationHours % 1) * 60);
+                            return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                          }
+                        })()}`}
+                      </>
+                    )}
                   </span>
-                </div>
-              )}
+                )}
+              </div>
               <div className="flex items-center gap-1">
                 <Users size={14} />
                 <span>
@@ -487,6 +515,20 @@ export const GameInfo = ({
                 </span>
               </div>
             </div>
+            {(timeDisplay.hintText || timeRangeDisplay.hintText) && (
+              <div className="flex items-center gap-1.5 opacity-75">
+                <Plane size={14} className="flex-shrink-0" />
+                <span className="text-xs text-gray-600 dark:text-gray-400">{timeDisplay.hintText || timeRangeDisplay.hintText}</span>
+              </div>
+            )}
+            {(game.court?.club || game.club) && (
+              <div className="flex items-center gap-1">
+                <MapPin size={14} />
+                <span className="truncate max-w-32">
+                  {game.court?.club?.name || game.club?.name}
+                </span>
+              </div>
+            )}
           </div>
         </>
       );
@@ -499,17 +541,75 @@ export const GameInfo = ({
           <div className="flex-shrink-0">
             <GameAvatar avatar={avatarToShow} small alt={game.name || t('gameDetails.gameAvatar')} />
           </div>
-          <div className="flex flex-col gap-2 flex-1">
+          <div className="flex flex-col gap-1 flex-1">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <Calendar size={14} />
+                {game.timeIsSet === false ? (
+                  <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
+                ) : (
+                  <span>
+                    {getDateLabelResolved(game.startTime, false)}
+                    {shouldShowTiming && (
+                      <>
+                        {` ${timeDisplay.primaryText}`}
+                        {game.entityType !== 'BAR' ? `, ${(() => {
+                          const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                          if (durationHours === Math.floor(durationHours)) {
+                            return `${durationHours}${t('common.h')}`;
+                          } else {
+                            const hours = Math.floor(durationHours);
+                            const minutes = Math.round((durationHours % 1) * 60);
+                            return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                          }
+                        })()}` : ''}
+                      </>
+                    )}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <Users size={14} />
+                <span>
+                  {game.entityType === 'BAR' 
+                    ? playingParticipants.length
+                    : `${playingParticipants.length}/${game.maxParticipants}`}
+                </span>
+              </div>
+            </div>
+            {(timeDisplay.hintText || timeRangeDisplay.hintText) && (
+              <div className="flex items-center gap-1.5 opacity-75">
+                <Plane size={14} className="flex-shrink-0" />
+                <span className="text-xs text-gray-600 dark:text-gray-400">{timeDisplay.hintText || timeRangeDisplay.hintText}</span>
+              </div>
+            )}
+            {(game.court?.club || game.club) && (
+              <div className="flex items-center gap-1">
+                <MapPin size={14} />
+                <span className="truncate max-w-32">
+                  {game.court?.club?.name || game.club?.name}
+                </span>
+              </div>
+            )}
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <Calendar size={14} />
               {game.timeIsSet === false ? (
                 <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
               ) : (
                 <span>
-                  {getDateLabel(game.startTime, false)}
+                  {getDateLabelResolved(game.startTime, false)}
                   {shouldShowTiming && (
                     <>
-                      {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
+                      {` ${timeDisplay.primaryText}`}
                       {game.entityType !== 'BAR' ? `, ${(() => {
                         const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
                         if (durationHours === Math.floor(durationHours)) {
@@ -525,72 +625,30 @@ export const GameInfo = ({
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <Users size={14} />
-                <span>
-                  {game.entityType === 'BAR' 
-                    ? playingParticipants.length
-                    : `${playingParticipants.length}/${game.maxParticipants}`}
-                </span>
-              </div>
-              {(game.court?.club || game.club) && (
-                <div className="flex items-center gap-1">
-                  <MapPin size={14} />
-                  <span className="truncate max-w-32">
-                    {game.court?.club?.name || game.club?.name}
-                  </span>
-                </div>
-              )}
+            <div className="flex items-center gap-1">
+              <Users size={14} />
+              <span>
+                {game.entityType === 'BAR' 
+                  ? playingParticipants.length
+                  : `${playingParticipants.length}/${game.maxParticipants}`}
+              </span>
             </div>
           </div>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <div className="flex items-center gap-1">
-          <Calendar size={14} />
-          {game.timeIsSet === false ? (
-            <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
-          ) : (
-            <span>
-              {getDateLabel(game.startTime, false)}
-              {shouldShowTiming && (
-                <>
-                  {` ${displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm')}`}
-                  {game.entityType !== 'BAR' ? `, ${(() => {
-                    const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                    if (durationHours === Math.floor(durationHours)) {
-                      return `${durationHours}${t('common.h')}`;
-                    } else {
-                      const hours = Math.floor(durationHours);
-                      const minutes = Math.round((durationHours % 1) * 60);
-                      return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                    }
-                  })()}` : ''}
-                </>
-              )}
-            </span>
+          {(timeDisplay.hintText || timeRangeDisplay.hintText) && (
+            <div className="flex items-center gap-1.5 opacity-75">
+              <Plane size={14} className="flex-shrink-0" />
+              <span className="text-xs text-gray-600 dark:text-gray-400">{timeDisplay.hintText || timeRangeDisplay.hintText}</span>
+            </div>
+          )}
+          {(game.court?.club || game.club) && (
+            <div className="flex items-center gap-1">
+              <MapPin size={14} />
+              <span className="truncate max-w-32">
+                {game.court?.club?.name || game.club?.name}
+              </span>
+            </div>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          <Users size={14} />
-          <span>
-            {game.entityType === 'BAR' 
-              ? playingParticipants.length
-              : `${playingParticipants.length}/${game.maxParticipants}`}
-          </span>
-        </div>
-        {(game.court?.club || game.club) && (
-          <div className="flex items-center gap-1">
-            <MapPin size={14} />
-            <span className="truncate max-w-32">
-              {game.court?.club?.name || game.club?.name}
-            </span>
-          </div>
-        )}
       </>
     );
   };
@@ -735,19 +793,13 @@ export const GameInfo = ({
                     }}
                     className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                   >
-                    <span>{(() => {
-                      const dayOfWeek = formatDate(game.startTime, 'EEEE');
-                      return dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-                    })()}</span>
-                    <span>{formatDate(game.startTime, 'PPP')}</span>
+                    <span>{weekdayDisplay.primaryText.charAt(0).toUpperCase() + weekdayDisplay.primaryText.slice(1)}</span>
+                    <span>{longDateDisplay.primaryText}</span>
                   </button>
                 ) : (
                   <div className="flex flex-col">
-                    <span>{(() => {
-                      const dayOfWeek = formatDate(game.startTime, 'EEEE');
-                      return dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-                    })()}</span>
-                    <span>{formatDate(game.startTime, 'PPP')}</span>
+                    <span>{weekdayDisplay.primaryText.charAt(0).toUpperCase() + weekdayDisplay.primaryText.slice(1)}</span>
+                    <span>{longDateDisplay.primaryText}</span>
                   </div>
                 )}
               </div>
@@ -769,21 +821,23 @@ export const GameInfo = ({
                       }}
                       className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                     >
-                      {game.entityType === 'BAR' 
-                        ? formatDate(game.startTime, 'p')
-                        : `${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`
-                      }
+                      {game.entityType === 'BAR' ? timeDisplay.primaryText : timeRangeDisplay.primaryText}
                     </button>
                   ) : (
                     <span>
-                      {game.entityType === 'BAR' 
-                        ? formatDate(game.startTime, 'p')
-                        : `${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`
-                      }
+                      {game.entityType === 'BAR' ? timeDisplay.primaryText : timeRangeDisplay.primaryText}
                     </span>
                   )}
                 </div>
               </div>
+            </div>
+          )}
+          {(game.entityType === 'BAR' ? timeDisplay.hintText : timeRangeDisplay.hintText) && (
+            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 opacity-75">
+              <Plane size={20} className="text-primary-600 dark:text-primary-400 flex-shrink-0" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {game.entityType === 'BAR' ? timeDisplay.hintText : timeRangeDisplay.hintText}
+              </span>
             </div>
           )}
           {(game.court?.club || game.club) && (

@@ -8,6 +8,8 @@ const router = Router();
 
 router.get('/profile', authenticate, userController.getProfile);
 
+router.get('/ip-location', authenticate, userController.getIpLocation);
+
 router.put(
   '/profile',
   authenticate,

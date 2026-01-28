@@ -1,99 +1,134 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { MapPin } from 'lucide-react';
 import { AuthLayout } from '@/layouts/AuthLayout';
-import { Button, Loading } from '@/components';
-import { citiesApi, usersApi } from '@/api';
+import { Button } from '@/components';
+import { usersApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
-import { City } from '@/types';
+import { useCityList } from '@/hooks/useCityList';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { findNearestCity } from '@/utils/nearestCity';
+import { CityListContent } from '@/components/CityListContent';
+
+const LOCATION_ERROR_KEYS: Record<string, string> = {
+  permission_denied: 'auth.locationDenied',
+  position_unavailable: 'auth.locationUnavailable',
+  timeout: 'auth.locationTimeout',
+  unsupported: 'auth.locationUnsupported',
+};
 
 export const SelectCity = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const updateUser = useAuthStore((state) => state.updateUser);
 
-  const [cities, setCities] = useState<City[]>([]);
   const [selectedCity, setSelectedCity] = useState<string>('');
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchCities = async () => {
-      try {
-        const response = await citiesApi.getAll();
-        setCities(response.data);
-      } catch (err) {
-        setError(t('errors.generic'));
-      } finally {
-        setLoading(false);
-      }
-    };
+  const cityList = useCityList({
+    enabled: true,
+    currentCityId: selectedCity,
+    onFetchError: (setError) => setError(t('errors.generic')),
+  });
 
-    fetchCities();
-  }, [t]);
+  const geo = useGeolocation();
+
+  const handleCityClick = (cityId: string) => {
+    setSelectedCity(cityId);
+    geo.clearError();
+  };
+
+  const handleUseLocation = async () => {
+    cityList.setError('');
+    geo.clearError();
+    const { position, errorCode } = await geo.getPosition();
+    if (!position) {
+      const key = LOCATION_ERROR_KEYS[errorCode ?? ''] ?? 'auth.locationUnavailable';
+      cityList.setError(t(key));
+      return;
+    }
+    if (cityList.cities.length === 0) {
+      cityList.setError(t('auth.locationUnavailable'));
+      return;
+    }
+    const nearest = findNearestCity(cityList.cities, position.latitude, position.longitude);
+    if (!nearest) {
+      cityList.setError(t('auth.noCityNearby'));
+      return;
+    }
+    setSelectedCity(nearest.id);
+    cityList.selectCountry(nearest.country);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCity) return;
-
     setSubmitting(true);
-    setError('');
-
+    cityList.setError('');
     try {
       const response = await usersApi.switchCity(selectedCity);
       updateUser(response.data);
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || t('errors.generic'));
+      cityList.setError(err.response?.data?.message || t('errors.generic'));
     } finally {
       setSubmitting(false);
     }
   };
-
-  if (loading) {
-    return <Loading />;
-  }
 
   return (
     <AuthLayout>
       <h2 className="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-white">
         {t('auth.selectCity')}
       </h2>
-      <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
+      <p className="text-center text-gray-600 dark:text-gray-400 mb-4">
         {t('auth.selectCityDescription')}
       </p>
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg">
-          {error}
-        </div>
-      )}
+      <div className="mb-4 flex flex-col items-center gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleUseLocation}
+          disabled={cityList.loading || geo.loading}
+          className="gap-2"
+        >
+          <MapPin className="w-4 h-4 shrink-0" />
+          {geo.loading ? t('app.loading') : t('auth.useMyLocation')}
+        </Button>
+        <span className="text-xs text-gray-500 dark:text-gray-400 text-center max-w-xs">
+          {t('auth.locationRationale')}
+        </span>
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-2 max-h-96 overflow-y-auto mb-6">
-          {cities.map((city) => (
-            <button
-              key={city.id}
-              type="button"
-              onClick={() => setSelectedCity(city.id)}
-              className={`w-full text-left p-4 rounded-lg border-2 transition-colors ${
-                selectedCity === city.id
-                  ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/30'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-            >
-              <div className="font-medium text-gray-900 dark:text-white">{city.name}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">{city.country}</div>
-            </button>
-          ))}
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 max-h-[min(24rem,50vh)] overflow-hidden mb-6 flex flex-col">
+          <CityListContent
+            view={cityList.view}
+            search={cityList.search}
+            setSearch={cityList.setSearch}
+            loading={cityList.loading}
+            error={cityList.error}
+            filteredCountries={cityList.filteredCountries}
+            filteredCitiesForCountry={cityList.filteredCitiesForCountry}
+            allCities={cityList.cities}
+            selectedCountry={cityList.selectedCountry}
+            selectCountry={cityList.selectCountry}
+            backToCountries={cityList.backToCountries}
+            currentCityId={selectedCity}
+            onCityClick={handleCityClick}
+            showError={true}
+            submitting={submitting}
+            citiesCount={cityList.cities.length}
+          />
         </div>
 
-        <Button type="submit" className="w-full" disabled={!selectedCity || submitting}>
+        <Button type="submit" className="w-full shrink-0" disabled={!selectedCity || submitting}>
           {submitting ? t('app.loading') : t('common.confirm')}
         </Button>
       </form>
     </AuthLayout>
   );
 };
-

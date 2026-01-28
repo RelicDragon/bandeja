@@ -5,6 +5,7 @@ import prisma from '../config/database';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { canModifyResults, hasParentGamePermission } from '../utils/parentGamePermissions';
 import { ParticipantRole } from '@prisma/client';
+import { getClientIp, updateUserIpLocation } from '../services/ipLocation.service';
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -45,6 +46,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
         isTrainer: true,
         currentCityId: true,
         authProvider: true,
+        lastUserIP: true,
       },
     });
 
@@ -54,6 +56,11 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     req.userId = user.id;
     req.user = user;
+
+    getClientIp(req).then((clientIp) => {
+      if (clientIp && user.lastUserIP !== clientIp) updateUserIpLocation(user.id, clientIp).catch((err) => console.error('IP location update failed', err));
+    }).catch(() => {});
+
     next();
   } catch (error) {
     if (error instanceof ApiError) {

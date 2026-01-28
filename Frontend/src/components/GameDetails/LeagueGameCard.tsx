@@ -1,4 +1,4 @@
-import { Edit2, ExternalLink, Award, MapPin, Calendar, Trash2 } from 'lucide-react';
+import { Edit2, ExternalLink, Award, MapPin, Calendar, Trash2, Plane } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { PlayerAvatar, ConfirmationModal } from '@/components';
@@ -6,7 +6,8 @@ import { Game } from '@/types';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { formatDate } from '@/utils/dateFormat';
 import { useAuthStore } from '@/store/authStore';
-import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
 import { gamesApi } from '@/api/games';
 import toast from 'react-hot-toast';
 import { RoundData } from '@/api/results';
@@ -32,7 +33,16 @@ export const LeagueGameCard = ({
   const { user } = useAuthStore();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const displaySettings = user ? resolveDisplaySettings(user) : null;
+  const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
+  const clubTz = getClubTimezone(game);
+  const timeDisplay = getGameTimeDisplay({
+    game,
+    displaySettings,
+    startTime: game.startTime,
+    endTime: game.entityType !== 'BAR' ? game.endTime : undefined,
+    kind: 'time',
+    t,
+  });
 
   const getTeamPlayers = (teamIndex: number) => {
     if (game.fixedTeams && game.fixedTeams.length > teamIndex) {
@@ -102,37 +112,40 @@ export const LeagueGameCard = ({
   };
 
   const getDateTimeLabel = () => {
-    if (!game.startTime) return '';
+    if (!game.startTime) return null;
 
-    const gameDate = new Date(game.startTime);
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-
-    const gameDateOnly = new Date(gameDate.getFullYear(), gameDate.getMonth(), gameDate.getDate());
-    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const tomorrowOnly = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
-    const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-
-    let datePart: string;
-    if (gameDateOnly.getTime() === todayOnly.getTime()) {
-      datePart = t('createGame.today');
-    } else if (gameDateOnly.getTime() === tomorrowOnly.getTime()) {
-      datePart = t('createGame.tomorrow');
-    } else if (gameDateOnly.getTime() === yesterdayOnly.getTime()) {
-      datePart = t('createGame.yesterday');
-    } else {
-      const daysDiff = Math.abs(Math.round((gameDateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24)));
-      const dateFormat = daysDiff <= 7 ? 'EEEE • d MMM' : 'd MMM';
-      datePart = formatDate(game.startTime, dateFormat);
-    }
-
-    const timePart = displaySettings ? formatGameTime(game.startTime, displaySettings) : formatDate(game.startTime, 'HH:mm');
+    const datePart = clubTz
+      ? getDateLabelInClubTz(game.startTime, clubTz, displaySettings, t)
+      : (() => {
+          const gameDate = new Date(game.startTime);
+          const today = new Date();
+          const tomorrow = new Date(today);
+          tomorrow.setDate(today.getDate() + 1);
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+          const gameDateOnly = new Date(gameDate.getFullYear(), gameDate.getMonth(), gameDate.getDate());
+          const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          const tomorrowOnly = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
+          const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+          if (gameDateOnly.getTime() === todayOnly.getTime()) return t('createGame.today');
+          if (gameDateOnly.getTime() === tomorrowOnly.getTime()) return t('createGame.tomorrow');
+          if (gameDateOnly.getTime() === yesterdayOnly.getTime()) return t('createGame.yesterday');
+          const daysDiff = Math.abs(Math.round((gameDateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24)));
+          return formatDate(game.startTime, daysDiff <= 7 ? 'EEEE • d MMM' : 'd MMM');
+        })();
     const durationPart = getDurationLabel();
 
-    return `${datePart} • ${timePart}${durationPart ? ` • ${durationPart}` : ''}`;
+    return (
+      <>
+        <span>{datePart} • {timeDisplay.primaryText}{durationPart ? ` • ${durationPart}` : ''}</span>
+        {timeDisplay.hintText && (
+          <div className="flex items-center gap-1.5 opacity-75">
+            <Plane size={14} className="text-gray-500 dark:text-gray-400 flex-shrink-0" />
+            <span className="text-xs text-gray-500 dark:text-gray-400">{timeDisplay.hintText}</span>
+          </div>
+        )}
+      </>
+    );
   };
 
   const handleDelete = async () => {
@@ -301,7 +314,7 @@ export const LeagueGameCard = ({
           {game.timeIsSet && game.startTime && (
             <div className="flex items-center gap-1">
               <Calendar size={10} />
-              <span>{getDateTimeLabel()}</span>
+              <div className="flex flex-col gap-0.5">{getDateTimeLabel()}</div>
             </div>
           )}
           {(game.club?.name || game.court?.name) && (

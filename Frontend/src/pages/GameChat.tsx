@@ -16,6 +16,8 @@ import { useHeaderStore } from '@/store/headerStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { formatDate } from '@/utils/dateFormat';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
 import { socketService } from '@/services/socketService';
 import { isUserGameAdminOrOwner, isGroupChannelOwner, isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { normalizeChatType } from '@/utils/chatType';
@@ -1052,12 +1054,16 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     return 'Chat';
   };
 
+  const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
+
   const getSubtitle = () => {
     if (contextType === 'GAME' && game) {
       if (game.timeIsSet === false) {
         return t('gameDetails.datetimeNotSet');
       }
-      return `${formatDate(game.startTime, 'PPP')} • ${formatDate(game.startTime, 'p')} - ${formatDate(game.endTime, 'p')}`;
+      const longDateD = getGameTimeDisplay({ game, displaySettings, startTime: game.startTime, kind: 'longDate', t });
+      const timeRangeD = getGameTimeDisplay({ game, displaySettings, startTime: game.startTime, endTime: game.endTime, kind: 'timeRange', t });
+      return `${longDateD.primaryText} • ${timeRangeD.primaryText}`;
     } else if (contextType === 'BUG' && bug) {
       return `${formatDate(bug.createdAt, 'PPP')} • ${t(`bug.types.${bug.bugType}`)} • ${t(`bug.statuses.${bug.status}`)}`;
     } else if (contextType === 'GROUP' && groupChannel) {

@@ -34,6 +34,9 @@ model User {
   gamesWon                   Int                  @default(0)
   wallet                     Int                  @default(0)
   currentCityId              String?
+  lastUserIP                 String?
+  latitudeByIP               Float?
+  longitudeByIP              Float?
   language                   String?              @default("auto")
   timeFormat                 String               @default("auto")
   weekStart                  String               @default("auto")
@@ -115,6 +118,17 @@ model User {
   @@index([approvedById])
 }
 
+model IpLocationCache {
+  id        String   @id @default(cuid())
+  ip        String   @unique
+  latitude  Float
+  longitude Float
+  meta      Json
+  createdAt DateTime @default(now())
+
+  @@index([ip])
+}
+
 model LundaProfile {
   id        String   @id @default(cuid())
   userId    String   @unique
@@ -130,6 +144,12 @@ model City {
   name                   String
   country                String
   timezone               String
+  subAdministrativeArea  String?
+  administrativeArea     String?
+  latitude               Float?
+  longitude              Float?
+  clubsCount             Int      @default(0)
+  isCorrect              Boolean  @default(false)
   telegramGroupId        String?
   telegramPinnedMessageId String?
   telegramPinnedLanguage String   @default("en-US")
@@ -144,11 +164,13 @@ model City {
   groupChannels          GroupChannel[] @relation("GroupChannelCity")
 
   @@index([isActive])
+  @@index([clubsCount])
 }
 
 model Club {
   id                   String             @id @default(cuid())
   name                 String
+  normalizedName       String
   description          String?
   address              String
   cityId               String
@@ -166,6 +188,7 @@ model Club {
   integrationScriptName String?
   integrationScriptDateIndependent Boolean? @default(false)
   integrationConfig    Json?
+  ptMeta               Json?    @map("pt_meta")
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   city                 City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
@@ -177,6 +200,7 @@ model Club {
   @@index([cityId])
   @@index([isActive])
   @@index([integrationScriptName])
+  @@index([normalizedName])
 }
 
 model Court {

@@ -3,13 +3,31 @@ import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { InviteStatus } from '@prisma/client';
 
-export const getGameInclude = () => ({
+const getLeagueSeasonInclude = () => ({
+  league: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  game: {
+    select: {
+      id: true,
+      name: true,
+      avatar: true,
+      originalAvatar: true,
+    },
+  },
+});
+
+export const getBaseGameInclude = () => ({
   city: {
     select: {
       id: true,
       name: true,
       country: true,
       telegramGroupId: true,
+      timezone: true,
     },
   },
   club: {
@@ -22,11 +40,6 @@ export const getGameInclude = () => ({
       },
     },
   },
-  court: {
-    include: {
-      club: true,
-    },
-  },
   participants: {
     include: {
       user: {
@@ -34,6 +47,75 @@ export const getGameInclude = () => ({
       },
     },
   },
+  fixedTeams: {
+    include: {
+      players: {
+        include: {
+          user: {
+            select: USER_SELECT_FIELDS,
+          },
+        },
+      },
+    },
+    orderBy: { teamNumber: 'asc' as const },
+  },
+  leagueSeason: {
+    include: getLeagueSeasonInclude(),
+  },
+  leagueGroup: {
+    select: {
+      id: true,
+      name: true,
+      color: true,
+    },
+  },
+  leagueRound: {
+    select: {
+      id: true,
+      orderIndex: true,
+    },
+  },
+});
+
+const getGamesCourtInclude = () => ({
+  court: {
+    include: {
+      club: {
+        select: {
+          name: true,
+          address: true,
+          city: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  },
+});
+
+const getGameIncludeCourtInclude = () => ({
+  court: {
+    include: {
+      club: true,
+    },
+  },
+});
+
+const getGamesParentInclude = () => ({
+  parent: {
+    include: {
+      leagueSeason: {
+        include: getLeagueSeasonInclude(),
+      },
+    },
+  },
+});
+
+export const getGameInclude = () => ({
+  ...getBaseGameInclude(),
+  ...getGameIncludeCourtInclude(),
   invites: {
     where: {
       status: InviteStatus.PENDING,
@@ -88,18 +170,6 @@ export const getGameInclude = () => ({
     },
     orderBy: { roundNumber: 'asc' as const },
   },
-  fixedTeams: {
-    include: {
-      players: {
-        include: {
-          user: {
-            select: USER_SELECT_FIELDS,
-          },
-        },
-      },
-    },
-    orderBy: { teamNumber: 'asc' as const },
-  },
   gameCourts: {
     include: {
       court: {
@@ -116,37 +186,6 @@ export const getGameInclude = () => ({
     },
     orderBy: { order: 'asc' as const },
   },
-  leagueSeason: {
-    include: {
-      league: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      game: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-          originalAvatar: true,
-        },
-      },
-    },
-  },
-  leagueGroup: {
-    select: {
-      id: true,
-      name: true,
-      color: true,
-    },
-  },
-  leagueRound: {
-    select: {
-      id: true,
-      orderIndex: true,
-    },
-  },
   parent: {
     include: {
       participants: {
@@ -157,22 +196,7 @@ export const getGameInclude = () => ({
         },
       },
       leagueSeason: {
-        include: {
-          league: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          game: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-              originalAvatar: true,
-            },
-          },
-        },
+        include: getLeagueSeasonInclude(),
       },
     },
   },
@@ -235,9 +259,6 @@ export class GameReadService {
       if (user && !user.isAdmin) {
         if (game.cityId === null) {
           throw new ApiError(403, 'Access denied: System games are not accessible');
-        }
-        if (user.currentCityId && game.cityId !== user.currentCityId) {
-          throw new ApiError(403, 'Access denied: Game is not in your city');
         }
       }
     }
@@ -333,110 +354,9 @@ export class GameReadService {
     const games = await prisma.game.findMany({
       where,
       include: {
-        city: {
-          select: {
-            id: true,
-            name: true,
-            country: true,
-            telegramGroupId: true,
-          },
-        },
-        club: {
-          include: {
-            courts: true,
-            city: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-        court: {
-          include: {
-            club: {
-              select: {
-                name: true,
-                address: true,
-                city: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        participants: {
-          include: {
-            user: {
-              select: USER_SELECT_FIELDS,
-            },
-          },
-        },
-        fixedTeams: {
-          include: {
-            players: {
-              include: {
-                user: {
-                  select: USER_SELECT_FIELDS,
-                },
-              },
-            },
-          },
-        },
-        leagueSeason: {
-          include: {
-            league: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            game: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-                originalAvatar: true,
-              },
-            },
-          },
-        },
-        leagueGroup: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-          },
-        },
-        leagueRound: {
-          select: {
-            id: true,
-            orderIndex: true,
-          },
-        },
-        parent: {
-          include: {
-            leagueSeason: {
-              include: {
-                league: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-                game: {
-                  select: {
-                    id: true,
-                    name: true,
-                    avatar: true,
-                    originalAvatar: true,
-                  },
-                },
-              },
-            },
-          },
-        },
+        ...getBaseGameInclude(),
+        ...getGamesCourtInclude(),
+        ...getGamesParentInclude(),
       },
       orderBy: { startTime: 'desc' },
       ...(limit && { take: limit }),
@@ -446,7 +366,7 @@ export class GameReadService {
     return games;
   }
 
-  static async getMyGames(userId: string, userCityId?: string) {
+  static async getMyGames(userId: string, _userCityId?: string) {
     if (!userId) {
       throw new ApiError(401, 'Unauthorized');
     }

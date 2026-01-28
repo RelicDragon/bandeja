@@ -136,7 +136,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         }
       }
     };
-  }, [playerId, handleClose, isClosingViaBack]);
+  }, [playerId, handleClose, isClosingViaBack, navigate]);
 
 
   const handleToggleFavorite = async () => {

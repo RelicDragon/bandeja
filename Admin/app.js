@@ -363,11 +363,33 @@ function renderCitiesTable(cities) {
             <td>
                 <div class="action-buttons">
                     <button class="btn-small btn-edit" onclick='editCityModal(${JSON.stringify(city)})'>Edit</button>
+                    <button class="btn-small btn-secondary" onclick="recalculateCityCenter('${city.id}')">Recalc center</button>
                     <button class="btn-small btn-delete" onclick="deleteCity('${city.id}', '${city.name}')">Delete</button>
                 </div>
             </td>
         </tr>
     `).join('');
+}
+
+async function recalculateCityCenter(cityId) {
+    try {
+        await apiRequest(`/admin/cities/${cityId}/recalculate-center`, { method: 'POST' });
+        alert('Center recalculated');
+        loadCities();
+    } catch (error) {
+        alert('Error: ' + (error.message || 'Failed to recalculate'));
+    }
+}
+
+async function recalculateAllCitiesCenter() {
+    if (!confirm('Recalculate centroid for all cities?')) return;
+    try {
+        const response = await apiRequest('/admin/cities/recalculate-all-centers', { method: 'POST' });
+        alert(`Updated ${response.data?.updated ?? 0} cities`);
+        loadCities();
+    } catch (error) {
+        alert('Error: ' + (error.message || 'Failed to recalculate'));
+    }
 }
 
 async function loadClubs() {

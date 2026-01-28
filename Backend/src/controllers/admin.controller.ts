@@ -98,13 +98,15 @@ export const getAllCities = asyncHandler(async (req: AuthRequest, res: Response)
 });
 
 export const createCity = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { name, country, timezone, isActive } = req.body;
+  const { name, country, timezone, isActive, subAdministrativeArea, administrativeArea } = req.body;
 
   const city = await AdminLocationsService.createCity({
     name,
     country,
     timezone,
     isActive,
+    subAdministrativeArea,
+    administrativeArea,
   });
 
   res.status(201).json({
@@ -115,13 +117,15 @@ export const createCity = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const updateCity = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { cityId } = req.params;
-  const { name, country, timezone, isActive } = req.body;
+  const { name, country, timezone, isActive, subAdministrativeArea, administrativeArea } = req.body;
 
   const city = await AdminLocationsService.updateCity(cityId, {
     name,
     country,
     timezone,
     isActive,
+    subAdministrativeArea,
+    administrativeArea,
   });
 
   res.json({
@@ -139,6 +143,17 @@ export const deleteCity = asyncHandler(async (req: AuthRequest, res: Response) =
     success: true,
     message: result.message,
   });
+});
+
+export const recalculateCityCenter = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { cityId } = req.params;
+  const city = await AdminLocationsService.recalculateCityCenter(cityId);
+  res.json({ success: true, data: city });
+});
+
+export const recalculateAllCitiesCenter = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const result = await AdminLocationsService.recalculateAllCitiesCenter();
+  res.json({ success: true, data: result });
 });
 
 export const getAllClubs = asyncHandler(async (req: AuthRequest, res: Response) => {

@@ -123,7 +123,7 @@ export const handleGamesCommand: Middleware<BotContext> = async (ctx) => {
         where: { id: user.currentCityId },
       });
 
-      if (!city || !city.isActive) {
+      if (!city || !city.isCorrect) {
         await ctx.reply(t('telegram.noCitySet', userLang));
         return;
       }

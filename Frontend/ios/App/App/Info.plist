@@ -43,6 +43,8 @@
 	<string>This app needs access to your camera to capture photos during games.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to your photo library to upload and share photos from your games.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need it to help you find games and clubs around you.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

@@ -15,7 +15,7 @@ export class AdminStatsService {
           },
         } : undefined,
       }),
-      prisma.city.count({ where: { isActive: true } }),
+      prisma.city.count(),
       prisma.club.count({
         where: {
           isActive: true,

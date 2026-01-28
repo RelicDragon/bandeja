@@ -197,7 +197,10 @@
             <div id="citiesPage" class="content-page">
                 <div class="page-header">
                     <h1>Cities Management</h1>
-                    <button class="btn-primary" onclick="createCityModal()">+ Add City</button>
+                    <div>
+                        <button class="btn-secondary" onclick="recalculateAllCitiesCenter()" style="margin-right: 10px;">Recalculate all centers</button>
+                        <button class="btn-primary" onclick="createCityModal()">+ Add City</button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table id="citiesTable">

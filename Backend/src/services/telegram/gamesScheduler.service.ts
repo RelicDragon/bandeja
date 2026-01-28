@@ -35,7 +35,7 @@ export class TelegramGamesScheduler {
           telegramGroupId: {
             not: null,
           },
-          isActive: true,
+          isCorrect: true,
         },
       });
 

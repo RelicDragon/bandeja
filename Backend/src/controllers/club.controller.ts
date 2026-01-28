@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
+import { normalizeClubName } from '../utils/normalizeClubName';
+import { refreshCityFromClubs } from '../utils/updateCityCenter';
 
 export const getClubsByCity = asyncHandler(async (req: Request, res: Response) => {
   const { cityId } = req.params;
@@ -106,6 +108,7 @@ export const createClub = asyncHandler(async (req: Request, res: Response) => {
   const club = await prisma.club.create({
     data: {
       name,
+      normalizedName: normalizeClubName(name),
       description,
       address,
       cityId,
@@ -121,7 +124,7 @@ export const createClub = asyncHandler(async (req: Request, res: Response) => {
       isForPlaying: isForPlaying !== undefined ? isForPlaying : true,
     },
   });
-
+  await refreshCityFromClubs(cityId);
   res.status(201).json({
     success: true,
     data: club,
@@ -130,13 +133,26 @@ export const createClub = asyncHandler(async (req: Request, res: Response) => {
 
 export const updateClub = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const updateData = req.body;
-
+  const updateData = { ...req.body };
+  if (updateData.name != null) {
+    updateData.normalizedName = normalizeClubName(updateData.name);
+  }
+  const oldClub = await prisma.club.findUnique({
+    where: { id },
+    select: { cityId: true, isActive: true },
+  });
+  if (!oldClub) throw new ApiError(404, 'Club not found');
   const club = await prisma.club.update({
     where: { id },
     data: updateData,
   });
-
+  const newCityId = club.cityId;
+  if (oldClub.cityId !== newCityId) {
+    await refreshCityFromClubs(oldClub.cityId);
+    await refreshCityFromClubs(newCityId);
+  } else {
+    await refreshCityFromClubs(newCityId);
+  }
   res.json({
     success: true,
     data: club,

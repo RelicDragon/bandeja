@@ -6,12 +6,17 @@ import { COUNTRIES, TIMEZONES, DEFAULT_TIMEZONE } from '../utils/constants';
 
 export const getAllCities = asyncHandler(async (req: Request, res: Response) => {
   const cities = await prisma.city.findMany({
-    where: { isActive: true },
+    where: { isCorrect: true },
     select: {
       id: true,
       name: true,
       country: true,
       timezone: true,
+      administrativeArea: true,
+      subAdministrativeArea: true,
+      clubsCount: true,
+      latitude: true,
+      longitude: true,
     },
     orderBy: { name: 'asc' },
   });
@@ -68,7 +73,7 @@ export const getTimezones = asyncHandler(async (req: Request, res: Response) => 
 });
 
 export const createCity = asyncHandler(async (req: Request, res: Response) => {
-  const { name, country, timezone } = req.body;
+  const { name, country, timezone, subAdministrativeArea, administrativeArea } = req.body;
 
   if (!name) {
     throw new ApiError(400, 'City name is required');
@@ -93,6 +98,8 @@ export const createCity = asyncHandler(async (req: Request, res: Response) => {
       name,
       country,
       timezone: cityTimezone,
+      subAdministrativeArea: subAdministrativeArea ?? null,
+      administrativeArea: administrativeArea ?? null,
     },
   });
 

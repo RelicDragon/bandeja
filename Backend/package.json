@@ -12,7 +12,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "lint": "eslint src --ext .ts",
-    "migrate-to-s3": "ts-node scripts/migrate-to-s3.ts"
+    "migrate-to-s3": "ts-node scripts/migrate-to-s3.ts",
+    "load-playtomic-jsons": "ts-node scripts/load-playtomic-jsons.ts"
   },
   "keywords": [
     "padel",

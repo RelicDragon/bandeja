@@ -80,6 +80,11 @@ export interface City {
   name: string;
   country: string;
   timezone: string;
+  administrativeArea?: string | null;
+  subAdministrativeArea?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  clubsCount?: number;
   telegramGroupId?: string | null;
   isActive: boolean;
 }
@@ -87,6 +92,7 @@ export interface City {
 export interface Club {
   id: string;
   name: string;
+  normalizedName?: string;
   description?: string;
   address: string;
   cityId: string;

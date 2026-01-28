@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, RefreshCw, UserPlus, Check } from 'lucide-react';
+import { Trash2, RefreshCw, UserPlus, Check, Plane } from 'lucide-react';
 import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection, ConfirmationModal, BaseModal } from '@/components';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { Game, Club, Court, EntityType, BasicUser } from '@/types';
@@ -9,7 +9,8 @@ import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 import { addHours, differenceInHours } from 'date-fns';
 import { createDateFromClubTime, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
-import { formatDate } from '@/utils/dateFormat';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
 
 interface EditLeagueGameTeamsModalProps {
   isOpen: boolean;
@@ -30,6 +31,9 @@ export const EditLeagueGameTeamsModal = ({
 }: EditLeagueGameTeamsModalProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
+  const longDateDisplay = getGameTimeDisplay({ game, displaySettings, startTime: game.startTime, kind: 'longDate', t });
+  const timeRangeDisplay = getGameTimeDisplay({ game, displaySettings, startTime: game.startTime, endTime: game.endTime, kind: 'timeRange', t });
   const [isSaving, setIsSaving] = useState(false);
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
   const [loading, setLoading] = useState(true);
@@ -761,11 +765,17 @@ export const EditLeagueGameTeamsModal = ({
                             {t('gameDetails.time')}
                           </div>
                           <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {formatDate(game.startTime, 'PPP')}
+                            {longDateDisplay.primaryText}
                           </div>
                           <div className="text-base text-gray-700 dark:text-gray-300 mt-1">
-                            {formatDate(game.startTime, 'p')} - {formatDate(game.endTime, 'p')}
+                            {timeRangeDisplay.primaryText}
                           </div>
+                          {timeRangeDisplay.hintText && (
+                            <div className="flex items-center gap-1.5 mt-1 opacity-75">
+                              <Plane size={16} className="text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{timeRangeDisplay.hintText}</span>
+                            </div>
+                          )}
                         </div>
                         <button
                           onClick={() => setShowConfirmRemoveTime(true)}

@@ -3,17 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AnimatePresence } from 'framer-motion';
-import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal } from '@/components';
+import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
 import { BlockedUsersSection } from '@/components/BlockedUsersSection';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useNavigationStore } from '@/store/navigationStore';
-import { usersApi, citiesApi, mediaApi, authApi } from '@/api';
+import { usersApi, mediaApi, authApi } from '@/api';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
-import { City, Gender, User } from '@/types';
+import { Gender, User } from '@/types';
 import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X, UserCircle } from 'lucide-react';
 import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -46,7 +46,6 @@ export const ProfileContent = () => {
   const [timeFormat, setTimeFormat] = useState<'auto' | '12h' | '24h'>(user?.timeFormat || 'auto');
   const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday'>(user?.weekStart || 'auto');
 
-  const [cities, setCities] = useState<City[]>([]);
   const [showCityModal, setShowCityModal] = useState(false);
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
@@ -125,15 +124,6 @@ export const ProfileContent = () => {
   }, [updateProfile, firstName, lastName, user, t]);
 
   useEffect(() => {
-    const fetchCities = async () => {
-      try {
-        const response = await citiesApi.getAll();
-        setCities(response.data);
-      } catch (error) {
-        console.error('Failed to fetch cities:', error);
-      }
-    };
-
     const fetchUserProfile = async () => {
       try {
         const response = await usersApi.getProfile();
@@ -157,7 +147,6 @@ export const ProfileContent = () => {
       }
     };
 
-    fetchCities();
     if (!user) {
       fetchUserProfile();
     } else {
@@ -267,17 +256,6 @@ export const ProfileContent = () => {
   const handleChangeWeekStart = (start: 'auto' | 'monday' | 'sunday') => {
     setWeekStart(start);
     updateProfile({ weekStart: start });
-  };
-
-  const handleChangeCity = async (cityId: string) => {
-    try {
-      const response = await usersApi.switchCity(cityId);
-      updateUser(response.data);
-      setShowCityModal(false);
-      navigate('/');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || t('errors.generic'));
-    }
   };
 
   const handleLogout = () => {
@@ -970,14 +948,19 @@ export const ProfileContent = () => {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.city')}
           </h2>
-          <div className="flex items-center justify-between">
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
               <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
               <span className="text-gray-900 dark:text-white">
                 {user?.currentCity?.name}
               </span>
             </div>
-            <Button variant="secondary" onClick={() => setShowCityModal(true)}>
+            <Button
+              variant="primary"
+              onClick={() => setShowCityModal(true)}
+              className="w-full flex items-center justify-center gap-2 rounded-xl"
+            >
+              <MapPin size={16} />
               {t('profile.changeCity')}
             </Button>
           </div>
@@ -1025,42 +1008,12 @@ export const ProfileContent = () => {
         )}
       </div>
 
-      {showCityModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="max-w-md w-full max-h-96 overflow-y-auto">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              {t('profile.changeCity')}
-            </h3>
-            <div className="space-y-2">
-              {cities.map((city) => (
-                <button
-                  key={city.id}
-                  onClick={() => handleChangeCity(city.id)}
-                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                    city.id === user?.currentCity?.id
-                      ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/30'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                  }`}
-                >
-                  <div className="font-medium text-gray-900 dark:text-white">
-                    {city.name}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {city.country}
-                  </div>
-                </button>
-              ))}
-            </div>
-            <Button
-              variant="secondary"
-              onClick={() => setShowCityModal(false)}
-              className="w-full mt-4"
-            >
-              {t('common.cancel')}
-            </Button>
-          </Card>
-        </div>
-      )}
+      <CityModal
+        isOpen={showCityModal}
+        onClose={() => setShowCityModal(false)}
+        selectedId={user?.currentCity?.id}
+        onCityChanged={() => navigate('/')}
+      />
 
       {showFullscreenAvatar && user?.originalAvatar && (
         <FullscreenImageViewer

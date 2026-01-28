@@ -6,8 +6,13 @@ import prisma from '../../config/database';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
 import { config } from '../../config/env';
+import { getClientIp, updateUserIpLocation } from '../../services/ipLocation.service';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+  getClientIp(req).then((clientIp) => {
+    if (clientIp && userId) updateUserIpLocation(userId, clientIp).catch((err) => console.error('IP location update failed', err));
+  }).catch(() => {});
   const user = await prisma.user.findUnique({
     where: { id: req.userId },
     select: PROFILE_SELECT_FIELDS,
@@ -31,6 +36,24 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
     data: {
       ...user,
       blockedUserIds,
+    },
+  });
+});
+
+export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { lastUserIP: true, latitudeByIP: true, longitudeByIP: true },
+  });
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+  res.json({
+    success: true,
+    data: {
+      lastUserIP: user.lastUserIP,
+      latitudeByIP: user.latitudeByIP,
+      longitudeByIP: user.longitudeByIP,
     },
   });
 });

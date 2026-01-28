@@ -13,6 +13,8 @@ import {
   createCity,
   updateCity,
   deleteCity,
+  recalculateCityCenter,
+  recalculateAllCitiesCenter,
   getAllClubs,
   createClub,
   updateClub,
@@ -54,8 +56,10 @@ router.post('/games/:gameId/reset-results', requireAdmin, resetGameResults);
 
 router.get('/cities', requireAdmin, getAllCities);
 router.post('/cities', requireAdmin, createCity);
+router.post('/cities/recalculate-all-centers', requireAdmin, recalculateAllCitiesCenter);
 router.put('/cities/:cityId', requireAdmin, updateCity);
 router.delete('/cities/:cityId', requireAdmin, deleteCity);
+router.post('/cities/:cityId/recalculate-center', requireAdmin, recalculateCityCenter);
 
 router.get('/clubs', requireAdmin, getAllClubs);
 router.post('/clubs', requireAdmin, createClub);
