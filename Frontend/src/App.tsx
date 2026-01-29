@@ -23,7 +23,6 @@ import { PermissionModalProvider } from './components/PermissionModalProvider';
 import { OfflineBanner } from './components/OfflineBanner';
 import { headerService } from './services/headerService';
 import { socketService } from './services/socketService';
-import { useHeaderStore } from './store/headerStore';
 import { useSocketEventsStore } from './store/socketEventsStore';
 import { isCapacitor, isIOS, isAndroid } from './utils/capacitor';
 import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerUtils';

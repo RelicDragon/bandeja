@@ -16,6 +16,8 @@ export type MatchGenerationType = 'HANDMADE' | 'FIXED' | 'RANDOM' | 'ROUND_ROBIN
 export type PriceType = 'PER_PERSON' | 'PER_TEAM' | 'TOTAL' | 'NOT_KNOWN' | 'FREE';
 export type PriceCurrency = 'EUR' | 'RSD' | 'RUB';
 
+import type { Round } from './gameResults';
+
 export interface BasicUser {
   id: string;
   firstName?: string;
@@ -246,6 +248,7 @@ export interface Game {
   joinQueues?: JoinQueue[];
   fixedTeams?: GameTeam[];
   outcomes?: GameOutcome[];
+  rounds?: Round[];
   gameCourts?: Array<{
     id: string;
     gameId: string;

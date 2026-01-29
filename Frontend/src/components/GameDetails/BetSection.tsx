@@ -6,7 +6,6 @@ import { BetCard } from './BetCard';
 import { CreateBetModal } from './CreateBetModal';
 import { Coins, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { socketService } from '@/services/socketService';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 
 interface BetSectionProps {
@@ -38,63 +37,32 @@ export const BetSection = ({ game }: BetSectionProps) => {
     loadBets();
   }, [game.id]);
 
+  const lastBetCreated = useSocketEventsStore((state) => state.lastBetCreated);
+  const lastBetUpdated = useSocketEventsStore((state) => state.lastBetUpdated);
+  const lastBetDeleted = useSocketEventsStore((state) => state.lastBetDeleted);
+  const lastBetResolved = useSocketEventsStore((state) => state.lastBetResolved);
+
   useEffect(() => {
-    if (!game.id) return;
+    if (!lastBetCreated || lastBetCreated.gameId !== game.id) return;
+    setBets(prev => [lastBetCreated.bet, ...prev]);
+  }, [lastBetCreated, game.id]);
 
-    const handleBetCreated = (data: { gameId: string; bet: Bet }) => {
-      if (data.gameId === game.id) {
-        setBets(prev => [data.bet, ...prev]);
-      }
-    };
+  useEffect(() => {
+    if (!lastBetUpdated || lastBetUpdated.gameId !== game.id) return;
+    setBets(prev => prev.map(b => b.id === lastBetUpdated.bet.id ? lastBetUpdated.bet : b));
+  }, [lastBetUpdated, game.id]);
 
-    const handleBetUpdated = (data: { gameId: string; bet: Bet }) => {
-      if (data.gameId === game.id) {
-        setBets(prev => prev.map(b => b.id === data.bet.id ? data.bet : b));
-      }
-    };
+  useEffect(() => {
+    if (!lastBetDeleted || lastBetDeleted.gameId !== game.id) return;
+    setBets(prev => prev.filter(b => b.id !== lastBetDeleted.betId));
+  }, [lastBetDeleted, game.id]);
 
-    const handleBetDeleted = (data: { gameId: string; betId: string }) => {
-      if (data.gameId === game.id) {
-        setBets(prev => prev.filter(b => b.id !== data.betId));
-      }
-    };
-
-    const handleBetResolved = (data: { gameId: string; betId: string; winnerId: string; loserId: string }) => {
-      if (data.gameId === game.id) {
-        // Reload bets to get updated status
-        betsApi.getGameBets(game.id).then(response => {
-          setBets(response.data);
-        }).catch(console.error);
-      }
-    };
-
-    const lastBetCreated = useSocketEventsStore((state) => state.lastBetCreated);
-    const lastBetUpdated = useSocketEventsStore((state) => state.lastBetUpdated);
-    const lastBetDeleted = useSocketEventsStore((state) => state.lastBetDeleted);
-    const lastBetResolved = useSocketEventsStore((state) => state.lastBetResolved);
-
-    useEffect(() => {
-      if (!lastBetCreated || lastBetCreated.gameId !== game.id) return;
-      setBets(prev => [lastBetCreated.bet, ...prev]);
-    }, [lastBetCreated, game.id]);
-
-    useEffect(() => {
-      if (!lastBetUpdated || lastBetUpdated.gameId !== game.id) return;
-      setBets(prev => prev.map(b => b.id === lastBetUpdated.bet.id ? lastBetUpdated.bet : b));
-    }, [lastBetUpdated, game.id]);
-
-    useEffect(() => {
-      if (!lastBetDeleted || lastBetDeleted.gameId !== game.id) return;
-      setBets(prev => prev.filter(b => b.id !== lastBetDeleted.betId));
-    }, [lastBetDeleted, game.id]);
-
-    useEffect(() => {
-      if (!lastBetResolved || lastBetResolved.gameId !== game.id) return;
-      betsApi.getGameBets(game.id).then(response => {
-        setBets(response.data);
-      }).catch(console.error);
-    }, [lastBetResolved, game.id]);
-  }, [game.id]);
+  useEffect(() => {
+    if (!lastBetResolved || lastBetResolved.gameId !== game.id) return;
+    betsApi.getGameBets(game.id).then(response => {
+      setBets(response.data);
+    }).catch(console.error);
+  }, [lastBetResolved, game.id]);
 
   if (isLoading) {
     return null;

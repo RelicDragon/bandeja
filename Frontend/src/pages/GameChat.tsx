@@ -936,7 +936,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   }, [lastChatDeleted, contextType, id, handleMessageDeleted]);
 
   useEffect(() => {
-    if (!lastSyncRequired) return;
+    if (!lastSyncRequired || !id) return;
     const currentMessages = messagesRef.current;
     if (currentMessages.length > 0) {
       const lastMessage = currentMessages[currentMessages.length - 1];

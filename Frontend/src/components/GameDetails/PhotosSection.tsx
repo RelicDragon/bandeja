@@ -4,7 +4,6 @@ import { Game } from '@/types';
 import { chatApi, ChatMessage } from '@/api/chat';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { mediaApi } from '@/api/media';
-import { socketService } from '@/services/socketService';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { gamesApi } from '@/api/games';
 import { useAuthStore } from '@/store/authStore';
@@ -23,6 +22,8 @@ interface PhotosSectionProps {
 export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
+  const lastChatDeleted = useSocketEventsStore((state) => state.lastChatDeleted);
   const [photos, setPhotos] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
@@ -86,34 +87,24 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
 
   useEffect(() => {
     if (!game.id || game.status === 'ANNOUNCED') return;
+    if (!lastChatMessage || lastChatMessage.contextType !== 'GAME' || lastChatMessage.contextId !== game.id) return;
+    
+    const message = lastChatMessage.message;
+    if (message.chatType === 'PHOTOS' && !message.content && message.mediaUrls && message.mediaUrls.length > 0) {
+      setPhotos(prevPhotos => {
+        const exists = prevPhotos.some(msg => msg.id === message.id);
+        if (exists) return prevPhotos;
+        return [message, ...prevPhotos];
+      });
+    }
+  }, [lastChatMessage, game.id, game.status]);
 
-    const handleNewMessage = (message: ChatMessage) => {
-      if (message.chatType === 'PHOTOS' && !message.content && message.mediaUrls && message.mediaUrls.length > 0) {
-        setPhotos(prevPhotos => {
-          const exists = prevPhotos.some(msg => msg.id === message.id);
-          if (exists) return prevPhotos;
-          return [message, ...prevPhotos];
-        });
-      }
-    };
-
-    const handleMessageDeleted = (data: { messageId: string }) => {
-      setPhotos(prevPhotos => prevPhotos.filter(msg => msg.id !== data.messageId));
-    };
-
-    const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
-    const lastChatDeleted = useSocketEventsStore((state) => state.lastChatDeleted);
-
-    useEffect(() => {
-      if (!lastChatMessage || lastChatMessage.contextType !== 'GAME' || lastChatMessage.contextId !== game.id) return;
-      handleNewMessage(lastChatMessage.message);
-    }, [lastChatMessage, game.id]);
-
-    useEffect(() => {
-      if (!lastChatDeleted || lastChatDeleted.contextType !== 'GAME' || lastChatDeleted.contextId !== game.id) return;
-      handleMessageDeleted({ messageId: lastChatDeleted.messageId });
-    }, [lastChatDeleted, game.id]);
-  }, [game.id, game.status]);
+  useEffect(() => {
+    if (!game.id || game.status === 'ANNOUNCED') return;
+    if (!lastChatDeleted || lastChatDeleted.contextType !== 'GAME' || lastChatDeleted.contextId !== game.id) return;
+    
+    setPhotos(prevPhotos => prevPhotos.filter(msg => msg.id !== lastChatDeleted.messageId));
+  }, [lastChatDeleted, game.id, game.status]);
 
   const handlePhotoSelect = async (files: File[]) => {
     if (!files || files.length === 0 || isUploadingPhoto || !game.id) return;

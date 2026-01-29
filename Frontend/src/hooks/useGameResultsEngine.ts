@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
-import { socketService } from '@/services/socketService';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 
 interface UseGameResultsEngineProps {

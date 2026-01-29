@@ -17,7 +17,6 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { MessageCircle, Search, X } from 'lucide-react';
 import { ChatMessage } from '@/api/chat';
-import { socketService } from '@/services/socketService';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 
 type ChatItem =
@@ -75,6 +74,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const { chatsFilter } = useNavigationStore();
   const favoriteUserIds = useFavoritesStore((state) => state.favoriteUserIds);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
+  const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -471,10 +471,23 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       setChats((prevChats) => updateChatDraft(prevChats, chatContextType, contextId, null));
     };
 
+    window.addEventListener('refresh-chat-list', handleRefresh);
+    window.addEventListener('draft-updated', handleDraftUpdate);
+    window.addEventListener('draft-deleted', handleDraftDelete);
+    
+    return () => {
+      window.removeEventListener('refresh-chat-list', handleRefresh);
+      window.removeEventListener('draft-updated', handleDraftUpdate);
+      window.removeEventListener('draft-deleted', handleDraftDelete);
+    };
+  }, [fetchChatsForFilter, chatsFilter, updateChatDraft, updateChatMessage]);
+
+  useEffect(() => {
+    if (!lastChatMessage) return;
+    
     const handleNewMessage = (data: { contextType: string; contextId: string; message: any }) => {
       const { contextType, contextId, message } = data;
       
-      // Only update if the message matches the current filter
       const shouldUpdate = 
         (chatsFilter === 'users' && (contextType === 'USER' || contextType === 'GROUP')) ||
         (chatsFilter === 'bugs' && contextType === 'BUG') ||
@@ -482,13 +495,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       
       if (shouldUpdate) {
         setChats((prevChats) => {
-          // Check if the chat exists in the current list
           const chatExists = prevChats.some((chat) => {
             if (contextType === 'USER' && chat.type === 'user' && chat.data.id === contextId) return true;
             if (contextType === 'GROUP' && (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId) {
-              // For channels filter, only update channels
               if (chatsFilter === 'channels') return chat.type === 'channel';
-              // For users filter, only update groups (not channels)
               if (chatsFilter === 'users') return chat.type === 'group';
               return true;
             }
@@ -504,24 +514,9 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         });
       }
     };
-
-    window.addEventListener('refresh-chat-list', handleRefresh);
-    window.addEventListener('draft-updated', handleDraftUpdate);
-    window.addEventListener('draft-deleted', handleDraftDelete);
     
-    const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
-    
-    useEffect(() => {
-      if (!lastChatMessage) return;
-      handleNewMessage(lastChatMessage);
-    }, [lastChatMessage]);
-    
-    return () => {
-      window.removeEventListener('refresh-chat-list', handleRefresh);
-      window.removeEventListener('draft-updated', handleDraftUpdate);
-      window.removeEventListener('draft-deleted', handleDraftDelete);
-    };
-  }, [fetchChatsForFilter, chatsFilter, updateChatDraft, updateChatMessage]);
+    handleNewMessage(lastChatMessage);
+  }, [lastChatMessage, chatsFilter, updateChatMessage]);
 
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();

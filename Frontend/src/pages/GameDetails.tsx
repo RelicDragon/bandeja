@@ -174,11 +174,12 @@ export const GameDetailsContent = () => {
       
       if (prevGame.resultsStatus === 'FINAL' && updatedGame.resultsStatus === 'FINAL') {
         const prevGameWithResults = prevGame as GameWithResults;
+        const updatedGameWithResults = updatedGame as GameWithResults;
         return {
           ...updatedGame,
-          rounds: (updatedGame.rounds && updatedGame.rounds.length > 0) 
-            ? updatedGame.rounds 
-            : (prevGameWithResults.rounds || updatedGame.rounds),
+          rounds: (updatedGameWithResults.rounds && updatedGameWithResults.rounds.length > 0) 
+            ? updatedGameWithResults.rounds 
+            : (prevGameWithResults.rounds || updatedGameWithResults.rounds),
           outcomes: (updatedGame.outcomes && updatedGame.outcomes.length > 0)
             ? updatedGame.outcomes
             : (prevGame.outcomes || updatedGame.outcomes),

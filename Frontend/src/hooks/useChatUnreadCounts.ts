@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { chatApi, GroupChannel, ChatMessage, MessageReadReceipt } from '@/api/chat';
+import { chatApi, GroupChannel } from '@/api/chat';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
@@ -27,6 +27,9 @@ const DEBOUNCE_DELAY = 300;
 export const useChatUnreadCounts = () => {
   const { user } = useAuthStore();
   const userChatsUnreadCounts = usePlayersStore((state) => state.unreadCounts);
+  const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
+  const lastChatUnreadCount = useSocketEventsStore((state) => state.lastChatUnreadCount);
+  const lastChatReadReceipt = useSocketEventsStore((state) => state.lastChatReadReceipt);
   const [counts, setCounts] = useState<ChatUnreadCounts>({
     users: 0,
     games: 0,
@@ -156,33 +159,27 @@ export const useChatUnreadCounts = () => {
   }, [userChatsUnreadCounts]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!lastChatMessage || lastChatMessage.message?.senderId === user?.id) return;
+    debouncedFetch();
+  }, [lastChatMessage, user?.id, debouncedFetch]);
 
-    const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
-    const lastChatUnreadCount = useSocketEventsStore((state) => state.lastChatUnreadCount);
-    const lastChatReadReceipt = useSocketEventsStore((state) => state.lastChatReadReceipt);
+  useEffect(() => {
+    if (!lastChatUnreadCount) return;
+    debouncedFetch();
+  }, [lastChatUnreadCount, debouncedFetch]);
 
-    useEffect(() => {
-      if (!lastChatMessage || lastChatMessage.message?.senderId === user?.id) return;
-      debouncedFetch();
-    }, [lastChatMessage, user?.id]);
+  useEffect(() => {
+    if (!lastChatReadReceipt || lastChatReadReceipt.readReceipt?.userId !== user?.id) return;
+    debouncedFetch();
+  }, [lastChatReadReceipt, user?.id, debouncedFetch]);
 
-    useEffect(() => {
-      if (!lastChatUnreadCount) return;
-      debouncedFetch();
-    }, [lastChatUnreadCount]);
-
-    useEffect(() => {
-      if (!lastChatReadReceipt || lastChatReadReceipt.readReceipt?.userId !== user?.id) return;
-      debouncedFetch();
-    }, [lastChatReadReceipt, user?.id]);
-
+  useEffect(() => {
     return () => {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [user?.id, debouncedFetch]);
+  }, []);
 
   return {
     counts,
