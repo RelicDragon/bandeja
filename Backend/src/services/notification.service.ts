@@ -14,7 +14,7 @@ import { createGameReminderPushNotification } from './push/notifications/game-re
 import { createGameResultsPushNotification } from './push/notifications/game-results-push.notification';
 import { createLeagueRoundStartPushNotification } from './push/notifications/league-round-start-push.notification';
 import { createNewGamePushNotification } from './push/notifications/new-game-push.notification';
-import { createBetResolvedPushNotification, createBetNeedsReviewPushNotification } from './push/notifications/bet-resolved-push.notification';
+import { createBetResolvedPushNotification, createBetNeedsReviewPushNotification, createBetCancelledPushNotification } from './push/notifications/bet-resolved-push.notification';
 import { createTransactionPushNotification } from './push/notifications/transaction-push.notification';
 
 class NotificationService {
@@ -559,6 +559,22 @@ class NotificationService {
       await telegramNotificationService.sendBetNeedsReviewNotification(betId, userId);
     } catch (error) {
       console.error(`Failed to send bet needs review notification to user ${userId}:`, error);
+    }
+  }
+
+  async sendBetCancelledNotification(betId: string, userId: string) {
+    try {
+      const payload = await createBetCancelledPushNotification(betId, userId);
+      if (payload) {
+        await this.sendNotification({
+          userId,
+          type: NotificationType.GAME_SYSTEM_MESSAGE,
+          payload
+        });
+      }
+      await telegramNotificationService.sendBetCancelledNotification(betId, userId);
+    } catch (error) {
+      console.error(`Failed to send bet cancelled notification to user ${userId}:`, error);
     }
   }
 

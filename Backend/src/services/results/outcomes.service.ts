@@ -470,7 +470,5 @@ export async function recalculateGameOutcomes(gameId: string) {
   });
   
   return result.game;
-  
-  return result;
 }
 

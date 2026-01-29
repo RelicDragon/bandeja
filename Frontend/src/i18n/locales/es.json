@@ -1374,6 +1374,8 @@
     "leaveConfirmation": "¿Estás seguro de que quieres salir de este chat?",
     "blockedByUser": "Este usuario te ha bloqueado. No puedes enviarle mensajes.",
     "invalidImageType": "Tipo de imagen inválido. Por favor selecciona un archivo de imagen válido.",
+    "sendFailed": "Error al enviar el mensaje",
+    "missingContextId": "Falta el contexto del chat",
     "photoPickFailed": "Error al seleccionar fotos",
     "someImagesFailed": "{{count}} imagen(es) falló(aron) al subir",
     "photo": "Foto",
@@ -1553,6 +1555,8 @@
     "cancel": "Cancelar",
     "fillAllFields": "Por favor complete todos los campos",
     "selectEntity": "Por favor seleccione a quién se aplica esta apuesta",
+    "selectPlace": "Seleccione el lugar",
+    "invalidBet": "Apuesta no válida",
     "invalidStakeCoins": "Las monedas de apuesta deben ser mayores que 0",
     "invalidRewardCoins": "Las monedas de recompensa deben ser mayores que 0",
     "updated": "¡Apuesta actualizada!",
@@ -1573,13 +1577,17 @@
     "condition": {
       "winGame": "Ganar el juego",
       "loseGame": "Perder el juego",
-      "winMatch": "Ganar un partido",
-      "loseMatch": "Perder un partido",
-      "tieMatch": "Empatar un partido",
-      "winSet": "Ganar un set",
-      "loseSet": "Perder un set",
-      "streak30": "Ganar 3-0 en un partido",
-      "streak21": "Ganar 2-1 en un partido"
+      "winTournament": "Ganar el torneo",
+      "loseTournament": "Perder el torneo",
+      "winLeague": "Ganar este partido en la liga",
+      "loseLeague": "Perder este partido en la liga",
+      "winLeagueSeason": "Ganar este partido en la liga",
+      "loseLeagueSeason": "Perder este partido en la liga",
+      "winAtLeastOneSet": "Ganar al menos un set",
+      "loseAllSets": "Perder todos los sets",
+      "winAllSets": "Ganar todos los sets",
+      "takePlace": "Quedar en lugar",
+      "takePlaceN": "Quedar en {{n}}º lugar"
     }
   },
   "permissions": {

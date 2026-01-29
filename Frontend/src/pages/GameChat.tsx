@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { chatApi, ChatMessage, ChatContextType, UserChat as UserChatType } from '@/api/chat';
+import { chatApi, ChatMessage, ChatMessageWithStatus, ChatContextType, UserChat as UserChatType, OptimisticMessagePayload } from '@/api/chat';
 import { gamesApi } from '@/api/games';
 import { bugsApi } from '@/api/bugs';
 import { blockedUsersApi } from '@/api/blockedUsers';
@@ -64,7 +64,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [userChat, setUserChat] = useState<UserChatType | null>(locationState?.chat || null);
   const [groupChannel, setGroupChannel] = useState<any>(null);
   const [groupChannelParticipantsCount, setGroupChannelParticipantsCount] = useState<number>(0);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessageWithStatus[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSwitchingChatType, setIsSwitchingChatType] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
@@ -92,7 +92,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
   const previousIdRef = useRef<string | undefined>(undefined);
-  const messagesRef = useRef<ChatMessage[]>([]);
+  const messagesRef = useRef<ChatMessageWithStatus[]>([]);
   const loadingIdRef = useRef<string | undefined>(undefined);
   const hasLoadedRef = useRef(false);
 
@@ -418,6 +418,65 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setReplyTo(null);
   }, []);
 
+  const handleAddOptimisticMessage = useCallback((payload: OptimisticMessagePayload): string => {
+    if (!id) return '';
+    const tempId = `opt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const optimistic: ChatMessageWithStatus = {
+      id: tempId,
+      chatContextType: contextType,
+      contextId: id,
+      senderId: user?.id ?? null,
+      content: payload.content,
+      mediaUrls: payload.mediaUrls,
+      thumbnailUrls: payload.thumbnailUrls,
+      mentionIds: payload.mentionIds,
+      state: 'SENT',
+      chatType: payload.chatType,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      replyToId: payload.replyToId,
+      replyTo: payload.replyTo,
+      sender: user ? (user as import('@/types').BasicUser) : null,
+      reactions: [],
+      readReceipts: [],
+      _status: 'SENDING',
+      _optimisticId: tempId,
+    };
+    setMessages(prev => {
+      const next = [...prev, optimistic];
+      messagesRef.current = next;
+      return next;
+    });
+    scrollToBottom();
+    return tempId;
+  }, [contextType, id, user, scrollToBottom]);
+
+  const handleSendFailed = useCallback((optimisticId: string) => {
+    setMessages(prev => {
+      const next = prev.filter(m => (m as ChatMessageWithStatus)._optimisticId !== optimisticId);
+      messagesRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const handleReplaceOptimisticWithServerMessage = useCallback((optimisticId: string, serverMessage: ChatMessage) => {
+    setMessages(prev => {
+      const idx = prev.findIndex(m => (m as ChatMessageWithStatus)._optimisticId === optimisticId);
+      if (idx < 0) return prev;
+      const next = [...prev];
+      next[idx] = serverMessage as ChatMessageWithStatus;
+      messagesRef.current = next;
+      return next;
+    });
+    if (sendingTimeoutRef.current) {
+      clearTimeout(sendingTimeoutRef.current);
+      sendingTimeoutRef.current = null;
+    }
+    isSendingRef.current = false;
+    sendingStartTimeRef.current = null;
+    setIsSendingMessage(false);
+  }, []);
+
   const handleMessageSent = useCallback(() => {
     if (sendingTimeoutRef.current) {
       clearTimeout(sendingTimeoutRef.current);
@@ -631,17 +690,44 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         if (exists) {
           return prevMessages;
         }
-        
+
+        const isOwnServerMessage = message.senderId === user?.id;
+        if (isOwnServerMessage) {
+          const msgReplyToId = message.replyToId ?? null;
+          const msgMentionIds = message.mentionIds?.slice().sort() ?? [];
+          const idx = prevMessages.findIndex((m): m is ChatMessageWithStatus => {
+            if ((m as ChatMessageWithStatus)._status !== 'SENDING') return false;
+            if (m.content !== message.content || m.senderId !== message.senderId) return false;
+            if (normalizeChatType(m.chatType) !== normalizedMessageChatType) return false;
+            const mReply = m.replyToId ?? null;
+            if (mReply !== msgReplyToId) return false;
+            const mIds = (m.mentionIds?.slice().sort() ?? []) as string[];
+            if (mIds.length !== msgMentionIds.length || mIds.some((id, i) => id !== msgMentionIds[i])) return false;
+            return true;
+          });
+          if (idx >= 0) {
+            const next = [...prevMessages];
+            next[idx] = message as ChatMessageWithStatus;
+            messagesRef.current = next;
+            if (sendingTimeoutRef.current) {
+              clearTimeout(sendingTimeoutRef.current);
+              sendingTimeoutRef.current = null;
+            }
+            isSendingRef.current = false;
+            sendingStartTimeRef.current = null;
+            setIsSendingMessage(false);
+            return next;
+          }
+        }
+
         if (isSendingRef.current && message.senderId === user?.id) {
           if (sendingTimeoutRef.current) {
             clearTimeout(sendingTimeoutRef.current);
             sendingTimeoutRef.current = null;
           }
-          
           const minDisplayTime = 500;
           const elapsedTime = sendingStartTimeRef.current ? Date.now() - sendingStartTimeRef.current : minDisplayTime;
           const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
-          
           if (remainingTime > 0) {
             sendingTimeoutRef.current = setTimeout(() => {
               isSendingRef.current = false;
@@ -655,8 +741,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             setIsSendingMessage(false);
           }
         }
-        
-        const newMessages = [...prevMessages, message];
+
+        const newMessages = [...prevMessages, message as ChatMessageWithStatus];
         messagesRef.current = newMessages;
         return newMessages;
       });
@@ -1430,6 +1516,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 bug={bug}
                 groupChannel={groupChannel}
                 onMessageSent={handleMessageSent}
+                onOptimisticMessage={handleAddOptimisticMessage}
+                onSendFailed={handleSendFailed}
+                onMessageCreated={handleReplaceOptimisticWithServerMessage}
                 disabled={false}
                 replyTo={replyTo}
                 onCancelReply={handleCancelReply}
@@ -1510,6 +1599,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 bug={bug}
                 groupChannel={groupChannel}
                 onMessageSent={handleMessageSent}
+                onOptimisticMessage={handleAddOptimisticMessage}
+                onSendFailed={handleSendFailed}
+                onMessageCreated={handleReplaceOptimisticWithServerMessage}
                 disabled={false}
                 replyTo={replyTo}
                 onCancelReply={handleCancelReply}

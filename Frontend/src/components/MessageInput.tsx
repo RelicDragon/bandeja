@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { chatApi, CreateMessageRequest, ChatMessage, ChatContextType, GroupChannel } from '@/api/chat';
+import { chatApi, CreateMessageRequest, ChatMessage, ChatContextType, GroupChannel, OptimisticMessagePayload } from '@/api/chat';
 import { mediaApi } from '@/api/media';
 import { ChatType, Game, Bug } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
@@ -30,6 +30,9 @@ interface MessageInputProps {
   bug?: Bug | null;
   groupChannel?: GroupChannel | null;
   onMessageSent: () => void;
+  onOptimisticMessage?: (payload: OptimisticMessagePayload) => string;
+  onSendFailed?: (optimisticId: string) => void;
+  onMessageCreated?: (optimisticId: string, serverMessage: ChatMessage) => void;
   disabled?: boolean;
   replyTo?: ChatMessage | null;
   onCancelReply?: () => void;
@@ -47,6 +50,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   bug,
   groupChannel,
   onMessageSent,
+  onOptimisticMessage,
+  onSendFailed,
+  onMessageCreated,
   disabled = false,
   replyTo,
   onCancelReply,
@@ -532,64 +538,89 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       return;
     }
 
-    setIsLoading(true);
-    onMessageSent();
-    
-    try {
-      const { originalUrls, thumbnailUrls } = await uploadImages();
+    const trimmedContent = message.trim();
+    const useOptimistic = !!onOptimisticMessage;
+    let optimisticId: string | undefined;
 
-      const trimmedContent = message.trim();
-
-      const messageData: CreateMessageRequest = {
-        chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
-        contextId: finalContextId,
-        gameId: gameId, // Keep for backward compatibility
-        content: trimmedContent || undefined,
-        mediaUrls: originalUrls.length > 0 ? originalUrls : [],
-        thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+    if (useOptimistic) {
+      setIsLoading(true);
+      const payload: OptimisticMessagePayload = {
+        content: trimmedContent,
+        mediaUrls: [],
+        thumbnailUrls: [],
         replyToId: replyTo?.id,
+        replyTo: replyTo ? { id: replyTo.id, content: replyTo.content, sender: replyTo.sender || { id: 'system', firstName: 'System' } } : undefined,
         chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
-        mentionIds: mentionIds.length > 0 ? mentionIds : undefined,
+        mentionIds: [...mentionIds],
       };
-
-      console.log('[MessageInput] Sending message:', messageData);
-      await chatApi.createMessage(messageData);
-
-      if (saveDraftTimeoutRef.current) {
-        clearTimeout(saveDraftTimeoutRef.current);
-        saveDraftTimeoutRef.current = null;
+      optimisticId = onOptimisticMessage(payload);
+      if (optimisticId) {
+        onMessageSent();
+        setMessage('');
+        setMentionIds([]);
+        setSelectedImages([]);
+        hasLoadedDraftRef.current = false;
+        setTimeout(() => updateMultilineState(), 100);
+        onCancelReply?.();
       }
-
-      if (finalContextId && user?.id) {
-        try {
-          await chatApi.deleteDraft(
-            contextType,
-            finalContextId,
-            userChatId ? 'PUBLIC' : normalizeChatType(chatType)
-          );
-          
-          window.dispatchEvent(new CustomEvent('draft-deleted', {
-            detail: {
-              chatContextType: contextType,
-              contextId: finalContextId
-            }
-          }));
-        } catch (error) {
-          console.error('Failed to delete draft:', error);
-        }
-      }
-
-      setMessage('');
-      setMentionIds([]);
-      setSelectedImages([]);
-      hasLoadedDraftRef.current = false;
-      setTimeout(() => updateMultilineState(), 100);
-      onCancelReply?.();
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    } finally {
-      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+      onMessageSent();
     }
+
+    (async () => {
+      try {
+        const { originalUrls, thumbnailUrls } = await uploadImages();
+        const messageData: CreateMessageRequest = {
+          chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
+          contextId: finalContextId,
+          gameId: gameId,
+          content: trimmedContent || undefined,
+          mediaUrls: originalUrls.length > 0 ? originalUrls : [],
+          thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+          replyToId: replyTo?.id,
+          chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
+          mentionIds: mentionIds.length > 0 ? mentionIds : undefined,
+        };
+        const created = await chatApi.createMessage(messageData);
+        if (useOptimistic && optimisticId && onMessageCreated) {
+          onMessageCreated(optimisticId, created);
+        }
+        if (saveDraftTimeoutRef.current) {
+          clearTimeout(saveDraftTimeoutRef.current);
+          saveDraftTimeoutRef.current = null;
+        }
+        if (finalContextId && user?.id) {
+          try {
+            await chatApi.deleteDraft(
+              contextType,
+              finalContextId,
+              userChatId ? 'PUBLIC' : normalizeChatType(chatType)
+            );
+            window.dispatchEvent(new CustomEvent('draft-deleted', {
+              detail: { chatContextType: contextType, contextId: finalContextId }
+            }));
+          } catch (err) {
+            console.error('Failed to delete draft:', err);
+          }
+        }
+        if (!useOptimistic) {
+          setMessage('');
+          setMentionIds([]);
+          setSelectedImages([]);
+          hasLoadedDraftRef.current = false;
+          setTimeout(() => updateMultilineState(), 100);
+          onCancelReply?.();
+        }
+      } catch (error) {
+        console.error('Failed to send message:', error);
+        if (optimisticId && onSendFailed) onSendFailed(optimisticId);
+        else if (!useOptimistic) setMessage(trimmedContent);
+        toast.error(t('chat.sendFailed') || 'Failed to send message');
+      } finally {
+        setIsLoading(false);
+      }
+    })();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

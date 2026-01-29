@@ -36,6 +36,7 @@ interface GameResultsData {
     wins: number;
     losses: number;
     ties: number;
+    position?: number;
   }>;
 }
 
@@ -61,7 +62,8 @@ export async function evaluateBetCondition(
       condition.predefined,
       condition.entityType,
       entityId,
-      gameResults
+      gameResults,
+      condition.metadata
     );
   }
 
@@ -87,40 +89,38 @@ function isBetCondition(value: unknown): value is BetCondition {
   return true;
 }
 
+export function getConditionUserId(condition: unknown): string | null {
+  if (!isBetCondition(condition) || condition.entityType !== 'USER' || !condition.entityId) {
+    return null;
+  }
+  return condition.entityId;
+}
+
 function evaluatePredefinedCondition(
   condition: string,
   entityType: 'USER' | 'TEAM',
   entityId: string,
-  gameResults: GameResultsData
+  gameResults: GameResultsData,
+  metadata?: Record<string, any>
 ): BetEvaluationResult {
   switch (condition) {
     case 'WIN_GAME':
       return evaluateWinGame(entityId, gameResults);
-    
     case 'LOSE_GAME':
       return evaluateLoseGame(entityId, gameResults);
-    
-    case 'WIN_MATCH':
-      return evaluateWinMatch(entityId, gameResults);
-    
-    case 'LOSE_MATCH':
-      return evaluateLoseMatch(entityId, gameResults);
-    
-    case 'TIE_MATCH':
-      return evaluateTieMatch(entityId, gameResults);
-    
     case 'WIN_SET':
-      return evaluateWinSet(entityId, gameResults);
-    
+      return evaluateWinAtLeastOneSet(entityId, gameResults);
     case 'LOSE_SET':
-      return evaluateLoseSet(entityId, gameResults);
-    
-    case 'STREAK_3_0':
-      return evaluateStreak(entityId, gameResults, { wins: 3, losses: 0 });
-    
-    case 'STREAK_2_1':
-      return evaluateStreak(entityId, gameResults, { wins: 2, losses: 1 });
-    
+      return evaluateLoseAllSets(entityId, gameResults);
+    case 'WIN_ALL_SETS':
+      return evaluateWinAllSets(entityId, gameResults);
+    case 'LOSE_ALL_SETS':
+      return evaluateLoseAllSets(entityId, gameResults);
+    case 'TAKE_PLACE': {
+      const place = metadata?.place != null ? Number(metadata.place) : NaN;
+      if (!Number.isInteger(place) || place < 2) return { won: false, reason: 'Invalid place' };
+      return evaluateTakePlace(entityType, entityId, place, gameResults);
+    }
     default:
       return { won: false, reason: 'Unsupported condition' };
   }
@@ -142,78 +142,15 @@ function evaluateLoseGame(userId: string, gameResults: GameResultsData): BetEval
   return { won: outcome.isWinner === false };
 }
 
-function evaluateWinMatch(userId: string, gameResults: GameResultsData): BetEvaluationResult {
+function evaluateWinAtLeastOneSet(userId: string, gameResults: GameResultsData): BetEvaluationResult {
   for (const round of gameResults.rounds) {
     for (const match of round.matches) {
-      const userTeam = match.teams.find(team => 
-        team.playerIds.includes(userId)
-      );
-      
-      if (userTeam && match.winnerId) {
-        const won = match.winnerId === userTeam.id || 
-                   (match.winnerId === 'teamA' && userTeam.teamNumber === 1) ||
-                   (match.winnerId === 'teamB' && userTeam.teamNumber === 2);
-        
-        if (won) {
-          return { won: true };
-        }
-      }
-    }
-  }
-  return { won: false };
-}
-
-function evaluateLoseMatch(userId: string, gameResults: GameResultsData): BetEvaluationResult {
-  for (const round of gameResults.rounds) {
-    for (const match of round.matches) {
-      const userTeam = match.teams.find(team => 
-        team.playerIds.includes(userId)
-      );
-      
-      if (userTeam && match.winnerId) {
-        const lost = match.winnerId !== userTeam.id && 
-                     !(match.winnerId === 'teamA' && userTeam.teamNumber === 1) &&
-                     !(match.winnerId === 'teamB' && userTeam.teamNumber === 2);
-        
-        if (lost) {
-          return { won: true };
-        }
-      }
-    }
-  }
-  return { won: false };
-}
-
-function evaluateTieMatch(userId: string, gameResults: GameResultsData): BetEvaluationResult {
-  for (const round of gameResults.rounds) {
-    for (const match of round.matches) {
-      const userTeam = match.teams.find(team => 
-        team.playerIds.includes(userId)
-      );
-      
-      if (userTeam && !match.winnerId) {
-        return { won: true };
-      }
-    }
-  }
-  return { won: false };
-}
-
-function evaluateWinSet(userId: string, gameResults: GameResultsData): BetEvaluationResult {
-  for (const round of gameResults.rounds) {
-    for (const match of round.matches) {
-      const userTeam = match.teams.find(team => 
-        team.playerIds.includes(userId)
-      );
-      
+      const userTeam = match.teams.find(team => team.playerIds.includes(userId));
       if (userTeam) {
         for (const set of match.sets) {
           const userWonSet = (userTeam.teamNumber === 1 && set.teamAScore > set.teamBScore) ||
-                            (userTeam.teamNumber === 2 && set.teamBScore > set.teamAScore);
-          
-          if (userWonSet) {
-            return { won: true };
-          }
+            (userTeam.teamNumber === 2 && set.teamBScore > set.teamAScore);
+          if (userWonSet) return { won: true };
         }
       }
     }
@@ -221,58 +158,83 @@ function evaluateWinSet(userId: string, gameResults: GameResultsData): BetEvalua
   return { won: false };
 }
 
-function evaluateLoseSet(userId: string, gameResults: GameResultsData): BetEvaluationResult {
+function evaluateLoseAllSets(userId: string, gameResults: GameResultsData): BetEvaluationResult {
+  let playedAnySet = false;
+  let wonAnySet = false;
   for (const round of gameResults.rounds) {
     for (const match of round.matches) {
-      const userTeam = match.teams.find(team => 
-        team.playerIds.includes(userId)
-      );
-      
+      const userTeam = match.teams.find(team => team.playerIds.includes(userId));
       if (userTeam) {
         for (const set of match.sets) {
+          playedAnySet = true;
+          const userWonSet = (userTeam.teamNumber === 1 && set.teamAScore > set.teamBScore) ||
+            (userTeam.teamNumber === 2 && set.teamBScore > set.teamAScore);
+          if (userWonSet) wonAnySet = true;
+        }
+      }
+    }
+  }
+  return { won: playedAnySet && !wonAnySet };
+}
+
+function evaluateWinAllSets(userId: string, gameResults: GameResultsData): BetEvaluationResult {
+  let playedAnySet = false;
+  let lostAnySet = false;
+  for (const round of gameResults.rounds) {
+    for (const match of round.matches) {
+      const userTeam = match.teams.find(team => team.playerIds.includes(userId));
+      if (userTeam) {
+        for (const set of match.sets) {
+          playedAnySet = true;
           const userLostSet = (userTeam.teamNumber === 1 && set.teamAScore < set.teamBScore) ||
-                             (userTeam.teamNumber === 2 && set.teamBScore < set.teamAScore);
-          
-          if (userLostSet) {
-            return { won: true };
-          }
+            (userTeam.teamNumber === 2 && set.teamBScore < set.teamAScore);
+          if (userLostSet) lostAnySet = true;
         }
       }
     }
   }
-  return { won: false };
+  return { won: playedAnySet && !lostAnySet };
 }
 
-function evaluateStreak(
-  userId: string, 
-  gameResults: GameResultsData,
-  streak: { wins: number; losses: number }
+function evaluateTakePlace(
+  entityType: 'USER' | 'TEAM',
+  entityId: string,
+  place: number,
+  gameResults: GameResultsData
 ): BetEvaluationResult {
+  if (entityType === 'USER') {
+    const outcome = gameResults.outcomes.find(o => o.userId === entityId);
+    if (!outcome) return { won: false, reason: 'Entity not in outcomes' };
+    if (outcome.position != null && Number.isInteger(outcome.position)) {
+      return { won: outcome.position === place };
+    }
+    const sorted = [...gameResults.outcomes].sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      if (b.ties !== a.ties) return b.ties - a.ties;
+      return a.userId.localeCompare(b.userId);
+    });
+    const idx = sorted.findIndex(o => o.userId === entityId);
+    const actualPlace = idx + 1;
+    return { won: actualPlace === place };
+  }
+  const teamWins: Record<string, number> = {};
   for (const round of gameResults.rounds) {
     for (const match of round.matches) {
-      const userTeam = match.teams.find(team => 
-        team.playerIds.includes(userId)
-      );
-      
-      if (userTeam) {
-        let wins = 0;
-        let losses = 0;
-        
-        for (const set of match.sets) {
-          const userWon = (userTeam.teamNumber === 1 && set.teamAScore > set.teamBScore) ||
-                         (userTeam.teamNumber === 2 && set.teamBScore > set.teamAScore);
-          const userLost = (userTeam.teamNumber === 1 && set.teamAScore < set.teamBScore) ||
-                          (userTeam.teamNumber === 2 && set.teamBScore < set.teamAScore);
-          
-          if (userWon) wins++;
-          else if (userLost) losses++;
-        }
-        
-        if (wins === streak.wins && losses === streak.losses) {
-          return { won: true };
-        }
+      for (const team of match.teams) {
+        const tid = team.id;
+        if (!(tid in teamWins)) teamWins[tid] = 0;
+        const won = match.winnerId === tid ||
+          (match.winnerId === 'teamA' && team.teamNumber === 1) ||
+          (match.winnerId === 'teamB' && team.teamNumber === 2);
+        if (won) teamWins[team.id]++;
       }
     }
   }
-  return { won: false };
+  const sortedTeams = Object.entries(teamWins)
+    .sort(([idA, a], [idB, b]) => b !== a ? b - a : idA.localeCompare(idB))
+    .map(([id]) => id);
+  const idx = sortedTeams.indexOf(entityId);
+  if (idx < 0) return { won: false, reason: 'Team not in results' };
+  const actualPlace = idx + 1;
+  return { won: actualPlace === place };
 }

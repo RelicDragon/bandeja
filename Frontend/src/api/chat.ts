@@ -65,6 +65,18 @@ export interface MessageReadReceipt {
   user?: BasicUser;
 }
 
+export type ChatMessageWithStatus = ChatMessage & { _status?: 'SENDING'; _optimisticId?: string };
+
+export interface OptimisticMessagePayload {
+  content: string;
+  mediaUrls: string[];
+  thumbnailUrls: string[];
+  replyToId?: string;
+  replyTo?: ChatMessage['replyTo'];
+  chatType: ChatType;
+  mentionIds: string[];
+}
+
 export interface CreateMessageRequest {
   chatContextType?: ChatContextType;
   contextId?: string;

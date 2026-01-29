@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChatMessage } from '@/api/chat';
+import { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { UnifiedMessageMenu } from './UnifiedMessageMenu';
 import { ReplyPreview } from './ReplyPreview';
@@ -24,7 +24,7 @@ interface ContextMenuState {
 }
 
 interface MessageItemProps {
-  message: ChatMessage;
+  message: ChatMessageWithStatus | ChatMessage;
   onAddReaction: (messageId: string, emoji: string) => void;
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
@@ -65,6 +65,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const [currentMessage, setCurrentMessage] = useState(message);
   const isOwnMessage = currentMessage.senderId === user?.id;
   const isSystemMessage = !currentMessage.senderId;
+  const isSending = (currentMessage as ChatMessageWithStatus)._status === 'SENDING';
   const { observeMessage, unobserveMessage } = useMessageReadTracking(disableReadTracking);
   
   const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === currentMessage.id;
@@ -311,6 +312,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       const clientY = e.clientY;
       
       longPressTimer.current = setTimeout(() => {
+        if ((currentMessage as ChatMessageWithStatus)._status === 'SENDING') return;
         menuWasOpened = true;
         onOpenContextMenu(currentMessage.id, { x: clientX, y: clientY });
       }, 500);
@@ -340,6 +342,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       const clientY = e.touches[0].clientY;
       
       longPressTimer.current = setTimeout(() => {
+        if ((currentMessage as ChatMessageWithStatus)._status === 'SENDING') return;
         menuWasOpened = true;
         onOpenContextMenu(currentMessage.id, { x: clientX, y: clientY });
       }, 500);
@@ -401,7 +404,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         detachListeners(reactionButton);
       }
     };
-  }, [currentMessage.id, onOpenContextMenu]);
+  }, [currentMessage, onOpenContextMenu]);
 
   return (
     <>
@@ -729,10 +732,16 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     
                     {/* Time and read status inside bubble */}
                     <div className={`absolute bottom-1 right-2 flex items-center gap-1 ${isChannel ? 'text-gray-400 dark:text-gray-500' : (isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500')}`}>
-                      <span className="text-[10px]">{formatMessageTime(message.createdAt)}</span>
+                      <span className="text-[10px]">{formatMessageTime(currentMessage.createdAt)}</span>
                       {isOwnMessage && (
                         <div className="flex items-center">
-                          {currentMessage.readReceipts && currentMessage.readReceipts.length > 0 ? (
+                          {isSending ? (
+                            <div className="flex items-center gap-0.5" title="Sending...">
+                              <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-1" />
+                              <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-2" />
+                              <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-3" />
+                            </div>
+                          ) : currentMessage.readReceipts && currentMessage.readReceipts.length > 0 ? (
                             <div className="text-purple-200" title={`Read by ${currentMessage.readReceipts.length} ${currentMessage.readReceipts.length === 1 ? 'person' : 'people'}`}>
                               <DoubleTickIcon size={14} variant="double" />
                             </div>

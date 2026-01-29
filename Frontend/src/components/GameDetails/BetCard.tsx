@@ -80,22 +80,39 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
     }
   };
   
+  const getWinLoseEntityKey = (win: boolean) => {
+    const entityKeys: Record<string, string> = {
+      GAME: win ? 'winGame' : 'loseGame',
+      TOURNAMENT: win ? 'winTournament' : 'loseTournament',
+      LEAGUE: win ? 'winLeague' : 'loseLeague',
+      LEAGUE_SEASON: win ? 'winLeagueSeason' : 'loseLeagueSeason',
+    };
+    const key = entityKeys[game.entityType || 'GAME'] || (win ? 'winGame' : 'loseGame');
+    return t(`bets.condition.${key}`, { defaultValue: win ? 'Win the game' : 'Lose the game' });
+  };
+
   const getConditionText = () => {
     if (bet.condition.type === 'CUSTOM') {
       return bet.condition.customText || '';
     }
+    const pre = bet.condition.predefined || '';
+    if (pre === 'WIN_GAME') return getWinLoseEntityKey(true);
+    if (pre === 'LOSE_GAME') return getWinLoseEntityKey(false);
+    if (pre === 'TAKE_PLACE') {
+      const place = bet.condition.metadata?.place != null ? Number(bet.condition.metadata.place) : 0;
+      if (!Number.isInteger(place) || place < 2) {
+        return t('bets.invalidBet', { defaultValue: 'Invalid bet' });
+      }
+      const ordinal = place === 2 ? 'nd' : place === 3 ? 'rd' : 'th';
+      return t('bets.condition.takePlaceN', { n: place, ordinal, defaultValue: `Take ${place}${ordinal} place` } as Record<string, unknown>);
+    }
     const conditionMap: Record<string, string> = {
-      'WIN_GAME': t('bets.condition.winGame', { defaultValue: 'Win the game' }),
-      'LOSE_GAME': t('bets.condition.loseGame', { defaultValue: 'Lose the game' }),
-      'WIN_MATCH': t('bets.condition.winMatch', { defaultValue: 'Win a match' }),
-      'LOSE_MATCH': t('bets.condition.loseMatch', { defaultValue: 'Lose a match' }),
-      'TIE_MATCH': t('bets.condition.tieMatch', { defaultValue: 'Tie a match' }),
-      'WIN_SET': t('bets.condition.winSet', { defaultValue: 'Win a set' }),
-      'LOSE_SET': t('bets.condition.loseSet', { defaultValue: 'Lose a set' }),
-      'STREAK_3_0': t('bets.condition.streak30', { defaultValue: 'Win 3-0 in a match' }),
-      'STREAK_2_1': t('bets.condition.streak21', { defaultValue: 'Win 2-1 in a match' }),
+      'WIN_SET': t('bets.condition.winAtLeastOneSet', { defaultValue: 'Win at least one set' }),
+      'LOSE_SET': t('bets.condition.loseAllSets', { defaultValue: 'Lose all sets' }),
+      'WIN_ALL_SETS': t('bets.condition.winAllSets', { defaultValue: 'Win all sets' }),
+      'LOSE_ALL_SETS': t('bets.condition.loseAllSets', { defaultValue: 'Lose all sets' }),
     };
-    return conditionMap[bet.condition.predefined || ''] || bet.condition.predefined;
+    return conditionMap[pre] || pre;
   };
   
   const getUserBetStatus = () => {

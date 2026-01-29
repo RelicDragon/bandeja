@@ -19,17 +19,40 @@ interface CreateBetModalProps {
   bet?: Bet;
 }
 
-const getPredefinedConditions = (t: (key: string, options?: { defaultValue: string }) => string): { value: PredefinedCondition; label: string }[] => [
-  { value: 'WIN_MATCH', label: t('bets.condition.winMatch', { defaultValue: 'Win a match' }) },
-  { value: 'LOSE_MATCH', label: t('bets.condition.loseMatch', { defaultValue: 'Lose a match' }) },
-  { value: 'TIE_MATCH', label: t('bets.condition.tieMatch', { defaultValue: 'Tie a match' }) },
-  { value: 'WIN_GAME', label: t('bets.condition.winGame', { defaultValue: 'Win the game' }) },
-  { value: 'LOSE_GAME', label: t('bets.condition.loseGame', { defaultValue: 'Lose the game' }) },
-  { value: 'WIN_SET', label: t('bets.condition.winSet', { defaultValue: 'Win a set' }) },
-  { value: 'LOSE_SET', label: t('bets.condition.loseSet', { defaultValue: 'Lose a set' }) },
-  { value: 'STREAK_3_0', label: t('bets.condition.streak30', { defaultValue: 'Win 3-0 in a match' }) },
-  { value: 'STREAK_2_1', label: t('bets.condition.streak21', { defaultValue: 'Win 2-1 in a match' }) },
-];
+const getWinLoseEntityKey = (entityType: string, win: boolean) => {
+  const entityKeys: Record<string, string> = {
+    GAME: win ? 'winGame' : 'loseGame',
+    TOURNAMENT: win ? 'winTournament' : 'loseTournament',
+    LEAGUE: win ? 'winLeague' : 'loseLeague',
+    LEAGUE_SEASON: win ? 'winLeagueSeason' : 'loseLeagueSeason',
+  };
+  return entityKeys[entityType || 'GAME'] || (win ? 'winGame' : 'loseGame');
+};
+
+const getPredefinedConditionOptions = (
+  t: (key: string, options?: { defaultValue?: string; [k: string]: any }) => string,
+  entityType: string | undefined,
+  game: Game
+): { value: string; label: string }[] => {
+  const et = entityType || 'GAME';
+  const maxPlace = game.fixedTeams?.length ?? game.participants?.filter(p => p.isPlaying).length ?? 0;
+  const base: { value: string; label: string }[] = [
+    { value: 'WIN_GAME', label: t(`bets.condition.${getWinLoseEntityKey(et, true)}`, { defaultValue: 'Win the game' }) },
+    { value: 'LOSE_GAME', label: t(`bets.condition.${getWinLoseEntityKey(et, false)}`, { defaultValue: 'Lose the game' }) },
+    { value: 'WIN_SET', label: t('bets.condition.winAtLeastOneSet', { defaultValue: 'Win at least one set' }) },
+    { value: 'LOSE_SET', label: t('bets.condition.loseAllSets', { defaultValue: 'Lose all sets' }) },
+    { value: 'WIN_ALL_SETS', label: t('bets.condition.winAllSets', { defaultValue: 'Win all sets' }) },
+    { value: 'LOSE_ALL_SETS', label: t('bets.condition.loseAllSets', { defaultValue: 'Lose all sets' }) },
+  ];
+  const ordinal = (p: number) => (p === 2 ? 'nd' : p === 3 ? 'rd' : 'th');
+  for (let place = 2; place <= maxPlace; place++) {
+    base.push({
+      value: `TAKE_PLACE_${place}`,
+      label: t('bets.condition.takePlaceN', { n: place, ordinal: ordinal(place), defaultValue: `Take ${place}${ordinal(place)} place` }),
+    });
+  }
+  return base;
+};
 
 export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdated, bet }: CreateBetModalProps) => {
   const { t } = useTranslation();
@@ -37,7 +60,10 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
   const [activeTab, setActiveTab] = useState<'condition' | 'stake'>('condition');
   const [conditionType, setConditionType] = useState<BetCondition['type']>(bet?.condition.type || 'PREDEFINED');
   const [predefinedCondition, setPredefinedCondition] = useState<PredefinedCondition>(
-    (bet?.condition.predefined as PredefinedCondition) || 'WIN_MATCH'
+    (bet?.condition.predefined as PredefinedCondition) || 'WIN_GAME'
+  );
+  const [takePlaceNumber, setTakePlaceNumber] = useState<number>(
+    (bet?.condition.metadata?.place != null ? Number(bet.condition.metadata.place) : NaN) || 2
   );
   const [customCondition, setCustomCondition] = useState(bet?.condition.customText || '');
   const [entityId, setEntityId] = useState<string>(bet?.condition.entityId || '');
@@ -66,7 +92,8 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
       
       if (bet) {
         setConditionType(bet.condition.type);
-        setPredefinedCondition((bet.condition.predefined as PredefinedCondition) || 'WIN_MATCH');
+        setPredefinedCondition((bet.condition.predefined as PredefinedCondition) || 'WIN_GAME');
+        setTakePlaceNumber(bet.condition.metadata?.place != null ? Number(bet.condition.metadata.place) : 2);
         setCustomCondition(bet.condition.customText || '');
         setEntityId(bet.condition.entityId ? String(bet.condition.entityId) : '');
         setStakeType(bet.stakeType);
@@ -79,6 +106,7 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
         setRewardText(bet.rewardText || '');
       } else {
         setEntityId('');
+        setTakePlaceNumber(2);
       }
     }
   }, [isOpen, bet]);
@@ -91,6 +119,10 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
 
     if (!entityId) {
       toast.error(t('bets.selectEntity', { defaultValue: 'Please select who this challenge applies to' }));
+      return;
+    }
+    if (conditionType === 'PREDEFINED' && predefinedCondition === 'TAKE_PLACE' && (takePlaceNumber < 2 || !Number.isInteger(takePlaceNumber))) {
+      toast.error(t('bets.selectPlace', { defaultValue: 'Please select place' }));
       return;
     }
 
@@ -127,6 +159,7 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
         customText: conditionType === 'CUSTOM' ? customCondition : undefined,
         entityType: 'USER',
         entityId,
+        metadata: conditionType === 'PREDEFINED' && predefinedCondition === 'TAKE_PLACE' ? { place: takePlaceNumber } : undefined,
       };
 
       if (isEditMode && bet) {
@@ -233,12 +266,17 @@ export const CreateBetModal = ({ isOpen, game, onClose, onBetCreated, onBetUpdat
                     {t('bets.conditionLabel', { defaultValue: 'Condition' })}
                   </label>
                   <Select
-                    options={getPredefinedConditions(t).map(cond => ({
-                      value: cond.value,
-                      label: cond.label,
-                    }))}
-                    value={predefinedCondition}
-                    onChange={(value) => setPredefinedCondition(value as PredefinedCondition)}
+                    options={getPredefinedConditionOptions(t, game.entityType, game)}
+                    value={predefinedCondition === 'TAKE_PLACE' ? `TAKE_PLACE_${takePlaceNumber}` : predefinedCondition}
+                    onChange={(value) => {
+                      if (value.startsWith('TAKE_PLACE_')) {
+                        const n = parseInt(value.replace('TAKE_PLACE_', ''), 10);
+                        setPredefinedCondition('TAKE_PLACE');
+                        setTakePlaceNumber(n);
+                      } else {
+                        setPredefinedCondition(value as PredefinedCondition);
+                      }
+                    }}
                   />
                 </div>
               ) : (

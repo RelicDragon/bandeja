@@ -171,3 +171,58 @@ export async function sendBetNeedsReviewNotification(
     console.error(`Failed to send Telegram bet needs review notification to user ${userId}:`, error);
   }
 }
+
+export async function sendBetCancelledNotification(api: Api, betId: string, userId: string) {
+  const bet = await prisma.bet.findUnique({
+    where: { id: betId },
+    include: {
+      game: {
+        include: {
+          court: { include: { club: true } },
+          club: true,
+        },
+      },
+      creator: {
+        select: {
+          telegramId: true,
+          language: true,
+          currentCityId: true,
+          sendTelegramMessages: true,
+        },
+      },
+      acceptedByUser: {
+        select: {
+          telegramId: true,
+          language: true,
+          currentCityId: true,
+          sendTelegramMessages: true,
+        },
+      },
+    },
+  });
+
+  if (!bet || !bet.game) return;
+
+  const user = userId === bet.creatorId ? bet.creator : bet.acceptedByUser;
+  if (!user || !user.telegramId || !user.sendTelegramMessages) return;
+
+  try {
+    const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
+    const gameInfo = await formatGameInfoForUser(bet.game, user.currentCityId, lang);
+    const gameName = bet.game.name ? bet.game.name : t(`games.gameTypes.${bet.game.gameType}`, lang);
+    const clubName = bet.game.court?.club?.name || bet.game.club?.name;
+
+    const title = t('telegram.betCancelled', lang) || '❌ Challenge Cancelled';
+    let message = `${title}\n\n`;
+    message += `🎮 ${escapeMarkdown(gameName)}\n`;
+    if (clubName) message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
+    message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
+    message += `\n${escapeMarkdown(t('telegram.betCancelledDescription', lang) || 'Bet cancelled because a player in the condition left the game. Money refunded.')}`;
+
+    const buttons = [[{ text: t('telegram.viewGame', lang), url: `${config.frontendUrl}/games/${bet.gameId}` }]];
+    const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
+    await api.sendMessage(user.telegramId, finalMessage, options);
+  } catch (error) {
+    console.error(`Failed to send Telegram bet cancelled notification to user ${userId}:`, error);
+  }
+}

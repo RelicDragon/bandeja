@@ -1,9 +1,10 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { Bet, TransactionType } from '@prisma/client';
-import { BetCondition } from './betConditionEvaluator.service';
+import { BetCondition, getConditionUserId } from './betConditionEvaluator.service';
 import { TransactionService } from '../transaction.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import notificationService from '../notification.service';
 
 export class BetService {
   static async getGameBets(gameId: string) {
@@ -48,7 +49,7 @@ export class BetService {
       throw new ApiError(400, 'Cannot create bets for finished games');
     }
 
-    // If stake is coins, transfer from creator's wallet
+    let stakeCharged = false;
     if (stakeType === 'COINS' && stakeCoins && stakeCoins > 0) {
       const creator = await prisma.user.findUnique({
         where: { id: creatorId },
@@ -63,7 +64,6 @@ export class BetService {
         throw new ApiError(400, 'Insufficient coins in wallet');
       }
 
-      // Transfer coins to escrow (BandejaBank) - use PURCHASE type which transfers to BandejaBank
       await TransactionService.createTransaction({
         type: TransactionType.PURCHASE,
         fromUserId: creatorId,
@@ -74,27 +74,46 @@ export class BetService {
           total: stakeCoins
         }]
       });
+      stakeCharged = true;
     }
 
-    return await prisma.bet.create({
-      data: {
-        gameId,
-        creatorId,
-        condition: condition as any,
-        stakeType,
-        stakeCoins,
-        stakeText,
-        rewardType,
-        rewardCoins,
-        rewardText,
-        status: 'OPEN'
-      },
-      include: {
-        creator: {
-          select: USER_SELECT_FIELDS
+    try {
+      return await prisma.bet.create({
+        data: {
+          gameId,
+          creatorId,
+          condition: condition as any,
+          stakeType,
+          stakeCoins,
+          stakeText,
+          rewardType,
+          rewardCoins,
+          rewardText,
+          status: 'OPEN'
+        },
+        include: {
+          creator: {
+            select: USER_SELECT_FIELDS
+          }
         }
+      });
+    } catch (err) {
+      if (stakeCharged && stakeType === 'COINS' && stakeCoins && stakeCoins > 0) {
+        await TransactionService.createTransaction({
+          type: TransactionType.REFUND,
+          toUserId: creatorId,
+          transactionRows: [{
+            name: `Bet create rollback refund for game ${gameId}`,
+            price: stakeCoins,
+            qty: 1,
+            total: stakeCoins
+          }]
+        }).catch(rollbackErr =>
+          console.error('Failed to rollback stake after bet create failure:', rollbackErr)
+        );
       }
-    });
+      throw err;
+    }
   }
 
   static async acceptBet(betId: string, userId: string): Promise<Bet> {
@@ -123,7 +142,7 @@ export class BetService {
       throw new ApiError(400, 'Cannot accept bets for finished games');
     }
 
-    // If reward is coins, check acceptor has enough and transfer to escrow
+    let rewardCharged = false;
     if (bet.rewardType === 'COINS' && bet.rewardCoins && bet.rewardCoins > 0) {
       const acceptor = await prisma.user.findUnique({
         where: { id: userId },
@@ -138,7 +157,6 @@ export class BetService {
         throw new ApiError(400, 'Insufficient coins in wallet');
       }
 
-      // Transfer coins to escrow (BandejaBank) - use PURCHASE type which transfers to BandejaBank
       await TransactionService.createTransaction({
         type: TransactionType.PURCHASE,
         fromUserId: userId,
@@ -149,24 +167,43 @@ export class BetService {
           total: bet.rewardCoins
         }]
       });
+      rewardCharged = true;
     }
 
-    return await prisma.bet.update({
-      where: { id: betId },
-      data: {
-        status: 'ACCEPTED',
-        acceptedBy: userId,
-        acceptedAt: new Date()
-      },
-      include: {
-        creator: {
-          select: USER_SELECT_FIELDS
+    try {
+      return await prisma.bet.update({
+        where: { id: betId },
+        data: {
+          status: 'ACCEPTED',
+          acceptedBy: userId,
+          acceptedAt: new Date()
         },
-        acceptedByUser: {
-          select: USER_SELECT_FIELDS
+        include: {
+          creator: {
+            select: USER_SELECT_FIELDS
+          },
+          acceptedByUser: {
+            select: USER_SELECT_FIELDS
+          }
         }
+      });
+    } catch (err) {
+      if (rewardCharged && bet.rewardType === 'COINS' && bet.rewardCoins && bet.rewardCoins > 0) {
+        await TransactionService.createTransaction({
+          type: TransactionType.REFUND,
+          toUserId: userId,
+          transactionRows: [{
+            name: `Bet accept rollback refund for game ${bet.gameId}`,
+            price: bet.rewardCoins,
+            qty: 1,
+            total: bet.rewardCoins
+          }]
+        }).catch(rollbackErr =>
+          console.error('Failed to rollback reward after bet accept failure:', rollbackErr)
+        );
       }
-    });
+      throw err;
+    }
   }
 
   static async cancelBet(betId: string, userId: string): Promise<void> {
@@ -186,7 +223,11 @@ export class BetService {
       throw new ApiError(400, 'Only open bets can be cancelled');
     }
 
-    // Refund stake coins if bet was created with coins
+    await prisma.bet.update({
+      where: { id: betId },
+      data: { status: 'CANCELLED' }
+    });
+
     if (bet.stakeType === 'COINS' && bet.stakeCoins && bet.stakeCoins > 0) {
       await TransactionService.createTransaction({
         type: TransactionType.REFUND,
@@ -199,11 +240,80 @@ export class BetService {
         }]
       });
     }
+  }
 
-    await prisma.bet.update({
-      where: { id: betId },
-      data: { status: 'CANCELLED' }
+  static async cancelBetsWithUserInCondition(gameId: string, userId: string): Promise<void> {
+    const bets = await prisma.bet.findMany({
+      where: {
+        gameId,
+        status: { in: ['OPEN', 'ACCEPTED'] }
+      },
+      include: {
+        creator: { select: USER_SELECT_FIELDS },
+        acceptedByUser: { select: USER_SELECT_FIELDS }
+      }
     });
+
+    const toCancel = bets.filter(b => getConditionUserId(b.condition) === userId);
+    if (toCancel.length === 0) return;
+
+    const resolutionReason = 'Bet cancelled because a player in the condition left the game.';
+
+    await prisma.$transaction(async (tx) => {
+      for (const bet of toCancel) {
+        await tx.bet.update({
+          where: { id: bet.id },
+          data: { status: 'CANCELLED', resolutionReason }
+        });
+      }
+    });
+
+    for (const bet of toCancel) {
+      if (bet.stakeType === 'COINS' && bet.stakeCoins && bet.stakeCoins > 0) {
+        try {
+          await TransactionService.createTransaction({
+            type: TransactionType.REFUND,
+            toUserId: bet.creatorId,
+            transactionRows: [{
+              name: `Bet cancelled (player left) refund for game ${bet.gameId}`,
+              price: bet.stakeCoins,
+              qty: 1,
+              total: bet.stakeCoins
+            }]
+          });
+        } catch (err) {
+          console.error(`Failed to refund stake for bet ${bet.id} (creator ${bet.creatorId}):`, err);
+        }
+      }
+      if (bet.status === 'ACCEPTED' && bet.rewardType === 'COINS' && bet.rewardCoins && bet.rewardCoins > 0 && bet.acceptedBy) {
+        try {
+          await TransactionService.createTransaction({
+            type: TransactionType.REFUND,
+            toUserId: bet.acceptedBy,
+            transactionRows: [{
+              name: `Bet cancelled (player left) refund for game ${bet.gameId}`,
+              price: bet.rewardCoins,
+              qty: 1,
+              total: bet.rewardCoins
+            }]
+          });
+        } catch (err) {
+          console.error(`Failed to refund reward for bet ${bet.id} (acceptor ${bet.acceptedBy}):`, err);
+        }
+      }
+      try {
+        await notificationService.sendBetCancelledNotification(bet.id, bet.creatorId);
+      } catch (err) {
+        console.error(`Failed to send bet cancelled notification to creator ${bet.creatorId}:`, err);
+      }
+      if (bet.acceptedBy) {
+        try {
+          await notificationService.sendBetCancelledNotification(bet.id, bet.acceptedBy);
+        } catch (err) {
+          console.error(`Failed to send bet cancelled notification to acceptor ${bet.acceptedBy}:`, err);
+        }
+      }
+    }
   }
 
   static async updateBet(
@@ -245,6 +355,8 @@ export class BetService {
     }
 
     type StakeRewardType = 'COINS' | 'TEXT';
+    let stakeRefunded = 0;
+    let stakeCharged = 0;
     const updateData: Partial<{
       condition: any;
       stakeType: StakeRewardType;
@@ -296,6 +408,7 @@ export class BetService {
               total: bet.stakeCoins
             }]
           });
+          stakeRefunded = bet.stakeCoins;
         }
 
         if (nextStakeType === 'COINS') {
@@ -319,6 +432,7 @@ export class BetService {
               total: ensuredStakeCoins
             }]
           });
+          stakeCharged = ensuredStakeCoins;
         }
       }
 
@@ -352,17 +466,49 @@ export class BetService {
       updateData.rewardText = nextRewardType === 'TEXT' ? desiredRewardText : null;
     }
 
-    return await prisma.bet.update({
-      where: { id: betId },
-      data: updateData,
-      include: {
-        creator: {
-          select: USER_SELECT_FIELDS
-        },
-        acceptedByUser: {
-          select: USER_SELECT_FIELDS
+    try {
+      return await prisma.bet.update({
+        where: { id: betId },
+        data: updateData,
+        include: {
+          creator: {
+            select: USER_SELECT_FIELDS
+          },
+          acceptedByUser: {
+            select: USER_SELECT_FIELDS
+          }
         }
+      });
+    } catch (err) {
+      if (stakeCharged > 0) {
+        await TransactionService.createTransaction({
+          type: TransactionType.REFUND,
+          toUserId: bet.creatorId,
+          transactionRows: [{
+            name: `Bet update rollback refund for game ${bet.gameId}`,
+            price: stakeCharged,
+            qty: 1,
+            total: stakeCharged
+          }]
+        }).catch(rollbackErr =>
+          console.error('Failed to rollback stake charge after bet update failure:', rollbackErr)
+        );
       }
-    });
+      if (stakeRefunded > 0) {
+        await TransactionService.createTransaction({
+          type: TransactionType.PURCHASE,
+          fromUserId: bet.creatorId,
+          transactionRows: [{
+            name: `Bet update rollback restore stake for game ${bet.gameId}`,
+            price: stakeRefunded,
+            qty: 1,
+            total: stakeRefunded
+          }]
+        }).catch(rollbackErr =>
+          console.error('Failed to rollback stake refund after bet update failure:', rollbackErr)
+        );
+      }
+      throw err;
+    }
   }
 }

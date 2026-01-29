@@ -5,8 +5,24 @@ import { TransactionService } from '../transaction.service';
 import notificationService from '../notification.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
+interface ResolvedBetPostTx {
+  betId: string;
+  gameId: string;
+  winnerId: string;
+  loserId: string;
+  totalCoinsWon: number;
+  stakeCoins: number | null;
+  rewardCoins: number | null;
+  stakeType: string;
+  rewardType: string;
+}
+
+interface CancelledOpenBetPostTx {
+  betId: string;
+  gameId: string;
+  creatorId: string;
+  stakeCoins: number;
+}
 
 /**
  * Called when game resultsStatus changes to FINAL
@@ -14,8 +30,8 @@ const RETRY_DELAY_MS = 1000;
  */
 export async function resolveGameBets(gameId: string): Promise<void> {
   console.log(`[BET RESOLUTION] Starting bet resolution for game ${gameId}`);
-  
-  return await prisma.$transaction(async (tx) => {
+
+  const postTx = await prisma.$transaction(async (tx) => {
     const game = await tx.game.findUnique({
       where: { id: gameId },
       include: {
@@ -51,12 +67,12 @@ export async function resolveGameBets(gameId: string): Promise<void> {
 
     if (!game) {
       console.log(`[BET RESOLUTION] Game ${gameId} not found, aborting bet resolution`);
-      return;
+      return { needsReviewBets: [], cancelledOpenBets: [], resolvedBets: [] };
     }
 
     if (game.resultsStatus !== 'FINAL') {
       console.log(`[BET RESOLUTION] Game ${gameId} resultsStatus is ${game.resultsStatus}, not FINAL. Aborting bet resolution`);
-      return;
+      return { needsReviewBets: [], cancelledOpenBets: [], resolvedBets: [] };
     }
 
     console.log(`[BET RESOLUTION] Game ${gameId} found with FINAL status, fetching bets with status OPEN or ACCEPTED`);
@@ -100,12 +116,14 @@ export async function resolveGameBets(gameId: string): Promise<void> {
         isWinner: outcome.isWinner,
         wins: outcome.wins,
         losses: outcome.losses,
-        ties: outcome.ties
+        ties: outcome.ties,
+        position: outcome.position ?? undefined
       }))
     };
 
-    const processedBetIds: string[] = [];
-    const failedBetIds: string[] = [];
+    const needsReviewBets: Bet[] = [];
+    const cancelledOpenBets: CancelledOpenBetPostTx[] = [];
+    const resolvedBets: ResolvedBetPostTx[] = [];
 
     for (const bet of bets) {
       try {
@@ -128,50 +146,140 @@ export async function resolveGameBets(gameId: string): Promise<void> {
         }
 
         if (bet.status === 'OPEN' && !bet.acceptedBy) {
-          await cancelOpenBet(bet, tx);
-          processedBetIds.push(bet.id);
+          const cancelled = await cancelOpenBet(bet, tx);
+          if (cancelled) cancelledOpenBets.push(cancelled);
           continue;
         }
 
         console.log(`[BET RESOLUTION] Evaluating bet condition for bet ${bet.id}`);
         const result = await evaluateBetCondition(bet, gameResults);
         console.log(`[BET RESOLUTION] Bet ${bet.id} evaluation result: won=${result.won}, reason=${result.reason}`);
-        
-        await resolveBetWithRetry(bet, result, tx);
-        processedBetIds.push(bet.id);
+
+        const resolved = await resolveBet(bet, result, tx);
+        if (resolved) resolvedBets.push(resolved);
         console.log(`[BET RESOLUTION] Bet ${bet.id} resolved successfully`);
       } catch (error) {
         console.error(`[BET RESOLUTION] Failed to resolve bet ${bet.id}:`, error);
-        failedBetIds.push(bet.id);
-        
+
         try {
           await tx.bet.update({
             where: { id: bet.id },
             data: { status: 'NEEDS_REVIEW' }
           });
           console.log(`[BET RESOLUTION] Bet ${bet.id} marked as NEEDS_REVIEW due to error`);
-          
-          await notifyBetNeedsReview(bet);
+          needsReviewBets.push(bet);
         } catch (updateError) {
           console.error(`[BET RESOLUTION] Failed to update bet ${bet.id} to NEEDS_REVIEW:`, updateError);
         }
       }
     }
-    
-    console.log(`[BET RESOLUTION] Completed bet resolution for game ${gameId}: ${processedBetIds.length} processed, ${failedBetIds.length} failed`);
+
+    console.log(`[BET RESOLUTION] Completed bet resolution for game ${gameId}: ${resolvedBets.length + cancelledOpenBets.length} processed, ${needsReviewBets.length} need review`);
+    return { needsReviewBets, cancelledOpenBets, resolvedBets };
   }, {
     isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     timeout: 30000
   });
+
+  for (const bet of postTx.needsReviewBets) {
+    notifyBetNeedsReview(bet).catch(err =>
+      console.error(`[BET RESOLUTION] Failed to notify NEEDS_REVIEW for bet ${bet.id}:`, err)
+    );
+  }
+  for (const c of postTx.cancelledOpenBets) {
+    runCancelledOpenBetPostTx(c).catch(err =>
+      console.error(`[BET RESOLUTION] Failed post-tx for cancelled open bet ${c.betId}:`, err)
+    );
+  }
+  for (const r of postTx.resolvedBets) {
+    runResolvedBetPostTx(r).catch(err =>
+      console.error(`[BET RESOLUTION] Failed post-tx for resolved bet ${r.betId}:`, err)
+    );
+  }
+}
+
+async function runCancelledOpenBetPostTx(c: CancelledOpenBetPostTx): Promise<void> {
+  if (c.stakeCoins > 0) {
+    await TransactionService.createTransaction({
+      type: TransactionType.REFUND,
+      toUserId: c.creatorId,
+      transactionRows: [{
+        name: `Bet cancelled (game finished) for game ${c.gameId}`,
+        price: c.stakeCoins,
+        qty: 1,
+        total: c.stakeCoins
+      }]
+    });
+  }
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    const bet = await prisma.bet.findUnique({
+      where: { id: c.betId },
+      include: {
+        creator: { select: USER_SELECT_FIELDS },
+        acceptedByUser: { select: USER_SELECT_FIELDS },
+        winner: { select: USER_SELECT_FIELDS }
+      }
+    });
+    if (bet) {
+      await socketService.emit('bet:updated', { gameId: c.gameId, bet });
+    }
+  }
+}
+
+async function runResolvedBetPostTx(r: ResolvedBetPostTx): Promise<void> {
+  let existingMeta = (await prisma.bet.findUnique({ where: { id: r.betId }, select: { metadata: true } }))?.metadata as Record<string, unknown> | null;
+  let resolution: Record<string, unknown> = { ...(existingMeta?.resolution as object || {}), stakeTransferred: false, rewardTransferred: false };
+
+  if (r.stakeType === 'COINS' && r.stakeCoins && r.stakeCoins > 0) {
+    await TransactionService.createTransaction({
+      type: TransactionType.REFUND,
+      toUserId: r.winnerId,
+      transactionRows: [{
+        name: `Bet stake won for game ${r.gameId}`,
+        price: r.stakeCoins,
+        qty: 1,
+        total: r.stakeCoins
+      }]
+    });
+    resolution = { ...resolution, stakeTransferred: true };
+    existingMeta = { ...existingMeta, resolution };
+    await prisma.bet.update({
+      where: { id: r.betId },
+      data: { metadata: existingMeta as object }
+    });
+  }
+  if (r.rewardType === 'COINS' && r.rewardCoins && r.rewardCoins > 0) {
+    await TransactionService.createTransaction({
+      type: TransactionType.REFUND,
+      toUserId: r.winnerId,
+      transactionRows: [{
+        name: `Bet reward won for game ${r.gameId}`,
+        price: r.rewardCoins,
+        qty: 1,
+        total: r.rewardCoins
+      }]
+    });
+    const metaAfterStake = (await prisma.bet.findUnique({ where: { id: r.betId }, select: { metadata: true } }))?.metadata as Record<string, unknown> | null;
+    const resolutionAfterReward = { ...(metaAfterStake?.resolution as object || {}), rewardTransferred: true };
+    await prisma.bet.update({
+      where: { id: r.betId },
+      data: { metadata: { ...metaAfterStake, resolution: resolutionAfterReward } as object }
+    });
+  }
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    await socketService.emit('bet:resolved', { gameId: r.gameId, betId: r.betId, winnerId: r.winnerId, loserId: r.loserId });
+  }
+  await notificationService.sendBetResolvedNotification(r.betId, r.winnerId, true, r.totalCoinsWon);
+  await notificationService.sendBetResolvedNotification(r.betId, r.loserId, false);
 }
 
 async function cancelOpenBet(
   bet: Bet,
   tx: Prisma.TransactionClient
-): Promise<void> {
-  console.log(`[BET RESOLUTION] Bet ${bet.id} is OPEN and not accepted, cancelling and refunding`);
-  
-  // Re-check bet status with optimistic locking
+): Promise<CancelledOpenBetPostTx | null> {
+  console.log(`[BET RESOLUTION] Bet ${bet.id} is OPEN and not accepted, cancelling`);
   const currentBet = await tx.bet.findUnique({
     where: { id: bet.id },
     select: { id: true, status: true, stakeType: true, stakeCoins: true, creatorId: true, gameId: true, acceptedBy: true }
@@ -179,95 +287,41 @@ async function cancelOpenBet(
 
   if (!currentBet) {
     console.log(`[BET RESOLUTION] Bet ${bet.id} no longer exists, skipping cancellation`);
-    return;
+    return null;
   }
 
   if (currentBet.status !== 'OPEN' || currentBet.acceptedBy) {
     console.log(`[BET RESOLUTION] Bet ${bet.id} status changed to ${currentBet.status}, skipping cancellation`);
-    return;
+    return null;
   }
 
-  if (currentBet.stakeType === 'COINS' && currentBet.stakeCoins && currentBet.stakeCoins > 0) {
-    console.log(`[BET RESOLUTION] Refunding ${currentBet.stakeCoins} coins to creator ${currentBet.creatorId} for bet ${bet.id}`);
-    await TransactionService.createTransaction({
-      type: TransactionType.REFUND,
-      toUserId: currentBet.creatorId,
-      transactionRows: [{
-        name: `Bet cancelled (game finished) for game ${currentBet.gameId}`,
-        price: currentBet.stakeCoins,
-        qty: 1,
-        total: currentBet.stakeCoins
-      }]
-    });
-    console.log(`[BET RESOLUTION] Refund transaction created for bet ${bet.id}`);
-  }
-
-  const cancelledBet = await tx.bet.update({
+  await tx.bet.update({
     where: { id: bet.id },
     data: {
       status: 'CANCELLED',
       resolutionReason: 'Game finished before bet was accepted'
     }
   });
-
   console.log(`[BET RESOLUTION] Bet ${bet.id} cancelled successfully`);
-
-  try {
-    const socketService = (global as any).socketService;
-    if (socketService) {
-      await socketService.emit('bet:updated', {
-        gameId: bet.gameId,
-        bet: cancelledBet
-      });
-      console.log(`[BET RESOLUTION] Socket event emitted for cancelled bet ${bet.id}`);
-    }
-  } catch (error) {
-    console.error(`[BET RESOLUTION] Failed to emit bet updated event for bet ${bet.id}:`, error);
-  }
-}
-
-async function resolveBetWithRetry(
-  bet: Bet,
-  evaluation: BetEvaluationResult,
-  tx: Prisma.TransactionClient
-): Promise<void> {
-  let lastError: Error | null = null;
-  
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      await resolveBet(bet, evaluation, tx);
-      return;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      console.error(`[BET RESOLUTION] Attempt ${attempt}/${MAX_RETRIES} failed for bet ${bet.id}:`, lastError);
-      
-      if (attempt < MAX_RETRIES) {
-        const delay = RETRY_DELAY_MS * attempt;
-        console.log(`[BET RESOLUTION] Retrying bet ${bet.id} in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-  }
-  
-  throw lastError || new Error(`Failed to resolve bet ${bet.id} after ${MAX_RETRIES} attempts`);
+  return {
+    betId: bet.id,
+    gameId: bet.gameId,
+    creatorId: currentBet.creatorId,
+    stakeCoins: currentBet.stakeType === 'COINS' && currentBet.stakeCoins ? currentBet.stakeCoins : 0
+  };
 }
 
 async function resolveBet(
   bet: Bet,
   evaluation: BetEvaluationResult,
   tx: Prisma.TransactionClient
-): Promise<void> {
+): Promise<ResolvedBetPostTx | null> {
   console.log(`[BET RESOLUTION] Resolving bet ${bet.id} with evaluation: won=${evaluation.won}`);
-  
   const currentBet = await tx.bet.findUnique({
     where: { id: bet.id },
-    include: { 
-      creator: {
-        select: USER_SELECT_FIELDS,
-      }, 
-      acceptedByUser: {
-        select: USER_SELECT_FIELDS,
-      }
+    select: {
+      id: true, status: true, gameId: true, creatorId: true, acceptedBy: true,
+      stakeType: true, stakeCoins: true, rewardType: true, rewardCoins: true
     }
   });
 
@@ -277,7 +331,7 @@ async function resolveBet(
 
   if (currentBet.status === 'RESOLVED' || currentBet.status === 'CANCELLED') {
     console.log(`[BET RESOLUTION] Bet ${bet.id} already ${currentBet.status}, skipping (idempotency)`);
-    return;
+    return null;
   }
 
   if (!currentBet.acceptedBy) {
@@ -286,8 +340,8 @@ async function resolveBet(
 
   const winnerId = evaluation.won ? currentBet.creatorId : currentBet.acceptedBy;
   const loserId = evaluation.won ? currentBet.acceptedBy : currentBet.creatorId;
-  
-  console.log(`[BET RESOLUTION] Bet ${bet.id} winner: ${winnerId}, loser: ${loserId}`);
+  const totalCoinsWon = (currentBet.stakeType === 'COINS' ? (currentBet.stakeCoins || 0) : 0) +
+    (currentBet.rewardType === 'COINS' ? (currentBet.rewardCoins || 0) : 0);
 
   const resolutionMetadata = {
     won: evaluation.won,
@@ -297,8 +351,7 @@ async function resolveBet(
     rewardTransferred: false
   };
 
-  const existingMetadata = (currentBet.metadata as any) || {};
-  const existingResolution = existingMetadata.resolution || {};
+  const existingMetadata = (await tx.bet.findUnique({ where: { id: bet.id }, select: { metadata: true } }))?.metadata as Record<string, unknown> || {};
 
   console.log(`[BET RESOLUTION] Updating bet ${bet.id} status to RESOLVED`);
   await tx.bet.update({
@@ -310,102 +363,22 @@ async function resolveBet(
       resolutionReason: evaluation.reason,
       metadata: {
         ...existingMetadata,
-        resolution: {
-          ...resolutionMetadata
-        }
+        resolution: resolutionMetadata
       }
     }
   });
   console.log(`[BET RESOLUTION] Bet ${bet.id} updated to RESOLVED status`);
-
-  try {
-    if (currentBet.stakeType === 'COINS' && currentBet.stakeCoins && currentBet.stakeCoins > 0 && !existingResolution.stakeTransferred) {
-      console.log(`[BET RESOLUTION] Transferring stake coins ${currentBet.stakeCoins} to winner ${winnerId} for bet ${bet.id}`);
-      await TransactionService.createTransaction({
-        type: TransactionType.REFUND,
-        toUserId: winnerId,
-        transactionRows: [{
-          name: `Bet stake won for game ${currentBet.gameId}`,
-          price: currentBet.stakeCoins,
-          qty: 1,
-          total: currentBet.stakeCoins
-        }]
-      });
-      console.log(`[BET RESOLUTION] Stake coins transaction created for bet ${bet.id}`);
-      
-      await tx.bet.update({
-        where: { id: bet.id },
-        data: {
-          metadata: {
-            ...existingMetadata,
-            resolution: {
-              ...resolutionMetadata,
-              stakeTransferred: true
-            }
-          }
-        }
-      });
-    }
-
-    if (currentBet.rewardType === 'COINS' && currentBet.rewardCoins && currentBet.rewardCoins > 0 && !existingResolution.rewardTransferred) {
-      console.log(`[BET RESOLUTION] Transferring reward coins ${currentBet.rewardCoins} to winner ${winnerId} for bet ${bet.id}`);
-      await TransactionService.createTransaction({
-        type: TransactionType.REFUND,
-        toUserId: winnerId,
-        transactionRows: [{
-          name: `Bet reward won for game ${currentBet.gameId}`,
-          price: currentBet.rewardCoins,
-          qty: 1,
-          total: currentBet.rewardCoins
-        }]
-      });
-      console.log(`[BET RESOLUTION] Reward coins transaction created for bet ${bet.id}`);
-      
-      await tx.bet.update({
-        where: { id: bet.id },
-        data: {
-          metadata: {
-            ...existingMetadata,
-            resolution: {
-              ...resolutionMetadata,
-              stakeTransferred: existingResolution.stakeTransferred || (currentBet.stakeType !== 'COINS'),
-              rewardTransferred: true
-            }
-          }
-        }
-      });
-    }
-  } catch (coinError) {
-    console.error(`[BET RESOLUTION] Failed to transfer coins for bet ${bet.id}:`, coinError);
-    throw new Error(`Coin transfer failed for bet ${bet.id}: ${coinError instanceof Error ? coinError.message : String(coinError)}`);
-  }
-
-  // Calculate total coins won
-  const totalCoinsWon = (currentBet.stakeType === 'COINS' ? (currentBet.stakeCoins || 0) : 0) + 
-                        (currentBet.rewardType === 'COINS' ? (currentBet.rewardCoins || 0) : 0);
-
-  // Emit socket event and send notifications (outside transaction)
-  setImmediate(async () => {
-    try {
-      const socketService = (global as any).socketService;
-      if (socketService) {
-        await socketService.emit('bet:resolved', {
-          gameId: bet.gameId,
-          betId: bet.id,
-          winnerId,
-          loserId
-        });
-        console.log(`[BET RESOLUTION] Socket event emitted for resolved bet ${bet.id}`);
-      }
-
-      // Send notifications to winner and loser
-      await notificationService.sendBetResolvedNotification(bet.id, winnerId, true, totalCoinsWon);
-      await notificationService.sendBetResolvedNotification(bet.id, loserId, false);
-      console.log(`[BET RESOLUTION] Notifications sent for resolved bet ${bet.id}`);
-    } catch (error) {
-      console.error(`[BET RESOLUTION] Failed to emit bet resolved event or send notifications for bet ${bet.id}:`, error);
-    }
-  });
+  return {
+    betId: bet.id,
+    gameId: currentBet.gameId,
+    winnerId,
+    loserId,
+    totalCoinsWon,
+    stakeCoins: currentBet.stakeType === 'COINS' ? currentBet.stakeCoins : null,
+    rewardCoins: currentBet.rewardType === 'COINS' ? currentBet.rewardCoins : null,
+    stakeType: currentBet.stakeType,
+    rewardType: currentBet.rewardType
+  };
 }
 
 async function notifyBetNeedsReview(bet: Bet): Promise<void> {

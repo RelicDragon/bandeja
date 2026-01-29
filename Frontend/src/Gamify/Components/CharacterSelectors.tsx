@@ -100,14 +100,20 @@ export const CharacterSelectors = ({
           pointer-events: none;
           display: grid;
           grid-template-columns: 1fr 300px;
-          padding: 40px;
+          padding-top: max(40px, env(safe-area-inset-top));
+          padding-right: max(40px, env(safe-area-inset-right));
+          padding-bottom: max(40px, env(safe-area-inset-bottom));
+          padding-left: max(40px, env(safe-area-inset-left));
           gap: 20px;
         }
 
         @media (max-width: 768px) {
           .ui-container {
             grid-template-columns: 1fr;
-            padding: 20px;
+            padding-top: max(20px, env(safe-area-inset-top));
+            padding-right: max(20px, env(safe-area-inset-right));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            padding-left: max(20px, env(safe-area-inset-left));
           }
         }
 

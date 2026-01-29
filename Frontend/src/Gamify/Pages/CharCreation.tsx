@@ -165,7 +165,15 @@ export const CharCreation = () => {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
+      <div
+        className="fixed inset-0 bg-black flex items-center justify-center"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
+        }}
+      >
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-12 h-12 text-amber-400 animate-spin" />
           <span className="text-amber-200 text-lg font-medium">
@@ -294,13 +302,13 @@ export const CharCreation = () => {
           top: 0;
           left: 0;
           right: 0;
-          height: 70px;
+          height: calc(70px + env(safe-area-inset-top));
           z-index: 50;
           pointer-events: none;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0 20px;
+          padding: env(safe-area-inset-top) max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
           background: rgba(20, 20, 20, 0.95);
           border-bottom: 4px solid #4a3b2a;
           box-shadow: 

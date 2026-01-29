@@ -10,6 +10,7 @@ import { InviteService } from '../invite.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { createSystemMessageWithNotification } from '../../utils/systemMessageHelper';
 import { ChatType } from '@prisma/client';
+import { BetService } from '../bets/bet.service';
 
 export class ParticipantService {
   static async joinGame(gameId: string, userId: string) {
@@ -140,6 +141,9 @@ export class ParticipantService {
       await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_GAME);
       await GameService.updateGameReadiness(gameId);
       await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
+      await BetService.cancelBetsWithUserInCondition(gameId, userId).catch(err =>
+        console.error('Failed to cancel bets with user in condition:', err)
+      );
       return 'games.leftSuccessfully';
     } else {
       await prisma.$transaction(async (tx) => {
@@ -167,6 +171,9 @@ export class ParticipantService {
       await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_CHAT);
       await GameService.updateGameReadiness(gameId);
       await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
+      await BetService.cancelBetsWithUserInCondition(gameId, userId).catch(err =>
+        console.error('Failed to cancel bets with user in condition:', err)
+      );
       return 'games.leftChatSuccessfully';
     }
   }

@@ -1419,6 +1419,8 @@
     "leaveConfirmation": "Are you sure you want to leave this chat?",
     "blockedByUser": "This user has blocked you. You cannot send messages to them.",
     "invalidImageType": "Invalid image type. Please select a valid image file.",
+    "sendFailed": "Failed to send message",
+    "missingContextId": "Missing chat context",
     "photoPickFailed": "Failed to pick photos",
     "someImagesFailed": "{{count}} image(s) failed to upload",
     "photo": "Photo",
@@ -1631,6 +1633,8 @@
     "cancel": "Cancel",
     "fillAllFields": "Please fill all fields",
     "selectEntity": "Please select who this challenge applies to",
+    "selectPlace": "Please select place",
+    "invalidBet": "Invalid bet",
     "invalidStakeCoins": "Stake coins must be greater than 0",
     "invalidRewardCoins": "Reward coins must be greater than 0",
     "updated": "Challenge updated!",
@@ -1651,13 +1655,17 @@
     "condition": {
       "winGame": "Win the game",
       "loseGame": "Lose the game",
-      "winMatch": "Win a match",
-      "loseMatch": "Lose a match",
-      "tieMatch": "Tie a match",
-      "winSet": "Win a set",
-      "loseSet": "Lose a set",
-      "streak30": "Win 3-0 in a match",
-      "streak21": "Win 2-1 in a match"
+      "winTournament": "Win the tournament",
+      "loseTournament": "Lose the tournament",
+      "winLeague": "Win this game in league",
+      "loseLeague": "Lose this game in league",
+      "winLeagueSeason": "Win this game in league",
+      "loseLeagueSeason": "Lose this game in league",
+      "winAtLeastOneSet": "Win at least one set",
+      "loseAllSets": "Lose all sets",
+      "winAllSets": "Win all sets",
+      "takePlace": "Take Nth place",
+      "takePlaceN": "Take {{n}}{{ordinal}} place"
     }
   },
   "permissions": {

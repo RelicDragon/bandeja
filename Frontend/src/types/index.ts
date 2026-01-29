@@ -381,16 +381,14 @@ export type BetStatus = 'OPEN' | 'ACCEPTED' | 'RESOLVED' | 'CANCELLED' | 'NEEDS_
 export type BetConditionType = 'PREDEFINED' | 'CUSTOM';
 export type BetEntityType = 'USER' | 'TEAM';
 
-export type PredefinedCondition = 
-  | 'WIN_MATCH' 
-  | 'LOSE_MATCH' 
-  | 'TIE_MATCH'
+export type PredefinedCondition =
   | 'WIN_GAME'
   | 'LOSE_GAME'
   | 'WIN_SET'
   | 'LOSE_SET'
-  | 'STREAK_3_0'
-  | 'STREAK_2_1';
+  | 'WIN_ALL_SETS'
+  | 'LOSE_ALL_SETS'
+  | 'TAKE_PLACE';
 
 export interface BetCondition {
   type: BetConditionType;

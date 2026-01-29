@@ -204,7 +204,7 @@ export const MessageList: React.FC<MessageListProps> = ({
         </div>
       )}
       {messages.map((message, index) => (
-        <div key={message.id} id={`message-${message.id}`}>
+        <div key={(message as { _optimisticId?: string })._optimisticId ?? message.id} id={`message-${message.id}`}>
           <AnimatedMessageItem
             message={message}
             index={index}
