@@ -416,6 +416,9 @@ export async function editGameResults(gameId: string) {
 }
 
 export async function syncResults(gameId: string, rounds: any[]) {
+  const normalizedRounds = Array.isArray(rounds) ? rounds : [];
+  console.log(`[SYNC RESULTS] gameId=${gameId} roundsCount=${normalizedRounds.length}`);
+
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
@@ -425,6 +428,20 @@ export async function syncResults(gameId: string, rounds: any[]) {
 
   if (!game) {
     throw new ApiError(404, 'Game not found');
+  }
+
+  for (let i = 0; i < normalizedRounds.length; i++) {
+    const r = normalizedRounds[i];
+    if (!r || typeof r?.id !== 'string') {
+      throw new ApiError(400, `Round at index ${i} must have a string id`);
+    }
+    const matches = r.matches ?? [];
+    for (let j = 0; j < matches.length; j++) {
+      const m = matches[j];
+      if (!m || typeof m?.id !== 'string') {
+        throw new ApiError(400, `Match at round ${i} index ${j} must have a string id`);
+      }
+    }
   }
 
   await prisma.$transaction(async (tx) => {
@@ -480,8 +497,8 @@ export async function syncResults(gameId: string, rounds: any[]) {
       where: { gameId },
     });
 
-    for (let roundIndex = 0; roundIndex < rounds.length; roundIndex++) {
-      const roundData = rounds[roundIndex];
+    for (let roundIndex = 0; roundIndex < normalizedRounds.length; roundIndex++) {
+      const roundData = normalizedRounds[roundIndex];
       const round = await tx.round.create({
         data: {
           id: roundData.id,
@@ -541,6 +558,7 @@ export async function syncResults(gameId: string, rounds: any[]) {
               setNumber: setIndex + 1,
               teamAScore: setData.teamA || 0,
               teamBScore: setData.teamB || 0,
+              isTieBreak: setData.isTieBreak || false,
             },
           });
         }
@@ -586,6 +604,10 @@ export async function deleteRound(gameId: string, roundId: string) {
     throw new ApiError(404, 'Round not found');
   }
 
+  if (round.gameId !== gameId) {
+    throw new ApiError(403, 'Round does not belong to this game');
+  }
+
   await prisma.$transaction(async (tx) => {
     const deletedRoundNumber = round.roundNumber;
     await tx.round.delete({ where: { id: roundId } });
@@ -619,6 +641,10 @@ export async function createMatch(gameId: string, roundId: string, matchId: stri
     throw new ApiError(404, 'Round not found');
   }
 
+  if (round.gameId !== gameId) {
+    throw new ApiError(403, 'Round does not belong to this game');
+  }
+
   const matchCount = await prisma.match.count({ where: { roundId } });
 
   await prisma.$transaction(async (tx) => {
@@ -650,10 +676,15 @@ export async function deleteMatch(gameId: string, matchId: string) {
 
   const match = await prisma.match.findUnique({
     where: { id: matchId },
+    include: { round: { select: { gameId: true } } },
   });
 
   if (!match) {
     throw new ApiError(404, 'Match not found');
+  }
+
+  if (match.round.gameId !== gameId) {
+    throw new ApiError(403, 'Match does not belong to this game');
   }
 
   await prisma.$transaction(async (tx) => {

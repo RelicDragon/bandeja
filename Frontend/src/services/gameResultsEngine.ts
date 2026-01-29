@@ -206,8 +206,16 @@ class GameResultsEngineClass {
 
     try {
       await resultsApi.syncResults(state.gameId, state.rounds);
+      const expectedCount = state.rounds.length;
+      const result = await resultsApi.getGameResults(state.gameId);
+      const serverRoundCount = result?.data?.rounds?.length ?? -1;
+      if (serverRoundCount !== expectedCount) {
+        throw new Error(
+          `Sync verification failed: server has ${serverRoundCount} rounds, expected ${expectedCount}`
+        );
+      }
       await ResultsStorage.setServerProblem(state.gameId, false);
-          useGameResultsStore.setState({ 
+          useGameResultsStore.setState({
         syncStatus: 'SUCCESS',
         serverProblem: false,
           });
@@ -359,21 +367,10 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({
           rounds: [...state.rounds, newRoundData],
           expandedRoundId: roundId,
-    });
+        });
       },
       async () => {
-        await resultsApi.createRound(state.gameId!, {
-          id: roundId,
-        });
-        for (const match of newRoundData.matches) {
-          await resultsApi.createMatch(state.gameId!, roundId, { id: match.id });
-          await resultsApi.updateMatch(state.gameId!, match.id, {
-            teamA: match.teamA,
-            teamB: match.teamB,
-            sets: match.sets,
-            courtId: match.courtId,
-          });
-        }
+        await this.syncToServer();
       }
     );
   }

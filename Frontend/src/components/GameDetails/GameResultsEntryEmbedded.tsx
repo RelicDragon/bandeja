@@ -521,15 +521,15 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
 
   const handleFinish = async () => {
     setLoadingState({ saving: true });
+    let syncFailed = false;
     try {
-      if (serverProblem) {
-        try {
-          await engine.syncToServer();
-        } catch (syncError: any) {
-          console.error('Failed to sync to server:', syncError);
-          toast.error(syncError?.response?.data?.message || t('errors.syncRequired') || 'Please sync to server before finishing');
-          return;
-        }
+      try {
+        await engine.syncToServer();
+      } catch (syncError: any) {
+        syncFailed = true;
+        console.error('Failed to sync to server:', syncError);
+        toast.error(syncError?.response?.data?.message || t('errors.syncRequired') || 'Please sync to server before finishing');
+        return;
       }
 
       await resultsApi.recalculateOutcomes(game.id);
@@ -546,7 +546,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
       toast.error(error?.response?.data?.message || t('errors.generic'));
     } finally {
       setLoadingState({ saving: false });
-      closeModal();
+      if (!syncFailed) closeModal();
     }
   };
 
