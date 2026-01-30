@@ -15,7 +15,7 @@ interface BottomTabBarProps {
 export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentPage, setCurrentPage, setIsAnimating, chatsFilter } = useNavigationStore();
+  const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
   const { counts } = useChatUnreadCounts();
   const chatsUnread = counts.users + counts.bugs + counts.channels;
   const user = useAuthStore((state) => state.user);
