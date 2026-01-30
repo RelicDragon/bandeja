@@ -23,8 +23,9 @@ export const getGameBets = asyncHandler(async (req: AuthRequest, res: Response) 
 });
 
 export const createBet = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { gameId, condition, stakeType, stakeCoins, stakeText, rewardType, rewardCoins, rewardText } = req.body;
+  const { gameId, condition, type, stakeType, stakeCoins, stakeText, rewardType, rewardCoins, rewardText } = req.body;
   const userId = req.userId!;
+  const betType = type === 'SOCIAL' ? 'SOCIAL' : 'POOL';
   const resolvedStakeType = stakeType || 'COINS';
   const resolvedRewardType = rewardType || 'COINS';
 
@@ -40,24 +41,26 @@ export const createBet = asyncHandler(async (req: AuthRequest, res: Response) =>
     return res.status(400).json({ success: false, message: 'Stake text is required' });
   }
 
-  if (resolvedRewardType === 'COINS' && (!rewardCoins || rewardCoins <= 0)) {
-    return res.status(400).json({ success: false, message: 'Reward coins must be greater than 0' });
-  }
-
-  if (resolvedRewardType === 'TEXT' && !rewardText) {
-    return res.status(400).json({ success: false, message: 'Reward text is required' });
+  if (betType === 'SOCIAL') {
+    if (resolvedRewardType === 'COINS' && (!rewardCoins || rewardCoins <= 0)) {
+      return res.status(400).json({ success: false, message: 'Reward coins must be greater than 0' });
+    }
+    if (resolvedRewardType === 'TEXT' && !rewardText) {
+      return res.status(400).json({ success: false, message: 'Reward text is required' });
+    }
   }
 
   const bet = await BetService.createBet(
-    gameId, 
-    userId, 
-    condition, 
+    gameId,
+    userId,
+    condition,
+    betType,
     resolvedStakeType,
     stakeCoins || null,
     stakeText || null,
     resolvedRewardType,
-    rewardCoins || null,
-    rewardText || null
+    betType === 'POOL' ? null : (rewardCoins || null),
+    betType === 'POOL' ? null : (rewardText || null)
   );
 
   // Emit socket event
@@ -78,9 +81,10 @@ export const createBet = asyncHandler(async (req: AuthRequest, res: Response) =>
 
 export const acceptBet = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const { side } = req.body;
   const userId = req.userId!;
 
-  const bet = await BetService.acceptBet(id, userId);
+  const bet = await BetService.acceptBet(id, userId, side);
 
   // Emit socket event
   try {
@@ -109,7 +113,7 @@ export const cancelBet = asyncHandler(async (req: AuthRequest, res: Response) =>
   });
 
   if (!bet) {
-    throw new Error('Bet not found');
+    throw new ApiError(404, 'Bet not found');
   }
 
   await BetService.cancelBet(id, userId);

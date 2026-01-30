@@ -18,7 +18,7 @@ export const getClubsForMap = asyncHandler(async (_req: Request, res: Response) 
       latitude: true,
       longitude: true,
       courtsNumber: true,
-      city: { select: { name: true, country: true } },
+      city: { select: { id: true, name: true, country: true } },
     },
   });
   const data = clubs.map((c) => ({
@@ -26,6 +26,7 @@ export const getClubsForMap = asyncHandler(async (_req: Request, res: Response) 
     name: c.name,
     latitude: c.latitude!,
     longitude: c.longitude!,
+    cityId: c.city.id,
     cityName: c.city.name,
     country: c.city.country,
     courtsCount: c.courtsNumber,

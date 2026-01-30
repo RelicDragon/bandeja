@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { LatLngBoundsLiteral } from 'leaflet';
 import type { City } from '@/types';
@@ -16,8 +16,17 @@ const HALF_VIEW_DEG = (MAX_VIEW_KM / 2) * DEG_PER_KM;
 
 const DEFAULT_CENTER: [number, number] = [20, 0];
 const DEFAULT_ZOOM = 2;
-const MIN_RADIUS = 8;
-const MAX_RADIUS = 28;
+
+function cityStarIcon(selected: boolean): L.DivIcon {
+  const ring = selected ? '#0ea5e9' : '#64748b';
+  return L.divIcon({
+    className: `city-star-marker ${selected ? 'city-star-marker--selected' : ''}`,
+    html: `<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:2px solid ${ring};border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.2);"><svg width="14" height="14" viewBox="0 0 24 24" fill="${ring}" stroke="${ring}" stroke-width="1.5" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor: [0, -28],
+  });
+}
 
 const CLUB_HOUSE_ICON = L.divIcon({
   className: 'club-house-marker',
@@ -27,48 +36,13 @@ const CLUB_HOUSE_ICON = L.divIcon({
   popupAnchor: [0, -32],
 });
 
-const COUNTRY_COLORS = [
-  '#0ea5e9', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#6366f1', '#ef4444', '#14b8a6',
-  '#f97316', '#a855f7', '#06b6d4', '#84cc16', '#e11d48', '#0d9488', '#7c3aed', '#ca8a04',
-];
-
-function hashCountry(country: string): number {
-  let h = 0;
-  for (let i = 0; i < country.length; i++) h = (h * 31 + country.charCodeAt(i)) >>> 0;
-  return h % COUNTRY_COLORS.length;
-}
-
-function countryColor(country: string): { stroke: string; fill: string } {
-  const hex = COUNTRY_COLORS[hashCountry(country)];
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return { stroke: hex, fill: `rgba(${r},${g},${b},0.5)` };
-}
-
-function darken(hex: string, pct: number): string {
-  const r = Math.max(0, Math.round(parseInt(hex.slice(1, 3), 16) * (1 - pct)));
-  const g = Math.max(0, Math.round(parseInt(hex.slice(3, 5), 16) * (1 - pct)));
-  const b = Math.max(0, Math.round(parseInt(hex.slice(5, 7), 16) * (1 - pct)));
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
-function radiusByCountry(cities: Array<{ country: string; clubsCount?: number | null }>): Map<string, number> {
-  const byCountry = new Map<string, number>();
-  for (const c of cities) {
-    const n = Math.max(0, c.clubsCount ?? 0);
-    const cur = byCountry.get(c.country) ?? 0;
-    if (n > cur) byCountry.set(c.country, n);
-  }
-  return byCountry;
-}
-
-function radiusInCountry(clubsCount: number, maxInCountry: number): number {
-  const n = Math.max(0, clubsCount);
-  if (maxInCountry <= 0) return MIN_RADIUS;
-  const ratio = n / maxInCountry;
-  return Math.round(MIN_RADIUS + ratio * (MAX_RADIUS - MIN_RADIUS));
-}
+const USER_LOCATION_ICON = L.divIcon({
+  className: 'user-location-marker',
+  html: `<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="#4285f4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="#fff"/></svg></div>`,
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+  popupAnchor: [0, -28],
+});
 
 function clampBoundsToMaxKm(bounds: LatLngBoundsLiteral, maxKm: number): LatLngBoundsLiteral {
   const [[south, west], [north, east]] = bounds;
@@ -100,9 +74,11 @@ export interface CityMapProps {
   currentCityId?: string;
   pendingCityId?: string | null;
   onCityClick?: (cityId: string) => void;
+  onClubClick?: (cityId: string) => void;
   onMapClick?: () => void;
   className?: string;
   userLocation?: { latitude: number; longitude: number } | null;
+  userLocationApproximate?: boolean;
 }
 
 function MapClickHandler({ onMapClick }: { onMapClick?: () => void }) {
@@ -112,36 +88,33 @@ function MapClickHandler({ onMapClick }: { onMapClick?: () => void }) {
   return null;
 }
 
-export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCityClick, onMapClick, className = '', userLocation = null }: CityMapProps) {
+export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCityClick, onClubClick, onMapClick, className = '', userLocation = null, userLocationApproximate = false }: CityMapProps) {
   const { t } = useTranslation();
-  const [locationBounds, setLocationBounds] = useState<LatLngBoundsLiteral | null>(null);
+  const [resolvedLocation, setResolvedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     appApi.getLocation().then((loc) => {
       if (cancelled || !loc) return;
-      setLocationBounds([
-        [loc.latitude - LOCATION_BOUNDS_DELTA, loc.longitude - LOCATION_BOUNDS_DELTA],
-        [loc.latitude + LOCATION_BOUNDS_DELTA, loc.longitude + LOCATION_BOUNDS_DELTA],
-      ] as LatLngBoundsLiteral);
+      setResolvedLocation(loc);
     });
     return () => { cancelled = true; };
   }, []);
 
+  const effectiveUserLocation = userLocation ?? resolvedLocation;
+
   const userLocationBounds: LatLngBoundsLiteral | null = useMemo(() => {
-    if (!userLocation) return null;
+    if (!effectiveUserLocation) return null;
     return [
-      [userLocation.latitude - LOCATION_BOUNDS_DELTA, userLocation.longitude - LOCATION_BOUNDS_DELTA],
-      [userLocation.latitude + LOCATION_BOUNDS_DELTA, userLocation.longitude + LOCATION_BOUNDS_DELTA],
+      [effectiveUserLocation.latitude - LOCATION_BOUNDS_DELTA, effectiveUserLocation.longitude - LOCATION_BOUNDS_DELTA],
+      [effectiveUserLocation.latitude + LOCATION_BOUNDS_DELTA, effectiveUserLocation.longitude + LOCATION_BOUNDS_DELTA],
     ] as LatLngBoundsLiteral;
-  }, [userLocation]);
+  }, [effectiveUserLocation]);
 
   const withCoords = useMemo(
     () => cities.filter((c): c is City & { latitude: number; longitude: number } => c.latitude != null && c.longitude != null),
     [cities]
   );
-
-  const countryMaxClubs = useMemo(() => radiusByCountry(withCoords), [withCoords]);
 
   const allPoints = useMemo(() => {
     const pts: Array<{ lat: number; lng: number }> = [...withCoords.map((c) => ({ lat: c.latitude!, lng: c.longitude! })), ...clubs.map((c) => ({ lat: c.latitude, lng: c.longitude }))];
@@ -180,9 +153,9 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
   }, [citiesBounds]);
 
   const bounds: LatLngBoundsLiteral | null =
-    selectedCityBounds ?? userLocationBounds ?? (locationBounds ? clampBoundsToMaxKm(locationBounds, MAX_VIEW_KM) : null) ?? centerOfAllBounds;
+    userLocationBounds ?? selectedCityBounds ?? centerOfAllBounds;
 
-  if (withCoords.length === 0 && clubs.length === 0) {
+  if (withCoords.length === 0 && clubs.length === 0 && !effectiveUserLocation) {
     return (
       <div className={`flex items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm ${className}`}>
         {t('common.noResults')}
@@ -205,23 +178,29 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
         />
         <FitBounds bounds={bounds} />
         <MapClickHandler onMapClick={onMapClick} />
+        {effectiveUserLocation && (
+          <Marker
+            position={[effectiveUserLocation.latitude, effectiveUserLocation.longitude]}
+            icon={USER_LOCATION_ICON}
+            eventHandlers={{
+              click: (e: L.LeafletMouseEvent) => L.DomEvent.stopPropagation(e),
+            }}
+          >
+            <Popup>
+              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                {userLocation == null ? t('city.approximateLocation') : (userLocationApproximate ? t('city.approximateLocation') : t('city.yourLocation'))}
+              </div>
+            </Popup>
+          </Marker>
+        )}
         {withCoords.map((city) => {
           const highlightedId = pendingCityId ?? currentCityId;
           const selected = city.id === highlightedId;
-          const maxInCountry = countryMaxClubs.get(city.country) ?? 0;
-          const radius = radiusInCountry(city.clubsCount ?? 0, maxInCountry);
-          const { stroke, fill } = countryColor(city.country);
           return (
-            <CircleMarker
+            <Marker
               key={city.id}
-              center={[city.latitude, city.longitude]}
-              radius={radius}
-              pathOptions={{
-                color: selected ? darken(stroke, 0.35) : stroke,
-                fillColor: fill,
-                fillOpacity: 1,
-                weight: selected ? 3 : 2,
-              }}
+              position={[city.latitude, city.longitude]}
+              icon={cityStarIcon(selected)}
               eventHandlers={{
                 click: (e: L.LeafletMouseEvent) => {
                   L.DomEvent.stopPropagation(e);
@@ -238,7 +217,7 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
                   </div>
                 </div>
               </Popup>
-            </CircleMarker>
+            </Marker>
           );
         })}
         {clubs.map((club) => (
@@ -246,6 +225,12 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
             key={club.id}
             position={[club.latitude, club.longitude]}
             icon={CLUB_HOUSE_ICON}
+            eventHandlers={{
+              click: (e: L.LeafletMouseEvent) => {
+                L.DomEvent.stopPropagation(e);
+                onClubClick?.(club.cityId);
+              },
+            }}
           >
             <Popup>
               <div className="text-sm">

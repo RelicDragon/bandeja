@@ -92,6 +92,10 @@ interface SocketEventsState {
   initialized: boolean;
   initialize: () => void;
   cleanup: () => void;
+  clearLastBetCreated: () => void;
+  clearLastBetUpdated: () => void;
+  clearLastBetDeleted: () => void;
+  clearLastBetResolved: () => void;
 }
 
 export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
@@ -218,9 +222,9 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     cleanup: () => {
       unsubscribeHandlers.forEach(cleanup => cleanup());
       unsubscribeHandlers = [];
-      set({ 
-        initialized: false, 
-        gameUpdates: new Map(), 
+      set({
+        initialized: false,
+        gameUpdates: new Map(),
         lastGameUpdate: null,
         lastNewInvite: null,
         lastInviteDeleted: null,
@@ -237,5 +241,9 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         lastGameResultsUpdated: null,
       });
     },
+    clearLastBetCreated: () => set({ lastBetCreated: null }),
+    clearLastBetUpdated: () => set({ lastBetUpdated: null }),
+    clearLastBetDeleted: () => set({ lastBetDeleted: null }),
+    clearLastBetResolved: () => set({ lastBetResolved: null }),
   };
 });

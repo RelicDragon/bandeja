@@ -10,10 +10,11 @@ export const betsApi = {
   create: async (data: {
     gameId: string;
     condition: BetCondition;
+    type?: 'POOL' | 'SOCIAL';
     stakeType: 'COINS' | 'TEXT';
     stakeCoins?: number | null;
     stakeText?: string | null;
-    rewardType: 'COINS' | 'TEXT';
+    rewardType?: 'COINS' | 'TEXT';
     rewardCoins?: number | null;
     rewardText?: string | null;
   }) => {
@@ -34,8 +35,8 @@ export const betsApi = {
     return response.data;
   },
 
-  accept: async (id: string) => {
-    const response = await api.post<ApiResponse<Bet>>(`/bets/${id}/accept`);
+  accept: async (id: string, side?: 'WITH_CREATOR' | 'AGAINST_CREATOR') => {
+    const response = await api.post<ApiResponse<Bet>>(`/bets/${id}/accept`, side != null ? { side } : undefined);
     return response.data;
   },
 

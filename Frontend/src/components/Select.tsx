@@ -25,48 +25,32 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
 
   const selectedOption = options.find(option => option.value === value);
 
+  const MAX_DROPDOWN_HEIGHT = 240;
+
   const updateDropdownPosition = useCallback(() => {
     if (!selectRef.current) return;
     const rect = selectRef.current.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
-    
-    const estimatedDropdownHeight = options.length * 40 + 8;
+    const estimatedDropdownHeight = Math.min(MAX_DROPDOWN_HEIGHT, options.length * 40 + 8);
     const spaceBelow = viewportHeight - rect.bottom;
     const spaceAbove = rect.top;
     const openUpward = spaceBelow < estimatedDropdownHeight && spaceAbove > spaceBelow;
-    
     let top: number;
-    
     if (openUpward) {
       top = rect.top - estimatedDropdownHeight - 4;
-      if (top < 8) {
-        top = 8;
-      }
+      if (top < 8) top = 8;
     } else {
       top = rect.bottom + 4;
     }
-    
     let left = rect.left;
     if (left + rect.width > viewportWidth - 8) {
       left = Math.max(8, viewportWidth - rect.width - 8);
     }
-    if (left < 8) {
-      left = 8;
-    }
-    
+    if (left < 8) left = 8;
     setDropdownPosition(prev => {
-      const newPos = {
-        top,
-        left,
-        width: rect.width,
-      };
-      if (prev && 
-          Math.abs(prev.top - newPos.top) < 1 && 
-          Math.abs(prev.left - newPos.left) < 1 && 
-          Math.abs(prev.width - newPos.width) < 1) {
-        return prev;
-      }
+      const newPos = { top, left, width: rect.width };
+      if (prev && Math.abs(prev.top - newPos.top) < 1 && Math.abs(prev.left - newPos.left) < 1 && Math.abs(prev.width - newPos.width) < 1) return prev;
       return newPos;
     });
   }, [options.length]);
@@ -95,18 +79,35 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
   useEffect(() => {
     if (!isOpen) return;
 
-    updateDropdownPosition();
-
-    const handleReposition = () => {
+    const id = requestAnimationFrame(() => {
       updateDropdownPosition();
-    };
-
+    });
+    const handleReposition = () => updateDropdownPosition();
     window.addEventListener('resize', handleReposition);
     window.addEventListener('scroll', handleReposition, true);
 
+    let scrollParent: Element | null = null;
+    if (selectRef.current) {
+      let el: Element | null = selectRef.current.parentElement;
+      while (el) {
+        const style = getComputedStyle(el);
+        const overflowY = style.overflowY;
+        if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
+          scrollParent = el;
+          break;
+        }
+        el = el.parentElement;
+      }
+    }
+    if (scrollParent) {
+      scrollParent.addEventListener('scroll', handleReposition, true);
+    }
+
     return () => {
+      cancelAnimationFrame(id);
       window.removeEventListener('resize', handleReposition);
       window.removeEventListener('scroll', handleReposition, true);
+      scrollParent?.removeEventListener('scroll', handleReposition, true);
     };
   }, [isOpen, updateDropdownPosition]);
 
@@ -136,7 +137,7 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
         <div
           ref={dropdownRef}
           data-select-dropdown
-          className="fixed z-[20000] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
+          className="fixed z-[20000] max-h-60 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
           style={{
             top: dropdownPosition.top,
             left: dropdownPosition.left,

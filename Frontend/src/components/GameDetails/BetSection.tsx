@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components';
 import { Game, Bet } from '@/types';
 import { betsApi } from '@/api/bets';
 import { BetCard } from './BetCard';
 import { CreateBetModal } from './CreateBetModal';
-import { Coins, Plus } from 'lucide-react';
+import { CircleDollarSign, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 
@@ -41,28 +41,42 @@ export const BetSection = ({ game }: BetSectionProps) => {
   const lastBetUpdated = useSocketEventsStore((state) => state.lastBetUpdated);
   const lastBetDeleted = useSocketEventsStore((state) => state.lastBetDeleted);
   const lastBetResolved = useSocketEventsStore((state) => state.lastBetResolved);
+  const clearLastBetCreated = useSocketEventsStore((state) => state.clearLastBetCreated);
+  const clearLastBetUpdated = useSocketEventsStore((state) => state.clearLastBetUpdated);
+  const clearLastBetDeleted = useSocketEventsStore((state) => state.clearLastBetDeleted);
+  const clearLastBetResolved = useSocketEventsStore((state) => state.clearLastBetResolved);
 
   useEffect(() => {
     if (!lastBetCreated || lastBetCreated.gameId !== game.id) return;
     setBets(prev => [lastBetCreated.bet, ...prev]);
-  }, [lastBetCreated, game.id]);
+    clearLastBetCreated();
+  }, [lastBetCreated, game.id, clearLastBetCreated]);
 
   useEffect(() => {
     if (!lastBetUpdated || lastBetUpdated.gameId !== game.id) return;
     setBets(prev => prev.map(b => b.id === lastBetUpdated.bet.id ? lastBetUpdated.bet : b));
-  }, [lastBetUpdated, game.id]);
+    clearLastBetUpdated();
+  }, [lastBetUpdated, game.id, clearLastBetUpdated]);
 
   useEffect(() => {
     if (!lastBetDeleted || lastBetDeleted.gameId !== game.id) return;
     setBets(prev => prev.filter(b => b.id !== lastBetDeleted.betId));
-  }, [lastBetDeleted, game.id]);
+    clearLastBetDeleted();
+  }, [lastBetDeleted, game.id, clearLastBetDeleted]);
 
   useEffect(() => {
     if (!lastBetResolved || lastBetResolved.gameId !== game.id) return;
     betsApi.getGameBets(game.id).then(response => {
       setBets(response.data);
     }).catch(console.error);
-  }, [lastBetResolved, game.id]);
+    clearLastBetResolved();
+  }, [lastBetResolved, game.id, clearLastBetResolved]);
+
+  const handleCloseModal = useCallback(() => setShowCreateModal(false), []);
+  const handleBetCreated = useCallback((createdBet: Bet) => {
+    setBets(prev => [createdBet, ...prev]);
+    setShowCreateModal(false);
+  }, []);
 
   if (isLoading) {
     return null;
@@ -74,7 +88,7 @@ export const BetSection = ({ game }: BetSectionProps) => {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Coins size={20} className="text-primary-600" />
+              <CircleDollarSign size={20} className="text-amber-500 dark:text-amber-400" />
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {t('bets.title', { defaultValue: 'Bets' })}
               </h2>
@@ -116,11 +130,8 @@ export const BetSection = ({ game }: BetSectionProps) => {
         <CreateBetModal
           isOpen={showCreateModal}
           game={game}
-          onClose={() => setShowCreateModal(false)}
-          onBetCreated={(bet) => {
-            setBets(prev => [bet, ...prev]);
-            setShowCreateModal(false);
-          }}
+          onClose={handleCloseModal}
+          onBetCreated={handleBetCreated}
         />
       )}
     </>

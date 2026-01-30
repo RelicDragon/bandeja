@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { modalZIndexService } from '@/services/modalZIndexService';
@@ -13,6 +14,7 @@ interface BaseModalProps {
   children: React.ReactNode;
   showCloseButton?: boolean;
   closeOnBackdropClick?: boolean;
+  contentClassName?: string;
 }
 
 export const BaseModal = ({
@@ -24,6 +26,7 @@ export const BaseModal = ({
   children,
   showCloseButton = true,
   closeOnBackdropClick = true,
+  contentClassName,
 }: BaseModalProps) => {
   const [isClosing, setIsClosing] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
@@ -150,6 +153,7 @@ export const BaseModal = ({
       {(isBasic || forceBackdrop) && (
         <div
           className={`absolute inset-0 bg-black/50 backdrop-blur-sm ${backdropClass}`}
+          style={{ contain: 'paint', transform: 'translateZ(0)' }}
         />
       )}
       {isBasic ? (
@@ -162,7 +166,9 @@ export const BaseModal = ({
           onClick={(e) => e.stopPropagation()}
         >
           
-          <div className="relative bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-6 md:p-8 max-w-2xl w-full border border-gray-200/50 dark:border-gray-700/50 max-h-[95vh] overflow-hidden flex flex-col mx-auto">
+          <motion.div
+            className={`relative bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-200/50 dark:border-gray-700/50 overflow-hidden flex flex-col mx-auto ${contentClassName ?? 'p-3 sm:p-6 md:p-8'}`}
+          >
             {showCloseButton && (
               <button
                 onClick={onClose}
@@ -172,7 +178,7 @@ export const BaseModal = ({
               </button>
             )}
             {children}
-          </div>
+          </motion.div>
         </div>
       ) : (
         <>

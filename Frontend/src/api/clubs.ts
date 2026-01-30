@@ -6,6 +6,7 @@ export interface ClubMapItem {
   name: string;
   latitude: number;
   longitude: number;
+  cityId: string;
   cityName: string;
   country: string;
   courtsCount: number;

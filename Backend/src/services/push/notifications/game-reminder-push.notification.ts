@@ -28,9 +28,8 @@ export async function createGameReminderPushNotification(
   const gameInfo = await formatGameInfoForUser(game, recipient.currentCityId, lang);
   const entityTypeLabel = t(`games.entityTypes.${game.entityType}`, lang);
 
-  const title = hoursBeforeStart === 24 
-    ? t('telegram.gameReminder24h', lang) 
-    : t('telegram.gameReminder2h', lang);
+  const titleKey = `telegram.gameReminder${hoursBeforeStart === 24 ? '24h' : '2h'}.${game.entityType}`;
+  const title = t(titleKey, lang) !== titleKey ? t(titleKey, lang) : (hoursBeforeStart === 24 ? t('telegram.gameReminder24h', lang) : t('telegram.gameReminder2h', lang));
   
   let body = `${entityTypeLabel}`;
   if (game.name) {

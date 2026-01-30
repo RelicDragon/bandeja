@@ -107,6 +107,7 @@ model User {
   betsCreated                 Bet[]                @relation("BetCreator")
   betsAccepted                Bet[]                @relation("BetAcceptor")
   betsWon                     Bet[]                @relation("BetWinner")
+  betParticipants             BetParticipant[]
   messageTranslations         MessageTranslation[]
   chatDrafts                  ChatDraft[]
 
@@ -959,6 +960,12 @@ enum MatchGenerationType {
 
 enum BetType {
   SOCIAL
+  POOL
+}
+
+enum BetPoolSide {
+  WITH_CREATOR
+  AGAINST_CREATOR
 }
 
 enum BetStatus {
@@ -1317,9 +1324,10 @@ model Bet {
   rewardType       String    @default("COINS") // COINS or TEXT
   rewardCoins      Int?      // Amount if rewardType is COINS
   rewardText       String?   // Text if rewardType is TEXT
+  poolTotalCoins   Int?      // POOL: total coins in pool
   acceptedBy       String?
   acceptedAt      DateTime?
-  winnerId         String?   // Set when resolved
+  winnerId         String?   // Set when resolved (SOCIAL single winner; POOL null)
   resolvedAt       DateTime?
   resolutionReason String?
   metadata         Json?
@@ -1329,12 +1337,27 @@ model Bet {
   creator          User      @relation("BetCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   acceptedByUser   User?     @relation("BetAcceptor", fields: [acceptedBy], references: [id], onDelete: SetNull)
   winner           User?     @relation("BetWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+  participants     BetParticipant[]
 
   @@index([gameId])
   @@index([creatorId])
   @@index([status])
   @@index([gameId, status])
   @@index([acceptedBy])
+}
+
+model BetParticipant {
+  id        String      @id @default(cuid())
+  betId     String
+  userId    String
+  side      BetPoolSide
+  createdAt DateTime    @default(now())
+  bet       Bet         @relation(fields: [betId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([betId, userId])
+  @@index([betId])
+  @@index([userId])
 }
 
 model AppVersionRequirement {

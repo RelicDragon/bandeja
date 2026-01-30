@@ -14,7 +14,7 @@ import { usersApi, mediaApi, authApi } from '@/api';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
 import { Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X, UserCircle } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X, UserCircle, Bell } from 'lucide-react';
 import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -937,8 +937,9 @@ export const ProfileContent = () => {
             <Button
               variant="primary"
               onClick={() => setShowNotificationModal(true)}
-              className="w-full rounded-xl"
+              className="w-full flex items-center justify-center gap-2 rounded-xl"
             >
+              <Bell size={16} />
               {t('profile.controlNotifications') || 'Control Notifications'}
             </Button>
           </div>
@@ -948,22 +949,20 @@ export const ProfileContent = () => {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.city')}
           </h2>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
-              <span className="text-gray-900 dark:text-white">
-                {user?.currentCity?.name}
-              </span>
-            </div>
-            <Button
-              variant="primary"
-              onClick={() => setShowCityModal(true)}
-              className="w-full flex items-center justify-center gap-2 rounded-xl"
-            >
-              <MapPin size={16} />
-              {t('profile.changeCity')}
-            </Button>
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
+            <span className="text-gray-900 dark:text-white">
+              {user?.currentCity?.name}
+            </span>
           </div>
+          <Button
+            variant="primary"
+            onClick={() => setShowCityModal(true)}
+            className="w-full flex items-center justify-center gap-2 rounded-xl"
+          >
+            <MapPin size={16} />
+            {t('profile.changeCity')}
+          </Button>
         </Card>
 
         {user?.blockedUserIds && user.blockedUserIds.length > 0 && (

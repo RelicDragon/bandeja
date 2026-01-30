@@ -376,7 +376,8 @@ export interface BugsResponse {
   };
 }
 
-export type BetType = 'SOCIAL';
+export type BetType = 'SOCIAL' | 'POOL';
+export type BetPoolSide = 'WITH_CREATOR' | 'AGAINST_CREATOR';
 export type BetStatus = 'OPEN' | 'ACCEPTED' | 'RESOLVED' | 'CANCELLED' | 'NEEDS_REVIEW';
 export type BetConditionType = 'PREDEFINED' | 'CUSTOM';
 export type BetEntityType = 'USER' | 'TEAM';
@@ -399,6 +400,15 @@ export interface BetCondition {
   metadata?: Record<string, any>;
 }
 
+export interface BetParticipant {
+  id: string;
+  betId: string;
+  userId: string;
+  side: BetPoolSide;
+  user: BasicUser;
+  createdAt: string;
+}
+
 export interface Bet {
   id: string;
   gameId: string;
@@ -413,6 +423,8 @@ export interface Bet {
   rewardType: 'COINS' | 'TEXT';
   rewardCoins?: number | null;
   rewardText?: string | null;
+  poolTotalCoins?: number | null;
+  participants?: BetParticipant[];
   acceptedBy?: string;
   acceptedByUser?: BasicUser;
   acceptedAt?: string;

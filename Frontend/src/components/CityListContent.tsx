@@ -70,6 +70,7 @@ export const CityListContent = ({
   const [clubs, setClubs] = useState<ClubMapItem[]>([]);
   const [pendingCityId, setPendingCityId] = useState<string | null>(null);
   const [userLocationTarget, setUserLocationTarget] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userLocationIsApproximate, setUserLocationIsApproximate] = useState(false);
   const [locating, setLocating] = useState(false);
   const { getPosition } = useGeolocation();
 
@@ -77,6 +78,7 @@ export const CityListContent = ({
     if (!showMap) {
       setPendingCityId(null);
       setUserLocationTarget(null);
+      setUserLocationIsApproximate(false);
       return;
     }
     let cancelled = false;
@@ -119,12 +121,14 @@ export const CityListContent = ({
       if (posResult.position) {
         lat = posResult.position.latitude;
         lon = posResult.position.longitude;
+        setUserLocationIsApproximate(false);
       } else {
         const ipLoc = await appApi.getLocation();
         if (ipLoc) {
           lat = ipLoc.latitude;
           lon = ipLoc.longitude;
           setUserLocationTarget(ipLoc);
+          setUserLocationIsApproximate(true);
         } else {
           posResult = await getPosition();
           if (!posResult.position) {
@@ -134,6 +138,7 @@ export const CityListContent = ({
           }
           lat = posResult.position.latitude;
           lon = posResult.position.longitude;
+          setUserLocationIsApproximate(false);
         }
       }
       setUserLocationTarget({ latitude: lat, longitude: lon });
@@ -354,9 +359,11 @@ export const CityListContent = ({
                     currentCityId={selectedCityId}
                     pendingCityId={pendingCityId}
                     onCityClick={(id) => setPendingCityId(id)}
+                    onClubClick={(id) => setPendingCityId(id)}
                     onMapClick={() => setPendingCityId(null)}
                     className="flex-1 min-h-[280px]"
                     userLocation={userLocationTarget}
+                    userLocationApproximate={userLocationIsApproximate}
                   />
                   <AnimatePresence>
                     {pendingCityId && (
@@ -375,7 +382,12 @@ export const CityListContent = ({
                           }}
                           className="w-full py-2.5 px-8 rounded-xl text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 focus:ring-2 focus:ring-primary-500/30 focus:outline-none transition-colors"
                         >
-                          {t('city.selectCity')}
+                          {(() => {
+                            const name =
+                              filteredMapCities.find((c) => c.id === pendingCityId)?.name ??
+                              clubs.find((c) => c.cityId === pendingCityId)?.cityName;
+                            return name ? t('city.selectCityName', { name }) : t('city.selectCity');
+                          })()}
                         </button>
                       </motion.div>
                     )}
