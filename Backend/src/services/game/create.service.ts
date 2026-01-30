@@ -10,8 +10,11 @@ import notificationService from '../notification.service';
 
 export class GameCreateService {
   static async createGame(data: any, userId: string) {
-    const entityType = data.entityType || EntityType.GAME;
-    const maxParticipants = entityType === EntityType.BAR ? 999 : (data.maxParticipants || 4);
+    let entityType = data.entityType || EntityType.GAME;
+    let maxParticipants = entityType === EntityType.BAR ? 999 : (data.maxParticipants || 4);
+    if (entityType === EntityType.GAME && maxParticipants >= 8) {
+      entityType = EntityType.TOURNAMENT;
+    }
     
     let cityId: string | null = null;
 
