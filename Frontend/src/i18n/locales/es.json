@@ -1203,6 +1203,7 @@
     "selectCity": "Seleccionar",
     "selectCityName": "Seleccionar {{name}}",
     "whereAmI": "¿Dónde estoy?",
+    "nearestToYou": "Más cercano a ti",
     "yourLocation": "Tu ubicación",
     "approximateLocation": "Ubicación aproximada"
   },

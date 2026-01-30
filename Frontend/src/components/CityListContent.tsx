@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useRef, useEffect, useState, useMemo } from 'react';
-import { Map, List, MapPin } from 'lucide-react';
+import { Map, List, MapPin, Navigation } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { City } from '@/types';
 import { getCountryFlag } from '@/utils/countryFlag';
@@ -65,10 +65,13 @@ export const CityListContent = ({
   const { t } = useTranslation();
   const isLoading = showingLoading ?? loading;
   const selectedCityRef = useRef<HTMLButtonElement>(null);
+  const scrollTargetRef = useRef<HTMLButtonElement>(null);
   const [allowTransition, setAllowTransition] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [clubs, setClubs] = useState<ClubMapItem[]>([]);
   const [pendingCityId, setPendingCityId] = useState<string | null>(null);
+  const [scrollToCityId, setScrollToCityId] = useState<string | null>(null);
+  const [nearestCityIdInList, setNearestCityIdInList] = useState<string | null>(null);
   const [userLocationTarget, setUserLocationTarget] = useState<{ latitude: number; longitude: number } | null>(null);
   const [userLocationIsApproximate, setUserLocationIsApproximate] = useState(false);
   const [locating, setLocating] = useState(false);
@@ -117,42 +120,39 @@ export const CityListContent = ({
     try {
       let lat: number;
       let lon: number;
-      let posResult = await getPosition();
-      if (posResult.position) {
-        lat = posResult.position.latitude;
-        lon = posResult.position.longitude;
-        setUserLocationIsApproximate(false);
+      const ipLoc = await appApi.getLocation();
+      if (ipLoc) {
+        lat = ipLoc.latitude;
+        lon = ipLoc.longitude;
+        setUserLocationTarget(ipLoc);
+        setUserLocationIsApproximate(true);
       } else {
-        const ipLoc = await appApi.getLocation();
-        if (ipLoc) {
-          lat = ipLoc.latitude;
-          lon = ipLoc.longitude;
-          setUserLocationTarget(ipLoc);
-          setUserLocationIsApproximate(true);
-        } else {
-          posResult = await getPosition();
-          if (!posResult.position) {
-            const key = locationErrorKeys[posResult.errorCode ?? ''] ?? 'auth.locationUnavailable';
-            onLocationError?.(t(key));
-            return;
-          }
+        const posResult = await getPosition();
+        if (posResult.position) {
           lat = posResult.position.latitude;
           lon = posResult.position.longitude;
+          setUserLocationTarget({ latitude: lat, longitude: lon });
           setUserLocationIsApproximate(false);
+        } else {
+          const key = locationErrorKeys[posResult.errorCode ?? ''] ?? 'auth.locationUnavailable';
+          onLocationError?.(t(key));
+          return;
         }
       }
-      setUserLocationTarget({ latitude: lat, longitude: lon });
       const nearest = findNearestCity(mapCities, lat, lon);
       if (nearest) {
         if (showMap) {
           setPendingCityId(nearest.id);
         } else {
+          setNearestCityIdInList(nearest.id);
           selectCountry(nearest.country);
-          onCityClick(nearest.id);
+          setScrollToCityId(nearest.id);
         }
       } else {
         onLocationError?.(t('auth.noCityNearby'));
       }
+    } catch {
+      onLocationError?.(t('auth.locationUnavailable'));
     } finally {
       setLocating(false);
     }
@@ -161,6 +161,18 @@ export const CityListContent = ({
   useEffect(() => {
     if (pendingCityId && !filteredMapCities.some((c) => c.id === pendingCityId)) setPendingCityId(null);
   }, [pendingCityId, filteredMapCities]);
+
+  useEffect(() => {
+    if (scrollToCityId && view === 'city' && !filteredCitiesForCountry.some((c) => c.id === scrollToCityId)) {
+      setScrollToCityId(null);
+    }
+  }, [scrollToCityId, view, filteredCitiesForCountry]);
+
+  useEffect(() => {
+    if (nearestCityIdInList && !filteredCitiesForCountry.some((c) => c.id === nearestCityIdInList)) {
+      setNearestCityIdInList(null);
+    }
+  }, [nearestCityIdInList, filteredCitiesForCountry]);
 
   useEffect(() => {
     const t = requestAnimationFrame(() => setAllowTransition(true));
@@ -175,6 +187,16 @@ export const CityListContent = ({
       return () => cancelAnimationFrame(raf);
     }
   }, [view, currentCityId, selectedId, filteredCitiesForCountry.length]);
+
+  useEffect(() => {
+    const canScroll = scrollToCityId && view === 'city' && filteredCitiesForCountry.some((c) => c.id === scrollToCityId);
+    if (!canScroll) return;
+    const raf = requestAnimationFrame(() => {
+      scrollTargetRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      setScrollToCityId(null);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [scrollToCityId, view, filteredCitiesForCountry]);
 
   const searchPlaceholder = view === 'country' ? t('city.searchCountries') : t('city.searchCities');
   const selectedCityId = isSelectorMode ? selectedId : currentCityId;
@@ -306,12 +328,14 @@ export const CityListContent = ({
                 <div className={`space-y-1.5 p-1 ${contentClassName}`}>
                   {filteredCitiesForCountry.map((city) => {
                     const isSelected = city.id === selectedCityId;
+                    const isNearest = city.id === nearestCityIdInList;
                     return (
                       <button
                         key={city.id}
-                        ref={isSelected ? selectedCityRef : undefined}
+                        ref={city.id === scrollToCityId ? scrollTargetRef : isSelected ? selectedCityRef : undefined}
                         onClick={() => onCityClick(city.id)}
                         disabled={submitting && !isSelectorMode}
+                        aria-label={isNearest ? `${city.name}, ${t('city.nearestToYou')}` : undefined}
                         className={
                           isSelectorMode
                             ? `w-full min-w-0 text-left px-4 py-3 rounded-xl transition-all ${
@@ -327,7 +351,14 @@ export const CityListContent = ({
                         }
                       >
                         <div className="flex items-center justify-between gap-2 min-w-0">
-                          <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{city.name}</span>
+                          <span className="flex items-center gap-2 min-w-0">
+                            {isNearest && (
+                              <span className="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400" title={t('city.nearestToYou')}>
+                                <Navigation className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
+                              </span>
+                            )}
+                            <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{city.name}</span>
+                          </span>
                           {isSelected && (
                             <span className={`shrink-0 flex items-center justify-center w-5 h-5 rounded-full text-xs ${isSelectorMode ? 'bg-white/20 text-white' : 'bg-primary-500 text-white'}`} aria-hidden>✓</span>
                           )}
@@ -361,7 +392,7 @@ export const CityListContent = ({
                     onCityClick={(id) => setPendingCityId(id)}
                     onClubClick={(id) => setPendingCityId(id)}
                     onMapClick={() => setPendingCityId(null)}
-                    className="flex-1 min-h-[280px]"
+                    className="flex-1 min-h-0"
                     userLocation={userLocationTarget}
                     userLocationApproximate={userLocationIsApproximate}
                   />

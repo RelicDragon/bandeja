@@ -1264,6 +1264,7 @@
     "selectCity": "Выбрать",
     "selectCityName": "Выбрать {{name}}",
     "whereAmI": "Где я?",
+    "nearestToYou": "Ближайший к вам",
     "yourLocation": "Ваше местоположение",
     "approximateLocation": "Приблизительное местоположение"
   },

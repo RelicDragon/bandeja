@@ -1218,6 +1218,7 @@
     "selectCity": "Изабери",
     "selectCityName": "Изабери {{name}}",
     "whereAmI": "Где сам?",
+    "nearestToYou": "Најближе вама",
     "yourLocation": "Ваша локација",
     "approximateLocation": "Приближна локација"
   },
