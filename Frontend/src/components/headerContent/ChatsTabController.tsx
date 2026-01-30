@@ -1,19 +1,29 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useChatUnreadCounts } from '@/hooks/useChatUnreadCounts';
 import { usePlayersStore } from '@/store/playersStore';
 
 export const ChatsTabController = () => {
   const { t } = useTranslation();
-  const { chatsFilter, setChatsFilter } = useNavigationStore();
+  const navigate = useNavigate();
+  const { currentPage, chatsFilter, setChatsFilter, setCurrentPage } = useNavigationStore();
   const { counts } = useChatUnreadCounts();
   const unreadCounts = usePlayersStore((state) => state.unreadCounts);
   const userChatsCount = Object.values(unreadCounts).reduce((sum: number, count: number) => sum + count, 0);
 
+  const handleFilter = (filter: 'users' | 'bugs' | 'channels') => {
+    setChatsFilter(filter);
+    if (currentPage === 'bugs' && filter !== 'bugs') {
+      setCurrentPage('chats');
+      navigate('/chats');
+    }
+  };
+
   return (
     <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
       <button
-        onClick={() => setChatsFilter('users')}
+        onClick={() => handleFilter('users')}
         className={`relative px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
           chatsFilter === 'users'
             ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
@@ -28,7 +38,7 @@ export const ChatsTabController = () => {
         )}
       </button>
       <button
-        onClick={() => setChatsFilter('bugs')}
+        onClick={() => handleFilter('bugs')}
         className={`relative px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
           chatsFilter === 'bugs'
             ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
@@ -43,7 +53,7 @@ export const ChatsTabController = () => {
         )}
       </button>
       <button
-        onClick={() => setChatsFilter('channels')}
+        onClick={() => handleFilter('channels')}
         className={`relative px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
           chatsFilter === 'channels'
             ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'

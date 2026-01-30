@@ -46,8 +46,12 @@ export const MainPage = () => {
         setCurrentPage('gameDetails');
       } else if (path === '/bugs') {
         setCurrentPage('bugs');
+        setChatsFilter('bugs');
       } else if (path.includes('/bugs/') && path.includes('/chat')) {
-        setCurrentPage('bugs');
+        setChatsFilter('bugs');
+        if (currentPage !== 'chats') {
+          setCurrentPage('bugs');
+        }
       } else if (path.includes('/user-chat/')) {
         setCurrentPage('chats');
         setChatsFilter('users');
@@ -120,7 +124,7 @@ export const MainPage = () => {
     return (
       <MainLayout>
         <ChatsTab />
-        {showBottomTabBar && <BottomTabBar />}
+        {showBottomTabBar && !isDesktop && <BottomTabBar />}
       </MainLayout>
     );
   }
@@ -129,7 +133,7 @@ export const MainPage = () => {
     return (
       <MainLayout>
         <BugsTab />
-        {showBottomTabBar && <BottomTabBar />}
+        {showBottomTabBar && !isDesktop && <BottomTabBar />}
       </MainLayout>
     );
   }

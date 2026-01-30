@@ -197,9 +197,6 @@ export const BugCard = ({
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bug.status)}`}>
               {t(`bug.statuses.${bug.status}`)}
             </span>
-            <span className={`text-xs ${isArchived ? 'text-gray-400' : 'text-gray-500'}`}>
-              {formatRelativeTime(bug.createdAt)}
-            </span>
           </div>
 
           <div 
@@ -369,6 +366,9 @@ export const BugCard = ({
         )}
         </div>
       </div>
+      <span className={`absolute bottom-2 right-3 text-xs ${isArchived ? 'text-gray-400' : 'text-gray-500'}`}>
+        {formatRelativeTime(bug.createdAt)}
+      </span>
       {fullscreenImage && (
         <FullscreenImageViewer
           imageUrl={fullscreenImage}
