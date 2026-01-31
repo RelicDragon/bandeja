@@ -32,25 +32,19 @@ export const calculateGameStatus = (
   const hoursUntilStart = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
   const hoursSinceEnd = (now.getTime() - endTime.getTime()) / (1000 * 60 * 60);
   
-  const isResultsBased = isResultsBasedEntityType(game.entityType);
-  
   let shouldArchive = false;
-  
-  if (isResultsBased && game.finishedDate) {
-    const finishedDate = new Date(game.finishedDate);
-    const hoursSinceFinished = (now.getTime() - finishedDate.getTime()) / (1000 * 60 * 60);
-    shouldArchive = hoursSinceFinished >= 24;
+  if (clubTimezone) {
+    const gameDayStart = startOfDay(toZonedTime(endTime, clubTimezone));
+    const archiveMidnight = startOfDay(addDays(gameDayStart, 2));
+    const archiveTimeUTC = fromZonedTime(archiveMidnight, clubTimezone);
+    shouldArchive = now >= archiveTimeUTC;
   } else {
-    if (clubTimezone) {
-      const endTimeInTimezone = toZonedTime(endTime, clubTimezone);
-      const endDatePlusTwoDays = addDays(endTimeInTimezone, 2);
-      const nextDayMidnight = startOfDay(endDatePlusTwoDays);
-      const archiveTimeUTC = fromZonedTime(nextDayMidnight, clubTimezone);
-      
-      shouldArchive = now >= archiveTimeUTC;
-    } else {
-      shouldArchive = hoursSinceEnd > 48;
-    }
+    const gameDayStartUTC = new Date(Date.UTC(endTime.getUTCFullYear(), endTime.getUTCMonth(), endTime.getUTCDate()));
+    const archiveTime = addDays(gameDayStartUTC, 2);
+    shouldArchive = now >= archiveTime;
+  }
+  if (game.entityType === EntityType.LEAGUE_SEASON && game.resultsStatus !== 'FINAL') {
+    shouldArchive = false;
   }
   
   if (shouldArchive) {
