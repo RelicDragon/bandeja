@@ -14,7 +14,6 @@ import { GenderIndicator } from './GenderIndicator';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { GamesStatsSection } from './GamesStatsSection';
 import { ConfirmationModal } from './ConfirmationModal';
-import { Button } from './Button';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { BaseModal } from './BaseModal';
