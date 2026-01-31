@@ -392,6 +392,7 @@
     "sending": "Отправка...",
     "send": "Отправить",
     "resultsSentToTelegram": "Результаты успешно отправлены в Telegram",
+    "resultsAlreadySentToTelegram": "Результаты уже отправлены в Telegram",
     "sendToTelegramFailed": "Не удалось отправить результаты в Telegram",
     "editTelegramText": "Редактировать Текст для Telegram",
     "editTelegramTextDescription": "Просмотрите и отредактируйте текст перед отправкой в Telegram",

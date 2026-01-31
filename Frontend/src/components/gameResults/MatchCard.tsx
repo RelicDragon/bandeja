@@ -112,7 +112,7 @@ export const MatchCard = ({
         onDragOver={!effectiveIsPresetGame && canEditResults ? onDragOver : undefined}
         onDrop={!effectiveIsPresetGame && canEditResults ? (e) => onDrop(e, team) : undefined}
       >
-        <div className="flex gap-1 justify-center">
+        <div className="flex gap-3 justify-center">
           {teamPlayers.map(playerId => {
             const player = players.find(p => p.id === playerId);
             return player ? (

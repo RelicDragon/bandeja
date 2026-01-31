@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Beer, Check } from 'lucide-react';
+import { TrendingUp, TrendingDown, Beer, Check, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +8,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { LevelHistoryTabController } from './LevelHistoryTabController';
 import { PlayerAvatar } from './PlayerAvatar';
 import { formatDate, formatSmartRelativeTime } from '@/utils/dateFormat';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 const TennisBallIcon = () => (
   <svg
@@ -26,12 +26,13 @@ const TennisBallIcon = () => (
 
 interface LevelHistoryViewProps {
   stats: UserStats;
-  padding?: 'p-6' | 'p-0';
+  padding?: string;
   tabDarkBgClass?: string;
   hideUserCard?: boolean;
+  onOpenGame?: () => void;
 }
 
-export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false }: LevelHistoryViewProps) => {
+export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false, onOpenGame }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { setCurrentPage, setIsAnimating } = useNavigationStore();
@@ -42,6 +43,8 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
   const [levelChangeEvents, setLevelChangeEvents] = useState<LevelHistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'10' | '30' | 'all'>('10');
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
+  const [activeChartIndex, setActiveChartIndex] = useState<number | null>(null);
+  const [hoveredChartIndex, setHoveredChartIndex] = useState<number | null>(null);
   const itemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
@@ -65,6 +68,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
 
   const handleRatingChangeClick = (item: { id: string; gameId: string }) => {
     if (!item.gameId) return;
+    onOpenGame?.();
     setIsAnimating(true);
     setCurrentPage('gameDetails');
     navigate(`/games/${item.gameId}`);
@@ -106,22 +110,57 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
       date: formatDate(item.createdAt, 'PP'),
       fullDate: item.createdAt,
       itemId: item.id,
+      eventType: item.eventType,
     }));
   }, [currentHistory]);
 
+  const getScrollParent = (el: HTMLElement | null): HTMLElement | null => {
+    if (!el) return null;
+    let parent = el.parentElement;
+    while (parent) {
+      const { overflowY, overflow } = getComputedStyle(parent);
+      if (overflowY === 'auto' || overflowY === 'scroll' || overflow === 'auto' || overflow === 'scroll') return parent;
+      parent = parent.parentElement;
+    }
+    return null;
+  };
+
   const handleChartDotClick = (data: { itemId: string; index: number }) => {
-    if (!data.itemId || !itemRefs.current[data.itemId]) return;
-    
+    if (!data.itemId) return;
+    setActiveChartIndex(data.index);
     setHighlightedItemId(data.itemId);
-    itemRefs.current[data.itemId]?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-    });
-    
     setTimeout(() => {
       setHighlightedItemId(null);
+      setActiveChartIndex(null);
     }, 2000);
   };
+
+  const handleHintClick = (data: { itemId: string; index: number }) => {
+    const el = data.itemId ? itemRefs.current[data.itemId] : null;
+    if (!data.itemId || !el) return;
+    setActiveChartIndex(data.index);
+    setHighlightedItemId(data.itemId);
+    const scrollParent = getScrollParent(el);
+    if (scrollParent) {
+      const parentRect = scrollParent.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const targetScroll = scrollParent.scrollTop + (elRect.top - parentRect.top) - (parentRect.height / 2) + (elRect.height / 2);
+      scrollParent.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
+    } else {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    setTimeout(() => {
+      setHighlightedItemId(null);
+      setActiveChartIndex(null);
+    }, 2000);
+  };
+
+  const createDotClickHandler = (data: { itemId: string; index: number }) => 
+    (e: React.MouseEvent<SVGElement> | React.TouchEvent<SVGElement>) => {
+      e.stopPropagation();
+      e.preventDefault();
+      handleChartDotClick(data);
+    };
 
   return (
     <div className={`${padding} space-y-3`}>
@@ -129,7 +168,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
         <>
           <div className="relative">
             <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-4 text-center relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2">
+              <div className="flex gap-2 items-center">
                 {user.originalAvatar ? (
                   <button
                     className="cursor-pointer hover:opacity-90 transition-opacity"
@@ -157,12 +196,16 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                     {initials}
                   </div>
                 )}
-              </div>
-              <div className="text-white text-sm mb-1">
-                {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}
-              </div>
-              <div className="text-white text-6xl font-bold pb-6">
-                {showSocialLevel ? user.socialLevel.toFixed(2) : user.level.toFixed(2)}
+
+
+                <div className="flex flex-col text-left">
+                  <div className="text-white text-sm">
+                    {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}
+                  </div>
+                  <div className="text-white text-6xl font-bold pb-6">
+                    {showSocialLevel ? user.socialLevel.toFixed(2) : user.level.toFixed(2)}
+                  </div>
+                </div>
               </div>
               {!showSocialLevel && (
                 <div className="absolute bottom-3 right-3 text-white/80 text-xs">
@@ -213,7 +256,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
         <>
           <LevelHistoryTabController activeTab={activeTab} onTabChange={setActiveTab} darkBgClass={tabDarkBgClass} />
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
-            <div className="relative h-48 select-none" style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
+            <div className="relative h-48 select-none" style={{ userSelect: 'none', WebkitUserSelect: 'none' }} onClick={() => setActiveChartIndex(null)}>
               <style>{`
                 .recharts-wrapper,
                 .recharts-wrapper *,
@@ -247,6 +290,20 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                   margin={{ top: 5, right: 5, left: 20, bottom: 5 }}
                   style={{ outline: 'none' }}
                   tabIndex={-1}
+                  onMouseMove={(state: any) => {
+                    if (activeChartIndex === null && state?.activeTooltipIndex !== undefined) {
+                      setHoveredChartIndex(state.activeTooltipIndex);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (activeChartIndex === null) {
+                      setHoveredChartIndex(null);
+                    }
+                  }}
+                  {...(() => {
+                    const displayIndex = activeChartIndex !== null ? activeChartIndex : hoveredChartIndex;
+                    return displayIndex !== null ? { activeIndex: displayIndex } : {};
+                  })()}
                 >
                   <defs>
                     <linearGradient id="levelGradient" x1="0" y1="0" x2="0" y2="1">
@@ -268,33 +325,6 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                     domain={[minLevel, maxLevel]}
                     hide
                   />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div 
-                            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 shadow-lg cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const data = payload[0].payload as { itemId: string; index: number };
-                              handleChartDotClick(data);
-                            }}
-                          >
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              {payload[0].payload.date}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                              {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}: {payload[0].value?.toFixed(2)}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {t('playerCard.clickToView')}
-                            </p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
                   <Area
                     type="monotone"
                     dataKey="level"
@@ -303,84 +333,80 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                     fill={showSocialLevel ? "url(#socialLevelGradient)" : "url(#levelGradient)"}
                     dot={({ cx, cy, payload }) => {
                       if (cx == null || cy == null || !payload) return null;
-                      const data = payload as { itemId: string; index: number };
+                      const data = payload as { itemId: string; index: number; eventType?: string };
                       if (!data?.itemId) return null;
-                      
-                      const handleClick = (e: React.MouseEvent<SVGCircleElement> | React.TouchEvent<SVGCircleElement>) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        handleChartDotClick(data);
-                      };
-                      
+                      const isSet = data.eventType === 'SET';
+                      const fill = isSet ? 'rgb(251, 191, 36)' : (showSocialLevel ? 'rgb(251, 191, 36)' : 'rgb(59, 130, 246)');
+                      const handleClick = createDotClickHandler(data);
+
+                      if (isSet) {
+                        const r = 9;
+                        return (
+                          <g transform={`translate(${cx}, ${cy})`} style={{ cursor: 'pointer', pointerEvents: 'all' }} onClick={handleClick} onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }} onTouchEnd={handleClick}>
+                            <foreignObject x={-r} y={-r} width={r * 2} height={r * 2}>
+                              <div {...({ xmlns: "http://www.w3.org/1999/xhtml" } as any)} className="flex items-center justify-center w-full h-full rounded-full bg-yellow-500 dark:bg-yellow-600 text-white" style={{ width: r * 2, height: r * 2 }}>
+                                <Star size={12} className="text-white" fill="currentColor" />
+                              </div>
+                            </foreignObject>
+                            <circle cx={0} cy={0} r={18} fill="transparent" onClick={handleClick} onTouchEnd={handleClick} />
+                          </g>
+                        );
+                      }
+
                       return (
                         <g>
                           <circle
                             cx={cx}
                             cy={cy}
                             r={4}
-                            fill={showSocialLevel ? "rgb(251, 191, 36)" : "rgb(59, 130, 246)"}
+                            fill={fill}
                             stroke="none"
                             style={{ cursor: 'pointer', pointerEvents: 'all' }}
                             onClick={handleClick}
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                            }}
+                            onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                             onTouchEnd={handleClick}
                           />
-                          <circle
-                            cx={cx}
-                            cy={cy}
-                            r={18}
-                            fill="transparent"
-                            stroke="transparent"
-                            strokeWidth={0}
-                            style={{ cursor: 'pointer', pointerEvents: 'all' }}
-                            onClick={handleClick}
-                            onTouchEnd={handleClick}
-                          />
+                          <circle cx={cx} cy={cy} r={18} fill="transparent" stroke="transparent" strokeWidth={0} style={{ cursor: 'pointer', pointerEvents: 'all' }} onClick={handleClick} onTouchEnd={handleClick} />
                         </g>
                       );
                     }}
                     activeDot={({ cx, cy, payload }) => {
                       if (cx == null || cy == null || !payload) return null;
-                      const data = payload as { itemId: string; index: number };
+                      const data = payload as { itemId: string; index: number; eventType?: string };
                       if (!data?.itemId) return null;
-                      
-                      const handleClick = (e: React.MouseEvent<SVGCircleElement> | React.TouchEvent<SVGCircleElement>) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        handleChartDotClick(data);
-                      };
-                      
+                      const isSet = data.eventType === 'SET';
+                      const fill = isSet ? 'rgb(251, 191, 36)' : (showSocialLevel ? 'rgb(251, 191, 36)' : 'rgb(59, 130, 246)');
+                      const handleClick = createDotClickHandler(data);
+
+                      if (isSet) {
+                        const r = 10;
+                        return (
+                          <g transform={`translate(${cx}, ${cy})`} style={{ cursor: 'pointer', pointerEvents: 'all' }} onClick={handleClick} onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }} onTouchEnd={handleClick}>
+                            <foreignObject x={-r} y={-r} width={r * 2} height={r * 2}>
+                              <div {...({ xmlns: "http://www.w3.org/1999/xhtml" } as any)} className="flex items-center justify-center w-full h-full rounded-full bg-yellow-500 dark:bg-yellow-600 text-white ring-2 ring-white" style={{ width: r * 2, height: r * 2 }}>
+                                <Star size={12} className="text-white" fill="currentColor" />
+                              </div>
+                            </foreignObject>
+                            <circle cx={0} cy={0} r={20} fill="transparent" onClick={handleClick} onTouchEnd={handleClick} />
+                          </g>
+                        );
+                      }
+
                       return (
                         <g>
                           <circle
                             cx={cx}
                             cy={cy}
                             r={6}
-                            fill={showSocialLevel ? "rgb(251, 191, 36)" : "rgb(59, 130, 246)"}
+                            fill={fill}
                             stroke="white"
                             strokeWidth={2}
                             style={{ cursor: 'pointer', pointerEvents: 'all' }}
                             onClick={handleClick}
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                            }}
+                            onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                             onTouchEnd={handleClick}
                           />
-                          <circle
-                            cx={cx}
-                            cy={cy}
-                            r={20}
-                            fill="transparent"
-                            stroke="transparent"
-                            strokeWidth={0}
-                            style={{ cursor: 'pointer', pointerEvents: 'all' }}
-                            onClick={handleClick}
-                            onTouchEnd={handleClick}
-                          />
+                          <circle cx={cx} cy={cy} r={20} fill="transparent" stroke="transparent" strokeWidth={0} style={{ cursor: 'pointer', pointerEvents: 'all' }} onClick={handleClick} onTouchEnd={handleClick} />
                         </g>
                       );
                     }}
@@ -394,6 +420,39 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
               <div className="absolute bottom-0 left-0 text-xs text-gray-500 dark:text-gray-400">
                 {minLevel.toFixed(2)}
               </div>
+              
+              {(() => {
+                const tooltipIndex = activeChartIndex !== null ? activeChartIndex : hoveredChartIndex;
+                if (tooltipIndex !== null && chartData[tooltipIndex]) {
+                  const data = chartData[tooltipIndex];
+                  return (
+                    <div 
+                      className="absolute bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 shadow-lg cursor-pointer z-10"
+                      style={{
+                        left: '50%',
+                        top: '10%',
+                        transform: 'translateX(-50%)',
+                        pointerEvents: 'auto'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleHintClick(data);
+                      }}
+                    >
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {data.date}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}: {data.level.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {t('playerCard.clickToView')}
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </div>
 
@@ -442,7 +501,11 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                       {formatDate(item.createdAt, 'PP')}
                     </span>
                     {item.eventType && (
-                      <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap flex-shrink-0 ${
+                        item.eventType === 'SET'
+                          ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                          : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      }`}>
                         {t(`playerCard.eventType.${item.eventType}`)}
                       </span>
                     )}

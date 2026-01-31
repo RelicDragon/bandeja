@@ -48,7 +48,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
   }, []);
 
   const getSizeClasses = () => {
-    if (extrasmall) return { avatar: 'w-8 h-8', text: 'text-xs', name: 'mt-0.5 text-[10px] h-8 max-w-12 leading-tight', level: 'w-4 h-4 text-[8px]', crown: 'w-4 h-4', crownIcon: 8, remove: 'w-4 h-4', removeIcon: 8 };
+    if (extrasmall) return { avatar: 'w-8 h-8', text: 'text-xs', name: 'mt-0.5 text-[10px] h-8 leading-tight', level: 'w-4 h-4 text-[8px]', crown: 'w-4 h-4', crownIcon: 8, remove: 'w-4 h-4', removeIcon: 8 };
     if (smallLayout) return { avatar: 'w-12 h-12', text: 'text-sm', name: 'mt-1 text-xs h-8 w-full', level: 'w-5 h-5 text-[10px]', crown: 'w-5 h-5', crownIcon: 10, remove: 'w-5 h-5', removeIcon: 10 };
     return { avatar: 'w-16 h-16', text: 'text-lg', name: 'mt-2 text-sm h-10', level: 'w-7 h-7 text-xs font-bold border-2', crown: 'w-6 h-6', crownIcon: 12, remove: 'w-6 h-6', removeIcon: 14 };
   };
@@ -300,10 +300,10 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
               </span>
             ) : (
               <>
-                <span className={`text-center truncate leading-none ${extrasmall ? 'max-w-20' : 'max-w-24'}`}>
+                <span className={`text-center truncate leading-none ${extrasmall ? 'max-w-16' : 'max-w-20'}`}>
                   {player.firstName || ''}
                 </span>
-                <span className={`text-center truncate leading-none ${extrasmall ? 'max-w-20' : 'max-w-24'}`}>
+                <span className={`text-center truncate leading-none ${extrasmall ? 'max-w-16' : 'max-w-20'}`}>
                   {player.lastName || ''}
                 </span>
               </>

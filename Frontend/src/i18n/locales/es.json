@@ -389,6 +389,7 @@
     "sending": "Enviando...",
     "send": "Enviar",
     "resultsSentToTelegram": "Resultados enviados a Telegram exitosamente",
+    "resultsAlreadySentToTelegram": "Los resultados ya se enviaron a Telegram",
     "sendToTelegramFailed": "Error al enviar resultados a Telegram",
     "editTelegramText": "Editar Texto de Telegram",
     "editTelegramTextDescription": "Revisa y edita el texto antes de enviarlo a Telegram",

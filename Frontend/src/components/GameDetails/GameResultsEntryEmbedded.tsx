@@ -53,12 +53,12 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
   const currentGame = useMemo(() => {
-    if (!engine.game) return game;
-    if (!game) return engine.game;
-    if (game.resultsStatus !== engine.game.resultsStatus || game.status !== engine.game.status) {
-      return game;
+    const base = !engine.game ? game : !game ? engine.game : (game.resultsStatus !== engine.game.resultsStatus || game.status !== engine.game.status) ? game : engine.game;
+    if (!base) return game ?? engine.game ?? null;
+    if (game && base === engine.game) {
+      return { ...base, photosCount: game.photosCount, mainPhotoId: game.mainPhotoId, resultsSentToTelegram: game.resultsSentToTelegram, city: game.city };
     }
-    return engine.game;
+    return base;
   }, [engine.game, game]);
 
   const { activeTab, setActiveTab } = useGameResultsTabs(currentGame?.resultsStatus);
@@ -115,6 +115,13 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
     if (currentGame.resultsSentToTelegram) return false;
     if (!currentGame.city?.telegramGroupId) return false;
     if ((currentGame.photosCount || 0) === 0 && !currentGame.mainPhotoId) return false;
+    return true;
+  }, [currentGame, hasResultsEntered]);
+
+  const showSentToTelegramHint = useMemo(() => {
+    if (!currentGame || !hasResultsEntered) return false;
+    if (!currentGame.resultsSentToTelegram) return false;
+    if (!currentGame.city?.telegramGroupId) return false;
     return true;
   }, [currentGame, hasResultsEntered]);
 
@@ -781,6 +788,13 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
         </div>
       )}
 
+      {showSentToTelegramHint && (
+        <div className="mb-6 flex justify-center px-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+            {t('gameResults.resultsAlreadySentToTelegram') || 'Results already sent to Telegram'}
+          </p>
+        </div>
+      )}
 
       {isResultsEntryMode && (
         <GameResultsTabs

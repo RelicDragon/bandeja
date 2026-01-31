@@ -233,16 +233,16 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
                       {outcome.user.firstName} {outcome.user.lastName}
                     </h3>
                     
-                    <div className="relative min-h-[2.5rem]">
-                      <AnimatePresence mode="wait">
+                    <div className="relative overflow-hidden min-h-[2.5rem]">
+                      <AnimatePresence mode="wait" initial={false}>
                         {mode === 'ratings' ? (
                           <motion.div
                             key="ratings"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute inset-0 flex flex-col gap-1"
+                            initial={{ opacity: 0, y: 10, height: 0 }}
+                            animate={{ opacity: 1, y: 0, height: 'auto' }}
+                            exit={{ opacity: 0, y: -10, height: 0 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            className="inset-0 flex flex-col gap-1"
                           >
                             <div className="flex items-center gap-2 text-sm flex-wrap">
                               <span className="text-gray-600 dark:text-gray-400">
@@ -260,11 +260,11 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
                         ) : (
                           <motion.div
                             key="stats"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute inset-0 flex flex-col gap-1"
+                            initial={{ opacity: 0, y: 10, height: 0 }}
+                            animate={{ opacity: 1, y: 0, height: 'auto' }}
+                            exit={{ opacity: 0, y: -10, height: 0 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            className="inset-0 flex flex-col gap-1"
                           >
                             <div className="flex items-center gap-2 text-sm flex-wrap">
                               <span className="text-gray-600 dark:text-gray-400">

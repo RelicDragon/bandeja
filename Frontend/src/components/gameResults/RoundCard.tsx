@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Trash2, Plus } from 'lucide-react';
 import { Round } from '@/types/gameResults';
@@ -99,14 +99,24 @@ export const RoundCard = ({
 }: RoundCardProps) => {
   const { t } = useTranslation();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
   const roundName = `${t('gameResults.round')} ${roundIndex + 1}`;
   
   const roundStatus = useMemo(() => getRoundStatus(round), [round]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const matchesContent = (
     <div className={hideFrame ? "" : "p-2"}>
               {round.matches.map((match, matchIndex) => (
-                fixedNumberOfSets === 1 ? (
+                fixedNumberOfSets === 1 && windowWidth >= 390 ? (
                   <HorizontalMatchCard
                     key={match.id}
                     match={match}

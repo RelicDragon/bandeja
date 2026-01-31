@@ -45,6 +45,8 @@ export const BaseModal = ({
       setIsAnimating(false);
       setShouldRender(true);
       document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      document.body.style.overscrollBehavior = 'none';
       
       justOpenedRef.current = true;
       const haltEvents = (e: Event) => {
@@ -96,6 +98,8 @@ export const BaseModal = ({
           setIsAnimating(false);
           modalZIndexService.unregisterModal(modalIdRef.current);
           document.body.style.overflow = '';
+          document.body.style.touchAction = '';
+          document.body.style.overscrollBehavior = '';
         }, 300);
         return () => clearTimeout(timeout);
       } else {
@@ -103,6 +107,8 @@ export const BaseModal = ({
         setIsClosing(false);
         modalZIndexService.unregisterModal(modalIdRef.current);
         document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+        document.body.style.overscrollBehavior = '';
       }
     }
   }, [isOpen, shouldRender, isBasic]);
@@ -113,6 +119,8 @@ export const BaseModal = ({
     return () => {
       modalZIndexService.unregisterModal(modalId);
       document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+      document.body.style.overscrollBehavior = '';
     };
   }, []);
 
@@ -147,9 +155,16 @@ export const BaseModal = ({
   return createPortal(
     <div
       className={`fixed inset-0 ${containerClass}`}
-      style={{ zIndex }}
+      style={{ zIndex, pointerEvents: 'auto' }}
       onClick={handleBackdropClick}
     >
+      {!isBasic && (
+        <div
+          className="absolute inset-0"
+          style={{ pointerEvents: 'auto' }}
+          aria-hidden
+        />
+      )}
       {(isBasic || forceBackdrop) && (
         <div
           className={`absolute inset-0 bg-black/50 backdrop-blur-sm ${backdropClass}`}
@@ -168,6 +183,7 @@ export const BaseModal = ({
           
           <motion.div
             className={`relative bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-200/50 dark:border-gray-700/50 overflow-hidden flex flex-col mx-auto ${contentClassName ?? 'p-3 sm:p-6 md:p-8'}`}
+            style={{ maxHeight: '80vh' }}
           >
             {showCloseButton && (
               <button

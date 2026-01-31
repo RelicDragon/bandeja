@@ -391,6 +391,7 @@
     "sending": "Слање...",
     "send": "Пошаљи",
     "resultsSentToTelegram": "Резултати су успешно послати у Telegram",
+    "resultsAlreadySentToTelegram": "Резултати су већ послати у Telegram",
     "sendToTelegramFailed": "Неуспешно слање резултата у Telegram",
     "editTelegramText": "Уреди Текст за Telegram",
     "editTelegramTextDescription": "Прегледајте и уредите текст пре слања у Telegram",

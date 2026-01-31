@@ -234,6 +234,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
             {playerId && (
               <motion.div
                 className="fixed inset-0"
+                style={{ pointerEvents: 'auto' }}
                 onClick={handleClose}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -243,6 +244,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                 <motion.div
                   className="absolute inset-0 bg-black/50"
                   style={{
+                    pointerEvents: 'auto',
                     opacity: backdropOpacity,
                     backdropFilter: `blur(${backdropBlur}px)`,
                     WebkitBackdropFilter: `blur(${backdropBlur}px)`,
@@ -255,7 +257,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                   className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl max-h-[75vh] overflow-hidden max-w-[428px] mx-auto"
                   style={{
                     y: ySpring,
-                    paddingBottom: 'env(safe-area-inset-bottom)',
+                    paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))',
                   }}
                   initial={{ y: '100%' }}
                   animate={{ y: isClosing ? '100%' : 0 }}
@@ -287,53 +289,99 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
               <div className="h-8 w-full cursor-grab active:cursor-grabbing touch-none" />
           
           <motion.div
-            className="absolute top-4 left-4 right-4 flex items-center justify-between z-10"
+            className="flex -mb-8 -top-8 relative items-center justify-between z-10 p-2 pl-6 w-full"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
-            <AnimatePresence mode="wait">
-              {showLevelView ? (
-                <motion.div
-                  key="level-header"
-                  className="flex items-center justify-between w-full"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="flex items-center gap-4">
-                    <motion.button
-                      onClick={() => setShowLevelView(false)}
-                      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
-                    </motion.button>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                      {t('playerCard.levelHistory')}
-                    </h2>
-                  </div>
+            {showLevelView ? (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-4 ">
                   <motion.button
-                    onClick={handleClose}
-                    className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    onClick={() => setShowLevelView(false)}
+                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                   >
-                    <X size={20} className="text-gray-600 dark:text-gray-300" />
+                    <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
                   </motion.button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="main-header"
-                  className="flex gap-2 items-center ml-auto"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    {t('playerCard.levelHistory')}
+                  </h2>
+                </div>
+                <motion.button
+                  onClick={handleClose}
+                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
+                  <X size={20} className="text-gray-600 dark:text-gray-300" />
+                </motion.button>
+              </div>
+            ) : (
+              <div className="flex gap-2 items-center w-full">
+                
+            {/* Favorite button */}
             {stats && !isCurrentUser && (
+              <motion.button
+                onClick={handleToggleFavorite}
+                disabled={isBlocked}
+                className={`p-2 rounded-xl backdrop-blur-sm shadow-sm border ${
+                  isBlocked
+                    ? 'opacity-50 cursor-not-allowed bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50'
+                    : stats.user.isFavorite
+                    ? 'bg-yellow-500 dark:bg-yellow-600 border-yellow-400 dark:border-yellow-500 hover:bg-yellow-600 dark:hover:bg-yellow-700'
+                    : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800'
+                }`}
+                title={isBlocked ? t('playerCard.userBlockedCannotFavorite') : (stats.user.isFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites'))}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              >
+                <Star
+                  size={16}
+                  className={stats.user.isFavorite
+                    ? 'text-white fill-white'
+                    : 'text-gray-400 hover:text-yellow-500 transition-colors'
+                  }
+                />
+              </motion.button>
+            )}
+           
+            {/* Level history button */}
+            {stats && (
+              <motion.button
+                onClick={() => {
+                  setShowAvatarView(false);
+                  setShowLevelView(true);
+                }}
+                className="px-4 py-2 rounded-xl text-white flex items-center gap-2 shadow-md bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                title={t('playerCard.levelHistory')}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              >
+                <LineChart size={18} />
+              </motion.button>
+            )}
+
+
+            {/* Chat button */}
+            {stats && !isCurrentUser && (
+              <motion.button
+                onClick={() => { handleStartChat(); }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-4 py-2 rounded-xl text-white flex items-center gap-2 shadow-md bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              >
+                  <MessageCircle size={18} />
+                  <span className="text-sm">{t('nav.chat')}</span>
+              </motion.button>
+            )}
+
+            {/* Block button */}
+             {stats && !isCurrentUser && (
               <motion.button
                 onClick={isBlocked ? handleBlockUser : () => setShowBlockConfirmation(true)}
                 disabled={blockingUser}
@@ -350,79 +398,24 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                 {isBlocked ? <Check size={18} /> : <Ban size={18} className="scale-x-[-1]" />}
               </motion.button>
             )}
-            {stats && (
-              <motion.button
-                onClick={() => {
-                  setShowAvatarView(false);
-                  setShowLevelView(true);
-                }}
-                className="px-4 py-2 rounded-xl text-white flex items-center gap-2 shadow-md bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                title={t('playerCard.levelHistory')}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-              >
-                <LineChart size={18} />
-              </motion.button>
-            )}
-            {stats && !isCurrentUser && (
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-              >
-                <Button
-                  onClick={handleStartChat}
-                  disabled={startingChat || isBlocked}
-                  variant="primary"
-                  size="sm"
-                  className="flex items-center gap-2"
-                  title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('nav.chat')}
-                >
-                  <MessageCircle size={16} />
-                  {t('nav.chat')}
-                </Button>
-              </motion.div>
-            )}
-            {stats && !isCurrentUser && (
-              <motion.button
-                onClick={handleToggleFavorite}
-                disabled={isBlocked}
-                className={`p-2.5 rounded-xl backdrop-blur-sm shadow-sm border ${
-                  isBlocked
-                    ? 'opacity-50 cursor-not-allowed bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50'
-                    : stats.user.isFavorite
-                    ? 'bg-yellow-500 dark:bg-yellow-600 border-yellow-400 dark:border-yellow-500 hover:bg-yellow-600 dark:hover:bg-yellow-700'
-                    : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800'
-                }`}
-                title={isBlocked ? t('playerCard.userBlockedCannotFavorite') : (stats.user.isFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites'))}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-              >
-                <Star
-                  size={20}
-                  className={stats.user.isFavorite
-                    ? 'text-white fill-white'
-                    : 'text-gray-400 hover:text-yellow-500 transition-colors'
-                  }
-                />
-              </motion.button>
-            )}
+
+            {/* Close button */}
             <motion.button
               onClick={handleClose}
-              className="p-2.5 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50"
+              className="p-2.5 ml-auto rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <X size={20} className="text-gray-600 dark:text-gray-300" />
             </motion.button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              </div>
+            )}
           </motion.div>
 
-              <div className="overflow-y-auto max-h-[calc(75vh-20px)] pt-4">
+              <div
+                className="overflow-y-auto max-h-[calc(75vh-20px)]"
+                style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}
+              >
                 <AnimatePresence mode="wait">
                   {loading ? (
                     <motion.div
@@ -455,7 +448,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                           exit={{ opacity: 0, x: -20 }}
                           transition={{ duration: 0.3, ease: 'easeInOut' }}
                         >
-                          <LevelHistoryView stats={stats} padding="p-6" tabDarkBgClass="dark:bg-gray-700/50" />
+                          <LevelHistoryView stats={stats} padding="p-6 pt-2" tabDarkBgClass="dark:bg-gray-700/50" onOpenGame={handleClose} />
                         </motion.div>
                       ) : (
                         <motion.div
@@ -578,7 +571,7 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onLevelClick, g
 
   return (
     <motion.div
-      className="p-6 space-y-6"
+      className="p-6 space-y-6 pt-2"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
