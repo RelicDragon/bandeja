@@ -20,15 +20,18 @@ export const getClubsForMap = asyncHandler(async (req: Request, res: Response) =
     Number.isFinite(minLng) &&
     Number.isFinite(maxLng);
 
-  const where: { isActive: true; latitude: { not: null }; longitude: { not: null }; latitude?: { gte: number; lte: number }; longitude?: { gte: number; lte: number } } = {
+  const where = {
     isActive: true,
-    latitude: { not: null },
-    longitude: { not: null },
+    ...(hasBbox
+      ? {
+          latitude: { gte: minLat!, lte: maxLat! },
+          longitude: { gte: minLng!, lte: maxLng! },
+        }
+      : {
+          latitude: { not: null },
+          longitude: { not: null },
+        }),
   };
-  if (hasBbox) {
-    where.latitude = { gte: minLat!, lte: maxLat! };
-    where.longitude = { gte: minLng!, lte: maxLng! };
-  }
 
   const clubs = await prisma.club.findMany({
     where,
