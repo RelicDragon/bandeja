@@ -118,8 +118,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 44.783333,
+        "lon": 20.4
       },
       "timezone": "Europe/Belgrade"
     },
@@ -264,8 +264,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 44.799855,
+        "lon": 20.462508
       },
       "timezone": "Europe/Belgrade"
     },
@@ -350,8 +350,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 44.782,
+        "lon": 20.398
       },
       "timezone": "Europe/Belgrade"
     },
@@ -466,8 +466,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 44.718,
+        "lon": 20.368
       },
       "timezone": "Europe/Belgrade"
     },
@@ -648,8 +648,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 44.814,
+        "lon": 20.465
       },
       "timezone": "Europe/Belgrade"
     },
@@ -734,8 +734,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 44.821,
+        "lon": 20.468
       },
       "timezone": "Europe/Belgrade"
     },
@@ -986,8 +986,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 44.835,
+        "lon": 20.48
       },
       "timezone": "Europe/Belgrade"
     },
@@ -1102,8 +1102,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 44.784,
+        "lon": 20.397
       },
       "timezone": "Europe/Belgrade"
     },
@@ -1248,8 +1248,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 44.823333,
+        "lon": 20.450278
       },
       "timezone": "Europe/Belgrade"
     },
@@ -1344,8 +1344,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 44.788744,
+        "lon": 20.459097
       },
       "timezone": "Europe/Belgrade"
     },
@@ -1480,8 +1480,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 44.8058,
+        "lon": 20.4486
       },
       "timezone": "Europe/Belgrade"
     },
@@ -1586,8 +1586,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 45.228,
+        "lon": 19.872
       },
       "timezone": "Europe/Belgrade"
     },
@@ -1722,8 +1722,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 45.242,
+        "lon": 19.838
       },
       "timezone": "Europe/Belgrade"
     },
@@ -1924,8 +1924,8 @@
       "country": "Serbia",
       "country_code": "RS",
       "coordinate": {
-        "lat": null,
-        "lon": null
+        "lat": 46.1015,
+        "lon": 19.668
       },
       "timezone": "Europe/Belgrade"
     },
@@ -2026,5 +2026,101 @@
     ],
     "communications_language": "en_US",
     "description": "Padel Centar Gravity, located in Subotica (northern Serbia), is a state-of-the-art padel complex with 4 modern courts (indoors), complete with comfortable changing rooms, a terrace café, free parking, and other amenities."
+  },
+  {
+    "tenant_id": "e8f9a1b2-3c4d-5e6f-7a8b-9c0d1e2f3a4b",
+    "tenant_name": "TRK Zlatibor",
+    "slug": "trk-zlatibor",
+    "address": {
+      "street": "TRK Zlatibor",
+      "postal_code": "31315",
+      "city": "Zlatibor",
+      "sub_administrative_area": "Čajetina",
+      "administrative_area": "Zlatibor",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": 43.726389,
+        "lon": 19.7
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+38131841646",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "c1d2e3f4-5a6b-7c8d-9e0f-1a2b3c4d5e6f",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "d2e3f4a5-6b7c-8d9e-0f1a-2b3c4d5e6f7a",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "TRK Zlatibor (Turističko-rekreativni kompleks Zlatibor) is the main sports complex on Zlatibor mountain, offering padel courts alongside basketball, volleyball, handball, tennis, and other facilities. Host venue for ISF U15 Gymnasiade padel 2025."
   }
 ]

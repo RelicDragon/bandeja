@@ -6,6 +6,7 @@ import * as path from 'path';
 import { Prisma } from '@prisma/client';
 import prisma from '../src/config/database';
 import { normalizeClubName } from '../src/utils/normalizeClubName';
+import { normalizeCountry } from '../src/utils/normalizePlaytomicCountry';
 import { refreshClubCourtsCount } from '../src/utils/refreshClubCourtsCount';
 
 const JSON_DIR = path.join(__dirname, '..', 'additions', 'playtomic', 'jsons');
@@ -180,10 +181,19 @@ async function loadFile(filePath: string): Promise<{
       continue;
     }
 
-    const cityKey = `${addr.city}|${addr.country}`;
+    // Use only this club's country/country_code (file may contain multiple countries)
+    const { country, country_code } = normalizeCountry(addr.country, addr.country_code);
+    const normalizedAddr: PtAddress = {
+      ...addr,
+      country,
+      country_code: country_code || addr.country_code,
+    };
+    pt.address = normalizedAddr;
+
+    const cityKey = `${addr.city}|${country_code || country}`;
     let cityId = cityIdsByKey.get(cityKey);
     if (!cityId) {
-      const city = await getOrCreateCity(addr);
+      const city = await getOrCreateCity(normalizedAddr);
       cityId = city.id;
       cityIdsByKey.set(cityKey, cityId);
       if (city.created) citiesCreated++;
