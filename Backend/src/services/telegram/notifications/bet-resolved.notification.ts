@@ -71,7 +71,7 @@ export async function sendBetResolvedNotification(
       message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
     }
     
-    message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
+    message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
 
     if (isWinner && totalCoinsWon && totalCoinsWon > 0) {
       message += `\n💰 ${escapeMarkdown(t('telegram.coinsWon', lang) || 'Coins won')}: ${totalCoinsWon}\n`;
@@ -155,7 +155,7 @@ export async function sendBetNeedsReviewNotification(
       message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
     }
     
-    message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
+    message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
     message += `\n${escapeMarkdown(t('telegram.betNeedsReviewDescription', lang) || 'Your challenge requires manual review due to a resolution error.')}`;
 
     const buttons = [[
@@ -216,7 +216,7 @@ export async function sendBetCancelledNotification(api: Api, betId: string, user
     let message = `${title}\n\n`;
     message += `🎮 ${escapeMarkdown(gameName)}\n`;
     if (clubName) message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
-    message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
+    message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
     message += `\n${escapeMarkdown(t('telegram.betCancelledDescription', lang) || 'Bet cancelled because a player in the condition left the game. Money refunded.')}`;
 
     const buttons = [[{ text: t('telegram.viewGame', lang), url: `${config.frontendUrl}/games/${bet.gameId}` }]];

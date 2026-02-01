@@ -23,7 +23,7 @@ export async function sendLeagueRoundStartNotification(
   const message = `🎾 ${escapeMarkdown(t('telegram.leagueRoundStartReceived', lang))}\n\n` +
     `🏆 *${escapeMarkdown(leagueName)}*\n` +
     `📅 ${escapeMarkdown(t('telegram.round', lang))} ${roundNumber}\n\n` +
-    `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+    `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
   const buttons = [[
     {

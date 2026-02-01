@@ -4,6 +4,8 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatUserName } from '../../shared/notification-base';
+import { getShortDayOfWeek, getTimezonesByCityIds } from '../../user-timezone.service';
+import { DEFAULT_TIMEZONE } from '../../../utils/constants';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import prisma from '../../../config/database';
 
@@ -30,10 +32,14 @@ export async function sendGroupChatNotification(
           language: true,
           firstName: true,
           lastName: true,
+          currentCityId: true,
         }
       }
     }
   });
+
+  const cityIds = participants.map(p => p.user.currentCityId ?? null);
+  const timezoneMap = await getTimezonesByCityIds(cityIds);
 
   for (const participant of participants) {
     const user = participant.user;
@@ -55,8 +61,10 @@ export async function sendGroupChatNotification(
 
     try {
       const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
+      const timezone = timezoneMap.get(user.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
+      const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
       const groupIcon = groupChannel.isChannel ? '📢' : '👥';
-      const formattedMessage = `${groupIcon} *${escapeMarkdown(groupChannel.name)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
+      const formattedMessage = `${shortDayOfWeek} ${groupIcon} *${escapeMarkdown(groupChannel.name)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
       
       const buttons = [[
         {

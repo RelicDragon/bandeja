@@ -58,7 +58,7 @@ export async function createBetResolvedPushNotification(
   if (gameInfo.place) {
     body += ` - ${gameInfo.place}`;
   }
-  body += `\n${gameInfo.shortDate} ${gameInfo.startTime}`;
+  body += `\n${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}`;
 
   if (isWinner && totalCoinsWon && totalCoinsWon > 0) {
     body += `\n💰 ${t('telegram.coinsWon', lang) || 'Coins won'}: ${totalCoinsWon}`;
@@ -73,7 +73,8 @@ export async function createBetResolvedPushNotification(
     title,
     body,
     data: {
-      gameId: bet.gameId
+      gameId: bet.gameId,
+      shortDayOfWeek: gameInfo.shortDayOfWeek
     },
     sound: 'default'
   };
@@ -129,6 +130,7 @@ export async function createBetNeedsReviewPushNotification(
   if (gameInfo.place) {
     body += ` - ${gameInfo.place}`;
   }
+  body += `\n${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}`;
   body += `\n${t('telegram.betNeedsReviewDescription', lang) || 'Your challenge requires manual review due to a resolution error.'}`;
 
   return {
@@ -136,7 +138,8 @@ export async function createBetNeedsReviewPushNotification(
     title,
     body,
     data: {
-      gameId: bet.gameId
+      gameId: bet.gameId,
+      shortDayOfWeek: gameInfo.shortDayOfWeek
     },
     sound: 'default'
   };
@@ -172,14 +175,14 @@ export async function createBetCancelledPushNotification(
   const title = t('telegram.betCancelled', lang) || 'Challenge Cancelled';
   let body = `${gameName}`;
   if (gameInfo.place) body += ` - ${gameInfo.place}`;
-  body += `\n${gameInfo.shortDate} ${gameInfo.startTime}`;
+  body += `\n${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}`;
   body += `\n${t('telegram.betCancelledDescription', lang) || 'Bet cancelled because a player in the condition left the game. Money refunded.'}`;
 
   return {
     type: NotificationType.GAME_SYSTEM_MESSAGE,
     title,
     body,
-    data: { gameId: bet.gameId },
+    data: { gameId: bet.gameId, shortDayOfWeek: gameInfo.shortDayOfWeek },
     sound: 'default'
   };
 }

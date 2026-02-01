@@ -84,7 +84,7 @@ export async function sendGameSystemMessageNotification(
         const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
         const translatedContent = translateSystemMessage(message, lang);
         
-        const formattedMessage = `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}\n🔔 ${escapeMarkdown(translatedContent)}`;
+        const formattedMessage = `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}\n🔔 ${escapeMarkdown(translatedContent)}`;
         
         const buttons = [[
           {

@@ -29,7 +29,7 @@ export async function createInvitePushNotification(
   const gameInfo = await formatGameInfoForUser(invite.game, receiver.currentCityId, lang);
 
   const title = t('telegram.inviteReceived', lang);
-  const body = `${senderName} ${t('telegram.invitedYou', lang)}\n${gameInfo.place} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+  const body = `${senderName} ${t('telegram.invitedYou', lang)}\n${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
   return {
     type: NotificationType.INVITE,
@@ -37,7 +37,8 @@ export async function createInvitePushNotification(
     body,
     data: {
       gameId: invite.game.id,
-      inviteId: invite.id
+      inviteId: invite.id,
+      shortDayOfWeek: gameInfo.shortDayOfWeek
     },
     actions: [
       {

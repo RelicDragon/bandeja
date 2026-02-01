@@ -12,7 +12,7 @@ export async function createGameChatPushNotification(
   const messageContent = message.content || '[Media]';
   const gameInfo = await formatGameInfoForUser(game, recipient.currentCityId, lang);
 
-  const title = `${gameInfo.place} ${gameInfo.shortDate} ${gameInfo.startTime}`;
+  const title = `${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}`;
   const body = `${senderName}: ${messageContent}`;
 
   return {
@@ -22,7 +22,8 @@ export async function createGameChatPushNotification(
     data: {
       gameId: game.id,
       messageId: message.id,
-      chatType: message.chatType
+      chatType: message.chatType,
+      shortDayOfWeek: gameInfo.shortDayOfWeek
     },
     sound: 'default'
   };

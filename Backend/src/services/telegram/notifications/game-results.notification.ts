@@ -195,7 +195,7 @@ export async function sendGameFinishedNotification(
     message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
   }
   
-  message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
+  message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
   
   if (game.entityType !== 'BAR') {
     message += `⏱️ ${escapeMarkdown(t('telegram.duration', lang))}: ${gameInfo.duration}\n`;

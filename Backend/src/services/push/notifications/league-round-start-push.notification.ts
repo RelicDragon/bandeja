@@ -17,14 +17,15 @@ export async function createLeagueRoundStartPushNotification(
   const roundNumber = game.leagueRound?.orderIndex !== undefined ? game.leagueRound.orderIndex + 1 : 1;
 
   const title = t('telegram.leagueRoundStartReceived', lang);
-  const body = `${leagueName} - ${t('telegram.round', lang)} ${roundNumber}\n${gameInfo.place} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+  const body = `${leagueName} - ${t('telegram.round', lang)} ${roundNumber}\n${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
   return {
     type: NotificationType.GAME_REMINDER,
     title,
     body,
     data: {
-      gameId: game.id
+      gameId: game.id,
+      shortDayOfWeek: gameInfo.shortDayOfWeek
     },
     sound: 'default'
   };

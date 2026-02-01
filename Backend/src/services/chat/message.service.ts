@@ -404,6 +404,7 @@ export class MessageService {
               language: true,
               firstName: true,
               lastName: true,
+              currentCityId: true,
             }
           },
           user2: {
@@ -414,6 +415,7 @@ export class MessageService {
               language: true,
               firstName: true,
               lastName: true,
+              currentCityId: true,
             }
           }
         }

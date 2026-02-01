@@ -2,6 +2,7 @@ import prisma from '../../../config/database';
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { TransactionType } from '@prisma/client';
+import { getShortDayOfWeekForUser } from '../../user-timezone.service';
 
 export async function createTransactionPushNotification(
   transactionId: string,
@@ -18,6 +19,7 @@ export async function createTransactionPushNotification(
           firstName: true,
           lastName: true,
           language: true,
+          currentCityId: true,
         },
       },
       toUser: {
@@ -26,6 +28,7 @@ export async function createTransactionPushNotification(
           firstName: true,
           lastName: true,
           language: true,
+          currentCityId: true,
         },
       },
     },
@@ -84,12 +87,15 @@ export async function createTransactionPushNotification(
     body += `\n${t('telegram.transactionDescription', lang) || 'Description'}: ${description}`;
   }
 
+  const shortDayOfWeek = await getShortDayOfWeekForUser(new Date(), user.currentCityId, lang);
+
   return {
     type: NotificationType.TRANSACTION,
     title,
     body,
     data: {
       transactionId: transaction.id,
+      shortDayOfWeek
     },
     sound: 'default'
   };

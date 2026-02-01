@@ -1,7 +1,6 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
-import { formatNewGameText } from '../../shared/notification-base';
-import { getUserTimezoneFromCityId } from '../../user-timezone.service';
+import { formatGameInfoForUserWithTimezone, formatNewGameText } from '../../shared/notification-base';
 
 export async function createNewGamePushNotification(
   game: any,
@@ -12,11 +11,12 @@ export async function createNewGamePushNotification(
   }
 
   const lang = recipient.language || 'en';
-  const timezone = await getUserTimezoneFromCityId(recipient.currentCityId);
+  const { gameInfo, timezone } = await formatGameInfoForUserWithTimezone(game, recipient.currentCityId, lang);
   const gameText = await formatNewGameText(game, timezone, lang, {
     includeParticipants: true,
     includeLink: false,
-    escapeMarkdown: false
+    escapeMarkdown: false,
+    existingGameInfo: gameInfo,
   });
 
   const title = t('telegram.newGameCreated', lang) || 'New game created';
@@ -27,7 +27,8 @@ export async function createNewGamePushNotification(
     title,
     body,
     data: {
-      gameId: game.id
+      gameId: game.id,
+      shortDayOfWeek: gameInfo.shortDayOfWeek
     },
     sound: 'default'
   };

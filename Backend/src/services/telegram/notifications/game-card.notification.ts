@@ -122,7 +122,7 @@ export async function sendGameCard(
   }
 
   const gameInfo = await formatGameInfoForUser(game, user.currentCityId || null, userLang);
-  const dateTimeLine = `📅 ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)}`;
+  const dateTimeLine = `📅 ${escapeMarkdown(gameInfo.shortDayOfWeek)} ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)}`;
   
   let timeLine = dateTimeLine;
   if (game.entityType !== 'BAR') {

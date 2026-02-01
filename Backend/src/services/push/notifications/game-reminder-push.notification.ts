@@ -35,14 +35,15 @@ export async function createGameReminderPushNotification(
   if (game.name) {
     body += `: ${game.name}`;
   }
-  body += `\n${gameInfo.place} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+  body += `\n${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
   return {
     type: NotificationType.GAME_REMINDER,
     title,
     body,
     data: {
-      gameId: game.id
+      gameId: game.id,
+      shortDayOfWeek: gameInfo.shortDayOfWeek
     },
     sound: 'default'
   };

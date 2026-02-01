@@ -1,4 +1,4 @@
-import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../user-timezone.service';
+import { formatDateInTimezone, getDateLabelInTimezone, getShortDayOfWeek, getUserTimezoneFromCityId } from '../user-timezone.service';
 import { formatDuration } from '../telegram/utils';
 import { t } from '../../utils/translations';
 
@@ -16,6 +16,7 @@ export interface GameInfo {
 export interface FormattedGameInfo {
   place: string;
   shortDate: string;
+  shortDayOfWeek: string;
   startTime: string;
   duration: string;
   gameName?: string;
@@ -35,13 +36,17 @@ export async function formatGameInfo(
   }
   
   const place = game.court?.club?.name || game.club?.name || 'Unknown location';
-  const shortDate = await getDateLabelInTimezone(game.startTime, timezone, lang, false);
-  const startTime = await formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang);
+  const [shortDate, shortDayOfWeek, startTime] = await Promise.all([
+    getDateLabelInTimezone(game.startTime, timezone, lang, false),
+    getShortDayOfWeek(game.startTime, timezone, lang),
+    formatDateInTimezone(game.startTime, 'HH:mm', timezone, lang),
+  ]);
   const duration = formatDuration(new Date(game.startTime), new Date(game.endTime), lang);
 
   return {
     place,
     shortDate,
+    shortDayOfWeek,
     startTime,
     duration,
     gameName: game.name || undefined,
@@ -61,6 +66,19 @@ export async function formatGameInfoForUser(
   return formatGameInfo(game, timezone, lang);
 }
 
+export async function formatGameInfoForUserWithTimezone(
+  game: GameInfo,
+  userCityId: string | null,
+  lang: string
+): Promise<{ gameInfo: FormattedGameInfo; timezone: string }> {
+  if (!game) {
+    throw new Error('Game is required for formatting');
+  }
+  const timezone = await getUserTimezoneFromCityId(userCityId);
+  const gameInfo = await formatGameInfo(game, timezone, lang);
+  return { gameInfo, timezone };
+}
+
 export function formatUserName(user: { firstName?: string | null; lastName?: string | null }): string {
   return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown';
 }
@@ -69,6 +87,7 @@ export interface GameTextOptions {
   includeParticipants?: boolean;
   includeLink?: boolean;
   escapeMarkdown?: boolean;
+  existingGameInfo?: FormattedGameInfo;
 }
 
 export interface GameWithParticipants extends GameInfo {
@@ -110,9 +129,9 @@ export async function formatNewGameText(
   lang: string,
   options: GameTextOptions = {}
 ): Promise<string> {
-  const { includeParticipants = true, includeLink = false, escapeMarkdown: shouldEscape = false } = options;
+  const { includeParticipants = true, includeLink = false, escapeMarkdown: shouldEscape = false, existingGameInfo } = options;
   
-  const gameInfo = await formatGameInfo(game, timezone, lang);
+  const gameInfo = existingGameInfo ?? await formatGameInfo(game, timezone, lang);
   const club = game.court?.club || game.club;
   const clubName = club?.name || 'Unknown location';
   const courtName = game.court?.name ? ` • ${game.court.name}` : '';
@@ -153,7 +172,7 @@ export async function formatNewGameText(
     text += `👑 ${escapeFn(t('games.organizer', lang))}: ${ownerDisplay}\n`;
   }
   
-  text += `📅 ${escapeFn(gameInfo.shortDate)} ${escapeFn(gameInfo.startTime)} (${escapeFn(gameInfo.duration)})\n`;
+  text += `📅 ${escapeFn(gameInfo.shortDayOfWeek)} ${escapeFn(gameInfo.shortDate)} ${escapeFn(gameInfo.startTime)} (${escapeFn(gameInfo.duration)})\n`;
   text += `📍 ${escapeFn(clubName)}${courtName ? escapeFn(courtName) : ''}\n`;
   
   if (includeParticipants) {

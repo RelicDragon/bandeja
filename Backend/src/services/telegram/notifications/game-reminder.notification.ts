@@ -66,7 +66,7 @@ export async function sendGameReminderNotification(
       } else {
         message += `🎾 ${escapeMarkdown(entityTypeLabel)}\n`;
       }
-      message += `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+      message += `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
       if (game.description) {
         message += `\n\n${escapeMarkdown(game.description)}`;

@@ -40,11 +40,12 @@ export async function createGameSystemMessagePushNotification(
 
   return {
     type: NotificationType.GAME_SYSTEM_MESSAGE,
-    title: `${gameInfo.place} ${gameInfo.shortDate} ${gameInfo.startTime}`,
+    title: `${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}`,
     body: `🔔 ${translatedContent}`,
     data: {
       gameId: game.id,
-      messageId: message.id
+      messageId: message.id,
+      shortDayOfWeek: gameInfo.shortDayOfWeek
     },
     sound: 'default'
   };

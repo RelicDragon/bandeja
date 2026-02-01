@@ -27,6 +27,7 @@ export interface NotificationData {
   userChatId?: string;
   groupChannelId?: string;
   transactionId?: string;
+  shortDayOfWeek?: string;
 }
 
 export interface NotificationPayload {

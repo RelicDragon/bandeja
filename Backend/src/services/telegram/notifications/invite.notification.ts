@@ -35,7 +35,7 @@ export async function sendInviteNotification(
 
   let message = `🎯 ${escapeMarkdown(t('telegram.inviteReceived', lang))}\n\n`;
   message += `👤 *${escapeMarkdown(senderName)}* ${escapeMarkdown(t('telegram.invitedYou', lang))}\n\n`;
-  message += `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+  message += `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
   if (invite.message) {
     message += `\n\n💬 ${escapeMarkdown(invite.message)}`;

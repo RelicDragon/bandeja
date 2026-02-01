@@ -70,7 +70,7 @@ export async function sendGameChatNotification(
         const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
         const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
         
-        const formattedMessage = `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
+        const formattedMessage = `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
         
         const chatTypeChar = chatType === 'PUBLIC' ? 'P' : chatType === 'PRIVATE' ? 'V' : 'A';
         
@@ -145,7 +145,7 @@ export async function sendGameChatNotification(
         const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
         const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
         
-        const formattedMessage = `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
+        const formattedMessage = `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
         
         const chatTypeChar = chatType === 'PUBLIC' ? 'P' : chatType === 'PRIVATE' ? 'V' : 'A';
         
