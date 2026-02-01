@@ -200,7 +200,7 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
             }}
           >
             <Popup>
-              <div className="text-sm font-medium text-gray-900 dark:text-white">
+              <div className="text-sm font-medium text-gray-900">
                 {userLocation == null ? t('city.approximateLocation') : (userLocationApproximate ? t('city.approximateLocation') : t('city.yourLocation'))}
               </div>
             </Popup>
@@ -218,14 +218,15 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
                 click: (e: L.LeafletMouseEvent) => {
                   L.DomEvent.stopPropagation(e);
                   onCityClick?.(city.id);
+                  e.target.openPopup();
                 },
               }}
             >
               <Popup>
                 <div className="text-sm">
-                  <div className="font-semibold text-gray-900 dark:text-white">{city.name}</div>
-                  <div className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{city.country}</div>
-                  <div className="text-gray-600 dark:text-gray-400 mt-0.5">
+                  <div className="font-semibold text-gray-900">{city.name}</div>
+                  <div className="text-gray-500 text-xs mt-0.5">{city.country}</div>
+                  <div className="text-gray-600 mt-0.5">
                     {t('city.clubsCount', { count: city.clubsCount ?? 0 })}
                   </div>
                 </div>
@@ -242,14 +243,15 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
               click: (e: L.LeafletMouseEvent) => {
                 L.DomEvent.stopPropagation(e);
                 onClubClick?.(club.cityId);
+                e.target.openPopup();
               },
             }}
           >
             <Popup>
               <div className="text-sm">
-                <div className="font-semibold text-gray-900 dark:text-white">{club.name}</div>
-                <div className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{club.cityName}, {club.country}</div>
-                <div className="text-gray-600 dark:text-gray-400 mt-0.5">{t('club.courtsCount', { count: club.courtsCount })}</div>
+                <div className="font-semibold text-gray-900">{club.name}</div>
+                <div className="text-gray-500 text-xs mt-0.5">{club.cityName}, {club.country}</div>
+                <div className="text-gray-600 mt-0.5">{t('club.courtsCount', { count: club.courtsCount })}</div>
               </div>
             </Popup>
           </Marker>
