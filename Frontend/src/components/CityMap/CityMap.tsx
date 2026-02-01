@@ -88,6 +88,18 @@ function MapClickHandler({ onMapClick }: { onMapClick?: () => void }) {
   return null;
 }
 
+function HideAttribution() {
+  const map = useMap();
+  useEffect(() => {
+    const el = map.getContainer().querySelector('.leaflet-control-attribution');
+    if (el) (el as HTMLElement).style.display = 'none';
+    return () => {
+      if (el) (el as HTMLElement).style.display = '';
+    };
+  }, [map]);
+  return null;
+}
+
 export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCityClick, onClubClick, onMapClick, className = '', userLocation = null, userLocationApproximate = false }: CityMapProps) {
   const { t } = useTranslation();
   const [resolvedLocation, setResolvedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -177,6 +189,7 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <FitBounds bounds={bounds} />
+        <HideAttribution />
         <MapClickHandler onMapClick={onMapClick} />
         {effectiveUserLocation && (
           <Marker
