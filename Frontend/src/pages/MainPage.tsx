@@ -85,7 +85,7 @@ export const MainPage = () => {
       previousPathnameRef.current = path;
       isInitialMountRef.current = false;
     }
-  }, [location.pathname, location.state, setCurrentPage, setIsAnimating, setChatsFilter, navigate]);
+  }, [location.pathname, location.state, currentPage, setCurrentPage, setIsAnimating, setChatsFilter, navigate]);
 
   const renderContent = useMemo(() => {
     switch (currentPage) {

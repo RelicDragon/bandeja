@@ -12,10 +12,31 @@ export interface ClubMapItem {
   courtsCount: number;
 }
 
+export interface MapBbox {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+}
+
+const MAP_CLUBS_CACHE_MS = 5 * 60 * 1000;
+let mapClubsCache: { data: ClubMapItem[]; ts: number } | null = null;
+
 export const clubsApi = {
-  getForMap: async () => {
-    const response = await api.get<ApiResponse<ClubMapItem[]>>('/clubs/map');
-    return response.data;
+  getForMap: async (bbox?: MapBbox | null) => {
+    if (!bbox && mapClubsCache && Date.now() - mapClubsCache.ts < MAP_CLUBS_CACHE_MS) {
+      return mapClubsCache.data;
+    }
+    const params =
+      bbox != null
+        ? { minLat: bbox.minLat, maxLat: bbox.maxLat, minLng: bbox.minLng, maxLng: bbox.maxLng }
+        : undefined;
+    const response = await api.get<ApiResponse<ClubMapItem[]>>('/clubs/map', { params });
+    const data = response.data?.data ?? [];
+    if (!bbox) {
+      mapClubsCache = { data, ts: Date.now() };
+    }
+    return data;
   },
 
   getByCityId: async (cityId: string, entityType?: EntityType) => {

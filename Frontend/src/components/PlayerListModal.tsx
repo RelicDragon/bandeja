@@ -99,7 +99,7 @@ export const PlayerListModal = ({
     };
 
     loadPlayers();
-  }, [gameId, fetchPlayers]);
+  }, [gameId, fetchPlayers, t]);
 
   const filteredPlayers = useMemo(() => {
     let filtered = players;

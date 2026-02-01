@@ -156,7 +156,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
   );
   const predefinedOptions = useMemo(
     () => getPredefinedConditionOptions(t, game.entityType, game, isFemale),
-    [t, game.entityType, game, isFemale]
+    [t, game, isFemale]
   );
   const conditionOptions = useMemo(
     () => [...predefinedOptions, { value: 'CUSTOM', label: t('bets.custom', { defaultValue: 'Custom' }) }],
@@ -208,7 +208,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
       setTakePlaceNumber(2);
     }
     return () => clearTimeout(t);
-  }, [isOpen, bet?.id]);
+  }, [isOpen, bet]);
 
   const handleSubmit = async () => {
     if (conditionType === 'CUSTOM' && !customCondition.trim()) {

@@ -1,11 +1,17 @@
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import type { LatLngBoundsLiteral } from 'leaflet';
 import type { City } from '@/types';
 import type { ClubMapItem } from '@/api/clubs';
 import { appApi } from '@/api/app';
+import { useMapViewport } from './useMapViewport';
+import { getClubHouseIcon, getUserLocationIcon } from './MarkerIcons';
+import { useDebounce } from './useDebounce';
+import { SpatialIndex } from './spatialIndex';
+import { useVirtualizedMarkers, getViewportCenter } from './VirtualizedMarkers';
 import 'leaflet/dist/leaflet.css';
 
 const LOCATION_RADIUS_KM = 50;
@@ -16,33 +22,47 @@ const HALF_VIEW_DEG = (MAX_VIEW_KM / 2) * DEG_PER_KM;
 
 const DEFAULT_CENTER: [number, number] = [20, 0];
 const DEFAULT_ZOOM = 2;
+const CLUSTER_ZOOM_THRESHOLD = 13;
+const VIEWPORT_DEBOUNCE_MS = 150;
+const VIEWPORT_PADDING = 0.15;
+const MAX_CLUSTER_MARKERS = 2500;
 
-function cityStarIcon(selected: boolean): L.DivIcon {
-  const ring = selected ? '#0ea5e9' : '#64748b';
-  return L.divIcon({
-    className: `city-star-marker ${selected ? 'city-star-marker--selected' : ''}`,
-    html: `<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:2px solid ${ring};border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.2);"><svg width="14" height="14" viewBox="0 0 24 24" fill="${ring}" stroke="${ring}" stroke-width="1.5" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-    popupAnchor: [0, -28],
+const clusterIconCache = new Map<string, L.DivIcon>();
+
+function createClusterIcon(cluster: { getChildCount(): number }) {
+  const count = cluster.getChildCount();
+  let size = 40;
+  let className = 'custom-cluster-small';
+  
+  if (count >= 100) {
+    size = 56;
+    className = 'custom-cluster-large';
+  } else if (count >= 20) {
+    size = 48;
+    className = 'custom-cluster-medium';
+  }
+
+  const cacheKey = `${className}-${count}`;
+  if (clusterIconCache.has(cacheKey)) {
+    return clusterIconCache.get(cacheKey)!;
+  }
+
+  const icon = L.divIcon({
+    html: `<div class="${className}">
+      <div class="cluster-inner">
+        <span>${count}</span>
+      </div>
+    </div>`,
+    className: 'custom-cluster-icon',
+    iconSize: [size, size],
   });
+
+  if (clusterIconCache.size < 100) {
+    clusterIconCache.set(cacheKey, icon);
+  }
+
+  return icon;
 }
-
-const CLUB_HOUSE_ICON = L.divIcon({
-  className: 'club-house-marker',
-  html: `<div style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:#0ea5e9;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.25);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>`,
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -32],
-});
-
-const USER_LOCATION_ICON = L.divIcon({
-  className: 'user-location-marker',
-  html: `<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="#4285f4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="#fff"/></svg></div>`,
-  iconSize: [28, 28],
-  iconAnchor: [14, 28],
-  popupAnchor: [0, -28],
-});
 
 function clampBoundsToMaxKm(bounds: LatLngBoundsLiteral, maxKm: number): LatLngBoundsLiteral {
   const [[south, west], [north, east]] = bounds;
@@ -73,7 +93,6 @@ export interface CityMapProps {
   clubs?: ClubMapItem[];
   currentCityId?: string;
   pendingCityId?: string | null;
-  onCityClick?: (cityId: string) => void;
   onClubClick?: (cityId: string) => void;
   onMapClick?: () => void;
   className?: string;
@@ -85,6 +104,18 @@ function MapClickHandler({ onMapClick }: { onMapClick?: () => void }) {
   useMapEvents({
     click: () => onMapClick?.(),
   });
+  return null;
+}
+
+function ViewportHandler({ onViewportChange }: { onViewportChange: (bounds: L.LatLngBounds, zoom: number) => void }) {
+  const { bounds, zoom } = useMapViewport();
+  
+  useEffect(() => {
+    if (bounds) {
+      onViewportChange(bounds, zoom);
+    }
+  }, [bounds, zoom, onViewportChange]);
+
   return null;
 }
 
@@ -100,9 +131,53 @@ function HideAttribution() {
   return null;
 }
 
-export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCityClick, onClubClick, onMapClick, className = '', userLocation = null, userLocationApproximate = false }: CityMapProps) {
+interface ClubMarkerProps {
+  club: ClubMapItem;
+  onClubClick?: (cityId: string) => void;
+}
+
+const ClubMarker = memo(({ 
+  club, 
+  onClubClick 
+}: ClubMarkerProps) => {
+  const { t } = useTranslation();
+  
+  const handleClick = useCallback((e: L.LeafletMouseEvent) => {
+    L.DomEvent.stopPropagation(e);
+    onClubClick?.(club.cityId);
+    e.target.openPopup();
+  }, [club.cityId, onClubClick]);
+  
+  return (
+    <Marker
+      position={[club.latitude, club.longitude]}
+      icon={getClubHouseIcon()}
+      eventHandlers={{ click: handleClick }}
+    >
+      <Popup>
+        <div className="text-sm">
+          <div className="font-semibold text-gray-900">{club.name}</div>
+          <div className="text-gray-500 text-xs mt-0.5">{club.cityName}, {club.country}</div>
+          <div className="text-gray-600 mt-0.5">{t('club.courtsCount', { count: club.courtsCount })}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+}, (prev, next) => 
+  prev.club.id === next.club.id && 
+  prev.club.latitude === next.club.latitude &&
+  prev.club.longitude === next.club.longitude &&
+  prev.onClubClick === next.onClubClick
+);
+
+export function CityMap({ clubs = [], currentCityId, onClubClick, onMapClick, className = '', userLocation = null, userLocationApproximate = false }: CityMapProps) {
   const { t } = useTranslation();
   const [resolvedLocation, setResolvedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [viewportBounds, setViewportBounds] = useState<L.LatLngBounds | null>(null);
+  const [viewportZoom, setViewportZoom] = useState<number>(DEFAULT_ZOOM);
+
+  const debouncedViewportBounds = useDebounce(viewportBounds, VIEWPORT_DEBOUNCE_MS);
+  const debouncedViewportZoom = useDebounce(viewportZoom, VIEWPORT_DEBOUNCE_MS);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,6 +190,11 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
 
   const effectiveUserLocation = userLocation ?? resolvedLocation;
 
+  const spatialIndex = useMemo(() => {
+    if (clubs.length === 0) return null;
+    return new SpatialIndex(clubs);
+  }, [clubs]);
+
   const userLocationBounds: LatLngBoundsLiteral | null = useMemo(() => {
     if (!effectiveUserLocation) return null;
     return [
@@ -123,51 +203,98 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
     ] as LatLngBoundsLiteral;
   }, [effectiveUserLocation]);
 
-  const withCoords = useMemo(
-    () => cities.filter((c): c is City & { latitude: number; longitude: number } => c.latitude != null && c.longitude != null),
-    [cities]
-  );
-
-  const allPoints = useMemo(() => {
-    const pts: Array<{ lat: number; lng: number }> = [...withCoords.map((c) => ({ lat: c.latitude!, lng: c.longitude! })), ...clubs.map((c) => ({ lat: c.latitude, lng: c.longitude }))];
-    return pts;
-  }, [withCoords, clubs]);
-
-  const citiesBounds: LatLngBoundsLiteral | null = useMemo(() => {
-    if (allPoints.length === 0) return null;
-    const lats = allPoints.map((p) => p.lat);
-    const lngs = allPoints.map((p) => p.lng);
+  const clubsBounds: LatLngBoundsLiteral | null = useMemo(() => {
+    if (!spatialIndex) return null;
+    const b = spatialIndex.getBounds();
     return [
-      [Math.min(...lats), Math.min(...lngs)],
-      [Math.max(...lats), Math.max(...lngs)],
+      [b.minLat, b.minLng],
+      [b.maxLat, b.maxLng],
     ] as LatLngBoundsLiteral;
-  }, [allPoints]);
+  }, [spatialIndex]);
+
+  const cityBoundsMap = useMemo(() => {
+    const m = new Map<string, { minLat: number; maxLat: number; minLng: number; maxLng: number }>();
+    for (let i = 0; i < clubs.length; i++) {
+      const c = clubs[i];
+      const lat = c.latitude;
+      const lng = c.longitude;
+      const existing = m.get(c.cityId);
+      if (!existing) {
+        m.set(c.cityId, { minLat: lat, maxLat: lat, minLng: lng, maxLng: lng });
+      } else {
+        if (lat < existing.minLat) existing.minLat = lat;
+        if (lat > existing.maxLat) existing.maxLat = lat;
+        if (lng < existing.minLng) existing.minLng = lng;
+        if (lng > existing.maxLng) existing.maxLng = lng;
+      }
+    }
+    return m;
+  }, [clubs]);
 
   const selectedCityBounds: LatLngBoundsLiteral | null = useMemo(() => {
-    if (!currentCityId || withCoords.length === 0) return null;
-    const city = withCoords.find((c) => c.id === currentCityId);
-    if (!city) return null;
+    if (!currentCityId) return null;
+    const b = cityBoundsMap.get(currentCityId);
+    if (!b) return null;
+    const centerLat = (b.minLat + b.maxLat) / 2;
+    const centerLng = (b.minLng + b.maxLng) / 2;
     return [
-      [city.latitude - HALF_VIEW_DEG, city.longitude - HALF_VIEW_DEG],
-      [city.latitude + HALF_VIEW_DEG, city.longitude + HALF_VIEW_DEG],
+      [centerLat - HALF_VIEW_DEG, centerLng - HALF_VIEW_DEG],
+      [centerLat + HALF_VIEW_DEG, centerLng + HALF_VIEW_DEG],
     ] as LatLngBoundsLiteral;
-  }, [currentCityId, withCoords]);
+  }, [currentCityId, cityBoundsMap]);
 
   const centerOfAllBounds: LatLngBoundsLiteral | null = useMemo(() => {
-    if (!citiesBounds) return null;
-    const [[south, west], [north, east]] = citiesBounds;
+    if (!clubsBounds) return null;
+    const [[south, west], [north, east]] = clubsBounds;
     const centerLat = (south + north) / 2;
     const centerLng = (west + east) / 2;
     return [
       [centerLat - HALF_VIEW_DEG, centerLng - HALF_VIEW_DEG],
       [centerLat + HALF_VIEW_DEG, centerLng + HALF_VIEW_DEG],
     ] as LatLngBoundsLiteral;
-  }, [citiesBounds]);
+  }, [clubsBounds]);
 
   const bounds: LatLngBoundsLiteral | null =
     userLocationBounds ?? selectedCityBounds ?? centerOfAllBounds;
 
-  if (withCoords.length === 0 && clubs.length === 0 && !effectiveUserLocation) {
+  const shouldCluster = debouncedViewportZoom < CLUSTER_ZOOM_THRESHOLD;
+
+  const viewportFilteredClubs = useMemo(() => {
+    if (!spatialIndex || !debouncedViewportBounds) return clubs;
+    const padded = debouncedViewportBounds.pad(VIEWPORT_PADDING);
+    const sw = padded.getSouthWest();
+    const ne = padded.getNorthEast();
+    return spatialIndex.query(sw.lat, ne.lat, sw.lng, ne.lng);
+  }, [clubs, spatialIndex, debouncedViewportBounds]);
+
+  const viewportClubsForCluster = useMemo(
+    () => (viewportFilteredClubs.length <= MAX_CLUSTER_MARKERS ? viewportFilteredClubs : viewportFilteredClubs.slice(0, MAX_CLUSTER_MARKERS)),
+    [viewportFilteredClubs]
+  );
+
+  const viewportCenter = useMemo(
+    () => getViewportCenter(debouncedViewportBounds),
+    [debouncedViewportBounds]
+  );
+
+  const virtualizedClubs = useVirtualizedMarkers({
+    clubs: shouldCluster ? viewportClubsForCluster : viewportFilteredClubs,
+    viewportCenter,
+    zoom: debouncedViewportZoom,
+  });
+
+  const visibleClubs = shouldCluster ? viewportClubsForCluster : virtualizedClubs;
+
+  const handleViewportChange = useCallback((bounds: L.LatLngBounds, zoom: number) => {
+    setViewportBounds(bounds);
+    setViewportZoom(zoom);
+  }, []);
+
+  const handleUserLocationClick = useCallback((e: L.LeafletMouseEvent) => {
+    L.DomEvent.stopPropagation(e);
+  }, []);
+
+  if (clubs.length === 0 && !effectiveUserLocation) {
     return (
       <div className={`flex items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm ${className}`}>
         {t('common.noResults')}
@@ -183,6 +310,7 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
         className="h-full w-full min-h-[280px]"
         scrollWheelZoom={true}
         style={{ minHeight: 280 }}
+        preferCanvas={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
@@ -191,13 +319,12 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
         <FitBounds bounds={bounds} />
         <HideAttribution />
         <MapClickHandler onMapClick={onMapClick} />
+        <ViewportHandler onViewportChange={handleViewportChange} />
         {effectiveUserLocation && (
           <Marker
             position={[effectiveUserLocation.latitude, effectiveUserLocation.longitude]}
-            icon={USER_LOCATION_ICON}
-            eventHandlers={{
-              click: (e: L.LeafletMouseEvent) => L.DomEvent.stopPropagation(e),
-            }}
+            icon={getUserLocationIcon()}
+            eventHandlers={{ click: handleUserLocationClick }}
           >
             <Popup>
               <div className="text-sm font-medium text-gray-900">
@@ -206,56 +333,24 @@ export function CityMap({ cities, clubs = [], currentCityId, pendingCityId, onCi
             </Popup>
           </Marker>
         )}
-        {withCoords.map((city) => {
-          const highlightedId = pendingCityId ?? currentCityId;
-          const selected = city.id === highlightedId;
-          return (
-            <Marker
-              key={city.id}
-              position={[city.latitude, city.longitude]}
-              icon={cityStarIcon(selected)}
-              eventHandlers={{
-                click: (e: L.LeafletMouseEvent) => {
-                  L.DomEvent.stopPropagation(e);
-                  onCityClick?.(city.id);
-                  e.target.openPopup();
-                },
-              }}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <div className="font-semibold text-gray-900">{city.name}</div>
-                  <div className="text-gray-500 text-xs mt-0.5">{city.country}</div>
-                  <div className="text-gray-600 mt-0.5">
-                    {t('city.clubsCount', { count: city.clubsCount ?? 0 })}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
-        {clubs.map((club) => (
-          <Marker
-            key={club.id}
-            position={[club.latitude, club.longitude]}
-            icon={CLUB_HOUSE_ICON}
-            eventHandlers={{
-              click: (e: L.LeafletMouseEvent) => {
-                L.DomEvent.stopPropagation(e);
-                onClubClick?.(club.cityId);
-                e.target.openPopup();
-              },
-            }}
-          >
-            <Popup>
-              <div className="text-sm">
-                <div className="font-semibold text-gray-900">{club.name}</div>
-                <div className="text-gray-500 text-xs mt-0.5">{club.cityName}, {club.country}</div>
-                <div className="text-gray-600 mt-0.5">{t('club.courtsCount', { count: club.courtsCount })}</div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={80}
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+          zoomToBoundsOnClick={true}
+          disableClusteringAtZoom={CLUSTER_ZOOM_THRESHOLD}
+          iconCreateFunction={createClusterIcon}
+          removeOutsideVisibleBounds={true}
+        >
+          {visibleClubs.map((club) => (
+            <ClubMarker
+              key={`club-${club.id}`}
+              club={club}
+              onClubClick={onClubClick}
+            />
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
     </div>
   );

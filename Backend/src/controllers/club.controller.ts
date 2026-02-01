@@ -5,13 +5,33 @@ import prisma from '../config/database';
 import { normalizeClubName } from '../utils/normalizeClubName';
 import { refreshCityFromClubs } from '../utils/updateCityCenter';
 
-export const getClubsForMap = asyncHandler(async (_req: Request, res: Response) => {
+export const getClubsForMap = asyncHandler(async (req: Request, res: Response) => {
+  const minLat = req.query.minLat != null ? Number(req.query.minLat) : null;
+  const maxLat = req.query.maxLat != null ? Number(req.query.maxLat) : null;
+  const minLng = req.query.minLng != null ? Number(req.query.minLng) : null;
+  const maxLng = req.query.maxLng != null ? Number(req.query.maxLng) : null;
+  const hasBbox =
+    minLat != null &&
+    maxLat != null &&
+    minLng != null &&
+    maxLng != null &&
+    Number.isFinite(minLat) &&
+    Number.isFinite(maxLat) &&
+    Number.isFinite(minLng) &&
+    Number.isFinite(maxLng);
+
+  const where: { isActive: true; latitude: { not: null }; longitude: { not: null }; latitude?: { gte: number; lte: number }; longitude?: { gte: number; lte: number } } = {
+    isActive: true,
+    latitude: { not: null },
+    longitude: { not: null },
+  };
+  if (hasBbox) {
+    where.latitude = { gte: minLat!, lte: maxLat! };
+    where.longitude = { gte: minLng!, lte: maxLng! };
+  }
+
   const clubs = await prisma.club.findMany({
-    where: {
-      isActive: true,
-      latitude: { not: null },
-      longitude: { not: null },
-    },
+    where,
     select: {
       id: true,
       name: true,

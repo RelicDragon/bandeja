@@ -1,11 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { useRef, useEffect, useState, useMemo } from 'react';
-import { Map, List, MapPin, Navigation } from 'lucide-react';
+import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import { Map, List, MapPin } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { City } from '@/types';
-import { getCountryFlag } from '@/utils/countryFlag';
 import type { CountryWithClubs } from '@/hooks/useCityList';
 import { CityMap } from '@/components/CityMap';
+import { CountryListItem } from '@/components/CityList/CountryListItem';
+import { CityListItem } from '@/components/CityList/CityListItem';
+import { VirtualizedList } from '@/components/CityList/VirtualizedList';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { findNearestCity } from '@/utils/nearestCity';
 import { appApi } from '@/api/app';
@@ -37,6 +39,13 @@ export interface CityListContentProps {
   onLocationError?: (message: string) => void;
 }
 
+const LOCATION_ERROR_KEYS: Record<string, string> = {
+  permission_denied: 'auth.locationDenied',
+  position_unavailable: 'auth.locationUnavailable',
+  timeout: 'auth.locationTimeout',
+  unsupported: 'auth.locationUnsupported',
+};
+
 export const CityListContent = ({
   view,
   search,
@@ -66,6 +75,8 @@ export const CityListContent = ({
   const isLoading = showingLoading ?? loading;
   const selectedCityRef = useRef<HTMLButtonElement>(null);
   const scrollTargetRef = useRef<HTMLButtonElement>(null);
+  const lastScrolledToSelectedIdRef = useRef<string | null>(null);
+  const userLocationTargetRef = useRef<{ latitude: number; longitude: number } | null>(null);
   const [allowTransition, setAllowTransition] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [clubs, setClubs] = useState<ClubMapItem[]>([]);
@@ -73,6 +84,7 @@ export const CityListContent = ({
   const [scrollToCityId, setScrollToCityId] = useState<string | null>(null);
   const [nearestCityIdInList, setNearestCityIdInList] = useState<string | null>(null);
   const [userLocationTarget, setUserLocationTarget] = useState<{ latitude: number; longitude: number } | null>(null);
+  userLocationTargetRef.current = userLocationTarget;
   const [userLocationIsApproximate, setUserLocationIsApproximate] = useState(false);
   const [locating, setLocating] = useState(false);
   const { getPosition } = useGeolocation();
@@ -85,8 +97,18 @@ export const CityListContent = ({
       return;
     }
     let cancelled = false;
-    clubsApi.getForMap().then((res) => {
-      if (!cancelled && res.data) setClubs(res.data);
+    const loc = userLocationTargetRef.current;
+    const bbox =
+      loc != null
+        ? {
+            minLat: loc.latitude - 2,
+            maxLat: loc.latitude + 2,
+            minLng: loc.longitude - 2,
+            maxLng: loc.longitude + 2,
+          }
+        : undefined;
+    clubsApi.getForMap(bbox).then((data) => {
+      if (!cancelled && data) setClubs(Array.isArray(data) ? data : []);
     }).catch(() => {});
     return () => { cancelled = true; };
   }, [showMap]);
@@ -108,13 +130,6 @@ export const CityListContent = ({
     );
   }, [mapCities, searchLower]);
 
-  const locationErrorKeys: Record<string, string> = {
-    permission_denied: 'auth.locationDenied',
-    position_unavailable: 'auth.locationUnavailable',
-    timeout: 'auth.locationTimeout',
-    unsupported: 'auth.locationUnsupported',
-  };
-
   const handleWhereAmI = async () => {
     setLocating(true);
     try {
@@ -134,7 +149,7 @@ export const CityListContent = ({
           setUserLocationTarget({ latitude: lat, longitude: lon });
           setUserLocationIsApproximate(false);
         } else {
-          const key = locationErrorKeys[posResult.errorCode ?? ''] ?? 'auth.locationUnavailable';
+          const key = LOCATION_ERROR_KEYS[posResult.errorCode ?? ''] ?? 'auth.locationUnavailable';
           onLocationError?.(t(key));
           return;
         }
@@ -175,11 +190,16 @@ export const CityListContent = ({
   }, [nearestCityIdInList, filteredCitiesForCountry]);
 
   useEffect(() => {
+    if (view === 'country') lastScrolledToSelectedIdRef.current = null;
+  }, [view]);
+
+  useEffect(() => {
     const t = requestAnimationFrame(() => setAllowTransition(true));
     return () => cancelAnimationFrame(t);
   }, []);
 
   useEffect(() => {
+    if (filteredCitiesForCountry.length >= 40) return;
     if (view === 'city' && (currentCityId || selectedId) && selectedCityRef.current) {
       const raf = requestAnimationFrame(() => {
         selectedCityRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -189,6 +209,7 @@ export const CityListContent = ({
   }, [view, currentCityId, selectedId, filteredCitiesForCountry.length]);
 
   useEffect(() => {
+    if (filteredCitiesForCountry.length >= 40) return;
     const canScroll = scrollToCityId && view === 'city' && filteredCitiesForCountry.some((c) => c.id === scrollToCityId);
     if (!canScroll) return;
     const raf = requestAnimationFrame(() => {
@@ -200,7 +221,37 @@ export const CityListContent = ({
 
   const searchPlaceholder = view === 'country' ? t('city.searchCountries') : t('city.searchCities');
   const selectedCityId = isSelectorMode ? selectedId : currentCityId;
-  const countryOfSelected = selectedCityId ? filteredCountries.find((item) => item.cities.some((c) => c.id === selectedCityId)) : null;
+  const useVirtualizedCityList = filteredCitiesForCountry.length >= 40;
+  const idxForScrollToCity = scrollToCityId != null ? filteredCitiesForCountry.findIndex((c) => c.id === scrollToCityId) : -1;
+  const idxForSelected =
+    view === 'city' &&
+    selectedCityId &&
+    selectedCityId !== lastScrolledToSelectedIdRef.current
+      ? filteredCitiesForCountry.findIndex((c) => c.id === selectedCityId)
+      : -1;
+  const cityScrollToIndex =
+    idxForScrollToCity >= 0
+      ? idxForScrollToCity
+      : idxForSelected >= 0
+        ? (() => {
+            lastScrolledToSelectedIdRef.current = selectedCityId ?? null;
+            return idxForSelected;
+          })()
+        : -1;
+  const countryOfSelected = useMemo(
+    () => (selectedCityId ? filteredCountries.find((item) => item.cities.some((c) => c.id === selectedCityId)) ?? null : null),
+    [selectedCityId, filteredCountries]
+  );
+  const pendingCityName = useMemo(
+    () =>
+      pendingCityId
+        ? filteredMapCities.find((c) => c.id === pendingCityId)?.name ?? clubs.find((c) => c.cityId === pendingCityId)?.cityName ?? null
+        : null,
+    [pendingCityId, filteredMapCities, clubs]
+  );
+  const handleScrolledToCityIndex = useCallback(() => setScrollToCityId(null), []);
+  const handleClubClick = useCallback((id: string) => setPendingCityId(id), []);
+  const handleMapClick = useCallback(() => setPendingCityId(null), []);
 
   return (
     <div className={`space-y-2 p-1 pt-2 min-h-0 flex flex-col flex-1 overflow-hidden min-w-0 ${className}`}>
@@ -253,14 +304,16 @@ export const CityListContent = ({
           </button>
         </div>
       )}
-      <input
-        type="text"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder={searchPlaceholder}
-        disabled={isLoading}
-        className="w-full min-w-0 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-shadow disabled:opacity-60 shrink-0"
-      />
+      {!showMap && (
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={searchPlaceholder}
+          disabled={isLoading}
+          className="w-full min-w-0 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-shadow disabled:opacity-60 shrink-0"
+        />
+      )}
       {isLoading ? (
         <div className="flex items-center justify-center py-10 flex-1 min-h-[8rem] shrink-0">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-200 dark:border-primary-800 border-t-primary-500" />
@@ -276,40 +329,28 @@ export const CityListContent = ({
                 className={`flex flex-1 min-h-0 w-full ${allowTransition ? 'transition-transform duration-300 ease-out' : ''}`}
                 style={{ width: '200%', transform: view === 'city' ? 'translateX(-50%)' : 'translateX(0)' }}
               >
-                <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-y-auto overflow-x-hidden pr-1">
+                <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
               {filteredCountries.length === 0 ? (
                 <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">
                   {citiesCount === 0 ? t('createLeague.noCitiesAvailable') : t('common.noResults')}
                 </p>
               ) : (
-                <div className={`space-y-1.5 ${contentClassName}`}>
-                  {filteredCountries.map((item) => {
-                    const isSelectedCountry = countryOfSelected?.country === item.country;
-                    return (
-                      <button
-                        key={item.country}
-                        type="button"
-                        onClick={() => selectCountry(item.country)}
-                        className={`w-full min-w-0 text-left flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border transition-colors ${
-                          isSelectedCountry
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 ring-2 ring-primary-400/50 ring-offset-2 dark:ring-offset-gray-900'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
-                        }`}
-                      >
-                        <span className="flex items-center gap-2 font-medium text-sm text-gray-900 dark:text-white min-w-0 overflow-hidden">
-                          <span className="text-lg leading-none shrink-0">{getCountryFlag(item.country)}</span>
-                          <span className="truncate">{item.country}</span>
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
-                          {t('city.clubsCount', { count: item.clubsCount })}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                <VirtualizedList
+                  items={filteredCountries}
+                  getItemKey={(item) => item.country}
+                  className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
+                  contentClassName={`space-y-1.5 ${contentClassName}`}
+                  renderItem={(item) => (
+                    <CountryListItem
+                      item={item}
+                      isSelected={countryOfSelected?.country === item.country}
+                      onSelect={selectCountry}
+                    />
+                  )}
+                />
               )}
                 </div>
-                <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-y-auto overflow-x-hidden pr-1">
+                <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
                   {showNoCityOption && isSelectorMode && (
                 <button
                   onClick={() => onCityClick('')}
@@ -324,58 +365,45 @@ export const CityListContent = ({
               )}
               {filteredCitiesForCountry.length === 0 ? (
                 <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">{t('common.noResults')}</p>
+              ) : useVirtualizedCityList ? (
+                <VirtualizedList
+                  items={filteredCitiesForCountry}
+                  getItemKey={(item) => item.id}
+                  estimateSize={72}
+                  scrollToIndex={cityScrollToIndex >= 0 ? cityScrollToIndex : null}
+                  onScrolledToIndex={handleScrolledToCityIndex}
+                  className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
+                  contentClassName={`space-y-1.5 p-1 ${contentClassName}`}
+                  renderItem={(city) => (
+                    <CityListItem
+                      city={city}
+                      isSelected={city.id === selectedCityId}
+                      isNearest={city.id === nearestCityIdInList}
+                      isScrollTarget={false}
+                      submitting={submitting}
+                      isSelectorMode={isSelectorMode}
+                      selectedCityRef={selectedCityRef}
+                      scrollTargetRef={scrollTargetRef}
+                      onSelect={onCityClick}
+                    />
+                  )}
+                />
               ) : (
-                <div className={`space-y-1.5 p-1 ${contentClassName}`}>
-                  {filteredCitiesForCountry.map((city) => {
-                    const isSelected = city.id === selectedCityId;
-                    const isNearest = city.id === nearestCityIdInList;
-                    return (
-                      <button
-                        key={city.id}
-                        ref={city.id === scrollToCityId ? scrollTargetRef : isSelected ? selectedCityRef : undefined}
-                        onClick={() => onCityClick(city.id)}
-                        disabled={submitting && !isSelectorMode}
-                        aria-label={isNearest ? `${city.name}, ${t('city.nearestToYou')}` : undefined}
-                        className={
-                          isSelectorMode
-                            ? `w-full min-w-0 text-left px-4 py-3 rounded-xl transition-all ${
-                                isSelected
-                                  ? 'bg-primary-500 text-white ring-2 ring-primary-400 ring-offset-2 dark:ring-offset-gray-900'
-                                  : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
-                              }`
-                            : `w-full min-w-0 text-left p-3 rounded-xl border transition-colors ${
-                                isSelected
-                                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 ring-2 ring-primary-400/50 ring-offset-2 dark:ring-offset-gray-900'
-                                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
-                              } ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`
-                        }
-                      >
-                        <div className="flex items-center justify-between gap-2 min-w-0">
-                          <span className="flex items-center gap-2 min-w-0">
-                            {isNearest && (
-                              <span className="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400" title={t('city.nearestToYou')}>
-                                <Navigation className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
-                              </span>
-                            )}
-                            <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{city.name}</span>
-                          </span>
-                          {isSelected && (
-                            <span className={`shrink-0 flex items-center justify-center w-5 h-5 rounded-full text-xs ${isSelectorMode ? 'bg-white/20 text-white' : 'bg-primary-500 text-white'}`} aria-hidden>✓</span>
-                          )}
-                        </div>
-                        {(city.administrativeArea || city.subAdministrativeArea) && (
-                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 truncate">
-                            {[city.administrativeArea, city.subAdministrativeArea].filter(Boolean).join(' · ')}
-                          </div>
-                        )}
-                        <div className="mt-1.5 flex justify-end">
-                          <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {t('city.clubsCount', { count: city.clubsCount ?? 0 })}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
+                <div className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 space-y-1.5 p-1 ${contentClassName}`}>
+                  {filteredCitiesForCountry.map((city) => (
+                    <CityListItem
+                      key={city.id}
+                      city={city}
+                      isSelected={city.id === selectedCityId}
+                      isNearest={city.id === nearestCityIdInList}
+                      isScrollTarget={city.id === scrollToCityId}
+                      submitting={submitting}
+                      isSelectorMode={isSelectorMode}
+                      selectedCityRef={selectedCityRef}
+                      scrollTargetRef={scrollTargetRef}
+                      onSelect={onCityClick}
+                    />
+                  ))}
                 </div>
               )}
                 </div>
@@ -389,9 +417,8 @@ export const CityListContent = ({
                     clubs={clubs}
                     currentCityId={selectedCityId}
                     pendingCityId={pendingCityId}
-                    onCityClick={(id) => setPendingCityId(id)}
-                    onClubClick={(id) => setPendingCityId(id)}
-                    onMapClick={() => setPendingCityId(null)}
+                    onClubClick={handleClubClick}
+                    onMapClick={handleMapClick}
                     className="flex-1 min-h-0"
                     userLocation={userLocationTarget}
                     userLocationApproximate={userLocationIsApproximate}
@@ -413,12 +440,7 @@ export const CityListContent = ({
                           }}
                           className="w-full py-2.5 px-8 rounded-xl text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 focus:ring-2 focus:ring-primary-500/30 focus:outline-none transition-colors"
                         >
-                          {(() => {
-                            const name =
-                              filteredMapCities.find((c) => c.id === pendingCityId)?.name ??
-                              clubs.find((c) => c.cityId === pendingCityId)?.cityName;
-                            return name ? t('city.selectCityName', { name }) : t('city.selectCity');
-                          })()}
+                          {pendingCityName ? t('city.selectCityName', { name: pendingCityName }) : t('city.selectCity')}
                         </button>
                       </motion.div>
                     )}
