@@ -8,6 +8,7 @@ import { Loading } from './Loading';
 import { PlayerAvatar } from './PlayerAvatar';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
+import { isAndroid, isCapacitor } from '@/utils/capacitor';
 import toast from 'react-hot-toast';
 
 export const ProfileLeaderboard = () => {
@@ -45,49 +46,52 @@ export const ProfileLeaderboard = () => {
     return change > 0 ? `+${formatted}` : formatted;
   };
 
+  const getScrollParent = (el: HTMLElement | null): HTMLElement | null => {
+    if (!el) return null;
+    let parent = el.parentElement;
+    while (parent) {
+      const { overflowY, overflow } = getComputedStyle(parent);
+      if (overflowY === 'auto' || overflowY === 'scroll' || overflow === 'auto' || overflow === 'scroll') return parent;
+      parent = parent.parentElement;
+    }
+    return null;
+  };
+
   const scrollToUser = () => {
-    // If user is filtered out, clear search first
     const userInFiltered = filteredLeaderboard.some(entry => entry.id === user?.id);
     if (!userInFiltered && searchQuery) {
       setSearchQuery('');
-      // Wait for re-render, then scroll
-      setTimeout(() => {
-        if (userRowRef.current) {
-          const row = userRowRef.current;
-          requestAnimationFrame(() => {
-            const rowRect = row.getBoundingClientRect();
-            const windowHeight = window.innerHeight;
-            const rowHeight = rowRect.height;
-            const scrollY = window.scrollY;
-            const rowTop = rowRect.top + scrollY;
-            const targetScroll = rowTop - (windowHeight / 2) + (rowHeight / 2);
-            
-            window.scrollTo({
-              top: targetScroll,
-              behavior: 'smooth',
-            });
-          });
-        }
-      }, 100);
+      setTimeout(() => doScrollToUser(), 150);
       return;
     }
-    
-    if (userRowRef.current) {
-      const row = userRowRef.current;
-      requestAnimationFrame(() => {
-        const rowRect = row.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        const rowHeight = rowRect.height;
-        const scrollY = window.scrollY;
-        const rowTop = rowRect.top + scrollY;
-        const targetScroll = rowTop - (windowHeight / 2) + (rowHeight / 2);
-        
-        window.scrollTo({
-          top: targetScroll,
-          behavior: 'smooth',
-        });
-      });
-    }
+    doScrollToUser();
+  };
+
+  const scrollBehavior = isAndroid() ? 'auto' : 'smooth';
+
+  const doScrollToUser = () => {
+    if (!userRowRef.current) return;
+    const row = userRowRef.current;
+    requestAnimationFrame(() => {
+      const rowRect = row.getBoundingClientRect();
+      if (isCapacitor()) {
+        const root = document.getElementById('root');
+        if (root) {
+          const rootRect = root.getBoundingClientRect();
+          const targetScroll = root.scrollTop + (rowRect.top - rootRect.top) - (root.clientHeight / 2) + (rowRect.height / 2);
+          root.scrollTop = Math.max(0, targetScroll);
+        }
+      } else {
+        const scrollParent = getScrollParent(row);
+        if (scrollParent) {
+          const parentRect = scrollParent.getBoundingClientRect();
+          const targetScroll = scrollParent.scrollTop + (rowRect.top - parentRect.top) - (parentRect.height / 2) + (rowRect.height / 2);
+          scrollParent.scrollTo({ top: Math.max(0, targetScroll), behavior: scrollBehavior });
+        } else {
+          row.scrollIntoView({ behavior: scrollBehavior, block: 'center' });
+        }
+      }
+    });
   };
 
   const normalizeString = (str: string) => {
@@ -136,16 +140,23 @@ export const ProfileLeaderboard = () => {
         const row = userRowRef.current;
         requestAnimationFrame(() => {
           const rowRect = row.getBoundingClientRect();
-          const windowHeight = window.innerHeight;
-          const rowHeight = rowRect.height;
-          const scrollY = window.scrollY;
-          const rowTop = rowRect.top + scrollY;
-          const targetScroll = rowTop - (windowHeight / 2) + (rowHeight / 2);
-          
-          window.scrollTo({
-            top: targetScroll,
-            behavior: 'smooth',
-          });
+          if (isCapacitor()) {
+            const root = document.getElementById('root');
+            if (root) {
+              const rootRect = root.getBoundingClientRect();
+              const targetScroll = root.scrollTop + (rowRect.top - rootRect.top) - (root.clientHeight / 2) + (rowRect.height / 2);
+              root.scrollTop = Math.max(0, targetScroll);
+            }
+          } else {
+            const scrollParent = getScrollParent(row);
+            if (scrollParent) {
+              const parentRect = scrollParent.getBoundingClientRect();
+              const targetScroll = scrollParent.scrollTop + (rowRect.top - parentRect.top) - (parentRect.height / 2) + (rowRect.height / 2);
+              scrollParent.scrollTo({ top: Math.max(0, targetScroll), behavior: scrollBehavior });
+            } else {
+              row.scrollIntoView({ behavior: scrollBehavior, block: 'center' });
+            }
+          }
           setIsScrolled(true);
           
           setTimeout(() => {
