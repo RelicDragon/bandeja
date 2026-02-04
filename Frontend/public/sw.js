@@ -1,12 +1,11 @@
-const CACHE_VERSION = 'v277';
+const CACHE_VERSION = 'v278';
 const CACHE_NAME = `bandeja-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `bandeja-runtime-${CACHE_VERSION}`;
 
 const urlsToCache = [
   '/',
   '/index.html',
-  '/tennis-ball.svg',
-  '/bandeja-blue-flat-small.png',
+  '/bandeja2-white-tr.png',
   '/manifest.json',
 ];
 
