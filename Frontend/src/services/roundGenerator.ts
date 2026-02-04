@@ -49,7 +49,7 @@ export class RoundGenerator {
 
   private generateHandmadeRound(initialSets: Array<{ teamA: number; teamB: number }>): Match[] {
     const { game } = this.options;
-    const playingParticipants = game.participants.filter(p => p.isPlaying);
+    const playingParticipants = game.participants.filter(p => p.status === 'PLAYING');
     const numPlayers = playingParticipants.length;
     const players = playingParticipants.map(p => p.user) as BasicUser[];
     
@@ -103,7 +103,7 @@ export class RoundGenerator {
 
   private generateRatingRound(initialSets: Array<{ teamA: number; teamB: number }>): Match[] {
     const { game, rounds } = this.options;
-    const playingParticipants = game.participants.filter(p => p.isPlaying);
+    const playingParticipants = game.participants.filter(p => p.status === 'PLAYING');
     const numPlayers = playingParticipants.length;
     
     if (numPlayers < 4) {
@@ -152,7 +152,7 @@ export class RoundGenerator {
 
   private generateWinnersCourtRound(initialSets: Array<{ teamA: number; teamB: number }>): Match[] {
     const { game, rounds } = this.options;
-    const playingParticipants = game.participants.filter(p => p.isPlaying);
+    const playingParticipants = game.participants.filter(p => p.status === 'PLAYING');
     const numPlayers = playingParticipants.length;
     
     if (numPlayers < 4) {

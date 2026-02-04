@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 import { gamesApi } from '@/api/games';
 
 interface TelegramSummaryModalProps {
@@ -94,23 +94,15 @@ export const TelegramSummaryModal = ({
   const isDisabled = isLoading;
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleCancel}
-      isBasic={true}
-      modalId="telegram-summary-modal"
-      showCloseButton={!isLoading}
-      closeOnBackdropClick={!isLoading}
-    >
+    <Dialog open={isOpen} onClose={handleCancel} modalId="telegram-summary-modal">
+      <DialogContent>
       <div className="flex flex-col h-full max-h-[85vh]">
-        <div className="flex-shrink-0 mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {t('gameResults.editTelegramText') || 'Edit Telegram Text'}
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <DialogHeader className="mb-4 flex-col items-start">
+          <DialogTitle>{t('gameResults.editTelegramText') || 'Edit Telegram Text'}</DialogTitle>
+          <DialogDescription className="mt-1">
             {t('gameResults.editTelegramTextDescription') || 'Review and edit the text before sending to Telegram'}
-          </p>
-        </div>
+          </DialogDescription>
+        </DialogHeader>
 
         <div className="flex-1 flex flex-col min-h-0 mb-4">
           <div className="flex items-center justify-between mb-2">
@@ -154,7 +146,7 @@ export const TelegramSummaryModal = ({
           </div>
         </div>
 
-        <div className="flex-shrink-0 flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+        <DialogFooter className="flex-shrink-0 flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
           <button
             type="button"
             onClick={handleCancel}
@@ -181,8 +173,9 @@ export const TelegramSummaryModal = ({
               </>
             )}
           </button>
-        </div>
+        </DialogFooter>
       </div>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };

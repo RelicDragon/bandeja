@@ -13,21 +13,23 @@ import { Club, Court, EntityType, GameType, PriceType, PriceCurrency, Game, Basi
 import { addHours } from 'date-fns';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { useGameTimeDuration, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
+import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 
 interface CreateGameProps {
   entityType: EntityType;
-  initialDate?: Date | null;
   initialGameData?: Partial<Game>;
 }
 
-export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateGameProps) => {
+export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const { setCurrentPage, setIsAnimating } = useNavigationStore();
 
-  console.log('CreateGame - initialDate received:', initialDate, typeof initialDate);
-  console.log('CreateGame - initialGameData received:', initialGameData);
+  useBackButtonHandler(() => {
+    navigate('/', { replace: true });
+    return true;
+  });
 
   const [clubs, setClubs] = useState<Club[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
@@ -62,12 +64,6 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
     if (initialGameData?.startTime) {
       return new Date(initialGameData.startTime);
     }
-    if (initialDate) {
-      const date = initialDate instanceof Date ? initialDate : new Date(initialDate);
-      console.log('CreateGame - storedInitialDate set to:', date);
-      return date;
-    }
-    console.log('CreateGame - no initialDate, using current date');
     return new Date();
   });
   const [loading, setLoading] = useState(false);
@@ -183,26 +179,14 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
           setHasBookedCourt(false);
         }
         
-        // Reset to stored initial date or auto-select based on time slots
-        console.log('CreateGame - club changed, resetting to storedInitialDate:', storedInitialDate);
         const initialDateTimeSlots = generateTimeOptionsForDate(storedInitialDate);
-        console.log('CreateGame - time slots for stored date:', initialDateTimeSlots.length);
         if (initialDateTimeSlots.length > 0) {
           setSelectedDate(storedInitialDate);
-          console.log('CreateGame - date set to storedInitialDate');
         } else {
-          // If initial date has no time slots, check tomorrow
           const tomorrow = new Date(storedInitialDate);
           tomorrow.setDate(tomorrow.getDate() + 1);
           const tomorrowTimeSlots = generateTimeOptionsForDate(tomorrow);
-          console.log('CreateGame - time slots for tomorrow:', tomorrowTimeSlots.length);
-          if (tomorrowTimeSlots.length > 0) {
-            setSelectedDate(tomorrow);
-            console.log('CreateGame - date set to tomorrow');
-          } else {
-            setSelectedDate(storedInitialDate);
-            console.log('CreateGame - date set to storedInitialDate (fallback)');
-          }
+          setSelectedDate(tomorrowTimeSlots.length > 0 ? tomorrow : storedInitialDate);
         }
       } catch (error) {
         console.error('Failed to fetch courts:', error);
@@ -473,7 +457,7 @@ export const CreateGame = ({ entityType, initialDate, initialGameData }: CreateG
 
   return (
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      <CreateGameHeader onBack={() => navigate('/')} entityType={entityType} />
+      <CreateGameHeader onBack={() => navigate('/', { replace: true })} entityType={entityType} />
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-6">

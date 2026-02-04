@@ -4,7 +4,7 @@ import { Game } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { format } from 'date-fns';
 
-export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) => {
+export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, includeLeagues?: boolean) => {
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -21,8 +21,8 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) =
     if (!user?.id) return;
 
     const fetchParams = startDate && endDate 
-      ? `available-games-${user.id}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}`
-      : `available-games-${user.id}`;
+      ? `available-games-${user.id}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}-${includeLeagues}`
+      : `available-games-${user.id}-${includeLeagues}`;
 
     if (!force && (isLoadingRef.current || lastFetchParamsRef.current === fetchParams)) {
       return;
@@ -35,6 +35,7 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) =
     try {
       const params: any = {
         showArchived: true,
+        includeLeagues: !!includeLeagues,
       };
       if (startDate && endDate) {
         params.startDate = format(startDate, 'yyyy-MM-dd');
@@ -51,7 +52,7 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date) =
       isLoadingRef.current = false;
       setLoading(false);
     }
-  }, [user?.id, startDate, endDate]);
+  }, [user?.id, startDate, endDate, includeLeagues]);
 
   useEffect(() => {
     if (user?.id) {

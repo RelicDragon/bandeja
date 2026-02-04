@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Search, XCircle, Check, X, User } from 'lucide-react';
+import { Search, XCircle, Check, User, X } from 'lucide-react';
 import { PlayerAvatar } from '@/components';
 import { GroupChannelInvite } from '@/api/chat';
 import { chatApi } from '@/api/chat';
@@ -9,7 +9,7 @@ import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
 import { matchesSearch } from '@/utils/transliteration';
 import { formatRelativeTime } from '@/utils/dateFormat';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { BasicUser } from '@/types';
 
 const buttonTransitionStyle = `
@@ -225,19 +225,11 @@ export const GroupChannelInvitesModal = ({
   return (
     <>
       <style>{buttonTransitionStyle}</style>
-      <BaseModal
-        isOpen={true}
-        onClose={onClose}
-        isBasic
-        modalId="group-channel-invites-modal"
-        showCloseButton={true}
-        closeOnBackdropClick={true}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('chat.inviteParticipant', { defaultValue: 'Invite participant' })}
-          </h2>
-        </div>
+      <Dialog open={true} onClose={onClose} modalId="group-channel-invites-modal">
+        <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('chat.inviteParticipant', { defaultValue: 'Invite participant' })}</DialogTitle>
+        </DialogHeader>
 
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="relative">
@@ -364,7 +356,8 @@ export const GroupChannelInvitesModal = ({
             )}
           </div>
         )}
-      </BaseModal>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

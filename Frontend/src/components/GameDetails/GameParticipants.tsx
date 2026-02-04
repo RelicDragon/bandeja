@@ -1,15 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
-import { Game, Invite, JoinQueue } from '@/types';
+import { Game, Invite, InviteStatus, JoinQueue } from '@/types';
+import { isParticipantPlaying } from '@/utils/participantStatus';
 import { Users, UserPlus, Sliders, CheckCircle, XCircle, Edit3, LayoutGrid, List } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PlayersCarousel } from './PlayersCarousel';
+import { getParticipantsViewMode, setParticipantsViewMode } from '@/utils/participantsViewStorage';
 
 interface GameParticipantsProps {
   game: Game;
   myInvites: Invite[];
   gameInvites: Invite[];
-  joinQueues?: JoinQueue[];
   isParticipant: boolean;
   isGuest: boolean;
   isFull: boolean;
@@ -38,7 +39,6 @@ export const GameParticipants = ({
   game,
   myInvites,
   gameInvites,
-  joinQueues = [],
   isParticipant,
   isGuest,
   isFull,
@@ -66,43 +66,39 @@ export const GameParticipants = ({
   const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
   const isUnauthorized = !userId;
 
-  // TODO: Remove after 2025-02-02 - Backward compatibility: compute joinQueues from participants
-  const computedJoinQueues = useMemo(() => {
-    // NEW: Get from non-playing participants
-    const fromParticipants = game?.participants
-      ?.filter(p => !p.isPlaying && p.role === 'PARTICIPANT')
-      .map(p => ({
-        id: (p as any).id || `${game.id}-${p.userId}`,
-        userId: p.userId,
-        gameId: game.id,
-        status: 'PENDING' as const,
-        createdAt: p.joinedAt,
-        user: p.user,
-      })) || [];
-    
-    // TODO: Remove after 2025-02-02 - Backward compatibility: merge with old joinQueues
-    const oldJoinQueues = joinQueues || [];
-    
-    // Merge and deduplicate
-    const queueMap = new Map();
-    [...fromParticipants, ...oldJoinQueues].forEach(q => {
-      if (!queueMap.has(q.userId)) {
-        queueMap.set(q.userId, q);
-      }
-    });
-    
-    return Array.from(queueMap.values()).sort((a, b) => 
+  useEffect(() => {
+    getParticipantsViewMode().then(setViewMode);
+  }, []);
+
+  const toggleViewMode = () => {
+    const next = viewMode === 'carousel' ? 'list' : 'carousel';
+    setViewMode(next);
+    setParticipantsViewMode(next);
+  };
+
+  const computedJoinQueues = useMemo((): JoinQueue[] => {
+    return (
+      game?.participants
+        ?.filter(p => p.status === 'IN_QUEUE')
+        .map(p => ({
+          id: (p as any).id || `${game.id}-${p.userId}`,
+          userId: p.userId,
+          gameId: game.id,
+          status: 'PENDING' as InviteStatus,
+          createdAt: p.joinedAt,
+          user: p.user,
+        })) || []
+    ).sort((a, b) =>
       new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
-  }, [game?.participants, game?.id, joinQueues]);
+  }, [game?.participants, game?.id]);
 
   const playingOwnersAndAdmins = game.participants.filter(
-    p => p.isPlaying && (p.role === 'OWNER' || p.role === 'ADMIN')
+    p => isParticipantPlaying(p) && (p.role === 'OWNER' || p.role === 'ADMIN')
   );
   const shouldShowCrowns = playingOwnersAndAdmins.length > 1;
   
-  const playingCount = game.participants.filter(p => p.isPlaying).length;
-  const hasUnoccupiedSlots = game.entityType === 'BAR' || playingCount < game.maxParticipants;
+  const hasUnoccupiedSlots = game.entityType === 'BAR' || !isFull;
 
   return (
     <Card>
@@ -113,7 +109,7 @@ export const GameParticipants = ({
         </h2>
         <div className="ml-auto flex items-center gap-2">
           <button
-            onClick={() => setViewMode(viewMode === 'carousel' ? 'list' : 'carousel')}
+            onClick={toggleViewMode}
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title={viewMode === 'carousel' ? t('games.listView', { defaultValue: 'List view' }) : t('games.carouselView', { defaultValue: 'Carousel view' })}
           >
@@ -131,13 +127,13 @@ export const GameParticipants = ({
               className="flex items-center gap-2"
             >
               <Edit3 size={16} />
-              {`${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`}
+              {`${game.participants.filter(isParticipantPlaying).length} / ${game.maxParticipants}`}
             </Button>
           ) : (
             <span className="text-gray-600 dark:text-gray-400">
               {game.entityType === 'BAR' 
-                ? game.participants.filter(p => p.isPlaying).length
-                : `${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`
+                ? game.participants.filter(isParticipantPlaying).length
+                : `${game.participants.filter(isParticipantPlaying).length} / ${game.maxParticipants}`
               }
             </span>
           )}
@@ -168,21 +164,32 @@ export const GameParticipants = ({
                     <CheckCircle size={16} />
                     {t('invites.accept')}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => onDeclineInvite(invite.id)}
-                    className="flex-1 flex items-center justify-center gap-1.5"
-                  >
-                    <XCircle size={16} />
-                    {t('invites.decline')}
-                  </Button>
+                  {!isOwner && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => onDeclineInvite(invite.id)}
+                      className="flex-1 flex items-center justify-center gap-1.5"
+                    >
+                      <XCircle size={16} />
+                      {t('invites.decline')}
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
-        {!isUnauthorized && !isUserPlaying && !isInJoinQueue && hasUnoccupiedSlots && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
+        {!isUnauthorized && isGuest && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
+          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {game.allowDirectJoin && (hasUnoccupiedSlots || game.entityType === 'BAR')
+                ? t('games.chatParticipantHintJoinGame', { defaultValue: 'You are a chat participant. Join the game below.' })
+                : t('games.chatParticipantHintJoinQueue', { defaultValue: 'You are a chat participant. Join the queue below.' })}
+            </p>
+          </div>
+        )}
+        {!isUnauthorized && !isUserPlaying && !isInJoinQueue && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && game.allowDirectJoin && (hasUnoccupiedSlots || game.entityType === 'BAR') && (
           <Button
             onClick={onJoin}
             size="lg"
@@ -192,7 +199,7 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        {!isUnauthorized && !isUserPlaying && !isInJoinQueue && !hasUnoccupiedSlots && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
+        {!isUnauthorized && !isUserPlaying && !isInJoinQueue && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (!game.allowDirectJoin || (!hasUnoccupiedSlots && game.entityType !== 'BAR')) && (
           <Button
             onClick={onJoin}
             size="lg"
@@ -205,13 +212,16 @@ export const GameParticipants = ({
         {!isUnauthorized && isInJoinQueue && (
           <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-              {t('games.inQueue', { defaultValue: 'You are in the waiting list. Waiting for approval...' })}
+              {isOwner
+                ? t('games.inQueueOwnerHint', { defaultValue: 'You are the owner. To play in your game, accept yourself from the join queue list below.' })
+                : t('games.inQueue', { defaultValue: 'You are in the waiting list. Waiting for approval...' })}
             </p>
             {onCancelJoinQueue && (
               <Button
+                variant="danger"
                 size="sm"
                 onClick={onCancelJoinQueue}
-                className="w-full flex items-center justify-center gap-1.5 bg-gradient-to-br from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 text-white border-0 shadow-[0_4px_12px_rgba(239,68,68,0.3)] hover:shadow-[0_6px_16px_rgba(239,68,68,0.4)] hover:scale-[1.02] transition-all duration-200 font-medium rounded-lg"
+                className="w-full flex items-center justify-center gap-1.5"
               >
                 <XCircle size={16} />
                 {t('games.cancelJoinRequest', { defaultValue: 'Cancel request' })}
@@ -229,7 +239,7 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        {!isUnauthorized && (isGuest || (isOwner && !isUserPlaying)) && hasUnoccupiedSlots && !isInJoinQueue && (
+        {!isUnauthorized && isOwner && !isUserPlaying && hasUnoccupiedSlots && !isInJoinQueue && (
           <Button
             onClick={onAddToGame}
             size="lg"
@@ -240,7 +250,7 @@ export const GameParticipants = ({
           </Button>
         )}
         {(() => {
-          const playingParticipants = game.participants.filter(p => p.isPlaying);
+          const playingParticipants = game.participants.filter(isParticipantPlaying);
           const emptySlots = game.entityType !== 'BAR'
             ? game.maxParticipants - playingParticipants.length 
             : 0;
@@ -274,18 +284,18 @@ export const GameParticipants = ({
 
           if (viewMode === 'list') {
             return (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {isMix && (
                   <>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         {t('games.male', { defaultValue: 'Male' })} ({carousel1Participants.length} / {maxPerGender})
                       </h3>
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         {carousel1Participants.map((participant) => (
                           <div
                             key={participant.userId}
-                            className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                            className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
                           >
                             <PlayerAvatar
                               player={participant.user}
@@ -307,7 +317,7 @@ export const GameParticipants = ({
                         {carousel1EmptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                           <button
                             onClick={() => onShowPlayerList('MALE')}
-                            className="w-full p-3 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
+                            className="w-full p-2 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
                           >
                             <UserPlus size={18} className="text-primary-600 dark:text-primary-400" />
                             <span className="text-sm text-primary-600 dark:text-primary-400">
@@ -318,14 +328,14 @@ export const GameParticipants = ({
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         {t('games.female', { defaultValue: 'Female' })} ({carousel2Participants.length} / {maxPerGender})
                       </h3>
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         {carousel2Participants.map((participant) => (
                           <div
                             key={participant.userId}
-                            className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                            className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
                           >
                             <PlayerAvatar
                               player={participant.user}
@@ -347,7 +357,7 @@ export const GameParticipants = ({
                         {carousel2EmptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                           <button
                             onClick={() => onShowPlayerList('FEMALE')}
-                            className="w-full p-3 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
+                            className="w-full p-2 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
                           >
                             <UserPlus size={18} className="text-primary-600 dark:text-primary-400" />
                             <span className="text-sm text-primary-600 dark:text-primary-400">
@@ -360,11 +370,11 @@ export const GameParticipants = ({
                   </>
                 )}
                 {!isMix && (
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {playingParticipants.map((participant) => (
                       <div
                         key={participant.userId}
-                        className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                        className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
                       >
                         <PlayerAvatar
                           player={participant.user}
@@ -386,7 +396,7 @@ export const GameParticipants = ({
                     {emptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                       <button
                         onClick={() => onShowPlayerList()}
-                        className="w-full p-3 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
+                        className="w-full p-2 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
                       >
                         <UserPlus size={18} className="text-primary-600 dark:text-primary-400" />
                         <span className="text-sm text-primary-600 dark:text-primary-400">

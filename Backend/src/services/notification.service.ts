@@ -1,7 +1,9 @@
 import prisma from '../config/database';
 import { NotificationType, UnifiedNotificationRequest } from '../types/notifications.types';
-import { ChatContextType, ChatType } from '@prisma/client';
+import { ChatContextType, ChatType, NotificationChannelType } from '@prisma/client';
 import telegramNotificationService from './telegram/notification.service';
+import { NotificationPreferenceService, NOTIFICATION_TYPE_TO_PREF } from './notificationPreference.service';
+import { PreferenceKey } from '../types/notifications.types';
 import pushNotificationService from './push/push-notification.service';
 import { ChatMuteService } from './chat/chatMute.service';
 import { createInvitePushNotification } from './push/notifications/invite-push.notification';
@@ -21,37 +23,18 @@ class NotificationService {
   async sendNotification(request: UnifiedNotificationRequest) {
     const { userId, type, payload, preferTelegram = false, preferPush = false } = request;
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        telegramId: true,
-        sendTelegramMessages: true,
-        sendTelegramInvites: true,
-        sendTelegramDirectMessages: true,
-        sendTelegramReminders: true,
-        sendTelegramWalletNotifications: true,
-        sendPushMessages: true,
-        sendPushInvites: true,
-        sendPushDirectMessages: true,
-        sendPushReminders: true,
-        sendPushWalletNotifications: true,
-      }
-    });
-
-    if (!user) {
-      console.error(`User ${userId} not found`);
-      return;
-    }
-
-    const shouldSendTelegram = this.shouldSendViaTelegram(user, type, preferTelegram);
-    const shouldSendPush = this.shouldSendViaPush(user, type, preferPush);
+    const prefKey = NOTIFICATION_TYPE_TO_PREF[type];
+    const [shouldSendTelegram, shouldSendPush] = await Promise.all([
+      preferTelegram || NotificationPreferenceService.doesUserAllow(userId, NotificationChannelType.TELEGRAM, prefKey),
+      preferPush || NotificationPreferenceService.doesUserAllow(userId, NotificationChannelType.PUSH, prefKey),
+    ]);
 
     const results = {
       telegram: false,
       push: false
     };
 
-    if (shouldSendTelegram && user.telegramId) {
+    if (shouldSendTelegram) {
     }
 
     if (shouldSendPush) {
@@ -119,8 +102,8 @@ class NotificationService {
         let canSeeMessage = false;
         if (chatType === ChatType.PUBLIC) {
           canSeeMessage = true;
-        } else if (chatType === ChatType.PRIVATE) {
-          canSeeMessage = participant.isPlaying;
+        } else if (chatType === ChatType.PRIVATE || chatType === ChatType.PHOTOS) {
+          canSeeMessage = participant.status === 'PLAYING' || participant.role === 'OWNER' || participant.role === 'ADMIN';
         } else if (chatType === ChatType.ADMINS) {
           canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
         }
@@ -148,8 +131,8 @@ class NotificationService {
         let canSeeMessage = false;
         if (chatType === ChatType.PUBLIC) {
           canSeeMessage = true;
-        } else if (chatType === ChatType.PRIVATE) {
-          canSeeMessage = participant.isPlaying;
+        } else if (chatType === ChatType.PRIVATE || chatType === ChatType.PHOTOS) {
+          canSeeMessage = participant.status === 'PLAYING' || participant.role === 'OWNER' || participant.role === 'ADMIN';
         } else if (chatType === ChatType.ADMINS) {
           canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
         }
@@ -464,8 +447,8 @@ class NotificationService {
       let canSeeMessage = false;
       if (chatType === ChatType.PUBLIC) {
         canSeeMessage = true;
-      } else if (chatType === ChatType.PRIVATE) {
-        canSeeMessage = participant.isPlaying;
+      } else if (chatType === ChatType.PRIVATE || chatType === ChatType.PHOTOS) {
+        canSeeMessage = participant.status === 'PLAYING' || participant.role === 'OWNER' || participant.role === 'ADMIN';
       } else if (chatType === ChatType.ADMINS) {
         canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
       }
@@ -600,15 +583,15 @@ class NotificationService {
           },
         },
         OR: [
-          { sendPushMessages: true },
-          { sendTelegramMessages: true }
-        ]
+          { notificationPreferences: { some: { channelType: NotificationChannelType.PUSH, sendMessages: true } } },
+          { notificationPreferences: { some: { channelType: NotificationChannelType.TELEGRAM, sendMessages: true } } },
+          { AND: [{ telegramId: { not: null } }, { sendTelegramMessages: true }] },
+          { AND: [{ pushTokens: { some: {} } }, { sendPushMessages: true }] },
+        ],
       },
       select: {
         id: true,
         telegramId: true,
-        sendTelegramMessages: true,
-        sendPushMessages: true,
         language: true,
         currentCityId: true,
       }
@@ -624,10 +607,12 @@ class NotificationService {
         continue;
       }
 
-      const shouldSendTelegram = recipient.telegramId && recipient.sendTelegramMessages;
-      const shouldSendPush = recipient.sendPushMessages;
+      const [allowPush, allowTelegram] = await Promise.all([
+        NotificationPreferenceService.doesUserAllow(recipient.id, NotificationChannelType.PUSH, PreferenceKey.SEND_MESSAGES),
+        NotificationPreferenceService.doesUserAllow(recipient.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES),
+      ]);
 
-      if (shouldSendPush) {
+      if (allowPush) {
         try {
           const payload = await createNewGamePushNotification(game, recipient);
           if (payload) {
@@ -642,7 +627,7 @@ class NotificationService {
         }
       }
 
-      if (shouldSendTelegram) {
+      if (allowTelegram) {
         try {
           await telegramNotificationService.sendNewGameNotification(game, recipient);
         } catch (error) {
@@ -669,53 +654,6 @@ class NotificationService {
     }
   }
 
-  private shouldSendViaTelegram(user: any, type: NotificationType, preferTelegram: boolean): boolean {
-    if (preferTelegram) return true;
-
-    switch (type) {
-      case NotificationType.INVITE:
-        return user.sendTelegramInvites;
-      case NotificationType.USER_CHAT:
-        return user.sendTelegramDirectMessages;
-      case NotificationType.GAME_REMINDER:
-        return user.sendTelegramReminders;
-      case NotificationType.TRANSACTION:
-        return user.sendTelegramWalletNotifications;
-      case NotificationType.GAME_CHAT:
-      case NotificationType.BUG_CHAT:
-      case NotificationType.GROUP_CHAT:
-      case NotificationType.GAME_SYSTEM_MESSAGE:
-      case NotificationType.GAME_RESULTS:
-      case NotificationType.NEW_GAME:
-        return user.sendTelegramMessages;
-      default:
-        return false;
-    }
-  }
-
-  private shouldSendViaPush(user: any, type: NotificationType, preferPush: boolean): boolean {
-    if (preferPush) return true;
-
-    switch (type) {
-      case NotificationType.INVITE:
-        return user.sendPushInvites;
-      case NotificationType.USER_CHAT:
-        return user.sendPushDirectMessages;
-      case NotificationType.GAME_REMINDER:
-        return user.sendPushReminders;
-      case NotificationType.TRANSACTION:
-        return user.sendPushWalletNotifications;
-      case NotificationType.GAME_CHAT:
-      case NotificationType.BUG_CHAT:
-      case NotificationType.GROUP_CHAT:
-      case NotificationType.GAME_SYSTEM_MESSAGE:
-      case NotificationType.GAME_RESULTS:
-      case NotificationType.NEW_GAME:
-        return user.sendPushMessages;
-      default:
-        return false;
-    }
-  }
 }
 
 export default new NotificationService();

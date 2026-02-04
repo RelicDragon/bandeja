@@ -9,7 +9,7 @@ export function generateRatingRound(
   previousRounds: Round[],
   initialSets: Array<{ teamA: number; teamB: number }>
 ): Match[] {
-  const playingParticipants = game.participants.filter(p => p.isPlaying);
+  const playingParticipants = game.participants.filter(p => p.status === 'PLAYING');
   const numPlayers = playingParticipants.length;
   
   if (numPlayers < 4) {

@@ -4,7 +4,7 @@ import transliterate from '@sindresorhus/transliterate';
 import { UserChatCard } from './UserChatCard';
 import { BugCard } from '@/components/bugs/BugCard';
 import { GroupChannelCard } from './GroupChannelCard';
-import { chatApi, UserChat, GroupChannel, ChatDraft } from '@/api/chat';
+import { chatApi, UserChat, GroupChannel, ChatDraft, getLastMessageTime } from '@/api/chat';
 import { matchDraftToChat } from '@/utils/chatListUtils';
 import { bugsApi } from '@/api/bugs';
 import { useAuthStore } from '@/store/authStore';
@@ -38,13 +38,11 @@ interface ChatListProps {
 }
 
 const calculateLastMessageDate = (
-  lastMessage: ChatMessage | null | undefined,
+  lastMessage: ChatMessage | { preview: string; updatedAt: string } | null | undefined,
   draft: ChatDraft | null | undefined,
   updatedAt: string
 ): Date => {
-  const lastMessageTime = lastMessage 
-    ? new Date(lastMessage.createdAt).getTime()
-    : 0;
+  const lastMessageTime = getLastMessageTime(lastMessage);
   const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
   const updatedTime = new Date(updatedAt).getTime();
   return new Date(Math.max(lastMessageTime, draftTime, updatedTime));
@@ -254,7 +252,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             if (channel.isChannel) {
               // Only set activity time if there's a message
               const lastMessageDate = channel.lastMessage
-                ? new Date(channel.lastMessage.createdAt)
+                ? new Date(getLastMessageTime(channel.lastMessage))
                 : null;
               
               chatItems.push({
@@ -555,9 +553,8 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             (item) => !(item.type === 'contact' && item.userId === userId)
           );
           
-          // Only set activity time if there's a message
           const lastMessageDate = chat.lastMessage
-            ? new Date(chat.lastMessage.createdAt)
+            ? new Date(getLastMessageTime(chat.lastMessage))
             : null;
           
           const newChatItem: ChatItem = {

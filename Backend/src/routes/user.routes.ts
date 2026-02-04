@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { NotificationChannelType } from '@prisma/client';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
@@ -7,6 +8,16 @@ import * as userController from '../controllers/user.controller';
 const router = Router();
 
 router.get('/profile', authenticate, userController.getProfile);
+router.get('/notification-preferences', authenticate, userController.getNotificationPreferences);
+router.put(
+  '/notification-preferences',
+  authenticate,
+  validate([
+    body('preferences').isArray().withMessage('preferences must be an array'),
+    body('preferences.*.channelType').isIn(Object.values(NotificationChannelType)).withMessage('Invalid channelType'),
+  ]),
+  userController.updateNotificationPreferences
+);
 
 router.get('/ip-location', authenticate, userController.getIpLocation);
 
@@ -42,6 +53,15 @@ router.get('/compare/:otherUserId', authenticate, userController.getPlayerCompar
 router.get('/:userId/stats', authenticate, userController.getUserStats);
 
 router.get('/invitable-players', authenticate, userController.getInvitablePlayers);
+
+router.put(
+  '/favorite-trainer',
+  authenticate,
+  validate([
+    body('trainerId').optional({ nullable: true }).custom((v) => v === null || typeof v === 'string').withMessage('Trainer ID must be a string or null'),
+  ]),
+  userController.setFavoriteTrainer
+);
 
 router.post(
   '/track-interaction',

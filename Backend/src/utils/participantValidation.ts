@@ -9,7 +9,7 @@ interface GameWithParticipants {
   entityType: EntityType;
   participants?: Array<{
     userId: string;
-    isPlaying: boolean;
+    status?: string;
     user?: {
       gender: Gender;
     };
@@ -92,7 +92,8 @@ export async function canAddPlayerToGame(
     throw new ApiError(404, 'User not found');
   }
 
-  let existingPlayingParticipants = game.participants?.filter(p => p.isPlaying) || [];
+  const isPlaying = (p: { status?: string }) => p.status === 'PLAYING';
+  let existingPlayingParticipants = game.participants?.filter(p => isPlaying(p)) || [];
 
   if (existingPlayingParticipants.length > 0 && (!existingPlayingParticipants[0].user || !existingPlayingParticipants[0].user.gender)) {
     const participantIds = existingPlayingParticipants.map(p => p.userId);
@@ -100,7 +101,7 @@ export async function canAddPlayerToGame(
       where: {
         gameId: game.id,
         userId: { in: participantIds },
-        isPlaying: true,
+        status: 'PLAYING',
       },
       include: {
         user: {
@@ -164,13 +165,14 @@ export async function validatePlayerCanJoinGame(
 }
 
 export function canUserManageQueue(
-  participant: { role: string; isPlaying: boolean } | null,
+  participant: { role: string; status?: string } | null,
   game: { anyoneCanInvite: boolean }
 ): boolean {
+  const playing = !!(participant && participant.status === 'PLAYING');
   return !!participant && (
     participant.role === 'OWNER' ||
     participant.role === 'ADMIN' ||
-    (game.anyoneCanInvite && participant.isPlaying)
+    (game.anyoneCanInvite && playing)
   );
 }
 

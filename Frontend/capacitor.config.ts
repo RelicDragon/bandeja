@@ -20,6 +20,9 @@ const config: CapacitorConfig = {
     allowMixedContent: false
   },
   plugins: {
+    App: {
+      disableBackButtonHandler: true
+    },
     StatusBar: {
       style: 'light',
       overlaysWebView: true

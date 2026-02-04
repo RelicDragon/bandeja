@@ -1,7 +1,8 @@
 import { App } from '@capacitor/app';
+import type { BackButtonListenerEvent } from '@capacitor/app';
 import { NavigateFunction } from 'react-router-dom';
 import { isAndroid } from '@/utils/capacitor';
-import { canNavigateBack, navigateWithTracking } from '@/utils/navigation';
+import { handleBackNavigationFromService, navigateWithTracking } from '@/utils/navigation';
 import toast from 'react-hot-toast';
 import i18n from '@/i18n/config';
 
@@ -26,17 +27,18 @@ class BackButtonService {
     if (this.isInitialized || !isAndroid()) return;
     
     this.isInitialized = true;
-    App.addListener('backButton', () => {
-      this.handleBackButton();
+    App.addListener('backButton', (event: BackButtonListenerEvent) => {
+      this.handleBackButton(event);
     }).then((handle) => {
       this.listenerHandle = handle;
     }).catch((error) => {
       console.error('Failed to initialize back button listener:', error);
       this.isInitialized = false;
+      App.toggleBackButtonHandler({ enabled: true }).catch(() => {});
     });
   }
 
-  private handleBackButton() {
+  private handleBackButton(backEvent?: BackButtonListenerEvent) {
     if (this.isHandling) return;
     
     this.isHandling = true;
@@ -67,7 +69,7 @@ class BackButtonService {
         }
       }
 
-      this.defaultBackNavigation();
+      this.defaultBackNavigation(backEvent);
     } catch (error) {
       console.error('Error handling back button:', error);
     } finally {
@@ -75,7 +77,7 @@ class BackButtonService {
     }
   }
 
-  private defaultBackNavigation() {
+  private defaultBackNavigation(backEvent?: BackButtonListenerEvent) {
     try {
       const isOnHomePage = window.location.pathname === '/' || 
                            window.location.pathname === '';
@@ -100,15 +102,11 @@ class BackButtonService {
         }
       }
       
-      // Not on home page - normal back navigation
-      if (canNavigateBack() && this.navigate) {
-        this.navigate(-1);
+      // Not on home page - use shared back logic (safety net + fallback). Use native canGoBack when provided.
+      if (this.navigate) {
+        handleBackNavigationFromService(this.navigate, backEvent?.canGoBack);
       } else {
-        if (this.navigate) {
-          navigateWithTracking(this.navigate, '/', { replace: true });
-        } else {
-          App.exitApp();
-        }
+        App.exitApp();
       }
     } catch (error) {
       console.error('Error in default back navigation:', error);

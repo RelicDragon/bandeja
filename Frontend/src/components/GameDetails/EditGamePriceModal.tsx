@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Save, Banknote } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Game, PriceType, PriceCurrency } from '@/types';
 import { Select } from '@/components';
 import { gamesApi } from '@/api';
 import toast from 'react-hot-toast';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
 interface EditGamePriceModalProps {
   isOpen: boolean;
@@ -105,22 +105,11 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
   };
 
   return (
-    <BaseModal 
-      isOpen={isOpen} 
-      onClose={handleClose} 
-      isBasic 
-      modalId="edit-game-price-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex items-center gap-2">
-            <Banknote size={24} className="text-gray-500 dark:text-gray-400" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {t('createGame.price')}
-            </h2>
-          </div>
-        </div>
+    <Dialog open={isOpen} onClose={handleClose} modalId="edit-game-price-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('createGame.price')}</DialogTitle>
+        </DialogHeader>
 
         <div className="overflow-y-auto flex-1 p-6 space-y-4">
           <div>
@@ -188,7 +177,7 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
+        <DialogFooter className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={handleClose}
             disabled={isSaving}
@@ -204,7 +193,8 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
             <Save size={18} />
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
-        </div>
-    </BaseModal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

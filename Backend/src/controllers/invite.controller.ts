@@ -3,14 +3,15 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
-import { InviteStatus, ParticipantRole } from '@prisma/client';
+import { ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from './chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import notificationService from '../services/notification.service';
 import { InviteService } from '../services/invite.service';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
-import { JoinQueueService } from '../services/game/joinQueue.service';
+import { ParticipantService } from '../services/game/participant.service';
+import { GameReadService } from '../services/game/read.service';
 
 export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { receiverId, gameId, message, expiresAt } = req.body;
@@ -63,19 +64,11 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
       }
     }
 
-    const existingInvite = await prisma.invite.findFirst({
-      where: {
-        gameId,
-        receiverId,
-        status: InviteStatus.PENDING,
-      },
+    const existingInvited = await prisma.gameParticipant.findFirst({
+      where: { gameId, userId: receiverId, status: 'INVITED' },
       include: {
-        sender: {
-          select: USER_SELECT_FIELDS,
-        },
-        receiver: {
-          select: USER_SELECT_FIELDS,
-        },
+        user: { select: USER_SELECT_FIELDS },
+        invitedByUser: { select: USER_SELECT_FIELDS },
         game: {
           select: {
             id: true,
@@ -97,59 +90,43 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
             status: true,
             resultsStatus: true,
             entityType: true,
-            court: {
-              select: {
-                id: true,
-                name: true,
-                club: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-            club: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            participants: {
-              select: {
-                userId: true,
-                isPlaying: true,
-                role: true,
-                user: {
-                  select: USER_SELECT_FIELDS,
-                },
-              },
-            },
+            court: { select: { id: true, name: true, club: { select: { id: true, name: true } } } },
+            club: { select: { id: true, name: true } },
           },
         },
       },
     });
-
-    if (existingInvite) {
-      return res.status(200).json({
-        success: true,
-        data: existingInvite,
-      });
+    if (existingInvited) {
+      const inviteShape = {
+        id: existingInvited.id,
+        receiverId: existingInvited.userId,
+        gameId: existingInvited.gameId,
+        status: 'PENDING',
+        message: existingInvited.inviteMessage,
+        expiresAt: existingInvited.inviteExpiresAt,
+        createdAt: existingInvited.joinedAt,
+        updatedAt: existingInvited.joinedAt,
+        receiver: existingInvited.user,
+        sender: existingInvited.invitedByUser,
+        game: existingInvited.game,
+      };
+      return res.status(200).json({ success: true, data: inviteShape });
     }
 
     const existingParticipant = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
         userId: receiverId,
-        isPlaying: true,
+        status: 'PLAYING',
       },
     });
 
-    const existingQueue = await prisma.joinQueue.findFirst({
+    const existingQueue = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
         userId: receiverId,
-        status: InviteStatus.PENDING,
+        status: 'IN_QUEUE',
+        role: 'PARTICIPANT',
       },
     });
 
@@ -162,7 +139,7 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
 
     if (existingQueue) {
       try {
-        await JoinQueueService.acceptJoinQueue(gameId, req.userId!, receiverId);
+        await ParticipantService.acceptNonPlayingParticipant(gameId, req.userId!, receiverId);
         return res.status(200).json({
           success: true,
           message: 'User was automatically accepted from queue',
@@ -176,74 +153,13 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
     }
   }
 
-  const invite = await prisma.invite.create({
-    data: {
-      senderId: req.userId!,
-      receiverId,
-      gameId,
-      message,
-      expiresAt: expiresAt ? new Date(expiresAt) : null,
-    },
-    include: {
-      sender: {
-        select: USER_SELECT_FIELDS,
-      },
-      receiver: {
-        select: USER_SELECT_FIELDS,
-      },
-      game: {
-        select: {
-          id: true,
-          name: true,
-          gameType: true,
-          startTime: true,
-          endTime: true,
-          maxParticipants: true,
-          minParticipants: true,
-          minLevel: true,
-          maxLevel: true,
-          isPublic: true,
-          affectsRating: true,
-          hasBookedCourt: true,
-          afterGameGoToBar: true,
-          hasFixedTeams: true,
-          teamsReady: true,
-          participantsReady: true,
-          status: true,
-          resultsStatus: true,
-          entityType: true,
-          court: {
-            select: {
-              id: true,
-              name: true,
-              club: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-          club: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          participants: {
-            select: {
-              userId: true,
-              isPlaying: true,
-              role: true,
-              user: {
-                select: USER_SELECT_FIELDS,
-              },
-            },
-          },
-        },
-      },
-    },
-  });
+  const { invite } = await ParticipantService.sendInvite(
+    gameId,
+    req.userId!,
+    receiverId,
+    message,
+    expiresAt ? new Date(expiresAt) : null
+  );
 
   // Send system message to game chat if it's a game invite
   if (gameId && invite.sender && invite.receiver) {
@@ -280,22 +196,10 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
 });
 
 export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { status } = req.query;
-
-  const where: any = {
-    receiverId: req.userId,
-  };
-
-  if (status) {
-    where.status = status;
-  }
-
-  const invites = await prisma.invite.findMany({
-    where,
+  const participants = await prisma.gameParticipant.findMany({
+    where: { userId: req.userId!, status: 'INVITED' },
     include: {
-      sender: {
-        select: USER_SELECT_FIELDS,
-      },
+      invitedByUser: { select: USER_SELECT_FIELDS },
       game: {
         select: {
           id: true,
@@ -317,73 +221,41 @@ export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response)
           status: true,
           resultsStatus: true,
           entityType: true,
-          court: {
-            select: {
-              id: true,
-              name: true,
-              club: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-          club: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          participants: {
-            select: {
-              userId: true,
-              isPlaying: true,
-              role: true,
-              user: {
-                select: USER_SELECT_FIELDS,
-              },
-            },
-          },
+          court: { select: { id: true, name: true, club: { select: { id: true, name: true } } } },
+          club: { select: { id: true, name: true } },
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { joinedAt: 'desc' },
   });
-
   const now = new Date();
-  const invitesToDelete: string[] = [];
-
-  invites.forEach(invite => {
-    if (invite.game && invite.status === InviteStatus.PENDING) {
-      const isGameStarted = new Date(invite.game.startTime) <= now && new Date(invite.game.endTime) > now;
-      if (isGameStarted) {
-        invitesToDelete.push(invite.id);
-      }
-    }
+  const toDelete: string[] = [];
+  participants.forEach((p) => {
+    if (p.game && new Date(p.game.startTime) <= now && new Date(p.game.endTime) > now) toDelete.push(p.id);
   });
-
-  if (invitesToDelete.length > 0) {
-    await prisma.invite.deleteMany({
-      where: {
-        id: { in: invitesToDelete },
-      },
-    });
-
+  if (toDelete.length > 0) {
+    await prisma.gameParticipant.deleteMany({ where: { id: { in: toDelete } } });
     if ((global as any).socketService) {
-      const invitesToNotify = invites.filter(inv => invitesToDelete.includes(inv.id));
-      invitesToNotify.forEach(invite => {
-        (global as any).socketService.emitInviteDeleted(invite.receiverId, invite.id, invite.gameId || undefined);
+      participants.filter((p) => toDelete.includes(p.id)).forEach((p) => {
+        (global as any).socketService.emitInviteDeleted(p.userId, p.id, p.gameId || undefined);
       });
     }
   }
-
-  const filteredInvites = invites.filter(invite => !invitesToDelete.includes(invite.id));
-
-  res.json({
-    success: true,
-    data: filteredInvites,
-  });
+  const filtered = participants.filter((p) => !toDelete.includes(p.id));
+  const data = filtered.map((p) => ({
+    id: p.id,
+    receiverId: p.userId,
+    gameId: p.gameId,
+    status: 'PENDING',
+    message: p.inviteMessage,
+    expiresAt: p.inviteExpiresAt,
+    createdAt: p.joinedAt,
+    updatedAt: p.joinedAt,
+    receiver: null,
+    sender: p.invitedByUser,
+    game: p.game,
+  }));
+  res.json({ success: true, data });
 });
 
 export const acceptInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -410,7 +282,8 @@ export const declineInvite = asyncHandler(async (req: AuthRequest, res: Response
 
   if (!result.success) {
     const statusCode = result.message === 'errors.invites.notFound' ? 404 :
-                      result.message === 'errors.invites.notAuthorizedToDecline' ? 403 : 400;
+                      result.message === 'errors.invites.notAuthorizedToDecline' ? 403 :
+                      result.message === 'errors.invites.ownerCannotDecline' ? 400 : 400;
     throw new ApiError(statusCode, result.message);
   }
 
@@ -421,128 +294,62 @@ export const declineInvite = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const deleteExpiredInvites = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const result = await prisma.invite.deleteMany({
+  const result = await prisma.gameParticipant.deleteMany({
     where: {
+      status: 'INVITED',
       OR: [
-        {
-          expiresAt: {
-            lt: new Date(),
-          },
-        },
-        {
-          game: {
-            startTime: {
-              lt: new Date(),
-            },
-          },
-        },
+        { inviteExpiresAt: { lt: new Date() } },
+        { game: { startTime: { lt: new Date() } } },
       ],
     },
   });
-
-  res.json({
-    success: true,
-    message: `Deleted ${result.count} expired invites`,
-  });
+  res.json({ success: true, message: `Deleted ${result.count} expired invites` });
 });
 
 export const getGameInvites = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
-
-  const invites = await prisma.invite.findMany({
-    where: {
-      gameId,
-      status: InviteStatus.PENDING,
-    },
-    include: {
-      sender: {
-        select: USER_SELECT_FIELDS,
-      },
-        receiver: {
-          select: USER_SELECT_FIELDS,
-        },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  res.json({
-    success: true,
-    data: invites,
-  });
+  const game = await GameReadService.getGameById(gameId, req.userId);
+  res.json({ success: true, data: game.invites ?? [] });
 });
 
 export const cancelInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-
-  const invite = await prisma.invite.findUnique({
+  const participant = await prisma.gameParticipant.findUnique({
     where: { id },
+    select: { id: true, status: true, invitedByUserId: true, userId: true, gameId: true },
   });
-
-  if (!invite) {
+  if (!participant || participant.status !== 'INVITED') {
     throw new ApiError(404, 'errors.invites.notFound');
   }
-
-  if (invite.senderId !== req.userId) {
+  if (participant.invitedByUserId !== req.userId) {
     throw new ApiError(403, 'errors.invites.onlySenderCanCancel');
   }
-
-  if (invite.status !== InviteStatus.PENDING) {
-    throw new ApiError(400, 'errors.invites.canOnlyCancelPending');
+  await prisma.gameParticipant.delete({ where: { id } });
+  if ((global as any).socketService) {
+    (global as any).socketService.emitInviteDeleted(participant.userId, id, participant.gameId || undefined);
+    if (participant.invitedByUserId) {
+      (global as any).socketService.emitInviteDeleted(participant.invitedByUserId, id, participant.gameId || undefined);
+    }
   }
-
-  await prisma.invite.delete({
-    where: { id },
-  });
-
-  res.json({
-    success: true,
-    message: 'Invite cancelled successfully',
-  });
+  res.json({ success: true, message: 'Invite cancelled successfully' });
 });
 
 export const deleteInvitesForStartedGame = async (gameId: string) => {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
-    select: {
-      status: true,
-      invites: {
-        where: {
-          status: InviteStatus.PENDING,
-        },
-        select: {
-          id: true,
-          receiverId: true,
-          gameId: true,
-        },
-      },
-    },
+    select: { status: true },
   });
-
-  if (!game || game.status !== 'STARTED') {
-    return;
-  }
-
-  if (game.invites.length === 0) {
-    return;
-  }
-
-  const inviteIds = game.invites.map(invite => invite.id);
-  const receiverIds = Array.from(new Set(game.invites.map(invite => invite.receiverId)));
-
-  await prisma.invite.deleteMany({
-    where: {
-      id: { in: inviteIds },
-      status: InviteStatus.PENDING,
-    },
+  if (!game || game.status !== 'STARTED') return;
+  const participants = await prisma.gameParticipant.findMany({
+    where: { gameId, status: 'INVITED' },
+    select: { id: true, userId: true, invitedByUserId: true, gameId: true },
   });
-
+  if (participants.length === 0) return;
+  await prisma.gameParticipant.deleteMany({ where: { id: { in: participants.map((p) => p.id) } } });
   if ((global as any).socketService) {
-    receiverIds.forEach(receiverId => {
-      game.invites
-        .filter(invite => invite.receiverId === receiverId)
-        .forEach(invite => {
-          (global as any).socketService.emitInviteDeleted(receiverId, invite.id, invite.gameId || undefined);
-        });
+    participants.forEach((p) => {
+      (global as any).socketService.emitInviteDeleted(p.userId, p.id, p.gameId || undefined);
+      if (p.invitedByUserId) (global as any).socketService.emitInviteDeleted(p.invitedByUserId, p.id, p.gameId || undefined);
     });
   }
 };
@@ -550,46 +357,19 @@ export const deleteInvitesForStartedGame = async (gameId: string) => {
 export const deleteInvitesForArchivedGame = async (gameId: string) => {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
-    select: {
-      status: true,
-      invites: {
-        where: {
-          status: InviteStatus.PENDING,
-        },
-        select: {
-          id: true,
-          receiverId: true,
-          gameId: true,
-        },
-      },
-    },
+    select: { status: true },
   });
-
-  if (!game || game.status !== 'ARCHIVED') {
-    return;
-  }
-
-  if (game.invites.length === 0) {
-    return;
-  }
-
-  const inviteIds = game.invites.map(invite => invite.id);
-  const receiverIds = Array.from(new Set(game.invites.map(invite => invite.receiverId)));
-
-  await prisma.invite.deleteMany({
-    where: {
-      id: { in: inviteIds },
-      status: InviteStatus.PENDING,
-    },
+  if (!game || game.status !== 'ARCHIVED') return;
+  const participants = await prisma.gameParticipant.findMany({
+    where: { gameId, status: 'INVITED' },
+    select: { id: true, userId: true, invitedByUserId: true, gameId: true },
   });
-
+  if (participants.length === 0) return;
+  await prisma.gameParticipant.deleteMany({ where: { id: { in: participants.map((p) => p.id) } } });
   if ((global as any).socketService) {
-    receiverIds.forEach(receiverId => {
-      game.invites
-        .filter(invite => invite.receiverId === receiverId)
-        .forEach(invite => {
-          (global as any).socketService.emitInviteDeleted(receiverId, invite.id, invite.gameId || undefined);
-        });
+    participants.forEach((p) => {
+      (global as any).socketService.emitInviteDeleted(p.userId, p.id, p.gameId || undefined);
+      if (p.invitedByUserId) (global as any).socketService.emitInviteDeleted(p.invitedByUserId, p.id, p.gameId || undefined);
     });
   }
 };

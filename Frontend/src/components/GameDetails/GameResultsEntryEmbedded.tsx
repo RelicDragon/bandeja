@@ -14,6 +14,7 @@ import { useOfflineMessage } from '@/hooks/useOfflineMessage';
 import { useGameResultsTabs } from '@/hooks/useGameResultsTabs';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { validateSetIndex, validateSetScores, validateSetIndexAgainstFixed, isUserGameAdminOrOwner, isLastSet, validateTieBreak } from '@/utils/gameResults';
+import { isParticipantPlaying } from '@/utils/participantStatus';
 import { 
   RoundCard,
   AvailablePlayersFooter, 
@@ -71,7 +72,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   const rounds = engine.rounds;
 
   const players = useMemo(() => 
-    (currentGame?.participants.filter(p => p.isPlaying).map(p => p.user) || []) as BasicUser[], 
+    (currentGame?.participants.filter(isParticipantPlaying).map(p => p.user) || []) as BasicUser[], 
     [currentGame?.participants]
   );
 

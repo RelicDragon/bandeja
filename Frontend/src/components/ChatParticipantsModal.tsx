@@ -1,25 +1,31 @@
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
-import { Game, ChatType } from '@/types';
+import { Game, GameParticipant, ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
+import { isParticipantPlaying } from '@/utils/participantStatus';
 import { PlayerAvatar } from './PlayerAvatar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { gamesApi } from '@/api/games';
-import { useAuthStore } from '@/store/authStore';
-import { BaseModal } from '@/components/BaseModal';
+import { chatApi } from '@/api/chat';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface ChatParticipantsModalProps {
   game: Game;
   onClose: () => void;
-  onGuestLeave?: () => void;
   currentChatType?: ChatType;
 }
 
-export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChatType = 'PUBLIC' }: ChatParticipantsModalProps) => {
+export const ChatParticipantsModal = ({ game: initialGame, onClose, currentChatType = 'PUBLIC' }: ChatParticipantsModalProps) => {
   const { t } = useTranslation();
-  const { user } = useAuthStore();
-  const [isLeaving, setIsLeaving] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
+  const [participants, setParticipants] = useState<GameParticipant[]>(initialGame.participants ?? []);
+
+  useEffect(() => {
+    chatApi.getGameParticipants(initialGame.id)
+      .then(setParticipants)
+      .catch(() => {
+        gamesApi.getById(initialGame.id).then(res => setParticipants(res.data.participants ?? [])).catch(() => {});
+      });
+  }, [initialGame.id]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -29,9 +35,8 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
   };
 
   const allParticipants = [
-    ...game.participants.filter(p => p.isPlaying).map(p => ({ ...p.user, isParticipant: true, isInvited: false, isGuest: false, role: p.role })),
-    ...game.participants.filter(p => !p.isPlaying).map(p => ({ ...p.user, isParticipant: false, isInvited: false, isGuest: p.role !== 'OWNER' && p.role !== 'ADMIN', role: p.role })),
-    ...(game.invites || []).filter(invite => invite.receiver).map(invite => ({ ...invite.receiver!, isParticipant: false, isInvited: true, isGuest: false, role: 'PARTICIPANT' as const }))
+    ...participants.filter(isParticipantPlaying).map(p => ({ ...p.user, isParticipant: true, isInvited: false, isGuest: false, role: p.role })),
+    ...participants.filter(p => !isParticipantPlaying(p)).map(p => ({ ...p.user, isParticipant: false, isInvited: p.status === 'INVITED', isGuest: p.status === 'GUEST' || (p.role !== 'OWNER' && p.role !== 'ADMIN'), role: p.role }))
   ];
 
   const isParticipantVisibleForChatType = (participant: any) => {
@@ -48,57 +53,13 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
     return true;
   };
 
-  const isCurrentUserGuest = game.participants?.some(participant => participant.userId === user?.id && !participant.isPlaying && participant.role !== 'OWNER' && participant.role !== 'ADMIN') ?? false;
-
-  const handleLeaveAsGuest = async () => {
-    if (!game.id || isLeaving) return;
-    
-    setIsLeaving(true);
-    try {
-      await gamesApi.leave(game.id);
-      onGuestLeave?.();
-      handleClose();
-    } catch (error) {
-      console.error('Failed to leave as guest:', error);
-    } finally {
-      setIsLeaving(false);
-    }
-  };
-
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      isBasic
-      modalId="chat-participants-modal"
-      showCloseButton={false}
-      closeOnBackdropClick={true}
-    >
+    <Dialog open={isOpen} onClose={handleClose} modalId="chat-participants-modal">
+      <DialogContent>
       <div className="flex flex-col h-full max-h-[80vh]">
-        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('chat.participants')}
-            </h2>
-            <div className="flex items-center gap-2">
-              {isCurrentUserGuest && (
-                <button
-                  onClick={handleLeaveAsGuest}
-                  disabled={isLeaving}
-                  className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLeaving ? t('app.loading') : t('chat.leave')}
-                </button>
-              )}
-              <button
-                onClick={handleClose}
-                className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                <X size={18} className="text-gray-600 dark:text-gray-300" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <DialogHeader>
+          <DialogTitle>{t('chat.participants')}</DialogTitle>
+        </DialogHeader>
 
         <div className="flex-1 overflow-y-auto scrollbar-auto p-3 space-y-2">
           {allParticipants.length === 0 ? (
@@ -181,6 +142,7 @@ export const ChatParticipantsModal = ({ game, onClose, onGuestLeave, currentChat
           )}
         </div>
       </div>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };

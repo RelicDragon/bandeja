@@ -22,13 +22,12 @@ class TelegramResultsSenderService {
         where: { id: gameId },
         include: {
           participants: {
-            where: { isPlaying: true },
+            where: { status: 'PLAYING' },
             include: {
               user: {
                 select: {
                   id: true,
                   telegramId: true,
-                  sendTelegramMessages: true,
                 },
               },
             },
@@ -51,9 +50,7 @@ class TelegramResultsSenderService {
         return;
       }
 
-      const readyParticipants = game.participants.filter(
-        (p) => p.user.telegramId && p.user.sendTelegramMessages
-      );
+      const readyParticipants = game.participants.filter((p) => p.user.telegramId);
 
       console.log(`[TELEGRAM SENDER SERVICE] Found ${readyParticipants.length} ready participants for game ${gameId}`);
 

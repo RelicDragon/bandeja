@@ -11,7 +11,8 @@ type ParticipantWithUser = {
   id: string;
   userId: string;
   role: ParticipantRole;
-  isPlaying: boolean;
+  status?: string;
+  isPlaying?: boolean;
   joinedAt: Date;
   stats: any;
   user: BasicUser;
@@ -200,12 +201,12 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
   const gamesTogether = await prisma.gameParticipant.findMany({
     where: {
       userId: currentUserId,
-      isPlaying: true,
+      status: 'PLAYING',
       game: {
         participants: {
           some: {
             userId: otherUserId,
-            isPlaying: true,
+            status: 'PLAYING',
           },
         },
         resultsStatus: 'FINAL',
@@ -382,10 +383,10 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
 
     if (playedAgainst) {
       const currentUserParticipant = game.participants.find(
-        (p: ParticipantWithUser) => p.userId === currentUserId && p.isPlaying === true
+        (p: ParticipantWithUser) => p.userId === currentUserId && (p.status === 'PLAYING' || p.isPlaying === true)
       );
       const otherUserParticipant = game.participants.find(
-        (p: ParticipantWithUser) => p.userId === otherUserId && p.isPlaying === true
+        (p: ParticipantWithUser) => p.userId === otherUserId && (p.status === 'PLAYING' || p.isPlaying === true)
       );
 
       if (currentUserParticipant && otherUserParticipant) {
@@ -410,7 +411,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
           id: p.id,
           userId: p.userId,
           role: p.role,
-          isPlaying: p.isPlaying,
+          isPlaying: p.status === 'PLAYING' || p.isPlaying,
           joinedAt: p.joinedAt,
           stats: p.stats,
           user: p.user,
@@ -482,7 +483,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
           participants: {
             some: {
               userId: currentUserId,
-              isPlaying: true,
+              status: 'PLAYING',
             },
           },
           resultsStatus: 'FINAL',
@@ -507,7 +508,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
           participants: {
             some: {
               userId: otherUserId,
-              isPlaying: true,
+              status: 'PLAYING',
             },
           },
           resultsStatus: 'FINAL',

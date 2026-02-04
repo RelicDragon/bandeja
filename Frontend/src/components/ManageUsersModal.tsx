@@ -4,7 +4,7 @@ import { Crown, Shield, User, UserX, ArrowRightLeft } from 'lucide-react';
 import { Button, PlayerAvatar } from '@/components';
 import { Game, GameParticipant } from '@/types';
 import { useAuthStore } from '@/store/authStore';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface ManageUsersModalProps {
   game: Game;
@@ -97,19 +97,11 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      isBasic
-      modalId="manage-users-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-      >
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('games.managePlayers')}
-          </h2>
-        </div>
+    <Dialog open={isOpen} onClose={handleClose} modalId="manage-users-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('games.managePlayers')}</DialogTitle>
+        </DialogHeader>
 
         <div ref={scrollContainerRef} className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
           {participants.map((participant) => {
@@ -189,6 +181,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
             </div>
           )}
         </div>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };

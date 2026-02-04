@@ -121,7 +121,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
     }
 
     // Check if player is a participant in the game
-    const isParticipant = game.participants.some(p => p.userId === playerId && p.isPlaying);
+    const isParticipant = game.participants.some(p => p.userId === playerId && p.status === 'PLAYING');
     if (!isParticipant) {
       toast.error(t('games.playerNotParticipant'));
       return;

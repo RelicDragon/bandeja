@@ -1,3 +1,11 @@
+export enum PreferenceKey {
+  SEND_MESSAGES = 'sendMessages',
+  SEND_INVITES = 'sendInvites',
+  SEND_DIRECT_MESSAGES = 'sendDirectMessages',
+  SEND_REMINDERS = 'sendReminders',
+  SEND_WALLET_NOTIFICATIONS = 'sendWalletNotifications',
+}
+
 export enum NotificationType {
   INVITE = 'INVITE',
   GAME_CHAT = 'GAME_CHAT',

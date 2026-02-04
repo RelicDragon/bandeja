@@ -1,6 +1,9 @@
 import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { ChatType, ChatContextType } from '@prisma/client';
+import { NotificationPreferenceService } from '../../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
@@ -48,7 +51,6 @@ export async function sendGameSystemMessageNotification(
         select: {
           id: true,
           telegramId: true,
-          sendTelegramMessages: true,
           language: true,
           currentCityId: true,
         }
@@ -58,10 +60,8 @@ export async function sendGameSystemMessageNotification(
 
   for (const participant of participants) {
     const user = participant.user;
-    
-    if (!user.telegramId || !user.sendTelegramMessages) {
-      continue;
-    }
+    const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+    if (!allowed || !user.telegramId) continue;
 
     const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
     if (isMuted) {
@@ -73,7 +73,7 @@ export async function sendGameSystemMessageNotification(
     if (chatType === ChatType.PUBLIC) {
       canSeeMessage = true;
     } else if (chatType === ChatType.PRIVATE) {
-      canSeeMessage = participant.isPlaying;
+      canSeeMessage = participant.status === 'PLAYING';
     } else if (chatType === ChatType.ADMINS) {
       canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
     }

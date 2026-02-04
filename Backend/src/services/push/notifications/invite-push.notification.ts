@@ -2,23 +2,26 @@ import prisma from '../../../config/database';
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { formatGameInfoForUser, formatUserName } from '../../shared/notification-base';
+import { NotificationPreferenceService } from '../../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../../types/notifications.types';
 
 export async function createInvitePushNotification(
   invite: any
 ): Promise<NotificationPayload | null> {
+  const allowed = await NotificationPreferenceService.doesUserAllow(invite.receiverId, NotificationChannelType.PUSH, PreferenceKey.SEND_INVITES);
+  if (!allowed) return null;
+
   const receiver = await prisma.user.findUnique({
     where: { id: invite.receiverId },
     select: {
       id: true,
       language: true,
       currentCityId: true,
-      sendPushInvites: true,
     }
   });
 
-  if (!receiver || !receiver.sendPushInvites) {
-    return null;
-  }
+  if (!receiver) return null;
 
   if (!invite.game) {
     return null;

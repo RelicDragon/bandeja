@@ -24,7 +24,7 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
     const accessibleGameIds = myGames
       .filter(game => {
         const isParticipant = game.participants.some(p => p.userId === userId);
-        const hasPendingInvite = game.invites?.some(invite => invite.receiverId === userId);
+        const hasPendingInvite = game.participants?.some(p => p.userId === userId && p.status === 'INVITED');
         return isParticipant || hasPendingInvite;
       })
       .map(game => game.id);

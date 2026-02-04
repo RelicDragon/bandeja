@@ -77,7 +77,7 @@ export class BetService {
       }
     } else if (condition.entityType === 'USER' && condition.entityId) {
       const participant = await prisma.gameParticipant.findFirst({
-        where: { gameId, userId: condition.entityId, isPlaying: true },
+        where: { gameId, userId: condition.entityId, status: 'PLAYING' },
         select: { userId: true }
       });
       if (!participant) {
@@ -585,7 +585,7 @@ export class BetService {
         }
       } else if (cond.entityType === 'USER' && cond.entityId) {
         const participant = await prisma.gameParticipant.findFirst({
-          where: { gameId: bet.gameId, userId: cond.entityId, isPlaying: true },
+          where: { gameId: bet.gameId, userId: cond.entityId, status: 'PLAYING' },
           select: { userId: true }
         });
         if (!participant) {

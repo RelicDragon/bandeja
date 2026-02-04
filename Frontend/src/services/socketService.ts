@@ -66,6 +66,7 @@ class SocketService {
   private eventSubscribers: Map<string, Set<(...args: any[]) => void>> = new Map();
   private socketListeners: Map<string, (...args: any[]) => void> = new Map();
   private waitForConnectionListeners: Array<() => void> = [];
+  private connectCallbacks: Set<() => void> = new Set();
 
   constructor() {
     // Don't auto-connect in constructor - let components trigger connection when needed
@@ -205,14 +206,19 @@ class SocketService {
       console.log('[SocketService] Socket.IO connected, socket ID:', this.socket?.id);
       this.isConnecting = false;
       this.reconnectAttempts = 0;
-      // Re-register socket listeners for all active subscriptions
       this.reregisterSocketListeners();
-      // Only start heartbeat if online
       const isOnline = useNetworkStore.getState().isOnline;
       if (!this.isOffline && isOnline) {
         this.startHeartbeat();
       }
       this.rejoinActiveChatRooms();
+      this.connectCallbacks.forEach((cb) => {
+        try {
+          cb();
+        } catch (e) {
+          console.error('[SocketService] Connect callback error:', e);
+        }
+      });
     });
 
     this.socket.on('disconnect', (reason) => {
@@ -612,7 +618,11 @@ class SocketService {
     }
   }
 
-  // Listen to events - uses multiplexer pattern (one socket listener dispatches to multiple subscribers)
+  public onConnect(callback: () => void): () => void {
+    this.connectCallbacks.add(callback);
+    return () => this.connectCallbacks.delete(callback);
+  }
+
   public on<K extends keyof SocketEvents>(event: K, callback: SocketEvents[K]) {
     this.ensureConnection();
     if (!this.socket) {

@@ -22,7 +22,7 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
           },
         },
         where: {
-          isPlaying: true,
+          status: 'PLAYING',
         },
       },
       rounds: {

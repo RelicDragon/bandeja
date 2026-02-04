@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components';
 import { AlertTriangle } from 'lucide-react';
 import { EntityType } from '@/types';
-import { BaseModal } from './BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 
 interface LeaveGameConfirmationModalProps {
   isOpen: boolean;
@@ -39,14 +39,11 @@ export const LeaveGameConfirmationModal = ({
   };
 
   return (
-    <BaseModal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      isBasic 
-      modalId="leave-game-confirmation-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
+    <Dialog open={isOpen} onClose={onClose} modalId="leave-game-confirmation-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('gameDetails.leaveGame')}</DialogTitle>
+        </DialogHeader>
         <div className="flex flex-col text-center">
           <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center mx-auto mb-4">
             <AlertTriangle
@@ -54,16 +51,12 @@ export const LeaveGameConfirmationModal = ({
               className="text-orange-600 dark:text-orange-400"
             />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            {t('gameDetails.leaveGame')}
-          </h3>
-
-          <p className="text-gray-500 dark:text-gray-400 mb-6">
+          <DialogDescription className="mb-6">
             {getConfirmationText()}
-          </p>
+          </DialogDescription>
         </div>
 
-        <div className="flex flex-col-reverse sm:flex-row gap-3">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-3">
           <Button
             onClick={onClose}
             variant="outline"
@@ -80,8 +73,10 @@ export const LeaveGameConfirmationModal = ({
           >
             {isLeaving ? t('common.leaving') || 'Leaving...' : t('common.leave')}
           </Button>
-        </div>
-    </BaseModal>
+        </DialogFooter>
+
+      </DialogContent>
+    </Dialog>
   );
 };
 

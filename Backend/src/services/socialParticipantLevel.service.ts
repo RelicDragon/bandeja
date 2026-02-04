@@ -20,7 +20,7 @@ export class SocialParticipantLevelService {
           select: {
             userId: true,
             role: true,
-            isPlaying: true,
+            status: true,
           },
         },
       },
@@ -38,7 +38,7 @@ export class SocialParticipantLevelService {
       return;
     }
 
-    const playingParticipants = game.participants.filter(p => p.isPlaying);
+    const playingParticipants = game.participants.filter(p => p.status === 'PLAYING');
     if (playingParticipants.length < 2) {
       return;
     }
@@ -62,7 +62,7 @@ export class SocialParticipantLevelService {
     );
 
     for (const participant of allParticipants) {
-      const isPlaying = participant.isPlaying;
+      const isPlaying = participant.status === 'PLAYING';
       let baseSocialLevelBoost = 0.0;
 
       // Calculate base boost for ALL participants based on playing participants
@@ -211,8 +211,8 @@ export class SocialParticipantLevelService {
         resultsStatus: 'FINAL',
         entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON] },
         AND: [
-          { participants: { some: { userId: userId1, isPlaying: true } } },
-          { participants: { some: { userId: userId2, isPlaying: true } } },
+          { participants: { some: { userId: userId1, status: 'PLAYING' } } },
+          { participants: { some: { userId: userId2, status: 'PLAYING' } } },
         ],
       },
       select: { id: true },

@@ -252,7 +252,8 @@ class SocketService {
         }
       });
 
-      // Handle disconnect
+      socket.emit('sync-required', { timestamp: new Date().toISOString() });
+
       socket.on('disconnect', () => {
         console.log(`User ${socket.userId} disconnected`);
         
@@ -265,16 +266,6 @@ class SocketService {
             }
           }
         }
-      });
-
-      // Handle reconnection - check for missed messages
-      socket.on('reconnect', async () => {
-        console.log(`User ${socket.userId} reconnected`);
-        
-        // Notify client to sync missed messages
-        socket.emit('sync-required', {
-          timestamp: new Date().toISOString()
-        });
       });
 
       // Handle ping from client (heartbeat)
@@ -602,11 +593,6 @@ class SocketService {
       // Add all users with pending invites
       if (gameToEmit.invites) {
         gameToEmit.invites.forEach((invite: any) => userIds.add(invite.receiverId || invite.receiver?.id));
-      }
-      
-      // Add all users in join queue (so they get notified of status changes)
-      if (gameToEmit.joinQueues) {
-        gameToEmit.joinQueues.forEach((queue: any) => userIds.add(queue.userId || queue.user?.id));
       }
       
       console.log(`[SocketService] Game ${gameId} - isPublic: ${gameToEmit.isPublic}, participant/userIds:`, Array.from(userIds));

@@ -61,7 +61,7 @@ export const BarParticipantsList = ({ gameId, participants }: BarParticipantsLis
           }])
         );
 
-        const playingParticipants = participants.filter(p => p.isPlaying);
+        const playingParticipants = participants.filter(p => p.status === 'PLAYING');
         const participantsWithChanges: ParticipantWithLevelChange[] = playingParticipants.map((p) => ({
           ...p,
           levelChange: levelChangeMap.get(p.userId),
@@ -70,7 +70,7 @@ export const BarParticipantsList = ({ gameId, participants }: BarParticipantsLis
         setParticipantsWithLevels(participantsWithChanges);
       } catch (error) {
         console.error('Failed to fetch level changes:', error);
-        const playingParticipants = participants.filter(p => p.isPlaying);
+        const playingParticipants = participants.filter(p => p.status === 'PLAYING');
         setParticipantsWithLevels(playingParticipants.map(p => ({ ...p })));
       } finally {
         setLoading(false);

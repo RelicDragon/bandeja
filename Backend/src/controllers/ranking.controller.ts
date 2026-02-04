@@ -126,7 +126,7 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       resultsStatus: ResultsStatus.FINAL,
       participants: {
         some: {
-          isPlaying: true,
+          status: 'PLAYING',
         },
       },
     };
@@ -143,7 +143,7 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       by: ['userId'],
       where: {
         game: gameWhere,
-        isPlaying: true,
+        status: 'PLAYING',
         user: where,
       },
       _count: {

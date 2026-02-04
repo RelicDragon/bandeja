@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components';
 import { CreateMenuModal } from '@/components/CreateMenuModal';
-import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { EntityType } from '@/types';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +10,6 @@ import { useNavigate } from 'react-router-dom';
 export const HomeHeaderContent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { selectedDateForCreateGame } = useHeaderStore();
   const { currentPage, setCurrentPage, setIsAnimating, setChatsFilter } = useNavigationStore();
   const buttonContainerRef = useRef<HTMLDivElement>(null);
   const [isIconOnly, setIsIconOnly] = useState(false);
@@ -60,16 +58,16 @@ export const HomeHeaderContent = () => {
       setTimeout(() => {
         setIsAnimating(false);
         if (entityType === 'LEAGUE') {
-          navigate('/create-league');
+          navigate('/create-league', { replace: true });
         } else {
-          navigate('/create-game', { state: { entityType, initialDate: selectedDateForCreateGame } });
+          navigate('/create-game', { state: { entityType }, replace: true });
         }
       }, 300);
     } else {
       if (entityType === 'LEAGUE') {
-        navigate('/create-league');
+        navigate('/create-league', { replace: true });
       } else {
-        navigate('/create-game', { state: { entityType, initialDate: selectedDateForCreateGame } });
+        navigate('/create-game', { state: { entityType }, replace: true });
       }
     }
   };

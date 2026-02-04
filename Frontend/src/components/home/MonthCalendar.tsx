@@ -13,6 +13,9 @@ interface MonthCalendarProps {
   availableGames: Game[];
   userFilter?: boolean;
   trainingFilter?: boolean;
+  tournamentFilter?: boolean;
+  leaguesFilter?: boolean;
+  favoriteTrainerId?: string | null;
   onMonthChange?: (month: number, year: number) => void;
   onDateRangeChange?: (startDate: Date, endDate: Date) => void;
 }
@@ -30,6 +33,9 @@ export const MonthCalendar = ({
   availableGames,
   userFilter = false,
   trainingFilter = false,
+  tournamentFilter = false,
+  leaguesFilter = false,
+  favoriteTrainerId,
   onMonthChange,
   onDateRangeChange,
 }: MonthCalendarProps) => {
@@ -66,11 +72,17 @@ export const MonthCalendar = ({
     const dataMap = new Map<string, { gameCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean; hasTraining: boolean }>();
     
     availableGames.forEach(game => {
+      if (game.timeIsSet === false) return;
+
+      const gameOwner = game.participants?.find((p: any) => p.role === 'OWNER');
+      if (gameOwner && user?.blockedUserIds?.includes(gameOwner.userId)) return;
+
       const gameDate = format(startOfDay(new Date(game.startTime)), 'yyyy-MM-dd');
       const isPublic = game.isPublic;
       const isUserParticipantInGame = user?.id && game.participants.some((p: any) => p.userId === user.id);
-      
-      if (!isPublic && !isUserParticipantInGame) {
+      const isLeagueGame = game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON';
+
+      if (!isPublic && !isUserParticipantInGame && !(leaguesFilter && isLeagueGame)) {
         return;
       }
 
@@ -94,6 +106,19 @@ export const MonthCalendar = ({
         return;
       }
 
+      if (trainingFilter && favoriteTrainerId) {
+        const owner = game.participants?.find((p: any) => p.role === 'OWNER');
+        if (!owner || owner.userId !== favoriteTrainerId) return;
+      }
+
+      if (tournamentFilter && game.entityType !== 'TOURNAMENT') {
+        return;
+      }
+
+      if (leaguesFilter && !isLeagueGame) {
+        return;
+      }
+
       const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false };
       
       existing.gameCount++;
@@ -114,7 +139,7 @@ export const MonthCalendar = ({
     });
 
     return dataMap;
-  }, [availableGames, userFilter, trainingFilter, user?.id, user?.level]);
+  }, [availableGames, userFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user?.id, user?.level, user?.blockedUserIds]);
 
   const handlePreviousMonth = () => {
     isNavigatingRef.current = true;

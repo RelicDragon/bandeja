@@ -1,5 +1,7 @@
 import prisma from '../../config/database';
 import { PushPlatform } from '@prisma/client';
+import { NotificationPreferenceService } from '../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
 
 export class PushTokenService {
   static async registerToken(
@@ -34,6 +36,7 @@ export class PushTokenService {
             updatedAt: new Date()
           }
         });
+        await NotificationPreferenceService.ensurePreferenceForChannel(userId, NotificationChannelType.PUSH);
         console.log(`[PushTokenService] ✅ Token updated successfully`);
         return updated;
       }
@@ -47,6 +50,7 @@ export class PushTokenService {
           deviceId
         }
       });
+      await NotificationPreferenceService.ensurePreferenceForChannel(userId, NotificationChannelType.PUSH);
       console.log(`[PushTokenService] ✅ Token created successfully`);
       return created;
     } catch (error) {
@@ -65,6 +69,10 @@ export class PushTokenService {
           }
         }
       });
+      const remaining = await prisma.pushToken.count({ where: { userId } });
+      if (remaining === 0) {
+        await NotificationPreferenceService.deletePreferenceForChannel(userId, NotificationChannelType.PUSH);
+      }
       return { success: true };
     } catch (error) {
       return { success: false, error };
@@ -75,6 +83,9 @@ export class PushTokenService {
     const result = await prisma.pushToken.deleteMany({
       where: { userId }
     });
+    if (result.count > 0) {
+      await NotificationPreferenceService.deletePreferenceForChannel(userId, NotificationChannelType.PUSH);
+    }
     return { deleted: result.count };
   }
 
@@ -134,9 +145,14 @@ export class PushTokenService {
   static async removeInvalidToken(token: string) {
     console.log(`[PushTokenService] Removing invalid token: ${token.substring(0, 20)}...`);
     try {
-      const result = await prisma.pushToken.deleteMany({
-        where: { token }
-      });
+      const existing = await prisma.pushToken.findFirst({ where: { token }, select: { userId: true } });
+      const result = await prisma.pushToken.deleteMany({ where: { token } });
+      if (result.count > 0 && existing) {
+        const remaining = await prisma.pushToken.count({ where: { userId: existing.userId } });
+        if (remaining === 0) {
+          await NotificationPreferenceService.deletePreferenceForChannel(existing.userId, NotificationChannelType.PUSH);
+        }
+      }
       console.log(`[PushTokenService] ✅ Removed ${result.count} invalid token(s)`);
     } catch (error) {
       console.error('[PushTokenService] ❌ Error removing invalid token:', error);

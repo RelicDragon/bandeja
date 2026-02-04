@@ -5,6 +5,7 @@ import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
+import { useDesktop } from '@/hooks/useDesktop';
 import { useAuthStore } from '@/store/authStore';
 import { handleBackNavigation } from '@/utils/navigation';
 import {
@@ -26,6 +27,9 @@ export const Header = () => {
   const user = useAuthStore((state) => state.user);
   const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
   const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications } = useNavigationStore();
+  const isDesktop = useDesktop();
+  const isGameDetailsPath = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
+  const isGameDetailsSplitView = currentPage === 'gameDetails' && isDesktop && isGameDetailsPath;
   
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const shouldHideHeader = !user && isGameDetailsPage;
@@ -113,7 +117,7 @@ export const Header = () => {
             )}
 
             {currentPage === 'gameDetails' && (
-              <GameDetailsHeaderContent canAccessChat={gameDetailsCanAccessChat} />
+              <GameDetailsHeaderContent canAccessChat={gameDetailsCanAccessChat && !isGameDetailsSplitView} />
             )}
 
             {currentPage === 'gameSubscriptions' && (

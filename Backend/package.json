@@ -13,7 +13,8 @@
     "prisma:studio": "prisma studio",
     "lint": "eslint src --ext .ts",
     "migrate-to-s3": "ts-node scripts/migrate-to-s3.ts",
-    "load-playtomic-jsons": "ts-node scripts/load-playtomic-jsons.ts"
+    "load-playtomic-jsons": "ts-node scripts/load-playtomic-jsons.ts",
+    "backfill:last-message-previews": "ts-node scripts/backfillLastMessagePreviews.ts"
   },
   "keywords": [
     "padel",

@@ -1,12 +1,12 @@
 import prisma from '../config/database';
-import { InviteStatus, ParticipantRole } from '@prisma/client';
+import { ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from '../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants } from '../utils/participantValidation';
 import { fetchGameWithPlayingParticipants } from '../utils/gameQueries';
 import { addOrUpdateParticipant, performPostJoinOperations } from '../utils/participantOperations';
-import { JoinQueueService } from './game/joinQueue.service';
+import { ParticipantService } from './game/participant.service';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { ApiError } from '../utils/ApiError';
 
@@ -18,238 +18,137 @@ export interface InviteActionResult {
 
 export class InviteService {
   static async deleteInvitesForUserInGame(gameId: string, userId: string): Promise<void> {
-    const invites = await prisma.invite.findMany({
-      where: {
-        gameId,
-        receiverId: userId,
-        status: InviteStatus.PENDING,
-      },
-      select: {
-        id: true,
-        receiverId: true,
-        senderId: true,
-        gameId: true,
-      },
+    const participants = await prisma.gameParticipant.findMany({
+      where: { gameId, userId, status: 'INVITED' },
+      select: { id: true, userId: true, invitedByUserId: true, gameId: true },
     });
-
-    if (invites.length === 0) {
-      return;
-    }
-
-    const inviteIds = invites.map(invite => invite.id);
-
-    await prisma.invite.deleteMany({
-      where: {
-        id: { in: inviteIds },
-      },
+    if (participants.length === 0) return;
+    await prisma.gameParticipant.deleteMany({
+      where: { id: { in: participants.map((p) => p.id) } },
     });
-
     if ((global as any).socketService) {
-      invites.forEach(invite => {
-        (global as any).socketService.emitInviteDeleted(invite.receiverId, invite.id, invite.gameId || undefined);
-        if (invite.senderId) {
-          (global as any).socketService.emitInviteDeleted(invite.senderId, invite.id, invite.gameId || undefined);
+      participants.forEach((p) => {
+        (global as any).socketService.emitInviteDeleted(p.userId, p.id, p.gameId || undefined);
+        if (p.invitedByUserId) {
+          (global as any).socketService.emitInviteDeleted(p.invitedByUserId, p.id, p.gameId || undefined);
         }
       });
     }
   }
 
-  static async acceptInvite(inviteId: string, userId: string, forceUpdate: boolean = false, isAdmin: boolean = false): Promise<InviteActionResult> {
-    const invite = await prisma.invite.findUnique({
-      where: { id: inviteId },
+  static async acceptInvite(participantId: string, userId: string, forceUpdate: boolean = false, isAdmin: boolean = false): Promise<InviteActionResult> {
+    const participant = await prisma.gameParticipant.findUnique({
+      where: { id: participantId },
       include: {
-        sender: {
-          select: USER_SELECT_FIELDS,
-        },
-        receiver: {
-          select: USER_SELECT_FIELDS,
-        },
-        game: {
-          include: {
-            participants: true,
-          },
-        },
+        user: { select: USER_SELECT_FIELDS },
+        invitedByUser: { select: USER_SELECT_FIELDS },
+        game: { include: { participants: true } },
       },
     });
-
-    if (!invite) {
-      return {
-        success: false,
-        message: 'errors.invites.notFound',
-      };
+    if (!participant || participant.status !== 'INVITED') {
+      return { success: false, message: 'errors.invites.notFound' };
     }
-
-    // Check if user is the receiver or has admin/owner permissions on the game
-    const isReceiver = invite.receiverId === userId;
+    const isReceiver = participant.userId === userId;
     let hasAdminPermission = false;
-    
-    if (!isReceiver && invite.gameId) {
+    if (!isReceiver && participant.gameId) {
       hasAdminPermission = await hasParentGamePermission(
-        invite.gameId,
+        participant.gameId,
         userId,
         [ParticipantRole.OWNER, ParticipantRole.ADMIN],
         isAdmin
       );
     }
-
     if (!isReceiver && !hasAdminPermission) {
-      return {
-        success: false,
-        message: 'errors.invites.notAuthorizedToAccept',
-      };
+      return { success: false, message: 'errors.invites.notAuthorizedToAccept' };
     }
-
-    if (invite.status !== InviteStatus.PENDING) {
-      return {
-        success: false,
-        message: 'errors.invites.alreadyProcessed',
-      };
+    if (participant.inviteExpiresAt && new Date() > participant.inviteExpiresAt) {
+      await prisma.gameParticipant.deleteMany({ where: { id: participantId } });
+      return { success: false, message: 'errors.invites.expired' };
     }
-
-    if (invite.expiresAt && new Date() > invite.expiresAt) {
-      await prisma.invite.deleteMany({
-        where: { id: inviteId },
-      });
-      return {
-        success: false,
-        message: 'errors.invites.expired',
-      };
-    }
-
-    if (invite.gameId && invite.game) {
+    const gameId = participant.gameId;
+    const receiverId = participant.userId;
+    if (gameId && participant.game) {
       try {
         await prisma.$transaction(async (tx: any) => {
-          const currentGame = await fetchGameWithPlayingParticipants(tx, invite.gameId!);
+          const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
           validateGameCanAcceptParticipants(currentGame);
-
           const existingParticipant = await tx.gameParticipant.findFirst({
-            where: {
-              gameId: invite.gameId,
-              userId: invite.receiverId,
-            },
+            where: { gameId, userId: receiverId },
           });
-
-          if (existingParticipant?.isPlaying) {
-            return;
-          }
-
-          const joinResult = await validatePlayerCanJoinGame(currentGame, invite.receiverId);
-
+          if (existingParticipant?.status === 'PLAYING') return;
+          const joinResult = await validatePlayerCanJoinGame(currentGame, receiverId);
           if (!joinResult.canJoin && joinResult.shouldQueue) {
             throw new ApiError(400, joinResult.reason || 'errors.invites.gameFull');
           }
-
-          await addOrUpdateParticipant(tx, invite.gameId!, invite.receiverId);
+          await tx.gameParticipant.delete({ where: { id: participantId } });
+          await addOrUpdateParticipant(tx, gameId, receiverId);
         });
-
-        await performPostJoinOperations(invite.gameId!, invite.receiverId);
+        await performPostJoinOperations(gameId, receiverId);
       } catch (error: any) {
-        if (error.message === 'errors.invites.gameFull' && invite.gameId) {
-          await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
-          await prisma.invite.deleteMany({
-            where: { id: inviteId },
-          });
-          return {
-            success: true,
-            message: 'games.addedToJoinQueue',
-          };
+        if (error.message === 'errors.invites.gameFull' && gameId) {
+          await ParticipantService.addToQueueAsParticipant(gameId, receiverId);
+          await prisma.gameParticipant.deleteMany({ where: { id: participantId } });
+          return { success: true, message: 'games.addedToJoinQueue' };
         }
         throw error;
       }
+    } else {
+      await prisma.gameParticipant.deleteMany({ where: { id: participantId } });
     }
-
     if ((global as any).socketService) {
-      (global as any).socketService.emitInviteDeleted(invite.receiverId, invite.id, invite.gameId || undefined);
-      if (invite.senderId) {
-        (global as any).socketService.emitInviteDeleted(invite.senderId, invite.id, invite.gameId || undefined);
+      (global as any).socketService.emitInviteDeleted(receiverId, participantId, gameId || undefined);
+      if (participant.invitedByUserId) {
+        (global as any).socketService.emitInviteDeleted(participant.invitedByUserId, participantId, gameId || undefined);
       }
-      if (invite.gameId) {
-        // Emit game update for the receiver (the person joining), not the person accepting
-        (global as any).socketService.emitGameUpdate(invite.gameId, invite.receiverId, undefined, forceUpdate);
+      if (gameId) {
+        (global as any).socketService.emitGameUpdate(gameId, receiverId, undefined, forceUpdate);
       }
     }
-
-    await prisma.invite.deleteMany({
-      where: { id: inviteId },
-    });
-
-    return {
-      success: true,
-      message: 'invites.acceptedSuccessfully',
-    };
+    return { success: true, message: 'invites.acceptedSuccessfully' };
   }
 
-  static async declineInvite(inviteId: string, userId: string, isAdmin: boolean = false): Promise<InviteActionResult> {
-    const invite = await prisma.invite.findUnique({
-      where: { id: inviteId },
-      include: {
-        receiver: {
-          select: USER_SELECT_FIELDS,
-        },
-      },
+  static async declineInvite(participantId: string, userId: string, isAdmin: boolean = false): Promise<InviteActionResult> {
+    const participant = await prisma.gameParticipant.findUnique({
+      where: { id: participantId },
+      include: { user: { select: USER_SELECT_FIELDS } },
     });
-
-    if (!invite) {
-      return {
-        success: false,
-        message: 'errors.invites.notFound',
-      };
+    if (!participant || participant.status !== 'INVITED') {
+      return { success: false, message: 'errors.invites.notFound' };
     }
-
-    // Check if user is the receiver or has admin/owner permissions on the game
-    const isReceiver = invite.receiverId === userId;
+    if (participant.role === ParticipantRole.OWNER) {
+      return { success: false, message: 'errors.invites.ownerCannotDecline' };
+    }
+    const isReceiver = participant.userId === userId;
     let hasAdminPermission = false;
-    
-    if (!isReceiver && invite.gameId) {
+    if (!isReceiver && participant.gameId) {
       hasAdminPermission = await hasParentGamePermission(
-        invite.gameId,
+        participant.gameId,
         userId,
         [ParticipantRole.OWNER, ParticipantRole.ADMIN],
         isAdmin
       );
     }
-
     if (!isReceiver && !hasAdminPermission) {
-      return {
-        success: false,
-        message: 'errors.invites.notAuthorizedToDecline',
-      };
+      return { success: false, message: 'errors.invites.notAuthorizedToDecline' };
     }
-
-    if (invite.status !== InviteStatus.PENDING) {
-      return {
-        success: false,
-        message: 'errors.invites.alreadyProcessed',
-      };
-    }
-
-    if (invite.gameId && invite.receiver) {
-      const receiverName = getUserDisplayName(invite.receiver.firstName, invite.receiver.lastName);
-      
+    if (participant.gameId && participant.user) {
+      const receiverName = getUserDisplayName(participant.user.firstName, participant.user.lastName);
       try {
-        await createSystemMessage(invite.gameId, {
+        await createSystemMessage(participant.gameId, {
           type: SystemMessageType.USER_DECLINED_INVITE,
-          variables: { userName: receiverName }
+          variables: { userName: receiverName },
         });
       } catch (error) {
         console.error('Failed to create system message for invite decline:', error);
       }
     }
-
     if ((global as any).socketService) {
-      (global as any).socketService.emitInviteDeleted(invite.receiverId, invite.id, invite.gameId || undefined);
-      if (invite.senderId) {
-        (global as any).socketService.emitInviteDeleted(invite.senderId, invite.id, invite.gameId || undefined);
+      (global as any).socketService.emitInviteDeleted(participant.userId, participantId, participant.gameId || undefined);
+      if (participant.invitedByUserId) {
+        (global as any).socketService.emitInviteDeleted(participant.invitedByUserId, participantId, participant.gameId || undefined);
       }
     }
-
-    await prisma.invite.deleteMany({
-      where: { id: inviteId },
-    });
-
-    return {
-      success: true,
-      message: 'invites.declinedSuccessfully',
-    };
+    await prisma.gameParticipant.deleteMany({ where: { id: participantId } });
+    return { success: true, message: 'invites.declinedSuccessfully' };
   }
 }

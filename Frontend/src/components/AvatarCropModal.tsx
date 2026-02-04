@@ -2,9 +2,9 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Cropper from 'react-easy-crop';
 import { Button } from './Button';
-import { X, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { getCircularCroppedImg } from '../utils/cropUtils';
-import { BaseModal } from '@/components/BaseModal';
+import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 
 interface AvatarCropModalProps {
   imageFile: File;
@@ -131,27 +131,12 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
     }
   }, [croppedAreaPixels, rotation, imageUrl, imageFile.name, onCrop]);
 
-  return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      isBasic={false}
-      forceBackdrop={true}
-      modalId="avatar-crop-modal"
-      showCloseButton={false}
-      closeOnBackdropClick={!isProcessing && !isUploading}
-    >
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <div className="relative w-full max-w-3xl h-[90vh] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
-          <button
-            onClick={handleClose}
-            disabled={isProcessing || isUploading}
-            className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label={t('common.close')}
-          >
-            <X size={20} className="text-gray-700 dark:text-gray-300" />
-          </button>
+  const closeOnBackdrop = !isProcessing && !isUploading;
 
+  return (
+    <FullScreenDialog open={isOpen} onClose={handleClose} modalId="avatar-crop-modal" closeOnInteractOutside={closeOnBackdrop}>
+      <div className={`fixed inset-0 flex items-center justify-center p-4 ${closeOnBackdrop ? 'pointer-events-none' : ''}`}>
+        <div className={`relative w-full max-w-3xl h-[90vh] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl ${closeOnBackdrop ? 'pointer-events-auto' : ''}`}>
           <div className="absolute inset-0">
             <Cropper
               image={imageUrl}
@@ -196,6 +181,6 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
           )}
         </div>
       </div>
-    </BaseModal>
+    </FullScreenDialog>
   );
 };

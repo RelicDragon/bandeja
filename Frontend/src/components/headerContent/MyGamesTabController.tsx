@@ -17,7 +17,8 @@ export const MyGamesTabController = () => {
             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
         }`}
       >
-        {t('home.myGames')}
+        <span className="min-[400px]:hidden">{t('home.myGamesShort')}</span>
+        <span className="hidden min-[400px]:inline">{t('home.myGames')}</span>
         {myGamesUnreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-medium">
             {myGamesUnreadCount > 99 ? '99+' : myGamesUnreadCount}

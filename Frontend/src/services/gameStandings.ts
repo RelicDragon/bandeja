@@ -389,7 +389,7 @@ export function calculateGameStandings(
   rounds: Round[],
   winnerOfGame: WinnerOfGame
 ): PlayerStanding[] {
-  const playingParticipants = game.participants.filter(p => p.isPlaying);
+  const playingParticipants = game.participants.filter(p => p.status === 'PLAYING');
   const players = playingParticipants.map(p => p.user as BasicUser);
 
   if (players.length === 0 || rounds.length === 0) {

@@ -7,7 +7,6 @@ interface HeaderState {
   unreadMessages: number;
   isNewInviteAnimating: boolean;
   syncStatus: SyncStatus;
-  selectedDateForCreateGame: Date | null;
   leaderboardType: 'level' | 'social' | 'games';
   leaderboardScope: 'city' | 'global';
   leaderboardTimePeriod: '10' | '30' | 'all';
@@ -18,7 +17,6 @@ interface HeaderState {
   setUnreadMessages: (count: number) => void;
   triggerNewInviteAnimation: () => void;
   setSyncStatus: (status: SyncStatus) => void;
-  setSelectedDateForCreateGame: (date: Date | null) => void;
   setLeaderboardType: (type: 'level' | 'social' | 'games') => void;
   setLeaderboardScope: (scope: 'city' | 'global') => void;
   setLeaderboardTimePeriod: (period: '10' | '30' | 'all') => void;
@@ -32,7 +30,6 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   unreadMessages: 0,
   isNewInviteAnimating: false,
   syncStatus: 'IDLE',
-  selectedDateForCreateGame: null,
   leaderboardType: 'level',
   leaderboardScope: 'city',
   leaderboardTimePeriod: 'all',
@@ -47,7 +44,6 @@ export const useHeaderStore = create<HeaderState>((set) => ({
     setTimeout(() => set({ isNewInviteAnimating: false }), 1000);
   },
   setSyncStatus: (status) => set({ syncStatus: status }),
-  setSelectedDateForCreateGame: (date) => set({ selectedDateForCreateGame: date }),
   setLeaderboardType: (type) => set({ leaderboardType: type }),
   setLeaderboardScope: (scope) => set({ leaderboardScope: scope }),
   setLeaderboardTimePeriod: (period) => set({ leaderboardTimePeriod: period }),

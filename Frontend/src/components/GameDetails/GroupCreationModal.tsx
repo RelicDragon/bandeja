@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components';
-import { BaseModal } from '../BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 
 interface GroupCreationModalProps {
   participantCount: number;
@@ -34,26 +34,16 @@ export const GroupCreationModal = ({
   };
 
   return (
-    <BaseModal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      isBasic 
-      modalId="group-creation-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
+    <Dialog open={isOpen} onClose={onClose} modalId="group-creation-modal">
+      <DialogContent>
       <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-600/5 rounded-2xl sm:rounded-3xl pointer-events-none" />
       
-      <div className="flex items-center justify-between mb-3 sm:mb-5 md:mb-8 p-3 sm:p-6 md:p-8">
-        <div>
-          <h3 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-            {t('gameDetails.selectNumberOfGroups')}
-          </h3>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {t('gameDetails.groupCreationHint', { count: participantCount, max: maxGroups })}
-          </p>
-        </div>
-      </div>
+      <DialogHeader className="mb-3 sm:mb-5 md:mb-8 flex-col items-start">
+        <DialogTitle>{t('gameDetails.selectNumberOfGroups')}</DialogTitle>
+        <DialogDescription className="mt-1">
+          {t('gameDetails.groupCreationHint', { count: participantCount, max: maxGroups })}
+        </DialogDescription>
+      </DialogHeader>
       
       <div className="mb-3 sm:mb-5 md:mb-8 px-3 sm:px-6 md:px-8">
         <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5 sm:gap-2 md:gap-2.5 w-full max-w-xs sm:max-w-md px-1 mx-auto">
@@ -73,7 +63,7 @@ export const GroupCreationModal = ({
         </div>
       </div>
       
-      <div className="flex gap-2 sm:gap-3 pt-4 px-3 sm:px-6 md:px-8 pb-3 sm:pb-6 md:pb-8">
+      <DialogFooter className="flex gap-2 sm:gap-3 pt-4 px-3 sm:px-6 md:px-8 pb-3 sm:pb-6 md:pb-8">
         <Button
           onClick={onClose}
           variant="outline"
@@ -88,8 +78,9 @@ export const GroupCreationModal = ({
         >
           {t('common.confirm')}
         </Button>
-      </div>
-    </BaseModal>
+      </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

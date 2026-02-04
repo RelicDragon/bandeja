@@ -70,7 +70,7 @@ export async function sendGameCard(
     throw new Error(`Game ${gameId} not found`);
   }
 
-  const playingParticipants = game.participants.filter((p: any) => p.isPlaying);
+  const playingParticipants = game.participants.filter((p: any) => p.status === 'PLAYING');
   const owner = game.participants.find((p: any) => p.role === 'OWNER');
   const ownerName = owner ? `${owner.user.firstName || ''} ${owner.user.lastName || ''}`.trim() : null;
 

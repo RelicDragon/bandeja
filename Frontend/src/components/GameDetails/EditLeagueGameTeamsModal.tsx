@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, RefreshCw, UserPlus, Check, Plane } from 'lucide-react';
-import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection, ConfirmationModal, BaseModal } from '@/components';
+import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection, ConfirmationModal } from '@/components';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { Game, Club, Court, EntityType, BasicUser } from '@/types';
 import { gamesApi, leaguesApi, invitesApi, LeagueStanding, clubsApi, courtsApi } from '@/api';
@@ -11,6 +12,7 @@ import { addHours, differenceInHours } from 'date-fns';
 import { createDateFromClubTime, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
+import { isParticipantPlaying } from '@/utils/participantStatus';
 
 interface EditLeagueGameTeamsModalProps {
   isOpen: boolean;
@@ -101,9 +103,9 @@ export const EditLeagueGameTeamsModal = ({
       if (hasFixedTeams && game.fixedTeams && game.fixedTeams.length > teamIndex) {
         const team = game.fixedTeams[teamIndex];
         const teamPlayerIds = team.players.map(tp => tp.userId);
-        return game.participants.filter(p => p.isPlaying && teamPlayerIds.includes(p.userId));
+        return game.participants.filter(p => isParticipantPlaying(p) && teamPlayerIds.includes(p.userId));
       }
-      const playingParticipants = game.participants.filter(p => p.isPlaying);
+      const playingParticipants = game.participants.filter(isParticipantPlaying);
       const midPoint = Math.floor(playingParticipants.length / 2);
       if (teamIndex === 0) {
         return playingParticipants.slice(0, midPoint);
@@ -374,7 +376,7 @@ export const EditLeagueGameTeamsModal = ({
     setIsSaving(true);
     try {
       const currentParticipantIds = game.participants
-        .filter(p => p.isPlaying)
+        .filter(isParticipantPlaying)
         .map(p => p.userId);
 
       const toAdd = allPlayerIds.filter(id => !currentParticipantIds.includes(id));
@@ -465,7 +467,7 @@ export const EditLeagueGameTeamsModal = ({
       const updatedGame = response.data;
       
       const currentParticipantIdsSet = new Set(
-        updatedGame.participants.filter(p => p.isPlaying).map(p => p.userId)
+        updatedGame.participants.filter(isParticipantPlaying).map(p => p.userId)
       );
       
       const stillNeedToAdd = allPlayerIds.filter(id => !currentParticipantIdsSet.has(id));
@@ -555,20 +557,14 @@ export const EditLeagueGameTeamsModal = ({
     handleClose();
   };
 
+  const closeOnBackdrop = !isModalOverlayLocked && !selectingPlayerFor;
+
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleModalClose}
-      isBasic
-      modalId="edit-league-game-teams-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={!isModalOverlayLocked && !selectingPlayerFor}
-    >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {t('gameDetails.editTeams')}
-          </h2>
-        </div>
+    <Dialog open={isOpen} onClose={handleModalClose} modalId="edit-league-game-teams-modal">
+      <DialogContent closeOnInteractOutside={closeOnBackdrop}>
+        <DialogHeader>
+          <DialogTitle>{t('gameDetails.editTeams')}</DialogTitle>
+        </DialogHeader>
 
         <div className="p-6 overflow-y-auto flex-1">
           {loading ? (
@@ -607,6 +603,7 @@ export const EditLeagueGameTeamsModal = ({
                             player={player}
                             showName={false}
                             extrasmall={true}
+                            fullHideName={true}
                           />
                           <span className="font-medium text-gray-900 dark:text-white">
                             {player.firstName} {player.lastName}
@@ -885,6 +882,7 @@ export const EditLeagueGameTeamsModal = ({
         cancelText={t('common.cancel') || 'Cancel'}
         confirmVariant="danger"
       />
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };

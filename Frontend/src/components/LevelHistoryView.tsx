@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserStats, usersApi, LevelHistoryItem } from '@/api/users';
 import { useNavigationStore } from '@/store/navigationStore';
 import { LevelHistoryTabController } from './LevelHistoryTabController';
+import { GamesStatsSection } from './GamesStatsSection';
 import { PlayerAvatar } from './PlayerAvatar';
 import { formatDate, formatSmartRelativeTime } from '@/utils/dateFormat';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
@@ -42,6 +43,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
   const [isToggleAnimating, setIsToggleAnimating] = useState(false);
   const [levelChangeEvents, setLevelChangeEvents] = useState<LevelHistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'10' | '30' | 'all'>('10');
+  const [gamesStatsTab, setGamesStatsTab] = useState<'30' | '90' | 'all'>('30');
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
   const [activeChartIndex, setActiveChartIndex] = useState<number | null>(null);
   const [hoveredChartIndex, setHoveredChartIndex] = useState<number | null>(null);
@@ -166,7 +168,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
     <div className={`${padding} space-y-3`}>
       {!hideUserCard && (
         <>
-          <div className="relative">
+      <div className="relative">
             <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-4 text-center relative">
               <div className="flex gap-2 items-center">
                 {user.originalAvatar ? (
@@ -227,7 +229,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
             </button>
           </div>
 
-          {!showSocialLevel && user.approvedLevel && user.approvedBy && (
+      {!showSocialLevel && user.approvedLevel && user.approvedBy && (
         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-2">
           <div className="flex flex-col items-center gap-2">
             <div className="bg-yellow-500 dark:bg-yellow-600 text-white px-2 py-0.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-2">
@@ -250,6 +252,64 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
         </div>
       )}
         </>
+      )}
+
+      <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700/50 border border-gray-200/60 dark:border-gray-600/50">
+        <div className="flex items-center gap-0 border-b border-gray-200/60 dark:border-gray-600/50">
+          <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 border-r border-gray-200/60 dark:border-gray-600/50">
+            <span className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.followers') || 'Followers'}</span>
+            <span className="text-base font-semibold tabular-nums text-gray-900 dark:text-white">{stats.followersCount}</span>
+          </div>
+          <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2">
+            <span className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.following') || 'Following'}</span>
+            <span className="text-base font-semibold tabular-nums text-gray-900 dark:text-white">{stats.followingCount}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-0">
+          <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 border-r border-gray-200/60 dark:border-gray-600/50">
+            <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.preferredHand')}</span>
+            <div className="flex gap-1">
+              <div
+                className={`w-5 min-h-[0.75rem] rounded-sm flex items-center justify-center min-w-0 px-0.5 py-1.5 ${user.preferredHandLeft ? 'bg-blue-500 dark:bg-blue-500 text-white shadow-[0_0_6px_rgba(59,130,246,0.6)]' : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                title={t('profile.left')}
+              >
+                <span className="text-[8px] font-semibold leading-none truncate">{t('profile.leftShort')}</span>
+              </div>
+              <div
+                className={`w-5 min-h-[0.75rem] rounded-sm flex items-center justify-center min-w-0 px-0.5 py-1.5 ${user.preferredHandRight ? 'bg-blue-500 dark:bg-blue-500 text-white shadow-[0_0_6px_rgba(59,130,246,0.6)]' : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                title={t('profile.right')}
+              >
+                <span className="text-[8px] font-semibold leading-none truncate">{t('profile.rightShort')}</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2">
+            <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.preferredCourtSide')}</span>
+            <div className="flex gap-1">
+              <div
+                className={`w-5 min-h-[0.75rem] rounded-sm flex items-center justify-center min-w-0 px-0.5 py-1.5 ${user.preferredCourtSideLeft ? 'bg-blue-500 dark:bg-blue-500 text-white shadow-[0_0_6px_rgba(59,130,246,0.6)]' : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                title={t('profile.left')}
+              >
+                <span className="text-[8px] font-semibold leading-none truncate">{t('profile.leftShort')}</span>
+              </div>
+              <div
+                className={`w-5 min-h-[0.75rem] rounded-sm flex items-center justify-center min-w-0 px-0.5 py-1.5 ${user.preferredCourtSideRight ? 'bg-blue-500 dark:bg-blue-500 text-white shadow-[0_0_6px_rgba(59,130,246,0.6)]' : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
+                title={t('profile.right')}
+              >
+                <span className="text-[8px] font-semibold leading-none truncate">{t('profile.rightShort')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {stats.gamesStats?.length > 0 && (
+        <GamesStatsSection
+          stats={stats.gamesStats}
+          activeTab={gamesStatsTab}
+          onTabChange={setGamesStatsTab}
+          darkBgClass={tabDarkBgClass}
+        />
       )}
 
       {currentHistory.length > 0 ? (

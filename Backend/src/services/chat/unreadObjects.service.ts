@@ -2,389 +2,262 @@ import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { ParticipantRole } from '@prisma/client';
 import { ChatMuteService } from './chatMute.service';
+import { UnreadCountBatchService } from './unreadCountBatch.service';
 
 export interface UnreadObjectsResult {
-  games: Array<{
-    game: any;
-    unreadCount: number;
-  }>;
-  bugs: Array<{
-    bug: any;
-    unreadCount: number;
-  }>;
-  userChats: Array<{
-    chat: any;
-    unreadCount: number;
-  }>;
-  groupChannels: Array<{
-    groupChannel: any;
-    unreadCount: number;
-  }>;
+  games: Array<{ game: any; unreadCount: number }>;
+  bugs: Array<{ bug: any; unreadCount: number }>;
+  userChats: Array<{ chat: any; unreadCount: number }>;
+  groupChannels: Array<{ groupChannel: any; unreadCount: number }>;
+}
+
+const GAME_INCLUDE = {
+  participants: {
+    include: {
+      user: { select: USER_SELECT_FIELDS },
+    },
+  },
+  court: {
+    include: {
+      club: {
+        select: {
+          name: true,
+          city: { select: { name: true } },
+        },
+      },
+    },
+  },
+  leagueSeason: {
+    include: {
+      league: { select: { id: true, name: true } },
+      game: { select: { id: true, name: true } },
+    },
+  },
+  leagueGroup: { select: { id: true, name: true, color: true } },
+  leagueRound: { select: { id: true, orderIndex: true } },
+  parent: {
+    include: {
+      leagueSeason: {
+        include: {
+          league: { select: { id: true, name: true } },
+          game: { select: { id: true, name: true } },
+        },
+      },
+    },
+  },
+} as const;
+
+const BUG_INCLUDE = {
+  sender: { select: { ...USER_SELECT_FIELDS, isAdmin: true } },
+  participants: {
+    include: { user: { select: USER_SELECT_FIELDS } },
+  },
+} as const;
+
+const GAME_COUNT_CONCURRENCY = 30;
+
+async function getGamesWithUnread(userId: string): Promise<UnreadObjectsResult['games']> {
+  const minimalGames = await prisma.game.findMany({
+    where: { participants: { some: { userId } } },
+    select: {
+      id: true,
+      status: true,
+      participants: {
+        where: { userId },
+        select: { status: true, role: true },
+      },
+    },
+  });
+
+  const counts: Array<{ gameId: string; count: number }> = [];
+  for (let i = 0; i < minimalGames.length; i += GAME_COUNT_CONCURRENCY) {
+    const batch = minimalGames.slice(i, i + GAME_COUNT_CONCURRENCY);
+    const batchResults = await Promise.all(
+      batch.map(async (g) => {
+        const participant = g.participants[0];
+        const chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(
+          participant,
+          g.status
+        );
+        const count = await UnreadCountBatchService.getGameUnreadCount(
+          g.id,
+          userId,
+          chatTypeFilter
+        );
+        return { gameId: g.id, count };
+      })
+    );
+    counts.push(...batchResults);
+  }
+
+  const gameIdsWithUnread = counts.filter((c) => c.count > 0).map((c) => c.gameId);
+
+  if (gameIdsWithUnread.length === 0) return [];
+
+  const fullGames = await prisma.game.findMany({
+    where: { id: { in: gameIdsWithUnread } },
+    include: GAME_INCLUDE,
+  });
+
+  const countMap = Object.fromEntries(counts.map((c) => [c.gameId, c.count]));
+  const gameById = Object.fromEntries(fullGames.map((g) => [g.id, g]));
+  return gameIdsWithUnread.map((id) => ({
+    game: gameById[id],
+    unreadCount: countMap[id] ?? 0,
+  }));
+}
+
+async function getUserChatsWithUnread(userId: string): Promise<UnreadObjectsResult['userChats']> {
+  const chats = await prisma.userChat.findMany({
+    where: { OR: [{ user1Id: userId }, { user2Id: userId }] },
+    select: { id: true },
+  });
+
+  if (chats.length === 0) return [];
+
+  const contextIds = chats.map((c) => c.id);
+  const unreadMap = await UnreadCountBatchService.getUnreadCountsByContext(
+    'USER',
+    contextIds,
+    userId
+  );
+
+  const chatIdsWithUnread = Object.entries(unreadMap)
+    .filter(([, count]) => count > 0)
+    .map(([id]) => id);
+
+  if (chatIdsWithUnread.length === 0) return [];
+
+  const fullChats = await prisma.userChat.findMany({
+    where: { id: { in: chatIdsWithUnread } },
+    include: {
+      user1: { select: USER_SELECT_FIELDS },
+      user2: { select: USER_SELECT_FIELDS },
+    },
+  });
+
+  const chatById = Object.fromEntries(fullChats.map((c) => [c.id, c]));
+  return chatIdsWithUnread.map((id) => ({
+    chat: chatById[id],
+    unreadCount: unreadMap[id] ?? 0,
+  }));
+}
+
+async function getBugsWithUnread(userId: string): Promise<UnreadObjectsResult['bugs']> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isAdmin: true },
+  });
+
+  let bugIds: string[];
+  if (user?.isAdmin) {
+    const bugs = await prisma.bug.findMany({ select: { id: true } });
+    bugIds = bugs.map((b) => b.id);
+  } else {
+    const [userBugs, participantBugs] = await Promise.all([
+      prisma.bug.findMany({ where: { senderId: userId }, select: { id: true } }),
+      prisma.bugParticipant.findMany({ where: { userId }, select: { bugId: true } }),
+    ]);
+    bugIds = [
+      ...new Set([
+        ...userBugs.map((b) => b.id),
+        ...participantBugs.map((p) => p.bugId),
+      ]),
+    ];
+  }
+
+  if (bugIds.length === 0) return [];
+
+  const unreadMap = await UnreadCountBatchService.getUnreadCountsByContext(
+    'BUG',
+    bugIds,
+    userId
+  );
+
+  const bugIdsWithUnread = Object.entries(unreadMap)
+    .filter(([, count]) => count > 0)
+    .map(([id]) => id);
+
+  if (bugIdsWithUnread.length === 0) return [];
+
+  const fullBugs = await prisma.bug.findMany({
+    where: { id: { in: bugIdsWithUnread } },
+    include: BUG_INCLUDE,
+  });
+
+  const bugById = Object.fromEntries(fullBugs.map((b) => [b.id, b]));
+  return bugIdsWithUnread.map((id) => ({
+    bug: bugById[id],
+    unreadCount: unreadMap[id] ?? 0,
+  }));
+}
+
+async function getGroupChannelsWithUnread(
+  userId: string
+): Promise<UnreadObjectsResult['groupChannels']> {
+  const [channels, mutedChats] = await Promise.all([
+    prisma.groupChannel.findMany({
+      where: {
+        participants: { some: { userId, hidden: false } },
+      },
+      select: { id: true },
+    }),
+    ChatMuteService.getMutedChats(userId, 'GROUP'),
+  ]);
+
+  const mutedSet = new Set(mutedChats.map((m) => m.contextId));
+  const contextIds = channels.map((c) => c.id).filter((id) => !mutedSet.has(id));
+
+  if (contextIds.length === 0) return [];
+
+  const unreadMap = await UnreadCountBatchService.getUnreadCountsByContext(
+    'GROUP',
+    contextIds,
+    userId
+  );
+
+  const channelIdsWithUnread = Object.entries(unreadMap)
+    .filter(([, count]) => count > 0)
+    .map(([id]) => id);
+
+  if (channelIdsWithUnread.length === 0) return [];
+
+  const fullChannels = await prisma.groupChannel.findMany({
+    where: { id: { in: channelIdsWithUnread } },
+    include: {
+      participants: {
+        where: { userId },
+        include: { user: { select: USER_SELECT_FIELDS } },
+      },
+    },
+  });
+
+  const channelById = Object.fromEntries(fullChannels.map((c) => [c.id, c]));
+  return channelIdsWithUnread.map((id) => {
+    const channel = channelById[id]!;
+    const userParticipant = (channel.participants as any[]).find(
+      (p: any) => p.userId === userId
+    );
+    return {
+      groupChannel: {
+        ...channel,
+        isParticipant: !!userParticipant,
+        isOwner: userParticipant?.role === ParticipantRole.OWNER,
+      },
+      unreadCount: unreadMap[id] ?? 0,
+    };
+  });
 }
 
 export class UnreadObjectsService {
   static async getUnreadObjects(userId: string): Promise<UnreadObjectsResult> {
-    const result: UnreadObjectsResult = {
-      games: [],
-      bugs: [],
-      userChats: [],
-      groupChannels: [],
-    };
+    const [games, userChats, bugs, groupChannels] = await Promise.all([
+      getGamesWithUnread(userId),
+      getUserChatsWithUnread(userId),
+      getBugsWithUnread(userId),
+      getGroupChannelsWithUnread(userId),
+    ]);
 
-    // 1. Get games with unread messages
-    const userGames = await prisma.game.findMany({
-      where: {
-        OR: [
-          {
-            participants: {
-              some: { userId }
-            }
-          },
-          {
-            invites: {
-              some: {
-                receiverId: userId,
-                status: 'PENDING'
-              }
-            }
-          }
-        ]
-      },
-      include: {
-        participants: {
-          include: {
-            user: {
-              select: USER_SELECT_FIELDS,
-            }
-          }
-        },
-        court: {
-          include: {
-            club: {
-              select: {
-                name: true,
-                city: {
-                  select: {
-                    name: true
-                  }
-                }
-              }
-            }
-          }
-        },
-        leagueSeason: {
-          include: {
-            league: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            game: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        leagueGroup: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-          },
-        },
-        leagueRound: {
-          select: {
-            id: true,
-            orderIndex: true,
-          },
-        },
-        parent: {
-          include: {
-            leagueSeason: {
-              include: {
-                league: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-                game: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        invites: {
-          where: {
-            receiverId: userId,
-            status: 'PENDING'
-          }
-        }
-      }
-    });
-
-    for (const game of userGames) {
-      const participant = game.participants.find((p: any) => p.userId === userId);
-      
-      const chatTypeFilter: any[] = ['PUBLIC'];
-      
-      if (participant && participant.isPlaying) {
-        chatTypeFilter.push('PRIVATE');
-      }
-      
-      if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) {
-        chatTypeFilter.push('ADMINS');
-      }
-
-      if (game.status !== 'ANNOUNCED') {
-        chatTypeFilter.push('PHOTOS');
-      }
-
-      const gameUnreadCount = await prisma.chatMessage.count({
-        where: {
-          chatContextType: 'GAME',
-          contextId: game.id,
-          chatType: {
-            in: chatTypeFilter
-          },
-          senderId: {
-            not: userId
-          },
-          readReceipts: {
-            none: {
-              userId
-            }
-          }
-        }
-      });
-
-      if (gameUnreadCount > 0) {
-        result.games.push({
-          game,
-          unreadCount: gameUnreadCount
-        });
-      }
-    }
-
-    // 2. Get user chats with unread messages
-    const userChats = await prisma.userChat.findMany({
-      where: {
-        OR: [
-          { user1Id: userId },
-          { user2Id: userId }
-        ]
-      },
-      include: {
-        user1: {
-          select: USER_SELECT_FIELDS
-        },
-        user2: {
-          select: USER_SELECT_FIELDS
-        }
-      }
-    });
-
-    for (const chat of userChats) {
-      const userChatUnreadCount = await prisma.chatMessage.count({
-        where: {
-          chatContextType: 'USER',
-          contextId: chat.id,
-          senderId: { not: userId },
-          readReceipts: {
-            none: { userId }
-          }
-        }
-      });
-
-      if (userChatUnreadCount > 0) {
-        result.userChats.push({
-          chat,
-          unreadCount: userChatUnreadCount
-        });
-      }
-    }
-
-    // 3. Get bugs with unread messages
-    const userForBugs = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true }
-    });
-
-    if (userForBugs && userForBugs.isAdmin) {
-      const allBugs = await prisma.bug.findMany({
-        include: {
-          sender: {
-            select: {
-              ...USER_SELECT_FIELDS,
-              isAdmin: true,
-            },
-          },
-          participants: {
-            include: {
-              user: {
-                select: USER_SELECT_FIELDS,
-              },
-            },
-          },
-        },
-      });
-
-      for (const bug of allBugs) {
-        const bugUnreadCount = await prisma.chatMessage.count({
-          where: {
-            chatContextType: 'BUG',
-            contextId: bug.id,
-            senderId: { not: userId },
-            readReceipts: {
-              none: { userId }
-            }
-          }
-        });
-
-        if (bugUnreadCount > 0) {
-          result.bugs.push({
-            bug,
-            unreadCount: bugUnreadCount
-          });
-        }
-      }
-    } else {
-      const userBugs = await prisma.bug.findMany({
-        where: { senderId: userId },
-        include: {
-          sender: {
-            select: {
-              ...USER_SELECT_FIELDS,
-              isAdmin: true,
-            },
-          },
-          participants: {
-            include: {
-              user: {
-                select: USER_SELECT_FIELDS,
-              },
-            },
-          },
-        },
-      });
-
-      const userBugParticipants = await prisma.bugParticipant.findMany({
-        where: { userId },
-        select: { bugId: true }
-      });
-
-      const participantBugIds = new Set(userBugParticipants.map(p => p.bugId));
-
-      const participantBugs = await prisma.bug.findMany({
-        where: {
-          id: {
-            in: Array.from(participantBugIds)
-          }
-        },
-        include: {
-          sender: {
-            select: {
-              ...USER_SELECT_FIELDS,
-              isAdmin: true,
-            },
-          },
-          participants: {
-            include: {
-              user: {
-                select: USER_SELECT_FIELDS,
-              },
-            },
-          },
-        },
-      });
-
-      const allBugs = [...userBugs, ...participantBugs.filter(b => !userBugs.some(ub => ub.id === b.id))];
-
-      for (const bug of allBugs) {
-        const bugUnreadCount = await prisma.chatMessage.count({
-          where: {
-            chatContextType: 'BUG',
-            contextId: bug.id,
-            senderId: { not: userId },
-            readReceipts: {
-              none: { userId }
-            }
-          }
-        });
-
-        if (bugUnreadCount > 0) {
-          result.bugs.push({
-            bug,
-            unreadCount: bugUnreadCount
-          });
-        }
-      }
-    }
-
-    // 4. Get group channels with unread messages
-    const groupChannels = await prisma.groupChannel.findMany({
-      where: {
-        participants: {
-          some: {
-            userId,
-            hidden: false
-          }
-        }
-      },
-      include: {
-        participants: {
-          where: { userId },
-          include: {
-            user: {
-              select: USER_SELECT_FIELDS
-            }
-          }
-        }
-      }
-    });
-
-    for (const groupChannel of groupChannels) {
-      // Skip muted channels
-      const isMuted = await ChatMuteService.isChatMuted(userId, 'GROUP', groupChannel.id);
-      if (isMuted) {
-        continue;
-      }
-
-      const groupChannelUnreadCount = await prisma.chatMessage.count({
-        where: {
-          chatContextType: 'GROUP',
-          contextId: groupChannel.id,
-          senderId: { not: userId },
-          readReceipts: {
-            none: { userId }
-          }
-        }
-      });
-
-      if (groupChannelUnreadCount > 0) {
-        const userParticipant = (groupChannel.participants as any[]).find((p: any) => p.userId === userId);
-        const isOwner = userParticipant?.role === ParticipantRole.OWNER;
-        const isParticipant = !!userParticipant;
-
-        result.groupChannels.push({
-          groupChannel: {
-            ...groupChannel,
-            isParticipant,
-            isOwner
-          },
-          unreadCount: groupChannelUnreadCount
-        });
-      }
-    }
-
-    return result;
+    return { games, bugs, userChats, groupChannels };
   }
 }
-

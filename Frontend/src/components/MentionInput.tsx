@@ -78,15 +78,17 @@ export const MentionInput: React.FC<MentionInputProps> = ({
             });
           }
         });
-        game.invites?.forEach(invite => {
-          if (invite.receiver && !userIds.has(invite.receiver.id)) {
-            userIds.add(invite.receiver.id);
-            users.push({
-              ...invite.receiver,
-              display: `${invite.receiver.firstName || ''} ${invite.receiver.lastName || ''}`.trim() || 'Unknown',
-            });
-          }
-        });
+        game.participants
+          ?.filter(p => p.status === 'INVITED')
+          .forEach(p => {
+            if (p.user && !userIds.has(p.user.id)) {
+              userIds.add(p.user.id);
+              users.push({
+                ...p.user,
+                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
+              });
+            }
+          });
         
         game.parent?.participants
           ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
@@ -125,7 +127,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           });
       } else if (normalizedChatType === 'PRIVATE') {
         game.participants
-          ?.filter(p => p.isPlaying)
+          ?.filter(p => p.status === 'PLAYING')
           .forEach(p => {
             if (p.user && !userIds.has(p.user.id)) {
               userIds.add(p.user.id);

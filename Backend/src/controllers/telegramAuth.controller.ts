@@ -6,6 +6,8 @@ import { generateToken } from '../utils/jwt';
 import { AuthProvider } from '@prisma/client';
 import telegramBotService from '../services/telegram/bot.service';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
+import { NotificationPreferenceService } from '../services/notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
 
 export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response) => {
   await new Promise(resolve => setTimeout(resolve, 1000));
@@ -59,6 +61,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
     }
 
     token = generateToken({ userId: user.id, telegramId: actualTelegramId });
+    await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
   } else {
     user = await prisma.user.create({
       data: {
@@ -73,6 +76,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
     });
 
     token = generateToken({ userId: user.id, telegramId: actualTelegramId });
+    await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
   }
 
   res.json({

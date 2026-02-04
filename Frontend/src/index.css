@@ -30,6 +30,47 @@
   animation: scaleIn 0.2s ease-out;
 }
 
+@keyframes dialogOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes dialogOverlayOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes dialogContentIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes dialogContentOut {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+}
+.dialog-overlay-animate {
+  opacity: 0;
+}
+.dialog-overlay-animate[data-state='open'] {
+  animation: dialogOverlayIn 0.2s ease-out forwards;
+}
+.dialog-overlay-animate[data-state='closed'] {
+  animation: dialogOverlayOut 0.2s ease-in forwards;
+}
+.dialog-content-animate {
+  opacity: 0;
+}
+.dialog-content-animate[data-state='open'] {
+  animation: dialogContentIn 0.2s ease-out forwards;
+}
+.dialog-content-animate[data-state='closed'] {
+  animation: dialogContentOut 0.2s ease-in forwards;
+}
+.animate-backdrop-in {
+  animation: dialogOverlayIn 0.3s ease-out forwards;
+}
+.animate-backdrop-out {
+  animation: dialogOverlayOut 0.3s ease-in forwards;
+}
+
 @keyframes splashLogoRotate {
   0% {
     transform: rotate(0deg);
@@ -44,6 +85,10 @@
 
 .animate-splash-logo {
   animation: splashLogoRotate 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+
+.animate-splash-logo-once {
+  animation: splashLogoRotate 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) 1;
 }
 
 * {

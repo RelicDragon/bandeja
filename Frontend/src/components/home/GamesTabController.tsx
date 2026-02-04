@@ -19,7 +19,8 @@ export const GamesTabController = ({ activeTab, onTabChange }: GamesTabControlle
             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
         }`}
       >
-        {t('home.myGames')}
+        <span className="min-[400px]:hidden">{t('home.myGamesShort')}</span>
+        <span className="hidden min-[400px]:inline">{t('home.myGames')}</span>
       </button>
       <button
         onClick={() => onTabChange('past-games')}

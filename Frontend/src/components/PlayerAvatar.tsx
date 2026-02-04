@@ -7,7 +7,7 @@ import { GenderIndicator } from './GenderIndicator';
 import { useAppModeStore } from '@/store/appModeStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuthStore } from '@/store/authStore';
-import { BaseModal } from './BaseModal';
+import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { PublicGamePrompt } from './GameDetails/PublicGamePrompt';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -22,6 +22,7 @@ interface PlayerAvatarProps {
   smallLayout?: boolean;
   extrasmall?: boolean;
   role?: 'OWNER' | 'ADMIN' | 'PLAYER';
+  asDiv?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
   onDragEnd?: () => void;
   onTouchStart?: (e: TouchEvent) => void;
@@ -29,7 +30,7 @@ interface PlayerAvatarProps {
   onTouchEnd?: (e: TouchEvent) => void;
 }
 
-export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, role, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
+export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
   const { t } = useTranslation();
   const { openPlayerCard } = usePlayerCardModal();
   const { mode: appMode } = useAppModeStore();
@@ -38,7 +39,6 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
   const [showAuthModal, setShowAuthModal] = useState(false);
-
   useEffect(() => {
     const observer = new MutationObserver(() => {
       setIsDark(document.documentElement.classList.contains('dark'));
@@ -175,22 +175,106 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
             style={getGlowStyle()}
           />
         )}
-        <button
-          ref={buttonRef}
-          draggable={draggable}
-          onDragStart={draggable ? onDragStart : undefined}
-          onDragEnd={draggable ? onDragEnd : undefined}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!user) {
-              setShowAuthModal(true);
-            } else {
-              openPlayerCard(player.id);
-            }
-          }}
-          className={`relative z-10 ${sizeClasses.avatar} rounded-full ${draggable ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 transition-opacity flex-shrink-0 p-0 border-0 ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
-        >
+        {asDiv ? (
+          <div
+            className={`relative z-10 ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
+          >
+          {player.avatar ? (
+            <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
+              <img
+                src={player.avatar || ''}
+                alt={`${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player'}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className={`absolute inset-0 w-full h-full rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text}`}>
+              {initials}
+            </div>
+          )}
+          {role === 'OWNER' && (
+            <div className={`absolute -top-1 -left-1 ${sizeClasses.crown} rounded-full bg-yellow-500 dark:bg-yellow-600 flex items-center justify-center border-2 border-white dark:border-gray-900`}>
+              <Crown size={sizeClasses.crownIcon} className="text-white" />
+            </div>
+          )}
+          {role === 'ADMIN' && (
+            <div className={`absolute -top-1 -left-1 ${sizeClasses.crown} rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center border-2 border-white dark:border-gray-900`}>
+              <Crown size={sizeClasses.crownIcon} className="text-white" />
+            </div>
+          )}
+          {!extrasmall && <GenderIndicator gender={player.gender} layout={smallLayout ? 'small' : 'normal'} position="bottom-left" />}
+          {appMode === 'PADEL' ? (
+            <div className="absolute -bottom-1 -right-2">
+              {player.approvedLevel ? (
+                <div 
+                  className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1 shadow-lg ring-4 ring-blue-300 dark:ring-blue-500 ring-offset-white dark:ring-offset-gray-900 ring-offset-1`}
+                  style={{
+                    ...getLevelColor(player.level, isDark),
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                  }}
+                >
+                  <span 
+                    className={`text-white font-bold leading-none ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'}`}
+                  >
+                    {player.level.toFixed(1)}
+                  </span>
+                  <Check 
+                    size={extrasmall ? 7 : smallLayout ? 9 : 12} 
+                    className="text-white" 
+                    strokeWidth={3}
+                  />
+                </div>
+              ) : (
+                <div 
+                  className={`relative ${sizeClasses.level} rounded-full flex items-center justify-center text-white ${sizeClasses.level.includes('w-4') ? 'text-[8px]' : sizeClasses.level.includes('w-5') ? 'text-[10px]' : 'text-xs font-bold border-2'} border-white dark:border-gray-900`}
+                  style={{
+                    ...getLevelColor(player.level, isDark),
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                  }}
+                >
+                  {player.level.toFixed(1)}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="absolute -bottom-1 -right-1 flex flex-col items-center">
+              <span className={`text-white font-bold text-center leading-none mb-0.5 ${
+                extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'
+              } bg-black bg-opacity-60 rounded px-1 py-0.5`}>
+                {player.socialLevel.toFixed(1)}
+              </span>
+              <div className="relative">
+                <Beer
+                  size={extrasmall ? 16 : smallLayout ? 20 : 24}
+                  className="text-amber-600 dark:text-amber-500 absolute inset-0"
+                  fill="currentColor"
+                />
+                <Beer
+                  size={extrasmall ? 16 : smallLayout ? 20 : 24}
+                  className="text-white dark:text-gray-900 relative z-10"
+                  strokeWidth={1.5}
+                />
+              </div>
+            </div>
+          )}
+          </div>
+        ) : (
+          <button
+            ref={buttonRef}
+            draggable={draggable}
+            onDragStart={draggable ? onDragStart : undefined}
+            onDragEnd={draggable ? onDragEnd : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!user) {
+                setShowAuthModal(true);
+              } else {
+                openPlayerCard(player.id);
+              }
+            }}
+            className={`relative z-10 ${sizeClasses.avatar} rounded-full ${draggable ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 transition-opacity flex-shrink-0 p-0 border-0 ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
+          >
           {player.avatar ? (
             <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
               <img
@@ -270,6 +354,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
             </div>
           )}
         </button>
+        )}
         {removable && onRemoveClick && (
           <button
             onClick={onRemoveClick}
@@ -311,13 +396,11 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
           </div>
         </div>
       )}
-      <BaseModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        isBasic={true}
-      >
-        <PublicGamePrompt />
-      </BaseModal>
+      <Dialog open={showAuthModal} onClose={() => setShowAuthModal(false)} modalId="player-avatar-auth-modal">
+        <DialogContent>
+          <PublicGamePrompt />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

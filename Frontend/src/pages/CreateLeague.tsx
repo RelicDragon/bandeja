@@ -147,7 +147,7 @@ export const CreateLeague = () => {
         }
       }
 
-      navigate('/');
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('Failed to create league:', error);
     } finally {
@@ -165,7 +165,7 @@ export const CreateLeague = () => {
 
   return (
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      <CreateGameHeader onBack={() => navigate('/')} entityType="LEAGUE" />
+      <CreateGameHeader onBack={() => navigate('/', { replace: true })} entityType="LEAGUE" />
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-6">

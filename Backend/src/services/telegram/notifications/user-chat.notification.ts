@@ -6,6 +6,9 @@ import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatUserName } from '../../shared/notification-base';
 import { getShortDayOfWeekForUser } from '../../user-timezone.service';
 import { ChatMuteService } from '../../chat/chatMute.service';
+import { NotificationPreferenceService } from '../../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../../types/notifications.types';
 
 export async function sendUserChatNotification(
   api: Api,
@@ -18,9 +21,9 @@ export async function sendUserChatNotification(
 
   const recipient = userChat.user1Id === sender.id ? userChat.user2 : userChat.user1;
 
-  if (!recipient || !recipient.telegramId || !recipient.sendTelegramDirectMessages || recipient.id === sender.id) {
-    return;
-  }
+  if (!recipient || recipient.id === sender.id) return;
+  const allowed = await NotificationPreferenceService.doesUserAllow(recipient.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_DIRECT_MESSAGES);
+  if (!allowed || !recipient.telegramId) return;
 
   const mentionIds = message.mentionIds || [];
   const hasMentions = mentionIds.length > 0;

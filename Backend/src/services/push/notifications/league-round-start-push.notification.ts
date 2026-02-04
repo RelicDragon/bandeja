@@ -1,14 +1,16 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { NotificationPreferenceService } from '../../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../../types/notifications.types';
 
 export async function createLeagueRoundStartPushNotification(
   game: any,
   user: any
 ): Promise<NotificationPayload | null> {
-  if (!user.sendPushMessages) {
-    return null;
-  }
+  const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.PUSH, PreferenceKey.SEND_MESSAGES);
+  if (!allowed) return null;
 
   const lang = user.language || 'en';
   const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);

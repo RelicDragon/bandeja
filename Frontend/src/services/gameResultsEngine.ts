@@ -307,7 +307,7 @@ class GameResultsEngineClass {
     const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit || !state.game) return;
 
-    const playingParticipants = state.game.participants.filter(p => p.isPlaying);
+    const playingParticipants = state.game.participants.filter(p => p.status === 'PLAYING');
     if (playingParticipants.length !== 2 && playingParticipants.length !== 4) return;
 
     const hasPlayers = state.rounds.some((round) =>
@@ -828,7 +828,7 @@ class GameResultsEngineClass {
       };
     }
 
-    const playingParticipants = game.participants?.filter((p) => p.isPlaying) || [];
+    const playingParticipants = game.participants?.filter((p) => p.status === 'PLAYING') || [];
     if (playingParticipants.length < 2) {
       return {
         type: 'INSUFFICIENT_PLAYERS',

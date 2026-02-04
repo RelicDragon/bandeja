@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Camera, Settings } from 'lucide-react';
-import { BaseModal } from './BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 import { Button } from './Button';
 import { openAppSettings } from '@/utils/settings';
 
@@ -55,14 +55,11 @@ export const PermissionModal = ({
   }, [permissionType, t]);
 
   return (
-    <BaseModal
-      isOpen={internalIsOpen}
-      onClose={handleClose}
-      isBasic
-      modalId="permission-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
+    <Dialog open={internalIsOpen} onClose={handleClose} modalId="permission-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{translations.title}</DialogTitle>
+        </DialogHeader>
       <div className="flex flex-col text-center">
         <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-4">
           <Camera
@@ -70,12 +67,9 @@ export const PermissionModal = ({
             className="text-blue-600 dark:text-blue-400"
           />
         </div>
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-          {translations.title}
-        </h3>
-        <p className="text-gray-500 dark:text-gray-400 mb-4">
+        <DialogDescription className="mb-4">
           {translations.description}
-        </p>
+        </DialogDescription>
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
             <Settings size={20} className="text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
@@ -86,7 +80,7 @@ export const PermissionModal = ({
         </div>
       </div>
 
-      <div className="flex flex-col-reverse sm:flex-row gap-3">
+      <DialogFooter className="flex flex-col-reverse sm:flex-row gap-3">
         <Button
           onClick={handleClose}
           variant="outline"
@@ -101,7 +95,8 @@ export const PermissionModal = ({
         >
           {translations.openSettings}
         </Button>
-      </div>
-    </BaseModal>
+      </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

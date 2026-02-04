@@ -65,7 +65,28 @@ export interface MessageReadReceipt {
   user?: BasicUser;
 }
 
-export type ChatMessageWithStatus = ChatMessage & { _status?: 'SENDING'; _optimisticId?: string };
+export type ChatMessageWithStatus = ChatMessage & { _status?: 'SENDING' | 'FAILED'; _optimisticId?: string };
+
+export interface LastMessagePreview {
+  preview: string;
+  updatedAt: string;
+}
+
+export function isLastMessagePreview(
+  m: ChatMessage | LastMessagePreview | null | undefined
+): m is LastMessagePreview {
+  return m != null && 'preview' in m && typeof (m as LastMessagePreview).preview === 'string';
+}
+
+export function getLastMessageTime(m: ChatMessage | LastMessagePreview | null | undefined): number {
+  if (!m) return 0;
+  return new Date(isLastMessagePreview(m) ? m.updatedAt : (m as ChatMessage).createdAt).getTime();
+}
+
+export function getLastMessageText(m: ChatMessage | LastMessagePreview | null | undefined): string {
+  if (!m) return '';
+  return isLastMessagePreview(m) ? m.preview : ((m as ChatMessage).content ?? '');
+}
 
 export interface OptimisticMessagePayload {
   content: string;
@@ -105,7 +126,7 @@ export interface UserChat {
   updatedAt: string;
   user1: BasicUser;
   user2: BasicUser;
-  lastMessage?: ChatMessage;
+  lastMessage?: ChatMessage | LastMessagePreview | null;
   isPinned?: boolean;
 }
 
@@ -120,7 +141,7 @@ export interface GroupChannel {
   createdAt: string;
   updatedAt: string;
   participants?: GroupChannelParticipant[];
-  lastMessage?: ChatMessage;
+  lastMessage?: ChatMessage | LastMessagePreview | null;
   isParticipant?: boolean;
   isOwner?: boolean;
 }
@@ -257,6 +278,11 @@ export const chatApi = {
     return response.data;
   },
 
+  getGameParticipants: async (gameId: string) => {
+    const response = await api.get<ApiResponse<import('@/types').GameParticipant[]>>(`/chat/games/${gameId}/participants`);
+    return response.data.data;
+  },
+
   getGameUnreadCount: async (gameId: string) => {
     const response = await api.get<ApiResponse<{ count: number }>>(`/chat/games/${gameId}/unread-count`);
     return response.data;
@@ -331,14 +357,6 @@ export const chatApi = {
     const normalizedChatType = normalizeChatType(chatType);
     const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/bugs/${bugId}/messages`, {
       params: { page, limit, chatType: normalizedChatType }
-    });
-    return response.data.data;
-  },
-
-  getBugLastUserMessage: async (bugId: string, chatType: ChatType = 'PUBLIC') => {
-    const normalizedChatType = normalizeChatType(chatType);
-    const response = await api.get<ApiResponse<ChatMessage | null>>(`/chat/bugs/${bugId}/last-user-message`, {
-      params: { chatType: normalizedChatType }
     });
     return response.data.data;
   },

@@ -4,6 +4,7 @@ export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'W
 export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'BAR' | 'TRAINING';
 export type GenderTeam = 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
 export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
+export type ParticipantStatus = 'GUEST' | 'INVITED' | 'IN_QUEUE' | 'PLAYING';
 export type Gender = 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
 export type GameStatus = 'ANNOUNCED' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
 export type ResultsStatus = 'NONE' | 'IN_PROGRESS' | 'FINAL';
@@ -51,6 +52,7 @@ export interface User extends BasicUser {
   gamesWon: number;
   approvedById?: string | null;
   approvedWhen?: Date | string | null;
+  favoriteTrainerId?: string | null;
   approvedBy?: BasicUser | null;
   language?: string; // Full locale (e.g., "en-US", "ru-RU") or "auto"
   timeFormat?: 'auto' | '12h' | '24h';
@@ -136,9 +138,13 @@ export interface BookedCourtSlot {
 export interface GameParticipant {
   userId: string;
   role: ParticipantRole;
-  isPlaying: boolean;
+  status: ParticipantStatus;
   joinedAt: string;
   user: BasicUser;
+  invitedByUserId?: string | null;
+  inviteMessage?: string | null;
+  inviteExpiresAt?: string | null;
+  invitedByUser?: BasicUser | null;
 }
 
 export interface GameTeamPlayer {
@@ -313,14 +319,9 @@ export interface Game {
     processedOps?: string[];
   };
   lastMessage?: {
-    id: string;
-    content?: string;
-    createdAt: string;
-    senderId: string;
-    sender?: BasicUser;
-    chatType?: ChatType;
-    mediaUrls?: string[];
-  };
+    preview: string;
+    updatedAt: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -355,6 +356,7 @@ export interface Bug {
   senderId: string;
   status: BugStatus;
   bugType: BugType;
+  lastMessagePreview?: string | null;
   createdAt: string;
   updatedAt: string;
   sender: User;

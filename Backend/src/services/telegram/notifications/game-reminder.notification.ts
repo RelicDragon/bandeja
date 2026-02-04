@@ -1,5 +1,8 @@
 import { Api } from 'grammy';
 import prisma from '../../../config/database';
+import { NotificationPreferenceService } from '../../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../../types/notifications.types';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
@@ -30,14 +33,13 @@ export async function sendGameReminderNotification(
   const participants = await prisma.gameParticipant.findMany({
     where: { 
       gameId: game.id,
-      isPlaying: true,
+      status: 'PLAYING',
     },
     include: {
       user: {
         select: {
           id: true,
           telegramId: true,
-          sendTelegramReminders: true,
           language: true,
           currentCityId: true,
         }
@@ -47,10 +49,8 @@ export async function sendGameReminderNotification(
 
   for (const participant of participants) {
     const user = participant.user;
-    
-    if (!user.telegramId || !user.sendTelegramReminders) {
-      continue;
-    }
+    const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_REMINDERS);
+    if (!allowed || !user.telegramId) continue;
 
     try {
       const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);

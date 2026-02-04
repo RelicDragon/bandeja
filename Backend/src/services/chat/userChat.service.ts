@@ -29,31 +29,13 @@ export class UserChatService {
       }
     });
 
-    // Get last message for each chat
-    const chatsWithLastMessage = await Promise.all(
-      chats.map(async (chat) => {
-        const lastMessage = await prisma.chatMessage.findFirst({
-          where: {
-            chatContextType: 'USER',
-            contextId: chat.id
-          },
-          orderBy: { createdAt: 'desc' },
-          include: {
-            sender: {
-              select: USER_SELECT_FIELDS
-            }
-          }
-        });
-
-        return {
-          ...chat,
-          lastMessage,
-          isPinned: chat.pinnedByUsers.length > 0
-        };
-      })
-    );
-
-    return chatsWithLastMessage;
+    return chats.map((chat) => ({
+      ...chat,
+      lastMessage: chat.lastMessagePreview
+        ? { preview: chat.lastMessagePreview, updatedAt: chat.updatedAt }
+        : null,
+      isPinned: chat.pinnedByUsers.length > 0
+    }));
   }
 
   static async getOrCreateChatWithUser(currentUserId: string, otherUserId: string) {

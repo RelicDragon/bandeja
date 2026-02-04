@@ -1,14 +1,14 @@
 import { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CircleDollarSign, Target, Zap } from 'lucide-react';
+import { CircleDollarSign, Target } from 'lucide-react';
 import { FaPersonRunning } from 'react-icons/fa6';
 import { Game, BetCondition, PredefinedCondition, Bet } from '@/types';
 import { betsApi } from '@/api/bets';
 import { transactionsApi } from '@/api/transactions';
 import toast from 'react-hot-toast';
-import { Select } from '@/components';
-import { BaseModal } from '@/components/BaseModal';
+import { Select, PlayerAvatar } from '@/components';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { AnimatedTabs } from '@/components/AnimatedTabs';
 
 const inputClass =
@@ -43,7 +43,7 @@ const getPredefinedConditionOptions = (
 ): { value: string; label: string }[] => {
   const ctx = isFemale ? { context: 'female' as const } : {};
   const et = entityType || 'GAME';
-  const playingCount = game.participants?.filter(p => p.isPlaying).length ?? 0;
+  const playingCount = game.participants?.filter(p => p.status === 'PLAYING').length ?? 0;
   const teamCount = game.fixedTeams?.length ?? 0;
   const maxPlace = teamCount > 0 ? teamCount : playingCount;
   const base: { value: string; label: string }[] = [
@@ -117,6 +117,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
               .map((pl) => `${pl.user?.firstName || ''} ${pl.user?.lastName || ''}`.trim() || '?')
               .join(' + ') || `Team ${team.teamNumber}`,
             entityType: 'TEAM' as const,
+            user: team.players[0]?.user ?? null,
           }))
         : [],
     [hasFixedTeamsSet, game.fixedTeams]
@@ -124,22 +125,37 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
   const participantOptions = useMemo(
     () =>
       game.participants
-        .filter((p) => p.isPlaying)
+        .filter((p) => p.status === 'PLAYING')
         .map((p) => ({
           value: String(p.userId),
           label: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
           gender: p.user.gender,
           entityType: 'USER' as const,
+          user: p.user,
         })),
     [game.participants]
   );
   const entityOptions = useMemo(() => {
-    const base = [...fixedTeamOptions, ...participantOptions.map((p) => ({ value: p.value, label: p.label, entityType: p.entityType }))];
+    const base = [
+      ...fixedTeamOptions.map((o) => ({
+        value: o.value,
+        label: o.label,
+        entityType: o.entityType,
+        icon: <PlayerAvatar player={o.user} extrasmall fullHideName asDiv />,
+      })),
+      ...participantOptions.map((p) => ({
+        value: p.value,
+        label: p.label,
+        entityType: p.entityType,
+        icon: <PlayerAvatar player={p.user} extrasmall fullHideName asDiv />,
+      })),
+    ];
     if (bet?.condition?.entityType === 'TEAM' && entityId && !base.some((o) => o.value === entityId)) {
       base.unshift({
         value: entityId,
         label: t('bets.teamNoLongerAvailable', { defaultValue: 'Team (no longer available)' }),
         entityType: 'TEAM' as const,
+        icon: <PlayerAvatar player={null} extrasmall fullHideName asDiv />,
       });
     }
     return base;
@@ -295,30 +311,13 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={onClose}
-      isBasic
-      modalId="create-bet-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-      contentClassName="p-0"
-    >
-        <div className="flex-shrink-0 px-3 pt-4 pb-3 bg-gradient-to-br from-primary-50 via-white to-primary-50/50 dark:from-primary-900/30 dark:via-gray-900 dark:to-primary-900/20 rounded-t-2xl border-b border-gray-100 dark:border-gray-700/60">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 dark:from-primary-500 dark:to-primary-700 text-white shadow-lg shadow-primary-500/25">
-              <Zap size={24} strokeWidth={2.5} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
-                {isEditMode ? t('bets.edit', { defaultValue: 'Edit Challenge' }) : t('bets.create', { defaultValue: 'Create Challenge' })}
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 min-h-[1.25rem]">
-                {activeTab === 'condition' ? t('bets.conditionLabel', { defaultValue: 'Condition' }) : t('bets.stake', { defaultValue: 'Stake' })}
-              </p>
-            </div>
-          </div>
-        </div>
+    <Dialog open={isOpen} onClose={onClose} modalId="create-bet-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {isEditMode ? t('bets.edit', { defaultValue: 'Edit Challenge' }) : t('bets.create', { defaultValue: 'Create Challenge' })}
+          </DialogTitle>
+        </DialogHeader>
 
         <div className="flex-shrink-0 px-3 pt-1 pb-1">
           <div className="relative flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
@@ -375,7 +374,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
                 >
                   <div className={sectionClass}>
                     <Select
-                      options={entityOptions.map((o) => ({ value: o.value, label: o.label }))}
+                      options={entityOptions.map((o) => ({ value: o.value, label: o.label, icon: o.icon }))}
                       value={entityId ? String(entityId) : ''}
                       onChange={(value) => setEntityId(value)}
                       placeholder={hasFixedTeamsSet ? t('bets.userOrTeam', { defaultValue: 'User or Team' }) : t('bets.user', { defaultValue: 'User' })}
@@ -482,7 +481,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
           </div>
         </div>
 
-        <div className="flex-shrink-0 px-3 py-3 border-t border-gray-200 dark:border-gray-700/80 bg-gradient-to-t from-gray-50 to-white dark:from-gray-800/80 dark:to-gray-900 flex gap-2 rounded-b-2xl">
+        <DialogFooter className="flex-shrink-0 px-3 py-3 border-t border-gray-200 dark:border-gray-700/80 flex gap-2 rounded-b-2xl">
           <button
             onClick={onClose}
             className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-100 dark:hover:bg-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200"
@@ -499,8 +498,9 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
               : (isEditMode ? t('common.update', { defaultValue: 'Update' }) : t('common.create', { defaultValue: 'Create' }))
             }
           </button>
-        </div>
-    </BaseModal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

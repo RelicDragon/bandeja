@@ -18,7 +18,7 @@ export async function createGameResultsPushNotification(
       },
       club: true,
       participants: {
-        where: { userId, isPlaying: true },
+        where: { userId, status: 'PLAYING' },
         include: {
           user: {
             select: {

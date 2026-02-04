@@ -1,8 +1,8 @@
-import { AlertTriangle, ServerCrash, Smartphone } from 'lucide-react';
+import { ServerCrash, Smartphone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ConflictOp } from '@/types/ops';
 import { Button } from '@/components';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 
 interface ConflictResolutionModalProps {
   isOpen: boolean;
@@ -34,30 +34,14 @@ export const ConflictResolutionModal = ({
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={onClose}
-      isBasic
-      modalId="conflict-resolution-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        {/* Header */}
-        <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-              <AlertTriangle size={24} className="text-red-600 dark:text-red-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {t('conflicts.title')}
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {t('conflicts.subtitle')}
-              </p>
-            </div>
-          </div>
-        </div>
+    <Dialog open={isOpen} onClose={onClose} modalId="conflict-resolution-modal">
+      <DialogContent>
+        <DialogHeader className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+          <DialogTitle>{t('conflicts.title')}</DialogTitle>
+          <DialogDescription className="mt-1">
+            {t('conflicts.subtitle')}
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(80vh-280px)]">
@@ -185,7 +169,8 @@ export const ConflictResolutionModal = ({
             </p>
           </div>
         </div>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };
 

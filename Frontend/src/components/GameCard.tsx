@@ -7,6 +7,8 @@ import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { GameAvatar } from '@/components/GameAvatar';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { Game } from '@/types';
+import { isParticipantPlaying } from '@/utils/participantStatus';
+import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
@@ -100,23 +102,24 @@ export const GameCard = ({
     loadMainPhoto();
   }, [game.mainPhotoId, game.id, game.status, user]);
 
-  const isParticipant = game.participants.some(p => p.userId === effectiveUser?.id && p.isPlaying);
-  const isUserParticipant = game.participants.some(p => p.userId === effectiveUser?.id);
-  const isGuest = game.participants.some(p => p.userId === effectiveUser?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN');
+  const participants = game.participants ?? [];
+  const participation = getGameParticipationState(participants, effectiveUser?.id, game);
+  const isParticipant = participation.isPlaying;
+  const isUserParticipant = participation.isParticipant;
+  const isGuest = participation.isGuest || (!participation.isPlaying && !participation.isAdminOrOwner);
   const canAccessChat = true;
   const isLeagueSeasonGame = game.entityType === 'LEAGUE_SEASON';
   const shouldShowTiming = !isLeagueSeasonGame;
   const displaySettings = effectiveUser ? resolveDisplaySettings(effectiveUser) : resolveDisplaySettings(null);
 
-  const playingCount = game.participants.filter(p => p.isPlaying).length;
-  const hasUnoccupiedSlots = game.entityType === 'BAR' || playingCount < game.maxParticipants;
-  const hasMyInvites = game.invites?.some(invite => invite.receiverId === effectiveUser?.id) || false;
-  const isInJoinQueue = game.joinQueues?.some(q => q.userId === effectiveUser?.id && q.status === 'PENDING') || false;
+  const hasUnoccupiedSlots = !participation.isFull;
+  const hasMyInvites = participation.hasPendingInvite;
+  const isInJoinQueue = participation.isInJoinQueue;
 
   const hasOtherTags = (game.photosCount ?? 0) > 0 ||
     !game.isPublic ||
     (game.genderTeams && game.genderTeams !== 'ANY') ||
-    game.participants.some(p => p.userId === effectiveUser?.id && ['OWNER', 'ADMIN'].includes(p.role)) ||
+    participants.some(p => p.userId === effectiveUser?.id && ['OWNER', 'ADMIN'].includes(p.role)) ||
     game.entityType !== 'GAME' ||
     isGuest ||
     !game.affectsRating ||
@@ -374,7 +377,7 @@ export const GameCard = ({
               )}
             </div>
           )}
-          {game.participants.some(
+          {participants.some(
             (p) => p.userId === effectiveUser?.id && ['OWNER', 'ADMIN'].includes(p.role)
           ) && (
             <span className="px-2 py-1 text-xs font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
@@ -511,7 +514,7 @@ export const GameCard = ({
                     )}
                   </div>
                 )}
-                {game.participants.some(
+                {participants.some(
                   (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
                 ) && (
                   <span className="px-2 py-1 text-xs font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
@@ -553,15 +556,18 @@ export const GameCard = ({
             </>
           ) : game.entityType === 'TRAINING' ? (
             <>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
                 {(() => {
-                  const owner = game.participants.find(p => p.role === 'OWNER');
-                  return owner ? (
-                    <PlayerAvatar
-                      player={owner.user}
-                      smallLayout={true}
-                      showName={false}
-                    />
+                  const trainer = participants.find(p => p.role === 'OWNER');
+                  return trainer ? (
+                    <>
+                      <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
+                      <PlayerAvatar
+                        player={trainer.user}
+                        extrasmall={true}
+                        showName={true}
+                      />
+                    </>
                   ) : null;
                 })()}
               </div>
@@ -610,7 +616,7 @@ export const GameCard = ({
                   <div className="flex items-center gap-1">
                     <Users size={14} />
                     <span>
-                      {`${game.participants.filter(p => p.isPlaying).length}/${game.maxParticipants}`}
+                      {`${participants.filter(isParticipantPlaying).length}/${game.maxParticipants}`}
                     </span>
                   </div>
                 </div>
@@ -667,8 +673,8 @@ export const GameCard = ({
                     <Users size={14} />
                     <span>
                       {game.entityType === 'BAR' 
-                        ? game.participants.filter(p => p.isPlaying).length
-                        : `${game.participants.filter(p => p.isPlaying).length}/${game.maxParticipants}`
+                        ? participants.filter(isParticipantPlaying).length
+                        : `${participants.filter(isParticipantPlaying).length}/${game.maxParticipants}`
                       }
                     </span>
                   </div>
@@ -733,8 +739,8 @@ export const GameCard = ({
                     <Users size={14} />
                     <span>
                       {game.entityType === 'BAR' 
-                        ? game.participants.filter(p => p.isPlaying).length
-                        : `${game.participants.filter(p => p.isPlaying).length}/${game.maxParticipants}`
+                        ? participants.filter(isParticipantPlaying).length
+                        : `${participants.filter(isParticipantPlaying).length}/${game.maxParticipants}`
                       }
                     </span>
                   </div>
@@ -788,8 +794,8 @@ export const GameCard = ({
                   <Users size={14} />
                   <span>
                     {game.entityType === 'BAR' 
-                      ? game.participants.filter(p => p.isPlaying).length
-                      : `${game.participants.filter(p => p.isPlaying).length}/${game.maxParticipants}`
+                      ? participants.filter(isParticipantPlaying).length
+                      : `${participants.filter(isParticipantPlaying).length}/${game.maxParticipants}`
                     }
                   </span>
                 </div>
@@ -810,6 +816,15 @@ export const GameCard = ({
       >
         {mainPhotoUrl ? (
           <div className="flex gap-4 mb-3">
+            {game.entityType === 'TRAINING' && (() => {
+              const trainer = participants.find(p => p.role === 'OWNER');
+              return trainer ? (
+                <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
+                  <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
+                  <PlayerAvatar player={trainer.user} extrasmall={true} showName={true} />
+                </div>
+              ) : null;
+            })()}
             <div className="flex-shrink-0">
               <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700">
                 <img
@@ -853,7 +868,7 @@ export const GameCard = ({
                     <>
                       <span className="text-gray-400 dark:text-gray-500">•</span>
                       <Users size={16} />
-                      <span>{game.participants.filter(p => p.isPlaying).length}</span>
+                      <span>{participants.filter(isParticipantPlaying).length}</span>
                     </>
                   )}
                 </div>
@@ -862,7 +877,7 @@ export const GameCard = ({
                 <div className="flex items-center gap-2">
                   <Users size={16} />
                   <span>
-                    {`${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`}
+                    {`${participants.filter(isParticipantPlaying).length} / ${game.maxParticipants}`}
                   </span>
                   {game.minLevel !== undefined && game.maxLevel !== undefined && (
                     <>
@@ -880,7 +895,17 @@ export const GameCard = ({
             </div>
           </div>
         ) : (
-          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+          <div className={`text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' ? 'flex gap-4 -mt-1' : ''}`}>
+            {game.entityType === 'TRAINING' && (() => {
+              const trainer = participants.find(p => p.role === 'OWNER');
+              return trainer ? (
+                <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
+                  <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
+                  <PlayerAvatar player={trainer.user} extrasmall={true} showName={true} />
+                </div>
+              ) : null;
+            })()}
+            <div className="space-y-2 flex-1">
             <div className="flex items-center gap-2">
               <Calendar size={16} />
               {game.timeIsSet === false ? (
@@ -913,7 +938,7 @@ export const GameCard = ({
                   <>
                     <span className="text-gray-400 dark:text-gray-500">•</span>
                     <Users size={16} />
-                    <span>{game.participants.filter(p => p.isPlaying).length}</span>
+                    <span>{participants.filter(isParticipantPlaying).length}</span>
                   </>
                 )}
               </div>
@@ -922,7 +947,7 @@ export const GameCard = ({
               <div className="flex items-center gap-2">
                 <Users size={16} />
                 <span>
-                  {`${game.participants.filter(p => p.isPlaying).length} / ${game.maxParticipants}`}
+                  {`${participants.filter(isParticipantPlaying).length} / ${game.maxParticipants}`}
                 </span>
                 {game.minLevel !== undefined && game.maxLevel !== undefined && (
                   <>
@@ -937,13 +962,14 @@ export const GameCard = ({
                 )}
               </div>
             )}
+            </div>
           </div>
         )}
-        <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+        <div className={`space-y-2 text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' && participants.filter(p => isParticipantPlaying(p) && p.role !== 'OWNER').length >= 1 ? 'pt-2 mt-2 border-t border-gray-200 dark:border-gray-700' : ''}`}>
           <div className="flex items-center gap-2">
             <div className="relative -mx-0 flex-1 w-full">
               <PlayersCarousel
-                participants={game.participants.filter(p => p.isPlaying)}
+                participants={participants.filter(isParticipantPlaying)}
                 userId={effectiveUser?.id}
                 shouldShowCrowns={true}
                 autoHideNames={true}

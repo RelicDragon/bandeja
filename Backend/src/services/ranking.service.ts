@@ -84,7 +84,7 @@ export class RankingService {
       by: ['userId'],
       where: {
         userId: { in: userIds },
-        isPlaying: true,
+        status: 'PLAYING',
         game: {
           cityId: cityId,
           resultsStatus: ResultsStatus.FINAL,

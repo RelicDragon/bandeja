@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components';
 import { BasicUser } from '@/types';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
 interface EditLevelModalProps {
   isOpen: boolean;
@@ -88,19 +88,11 @@ export const EditLevelModal = ({
 
   return (
     <>
-      <BaseModal 
-        isOpen={internalIsOpen && !showConfirmDecrease} 
-        onClose={handleClose} 
-        isBasic 
-        modalId="edit-level-modal"
-        showCloseButton={true}
-        closeOnBackdropClick={true}
-      >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {t('training.editLevel')}
-            </h2>
-          </div>
+      <Dialog open={internalIsOpen && !showConfirmDecrease} onClose={handleClose} modalId="edit-level-modal">
+        <DialogContent>
+        <DialogHeader className="border-slate-200 dark:border-slate-700">
+          <DialogTitle>{t('training.editLevel')}</DialogTitle>
+        </DialogHeader>
 
           <div className="flex-1 overflow-y-auto" style={{ minHeight: 0, overflowX: 'hidden' }}>
             <div className="px-4 py-4 space-y-4">
@@ -191,7 +183,7 @@ export const EditLevelModal = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
+          <DialogFooter className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
             <Button onClick={handleClose} variant="outline" disabled={saving} size="md">
               {t('common.cancel')}
             </Button>
@@ -205,8 +197,9 @@ export const EditLevelModal = ({
                 t('common.save')
               )}
             </Button>
-          </div>
-      </BaseModal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmationModal
         isOpen={showConfirmDecrease}

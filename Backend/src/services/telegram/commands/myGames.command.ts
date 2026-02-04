@@ -72,7 +72,7 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
       const clubName = escapeMarkdown(club?.name || 'Unknown location');
       const courtName = game.court?.name ? ` • ${escapeMarkdown(game.court.name)}` : '';
 
-      const playingParticipants = game.participants.filter((p: any) => p.isPlaying);
+      const playingParticipants = game.participants.filter((p: any) => p.status === 'PLAYING');
       const participantsCount = game.entityType === 'BAR'
         ? `${playingParticipants.length}`
         : `${playingParticipants.length}/${game.maxParticipants}`;

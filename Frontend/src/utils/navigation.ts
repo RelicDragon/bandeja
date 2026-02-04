@@ -1,5 +1,6 @@
 import { NavigateFunction, NavigateOptions } from 'react-router-dom';
 import { findMatchingRoute } from '@/config/navigationRoutes';
+import { useNavigationStore } from '@/store/navigationStore';
 
 export const markNavigation = (): void => {
   // Use History State API instead of sessionStorage
@@ -76,55 +77,122 @@ interface HandleBackNavigationParams {
   setChatsFilter?: (filter: 'users' | 'bugs' | 'channels') => void;
   contextType?: 'USER' | 'BUG' | 'GAME' | 'GROUP';
   gameId?: string;
+  /** When false (e.g. from Capacitor backButton event.canGoBack), skip history.back and use fallback */
+  nativeCanGoBack?: boolean;
 }
 
-const navigateBackSafely = (navigate: NavigateFunction): void => {
-  try {
-    navigate(-1);
-  } catch (error) {
-    console.error('[Navigation] Error navigating back:', error);
-    navigate('/', { replace: true });
+const SAFETY_CHECK_MS = 350;
+
+const APP_PATH_RE =
+  /^\/(find|chats|profile|leaderboard|games|create-game|create-league|rating|bugs|game-subscriptions|user-chat|group-chat|channel-chat|select-city|complete-profile|login|register|character)(\/.*)?$/;
+
+const isAppPath = (pathname: string): boolean =>
+  pathname === '/' || APP_PATH_RE.test(pathname);
+
+/** Entry-point routes (direct URL, push, external link). Never use history.back() from these — previous entry may be external (e.g. google, about:blank). */
+const ENTRY_POINT_PATH_RE = /^\/games\/[^/]+(\/chat)?$/;
+const isEntryPointRoute = (pathname: string): boolean => ENTRY_POINT_PATH_RE.test(pathname);
+
+/** Call from App when Capacitor. On iOS, swipe-back is WebView-native (history.back()); this redirects to home if we land on a non-app path. */
+export const setupPopstateFallback = (navigate: NavigateFunction): (() => void) => {
+  const handler = () => {
+    const pathname = window.location.pathname || '';
+    if (!isAppPath(pathname)) {
+      useNavigationStore.getState().setCurrentPage('my');
+      navigate('/', { replace: true });
+    }
+  };
+  window.addEventListener('popstate', handler);
+  return () => window.removeEventListener('popstate', handler);
+};
+
+const applyFallback = (
+  params: HandleBackNavigationParams,
+  fallback: string,
+  matchedRoute: { setFilter?: 'users' | 'bugs' | 'channels' } | null
+): void => {
+  const { navigate, setCurrentPage, setChatsFilter } = params;
+  if (matchedRoute?.setFilter && setChatsFilter) {
+    setChatsFilter(matchedRoute.setFilter);
   }
+  if (setCurrentPage) {
+    if (fallback === '/') {
+      setCurrentPage('my');
+    } else if (fallback.includes('/games/')) {
+      setCurrentPage('gameDetails');
+    }
+  }
+  navigateWithTracking(navigate, fallback, { replace: true });
 };
 
 export const handleBackNavigation = (params: HandleBackNavigationParams): void => {
-  const { pathname, locationState, navigate, setCurrentPage, setChatsFilter } = params;
-  
-  if (canNavigateBack()) {
-    console.log('[handleBackNavigation] Using browser history: navigate(-1)');
-    navigateBackSafely(navigate);
-    return;
-  }
-  
-  // Use declarative route configuration
+  const { pathname, locationState, navigate, setCurrentPage, setChatsFilter: _setChatsFilter, nativeCanGoBack } = params;
   const matchedRoute = findMatchingRoute(pathname);
-  
-  if (matchedRoute) {
-    const fallback = typeof matchedRoute.fallback === 'function'
-      ? matchedRoute.fallback(pathname, locationState)
-      : matchedRoute.fallback;
-    
-    // Set filter if specified
-    if (matchedRoute.setFilter && setChatsFilter) {
-      setChatsFilter(matchedRoute.setFilter);
-    }
-    
-    // Update page state if needed
-    if (setCurrentPage) {
-      if (fallback === '/') {
-        setCurrentPage('my');
-      } else if (fallback.includes('/games/')) {
-        setCurrentPage('gameDetails');
+  const fallback =
+    matchedRoute
+      ? typeof matchedRoute.fallback === 'function'
+        ? matchedRoute.fallback(pathname, locationState)
+        : matchedRoute.fallback
+      : '/';
+
+  const goToFallback = () => {
+    if (matchedRoute) {
+      if (import.meta.env.DEV) {
+        console.log(`[handleBackNavigation] Navigating to fallback: ${fallback} (from: ${pathname})`);
       }
+      applyFallback(params, fallback, matchedRoute);
+    } else {
+      if (import.meta.env.DEV) {
+        console.log('[handleBackNavigation] No route matched, falling back to home');
+      }
+      setCurrentPage?.('my');
+      navigateWithTracking(navigate, '/', { replace: true });
     }
-    
-    console.log(`[handleBackNavigation] No history available. Navigating to: ${fallback} (from: ${pathname})`);
-    navigateWithTracking(navigate, fallback, { replace: true });
+  };
+
+  if (nativeCanGoBack === false) {
+    goToFallback();
     return;
   }
-  
-  // Ultimate fallback
-  console.log('[handleBackNavigation] No route matched, falling back to home');
-  setCurrentPage?.('my');
-  navigateWithTracking(navigate, '/', { replace: true });
+  if (isEntryPointRoute(pathname)) {
+    goToFallback();
+    return;
+  }
+  if (canNavigateBack()) {
+    const previousPathname = pathname;
+    try {
+      navigate(-1);
+    } catch (error) {
+      console.error('[Navigation] Error navigating back:', error);
+      goToFallback();
+      return;
+    }
+    setTimeout(() => {
+      const current = window.location.pathname;
+      if (current === previousPathname || !isAppPath(current)) {
+        goToFallback();
+      }
+    }, SAFETY_CHECK_MS);
+    return;
+  }
+
+  goToFallback();
+};
+
+export const handleBackNavigationFromService = (
+  navigate: NavigateFunction,
+  nativeCanGoBack?: boolean
+): void => {
+  const pathname = window.location.pathname || '/';
+  const state = window.history.state;
+  const locationState = (state?.usr ?? state ?? null) as LocationState | null;
+  const { setCurrentPage, setChatsFilter } = useNavigationStore.getState();
+  handleBackNavigation({
+    pathname,
+    locationState,
+    navigate,
+    setCurrentPage,
+    setChatsFilter,
+    nativeCanGoBack,
+  });
 };

@@ -7,7 +7,7 @@ const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION',
 import { bugsApi } from '@/api';
 import { toast } from 'react-hot-toast';
 import { isCapacitor, isIOS, isAndroid, getAppInfo, getCapacitorPlatform } from '@/utils/capacitor';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
 interface BugModalProps {
   isOpen: boolean;
@@ -73,17 +73,11 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      isBasic
-      modalId="bug-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('bug.addBug')}</h2>
-        </div>
+    <Dialog open={isOpen} onClose={handleClose} modalId="bug-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('bug.addBug')}</DialogTitle>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -117,7 +111,7 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <DialogFooter className="flex gap-3 mt-4">
             <Button
               type="button"
               variant="outline"
@@ -134,8 +128,9 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
             >
               {isSubmitting ? t('common.submitting') : t('bug.submit')}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -65,7 +65,7 @@ export class ResultsTelegramService {
       throw new ApiError(503, 'OpenAI service is not configured');
     }
 
-    const playingParticipants = game.participants?.filter((p: any) => p.isPlaying) || [];
+    const playingParticipants = game.participants?.filter((p: any) => p.status === 'PLAYING') || [];
     const participantUserIds = playingParticipants.map((p: any) => p.userId).filter(Boolean);
     const cityId = game.city?.id || game.cityId;
 

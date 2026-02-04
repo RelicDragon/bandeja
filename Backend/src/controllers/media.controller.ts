@@ -278,13 +278,10 @@ export const uploadChatDocument = asyncHandler(async (req: AuthRequest, res: Res
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
-      invites: {
-        where: { 
-          receiverId: senderId,
-          status: 'PENDING'
-        }
-      }
-    }
+      participants: {
+        where: { userId: senderId },
+      },
+    },
   });
 
   if (!game) {
@@ -297,7 +294,7 @@ export const uploadChatDocument = asyncHandler(async (req: AuthRequest, res: Res
     [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT],
     req.user?.isAdmin || false
   );
-  const hasPendingInvite = (game.invites?.length ?? 0) > 0;
+  const hasPendingInvite = (game as any).participants?.[0]?.status === 'INVITED';
 
   if (!hasPermission && !hasPendingInvite) {
     throw new ApiError(403, 'You are not a participant or invited to this game');

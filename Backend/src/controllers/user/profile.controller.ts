@@ -7,6 +7,8 @@ import { ImageProcessor } from '../../utils/imageProcessor';
 import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
 import { config } from '../../config/env';
 import { getClientIp, updateUserIpLocation } from '../../services/ipLocation.service';
+import { NotificationChannelType } from '@prisma/client';
+import { DEFAULT_PREFERENCES } from '../../services/notificationPreference.service';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
@@ -59,7 +61,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, timeFormat, weekStart, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, timeFormat, weekStart, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, favoriteTrainerId } = req.body;
   
   // Explicitly ignore level and socialLevel - only backend can modify these
 
@@ -95,6 +97,16 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     await ImageProcessor.deleteFile(currentUser.originalAvatar);
   }
 
+  if (favoriteTrainerId !== undefined && favoriteTrainerId) {
+    const trainer = await prisma.user.findUnique({
+      where: { id: favoriteTrainerId },
+      select: { isTrainer: true },
+    });
+    if (!trainer?.isTrainer) {
+      throw new ApiError(400, 'Invalid trainer');
+    }
+  }
+
   let finalGenderIsSet = genderIsSet;
   if (gender !== undefined && genderIsSet === undefined) {
     if (gender === 'MALE' || gender === 'FEMALE') {
@@ -104,35 +116,94 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     }
   }
 
-  const user = await prisma.user.update({
-    where: { id: req.userId },
-    data: {
-      ...(firstName !== undefined && { firstName }),
-      ...(lastName !== undefined && { lastName }),
-      ...(email !== undefined && { email }),
-      ...(avatar !== undefined && { avatar }),
-      ...(originalAvatar !== undefined && { originalAvatar }),
-      ...(language !== undefined && { language }),
-      ...(timeFormat !== undefined && { timeFormat }),
-      ...(weekStart !== undefined && { weekStart }),
-      ...(gender !== undefined && { gender }),
-      ...(finalGenderIsSet !== undefined && { genderIsSet: finalGenderIsSet }),
-      ...(preferredHandLeft !== undefined && { preferredHandLeft }),
-      ...(preferredHandRight !== undefined && { preferredHandRight }),
-      ...(preferredCourtSideLeft !== undefined && { preferredCourtSideLeft }),
-      ...(preferredCourtSideRight !== undefined && { preferredCourtSideRight }),
-      ...(sendTelegramMessages !== undefined && { sendTelegramMessages }),
-      ...(sendTelegramInvites !== undefined && { sendTelegramInvites }),
-      ...(sendTelegramDirectMessages !== undefined && { sendTelegramDirectMessages }),
-      ...(sendTelegramReminders !== undefined && { sendTelegramReminders }),
-      ...(sendTelegramWalletNotifications !== undefined && { sendTelegramWalletNotifications }),
-      ...(sendPushMessages !== undefined && { sendPushMessages }),
-      ...(sendPushInvites !== undefined && { sendPushInvites }),
-      ...(sendPushDirectMessages !== undefined && { sendPushDirectMessages }),
-      ...(sendPushReminders !== undefined && { sendPushReminders }),
-      ...(sendPushWalletNotifications !== undefined && { sendPushWalletNotifications }),
-    },
-    select: PROFILE_SELECT_FIELDS,
+  const hasTelegramPrefs = sendTelegramMessages !== undefined || sendTelegramInvites !== undefined || sendTelegramDirectMessages !== undefined || sendTelegramReminders !== undefined || sendTelegramWalletNotifications !== undefined;
+  const hasPushPrefs = sendPushMessages !== undefined || sendPushInvites !== undefined || sendPushDirectMessages !== undefined || sendPushReminders !== undefined || sendPushWalletNotifications !== undefined;
+
+  const user = await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.update({
+      where: { id: req.userId },
+      data: {
+        ...(firstName !== undefined && { firstName }),
+        ...(lastName !== undefined && { lastName }),
+        ...(email !== undefined && { email }),
+        ...(avatar !== undefined && { avatar }),
+        ...(originalAvatar !== undefined && { originalAvatar }),
+        ...(language !== undefined && { language }),
+        ...(timeFormat !== undefined && { timeFormat }),
+        ...(weekStart !== undefined && { weekStart }),
+        ...(gender !== undefined && { gender }),
+        ...(finalGenderIsSet !== undefined && { genderIsSet: finalGenderIsSet }),
+        ...(preferredHandLeft !== undefined && { preferredHandLeft }),
+        ...(preferredHandRight !== undefined && { preferredHandRight }),
+        ...(preferredCourtSideLeft !== undefined && { preferredCourtSideLeft }),
+        ...(preferredCourtSideRight !== undefined && { preferredCourtSideRight }),
+        ...(sendTelegramMessages !== undefined && { sendTelegramMessages }),
+        ...(sendTelegramInvites !== undefined && { sendTelegramInvites }),
+        ...(sendTelegramDirectMessages !== undefined && { sendTelegramDirectMessages }),
+        ...(sendTelegramReminders !== undefined && { sendTelegramReminders }),
+        ...(sendTelegramWalletNotifications !== undefined && { sendTelegramWalletNotifications }),
+        ...(sendPushMessages !== undefined && { sendPushMessages }),
+        ...(sendPushInvites !== undefined && { sendPushInvites }),
+        ...(sendPushDirectMessages !== undefined && { sendPushDirectMessages }),
+        ...(sendPushReminders !== undefined && { sendPushReminders }),
+        ...(sendPushWalletNotifications !== undefined && { sendPushWalletNotifications }),
+        ...(favoriteTrainerId !== undefined && { favoriteTrainerId: favoriteTrainerId || null }),
+      },
+      select: PROFILE_SELECT_FIELDS,
+    });
+    if (hasTelegramPrefs || hasPushPrefs) {
+      const [userRow, pushCount] = await Promise.all([
+        tx.user.findUnique({ where: { id: req.userId }, select: { telegramId: true } }),
+        tx.pushToken.count({ where: { userId: req.userId! } }),
+      ]);
+      const hasTelegram = !!userRow?.telegramId;
+      const hasPush = pushCount > 0;
+      if (hasTelegramPrefs && hasTelegram) {
+        await tx.notificationPreference.upsert({
+          where: { userId_channelType: { userId: req.userId!, channelType: NotificationChannelType.TELEGRAM } },
+          create: {
+            userId: req.userId!,
+            channelType: NotificationChannelType.TELEGRAM,
+            ...DEFAULT_PREFERENCES,
+            ...(sendTelegramMessages !== undefined && { sendMessages: sendTelegramMessages }),
+            ...(sendTelegramInvites !== undefined && { sendInvites: sendTelegramInvites }),
+            ...(sendTelegramDirectMessages !== undefined && { sendDirectMessages: sendTelegramDirectMessages }),
+            ...(sendTelegramReminders !== undefined && { sendReminders: sendTelegramReminders }),
+            ...(sendTelegramWalletNotifications !== undefined && { sendWalletNotifications: sendTelegramWalletNotifications }),
+          },
+          update: {
+            ...(sendTelegramMessages !== undefined && { sendMessages: sendTelegramMessages }),
+            ...(sendTelegramInvites !== undefined && { sendInvites: sendTelegramInvites }),
+            ...(sendTelegramDirectMessages !== undefined && { sendDirectMessages: sendTelegramDirectMessages }),
+            ...(sendTelegramReminders !== undefined && { sendReminders: sendTelegramReminders }),
+            ...(sendTelegramWalletNotifications !== undefined && { sendWalletNotifications: sendTelegramWalletNotifications }),
+          },
+        });
+      }
+      if (hasPushPrefs && hasPush) {
+        await tx.notificationPreference.upsert({
+          where: { userId_channelType: { userId: req.userId!, channelType: NotificationChannelType.PUSH } },
+          create: {
+            userId: req.userId!,
+            channelType: NotificationChannelType.PUSH,
+            ...DEFAULT_PREFERENCES,
+            ...(sendPushMessages !== undefined && { sendMessages: sendPushMessages }),
+            ...(sendPushInvites !== undefined && { sendInvites: sendPushInvites }),
+            ...(sendPushDirectMessages !== undefined && { sendDirectMessages: sendPushDirectMessages }),
+            ...(sendPushReminders !== undefined && { sendReminders: sendPushReminders }),
+            ...(sendPushWalletNotifications !== undefined && { sendWalletNotifications: sendPushWalletNotifications }),
+          },
+          update: {
+            ...(sendPushMessages !== undefined && { sendMessages: sendPushMessages }),
+            ...(sendPushInvites !== undefined && { sendInvites: sendPushInvites }),
+            ...(sendPushDirectMessages !== undefined && { sendDirectMessages: sendPushDirectMessages }),
+            ...(sendPushReminders !== undefined && { sendReminders: sendPushReminders }),
+            ...(sendPushWalletNotifications !== undefined && { sendWalletNotifications: sendPushWalletNotifications }),
+          },
+        });
+      }
+    }
+    return updated;
   });
 
   res.json({
@@ -187,28 +258,32 @@ export const deleteUser = asyncHandler(async (req: AuthRequest, res: Response) =
     },
   });
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      phone: null,
-      email: null,
-      telegramId: null,
-      telegramUsername: null,
-      appleSub: null,
-      appleEmail: null,
-      appleEmailVerified: false,
-      googleId: null,
-      googleEmail: null,
-      googleEmailVerified: false,
-      firstName: '###DELETED',
-      lastName: null,
-      passwordHash: null,
-      currentCityId: null,
-      isActive: false,
-      avatar: deletedAvatarUrl,
-      originalAvatar: deletedAvatarUrl,
-    },
-  });
+  await prisma.$transaction([
+    prisma.pushToken.deleteMany({ where: { userId } }),
+    prisma.notificationPreference.deleteMany({ where: { userId } }),
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        phone: null,
+        email: null,
+        telegramId: null,
+        telegramUsername: null,
+        appleSub: null,
+        appleEmail: null,
+        appleEmailVerified: false,
+        googleId: null,
+        googleEmail: null,
+        googleEmailVerified: false,
+        firstName: '###DELETED',
+        lastName: null,
+        passwordHash: null,
+        currentCityId: null,
+        isActive: false,
+        avatar: deletedAvatarUrl,
+        originalAvatar: deletedAvatarUrl,
+      },
+    }),
+  ]);
 
   res.json({
     success: true,

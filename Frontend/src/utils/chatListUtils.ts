@@ -1,4 +1,14 @@
-import { ChatDraft, ChatContextType, ChatType, UserChat, GroupChannel, ChatMessage } from '@/api/chat';
+import {
+  ChatDraft,
+  ChatContextType,
+  ChatType,
+  UserChat,
+  GroupChannel,
+  ChatMessage,
+  LastMessagePreview,
+  getLastMessageTime,
+  getLastMessageText,
+} from '@/api/chat';
 import { Game, BasicUser } from '@/types';
 
 export interface UnifiedChatItem {
@@ -7,7 +17,7 @@ export interface UnifiedChatItem {
   title: string;
   subtitle?: string;
   avatar?: string | null;
-  lastMessage?: ChatMessage | null;
+  lastMessage?: ChatMessage | LastMessagePreview | null;
   draft?: ChatDraft | null;
   sortTimestamp: number;
   game?: Game;
@@ -47,42 +57,27 @@ export const matchDraftToChat = (
 };
 
 export const getSortTimestamp = (item: UnifiedChatItem): number => {
-  const lastMessageTime = item.lastMessage
-    ? new Date(item.lastMessage.createdAt).getTime()
-    : 0;
-  const draftTime = item.draft
-    ? new Date(item.draft.updatedAt).getTime()
-    : 0;
+  const lastMessageTime = getLastMessageTime(item.lastMessage);
+  const draftTime = item.draft ? new Date(item.draft.updatedAt).getTime() : 0;
   return Math.max(lastMessageTime, draftTime);
 };
 
 export const getDisplayText = (item: UnifiedChatItem): { text: string; isDraft: boolean } => {
-  const lastMessageTime = item.lastMessage
-    ? new Date(item.lastMessage.createdAt).getTime()
-    : 0;
-  const draftTime = item.draft
-    ? new Date(item.draft.updatedAt).getTime()
-    : 0;
+  const lastMessageTime = getLastMessageTime(item.lastMessage);
+  const draftTime = item.draft ? new Date(item.draft.updatedAt).getTime() : 0;
 
-  // Show draft if it exists and is newer than last message, or if there's no last message
   if (item.draft && (draftTime > lastMessageTime || !item.lastMessage)) {
     const draftContent = item.draft.content || '';
     if (draftContent.trim()) {
-      const truncated = draftContent.length > 60 
-        ? draftContent.substring(0, 60) + '...' 
-        : draftContent;
+      const truncated = draftContent.length > 60 ? draftContent.substring(0, 60) + '...' : draftContent;
       return { text: `Draft: ${truncated}`, isDraft: true };
-    } else {
-      // Draft exists but has no content - still show "Draft:" to indicate there's a draft
-      return { text: 'Draft:', isDraft: true };
     }
+    return { text: 'Draft:', isDraft: true };
   }
 
   if (item.lastMessage) {
-    const content = item.lastMessage.content || '';
-    const truncated = content.length > 60 
-      ? content.substring(0, 60) + '...' 
-      : content;
+    const text = getLastMessageText(item.lastMessage);
+    const truncated = text.length > 60 ? text.substring(0, 60) + '...' : text;
     return { text: truncated, isDraft: false };
   }
 
@@ -90,19 +85,16 @@ export const getDisplayText = (item: UnifiedChatItem): { text: string; isDraft: 
 };
 
 export const getDisplayTimestamp = (item: UnifiedChatItem): Date => {
-  const lastMessageTime = item.lastMessage
-    ? new Date(item.lastMessage.createdAt).getTime()
-    : 0;
-  const draftTime = item.draft
-    ? new Date(item.draft.updatedAt).getTime()
-    : 0;
+  const lastMessageTime = getLastMessageTime(item.lastMessage);
+  const draftTime = item.draft ? new Date(item.draft.updatedAt).getTime() : 0;
 
   if (draftTime > lastMessageTime && item.draft) {
     return new Date(item.draft.updatedAt);
   }
 
   if (item.lastMessage) {
-    return new Date(item.lastMessage.createdAt);
+    const m = item.lastMessage;
+    return new Date('updatedAt' in m ? m.updatedAt : (m as ChatMessage).createdAt);
   }
 
   return new Date(0);

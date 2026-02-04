@@ -12,7 +12,7 @@ const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(mo
 const CreateLeague = lazy(() => import('./pages/CreateLeague').then(module => ({ default: module.CreateLeague })));
 const CharCreation = lazy(() => import('./Gamify/Pages/CharCreation').then(module => ({ default: module.CharCreation })));
 // const Rating = lazy(() => import('./pages/Rating').then(module => ({ default: module.Rating })));
-const GameChat = lazy(() => import('./pages/GameChat').then(module => ({ default: module.GameChat })));
+const GameChatRoute = lazy(() => import('./pages/GameChatRoute').then(module => ({ default: module.GameChatRoute })));
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
 import { isProfileComplete } from './utils/userValidation';
@@ -33,7 +33,7 @@ import { extractLanguageCode } from './utils/displayPreferences';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import { backButtonService } from './services/backButtonService';
 import { navigationService } from './services/navigationService';
-import { markNavigation } from './utils/navigation';
+import { markNavigation, setupPopstateFallback } from './utils/navigation';
 import i18n from './i18n/config';
 import './i18n/config';
 
@@ -56,6 +56,12 @@ function AppContent() {
   useEffect(() => {
     navigationService.initialize(navigate);
     backButtonService.setNavigate(navigate);
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!isCapacitor()) return;
+    const cleanupPopstate = setupPopstateFallback(navigate);
+    return cleanupPopstate;
   }, [navigate]);
 
   const previousPathnameRef = useRef<string | null>(null);
@@ -450,7 +456,7 @@ function AppContent() {
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                  <GameChat />
+                  <GameChatRoute />
                 </Suspense>
               )}
             </ProtectedRoute>

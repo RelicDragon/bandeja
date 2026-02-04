@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Club } from '@/types';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface ClubModalProps {
   isOpen: boolean;
@@ -43,17 +43,11 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={onClose}
-      isBasic
-      modalId="club-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('createGame.selectClub')}</h3>
-        </div>
+    <Dialog open={isOpen} onClose={onClose} modalId="club-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('createGame.selectClub')}</DialogTitle>
+        </DialogHeader>
         <div className="overflow-y-auto flex-1 p-4">
           <div className="space-y-2 min-h-[80px]">
             {clubs.length === 0 ? (
@@ -92,6 +86,7 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
             )}
           </div>
         </div>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -8,7 +8,7 @@ export class GameReadinessService {
       where: { id: gameId },
       include: {
         participants: {
-          where: { isPlaying: true },
+          where: { status: 'PLAYING' },
         },
         fixedTeams: {
           include: {
@@ -50,7 +50,7 @@ export class GameReadinessService {
         allTeamsHavePlayers,
         allPlayersArePlayingParticipants,
         teamsReady,
-        participants: game.participants.map(p => ({ userId: p.userId, isPlaying: p.isPlaying })),
+        participants: game.participants.map(p => ({ userId: p.userId, status: p.status })),
         fixedTeams: game.fixedTeams.map(team => ({
           teamNumber: team.teamNumber,
           players: team.players.map(p => ({ userId: p.userId }))

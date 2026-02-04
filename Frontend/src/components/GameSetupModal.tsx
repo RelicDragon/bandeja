@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@/types';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { AnimatedTabs } from '@/components/AnimatedTabs';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -145,20 +145,13 @@ export const GameSetupModal = ({
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={onClose}
-      isBasic
-      modalId="game-setup-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-              {t('gameResults.setupGame')}
-            </h2>
-          </div>
+    <Dialog open={isOpen} onClose={onClose} modalId="game-setup-modal">
+      <DialogContent className="flex flex-col gap-2 p-2">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>{t('gameResults.setupGame')}</DialogTitle>
+          </DialogHeader>
 
+          <div className="flex-1 min-h-0 overflow-y-auto p-4">
           <div className="mb-4">
             <AnimatedTabs
               tabs={[
@@ -626,24 +619,26 @@ export const GameSetupModal = ({
               )}
             </AnimatePresence>
           </div>
+          </div>
 
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+          <DialogFooter className="flex-shrink-0 flex gap-2 -mb-4">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 text-sm rounded-lg font-semibold transition-all duration-200 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105"
+              className="flex-1 rounded-lg font-semibold transition-all duration-200 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105 p-2"
             >
               {t('common.cancel')}
             </button>
             {isEditing && (
               <button
                 onClick={handleConfirm}
-                className="flex-1 px-4 py-2.5 text-sm rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg shadow-green-500/50 hover:scale-105"
+                className="flex-1 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg shadow-green-500/50 hover:scale-105 p-2"
               >
                 {getStartText()}
               </button>
             )}
-          </div>
-    </BaseModal>
+          </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -147,6 +147,10 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
     select: PROFILE_SELECT_FIELDS,
   });
 
+  const { NotificationPreferenceService } = await import('../services/notificationPreference.service');
+  const { NotificationChannelType } = await import('@prisma/client');
+  await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
+
   const token = generateToken({ userId: user.id, telegramId: user.telegramId! });
 
   res.status(201).json({
@@ -180,6 +184,10 @@ export const loginWithTelegram = asyncHandler(async (req: Request, res: Response
     });
     user.language = language;
   }
+
+  const { NotificationPreferenceService } = await import('../services/notificationPreference.service');
+  const { NotificationChannelType } = await import('@prisma/client');
+  await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
 
   const token = generateToken({ userId: user.id, telegramId: user.telegramId! });
 

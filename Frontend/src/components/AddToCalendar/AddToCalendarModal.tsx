@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CalendarDays, Download, ExternalLink } from 'lucide-react';
+import { Download, ExternalLink } from 'lucide-react';
 import { buildGoogleCalendarUrl, downloadIcsEvent, addToNativeCalendar, type CalendarEventInput } from '@/utils/calendar';
 import { isCapacitor } from '@/utils/capacitor';
 import toast from 'react-hot-toast';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
 interface AddToCalendarModalProps {
   isOpen: boolean;
@@ -37,23 +37,13 @@ export const AddToCalendarModal = ({ isOpen, onClose, event, filename }: AddToCa
 
   if (isNative) {
     return (
-      <BaseModal
-        isOpen={isOpen}
-        onClose={onClose}
-        isBasic
-        modalId="add-to-calendar-modal"
-        showCloseButton={true}
-        closeOnBackdropClick={true}
-      >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <CalendarDays size={18} className="text-primary-600 dark:text-primary-400" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {t('gameDetails.addToCalendar')}
-              </h3>
-            </div>
-          </div>
+      <Dialog open={isOpen} onClose={onClose} modalId="add-to-calendar-modal">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('gameDetails.addToCalendar')}</DialogTitle>
+          </DialogHeader>
 
+          <div className="p-6">
           <div className="mb-5">
             <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{event.title}</p>
             {event.location && (
@@ -73,36 +63,30 @@ export const AddToCalendarModal = ({ isOpen, onClose, event, filename }: AddToCa
                 <span className="font-medium">{t('gameDetails.addToCalendar')}</span>
               )}
             </button>
+          </div>
+          </div>
 
+          <DialogFooter>
             <button
               onClick={onClose}
               className="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors"
             >
               {t('common.close')}
             </button>
-          </div>
-      </BaseModal>
+          </DialogFooter>
+      </DialogContent>
+    </Dialog>
     );
   }
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={onClose}
-      isBasic
-      modalId="add-to-calendar-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-      <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <CalendarDays size={18} className="text-primary-600 dark:text-primary-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('gameDetails.addToCalendar')}
-            </h3>
-          </div>
-        </div>
+    <Dialog open={isOpen} onClose={onClose} modalId="add-to-calendar-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('gameDetails.addToCalendar')}</DialogTitle>
+        </DialogHeader>
 
+        <div className="p-6">
         <div className="mb-5">
           <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{event.title}</p>
           {event.location && (
@@ -132,15 +116,19 @@ export const AddToCalendarModal = ({ isOpen, onClose, event, filename }: AddToCa
             <span className="font-medium">{t('gameDetails.addToOtherCalendar')}</span>
             <Download size={18} />
           </button>
+        </div>
+        </div>
 
+        <DialogFooter>
           <button
             onClick={onClose}
             className="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors"
           >
             {t('common.close')}
           </button>
-        </div>
-    </BaseModal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

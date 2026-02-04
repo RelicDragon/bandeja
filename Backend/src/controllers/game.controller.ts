@@ -82,8 +82,9 @@ export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Resp
   const startDate = req.query.startDate as string | undefined;
   const endDate = req.query.endDate as string | undefined;
   const showArchived = req.query.showArchived === 'true';
+  const includeLeagues = req.query.includeLeagues === 'true';
 
-  const games = await GameService.getAvailableGames(req.userId, req.user?.currentCityId, startDate, endDate, showArchived);
+  const games = await GameService.getAvailableGames(req.userId, req.user?.currentCityId, startDate, endDate, showArchived, includeLeagues);
 
   res.json({
     success: true,
@@ -139,6 +140,16 @@ export const joinAsGuest = asyncHandler(async (req: AuthRequest, res: Response) 
   res.json({
     success: true,
     message,
+  });
+});
+
+export const leaveChat = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  await ParticipantService.leaveGuest(id, req.userId!);
+
+  res.json({
+    success: true,
+    message: 'games.leftChatSuccessfully',
   });
 });
 
@@ -201,7 +212,6 @@ export const acceptJoinQueue = asyncHandler(async (req: AuthRequest, res: Respon
   const { id } = req.params;
   const { userId } = req.body;
   
-  // TODO: Remove after 2025-02-02 - Use ParticipantService directly
   const message = await ParticipantService.acceptNonPlayingParticipant(id, req.userId!, userId);
 
   res.json({
@@ -214,7 +224,6 @@ export const declineJoinQueue = asyncHandler(async (req: AuthRequest, res: Respo
   const { id } = req.params;
   const { userId } = req.body;
   
-  // TODO: Remove after 2025-02-02 - Use ParticipantService directly
   const message = await ParticipantService.declineNonPlayingParticipant(id, req.userId!, userId);
 
   res.json({
@@ -226,7 +235,6 @@ export const declineJoinQueue = asyncHandler(async (req: AuthRequest, res: Respo
 export const cancelJoinQueue = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   
-  // TODO: Remove after 2025-02-02 - Use ParticipantService directly
   const message = await ParticipantService.cancelNonPlayingParticipant(id, req.userId!);
 
   res.json({

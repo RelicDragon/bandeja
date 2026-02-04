@@ -79,7 +79,7 @@ export class LeagueCreateService {
           create: {
             userId: userId,
             role: 'OWNER',
-            isPlaying: false,
+            status: 'IN_QUEUE',
           },
         },
       },

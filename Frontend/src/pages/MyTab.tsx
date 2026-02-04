@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { InvitesSection, MyGamesSection, PastGamesSection } from '@/components/home';
-import { Button } from '@/components';
+import { Button, MainTabFooter } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
@@ -383,6 +383,7 @@ export const MyTab = () => {
             </Button>
           </div>
         </div>
+        <MainTabFooter isLoading={loading || loadingPastGames || isRefreshing} />
       </div>
     </>
   );

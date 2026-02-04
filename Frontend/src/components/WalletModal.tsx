@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Send, ArrowUp, ArrowDown, Wallet as WalletIcon } from 'lucide-react';
+import { Send, ArrowUp, ArrowDown } from 'lucide-react';
 import { transactionsApi, Transaction, Wallet } from '@/api/transactions';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from './Button';
 import { PlayerListModal } from './PlayerListModal';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { PlayerCardBottomSheet } from './PlayerCardBottomSheet';
-import { BaseModal } from './BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface WalletModalProps {
   onClose: () => void;
@@ -121,22 +121,15 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
     }
   };
 
+  const walletOpen = !showPlayerList && !selectedPlayerId && !viewPlayerId;
+
   return (
     <>
-      <BaseModal 
-        isOpen={!showPlayerList && !selectedPlayerId && !viewPlayerId} 
-        onClose={onClose} 
-        isBasic 
-        modalId="wallet-modal"
-        showCloseButton={true}
-        closeOnBackdropClick={true}
-      >
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <WalletIcon size={24} className="text-primary-600 dark:text-primary-400" />
-              {t('wallet.title') || 'Wallet'}
-            </h2>
-          </div>
+      <Dialog open={walletOpen} onClose={onClose} modalId="wallet-modal">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('wallet.title') || 'Wallet'}</DialogTitle>
+          </DialogHeader>
 
           {loading ? (
             <div className="flex items-center justify-center py-12 flex-1">
@@ -232,7 +225,8 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
               </div>
             </>
           )}
-      </BaseModal>
+        </DialogContent>
+      </Dialog>
 
       {showPlayerList && (
         <PlayerListModal

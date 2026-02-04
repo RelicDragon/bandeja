@@ -4,6 +4,9 @@ import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 import notificationService from '../notification.service';
+import { NotificationPreferenceService } from '../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../types/notifications.types';
 
 export class LeagueBroadcastService {
   static async broadcastRoundStartMessage(leagueRoundId: string, userId: string, isAdmin: boolean = false) {
@@ -25,14 +28,12 @@ export class LeagueBroadcastService {
         games: {
           include: {
             participants: {
-              where: { isPlaying: true },
+              where: { status: 'PLAYING' },
               include: {
                 user: {
                   select: {
                     ...USER_SELECT_FIELDS,
                     telegramId: true,
-                    sendTelegramMessages: true,
-                    sendPushMessages: true,
                     language: true,
                     currentCityId: true,
                   },
@@ -47,8 +48,6 @@ export class LeagueBroadcastService {
                       select: {
                         ...USER_SELECT_FIELDS,
                         telegramId: true,
-                        sendTelegramMessages: true,
-                        sendPushMessages: true,
                         language: true,
                         currentCityId: true,
                       },
@@ -117,7 +116,7 @@ export class LeagueBroadcastService {
       };
 
       const participants = game.participants
-        .filter(p => p.isPlaying && p.user)
+        .filter(p => p.status === 'PLAYING' && p.user)
         .map(p => p.user);
 
       const fixedTeamPlayers = game.hasFixedTeams
@@ -143,14 +142,14 @@ export class LeagueBroadcastService {
 
         try {
           await notificationService.sendLeagueRoundStartNotification(gameWithContext, user);
+          const [allowTelegram, allowPush] = await Promise.all([
+            NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES),
+            NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.PUSH, PreferenceKey.SEND_MESSAGES),
+          ]);
           const notificationTypes: string[] = [];
-          if (user.sendTelegramMessages && user.telegramId) {
-            notificationTypes.push('Telegram');
-          }
-          if (user.sendPushMessages) {
-            notificationTypes.push('Push');
-          }
-          
+          if (allowTelegram) notificationTypes.push('Telegram');
+          if (allowPush) notificationTypes.push('Push');
+
           if (notificationTypes.length > 0) {
             console.log(`  ✅ Sent ${notificationTypes.join(' + ')} notification to ${userName} (${user.id})`);
           } else {

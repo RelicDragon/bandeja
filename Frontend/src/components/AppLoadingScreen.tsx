@@ -6,10 +6,10 @@ export const AppLoadingScreen = ({ isInitializing }: AppLoadingScreenProps) => {
   if (!isInitializing) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-white dark:bg-black">
+    <div className="fixed inset-0 z-50 overflow-hidden" style={{ backgroundColor: '#abdee3' }}>
       <div className="absolute inset-0 flex items-center justify-center">
         <img
-          src="/bandeja-blue-flat-small.png"
+          src="/bandeja2-white-tr.png"
           alt="Logo"
           className="w-[220px] h-[220px] object-contain animate-splash-logo"
         />

@@ -8,14 +8,11 @@ import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 export const CreateGameWrapper = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const state = location.state as { entityType?: EntityType; initialDate?: Date | null; initialGameData?: Partial<Game> };
+  const state = location.state as { entityType?: EntityType; initialGameData?: Partial<Game> };
   const entityType = state?.entityType;
-  const initialDate = state?.initialDate;
   const initialGameData = state?.initialGameData;
   const { setBottomTabsVisible } = useNavigationStore();
   
-  console.log('CreateGameWrapper - received state:', { entityType, initialDate, stateType: typeof initialDate, initialGameData });
-
   useEffect(() => {
     setBottomTabsVisible(false);
     return () => {
@@ -32,6 +29,6 @@ export const CreateGameWrapper = () => {
     return <Navigate to="/" replace />;
   }
 
-  return <CreateGame entityType={entityType} initialDate={initialDate} initialGameData={initialGameData} />;
+  return <CreateGame entityType={entityType} initialGameData={initialGameData} />;
 };
 

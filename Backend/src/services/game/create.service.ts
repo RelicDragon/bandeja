@@ -170,7 +170,7 @@ export class GameCreateService {
           create: {
             userId,
             role: 'OWNER',
-            isPlaying: ownerIsPlaying,
+            status: ownerIsPlaying ? 'PLAYING' : 'IN_QUEUE',
           },
         },
       },

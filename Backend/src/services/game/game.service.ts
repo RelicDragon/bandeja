@@ -4,7 +4,6 @@ export { GameReadService } from './read.service';
 export { GameUpdateService } from './update.service';
 export { GameDeleteService } from './delete.service';
 export { ParticipantService } from './participant.service';
-export { JoinQueueService } from './joinQueue.service';
 export { AdminService } from './admin.service';
 export { OwnershipService } from './ownership.service';
 
@@ -43,8 +42,8 @@ export class GameService {
     return GameReadService.getPastGames(userId, userCityId, limit, offset);
   }
 
-  static async getAvailableGames(userId: string, userCityId?: string, startDate?: string, endDate?: string, showArchived?: boolean) {
-    return GameReadService.getAvailableGames(userId, userCityId, startDate, endDate, showArchived);
+  static async getAvailableGames(userId: string, userCityId?: string, startDate?: string, endDate?: string, showArchived?: boolean, includeLeagues?: boolean) {
+    return GameReadService.getAvailableGames(userId, userCityId, startDate, endDate, showArchived, includeLeagues);
   }
 
   static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {

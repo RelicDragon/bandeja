@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Flag } from 'lucide-react';
 import { ChatMessage } from '@/api/chat';
 import { chatApi } from '@/api/chat';
 import { toast } from 'react-hot-toast';
-import { BaseModal } from './BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 
 type MessageReportReason = 'SPAM' | 'HARASSMENT' | 'INAPPROPRIATE_CONTENT' | 'FAKE_INFORMATION' | 'OTHER';
 
@@ -69,27 +68,16 @@ export const ReportMessageModal: React.FC<ReportMessageModalProps> = ({
   };
 
   return (
-    <BaseModal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      isBasic 
-      modalId="report-message-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <Flag className="w-5 h-5 text-red-500" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {t('chat.report.title')}
-            </h2>
-          </div>
-        </div>
+    <Dialog open={isOpen} onClose={onClose} modalId="report-message-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('chat.report.title')}</DialogTitle>
+        </DialogHeader>
 
         <div className="p-6 overflow-y-auto flex-1">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          <DialogDescription className="mb-6">
             {t('chat.report.description')}
-          </p>
+          </DialogDescription>
 
           <div className="space-y-3 mb-6">
             {reasons.map((reason) => (
@@ -146,7 +134,8 @@ export const ReportMessageModal: React.FC<ReportMessageModalProps> = ({
             {isSubmitting ? t('common.loading') : t('chat.report.submit')}
           </button>
         </div>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };
 

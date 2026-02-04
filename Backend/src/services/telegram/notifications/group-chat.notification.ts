@@ -8,6 +8,9 @@ import { getShortDayOfWeek, getTimezonesByCityIds } from '../../user-timezone.se
 import { DEFAULT_TIMEZONE } from '../../../utils/constants';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import prisma from '../../../config/database';
+import { NotificationPreferenceService } from '../../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../../types/notifications.types';
 
 export async function sendGroupChatNotification(
   api: Api,
@@ -28,7 +31,6 @@ export async function sendGroupChatNotification(
         select: {
           id: true,
           telegramId: true,
-          sendTelegramMessages: true,
           language: true,
           firstName: true,
           lastName: true,
@@ -43,10 +45,9 @@ export async function sendGroupChatNotification(
 
   for (const participant of participants) {
     const user = participant.user;
-    
-    if (!user.telegramId || !user.sendTelegramMessages || user.id === sender.id) {
-      continue;
-    }
+    if (user.id === sender.id) continue;
+    const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+    if (!allowed || !user.telegramId) continue;
 
     if (hasMentions) {
       if (!mentionedUserIds?.has(user.id)) {

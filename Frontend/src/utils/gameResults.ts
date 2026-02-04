@@ -100,7 +100,7 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
   } else if (game.resultsByAnyone) {
     // Check if user is a playing participant and resultsByAnyone is true
     const isPlayingParticipant = game.participants.some(
-      (p) => p.userId === user.id && p.isPlaying
+      (p) => p.userId === user.id && p.status === 'PLAYING'
     );
     hasEditPermission = isPlayingParticipant;
   }

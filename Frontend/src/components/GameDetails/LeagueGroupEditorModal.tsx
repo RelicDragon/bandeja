@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { PlayerAvatar } from '@/components';
 import { leaguesApi, LeagueGroupManagementPayload, LeagueStanding } from '@/api/leagues';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 
 const RENAME_DEBOUNCE_MS = 800;
 
@@ -293,24 +293,12 @@ export const LeagueGroupEditorModal = ({
   };
 
   return (
-    <BaseModal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      isBasic 
-      modalId="league-group-editor-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {t('gameDetails.groupEditorTitle')}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('gameDetails.manageGroupsDescription')}
-            </p>
-          </div>
-        </div>
+    <Dialog open={isOpen} onClose={onClose} modalId="league-group-editor-modal">
+      <DialogContent>
+        <DialogHeader className="flex-col items-start">
+          <DialogTitle>{t('gameDetails.groupEditorTitle')}</DialogTitle>
+          <DialogDescription>{t('gameDetails.manageGroupsDescription')}</DialogDescription>
+        </DialogHeader>
 
         <div className="border-b border-gray-200 dark:border-gray-800">
           <div className="flex px-4">
@@ -628,7 +616,8 @@ export const LeagueGroupEditorModal = ({
             </>
           )}
         </div>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -19,6 +19,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
   const isDesktopChats = isDesktop && currentPage === 'chats';
   const isDesktopBugs = isDesktop && currentPage === 'bugs';
+  const isDesktopGameDetails = isDesktop && currentPage === 'gameDetails';
+  const isGameDetailsPath = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
   const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') || 
                                  location.pathname.includes('/group-chat/') || 
                                  location.pathname.includes('/channel-chat/') || 
@@ -26,7 +28,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const isOnBugsListPage = chatsFilter === 'bugs' && !isOnSpecificChatRoute;
   const isDesktopChatsSplitView = isDesktopChats && !isOnBugsListPage;
   const isDesktopBugsSplitView = isDesktopBugs;
-  const shouldAddBottomPadding = bottomTabsVisible && !isDesktopChats && !isDesktopBugs;
+  const isDesktopGameDetailsSplitView = isDesktopGameDetails && isGameDetailsPath;
+  const shouldAddBottomPadding = bottomTabsVisible && !isDesktopChats && !isDesktopBugs && !isDesktopGameDetailsSplitView;
   
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -37,13 +40,13 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       )}
       <main 
         style={{ 
-          paddingTop: shouldHideHeader ? '0' : ((isDesktopChatsSplitView || isDesktopBugsSplitView) ? '0' : `calc(4rem + env(safe-area-inset-top))`), 
+          paddingTop: shouldHideHeader ? '0' : ((isDesktopChatsSplitView || isDesktopBugsSplitView || isDesktopGameDetailsSplitView) ? '0' : `calc(4rem + env(safe-area-inset-top))`), 
           paddingBottom: shouldAddBottomPadding ? 'calc(5rem + env(safe-area-inset-bottom))' : '1.5rem',
-          paddingLeft: (isDesktopChatsSplitView || isDesktopBugsSplitView) ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
-          paddingRight: (isDesktopChatsSplitView || isDesktopBugsSplitView) ? '0' : `max(0.5rem, env(safe-area-inset-right))`
+          paddingLeft: (isDesktopChatsSplitView || isDesktopBugsSplitView || isDesktopGameDetailsSplitView) ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
+          paddingRight: (isDesktopChatsSplitView || isDesktopBugsSplitView || isDesktopGameDetailsSplitView) ? '0' : `max(0.5rem, env(safe-area-inset-right))`
         }}
       >
-        {(isDesktopChatsSplitView || isDesktopBugsSplitView) ? children : <div className="container mx-auto px-2 py-4">{children}</div>}
+        {(isDesktopChatsSplitView || isDesktopBugsSplitView || isDesktopGameDetailsSplitView) ? children : <div className="container mx-auto px-2 py-4">{children}</div>}
       </main>
     </div>
   );

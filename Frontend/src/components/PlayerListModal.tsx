@@ -11,7 +11,7 @@ import { PlayerAvatar } from './PlayerAvatar';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { matchesSearch } from '@/utils/transliteration';
-import { BaseModal } from '@/components';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface PlayerListModalProps {
   gameId?: string;
@@ -185,23 +185,13 @@ export const PlayerListModal = ({
   const showCountHint = multiSelect && selectedCount > 0;
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      isBasic
-      modalId="player-list-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-      contentClassName="h-[80vh] max-w-[80vw] overflow-hidden flex flex-col p-0 bg-gradient-to-b from-white to-gray-50/80 dark:from-gray-900 dark:to-gray-900/95"
-    >
-      <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0 bg-white/80 dark:bg-gray-900/80 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/40">
-          <UserPlus className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-        </div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+    <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
+      <DialogContent>
+      <DialogHeader className="flex flex-row items-center gap-3">
+        <DialogTitle>
           {title || (multiSelect ? t('games.invitePlayers') : t('games.invitePlayer'))}
-        </h2>
-      </div>
+        </DialogTitle>
+      </DialogHeader>
 
       {loading ? (
         <div className="flex flex-1 items-center justify-center py-16 flex-shrink-0">
@@ -327,6 +317,7 @@ export const PlayerListModal = ({
           )}
         </>
       )}
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };

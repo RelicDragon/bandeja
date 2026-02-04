@@ -4,6 +4,7 @@ import { ChatType } from '@prisma/client';
 import {
   createMessage,
   getGameMessages,
+  getGameParticipants,
   updateMessageState,
   markMessageAsRead,
   addReaction,
@@ -23,7 +24,6 @@ import {
   pinUserChat,
   unpinUserChat,
   getBugMessages,
-  getBugLastUserMessage,
   getBugUnreadCount,
   getBugsUnreadCounts,
   markAllBugMessagesAsRead,
@@ -41,7 +41,7 @@ import {
   getUserDrafts,
   deleteDraft
 } from '../controllers/chat.controller';
-import { authenticate } from '../middleware/auth';
+import { authenticate, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import rateLimit from 'express-rate-limit';
 
@@ -57,8 +57,28 @@ const draftLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const createMessageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { success: false, message: 'Too many messages, please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  skipFailedRequests: true,
+});
+
+const unreadObjectsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { success: false, message: 'Too many unread requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
+
 router.post(
   '/messages',
+  createMessageLimiter,
   validate([
     body('contextId').optional().isString().withMessage('Context ID must be a string'),
     body('gameId').optional().isString().withMessage('Game ID must be a string'),
@@ -74,6 +94,7 @@ router.post(
 );
 
 router.get('/games/:gameId/messages', getGameMessages);
+router.get('/games/:gameId/participants', getGameParticipants);
 router.get('/games/:gameId/unread-count', getGameUnreadCount);
 router.post(
   '/games/unread-counts',
@@ -84,7 +105,7 @@ router.post(
   getGamesUnreadCounts
 );
 router.get('/unread-count', getUnreadCount);
-router.get('/unread-objects', getUnreadObjects);
+router.get('/unread-objects', unreadObjectsLimiter, getUnreadObjects);
 router.get('/user-games', getUserChatGames);
 
 router.patch(
@@ -130,7 +151,6 @@ router.post(
 
 // Bug Chat Routes
 router.get('/bugs/:bugId/messages', getBugMessages);
-router.get('/bugs/:bugId/last-user-message', getBugLastUserMessage);
 router.get('/bugs/:bugId/unread-count', getBugUnreadCount);
 router.post('/bugs/:bugId/mark-all-read', markAllBugMessagesAsRead);
 router.post(

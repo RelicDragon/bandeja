@@ -6,7 +6,7 @@ import { Select } from '@/components';
 import { gamesApi } from '@/api';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import toast from 'react-hot-toast';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
 interface EditGameTextModalProps {
   isOpen: boolean;
@@ -76,8 +76,6 @@ export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditG
     }
   };
 
-  if (!isOpen) return null;
-
   const isLeagueSeason = game?.entityType === 'LEAGUE_SEASON';
   const nameLabel = t(isLeagueSeason ? 'createGame.gameNameLeague' : 'createGame.gameName');
   const namePlaceholder = t(isLeagueSeason ? 'createGame.gameNamePlaceholderLeague' : 'createGame.gameNamePlaceholder');
@@ -85,20 +83,14 @@ export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditG
   const commentsPlaceholder = t(isLeagueSeason ? 'createGame.commentsPlaceholderLeague' : 'createGame.commentsPlaceholder');
   const gameTypeLabel = t(isLeagueSeason ? 'createGame.gameTypeLeague' : 'createGame.gameType');
 
+  if (!isOpen) return null;
+
   return (
-    <BaseModal 
-      isOpen={isOpen} 
-      onClose={handleClose} 
-      isBasic 
-      modalId="edit-game-text-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {t('common.edit')}
-          </h2>
-        </div>
+    <Dialog open={isOpen} onClose={handleClose} modalId="edit-game-text-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('common.edit')}</DialogTitle>
+        </DialogHeader>
 
         <div className="overflow-y-auto flex-1 p-6 space-y-4">
           {game.entityType !== 'TRAINING' && (
@@ -162,7 +154,7 @@ export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditG
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
+        <DialogFooter className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={handleClose}
             disabled={isSaving}
@@ -178,7 +170,8 @@ export const EditGameTextModal = ({ isOpen, onClose, game, onGameUpdate }: EditG
             <Save size={18} />
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
-        </div>
-    </BaseModal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

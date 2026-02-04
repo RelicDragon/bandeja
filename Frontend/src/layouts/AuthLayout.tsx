@@ -72,7 +72,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         <div className="text-center">
           <div className="inline-flex items-center justify-center">
             <img 
-              src="/bandeja-blue-flat-small.png" 
+              src="/bandeja2-white-tr.png" 
               alt={t('app.title')} 
               className={`h-48 w-auto cursor-pointer select-none ${isAnimating ? 'logo-bounce' : ''}`}
               onClick={handleLogoClick}

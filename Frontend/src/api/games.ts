@@ -30,7 +30,7 @@ export const gamesApi = {
     return response.data;
   },
 
-  getAvailableGames: async (params?: { month?: number; year?: number; startDate?: string; endDate?: string; showArchived?: boolean }) => {
+  getAvailableGames: async (params?: { month?: number; year?: number; startDate?: string; endDate?: string; showArchived?: boolean; includeLeagues?: boolean }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games/available', { params });
     return response.data;
   },
@@ -62,6 +62,11 @@ export const gamesApi = {
 
   joinAsGuest: async (id: string) => {
     const response = await api.post<ApiResponse<Game>>(`/games/${id}/join-as-guest`);
+    return response.data;
+  },
+
+  leaveChat: async (id: string) => {
+    const response = await api.post<ApiResponse<void>>(`/games/${id}/leave-chat`);
     return response.data;
   },
 

@@ -3,8 +3,6 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { USER_SELECT_FIELDS } from '../utils/constants';
-import { InviteStatus } from '@prisma/client';
-
 const getGameInclude = () => ({
   club: {
     include: {
@@ -27,27 +25,6 @@ const getGameInclude = () => ({
         select: USER_SELECT_FIELDS,
       },
     },
-  },
-  invites: {
-    where: {
-      status: InviteStatus.PENDING,
-    },
-    include: {
-      receiver: {
-        select: USER_SELECT_FIELDS,
-      },
-    },
-  },
-  joinQueues: {
-    where: {
-      status: InviteStatus.PENDING,
-    },
-    include: {
-      user: {
-        select: USER_SELECT_FIELDS,
-      },
-    },
-    orderBy: { createdAt: 'asc' },
   },
   outcomes: {
     include: {

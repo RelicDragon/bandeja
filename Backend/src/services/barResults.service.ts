@@ -20,7 +20,7 @@ export class BarResultsService {
             select: {
               userId: true,
               role: true,
-              isPlaying: true,
+              status: true,
             },
           },
         },
@@ -49,7 +49,7 @@ export class BarResultsService {
         return;
       }
 
-      const playingParticipants = game.participants.filter(p => p.isPlaying);
+      const playingParticipants = game.participants.filter(p => p.status === 'PLAYING');
       if (playingParticipants.length < 2) {
         await client.game.update({
           where: { id: gameId },
@@ -85,7 +85,7 @@ export class BarResultsService {
       }
 
       for (const participant of allParticipants) {
-        const isPlaying = participant.isPlaying;
+        const isPlaying = participant.status === 'PLAYING';
         let baseSocialLevelBoost = 0.0;
 
         for (const otherParticipant of playingParticipants) {
@@ -218,8 +218,8 @@ export class BarResultsService {
         resultsStatus: 'FINAL',
         entityType: { notIn: [EntityType.LEAGUE_SEASON] },
         AND: [
-          { participants: { some: { userId: userId1, isPlaying: true } } },
-          { participants: { some: { userId: userId2, isPlaying: true } } },
+          { participants: { some: { userId: userId1, status: 'PLAYING' } } },
+          { participants: { some: { userId: userId2, status: 'PLAYING' } } },
         ],
       },
       select: { id: true },

@@ -17,7 +17,7 @@ export async function addOrUpdateParticipant(
   });
 
   if (existingParticipant) {
-    if (existingParticipant.isPlaying) {
+    if (existingParticipant.status === 'PLAYING') {
       return {
         created: false,
         updated: false,
@@ -27,7 +27,12 @@ export async function addOrUpdateParticipant(
 
     await tx.gameParticipant.update({
       where: { id: existingParticipant.id },
-      data: { isPlaying: true },
+      data: {
+        status: 'PLAYING',
+        invitedByUserId: null,
+        inviteMessage: null,
+        inviteExpiresAt: null,
+      },
     });
 
     return {
@@ -42,7 +47,7 @@ export async function addOrUpdateParticipant(
       gameId,
       userId,
       role: options?.role || ParticipantRole.PARTICIPANT,
-      isPlaying: true,
+      status: 'PLAYING',
     },
   });
 

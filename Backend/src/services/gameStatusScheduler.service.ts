@@ -229,7 +229,7 @@ export class GameStatusScheduler {
     const participants = await prisma.gameParticipant.findMany({
       where: {
         gameId,
-        isPlaying: true,
+        status: 'PLAYING',
       },
       include: {
         user: {

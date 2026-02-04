@@ -5,25 +5,28 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser, formatUserName } from '../../shared/notification-base';
+import { NotificationPreferenceService } from '../../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../../types/notifications.types';
 
 export async function sendInviteNotification(
   api: Api,
   invite: any
 ) {
+  const allowed = await NotificationPreferenceService.doesUserAllow(invite.receiverId, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_INVITES);
+  if (!allowed) return;
+
   const receiver = await prisma.user.findUnique({
     where: { id: invite.receiverId },
     select: {
       id: true,
       telegramId: true,
-      sendTelegramInvites: true,
       language: true,
       currentCityId: true,
     }
   });
 
-  if (!receiver || !receiver.telegramId || !receiver.sendTelegramInvites) {
-    return;
-  }
+  if (!receiver?.telegramId) return;
 
   if (!invite.game) {
     return;

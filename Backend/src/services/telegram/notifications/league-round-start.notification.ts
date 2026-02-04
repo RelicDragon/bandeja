@@ -4,15 +4,17 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { NotificationPreferenceService } from '../../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../../types/notifications.types';
 
 export async function sendLeagueRoundStartNotification(
   api: Api,
   game: any,
   user: any
 ) {
-  if (!user.telegramId || !user.sendTelegramMessages) {
-    return;
-  }
+  const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+  if (!allowed || !user.telegramId) return;
 
   const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
   const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);

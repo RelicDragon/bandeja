@@ -70,6 +70,13 @@ export const adminAcceptInvite = asyncHandler(async (req: AuthRequest, res: Resp
 
   const result = await AdminGamesService.acceptInvite(inviteId);
 
+  if (result.gameId) {
+    const socketService = (global as any).socketService;
+    if (socketService) {
+      await socketService.emitGameUpdate(result.gameId, req.userId!);
+    }
+  }
+
   res.json({
     success: true,
     message: result.message,

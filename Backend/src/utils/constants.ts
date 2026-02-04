@@ -131,6 +131,7 @@ export const PROFILE_SELECT_FIELDS = {
   ...USER_SELECT_FIELDS,
   approvedById: true,
   approvedWhen: true,
+  favoriteTrainerId: true,
   phone: true,
   email: true,
   telegramId: true,

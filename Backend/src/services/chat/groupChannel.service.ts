@@ -176,35 +176,19 @@ export class GroupChannelService {
       }
     });
 
-    const groupChannelsWithLastMessage = await Promise.all(
-      groupChannels.map(async (gc) => {
-        const lastMessage = await prisma.chatMessage.findFirst({
-          where: {
-            chatContextType: 'GROUP',
-            contextId: gc.id
-          },
-          orderBy: { createdAt: 'desc' },
-          include: {
-            sender: {
-              select: USER_SELECT_FIELDS
-            }
-          }
-        });
-
-        const userParticipant = gc.participants.find(p => p.userId === userId);
-        const isOwner = userParticipant?.role === ParticipantRole.OWNER;
-        const isParticipant = !!userParticipant;
-
-        return {
-          ...gc,
-          lastMessage,
-          isParticipant,
-          isOwner
-        };
-      })
-    );
-
-    return groupChannelsWithLastMessage;
+    return groupChannels.map((gc) => {
+      const userParticipant = gc.participants.find((p) => p.userId === userId);
+      const isOwner = userParticipant?.role === ParticipantRole.OWNER;
+      const isParticipant = !!userParticipant;
+      return {
+        ...gc,
+        lastMessage: gc.lastMessagePreview
+          ? { preview: gc.lastMessagePreview, updatedAt: gc.updatedAt }
+          : null,
+        isParticipant,
+        isOwner
+      };
+    });
   }
 
   static async getPublicGroupChannels(userId?: string) {

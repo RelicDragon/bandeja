@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { PlayerAvatar } from '../PlayerAvatar';
 import { GameParticipant } from '@/types';
+import { isParticipantPlaying } from '@/utils/participantStatus';
 import { matchesSearch } from '@/utils/transliteration';
-import { BaseModal } from '@/components';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface TeamPlayerSelectorProps {
   gameParticipants: GameParticipant[];
@@ -33,7 +34,7 @@ export const TeamPlayerSelector = ({
   };
 
   const filteredParticipants = useMemo(() => {
-    let filtered = gameParticipants.filter(p => p.isPlaying);
+    let filtered = gameParticipants.filter(isParticipantPlaying);
 
     // Filter out already selected players
     if (selectedPlayerIds.length > 0) {
@@ -56,25 +57,11 @@ export const TeamPlayerSelector = ({
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      isBasic
-      modalId="team-player-selector"
-      showCloseButton={false}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {title}
-          </h2>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} className="text-gray-500 dark:text-gray-400" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onClose={handleClose} modalId="team-player-selector">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
 
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
           <div className="relative">
@@ -123,6 +110,7 @@ export const TeamPlayerSelector = ({
             ))}
           </div>
         )}
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -28,6 +28,7 @@
     "@capgo/capacitor-social-login": "^8.2.16",
     "@ebarooni/capacitor-calendar": "^8.0.0",
     "@paralleldrive/cuid2": "^3.0.4",
+    "@radix-ui/react-dialog": "^1.1.15",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@react-three/postprocessing": "^3.0.4",
@@ -61,6 +62,7 @@
     "socket.io-client": "^4.8.1",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.182.0",
+    "vaul": "^1.1.2",
     "zustand": "^4.4.7"
   },
   "devDependencies": {

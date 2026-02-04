@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components';
 import { AlertTriangle, Upload, Download } from 'lucide-react';
-import { BaseModal } from '../BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 
 interface SyncConflictModalProps {
   isOpen: boolean;
@@ -38,14 +38,11 @@ export const SyncConflictModal = ({
   };
 
   return (
-    <BaseModal 
-      isOpen={internalIsOpen} 
-      onClose={handleClose} 
-      isBasic 
-      modalId="sync-conflict-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
+    <Dialog open={internalIsOpen} onClose={handleClose} modalId="sync-conflict-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('gameResults.unsyncedChangesTitle') || 'Unsynced Changes Detected'}</DialogTitle>
+        </DialogHeader>
         <div className="flex flex-col text-center">
           <div className="w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center mx-auto mb-4">
             <AlertTriangle
@@ -53,16 +50,12 @@ export const SyncConflictModal = ({
               className="text-yellow-600 dark:text-yellow-400"
             />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            {t('gameResults.unsyncedChangesTitle') || 'Unsynced Changes Detected'}
-          </h3>
-
-          <p className="text-gray-500 dark:text-gray-400 mb-6">
+          <DialogDescription className="mb-6">
             {t('gameResults.unsyncedChangesMessage') || 'You have local changes that are not synced to the server. Before updating the local database, please choose an action:'}
-          </p>
+          </DialogDescription>
         </div>
 
-        <div className="flex flex-col gap-3 mb-4">
+        <DialogFooter className="flex flex-col gap-3 mb-4">
           <Button
             onClick={onSyncToServer}
             disabled={isSyncing || isLoading}
@@ -81,8 +74,9 @@ export const SyncConflictModal = ({
             <Download size={18} />
             {isLoading ? (t('common.loading') || 'Loading...') : (t('gameResults.eraseAndLoadFromServer') || 'Erase Local Changes & Load from Server')}
           </Button>
-        </div>
-    </BaseModal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

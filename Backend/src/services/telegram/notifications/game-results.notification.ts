@@ -1,5 +1,7 @@
 import { Api } from 'grammy';
+import { NotificationChannelType } from '@prisma/client';
 import prisma from '../../../config/database';
+import { NotificationPreferenceService, PreferenceKey } from '../../notificationPreference.service';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
@@ -112,13 +114,12 @@ export async function sendGameFinishedNotification(
       },
       club: true,
       participants: {
-        where: { isPlaying: true },
+        where: { status: 'PLAYING' },
         include: {
           user: {
             select: {
               id: true,
               telegramId: true,
-              sendTelegramMessages: true,
               language: true,
               firstName: true,
               lastName: true,
@@ -171,8 +172,10 @@ export async function sendGameFinishedNotification(
   }
 
   const participant = game.participants.find((p: any) => p.userId === userId);
-  if (!participant || !participant.user.telegramId || !participant.user.sendTelegramMessages) {
-    console.log(`[GAME RESULTS NOTIFICATION] User ${userId} not eligible: telegramId=${participant?.user.telegramId}, sendMessages=${participant?.user.sendTelegramMessages}`);
+  if (!participant) return;
+  const allowed = await NotificationPreferenceService.doesUserAllow(userId, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+  if (!allowed || !participant.user.telegramId) {
+    console.log(`[GAME RESULTS NOTIFICATION] User ${userId} not eligible`);
     return;
   }
   

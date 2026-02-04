@@ -61,7 +61,7 @@ async function isPlayingParticipant(gameId: string, userId: string): Promise<boo
     where: {
       gameId,
       userId,
-      isPlaying: true,
+      status: 'PLAYING',
     },
   });
 
@@ -79,7 +79,7 @@ async function isPlayingParticipant(gameId: string, userId: string): Promise<boo
       where: {
         gameId: game.parentId,
         userId,
-        isPlaying: true,
+        status: 'PLAYING',
       },
     });
 

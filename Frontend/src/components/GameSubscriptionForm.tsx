@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { enUS, ru, es, sr, Locale } from 'date-fns/locale';
 import { Calendar, X, Star } from 'lucide-react';
-import { Button, Card, Select, CalendarComponent, PlayerLevelSection, BaseModal } from '@/components';
+import { Button, Card, Select, CalendarComponent, PlayerLevelSection } from '@/components';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { TimeRangeSlider } from './TimeRangeSlider';
 import { City, Club, EntityType } from '@/types';
 import { citiesApi, clubsApi } from '@/api';
@@ -445,18 +446,12 @@ export const GameSubscriptionForm = ({
         </div>
 
         {showStartCalendar && (
-          <BaseModal
-            isOpen={showStartCalendar}
-            onClose={() => setShowStartCalendar(false)}
-            isBasic
-            modalId="game-subscription-calendar"
-            showCloseButton={false}
-            closeOnBackdropClick={true}
-          >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {t('gameSubscriptions.startDate')}
-            </h3>
-            <CalendarComponent
+          <Dialog open={showStartCalendar} onClose={() => setShowStartCalendar(false)} modalId="game-subscription-calendar-start">
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t('gameSubscriptions.startDate')}</DialogTitle>
+              </DialogHeader>
+              <CalendarComponent
                 selectedDate={startDateObj}
                 onDateSelect={(date: Date) => {
                   const newStartDate = format(date, 'yyyy-MM-dd');
@@ -467,22 +462,17 @@ export const GameSubscriptionForm = ({
                   setShowStartCalendar(false);
                 }}
               />
-          </BaseModal>
+            </DialogContent>
+          </Dialog>
         )}
 
         {showEndCalendar && (
-          <BaseModal
-            isOpen={showEndCalendar}
-            onClose={() => setShowEndCalendar(false)}
-            isBasic
-            modalId="game-subscription-calendar"
-            showCloseButton={false}
-            closeOnBackdropClick={true}
-          >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {t('gameSubscriptions.endDate')}
-            </h3>
-            <CalendarComponent
+          <Dialog open={showEndCalendar} onClose={() => setShowEndCalendar(false)} modalId="game-subscription-calendar-end">
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t('gameSubscriptions.endDate')}</DialogTitle>
+              </DialogHeader>
+              <CalendarComponent
                 selectedDate={endDateObj}
                 onDateSelect={(date: Date) => {
                   setEndDate(format(date, 'yyyy-MM-dd'));
@@ -490,7 +480,8 @@ export const GameSubscriptionForm = ({
                 }}
                 minDate={startDate ? new Date(startDate) : undefined}
               />
-          </BaseModal>
+            </DialogContent>
+          </Dialog>
         )}
 
         <PlayerLevelSection

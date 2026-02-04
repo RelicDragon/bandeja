@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { socketService } from '@/services/socketService';
+import { invitesApi } from '@/api';
 import { useHeaderStore } from './headerStore';
 import { Game, Invite } from '@/types';
 
@@ -163,6 +164,9 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
 
       const handleSyncRequired = (data: { timestamp: string }) => {
         set({ lastSyncRequired: data });
+        invitesApi.getMyInvites('PENDING')
+          .then((res) => useHeaderStore.getState().setPendingInvites(res.data.length))
+          .catch(() => {});
       };
 
       const handleBetCreated = (data: BetCreatedData) => {

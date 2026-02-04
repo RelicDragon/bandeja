@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usersApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { useCityList } from '@/hooks/useCityList';
 import { CityListContent } from '@/components/CityListContent';
 
@@ -72,24 +72,12 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
   const modalId = isSelectorMode ? 'city-selector-modal' : 'city-modal';
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={onClose}
-      isBasic
-      modalId={modalId}
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-      <div className="flex flex-col min-h-0 h-[80vh]">
-        {isSelectorMode ? (
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
-          </div>
-        ) : (
-          <div className="px-4 pt-2 pb-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
-          </div>
-        )}
+    <Dialog open={isOpen} onClose={onClose} modalId={modalId}>
+      <DialogContent>
+      <div className="flex flex-col min-h-0 h-[80vh] p-2">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
 
         <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
           <div className={`flex flex-col flex-1 min-h-0 overflow-hidden ${isSelectorMode ? 'p-0' : 'px-0'}`}>
@@ -131,6 +119,7 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
           )}
         </div>
       </div>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };

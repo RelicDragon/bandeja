@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse, User, BasicUser, EntityType, GameType, GameStatus, ParticipantRole } from '@/types';
+import { ApiResponse, User, BasicUser, EntityType, GameType, GameStatus, ParticipantRole, ParticipantStatus } from '@/types';
 
 export interface LevelHistoryItem {
   id: string;
@@ -66,7 +66,7 @@ export interface PlayerComparison {
       id: string;
       userId: string;
       role: ParticipantRole;
-      isPlaying: boolean;
+      status: ParticipantStatus;
       joinedAt: string;
       stats?: any;
       user: BasicUser;
@@ -114,9 +114,30 @@ export interface InvitablePlayer extends BasicUser {
   interactionCount: number;
 }
 
+export type NotificationChannelType = 'PUSH' | 'TELEGRAM' | 'WHATSAPP' | 'VIBER';
+
+export interface NotificationPreference {
+  channelType: NotificationChannelType;
+  sendMessages: boolean;
+  sendInvites: boolean;
+  sendDirectMessages: boolean;
+  sendReminders: boolean;
+  sendWalletNotifications: boolean;
+}
+
 export const usersApi = {
   getProfile: async () => {
     const response = await api.get<ApiResponse<User>>('/users/profile');
+    return response.data;
+  },
+
+  getNotificationPreferences: async () => {
+    const response = await api.get<ApiResponse<NotificationPreference[]>>('/users/notification-preferences');
+    return response.data;
+  },
+
+  updateNotificationPreferences: async (preferences: Array<Partial<NotificationPreference> & { channelType: NotificationChannelType }>) => {
+    const response = await api.put<ApiResponse<NotificationPreference[]>>('/users/notification-preferences', { preferences });
     return response.data;
   },
 
@@ -168,6 +189,11 @@ export const usersApi = {
 
   deleteUser: async () => {
     const response = await api.delete<ApiResponse<{ message: string }>>('/users/profile');
+    return response.data;
+  },
+
+  setFavoriteTrainer: async (trainerId: string | null) => {
+    const response = await api.put<ApiResponse<{ favoriteTrainerId: string | null }>>('/users/favorite-trainer', { trainerId });
     return response.data;
   },
 };

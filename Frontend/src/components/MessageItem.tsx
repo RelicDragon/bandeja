@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useLayoutEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
@@ -16,6 +16,7 @@ import { ReportMessageModal } from './ReportMessageModal';
 import { parseMentions } from '@/utils/parseMentions';
 import { parseUrls } from '@/utils/parseUrls';
 import { extractLanguageCode } from '@/utils/language';
+import { AlertCircle } from 'lucide-react';
 
 interface ContextMenuState {
   isOpen: boolean;
@@ -29,6 +30,8 @@ interface MessageItemProps {
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onReplyMessage: (message: ChatMessage) => void;
+  onResendQueued?: (tempId: string) => void;
+  onRemoveFromQueue?: (tempId: string) => void;
   contextMenuState: ContextMenuState;
   onOpenContextMenu: (messageId: string, position: { x: number; y: number }) => void;
   onCloseContextMenu: () => void;
@@ -44,6 +47,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onRemoveReaction,
   onDeleteMessage,
   onReplyMessage,
+  onResendQueued,
+  onRemoveFromQueue,
   contextMenuState,
   onOpenContextMenu,
   onCloseContextMenu,
@@ -62,17 +67,31 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [reportMessage, setReportMessage] = useState<ChatMessage | null>(null);
   const [selectedMentionUserId, setSelectedMentionUserId] = useState<string | null>(null);
+  const [showFailedMenu, setShowFailedMenu] = useState(false);
   const [currentMessage, setCurrentMessage] = useState(message);
   const isOwnMessage = currentMessage.senderId === user?.id;
   const isSystemMessage = !currentMessage.senderId;
   const isSending = (currentMessage as ChatMessageWithStatus)._status === 'SENDING';
+  const isFailed = (currentMessage as ChatMessageWithStatus)._status === 'FAILED';
+  const isOffline = isSending || isFailed;
+  const optimisticId = (currentMessage as ChatMessageWithStatus)._optimisticId;
   const { observeMessage, unobserveMessage } = useMessageReadTracking(disableReadTracking);
   
   const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === currentMessage.id;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setCurrentMessage(message);
   }, [message]);
+
+  useEffect(() => {
+    if (!showFailedMenu) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (messageRef.current?.contains(e.target as Node)) return;
+      setShowFailedMenu(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [showFailedMenu]);
 
   const displayContent = isSystemMessage
     ? formatSystemMessageForDisplay(currentMessage.content, t)
@@ -215,6 +234,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   };
 
   const hasReplies = () => {
+    if (isOffline) return false;
     return getReplyCount() > 0;
   };
 
@@ -312,7 +332,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       const clientY = e.clientY;
       
       longPressTimer.current = setTimeout(() => {
-        if ((currentMessage as ChatMessageWithStatus)._status === 'SENDING') return;
+        if (isOffline) return;
         menuWasOpened = true;
         onOpenContextMenu(currentMessage.id, { x: clientX, y: clientY });
       }, 500);
@@ -342,7 +362,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       const clientY = e.touches[0].clientY;
       
       longPressTimer.current = setTimeout(() => {
-        if ((currentMessage as ChatMessageWithStatus)._status === 'SENDING') return;
+        if (isOffline) return;
         menuWasOpened = true;
         onOpenContextMenu(currentMessage.id, { x: clientX, y: clientY });
       }, 500);
@@ -404,7 +424,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         detachListeners(reactionButton);
       }
     };
-  }, [currentMessage, onOpenContextMenu]);
+  }, [currentMessage, onOpenContextMenu, isOffline]);
 
   return (
     <>
@@ -457,7 +477,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               )}
               
               <div className="relative overflow-visible">
-                {currentMessage.replyTo && (
+                {!isOffline && currentMessage.replyTo && (
                   <ReplyPreview
                     replyTo={currentMessage.replyTo}
                     onScrollToMessage={onScrollToMessage}
@@ -734,13 +754,38 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     <div className={`absolute bottom-1 right-2 flex items-center gap-1 ${isChannel ? 'text-gray-400 dark:text-gray-500' : (isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500')}`}>
                       <span className="text-[10px]">{formatMessageTime(currentMessage.createdAt)}</span>
                       {isOwnMessage && (
-                        <div className="flex items-center">
+                        <div className="flex items-center relative">
                           {isSending ? (
                             <div className="flex items-center gap-0.5" title="Sending...">
                               <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-1" />
                               <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-2" />
                               <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-3" />
                             </div>
+                          ) : isFailed ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setShowFailedMenu((v) => !v); }}
+                                className="p-0.5 rounded hover:bg-white/20"
+                                title={t('chat.failedToSend', { defaultValue: 'Failed to send' })}
+                              >
+                                <AlertCircle size={14} className="text-red-200" />
+                              </button>
+                              {showFailedMenu && optimisticId && (onResendQueued || onRemoveFromQueue) && (
+                                <div className="absolute right-0 bottom-full mb-1 flex flex-col gap-0.5 rounded-lg bg-gray-800 dark:bg-gray-700 py-1 shadow-lg z-50 min-w-[100px]">
+                                  {onResendQueued && (
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); setShowFailedMenu(false); onResendQueued(optimisticId); }} className="px-3 py-1.5 text-left text-sm text-white hover:bg-gray-700 dark:hover:bg-gray-600">
+                                      {t('chat.resend', { defaultValue: 'Resend' })}
+                                    </button>
+                                  )}
+                                  {onRemoveFromQueue && (
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); setShowFailedMenu(false); onRemoveFromQueue(optimisticId); }} className="px-3 py-1.5 text-left text-sm text-red-300 hover:bg-gray-700 dark:hover:bg-gray-600">
+                                      {t('chat.delete', { defaultValue: 'Delete' })}
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </>
                           ) : currentMessage.readReceipts && currentMessage.readReceipts.length > 0 ? (
                             <div className="text-purple-200" title={`Read by ${currentMessage.readReceipts.length} ${currentMessage.readReceipts.length === 1 ? 'person' : 'people'}`}>
                               <DoubleTickIcon size={14} variant="double" />
@@ -756,7 +801,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                   </div>
                   
                   {/* Reply counter positioned absolutely under bubble */}
-                  {hasReplies() && (
+                  {!isOffline && hasReplies() && (
                     <div className={`absolute top-[calc(100%-2px)] ${isOwnMessage ? 'right-1' : 'left-2'} z-10 overflow-visible`}>
                       <button
                         onClick={handleScrollToReplies}
@@ -775,8 +820,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     </div>
                   )}
                   
+                  {!isOffline && (
                   <div className={`flex items-center gap-1 ${isOwnMessage ? 'flex-row-reverse mr-1' : 'flex-row ml-1'} self-center`}>
-                    {/* Simple reaction display */}
                     <button 
                       data-reaction-button="true"
                       onClick={handleQuickReaction}
@@ -821,6 +866,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                       </div>
                     )}
                   </div>
+                  )}
                 </div>
               </div>
             </div>

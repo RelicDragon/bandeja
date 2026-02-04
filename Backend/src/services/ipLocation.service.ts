@@ -6,7 +6,7 @@ interface AbstractApiResponse {
   location?: { longitude: number; latitude: number };
 }
 
-const ABSTRACT_API_MAX_PER_SEC = 2;
+const ABSTRACT_API_INTERVAL_MS = 2000;
 const abstractApiTimestamps: number[] = [];
 let abstractApiRateLimitPromise = Promise.resolve();
 
@@ -14,11 +14,11 @@ async function waitAbstractApiRateLimit(): Promise<void> {
   let now = Date.now();
   const prune = () => {
     now = Date.now();
-    abstractApiTimestamps.splice(0, abstractApiTimestamps.length, ...abstractApiTimestamps.filter((t) => now - t < 1000));
+    abstractApiTimestamps.splice(0, abstractApiTimestamps.length, ...abstractApiTimestamps.filter((t) => now - t < ABSTRACT_API_INTERVAL_MS));
   };
   prune();
-  while (abstractApiTimestamps.length >= ABSTRACT_API_MAX_PER_SEC) {
-    const waitMs = abstractApiTimestamps[0] + 1000 - now;
+  while (abstractApiTimestamps.length >= 1) {
+    const waitMs = abstractApiTimestamps[0] + ABSTRACT_API_INTERVAL_MS - now;
     if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
     prune();
   }

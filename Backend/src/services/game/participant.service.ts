@@ -9,8 +9,13 @@ import { addOrUpdateParticipant, performPostJoinOperations } from '../../utils/p
 import { InviteService } from '../invite.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { createSystemMessageWithNotification } from '../../utils/systemMessageHelper';
-import { ChatType } from '@prisma/client';
+import { ChatType, ParticipantRole } from '@prisma/client';
 import { BetService } from '../bets/bet.service';
+
+const PLAYING_STATUS = 'PLAYING' as const;
+const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
+const GUEST_STATUS = 'GUEST' as const;
+const INVITED_STATUS = 'INVITED' as const;
 
 export class ParticipantService {
   static async joinGame(gameId: string, userId: string) {
@@ -18,7 +23,7 @@ export class ParticipantService {
       where: { id: gameId },
       include: {
         participants: {
-          where: { isPlaying: true }
+          where: { status: PLAYING_STATUS }
         },
       },
     });
@@ -35,24 +40,29 @@ export class ParticipantService {
     });
 
     if (existingParticipant) {
-      if (existingParticipant.isPlaying) {
+      if (existingParticipant.status === PLAYING_STATUS) {
         throw new ApiError(400, 'Already joined this game as a player');
       }
+      if (existingParticipant.status === IN_QUEUE_STATUS) {
+        throw new ApiError(400, 'games.alreadyInJoinQueue');
+      }
 
-      // Non-playing participant trying to become playing
+      const currentGame = await fetchGameWithPlayingParticipants(prisma, gameId);
+      const joinResult = await validatePlayerCanJoinGame(currentGame, userId);
+
+      if (!joinResult.canJoin && joinResult.shouldQueue) {
+        return await this.moveExistingParticipantToQueue(gameId, userId);
+      }
+
       await prisma.$transaction(async (tx) => {
-        const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
-        const joinResult = await validatePlayerCanJoinGame(currentGame, userId);
-
-        if (!joinResult.canJoin && joinResult.shouldQueue) {
-          throw new ApiError(400, joinResult.reason || 'errors.games.cannotAddPlayer');
+        const gameInTx = await fetchGameWithPlayingParticipants(tx, gameId);
+        const txJoinResult = await validatePlayerCanJoinGame(gameInTx, userId);
+        if (!txJoinResult.canJoin) {
+          throw new ApiError(400, txJoinResult.reason || 'errors.games.cannotAddPlayer');
         }
-
-        // Check if allowDirectJoin allows self-promotion
-        if (!currentGame.allowDirectJoin) {
+        if (!gameInTx.allowDirectJoin) {
           throw new ApiError(400, 'errors.games.directJoinNotAllowed');
         }
-
         await addOrUpdateParticipant(tx, gameId, userId);
       });
 
@@ -110,32 +120,16 @@ export class ParticipantService {
       throw new ApiError(404, 'Not a participant of this game');
     }
 
-    if (participant.role === 'OWNER') {
+    if (participant.role === 'OWNER' && participant.status !== PLAYING_STATUS) {
       throw new ApiError(400, 'Owner cannot leave the game. Delete the game instead.');
     }
 
-    if (participant.isPlaying) {
+    if (participant.status === PLAYING_STATUS) {
       await prisma.$transaction(async (tx) => {
         await tx.gameParticipant.update({
           where: { id: participant.id },
-          data: { isPlaying: false },
+          data: { status: IN_QUEUE_STATUS },
         });
-
-        // TODO: Remove after 2025-02-02 - Backward compatibility: delete JoinQueue entry if exists
-        try {
-          await tx.joinQueue.deleteMany({
-            where: {
-              userId,
-              gameId,
-              status: 'PENDING',
-            },
-          });
-        } catch (error: any) {
-          // Ignore if JoinQueue table doesn't exist
-          if (error.code !== 'P2021') {
-            console.warn('Failed to delete backward compatibility JoinQueue entry:', error);
-          }
-        }
       });
 
       await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_GAME);
@@ -145,37 +139,26 @@ export class ParticipantService {
         console.error('Failed to cancel bets with user in condition:', err)
       );
       return 'games.leftSuccessfully';
-    } else {
-      await prisma.$transaction(async (tx) => {
-        await tx.gameParticipant.delete({
-          where: { id: participant.id },
-        });
+    }
 
-        // TODO: Remove after 2025-02-02 - Backward compatibility: delete JoinQueue entry
-        try {
-          await tx.joinQueue.deleteMany({
-            where: {
-              userId,
-              gameId,
-              status: 'PENDING',
-            },
-          });
-        } catch (error: any) {
-          // Ignore if JoinQueue table doesn't exist
-          if (error.code !== 'P2021') {
-            console.warn('Failed to delete backward compatibility JoinQueue entry:', error);
-          }
-        }
-      });
-
-      await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_CHAT);
-      await GameService.updateGameReadiness(gameId);
-      await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
-      await BetService.cancelBetsWithUserInCondition(gameId, userId).catch(err =>
-        console.error('Failed to cancel bets with user in condition:', err)
-      );
+    if (participant.status === GUEST_STATUS) {
+      await this.leaveGuest(gameId, userId);
       return 'games.leftChatSuccessfully';
     }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.gameParticipant.delete({
+        where: { id: participant.id },
+      });
+    });
+
+    await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_CHAT);
+    await GameService.updateGameReadiness(gameId);
+    await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
+    await BetService.cancelBetsWithUserInCondition(gameId, userId).catch(err =>
+      console.error('Failed to cancel bets with user in condition:', err)
+    );
+    return 'games.leftChatSuccessfully';
   }
 
   static async joinAsGuest(gameId: string, userId: string) {
@@ -200,11 +183,13 @@ export class ParticipantService {
     });
 
     if (existingParticipant) {
-      if (!existingParticipant.isPlaying) {
-        throw new ApiError(400, 'Already joined this game as a guest');
-      } else {
+      if (existingParticipant.status === GUEST_STATUS) {
+        return 'games.joinedChatAsGuest';
+      }
+      if (existingParticipant.status === PLAYING_STATUS) {
         throw new ApiError(400, 'Already joined this game as a player');
       }
+      throw new ApiError(400, 'Already a participant of this game');
     }
 
     await prisma.gameParticipant.create({
@@ -212,7 +197,7 @@ export class ParticipantService {
         gameId,
         userId,
         role: 'PARTICIPANT',
-        isPlaying: false,
+        status: GUEST_STATUS,
       },
     });
 
@@ -220,6 +205,26 @@ export class ParticipantService {
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
     return 'games.joinedChatAsGuest';
+  }
+
+  static async leaveGuest(gameId: string, userId: string) {
+    const participant = await prisma.gameParticipant.findFirst({
+      where: { gameId, userId, status: GUEST_STATUS },
+      include: {
+        user: { select: USER_SELECT_FIELDS },
+      },
+    });
+
+    if (!participant) {
+      throw new ApiError(404, 'Not in chat as guest');
+    }
+
+    await prisma.gameParticipant.delete({
+      where: { id: participant.id },
+    });
+
+    await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_CHAT);
+    await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
   }
 
   static async togglePlayingStatus(gameId: string, userId: string, isPlaying: boolean) {
@@ -239,12 +244,14 @@ export class ParticipantService {
       throw new ApiError(404, 'Not a participant of this game');
     }
 
-    if (isPlaying && !participant.isPlaying) {
+    const newStatus = isPlaying ? PLAYING_STATUS : IN_QUEUE_STATUS;
+
+    if (isPlaying && participant.status !== PLAYING_STATUS) {
       const game = await prisma.game.findUnique({
         where: { id: gameId },
         include: {
           participants: {
-            where: { isPlaying: true },
+            where: { status: PLAYING_STATUS },
             include: {
               user: {
                 select: {
@@ -260,9 +267,7 @@ export class ParticipantService {
         throw new ApiError(404, 'Game not found');
       }
 
-      // NEW: Check if allowDirectJoin allows self-promotion
       if (!game.allowDirectJoin) {
-        // Only owner/admin can accept non-playing participants when allowDirectJoin is false
         const isOwnerOrAdmin = participant.role === 'OWNER' || participant.role === 'ADMIN';
         if (!isOwnerOrAdmin) {
           throw new ApiError(403, 'errors.games.directJoinNotAllowed');
@@ -277,27 +282,16 @@ export class ParticipantService {
 
     await prisma.gameParticipant.update({
       where: { id: participant.id },
-      data: { isPlaying },
+      data: {
+        status: newStatus,
+        invitedByUserId: null,
+        inviteMessage: null,
+        inviteExpiresAt: null,
+      },
     });
 
     if (isPlaying) {
       await InviteService.deleteInvitesForUserInGame(gameId, userId);
-      
-      // TODO: Remove after 2025-02-02 - Backward compatibility: delete JoinQueue entry
-      try {
-        await prisma.joinQueue.deleteMany({
-          where: {
-            userId,
-            gameId,
-            status: 'PENDING',
-          },
-        });
-      } catch (error: any) {
-        // Ignore if JoinQueue table doesn't exist
-        if (error.code !== 'P2021') {
-          console.warn('Failed to delete backward compatibility JoinQueue entry:', error);
-        }
-      }
     }
 
     if (participant.user) {
@@ -313,13 +307,33 @@ export class ParticipantService {
     return isPlaying ? 'games.joinedSuccessfully' : 'games.leftSuccessfully';
   }
 
-  // TODO: Remove after 2025-02-02 - Backward compatibility: also create JoinQueue entry
+  static async moveExistingParticipantToQueue(gameId: string, userId: string) {
+    const game = await prisma.game.findUnique({ where: { id: gameId } });
+    if (!game) throw new ApiError(404, 'Game not found');
+    validateGameCanAcceptParticipants(game);
+
+    await prisma.gameParticipant.updateMany({
+      where: { gameId, userId },
+      data: { status: IN_QUEUE_STATUS },
+    });
+
+    await createSystemMessageWithNotification(
+      gameId,
+      SystemMessageType.USER_JOINED_JOIN_QUEUE,
+      userId,
+      ChatType.ADMINS
+    );
+    await InviteService.deleteInvitesForUserInGame(gameId, userId);
+    await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
+    return 'games.addedToJoinQueue';
+  }
+
   static async addToQueueAsParticipant(gameId: string, userId: string) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       include: {
         participants: {
-          where: { isPlaying: true }
+          where: { status: PLAYING_STATUS }
         },
       },
     });
@@ -335,10 +349,9 @@ export class ParticipantService {
     });
 
     if (existingParticipant) {
-      if (existingParticipant.isPlaying) {
+      if (existingParticipant.status === PLAYING_STATUS) {
         throw new ApiError(400, 'Already a playing participant');
       }
-      // Already in queue as non-playing participant
       throw new ApiError(400, 'games.alreadyInJoinQueue');
     }
 
@@ -354,38 +367,21 @@ export class ParticipantService {
 
         validateGameCanAcceptParticipants(currentGame);
 
-        // NEW: Create non-playing participant
         await tx.gameParticipant.create({
           data: {
             userId,
             gameId,
             role: 'PARTICIPANT',
-            isPlaying: false,
+            status: IN_QUEUE_STATUS,
           },
         });
-
-        // TODO: Remove after 2025-02-02 - Backward compatibility: also create JoinQueue entry
-        try {
-          await tx.joinQueue.create({
-            data: {
-              userId,
-              gameId,
-              status: 'PENDING',
-            },
-          });
-        } catch (error: any) {
-          // Ignore if JoinQueue entry already exists or table doesn't exist
-          if (error.code !== 'P2002' && error.code !== 'P2021') {
-            console.warn('Failed to create backward compatibility JoinQueue entry:', error);
-          }
-        }
       });
     } catch (error: any) {
       if (error.code === 'P2002') {
         const existingParticipant = await prisma.gameParticipant.findFirst({
           where: { gameId, userId },
         });
-        if (existingParticipant && !existingParticipant.isPlaying) {
+        if (existingParticipant && existingParticipant.status !== PLAYING_STATUS) {
           throw new ApiError(400, 'games.alreadyInJoinQueue');
         }
       }
@@ -409,8 +405,7 @@ export class ParticipantService {
       where: {
         gameId,
         userId: queueUserId,
-        isPlaying: false,
-        role: 'PARTICIPANT',
+        status: IN_QUEUE_STATUS,
       },
     });
 
@@ -438,7 +433,7 @@ export class ParticipantService {
         where: {
           gameId,
           userId: queueUserId,
-          isPlaying: false,
+          status: IN_QUEUE_STATUS,
         },
       });
 
@@ -446,27 +441,15 @@ export class ParticipantService {
         throw new ApiError(404, 'games.joinQueueRequestNotFound');
       }
 
-      // Update to playing participant
       await tx.gameParticipant.update({
         where: { id: currentParticipantEntry.id },
-        data: { isPlaying: true },
+        data: {
+          status: PLAYING_STATUS,
+          invitedByUserId: null,
+          inviteMessage: null,
+          inviteExpiresAt: null,
+        },
       });
-
-      // TODO: Remove after 2025-02-02 - Backward compatibility: delete JoinQueue entry
-      try {
-        await tx.joinQueue.deleteMany({
-          where: {
-            userId: queueUserId,
-            gameId,
-            status: 'PENDING',
-          },
-        });
-      } catch (error: any) {
-        // Ignore if JoinQueue table doesn't exist
-        if (error.code !== 'P2021') {
-          console.warn('Failed to delete backward compatibility JoinQueue entry:', error);
-        }
-      }
     });
 
     await ParticipantMessageHelper.sendJoinMessage(gameId, queueUserId);
@@ -501,8 +484,7 @@ export class ParticipantService {
       where: {
         gameId,
         userId: queueUserId,
-        isPlaying: false,
-        role: 'PARTICIPANT',
+        status: IN_QUEUE_STATUS,
       },
     });
 
@@ -513,21 +495,6 @@ export class ParticipantService {
     await prisma.gameParticipant.delete({
       where: { id: participant.id },
     });
-
-    // TODO: Remove after 2025-02-02 - Backward compatibility: delete JoinQueue entry
-    try {
-      await prisma.joinQueue.deleteMany({
-        where: {
-          userId: queueUserId,
-          gameId,
-          status: 'PENDING',
-        },
-      });
-    } catch (error: any) {
-      if (error.code !== 'P2021') {
-        console.warn('Failed to delete backward compatibility JoinQueue entry:', error);
-      }
-    }
 
     await createSystemMessageWithNotification(
       gameId,
@@ -556,46 +523,19 @@ export class ParticipantService {
       where: {
         gameId,
         userId,
-        isPlaying: false,
-        role: 'PARTICIPANT',
+        status: IN_QUEUE_STATUS,
       },
     });
 
-    // TODO: Remove after 2025-02-02 - Backward compatibility: check old JoinQueue if no participant found
-    const oldJoinQueue = participant ? null : await prisma.joinQueue.findFirst({
-      where: {
-        gameId,
-        userId,
-        status: 'PENDING',
-      },
-    });
-
-    if (!participant && !oldJoinQueue) {
+    if (!participant) {
       throw new ApiError(404, 'games.joinQueueRequestNotFound');
     }
+    if (participant.role === ParticipantRole.OWNER) {
+      throw new ApiError(400, 'games.ownerCannotCancelQueue');
+    }
 
-    await prisma.$transaction(async (tx) => {
-      if (participant) {
-        await tx.gameParticipant.delete({
-          where: { id: participant.id },
-        });
-      }
-
-      // TODO: Remove after 2025-02-02 - Backward compatibility: delete JoinQueue entry
-      try {
-        await tx.joinQueue.deleteMany({
-          where: {
-            userId,
-            gameId,
-            status: 'PENDING',
-          },
-        });
-      } catch (error: any) {
-        // Ignore if JoinQueue table doesn't exist
-        if (error.code !== 'P2021') {
-          console.warn('Failed to delete backward compatibility JoinQueue entry:', error);
-        }
-      }
+    await prisma.gameParticipant.delete({
+      where: { id: participant.id },
     });
 
     await createSystemMessageWithNotification(
@@ -606,6 +546,86 @@ export class ParticipantService {
 
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
     return 'games.joinRequestCanceled';
+  }
+
+  /** Creates participant with status INVITED. Returns synthetic invite shape for backward compat. */
+  static async sendInvite(
+    gameId: string,
+    senderId: string,
+    receiverId: string,
+    message?: string | null,
+    expiresAt?: Date | null
+  ): Promise<{ participant: any; invite: any }> {
+    validateGameCanAcceptParticipants(await prisma.game.findUniqueOrThrow({ where: { id: gameId } }));
+
+    const existing = await prisma.gameParticipant.findFirst({
+      where: { gameId, userId: receiverId },
+    });
+    if (existing) {
+      if (existing.status === INVITED_STATUS) {
+        throw new ApiError(400, 'errors.invites.alreadySent');
+      }
+      if (existing.status === PLAYING_STATUS) {
+        throw new ApiError(400, 'Already a playing participant');
+      }
+      throw new ApiError(400, 'errors.invites.alreadySent');
+    }
+
+    const participant = await prisma.gameParticipant.create({
+      data: {
+        gameId,
+        userId: receiverId,
+        role: 'PARTICIPANT',
+        status: INVITED_STATUS,
+        invitedByUserId: senderId,
+        inviteMessage: message ?? null,
+        inviteExpiresAt: expiresAt ?? null,
+      },
+      include: {
+        user: { select: USER_SELECT_FIELDS },
+        invitedByUser: { select: USER_SELECT_FIELDS },
+        game: {
+          select: {
+            id: true,
+            name: true,
+            gameType: true,
+            startTime: true,
+            endTime: true,
+            maxParticipants: true,
+            minParticipants: true,
+            minLevel: true,
+            maxLevel: true,
+            isPublic: true,
+            affectsRating: true,
+            hasBookedCourt: true,
+            afterGameGoToBar: true,
+            hasFixedTeams: true,
+            teamsReady: true,
+            participantsReady: true,
+            status: true,
+            resultsStatus: true,
+            entityType: true,
+            court: { select: { id: true, name: true, club: { select: { id: true, name: true } } } },
+            club: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+
+    const invite = {
+      id: participant.id,
+      receiverId: participant.userId,
+      gameId: participant.gameId,
+      status: 'PENDING',
+      message: participant.inviteMessage,
+      expiresAt: participant.inviteExpiresAt,
+      createdAt: participant.joinedAt,
+      updatedAt: participant.joinedAt,
+      receiver: participant.user,
+      sender: participant.invitedByUser,
+      game: participant.game,
+    };
+    return { participant, invite };
   }
 }
 

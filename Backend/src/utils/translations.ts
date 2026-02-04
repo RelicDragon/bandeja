@@ -108,6 +108,7 @@ const translations: Record<string, Record<string, string>> = {
     'errors.invites.notFound': 'Invite not found',
     'errors.invites.notAuthorizedToAccept': 'You are not authorized to accept this invite',
     'errors.invites.notAuthorizedToDecline': 'You are not authorized to decline this invite',
+    'errors.invites.ownerCannotDecline': 'Owner cannot decline or leave via invite; accept the invite or transfer ownership',
     'errors.invites.alreadyProcessed': 'This invite has already been processed',
     'errors.invites.expired': 'This invite has expired',
     'errors.invites.gameFull': 'The game is full',

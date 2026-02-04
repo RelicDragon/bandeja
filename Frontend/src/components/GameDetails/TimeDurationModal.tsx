@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Game, Club, EntityType } from '@/types';
 import { addHours } from 'date-fns';
 import { GameStartSection } from '@/components/createGame/GameStartSection';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
 interface TimeDurationModalProps {
   isOpen: boolean;
@@ -107,21 +107,15 @@ export const TimeDurationModal = ({ isOpen, onClose, game, clubs, onSave }: Time
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={onClose}
-      isBasic
-      modalId="time-duration-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+    <Dialog open={isOpen} onClose={onClose} modalId="time-duration-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
             {game.entityType === 'TOURNAMENT' ? t('createGame.gameStartTournament') :
              game.entityType === 'LEAGUE' ? t('createGame.gameStartLeague') :
              t('createGame.gameStart')}
-          </h2>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
         <div className="overflow-y-auto flex-1 p-4">
           {!clubId ? (
@@ -159,7 +153,7 @@ export const TimeDurationModal = ({ isOpen, onClose, game, clubs, onSave }: Time
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
+        <DialogFooter className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={onClose}
             disabled={isSaving}
@@ -174,8 +168,9 @@ export const TimeDurationModal = ({ isOpen, onClose, game, clubs, onSave }: Time
           >
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
-        </div>
-    </BaseModal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { OutcomeExplanation } from '@/api/results';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 
 interface OutcomeExplanationModalProps {
   explanation: OutcomeExplanation;
@@ -87,21 +88,17 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
   }, {} as Record<number, typeof explanation.matches>);
 
   const sortedRounds = Object.keys(groupedMatches).map(Number).sort((a, b) => a - b);
+  const modalIdRef = useRef('outcome-explanation-modal');
+  useBackButtonModal(isOpen, handleClose, modalIdRef.current);
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      isBasic
-      modalId="outcome-explanation-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+    <Dialog open={isOpen} onClose={handleClose} modalId={modalIdRef.current}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
             {t('gameResults.explanationTitle')}: {playerName && playerName !== 'null' ? playerName : 'Unknown'}
-          </h2>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
         <div className="p-4 overflow-y-auto max-h-[calc(90vh-8rem)]">
           <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -391,7 +388,8 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
             </div>
           )}
         </div>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };
 

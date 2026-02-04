@@ -34,13 +34,11 @@ export class AdminStatsService {
           }),
         },
       }),
-      prisma.invite.count({
+      prisma.gameParticipant.count({
         where: {
-          status: 'PENDING',
+          status: 'INVITED',
           game: {
-            status: {
-              not: 'ARCHIVED',
-            },
+            status: { not: 'ARCHIVED' },
             ...(cityId && {
               court: {
                 club: {

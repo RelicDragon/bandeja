@@ -50,7 +50,7 @@ export const AvailablePlayersFooter = ({
     return availablePlayers.map(player => ({
       userId: player.id,
       role: 'PARTICIPANT' as const,
-      isPlaying: true,
+      status: 'PLAYING' as const,
       joinedAt: new Date().toISOString(),
       user: player,
     }));

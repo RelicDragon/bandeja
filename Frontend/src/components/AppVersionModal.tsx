@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from './Button';
 import { AppVersionService } from '@/services/appVersion.service';
 import { getCapacitorPlatform } from '@/utils/capacitor';
-import { BaseModal } from '@/components';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 
 interface AppVersionModalProps {
   isBlocking: boolean;
@@ -39,40 +39,30 @@ export const AppVersionModal = ({
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={isBlocking ? () => {} : handleClose}
-      isBasic
-      modalId="app-version-modal"
-      showCloseButton={!isBlocking}
-      closeOnBackdropClick={!isBlocking}
-    >
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            {isBlocking ? 'Update Required' : 'Update Available'}
-          </h2>
+    <Dialog open={isOpen} onClose={handleClose} modalId="app-version-modal">
+      <DialogContent showCloseButton={!isBlocking} closeOnInteractOutside={!isBlocking}>
+        <DialogHeader>
+          <DialogTitle>{isBlocking ? 'Update Required' : 'Update Available'}</DialogTitle>
           {minVersion && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Version {minVersion} is now available
-            </p>
+            <DialogDescription>Version {minVersion} is now available</DialogDescription>
           )}
-        </div>
+        </DialogHeader>
 
         <div className="mb-6">
           {message ? (
-            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+            <DialogDescription className="whitespace-pre-wrap">
               {message}
-            </p>
+            </DialogDescription>
           ) : (
-            <p className="text-gray-700 dark:text-gray-300">
+            <DialogDescription>
               {isBlocking
                 ? 'This version is no longer supported. Please update to continue using the app.'
                 : 'A new version of the app is available with new features and improvements.'}
-            </p>
+            </DialogDescription>
           )}
         </div>
 
-        <div className="flex gap-3">
+        <DialogFooter className="flex gap-3">
           <Button
             onClick={handleUpdate}
             variant="primary"
@@ -89,13 +79,14 @@ export const AppVersionModal = ({
               Later
             </Button>
           )}
-        </div>
+        </DialogFooter>
 
         {isBlocking && (
-          <p className="mt-4 text-xs text-center text-gray-500 dark:text-gray-400">
+          <DialogDescription className="mt-4 text-xs text-center">
             You must update to continue using the app
-          </p>
+          </DialogDescription>
         )}
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };

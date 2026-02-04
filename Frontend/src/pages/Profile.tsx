@@ -2,15 +2,15 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { AnimatePresence } from 'framer-motion';
-import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal } from '@/components';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal, MainTabFooter } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
 import { BlockedUsersSection } from '@/components/BlockedUsersSection';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useNavigationStore } from '@/store/navigationStore';
-import { usersApi, mediaApi, authApi } from '@/api';
+import { usersApi, mediaApi, authApi, NotificationPreference } from '@/api';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
 import { Gender, User } from '@/types';
@@ -63,6 +63,8 @@ export const ProfileContent = () => {
   const [isUnlinkingGoogle, setIsUnlinkingGoogle] = useState(false);
   const [showUnlinkAppleModal, setShowUnlinkAppleModal] = useState(false);
   const [showUnlinkGoogleModal, setShowUnlinkGoogleModal] = useState(false);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([]);
+  const [padelmanAnimating, setPadelmanAnimating] = useState(false);
 
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -126,8 +128,14 @@ export const ProfileContent = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await usersApi.getProfile();
-        updateUser(response.data);
+        const profileRes = await usersApi.getProfile();
+        updateUser(profileRes.data);
+        try {
+          const prefsRes = await usersApi.getNotificationPreferences();
+          setNotificationPreferences(prefsRes.data || []);
+        } catch {
+          setNotificationPreferences([]);
+        }
       } catch (error) {
         console.error('Failed to fetch user profile:', error);
       } finally {
@@ -151,6 +159,7 @@ export const ProfileContent = () => {
       fetchUserProfile();
     } else {
       setIsLoadingProfile(false);
+      usersApi.getNotificationPreferences().then((r) => setNotificationPreferences(r.data || [])).catch(() => setNotificationPreferences([]));
     }
     loadAppInfo();
   }, [updateUser, user]);
@@ -417,8 +426,14 @@ export const ProfileContent = () => {
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();
     try {
-      const response = await usersApi.getProfile();
-      updateUser(response.data);
+      const profileRes = await usersApi.getProfile();
+      updateUser(profileRes.data);
+      try {
+        const prefsRes = await usersApi.getNotificationPreferences();
+        setNotificationPreferences(prefsRes.data || []);
+      } catch {
+        setNotificationPreferences([]);
+      }
     } catch (error) {
       console.error('Failed to refresh profile:', error);
     }
@@ -440,6 +455,7 @@ export const ProfileContent = () => {
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
         </div>
+        <MainTabFooter isLoading />
       </>
     );
   }
@@ -520,6 +536,7 @@ export const ProfileContent = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
+        <div className="relative">
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.personalInfo')}
@@ -631,6 +648,24 @@ export const ProfileContent = () => {
             )}
           </div>
         </Card>
+        <motion.div
+            className="absolute left-0 bottom-full mb-[-2px] w-16 h-16 -z-10"
+            style={{ transformOrigin: 'left bottom' }}
+            animate={{ rotate: padelmanAnimating ? 15 : 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          >
+            <img src="/padelman/padelman-cards-1.png" alt="" className="w-full h-full object-contain pointer-events-none" />
+          </motion.div>
+        <button
+            type="button"
+            className="absolute left-0 bottom-full mb-[-2px] w-16 h-16 cursor-pointer p-0 border-0 bg-transparent z-10"
+            onClick={() => {
+              setPadelmanAnimating(true);
+              setTimeout(() => setPadelmanAnimating(false), 200);
+            }}
+          />
+
+        </div>
 
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
@@ -929,6 +964,7 @@ export const ProfileContent = () => {
           </div>
         </Card>
 
+        {notificationPreferences.length > 0 && (
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.notificationSettings') || 'Notification Settings'}
@@ -944,6 +980,7 @@ export const ProfileContent = () => {
             </Button>
           </div>
         </Card>
+        )}
 
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
@@ -1033,8 +1070,8 @@ export const ProfileContent = () => {
       <NotificationSettingsModal
         isOpen={showNotificationModal}
         onClose={() => setShowNotificationModal(false)}
-        user={user}
-        onUpdate={updateUser}
+        preferences={notificationPreferences}
+        onUpdate={setNotificationPreferences}
       />
 
       <ConfirmationModal
@@ -1081,6 +1118,7 @@ export const ProfileContent = () => {
         confirmVariant="primary"
       />
 
+      <MainTabFooter isLoading={isRefreshing} />
       <div className="mt-8 text-center space-y-2">
         <div className="text-xs text-gray-500 dark:text-gray-400">
           <a

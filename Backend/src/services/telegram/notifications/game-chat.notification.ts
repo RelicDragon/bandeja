@@ -6,6 +6,9 @@ import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } fr
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser, formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
+import { NotificationPreferenceService } from '../../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../../types/notifications.types';
 
 export async function sendGameChatNotification(
   api: Api,
@@ -24,7 +27,6 @@ export async function sendGameChatNotification(
         select: {
           id: true,
           telegramId: true,
-          sendTelegramMessages: true,
           language: true,
           currentCityId: true,
         }
@@ -39,10 +41,9 @@ export async function sendGameChatNotification(
 
   for (const participant of participants) {
     const user = participant.user;
-    
-    if (!user.telegramId || !user.sendTelegramMessages || user.id === sender.id) {
-      continue;
-    }
+    if (user.id === sender.id) continue;
+    const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+    if (!allowed || !user.telegramId) continue;
 
     if (hasMentions) {
       if (!mentionedUserIds?.has(user.id)) {
@@ -60,7 +61,7 @@ export async function sendGameChatNotification(
     if (chatType === ChatType.PUBLIC) {
       canSeeMessage = true;
     } else if (chatType === ChatType.PRIVATE) {
-      canSeeMessage = participant.isPlaying;
+      canSeeMessage = participant.status === 'PLAYING';
     } else if (chatType === ChatType.ADMINS) {
       canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
     }
@@ -111,7 +112,6 @@ export async function sendGameChatNotification(
           select: {
             id: true,
             telegramId: true,
-            sendTelegramMessages: true,
             language: true,
             currentCityId: true,
           }
@@ -121,10 +121,9 @@ export async function sendGameChatNotification(
 
     for (const parentParticipant of parentGameAdmins) {
       const user = parentParticipant.user;
-      
-      if (!user.telegramId || !user.sendTelegramMessages || user.id === sender.id) {
-        continue;
-      }
+      if (user.id === sender.id) continue;
+      const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+      if (!allowed || !user.telegramId) continue;
 
       if (currentGameUserIds.has(user.id)) {
         continue;

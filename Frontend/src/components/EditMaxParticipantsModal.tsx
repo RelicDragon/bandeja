@@ -12,7 +12,7 @@ import { Select } from './Select';
 import { ConfirmationModal } from './ConfirmationModal';
 import { Game, GenderTeam } from '@/types';
 import { useAuthStore } from '@/store/authStore';
-import { BaseModal } from './BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface EditMaxParticipantsModalProps {
   isOpen: boolean;
@@ -54,14 +54,14 @@ export const EditMaxParticipantsModal = ({
       setLevelRange([game.minLevel ?? 1.0, game.maxLevel ?? 7.0]);
       setGenderTeams(game.genderTeams ?? 'ANY');
       setRemovedPlayerIds(new Set());
-      setOriginalParticipants(game.participants.filter(p => p.isPlaying));
+      setOriginalParticipants(game.participants.filter(p => p.status === 'PLAYING'));
       setIsEditingMaxParticipants(false);
     }
   }, [isOpen, game]);
 
   useEffect(() => {
     if (isOpen) {
-      setOriginalParticipants(game.participants.filter(p => p.isPlaying));
+      setOriginalParticipants(game.participants.filter(p => p.status === 'PLAYING'));
     }
   }, [isOpen, game.participants]);
 
@@ -196,7 +196,7 @@ export const EditMaxParticipantsModal = ({
 
     setIsSaving(true);
     try {
-      // Handle marked players - set current user to isPlaying: false, kick others
+      // Handle marked players - set current user to not playing, kick others
       // Only process users who are still in the current participants
       for (const userId of validRemovedPlayerIds) {
         if (userId === user?.id) {
@@ -262,7 +262,7 @@ export const EditMaxParticipantsModal = ({
       const response = await gamesApi.getById(game.id);
       const updatedGame = response.data;
       onUpdate(updatedGame);
-      setOriginalParticipants(updatedGame.participants.filter(p => p.isPlaying));
+      setOriginalParticipants(updatedGame.participants.filter(p => p.status === 'PLAYING'));
       
       toast.success(t('gameDetails.playersKicked', { 
         count: playersToKick.length,
@@ -277,20 +277,14 @@ export const EditMaxParticipantsModal = ({
     }
   }, [confirmationModal, nonMaleParticipants, nonFemaleParticipants, preferNotToSayParticipants, game.id, user?.id, onKickUser, onUpdate, t]);
 
+  const modalOpen = isOpen && !confirmationModal.isOpen;
+
   return (
-    <BaseModal 
-      isOpen={isOpen && !confirmationModal.isOpen} 
-      onClose={handleClose} 
-      isBasic 
-      modalId="edit-max-participants-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {t('gameDetails.editParticipants', { defaultValue: 'Edit Participants' })}
-          </h2>
-        </div>
+    <Dialog open={modalOpen} onClose={handleClose} modalId="edit-max-participants-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('gameDetails.editParticipants', { defaultValue: 'Edit Participants' })}</DialogTitle>
+        </DialogHeader>
 
         <div className="overflow-y-auto p-4 space-y-4">
           <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -719,7 +713,8 @@ export const EditMaxParticipantsModal = ({
         onConfirm={handleKickAllNonCompliant}
         onClose={() => setConfirmationModal({ isOpen: false, type: 'NON_MALE', count: 0 })}
       />
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };
 

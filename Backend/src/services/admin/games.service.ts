@@ -5,7 +5,6 @@ import { GameService } from '../game/game.service';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
-import { JoinQueueService } from '../game/joinQueue.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 
 export class AdminGamesService {
@@ -43,34 +42,20 @@ export class AdminGamesService {
   }
 
   static async getAllInvites(cityId?: string) {
-    const invites = await prisma.invite.findMany({
+    const participants = await prisma.gameParticipant.findMany({
       where: {
-        status: 'PENDING',
+        status: 'INVITED',
         game: {
-          ...(cityId && {
-            court: {
-              club: {
-                cityId: cityId,
-              },
-            },
-          }),
-          status: {
-            not: 'ARCHIVED',
-          },
+          status: { not: 'ARCHIVED' },
+          ...(cityId && { cityId }),
         },
       },
       include: {
-        sender: {
-          select: {
-            ...USER_SELECT_FIELDS,
-            phone: true,
-          },
+        invitedByUser: {
+          select: { ...USER_SELECT_FIELDS, phone: true },
         },
-        receiver: {
-          select: {
-            ...USER_SELECT_FIELDS,
-            phone: true,
-          },
+        user: {
+          select: { ...USER_SELECT_FIELDS, phone: true },
         },
         game: {
           select: {
@@ -85,10 +70,7 @@ export class AdminGamesService {
                 club: {
                   include: {
                     city: {
-                      select: {
-                        id: true,
-                        name: true,
-                      },
+                      select: { id: true, name: true },
                     },
                   },
                 },
@@ -97,150 +79,123 @@ export class AdminGamesService {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { joinedAt: 'desc' },
     });
-
-    return invites;
+    return participants.map((p) => ({
+      id: p.id,
+      receiverId: p.userId,
+      senderId: p.invitedByUserId,
+      gameId: p.gameId,
+      status: 'PENDING',
+      message: p.inviteMessage,
+      expiresAt: p.inviteExpiresAt,
+      createdAt: p.joinedAt,
+      receiver: p.user,
+      sender: p.invitedByUser,
+      game: p.game,
+    }));
   }
 
-  static async acceptInvite(inviteId: string) {
-    const invite = await prisma.invite.findUnique({
-      where: { id: inviteId },
+  static async acceptInvite(participantId: string) {
+    const participant = await prisma.gameParticipant.findUnique({
+      where: { id: participantId },
       include: {
-        receiver: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        game: {
-          include: {
-            participants: true,
-          },
-        },
+        user: { select: { id: true, firstName: true, lastName: true } },
+        game: { include: { participants: true } },
       },
     });
-
-    if (!invite) {
+    if (!participant || participant.status !== 'INVITED') {
       throw new ApiError(404, 'Invite not found');
     }
-
-    if (invite.status !== 'PENDING') {
-      throw new ApiError(400, 'Invite has already been processed');
-    }
-
-    if (invite.gameId && invite.game) {
-      await validateGenderForGame(invite.game, invite.receiverId);
-
-      const existingParticipant = invite.game.participants.find(
-        p => p.userId === invite.receiverId
-      );
-
+    const gameId = participant.gameId;
+    const receiverId = participant.userId;
+    if (gameId && participant.game) {
+      await validateGenderForGame(participant.game, receiverId);
+      const existingParticipant = participant.game.participants.find((p) => p.userId === receiverId);
       if (existingParticipant) {
-        if (existingParticipant.isPlaying) {
-          // Already a playing participant, nothing to do
-        } else {
-          // Existing non-playing participant, validate and update to playing or add to queue
-          const joinResult = await canAddPlayerToGame(invite.game, invite.receiverId);
-
-          if (!joinResult.canJoin && joinResult.shouldQueue) {
-            await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
-            await prisma.invite.delete({
-              where: { id: inviteId },
-            });
-            return { message: 'games.addedToJoinQueue' };
-          }
-
-          await prisma.gameParticipant.update({
-            where: { id: existingParticipant.id },
-            data: { isPlaying: true },
-          });
-          await GameService.updateGameReadiness(invite.gameId);
+        if (existingParticipant.status === 'PLAYING') {
+          return { message: 'invites.acceptedSuccessfully', gameId };
         }
-      } else {
-        // No existing participant, validate and create as playing or add to queue
-        const joinResult = await canAddPlayerToGame(invite.game, invite.receiverId);
-
+        const joinResult = await canAddPlayerToGame(participant.game, receiverId);
         if (!joinResult.canJoin && joinResult.shouldQueue) {
-          await JoinQueueService.addToQueue(invite.gameId, invite.receiverId);
-          await prisma.invite.delete({
-            where: { id: inviteId },
+          await prisma.gameParticipant.update({
+            where: { id: participantId },
+            data: {
+              status: 'IN_QUEUE',
+              invitedByUserId: null,
+              inviteMessage: null,
+              inviteExpiresAt: null,
+            },
           });
-          return { message: 'games.addedToJoinQueue' };
+          await GameService.updateGameReadiness(gameId);
+          return { message: 'games.addedToJoinQueue', gameId };
         }
-
-        await prisma.gameParticipant.create({
+        await prisma.gameParticipant.update({
+          where: { id: existingParticipant.id },
           data: {
-            gameId: invite.gameId,
-            userId: invite.receiverId,
-            role: 'PARTICIPANT',
-            isPlaying: true,
+            status: 'PLAYING',
+            invitedByUserId: null,
+            inviteMessage: null,
+            inviteExpiresAt: null,
           },
         });
-        await GameService.updateGameReadiness(invite.gameId);
+        await GameService.updateGameReadiness(gameId);
+      } else {
+        const joinResult = await canAddPlayerToGame(participant.game, receiverId);
+        if (!joinResult.canJoin && joinResult.shouldQueue) {
+          await prisma.gameParticipant.update({
+            where: { id: participantId },
+            data: {
+              status: 'IN_QUEUE',
+              invitedByUserId: null,
+              inviteMessage: null,
+              inviteExpiresAt: null,
+            },
+          });
+          await GameService.updateGameReadiness(gameId);
+          return { message: 'games.addedToJoinQueue', gameId };
+        }
+        await prisma.gameParticipant.update({
+          where: { id: participantId },
+          data: { status: 'PLAYING', role: 'PARTICIPANT' },
+        });
+        await GameService.updateGameReadiness(gameId);
       }
     }
-
-    if (invite.gameId && invite.receiver) {
-      const receiverName = getUserDisplayName(invite.receiver.firstName, invite.receiver.lastName);
-      
+    if (gameId && participant.user) {
+      const receiverName = getUserDisplayName(participant.user.firstName, participant.user.lastName);
       try {
-        await createSystemMessage(invite.gameId, {
+        await createSystemMessage(gameId, {
           type: SystemMessageType.USER_ACCEPTED_INVITE,
-          variables: { userName: receiverName }
+          variables: { userName: receiverName },
         });
       } catch (error) {
         console.error('Failed to create system message for invite acceptance:', error);
       }
     }
-
-    await prisma.invite.delete({
-      where: { id: inviteId },
-    });
-
-    return { message: 'invites.acceptedSuccessfully' };
+    return { message: 'invites.acceptedSuccessfully', gameId };
   }
 
-  static async declineInvite(inviteId: string) {
-    const invite = await prisma.invite.findUnique({
-      where: { id: inviteId },
-      include: {
-        receiver: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
+  static async declineInvite(participantId: string) {
+    const participant = await prisma.gameParticipant.findUnique({
+      where: { id: participantId },
+      include: { user: { select: { id: true, firstName: true, lastName: true } } },
     });
-
-    if (!invite) {
+    if (!participant || participant.status !== 'INVITED') {
       throw new ApiError(404, 'Invite not found');
     }
-
-    if (invite.status !== 'PENDING') {
-      throw new ApiError(400, 'Invite has already been processed');
-    }
-
-    if (invite.gameId && invite.receiver) {
-      const receiverName = getUserDisplayName(invite.receiver.firstName, invite.receiver.lastName);
-      
+    if (participant.gameId && participant.user) {
+      const receiverName = getUserDisplayName(participant.user.firstName, participant.user.lastName);
       try {
-        await createSystemMessage(invite.gameId, {
+        await createSystemMessage(participant.gameId, {
           type: SystemMessageType.USER_DECLINED_INVITE,
-          variables: { userName: receiverName }
+          variables: { userName: receiverName },
         });
       } catch (error) {
         console.error('Failed to create system message for invite decline:', error);
       }
     }
-
-    await prisma.invite.delete({
-      where: { id: inviteId },
-    });
-
+    await prisma.gameParticipant.delete({ where: { id: participantId } });
     return { message: 'invites.declinedSuccessfully' };
   }
 

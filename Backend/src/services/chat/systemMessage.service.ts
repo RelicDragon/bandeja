@@ -2,6 +2,7 @@ import prisma from '../../config/database';
 import { MessageState, ChatType, ChatContextType } from '@prisma/client';
 import { SystemMessageType, createSystemMessageContent } from '../../utils/systemMessages';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { updateLastMessagePreview } from './lastMessagePreview.service';
 
 export class SystemMessageService {
   static async createSystemMessage(
@@ -58,6 +59,7 @@ export class SystemMessageService {
       }
     });
 
+    await updateLastMessagePreview(chatContextType, contextId);
     return message;
   }
 }

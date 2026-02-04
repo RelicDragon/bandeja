@@ -10,7 +10,7 @@ import { ChatsTab } from './ChatsTab';
 import { BugsTab } from './BugsTab';
 import { LeaderboardTab } from './LeaderboardTab';
 import { ProfileTab } from './ProfileTab';
-import { GameDetailsContent } from './GameDetails';
+import { GameDetailsPage } from './GameDetailsPage';
 import { GameSubscriptionsContent } from './GameSubscriptions';
 
 export const MainPage = () => {
@@ -102,7 +102,7 @@ export const MainPage = () => {
       case 'profile':
         return <ProfileTab />;
       case 'gameDetails':
-        return <GameDetailsContent />;
+        return <GameDetailsPage />;
       case 'gameSubscriptions':
         return <GameSubscriptionsContent />;
       default:
@@ -134,6 +134,16 @@ export const MainPage = () => {
       <MainLayout>
         <BugsTab />
         {showBottomTabBar && !isDesktop && <BottomTabBar />}
+      </MainLayout>
+    );
+  }
+
+  const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
+  if (currentPage === 'gameDetails' && isDesktop && isGameDetailsPage) {
+    return (
+      <MainLayout>
+        <GameDetailsPage />
+        {bottomTabsVisible && <BottomTabBar />}
       </MainLayout>
     );
   }

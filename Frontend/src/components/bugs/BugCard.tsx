@@ -9,13 +9,11 @@ const BUG_STATUS_VALUES: BugStatus[] = ['CREATED', 'CONFIRMED', 'IN_PROGRESS', '
 const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { bugsApi, chatApi } from '@/api';
-import { ChatMessage } from '@/api/chat';
+import { bugsApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'react-hot-toast';
 import { MoreVertical, Trash2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components';
-import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 
 interface BugCardProps {
   bug: Bug;
@@ -42,8 +40,6 @@ export const BugCard = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [lastMessage, setLastMessage] = useState<ChatMessage | null>(null);
-  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,20 +61,6 @@ export const BugCard = ({
       document.body.style.overflow = 'unset';
     };
   }, [showMenu]);
-
-  useEffect(() => {
-    const fetchLastMessage = async () => {
-      try {
-        const message = await chatApi.getBugLastUserMessage(bug.id);
-        setLastMessage(message);
-      } catch (error) {
-        console.error('Failed to fetch bug last user message:', error);
-        setLastMessage(null);
-      }
-    };
-
-    fetchLastMessage();
-  }, [bug.id]);
 
   const getStatusColor = (status: BugStatus) => {
     switch (status) {
@@ -159,19 +141,6 @@ export const BugCard = ({
     }
   };
 
-  const getThumbnailUrl = (index: number): string => {
-    if (!lastMessage) return '';
-    if (lastMessage.thumbnailUrls && lastMessage.thumbnailUrls[index]) {
-      return lastMessage.thumbnailUrls[index] || '';
-    }
-    return lastMessage.mediaUrls[index] || '';
-  };
-
-  const handleImageClick = (e: React.MouseEvent, imageUrl: string) => {
-    e.stopPropagation();
-    setFullscreenImage(imageUrl || '');
-  };
-
   const canModify = user?.isAdmin || bug.senderId === user?.id;
   const isArchived = bug.status === 'ARCHIVED';
 
@@ -206,57 +175,20 @@ export const BugCard = ({
             {isExpanded ? bug.text : bug.text.length > 200 ? `${bug.text.substring(0, 100)}...` : bug.text}
           </div>
 
-          {lastMessage && (
-            <div 
+          {bug.lastMessagePreview && (
+            <div
               onClick={handleOpenChat}
               className={`flex items-start gap-2 mb-2 p-2 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors ${isArchived ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-gray-50 dark:bg-gray-800/30'}`}
             >
-              {lastMessage.sender ? (
-                <PlayerAvatar
-                  player={lastMessage.sender}
-                  extrasmall
-                  showName={false}
-                />
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0" />
-              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-medium ${isArchived ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300'}`}>
-                    {lastMessage.sender 
-                      ? `${lastMessage.sender.firstName || ''} ${lastMessage.sender.lastName || ''}`.trim() || 'Unknown'
-                      : 'Unknown'
-                    }
-                  </span>
                   <span className={`text-xs ${isArchived ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {formatRelativeTime(lastMessage.createdAt)}
+                    {formatRelativeTime(bug.updatedAt)}
                   </span>
                 </div>
-                <div className={`text-xs ${isArchived ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'} whitespace-pre-line max-h-16 overflow-hidden`}>
-                  {lastMessage.content}
+                <div className={`text-xs ${isArchived ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'} whitespace-pre-line max-h-16 overflow-hidden line-clamp-2`}>
+                  {bug.lastMessagePreview}
                 </div>
-                {lastMessage.mediaUrls && lastMessage.mediaUrls.length > 0 && (
-                  <div className="mt-2 flex gap-2 overflow-x-auto">
-                    {lastMessage.mediaUrls.slice(0, 3).map((url, index) => (
-                      <div
-                        key={index}
-                        onClick={(e) => handleImageClick(e, url)}
-                        className="cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0"
-                      >
-                        <img
-                          src={getThumbnailUrl(index)}
-                          alt={`Media ${index + 1}`}
-                          className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
-                        />
-                      </div>
-                    ))}
-                    {lastMessage.mediaUrls.length > 3 && (
-                      <div className="flex-shrink-0 w-16 h-16 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-500">
-                        +{lastMessage.mediaUrls.length - 3}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -369,13 +301,6 @@ export const BugCard = ({
       <span className={`absolute bottom-2 right-3 text-xs ${isArchived ? 'text-gray-400' : 'text-gray-500'}`}>
         {formatRelativeTime(bug.createdAt)}
       </span>
-      {fullscreenImage && (
-        <FullscreenImageViewer
-          imageUrl={fullscreenImage}
-          onClose={() => setFullscreenImage(null)}
-          isOpen={!!fullscreenImage}
-        />
-      )}
     </Card>
   );
 };

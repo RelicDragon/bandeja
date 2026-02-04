@@ -92,7 +92,7 @@ export interface GameTextOptions {
 
 export interface GameWithParticipants extends GameInfo {
   participants?: Array<{ 
-    isPlaying: boolean;
+    status?: string;
     role?: string;
     user?: { firstName?: string | null; lastName?: string | null; level?: number | null };
   }>;
@@ -136,7 +136,7 @@ export async function formatNewGameText(
   const clubName = club?.name || 'Unknown location';
   const courtName = game.court?.name ? ` • ${game.court.name}` : '';
   
-  const playingParticipants = game.participants?.filter((p: any) => p.isPlaying) || [];
+  const playingParticipants = game.participants?.filter((p: any) => p.status === 'PLAYING') || [];
   const participantsCount = game.entityType === 'BAR'
     ? `${playingParticipants.length}`
     : `${playingParticipants.length}/${game.maxParticipants || 0}`;

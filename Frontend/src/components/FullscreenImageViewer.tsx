@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { X, Download, Loader2 } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { useTranslation } from 'react-i18next';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { isCapacitor, isAndroid } from '@/utils/capacitor';
-import { BaseModal } from './BaseModal';
+import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 
 interface FullscreenImageViewerProps {
   imageUrl: string;
@@ -104,11 +104,6 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     transformRef.current?.resetTransform();
   }, []);
 
-  const handleClose = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    onClose();
-  }, [onClose]);
-
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -159,14 +154,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   }, [onClose]);
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={onClose}
-      isBasic={false}
-      modalId="fullscreen-image-viewer"
-      showCloseButton={false}
-      closeOnBackdropClick={false}
-    >
+    <FullScreenDialog open={isOpen} onClose={onClose} modalId="fullscreen-image-viewer" closeOnInteractOutside={false}>
       <div 
         ref={containerRef}
         className="fixed inset-0 flex items-center justify-center"
@@ -234,13 +222,6 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
                 <Download size={22} />
               )}
             </button>
-            <button
-              onClick={handleClose}
-              className="w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 shadow-xl backdrop-blur-sm"
-              aria-label={t('common.close')}
-            >
-              <X size={22} />
-            </button>
           </div>
 
           <div 
@@ -258,6 +239,6 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           </div>
         </div>
       </div>
-    </BaseModal>
+    </FullScreenDialog>
   );
 };

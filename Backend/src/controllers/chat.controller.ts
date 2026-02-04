@@ -11,9 +11,11 @@ import { SystemMessageService } from '../services/chat/systemMessage.service';
 import { UserChatService } from '../services/chat/userChat.service';
 import { MessageReportService } from '../services/chat/messageReport.service';
 import { UnreadObjectsService } from '../services/chat/unreadObjects.service';
+import { withTimeout } from '../utils/promiseWithTimeout';
 import { ChatMuteService } from '../services/chat/chatMute.service';
 import { TranslationService } from '../services/chat/translation.service';
 import { DraftService } from '../services/chat/draft.service';
+import { GameReadService } from '../services/game/read.service';
 import prisma from '../config/database';
 
 export const createSystemMessage = async (contextId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC, chatContextType: ChatContextType = ChatContextType.GAME) => {
@@ -350,6 +352,8 @@ export const getUnreadCount = asyncHandler(async (req: AuthRequest, res: Respons
   });
 });
 
+const UNREAD_OBJECTS_TIMEOUT_MS = 15000;
+
 export const getUnreadObjects = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
 
@@ -357,11 +361,34 @@ export const getUnreadObjects = asyncHandler(async (req: AuthRequest, res: Respo
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const result = await UnreadObjectsService.getUnreadObjects(userId);
+  const result = await withTimeout(
+    UnreadObjectsService.getUnreadObjects(userId),
+    UNREAD_OBJECTS_TIMEOUT_MS
+  );
 
   res.json({
     success: true,
     data: result
+  });
+});
+
+export const getGameParticipants = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId } = req.params;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const game = await GameReadService.getGameById(gameId, userId, true);
+  const participants = (game.participants ?? []).map((p: any) => ({
+    ...p,
+    isPlaying: p.status === 'PLAYING',
+  }));
+
+  res.json({
+    success: true,
+    data: participants
   });
 });
 
@@ -645,28 +672,6 @@ export const getBugMessages = asyncHandler(async (req: AuthRequest, res: Respons
   res.json({
     success: true,
     data: messages
-  });
-});
-
-export const getBugLastUserMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { bugId } = req.params;
-  const userId = req.userId;
-  const { chatType = ChatType.PUBLIC } = req.query;
-
-  if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  const message = await MessageService.getLastUserMessage(
-    ChatContextType.BUG,
-    bugId,
-    userId,
-    chatType as ChatType
-  );
-
-  res.json({
-    success: true,
-    data: message
   });
 });
 

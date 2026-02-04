@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { formatChatTime } from '@/utils/dateFormat';
-import { UserChat, ChatDraft } from '@/api/chat';
+import { UserChat, ChatDraft, getLastMessageTime, isLastMessagePreview } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useMemo } from 'react';
@@ -60,11 +60,16 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
             <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 flex-shrink-0">
               {formatChatTime(
                 (() => {
-                  const lastMessageTime = chat.lastMessage ? new Date(chat.lastMessage.createdAt).getTime() : 0;
+                  const lastMessageTime = getLastMessageTime(chat.lastMessage);
                   const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
-                  return draftTime > lastMessageTime && draft 
-                    ? draft.updatedAt 
-                    : (chat.lastMessage?.createdAt || new Date().toISOString());
+                  const msg = chat.lastMessage;
+                  return draftTime > lastMessageTime && draft
+                    ? draft.updatedAt
+                    : msg
+                      ? isLastMessagePreview(msg)
+                        ? msg.updatedAt
+                        : (msg as { createdAt: string }).createdAt
+                      : new Date().toISOString();
                 })(),
                 displaySettings.locale,
                 displaySettings.hour12
@@ -74,13 +79,13 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
         </div>
 
         {(() => {
-          const lastMessageTime = chat.lastMessage ? new Date(chat.lastMessage.createdAt).getTime() : 0;
+          const lastMessageTime = getLastMessageTime(chat.lastMessage);
           const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
           const showDraft = draft && (draftTime > lastMessageTime || !chat.lastMessage);
 
           if (showDraft) {
             const draftContent = draft.content || '';
-            const displayContent = draftContent.trim() 
+            const displayContent = draftContent.trim()
               ? (draftContent.length > 50 ? draftContent.substring(0, 50) + '...' : draftContent)
               : '';
             return (
@@ -101,25 +106,22 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
           }
 
           if (chat.lastMessage) {
-            const isSystemMessage = !chat.lastMessage.senderId;
-            let displayContent = '';
-            
-            if (isSystemMessage) {
-              const formattedSystemMessage = formatSystemMessageForDisplay(
-                chat.lastMessage.content || '',
-                t
-              );
-              displayContent = convertMentionsToPlaintext(formattedSystemMessage);
-            } else {
-              displayContent = chat.lastMessage.content 
-                ? convertMentionsToPlaintext(chat.lastMessage.content)
+            const fullMessage = !isLastMessagePreview(chat.lastMessage) ? chat.lastMessage : null;
+            const displayContent = isLastMessagePreview(chat.lastMessage)
+              ? chat.lastMessage.preview
+              : fullMessage
+                ? fullMessage.senderId
+                  ? convertMentionsToPlaintext(fullMessage.content || '')
+                  : convertMentionsToPlaintext(
+                      formatSystemMessageForDisplay(fullMessage.content || '', t)
+                    )
                 : '';
-            }
-            
+
             return (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 pr-2">
-                  {chat.lastMessage.mediaUrls && chat.lastMessage.mediaUrls.length > 0 ? (
+                  {!isLastMessagePreview(chat.lastMessage) &&
+                  chat.lastMessage.mediaUrls?.length > 0 ? (
                     <span className="flex items-center gap-1">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />

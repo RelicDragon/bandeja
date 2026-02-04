@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { ChatMessage, chatApi } from '@/api/chat';
@@ -52,10 +53,17 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [isTranslating, setIsTranslating] = useState(false);
   const duplicateRef = useRef<HTMLDivElement>(null);
+  const openTimeRef = useRef(0);
 
   useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    document.body.style.pointerEvents = 'none';
+    openTimeRef.current = Date.now();
+
+    const shouldIgnore = () => Date.now() - openTimeRef.current < 400;
+
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node) && !shouldIgnore()) {
         onClose();
       }
     };
@@ -67,22 +75,28 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     };
 
     const handleTouchStart = (event: TouchEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node) && !shouldIgnore()) {
         event.preventDefault();
         onClose();
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
+    const handleTouchEnd = (event: TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node) && !shouldIgnore()) {
+        onClose();
+      }
+    };
+
     document.addEventListener('keydown', handleEscape);
+    document.addEventListener('click', handleClickOutside);
     document.addEventListener('touchstart', handleTouchStart, { passive: false });
-    document.body.style.overflow = 'hidden';
-    document.body.style.pointerEvents = 'none';
+    document.addEventListener('touchend', handleTouchEnd, { passive: false });
 
     return () => {
       document.removeEventListener('click', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
       document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
       document.body.style.overflow = '';
       document.body.style.pointerEvents = '';
     };
@@ -194,6 +208,11 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
   const handleBackToMenu = () => {
     setShowDetails(false);
+  };
+
+  const handleBackdropClick = () => {
+    if (Date.now() - openTimeRef.current < 400) return;
+    onClose();
   };
 
   const getReadReceiptsWithReactions = () => {
@@ -310,16 +329,14 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     }
   }, [isInitialRender]);
 
-  return (
+  const content = (
     <>
-      {/* Blur backdrop */}
       <div 
         className="fixed inset-0 bg-black/30 backdrop-blur-md z-[9998] pointer-events-auto transition-opacity duration-150"
         style={{ opacity: isInitialRender ? 0 : 1 }}
-        onClick={onClose}
+        onClick={handleBackdropClick}
       />
 
-      {/* Duplicate message overlay */}
       <div ref={duplicateRef} />
 
       {/* Context menu */}
@@ -514,4 +531,6 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       </div>
     </>
   );
+
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 };

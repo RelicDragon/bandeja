@@ -53,27 +53,15 @@ export class ReadReceiptService {
     // 1. Count unread messages from GAME chats
     const userGames = await prisma.game.findMany({
       where: {
-        OR: [
-          {
-            participants: {
-              some: { userId }
-            }
-          },
-          {
-            invites: {
-              some: {
-                receiverId: userId,
-                status: 'PENDING'
-              }
-            }
-          }
-        ]
+        participants: {
+          some: { userId },
+        },
       },
       include: {
         participants: {
-          where: { userId }
-        }
-      }
+          where: { userId },
+        },
+      },
     });
     
     for (const game of userGames) {
@@ -83,7 +71,7 @@ export class ReadReceiptService {
       const chatTypeFilter: any[] = ['PUBLIC'];
       
       // Add PRIVATE if user is a playing participant
-      if (participant && participant.isPlaying) {
+      if (participant && participant.status === 'PLAYING') {
         chatTypeFilter.push('PRIVATE');
       }
       
@@ -211,7 +199,7 @@ export class ReadReceiptService {
     const chatTypeFilter: any[] = ['PUBLIC'];
 
     // Add PRIVATE if user is a playing participant or parent game admin/owner
-    if ((participant && participant.isPlaying) || isParentGameAdminOrOwner) {
+    if ((participant && participant.status === 'PLAYING') || isParentGameAdminOrOwner) {
       chatTypeFilter.push('PRIVATE');
     }
 
@@ -254,21 +242,13 @@ export class ReadReceiptService {
     // Get all games with participants in one query
     const games = await prisma.game.findMany({
       where: {
-        id: {
-          in: gameIds
-        }
+        id: { in: gameIds },
       },
       include: {
         participants: {
-          where: { userId }
+          where: { userId },
         },
-        invites: {
-          where: {
-            receiverId: userId,
-            status: 'PENDING'
-          }
-        }
-      }
+      },
     });
 
     const unreadCounts: Record<string, number> = {};
@@ -281,7 +261,7 @@ export class ReadReceiptService {
       const chatTypeFilter: any[] = ['PUBLIC'];
 
       // Add PRIVATE if user is a playing participant
-      if (participant && participant.isPlaying) {
+      if (participant && participant.status === 'PLAYING') {
         chatTypeFilter.push('PRIVATE');
       }
 
@@ -380,7 +360,7 @@ export class ReadReceiptService {
     const chatTypeFilter: any[] = chatTypes.length > 0 ? chatTypes : ['PUBLIC'];
 
     // Add PRIVATE if user is a playing participant or parent game admin/owner
-    if (((participant && participant.isPlaying) || isParentGameAdminOrOwner) && !chatTypes.length) {
+    if (((participant && participant.status === 'PLAYING') || isParentGameAdminOrOwner) && !chatTypes.length) {
       chatTypeFilter.push('PRIVATE');
     }
 

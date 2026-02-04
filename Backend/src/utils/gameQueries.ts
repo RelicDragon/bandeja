@@ -12,7 +12,7 @@ export interface GameWithPlayingParticipants {
   anyoneCanInvite: boolean;
   participants: Array<{
     userId: string;
-    isPlaying: boolean;
+    status: string;
     user?: {
       gender: Gender;
     };
@@ -27,7 +27,7 @@ export async function fetchGameWithPlayingParticipants(
     where: { id: gameId },
     include: {
       participants: {
-        where: { isPlaying: true },
+        where: { status: 'PLAYING' },
         include: {
           user: {
             select: { gender: true },

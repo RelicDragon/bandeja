@@ -10,6 +10,7 @@ import { TranslationService } from './translation.service';
 import { ReadReceiptService } from './readReceipt.service';
 import { DraftService } from './draft.service';
 import { ChatMuteService } from './chatMute.service';
+import { updateLastMessagePreview } from './lastMessagePreview.service';
 
 export class MessageService {
   static async validateGameAccess(gameId: string, userId: string) {
@@ -17,15 +18,9 @@ export class MessageService {
       where: { id: gameId },
       include: {
         participants: {
-          where: { userId }
+          where: { userId },
         },
-        invites: {
-          where: { 
-            receiverId: userId,
-            status: 'PENDING'
-          }
-        }
-      }
+      },
     });
 
     if (!game) {
@@ -40,7 +35,7 @@ export class MessageService {
       [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
     );
     const hasPermission = isDirectParticipant || hasParentParticipantPermission;
-    const hasPendingInvite = game.invites.length > 0;
+    const hasPendingInvite = participant?.status === 'INVITED';
 
     return { game, isParticipant: hasPermission, hasPendingInvite, participant };
   }
@@ -150,6 +145,9 @@ export class MessageService {
       [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]
     );
 
+    const isPlaying = participant && (participant.status === 'PLAYING');
+    const isAdminOrOwner = participant && (participant.role === 'OWNER' || participant.role === 'ADMIN');
+
     if (chatType === ChatType.PUBLIC) {
       if (requireWriteAccess) {
         const isDirectParticipant = !!participant;
@@ -161,22 +159,24 @@ export class MessageService {
     }
 
     if (chatType === ChatType.PRIVATE) {
-      const isDirectPlayingParticipant = participant && participant.isPlaying;
-      const isDirectAdminOrOwner = participant && (participant.role === 'OWNER' || participant.role === 'ADMIN');
-      if (!isDirectPlayingParticipant && !isDirectAdminOrOwner && !isParentGameAdminOrOwner) {
+      if (!isPlaying && !isAdminOrOwner && !isParentGameAdminOrOwner) {
         throw new ApiError(403, 'Only playing participants, admins, and owners can access private chat');
       }
     }
 
     if (chatType === ChatType.ADMINS) {
-      const isDirectAdminOrOwner = participant && (participant.role === 'OWNER' || participant.role === 'ADMIN');
-      if (!isDirectAdminOrOwner && !isParentGameAdminOrOwner) {
+      if (!isAdminOrOwner && !isParentGameAdminOrOwner) {
         throw new ApiError(403, 'Only game owners and admins can access admin chat');
       }
     }
 
-    if (chatType === ChatType.PHOTOS && game.status === 'ANNOUNCED') {
-      throw new ApiError(403, 'Photos chat is only available when game has started');
+    if (chatType === ChatType.PHOTOS) {
+      if (game.status === 'ANNOUNCED') {
+        throw new ApiError(403, 'Photos chat is only available when game has started');
+      }
+      if (requireWriteAccess && !isPlaying && !isAdminOrOwner && !isParentGameAdminOrOwner) {
+        throw new ApiError(403, 'Only playing participants, admins, and owners can write in photos chat');
+      }
     }
   }
 
@@ -400,7 +400,6 @@ export class MessageService {
             select: {
               id: true,
               telegramId: true,
-              sendTelegramDirectMessages: true,
               language: true,
               firstName: true,
               lastName: true,
@@ -411,7 +410,6 @@ export class MessageService {
             select: {
               id: true,
               telegramId: true,
-              sendTelegramDirectMessages: true,
               language: true,
               firstName: true,
               lastName: true,
@@ -443,6 +441,7 @@ export class MessageService {
       console.error('Failed to delete draft in createMessage:', error);
     }
 
+    await updateLastMessagePreview(chatContextType, contextId);
     return message;
   }
 
@@ -701,50 +700,6 @@ export class MessageService {
     return messagesWithTranslation.reverse();
   }
 
-  static async getLastUserMessage(
-    chatContextType: ChatContextType,
-    contextId: string,
-    userId: string,
-    chatType: ChatType = ChatType.PUBLIC
-  ) {
-    // Validate access based on context type
-    if (chatContextType === 'GAME') {
-      const { participant, game } = await this.validateGameAccess(contextId, userId);
-      await this.validateChatTypeAccess(participant, chatType, game, userId, contextId, false);
-    } else if (chatContextType === 'BUG') {
-      await this.validateBugAccess(contextId, userId);
-    } else if (chatContextType === 'USER') {
-      await this.validateUserChatAccess(contextId, userId);
-    } else if (chatContextType === 'GROUP') {
-      await this.validateGroupChannelAccess(contextId, userId);
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { language: true },
-    });
-
-    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
-
-    const message = await prisma.chatMessage.findFirst({
-      where: { 
-        chatContextType,
-        contextId,
-        chatType: chatType as ChatType,
-        senderId: { not: null }
-      },
-      include: this.getMessageInclude(),
-      orderBy: { createdAt: 'desc' }
-    });
-
-    if (!message) {
-      return null;
-    }
-
-    const enrichedMessages = await this.enrichMessagesWithTranslations([message], languageCode);
-    return enrichedMessages[0] || null;
-  }
-
   static async updateMessageState(messageId: string, userId: string, state: MessageState) {
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId }
@@ -845,6 +800,8 @@ export class MessageService {
       where: { id: messageId }
     });
 
+    await updateLastMessagePreview(message.chatContextType, message.contextId);
+
     // Handle game-specific photo count update
     if (message.chatContextType === 'GAME' && message.chatType === ChatType.PHOTOS && message.mediaUrls.length > 0) {
       const currentGame = await prisma.game.findUnique({
@@ -897,21 +854,9 @@ export class MessageService {
   static async getUserChatGames(userId: string) {
     const games = await prisma.game.findMany({
       where: {
-        OR: [
-          {
-            participants: {
-              some: { userId }
-            }
-          },
-          {
-            invites: {
-              some: {
-                receiverId: userId,
-                status: 'PENDING'
-              }
-            }
-          }
-        ]
+        participants: {
+          some: { userId },
+        },
       },
       include: {
         participants: {
@@ -991,78 +936,18 @@ export class MessageService {
             },
           },
         },
-        invites: {
-          where: {
-            receiverId: userId,
-            status: 'PENDING'
-          }
-        }
       },
       orderBy: {
         startTime: 'desc'
       }
     });
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { language: true },
-    });
-
-    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
-
-    const gamesWithLastMessage = await Promise.all(
-      games.map(async (game) => {
-        const participant = game.participants.find((p: any) => p.userId === userId);
-        
-        const chatTypeFilter: any[] = ['PUBLIC'];
-        
-        if (participant && participant.isPlaying) {
-          chatTypeFilter.push('PRIVATE');
-        }
-        
-        if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) {
-          chatTypeFilter.push('ADMINS');
-        }
-
-        if (game.status !== 'ANNOUNCED') {
-          chatTypeFilter.push('PHOTOS');
-        }
-
-        const lastMessage = await prisma.chatMessage.findFirst({
-          where: {
-            chatContextType: 'GAME',
-            contextId: game.id,
-            chatType: {
-              in: chatTypeFilter
-            }
-          },
-          orderBy: { createdAt: 'desc' },
-          include: {
-            sender: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true
-              }
-            }
-          }
-        });
-
-        const enrichedLastMessage = lastMessage 
-          ? (await this.enrichMessagesWithTranslations([lastMessage], languageCode))[0]
-          : null;
-
-        return {
-          ...game,
-          lastMessage: enrichedLastMessage
-        };
-      })
-    );
-
-    return gamesWithLastMessage;
+    return games.map((game) => ({
+      ...game,
+      lastMessage: game.lastMessagePreview
+        ? { preview: game.lastMessagePreview, updatedAt: game.updatedAt }
+        : null
+    }));
   }
 }
 

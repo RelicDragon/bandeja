@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash, X } from 'lucide-react';
 import { EntityType } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { CreateGroupChannelForm } from './chat/CreateGroupChannelForm';
-import { BaseModal } from '@/components';
+import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { navigationService } from '@/services/navigationService';
 
 interface CreateMenuModalProps {
@@ -35,6 +36,17 @@ export const CreateMenuModal = ({
   const [shouldRender, setShouldRender] = useState(false);
   const [position, setPosition] = useState({ top: 0, right: 0 });
   
+  const handleClose = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onClose();
+      setIsExiting(false);
+      setShouldRender(false);
+    }, 400);
+  }, [onClose]);
+  
+  useBackButtonModal(isOpen, handleClose, 'create-menu-modal');
+
   const getEntityTypes = (): EntityType[] => {
     const types: EntityType[] = ['GAME'];
     
@@ -82,6 +94,7 @@ export const CreateMenuModal = ({
   useEffect(() => {
     if (isOpen && !showChatForm) {
       setShouldRender(true);
+      setIsExiting(false);
     } else {
       setShouldRender(false);
     }
@@ -128,7 +141,6 @@ export const CreateMenuModal = ({
     }, 400);
   };
 
-
   const getIcon = (type: EntityType) => {
     switch (type) {
       case 'GAME':
@@ -146,31 +158,20 @@ export const CreateMenuModal = ({
     }
   };
 
-  const totalItems = entityTypes.length + 4;
+  const totalItems = entityTypes.length + 5;
   let currentIndex = 0;
 
-  const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      onClose();
-      setIsExiting(false);
-      setShouldRender(false);
-    }, 400);
-  };
-
-  return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      isBasic={false}
-      forceBackdrop={true}
-      modalId="create-menu-modal"
-      showCloseButton={false}
-      closeOnBackdropClick={true}
+  const overlay = (
+    <div
+      className={`fixed inset-0 z-50 bg-black/80 ${isExiting ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+      onClick={handleClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('games.create', { defaultValue: 'Create' })}
     >
-      <div 
-        ref={containerRef} 
-        className="fixed"
+      <div
+        ref={containerRef}
+        className="fixed pointer-events-auto"
         style={{
           top: `${position.top}px`,
           right: `${position.right}px`
@@ -178,14 +179,15 @@ export const CreateMenuModal = ({
       >
         <div className="flex flex-col gap-2">
           <button
-            onClick={handleClose}
-            className={`game-type-button w-10 h-10 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center justify-center self-end ${
+            onClick={(e) => { e.stopPropagation(); handleClose(); }}
+            className={`game-type-button w-12 h-12 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center justify-center self-end ${
               isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
             }`}
             style={{
-              animationDelay: isExiting ? `${(totalItems - currentIndex - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
+              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
             }}
+            aria-label={t('common.close', { defaultValue: 'Close' })}
           >
             <X size={18} />
           </button>
@@ -195,7 +197,7 @@ export const CreateMenuModal = ({
             return (
               <button
                 key={type}
-                onClick={() => handleSelectGameType(type)}
+                onClick={(e) => { e.stopPropagation(); handleSelectGameType(type); }}
                 className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
                   isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
                 }`}
@@ -220,7 +222,7 @@ export const CreateMenuModal = ({
           />
           
           <button
-            onClick={() => handleSelectChatType('group')}
+            onClick={(e) => { e.stopPropagation(); handleSelectChatType('group'); }}
             className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
               isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
             }`}
@@ -234,7 +236,7 @@ export const CreateMenuModal = ({
           </button>
           
           <button
-            onClick={() => handleSelectChatType('channel')}
+            onClick={(e) => { e.stopPropagation(); handleSelectChatType('channel'); }}
             className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
               isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
             }`}
@@ -248,6 +250,8 @@ export const CreateMenuModal = ({
           </button>
         </div>
       </div>
-    </BaseModal>
+    </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(overlay, document.body) : null;
 };

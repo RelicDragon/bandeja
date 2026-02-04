@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Copy, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { BaseModal } from './BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -45,19 +45,11 @@ export const ShareModal = ({
   };
 
   return (
-    <BaseModal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      isBasic 
-      modalId="share-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('gameDetails.shareGame')}
-          </h3>
-        </div>
+    <Dialog open={isOpen} onClose={onClose} modalId="share-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('gameDetails.shareGame')}</DialogTitle>
+        </DialogHeader>
 
         <div className="mb-6">
           <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -81,15 +73,16 @@ export const ShareModal = ({
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <DialogFooter className="flex gap-3">
           <button
             onClick={onClose}
             className="flex-1 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
             {t('common.close')}
           </button>
-        </div>
-    </BaseModal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -16,7 +16,7 @@ export async function buildGamesMessage(
   maxLength?: number
 ): Promise<string | null> {
   const gamesWithEmptySlots = games.filter((game: any) => {
-    const playingParticipants = game.participants.filter((p: any) => p.isPlaying);
+    const playingParticipants = game.participants.filter((p: any) => p.status === 'PLAYING');
     return playingParticipants.length < game.maxParticipants;
   });
 

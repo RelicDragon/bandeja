@@ -1,5 +1,8 @@
 import { Api } from 'grammy';
 import { config } from '../../../config/env';
+import { NotificationPreferenceService } from '../../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
@@ -31,7 +34,6 @@ export async function sendBetResolvedNotification(
           telegramId: true,
           language: true,
           currentCityId: true,
-          sendTelegramMessages: true,
         },
       },
       acceptedByUser: {
@@ -39,7 +41,6 @@ export async function sendBetResolvedNotification(
           telegramId: true,
           language: true,
           currentCityId: true,
-          sendTelegramMessages: true,
         },
       },
     },
@@ -50,9 +51,9 @@ export async function sendBetResolvedNotification(
   }
 
   const user = userId === bet.creatorId ? bet.creator : bet.acceptedByUser;
-  if (!user || !user.telegramId || !user.sendTelegramMessages) {
-    return;
-  }
+  if (!user) return;
+  const allowed = await NotificationPreferenceService.doesUserAllow(userId, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+  if (!allowed || !user.telegramId) return;
 
   try {
     const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
@@ -118,7 +119,6 @@ export async function sendBetNeedsReviewNotification(
           telegramId: true,
           language: true,
           currentCityId: true,
-          sendTelegramMessages: true,
         },
       },
       acceptedByUser: {
@@ -126,7 +126,6 @@ export async function sendBetNeedsReviewNotification(
           telegramId: true,
           language: true,
           currentCityId: true,
-          sendTelegramMessages: true,
         },
       },
     },
@@ -137,9 +136,9 @@ export async function sendBetNeedsReviewNotification(
   }
 
   const user = userId === bet.creatorId ? bet.creator : bet.acceptedByUser;
-  if (!user || !user.telegramId || !user.sendTelegramMessages) {
-    return;
-  }
+  if (!user) return;
+  const allowed = await NotificationPreferenceService.doesUserAllow(userId, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+  if (!allowed || !user.telegramId) return;
 
   try {
     const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
@@ -187,7 +186,6 @@ export async function sendBetCancelledNotification(api: Api, betId: string, user
           telegramId: true,
           language: true,
           currentCityId: true,
-          sendTelegramMessages: true,
         },
       },
       acceptedByUser: {
@@ -195,7 +193,6 @@ export async function sendBetCancelledNotification(api: Api, betId: string, user
           telegramId: true,
           language: true,
           currentCityId: true,
-          sendTelegramMessages: true,
         },
       },
     },
@@ -204,7 +201,9 @@ export async function sendBetCancelledNotification(api: Api, betId: string, user
   if (!bet || !bet.game) return;
 
   const user = userId === bet.creatorId ? bet.creator : bet.acceptedByUser;
-  if (!user || !user.telegramId || !user.sendTelegramMessages) return;
+  if (!user) return;
+  const allowed = await NotificationPreferenceService.doesUserAllow(userId, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+  if (!allowed || !user.telegramId) return;
 
   try {
     const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);

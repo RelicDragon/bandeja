@@ -5,7 +5,7 @@ import { Button } from '@/components';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser } from '@/types';
-import { BaseModal } from './BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { isLastSet, validateTieBreak } from '@/utils/gameResults';
 
 interface SetResultModalProps {
@@ -236,23 +236,15 @@ export const SetResultModal = ({
   const showTieBreakToggle = isOddSetFromThird && arePreviousSetsTied() && lastSetCheck && ballsInGames && !hasExistingTieBreak;
 
   return (
-    <BaseModal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      isBasic 
-      modalId="set-result-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
+    <Dialog open={isOpen} onClose={onClose} modalId="set-result-modal">
+      <DialogContent>
       <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-600/5 rounded-2xl sm:rounded-3xl pointer-events-none" />
       
-      <div className="flex items-center justify-between mb-3 sm:mb-5 md:mb-8 p-3 sm:p-4 md:p-5">
-        <div>
-          <h3 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-            {fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')}
-          </h3>
-        </div>
-      </div>
+      <DialogHeader className="mb-3 sm:mb-5 md:mb-8">
+        <DialogTitle>
+          {fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')}
+        </DialogTitle>
+      </DialogHeader>
       
       <div className="relative mb-3 sm:mb-5 md:mb-8 px-3 sm:px-4 md:px-5">
         <div className={`transition-all duration-500 ${!isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
@@ -432,7 +424,7 @@ export const SetResultModal = ({
         </div>
       )}
       
-      <div className="flex gap-2 sm:gap-3 pt-4 px-3 sm:px-4 md:px-5 pb-3 sm:pb-4 md:pb-5">
+      <DialogFooter className="flex gap-2 sm:gap-3 pt-4 px-3 sm:px-4 md:px-5 pb-3 sm:pb-4 md:pb-5">
         <Button
           onClick={onClose}
           variant="outline"
@@ -456,7 +448,8 @@ export const SetResultModal = ({
         >
           {t('common.save')}
         </Button>
-      </div>
-    </BaseModal>
+      </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -55,6 +55,7 @@ model User {
   approvedLevel               Boolean              @default(false)
   approvedById                String?
   approvedWhen                DateTime?
+  favoriteTrainerId           String?
   sendTelegramMessages       Boolean              @default(true)
   sendTelegramInvites        Boolean              @default(true)
   sendTelegramDirectMessages Boolean              @default(true)
@@ -62,17 +63,17 @@ model User {
   sendTelegramWalletNotifications Boolean         @default(true)
   chatMessages               ChatMessage[]
   participateInGames         GameParticipant[]    @relation("ParticipantUser")
+  participantsInvitedByMe     GameParticipant[]    @relation("ParticipantInvitedBy")
   userChats1                 UserChat[]           @relation("UserChat1")
   userChats2                 UserChat[]           @relation("UserChat2")
   pinnedUserChats            PinnedUserChat[]
-  receivedInvites            Invite[]             @relation("InviteReceiver")
-  sentInvites                Invite[]             @relation("InviteSender")
-  joinQueues                 JoinQueue[]          @relation("JoinQueueUser")
   messageReactions           MessageReaction[]
   messageReadReceipts        MessageReadReceipt[]
   currentCity                City?                @relation("UserCurrentCity", fields: [currentCityId], references: [id])
   approvedBy                 User?                @relation("UserApprovedBy", fields: [approvedById], references: [id])
   approvedUsers              User[]               @relation("UserApprovedBy")
+  favoriteTrainer            User?                @relation("UserFavoriteTrainer", fields: [favoriteTrainerId], references: [id], onDelete: SetNull)
+  usersWithFavoriteTrainer   User[]               @relation("UserFavoriteTrainer")
   favoriteClubs              UserFavoriteClub[]
   favoriteUsers              UserFavoriteUser[]   @relation("UserFavorites")
   favoritedBy                UserFavoriteUser[]   @relation("UserFavoritedBy")
@@ -110,6 +111,7 @@ model User {
   betParticipants             BetParticipant[]
   messageTranslations         MessageTranslation[]
   chatDrafts                  ChatDraft[]
+  notificationPreferences     NotificationPreference[]
 
   @@index([phone])
   @@index([telegramId])
@@ -282,6 +284,7 @@ model Game {
   priceType              PriceType           @default(NOT_KNOWN)
   priceCurrency          PriceCurrency?
   metadata               Json?
+  lastMessagePreview     String?             @db.VarChar(500)
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
   club                   Club?               @relation(fields: [clubId], references: [id])
@@ -292,8 +295,6 @@ model Game {
   leagueRound            LeagueRound?        @relation(fields: [leagueRoundId], references: [id], onDelete: SetNull)
   leagueGroup            LeagueGroup?        @relation(fields: [leagueGroupId], references: [id], onDelete: SetNull)
   participants           GameParticipant[]
-  invites                Invite[]
-  joinQueues             JoinQueue[]
   rounds                 Round[]
   outcomes               GameOutcome[]
   fixedTeams             GameTeam[]
@@ -335,57 +336,24 @@ model GameFaq {
 }
 
 model GameParticipant {
-  id        String          @id @default(cuid())
-  userId    String
-  gameId    String
-  role      ParticipantRole
-  isPlaying Boolean         @default(true)
-  joinedAt  DateTime        @default(now())
-  stats     Json?
-  game      Game            @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  user      User            @relation("ParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
+  id               String             @id @default(cuid())
+  userId           String
+  gameId           String
+  role             ParticipantRole
+  status           ParticipantStatus  @default(PLAYING)
+  joinedAt         DateTime           @default(now())
+  stats            Json?
+  invitedByUserId  String?
+  inviteMessage    String?
+  inviteExpiresAt  DateTime?
+  game             Game               @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user             User               @relation("ParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
+  invitedByUser    User?              @relation("ParticipantInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
 
   @@unique([userId, gameId])
   @@index([userId])
   @@index([gameId])
   @@index([role])
-  @@index([isPlaying])
-}
-
-model Invite {
-  id         String       @id @default(cuid())
-  senderId   String
-  receiverId String
-  gameId     String?
-  status     InviteStatus @default(PENDING)
-  message    String?
-  expiresAt  DateTime?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  game       Game?        @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  receiver   User         @relation("InviteReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  sender     User         @relation("InviteSender", fields: [senderId], references: [id], onDelete: Cascade)
-
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([gameId])
-  @@index([status])
-  @@index([expiresAt])
-}
-
-model JoinQueue {
-  id        String       @id @default(cuid())
-  userId    String
-  gameId    String
-  status    InviteStatus @default(PENDING)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  game      Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  user      User         @relation("JoinQueueUser", fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, gameId])
-  @@index([userId])
-  @@index([gameId])
   @@index([status])
 }
 
@@ -558,12 +526,13 @@ model UserInteraction {
 }
 
 model UserChat {
-  id            String           @id @default(cuid())
-  user1Id       String
-  user2Id       String
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  user1         User             @relation("UserChat1", fields: [user1Id], references: [id], onDelete: Cascade)
+  id                  String           @id @default(cuid())
+  user1Id             String
+  user2Id             String
+  lastMessagePreview  String?          @db.VarChar(500)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  user1               User             @relation("UserChat1", fields: [user1Id], references: [id], onDelete: Cascade)
   user2         User             @relation("UserChat2", fields: [user2Id], references: [id], onDelete: Cascade)
   pinnedByUsers PinnedUserChat[]
 
@@ -782,6 +751,13 @@ enum ParticipantRole {
   PARTICIPANT
 }
 
+enum ParticipantStatus {
+  GUEST
+  INVITED
+  IN_QUEUE
+  PLAYING
+}
+
 enum MessageState {
   SENT
   DELIVERED
@@ -822,14 +798,15 @@ model TelegramOtp {
 }
 
 model Bug {
-  id           String           @id @default(cuid())
-  text         String
-  senderId     String
-  status       BugStatus        @default(CREATED)
-  bugType      BugType          @default(BUG)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  sender       User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  id                   String           @id @default(cuid())
+  text                 String
+  senderId             String
+  status               BugStatus        @default(CREATED)
+  bugType              BugType          @default(BUG)
+  lastMessagePreview   String?          @db.VarChar(500)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  sender               User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
   participants BugParticipant[]
 
   @@index([senderId])
@@ -851,17 +828,18 @@ model BugParticipant {
 }
 
 model GroupChannel {
-  id            String                  @id @default(cuid())
-  name          String
-  avatar        String?
-  originalAvatar String?
-  cityId        String?
-  isChannel     Boolean                 @default(false)
-  isPublic      Boolean                 @default(true)
-  participantsCount Int                  @default(0)
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  city          City?                   @relation("GroupChannelCity", fields: [cityId], references: [id], onDelete: SetNull)
+  id                   String                  @id @default(cuid())
+  name                 String
+  avatar               String?
+  originalAvatar       String?
+  cityId               String?
+  isChannel            Boolean                 @default(false)
+  isPublic             Boolean                 @default(true)
+  participantsCount    Int                     @default(0)
+  lastMessagePreview   String?                 @db.VarChar(500)
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  city                 City?                   @relation("GroupChannelCity", fields: [cityId], references: [id], onDelete: SetNull)
   participants  GroupChannelParticipant[]
   invites       GroupChannelInvite[]
 
@@ -1249,6 +1227,30 @@ enum PushPlatform {
   IOS
   ANDROID
   WEB
+}
+
+enum NotificationChannelType {
+  PUSH
+  TELEGRAM
+  WHATSAPP
+  VIBER
+}
+
+model NotificationPreference {
+  id                      String                 @id @default(cuid())
+  userId                  String
+  channelType             NotificationChannelType
+  sendMessages            Boolean                @default(true)
+  sendInvites             Boolean                @default(true)
+  sendDirectMessages      Boolean                @default(true)
+  sendReminders           Boolean                @default(true)
+  sendWalletNotifications Boolean                @default(true)
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  user                    User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, channelType])
+  @@index([userId])
 }
 
 model MessageReport {

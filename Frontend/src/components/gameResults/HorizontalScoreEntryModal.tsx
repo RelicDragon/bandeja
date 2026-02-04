@@ -5,7 +5,7 @@ import { Button } from '@/components';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser } from '@/types';
-import { BaseModal } from '../BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface HorizontalScoreEntryModalProps {
   match: Match;
@@ -103,23 +103,15 @@ export const HorizontalScoreEntryModal = ({
   const isTeamBWinning = teamBScore > teamAScore;
 
   return (
-    <BaseModal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      isBasic 
-      modalId="horizontal-score-entry-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
+    <Dialog open={isOpen} onClose={onClose} modalId="horizontal-score-entry-modal">
+      <DialogContent>
       <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-600/5 rounded-2xl sm:rounded-3xl pointer-events-none" />
       
-      <div className="flex items-center justify-between mb-3 sm:mb-5 md:mb-8 p-3 sm:p-6 md:p-8">
-        <div>
-          <h3 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-            {fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')}
-          </h3>
-        </div>
-      </div>
+      <DialogHeader className="mb-3 sm:mb-5 md:mb-8">
+        <DialogTitle>
+          {fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')}
+        </DialogTitle>
+      </DialogHeader>
       
       <div className="relative mb-3 sm:mb-5 md:mb-8 px-3 sm:px-6 md:px-8">
         <div className={`transition-all duration-500 ${!isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
@@ -287,7 +279,8 @@ export const HorizontalScoreEntryModal = ({
           {t('common.save')}
         </Button>
       </div>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };
 

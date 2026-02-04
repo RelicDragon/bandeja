@@ -6,7 +6,7 @@ import { CourtModal } from '@/components/CourtModal';
 import { ToggleSwitch } from '@/components';
 import { courtsApi } from '@/api';
 import toast from 'react-hot-toast';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
 interface LocationModalProps {
   isOpen: boolean;
@@ -164,18 +164,14 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
 
   const locationLabel = game?.entityType === 'LEAGUE_SEASON' ? t('createGame.locationLeague') : t('createGame.location');
 
+  const closeOnBackdrop = !isClubModalOpen && !isCourtModalOpen;
+
   return (
-    <BaseModal 
-      isOpen={isOpen} 
-      onClose={handleClose} 
-      isBasic 
-      modalId="location-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={!isClubModalOpen && !isCourtModalOpen}
-    >
-      <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{locationLabel}</h2>
-      </div>
+    <Dialog open={isOpen} onClose={handleClose} modalId="location-modal">
+      <DialogContent closeOnInteractOutside={closeOnBackdrop}>
+      <DialogHeader>
+        <DialogTitle>{locationLabel}</DialogTitle>
+      </DialogHeader>
 
       <div className="overflow-y-auto flex-1 p-6 space-y-4">
           <div>
@@ -224,7 +220,7 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
           )}
       </div>
 
-      <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
+      <DialogFooter className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={handleClose}
             disabled={isSaving}
@@ -239,7 +235,7 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
           >
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
-      </div>
+      </DialogFooter>
 
       <ClubModal
         isOpen={isClubModalOpen}
@@ -269,7 +265,8 @@ export const LocationModal = ({ isOpen, onClose, game, clubs, courts, onSave, on
         }}
         entityType={game.entityType}
       />
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };
 

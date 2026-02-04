@@ -21,6 +21,15 @@ const isValidImage = (file: File): boolean => {
 const draftLoadingCache = new Map<string, Promise<any>>();
 const loadedDraftsCache = new Set<string>();
 
+export interface SendQueuedParams {
+  tempId: string;
+  contextType: ChatContextType;
+  contextId: string;
+  payload: OptimisticMessagePayload;
+  mediaUrls?: string[];
+  thumbnailUrls?: string[];
+}
+
 interface MessageInputProps {
   gameId?: string;
   bugId?: string;
@@ -29,8 +38,9 @@ interface MessageInputProps {
   game?: Game | null;
   bug?: Bug | null;
   groupChannel?: GroupChannel | null;
-  onMessageSent: () => void;
+  onMessageSent?: () => void;
   onOptimisticMessage?: (payload: OptimisticMessagePayload) => string;
+  onSendQueued?: (params: SendQueuedParams) => void;
   onSendFailed?: (optimisticId: string) => void;
   onMessageCreated?: (optimisticId: string, serverMessage: ChatMessage) => void;
   disabled?: boolean;
@@ -39,6 +49,8 @@ interface MessageInputProps {
   onScrollToMessage?: (messageId: string) => void;
   chatType?: ChatType;
   onGroupChannelUpdate?: () => void | Promise<void>;
+  contextType?: ChatContextType;
+  contextId?: string;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
@@ -51,6 +63,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   groupChannel,
   onMessageSent,
   onOptimisticMessage,
+  onSendQueued,
   onSendFailed,
   onMessageCreated,
   disabled = false,
@@ -59,6 +72,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onScrollToMessage,
   chatType = 'PUBLIC',
   onGroupChannelUpdate,
+  contextType: propContextType,
+  contextId: propContextId,
 }) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
@@ -73,6 +88,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const saveDraftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasLoadedDraftRef = useRef(false);
   const loadingDraftKeyRef = useRef<string | null>(null);
+  const queueSendRef = useRef(false);
 
   const contextType: ChatContextType = gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER';
   const finalContextId = gameId || bugId || userChatId || groupChannelId;
@@ -84,6 +100,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const canWrite = isChannel ? isChannelAdminOrOwner : (isGroup ? isChannelParticipant : true);
   const shouldShowJoinButton = isChannel && !isChannelAdminOrOwner && !isChannelParticipant;
   const isDisabled = (!canWrite) || disabled;
+  const inputBlocked = isLoading && !queueSendRef.current;
 
   const imagePreviewUrls = useMemo(() => {
     return selectedImages.map(file => URL.createObjectURL(file));
@@ -370,7 +387,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
-    if (isDisabled || isLoading) return;
+    if (isDisabled || inputBlocked) return;
 
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -392,10 +409,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       e.preventDefault();
       setSelectedImages(prev => [...prev, ...imageFiles]);
     }
-  }, [isDisabled, isLoading]);
+  }, [isDisabled, inputBlocked]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    if (isDisabled || isLoading) return;
+    if (isDisabled || inputBlocked) return;
     
     e.preventDefault();
     e.stopPropagation();
@@ -403,7 +420,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     if (e.dataTransfer.types.includes('Files')) {
       setIsDragOver(true);
     }
-  }, [isDisabled, isLoading]);
+  }, [isDisabled, inputBlocked]);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -419,7 +436,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
-    if (isDisabled || isLoading) return;
+    if (isDisabled || inputBlocked) return;
 
     e.preventDefault();
     e.stopPropagation();
@@ -436,10 +453,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
 
     setSelectedImages(prev => [...prev, ...imageFiles]);
-  }, [isDisabled, isLoading, t]);
+  }, [isDisabled, inputBlocked, t]);
 
   const handleImageButtonClick = async () => {
-    if (isDisabled || isLoading) return;
+    if (isDisabled || inputBlocked) return;
 
     if (isCapacitor()) {
       try {
@@ -530,7 +547,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!message.trim() && selectedImages.length === 0) || isLoading || isDisabled) return;
+    if ((!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled) return;
 
     if (!finalContextId) {
       console.error('[MessageInput] Missing contextId:', { gameId, bugId, userChatId, groupChannelId });
@@ -542,49 +559,67 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const useOptimistic = !!onOptimisticMessage;
     let optimisticId: string | undefined;
 
+    const payload: OptimisticMessagePayload = {
+      content: trimmedContent,
+      mediaUrls: [],
+      thumbnailUrls: [],
+      replyToId: replyTo?.id,
+      replyTo: replyTo ? { id: replyTo.id, content: replyTo.content, sender: replyTo.sender || { id: 'system', firstName: 'System' } } : undefined,
+      chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
+      mentionIds: [...mentionIds],
+    };
+
+    const useQueue = useOptimistic && !!onSendQueued && (propContextType != null) && (propContextId != null);
+    if (useQueue) queueSendRef.current = true;
+
     if (useOptimistic) {
-      setIsLoading(true);
-      const payload: OptimisticMessagePayload = {
-        content: trimmedContent,
-        mediaUrls: [],
-        thumbnailUrls: [],
-        replyToId: replyTo?.id,
-        replyTo: replyTo ? { id: replyTo.id, content: replyTo.content, sender: replyTo.sender || { id: 'system', firstName: 'System' } } : undefined,
-        chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
-        mentionIds: [...mentionIds],
-      };
       optimisticId = onOptimisticMessage(payload);
       if (optimisticId) {
-        onMessageSent();
+        onMessageSent?.();
         setMessage('');
         setMentionIds([]);
         setSelectedImages([]);
         hasLoadedDraftRef.current = false;
         setTimeout(() => updateMultilineState(), 100);
         onCancelReply?.();
+        requestAnimationFrame(() => {
+          (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
+        });
       }
     } else {
       setIsLoading(true);
-      onMessageSent();
+      onMessageSent?.();
     }
 
-    (async () => {
-      try {
-        const { originalUrls, thumbnailUrls } = await uploadImages();
-        const messageData: CreateMessageRequest = {
-          chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
-          contextId: finalContextId,
-          gameId: gameId,
-          content: trimmedContent || undefined,
-          mediaUrls: originalUrls.length > 0 ? originalUrls : [],
-          thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
-          replyToId: replyTo?.id,
-          chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
-          mentionIds: mentionIds.length > 0 ? mentionIds : undefined,
-        };
-        const created = await chatApi.createMessage(messageData);
-        if (useOptimistic && optimisticId && onMessageCreated) {
-          onMessageCreated(optimisticId, created);
+    queueMicrotask(() => {
+      (async () => {
+        try {
+          const { originalUrls, thumbnailUrls } = await uploadImages();
+        if (useQueue && optimisticId) {
+          onSendQueued!({
+            tempId: optimisticId,
+            contextType: propContextType!,
+            contextId: propContextId!,
+            payload: { ...payload, mediaUrls: originalUrls, thumbnailUrls },
+            mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
+            thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+          });
+        } else {
+          const messageData: CreateMessageRequest = {
+            chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
+            contextId: finalContextId,
+            gameId: gameId,
+            content: trimmedContent || undefined,
+            mediaUrls: originalUrls.length > 0 ? originalUrls : [],
+            thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+            replyToId: replyTo?.id,
+            chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
+            mentionIds: mentionIds.length > 0 ? mentionIds : undefined,
+          };
+          const created = await chatApi.createMessage(messageData);
+          if (useOptimistic && optimisticId && onMessageCreated) {
+            onMessageCreated(optimisticId, created);
+          }
         }
         if (saveDraftTimeoutRef.current) {
           clearTimeout(saveDraftTimeoutRef.current);
@@ -618,9 +653,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         else if (!useOptimistic) setMessage(trimmedContent);
         toast.error(t('chat.sendFailed') || 'Failed to send message');
       } finally {
-        setIsLoading(false);
+        if (useQueue) queueSendRef.current = false;
+        if (!useQueue) setIsLoading(false);
+        requestAnimationFrame(() => {
+          (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
+        });
       }
-    })();
+      })();
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -638,7 +678,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       if (onGroupChannelUpdate) {
         await onGroupChannelUpdate();
       }
-      onMessageSent();
+      onMessageSent?.();
     } catch (error) {
       console.error('Failed to join channel:', error);
     } finally {
@@ -710,7 +750,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               value={message}
               onChange={handleMessageChange}
               placeholder={t('chat.messages.typeMessage')}
-              disabled={isDisabled || isLoading}
+              disabled={isDisabled || inputBlocked}
               game={game}
               bug={bug}
               groupChannel={groupChannel}
@@ -728,7 +768,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             <button
               type="button"
               onClick={handleImageButtonClick}
-              disabled={isDisabled || isLoading}
+              disabled={isDisabled || inputBlocked}
               className="absolute w-9 h-9 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110 hover:bg-gray-200 dark:hover:bg-gray-600 shadow-lg z-10"
               style={{
                 right: isMultiline ? '8px' : '54px',
@@ -743,11 +783,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             
             <button
               type="submit"
-              disabled={(!message.trim() && selectedImages.length === 0) || isLoading || isDisabled}
+              disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
               className="absolute bottom-0.5 right-1 w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_4px_24px_rgba(59,130,246,0.6),0_8px_48px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_32px_rgba(59,130,246,0.7),0_12px_56px_rgba(59,130,246,0.5)] hover:scale-105 z-10"
-              aria-label={isLoading ? t('common.sending') : t('chat.messages.sendMessage')}
+              aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
             >
-              {isLoading ? (
+              {inputBlocked ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <svg

@@ -308,6 +308,13 @@ function renderGamesTable(games) {
         const location = game.court ? 
             `${game.court.club.name}, ${game.court.club.city.name}` : 
             'No location';
+        const parts = game.participants || [];
+        const playing = parts.filter(p => p.status === 'PLAYING').length;
+        const invited = parts.filter(p => p.status === 'INVITED').length;
+        const inQueue = parts.filter(p => p.status === 'IN_QUEUE').length;
+        const partsStr = invited || inQueue
+            ? `${playing}/${invited}/${inQueue}` 
+            : parts.length;
         return `
             <tr>
                 <td>
@@ -317,7 +324,7 @@ function renderGamesTable(games) {
                 </td>
                 <td>${location}</td>
                 <td>${formatDate(game.startTime)}</td>
-                <td>${game.participants.length}</td>
+                <td title="${invited || inQueue ? 'playing/invited/queue' : 'participants'}">${partsStr}</td>
                 <td><span class="badge badge-warning">${game.status}</span></td>
                 <td>
                     <span class="badge ${game.resultsStatus !== 'NONE' ? 'badge-success' : 'badge-danger'}">
@@ -709,15 +716,27 @@ function viewGameModal(game) {
     document.getElementById('gameHasBookedCourt').textContent = game.hasBookedCourt ? 'Yes' : 'No';
     
     // Participants
-    document.getElementById('gameParticipantsCount').textContent = `${game.participants?.length || 0} / ${game.maxParticipants || 0}`;
+    const parts = game.participants || [];
+    const playing = parts.filter(p => p.status === 'PLAYING').length;
+    const invited = parts.filter(p => p.status === 'INVITED').length;
+    const inQueue = parts.filter(p => p.status === 'IN_QUEUE').length;
+    const countStr = invited || inQueue
+        ? `${playing} playing, ${invited} invited, ${inQueue} in queue (${parts.length} total) / ${game.maxParticipants || 0}`
+        : `${parts.length} / ${game.maxParticipants || 0}`;
+    document.getElementById('gameParticipantsCount').textContent = countStr;
     
     const participantsList = document.getElementById('gameParticipantsList');
     if (game.participants && game.participants.length > 0) {
+        const statusBadge = (s) => {
+            const c = { PLAYING: 'badge-success', INVITED: 'badge-warning', IN_QUEUE: 'badge-info', GUEST: 'badge-secondary' }[s] || 'badge-secondary';
+            return `<span class="badge ${c}">${s?.replace('_', ' ') || '-'}</span>`;
+        };
         participantsList.innerHTML = game.participants.map(participant => `
             <div class="participant-item">
                 <div class="participant-info">
                     <strong>${participant.user.firstName || ''} ${participant.user.lastName || ''}</strong>
                     <span class="participant-role">(${participant.role})</span>
+                    ${statusBadge(participant.status)}
                 </div>
                 <div class="participant-details">
                     <span class="participant-level">Level: ${participant.user.level?.toFixed(1) || 'N/A'}</span>
@@ -758,8 +777,12 @@ function renderInvitesTable(invites) {
     tbody.innerHTML = invites.map(invite => {
         const gameName = invite.game?.name || 'Unknown Game';
         const gameType = invite.game?.gameType || '-';
-        const senderName = `${invite.sender?.firstName || ''} ${invite.sender?.lastName || ''}`.trim() || invite.sender?.phone || 'Unknown';
-        const receiverName = `${invite.receiver?.firstName || ''} ${invite.receiver?.lastName || ''}`.trim() || invite.receiver?.phone || 'Unknown';
+        const senderName = invite.sender
+            ? `${invite.sender.firstName || ''} ${invite.sender.lastName || ''}`.trim() || invite.sender.phone || 'Unknown'
+            : '-';
+        const receiverName = invite.receiver
+            ? `${invite.receiver.firstName || ''} ${invite.receiver.lastName || ''}`.trim() || invite.receiver.phone || 'Unknown'
+            : 'Unknown';
         const location = invite.game?.court ? 
             `${invite.game.court.club.name}, ${invite.game.court.club.city.name}` : 
             'No location';

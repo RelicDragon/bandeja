@@ -2,9 +2,11 @@ import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AvailableGamesSection } from '@/components/home';
+import { MainTabFooter } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { useAuthStore } from '@/store/authStore';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
+import { useGameFilters } from '@/hooks/useGameFilters';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { enUS, ru, es, sr } from 'date-fns/locale';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
@@ -55,11 +57,12 @@ export const FindTab = () => {
     return { startDate: start, endDate: end };
   });
 
+  const { filters, updateFilter, updateFilters } = useGameFilters();
   const {
     availableGames,
     loading: loadingAvailableGames,
     fetchData: fetchAvailableGames,
-  } = useAvailableGames(user, dateRange.startDate, dateRange.endDate);
+  } = useAvailableGames(user, dateRange.startDate, dateRange.endDate, true);
 
   const handleMonthChange = () => {
   };
@@ -120,7 +123,11 @@ export const FindTab = () => {
           onJoin={handleJoinGame}
           onMonthChange={handleMonthChange}
           onDateRangeChange={handleDateRangeChange}
+          filters={filters}
+          onFilterChange={(key, value) => updateFilter(key, value)}
+          onFiltersChange={(updates) => updateFilters(updates)}
         />
+        <MainTabFooter isLoading={loadingAvailableGames || isRefreshing} />
       </div>
     </>
   );

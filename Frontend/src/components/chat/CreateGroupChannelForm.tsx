@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Users, Hash } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { chatApi, GroupChannel } from '@/api/chat';
 import toast from 'react-hot-toast';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface CreateGroupChannelFormProps {
   isChannel: boolean;
@@ -67,28 +67,15 @@ export const CreateGroupChannelForm = ({ isChannel, onClose, onSuccess }: Create
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      isBasic
-      modalId="create-group-channel-form"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between mb-6 p-6">
-          <div className="flex items-center gap-3">
-            {isChannel ? (
-              <Hash className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-            ) : (
-              <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-            )}
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              {isChannel 
-                ? t('chat.createChannel', { defaultValue: 'Create Channel' })
-                : t('chat.createGroup', { defaultValue: 'Create Group' })}
-            </h2>
-          </div>
-        </div>
+    <Dialog open={isOpen} onClose={handleClose} modalId="create-group-channel-form">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {isChannel 
+              ? t('chat.createChannel', { defaultValue: 'Create Channel' })
+              : t('chat.createGroup', { defaultValue: 'Create Group' })}
+          </DialogTitle>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6">
           <div>
@@ -136,6 +123,7 @@ export const CreateGroupChannelForm = ({ isChannel, onClose, onSuccess }: Create
             </button>
           </div>
         </form>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };

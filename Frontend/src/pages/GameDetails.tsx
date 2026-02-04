@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -23,7 +23,6 @@ import {
 } from '@/components';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
-import { DeleteGameConfirmationModal } from '@/components/DeleteGameConfirmationModal';
 import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
@@ -47,6 +46,7 @@ import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
 import { Round } from '@/types/gameResults';
 import { isUserGameAdminOrOwner, canUserEditResults } from '@/utils/gameResults';
+import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { socketService } from '@/services/socketService';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
@@ -55,7 +55,11 @@ type GameWithResults = Game & {
   rounds?: Round[];
 };
 
-export const GameDetailsContent = () => {
+interface GameDetailsContentProps {
+  scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
+}
+
+export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -224,6 +228,14 @@ export const GameDetailsContent = () => {
   }, [setBottomTabsVisible]);
 
   useEffect(() => {
+    if (scrollContainerRef?.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [id, scrollContainerRef]);
+
+  useEffect(() => {
     if (!id || !isEditMode || !game) return;
     if (editFormData.gameType === game.gameType) return;
     
@@ -339,19 +351,6 @@ export const GameDetailsContent = () => {
     }
   };
 
-  const handleLeave = async () => {
-    if (!id) return;
-
-    try {
-      await gamesApi.togglePlayingStatus(id, false);
-      const response = await gamesApi.getById(id);
-      setGame(response.data);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    }
-  };
-
   const handleAddToGame = async () => {
     if (!id) return;
 
@@ -409,26 +408,11 @@ export const GameDetailsContent = () => {
     }
   };
 
-  const isParticipant = game?.participants.some((p) => p.userId === user?.id) || false;
-  const userParticipant = game?.participants.find((p) => p.userId === user?.id);
-  const isUserPlaying = userParticipant?.isPlaying || false;
-  const isUserOwner = userParticipant?.role === 'OWNER';
-  const isGuest = game?.participants.some(p => p.userId === user?.id && !p.isPlaying && p.role !== 'OWNER' && p.role !== 'ADMIN') || false;
-  // TODO: Remove after 2025-02-02 - Backward compatibility: check both old joinQueues and new non-playing participants
-  const isInJoinQueue = useMemo(() => {
-    if (!game || !user?.id) return false;
-    
-    const userParticipant = game.participants.find(p => p.userId === user.id);
-    const isNonPlayingParticipant = userParticipant && !userParticipant.isPlaying && userParticipant.role === 'PARTICIPANT';
-    const isInOldQueue = game.joinQueues?.some(q => q.userId === user.id && q.status === 'PENDING') || false;
-    
-    return isNonPlayingParticipant || isInOldQueue;
-  }, [game, user?.id]);
-  const isOwner = game && user ? isUserGameAdminOrOwner(game, user.id) : false;
+  const participation = getGameParticipationState(game?.participants ?? [], user?.id, game ?? undefined);
+  const { isGuest, isParticipantNonGuest: isParticipant, isPlaying: isUserPlaying, isOwner: isUserOwner, isInJoinQueue, hasPendingInvite, isAdminOrOwner: isOwner, isFull } = participation;
   const canAccessChat = true;
   const canEdit = isOwner || user?.isAdmin || false;
   const canViewSettings = game?.resultsStatus === 'NONE' && canEdit && game.status !== 'ARCHIVED';
-  const isFull = game ? game.entityType !== 'BAR' && game.participants.filter(p => p.isPlaying).length >= game.maxParticipants : false;
 
   useEffect(() => {
     setGameDetailsCanAccessChat(canAccessChat);
@@ -437,9 +421,9 @@ export const GameDetailsContent = () => {
 
   const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && !isFull);
   const canManageJoinQueue = Boolean(
-    isOwner || 
-    (game?.participants.some(p => p.userId === user?.id && p.role === 'ADMIN')) ||
-    (game?.anyoneCanInvite && game?.participants.some(p => p.userId === user?.id && p.isPlaying))
+    isOwner ||
+    participation.userParticipant?.role === 'ADMIN' ||
+    (game?.anyoneCanInvite && participation.isPlaying)
   );
 
   const handleAcceptJoinQueue = async (queueUserId: string) => {
@@ -1015,14 +999,10 @@ export const GameDetailsContent = () => {
 
   const handleLeaveGame = async () => {
     if (!id || isLeaving) return;
-    
+
     setIsLeaving(true);
     try {
-      if (isUserOwner) {
-        await gamesApi.togglePlayingStatus(id, false);
-      } else {
-        await gamesApi.leave(id);
-      }
+      await gamesApi.leave(id);
       const response = await gamesApi.getById(id);
       setGame(response.data);
       toast.success(t(getLeftGameText(game?.entityType || 'GAME')));
@@ -1084,7 +1064,7 @@ export const GameDetailsContent = () => {
             <LeagueFixedTeamsSection game={game} />
           )}
 
-          <div className="overflow-visible pt-10 -mt-10">
+          <div className="overflow-visible">
             <GameInfo
               game={game}
               isOwner={isOwner}
@@ -1120,7 +1100,6 @@ export const GameDetailsContent = () => {
                 game={game}
                 myInvites={myInvites}
                 gameInvites={gameInvites}
-                joinQueues={game.joinQueues}
                 isParticipant={isParticipant}
                 isGuest={isGuest}
                 isFull={isFull}
@@ -1133,13 +1112,13 @@ export const GameDetailsContent = () => {
                 canViewSettings={canViewSettings}
                 onJoin={handleJoin}
                 onAddToGame={handleAddToGame}
-                onLeave={handleLeave}
+                onLeave={() => setShowLeaveConfirmation(true)}
                 onAcceptInvite={handleAcceptInvite}
                 onDeclineInvite={handleDeclineInvite}
                 onCancelInvite={handleCancelInvite}
                 onAcceptJoinQueue={handleAcceptJoinQueue}
                 onDeclineJoinQueue={handleDeclineJoinQueue}
-                onCancelJoinQueue={handleCancelJoinQueue}
+                onCancelJoinQueue={isOwner ? undefined : handleCancelJoinQueue}
                 onShowPlayerList={(gender) => {
                   setPlayerListGender(gender);
                   setShowPlayerList(true);
@@ -1240,7 +1219,7 @@ export const GameDetailsContent = () => {
             </Card>
           )}
 
-          {user && isParticipant && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && game.resultsStatus !== 'FINAL' && (
+          {user && isParticipant && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && game.resultsStatus !== 'FINAL' && !isGuest && !hasPendingInvite && !isInJoinQueue && (
             <Card>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -1361,6 +1340,7 @@ export const GameDetailsContent = () => {
                         entityType: game.entityType,
                         initialGameData: gameData,
                       },
+                      replace: true,
                     });
                   }}
                   className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
@@ -1564,11 +1544,17 @@ export const GameDetailsContent = () => {
         entityType={game?.entityType || 'GAME'}
       />
 
-      <DeleteGameConfirmationModal
+      <ConfirmationModal
         isOpen={showDeleteConfirmation}
+        title={t('gameDetails.deleteGame')}
+        message={t('gameDetails.deleteGameConfirmation')}
+        confirmText={t('common.delete')}
+        confirmVariant="danger"
+        isLoading={isDeleting}
+        loadingText={t('common.deleting')}
+        closeOnConfirm={false}
         onConfirm={handleDeleteGame}
         onClose={() => setShowDeleteConfirmation(false)}
-        isDeleting={isDeleting}
       />
 
       {showResetConfirmation && (

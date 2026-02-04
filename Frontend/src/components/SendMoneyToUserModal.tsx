@@ -6,7 +6,7 @@ import { transactionsApi } from '@/api/transactions';
 import { usersApi } from '@/api/users';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
-import { BaseModal } from '@/components';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
 interface SendMoneyToUserModalProps {
   toUserId: string;
@@ -125,33 +125,20 @@ export const SendMoneyToUserModal = ({
 
   if (loading) {
     return (
-      <BaseModal
-        isOpen={isOpen}
-        onClose={handleClose}
-        isBasic
-        modalId="send-money-to-user-modal-loading"
-        showCloseButton={false}
-        closeOnBackdropClick={true}
-      >
+      <Dialog open={isOpen} onClose={handleClose} modalId="send-money-to-user-modal-loading">
+        <DialogContent>
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </BaseModal>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      isBasic
-      modalId="send-money-to-user-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          {t('wallet.sendCoins') || 'Send Coins'}
-        </h2>
-      </div>
+    <Dialog open={isOpen} onClose={handleClose} modalId="send-money-to-user-modal">
+      <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{t('wallet.sendCoins') || 'Send Coins'}</DialogTitle>
+      </DialogHeader>
 
       <div className="p-4">
           {toUser && (
@@ -297,7 +284,7 @@ export const SendMoneyToUserModal = ({
           )}
       </div>
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
+      <DialogFooter className="p-4 border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
           <div className="flex gap-2">
             <Button
               onClick={handleClose}
@@ -322,8 +309,9 @@ export const SendMoneyToUserModal = ({
               )}
             </Button>
           </div>
-        </div>
-    </BaseModal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

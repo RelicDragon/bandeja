@@ -6,8 +6,9 @@ const ONE_HOUR_MS = 60 * 60 * 1000;
 export interface GameFilters {
   userFilter: boolean;
   trainingFilter: boolean;
+  tournamentFilter: boolean;
+  leaguesFilter: boolean;
   activeTab: 'calendar' | 'list';
-  selectedDate?: string;
   listViewStartDate?: string;
   dateSavedAt?: number;
 }
@@ -15,6 +16,8 @@ export interface GameFilters {
 const DEFAULT_FILTERS: GameFilters = {
   userFilter: false,
   trainingFilter: false,
+  tournamentFilter: false,
+  leaguesFilter: false,
   activeTab: 'calendar',
 };
 
@@ -34,7 +37,6 @@ export const getGameFilters = async (): Promise<GameFilters> => {
     ...DEFAULT_FILTERS,
     ...filters,
     activeTab: filters?.activeTab || 'calendar',
-    selectedDate: undefined,
     listViewStartDate: undefined,
     dateSavedAt: undefined,
   };
@@ -43,7 +45,7 @@ export const getGameFilters = async (): Promise<GameFilters> => {
 export const setGameFilters = async (filters: GameFilters): Promise<void> => {
   const filtersToSave: GameFilters = {
     ...filters,
-    dateSavedAt: filters.selectedDate || filters.listViewStartDate ? Date.now() : undefined,
+    dateSavedAt: filters.listViewStartDate ? Date.now() : undefined,
   };
   await set(GAME_FILTERS_KEY, filtersToSave);
 };

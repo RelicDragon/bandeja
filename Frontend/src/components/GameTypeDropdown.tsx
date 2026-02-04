@@ -74,7 +74,7 @@ export const GameTypeDropdown = ({ isOpen, onClose, onSelectType }: GameTypeDrop
     setIsExiting(true);
     setTimeout(() => {
       if (type === 'LEAGUE') {
-        navigate('/create-league');
+        navigate('/create-league', { replace: true });
         onClose();
       } else {
         onSelectType(type);

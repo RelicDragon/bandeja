@@ -11,6 +11,8 @@ interface MessageListProps {
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onReplyMessage: (message: ChatMessage) => void;
+  onResendQueued?: (tempId: string) => void;
+  onRemoveFromQueue?: (tempId: string) => void;
   isLoading?: boolean;
   isLoadingMessages?: boolean;
   isSwitchingChatType?: boolean;
@@ -29,6 +31,8 @@ export const MessageList: React.FC<MessageListProps> = ({
   onRemoveReaction,
   onDeleteMessage,
   onReplyMessage,
+  onResendQueued,
+  onRemoveFromQueue,
   isLoading = false,
   isLoadingMessages = false,
   isSwitchingChatType = false,
@@ -212,6 +216,8 @@ export const MessageList: React.FC<MessageListProps> = ({
             onRemoveReaction={onRemoveReaction}
             onDeleteMessage={onDeleteMessage}
             onReplyMessage={onReplyMessage}
+            onResendQueued={onResendQueued}
+            onRemoveFromQueue={onRemoveFromQueue}
             contextMenuState={contextMenuState}
             onOpenContextMenu={openContextMenu}
             onCloseContextMenu={closeContextMenu}

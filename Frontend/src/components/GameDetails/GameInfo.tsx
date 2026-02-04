@@ -296,7 +296,7 @@ export const GameInfo = ({
     }
   };
 
-  const playingParticipants = game.participants?.filter(p => p.isPlaying) ?? [];
+  const playingParticipants = game.participants?.filter(p => p.status === 'PLAYING') ?? [];
   const shouldShowTiming = game.entityType !== 'LEAGUE_SEASON';
   const canShowEdit = game.resultsStatus === 'NONE' && game.status !== 'ARCHIVED';
   const userCityId = user?.currentCity?.id || user?.currentCityId;

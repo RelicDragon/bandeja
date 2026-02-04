@@ -58,7 +58,7 @@ export async function updateParticipantLevel(
       participants: {
         where: {
           userId: participantUserId,
-          isPlaying: true,
+          status: 'PLAYING',
         },
       },
     },

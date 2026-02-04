@@ -92,7 +92,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
         create: participantUserIds.map(userId => ({
           userId,
           role: 'PARTICIPANT' as const,
-          isPlaying: true,
+          status: 'PLAYING',
         })),
       },
     },

@@ -1,7 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
-import { InviteStatus } from '@prisma/client';
 
 const getLeagueSeasonInclude = () => ({
   league: {
@@ -43,6 +42,9 @@ export const getBaseGameInclude = () => ({
   participants: {
     include: {
       user: {
+        select: USER_SELECT_FIELDS,
+      },
+      invitedByUser: {
         select: USER_SELECT_FIELDS,
       },
     },
@@ -116,28 +118,6 @@ const getGamesParentInclude = () => ({
 export const getGameInclude = () => ({
   ...getBaseGameInclude(),
   ...getGameIncludeCourtInclude(),
-  invites: {
-    where: {
-      status: InviteStatus.PENDING,
-    },
-    include: {
-      receiver: {
-        select: USER_SELECT_FIELDS,
-      },
-    },
-  },
-  // TODO: Remove after 2025-02-02 - Backward compatibility: include JoinQueue
-  joinQueues: {
-    where: {
-      status: InviteStatus.PENDING,
-    },
-    include: {
-      user: {
-        select: USER_SELECT_FIELDS,
-      },
-    },
-    orderBy: { createdAt: 'asc' as const },
-  },
   outcomes: {
     include: {
       user: {
@@ -202,21 +182,12 @@ export const getGameInclude = () => ({
   },
 });
 
-// TODO: Remove after 2025-02-02 - Backward compatibility: compute joinQueues from participants
 export function computeJoinQueuesFromParticipants(game: any): any[] {
-  const nonPlayingParticipants = game.participants?.filter(
-    (p: any) => !p.isPlaying && p.role === 'PARTICIPANT'
+  const inQueueParticipants = game.participants?.filter(
+    (p: any) => p.status === 'IN_QUEUE' && p.role === 'PARTICIPANT'
   ) || [];
-  
-  // Merge with old joinQueues for backward compatibility
-  const oldJoinQueues = game.joinQueues || [];
-  
-  // Create map to avoid duplicates
-  const queueMap = new Map();
-  
-  // Add non-playing participants
-  nonPlayingParticipants.forEach((p: any) => {
-    queueMap.set(p.userId, {
+  return inQueueParticipants
+    .map((p: any) => ({
       id: p.id,
       userId: p.userId,
       gameId: p.gameId,
@@ -224,19 +195,28 @@ export function computeJoinQueuesFromParticipants(game: any): any[] {
       createdAt: p.joinedAt,
       updatedAt: p.joinedAt,
       user: p.user,
-    });
-  });
-  
-  // Add old joinQueues that don't have corresponding participants
-  oldJoinQueues.forEach((jq: any) => {
-    if (!queueMap.has(jq.userId)) {
-      queueMap.set(jq.userId, jq);
-    }
-  });
-  
-  return Array.from(queueMap.values()).sort((a, b) => 
-    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
+    }))
+    .sort((a: any, b: any) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+}
+
+/** Backward compat: participants with status INVITED exposed as game.invites. To be removed on 10-02-2026. */
+export function computeInvitesFromParticipants(game: any): any[] {
+  const invited = game.participants?.filter((p: any) => p.status === 'INVITED') || [];
+  return invited.map((p: any) => ({
+    id: p.id,
+    receiverId: p.userId,
+    gameId: p.gameId,
+    status: 'PENDING',
+    message: p.inviteMessage ?? null,
+    expiresAt: p.inviteExpiresAt ?? null,
+    createdAt: p.joinedAt,
+    updatedAt: p.joinedAt,
+    receiver: p.user,
+    sender: p.invitedByUser ?? null,
+    game: p.game ?? (game.id === p.gameId ? game : null),
+  }));
 }
 
 export class GameReadService {
@@ -280,11 +260,16 @@ export class GameReadService {
       }
     }
 
+    const participantsWithIsPlaying = game.participants?.map((p: any) => ({
+      ...p,
+      isPlaying: p.status === 'PLAYING',
+    })) ?? game.participants;
     return {
       ...game,
+      participants: participantsWithIsPlaying,
       isClubFavorite,
-      // TODO: Remove after 2025-02-02 - Backward compatibility: compute joinQueues from participants
       joinQueues: computeJoinQueuesFromParticipants(game),
+      invites: computeInvitesFromParticipants(game),
     };
   }
 
@@ -427,7 +412,7 @@ export class GameReadService {
     return games;
   }
 
-  static async getAvailableGames(userId: string, userCityId?: string, startDate?: string, endDate?: string, showArchived?: boolean) {
+  static async getAvailableGames(userId: string, userCityId?: string, startDate?: string, endDate?: string, showArchived?: boolean, includeLeagues?: boolean) {
     if (!userId) {
       throw new ApiError(401, 'Unauthorized');
     }
@@ -438,11 +423,13 @@ export class GameReadService {
         {
           isPublic: false,
           participants: {
-            some: {
-              userId: userId
-            }
+            some: { userId: userId }
           }
-        }
+        },
+        ...(includeLeagues ? [
+          { entityType: 'LEAGUE' },
+          { entityType: 'LEAGUE_SEASON' }
+        ] : [])
       ]
     };
 

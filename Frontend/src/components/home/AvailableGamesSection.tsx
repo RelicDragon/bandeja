@@ -4,21 +4,23 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Card, GameCard, Button } from '@/components';
 import { Game } from '@/types';
-import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell } from 'lucide-react';
+import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { format, startOfDay, addDays, subDays } from 'date-fns';
-import { useHeaderStore } from '@/store/headerStore';
 import { MonthCalendar } from './MonthCalendar';
 import { TrainersList } from './TrainersList';
-import { getGameFilters, setGameFilters } from '@/utils/gameFiltersStorage';
+import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
   user: any;
-  loading: boolean;
+  loading?: boolean;
   onJoin: (gameId: string, e: React.MouseEvent) => void;
   onMonthChange?: (month: number, year: number) => void;
   onDateRangeChange?: (startDate: Date, endDate: Date) => void;
+  filters?: GameFilters;
+  onFilterChange?: (key: keyof GameFilters, value: any) => void;
+  onFiltersChange?: (updates: Partial<GameFilters>) => void;
 }
 
 export const AvailableGamesSection = ({
@@ -27,6 +29,9 @@ export const AvailableGamesSection = ({
   onJoin,
   onMonthChange,
   onDateRangeChange,
+  filters: externalFilters,
+  onFilterChange,
+  onFiltersChange,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -35,24 +40,49 @@ export const AvailableGamesSection = ({
   const [listViewStartDate, setListViewStartDate] = useState<Date>(new Date());
   const [userFilter, setUserFilter] = useState(false);
   const [trainingFilter, setTrainingFilter] = useState(false);
+  const [tournamentFilter, setTournamentFilter] = useState(false);
+  const [leaguesFilter, setLeaguesFilter] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const setSelectedDateForCreateGame = useHeaderStore((state) => state.setSelectedDateForCreateGame);
+
+  const userFilterVal = externalFilters?.userFilter ?? userFilter;
+  const trainingFilterVal = externalFilters?.trainingFilter ?? trainingFilter;
+  const tournamentFilterVal = externalFilters?.tournamentFilter ?? tournamentFilter;
+  const leaguesFilterVal = externalFilters?.leaguesFilter ?? leaguesFilter;
+
+  const setUserFilterVal = (v: boolean) => (onFilterChange ? onFilterChange('userFilter', v) : setUserFilter(v));
+
+  const setEntityFilters = (training: boolean, tournament: boolean, leagues: boolean) => {
+    if (onFiltersChange) {
+      onFiltersChange({ trainingFilter: training, tournamentFilter: tournament, leaguesFilter: leagues });
+    } else {
+      setTrainingFilter(training);
+      setTournamentFilter(tournament);
+      setLeaguesFilter(leagues);
+    }
+  };
+
+  const handleEntityFilterClick = (type: 'training' | 'tournament' | 'leagues') => {
+    if (type === 'training') {
+      setEntityFilters(!trainingFilterVal, false, false);
+    } else if (type === 'tournament') {
+      setEntityFilters(false, !tournamentFilterVal, false);
+    } else {
+      setEntityFilters(false, false, !leaguesFilterVal);
+    }
+  };
   const lastDateRangeRef = useRef<{ start: string; end: string } | null>(null);
 
   useEffect(() => {
     const loadFilters = async () => {
       const filters = await getGameFilters();
-      setUserFilter(filters.userFilter);
-      setTrainingFilter(filters.trainingFilter);
+      if (!externalFilters) {
+        setUserFilter(filters.userFilter);
+        setTrainingFilter(filters.trainingFilter);
+        setTournamentFilter(filters.tournamentFilter ?? false);
+        setLeaguesFilter(filters.leaguesFilter ?? false);
+      }
       if (filters.activeTab) {
         setFindViewMode(filters.activeTab);
-      }
-      
-      if (filters.selectedDate) {
-        const restoredDate = new Date(filters.selectedDate);
-        if (!isNaN(restoredDate.getTime())) {
-          setSelectedDate(restoredDate);
-        }
       }
       
       if (filters.listViewStartDate) {
@@ -65,28 +95,23 @@ export const AvailableGamesSection = ({
       setIsInitialized(true);
     };
     loadFilters();
-  }, [setFindViewMode]);
+  }, [setFindViewMode, externalFilters]);
 
   useEffect(() => {
     if (!isInitialized) return;
-    
+
     const saveFilters = async () => {
       await setGameFilters({
-        userFilter,
-        trainingFilter,
+        userFilter: userFilterVal,
+        trainingFilter: trainingFilterVal,
+        tournamentFilter: tournamentFilterVal,
+        leaguesFilter: leaguesFilterVal,
         activeTab: findViewMode,
-        selectedDate: findViewMode === 'calendar' ? selectedDate.toISOString() : undefined,
         listViewStartDate: findViewMode === 'list' ? listViewStartDate.toISOString() : undefined,
       });
     };
     saveFilters();
-  }, [isInitialized, userFilter, trainingFilter, findViewMode, selectedDate, listViewStartDate]);
-
-  useEffect(() => {
-    console.log('AvailableGamesSection - storing date for create game:', selectedDate);
-    setSelectedDateForCreateGame(selectedDate);
-  }, [selectedDate, setSelectedDateForCreateGame]);
-
+  }, [isInitialized, userFilterVal, trainingFilterVal, tournamentFilterVal, leaguesFilterVal, findViewMode, listViewStartDate]);
 
   const handleCityClick = () => {
     toast(t('games.switchCityInProfile'));
@@ -173,12 +198,13 @@ export const AvailableGamesSection = ({
 
     const isPublic = game.isPublic;
     const isParticipant = user?.id && game.participants.some((p: any) => p.userId === user.id);
-    
-    if (!isPublic && !isParticipant) {
+    const isLeagueGame = game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON';
+
+    if (!isPublic && !isParticipant && !(leaguesFilterVal && isLeagueGame)) {
       return false;
     }
 
-    if (userFilter) {
+    if (userFilterVal) {
       if (game.participants.length >= game.maxParticipants) {
         return false;
       }
@@ -194,7 +220,27 @@ export const AvailableGamesSection = ({
       }
     }
 
-    if (trainingFilter && game.entityType !== 'TRAINING') {
+    if (trainingFilterVal && game.entityType !== 'TRAINING') {
+      return false;
+    }
+
+    if (trainingFilterVal && user?.favoriteTrainerId) {
+      const owner = game.participants.find((p: any) => p.role === 'OWNER');
+      if (!owner || owner.userId !== user.favoriteTrainerId) {
+        return false;
+      }
+    }
+
+    if (trainingFilterVal && user?.favoriteTrainerId) {
+      const hasTrainer = game.participants.some((p: any) => p.userId === user.favoriteTrainerId);
+      if (!hasTrainer) return false;
+    }
+
+    if (tournamentFilterVal && game.entityType !== 'TOURNAMENT') {
+      return false;
+    }
+
+    if (leaguesFilterVal && !isLeagueGame) {
       return false;
     }
 
@@ -226,31 +272,55 @@ export const AvailableGamesSection = ({
         </div>
         <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
           <button
-            onClick={() => setTrainingFilter(!trainingFilter)}
+            onClick={() => handleEntityFilterClick('training')}
             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-              trainingFilter
+              trainingFilterVal
                 ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                 : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
             }`}
           >
-            <Dumbbell size={18} className={trainingFilter ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={trainingFilter ? 'currentColor' : 'none'} />
+            <Dumbbell size={18} className={trainingFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={trainingFilterVal ? 'currentColor' : 'none'} />
             <span className="text-sm font-medium">{t('games.training', { defaultValue: 'Training' })}</span>
           </button>
           <button
-            onClick={() => setUserFilter(!userFilter)}
+            onClick={() => setUserFilterVal(!userFilterVal)}
             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-              userFilter
+              userFilterVal
                 ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                 : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
             }`}
           >
-            <Filter size={18} className={userFilter ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={userFilter ? 'currentColor' : 'none'} />
+            <Filter size={18} className={userFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={userFilterVal ? 'currentColor' : 'none'} />
             <span className="text-sm font-medium">{t('games.availableForMe', { defaultValue: 'Available for me' })}</span>
+          </button>
+        </div>
+        <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
+          <button
+            onClick={() => handleEntityFilterClick('tournament')}
+            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
+              tournamentFilterVal
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <Swords size={18} className={tournamentFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={tournamentFilterVal ? 'currentColor' : 'none'} />
+            <span className="text-sm font-medium">{t('games.entityTypes.TOURNAMENT', { defaultValue: 'Tournament' })}</span>
+          </button>
+          <button
+            onClick={() => handleEntityFilterClick('leagues')}
+            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
+              leaguesFilterVal
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <Trophy size={18} className={leaguesFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={leaguesFilterVal ? 'currentColor' : 'none'} />
+            <span className="text-sm font-medium">{t('games.entityTypes.LEAGUE', { defaultValue: 'Leagues' })}</span>
           </button>
         </div>
         <div 
           className={`max-w-md mx-auto mb-3 overflow-hidden transition-all duration-300 ease-in-out ${
-            userFilter 
+            userFilterVal 
               ? 'max-h-20 opacity-100' 
               : 'max-h-0 opacity-0'
           }`}
@@ -263,7 +333,7 @@ export const AvailableGamesSection = ({
         </div>
       </div>
 
-      <TrainersList show={trainingFilter} />
+      <TrainersList show={trainingFilterVal} />
 
       {findViewMode === 'calendar' ? (
         <>
@@ -271,8 +341,11 @@ export const AvailableGamesSection = ({
             selectedDate={selectedDate}
             onDateSelect={handleDateSelect}
             availableGames={availableGames}
-            userFilter={userFilter}
-            trainingFilter={trainingFilter}
+            userFilter={userFilterVal}
+            trainingFilter={trainingFilterVal}
+            tournamentFilter={tournamentFilterVal}
+            leaguesFilter={leaguesFilterVal}
+            favoriteTrainerId={user?.favoriteTrainerId}
             onMonthChange={onMonthChange}
             onDateRangeChange={onDateRangeChange}
           />
@@ -280,7 +353,7 @@ export const AvailableGamesSection = ({
           {filteredGames.length === 0 ? (
             <Card className="text-center py-12">
               <p className="text-gray-600 dark:text-gray-400">
-                {trainingFilter ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : t('games.noGamesFound')}
+                {trainingFilterVal ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : tournamentFilterVal ? t('games.noTournamentFound', { defaultValue: 'No tournament found' }) : leaguesFilterVal ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' }) : t('games.noGamesFound')}
               </p>
             </Card>
           ) : (
@@ -322,7 +395,7 @@ export const AvailableGamesSection = ({
           {filteredGames.length === 0 ? (
             <Card className="text-center py-12">
               <p className="text-gray-600 dark:text-gray-400">
-                {trainingFilter ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : t('games.noGamesFound')}
+                {trainingFilterVal ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : tournamentFilterVal ? t('games.noTournamentFound', { defaultValue: 'No tournament found' }) : leaguesFilterVal ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' }) : t('games.noGamesFound')}
               </p>
             </Card>
           ) : (

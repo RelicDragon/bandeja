@@ -23,7 +23,7 @@ export class LeagueSyncService {
       where: { id: leagueSeasonId },
       include: {
         participants: {
-          where: { isPlaying: true },
+          where: { status: 'PLAYING' },
           include: {
             user: {
               select: USER_SELECT_FIELDS,

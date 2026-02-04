@@ -13,6 +13,7 @@ import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
 import { useMyGames } from '@/hooks/useMyGames';
 import { usePastGames } from '@/hooks/usePastGames';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
+import { useGameFilters } from '@/hooks/useGameFilters';
 import { ChatType } from '@/types';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { enUS, ru, es, sr } from 'date-fns/locale';
@@ -114,11 +115,12 @@ export const HomeContent = () => {
     return { startDate: start, endDate: end };
   });
 
+  const { filters, updateFilter, updateFilters } = useGameFilters();
   const {
     availableGames,
     loading: loadingAvailableGames,
     fetchData: fetchAvailableGames,
-  } = useAvailableGames(user, dateRange.startDate, dateRange.endDate);
+  } = useAvailableGames(user, dateRange.startDate, dateRange.endDate, true);
 
   const handleMonthChange = () => {
     // Keep for compatibility but not used for fetching
@@ -370,6 +372,9 @@ export const HomeContent = () => {
             onJoin={handleJoinGame}
             onMonthChange={handleMonthChange}
             onDateRangeChange={handleDateRangeChange}
+            filters={filters}
+            onFilterChange={(key, value) => updateFilter(key, value)}
+            onFiltersChange={(updates) => updateFilters(updates)}
           />
         </div>
       </div>

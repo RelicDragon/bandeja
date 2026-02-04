@@ -1,6 +1,9 @@
 import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { ChatContextType } from '@prisma/client';
+import { NotificationPreferenceService } from '../../notificationPreference.service';
+import { NotificationChannelType } from '@prisma/client';
+import { PreferenceKey } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { formatUserName } from '../../shared/notification-base';
@@ -35,7 +38,6 @@ export async function sendBugChatNotification(
       select: {
         id: true,
         telegramId: true,
-        sendTelegramMessages: true,
         currentCityId: true,
       }
     });
@@ -51,7 +53,6 @@ export async function sendBugChatNotification(
           select: {
             id: true,
             telegramId: true,
-            sendTelegramMessages: true,
             currentCityId: true,
           }
         }
@@ -66,12 +67,10 @@ export async function sendBugChatNotification(
       where: {
         isAdmin: true,
         telegramId: { not: null },
-        sendTelegramMessages: true,
       },
       select: {
         id: true,
         telegramId: true,
-        sendTelegramMessages: true,
         currentCityId: true,
       }
     });
@@ -107,7 +106,8 @@ export async function sendBugChatNotification(
         }
       }
 
-      if (user && user.telegramId && user.sendTelegramMessages) {
+      const allowed = user ? await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES) : false;
+      if (user && user.telegramId && allowed) {
         notifiedUserIds.add(userId);
         try {
           const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
@@ -132,7 +132,6 @@ export async function sendBugChatNotification(
       select: {
         id: true,
         telegramId: true,
-        sendTelegramMessages: true,
         currentCityId: true,
       }
     });
@@ -144,7 +143,6 @@ export async function sendBugChatNotification(
           select: {
             id: true,
             telegramId: true,
-            sendTelegramMessages: true,
             currentCityId: true,
           }
         }
@@ -156,7 +154,6 @@ export async function sendBugChatNotification(
         isAdmin: true,
         NOT: { id: sender.id },
         telegramId: { not: null },
-        sendTelegramMessages: true,
       },
       select: {
         id: true,
@@ -174,7 +171,8 @@ export async function sendBugChatNotification(
 
     if (bugCreator && bugCreator.id !== sender.id) {
       const isMuted = await ChatMuteService.isChatMuted(bugCreator.id, ChatContextType.BUG, bug.id);
-      if (!isMuted && bugCreator.telegramId && bugCreator.sendTelegramMessages) {
+      const creatorAllowed = await NotificationPreferenceService.doesUserAllow(bugCreator.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+      if (!isMuted && bugCreator.telegramId && creatorAllowed) {
         try {
           const lang = await getUserLanguageFromTelegramId(bugCreator.telegramId, undefined);
           const timezone = elseTimezoneMap.get(bugCreator.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
@@ -196,10 +194,9 @@ export async function sendBugChatNotification(
 
     for (const participant of bugParticipants) {
       const user = participant.user;
-      
-      if (!user.telegramId || !user.sendTelegramMessages || user.id === sender.id || notifiedUserIds.has(user.id)) {
-        continue;
-      }
+      if (user.id === sender.id || notifiedUserIds.has(user.id)) continue;
+      const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+      if (!user.telegramId || !allowed) continue;
 
       const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.BUG, bug.id);
       if (isMuted) {
@@ -226,29 +223,29 @@ export async function sendBugChatNotification(
     }
 
     for (const admin of admins) {
-      if (admin.telegramId && !notifiedUserIds.has(admin.id)) {
-        const isMuted = await ChatMuteService.isChatMuted(admin.id, ChatContextType.BUG, bug.id);
-        if (isMuted) {
-          notifiedUserIds.add(admin.id);
-          continue;
-        }
-        
+      if (!admin.telegramId || notifiedUserIds.has(admin.id)) continue;
+      const adminAllowed = await NotificationPreferenceService.doesUserAllow(admin.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+      if (!adminAllowed) continue;
+      const isMuted = await ChatMuteService.isChatMuted(admin.id, ChatContextType.BUG, bug.id);
+      if (isMuted) {
         notifiedUserIds.add(admin.id);
-        try {
-          const lang = await getUserLanguageFromTelegramId(admin.telegramId, undefined);
-          const timezone = elseTimezoneMap.get(admin.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
-          const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
-          const buttons = [[
-            {
-              text: t('telegram.reply', lang),
-              callback_data: `rbm:${message.id}:${bug.id}`
-            }
-          ]];
-          const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${formattedMessage}`, buttons, lang);
-          await api.sendMessage(admin.telegramId, finalMessage, options);
-        } catch (error) {
-          console.error(`Failed to send Telegram notification to admin ${admin.id}:`, error);
-        }
+        continue;
+      }
+      notifiedUserIds.add(admin.id);
+      try {
+        const lang = await getUserLanguageFromTelegramId(admin.telegramId, undefined);
+        const timezone = elseTimezoneMap.get(admin.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
+        const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
+        const buttons = [[
+          {
+            text: t('telegram.reply', lang),
+            callback_data: `rbm:${message.id}:${bug.id}`
+          }
+        ]];
+        const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${formattedMessage}`, buttons, lang);
+        await api.sendMessage(admin.telegramId, finalMessage, options);
+      } catch (error) {
+        console.error(`Failed to send Telegram notification to admin ${admin.id}:`, error);
       }
     }
   }

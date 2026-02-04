@@ -28,7 +28,7 @@ final class MainViewController: CAPBridgeViewController {
 
         let overlay = UIView()
         overlay.translatesAutoresizingMaskIntoConstraints = false
-        overlay.backgroundColor = UIColor.systemBackground
+        overlay.backgroundColor = UIColor(red: 171/255, green: 222/255, blue: 227/255, alpha: 1)
 
         let logo = UIImageView(image: UIImage(named: "Logo"))
         logo.translatesAutoresizingMaskIntoConstraints = false

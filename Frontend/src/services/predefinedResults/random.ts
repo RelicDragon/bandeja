@@ -439,7 +439,7 @@ export function generateRandomRound(
   previousRounds: Round[],
   initialSets: Array<{ teamA: number; teamB: number }>
 ): Match[] {
-  let playingParticipants = game.participants.filter(p => p.isPlaying);
+  let playingParticipants = game.participants.filter(p => p.status === 'PLAYING');
   
   if (game.genderTeams === 'MEN') {
     playingParticipants = playingParticipants.filter(p => p.user.gender === 'MALE');

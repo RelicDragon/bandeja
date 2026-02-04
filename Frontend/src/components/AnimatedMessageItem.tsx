@@ -15,6 +15,8 @@ interface AnimatedMessageItemProps {
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onReplyMessage: (message: ChatMessage) => void;
+  onResendQueued?: (tempId: string) => void;
+  onRemoveFromQueue?: (tempId: string) => void;
   contextMenuState: ContextMenuState;
   onOpenContextMenu: (messageId: string, position: { x: number; y: number }) => void;
   onCloseContextMenu: () => void;
@@ -31,6 +33,8 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   onRemoveReaction,
   onDeleteMessage,
   onReplyMessage,
+  onResendQueued,
+  onRemoveFromQueue,
   contextMenuState,
   onOpenContextMenu,
   onCloseContextMenu,
@@ -68,6 +72,8 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
         onRemoveReaction={onRemoveReaction}
         onDeleteMessage={onDeleteMessage}
         onReplyMessage={onReplyMessage}
+        onResendQueued={onResendQueued}
+        onRemoveFromQueue={onRemoveFromQueue}
         contextMenuState={contextMenuState}
         onOpenContextMenu={onOpenContextMenu}
         onCloseContextMenu={onCloseContextMenu}

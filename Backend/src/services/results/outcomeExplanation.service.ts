@@ -318,7 +318,7 @@ export async function getOutcomeExplanation(
     if (socialLevelEvent) {
       const currentParticipant = game.participants.find(p => p.userId === userId);
       if (currentParticipant) {
-        const playingParticipants = game.participants.filter(p => p.isPlaying);
+        const playingParticipants = game.participants.filter(p => p.status === 'PLAYING');
         const allParticipants = game.participants;
         
         const parentGameParticipants = game.parentId
@@ -380,13 +380,13 @@ export async function getOutcomeExplanation(
         const multiplier = getRoleMultiplier(
           currentParticipant.role,
           parentParticipantMap.get(userId),
-          currentParticipant.isPlaying
+          currentParticipant.status === 'PLAYING'
         );
 
         const roleName = getRoleName(
           currentParticipant.role,
           parentParticipantMap.get(userId),
-          currentParticipant.isPlaying
+          currentParticipant.status === 'PLAYING'
         );
 
         socialLevelChangeData = {
@@ -434,8 +434,8 @@ async function countCoPlayedGames(
       startTime: { lt: currentGameStartTime },
       entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON] },
       AND: [
-        { participants: { some: { userId: userId1, isPlaying: true } } },
-        { participants: { some: { userId: userId2, isPlaying: true } } },
+        { participants: { some: { userId: userId1, status: 'PLAYING' } } },
+        { participants: { some: { userId: userId2, status: 'PLAYING' } } },
       ],
     },
     select: { id: true },

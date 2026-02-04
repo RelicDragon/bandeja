@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Home } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Court, EntityType } from '@/types';
-import { BaseModal } from '@/components/BaseModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface CourtModalProps {
   isOpen: boolean;
@@ -41,17 +41,11 @@ export const CourtModal = ({ isOpen, onClose, courts, selectedId, onSelect, enti
   const noAvailableText = isBar ? t('createGame.noHallsAvailable') : t('createGame.noCourtsAvailable');
 
   return (
-    <BaseModal
-      isOpen={internalIsOpen}
-      onClose={handleClose}
-      isBasic
-      modalId="court-modal"
-      showCloseButton={true}
-      closeOnBackdropClick={true}
-    >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{selectText}</h3>
-        </div>
+    <Dialog open={internalIsOpen} onClose={handleClose} modalId="court-modal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{selectText}</DialogTitle>
+        </DialogHeader>
         <div className="overflow-y-auto scrollbar-auto flex-1 p-4">
           {courts.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">{noAvailableText}</p>
@@ -103,7 +97,8 @@ export const CourtModal = ({ isOpen, onClose, courts, selectedId, onSelect, enti
             </div>
           )}
         </div>
-    </BaseModal>
+      </DialogContent>
+    </Dialog>
   );
 };
 
