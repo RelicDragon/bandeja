@@ -59,8 +59,6 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
 
   const { chatContextType = 'GAME', contextId, gameId, content, mediaUrls, replyToId, chatType = ChatType.PUBLIC, mentionIds = [] } = req.body;
   const senderId = req.userId;
-  
-  const normalizedChatType = chatType === ChatType.PRIVATE ? ChatType.PUBLIC : chatType;
 
   console.log('[createMessage] Parsed data:', {
     chatContextType,
@@ -110,7 +108,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       contentLength: content?.length,
       mediaUrlsCount: finalMediaUrls.length,
       replyToId,
-      chatType: normalizedChatType,
+      chatType,
       mentionIdsCount: Array.isArray(mentionIds) ? mentionIds.length : 0
     });
 
@@ -121,7 +119,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       content,
       mediaUrls: finalMediaUrls,
       replyToId,
-      chatType: normalizedChatType,
+      chatType: chatType as ChatType,
       mentionIds: Array.isArray(mentionIds) ? mentionIds : []
     });
 
@@ -990,7 +988,7 @@ export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequ
     throw new ApiError(400, 'contextType and contextId are required');
   }
 
-  const validContextTypes = ['GAME', 'BUG', 'USER'];
+  const validContextTypes = ['GAME', 'BUG', 'USER', 'GROUP'];
   if (!validContextTypes.includes(contextType)) {
     throw new ApiError(400, 'Invalid contextType');
   }

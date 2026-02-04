@@ -154,7 +154,9 @@ export const GameCard = ({
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    navigate(`/games/${game.id}/chat`);
+    const participant = game.participants?.find((p) => p.userId === effectiveUser?.id);
+    const state = participant?.status === 'PLAYING' ? { initialChatType: 'PRIVATE' as const } : undefined;
+    navigate(`/games/${game.id}/chat`, { state });
   };
 
   const handleToggleCollapse = (e: React.MouseEvent) => {

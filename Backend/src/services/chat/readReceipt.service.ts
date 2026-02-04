@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { ParticipantRole, ChatContextType } from '@prisma/client';
+import { UnreadCountBatchService } from './unreadCountBatch.service';
 
 export class ReadReceiptService {
   static async markMessageAsRead(messageId: string, userId: string) {
@@ -14,14 +15,7 @@ export class ReadReceiptService {
       throw new ApiError(404, 'Message not found');
     }
 
-    // Validate access based on context type
-    if (message.chatContextType === 'GAME') {
-      await MessageService.validateGameAccess(message.contextId, userId);
-    } else if (message.chatContextType === 'BUG') {
-      await MessageService.validateBugAccess(message.contextId, userId);
-    } else if (message.chatContextType === 'USER') {
-      await MessageService.validateUserChatAccess(message.contextId, userId);
-    }
+    await MessageService.validateMessageAccess(message, userId);
 
     await prisma.messageReadReceipt.upsert({
       where: {
@@ -66,24 +60,7 @@ export class ReadReceiptService {
     
     for (const game of userGames) {
       const participant = game.participants[0];
-      
-      // Build chat type filter based on user access
-      const chatTypeFilter: any[] = ['PUBLIC'];
-      
-      // Add PRIVATE if user is a playing participant
-      if (participant && participant.status === 'PLAYING') {
-        chatTypeFilter.push('PRIVATE');
-      }
-      
-      // Add ADMINS if user is owner or admin
-      if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) {
-        chatTypeFilter.push('ADMINS');
-      }
-
-      // Add PHOTOS if game status != ANNOUNCED (available for everyone like PUBLIC)
-      if (game.status !== 'ANNOUNCED') {
-        chatTypeFilter.push('PHOTOS');
-      }
+      const chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(participant, game.status);
 
       const gameUnreadCount = await prisma.chatMessage.count({
         where: {
@@ -195,23 +172,7 @@ export class ReadReceiptService {
       [ParticipantRole.OWNER, ParticipantRole.ADMIN]
     );
 
-    // Build chat type filter based on user access
-    const chatTypeFilter: any[] = ['PUBLIC'];
-
-    // Add PRIVATE if user is a playing participant or parent game admin/owner
-    if ((participant && participant.status === 'PLAYING') || isParentGameAdminOrOwner) {
-      chatTypeFilter.push('PRIVATE');
-    }
-
-    // Add ADMINS if user is owner or admin (current or parent game)
-    if ((participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) || isParentGameAdminOrOwner) {
-      chatTypeFilter.push('ADMINS');
-    }
-
-    // Add PHOTOS if game status != ANNOUNCED (available for everyone like PUBLIC)
-    if (game.status !== 'ANNOUNCED') {
-      chatTypeFilter.push('PHOTOS');
-    }
+    const chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(participant, game.status, isParentGameAdminOrOwner);
 
     const unreadCount = await prisma.chatMessage.count({
       where: {
@@ -253,27 +214,9 @@ export class ReadReceiptService {
 
     const unreadCounts: Record<string, number> = {};
 
-    // Calculate unread count for each game based on user's access level
     for (const game of games) {
       const participant = game.participants[0];
-
-      // Build chat type filter based on user access
-      const chatTypeFilter: any[] = ['PUBLIC'];
-
-      // Add PRIVATE if user is a playing participant
-      if (participant && participant.status === 'PLAYING') {
-        chatTypeFilter.push('PRIVATE');
-      }
-
-      // Add ADMINS if user is owner or admin
-      if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) {
-        chatTypeFilter.push('ADMINS');
-      }
-
-      // Add PHOTOS if game status != ANNOUNCED (available for everyone like PUBLIC)
-      if (game.status !== 'ANNOUNCED') {
-        chatTypeFilter.push('PHOTOS');
-      }
+      const chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(participant, game.status);
 
       const gameUnreadCount = await prisma.chatMessage.count({
         where: {
@@ -348,7 +291,7 @@ export class ReadReceiptService {
   }
 
   static async markAllMessagesAsRead(gameId: string, userId: string, chatTypes: string[] = []) {
-    const { participant } = await MessageService.validateGameAccess(gameId, userId);
+    const { participant, game } = await MessageService.validateGameAccess(gameId, userId);
 
     const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
       gameId,
@@ -356,17 +299,19 @@ export class ReadReceiptService {
       [ParticipantRole.OWNER, ParticipantRole.ADMIN]
     );
 
-    // Build chat type filter based on user access
-    const chatTypeFilter: any[] = chatTypes.length > 0 ? chatTypes : ['PUBLIC'];
+    let chatTypeFilter: any[];
 
-    // Add PRIVATE if user is a playing participant or parent game admin/owner
-    if (((participant && participant.status === 'PLAYING') || isParentGameAdminOrOwner) && !chatTypes.length) {
-      chatTypeFilter.push('PRIVATE');
-    }
-
-    // Add ADMINS if user is owner or admin (current or parent game)
-    if (((participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) || isParentGameAdminOrOwner) && !chatTypes.length) {
-      chatTypeFilter.push('ADMINS');
+    if (chatTypes.length > 0) {
+      chatTypeFilter = [...chatTypes];
+      if (!(participant && participant.status === 'PLAYING') && chatTypeFilter.includes('PRIVATE')) {
+        chatTypeFilter = chatTypeFilter.filter((t: string) => t !== 'PRIVATE');
+      }
+      const canAccessAdmins = (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) || isParentGameAdminOrOwner;
+      if (!canAccessAdmins && chatTypeFilter.includes('ADMINS')) {
+        chatTypeFilter = chatTypeFilter.filter((t: string) => t !== 'ADMINS');
+      }
+    } else {
+      chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(participant, game.status, isParentGameAdminOrOwner);
     }
 
     // Get all unread messages for this game and chat types
@@ -595,6 +540,7 @@ export class ReadReceiptService {
     } else if (contextType === 'BUG') {
       return await this.markAllBugMessagesAsRead(contextId, userId);
     } else if (contextType === 'GROUP') {
+      await MessageService.validateGroupChannelAccess(contextId, userId);
       const messages = await prisma.chatMessage.findMany({
         where: {
           chatContextType: 'GROUP',

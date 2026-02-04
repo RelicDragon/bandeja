@@ -6,6 +6,7 @@ import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } fr
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser, formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
+import { canParticipantSeeGameChatMessage } from '../../chat/gameChatVisibility';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
@@ -56,15 +57,7 @@ export async function sendGameChatNotification(
       }
     }
 
-    let canSeeMessage = false;
-    
-    if (chatType === ChatType.PUBLIC) {
-      canSeeMessage = true;
-    } else if (chatType === ChatType.PRIVATE) {
-      canSeeMessage = participant.status === 'PLAYING';
-    } else if (chatType === ChatType.ADMINS) {
-      canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
-    }
+    const canSeeMessage = canParticipantSeeGameChatMessage(participant, game, chatType);
 
     if (canSeeMessage) {
       try {
@@ -73,7 +66,7 @@ export async function sendGameChatNotification(
         
         const formattedMessage = `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
         
-        const chatTypeChar = chatType === 'PUBLIC' ? 'P' : chatType === 'PRIVATE' ? 'V' : 'A';
+        const chatTypeChar = { [ChatType.PUBLIC]: 'P', [ChatType.PRIVATE]: 'V', [ChatType.ADMINS]: 'A', [ChatType.PHOTOS]: 'F' }[chatType] ?? 'P';
         
         const buttons = [[
           {
@@ -101,7 +94,7 @@ export async function sendGameChatNotification(
     select: { parentId: true }
   });
 
-  if (gameWithParent?.parentId) {
+  if (gameWithParent?.parentId && chatType !== ChatType.PRIVATE) {
     const parentGameAdmins = await prisma.gameParticipant.findMany({
       where: {
         gameId: gameWithParent.parentId,
@@ -146,7 +139,7 @@ export async function sendGameChatNotification(
         
         const formattedMessage = `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
         
-        const chatTypeChar = chatType === 'PUBLIC' ? 'P' : chatType === 'PRIVATE' ? 'V' : 'A';
+        const chatTypeChar = { [ChatType.PUBLIC]: 'P', [ChatType.PRIVATE]: 'V', [ChatType.ADMINS]: 'A', [ChatType.PHOTOS]: 'F' }[chatType] ?? 'P';
         
         const buttons = [[
           {

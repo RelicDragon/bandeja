@@ -173,7 +173,8 @@ export function createCallbackHandler(
         const chatTypeMap: Record<string, ChatType> = {
           'P': 'PUBLIC',
           'V': 'PRIVATE',
-          'A': 'ADMINS'
+          'A': 'ADMINS',
+          'F': 'PHOTOS'
         };
         const chatType = chatTypeMap[chatTypeChar] || 'PUBLIC';
 

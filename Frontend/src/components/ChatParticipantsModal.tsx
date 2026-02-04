@@ -46,6 +46,10 @@ export const ChatParticipantsModal = ({ game: initialGame, onClose, currentChatT
       return true; // All participants are visible in public chat
     }
     
+    if (normalizedChatType === 'PRIVATE') {
+      return participant.isParticipant;
+    }
+    
     if (normalizedChatType === 'ADMINS') {
       return participant.isParticipant && (participant.role === 'ADMIN' || participant.role === 'OWNER');
     }

@@ -9,6 +9,7 @@ import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } fr
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
+import { canParticipantSeeGameChatMessage } from '../../chat/gameChatVisibility';
 
 function translateSystemMessage(message: any, lang: string): string {
   let messageData: any = null;
@@ -68,15 +69,7 @@ export async function sendGameSystemMessageNotification(
       continue;
     }
 
-    let canSeeMessage = false;
-    
-    if (chatType === ChatType.PUBLIC) {
-      canSeeMessage = true;
-    } else if (chatType === ChatType.PRIVATE) {
-      canSeeMessage = participant.status === 'PLAYING';
-    } else if (chatType === ChatType.ADMINS) {
-      canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
-    }
+    const canSeeMessage = canParticipantSeeGameChatMessage(participant, game, chatType);
 
     if (canSeeMessage) {
       try {

@@ -6,6 +6,7 @@ import { NotificationPreferenceService, NOTIFICATION_TYPE_TO_PREF } from './noti
 import { PreferenceKey } from '../types/notifications.types';
 import pushNotificationService from './push/push-notification.service';
 import { ChatMuteService } from './chat/chatMute.service';
+import { canParticipantSeeGameChatMessage } from './chat/gameChatVisibility';
 import { createInvitePushNotification } from './push/notifications/invite-push.notification';
 import { createGameChatPushNotification } from './push/notifications/game-chat-push.notification';
 import { createUserChatPushNotification } from './push/notifications/user-chat-push.notification';
@@ -99,14 +100,7 @@ class NotificationService {
         if (user.id === sender.id) continue;
         if (!mentionedUserIds.has(user.id)) continue;
 
-        let canSeeMessage = false;
-        if (chatType === ChatType.PUBLIC) {
-          canSeeMessage = true;
-        } else if (chatType === ChatType.PRIVATE || chatType === ChatType.PHOTOS) {
-          canSeeMessage = participant.status === 'PLAYING' || participant.role === 'OWNER' || participant.role === 'ADMIN';
-        } else if (chatType === ChatType.ADMINS) {
-          canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
-        }
+        const canSeeMessage = canParticipantSeeGameChatMessage(participant, game, chatType);
 
         if (canSeeMessage) {
           const payload = await createGameChatPushNotification(message, game, sender, user);
@@ -128,14 +122,7 @@ class NotificationService {
         const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
         if (isMuted) continue;
 
-        let canSeeMessage = false;
-        if (chatType === ChatType.PUBLIC) {
-          canSeeMessage = true;
-        } else if (chatType === ChatType.PRIVATE || chatType === ChatType.PHOTOS) {
-          canSeeMessage = participant.status === 'PLAYING' || participant.role === 'OWNER' || participant.role === 'ADMIN';
-        } else if (chatType === ChatType.ADMINS) {
-          canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
-        }
+        const canSeeMessage = canParticipantSeeGameChatMessage(participant, game, chatType);
 
         if (canSeeMessage) {
           const payload = await createGameChatPushNotification(message, game, sender, user);
@@ -156,7 +143,7 @@ class NotificationService {
       select: { parentId: true }
     });
 
-    if (gameWithParent?.parentId) {
+    if (gameWithParent?.parentId && chatType !== ChatType.PRIVATE) {
       const parentGameAdmins = await prisma.gameParticipant.findMany({
         where: {
           gameId: gameWithParent.parentId,
@@ -444,14 +431,7 @@ class NotificationService {
         continue;
       }
 
-      let canSeeMessage = false;
-      if (chatType === ChatType.PUBLIC) {
-        canSeeMessage = true;
-      } else if (chatType === ChatType.PRIVATE || chatType === ChatType.PHOTOS) {
-        canSeeMessage = participant.status === 'PLAYING' || participant.role === 'OWNER' || participant.role === 'ADMIN';
-      } else if (chatType === ChatType.ADMINS) {
-        canSeeMessage = participant.role === 'OWNER' || participant.role === 'ADMIN';
-      }
+      const canSeeMessage = canParticipantSeeGameChatMessage(participant, game, chatType);
 
       if (canSeeMessage) {
         const payload = await createGameSystemMessagePushNotification(message, game, user);

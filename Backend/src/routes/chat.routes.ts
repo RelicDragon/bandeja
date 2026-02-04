@@ -230,7 +230,7 @@ router.get(
 router.post(
   '/mark-all-read',
   validate([
-    body('contextType').isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid contextType'),
+    body('contextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid contextType'),
     body('contextId').notEmpty().withMessage('contextId is required'),
     body('chatTypes').optional().isArray().withMessage('chatTypes must be an array')
   ]),

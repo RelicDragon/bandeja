@@ -11,7 +11,7 @@ import { useHeaderStore } from '@/store/headerStore';
 import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
 import { useMyGames } from '@/hooks/useMyGames';
 import { usePastGames } from '@/hooks/usePastGames';
-import { ChatType } from '@/types';
+import { getAvailableGameChatTypes } from '@/utils/chatType';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 
@@ -178,21 +178,9 @@ export const MyTab = () => {
 
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
 
-  const getAvailableChatTypes = (game: any): ChatType[] => {
-    const availableChatTypes: ChatType[] = [];
+  const getAvailableChatTypes = (game: any) => {
     const participant = game.participants?.find((p: any) => p.userId === user?.id);
-    
-    if (game.status && game.status !== 'ANNOUNCED') {
-      availableChatTypes.push('PHOTOS');
-    }
-    
-    availableChatTypes.push('PUBLIC');
-    
-    if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) {
-      availableChatTypes.push('ADMINS');
-    }
-    
-    return availableChatTypes;
+    return getAvailableGameChatTypes(game, participant ?? undefined);
   };
 
   const handleMarkAllAsRead = async () => {

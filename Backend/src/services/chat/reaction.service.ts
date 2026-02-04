@@ -13,14 +13,7 @@ export class ReactionService {
       throw new ApiError(404, 'Message not found');
     }
 
-    // Validate access based on context type
-    if (message.chatContextType === 'GAME') {
-      await MessageService.validateGameAccess(message.contextId, userId);
-    } else if (message.chatContextType === 'BUG') {
-      await MessageService.validateBugAccess(message.contextId, userId, true);
-    } else if (message.chatContextType === 'USER') {
-      await MessageService.validateUserChatAccess(message.contextId, userId);
-    }
+    await MessageService.validateMessageAccess(message, userId, true);
 
     let reaction;
     try {
@@ -83,14 +76,7 @@ export class ReactionService {
       throw new ApiError(404, 'Message not found');
     }
 
-    // Validate access based on context type
-    if (message.chatContextType === 'GAME') {
-      await MessageService.validateGameAccess(message.contextId, userId);
-    } else if (message.chatContextType === 'BUG') {
-      await MessageService.validateBugAccess(message.contextId, userId, true);
-    } else if (message.chatContextType === 'USER') {
-      await MessageService.validateUserChatAccess(message.contextId, userId);
-    }
+    await MessageService.validateMessageAccess(message, userId, true);
 
     await prisma.messageReaction.deleteMany({
       where: {

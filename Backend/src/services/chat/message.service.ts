@@ -159,8 +159,8 @@ export class MessageService {
     }
 
     if (chatType === ChatType.PRIVATE) {
-      if (!isPlaying && !isAdminOrOwner && !isParentGameAdminOrOwner) {
-        throw new ApiError(403, 'Only playing participants, admins, and owners can access private chat');
+      if (!isPlaying) {
+        throw new ApiError(403, 'Only playing participants can access private chat');
       }
     }
 
@@ -177,6 +177,23 @@ export class MessageService {
       if (requireWriteAccess && !isPlaying && !isAdminOrOwner && !isParentGameAdminOrOwner) {
         throw new ApiError(403, 'Only playing participants, admins, and owners can write in photos chat');
       }
+    }
+  }
+
+  static async validateMessageAccess(
+    message: { chatContextType: string; contextId: string; chatType: ChatType },
+    userId: string,
+    requireWriteAccess: boolean = false
+  ) {
+    if (message.chatContextType === 'GAME') {
+      const { participant, game } = await this.validateGameAccess(message.contextId, userId);
+      await this.validateChatTypeAccess(participant, message.chatType, game, userId, message.contextId, false);
+    } else if (message.chatContextType === 'BUG') {
+      await this.validateBugAccess(message.contextId, userId, requireWriteAccess);
+    } else if (message.chatContextType === 'USER') {
+      await this.validateUserChatAccess(message.contextId, userId);
+    } else if (message.chatContextType === 'GROUP') {
+      await this.validateGroupChannelAccess(message.contextId, userId);
     }
   }
 
@@ -709,15 +726,7 @@ export class MessageService {
       throw new ApiError(404, 'Message not found');
     }
 
-    // Validate access based on context type
-    if (message.chatContextType === 'GAME') {
-      const { participant, game } = await this.validateGameAccess(message.contextId, userId);
-      await this.validateChatTypeAccess(participant, message.chatType, game, userId, message.contextId, false);
-    } else if (message.chatContextType === 'BUG') {
-      await this.validateBugAccess(message.contextId, userId, true);
-    } else if (message.chatContextType === 'USER') {
-      await this.validateUserChatAccess(message.contextId, userId);
-    }
+    await this.validateMessageAccess(message, userId, true);
 
     return await prisma.chatMessage.update({
       where: { id: messageId },
@@ -764,15 +773,7 @@ export class MessageService {
       throw new ApiError(403, 'You can only delete your own messages');
     }
 
-    // Validate access based on context type
-    if (message.chatContextType === 'GAME') {
-      const { participant, game } = await this.validateGameAccess(message.contextId, userId);
-      await this.validateChatTypeAccess(participant, message.chatType, game, userId, message.contextId, false);
-    } else if (message.chatContextType === 'BUG') {
-      await this.validateBugAccess(message.contextId, userId, true);
-    } else if (message.chatContextType === 'USER') {
-      await this.validateUserChatAccess(message.contextId, userId);
-    }
+    await this.validateMessageAccess(message, userId, true);
 
     if (message.mediaUrls && message.mediaUrls.length > 0) {
         const { ImageProcessor } = await import('../../utils/imageProcessor');

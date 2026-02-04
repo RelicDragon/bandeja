@@ -23,7 +23,7 @@ import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { isGroupChannelOwner, isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
-import { normalizeChatType } from '@/utils/chatType';
+import { normalizeChatType, getAvailableGameChatTypes } from '@/utils/chatType';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users, Hash } from 'lucide-react';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
@@ -135,7 +135,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     (contextType === 'GAME' && (
       currentChatType === 'PUBLIC' || 
       currentChatType === 'PHOTOS' ||
-      (currentChatType === 'PRIVATE' && (isPlayingParticipant || isAdminOrOwner)) ||
+      (currentChatType === 'PRIVATE' && isPlayingParticipant) ||
       (currentChatType === 'ADMINS' && isAdminOrOwner) ||
       isParticipant || 
       hasPendingInvite || 
@@ -153,7 +153,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     } else if (currentChatType === 'ADMINS') {
       return isAdminOrOwner;
     } else if (currentChatType === 'PRIVATE') {
-      return isPlayingParticipant || isAdminOrOwner;
+      return isPlayingParticipant;
     } else if (currentChatType === 'PHOTOS') {
       return isPlayingParticipant || isAdminOrOwner;
     }
@@ -760,22 +760,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   const getAvailableChatTypes = useCallback((): ChatType[] => {
     if (contextType !== 'GAME') return ['PUBLIC'];
-    
-    const availableTypes: ChatType[] = [];
-    
-    if (game?.status && game.status !== 'ANNOUNCED') {
-      availableTypes.push('PHOTOS');
-    }
-    
-    availableTypes.push('PUBLIC');
-    
-    if (isAdminOrOwner) {
-      availableTypes.push('ADMINS');
-      return availableTypes;
-    }
-    
-    return availableTypes;
-  }, [contextType, isAdminOrOwner, game?.status]);
+    const participant = game?.participants?.find(p => p.userId === user?.id);
+    return getAvailableGameChatTypes(game ?? { status: undefined }, participant ?? undefined);
+  }, [contextType, game, user?.id]);
 
   const handleNewMessage = useCallback((message: ChatMessage): string | void => {
     const normalizedCurrentChatType = normalizeChatType(currentChatType);
@@ -958,10 +945,17 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         }
         
         if (!hasSetDefaultChatType && !initialChatType && contextType === 'GAME' && loadedContext) {
-          if (currentChatType !== 'PUBLIC') {
-            setCurrentChatType('PUBLIC');
-          }
+          const loadedGame = loadedContext as Game;
+          const loadedParticipant = loadedGame.participants?.find(p => p.userId === user?.id);
+          const defaultType = (loadedParticipant?.status === 'PLAYING') ? 'PRIVATE' : 'PUBLIC';
           setHasSetDefaultChatType(true);
+          if (defaultType === 'PRIVATE' && currentChatType !== 'PRIVATE') {
+            await handleChatTypeChange('PRIVATE');
+            return;
+          }
+          if (currentChatType !== defaultType) {
+            setCurrentChatType(defaultType);
+          }
         }
         
         if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
@@ -1022,20 +1016,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             const loadedGame = loadedContext as Game;
             const loadedUserParticipant = loadedGame.participants.find(p => p.userId === user.id);
             const loadedIsParticipant = !!loadedUserParticipant;
-            const loadedIsAdminOrOwner = loadedUserParticipant?.role === 'ADMIN' || loadedUserParticipant?.role === 'OWNER';
             const loadedHasPendingInvite = loadedGame.participants?.some(p => p.userId === user.id && p.status === 'INVITED') ?? false;
             const loadedIsGuest = loadedGame.participants.some(p => p.userId === user.id && (p.status === 'GUEST' || !isParticipantPlaying(p))) ?? false;
             
             if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
-              const availableChatTypes: ChatType[] = [];
-              if (loadedGame.status && loadedGame.status !== 'ANNOUNCED') {
-                availableChatTypes.push('PHOTOS');
-              }
-              availableChatTypes.push('PUBLIC');
-              if (loadedIsParticipant && loadedIsAdminOrOwner) {
-                availableChatTypes.push('ADMINS');
-              }
-              
+              const availableChatTypes = getAvailableGameChatTypes(loadedGame, loadedUserParticipant ?? undefined);
               const markReadResponse = await chatApi.markAllMessagesAsReadForContext('GAME', id, availableChatTypes);
               const markedCount = markReadResponse.data?.count || 0;
               
