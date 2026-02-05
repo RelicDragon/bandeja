@@ -1006,3 +1006,90 @@ input[type="range"].slider:disabled::-moz-range-thumb {
 .dark .custom-cluster-icon:hover .cluster-inner {
   box-shadow: 0 6px 20px rgba(14, 165, 233, 0.7), 0 0 0 4px rgba(31, 41, 55, 0.95);
 }
+
+.auth-logo-top {
+  height: 2rem;
+  min-width: 2.5rem;
+  margin: 0 auto;
+  opacity: 0.3;
+  background-color: #0284c7;
+  mask: url(/bandeja-logo.png) center/contain no-repeat;
+  -webkit-mask: url(/bandeja-logo.png) center/contain no-repeat;
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  filter: drop-shadow(0 0 16px rgba(2, 132, 199, 0.4))
+    drop-shadow(0 0 40px rgba(2, 132, 199, 0.25));
+}
+
+.dark .auth-panel-logo {
+  filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.5))
+    drop-shadow(0 0 32px rgba(245, 158, 11, 0.35))
+    drop-shadow(0 0 48px rgba(251, 191, 36, 0.2));
+}
+
+.auth-logo-top-img {
+  filter: brightness(0)
+    drop-shadow(0 0 12px rgba(245, 158, 11, 0.5))
+    drop-shadow(0 0 32px rgba(245, 158, 11, 0.35))
+    drop-shadow(0 0 48px rgba(251, 191, 36, 0.2));
+}
+
+.mode-select-logo {
+  height: 21px;
+  min-width: 60px;
+  opacity: 0.3;
+  background-color: #0284c7;
+  mask: url(/bandeja-logo.png) center/contain no-repeat;
+  -webkit-mask: url(/bandeja-logo.png) center/contain no-repeat;
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  filter: drop-shadow(0 0 12px rgba(2, 132, 199, 0.5))
+    drop-shadow(0 0 32px rgba(2, 132, 199, 0.35))
+    drop-shadow(0 0 48px rgba(2, 132, 199, 0.2));
+  margin: 0 auto 1.5rem;
+  display: block;
+}
+
+.dark .mode-select-logo {
+  opacity: 1;
+  background-color: #000;
+  filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.5))
+    drop-shadow(0 0 32px rgba(245, 158, 11, 0.35))
+    drop-shadow(0 0 48px rgba(251, 191, 36, 0.2));
+}
+
+.auth-panel {
+  position: relative;
+}
+
+html:not(.dark) .auth-panel {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 251, 235, 0.92) 50%,
+    rgba(255, 255, 255, 0.95) 100%
+  ) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(245, 158, 11, 0.08),
+    0 0 40px -10px rgba(245, 158, 11, 0.12);
+}
+
+.auth-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.4) 0%, transparent 40%, transparent 60%, rgba(251, 191, 36, 0.2) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.dark .auth-panel {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(245, 158, 11, 0.06),
+    0 0 30px -8px rgba(245, 158, 11, 0.08);
+}

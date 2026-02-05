@@ -173,7 +173,7 @@ export const ProfileLeaderboard = () => {
         setIsScrolled(true);
       }
     }
-  }, [loading, leaderboard, isScrolled, setAreFiltersSticky, user?.id]);
+  }, [loading, leaderboard, isScrolled, setAreFiltersSticky, user?.id, scrollBehavior]);
 
   useEffect(() => {
     const handleScroll = () => {

@@ -285,11 +285,10 @@ export async function applyGameOutcomes(
 
   if (updatedGame) {
     const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
-    const { calculateGameStatus, isResultsBasedEntityType } = await import('../../utils/gameStatus');
+    const { calculateGameStatus, isResultsBasedEntityType, ARCHIVE_BY_FINISHED_DATE_TYPES } = await import('../../utils/gameStatus');
     const previousResultsStatus = updatedGame.resultsStatus;
     
     const isResultsBased = isResultsBasedEntityType(updatedGame.entityType);
-    const isFirstTimeFinal = previousResultsStatus !== 'FINAL';
     
     const updateData: {
       resultsStatus: 'FINAL';
@@ -300,7 +299,7 @@ export async function applyGameOutcomes(
       status: 'FINISHED',
     };
     
-    if (isResultsBased && isFirstTimeFinal) {
+    if (ARCHIVE_BY_FINISHED_DATE_TYPES.includes(updatedGame.entityType)) {
       updateData.finishedDate = new Date();
     } else if (!isResultsBased) {
       updateData.status = calculateGameStatus({

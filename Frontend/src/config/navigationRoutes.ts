@@ -83,7 +83,23 @@ export const navigationRoutes: RouteConfig[] = [
     fallback: '/',
     priority: 3,
   },
-  
+
+  {
+    pattern: /^\/login\/telegram$/,
+    fallback: '/login',
+    priority: 5,
+  },
+  {
+    pattern: /^\/login\/phone$/,
+    fallback: '/login',
+    priority: 5,
+  },
+  {
+    pattern: /^\/login$/,
+    fallback: '/',
+    priority: 5,
+  },
+
   // Default fallback for all other routes
   {
     pattern: /.*/,

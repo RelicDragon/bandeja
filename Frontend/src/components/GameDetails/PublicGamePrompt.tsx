@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, LanguageSelector, ThemeSelector } from '@/components';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 
 export const PublicGamePrompt = () => {
   const navigate = useNavigate();
@@ -21,26 +21,15 @@ export const PublicGamePrompt = () => {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {t('games.loginToJoinGame', { defaultValue: 'Login or register to join this game and connect with other players' })}
           </p>
-          <div className="flex gap-3 justify-center">
-            <Button
-              onClick={() => navigate('/login')}
-              variant="primary"
-              size="md"
-              className="flex items-center gap-2"
-            >
-              <LogIn size={18} />
-              {t('auth.login', { defaultValue: 'Login' })}
-            </Button>
-            <Button
-              onClick={() => navigate('/register')}
-              variant="outline"
-              size="md"
-              className="flex items-center gap-2"
-            >
-              <UserPlus size={18} />
-              {t('auth.register', { defaultValue: 'Register' })}
-            </Button>
-          </div>
+          <Button
+            onClick={() => navigate('/login')}
+            variant="primary"
+            size="md"
+            className="flex items-center gap-2 mx-auto"
+          >
+            <LogIn size={18} />
+            {t('auth.login', { defaultValue: 'Login' })}
+          </Button>
         </div>
       </Card>
     </div>

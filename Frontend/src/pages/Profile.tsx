@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal, MainTabFooter } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
@@ -64,8 +64,6 @@ export const ProfileContent = () => {
   const [showUnlinkAppleModal, setShowUnlinkAppleModal] = useState(false);
   const [showUnlinkGoogleModal, setShowUnlinkGoogleModal] = useState(false);
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([]);
-  const [padelmanAnimating, setPadelmanAnimating] = useState(false);
-
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const updateProfile = useCallback(async (updates: Partial<User>) => {
@@ -536,7 +534,6 @@ export const ProfileContent = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
-        <div className="relative">
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.personalInfo')}
@@ -648,24 +645,6 @@ export const ProfileContent = () => {
             )}
           </div>
         </Card>
-        <motion.div
-            className="absolute left-0 bottom-full mb-[-2px] w-16 h-16 -z-10"
-            style={{ transformOrigin: 'left bottom' }}
-            animate={{ rotate: padelmanAnimating ? 15 : 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-          >
-            <img src="/padelman/padelman-cards-1.png" alt="" className="w-full h-full object-contain pointer-events-none" />
-          </motion.div>
-        <button
-            type="button"
-            className="absolute left-0 bottom-full mb-[-2px] w-16 h-16 cursor-pointer p-0 border-0 bg-transparent z-10"
-            onClick={() => {
-              setPadelmanAnimating(true);
-              setTimeout(() => setPadelmanAnimating(false), 200);
-            }}
-          />
-
-        </div>
 
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">

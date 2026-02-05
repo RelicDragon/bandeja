@@ -8,6 +8,9 @@ export default {
   theme: {
     extend: {
       colors: {
+        telegram: '#0088cc',
+        whatsapp: '#25D366',
+        viber: '#7360f2',
         primary: {
           50: '#f0f9ff',
           100: '#e0f2fe',

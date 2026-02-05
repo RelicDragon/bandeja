@@ -6,9 +6,18 @@ type GameStatus = 'ANNOUNCED' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
 
 const RESULTS_BASED_ENTITY_TYPES: readonly EntityType[] = [EntityType.GAME, EntityType.LEAGUE, EntityType.TOURNAMENT, EntityType.TRAINING];
 
+export const ARCHIVE_BY_FINISHED_DATE_TYPES: readonly EntityType[] = [EntityType.GAME, EntityType.LEAGUE, EntityType.TOURNAMENT];
+
 export const isResultsBasedEntityType = (entityType: EntityType): boolean => {
   return RESULTS_BASED_ENTITY_TYPES.includes(entityType);
 };
+
+function isPastArchiveTime(baseDate: Date, clubTimezone: string): boolean {
+  const gameDayStart = startOfDay(toZonedTime(baseDate, clubTimezone));
+  const archiveMidnight = startOfDay(addDays(gameDayStart, 2));
+  const archiveTimeUTC = fromZonedTime(archiveMidnight, clubTimezone);
+  return new Date() >= archiveTimeUTC;
+}
 
 export const calculateGameStatus = (
   game: {
@@ -19,7 +28,7 @@ export const calculateGameStatus = (
     finishedDate?: Date | null;
     entityType: EntityType;
   },
-  clubTimezone?: string
+  clubTimezone: string
 ): GameStatus => {
   if (game.timeIsSet === false) {
     return 'ANNOUNCED';
@@ -33,18 +42,10 @@ export const calculateGameStatus = (
   const hoursSinceEnd = (now.getTime() - endTime.getTime()) / (1000 * 60 * 60);
   
   let shouldArchive = false;
-  if (clubTimezone) {
-    const gameDayStart = startOfDay(toZonedTime(endTime, clubTimezone));
-    const archiveMidnight = startOfDay(addDays(gameDayStart, 2));
-    const archiveTimeUTC = fromZonedTime(archiveMidnight, clubTimezone);
-    shouldArchive = now >= archiveTimeUTC;
+  if (ARCHIVE_BY_FINISHED_DATE_TYPES.includes(game.entityType)) {
+    shouldArchive = game.resultsStatus === 'FINAL' && !!game.finishedDate && isPastArchiveTime(new Date(game.finishedDate), clubTimezone);
   } else {
-    const gameDayStartUTC = new Date(Date.UTC(endTime.getUTCFullYear(), endTime.getUTCMonth(), endTime.getUTCDate()));
-    const archiveTime = addDays(gameDayStartUTC, 2);
-    shouldArchive = now >= archiveTime;
-  }
-  if (game.entityType === EntityType.LEAGUE_SEASON && game.resultsStatus !== 'FINAL') {
-    shouldArchive = false;
+    shouldArchive = isPastArchiveTime(endTime, clubTimezone) && !(game.entityType === EntityType.LEAGUE_SEASON && game.resultsStatus !== 'FINAL');
   }
   
   if (shouldArchive) {

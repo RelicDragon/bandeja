@@ -190,6 +190,7 @@ export async function deleteGameResults(gameId: string) {
         where: { id: gameId },
         data: {
           resultsStatus: 'NONE',
+          finishedDate: null,
           metadata: {
             ...((game.metadata as any) || {}),
           },
@@ -316,6 +317,7 @@ export async function resetGameResults(gameId: string) {
         where: { id: gameId },
         data: {
           resultsStatus: 'NONE',
+          finishedDate: null,
           metadata: {
             ...((game.metadata as any) || {}),
           },
@@ -402,6 +404,7 @@ export async function editGameResults(gameId: string) {
           where: { id: gameId },
           data: {
             resultsStatus: 'IN_PROGRESS',
+            finishedDate: null,
             status: calculateGameStatus({
               startTime: updatedGame.startTime,
               endTime: updatedGame.endTime,
@@ -569,6 +572,7 @@ export async function syncResults(gameId: string, rounds: any[]) {
       where: { id: gameId },
       data: {
         resultsStatus: 'IN_PROGRESS',
+        finishedDate: null,
       },
     });
   });
@@ -590,6 +594,7 @@ export async function createRound(gameId: string, roundId: string) {
     where: { id: gameId },
     data: {
       resultsStatus: 'IN_PROGRESS',
+      finishedDate: null,
     },
   });
 }
@@ -888,6 +893,7 @@ export async function updateMatch(
     where: { id: gameId },
     data: {
       resultsStatus: 'IN_PROGRESS',
+      finishedDate: null,
     },
   });
 }

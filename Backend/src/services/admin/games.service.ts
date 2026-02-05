@@ -309,6 +309,7 @@ export class AdminGamesService {
           where: { id: gameId },
           data: {
             resultsStatus: 'NONE',
+            finishedDate: null,
             metadata: {
               ...((game.metadata as any) || {}),
             },
