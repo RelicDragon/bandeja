@@ -10,7 +10,7 @@ import { ReplyPreview } from './ReplyPreview';
 import { MentionInput } from './MentionInput';
 import { JoinGroupChannelButton } from './JoinGroupChannelButton';
 import { PollCreationModal } from './chat/PollCreationModal';
-import { Image, X, ListPlus } from 'lucide-react';
+import { X, ListPlus, Paperclip, Image } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
@@ -84,9 +84,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [isMultiline, setIsMultiline] = useState(false);
+  const [, setIsMultiline] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
+  const [isAttachExpanded, setIsAttachExpanded] = useState(false);
+  const attachMenuRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const saveDraftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasLoadedDraftRef = useRef(false);
@@ -375,6 +377,17 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     };
   }, [finalContextId, user?.id, saveDraft]);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (attachMenuRef.current && !attachMenuRef.current.contains(e.target as Node)) {
+        setIsAttachExpanded(false);
+      }
+    };
+    if (isAttachExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isAttachExpanded]);
 
   const handleImageSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -485,6 +498,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     } else {
       fileInputRef.current?.click();
     }
+    setIsAttachExpanded(false);
+  };
+
+  const handlePollButtonClick = () => {
+    if (isDisabled || inputBlocked) return;
+    setIsPollModalOpen(true);
+    setIsAttachExpanded(false);
   };
 
   const removeImage = (index: number) => {
@@ -784,10 +804,47 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       )}
 
       <form onSubmit={handleSubmit} className="relative overflow-visible">
-        <div className={`relative overflow-visible bg-white dark:bg-gray-800 md:bg-opacity-100 md:dark:bg-opacity-100 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
+        <div className="flex items-end gap-2">
+          <div ref={attachMenuRef} className="flex flex-col-reverse items-center gap-2 flex-shrink-0 bg-transparent">
+            <button
+              type="button"
+              onClick={() => setIsAttachExpanded(prev => !prev)}
+              disabled={isDisabled || inputBlocked}
+              className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+              title={t('chat.attach', 'Attach')}
+            >
+              <Paperclip size={20} className="text-gray-700 dark:text-gray-300" />
+            </button>
+            <div
+              className={`flex flex-col-reverse items-center gap-2 transition-all duration-300 ease-out bg-transparent ${
+                isAttachExpanded ? 'max-h-28 opacity-100 overflow-visible' : 'max-h-0 opacity-0 pointer-events-none overflow-hidden'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={handleImageButtonClick}
+                disabled={isDisabled || inputBlocked}
+                className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)] hover:scale-105"
+                title={t('chat.attachImages', 'Images')}
+              >
+                <Image size={20} className="text-gray-700 dark:text-gray-300" />
+              </button>
+              <button
+                type="button"
+                onClick={handlePollButtonClick}
+                disabled={isDisabled || inputBlocked}
+                className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)] hover:scale-105"
+                title={t('chat.poll.createTitle', 'Create Poll')}
+              >
+                <ListPlus size={20} className="text-gray-700 dark:text-gray-300" />
+              </button>
+            </div>
+          </div>
+          <div className={`flex-1 message-input-panel relative overflow-visible !bg-transparent md:!bg-white md:dark:!bg-gray-800 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
           }`}>
           <div ref={inputContainerRef} className="relative overflow-visible">
-            <MentionInput
+            <div className="rounded-2xl bg-white dark:bg-gray-800 md:bg-transparent">
+              <MentionInput
               value={message}
               onChange={handleMessageChange}
               placeholder={t('chat.messages.typeMessage')}
@@ -803,42 +860,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               style={{
                 minHeight: '48px',
                 maxHeight: '120px',
+                paddingLeft: '20px',
               }}
-            />
-
-            <button
-              type="button"
-              onClick={() => setIsPollModalOpen(true)}
-              disabled={isDisabled || inputBlocked}
-              className="absolute w-9 h-9 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110 hover:bg-gray-200 dark:hover:bg-gray-600 shadow-lg z-10"
-              style={{
-                right: isMultiline ? '48px' : '94px',
-                top: isMultiline ? 'auto' : 'auto',
-                bottom: isMultiline ? '4px' : '8px',
-                transform: isMultiline ? 'translateY(-44px)' : 'translateY(0)',
-                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1), right 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-              title={t('chat.poll.createTitle', 'Create Poll')}
-            >
-              <ListPlus size={18} />
-            </button>
-
-            <button
-              type="button"
-              onClick={handleImageButtonClick}
-              disabled={isDisabled || inputBlocked}
-              className="absolute w-9 h-9 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110 hover:bg-gray-200 dark:hover:bg-gray-600 shadow-lg z-10"
-              style={{
-                right: isMultiline ? '8px' : '54px',
-                top: isMultiline ? 'auto' : 'auto',
-                bottom: isMultiline ? '4px' : '8px',
-                transform: isMultiline ? 'translateY(-44px)' : 'translateY(0)',
-                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1), right 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            >
-              <Image size={18} />
-            </button>
-
+              />
+            </div>
             <button
               type="submit"
               disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
@@ -865,6 +890,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             </button>
           </div>
         </div>
+      </div>
       </form>
 
       <input

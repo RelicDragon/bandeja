@@ -420,12 +420,12 @@ class SocketService {
   public emitChatEvent(
     contextType: ChatContextType, 
     contextId: string, 
-    eventType: 'message' | 'reaction' | 'read-receipt' | 'deleted',
+    eventType: 'message' | 'reaction' | 'read-receipt' | 'deleted' | 'poll-vote',
     data: any,
     messageId?: string
   ) {
     const room = this.getChatRoomName(contextType, contextId);
-    const eventName = `chat:${eventType}`;
+    const eventName = eventType === 'poll-vote' ? 'poll-vote' : `chat:${eventType}`;
     
     // Emit to room with messageId for acknowledgment
     this.io.to(room).emit(eventName, { 

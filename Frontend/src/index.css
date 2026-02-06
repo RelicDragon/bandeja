@@ -282,21 +282,25 @@ body {
   0% {
     opacity: 0;
     backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
   }
   100% {
     opacity: 1;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 }
 
 @keyframes blurOut {
   0% {
     opacity: 1;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
   100% {
     opacity: 0;
     backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
   }
 }
 
@@ -306,6 +310,41 @@ body {
 
 .animate-blur-out {
   animation: blurOut 0.2s ease-in forwards;
+}
+
+.fullscreen-backdrop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+}
+.fullscreen-backdrop-overlay[data-state='open'] {
+  animation: blurIn 0.3s ease-out forwards;
+}
+.fullscreen-backdrop-overlay[data-state='closed'] {
+  animation: blurOut 0.2s ease-in forwards;
+}
+
+@keyframes fullscreenContentIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes fullscreenContentOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.98); }
+}
+.fullscreen-content-animate {
+  opacity: 0;
+  transform: scale(0.98);
+}
+.fullscreen-content-animate[data-state='open'] {
+  animation: fullscreenContentIn 0.3s ease-out forwards;
+}
+.fullscreen-content-animate[data-state='closed'] {
+  animation: fullscreenContentOut 0.2s ease-in forwards;
 }
 
 /* Smooth button hover and click animations */
@@ -788,6 +827,20 @@ body.keyboard-visible .chat-container {
   position: relative;
   z-index: 40;
   flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .chat-container footer {
+    position: absolute !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: transparent !important;
+    z-index: 50;
+  }
+  .chat-container footer .message-input-panel {
+    background-color: transparent !important;
+  }
 }
 
 /* Modal safe area support - modals with fixed inset-0 */

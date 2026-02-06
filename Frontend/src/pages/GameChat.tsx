@@ -1085,6 +1085,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const lastChatReadReceipt = useSocketEventsStore((state) => state.lastChatReadReceipt);
   const lastChatDeleted = useSocketEventsStore((state) => state.lastChatDeleted);
   const lastSyncRequired = useSocketEventsStore((state) => state.lastSyncRequired);
+  const lastPollVote = useSocketEventsStore((state) => state.lastPollVote);
 
   useEffect(() => {
     if (!id) return;
@@ -1134,6 +1135,24 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       socketService.syncMessages(contextType as 'GAME' | 'BUG' | 'USER', id, lastMessage.id);
     }
   }, [lastSyncRequired, contextType, id]);
+
+  useEffect(() => {
+    if (!lastPollVote || lastPollVote.contextType !== contextType || lastPollVote.contextId !== id) return;
+    
+    setMessages(prevMessages => {
+      const newMessages = prevMessages.map(message => {
+        if (message.id === lastPollVote.messageId && message.poll) {
+          return {
+            ...message,
+            poll: lastPollVote.updatedPoll
+          };
+        }
+        return message;
+      });
+      messagesRef.current = newMessages;
+      return newMessages;
+    });
+  }, [lastPollVote, contextType, id]);
 
   useEffect(() => {
     if (justLoadedOlderMessagesRef.current) {
@@ -1307,7 +1326,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   return (
     <>
-    <div ref={chatContainerRef} className={`chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden overflow-x-hidden ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'} ${showParticipantsPage ? 'hidden' : ''}`}>
+    <div ref={chatContainerRef} className={`chat-container relative bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden overflow-x-hidden ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'} ${showParticipantsPage ? 'hidden' : ''}`}>
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: isEmbedded ? '0' : 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           {showLoadingHeader ? (
@@ -1606,7 +1625,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       </main>
 
       {(!isInitialLoad || isEmbedded) && !(contextType === 'GROUP' && (showParticipantsPage || isParticipantsPageAnimating)) && (
-      <footer className="flex-shrink-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <footer className="md:flex-shrink-0 md:relative absolute bottom-0 left-0 right-0 z-50 md:z-40 !bg-transparent md:!bg-white md:dark:!bg-gray-800 md:border-t md:border-gray-200 md:dark:border-gray-700 border-transparent" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {isBlockedByUser && contextType === 'USER' ? (
           <div className="px-4 py-3" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
             <div className="text-sm text-center text-gray-700 dark:text-gray-300 rounded-[20px] px-4 py-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700">

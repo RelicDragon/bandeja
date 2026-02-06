@@ -249,13 +249,21 @@ export class MessageService {
         include: {
           options: {
             include: {
-              votes: true
+              votes: {
+                include: {
+                  user: { select: USER_SELECT_FIELDS }
+                }
+              }
             },
             orderBy: {
               order: Prisma.SortOrder.asc
             }
           },
-          votes: true
+          votes: {
+            include: {
+              user: { select: USER_SELECT_FIELDS }
+            }
+          }
         }
       }
     };
@@ -286,13 +294,27 @@ export class MessageService {
 
     return messages.map(message => {
       const translation = translationMap.get(message.id);
-      return {
+      let sanitized = {
         ...message,
         translation: translation ? {
           languageCode: translation.languageCode,
           translation: translation.translation
         } : undefined
       };
+      if (message.poll?.isAnonymous && message.poll.options) {
+        sanitized = {
+          ...sanitized,
+          poll: {
+            ...message.poll,
+            options: message.poll.options.map((o: any) => ({
+              ...o,
+              votes: o.votes?.map((v: any) => ({ ...v, user: undefined })) ?? []
+            })),
+            votes: message.poll.votes?.map((v: any) => ({ ...v, user: undefined })) ?? []
+          }
+        };
+      }
+      return sanitized;
     });
   }
 

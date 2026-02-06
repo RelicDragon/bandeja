@@ -99,7 +99,7 @@ router.post(
   validate([
     param('pollId').notEmpty().withMessage('Poll ID is required'),
     body('optionIds').isArray().withMessage('Option IDs must be an array'),
-    body('optionIds.*').notEmpty().withMessage('Option ID cannot be empty')
+    body('optionIds.*').optional().notEmpty().withMessage('Option ID cannot be empty')
   ]),
   votePoll
 );

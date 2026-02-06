@@ -24,6 +24,7 @@ export interface PollVote {
   optionId: string;
   userId: string;
   createdAt: string;
+  user?: BasicUser;
 }
 
 export interface Poll {

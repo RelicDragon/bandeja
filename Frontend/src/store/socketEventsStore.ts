@@ -74,6 +74,14 @@ interface GameResultsUpdatedData {
   gameId: string;
 }
 
+interface PollVoteData {
+  contextType: string;
+  contextId: string;
+  pollId: string;
+  messageId: string;
+  updatedPoll: any;
+}
+
 interface SocketEventsState {
   gameUpdates: Map<string, GameUpdateData>;
   lastGameUpdate: GameUpdateData | null;
@@ -90,6 +98,7 @@ interface SocketEventsState {
   lastBetDeleted: BetDeletedData | null;
   lastBetResolved: BetResolvedData | null;
   lastGameResultsUpdated: GameResultsUpdatedData | null;
+  lastPollVote: PollVoteData | null;
   initialized: boolean;
   initialize: () => void;
   cleanup: () => void;
@@ -118,6 +127,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     lastBetDeleted: null,
     lastBetResolved: null,
     lastGameResultsUpdated: null,
+    lastPollVote: null,
     initialized: false,
     initialize: () => {
       if (get().initialized) return;
@@ -189,6 +199,10 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         set({ lastGameResultsUpdated: data });
       };
 
+      const handlePollVote = (data: PollVoteData) => {
+        set({ lastPollVote: data });
+      };
+
       socketService.on('new-invite', handleNewInvite);
       socketService.on('invite-deleted', handleInviteDeleted);
       socketService.on('game-updated', handleGameUpdated);
@@ -203,6 +217,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('bet:deleted', handleBetDeleted);
       socketService.on('bet:resolved', handleBetResolved);
       socketService.on('game-results-updated', handleGameResultsUpdated);
+      socketService.on('poll-vote', handlePollVote);
 
       unsubscribeHandlers = [
         () => socketService.off('new-invite', handleNewInvite),
@@ -219,6 +234,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('bet:deleted', handleBetDeleted),
         () => socketService.off('bet:resolved', handleBetResolved),
         () => socketService.off('game-results-updated', handleGameResultsUpdated),
+        () => socketService.off('poll-vote', handlePollVote),
       ];
 
       set({ initialized: true });
@@ -243,6 +259,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         lastBetDeleted: null,
         lastBetResolved: null,
         lastGameResultsUpdated: null,
+        lastPollVote: null,
       });
     },
     clearLastBetCreated: () => set({ lastBetCreated: null }),

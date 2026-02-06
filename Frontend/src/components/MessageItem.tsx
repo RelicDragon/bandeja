@@ -431,7 +431,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     <>
       {isSystemMessage ? (
         <div className="flex justify-center mb-4">
-          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2 max-w-[80%]">
+          <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl px-3 py-2 max-w-[80%]">
             <p className="text-xs text-gray-600 dark:text-gray-300 text-center whitespace-pre-wrap break-words break-all overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{displayContent}</p>
             <span className="text-[10px] text-gray-400 dark:text-gray-500 block text-center mt-1">
               {formatMessageTime(currentMessage.createdAt)}
@@ -447,7 +447,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             }`}
         >
 
-          <div className={`flex ${isChannel ? 'w-full max-w-full' : 'max-w-[85%]'} ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')} overflow-visible`}>
+          <div className={`flex ${isChannel 
+            ? 'w-full max-w-full' 
+            : (currentMessage.poll ? 'w-[85%] min-w-[85%] flex-shrink-0' : 'max-w-[85%]')} 
+            ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')} 
+            overflow-visible`}>
+
             {!isChannel && !isOwnMessage && (
               <div className="flex-shrink-0 mr-3 self-center">
                 <button
@@ -471,12 +476,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               </div>
             )}
 
-            <div className={`flex flex-col ${isChannel ? 'items-start flex-1' : (isOwnMessage ? 'items-end' : 'items-start')} overflow-visible`}>
+            <div className={`flex flex-col ${isChannel ? 'items-start flex-1' : (isOwnMessage ? 'items-end' : 'items-start')} ${currentMessage.poll ? 'flex-1 min-w-0' : ''} overflow-visible`}>
               {!isChannel && !isOwnMessage && (
                 <span className="text-xs text-gray-500 dark:text-gray-400 mb-0.5 px-2">{getSenderName()}</span>
               )}
 
-              <div className="relative overflow-visible">
+              <div className={`relative overflow-visible ${currentMessage.poll ? 'w-full' : ''}`}>
                 {!isOffline && currentMessage.replyTo && (
                   <ReplyPreview
                     replyTo={currentMessage.replyTo}
@@ -486,20 +491,20 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 )}
 
                 <div
-                  className={`flex items-start select-none ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')} overflow-visible`}
+                  className={`flex items-start select-none ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')} ${currentMessage.poll ? 'w-full' : ''} overflow-visible`}
                 >
-                  <div
-                    data-message-bubble="true"
-                    className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? '' : 'px-4'} ${hasTranslation ? 'pt-2 pb-4' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && currentMessage.content ? 'pt-0 pb-2' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'py-0' : 'py-2'))} rounded-lg shadow-sm relative min-w-[120px] overflow-visible ${isChannel
-                        ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
-                        : isOwnMessage
-                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-                          : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
-                      }`}
-                  >
+                <div
+                  data-message-bubble="true"
+                  className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? '' : 'px-4'} ${hasTranslation ? 'pt-2 pb-4' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && currentMessage.content ? 'pt-0 pb-2' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'py-0' : 'py-2'))} rounded-2xl shadow-sm relative min-w-[120px] ${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'overflow-hidden' : 'overflow-visible'} ${currentMessage.poll ? 'flex-1 min-w-0' : ''} ${isChannel
+                      ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
+                      : isOwnMessage
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+                        : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
+                    }`}
+                >
                     {/* Poll Content */}
                     {currentMessage.poll && (
-                      <div className="p-3">
+                      <div className="p-2">
                         <PollMessage poll={currentMessage.poll} messageId={currentMessage.id} />
                       </div>
                     )}

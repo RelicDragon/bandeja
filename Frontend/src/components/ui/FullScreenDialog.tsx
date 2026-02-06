@@ -16,6 +16,8 @@ interface FullScreenDialogProps {
   modalId?: string;
   closeOnInteractOutside?: boolean;
   title?: string;
+  overlayClassName?: string;
+  contentClassName?: string;
   children: React.ReactNode;
 }
 
@@ -26,6 +28,8 @@ export const FullScreenDialog = ({
   modalId,
   closeOnInteractOutside = true,
   title = 'Dialog',
+  overlayClassName,
+  contentClassName,
   children,
 }: FullScreenDialogProps) => {
   const fallbackIdRef = useRef(`fullscreen-${Math.random()}`);
@@ -47,9 +51,9 @@ export const FullScreenDialog = ({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(o) => handleOpenChange(!!o)}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className={FULL_SCREEN_OVERLAY_CLASS} />
+        <DialogPrimitive.Overlay className={overlayClassName ?? FULL_SCREEN_OVERLAY_CLASS} />
         <DialogPrimitive.Content
-          className={FULL_SCREEN_CONTENT_CLASS}
+          className={contentClassName ? `${FULL_SCREEN_CONTENT_CLASS} ${contentClassName}` : FULL_SCREEN_CONTENT_CLASS}
           {...preventOutside}
         >
           <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>

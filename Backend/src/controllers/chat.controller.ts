@@ -155,8 +155,8 @@ export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => 
     throw new ApiError(401, 'Unauthorized');
   }
 
-  if (!optionIds || !Array.isArray(optionIds) || optionIds.length === 0) {
-    throw new ApiError(400, 'Option IDs array is required');
+  if (!optionIds || !Array.isArray(optionIds)) {
+    throw new ApiError(400, 'Option IDs must be an array');
   }
 
   const updatedPoll = await PollService.vote(pollId, userId, optionIds);
@@ -183,7 +183,9 @@ export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => 
     });
 
     if (message) {
-      // Unified event
+      const sanitized = updatedPoll!.isAnonymous
+        ? { ...updatedPoll, options: updatedPoll!.options.map(o => ({ ...o, votes: o.votes.map(v => ({ ...v, user: undefined })) })), votes: updatedPoll!.votes.map(v => ({ ...v, user: undefined })) }
+        : updatedPoll;
       socketService.emitChatEvent(
         message.chatContextType,
         message.contextId,
@@ -191,15 +193,18 @@ export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => 
         {
           pollId: updatedPoll!.id,
           messageId: updatedPoll!.messageId,
-          updatedPoll
+          updatedPoll: sanitized
         }
       );
     }
   }
 
+  const responsePoll = updatedPoll!.isAnonymous
+    ? { ...updatedPoll, options: updatedPoll!.options.map(o => ({ ...o, votes: o.votes.map(v => ({ ...v, user: undefined })) })), votes: updatedPoll!.votes.map(v => ({ ...v, user: undefined })) }
+    : updatedPoll;
   res.json({
     success: true,
-    data: updatedPoll
+    data: responsePoll
   });
 });
 

@@ -7,7 +7,7 @@ import { Game, BetCondition, PredefinedCondition, Bet } from '@/types';
 import { betsApi } from '@/api/bets';
 import { transactionsApi } from '@/api/transactions';
 import toast from 'react-hot-toast';
-import { Select, PlayerAvatar } from '@/components';
+import { PlayerAvatar } from '@/components';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { AnimatedTabs } from '@/components/AnimatedTabs';
 
@@ -312,18 +312,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
 
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="create-bet-modal">
-      <DialogContent
-        onInteractOutside={(e) => {
-          if ((e.target as Element)?.closest?.('[data-select-dropdown]')) {
-            e.preventDefault();
-          }
-        }}
-        onPointerDownOutside={(e) => {
-          if ((e.target as Element)?.closest?.('[data-select-dropdown]')) {
-            e.preventDefault();
-          }
-        }}
-      >
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {isEditMode ? t('bets.edit', { defaultValue: 'Edit Challenge' }) : t('bets.create', { defaultValue: 'Create Challenge' })}
@@ -384,12 +373,24 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
                   className="space-y-3"
                 >
                   <div className={sectionClass}>
-                    <Select
-                      options={entityOptions.map((o) => ({ value: o.value, label: o.label, icon: o.icon }))}
-                      value={entityId ? String(entityId) : ''}
-                      onChange={(value) => setEntityId(value)}
-                      placeholder={hasFixedTeamsSet ? t('bets.userOrTeam', { defaultValue: 'User or Team' }) : t('bets.user', { defaultValue: 'User' })}
-                    />
+                    <label className={labelClass}>{hasFixedTeamsSet ? t('bets.userOrTeam', { defaultValue: 'User or Team' }) : t('bets.user', { defaultValue: 'User' })}</label>
+                    <ul className="space-y-1 max-h-32 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-600 p-1 mb-4">
+                      {entityOptions.map((o) => {
+                        const isActive = entityId === o.value;
+                        return (
+                          <li key={o.value}>
+                            <button
+                              type="button"
+                              onClick={() => setEntityId(o.value)}
+                              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${isActive ? 'bg-primary-100 dark:bg-primary-500/25 text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60'}`}
+                            >
+                              {o.icon}
+                              <span>{o.label}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
                     <label className={`${labelClass} mt-4`}>{t('bets.mustDo', { defaultValue: 'Must', context: selectedEntityType === 'TEAM' ? 'plural' : isFemale ? 'female' : undefined })}</label>
                     <ul className="space-y-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-600 p-1">
                       {conditionOptions.map((opt) => {

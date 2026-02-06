@@ -40,18 +40,10 @@ export function calculateEnduranceCoefficient(
   ballsInGames: boolean
 ): number {
   if (!setScores || setScores.length === 0) {
-    return 1;
+    return 0.5;
   }
 
-  const sum = setScores.reduce((total, set) => {
-    const setTotal = set.teamAScore + set.teamBScore;
-    const effectiveBallsInGames = ballsInGames && !set.isTieBreak;
-    return total + (effectiveBallsInGames ? setTotal * 5 : setTotal);
-  }, 0);
-  
-  let coefficient = sum / 20 / 5;
-  
-  return coefficient;
+  return ballsInGames ? 0.5 : 0.05;
 }
 
 export function calculateReliabilityChange(

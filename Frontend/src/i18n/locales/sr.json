@@ -1361,6 +1361,7 @@
       "create": "Napravi",
       "vote": "glas",
       "votes": "glasova",
+      "voting": "Glasanje",
       "quiz": "Kviz",
       "poll": "Anketa",
       "public": "Javno glasanje"

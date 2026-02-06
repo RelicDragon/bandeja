@@ -15,9 +15,10 @@ export interface SelectProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  dropdownContainer?: HTMLElement | null;
 }
 
-export const Select = ({ options, value, onChange, placeholder, className = '', disabled = false }: SelectProps) => {
+export const Select = ({ options, value, onChange, placeholder, className = '', disabled = false, dropdownContainer }: SelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -149,7 +150,6 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
               type="button"
               onMouseDown={(e) => {
                 e.preventDefault();
-                e.stopPropagation();
                 onChange(option.value);
                 setIsOpen(false);
               }}
@@ -161,7 +161,7 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
             </button>
           ))}
         </div>,
-        document.body
+        dropdownContainer ?? document.body
       )}
     </div>
   );

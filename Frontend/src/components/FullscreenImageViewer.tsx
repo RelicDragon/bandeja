@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, X } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { useTranslation } from 'react-i18next';
 import { Share } from '@capacitor/share';
@@ -154,21 +154,26 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   }, [onClose]);
 
   return (
-    <FullScreenDialog open={isOpen} onClose={onClose} modalId="fullscreen-image-viewer" closeOnInteractOutside={false}>
+    <FullScreenDialog
+      open={isOpen}
+      onClose={onClose}
+      modalId="fullscreen-image-viewer"
+      closeOnInteractOutside={false}
+      overlayClassName="fullscreen-backdrop-overlay"
+      contentClassName="fullscreen-content-animate"
+    >
       <div 
         ref={containerRef}
-        className="fixed inset-0 flex items-center justify-center"
+        className="fixed inset-0 flex items-center justify-center bg-transparent"
         onClick={handleBackdropClick}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         style={{ 
-          backgroundColor: `rgba(0, 0, 0, ${Math.max(0.5, 0.95 - Math.abs(swipeOffset) / 1000)})`,
           paddingTop: 'env(safe-area-inset-top)',
           paddingRight: 'env(safe-area-inset-right)',
           paddingBottom: 'env(safe-area-inset-bottom)',
           paddingLeft: 'env(safe-area-inset-left)',
-          transition: swipeOffset === 0 ? 'background-color 0.2s' : 'none',
         }}
       >
         <div 
@@ -221,6 +226,13 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
               ) : (
                 <Download size={22} />
               )}
+            </button>
+            <button
+              onClick={onClose}
+              className="w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 shadow-xl backdrop-blur-sm"
+              aria-label={t('common.close')}
+            >
+              <X size={22} />
             </button>
           </div>
 

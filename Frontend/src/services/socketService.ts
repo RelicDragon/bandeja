@@ -43,6 +43,8 @@ export interface SocketEvents {
   'bet:updated': (data: { gameId: string; bet: any }) => void;
   'bet:deleted': (data: { gameId: string; betId: string }) => void;
   'bet:resolved': (data: { gameId: string; betId: string; winnerId: string; loserId: string }) => void;
+  // Poll events
+  'poll-vote': (data: { contextType: string; contextId: string; pollId: string; messageId: string; updatedPoll: any }) => void;
 }
 
 class SocketService {
