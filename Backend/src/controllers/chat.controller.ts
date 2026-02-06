@@ -16,6 +16,7 @@ import { ChatMuteService } from '../services/chat/chatMute.service';
 import { TranslationService } from '../services/chat/translation.service';
 import { DraftService } from '../services/chat/draft.service';
 import { GameReadService } from '../services/game/read.service';
+import { PollService } from '../services/chat/poll.service';
 import prisma from '../config/database';
 
 export const createSystemMessage = async (contextId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC, chatContextType: ChatContextType = ChatContextType.GAME) => {
@@ -32,7 +33,7 @@ export const createSystemMessage = async (contextId: string, messageData: { type
       await socketService.emitNewUserMessage(contextId, message);
     }
     // GROUP uses only unified events (no old compatibility)
-    
+
     // NEW unified event
     socketService.emitChatEvent(
       chatContextType,
@@ -57,7 +58,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     headers: req.headers
   });
 
-  const { chatContextType = 'GAME', contextId, gameId, content, mediaUrls, replyToId, chatType = ChatType.PUBLIC, mentionIds = [] } = req.body;
+  const { chatContextType = 'GAME', contextId, gameId, content, mediaUrls, replyToId, chatType = ChatType.PUBLIC, mentionIds = [], poll } = req.body;
   const senderId = req.userId;
 
   console.log('[createMessage] Parsed data:', {
@@ -71,6 +72,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     replyToId,
     chatType,
     mentionIds,
+    poll: poll ? 'Poll data present' : null,
     senderId
   });
 
@@ -91,13 +93,14 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
   const finalMediaUrls = Array.isArray(mediaUrls) ? mediaUrls : [];
   console.log('[createMessage] Final mediaUrls:', finalMediaUrls);
 
-  // Validate that message has content or media
+  // Validate that message has content, media, or poll
   const hasContent = content && content.trim();
   const hasMedia = finalMediaUrls.length > 0;
-  console.log('[createMessage] Validation:', { hasContent, hasMedia, contentLength: content?.length });
-  if (!hasContent && !hasMedia) {
-    console.error('[createMessage] Message has no content or media');
-    throw new ApiError(400, 'Message must have content or media');
+  const hasPoll = poll && poll.question && poll.options && poll.options.length >= 2;
+  console.log('[createMessage] Validation:', { hasContent, hasMedia, hasPoll, contentLength: content?.length });
+  if (!hasContent && !hasMedia && !hasPoll) {
+    console.error('[createMessage] Message has no content, media, or poll');
+    throw new ApiError(400, 'Message must have content, media, or poll');
   }
 
   try {
@@ -120,7 +123,8 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       mediaUrls: finalMediaUrls,
       replyToId,
       chatType: chatType as ChatType,
-      mentionIds: Array.isArray(mentionIds) ? mentionIds : []
+      mentionIds: Array.isArray(mentionIds) ? mentionIds : [],
+      poll
     });
 
     console.log('[createMessage] Message created successfully:', message.id);
@@ -138,6 +142,65 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     });
     throw error;
   }
+});
+
+
+
+export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { pollId } = req.params;
+  const { optionIds } = req.body;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!optionIds || !Array.isArray(optionIds) || optionIds.length === 0) {
+    throw new ApiError(400, 'Option IDs array is required');
+  }
+
+  const updatedPoll = await PollService.vote(pollId, userId, optionIds);
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    // We need to notify about the vote update.
+    // Ideally we should emit 'message-updated' or specific 'poll-updated' event.
+    // 'message-updated' is usually for edits.
+    // Let's check `updatedPoll.message`. We need to include message to know context.
+
+    // PollService.vote calls finds unique with message include.
+    // But updatedPoll return value might not have context info if we just return poll.
+    // Let's fetch context info or ensure PollService returns it.
+
+    // Actually PollService.vote query:
+    // const updatedPoll = await prisma.poll.findUnique({ ... include: { options: ..., votes: ... } });
+    // It does NOT include message context.
+
+    // Let's fetch the message context separately or update PollService to return it.
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: updatedPoll!.messageId },
+      select: { chatContextType: true, contextId: true, gameId: true }
+    });
+
+    if (message) {
+      // Unified event
+      socketService.emitChatEvent(
+        message.chatContextType,
+        message.contextId,
+        'poll-vote',
+        {
+          pollId: updatedPoll!.id,
+          messageId: updatedPoll!.messageId,
+          updatedPoll
+        }
+      );
+    }
+  }
+
+  res.json({
+    success: true,
+    data: updatedPoll
+  });
 });
 
 export const getGameMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -195,7 +258,7 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
       where: { id: messageId },
       select: { chatContextType: true, contextId: true, gameId: true }
     });
-    
+
     if (message) {
       // OLD events (keep for backward compatibility - GAME, BUG, USER only)
       if (message.chatContextType === 'GAME') {
@@ -206,7 +269,7 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
         socketService.emitUserReadReceipt(message.contextId, readReceipt);
       }
       // GROUP uses only unified events (no old compatibility)
-      
+
       // NEW unified event
       socketService.emitChatEvent(
         message.chatContextType,
@@ -251,7 +314,7 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
       where: { id: messageId },
       select: { chatContextType: true, contextId: true, gameId: true }
     });
-    
+
     if (message) {
       // OLD events (keep for backward compatibility - GAME, BUG, USER only)
       if (message.chatContextType === 'GAME') {
@@ -262,7 +325,7 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
         socketService.emitUserMessageReaction(message.contextId, reaction);
       }
       // GROUP uses only unified events (no old compatibility)
-      
+
       // NEW unified event
       socketService.emitChatEvent(
         message.chatContextType,
@@ -296,7 +359,7 @@ export const removeReaction = asyncHandler(async (req: AuthRequest, res: Respons
       where: { id: messageId },
       select: { chatContextType: true, contextId: true, gameId: true }
     });
-    
+
     if (message) {
       // OLD events (keep for backward compatibility)
       if (message.chatContextType === 'GAME') {
@@ -306,7 +369,7 @@ export const removeReaction = asyncHandler(async (req: AuthRequest, res: Respons
       } else if (message.chatContextType === 'USER') {
         socketService.emitUserMessageReaction(message.contextId, result);
       }
-      
+
       // NEW unified event
       socketService.emitChatEvent(
         message.chatContextType,
@@ -444,7 +507,7 @@ export const markAllMessagesAsRead = asyncHandler(async (req: AuthRequest, res: 
   const socketService = (global as any).socketService;
   if (socketService) {
     socketService.emitReadReceipt(gameId, { userId, readAt: new Date() });
-    
+
     // Emit unread count update
     const unreadCount = await ReadReceiptService.getUnreadCountForContext(
       'GAME',
@@ -486,7 +549,7 @@ export const deleteMessage = asyncHandler(async (req: AuthRequest, res: Response
       socketService.emitUserMessageDeleted(message.contextId, messageId);
     }
     // GROUP uses only unified events (no old compatibility)
-    
+
     // NEW unified event
     socketService.emitChatEvent(
       message.chatContextType,
@@ -726,7 +789,7 @@ export const markAllBugMessagesAsRead = asyncHandler(async (req: AuthRequest, re
   const socketService = (global as any).socketService;
   if (socketService) {
     socketService.emitBugReadReceipt(bugId, { userId, readAt: new Date() });
-    
+
     // Emit unread count update
     const unreadCount = await ReadReceiptService.getUnreadCountForContext(
       'BUG',
@@ -957,7 +1020,7 @@ export const getMissedMessages = asyncHandler(async (req: AuthRequest, res: Resp
       where: { id: lastMessageId as string },
       select: { createdAt: true }
     });
-    
+
     if (lastMessage) {
       where.createdAt = { gt: lastMessage.createdAt };
     }
@@ -1009,7 +1072,7 @@ export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequ
       'read-receipt',
       { readReceipt: { userId, readAt: new Date() } }
     );
-    
+
     // Emit unread count update
     const unreadCount = await ReadReceiptService.getUnreadCountForContext(
       contextType as ChatContextType,

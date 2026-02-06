@@ -36,7 +36,7 @@ const getWinLoseEntityKey = (entityType: string, win: boolean) => {
 };
 
 const getPredefinedConditionOptions = (
-  t: (key: string, options?: { defaultValue?: string; context?: string; [k: string]: any }) => string,
+  t: (key: string, options?: { defaultValue?: string; context?: string;[k: string]: any }) => string,
   entityType: string | undefined,
   game: Game,
   isFemale?: boolean
@@ -112,13 +112,13 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
     () =>
       hasFixedTeamsSet && game.fixedTeams
         ? game.fixedTeams.map((team) => ({
-            value: team.id,
-            label: team.name || team.players
-              .map((pl) => `${pl.user?.firstName || ''} ${pl.user?.lastName || ''}`.trim() || '?')
-              .join(' + ') || `Team ${team.teamNumber}`,
-            entityType: 'TEAM' as const,
-            user: team.players[0]?.user ?? null,
-          }))
+          value: team.id,
+          label: team.name || team.players
+            .map((pl) => `${pl.user?.firstName || ''} ${pl.user?.lastName || ''}`.trim() || '?')
+            .join(' + ') || `Team ${team.teamNumber}`,
+          entityType: 'TEAM' as const,
+          user: team.players[0]?.user ?? null,
+        }))
         : [],
     [hasFixedTeamsSet, game.fixedTeams]
   );
@@ -292,7 +292,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
 
         onBetCreated?.(response.data);
         toast.success(t('bets.created', { defaultValue: 'Challenge created!' }));
-        
+
         setStakeCoins(1);
         setStakeCoinsInput('1');
         setStakeText('');
@@ -301,7 +301,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
         setCustomCondition('');
         setEntityId('');
       }
-      
+
       onClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic', { defaultValue: 'An error occurred' }));
@@ -312,7 +312,18 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
 
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="create-bet-modal">
-      <DialogContent>
+      <DialogContent
+        onInteractOutside={(e) => {
+          if ((e.target as Element)?.closest?.('[data-select-dropdown]')) {
+            e.preventDefault();
+          }
+        }}
+        onPointerDownOutside={(e) => {
+          if ((e.target as Element)?.closest?.('[data-select-dropdown]')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {isEditMode ? t('bets.edit', { defaultValue: 'Edit Challenge' }) : t('bets.create', { defaultValue: 'Create Challenge' })}

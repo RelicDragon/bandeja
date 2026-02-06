@@ -1,6 +1,6 @@
 {
   "app": {
-  "title": "Bandeja",
+    "title": "Bandeja",
     "loading": "Loading..."
   },
   "auth": {
@@ -289,7 +289,7 @@
       "noResultsGameEndedEditable": "Game has ended. You can still enter results",
       "status": {
         "notStarted": "Not Started",
-        "inProgress": "In Progress", 
+        "inProgress": "In Progress",
         "finished": "Finished",
         "archived": "Archived"
       },
@@ -315,7 +315,7 @@
       },
       "positive": {
         "canEnterResults": "You can enter results",
-        "canModifyResults": "You can modify results", 
+        "canModifyResults": "You can modify results",
         "canViewResults": "You can view results",
         "noResultsYet": "No results entered yet"
       }
@@ -1378,6 +1378,23 @@
       "cancelReply": "Cancel reply",
       "message": "Message"
     },
+    "poll": {
+      "createTitle": "Create Poll",
+      "question": "Question",
+      "options": "Options",
+      "optionPlaceholder": "Option {{index}}",
+      "addOption": "Add Option",
+      "typeRegular": "Regular Poll",
+      "typeQuiz": "Quiz Mode",
+      "anonymous": "Anonymous Voting",
+      "multipleAnswers": "Allow Multiple Answers",
+      "create": "Create Poll",
+      "vote": "vote",
+      "votes": "votes",
+      "quiz": "Quiz",
+      "poll": "Poll",
+      "public": "Public Vote"
+    },
     "messages": {
       "loading": "Loading messages...",
       "loadMore": "Load older messages",
@@ -1736,4 +1753,3 @@
     }
   }
 }
-

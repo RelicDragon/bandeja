@@ -117,9 +117,8 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-3 py-2 text-left bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between ${
-          disabled ? 'opacity-50 cursor-not-allowed' : ''
-        }`}
+        className={`w-full px-3 py-2 text-left bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between ${disabled ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
       >
         <div className="flex items-center gap-2">
           {selectedOption?.icon}
@@ -127,9 +126,9 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
             {selectedOption?.label || placeholder}
           </span>
         </div>
-        <ChevronDown 
-          size={16} 
-          className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+        <ChevronDown
+          size={16}
+          className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -148,13 +147,14 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
             <button
               key={option.value}
               type="button"
-              onClick={() => {
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 onChange(option.value);
                 setIsOpen(false);
               }}
-              className={`w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${
-                option.value === value ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400' : 'text-gray-900 dark:text-white'
-              }`}
+              className={`w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${option.value === value ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400' : 'text-gray-900 dark:text-white'
+                }`}
             >
               {option.icon}
               <span>{option.label}</span>

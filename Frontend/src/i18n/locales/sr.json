@@ -1,6 +1,6 @@
 {
   "app": {
-  "title": "Bandeja",
+    "title": "Bandeja",
     "loading": "Учитавање..."
   },
   "auth": {
@@ -1347,6 +1347,23 @@
       "replyingTo": "Одговарам {{name}}",
       "cancelReply": "Откажи одговор",
       "message": "Порука"
+    },
+    "poll": {
+      "createTitle": "Napravi anketu",
+      "question": "Pitanje",
+      "options": "Opcije",
+      "optionPlaceholder": "Opcija {{index}}",
+      "addOption": "Dodaj opciju",
+      "typeRegular": "Obična anketa",
+      "typeQuiz": "Kviz",
+      "anonymous": "Anonimno glasanje",
+      "multipleAnswers": "Više odgovora",
+      "create": "Napravi",
+      "vote": "glas",
+      "votes": "glasova",
+      "quiz": "Kviz",
+      "poll": "Anketa",
+      "public": "Javno glasanje"
     },
     "messages": {
       "loading": "Учитавање порука...",

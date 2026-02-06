@@ -14,6 +14,7 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from 'react-hot-toast';
 import { MoreVertical, Trash2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components';
+import { parseMessagePreview } from '@/utils/messagePreview';
 
 interface BugCardProps {
   bug: Bug;
@@ -25,10 +26,10 @@ interface BugCardProps {
   isSelected?: boolean;
 }
 
-export const BugCard = ({ 
-  bug, 
-  unreadCount = 0, 
-  onUpdate, 
+export const BugCard = ({
+  bug,
+  unreadCount = 0,
+  onUpdate,
   onDelete,
   onBugSelect,
   isDesktop = false,
@@ -168,7 +169,7 @@ export const BugCard = ({
             </span>
           </div>
 
-          <div 
+          <div
             onClick={() => bug.text.length > 200 && setIsExpanded(!isExpanded)}
             className={`text-sm mb-2 w-full whitespace-pre-line ${isArchived ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-200'} ${bug.text.length > 200 ? 'cursor-pointer hover:opacity-80' : ''}`}
           >
@@ -187,7 +188,7 @@ export const BugCard = ({
                   </span>
                 </div>
                 <div className={`text-xs ${isArchived ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'} whitespace-pre-line max-h-16 overflow-hidden line-clamp-2`}>
-                  {bug.lastMessagePreview}
+                  {parseMessagePreview(bug.lastMessagePreview, t)}
                 </div>
               </div>
             </div>
@@ -222,18 +223,62 @@ export const BugCard = ({
                 <MoreVertical className="w-4 h-4" />
               </Button>
 
-            {showMenu && createPortal(
-              <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div
-                  ref={modalRef}
-                  className="bg-white rounded-lg shadow-xl max-w-sm w-full max-h-[80vh] overflow-y-auto"
-                >
-                  {(user?.isAdmin || bug.senderId === user?.id) ? (
-                    <>
-                      <div className="p-4 border-b border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-900">{t('bug.actions')}</h3>
-                      </div>
-                      <div className="p-2">
+              {showMenu && createPortal(
+                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                  <div
+                    ref={modalRef}
+                    className="bg-white rounded-lg shadow-xl max-w-sm w-full max-h-[80vh] overflow-y-auto"
+                  >
+                    {(user?.isAdmin || bug.senderId === user?.id) ? (
+                      <>
+                        <div className="p-4 border-b border-gray-200">
+                          <h3 className="text-lg font-semibold text-gray-900">{t('bug.actions')}</h3>
+                        </div>
+                        <div className="p-2">
+                          <div className="py-1">
+                            <button
+                              onClick={handleDelete}
+                              className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+                              disabled={isUpdating}
+                            >
+                              <Trash2 className="w-3 h-3 mr-2 inline" />
+                              {t('common.delete')}
+                            </button>
+                          </div>
+                          <div className="border-t border-gray-200 py-1 mt-2">
+                            <h4 className="px-3 py-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              {t('bug.changeStatus')}
+                            </h4>
+                            {BUG_STATUS_VALUES.map((status) => (
+                              <button
+                                key={status}
+                                onClick={() => handleStatusChange(status)}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+                                disabled={isUpdating}
+                              >
+                                {t(`bug.statuses.${status}`)}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="border-t border-gray-200 py-1 mt-2">
+                            <h4 className="px-3 py-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              {t('bug.changeType')}
+                            </h4>
+                            {BUG_TYPE_VALUES.map((type) => (
+                              <button
+                                key={type}
+                                onClick={() => handleTypeChange(type)}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+                                disabled={isUpdating}
+                              >
+                                {t(`bug.types.${type}`)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="p-4">
                         <div className="py-1">
                           <button
                             onClick={handleDelete}
@@ -244,58 +289,14 @@ export const BugCard = ({
                             {t('common.delete')}
                           </button>
                         </div>
-                        <div className="border-t border-gray-200 py-1 mt-2">
-                          <h4 className="px-3 py-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            {t('bug.changeStatus')}
-                          </h4>
-                          {BUG_STATUS_VALUES.map((status) => (
-                            <button
-                              key={status}
-                              onClick={() => handleStatusChange(status)}
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
-                              disabled={isUpdating}
-                            >
-                              {t(`bug.statuses.${status}`)}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="border-t border-gray-200 py-1 mt-2">
-                          <h4 className="px-3 py-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            {t('bug.changeType')}
-                          </h4>
-                          {BUG_TYPE_VALUES.map((type) => (
-                            <button
-                              key={type}
-                              onClick={() => handleTypeChange(type)}
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
-                              disabled={isUpdating}
-                            >
-                              {t(`bug.types.${type}`)}
-                            </button>
-                          ))}
-                        </div>
                       </div>
-                    </>
-                  ) : (
-                    <div className="p-4">
-                      <div className="py-1">
-                        <button
-                          onClick={handleDelete}
-                          className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
-                          disabled={isUpdating}
-                        >
-                          <Trash2 className="w-3 h-3 mr-2 inline" />
-                          {t('common.delete')}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>,
-              document.body
-            )}
-          </div>
-        )}
+                    )}
+                  </div>
+                </div>,
+                document.body
+              )}
+            </div>
+          )}
         </div>
       </div>
       <span className={`absolute bottom-2 right-3 text-xs ${isArchived ? 'text-gray-400' : 'text-gray-500'}`}>

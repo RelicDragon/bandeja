@@ -12,6 +12,7 @@ import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferenc
 import { PlayerCardBottomSheet } from './PlayerCardBottomSheet';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { FullscreenImageViewer } from './FullscreenImageViewer';
+import { PollMessage } from './chat/PollMessage';
 import { ReportMessageModal } from './ReportMessageModal';
 import { parseMentions } from '@/utils/parseMentions';
 import { parseUrls } from '@/utils/parseUrls';
@@ -76,7 +77,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const isOffline = isSending || isFailed;
   const optimisticId = (currentMessage as ChatMessageWithStatus)._optimisticId;
   const { observeMessage, unobserveMessage } = useMessageReadTracking(disableReadTracking);
-  
+
   const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === currentMessage.id;
 
   useLayoutEffect(() => {
@@ -100,7 +101,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const parseContentWithMentionsAndUrls = (text: string) => {
     const mentionParts = parseMentions(text);
     const result: Array<{ type: 'mention' | 'url' | 'text'; content: string; userId?: string; display?: string; url?: string; displayText?: string }> = [];
-    
+
     mentionParts.forEach(part => {
       if (part.type === 'mention') {
         result.push(part);
@@ -109,14 +110,14 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         result.push(...urlParts);
       }
     });
-    
+
     return result;
   };
 
   const parsedContent = isSystemMessage ? null : parseContentWithMentionsAndUrls(displayContent);
 
   const userLanguageCode = user?.language ? extractLanguageCode(user.language).toLowerCase() : 'en';
-  
+
   // Support both translation (singular) and translations (array) for backward compatibility
   let matchingTranslation = currentMessage.translation;
   if (currentMessage.translations && currentMessage.translations.length > 0) {
@@ -124,8 +125,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       t => t.languageCode.toLowerCase() === userLanguageCode
     ) || currentMessage.translation;
   }
-  
-  const hasTranslation = matchingTranslation && 
+
+  const hasTranslation = matchingTranslation &&
     matchingTranslation.languageCode.toLowerCase() === userLanguageCode;
   const translationContent = hasTranslation && matchingTranslation ? parseContentWithMentionsAndUrls(matchingTranslation.translation) : null;
 
@@ -144,7 +145,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       setCurrentMessage({
         ...currentMessage,
         translation,
-        translations: currentMessage.translations 
+        translations: currentMessage.translations
           ? [...currentMessage.translations.filter(t => t.languageCode !== translation.languageCode), translation]
           : [translation]
       });
@@ -164,13 +165,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   };
 
   const displaySettings = user ? resolveDisplaySettings(user) : null;
-  
+
   const formatMessageTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    
+
     if (messageDate.getTime() === today.getTime()) {
       return displaySettings ? formatGameTime(dateString, displaySettings) : formatDate(date, 'HH:mm');
     } else {
@@ -185,8 +186,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     } else if (count === 2) {
       return { gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto', gap: '0' };
     } else if (count === 3) {
-      return { 
-        gridTemplateColumns: '1fr 1fr', 
+      return {
+        gridTemplateColumns: '1fr 1fr',
         gridTemplateRows: 'auto auto',
         gap: '0',
         firstImageSpan: true
@@ -208,7 +209,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const handleQuickReaction = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const currentReaction = getCurrentUserReaction();
     if (currentReaction === '❤️') {
       onRemoveReaction(currentMessage.id);
@@ -284,7 +285,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     if (element && !isOwnMessage && senderId) {
       observeMessage(element, currentMessage.id, senderId);
     }
-    
+
     return () => {
       if (element) {
         unobserveMessage(element);
@@ -298,7 +299,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
     const messageBubble = messageElement.querySelector('[data-message-bubble="true"]') as HTMLElement;
     const reactionButton = messageElement.querySelector('[data-reaction-button="true"]') as HTMLElement;
-    
+
     if (!messageBubble) return;
 
     let touchStartX = 0;
@@ -330,7 +331,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       menuWasOpened = false;
       const clientX = e.clientX;
       const clientY = e.clientY;
-      
+
       longPressTimer.current = setTimeout(() => {
         if (isOffline) return;
         menuWasOpened = true;
@@ -360,7 +361,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       touchStartY = e.touches[0].clientY;
       const clientX = e.touches[0].clientX;
       const clientY = e.touches[0].clientY;
-      
+
       longPressTimer.current = setTimeout(() => {
         if (isOffline) return;
         menuWasOpened = true;
@@ -370,10 +371,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!longPressTimer.current) return;
-      
+
       const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
       const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
-      
+
       if (deltaX > scrollThreshold || deltaY > scrollThreshold) {
         clearTimer();
       }
@@ -440,13 +441,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       ) : (
         <div
           ref={messageRef}
-          className={`group flex select-none ${isChannel ? 'justify-start' : (isOwnMessage ? 'justify-end' : 'justify-start')} mb-4 relative transition-all duration-300 ease-out overflow-visible ${
-            isDeleting 
-              ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' 
+          className={`group flex select-none ${isChannel ? 'justify-start' : (isOwnMessage ? 'justify-end' : 'justify-start')} mb-4 relative transition-all duration-300 ease-out overflow-visible ${isDeleting
+              ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu'
               : 'opacity-100 scale-100 translate-y-0'
-          }`}
+            }`}
         >
-          
+
           <div className={`flex ${isChannel ? 'w-full max-w-full' : 'max-w-[85%]'} ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')} overflow-visible`}>
             {!isChannel && !isOwnMessage && (
               <div className="flex-shrink-0 mr-3 self-center">
@@ -470,12 +470,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 </button>
               </div>
             )}
-            
+
             <div className={`flex flex-col ${isChannel ? 'items-start flex-1' : (isOwnMessage ? 'items-end' : 'items-start')} overflow-visible`}>
               {!isChannel && !isOwnMessage && (
                 <span className="text-xs text-gray-500 dark:text-gray-400 mb-0.5 px-2">{getSenderName()}</span>
               )}
-              
+
               <div className="relative overflow-visible">
                 {!isOffline && currentMessage.replyTo && (
                   <ReplyPreview
@@ -484,23 +484,29 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     className="mb-1"
                   />
                 )}
-                
-                <div 
+
+                <div
                   className={`flex items-start select-none ${isChannel ? 'flex-row' : (isOwnMessage ? 'flex-row-reverse' : 'flex-row')} overflow-visible`}
                 >
                   <div
                     data-message-bubble="true"
-                    className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? '' : 'px-4'} ${hasTranslation ? 'pt-2 pb-4' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && currentMessage.content ? 'pt-0 pb-2' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'py-0' : 'py-2'))} rounded-lg shadow-sm relative min-w-[120px] overflow-visible ${
-                      isChannel
+                    className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? '' : 'px-4'} ${hasTranslation ? 'pt-2 pb-4' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && currentMessage.content ? 'pt-0 pb-2' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'py-0' : 'py-2'))} rounded-lg shadow-sm relative min-w-[120px] overflow-visible ${isChannel
                         ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
                         : isOwnMessage
                           ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
                           : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
-                    }`}
+                      }`}
                   >
+                    {/* Poll Content */}
+                    {currentMessage.poll && (
+                      <div className="p-3">
+                        <PollMessage poll={currentMessage.poll} messageId={currentMessage.id} />
+                      </div>
+                    )}
+
                     {/* Images first - Telegram style */}
                     {currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && (
-                      <div 
+                      <div
                         className="w-full"
                         style={{
                           display: 'grid',
@@ -512,7 +518,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                           const layout = getImageGridLayout(currentMessage.mediaUrls.length);
                           const isFirstInThreeLayout = layout.firstImageSpan && index === 0;
                           const isSingleImage = layout.singleImage;
-                          
+
                           return (
                             <div
                               key={index}
@@ -537,8 +543,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                       </div>
                     )}
 
-                    {/* Text content after images */}
-                    {currentMessage.content && (
+                    {/* Text content after images - Hide if poll is present as poll has its own question display */}
+                    {currentMessage.content && !currentMessage.poll && (
                       <div className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'px-4' : ''} overflow-visible`}>
                         {hasTranslation ? (
                           <div className="space-y-2">
@@ -557,8 +563,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                               setSelectedMentionUserId(part.userId);
                                             }
                                           }}
-                                          className={`font-semibold cursor-pointer hover:underline ${
-                                            isChannel
+                                          className={`font-semibold cursor-pointer hover:underline ${isChannel
                                               ? isMentioned
                                                 ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
                                                 : 'text-blue-600 dark:text-blue-400'
@@ -569,7 +574,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                                 : isMentioned
                                                   ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
                                                   : 'text-blue-600 dark:text-blue-400'
-                                          }`}
+                                            }`}
                                         >
                                           @{part.display}
                                         </span>
@@ -593,13 +598,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                               }
                                             }
                                           }}
-                                          className={`underline ${
-                                            isChannel
+                                          className={`underline ${isChannel
                                               ? 'text-blue-600 dark:text-blue-400'
                                               : isOwnMessage
                                                 ? 'text-blue-100'
                                                 : 'text-blue-600 dark:text-blue-400'
-                                          }`}
+                                            }`}
                                         >
                                           {part.displayText || part.content}
                                         </a>
@@ -627,15 +631,14 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                               setSelectedMentionUserId(part.userId);
                                             }
                                           }}
-                                          className={`font-semibold cursor-pointer hover:underline ${
-                                            isOwnMessage
+                                          className={`font-semibold cursor-pointer hover:underline ${isOwnMessage
                                               ? isMentioned
                                                 ? 'text-yellow-200 bg-yellow-500/30 px-1 rounded'
                                                 : 'text-blue-50'
                                               : isMentioned
                                                 ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
                                                 : 'text-blue-600 dark:text-blue-400'
-                                          }`}
+                                            }`}
                                         >
                                           @{part.display}
                                         </span>
@@ -659,11 +662,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                               }
                                             }
                                           }}
-                                          className={`underline ${
-                                            isOwnMessage
+                                          className={`underline ${isOwnMessage
                                               ? 'text-blue-50'
                                               : 'text-blue-600 dark:text-blue-400'
-                                          }`}
+                                            }`}
                                         >
                                           {part.displayText || part.content}
                                         </a>
@@ -692,8 +694,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                           setSelectedMentionUserId(part.userId);
                                         }
                                       }}
-                                      className={`font-semibold cursor-pointer hover:underline ${
-                                        isChannel
+                                      className={`font-semibold cursor-pointer hover:underline ${isChannel
                                           ? isMentioned
                                             ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
                                             : 'text-blue-600 dark:text-blue-400'
@@ -704,7 +705,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                             : isMentioned
                                               ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded'
                                               : 'text-blue-600 dark:text-blue-400'
-                                      }`}
+                                        }`}
                                     >
                                       @{part.display}
                                     </span>
@@ -728,13 +729,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                           }
                                         }
                                       }}
-                                      className={`underline ${
-                                        isChannel
+                                      className={`underline ${isChannel
                                           ? 'text-blue-600 dark:text-blue-400'
                                           : isOwnMessage
                                             ? 'text-blue-100'
                                             : 'text-blue-600 dark:text-blue-400'
-                                      }`}
+                                        }`}
                                     >
                                       {part.displayText || part.content}
                                     </a>
@@ -749,7 +749,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                         )}
                       </div>
                     )}
-                    
+
                     {/* Time and read status inside bubble */}
                     <div className={`absolute bottom-1 right-2 flex items-center gap-1 ${isChannel ? 'text-gray-400 dark:text-gray-500' : (isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500')}`}>
                       <span className="text-[10px]">{formatMessageTime(currentMessage.createdAt)}</span>
@@ -799,17 +799,16 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Reply counter positioned absolutely under bubble */}
                   {!isOffline && hasReplies() && (
                     <div className={`absolute top-[calc(100%-2px)] ${isOwnMessage ? 'right-1' : 'left-2'} z-10 overflow-visible`}>
                       <button
                         onClick={handleScrollToReplies}
-                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[9px] transition-colors ${
-                          isOwnMessage 
-                            ? 'text-blue-500 bg-blue-50 hover:text-blue-600 hover:bg-blue-100' 
+                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[9px] transition-colors ${isOwnMessage
+                            ? 'text-blue-500 bg-blue-50 hover:text-blue-600 hover:bg-blue-100'
                             : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
+                          }`}
                         title={`${getReplyCount()} ${getReplyCount() === 1 ? 'reply' : 'replies'}`}
                       >
                         <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -819,53 +818,53 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                       </button>
                     </div>
                   )}
-                  
+
                   {!isOffline && (
-                  <div className={`flex items-center gap-1 ${isOwnMessage ? 'flex-row-reverse mr-1' : 'flex-row ml-1'} self-center`}>
-                    <button 
-                      data-reaction-button="true"
-                      onClick={handleQuickReaction}
-                      className="relative flex flex-col items-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-1 transition-colors"
-                    >
-                      <span className="text-lg">
-                        {getCurrentUserReaction() || (
-                          <span className="text-gray-600 dark:text-white">♡</span>
-                        )}
-                      </span>
-                      <span className={`text-xs text-gray-500 dark:text-gray-400 -mt-1 ${getCurrentUserReaction() && getReactionCounts()[getCurrentUserReaction()!] > 1 ? 'visible' : 'invisible'}`}>
-                        {getCurrentUserReaction() ? getReactionCounts()[getCurrentUserReaction()!] || '1' : '1'}
-                      </span>
-                    </button>
-                    
-                    {currentMessage.reactions.length > 0 && (
-                      <div className="flex gap-1">
-                        {Object.entries(getReactionCounts()).map(([emoji, count]) => {
-                          const isUserReaction = getCurrentUserReaction() === emoji;
-                          
-                          // Don't show user's reaction here - it's shown in the button
-                          if (isUserReaction) return null;
-                          
-                          return (
-                            <div
-                              key={emoji}
-                              className="relative flex flex-col items-center"
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onMouseUp={(e) => e.stopPropagation()}
-                              onMouseLeave={(e) => e.stopPropagation()}
-                              onTouchStart={(e) => e.stopPropagation()}
-                              onTouchEnd={(e) => e.stopPropagation()}
-                              onTouchCancel={(e) => e.stopPropagation()}
-                            >
-                              <span className="text-sm">{emoji}</span>
-                              <span className={`text-xs text-gray-500 dark:text-gray-400 -mt-1 ${count > 1 ? 'visible' : 'invisible'}`}>
-                                {count}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                    <div className={`flex items-center gap-1 ${isOwnMessage ? 'flex-row-reverse mr-1' : 'flex-row ml-1'} self-center`}>
+                      <button
+                        data-reaction-button="true"
+                        onClick={handleQuickReaction}
+                        className="relative flex flex-col items-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-1 transition-colors"
+                      >
+                        <span className="text-lg">
+                          {getCurrentUserReaction() || (
+                            <span className="text-gray-600 dark:text-white">♡</span>
+                          )}
+                        </span>
+                        <span className={`text-xs text-gray-500 dark:text-gray-400 -mt-1 ${getCurrentUserReaction() && getReactionCounts()[getCurrentUserReaction()!] > 1 ? 'visible' : 'invisible'}`}>
+                          {getCurrentUserReaction() ? getReactionCounts()[getCurrentUserReaction()!] || '1' : '1'}
+                        </span>
+                      </button>
+
+                      {currentMessage.reactions.length > 0 && (
+                        <div className="flex gap-1">
+                          {Object.entries(getReactionCounts()).map(([emoji, count]) => {
+                            const isUserReaction = getCurrentUserReaction() === emoji;
+
+                            // Don't show user's reaction here - it's shown in the button
+                            if (isUserReaction) return null;
+
+                            return (
+                              <div
+                                key={emoji}
+                                className="relative flex flex-col items-center"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onMouseUp={(e) => e.stopPropagation()}
+                                onMouseLeave={(e) => e.stopPropagation()}
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onTouchEnd={(e) => e.stopPropagation()}
+                                onTouchCancel={(e) => e.stopPropagation()}
+                              >
+                                <span className="text-sm">{emoji}</span>
+                                <span className={`text-xs text-gray-500 dark:text-gray-400 -mt-1 ${count > 1 ? 'visible' : 'invisible'}`}>
+                                  {count}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -873,7 +872,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           </div>
         </div>
       )}
-      
+
       {isMenuOpen && !isSystemMessage && (
         <UnifiedMessageMenu
           message={currentMessage}
@@ -899,7 +898,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           onClose={() => setReportMessage(null)}
         />
       )}
-      
+
       {showPlayerCard && !isSystemMessage && (
         <PlayerCardBottomSheet
           playerId={currentMessage.senderId!}

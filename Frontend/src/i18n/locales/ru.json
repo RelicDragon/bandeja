@@ -1,6 +1,6 @@
 {
   "app": {
-  "title": "Bandeja",
+    "title": "Bandeja",
     "loading": "Загрузка..."
   },
   "auth": {
@@ -1394,6 +1394,23 @@
       "cancelReply": "Отменить ответ",
       "message": "Сообщение"
     },
+    "poll": {
+      "createTitle": "Создать опрос",
+      "question": "Вопрос",
+      "options": "Варианты ответа",
+      "optionPlaceholder": "Вариант {{index}}",
+      "addOption": "Добавить вариант",
+      "typeRegular": "Обычный опрос",
+      "typeQuiz": "Викторина",
+      "anonymous": "Анонимное голосование",
+      "multipleAnswers": "Несколько ответов",
+      "create": "Создать",
+      "vote": "голос",
+      "votes": "голосов",
+      "quiz": "Викторина",
+      "poll": "Опрос",
+      "public": "Публичный опрос"
+    },
     "messages": {
       "loading": "Загрузка сообщений...",
       "loadMore": "Загрузить старые сообщения",
@@ -1745,4 +1762,3 @@
     }
   }
 }
-

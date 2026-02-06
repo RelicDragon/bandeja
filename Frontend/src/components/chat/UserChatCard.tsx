@@ -8,6 +8,7 @@ import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useMemo } from 'react';
 import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
+import { parseMessagePreview } from '@/utils/messagePreview';
 
 interface UserChatCardProps {
   chat: UserChat;
@@ -36,11 +37,10 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
   return (
     <div
       onClick={handleClick}
-      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700 ${
-        isSelected 
-          ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30' 
-          : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-      }`}
+      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700 ${isSelected
+        ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+        : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+        }`}
     >
       <div className="flex-shrink-0">
         <PlayerAvatar
@@ -108,20 +108,20 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
           if (chat.lastMessage) {
             const fullMessage = !isLastMessagePreview(chat.lastMessage) ? chat.lastMessage : null;
             const displayContent = isLastMessagePreview(chat.lastMessage)
-              ? chat.lastMessage.preview
+              ? parseMessagePreview(chat.lastMessage.preview, t)
               : fullMessage
                 ? fullMessage.senderId
                   ? convertMentionsToPlaintext(fullMessage.content || '')
                   : convertMentionsToPlaintext(
-                      formatSystemMessageForDisplay(fullMessage.content || '', t)
-                    )
+                    formatSystemMessageForDisplay(fullMessage.content || '', t)
+                  )
                 : '';
 
             return (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 pr-2">
                   {!isLastMessagePreview(chat.lastMessage) &&
-                  chat.lastMessage.mediaUrls?.length > 0 ? (
+                    chat.lastMessage.mediaUrls?.length > 0 ? (
                     <span className="flex items-center gap-1">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />

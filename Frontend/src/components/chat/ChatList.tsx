@@ -23,7 +23,7 @@ type ChatItem =
   | { type: 'user'; data: UserChat; lastMessageDate: Date | null; unreadCount: number; otherUser?: BasicUser; draft?: ChatDraft | null }
   | { type: 'contact'; userId: string; user: BasicUser; interactionCount: number; isFavorite: boolean; lastMessageDate: null }
 
-  
+
   | { type: 'bug'; data: Bug; lastMessageDate: Date; unreadCount: number }
   | { type: 'group'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number; draft?: ChatDraft | null }
   | { type: 'channel'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number };
@@ -101,12 +101,12 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
 
   const sortUserChatItems = useCallback((chatItems: ChatItem[]) => {
     if (!user?.id) return chatItems;
-    
+
     return chatItems.sort((a, b) => {
       // Primary sort: by activity time (desc) - nulls at the end
       const aActivityTime = a.lastMessageDate ? a.lastMessageDate.getTime() : null;
       const bActivityTime = b.lastMessageDate ? b.lastMessageDate.getTime() : null;
-      
+
       // Handle nulls - put them at the end
       if (aActivityTime === null && bActivityTime === null) {
         // Both null - sort by title
@@ -116,12 +116,12 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       }
       if (aActivityTime === null) return 1; // a goes to end
       if (bActivityTime === null) return -1; // b goes to end
-      
+
       // Both have activity time - sort desc
       if (bActivityTime !== aActivityTime) {
         return bActivityTime - aActivityTime;
       }
-      
+
       // Secondary sort: by title (ascending)
       const aTitle = getChatTitle(a, user.id).toLowerCase();
       const bTitle = getChatTitle(b, user.id).toLowerCase();
@@ -139,28 +139,28 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       if (filter === 'users') {
         const { fetchPlayers, fetchUserChats } = usePlayersStore.getState();
         await Promise.all([fetchPlayers(), fetchUserChats()]);
-        
+
         const draftsResponse = await chatApi.getUserDrafts(1, 100).catch(() => ({ drafts: [] }));
         const allDrafts = draftsResponse.drafts || [];
-        
-        const { users, chats: userChats, getUserMetadata, unreadCounts } = usePlayersStore.getState();
+
+        const { chats: userChats, unreadCounts } = usePlayersStore.getState();
 
         const blockedUserIds = user.blockedUserIds || [];
-        const processedUserIds = new Set<string>();
+
 
         Object.values(userChats).forEach(chat => {
           const otherUserId = chat.user1Id === user.id ? chat.user2Id : chat.user1Id;
           const otherUser = chat.user1Id === user.id ? chat.user2 : chat.user1;
-          
+
           if (otherUserId && !blockedUserIds.includes(otherUserId)) {
-            processedUserIds.add(otherUserId);
+
             const draft = matchDraftToChat(allDrafts, 'USER', chat.id);
-            
+
             // Only set activity time if there's a message or draft
             const lastMessageDate = (chat.lastMessage || draft)
               ? calculateLastMessageDate(chat.lastMessage, draft, chat.updatedAt)
               : null;
-            
+
             chatItems.push({
               type: 'user',
               data: chat,
@@ -189,7 +189,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
               const lastMessageDate = (group.lastMessage || draft)
                 ? calculateLastMessageDate(group.lastMessage, draft, group.updatedAt)
                 : null;
-              
+
               chatItems.push({
                 type: 'group',
                 data: group,
@@ -203,21 +203,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
           console.error('Failed to fetch groups:', error);
         }
 
-        Object.values(users).forEach((userData) => {
-          const userId = userData.id;
-          if (processedUserIds.has(userId) || userId === user.id || blockedUserIds.includes(userId)) return;
 
-          const metadata = getUserMetadata(userId);
-          
-          chatItems.push({
-            type: 'contact',
-            userId,
-            user: userData,
-            interactionCount: metadata?.interactionCount || 0,
-            isFavorite: favoriteUserIds.includes(userId),
-            lastMessageDate: null
-          });
-        });
 
         // Sort entire list (user chats + groups + contacts) by activity time only
         sortUserChatItems(chatItems);
@@ -225,7 +211,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         const bugsResponse = await bugsApi.getBugs({ myBugsOnly: false });
         const bugs = bugsResponse.data.bugs || [];
         const bugIds = bugs.map(b => b.id);
-        
+
         const bugUnreads = bugIds.length > 0
           ? await chatApi.getBugsUnreadCounts(bugIds)
           : { data: {} as Record<string, number> };
@@ -254,7 +240,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
               const lastMessageDate = channel.lastMessage
                 ? new Date(getLastMessageTime(channel.lastMessage))
                 : null;
-              
+
               chatItems.push({
                 type: 'channel',
                 data: channel,
@@ -274,23 +260,23 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
           // Primary sort: by activity time (desc) - nulls at the end
           const aTime = a.lastMessageDate ? a.lastMessageDate.getTime() : null;
           const bTime = b.lastMessageDate ? b.lastMessageDate.getTime() : null;
-          
+
           // Handle nulls - put them at the end
           if (aTime === null && bTime === null) return 0;
           if (aTime === null) return 1; // a goes to end
           if (bTime === null) return -1; // b goes to end
-          
+
           if (bTime !== aTime) {
             return bTime - aTime;
           }
-          
+
           // Secondary: unread count (only for items that have unreadCount)
-          if ((a.type === 'user' || a.type === 'group' || a.type === 'channel' || a.type === 'bug') && 
-              (b.type === 'user' || b.type === 'group' || b.type === 'channel' || b.type === 'bug')) {
+          if ((a.type === 'user' || a.type === 'group' || a.type === 'channel' || a.type === 'bug') &&
+            (b.type === 'user' || b.type === 'group' || b.type === 'channel' || b.type === 'bug')) {
             if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
             if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
           }
-          
+
           // Tertiary: by name/ID
           if (a.type === 'bug' && b.type === 'bug') {
             return a.data.id.localeCompare(b.data.id);
@@ -298,11 +284,11 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
           if (a.type === 'channel' && b.type === 'channel') {
             return a.data.name.localeCompare(b.data.name);
           }
-          
+
           return 0;
         });
       }
-      
+
       setChats(chatItems);
     } catch (error) {
       console.error('Failed to fetch chats:', error);
@@ -351,11 +337,11 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       }
       return chat;
     });
-    
+
     if (chatsFilter === 'users') {
       return sortUserChatItems(updatedChats);
     }
-    
+
     return updatedChats;
   }, [chatsFilter, sortUserChatItems]);
 
@@ -405,7 +391,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       }
       return chat;
     });
-    
+
     if (chatsFilter === 'users') {
       return sortUserChatItems(updatedChats);
     } else if (chatsFilter === 'bugs' || chatsFilter === 'channels') {
@@ -413,18 +399,18 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         // Primary sort: by activity time (desc) - nulls at the end
         const aTime = a.lastMessageDate ? a.lastMessageDate.getTime() : null;
         const bTime = b.lastMessageDate ? b.lastMessageDate.getTime() : null;
-        
+
         // Handle nulls - put them at the end
         if (aTime === null && bTime === null) return 0;
         if (aTime === null) return 1; // a goes to end
         if (bTime === null) return -1; // b goes to end
-        
+
         if (bTime !== aTime) {
           return bTime - aTime;
         }
         // Secondary: unread count (only for items that have unreadCount)
-        if ((a.type === 'user' || a.type === 'group' || a.type === 'channel' || a.type === 'bug') && 
-            (b.type === 'user' || b.type === 'group' || b.type === 'channel' || b.type === 'bug')) {
+        if ((a.type === 'user' || a.type === 'group' || a.type === 'channel' || a.type === 'bug') &&
+          (b.type === 'user' || b.type === 'group' || b.type === 'channel' || b.type === 'bug')) {
           if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
           if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
         }
@@ -437,7 +423,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         return 0;
       });
     }
-    
+
     return updatedChats;
   }, [chatsFilter, sortUserChatItems]);
 
@@ -472,7 +458,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     window.addEventListener('refresh-chat-list', handleRefresh);
     window.addEventListener('draft-updated', handleDraftUpdate);
     window.addEventListener('draft-deleted', handleDraftDelete);
-    
+
     return () => {
       window.removeEventListener('refresh-chat-list', handleRefresh);
       window.removeEventListener('draft-updated', handleDraftUpdate);
@@ -482,15 +468,15 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
 
   useEffect(() => {
     if (!lastChatMessage) return;
-    
+
     const handleNewMessage = (data: { contextType: string; contextId: string; message: any }) => {
       const { contextType, contextId, message } = data;
-      
-      const shouldUpdate = 
+
+      const shouldUpdate =
         (chatsFilter === 'users' && (contextType === 'USER' || contextType === 'GROUP')) ||
         (chatsFilter === 'bugs' && contextType === 'BUG') ||
         (chatsFilter === 'channels' && contextType === 'GROUP');
-      
+
       if (shouldUpdate) {
         setChats((prevChats) => {
           const chatExists = prevChats.some((chat) => {
@@ -503,16 +489,16 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             if (contextType === 'BUG' && chat.type === 'bug' && chat.data.id === contextId) return true;
             return false;
           });
-          
+
           if (chatExists) {
             return updateChatMessage(prevChats, contextType, contextId, message);
           }
-          
+
           return prevChats;
         });
       }
     };
-    
+
     handleNewMessage(lastChatMessage);
   }, [lastChatMessage, chatsFilter, updateChatMessage]);
 
@@ -536,27 +522,27 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
 
   const handleContactClick = async (userId: string) => {
     if (!user) return;
-    
+
     try {
       const response = await chatApi.getOrCreateChatWithUser(userId);
       const chat = response.data;
-      
+
       const { addChat } = usePlayersStore.getState();
       await addChat(chat);
-      
+
       const updatedUnreadCounts = usePlayersStore.getState().unreadCounts;
       const otherUser = chat.user1Id === user.id ? chat.user2 : chat.user1;
-      
+
       if (chatsFilter === 'users' && otherUser) {
         setChats((prevChats) => {
           const filteredChats = prevChats.filter(
             (item) => !(item.type === 'contact' && item.userId === userId)
           );
-          
+
           const lastMessageDate = chat.lastMessage
             ? new Date(getLastMessageTime(chat.lastMessage))
             : null;
-          
+
           const newChatItem: ChatItem = {
             type: 'user',
             data: chat,
@@ -564,13 +550,13 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             unreadCount: updatedUnreadCounts[chat.id] || 0,
             otherUser,
           };
-          
+
           const updatedChats = [...filteredChats, newChatItem];
           sortUserChatItems(updatedChats);
           return updatedChats;
         });
       }
-      
+
       if (onChatSelect) {
         onChatSelect(chat.id, 'user');
       }

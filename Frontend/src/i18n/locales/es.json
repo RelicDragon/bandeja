@@ -1,6 +1,6 @@
 {
   "app": {
-  "title": "Bandeja",
+    "title": "Bandeja",
     "loading": "Cargando..."
   },
   "auth": {
@@ -719,7 +719,6 @@
     "deleteUserSecondMessage": "Esta es tu última oportunidad. ¿Estás absolutamente seguro de que quieres eliminar permanentemente tu cuenta? Todos tus datos se perderán para siempre.",
     "deleteUserSecondConfirm": "Sí, Eliminar Para Siempre",
     "userDeleted": "Cuenta eliminada exitosamente",
-    "userDeleted": "Cuenta eliminada exitosamente",
     "general": "General",
     "statistics": "Estadísticas",
     "comparison": "Comparación",
@@ -1332,6 +1331,23 @@
       "replyingTo": "Respondiendo a {{name}}",
       "cancelReply": "Cancelar respuesta",
       "message": "Mensaje"
+    },
+    "poll": {
+      "createTitle": "Crear encuesta",
+      "question": "Pregunta",
+      "options": "Opciones",
+      "optionPlaceholder": "Opción {{index}}",
+      "addOption": "Añadir opción",
+      "typeRegular": "Encuesta normal",
+      "typeQuiz": "Modo cuestionario",
+      "anonymous": "Votación anónima",
+      "multipleAnswers": "Permitir respuestas múltiples",
+      "create": "Crear encuesta",
+      "vote": "voto",
+      "votes": "votos",
+      "quiz": "Cuestionario",
+      "poll": "Encuesta",
+      "public": "Voto público"
     },
     "messages": {
       "loading": "Cargando mensajes...",

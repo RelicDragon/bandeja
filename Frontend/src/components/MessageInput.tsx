@@ -9,10 +9,12 @@ import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { ReplyPreview } from './ReplyPreview';
 import { MentionInput } from './MentionInput';
 import { JoinGroupChannelButton } from './JoinGroupChannelButton';
-import { Image, X } from 'lucide-react';
+import { PollCreationModal } from './chat/PollCreationModal';
+import { Image, X, ListPlus } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
+import { PollType } from '@/api/chat';
 
 const isValidImage = (file: File): boolean => {
   return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
@@ -84,6 +86,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [isMultiline, setIsMultiline] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const saveDraftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasLoadedDraftRef = useRef(false);
@@ -123,7 +126,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           finalContextId,
           userChatId ? 'PUBLIC' : normalizeChatType(chatType)
         );
-        
+
         window.dispatchEvent(new CustomEvent('draft-deleted', {
           detail: {
             chatContextType: contextType,
@@ -144,7 +147,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         content: trimmedContent || undefined,
         mentionIds: mentionIds.length > 0 ? mentionIds : undefined
       });
-      
+
       window.dispatchEvent(new CustomEvent('draft-updated', {
         detail: {
           draft: savedDraft,
@@ -175,7 +178,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         if (textarea) {
           const computedStyle = window.getComputedStyle(textarea);
           const lineHeight = parseFloat(computedStyle.lineHeight);
-          
+
           if (lineHeight && lineHeight > 0) {
             const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
             const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
@@ -210,7 +213,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     if (!finalContextId || !user?.id) return;
 
     const draftKey = `${contextType}-${finalContextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
-    
+
     if (loadedDraftsCache.has(draftKey)) {
       const cachedPromise = draftLoadingCache.get(draftKey);
       if (cachedPromise) {
@@ -357,11 +360,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       if (saveDraftTimeoutRef.current) {
         clearTimeout(saveDraftTimeoutRef.current);
         saveDraftTimeoutRef.current = null;
-        
+
         if (finalContextId && user?.id) {
           const currentMessage = messageRef.current?.trim();
           const currentMentionIds = mentionIdsRef.current || [];
-          
+
           if (currentMessage || currentMentionIds.length > 0) {
             saveDraft(currentMessage || '', currentMentionIds).catch(error => {
               console.error('Failed to save draft on unmount:', error);
@@ -396,7 +399,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      
+
       if (item.type.startsWith('image/')) {
         const file = item.getAsFile();
         if (file && isValidImage(file)) {
@@ -413,10 +416,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     if (isDisabled || inputBlocked) return;
-    
+
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (e.dataTransfer.types.includes('Files')) {
       setIsDragOver(true);
     }
@@ -425,11 +428,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = e.clientX;
     const y = e.clientY;
-    
+
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       setIsDragOver(false);
     }
@@ -512,15 +515,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     });
 
     const results = await Promise.allSettled(uploadPromises);
-    
+
     const successful = results
-      .filter((result): result is PromiseFulfilledResult<{ success: true; originalUrl: string; thumbnailUrl: string }> => 
+      .filter((result): result is PromiseFulfilledResult<{ success: true; originalUrl: string; thumbnailUrl: string }> =>
         result.status === 'fulfilled' && result.value.success === true
       )
       .map(result => result.value);
 
-    const failed = results.filter(result => 
-      result.status === 'rejected' || 
+    const failed = results.filter(result =>
+      result.status === 'rejected' ||
       (result.status === 'fulfilled' && result.value.success === false)
     );
 
@@ -543,6 +546,45 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     setMentionIds(newMentionIds);
     debouncedSaveDraft(newValue, newMentionIds);
     updateMultilineState();
+  };
+
+  const handlePollCreate = async (pollData: {
+    question: string;
+    options: string[];
+    type: PollType;
+    isAnonymous: boolean;
+    allowsMultipleAnswers: boolean;
+    quizCorrectOptionIndex?: number;
+  }) => {
+    if (inputBlocked || isDisabled) return;
+
+    if (!finalContextId) {
+      toast.error(t('chat.missingContextId'));
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const messageData: CreateMessageRequest = {
+        chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
+        contextId: finalContextId,
+        gameId: gameId,
+        chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
+        content: pollData.question,
+        poll: pollData
+      };
+
+      const created = await chatApi.createMessage(messageData);
+
+      onMessageSent?.();
+      onMessageCreated?.('temp-' + Date.now(), created); // Optimistic ID is tricky here without proper handling, but we just need to refresh list
+
+    } catch (error) {
+      console.error('Failed to create poll:', error);
+      toast.error(t('chat.sendFailed'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -595,70 +637,70 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       (async () => {
         try {
           const { originalUrls, thumbnailUrls } = await uploadImages();
-        if (useQueue && optimisticId) {
-          onSendQueued!({
-            tempId: optimisticId,
-            contextType: propContextType!,
-            contextId: propContextId!,
-            payload: { ...payload, mediaUrls: originalUrls, thumbnailUrls },
-            mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
-            thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+          if (useQueue && optimisticId) {
+            onSendQueued!({
+              tempId: optimisticId,
+              contextType: propContextType!,
+              contextId: propContextId!,
+              payload: { ...payload, mediaUrls: originalUrls, thumbnailUrls },
+              mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
+              thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+            });
+          } else {
+            const messageData: CreateMessageRequest = {
+              chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
+              contextId: finalContextId,
+              gameId: gameId,
+              content: trimmedContent || undefined,
+              mediaUrls: originalUrls.length > 0 ? originalUrls : [],
+              thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+              replyToId: replyTo?.id,
+              chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
+              mentionIds: mentionIds.length > 0 ? mentionIds : undefined,
+            };
+            const created = await chatApi.createMessage(messageData);
+            if (useOptimistic && optimisticId && onMessageCreated) {
+              onMessageCreated(optimisticId, created);
+            }
+          }
+          if (saveDraftTimeoutRef.current) {
+            clearTimeout(saveDraftTimeoutRef.current);
+            saveDraftTimeoutRef.current = null;
+          }
+          if (finalContextId && user?.id) {
+            try {
+              await chatApi.deleteDraft(
+                contextType,
+                finalContextId,
+                userChatId ? 'PUBLIC' : normalizeChatType(chatType)
+              );
+              window.dispatchEvent(new CustomEvent('draft-deleted', {
+                detail: { chatContextType: contextType, contextId: finalContextId }
+              }));
+            } catch (err) {
+              console.error('Failed to delete draft:', err);
+            }
+          }
+          if (!useOptimistic) {
+            setMessage('');
+            setMentionIds([]);
+            setSelectedImages([]);
+            hasLoadedDraftRef.current = false;
+            setTimeout(() => updateMultilineState(), 100);
+            onCancelReply?.();
+          }
+        } catch (error) {
+          console.error('Failed to send message:', error);
+          if (optimisticId && onSendFailed) onSendFailed(optimisticId);
+          else if (!useOptimistic) setMessage(trimmedContent);
+          toast.error(t('chat.sendFailed') || 'Failed to send message');
+        } finally {
+          if (useQueue) queueSendRef.current = false;
+          if (!useQueue) setIsLoading(false);
+          requestAnimationFrame(() => {
+            (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
           });
-        } else {
-          const messageData: CreateMessageRequest = {
-            chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
-            contextId: finalContextId,
-            gameId: gameId,
-            content: trimmedContent || undefined,
-            mediaUrls: originalUrls.length > 0 ? originalUrls : [],
-            thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
-            replyToId: replyTo?.id,
-            chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
-            mentionIds: mentionIds.length > 0 ? mentionIds : undefined,
-          };
-          const created = await chatApi.createMessage(messageData);
-          if (useOptimistic && optimisticId && onMessageCreated) {
-            onMessageCreated(optimisticId, created);
-          }
         }
-        if (saveDraftTimeoutRef.current) {
-          clearTimeout(saveDraftTimeoutRef.current);
-          saveDraftTimeoutRef.current = null;
-        }
-        if (finalContextId && user?.id) {
-          try {
-            await chatApi.deleteDraft(
-              contextType,
-              finalContextId,
-              userChatId ? 'PUBLIC' : normalizeChatType(chatType)
-            );
-            window.dispatchEvent(new CustomEvent('draft-deleted', {
-              detail: { chatContextType: contextType, contextId: finalContextId }
-            }));
-          } catch (err) {
-            console.error('Failed to delete draft:', err);
-          }
-        }
-        if (!useOptimistic) {
-          setMessage('');
-          setMentionIds([]);
-          setSelectedImages([]);
-          hasLoadedDraftRef.current = false;
-          setTimeout(() => updateMultilineState(), 100);
-          onCancelReply?.();
-        }
-      } catch (error) {
-        console.error('Failed to send message:', error);
-        if (optimisticId && onSendFailed) onSendFailed(optimisticId);
-        else if (!useOptimistic) setMessage(trimmedContent);
-        toast.error(t('chat.sendFailed') || 'Failed to send message');
-      } finally {
-        if (useQueue) queueSendRef.current = false;
-        if (!useQueue) setIsLoading(false);
-        requestAnimationFrame(() => {
-          (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
-        });
-      }
       })();
     });
   };
@@ -701,7 +743,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   }
 
   return (
-    <div 
+    <div
       className="p-3 overflow-visible"
       onPaste={handlePaste}
       onDragOver={handleDragOver}
@@ -740,11 +782,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           ))}
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit} className="relative overflow-visible">
-        <div className={`relative overflow-visible bg-white dark:bg-gray-800 md:bg-opacity-100 md:dark:bg-opacity-100 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${
-          isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
-        }`}>
+        <div className={`relative overflow-visible bg-white dark:bg-gray-800 md:bg-opacity-100 md:dark:bg-opacity-100 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
+          }`}>
           <div ref={inputContainerRef} className="relative overflow-visible">
             <MentionInput
               value={message}
@@ -764,7 +805,24 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 maxHeight: '120px',
               }}
             />
-            
+
+            <button
+              type="button"
+              onClick={() => setIsPollModalOpen(true)}
+              disabled={isDisabled || inputBlocked}
+              className="absolute w-9 h-9 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110 hover:bg-gray-200 dark:hover:bg-gray-600 shadow-lg z-10"
+              style={{
+                right: isMultiline ? '48px' : '94px',
+                top: isMultiline ? 'auto' : 'auto',
+                bottom: isMultiline ? '4px' : '8px',
+                transform: isMultiline ? 'translateY(-44px)' : 'translateY(0)',
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1), right 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              title={t('chat.poll.createTitle', 'Create Poll')}
+            >
+              <ListPlus size={18} />
+            </button>
+
             <button
               type="button"
               onClick={handleImageButtonClick}
@@ -780,7 +838,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             >
               <Image size={18} />
             </button>
-            
+
             <button
               type="submit"
               disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
@@ -816,6 +874,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         multiple
         onChange={(e) => handleImageSelect(e.target.files)}
         className="hidden"
+      />
+      <PollCreationModal
+        isOpen={isPollModalOpen}
+        onClose={() => setIsPollModalOpen(false)}
+        onSubmit={handlePollCreate}
       />
     </div>
   );

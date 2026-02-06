@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { parseMessagePreview } from '@/utils/messagePreview';
 
 interface GroupChannelCardProps {
   groupChannel: GroupChannel;
@@ -28,11 +29,10 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700 ${
-        isSelected 
-          ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30' 
-          : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-      }`}
+      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700 ${isSelected
+        ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+        : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+        }`}
     >
       <div className="relative flex-shrink-0">
         {groupChannel.avatar ? (
@@ -51,7 +51,7 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
           </div>
         )}
       </div>
-      
+
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
@@ -106,8 +106,10 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
           }
 
           if (lastMessage) {
-            const displayText = getLastMessageText(lastMessage);
             const isPreviewOnly = isLastMessagePreview(lastMessage);
+            const displayText = isPreviewOnly
+              ? parseMessagePreview(lastMessage.preview, t)
+              : getLastMessageText(lastMessage);
             const fullMsg = !isPreviewOnly && lastMessage && 'mediaUrls' in lastMessage ? lastMessage as { mediaUrls?: string[] } : null;
             const hasMedia = (fullMsg?.mediaUrls?.length ?? 0) > 0;
             const sender =

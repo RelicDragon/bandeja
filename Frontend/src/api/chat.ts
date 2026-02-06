@@ -4,6 +4,40 @@ import { normalizeChatType } from '@/utils/chatType';
 
 export type { ChatType };
 
+export type PollType = 'CLASSICAL' | 'QUIZ';
+
+export interface PollOption {
+  id: string;
+  pollId: string;
+  text: string;
+  order: number;
+  isCorrect?: boolean;
+  votes: PollVote[];
+  _count?: {
+    votes: number;
+  };
+}
+
+export interface PollVote {
+  id: string;
+  pollId: string;
+  optionId: string;
+  userId: string;
+  createdAt: string;
+}
+
+export interface Poll {
+  id: string;
+  question: string;
+  type: PollType;
+  isAnonymous: boolean;
+  allowsMultipleAnswers: boolean;
+  options: PollOption[];
+  votes: PollVote[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
 export type ChatContextType = 'GAME' | 'BUG' | 'USER' | 'GROUP';
 
@@ -46,6 +80,7 @@ export interface ChatMessage {
     languageCode: string;
     translation: string;
   }>;
+  poll?: Poll;
 }
 
 export interface MessageReaction {
@@ -108,6 +143,14 @@ export interface CreateMessageRequest {
   replyToId?: string;
   chatType?: ChatType;
   mentionIds?: string[];
+  poll?: {
+    question: string;
+    type: PollType;
+    isAnonymous: boolean;
+    allowsMultipleAnswers: boolean;
+    options: string[];
+    quizCorrectOptionIndex?: number;
+  };
 }
 
 export interface UpdateMessageStateRequest {
@@ -203,7 +246,7 @@ export const chatApi = {
 
   getGameMessages: async (gameId: string, page = 1, limit = 50, chatType: ChatType = 'PUBLIC') => {
     const normalizedChatType = normalizeChatType(chatType);
-    
+
     const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/games/${gameId}/messages`, {
       params: { page, limit, chatType: normalizedChatType }
     });
@@ -294,8 +337,8 @@ export const chatApi = {
   },
 
   markAllMessagesAsRead: async (gameId: string, chatTypes?: ChatType[]) => {
-    const response = await api.post<ApiResponse<{ count: number }>>(`/chat/games/${gameId}/mark-all-read`, { 
-      chatTypes: chatTypes || [] 
+    const response = await api.post<ApiResponse<{ count: number }>>(`/chat/games/${gameId}/mark-all-read`, {
+      chatTypes: chatTypes || []
     });
     return response.data;
   },
@@ -591,5 +634,10 @@ export const chatApi = {
       data: { chatContextType, contextId, chatType: normalizedChatType }
     });
     return response.data;
+  },
+
+  votePoll: async (pollId: string, optionIds: string[]) => {
+    const response = await api.post<ApiResponse<Poll>>(`/chat/polls/${pollId}/vote`, { optionIds });
+    return response.data.data;
   },
 };

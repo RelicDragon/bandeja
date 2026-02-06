@@ -6,43 +6,37 @@ const MAX_PREVIEW_LENGTH = 200;
 interface MessageForPreview {
   content: string | null;
   mediaUrls: string[];
+  pollId: string | null;
 }
 
-function isSystemMessageContent(content: string | null): boolean {
-  if (!content?.trim()) return false;
-  try {
-    const parsed = JSON.parse(content) as unknown;
-    return (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      'type' in parsed &&
-      'text' in parsed
-    );
-  } catch {
-    return false;
-  }
-}
-
-function getSystemMessageText(content: string): string {
-  try {
-    const parsed = JSON.parse(content) as { text?: string };
-    return typeof parsed.text === 'string' ? parsed.text : content;
-  } catch {
-    return content;
-  }
-}
 
 export function extractPreviewFromMessage(message: MessageForPreview): string {
   const hasMedia = Array.isArray(message.mediaUrls) && message.mediaUrls.length > 0;
   const hasText = Boolean(message.content?.trim());
 
-  if (hasMedia && !hasText) return '[Media]';
-  if (!hasText) return '[Media]';
+  if (hasMedia && !hasText) return '[TYPE:MEDIA]';
+  if (!hasText) return '[TYPE:MEDIA]';
 
-  const text = isSystemMessageContent(message.content)
-    ? getSystemMessageText(message.content!)
-    : message.content!;
+  const text = message.content!;
 
+  // Handle poll messages - check pollId field
+  if (message.pollId) {
+    return `[TYPE:POLL]${text}`;
+  }
+
+  // Handle system messages - store tag with the JSON
+  if (text.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed.type && parsed.text) {
+        return `[TYPE:SYSTEM]${text}`;
+      }
+    } catch {
+      // Not a valid system message, treat as regular text
+    }
+  }
+
+  // Regular text messages - truncate if needed
   const trimmed = text.trim();
   if (trimmed.length <= MAX_PREVIEW_LENGTH) return trimmed;
   return trimmed.slice(0, MAX_PREVIEW_LENGTH - 1) + '…';
@@ -55,7 +49,11 @@ export async function updateLastMessagePreview(
   const lastMessage = await prisma.chatMessage.findFirst({
     where: { chatContextType, contextId },
     orderBy: { createdAt: 'desc' },
-    select: { content: true, mediaUrls: true },
+    select: {
+      content: true,
+      mediaUrls: true,
+      pollId: true,
+    },
   });
 
   const preview = lastMessage

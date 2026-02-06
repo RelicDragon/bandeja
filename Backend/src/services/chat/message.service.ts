@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { MessageState, ChatType, ChatContextType, ParticipantRole } from '@prisma/client';
+import { MessageState, ChatType, ChatContextType, ParticipantRole, PollType, Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import notificationService from '../notification.service';
@@ -120,13 +120,13 @@ export class MessageService {
 
     // For writing: Channel = owner or admin, Group = any participant
     const isAdmin = userParticipant?.role === ParticipantRole.ADMIN;
-    const canWrite = groupChannel.isChannel 
+    const canWrite = groupChannel.isChannel
       ? (isOwner || isAdmin)
       : isParticipant;
 
     if (requireWriteAccess && !canWrite) {
-      throw new ApiError(403, groupChannel.isChannel 
-        ? 'Only owner or admin can post in channels' 
+      throw new ApiError(403, groupChannel.isChannel
+        ? 'Only owner or admin can post in channels'
         : 'You must be a participant to post');
     }
 
@@ -200,19 +200,19 @@ export class MessageService {
   static generateThumbnailUrls(mediaUrls: string[]): string[] {
     return mediaUrls.map(originalUrl => {
       if (!originalUrl) return originalUrl;
-      
+
       if (originalUrl.includes('/uploads/chat/originals/')) {
         const filename = originalUrl.split('/').pop() || '';
         const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
         const thumbnailFilename = `${nameWithoutExt}_thumb.jpg`;
-        
+
         const thumbnailUrl = originalUrl
           .replace('/uploads/chat/originals/', '/uploads/chat/thumbnails/')
           .replace(filename, thumbnailFilename);
-        
+
         return thumbnailUrl;
       }
-      
+
       return originalUrl;
     });
   }
@@ -220,7 +220,7 @@ export class MessageService {
   static getMessageInclude() {
     return {
       sender: {
-          select: USER_SELECT_FIELDS
+        select: USER_SELECT_FIELDS
       },
       replyTo: {
         select: {
@@ -243,6 +243,19 @@ export class MessageService {
           user: {
             select: USER_SELECT_FIELDS
           }
+        }
+      },
+      poll: {
+        include: {
+          options: {
+            include: {
+              votes: true
+            },
+            orderBy: {
+              order: Prisma.SortOrder.asc
+            }
+          },
+          votes: true
         }
       }
     };
@@ -292,12 +305,20 @@ export class MessageService {
     replyToId?: string;
     chatType: ChatType;
     mentionIds?: string[];
+    poll?: {
+      question: string;
+      options: string[];
+      type: PollType;
+      isAnonymous: boolean;
+      allowsMultipleAnswers: boolean;
+      quizCorrectOptionIndex?: number;
+    };
   }) {
-    const { chatContextType, contextId, senderId, content, mediaUrls, replyToId, chatType, mentionIds = [] } = data;
+    const { chatContextType, contextId, senderId, content, mediaUrls, replyToId, chatType, mentionIds = [], poll } = data;
 
     // Validate access based on context type
     let game, participant, bug, userChat, groupChannel;
-    
+
     if (chatContextType === 'GAME') {
       const result = await this.validateGameAccess(contextId, senderId);
       game = result.game;
@@ -332,24 +353,63 @@ export class MessageService {
 
     const thumbnailUrls = this.generateThumbnailUrls(mediaUrls);
 
-    const message = await prisma.chatMessage.create({
-      data: {
-        chatContextType,
-        contextId,
-        gameId: chatContextType === 'GAME' ? contextId : null,
-        senderId,
-        content: content ?? '',
-        mediaUrls,
-        thumbnailUrls,
-        replyToId,
-        chatType,
-        mentionIds: mentionIds || [],
-        state: MessageState.SENT
-      } as any,
-      include: this.getMessageInclude()
-    }) as any;
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create the message
+      const message = await tx.chatMessage.create({
+        data: {
+          chatContextType,
+          contextId,
+          gameId: chatContextType === 'GAME' ? contextId : null,
+          senderId,
+          content: content?.startsWith('[TYPE:') ? content.substring(1) : (content ?? ''),
+          mediaUrls,
+          thumbnailUrls,
+          replyToId,
+          chatType,
+          mentionIds: mentionIds || [],
+          state: MessageState.SENT
+        } as any,
+        include: this.getMessageInclude()
+      }) as any;
 
-    // Handle game-specific logic
+      // 2. If it's a poll, create the poll and link it back
+      if (poll) {
+        const createdPoll = await tx.poll.create({
+          data: {
+            messageId: message.id,
+            question: poll.question,
+            type: poll.type,
+            isAnonymous: poll.isAnonymous,
+            allowsMultipleAnswers: poll.allowsMultipleAnswers,
+            options: {
+              create: poll.options.map((option, index) => ({
+                text: option,
+                order: index,
+                isCorrect: poll.type === 'QUIZ' ? index === poll.quizCorrectOptionIndex : false
+              }))
+            }
+          }
+        });
+
+        // Update the message with pollId
+        await tx.chatMessage.update({
+          where: { id: message.id },
+          data: { pollId: createdPoll.id }
+        });
+
+        // Return the refetched message with all relations
+        return await tx.chatMessage.findUnique({
+          where: { id: message.id },
+          include: this.getMessageInclude()
+        });
+      }
+
+      return message;
+    });
+
+    const message = result;
+
+    // Post-creation logic (notifications, counts, etc.)
     if (chatContextType === 'GAME' && game) {
       if (chatType === ChatType.PHOTOS && mediaUrls.length > 0) {
         const currentGame = await prisma.game.findUnique({
@@ -409,7 +469,7 @@ export class MessageService {
       });
     } else if (chatContextType === 'USER' && userChat && message.sender) {
       await UserChatService.updateChatTimestamp(contextId);
-      
+
       const userChatWithUsers = await prisma.userChat.findUnique({
         where: { id: contextId },
         include: {
@@ -471,14 +531,22 @@ export class MessageService {
     replyToId?: string;
     chatType: ChatType;
     mentionIds?: string[];
+    poll?: {
+      question: string;
+      options: string[];
+      type: PollType;
+      isAnonymous: boolean;
+      allowsMultipleAnswers: boolean;
+      quizCorrectOptionIndex?: number;
+    };
   }) {
     const message = await this.createMessage(data);
-    
+
     const socketService = (global as any).socketService;
     if (socketService) {
       // Get recipients for delivery tracking
       const recipients: string[] = [];
-      
+
       if (data.chatContextType === 'GAME') {
         const game = await prisma.game.findUnique({
           where: { id: data.contextId },
@@ -496,8 +564,8 @@ export class MessageService {
           where: { id: data.contextId }
         });
         if (userChat) {
-          const recipientId = userChat.user1Id === data.senderId 
-            ? userChat.user2Id 
+          const recipientId = userChat.user1Id === data.senderId
+            ? userChat.user2Id
             : userChat.user1Id;
           if (recipientId) recipients.push(recipientId);
         }
@@ -515,7 +583,7 @@ export class MessageService {
             recipients.push(bug.senderId);
           }
           recipients.push(...bug.participants.map(p => p.userId));
-          
+
           const admins = await prisma.user.findMany({
             where: { isAdmin: true },
             select: { id: true }
@@ -587,7 +655,7 @@ export class MessageService {
         await socketService.emitNewUserMessage(data.contextId, messageWithTranslations);
       }
       // GROUP uses only unified events (no old compatibility)
-      
+
       // NEW unified event with messageId for acknowledgment
       socketService.emitChatEvent(
         data.chatContextType,
@@ -611,7 +679,7 @@ export class MessageService {
                   continue;
                 }
               }
-              
+
               const unreadCount = await ReadReceiptService.getUnreadCountForContext(
                 data.chatContextType,
                 data.contextId,
@@ -634,7 +702,7 @@ export class MessageService {
       if (recipients.length > 0) {
         setTimeout(async () => {
           const undelivered = socketService.getUndeliveredRecipients(message.id);
-          
+
           for (const userId of undelivered) {
             const isOnline = socketService.isUserOnline(userId);
             const isInRoom = await socketService.isUserInChatRoom(
@@ -663,7 +731,7 @@ export class MessageService {
     } catch (error) {
       console.error('Failed to delete draft in createMessageWithEvent:', error);
     }
-    
+
     return message;
   }
 
@@ -701,7 +769,7 @@ export class MessageService {
     const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
 
     const messages = await prisma.chatMessage.findMany({
-      where: { 
+      where: {
         chatContextType,
         contextId,
         chatType: chatType as ChatType
@@ -776,7 +844,7 @@ export class MessageService {
     await this.validateMessageAccess(message, userId, true);
 
     if (message.mediaUrls && message.mediaUrls.length > 0) {
-        const { ImageProcessor } = await import('../../utils/imageProcessor');
+      const { ImageProcessor } = await import('../../utils/imageProcessor');
       for (const mediaUrl of message.mediaUrls) {
         try {
           await ImageProcessor.deleteFile(mediaUrl);
@@ -787,7 +855,7 @@ export class MessageService {
     }
 
     if (message.thumbnailUrls && message.thumbnailUrls.length > 0) {
-        const { ImageProcessor } = await import('../../utils/imageProcessor');
+      const { ImageProcessor } = await import('../../utils/imageProcessor');
       for (const thumbnailUrl of message.thumbnailUrls) {
         try {
           await ImageProcessor.deleteFile(thumbnailUrl);

@@ -39,7 +39,8 @@ import {
   saveDraft,
   getDraft,
   getUserDrafts,
-  deleteDraft
+  deleteDraft,
+  votePoll
 } from '../controllers/chat.controller';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -91,6 +92,16 @@ router.post(
     body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type')
   ]),
   createMessage
+);
+
+router.post(
+  '/polls/:pollId/vote',
+  validate([
+    param('pollId').notEmpty().withMessage('Poll ID is required'),
+    body('optionIds').isArray().withMessage('Option IDs must be an array'),
+    body('optionIds.*').notEmpty().withMessage('Option ID cannot be empty')
+  ]),
+  votePoll
 );
 
 router.get('/games/:gameId/messages', getGameMessages);

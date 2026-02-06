@@ -112,6 +112,7 @@ model User {
   messageTranslations         MessageTranslation[]
   chatDrafts                  ChatDraft[]
   notificationPreferences     NotificationPreference[]
+  pollVotes              PollVote[]
 
   @@index([phone])
   @@index([telegramId])
@@ -577,6 +578,8 @@ model ChatMessage {
   readReceipts    MessageReadReceipt[]
   reports         MessageReport[]
   translations    MessageTranslation[]
+  poll            Poll?
+  pollId          String?              @unique
 
   @@index([chatContextType, contextId])
   @@index([gameId])
@@ -586,6 +589,50 @@ model ChatMessage {
   @@index([replyToId])
   @@index([chatType])
   @@index([contextId])
+}
+
+model Poll {
+  id              String       @id @default(cuid())
+  question        String
+  type            PollType     @default(CLASSICAL)
+  isAnonymous     Boolean      @default(false)
+  allowsMultipleAnswers Boolean @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  message         ChatMessage  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId       String       @unique
+
+  options         PollOption[]
+  votes           PollVote[]
+}
+
+model PollOption {
+  id        String     @id @default(cuid())
+  text      String
+  order     Int
+  isCorrect Boolean    @default(false) // For QUIZ type
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId    String
+  votes     PollVote[] // Votes for this specific option
+
+  @@index([pollId])
+}
+
+model PollVote {
+  id           String     @id @default(cuid())
+  poll         Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId       String
+  option       PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  optionId     String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, optionId])
+  @@index([pollId])
+  @@index([userId])
+  @@index([optionId])
 }
 
 model ChatMute {
@@ -776,6 +823,12 @@ enum ChatContextType {
   BUG
   USER
   GROUP
+}
+
+enum PollType {
+  CLASSICAL
+  MULTI_ANSWER
+  QUIZ
 }
 
 model TelegramOtp {
