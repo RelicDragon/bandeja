@@ -89,8 +89,9 @@ const APP_PATH_RE =
 const isAppPath = (pathname: string): boolean =>
   pathname === '/' || APP_PATH_RE.test(pathname);
 
-/** Entry-point routes (direct URL, push, external link). Never use history.back() from these — previous entry may be external (e.g. google, about:blank). */
-const ENTRY_POINT_PATH_RE = /^\/games\/[^/]+(\/chat)?$/;
+/** Entry-point routes (direct URL, shared link, push). Never use history.back() — previous entry may be external (about:blank, google). */
+const ENTRY_POINT_PATH_RE =
+  /^\/(group-chat|user-chat|channel-chat|games)\/[^/]+(\/chat)?$|^\/bugs\/[^/]+\/chat$/;
 const isEntryPointRoute = (pathname: string): boolean => ENTRY_POINT_PATH_RE.test(pathname);
 
 /** Call from App when Capacitor. On iOS, swipe-back is WebView-native (history.back()); this redirects to home if we land on a non-app path. */
