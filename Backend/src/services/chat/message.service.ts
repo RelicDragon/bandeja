@@ -78,7 +78,7 @@ export class MessageService {
     return { bug, isSender, isAdmin, isParticipant };
   }
 
-  static async validateUserChatAccess(userChatId: string, userId: string) {
+  static async validateUserChatAccess(userChatId: string, userId: string, requireSendPermission = false) {
     const userChat = await prisma.userChat.findUnique({
       where: { id: userChatId },
       include: { user1: true, user2: true }
@@ -90,6 +90,15 @@ export class MessageService {
 
     if (userChat.user1Id !== userId && userChat.user2Id !== userId) {
       throw new ApiError(403, 'You are not a participant in this chat');
+    }
+
+    if (requireSendPermission) {
+      if (userChat.user1Id === userId && !userChat.user2allowed) {
+        throw new ApiError(403, 'Cannot send message - user has not allowed messages');
+      }
+      if (userChat.user2Id === userId && !userChat.user1allowed) {
+        throw new ApiError(403, 'Cannot send message - user has not allowed messages');
+      }
     }
 
     return { userChat };
@@ -350,7 +359,7 @@ export class MessageService {
       const result = await this.validateBugAccess(contextId, senderId, true);
       bug = result.bug;
     } else if (chatContextType === 'USER') {
-      const result = await this.validateUserChatAccess(contextId, senderId);
+      const result = await this.validateUserChatAccess(contextId, senderId, true);
       userChat = result.userChat;
     } else if (chatContextType === 'GROUP') {
       await this.validateGroupChannelAccess(contextId, senderId, true);

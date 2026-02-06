@@ -687,6 +687,8 @@
     "notificationSettingsSaved": "Configuración de notificaciones guardada exitosamente",
     "notificationSettingsSaveError": "Error al guardar la configuración de notificaciones",
     "controlNotifications": "Controlar notificaciones",
+    "allowMessagesFromNonContacts": "Permitir mensajes de no contactos",
+    "allowMessagesFromNonContactsDescription": "Permitir que cualquiera en tu ciudad te envíe mensajes directos. Desactiva para recibir mensajes solo de contactos.",
     "gender": "Género",
     "male": "Masculino",
     "female": "Femenino",
@@ -1142,6 +1144,8 @@
   "common": {
     "yes": "Sí",
     "no": "No",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
     "ok": "OK",
     "cancel": "Cancelar",
     "create": "Crear",
@@ -1288,6 +1292,7 @@
   },
   "chat": {
     "noMessages": "Aún no hay mensajes",
+    "users": "Usuarios",
     "reactions": {
       "addReaction": "Añadir reacción",
       "removeReaction": "Quitar reacción",
@@ -1374,6 +1379,9 @@
       "BUG_TYPE_CHANGED": "Tipo del error cambiado a {{type}}",
       "GAME_CLUB_CHANGED": "Ubicación del juego cambiada a {{clubName}}",
       "GAME_DATE_TIME_CHANGED": "Fecha/hora del juego cambiada a {{dateTime}}",
+      "USER_CHAT_REQUEST": "{{requesterName}} solicita chatear contigo",
+      "USER_CHAT_ACCEPTED": "{{userName}} aceptó la solicitud de chat",
+      "USER_CHAT_DECLINED": "{{userName}} rechazó la solicitud de chat",
       "actions": {
         "joined": "se unió al juego",
         "left": "abandonó el juego"
@@ -1407,6 +1415,8 @@
     "leaveCancelQueueTitle": "Cancelar solicitud de unión",
     "leaveCancelQueueMessage": "¿Estás seguro de que quieres cancelar tu solicitud de unión?",
     "blockedByUser": "Este usuario te ha bloqueado. No puedes enviarle mensajes.",
+    "userDoesNotAllowDirectChat": "Este usuario no permite mensajes directos de personas que no están en sus contactos.",
+    "requestToChat": "Solicitar chat",
     "invalidImageType": "Tipo de imagen inválido. Por favor selecciona un archivo de imagen válido.",
     "sendFailed": "Error al enviar el mensaje",
     "failedToSend": "Error al enviar",

@@ -23,6 +23,8 @@ import {
   markUserChatAsRead,
   pinUserChat,
   unpinUserChat,
+  requestToChat,
+  respondToChatRequest,
   getBugMessages,
   getBugUnreadCount,
   getBugsUnreadCounts,
@@ -151,6 +153,16 @@ router.get('/user-chats/:chatId/unread-count', getUserChatUnreadCount);
 router.post('/user-chats/:chatId/mark-all-read', markUserChatAsRead);
 router.post('/user-chats/:chatId/pin', pinUserChat);
 router.delete('/user-chats/:chatId/pin', unpinUserChat);
+router.post('/user-chats/:chatId/request-to-chat', requestToChat);
+router.post(
+  '/user-chats/:chatId/request-to-chat/:messageId/respond',
+  validate([
+    param('chatId').notEmpty().withMessage('Chat ID is required'),
+    param('messageId').notEmpty().withMessage('Message ID is required'),
+    body('accepted').isBoolean().withMessage('accepted must be a boolean')
+  ]),
+  respondToChatRequest
+);
 router.post(
   '/user-chats/unread-counts',
   validate([

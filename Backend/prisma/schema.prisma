@@ -96,6 +96,7 @@ model User {
   sendPushDirectMessages     Boolean              @default(true)
   sendPushReminders          Boolean              @default(true)
   sendPushWalletNotifications Boolean             @default(true)
+  allowMessagesFromNonContacts Boolean            @default(true)
   pushTokens                 PushToken[]
   messageReports             MessageReport[]      @relation("MessageReportReporter")
   blockedUsers               BlockedUser[]        @relation("UserBlocked")
@@ -530,6 +531,8 @@ model UserChat {
   id                  String           @id @default(cuid())
   user1Id             String
   user2Id             String
+  user1allowed        Boolean          @default(true)
+  user2allowed        Boolean          @default(true)
   lastMessagePreview  String?          @db.VarChar(500)
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt

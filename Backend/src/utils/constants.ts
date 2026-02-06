@@ -166,6 +166,7 @@ export const PROFILE_SELECT_FIELDS = {
   sendPushInvites: true,
   sendPushDirectMessages: true,
   sendPushReminders: true,
+  allowMessagesFromNonContacts: true,
   wallet: true,
   totalPoints: true,
   gamesPlayed: true,

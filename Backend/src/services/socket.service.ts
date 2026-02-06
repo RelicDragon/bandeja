@@ -442,11 +442,7 @@ class SocketService {
     }
   }
 
-  /**
-   * Helper to emit user chat messages directly to both users
-   * (for notification/badge updates even when not in chat)
-   */
-  private async emitUserChatMessageToUsers(chatId: string, message: any, messageId?: string) {
+  public async emitUserChatMessageToUsers(chatId: string, message: any, messageId?: string) {
     try {
       const chat = await prisma.userChat.findUnique({
         where: { id: chatId },

@@ -246,7 +246,7 @@ export const uploadChatImage = asyncHandler(async (req: AuthRequest, res: Respon
   } else if (bugId) {
     await MessageService.validateBugAccess(bugId, senderId, true);
   } else if (userChatId) {
-    await MessageService.validateUserChatAccess(userChatId, senderId);
+    await MessageService.validateUserChatAccess(userChatId, senderId, true);
   } else if (groupChannelId) {
     await MessageService.validateGroupChannelAccess(groupChannelId, senderId, true);
   }

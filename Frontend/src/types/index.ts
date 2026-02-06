@@ -76,6 +76,7 @@ export interface User extends BasicUser {
   sendPushReminders?: boolean;
   sendPushWalletNotifications?: boolean;
   wallet?: number;
+  allowMessagesFromNonContacts?: boolean;
   blockedUserIds?: string[];
 }
 

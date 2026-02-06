@@ -699,6 +699,8 @@
     "notificationSettingsSaved": "Настройки уведомлений успешно сохранены",
     "notificationSettingsSaveError": "Не удалось сохранить настройки уведомлений",
     "controlNotifications": "Управление уведомлениями",
+    "allowMessagesFromNonContacts": "Разрешить сообщения от незнакомцев",
+    "allowMessagesFromNonContactsDescription": "Позволить любому в вашем городе отправлять вам личные сообщения. Отключите, чтобы получать сообщения только от контактов.",
     "gender": "Пол",
     "male": "Мужской",
     "female": "Женский",
@@ -1200,6 +1202,8 @@
   "common": {
     "yes": "Да",
     "no": "Нет",
+    "accept": "Принять",
+    "decline": "Отклонить",
     "ok": "ОК",
     "cancel": "Отмена",
     "create": "Создать",
@@ -1350,6 +1354,7 @@
   },
   "chat": {
     "noMessages": "Пока нет сообщений",
+    "users": "Пользователи",
     "reactions": {
       "addReaction": "Добавить реакцию",
       "removeReaction": "Убрать реакцию",
@@ -1436,6 +1441,9 @@
       "BUG_TYPE_CHANGED": "Тип ошибки изменен на {{type}}",
       "GAME_CLUB_CHANGED": "Место игры изменено на {{clubName}}",
       "GAME_DATE_TIME_CHANGED": "Дата/время игры изменено на {{dateTime}}",
+      "USER_CHAT_REQUEST": "{{requesterName}} запрашивает чат с вами",
+      "USER_CHAT_ACCEPTED": "{{userName}} принял запрос на чат",
+      "USER_CHAT_DECLINED": "{{userName}} отклонил запрос на чат",
       "actions": {
         "joined": "присоединился к игре",
         "left": "покинул игру"
@@ -1471,6 +1479,8 @@
     "leaveCancelQueueTitle": "Отменить запрос на присоединение",
     "leaveCancelQueueMessage": "Вы уверены, что хотите отменить запрос на присоединение?",
     "blockedByUser": "Этот пользователь заблокировал вас. Вы не можете отправлять им сообщения.",
+    "userDoesNotAllowDirectChat": "Этот пользователь не разрешает прямые сообщения от людей, не входящих в контакты.",
+    "requestToChat": "Запросить чат",
     "invalidImageType": "Неверный тип изображения. Пожалуйста, выберите корректный файл изображения.",
     "sendFailed": "Не удалось отправить сообщение",
     "failedToSend": "Не удалось отправить",

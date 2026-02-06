@@ -18,7 +18,10 @@ export enum SystemMessageType {
   BUG_STATUS_CHANGED = 'BUG_STATUS_CHANGED',
   BUG_TYPE_CHANGED = 'BUG_TYPE_CHANGED',
   GAME_CLUB_CHANGED = 'GAME_CLUB_CHANGED',
-  GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED'
+  GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED',
+  USER_CHAT_REQUEST = 'USER_CHAT_REQUEST',
+  USER_CHAT_ACCEPTED = 'USER_CHAT_ACCEPTED',
+  USER_CHAT_DECLINED = 'USER_CHAT_DECLINED'
 }
 
 export interface SystemMessageData {
@@ -44,7 +47,10 @@ const FALLBACK_TEMPLATES: Record<SystemMessageType, string> = {
   [SystemMessageType.BUG_STATUS_CHANGED]: 'Bug status changed to {{status}}',
   [SystemMessageType.BUG_TYPE_CHANGED]: 'Bug type changed to {{type}}',
   [SystemMessageType.GAME_CLUB_CHANGED]: 'Game location changed to {{clubName}}',
-  [SystemMessageType.GAME_DATE_TIME_CHANGED]: 'Game date/time changed to {{dateTime}}'
+  [SystemMessageType.GAME_DATE_TIME_CHANGED]: 'Game date/time changed to {{dateTime}}',
+  [SystemMessageType.USER_CHAT_REQUEST]: '{{requesterName}} requests to chat with you',
+  [SystemMessageType.USER_CHAT_ACCEPTED]: '{{userName}} accepted the chat request',
+  [SystemMessageType.USER_CHAT_DECLINED]: '{{userName}} declined the chat request'
 };
 
 const interpolateTemplate = (template: string, variables: Record<string, string>): string => {

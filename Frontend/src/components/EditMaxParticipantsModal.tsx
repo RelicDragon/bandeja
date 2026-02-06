@@ -206,13 +206,15 @@ export const EditMaxParticipantsModal = ({
         }
       }
       
-      // Then update max participants, level range, and gender teams
-      await gamesApi.update(game.id, {
+      const updatePayload: { maxParticipants: number; minLevel: number; maxLevel: number; genderTeams?: GenderTeam } = {
         maxParticipants: newMaxParticipants,
         minLevel: levelRange[0],
         maxLevel: levelRange[1],
-        genderTeams: genderTeams,
-      });
+      };
+      if (game.entityType === 'GAME' || game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
+        updatePayload.genderTeams = genderTeams;
+      }
+      await gamesApi.update(game.id, updatePayload);
       const response = await gamesApi.getById(game.id);
       onUpdate(response.data);
       toast.success(t('gameDetails.participantsUpdated', { defaultValue: 'Participants updated' }));
@@ -223,7 +225,7 @@ export const EditMaxParticipantsModal = ({
     } finally {
       setIsSaving(false);
     }
-  }, [canSave, isSaving, validRemovedPlayerIds, newMaxParticipants, levelRange, genderTeams, game.id, user?.id, onKickUser, onUpdate, t, handleClose]);
+  }, [canSave, isSaving, validRemovedPlayerIds, newMaxParticipants, levelRange, genderTeams, game.id, game.entityType, user?.id, onKickUser, onUpdate, t, handleClose]);
 
   const handleMarkForRemoval = useCallback((userId: string) => {
     setRemovedPlayerIds(prev => {

@@ -24,9 +24,11 @@ import { isGroupChannelOwner, isGroupChannelAdminOrOwner } from '@/utils/gameRes
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { normalizeChatType, getAvailableGameChatTypes } from '@/utils/chatType';
+import { parseSystemMessage } from '@/utils/systemMessages';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users, Hash } from 'lucide-react';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
+import { RequestToChat } from '@/components/chat/RequestToChat';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBackNavigation } from '@/utils/navigation';
 import { messageQueueStorage, QueuedMessage } from '@/services/chatMessageQueueStorage';
@@ -770,6 +772,17 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     const matchesChatType = contextType === 'USER' || normalizedMessageChatType === normalizedCurrentChatType;
     if (!matchesChatType) return;
 
+    if (contextType === 'USER' && id && !message.senderId && message.content) {
+      const parsed = parseSystemMessage(message.content);
+      if (parsed?.type === 'USER_CHAT_ACCEPTED') {
+        const { fetchUserChats, getChatById } = usePlayersStore.getState();
+        fetchUserChats().then(() => {
+          const updated = getChatById(id!);
+          if (updated) setUserChat(updated);
+        });
+      }
+    }
+
     let replacedOptimisticId: string | undefined;
     setMessages(prevMessages => {
       const exists = prevMessages.some(msg => msg.id === message.id);
@@ -879,6 +892,47 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       return newMessages;
     });
   }, []);
+
+  const handleChatRequestRespond = useCallback(async (messageId: string, accepted: boolean) => {
+    if (!id) return;
+    try {
+      const result = await chatApi.respondToChatRequest(id, messageId, accepted);
+      setMessages(prev => {
+        const next = prev.map(m => {
+          if (m.id === messageId && m.content) {
+            try {
+              const parsed = JSON.parse(m.content);
+              if (parsed.type === 'USER_CHAT_REQUEST') {
+                return { ...m, content: JSON.stringify({ ...parsed, responded: true }) };
+              }
+            } catch {
+              // ignore invalid JSON
+            }
+          }
+          return m;
+        });
+        const exists = next.some(m => m.id === result.message.id);
+        if (!exists) {
+          const withNew = [...next, result.message as ChatMessageWithStatus];
+          messagesRef.current = withNew;
+          return withNew;
+        }
+        messagesRef.current = next;
+        return next;
+      });
+      if (result.userChat) {
+        setUserChat((prev) => prev ? { ...prev, ...result.userChat } : result.userChat);
+        usePlayersStore.setState((state) => ({
+          chats: {
+            ...state.chats,
+            [result.userChat!.id]: { ...state.chats[result.userChat!.id], ...result.userChat },
+          },
+        }));
+      }
+    } catch (err) {
+      console.error('Respond to chat request failed:', err);
+    }
+  }, [id]);
 
   useEffect(() => {
     if (id !== previousIdRef.current) {
@@ -1619,6 +1673,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           isLoadingMore={isLoadingMore}
           disableReadTracking={contextType === 'USER'}
           isChannel={isChannel}
+          userChatUser1Id={contextType === 'USER' && userChat ? userChat.user1Id : undefined}
+          userChatUser2Id={contextType === 'USER' && userChat ? userChat.user2Id : undefined}
+          onChatRequestRespond={handleChatRequestRespond}
         />
         </div>
 
@@ -1632,6 +1689,15 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               {t('chat.blockedByUser')}
             </div>
           </div>
+        ) : contextType === 'USER' && userChat && user?.id && (
+          (user.id === userChat.user1Id && !userChat.user2allowed) ||
+          (user.id === userChat.user2Id && !userChat.user1allowed)
+        ) ? (
+          <RequestToChat
+            userChatId={id!}
+            disabled={messages.length > 0}
+            onUserChatUpdate={(uc) => setUserChat((prev) => prev ? { ...prev, ...uc } : null)}
+          />
         ) : canAccessChat && canWriteChat && !isChannelParticipantOnly ? (
           <div className="relative overflow-visible">
             <MessageInput

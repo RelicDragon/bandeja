@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import transliterate from '@sindresorhus/transliterate';
 import { UserChatCard } from './UserChatCard';
+import { CityUserCard } from './CityUserCard';
 import { BugCard } from '@/components/bugs/BugCard';
 import { GroupChannelCard } from './GroupChannelCard';
 import { chatApi, UserChat, GroupChannel, ChatDraft, getLastMessageTime } from '@/api/chat';
 import { matchDraftToChat } from '@/utils/chatListUtils';
 import { bugsApi } from '@/api/bugs';
+import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
@@ -15,7 +17,7 @@ import { Bug, BasicUser } from '@/types';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
-import { MessageCircle, Search, X } from 'lucide-react';
+import { MessageCircle, Search, X, BookUser } from 'lucide-react';
 import { ChatMessage } from '@/api/chat';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 
@@ -70,12 +72,15 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { chatsFilter } = useNavigationStore();
-  const favoriteUserIds = useFavoritesStore((state) => state.favoriteUserIds);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [contactsMode, setContactsMode] = useState(false);
+  const [cityUsers, setCityUsers] = useState<BasicUser[]>([]);
+  const [cityUsersLoading, setCityUsersLoading] = useState(false);
+  const [listTransition, setListTransition] = useState<'idle' | 'out' | 'in'>('idle');
   const liveUnreadCounts = usePlayersStore((state) => state.unreadCounts);
   const liveChats = usePlayersStore((state) => state.chats);
 
@@ -295,7 +300,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     } finally {
       setLoading(false);
     }
-  }, [user, favoriteUserIds, sortUserChatItems]);
+  }, [user, sortUserChatItems]);
 
   useEffect(() => {
     if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') {
@@ -303,9 +308,43 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     }
   }, [fetchChatsForFilter, chatsFilter]);
 
+  const fetchCityUsers = useCallback(async () => {
+    if (!user?.currentCity?.id) return;
+    setCityUsersLoading(true);
+    try {
+      const response = await usersApi.getInvitablePlayers();
+      setCityUsers(response.data || []);
+    } catch {
+      setCityUsers([]);
+    } finally {
+      setCityUsersLoading(false);
+    }
+  }, [user?.currentCity?.id]);
+
+  const handleContactsToggle = useCallback(() => {
+    if (contactsMode) {
+      setListTransition('out');
+      setTimeout(() => {
+        setContactsMode(false);
+        setSearchQuery('');
+        setListTransition('in');
+        setTimeout(() => setListTransition('idle'), 300);
+      }, 250);
+    } else {
+      setListTransition('out');
+      setTimeout(() => {
+        setContactsMode(true);
+        fetchCityUsers();
+        setListTransition('in');
+        setTimeout(() => setListTransition('idle'), 300);
+      }, 250);
+    }
+  }, [contactsMode, fetchCityUsers]);
+
   useEffect(() => {
     if (chatsFilter !== 'users') {
       setSearchQuery('');
+      setContactsMode(false);
     }
   }, [chatsFilter]);
 
@@ -570,7 +609,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   };
 
   const filteredChats = useMemo(() => {
-    if (!searchQuery.trim() || chatsFilter !== 'users') {
+    if (!searchQuery.trim() || chatsFilter !== 'users' || contactsMode) {
       return chats;
     }
 
@@ -589,7 +628,17 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       }
       return true;
     });
-  }, [chats, searchQuery, chatsFilter, user?.id]);
+  }, [chats, searchQuery, chatsFilter, user?.id, contactsMode]);
+
+  const filteredCityUsers = useMemo(() => {
+    if (!contactsMode) return [];
+    if (!searchQuery.trim()) return cityUsers;
+    const normalized = normalizeString(searchQuery);
+    return cityUsers.filter((u) => {
+      const fullName = `${u.firstName || ''} ${u.lastName || ''}`.trim();
+      return normalizeString(fullName).includes(normalized);
+    });
+  }, [contactsMode, cityUsers, searchQuery]);
 
   if (loading) {
     return (
@@ -624,17 +673,23 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     );
   }
 
-  if (chats.length === 0 && !loading) {
+  const showContactsEmpty = contactsMode && chatsFilter === 'users' && !cityUsersLoading && filteredCityUsers.length === 0;
+  const showChatsEmpty = !contactsMode && chats.length === 0 && !loading;
+
+  if (showChatsEmpty || showContactsEmpty) {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-500 dark:text-gray-400">
         <MessageCircle size={64} className="mb-4 opacity-50" />
         <p className="text-lg font-medium">
-          {t('chat.noConversations', { defaultValue: 'No conversations yet' })}
+          {showContactsEmpty
+            ? (user?.currentCity ? t('chat.noCityUsers', { defaultValue: 'No users in your city' }) : t('chat.noCitySet', { defaultValue: 'Set your city to see players' }))
+            : t('chat.noConversations', { defaultValue: 'No conversations yet' })}
         </p>
         <p className="text-sm mt-2">
-          {chatsFilter === 'users' && t('chat.noUserChats', { defaultValue: 'Start chatting with players' })}
-          {chatsFilter === 'bugs' && t('chat.noBugChats', { defaultValue: 'No bug reports yet' })}
-          {chatsFilter === 'channels' && t('chat.noChannels', { defaultValue: 'No channels yet' })}
+          {showContactsEmpty && user?.currentCity && t('chat.noCityUsersHint', { defaultValue: 'Try a different search' })}
+          {showChatsEmpty && chatsFilter === 'users' && t('chat.noUserChats', { defaultValue: 'Start chatting with players' })}
+          {showChatsEmpty && chatsFilter === 'bugs' && t('chat.noBugChats', { defaultValue: 'No bug reports yet' })}
+          {showChatsEmpty && chatsFilter === 'channels' && t('chat.noChannels', { defaultValue: 'No channels yet' })}
         </p>
       </div>
     );
@@ -658,15 +713,29 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       >
         {chatsFilter === 'users' && (
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
-              <input
-                type="text"
-                placeholder={t('chat.search', { defaultValue: 'Search' })}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-              />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleContactsToggle}
+                disabled={!user?.currentCity?.id}
+                className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center border transition-colors ${
+                  contactsMode
+                    ? 'border-blue-500 bg-blue-500 text-white dark:border-blue-400 dark:bg-blue-500'
+                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+                } ${!user?.currentCity?.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                aria-label="Contacts"
+              >
+                <BookUser size={20} className={contactsMode ? 'text-white' : 'text-gray-600 dark:text-gray-400'} />
+              </button>
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+                <input
+                  type="text"
+                  placeholder={contactsMode ? t('chat.searchUsers', { defaultValue: 'Search users' }) : t('chat.search', { defaultValue: 'Search' })}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
@@ -676,10 +745,37 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                   <X size={16} className="text-gray-400 dark:text-gray-500" />
                 </button>
               )}
+              </div>
             </div>
           </div>
         )}
-        {filteredChats.map((chat) => {
+        <div
+          className="flex-1 min-h-0 overflow-hidden"
+          style={{
+            opacity: listTransition === 'out' ? 0 : 1,
+            transform: listTransition === 'out' ? 'scale(0.98)' : 'scale(1)',
+            transition: 'opacity 0.25s ease-out, transform 0.25s ease-out',
+          }}
+        >
+          {contactsMode && cityUsersLoading ? (
+            <div className="p-4 flex justify-center">
+              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : contactsMode ? (
+            <>
+              <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                {t('chat.users', { defaultValue: 'Users' })}
+              </div>
+              {filteredCityUsers.map((cityUser) => (
+                <CityUserCard
+                  key={cityUser.id}
+                  user={cityUser}
+                  onClick={() => handleContactClick(cityUser.id)}
+                />
+              ))}
+            </>
+          ) : (
+            filteredChats.map((chat) => {
           if (chat.type === 'user') {
             const key = `${chat.type}-${chat.data.id}`;
             const liveChat = liveChats[chat.data.id] || chat.data;
@@ -701,6 +797,8 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
               id: '',
               user1Id: user?.id || '',
               user2Id: chat.userId,
+              user1allowed: true,
+              user2allowed: true,
               user1: user!,
               user2: chat.user,
               createdAt: new Date().toISOString(),
@@ -750,7 +848,9 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
               </div>
             );
           }
-        })}
+        })
+          )}
+        </div>
       </div>
     </>
   );

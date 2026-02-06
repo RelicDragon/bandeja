@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AnimatePresence } from 'framer-motion';
-import { Button, Card, Input, Select, ToggleGroup, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal, MainTabFooter } from '@/components';
+import { Button, Card, Input, Select, ToggleGroup, ToggleSwitch, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal, MainTabFooter } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
 import { BlockedUsersSection } from '@/components/BlockedUsersSection';
@@ -64,6 +64,7 @@ export const ProfileContent = () => {
   const [showUnlinkAppleModal, setShowUnlinkAppleModal] = useState(false);
   const [showUnlinkGoogleModal, setShowUnlinkGoogleModal] = useState(false);
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([]);
+  const [allowMessagesFromNonContacts, setAllowMessagesFromNonContacts] = useState(user?.allowMessagesFromNonContacts !== false);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const updateProfile = useCallback(async (updates: Partial<User>) => {
@@ -176,6 +177,7 @@ export const ProfileContent = () => {
       setPreferredHandRight(user.preferredHandRight || false);
       setPreferredCourtSideLeft(user.preferredCourtSideLeft || false);
       setPreferredCourtSideRight(user.preferredCourtSideRight || false);
+      setAllowMessagesFromNonContacts(user.allowMessagesFromNonContacts !== false);
     }
   }, [user]);
 
@@ -263,6 +265,11 @@ export const ProfileContent = () => {
   const handleChangeWeekStart = (start: 'auto' | 'monday' | 'sunday') => {
     setWeekStart(start);
     updateProfile({ weekStart: start });
+  };
+
+  const handleAllowMessagesFromNonContactsChange = (value: boolean) => {
+    setAllowMessagesFromNonContacts(value);
+    updateProfile({ allowMessagesFromNonContacts: value });
   };
 
   const handleLogout = () => {
@@ -943,23 +950,37 @@ export const ProfileContent = () => {
           </div>
         </Card>
 
-        {notificationPreferences.length > 0 && (
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.notificationSettings') || 'Notification Settings'}
           </h2>
           <div className="space-y-4">
-            <Button
-              variant="primary"
-              onClick={() => setShowNotificationModal(true)}
-              className="w-full flex items-center justify-center gap-2 rounded-xl"
-            >
-              <Bell size={16} />
-              {t('profile.controlNotifications') || 'Control Notifications'}
-            </Button>
+            <div className="flex items-center justify-between gap-4 py-2">
+              <div className="flex-1 min-w-0">
+                <label className="text-sm font-medium text-gray-900 dark:text-white block">
+                  {t('profile.allowMessagesFromNonContacts')}
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {t('profile.allowMessagesFromNonContactsDescription')}
+                </p>
+              </div>
+              <ToggleSwitch
+                checked={allowMessagesFromNonContacts}
+                onChange={handleAllowMessagesFromNonContactsChange}
+              />
+            </div>
+            {notificationPreferences.length > 0 && (
+              <Button
+                variant="primary"
+                onClick={() => setShowNotificationModal(true)}
+                className="w-full flex items-center justify-center gap-2 rounded-xl"
+              >
+                <Bell size={16} />
+                {t('profile.controlNotifications') || 'Control Notifications'}
+              </Button>
+            )}
           </div>
         </Card>
-        )}
 
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">

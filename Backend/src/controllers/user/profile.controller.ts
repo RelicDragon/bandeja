@@ -61,7 +61,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, timeFormat, weekStart, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, favoriteTrainerId } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, timeFormat, weekStart, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, favoriteTrainerId } = req.body;
   
   // Explicitly ignore level and socialLevel - only backend can modify these
 
@@ -147,6 +147,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(sendPushDirectMessages !== undefined && { sendPushDirectMessages }),
         ...(sendPushReminders !== undefined && { sendPushReminders }),
         ...(sendPushWalletNotifications !== undefined && { sendPushWalletNotifications }),
+        ...(allowMessagesFromNonContacts !== undefined && { allowMessagesFromNonContacts }),
         ...(favoriteTrainerId !== undefined && { favoriteTrainerId: favoriteTrainerId || null }),
       },
       select: PROFILE_SELECT_FIELDS,

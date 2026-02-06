@@ -719,6 +719,46 @@ export const unpinUserChat = asyncHandler(async (req: AuthRequest, res: Response
   });
 });
 
+export const requestToChat = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { chatId } = req.params;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const message = await UserChatService.requestToChat(chatId, userId);
+  if (!message) {
+    return res.status(400).json({ success: false, message: 'Chat is not empty' });
+  }
+
+  res.json({
+    success: true,
+    data: message
+  });
+});
+
+export const respondToChatRequest = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { chatId, messageId } = req.params;
+  const userId = req.userId;
+  const { accepted } = req.body;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (typeof accepted !== 'boolean') {
+    throw new ApiError(400, 'accepted must be a boolean');
+  }
+
+  const result = await UserChatService.respondToChatRequest(chatId, messageId, userId, accepted);
+
+  res.json({
+    success: true,
+    data: result
+  });
+});
+
 // Bug Chat Controllers
 export const getBugMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { bugId } = req.params;

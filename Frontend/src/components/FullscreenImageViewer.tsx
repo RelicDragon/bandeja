@@ -104,12 +104,6 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     transformRef.current?.resetTransform();
   }, []);
 
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  }, [onClose]);
-
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     touchStartY.current = touch.clientY;
@@ -165,7 +159,6 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       <div 
         ref={containerRef}
         className="fixed inset-0 flex items-center justify-center bg-transparent"
-        onClick={handleBackdropClick}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -176,29 +169,35 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           paddingLeft: 'env(safe-area-inset-left)',
         }}
       >
+        <div
+          className="absolute inset-0 z-0"
+          onClick={onClose}
+          aria-hidden
+        />
         <div 
-          className="relative w-full h-full flex items-center justify-center"
+          className="relative z-10 w-full h-full flex items-center justify-center pointer-events-none"
           style={{
             transform: swipeOffset > 0 ? `translateY(${swipeOffset}px)` : 'none',
             transition: swipeOffset === 0 ? 'transform 0.2s' : 'none',
           }}
         >
-          <TransformWrapper
-            ref={transformRef}
-            initialScale={1}
-            minScale={0.1}
-            maxScale={5}
-            centerOnInit={true}
-            wheel={{ step: 0.1 }}
-            pinch={{ step: 5 }}
-            doubleClick={{ disabled: false, step: 0.7 }}
-            panning={{ disabled: false }}
-          >
-            <TransformComponent>
-              <div
-                className="relative max-w-full max-h-full"
-                onClick={(e) => e.stopPropagation()}
-              >
+          <div className="pointer-events-auto max-w-full max-h-full w-fit h-fit">
+            <TransformWrapper
+              ref={transformRef}
+              initialScale={1}
+              minScale={0.1}
+              maxScale={5}
+              centerOnInit={true}
+              wheel={{ step: 0.1 }}
+              pinch={{ step: 5 }}
+              doubleClick={{ disabled: false, step: 0.7 }}
+              panning={{ disabled: false }}
+            >
+              <TransformComponent>
+                <div
+                  className="relative max-w-full max-h-full"
+                  onClick={(e) => e.stopPropagation()}
+                >
                 <img
                   src={imageUrl}
                   alt="Fullscreen view"
@@ -207,9 +206,10 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
               </div>
             </TransformComponent>
           </TransformWrapper>
+          </div>
 
           <div 
-            className="absolute top-4 right-4 z-50 flex gap-3"
+            className="absolute top-4 right-4 z-50 flex gap-3 pointer-events-auto"
             style={{
               top: 'calc(env(safe-area-inset-top, 0px) + 2.5rem)',
               right: 'max(1rem, env(safe-area-inset-right))',
@@ -237,7 +237,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           </div>
 
           <div 
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50"
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
             style={{
               bottom: 'max(2rem, env(safe-area-inset-bottom))',
             }}

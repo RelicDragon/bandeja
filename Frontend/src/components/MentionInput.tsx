@@ -42,7 +42,22 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   style,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const [suggestionsWidth, setSuggestionsWidth] = useState(300);
+
+  const syncInputHeight = () => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+    const minH = 48;
+    const maxH = 120;
+    textarea.style.height = '0';
+    const h = Math.min(maxH, Math.max(minH, textarea.scrollHeight));
+    textarea.style.height = `${h}px`;
+    const control = textarea.parentElement;
+    if (control) {
+      (control as HTMLElement).style.height = `${h}px`;
+    }
+  };
 
   useEffect(() => {
     const updateWidth = () => {
@@ -50,16 +65,22 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         const inputWidth = containerRef.current.offsetWidth;
         setSuggestionsWidth(Math.min(300, inputWidth * 0.9));
       }
+      requestAnimationFrame(() => syncInputHeight());
     };
-    
+
     updateWidth();
     const observer = new ResizeObserver(updateWidth);
     if (containerRef.current) {
       observer.observe(containerRef.current);
     }
-    
+
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => syncInputHeight());
+    return () => cancelAnimationFrame(id);
+  }, [value]);
 
 
   const mentionableUsers = useMemo((): MentionableUser[] => {
@@ -363,6 +384,11 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const isDark = document.documentElement.classList.contains('dark');
   const finalStyle = isDark ? darkStyle : customStyle;
 
+  const setInputRef = (el: HTMLTextAreaElement | null) => {
+    (inputRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
+    if (el) syncInputHeight();
+  };
+
   return (
     <div ref={containerRef} className={`mention-input-wrapper ${className}`}>
       <MentionsInput
@@ -373,6 +399,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         disabled={disabled}
         style={finalStyle}
         allowSuggestionsAboveCursor
+        inputRef={setInputRef}
       >
       <Mention
         trigger="@"

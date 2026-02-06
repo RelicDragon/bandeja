@@ -692,6 +692,8 @@
     "notificationSettingsSaved": "Подешавања обавештења су успешно сачувана",
     "notificationSettingsSaveError": "Неуспешно чување подешавања обавештења",
     "controlNotifications": "Контрола обавештења",
+    "allowMessagesFromNonContacts": "Дозволи поруке од неконтаката",
+    "allowMessagesFromNonContactsDescription": "Дозволи било коме у вашем граду да вам шаље директне поруке. Искључите да бисте примали поруке само од контаката.",
     "gender": "Пол",
     "male": "Мушки",
     "female": "Женски",
@@ -1154,6 +1156,8 @@
   "common": {
     "yes": "Да",
     "no": "Не",
+    "accept": "Прихвати",
+    "decline": "Одбиј",
     "ok": "ОК",
     "cancel": "Откажи",
     "create": "Креирај",
@@ -1304,6 +1308,7 @@
   },
   "chat": {
     "noMessages": "Још нема порука",
+    "users": "Корисници",
     "reactions": {
       "addReaction": "Додај реакцију",
       "removeReaction": "Уклони реакцију",
@@ -1390,6 +1395,9 @@
       "BUG_TYPE_CHANGED": "Тип грешке промењен на {{type}}",
       "GAME_CLUB_CHANGED": "Локација игре промењена на {{clubName}}",
       "GAME_DATE_TIME_CHANGED": "Датум/време игре промењено на {{dateTime}}",
+      "USER_CHAT_REQUEST": "{{requesterName}} тражи да ћаска са вама",
+      "USER_CHAT_ACCEPTED": "{{userName}} је прихватио захтев за ћаскање",
+      "USER_CHAT_DECLINED": "{{userName}} је одбио захтев за ћаскање",
       "actions": {
         "joined": "се придружио игри",
         "left": "напустио игру"
@@ -1425,6 +1433,8 @@
     "leaveCancelQueueTitle": "Откажи захтев за придруживање",
     "leaveCancelQueueMessage": "Да ли сте сигурни да желите да откажете захтев за придруживање?",
     "blockedByUser": "Овај корисник вас је блокирао. Не можете му слати поруке.",
+    "userDoesNotAllowDirectChat": "Овај корисник не дозвољава директне поруке од особа које нису у контактима.",
+    "requestToChat": "Затражи ћаскање",
     "invalidImageType": "Неисправан тип слике. Молимо изаберите важећу слику.",
     "sendFailed": "Није успело слање поруке",
     "failedToSend": "Није успело слање",

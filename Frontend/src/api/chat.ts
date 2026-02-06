@@ -166,6 +166,8 @@ export interface UserChat {
   id: string;
   user1Id: string;
   user2Id: string;
+  user1allowed: boolean;
+  user2allowed: boolean;
   createdAt: string;
   updatedAt: string;
   user1: BasicUser;
@@ -389,6 +391,19 @@ export const chatApi = {
   pinUserChat: async (chatId: string) => {
     const response = await api.post<ApiResponse<any>>(`/chat/user-chats/${chatId}/pin`);
     return response.data;
+  },
+
+  requestToChat: async (chatId: string) => {
+    const response = await api.post<ApiResponse<ChatMessage>>(`/chat/user-chats/${chatId}/request-to-chat`);
+    return response.data.data;
+  },
+
+  respondToChatRequest: async (chatId: string, messageId: string, accepted: boolean) => {
+    const response = await api.post<ApiResponse<{ message: ChatMessage; userChat: UserChat }>>(
+      `/chat/user-chats/${chatId}/request-to-chat/${messageId}/respond`,
+      { accepted }
+    );
+    return response.data.data;
   },
 
   unpinUserChat: async (chatId: string) => {
