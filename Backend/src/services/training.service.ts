@@ -35,34 +35,35 @@ export async function updateParticipantLevel(
   level: number,
   reliability: number
 ): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      isTrainer: true,
-      isAdmin: true,
-    },
-  });
+  const [user, game] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, isTrainer: true, isAdmin: true },
+    }),
+    prisma.game.findUnique({
+      where: { id: gameId },
+      include: { participants: true },
+    }),
+  ]);
 
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
 
-  if (!user.isTrainer && !user.isAdmin) {
+  const userParticipant = game?.participants.find(p => p.userId === userId);
+  const isTrainerOrOwner = userParticipant?.isTrainer || userParticipant?.role === 'OWNER';
+  if (!user.isTrainer && !user.isAdmin && !isTrainerOrOwner) {
     throw new ApiError(403, 'Only trainers or admins can update participant levels');
   }
 
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    include: {
-      participants: {
-        where: {
-          userId: participantUserId,
-          status: 'PLAYING',
-        },
-      },
-    },
-  });
+  const targetParticipant = game?.participants.find(p => p.userId === participantUserId);
+  if (targetParticipant?.isTrainer) {
+    throw new ApiError(400, 'Cannot update trainer level');
+  }
+
+  const gameWithTarget = game
+    ? { ...game, participants: game.participants.filter(p => p.userId === participantUserId && p.status === 'PLAYING') }
+    : null;
 
   if (!game) {
     throw new ApiError(404, 'Game not found');
@@ -80,7 +81,7 @@ export async function updateParticipantLevel(
     throw new ApiError(400, 'Training must be finished before updating participant levels');
   }
 
-  if (game.participants.length === 0) {
+  if (gameWithTarget!.participants.length === 0) {
     throw new ApiError(404, 'Participant not found in this game');
   }
 
@@ -128,7 +129,7 @@ export async function updateParticipantLevel(
       reliability: reliabilityAfter,
     };
 
-    if (user.isTrainer || user.isAdmin) {
+    if (user.isTrainer || user.isAdmin || isTrainerOrOwner) {
       updateData.approvedLevel = true;
       updateData.approvedById = userId;
       updateData.approvedWhen = new Date();
@@ -189,29 +190,26 @@ export async function updateParticipantLevel(
 }
 
 export async function undoTraining(gameId: string, userId: string): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      isTrainer: true,
-      isAdmin: true,
-    },
-  });
+  const [user, game] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, isTrainer: true, isAdmin: true },
+    }),
+    prisma.game.findUnique({
+      where: { id: gameId },
+      include: { outcomes: true, participants: true },
+    }),
+  ]);
 
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
 
-  if (!user.isTrainer && !user.isAdmin) {
+  const userParticipant = game?.participants.find(p => p.userId === userId);
+  const isTrainerOrOwner = userParticipant?.isTrainer || userParticipant?.role === 'OWNER';
+  if (!user.isTrainer && !user.isAdmin && !isTrainerOrOwner) {
     throw new ApiError(403, 'Only trainers or admins can undo training changes');
   }
-
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    include: {
-      outcomes: true,
-    },
-  });
 
   if (!game) {
     throw new ApiError(404, 'Game not found');

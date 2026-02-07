@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Home, Search, MessageCircle, Trophy, User } from 'lucide-react';
+import { Home, Calendar, MessageCircle, Trophy, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useAuthStore } from '@/store/authStore';
@@ -15,7 +15,7 @@ interface BottomTabBarProps {
 export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
+  const { currentPage, setCurrentPage, setIsAnimating, findViewMode, setRequestFindGoToCurrent } = useNavigationStore();
   const { counts } = useChatUnreadCounts();
   const chatsUnread = counts.users + counts.bugs + counts.channels;
   const user = useAuthStore((state) => state.user);
@@ -35,7 +35,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
     {
       id: 'find' as const,
       label: t('bottomTab.find', { defaultValue: 'Find' }),
-      icon: Search,
+      icon: Calendar,
       path: '/find',
     },
     {
@@ -55,7 +55,12 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
 
 
   const handleTabClick = (tab: 'my' | 'find' | 'chats' | 'leaderboard' | 'profile', path: string) => {
-    if (currentPage === tab) return;
+    if (currentPage === tab) {
+      if (tab === 'find') {
+        setRequestFindGoToCurrent(findViewMode);
+      }
+      return;
+    }
     
     setIsAnimating(true);
     setCurrentPage(tab);
@@ -76,6 +81,8 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
             const isActive = currentPage === tab.id;
+            const currentDay = new Date().getDate();
+            const isCalendarTab = tab.id === 'find';
             
             return (
               <motion.button
@@ -96,6 +103,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 >
                   <motion.div
+                    className={isCalendarTab ? 'relative' : undefined}
                     animate={{
                       scale: isActive ? [1, 1.4, 1.3] : 1,
                     }}
@@ -112,6 +120,18 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
                           : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
                       }`}
                     />
+                    {isCalendarTab && (
+                      <span
+                        className={`absolute mt-1 inset-0 flex items-center justify-center text-[8px] font-bold leading-none pointer-events-none ${
+                          isActive
+                            ? 'text-primary-600 dark:text-primary-400'
+                            : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
+                        }`}
+                        style={{ paddingTop: '2px' }}
+                      >
+                        {currentDay}
+                      </span>
+                    )}
                   </motion.div>
                   
                   <AnimatePresence>

@@ -60,6 +60,10 @@ export async function sendGroupChatNotification(
       }
     }
 
+    const canWrite = groupChannel.isChannel
+      ? (participant.role === 'OWNER' || participant.role === 'ADMIN')
+      : true;
+
     try {
       const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
       const timezone = timezoneMap.get(user.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
@@ -67,12 +71,12 @@ export async function sendGroupChatNotification(
       const groupIcon = groupChannel.isChannel ? '📢' : '👥';
       const formattedMessage = `${shortDayOfWeek} ${groupIcon} *${escapeMarkdown(groupChannel.name)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
       
-      const buttons = [[
+      const buttons = canWrite ? [[
         {
           text: t('telegram.reply', lang),
           callback_data: `rg:${message.id}:${groupChannel.id}`
         }
-      ]];
+      ]] : [];
 
       const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
       

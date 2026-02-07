@@ -74,8 +74,10 @@ export const MonthCalendar = ({
     availableGames.forEach(game => {
       if (game.timeIsSet === false) return;
 
-      const gameOwner = game.participants?.find((p: any) => p.role === 'OWNER');
-      if (gameOwner && user?.blockedUserIds?.includes(gameOwner.userId)) return;
+      const organizer = game.entityType === 'TRAINING'
+        ? game.participants?.find((p: any) => p.isTrainer) || game.participants?.find((p: any) => p.role === 'OWNER')
+        : game.participants?.find((p: any) => p.role === 'OWNER');
+      if (organizer && user?.blockedUserIds?.includes(organizer.userId)) return;
 
       const gameDate = format(startOfDay(new Date(game.startTime)), 'yyyy-MM-dd');
       const isPublic = game.isPublic;
@@ -87,7 +89,10 @@ export const MonthCalendar = ({
       }
 
       if (userFilter) {
-        if (game.participants.length >= game.maxParticipants) {
+        const slotCount = game.entityType === 'TRAINING'
+          ? game.participants?.filter((p: any) => p.status === 'PLAYING' && !p.isTrainer).length ?? 0
+          : game.participants?.filter((p: any) => p.status === 'PLAYING').length ?? 0;
+        if (slotCount >= game.maxParticipants) {
           return;
         }
 
@@ -107,8 +112,8 @@ export const MonthCalendar = ({
       }
 
       if (trainingFilter && favoriteTrainerId) {
-        const owner = game.participants?.find((p: any) => p.role === 'OWNER');
-        if (!owner || owner.userId !== favoriteTrainerId) return;
+        const trainer = game.participants?.find((p: any) => p.isTrainer && p.userId === favoriteTrainerId);
+        if (!trainer) return;
       }
 
       if (tournamentFilter && game.entityType !== 'TOURNAMENT') {

@@ -170,7 +170,7 @@ export class ResultsTelegramService {
     if (entityType === 'BAR') {
       contextInfo = `This was a bar event where they had a great time together. `;
     } else if (entityType === 'TRAINING') {
-      const trainer = game.participants?.find((p: any) => p.role === 'OWNER');
+      const trainer = game.participants?.find((p: any) => p.isTrainer) || game.participants?.find((p: any) => p.role === 'OWNER');
       const trainerName = trainer?.user 
         ? `${trainer.user.firstName || ''} ${trainer.user.lastName || ''}`.trim()
         : null;

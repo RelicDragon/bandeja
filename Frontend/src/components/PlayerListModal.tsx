@@ -23,6 +23,7 @@ interface PlayerListModalProps {
   filterPlayerIds?: string[];
   filterGender?: 'MALE' | 'FEMALE';
   title?: string;
+  inviteAsTrainerOnly?: boolean;
 }
 
 export const PlayerListModal = ({
@@ -34,7 +35,8 @@ export const PlayerListModal = ({
   preSelectedIds = [],
   filterPlayerIds = [],
   filterGender,
-  title
+  title,
+  inviteAsTrainerOnly = false,
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
@@ -45,17 +47,26 @@ export const PlayerListModal = ({
   const [selectedIds, setSelectedIds] = useState<string[]>(preSelectedIds);
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(true);
+  const [canInviteAsTrainer, setCanInviteAsTrainer] = useState(inviteAsTrainerOnly);
+  const [inviteAsTrainer, setInviteAsTrainer] = useState(inviteAsTrainerOnly);
 
   const handleClose = () => {
     setIsOpen(false);
-    // Wait for animation to complete before calling onClose
-    setTimeout(() => {
-      onClose();
-    }, 300);
+    setInviteAsTrainer(false);
+    setCanInviteAsTrainer(false);
+    setTimeout(() => onClose(), 300);
   };
 
   useEffect(() => {
+    if (inviteAsTrainerOnly) {
+      setCanInviteAsTrainer(true);
+      setInviteAsTrainer(true);
+    }
+  }, [inviteAsTrainerOnly]);
+
+  useEffect(() => {
     const loadPlayers = async () => {
+      if (!inviteAsTrainerOnly) setCanInviteAsTrainer(false);
       try {
         await fetchPlayers();
         const currentUsers = usePlayersStore.getState().users;
@@ -69,9 +80,13 @@ export const PlayerListModal = ({
         const invitedUserIds = new Set<string>();
 
         if (gameId && gameResponse.status === 'fulfilled' && gameResponse.value?.data) {
-          const participants = gameResponse.value.data.participants;
+          const gameData = gameResponse.value.data;
+          const participants = gameData.participants;
           if (Array.isArray(participants)) {
             participants.forEach((p: { userId: string }) => participantIds.add(p.userId));
+          }
+          if (!inviteAsTrainerOnly && gameData.entityType === 'TRAINING' && !participants?.some((p: { isTrainer?: boolean }) => p.isTrainer)) {
+            setCanInviteAsTrainer(true);
           }
         }
 
@@ -99,12 +114,15 @@ export const PlayerListModal = ({
     };
 
     loadPlayers();
-  }, [gameId, fetchPlayers, t]);
+  }, [gameId, fetchPlayers, t, inviteAsTrainerOnly]);
 
   const filteredPlayers = useMemo(() => {
     let filtered = players;
 
-    // Filter by gender if specified
+    if (inviteAsTrainerOnly) {
+      filtered = filtered.filter((p): p is BasicUser & { isTrainer: boolean } => p.isTrainer === true);
+    }
+
     if (filterGender) {
       filtered = filtered.filter((player) => player.gender === filterGender);
     }
@@ -131,13 +149,12 @@ export const PlayerListModal = ({
       const bInteractionCount = getUserMetadata(b.id)?.interactionCount || 0;
       return bInteractionCount - aInteractionCount;
     });
-  }, [players, searchQuery, filterPlayerIds, filterGender, isFavorite, getUserMetadata]);
+  }, [players, searchQuery, filterPlayerIds, filterGender, inviteAsTrainerOnly, isFavorite, getUserMetadata]);
 
   const handlePlayerClick = (playerId: string) => {
-    if (multiSelect) {
+    if (multiSelect && !inviteAsTrainerOnly) {
       togglePlayer(playerId);
     } else {
-      // Single select mode - replace current selection
       setSelectedIds([playerId]);
     }
   };
@@ -163,10 +180,12 @@ export const PlayerListModal = ({
     // Otherwise, send invites
     setInviting('confirming');
     try {
+      const asTrainer = (canInviteAsTrainer && inviteAsTrainer && selectedIds.length === 1) || inviteAsTrainerOnly;
       for (const playerId of selectedIds) {
         await invitesApi.send({
           receiverId: playerId,
           gameId,
+          asTrainer: asTrainer && selectedIds[0] === playerId,
         });
         await usersApi.trackInteraction(playerId);
       }
@@ -189,7 +208,7 @@ export const PlayerListModal = ({
       <DialogContent>
       <DialogHeader className="flex flex-row items-center gap-3">
         <DialogTitle>
-          {title || (multiSelect ? t('games.invitePlayers') : t('games.invitePlayer'))}
+          {title || (inviteAsTrainerOnly ? t('games.inviteTrainer', { defaultValue: 'Invite trainer' }) : (multiSelect ? t('games.invitePlayers') : t('games.invitePlayer')))}
         </DialogTitle>
       </DialogHeader>
 
@@ -285,6 +304,18 @@ export const PlayerListModal = ({
             <div className="flex-shrink-0 mx-4 mb-2 rounded-xl bg-primary-100 dark:bg-primary-900/40 px-4 py-2.5 text-center text-sm font-medium text-primary-700 dark:text-primary-300 transition-opacity duration-200">
               {t('games.playersSelected', { count: selectedCount })}
             </div>
+          )}
+
+          {canInviteAsTrainer && gameId && !multiSelect && !inviteAsTrainerOnly && filteredPlayers.length > 0 && (
+            <label className="flex-shrink-0 mx-4 mb-2 flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={inviteAsTrainer}
+                onChange={(e) => setInviteAsTrainer(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">{t('playerCard.inviteAsTrainer', { defaultValue: 'Invite as trainer' })}</span>
+            </label>
           )}
 
           {filteredPlayers.length > 0 && (

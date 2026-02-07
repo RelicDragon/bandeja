@@ -243,6 +243,8 @@
     "gamesCount_many": "{{count}} игара",
     "invitePlayer": "Позови играча",
     "invitePlayers": "Позови играче",
+    "inviteTrainer": "Позови тренера",
+    "trainerSlotEmpty": "Нема тренера",
     "playersSelected_one": "Изабран 1 играч",
     "playersSelected_few": "Изабрано {{count}} играча",
     "playersSelected_other": "Изабрано {{count}} играча",

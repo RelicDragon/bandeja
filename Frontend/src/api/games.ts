@@ -105,6 +105,11 @@ export const gamesApi = {
     return response.data;
   },
 
+  setTrainer: async (id: string, userId: string, isTrainer: boolean) => {
+    const response = await api.post<ApiResponse<void>>(`/games/${id}/set-trainer`, { userId, isTrainer });
+    return response.data;
+  },
+
   kickUser: async (id: string, userId: string) => {
     const response = await api.post<ApiResponse<void>>(`/games/${id}/kick-user`, { userId });
     return response.data;

@@ -6,7 +6,8 @@ import { Card, GameCard, Button } from '@/components';
 import { Game } from '@/types';
 import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
-import { format, startOfDay, addDays, subDays } from 'date-fns';
+import { format, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MonthCalendar } from './MonthCalendar';
 import { TrainersList } from './TrainersList';
 import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
@@ -35,7 +36,7 @@ export const AvailableGamesSection = ({
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { setCurrentPage, setIsAnimating, findViewMode, setFindViewMode } = useNavigationStore();
+  const { setCurrentPage, setIsAnimating, findViewMode, setFindViewMode, requestFindGoToCurrent, setRequestFindGoToCurrent } = useNavigationStore();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [listViewStartDate, setListViewStartDate] = useState<Date>(new Date());
   const [userFilter, setUserFilter] = useState(false);
@@ -136,6 +137,22 @@ export const AvailableGamesSection = ({
   };
 
   useEffect(() => {
+    if (!requestFindGoToCurrent) return;
+    const mode = requestFindGoToCurrent;
+    setRequestFindGoToCurrent(null);
+    if (mode === 'calendar') {
+      setSelectedDate(new Date());
+      requestAnimationFrame(() => {
+        const el = document.querySelector('[data-calendar="true"]');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    } else {
+      const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
+      setListViewStartDate(startOfWeek(new Date(), { weekStartsOn: displaySettings.weekStart }));
+    }
+  }, [requestFindGoToCurrent, setRequestFindGoToCurrent, user]);
+
+  useEffect(() => {
     if (!isInitialized || findViewMode !== 'list' || !onDateRangeChange) {
       if (findViewMode === 'calendar') {
         lastDateRangeRef.current = null;
@@ -191,8 +208,10 @@ export const AvailableGamesSection = ({
       return false;
     }
 
-    const gameOwner = game.participants.find((p: any) => p.role === 'OWNER');
-    if (gameOwner && user?.blockedUserIds?.includes(gameOwner.userId)) {
+    const organizer = game.entityType === 'TRAINING'
+      ? game.participants.find((p: any) => p.isTrainer) || game.participants.find((p: any) => p.role === 'OWNER')
+      : game.participants.find((p: any) => p.role === 'OWNER');
+    if (organizer && user?.blockedUserIds?.includes(organizer.userId)) {
       return false;
     }
 
@@ -205,7 +224,10 @@ export const AvailableGamesSection = ({
     }
 
     if (userFilterVal) {
-      if (game.participants.length >= game.maxParticipants) {
+      const slotCount = game.entityType === 'TRAINING'
+        ? game.participants.filter((p: any) => p.status === 'PLAYING' && !p.isTrainer).length
+        : game.participants.filter((p: any) => p.status === 'PLAYING').length;
+      if (slotCount >= game.maxParticipants) {
         return false;
       }
 
@@ -225,15 +247,8 @@ export const AvailableGamesSection = ({
     }
 
     if (trainingFilterVal && user?.favoriteTrainerId) {
-      const owner = game.participants.find((p: any) => p.role === 'OWNER');
-      if (!owner || owner.userId !== user.favoriteTrainerId) {
-        return false;
-      }
-    }
-
-    if (trainingFilterVal && user?.favoriteTrainerId) {
-      const hasTrainer = game.participants.some((p: any) => p.userId === user.favoriteTrainerId);
-      if (!hasTrainer) return false;
+      const trainer = game.participants.find((p: any) => p.isTrainer && p.userId === user.favoriteTrainerId);
+      if (!trainer) return false;
     }
 
     if (tournamentFilterVal && game.entityType !== 'TOURNAMENT') {

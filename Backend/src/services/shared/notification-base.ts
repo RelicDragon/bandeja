@@ -151,9 +151,11 @@ export async function formatNewGameText(
   }
 
   const entityTypeLabel = t(`games.entityTypes.${game.entityType}`, lang);
-  const owner = game.participants?.find((p: any) => p.role === 'OWNER');
-  const ownerName = owner?.user ? formatUserName(owner.user) : null;
-  const ownerLevel = owner?.user?.level;
+  const organizer = game.entityType === 'TRAINING'
+    ? game.participants?.find((p: any) => p.isTrainer) || game.participants?.find((p: any) => p.role === 'OWNER')
+    : game.participants?.find((p: any) => p.role === 'OWNER');
+  const ownerName = organizer?.user ? formatUserName(organizer.user) : null;
+  const ownerLevel = organizer?.user?.level;
 
   let text = '';
   

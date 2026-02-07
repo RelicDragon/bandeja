@@ -32,10 +32,12 @@ export function createMessageHandler(
       }
       
       try {
-        const contextId = pendingReply.chatContextType === 'USER' 
-          ? pendingReply.userChatId 
+        const contextId = pendingReply.chatContextType === 'USER'
+          ? pendingReply.userChatId
           : pendingReply.chatContextType === 'BUG'
           ? pendingReply.bugId
+          : pendingReply.chatContextType === 'GROUP'
+          ? pendingReply.groupChannelId
           : pendingReply.gameId;
         
         if (!contextId) {

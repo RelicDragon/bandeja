@@ -71,6 +71,7 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
   const [gameInvites, setGameInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPlayerList, setShowPlayerList] = useState(false);
+  const [playerListMode, setPlayerListMode] = useState<'players' | 'trainer'>('players');
   const [playerListGender, setPlayerListGender] = useState<'MALE' | 'FEMALE' | undefined>(undefined);
   const [showManageUsers, setShowManageUsers] = useState(false);
   const [courts, setCourts] = useState<Court[]>([]);
@@ -628,6 +629,14 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
         case 'revoke-admin':
           await gamesApi.revokeAdmin(id, userId);
           break;
+        case 'set-trainer':
+          await gamesApi.setTrainer(id, userId, true);
+          toast.success(t('games.trainerSet', { defaultValue: 'Trainer set successfully' }));
+          break;
+        case 'remove-trainer':
+          await gamesApi.setTrainer(id, userId, false);
+          toast.success(t('games.trainerRemoved', { defaultValue: 'Trainer removed successfully' }));
+          break;
         case 'kick-user':
         case 'kick-admin':
           await gamesApi.kickUser(id, userId);
@@ -1079,6 +1088,11 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
               onScrollToSettings={handleScrollToSettings}
               onGameUpdate={setGame}
               collapsedByDefault={game.resultsStatus !== 'NONE'}
+              onInviteTrainer={() => {
+                setPlayerListMode('trainer');
+                setShowPlayerList(true);
+              }}
+              canInviteTrainer={game.entityType === 'TRAINING' && (isOwner || (game.participants?.some(p => p.userId === user?.id && p.role === 'ADMIN'))) && !game.participants?.some(p => p.isTrainer)}
             />
           </div>
 
@@ -1120,6 +1134,7 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
                 onDeclineJoinQueue={handleDeclineJoinQueue}
                 onCancelJoinQueue={isOwner ? undefined : handleCancelJoinQueue}
                 onShowPlayerList={(gender) => {
+                  setPlayerListMode('players');
                   setPlayerListGender(gender);
                   setShowPlayerList(true);
                 }}
@@ -1458,12 +1473,13 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
           gameId={id}
           onClose={() => {
             setShowPlayerList(false);
+            setPlayerListMode('players');
             setPlayerListGender(undefined);
           }}
-          multiSelect={true}
-          filterGender={playerListGender}
-          onConfirm={async (playerIds) => {
-            console.log(`Invited ${playerIds.length} players`);
+          multiSelect={playerListMode !== 'trainer'}
+          inviteAsTrainerOnly={playerListMode === 'trainer'}
+          filterGender={playerListMode === 'players' ? playerListGender : undefined}
+          onConfirm={async (_playerIds) => {
             if (id) {
               const response = await gamesApi.getById(id);
               setGame(response.data);

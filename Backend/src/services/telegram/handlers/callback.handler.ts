@@ -178,8 +178,6 @@ export function createCallbackHandler(
         };
         const chatType = chatTypeMap[chatTypeChar] || 'PUBLIC';
 
-        await ctx.answerCallbackQuery();
-
         const user = await prisma.user.findUnique({
           where: { telegramId },
           select: {
@@ -188,31 +186,34 @@ export function createCallbackHandler(
           }
         });
 
-        if (user) {
-          const lang = getUserLanguage(user.language, ctx.from?.language_code);
-          pendingReplies.set(telegramId, {
-            messageId,
-            gameId,
-            userId: user.id,
-            chatType,
-            chatContextType: 'GAME',
-            lang
-          });
-          
-          if (query.message && 'chat' in query.message && query.message.chat) {
-            const chat = query.message.chat;
-            if ('id' in chat && typeof chat.id === 'number') {
-              await ctx.api.sendMessage(
-                chat.id,
-                t('telegram.replyPrompt', lang)
-              );
-            }
-          }
-        } else {
+        if (!user) {
           await ctx.answerCallbackQuery({
             text: 'Unauthorized',
             show_alert: true
           });
+          return;
+        }
+
+        await ctx.answerCallbackQuery();
+
+        const lang = getUserLanguage(user.language, ctx.from?.language_code);
+        pendingReplies.set(telegramId, {
+          messageId,
+          gameId,
+          userId: user.id,
+          chatType,
+          chatContextType: 'GAME',
+          lang
+        });
+
+        if (query.message && 'chat' in query.message && query.message.chat) {
+          const chat = query.message.chat;
+          if ('id' in chat && typeof chat.id === 'number') {
+            await ctx.api.sendMessage(
+              chat.id,
+              t('telegram.replyPrompt', lang)
+            );
+          }
         }
       } else if (query.data.startsWith('rum:')) {
         const parts = query.data.split(':');
@@ -224,7 +225,52 @@ export function createCallbackHandler(
         const [, messageId, userChatId] = parts;
         const telegramId = ctx.telegramId;
 
+        const user = await prisma.user.findUnique({
+          where: { telegramId },
+          select: {
+            id: true,
+            language: true,
+          }
+        });
+
+        if (!user) {
+          await ctx.answerCallbackQuery({
+            text: 'Unauthorized',
+            show_alert: true
+          });
+          return;
+        }
+
         await ctx.answerCallbackQuery();
+
+        const lang = getUserLanguage(user.language, ctx.from?.language_code);
+        pendingReplies.set(telegramId, {
+          messageId,
+          userChatId,
+          userId: user.id,
+          chatType: 'PUBLIC',
+          chatContextType: 'USER',
+          lang
+        });
+
+        if (query.message && 'chat' in query.message && query.message.chat) {
+          const chat = query.message.chat;
+          if ('id' in chat && typeof chat.id === 'number') {
+            await ctx.api.sendMessage(
+              chat.id,
+              t('telegram.replyPrompt', lang)
+            );
+          }
+        }
+      } else if (query.data.startsWith('rg:')) {
+        const parts = query.data.split(':');
+        if (parts.length !== 3) {
+          await ctx.answerCallbackQuery({ text: 'Invalid request', show_alert: true });
+          return;
+        }
+
+        const [, messageId, groupChannelId] = parts;
+        const telegramId = ctx.telegramId;
 
         const user = await prisma.user.findUnique({
           where: { telegramId },
@@ -234,31 +280,58 @@ export function createCallbackHandler(
           }
         });
 
-        if (user) {
-          const lang = getUserLanguage(user.language, ctx.from?.language_code);
-          pendingReplies.set(telegramId, {
-            messageId,
-            userChatId,
-            userId: user.id,
-            chatType: 'PUBLIC',
-            chatContextType: 'USER',
-            lang
-          });
-          
-          if (query.message && 'chat' in query.message && query.message.chat) {
-            const chat = query.message.chat;
-            if ('id' in chat && typeof chat.id === 'number') {
-              await ctx.api.sendMessage(
-                chat.id,
-                t('telegram.replyPrompt', lang)
-              );
-            }
-          }
-        } else {
+        if (!user) {
           await ctx.answerCallbackQuery({
             text: 'Unauthorized',
             show_alert: true
           });
+          return;
+        }
+
+        const groupChannel = await prisma.groupChannel.findUnique({
+          where: { id: groupChannelId },
+          include: {
+            participants: {
+              where: { userId: user.id }
+            }
+          }
+        });
+
+        const participant = groupChannel?.participants[0];
+        const canWrite = groupChannel
+          ? (groupChannel.isChannel
+            ? participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')
+            : !!participant)
+          : false;
+
+        if (!canWrite) {
+          await ctx.answerCallbackQuery({
+            text: 'You do not have permission to reply to this chat.',
+            show_alert: true
+          });
+          return;
+        }
+
+        await ctx.answerCallbackQuery();
+
+        const lang = getUserLanguage(user.language, ctx.from?.language_code);
+        pendingReplies.set(telegramId, {
+          messageId,
+          groupChannelId,
+          userId: user.id,
+          chatType: 'PUBLIC',
+          chatContextType: 'GROUP',
+          lang
+        });
+
+        if (query.message && 'chat' in query.message && query.message.chat) {
+          const chat = query.message.chat;
+          if ('id' in chat && typeof chat.id === 'number') {
+            await ctx.api.sendMessage(
+              chat.id,
+              t('telegram.replyPrompt', lang)
+            );
+          }
         }
       } else if (query.data.startsWith('rbm:')) {
         const parts = query.data.split(':');
@@ -270,8 +343,6 @@ export function createCallbackHandler(
         const [, messageId, bugId] = parts;
         const telegramId = ctx.telegramId;
 
-        await ctx.answerCallbackQuery();
-
         const user = await prisma.user.findUnique({
           where: { telegramId },
           select: {
@@ -280,31 +351,34 @@ export function createCallbackHandler(
           }
         });
 
-        if (user) {
-          const lang = getUserLanguage(user.language, ctx.from?.language_code);
-          pendingReplies.set(telegramId, {
-            messageId,
-            bugId,
-            userId: user.id,
-            chatType: 'PUBLIC',
-            chatContextType: 'BUG',
-            lang
-          });
-          
-          if (query.message && 'chat' in query.message && query.message.chat) {
-            const chat = query.message.chat;
-            if ('id' in chat && typeof chat.id === 'number') {
-              await ctx.api.sendMessage(
-                chat.id,
-                t('telegram.replyPrompt', lang)
-              );
-            }
-          }
-        } else {
+        if (!user) {
           await ctx.answerCallbackQuery({
             text: 'Unauthorized',
             show_alert: true
           });
+          return;
+        }
+
+        await ctx.answerCallbackQuery();
+
+        const lang = getUserLanguage(user.language, ctx.from?.language_code);
+        pendingReplies.set(telegramId, {
+          messageId,
+          bugId,
+          userId: user.id,
+          chatType: 'PUBLIC',
+          chatContextType: 'BUG',
+          lang
+        });
+
+        if (query.message && 'chat' in query.message && query.message.chat) {
+          const chat = query.message.chat;
+          if ('id' in chat && typeof chat.id === 'number') {
+            await ctx.api.sendMessage(
+              chat.id,
+              t('telegram.replyPrompt', lang)
+            );
+          }
         }
       }
     } catch (error) {

@@ -1,4 +1,5 @@
 import { ParticipantRole } from '@prisma/client';
+import { ApiError } from './ApiError';
 
 export interface ParticipantOperationResult {
   created: boolean;
@@ -10,11 +11,20 @@ export async function addOrUpdateParticipant(
   tx: any,
   gameId: string,
   userId: string,
-  options?: { role?: ParticipantRole }
+  options?: { role?: ParticipantRole; isTrainer?: boolean }
 ): Promise<ParticipantOperationResult> {
   const existingParticipant = await tx.gameParticipant.findFirst({
     where: { gameId, userId },
   });
+
+  if (options?.isTrainer === true) {
+    const existingTrainer = await tx.gameParticipant.findFirst({
+      where: { gameId, isTrainer: true },
+    });
+    if (existingTrainer && existingTrainer.userId !== userId) {
+      throw new ApiError(400, 'This training already has a trainer');
+    }
+  }
 
   if (existingParticipant) {
     if (existingParticipant.status === 'PLAYING') {
@@ -32,6 +42,7 @@ export async function addOrUpdateParticipant(
         invitedByUserId: null,
         inviteMessage: null,
         inviteExpiresAt: null,
+        ...(options?.isTrainer !== undefined && { isTrainer: options.isTrainer }),
       },
     });
 
@@ -48,6 +59,7 @@ export async function addOrUpdateParticipant(
       userId,
       role: options?.role || ParticipantRole.PARTICIPANT,
       status: 'PLAYING',
+      isTrainer: options?.isTrainer ?? false,
     },
   });
 

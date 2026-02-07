@@ -38,6 +38,7 @@ import {
   Banknote,
   CalendarPlus,
   Plane,
+  UserPlus,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -58,6 +59,8 @@ interface GameInfoProps {
   onScrollToSettings: () => void;
   onGameUpdate?: (game: Game) => void;
   collapsedByDefault?: boolean;
+  onInviteTrainer?: () => void;
+  canInviteTrainer?: boolean;
 }
 
 export const GameInfo = ({
@@ -73,7 +76,9 @@ export const GameInfo = ({
   onOpenTimeDurationModal,
   onScrollToSettings,
   onGameUpdate,
-  collapsedByDefault = false
+  collapsedByDefault = false,
+  onInviteTrainer,
+  canInviteTrainer = false,
 }: GameInfoProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
@@ -141,8 +146,10 @@ export const GameInfo = ({
     prevResultsStatusRef.current = currentStatus;
   }, [game.resultsStatus]);
 
-  const ownerParticipant = game.participants?.find(p => p.role === 'OWNER');
-  const owner = ownerParticipant?.user;
+  const organizerParticipant = game.entityType === 'TRAINING'
+    ? game.participants?.find(p => p.isTrainer) || game.participants?.find(p => p.role === 'OWNER')
+    : game.participants?.find(p => p.role === 'OWNER');
+  const owner = organizerParticipant?.user;
 
   const calendarEvent: CalendarEventInput | null = game.timeIsSet === true
     ? (() => {
@@ -469,13 +476,13 @@ export const GameInfo = ({
 
   const renderCollapsedSummary = () => {
     if (game.entityType === 'TRAINING') {
-      const owner = game.participants?.find(p => p.role === 'OWNER');
+      const trainer = game.participants?.find(p => p.isTrainer);
       return (
         <>
           <div className="flex-shrink-0">
-            {owner && (
+            {trainer && (
               <PlayerAvatar
-                player={owner.user}
+                player={trainer.user}
                 smallLayout={true}
                 showName={false}
               />
@@ -908,7 +915,7 @@ export const GameInfo = ({
               </div>
             </div>
           )}
-          {!isOwner && owner && (
+          {!isOwner && owner && !(game.entityType === 'TRAINING' && game.participants?.find(p => p.isTrainer)?.userId === game.participants?.find(p => p.role === 'OWNER')?.userId) && (
             <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
               <Crown size={20} className="text-primary-600 dark:text-primary-400" />
               <PlayerAvatar
@@ -921,7 +928,44 @@ export const GameInfo = ({
               </span>
             </div>
           )}
-          
+          {game.entityType === 'TRAINING' && (
+            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+              <Dumbbell size={20} className="text-primary-600 dark:text-primary-400 flex-shrink-0" />
+              {(() => {
+                const trainer = game.participants?.find(p => p.isTrainer);
+                return trainer ? (
+                  <>
+                    <PlayerAvatar
+                      player={trainer.user}
+                      extrasmall={true}
+                      showName={false}
+                    />
+                    <span className="text-sm">
+                      {[trainer.user.firstName, trainer.user.lastName].filter(name => name && name.trim()).join(' ')}
+                    </span>
+                  </>
+                ) : (
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
+                    <UserPlus size={14} className="text-gray-400 dark:text-gray-500" />
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 italic flex-1">
+                    {t('games.trainerSlotEmpty', { defaultValue: 'No trainer' })}
+                  </span>
+                  {canInviteTrainer && onInviteTrainer && (
+                    <button
+                      onClick={onInviteTrainer}
+                      className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 whitespace-nowrap"
+                    >
+                      {t('games.inviteTrainer', { defaultValue: 'Invite trainer' })}
+                    </button>
+                  )}
+                </div>
+              );
+              })()}
+            </div>
+          )}
+
           {/* Game Price */}
           {((game.priceType && game.priceType !== 'NOT_KNOWN') || (canEdit && canShowEdit)) && (
             <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">

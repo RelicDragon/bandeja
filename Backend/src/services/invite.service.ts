@@ -81,7 +81,10 @@ export class InviteService {
             throw new ApiError(400, joinResult.reason || 'errors.invites.gameFull');
           }
           await tx.gameParticipant.delete({ where: { id: participantId } });
-          await addOrUpdateParticipant(tx, gameId, receiverId);
+          await addOrUpdateParticipant(tx, gameId, receiverId, {
+            role: participant.role as ParticipantRole,
+            isTrainer: participant.isTrainer ?? false,
+          });
         });
         await performPostJoinOperations(gameId, receiverId);
       } catch (error: any) {

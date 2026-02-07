@@ -79,7 +79,10 @@ export class GameCreateService {
       : [];
     
     const ownerIsPlaying = participantsList.includes(userId);
-    
+    const creator = entityType === EntityType.TRAINING
+      ? await prisma.user.findUnique({ where: { id: userId }, select: { isTrainer: true } })
+      : null;
+
     if (ownerIsPlaying) {
       const tempGame = {
         id: 'temp',
@@ -171,6 +174,7 @@ export class GameCreateService {
             userId,
             role: 'OWNER',
             status: ownerIsPlaying ? 'PLAYING' : 'IN_QUEUE',
+            isTrainer: entityType === EntityType.TRAINING && creator?.isTrainer === true,
           },
         },
       },

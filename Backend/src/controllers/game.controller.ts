@@ -186,6 +186,17 @@ export const revokeAdmin = asyncHandler(async (req: AuthRequest, res: Response) 
   });
 });
 
+export const setTrainer = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { userId, isTrainer } = req.body;
+  const message = await AdminService.setTrainer(id, req.userId!, userId, isTrainer === true);
+
+  res.json({
+    success: true,
+    message,
+  });
+});
+
 export const kickUser = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { userId } = req.body;

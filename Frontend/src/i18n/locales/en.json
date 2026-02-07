@@ -242,6 +242,8 @@
     "gamesCount_other": "{{count}} games",
     "invitePlayer": "Invite Player",
     "invitePlayers": "Invite Players",
+    "inviteTrainer": "Invite trainer",
+    "trainerSlotEmpty": "No trainer",
     "playersSelected_one": "1 player selected",
     "playersSelected_other": "{{count}} players selected",
     "invite": "Invite",

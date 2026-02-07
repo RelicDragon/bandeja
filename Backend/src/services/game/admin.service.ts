@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { ParticipantRole } from '@prisma/client';
+import { ParticipantRole, EntityType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { GameService } from './game.service';
@@ -171,6 +171,52 @@ export class AdminService {
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentUserId);
     return 'User kicked successfully';
+  }
+
+  static async setTrainer(gameId: string, ownerId: string, userId: string, isTrainer: boolean) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { entityType: true },
+    });
+    if (!game || game.entityType !== EntityType.TRAINING) {
+      throw new ApiError(400, 'Only training games can have a trainer');
+    }
+
+    const ownerParticipant = await prisma.gameParticipant.findFirst({
+      where: { gameId, userId: ownerId, role: ParticipantRole.OWNER },
+    });
+    if (!ownerParticipant) {
+      throw new ApiError(403, 'Only the owner can set the trainer');
+    }
+
+    const targetParticipant = await prisma.gameParticipant.findFirst({
+      where: { gameId, userId },
+      include: { user: { select: { firstName: true, lastName: true } } },
+    });
+    if (!targetParticipant) {
+      throw new ApiError(404, 'User is not a participant of this game');
+    }
+
+    if (isTrainer) {
+      await prisma.$transaction(async (tx) => {
+        await tx.gameParticipant.updateMany({
+          where: { gameId, isTrainer: true },
+          data: { isTrainer: false, role: ParticipantRole.PARTICIPANT },
+        });
+        await tx.gameParticipant.update({
+          where: { id: targetParticipant.id },
+          data: { isTrainer: true, role: ParticipantRole.ADMIN },
+        });
+      });
+    } else {
+      await prisma.gameParticipant.update({
+        where: { id: targetParticipant.id },
+        data: { isTrainer: false, role: ParticipantRole.PARTICIPANT },
+      });
+    }
+
+    await ParticipantMessageHelper.emitGameUpdate(gameId, ownerId);
+    return isTrainer ? 'Trainer set successfully' : 'Trainer removed successfully';
   }
 }
 

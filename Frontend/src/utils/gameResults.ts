@@ -90,12 +90,7 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
   // Check if user has permission to modify results (user permissions only)
   let hasEditPermission = false;
   
-  if (user.isAdmin) {
-    hasEditPermission = true;
-  } else if (isUserGameAdminOrOwner(game, user.id)) {
-    hasEditPermission = true;
-  } else if (game.entityType === 'TRAINING' && (user.isTrainer || user.isAdmin)) {
-    // For training games, trainers and admins can edit
+  if (user.isAdmin || isUserGameAdminOrOwner(game, user.id)) {
     hasEditPermission = true;
   } else if (game.resultsByAnyone) {
     // Check if user is a playing participant and resultsByAnyone is true

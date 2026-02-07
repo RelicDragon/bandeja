@@ -84,6 +84,17 @@ router.post(
 );
 
 router.post(
+  '/:id/set-trainer',
+  authenticate,
+  requireGamePermission([ParticipantRole.OWNER]),
+  validate([
+    body('userId').notEmpty().withMessage('User ID is required'),
+    body('isTrainer').isBoolean().withMessage('isTrainer must be a boolean'),
+  ]),
+  gameController.setTrainer
+);
+
+router.post(
   '/:id/kick-user',
   authenticate,
   canEditGame,

@@ -146,6 +146,7 @@ export interface GameParticipant {
   inviteMessage?: string | null;
   inviteExpiresAt?: string | null;
   invitedByUser?: BasicUser | null;
+  isTrainer?: boolean;
 }
 
 export interface GameTeamPlayer {

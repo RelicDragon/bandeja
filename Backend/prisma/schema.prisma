@@ -348,6 +348,7 @@ model GameParticipant {
   invitedByUserId  String?
   inviteMessage    String?
   inviteExpiresAt  DateTime?
+  isTrainer        Boolean            @default(false)
   game             Game               @relation(fields: [gameId], references: [id], onDelete: Cascade)
   user             User               @relation("ParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
   invitedByUser    User?              @relation("ParticipantInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)

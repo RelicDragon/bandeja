@@ -19,6 +19,7 @@ export const invitesApi = {
     gameId?: string;
     message?: string;
     expiresAt?: string;
+    asTrainer?: boolean;
   }) => {
     const response = await api.post<ApiResponse<Invite>>('/invites', data);
     return response.data;
@@ -29,6 +30,7 @@ export const invitesApi = {
     gameId?: string;
     message?: string;
     expiresAt?: string;
+    asTrainer?: boolean;
   }) => {
     const promises = data.receiverIds.map(receiverId =>
       api.post<ApiResponse<Invite>>('/invites', {
@@ -36,6 +38,7 @@ export const invitesApi = {
         gameId: data.gameId,
         message: data.message,
         expiresAt: data.expiresAt,
+        asTrainer: data.asTrainer,
       })
     );
     const responses = await Promise.all(promises);

@@ -34,8 +34,10 @@ const generateGameMetaTags = (game: any): string => {
                    game.entityType === 'BAR' ? 'Bar Event' : 
                    'Game';
   
-  const owner = game.participants?.find((p: any) => p.role === 'OWNER')?.user;
-  const creatorName = owner ? `${owner.firstName || ''} ${owner.lastName || ''}`.trim() : null;
+  const organizer = game.entityType === 'TRAINING'
+    ? game.participants?.find((p: any) => p.isTrainer) || game.participants?.find((p: any) => p.role === 'OWNER')
+    : game.participants?.find((p: any) => p.role === 'OWNER');
+  const creatorName = organizer?.user ? `${organizer.user.firstName || ''} ${organizer.user.lastName || ''}`.trim() : null;
   
   const levelInfo = [];
   if (game.minLevel) levelInfo.push(`Level ${game.minLevel}`);

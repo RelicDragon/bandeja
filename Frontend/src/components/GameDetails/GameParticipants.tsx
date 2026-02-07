@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
 import { Game, Invite, InviteStatus, JoinQueue } from '@/types';
-import { isParticipantPlaying } from '@/utils/participantStatus';
+import { isParticipantCountsTowardSlots } from '@/utils/participantStatus';
 import { Users, UserPlus, Sliders, CheckCircle, XCircle, Edit3, LayoutGrid, List } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PlayersCarousel } from './PlayersCarousel';
@@ -94,7 +94,7 @@ export const GameParticipants = ({
   }, [game?.participants, game?.id]);
 
   const playingOwnersAndAdmins = game.participants.filter(
-    p => isParticipantPlaying(p) && (p.role === 'OWNER' || p.role === 'ADMIN')
+    p => isParticipantCountsTowardSlots(p, game.entityType) && (p.role === 'OWNER' || p.role === 'ADMIN')
   );
   const shouldShowCrowns = playingOwnersAndAdmins.length > 1;
   
@@ -127,13 +127,13 @@ export const GameParticipants = ({
               className="flex items-center gap-2"
             >
               <Edit3 size={16} />
-              {`${game.participants.filter(isParticipantPlaying).length} / ${game.maxParticipants}`}
+              {`${game.participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length} / ${game.maxParticipants}`}
             </Button>
           ) : (
             <span className="text-gray-600 dark:text-gray-400">
               {game.entityType === 'BAR' 
-                ? game.participants.filter(isParticipantPlaying).length
-                : `${game.participants.filter(isParticipantPlaying).length} / ${game.maxParticipants}`
+                ? game.participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length
+                : `${game.participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length} / ${game.maxParticipants}`
               }
             </span>
           )}
@@ -250,7 +250,7 @@ export const GameParticipants = ({
           </Button>
         )}
         {(() => {
-          const playingParticipants = game.participants.filter(isParticipantPlaying);
+          const playingParticipants = game.participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType));
           const emptySlots = game.entityType !== 'BAR'
             ? game.maxParticipants - playingParticipants.length 
             : 0;

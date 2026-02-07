@@ -6,9 +6,10 @@ export interface PendingReply {
   gameId?: string;
   userChatId?: string;
   bugId?: string;
+  groupChannelId?: string;
   userId: string;
   chatType: ChatType;
-  chatContextType: 'GAME' | 'USER' | 'BUG';
+  chatContextType: 'GAME' | 'USER' | 'BUG' | 'GROUP';
   lang: string;
 }
 

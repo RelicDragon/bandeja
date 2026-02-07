@@ -7,7 +7,7 @@ import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { GameAvatar } from '@/components/GameAvatar';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { Game } from '@/types';
-import { isParticipantPlaying } from '@/utils/participantStatus';
+import { isParticipantCountsTowardSlots } from '@/utils/participantStatus';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
@@ -560,7 +560,7 @@ export const GameCard = ({
             <>
               <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
                 {(() => {
-                  const trainer = participants.find(p => p.role === 'OWNER');
+                  const trainer = participants.find(p => p.isTrainer);
                   return trainer ? (
                     <>
                       <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
@@ -618,7 +618,7 @@ export const GameCard = ({
                   <div className="flex items-center gap-1">
                     <Users size={14} />
                     <span>
-                      {`${participants.filter(isParticipantPlaying).length}/${game.maxParticipants}`}
+                      {`${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}/${game.maxParticipants}`}
                     </span>
                   </div>
                 </div>
@@ -675,8 +675,8 @@ export const GameCard = ({
                     <Users size={14} />
                     <span>
                       {game.entityType === 'BAR' 
-                        ? participants.filter(isParticipantPlaying).length
-                        : `${participants.filter(isParticipantPlaying).length}/${game.maxParticipants}`
+                        ? participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length
+                        : `${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}/${game.maxParticipants}`
                       }
                     </span>
                   </div>
@@ -741,8 +741,8 @@ export const GameCard = ({
                     <Users size={14} />
                     <span>
                       {game.entityType === 'BAR' 
-                        ? participants.filter(isParticipantPlaying).length
-                        : `${participants.filter(isParticipantPlaying).length}/${game.maxParticipants}`
+                        ? participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length
+                        : `${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}/${game.maxParticipants}`
                       }
                     </span>
                   </div>
@@ -762,15 +762,15 @@ export const GameCard = ({
                       <>
                         {` ${timeDisplay.primaryText}`}
                         {game.entityType !== 'BAR' ? ` • ${(() => {
-                          const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                          if (durationHours === Math.floor(durationHours)) {
-                            return `${durationHours}${t('common.h')}`;
-                          } else {
-                            const hours = Math.floor(durationHours);
-                            const minutes = Math.round((durationHours % 1) * 60);
-                            return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                          }
-                        })()}` : ''}
+                            const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
+                            if (durationHours === Math.floor(durationHours)) {
+                              return `${durationHours}${t('common.h')}`;
+                            } else {
+                              const hours = Math.floor(durationHours);
+                              const minutes = Math.round((durationHours % 1) * 60);
+                              return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
+                            }
+                          })()}` : ''}
                       </>
                     )}
                   </span>
@@ -796,8 +796,8 @@ export const GameCard = ({
                   <Users size={14} />
                   <span>
                     {game.entityType === 'BAR' 
-                      ? participants.filter(isParticipantPlaying).length
-                      : `${participants.filter(isParticipantPlaying).length}/${game.maxParticipants}`
+                      ? participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length
+                      : `${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}/${game.maxParticipants}`
                     }
                   </span>
                 </div>
@@ -819,7 +819,7 @@ export const GameCard = ({
         {mainPhotoUrl ? (
           <div className="flex gap-4 mb-3">
             {game.entityType === 'TRAINING' && (() => {
-              const trainer = participants.find(p => p.role === 'OWNER');
+              const trainer = participants.find(p => p.isTrainer);
               return trainer ? (
                 <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
                   <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
@@ -870,7 +870,7 @@ export const GameCard = ({
                     <>
                       <span className="text-gray-400 dark:text-gray-500">•</span>
                       <Users size={16} />
-                      <span>{participants.filter(isParticipantPlaying).length}</span>
+                      <span>{participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}</span>
                     </>
                   )}
                 </div>
@@ -879,7 +879,7 @@ export const GameCard = ({
                 <div className="flex items-center gap-2">
                   <Users size={16} />
                   <span>
-                    {`${participants.filter(isParticipantPlaying).length} / ${game.maxParticipants}`}
+                    {`${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length} / ${game.maxParticipants}`}
                   </span>
                   {game.minLevel !== undefined && game.maxLevel !== undefined && (
                     <>
@@ -899,7 +899,7 @@ export const GameCard = ({
         ) : (
           <div className={`text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' ? 'flex gap-4 -mt-1' : ''}`}>
             {game.entityType === 'TRAINING' && (() => {
-              const trainer = participants.find(p => p.role === 'OWNER');
+              const trainer = participants.find(p => p.isTrainer);
               return trainer ? (
                 <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
                   <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
@@ -940,7 +940,7 @@ export const GameCard = ({
                   <>
                     <span className="text-gray-400 dark:text-gray-500">•</span>
                     <Users size={16} />
-                    <span>{participants.filter(isParticipantPlaying).length}</span>
+                    <span>{participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}</span>
                   </>
                 )}
               </div>
@@ -949,7 +949,7 @@ export const GameCard = ({
               <div className="flex items-center gap-2">
                 <Users size={16} />
                 <span>
-                  {`${participants.filter(isParticipantPlaying).length} / ${game.maxParticipants}`}
+                  {`${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length} / ${game.maxParticipants}`}
                 </span>
                 {game.minLevel !== undefined && game.maxLevel !== undefined && (
                   <>
@@ -967,11 +967,11 @@ export const GameCard = ({
             </div>
           </div>
         )}
-        <div className={`space-y-2 text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' && participants.filter(p => isParticipantPlaying(p) && p.role !== 'OWNER').length >= 1 ? 'pt-2 mt-2 border-t border-gray-200 dark:border-gray-700' : ''}`}>
+        <div className={`space-y-2 text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' && participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length >= 1 ? 'pt-2 mt-2 border-t border-gray-200 dark:border-gray-700' : ''}`}>
           <div className="flex items-center gap-2">
             <div className="relative -mx-0 flex-1 w-full">
               <PlayersCarousel
-                participants={participants.filter(isParticipantPlaying)}
+                participants={participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType))}
                 userId={effectiveUser?.id}
                 shouldShowCrowns={true}
                 autoHideNames={true}

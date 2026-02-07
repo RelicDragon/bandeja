@@ -554,62 +554,79 @@ export class ParticipantService {
     senderId: string,
     receiverId: string,
     message?: string | null,
-    expiresAt?: Date | null
+    expiresAt?: Date | null,
+    asTrainer?: boolean
   ): Promise<{ participant: any; invite: any }> {
-    validateGameCanAcceptParticipants(await prisma.game.findUniqueOrThrow({ where: { id: gameId } }));
-
-    const existing = await prisma.gameParticipant.findFirst({
-      where: { gameId, userId: receiverId },
-    });
-    if (existing) {
-      if (existing.status === INVITED_STATUS) {
-        throw new ApiError(400, 'errors.invites.alreadySent');
-      }
-      if (existing.status === PLAYING_STATUS) {
-        throw new ApiError(400, 'Already a playing participant');
-      }
-      throw new ApiError(400, 'errors.invites.alreadySent');
+    const game = await prisma.game.findUniqueOrThrow({ where: { id: gameId }, select: { entityType: true, status: true } });
+    validateGameCanAcceptParticipants(game);
+    if (asTrainer && game.entityType !== 'TRAINING') {
+      throw new ApiError(400, 'Only training games can have a trainer');
     }
 
-    const participant = await prisma.gameParticipant.create({
-      data: {
-        gameId,
-        userId: receiverId,
-        role: 'PARTICIPANT',
-        status: INVITED_STATUS,
-        invitedByUserId: senderId,
-        inviteMessage: message ?? null,
-        inviteExpiresAt: expiresAt ?? null,
-      },
-      include: {
-        user: { select: USER_SELECT_FIELDS },
-        invitedByUser: { select: USER_SELECT_FIELDS },
-        game: {
-          select: {
-            id: true,
-            name: true,
-            gameType: true,
-            startTime: true,
-            endTime: true,
-            maxParticipants: true,
-            minParticipants: true,
-            minLevel: true,
-            maxLevel: true,
-            isPublic: true,
-            affectsRating: true,
-            hasBookedCourt: true,
-            afterGameGoToBar: true,
-            hasFixedTeams: true,
-            teamsReady: true,
-            participantsReady: true,
-            status: true,
-            resultsStatus: true,
-            entityType: true,
-            court: { select: { id: true, name: true, club: { select: { id: true, name: true } } } },
-            club: { select: { id: true, name: true } },
+    const participant = await prisma.$transaction(async (tx) => {
+      const existing = await tx.gameParticipant.findFirst({
+        where: { gameId, userId: receiverId },
+      });
+      if (existing) {
+        if (existing.status === INVITED_STATUS) {
+          throw new ApiError(400, 'errors.invites.alreadySent');
+        }
+        if (existing.status === PLAYING_STATUS) {
+          throw new ApiError(400, 'Already a playing participant');
+        }
+        throw new ApiError(400, 'errors.invites.alreadySent');
+      }
+
+      if (asTrainer) {
+        const existingTrainer = await tx.gameParticipant.findFirst({
+          where: { gameId, isTrainer: true },
+        });
+        if (existingTrainer) {
+          throw new ApiError(400, 'This training already has a trainer');
+        }
+      }
+
+      return tx.gameParticipant.create({
+        data: {
+          gameId,
+          userId: receiverId,
+          role: asTrainer ? 'ADMIN' : 'PARTICIPANT',
+          status: INVITED_STATUS,
+          invitedByUserId: senderId,
+          inviteMessage: message ?? null,
+          inviteExpiresAt: expiresAt ?? null,
+          isTrainer: asTrainer ?? false,
+        },
+        include: {
+          user: { select: USER_SELECT_FIELDS },
+          invitedByUser: { select: USER_SELECT_FIELDS },
+          game: {
+            select: {
+              id: true,
+              name: true,
+              gameType: true,
+              startTime: true,
+              endTime: true,
+              maxParticipants: true,
+              minParticipants: true,
+              minLevel: true,
+              maxLevel: true,
+              isPublic: true,
+              affectsRating: true,
+              hasBookedCourt: true,
+              afterGameGoToBar: true,
+              hasFixedTeams: true,
+              teamsReady: true,
+              participantsReady: true,
+              status: true,
+              resultsStatus: true,
+              entityType: true,
+              court: { select: { id: true, name: true, club: { select: { id: true, name: true } } } },
+              club: { select: { id: true, name: true } },
+            },
           },
         },
-      },
+      });
     });
 
     const invite = {

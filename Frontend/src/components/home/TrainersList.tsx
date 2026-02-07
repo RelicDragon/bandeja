@@ -85,17 +85,17 @@ export const TrainersList = ({ show }: TrainersListProps) => {
           : 'max-h-0 opacity-0 -translate-y-4 mb-0'
       }`}
     >
-      <div className="px-4 relative">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+      <div className="px-4 relative md:flex md:flex-col md:items-center">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 md:text-center">
           {t('trainers.ourTrainers', { defaultValue: 'Our trainers' })}
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 md:text-center">
           {t('trainers.selectToFilterHint', { defaultValue: 'Tap a trainer to filter trainings by them' })}
         </p>
-        <div className="relative">
+        <div className="relative md:w-full">
           <div
             ref={carouselRef}
-            className="overflow-x-auto overflow-y-hidden scrollbar-hide flex gap-2 pb-4"
+            className="overflow-x-auto overflow-y-hidden scrollbar-hide flex gap-2 pb-4 md:justify-center"
           >
             {trainers.map((trainer) => {
               const isSelected = user?.favoriteTrainerId === trainer.id;

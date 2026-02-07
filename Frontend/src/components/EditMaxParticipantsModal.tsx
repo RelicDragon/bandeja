@@ -11,6 +11,7 @@ import { RangeSlider } from './RangeSlider';
 import { Select } from './Select';
 import { ConfirmationModal } from './ConfirmationModal';
 import { Game, GenderTeam } from '@/types';
+import { isParticipantCountsTowardSlots } from '@/utils/participantStatus';
 import { useAuthStore } from '@/store/authStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
@@ -70,7 +71,7 @@ export const EditMaxParticipantsModal = ({
   }, [onClose]);
 
   const playingParticipants = originalParticipants.filter(p => !removedPlayerIds.has(p.userId));
-  const currentPlayingCount = playingParticipants.length;
+  const currentPlayingCount = playingParticipants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length;
   const currentUserParticipant = game.participants.find(p => p.userId === user?.id);
   const isOwner = currentUserParticipant?.role === 'OWNER';
   const isAdmin = currentUserParticipant?.role === 'ADMIN';
@@ -81,6 +82,10 @@ export const EditMaxParticipantsModal = ({
       return true;
     });
   }, [playingParticipants, isAdmin, isOwner]);
+
+  const slotEligibleParticipants = useMemo(() => {
+    return eligibleParticipants.filter(p => isParticipantCountsTowardSlots(p, game.entityType));
+  }, [eligibleParticipants, game.entityType]);
 
   const maleParticipants = useMemo(() => {
     return eligibleParticipants.filter(p => p.user.gender === 'MALE');
@@ -104,41 +109,44 @@ export const EditMaxParticipantsModal = ({
     return eligibleParticipants.filter(p => p.user.gender !== 'FEMALE');
   }, [eligibleParticipants]);
 
+  const slotMaleParticipants = useMemo(() => maleParticipants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)), [maleParticipants, game.entityType]);
+  const slotFemaleParticipants = useMemo(() => femaleParticipants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)), [femaleParticipants, game.entityType]);
+
   const getParticipantsForRemoval = useMemo(() => {
     if (genderTeams === 'ANY') {
-      const remainingCount = eligibleParticipants.length;
+      const remainingCount = slotEligibleParticipants.length;
       const needsRemoval = remainingCount > newMaxParticipants;
       return {
         needsRemoval,
         playersToRemoveCount: Math.max(0, remainingCount - newMaxParticipants),
-        participants: eligibleParticipants,
+        participants: slotEligibleParticipants,
       };
     } else if (genderTeams === 'MEN') {
-      const remainingCount = maleParticipants.length;
+      const remainingCount = slotMaleParticipants.length;
       const needsRemoval = remainingCount > newMaxParticipants;
       return {
         needsRemoval,
         playersToRemoveCount: Math.max(0, remainingCount - newMaxParticipants),
-        participants: maleParticipants,
+        participants: slotMaleParticipants,
       };
     } else if (genderTeams === 'WOMEN') {
-      const remainingCount = femaleParticipants.length;
+      const remainingCount = slotFemaleParticipants.length;
       const needsRemoval = remainingCount > newMaxParticipants;
       return {
         needsRemoval,
         playersToRemoveCount: Math.max(0, remainingCount - newMaxParticipants),
-        participants: femaleParticipants,
+        participants: slotFemaleParticipants,
       };
     } else if (genderTeams === 'MIX_PAIRS') {
       const maxPerGender = newMaxParticipants / 2;
-      const maleCount = maleParticipants.length;
-      const femaleCount = femaleParticipants.length;
+      const maleCount = slotMaleParticipants.length;
+      const femaleCount = slotFemaleParticipants.length;
       const needsMaleRemoval = maleCount > maxPerGender;
       const needsFemaleRemoval = femaleCount > maxPerGender;
       return {
         needsRemoval: needsMaleRemoval || needsFemaleRemoval,
         playersToRemoveCount: Math.max(0, maleCount - maxPerGender) + Math.max(0, femaleCount - maxPerGender),
-        participants: [...maleParticipants, ...femaleParticipants],
+        participants: [...slotMaleParticipants, ...slotFemaleParticipants],
         needsMaleRemoval,
         needsFemaleRemoval,
         maleToRemoveCount: Math.max(0, maleCount - maxPerGender),
@@ -150,7 +158,7 @@ export const EditMaxParticipantsModal = ({
       playersToRemoveCount: 0,
       participants: [],
     };
-  }, [genderTeams, eligibleParticipants, maleParticipants, femaleParticipants, newMaxParticipants]);
+  }, [genderTeams, slotEligibleParticipants, slotMaleParticipants, slotFemaleParticipants, newMaxParticipants]);
 
   const needsRemoval = getParticipantsForRemoval.needsRemoval;
   const playersToRemoveCount = getParticipantsForRemoval.playersToRemoveCount;

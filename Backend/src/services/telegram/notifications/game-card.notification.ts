@@ -70,9 +70,12 @@ export async function sendGameCard(
     throw new Error(`Game ${gameId} not found`);
   }
 
-  const playingParticipants = game.participants.filter((p: any) => p.status === 'PLAYING');
-  const owner = game.participants.find((p: any) => p.role === 'OWNER');
-  const ownerName = owner ? `${owner.user.firstName || ''} ${owner.user.lastName || ''}`.trim() : null;
+  const countsTowardSlots = (p: any) => p.status === 'PLAYING' && !(game.entityType === 'TRAINING' && p.isTrainer);
+  const playingParticipants = game.participants.filter(countsTowardSlots);
+  const organizer = game.entityType === 'TRAINING'
+    ? game.participants.find((p: any) => p.isTrainer) || game.participants.find((p: any) => p.role === 'OWNER')
+    : game.participants.find((p: any) => p.role === 'OWNER');
+  const ownerName = organizer ? `${organizer.user.firstName || ''} ${organizer.user.lastName || ''}`.trim() : null;
 
   const statusEmoji: Record<string, string> = {
     'announced': '📢',

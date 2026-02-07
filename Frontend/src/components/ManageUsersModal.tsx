@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Crown, Shield, User, UserX, ArrowRightLeft } from 'lucide-react';
+import { Crown, Shield, User, UserX, ArrowRightLeft, Dumbbell } from 'lucide-react';
 import { Button, PlayerAvatar } from '@/components';
 import { Game, GameParticipant } from '@/types';
 import { useAuthStore } from '@/store/authStore';
@@ -46,8 +46,11 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
 
   const participants = game.participants.filter(p => p.userId !== user?.id);
 
-  const getRoleTag = (role: string) => {
-    switch (role) {
+  const getRoleTag = (participant: GameParticipant) => {
+    if (game.entityType === 'TRAINING' && participant.isTrainer) {
+      return { text: t('playerCard.isTrainer'), color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' };
+    }
+    switch (participant.role) {
       case 'OWNER':
         return { text: t('games.owner'), color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' };
       case 'ADMIN':
@@ -61,15 +64,24 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
     }
   };
 
+  const hasTrainer = game.entityType === 'TRAINING' && game.participants.some(p => p.isTrainer);
+
   const getAvailableActions = (participant: GameParticipant) => {
     const actions = [];
     
     if (isOwner) {
-      if (participant.role === 'ADMIN') {
+      if (game.entityType === 'TRAINING' && participant.isTrainer) {
+        actions.push({ id: 'remove-trainer', label: t('games.removeTrainer', { defaultValue: 'Remove as trainer' }), icon: Dumbbell });
+        actions.push({ id: 'kick-admin', label: t('games.kickUser'), icon: UserX });
+      } else if (participant.role === 'ADMIN') {
         actions.push({ id: 'revoke-admin', label: t('games.revokeAdmin'), icon: Shield });
         actions.push({ id: 'kick-admin', label: t('games.kickUser'), icon: UserX });
       } else if (participant.role === 'PARTICIPANT' || participant.role === 'GUEST') {
-        actions.push({ id: 'promote-admin', label: t('games.promoteToAdmin'), icon: Crown });
+        if (game.entityType === 'TRAINING' && !hasTrainer) {
+          actions.push({ id: 'set-trainer', label: t('games.setAsTrainer', { defaultValue: 'Set as trainer' }), icon: Dumbbell });
+        } else {
+          actions.push({ id: 'promote-admin', label: t('games.promoteToAdmin'), icon: Crown });
+        }
         actions.push({ id: 'kick-user', label: t('games.kickUser'), icon: UserX });
       }
       if (participant.role !== 'OWNER') {
@@ -105,7 +117,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
 
         <div ref={scrollContainerRef} className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
           {participants.map((participant) => {
-            const roleTag = getRoleTag(participant.role);
+            const roleTag = getRoleTag(participant);
             const isSelected = selectedUserId === participant.userId;
             const actions = getAvailableActions(participant);
 

@@ -21,6 +21,8 @@ interface NavigationState {
   openBugModal: boolean;
   bugsFilter: BugsFilterState;
   findViewMode: 'calendar' | 'list';
+  requestFindGoToCurrent: 'calendar' | 'list' | null;
+  setRequestFindGoToCurrent: (mode: 'calendar' | 'list' | null) => void;
   setCurrentPage: (page: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions') => void;
   setBottomTabsVisible: (visible: boolean) => void;
   setIsAnimating: (animating: boolean) => void;
@@ -50,6 +52,7 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   openBugModal: false,
   bugsFilter: { status: null, type: null, createdByMe: false },
   findViewMode: 'calendar',
+  requestFindGoToCurrent: null,
   setCurrentPage: (page) => set({ currentPage: page }),
   setBottomTabsVisible: (visible) => set({ bottomTabsVisible: visible }),
   setIsAnimating: (animating) => set({ isAnimating: animating }),
@@ -63,4 +66,5 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setOpenBugModal: (open) => set({ openBugModal: open }),
   setBugsFilter: (filter) => set((state) => ({ bugsFilter: typeof filter === 'function' ? filter(state.bugsFilter) : filter })),
   setFindViewMode: (mode) => set({ findViewMode: mode }),
+  setRequestFindGoToCurrent: (mode) => set({ requestFindGoToCurrent: mode }),
 }));

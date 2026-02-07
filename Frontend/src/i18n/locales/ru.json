@@ -243,6 +243,8 @@
     "gamesCount_many": "{{count}} игр",
     "invitePlayer": "Пригласить игрока",
     "invitePlayers": "Пригласить игроков",
+    "inviteTrainer": "Пригласить тренера",
+    "trainerSlotEmpty": "Нет тренера",
     "playersSelected_one": "Выбран 1 игрок",
     "playersSelected_few": "Выбрано {{count}} игрока",
     "playersSelected_many": "Выбрано {{count}} игроков",
