@@ -71,6 +71,9 @@ const interpolateTemplate = (template: string, variables: Record<string, string>
   return result;
 };
 
+const toStatusKey = (v: string) => v.toUpperCase().replace(/-/g, '_');
+const toTypeKey = (v: string) => v.toUpperCase();
+
 const translateSystemMessageData = (
   messageData: SystemMessageData,
   translateFn: (key: string, options?: { defaultValue?: string }) => string
@@ -81,8 +84,15 @@ const translateSystemMessageData = (
     return '';
   }
   
-  const safeVariables = variables || {};
-  
+  let safeVariables = { ...(variables || {}) };
+
+  if (type === SystemMessageType.BUG_STATUS_CHANGED && safeVariables.status) {
+    safeVariables = { ...safeVariables, status: translateFn(`bug.statuses.${toStatusKey(safeVariables.status)}`, { defaultValue: safeVariables.status }) };
+  }
+  if (type === SystemMessageType.BUG_TYPE_CHANGED && safeVariables.type) {
+    safeVariables = { ...safeVariables, type: translateFn(`bug.types.${toTypeKey(safeVariables.type)}`, { defaultValue: safeVariables.type }) };
+  }
+
   const template = translateFn(`chat.systemMessages.${type}`, { defaultValue: '' });
   
   if (!template || typeof template !== 'string') {

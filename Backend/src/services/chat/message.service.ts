@@ -11,6 +11,7 @@ import { ReadReceiptService } from './readReceipt.service';
 import { DraftService } from './draft.service';
 import { ChatMuteService } from './chatMute.service';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
+import { computeContentSearchable } from '../../utils/messageSearchContent';
 
 export class MessageService {
   static async validateGameAccess(gameId: string, userId: string) {
@@ -171,12 +172,14 @@ export class MessageService {
       if (!isPlaying) {
         throw new ApiError(403, 'Only playing participants can access private chat');
       }
+      return;
     }
 
     if (chatType === ChatType.ADMINS) {
       if (!isAdminOrOwner && !isParentGameAdminOrOwner) {
         throw new ApiError(403, 'Only game owners and admins can access admin chat');
       }
+      return;
     }
 
     if (chatType === ChatType.PHOTOS) {
@@ -186,7 +189,10 @@ export class MessageService {
       if (requireWriteAccess && !isPlaying && !isAdminOrOwner && !isParentGameAdminOrOwner) {
         throw new ApiError(403, 'Only playing participants, admins, and owners can write in photos chat');
       }
+      return;
     }
+
+    throw new ApiError(403, 'Access denied');
   }
 
   static async validateMessageAccess(
@@ -195,7 +201,10 @@ export class MessageService {
     requireWriteAccess: boolean = false
   ) {
     if (message.chatContextType === 'GAME') {
-      const { participant, game } = await this.validateGameAccess(message.contextId, userId);
+      const { participant, game, isParticipant } = await this.validateGameAccess(message.contextId, userId);
+      if (!isParticipant) {
+        throw new ApiError(403, 'Access denied');
+      }
       await this.validateChatTypeAccess(participant, message.chatType, game, userId, message.contextId, false);
     } else if (message.chatContextType === 'BUG') {
       await this.validateBugAccess(message.contextId, userId, requireWriteAccess);
@@ -393,6 +402,7 @@ export class MessageService {
           gameId: chatContextType === 'GAME' ? contextId : null,
           senderId,
           content: content?.startsWith('[TYPE:') ? content.substring(1) : (content ?? ''),
+          contentSearchable: computeContentSearchable(content ?? null, poll?.question),
           mediaUrls,
           thumbnailUrls,
           replyToId,
@@ -422,10 +432,12 @@ export class MessageService {
           }
         });
 
-        // Update the message with pollId
         await tx.chatMessage.update({
           where: { id: message.id },
-          data: { pollId: createdPoll.id }
+          data: {
+            pollId: createdPoll.id,
+            contentSearchable: computeContentSearchable(message.content ?? null, poll.question)
+          }
         });
 
         // Return the refetched message with all relations

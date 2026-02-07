@@ -21,6 +21,16 @@ router.post(
 router.get('/', authenticate, groupChannelController.getGroupChannels);
 router.get('/public', authenticate, groupChannelController.getPublicGroupChannels);
 
+router.post(
+  '/unread-counts',
+  authenticate,
+  validate([
+    body('groupIds').isArray().withMessage('groupIds must be an array'),
+    body('groupIds.*').notEmpty().withMessage('Group ID cannot be empty')
+  ]),
+  groupChannelController.getGroupChannelsUnreadCounts
+);
+
 router.get(
   '/:id',
   authenticate,

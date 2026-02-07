@@ -3,6 +3,7 @@ import { ChatContextType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { SystemMessageType, createSystemMessageContent, getUserDisplayName } from '../../utils/systemMessages';
+import { computeContentSearchable } from '../../utils/messageSearchContent';
 import { SystemMessageService } from './systemMessage.service';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
 
@@ -184,6 +185,7 @@ export class UserChatService {
         contextId: chatId,
         senderId: null,
         content,
+        contentSearchable: computeContentSearchable(content),
         mediaUrls: [],
         thumbnailUrls: [],
         chatType: 'PUBLIC',

@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { MessageState, ChatType, ChatContextType } from '@prisma/client';
 import { SystemMessageType, createSystemMessageContent } from '../../utils/systemMessages';
+import { computeContentSearchable } from '../../utils/messageSearchContent';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
 
@@ -11,12 +12,12 @@ export class SystemMessageService {
     chatType: ChatType = ChatType.PUBLIC,
     chatContextType: ChatContextType = ChatContextType.GAME
   ) {
+    const text = createSystemMessageContent(messageData);
     const content = JSON.stringify({
       type: messageData.type,
       variables: messageData.variables,
-      text: createSystemMessageContent(messageData)
+      text
     });
-    
     const message = await prisma.chatMessage.create({
       data: {
         chatContextType,
@@ -24,6 +25,7 @@ export class SystemMessageService {
         gameId: chatContextType === 'GAME' ? contextId : null,
         senderId: null,
         content: content ?? '',
+        contentSearchable: computeContentSearchable(text),
         mediaUrls: [],
         thumbnailUrls: [],
         chatType,

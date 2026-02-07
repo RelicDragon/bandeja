@@ -6,6 +6,15 @@ export interface CreateBugData {
   bugType: BugType;
 }
 
+export interface CreateBugResponse {
+  bug: Bug;
+  groupChannel: { id: string };
+}
+
+export interface BugWithGroupChannel extends Bug {
+  groupChannel?: { id: string };
+}
+
 export interface UpdateBugData {
   status?: BugStatus;
   bugType?: BugType;
@@ -13,7 +22,7 @@ export interface UpdateBugData {
 
 export const bugsApi = {
   createBug: async (data: CreateBugData) => {
-    const response = await api.post<ApiResponse<Bug>>('/bugs', data);
+    const response = await api.post<ApiResponse<CreateBugResponse>>('/bugs', data);
     return response.data;
   },
 
@@ -30,7 +39,7 @@ export const bugsApi = {
   },
 
   getBugById: async (id: string) => {
-    const response = await api.get<ApiResponse<Bug>>(`/bugs/${id}`);
+    const response = await api.get<ApiResponse<BugWithGroupChannel>>(`/bugs/${id}`);
     return response.data;
   },
 

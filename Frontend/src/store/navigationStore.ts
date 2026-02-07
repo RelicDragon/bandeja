@@ -1,4 +1,11 @@
 import { create } from 'zustand';
+import type { BugStatus, BugType } from '@/types';
+
+interface BugsFilterState {
+  status: BugStatus | null;
+  type: BugType | null;
+  createdByMe: boolean;
+}
 
 interface NavigationState {
   currentPage: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions';
@@ -11,6 +18,8 @@ interface NavigationState {
   activeTab: 'my-games' | 'past-games' | 'search';
   profileActiveTab: 'general' | 'statistics' | 'comparison';
   chatsFilter: 'users' | 'bugs' | 'channels';
+  openBugModal: boolean;
+  bugsFilter: BugsFilterState;
   findViewMode: 'calendar' | 'list';
   setCurrentPage: (page: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions') => void;
   setBottomTabsVisible: (visible: boolean) => void;
@@ -22,6 +31,8 @@ interface NavigationState {
   setActiveTab: (tab: 'my-games' | 'past-games' | 'search') => void;
   setProfileActiveTab: (tab: 'general' | 'statistics' | 'comparison') => void;
   setChatsFilter: (filter: 'users' | 'bugs' | 'channels') => void;
+  setOpenBugModal: (open: boolean) => void;
+  setBugsFilter: (filter: BugsFilterState | ((prev: BugsFilterState) => BugsFilterState)) => void;
   setFindViewMode: (mode: 'calendar' | 'list') => void;
 }
 
@@ -36,6 +47,8 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   activeTab: 'my-games',
   profileActiveTab: 'general',
   chatsFilter: 'users',
+  openBugModal: false,
+  bugsFilter: { status: null, type: null, createdByMe: false },
   findViewMode: 'calendar',
   setCurrentPage: (page) => set({ currentPage: page }),
   setBottomTabsVisible: (visible) => set({ bottomTabsVisible: visible }),
@@ -47,5 +60,7 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
   setProfileActiveTab: (tab) => set({ profileActiveTab: tab }),
   setChatsFilter: (filter) => set({ chatsFilter: filter }),
+  setOpenBugModal: (open) => set({ openBugModal: open }),
+  setBugsFilter: (filter) => set((state) => ({ bugsFilter: typeof filter === 'function' ? filter(state.bugsFilter) : filter })),
   setFindViewMode: (mode) => set({ findViewMode: mode }),
 }));

@@ -17,6 +17,7 @@ import { TranslationService } from '../services/chat/translation.service';
 import { DraftService } from '../services/chat/draft.service';
 import { GameReadService } from '../services/game/read.service';
 import { PollService } from '../services/chat/poll.service';
+import { MessageSearchService } from '../services/chat/messageSearch.service';
 import prisma from '../config/database';
 
 export const createSystemMessage = async (contextId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC, chatContextType: ChatContextType = ChatContextType.GAME) => {
@@ -759,102 +760,6 @@ export const respondToChatRequest = asyncHandler(async (req: AuthRequest, res: R
   });
 });
 
-// Bug Chat Controllers
-export const getBugMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { bugId } = req.params;
-  const userId = req.userId;
-  const { page = 1, limit = 50, chatType = ChatType.PUBLIC } = req.query;
-
-  if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  const messages = await MessageService.getMessages(ChatContextType.BUG, bugId, userId, {
-    page: Number(page),
-    limit: Number(limit),
-    chatType: chatType as ChatType
-  });
-
-  res.json({
-    success: true,
-    data: messages
-  });
-});
-
-export const getBugUnreadCount = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { bugId } = req.params;
-  const userId = req.userId;
-
-  if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  const result = await ReadReceiptService.getBugUnreadCount(bugId, userId);
-
-  res.json({
-    success: true,
-    data: result
-  });
-});
-
-export const getBugsUnreadCounts = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { bugIds } = req.body;
-  const userId = req.userId;
-
-  if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  if (!bugIds || !Array.isArray(bugIds) || bugIds.length === 0) {
-    throw new ApiError(400, 'Bug IDs array is required');
-  }
-
-  const result = await ReadReceiptService.getBugsUnreadCounts(bugIds, userId);
-
-  res.json({
-    success: true,
-    data: result
-  });
-});
-
-export const markAllBugMessagesAsRead = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { bugId } = req.params;
-  const userId = req.userId;
-
-  if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  if (!bugId) {
-    throw new ApiError(400, 'Bug ID is required');
-  }
-
-  const result = await ReadReceiptService.markAllBugMessagesAsRead(bugId, userId);
-
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    socketService.emitBugReadReceipt(bugId, { userId, readAt: new Date() });
-
-    // Emit unread count update
-    const unreadCount = await ReadReceiptService.getUnreadCountForContext(
-      'BUG',
-      bugId,
-      userId
-    );
-    await socketService.emitUnreadCountUpdate(
-      'BUG',
-      bugId,
-      userId,
-      unreadCount
-    );
-  }
-
-  res.json({
-    success: true,
-    data: result
-  });
-});
-
 export const reportMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { messageId } = req.params;
   const { reason, description } = req.body;
@@ -1214,6 +1119,33 @@ export const getUserDrafts = asyncHandler(async (req: AuthRequest, res: Response
     success: true,
     data: result.drafts,
     pagination: result.pagination
+  });
+});
+
+export const searchMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+  const { q, section, messagesPage = 1, messagesLimit = 20, gamePage = 1, gameLimit = 20, bugsPage = 1, channelPage = 1, channelLimit = 20 } = req.query;
+  if (!userId) throw new ApiError(401, 'Unauthorized');
+  const result = await MessageSearchService.search(userId, String(q).trim(), {
+    section: section as 'messages' | 'games' | 'channels' | 'bugs' | undefined,
+    messagesPage: Number(messagesPage),
+    messagesLimit: Number(messagesLimit),
+    gamePage: Number(gamePage),
+    gameLimit: Number(gameLimit),
+    bugsPage: Number(bugsPage),
+    channelPage: Number(channelPage),
+    channelLimit: Number(channelLimit)
+  });
+  res.json({
+    success: true,
+    messages: result.messages,
+    gameMessages: result.gameMessages,
+    channelMessages: result.channelMessages,
+    bugMessages: result.bugMessages,
+    messagesPagination: result.messagesPagination,
+    gamePagination: result.gamePagination,
+    channelPagination: result.channelPagination,
+    bugsPagination: result.bugsPagination
   });
 });
 

@@ -190,6 +190,17 @@ export interface GroupChannel {
   lastMessage?: ChatMessage | LastMessagePreview | null;
   isParticipant?: boolean;
   isOwner?: boolean;
+  bugId?: string | null;
+  bug?: {
+    id: string;
+    text: string;
+    status: string;
+    bugType: string;
+    senderId: string;
+    createdAt?: string;
+    updatedAt?: string;
+    sender?: BasicUser;
+  };
 }
 
 export interface GroupChannelParticipant {
@@ -215,6 +226,24 @@ export interface GroupChannelInvite {
   sender: BasicUser;
   receiver: BasicUser;
   groupChannel: GroupChannel;
+}
+
+export interface SearchMessageResult {
+  message: ChatMessage;
+  context: Game | UserChat | GroupChannel | { id: string; status: string; bugType: string; sender: BasicUser };
+  relevanceScore?: number;
+  gameEntityType?: string;
+}
+
+export interface SearchMessagesResponse {
+  messages: SearchMessageResult[];
+  gameMessages: SearchMessageResult[];
+  channelMessages: SearchMessageResult[];
+  bugMessages: SearchMessageResult[];
+  messagesPagination: { page: number; limit: number; hasMore: boolean };
+  gamePagination: { page: number; limit: number; hasMore: boolean };
+  channelPagination: { page: number; limit: number; hasMore: boolean };
+  bugsPagination: { page: number; limit: number; hasMore: boolean };
 }
 
 export interface ChatDraft {
@@ -411,48 +440,39 @@ export const chatApi = {
     return response.data;
   },
 
-  // Bug Chat Methods
-  getBugMessages: async (bugId: string, page = 1, limit = 50, chatType: ChatType = 'PUBLIC') => {
-    const normalizedChatType = normalizeChatType(chatType);
-    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/bugs/${bugId}/messages`, {
-      params: { page, limit, chatType: normalizedChatType }
-    });
-    return response.data.data;
-  },
-
-  getBugUnreadCount: async (bugId: string) => {
-    const response = await api.get<ApiResponse<{ count: number }>>(`/chat/bugs/${bugId}/unread-count`);
-    return response.data;
-  },
-
-  getBugsUnreadCounts: async (bugIds: string[]) => {
-    const response = await api.post<ApiResponse<Record<string, number>>>(`/chat/bugs/unread-counts`, { bugIds });
-    return response.data;
-  },
-
-  markAllBugMessagesAsRead: async (bugId: string) => {
-    const response = await api.post<ApiResponse<{ count: number }>>(`/chat/bugs/${bugId}/mark-all-read`);
-    return response.data;
-  },
-
   // Generic method for any context type
   getMessages: async (chatContextType: ChatContextType, contextId: string, page = 1, limit = 50, chatType: ChatType = 'PUBLIC') => {
     if (chatContextType === 'GAME') {
       return chatApi.getGameMessages(contextId, page, limit, chatType);
     } else if (chatContextType === 'USER') {
       return chatApi.getUserChatMessages(contextId, page, limit);
-    } else if (chatContextType === 'BUG') {
-      return chatApi.getBugMessages(contextId, page, limit, chatType);
     } else if (chatContextType === 'GROUP') {
       return chatApi.getGroupChannelMessages(contextId, page, limit);
     }
     throw new Error(`Unsupported chat context type: ${chatContextType}`);
   },
 
-  // Group Channel Methods
-  getGroupChannels: async () => {
-    const response = await api.get<ApiResponse<GroupChannel[]>>('/group-channels');
-    return response.data;
+  getGroupChannels: async (
+    filter?: 'users' | 'bugs' | 'channels',
+    page?: number,
+    bugsFilter?: { status?: string | null; type?: string | null; createdByMe?: boolean }
+  ) => {
+    const params: Record<string, string> = {};
+    if (filter) params.filter = filter;
+    if ((filter === 'bugs' || filter === 'users' || filter === 'channels') && page != null) params.page = String(page);
+    if (filter === 'bugs' && bugsFilter) {
+      if (bugsFilter.status) params.status = bugsFilter.status;
+      if (bugsFilter.type) params.bugType = bugsFilter.type;
+      if (bugsFilter.createdByMe) params.myBugsOnly = 'true';
+    }
+    const response = await api.get<ApiResponse<GroupChannel[]> & { pagination?: { page: number; limit: number; total: number; hasMore: boolean } }>('/group-channels', {
+      params: Object.keys(params).length ? params : undefined
+    });
+    const res = response.data as any;
+    return {
+      data: res.data ?? [],
+      pagination: res.pagination
+    };
   },
 
   getPublicGroupChannels: async () => {
@@ -519,6 +539,11 @@ export const chatApi = {
 
   getGroupChannelUnreadCount: async (id: string) => {
     const response = await api.get<ApiResponse<{ count: number }>>(`/group-channels/${id}/unread-count`);
+    return response.data;
+  },
+
+  getGroupChannelsUnreadCounts: async (groupIds: string[]) => {
+    const response = await api.post<ApiResponse<Record<string, number>>>(`/group-channels/unread-counts`, { groupIds });
     return response.data;
   },
 
@@ -650,6 +675,23 @@ export const chatApi = {
       data: { chatContextType, contextId, chatType: normalizedChatType }
     });
     return response.data;
+  },
+
+  searchMessages: async (
+    q: string,
+    opts?: { section?: 'messages' | 'games' | 'channels' | 'bugs'; messagesPage?: number; messagesLimit?: number; gamePage?: number; gameLimit?: number; bugsPage?: number; channelPage?: number; channelLimit?: number }
+  ): Promise<SearchMessagesResponse> => {
+    const params = new URLSearchParams({ q });
+    if (opts?.section) params.set('section', opts.section);
+    if (opts?.messagesPage) params.set('messagesPage', String(opts.messagesPage));
+    if (opts?.messagesLimit) params.set('messagesLimit', String(opts.messagesLimit));
+    if (opts?.gamePage) params.set('gamePage', String(opts.gamePage));
+    if (opts?.gameLimit) params.set('gameLimit', String(opts.gameLimit));
+    if (opts?.bugsPage) params.set('bugsPage', String(opts.bugsPage));
+    if (opts?.channelPage) params.set('channelPage', String(opts.channelPage));
+    if (opts?.channelLimit) params.set('channelLimit', String(opts.channelLimit));
+    const res = await api.get<{ success: boolean } & SearchMessagesResponse>(`/chat/messages/search?${params}`);
+    return res.data;
   },
 
   votePoll: async (pollId: string, optionIds: string[]) => {

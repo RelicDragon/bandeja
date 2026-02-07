@@ -22,7 +22,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const isDesktop = useDesktop();
   
-  const shouldAnimateToLeft = isDesktop && (currentPage === 'chats' || currentPage === 'bugs');
+  const shouldAnimateToLeft = isDesktop && currentPage === 'chats';
 
   const tabs = useMemo(() => [
     {
@@ -85,7 +85,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
                 className="flex flex-col items-center justify-center flex-1 h-full relative group"
                 whileTap={{ scale: 0.85 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                layout
+                layout="position"
               >
                 <motion.div
                   className="relative"
@@ -164,7 +164,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
             className="flex flex-col items-center justify-center flex-1 h-full relative group"
             whileTap={{ scale: 0.85 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-            layout
+            layout="position"
           >
             <motion.div
               className="relative"

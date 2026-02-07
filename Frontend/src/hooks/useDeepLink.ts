@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { App } from '@capacitor/app';
 import { isCapacitor } from '@/utils/capacitor';
 import { navigateWithTracking } from '@/utils/navigation';
+import { useNavigationStore } from '@/store/navigationStore';
 
 export const useDeepLink = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export const useDeepLink = () => {
   useEffect(() => {
     if (!isCapacitor()) return;
 
-    const handleDeepLink = (urlString: string) => {
+    const handleDeepLink = async (urlString: string) => {
       try {
         const url = new URL(urlString);
         if (url.hostname !== 'bandeja.me') return;
@@ -57,13 +58,27 @@ export const useDeepLink = () => {
           }
         }
         
-        // Bugs routes
+        // Bugs routes (legacy /bugs/:id/chat -> /channel-chat/:groupChannelId)
         if (pathname.startsWith('/bugs/')) {
           const parts = pathname.split('/').filter(Boolean);
           if (parts.length >= 2) {
             const bugId = parts[1];
             if (parts.length === 3 && parts[2] === 'chat') {
-              navigateWithTracking(navigate, `/bugs/${bugId}/chat`, { replace: true });
+              try {
+                const { bugsApi } = await import('@/api');
+                const res = await bugsApi.getBugById(bugId);
+                const groupChannelId = res.data?.groupChannel?.id;
+                if (groupChannelId) {
+                  useNavigationStore.getState().setChatsFilter('bugs');
+                  navigateWithTracking(navigate, `/channel-chat/${groupChannelId}`, { replace: true });
+                } else {
+                  useNavigationStore.getState().setChatsFilter('bugs');
+                  navigateWithTracking(navigate, '/chats', { replace: true });
+                }
+              } catch {
+                useNavigationStore.getState().setChatsFilter('bugs');
+                navigateWithTracking(navigate, '/chats', { replace: true });
+              }
               return;
             }
           }

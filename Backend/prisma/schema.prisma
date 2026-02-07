@@ -560,12 +560,13 @@ model PinnedUserChat {
 }
 
 model ChatMessage {
-  id              String               @id @default(cuid())
-  chatContextType ChatContextType      @default(GAME)
-  contextId       String
-  gameId          String?
-  senderId        String?
-  content         String?
+  id                 String               @id @default(cuid())
+  chatContextType    ChatContextType      @default(GAME)
+  contextId          String
+  gameId             String?
+  senderId           String?
+  content            String?
+  contentSearchable  String?
   mediaUrls       String[]
   thumbnailUrls   String[]
   mentionIds      String[]
@@ -863,7 +864,8 @@ model Bug {
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
   sender               User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  participants BugParticipant[]
+  participants         BugParticipant[]
+  groupChannel         GroupChannel?
 
   @@index([senderId])
   @@index([status])
@@ -889,6 +891,7 @@ model GroupChannel {
   avatar               String?
   originalAvatar       String?
   cityId               String?
+  bugId                String?                 @unique
   isChannel            Boolean                 @default(false)
   isPublic             Boolean                 @default(true)
   participantsCount    Int                     @default(0)
@@ -896,12 +899,14 @@ model GroupChannel {
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
   city                 City?                   @relation("GroupChannelCity", fields: [cityId], references: [id], onDelete: SetNull)
-  participants  GroupChannelParticipant[]
-  invites       GroupChannelInvite[]
+  bug                  Bug?                    @relation(fields: [bugId], references: [id], onDelete: Cascade)
+  participants         GroupChannelParticipant[]
+  invites              GroupChannelInvite[]
 
   @@index([isPublic])
   @@index([isChannel])
   @@index([cityId])
+  @@index([bugId])
 }
 
 model GroupChannelParticipant {

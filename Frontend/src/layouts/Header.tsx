@@ -78,7 +78,7 @@ export const Header = () => {
       >
         <div className="h-16 px-4 flex" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           <div className="flex items-center gap-3">
-            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'bugs' || currentPage === 'profile' || currentPage === 'leaderboard') ? null : (
+            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard') ? null : (
               <button
                 onClick={handleBackClick}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-110 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current  focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current"
@@ -106,13 +106,13 @@ export const Header = () => {
 
             {currentPage === 'my' && <MyGamesTabController />}
             {currentPage === 'find' && <FindTabController />}
-            {(currentPage === 'chats' || currentPage === 'bugs') && <ChatsTabController />}
+            {currentPage === 'chats' && <ChatsTabController />}
             {currentPage === 'profile' && <ProfileTabController />}
             {currentPage === 'leaderboard' && <LeaderboardTabController />}
           </div>
 
           <div className="flex items-center gap-4 relative ml-auto">
-            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'bugs' || currentPage === 'profile' || currentPage === 'leaderboard') && (
+            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard') && (
               <HomeHeaderContent />
             )}
 

@@ -3,8 +3,26 @@ import { ApiError } from '../../utils/ApiError';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { createSystemMessage } from '../../controllers/chat.controller';
-import { ChatContextType, ParticipantRole, InviteStatus, ChatType } from '@prisma/client';
+import { ChatContextType, ParticipantRole, InviteStatus, ChatType, Prisma, BugStatus, BugType } from '@prisma/client';
 import { MessageService } from './message.service';
+
+type GcWithParticipants = Awaited<ReturnType<typeof prisma.groupChannel.findMany>>[number] & {
+  participants: Array<{ userId: string; role: ParticipantRole }>;
+};
+
+function mapGroupChannelToResponse(gc: GcWithParticipants, userId: string) {
+  const userParticipant = gc.participants.find((p) => p.userId === userId);
+  const isOwner = userParticipant?.role === ParticipantRole.OWNER;
+  const isParticipant = !!userParticipant;
+  return {
+    ...gc,
+    lastMessage: gc.lastMessagePreview
+      ? { preview: gc.lastMessagePreview, updatedAt: gc.updatedAt }
+      : null,
+    isParticipant,
+    isOwner
+  };
+}
 
 export class GroupChannelService {
   static async getGroupChannelOwner(groupChannelId: string) {
@@ -99,6 +117,11 @@ export class GroupChannelService {
     const groupChannel = await prisma.groupChannel.findUnique({
       where: { id: groupChannelId },
       include: {
+        bug: {
+          include: {
+            sender: { select: USER_SELECT_FIELDS }
+          }
+        },
         participants: {
           include: {
             user: {
@@ -124,7 +147,15 @@ export class GroupChannelService {
     };
   }
 
-  static async getGroupChannels(userId: string) {
+  static readonly PAGE_SIZE = 10;
+
+  static async getGroupChannels(userId: string, filter?: 'users' | 'bugs' | 'channels', opts?: {
+    page?: number;
+    limit?: number;
+    status?: string[];
+    bugType?: string[];
+    myBugsOnly?: boolean;
+  }) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { currentCityId: true }
@@ -132,63 +163,213 @@ export class GroupChannelService {
 
     const userCityId = user?.currentCityId;
 
-    const groupChannels = await prisma.groupChannel.findMany({
-      where: {
-        OR: [
-          {
-            isChannel: false,
-            participants: {
-              some: {
-                userId,
-                hidden: false
+    const baseWhere: any = {
+      OR: [
+        {
+          isChannel: false,
+          participants: {
+            some: {
+              userId,
+              hidden: false
+            }
+          }
+        },
+        {
+          isChannel: true,
+          cityId: userCityId,
+          OR: [
+            {
+              participants: {
+                some: {
+                  userId,
+                  hidden: false
+                }
               }
+            },
+            { isPublic: true }
+          ]
+        }
+      ]
+    };
+
+    if (filter === 'users') {
+      baseWhere.OR = baseWhere.OR.filter((c: any) => c.isChannel === false);
+    } else if (filter === 'bugs') {
+      baseWhere.OR = [
+        {
+          isChannel: true,
+          bugId: { not: null },
+          OR: [
+            { participants: { some: { userId, hidden: false } } },
+            { isPublic: true }
+          ]
+        }
+      ];
+    } else if (filter === 'channels') {
+      baseWhere.OR = [
+        {
+          isChannel: true,
+          bugId: null,
+          cityId: userCityId,
+          OR: [
+            {
+              participants: {
+                some: {
+                  userId,
+                  hidden: false
+                }
+              }
+            },
+            { isPublic: true }
+          ]
+        }
+      ];
+    }
+
+    const isPaged = opts?.page != null && (filter === 'bugs' || filter === 'users' || filter === 'channels');
+    const page = opts?.page ?? 1;
+    const limit = opts?.limit ?? GroupChannelService.PAGE_SIZE;
+
+    let groupChannels: Awaited<ReturnType<typeof prisma.groupChannel.findMany>>;
+
+    if (filter === 'bugs' && isPaged) {
+      const statusArr = opts?.status?.length ? opts.status : null;
+      const bugTypeArr = opts?.bugType?.length ? opts.bugType : null;
+      const myBugsOnly = opts?.myBugsOnly === true;
+      const bugWhere: Prisma.BugWhereInput = {};
+      if (statusArr?.length) {
+        bugWhere.status = statusArr.length === 1 ? (statusArr[0] as BugStatus) : { in: statusArr as BugStatus[] };
+      } else {
+        bugWhere.status = { not: 'ARCHIVED' };
+      }
+      if (bugTypeArr?.length) {
+        bugWhere.bugType = bugTypeArr.length === 1 ? (bugTypeArr[0] as BugType) : { in: bugTypeArr as BugType[] };
+      }
+      if (myBugsOnly) {
+        bugWhere.senderId = userId;
+      }
+      const idsResult = await prisma.groupChannel.findMany({
+        where: {
+          isChannel: true,
+          bugId: { not: null },
+          OR: [
+            { participants: { some: { userId, hidden: false } } },
+            { isPublic: true }
+          ],
+          bug: bugWhere
+        },
+        select: { id: true },
+        orderBy: [
+          { bug: { bugType: 'asc' } },
+          { bug: { status: 'asc' } }
+        ],
+        skip: (page - 1) * limit,
+        take: limit
+      });
+      const orderedIds = idsResult.map((r) => r.id);
+      if (orderedIds.length === 0) {
+        const total = await prisma.groupChannel.count({
+          where: {
+            isChannel: true,
+            bugId: { not: null },
+            OR: [
+              { participants: { some: { userId, hidden: false } } },
+              { isPublic: true }
+            ],
+            bug: bugWhere
+          }
+        });
+        return { data: [], pagination: { page, limit, total, hasMore: false } };
+      }
+      const channels = await prisma.groupChannel.findMany({
+        where: { id: { in: orderedIds } },
+        include: {
+          bug: {
+            include: {
+              sender: { select: USER_SELECT_FIELDS }
             }
           },
-          {
-            isChannel: true,
-            cityId: userCityId,
-            OR: [
-              {
-                participants: {
-                  some: {
-                    userId,
-                    hidden: false
-                  }
-                }
-              },
-              { isPublic: true }
-            ]
-          }
-        ]
-      },
-      include: {
-        participants: {
-          where: { userId },
-          include: {
-            user: {
-              select: USER_SELECT_FIELDS
+          participants: {
+            where: { userId },
+            include: {
+              user: {
+                select: USER_SELECT_FIELDS
+              }
             }
           }
         }
-      },
-      orderBy: {
-        updatedAt: 'desc'
-      }
-    });
-
-    return groupChannels.map((gc) => {
-      const userParticipant = gc.participants.find((p) => p.userId === userId);
-      const isOwner = userParticipant?.role === ParticipantRole.OWNER;
-      const isParticipant = !!userParticipant;
-      return {
-        ...gc,
-        lastMessage: gc.lastMessagePreview
-          ? { preview: gc.lastMessagePreview, updatedAt: gc.updatedAt }
-          : null,
-        isParticipant,
-        isOwner
+      });
+      const idToIndex = new Map(orderedIds.map((id, i) => [id, i]));
+      groupChannels = channels.sort((a, b) => (idToIndex.get(a.id) ?? 0) - (idToIndex.get(b.id) ?? 0)) as typeof groupChannels;
+    } else {
+      const findManyOpts: Prisma.GroupChannelFindManyArgs = {
+        where: baseWhere,
+        include: {
+          bug: {
+            include: {
+              sender: { select: USER_SELECT_FIELDS }
+            }
+          },
+          participants: {
+            where: { userId },
+            include: {
+              user: {
+                select: USER_SELECT_FIELDS
+              }
+            }
+          }
+        },
+        orderBy: {
+          updatedAt: 'desc'
+        }
       };
-    });
+      if (isPaged && (filter === 'users' || filter === 'channels')) {
+        findManyOpts.skip = (page - 1) * limit;
+        findManyOpts.take = limit;
+      }
+      groupChannels = await prisma.groupChannel.findMany(findManyOpts);
+    }
+
+    const typedChannels = groupChannels as GcWithParticipants[];
+
+    if (isPaged) {
+      const hasBugFilters = filter === 'bugs' && (opts?.status?.length || opts?.bugType?.length || opts?.myBugsOnly);
+      let total: number;
+      if (hasBugFilters) {
+        const statusArr = opts?.status?.length ? opts.status : null;
+        const bugTypeArr = opts?.bugType?.length ? opts.bugType : null;
+        const myBugsOnly = opts?.myBugsOnly === true;
+        const bugWhere: Prisma.BugWhereInput = {};
+        if (statusArr?.length) {
+          bugWhere.status = statusArr.length === 1 ? (statusArr[0] as BugStatus) : { in: statusArr as BugStatus[] };
+        } else {
+          bugWhere.status = { not: 'ARCHIVED' };
+        }
+        if (bugTypeArr?.length) {
+          bugWhere.bugType = bugTypeArr.length === 1 ? (bugTypeArr[0] as BugType) : { in: bugTypeArr as BugType[] };
+        }
+        if (myBugsOnly) {
+          bugWhere.senderId = userId;
+        }
+        total = await prisma.groupChannel.count({
+          where: {
+            isChannel: true,
+            bugId: { not: null },
+            OR: [
+              { participants: { some: { userId, hidden: false } } },
+              { isPublic: true }
+            ],
+            bug: bugWhere
+          }
+        });
+      } else {
+        total = await prisma.groupChannel.count({ where: baseWhere });
+      }
+      const mapped = typedChannels.map((gc) => mapGroupChannelToResponse(gc, userId));
+      return { data: mapped, pagination: { page, limit, total, hasMore: page * limit < total } };
+    }
+
+    return typedChannels.map((gc) => mapGroupChannelToResponse(gc, userId));
   }
 
   static async getPublicGroupChannels(userId?: string) {

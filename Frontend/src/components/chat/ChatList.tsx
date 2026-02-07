@@ -1,88 +1,93 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import transliterate from '@sindresorhus/transliterate';
-import { UserChatCard } from './UserChatCard';
 import { CityUserCard } from './CityUserCard';
-import { BugCard } from '@/components/bugs/BugCard';
-import { GroupChannelCard } from './GroupChannelCard';
-import { chatApi, UserChat, GroupChannel, ChatDraft, getLastMessageTime } from '@/api/chat';
+import { ChatListItem } from './ChatListItem';
+import { ChatListSearchBar } from './ChatListSearchBar';
+import { chatApi, ChatDraft, getLastMessageTime, GroupChannel } from '@/api/chat';
 import { matchDraftToChat } from '@/utils/chatListUtils';
-import { bugsApi } from '@/api/bugs';
+import { getChatTitle, sortChatItems } from '@/utils/chatListSort';
+import {
+  deduplicateChats,
+  getChatKey,
+  calculateLastMessageDate,
+  groupsToChatItems,
+  channelsToChatItems,
+  applyPaginationState,
+  createLoadMore,
+  type FilterCache
+} from '@/utils/chatListHelpers';
 import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useNavigationStore } from '@/store/navigationStore';
-import { Bug, BasicUser } from '@/types';
+import { BasicUser } from '@/types';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { useDebounce } from '@/components/CityMap/useDebounce';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
-import { MessageCircle, Search, X, BookUser } from 'lucide-react';
+import { MessageCircle, SlidersHorizontal } from 'lucide-react';
+import { BugModal } from '@/components/bugs/BugModal';
+import { BugsFilterPanel } from '@/components/bugs/BugsFilterPanel';
+import { ChatMessageSearchResults } from './ChatMessageSearchResults';
+import { CollapsibleSection } from './CollapsibleSection';
 import { ChatMessage } from '@/api/chat';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { ChatItem, ChatType } from './chatListTypes';
 
-type ChatItem =
-  | { type: 'user'; data: UserChat; lastMessageDate: Date | null; unreadCount: number; otherUser?: BasicUser; draft?: ChatDraft | null }
-  | { type: 'contact'; userId: string; user: BasicUser; interactionCount: number; isFavorite: boolean; lastMessageDate: null }
-
-
-  | { type: 'bug'; data: Bug; lastMessageDate: Date; unreadCount: number }
-  | { type: 'group'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number; draft?: ChatDraft | null }
-  | { type: 'channel'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number };
-
-export type ChatType = 'user' | 'bug' | 'group' | 'channel';
+export type { ChatType };
 
 interface ChatListProps {
-  onChatSelect?: (chatId: string, chatType: ChatType) => void;
+  onChatSelect?: (chatId: string, chatType: ChatType, options?: { initialChatType?: string; searchQuery?: string }) => void;
   isDesktop?: boolean;
   selectedChatId?: string | null;
   selectedChatType?: ChatType | null;
 }
 
-const calculateLastMessageDate = (
-  lastMessage: ChatMessage | { preview: string; updatedAt: string } | null | undefined,
-  draft: ChatDraft | null | undefined,
-  updatedAt: string
-): Date => {
-  const lastMessageTime = getLastMessageTime(lastMessage);
-  const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
-  const updatedTime = new Date(updatedAt).getTime();
-  return new Date(Math.max(lastMessageTime, draftTime, updatedTime));
-};
-
-const fetchUnreadCounts = async (
-  ids: string[],
-  fetchFn: (id: string) => Promise<{ data: { count: number } }>
-): Promise<Record<string, number>> => {
-  const unreads: Record<string, number> = {};
-  if (ids.length > 0) {
-    await Promise.all(ids.map(async (id) => {
-      try {
-        const unread = await fetchFn(id);
-        unreads[id] = unread.data.count || 0;
-      } catch {
-        unreads[id] = 0;
-      }
-    }));
-  }
-  return unreads;
-};
-
 export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, selectedChatType }: ChatListProps) => {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuthStore();
-  const { chatsFilter } = useNavigationStore();
+  const { chatsFilter, bugsFilter, openBugModal, setOpenBugModal } = useNavigationStore();
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const urlQuery = searchParams.get('q') ?? '';
+  const [searchInput, setSearchInput] = useState(urlQuery);
+  const debouncedSearchQuery = useDebounce(searchInput, 500);
+  const skipUrlSyncRef = useRef(false);
   const [contactsMode, setContactsMode] = useState(false);
   const [cityUsers, setCityUsers] = useState<BasicUser[]>([]);
   const [cityUsersLoading, setCityUsersLoading] = useState(false);
+  const [searchableUsersData, setSearchableUsersData] = useState<{ activeChats: ChatItem[]; cityUsers: BasicUser[] } | null>(null);
   const [listTransition, setListTransition] = useState<'idle' | 'out' | 'in'>('idle');
-  const liveUnreadCounts = usePlayersStore((state) => state.unreadCounts);
-  const liveChats = usePlayersStore((state) => state.chats);
+  const [bugsHasMore, setBugsHasMore] = useState(false);
+  const [bugsLoadingMore, setBugsLoadingMore] = useState(false);
+  const bugsPageRef = useRef(1);
+  const [usersHasMore, setUsersHasMore] = useState(false);
+  const [usersLoadingMore, setUsersLoadingMore] = useState(false);
+  const usersPageRef = useRef(1);
+  const [channelsHasMore, setChannelsHasMore] = useState(false);
+  const [channelsLoadingMore, setChannelsLoadingMore] = useState(false);
+  const channelsPageRef = useRef(1);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+
+  const chatsCacheRef = useRef<Partial<Record<'users' | 'bugs' | 'channels', FilterCache>>>({});
+
+  useEffect(() => {
+    if (skipUrlSyncRef.current) {
+      skipUrlSyncRef.current = false;
+      return;
+    }
+    if (urlQuery !== searchInput) {
+      setSearchInput(urlQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only sync from URL when urlQuery changes
+  }, [urlQuery]);
 
   useEffect(() => {
     if (user?.id) {
@@ -90,223 +95,274 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     }
   }, [user?.id, fetchFavorites]);
 
-  const getChatTitle = (chat: ChatItem, currentUserId: string): string => {
-    if (chat.type === 'user') {
-      const otherUser = chat.data.user1Id === currentUserId ? chat.data.user2 : chat.data.user1;
-      return `${otherUser?.firstName || ''} ${otherUser?.lastName || ''}`.trim() || 'Unknown';
-    } else if (chat.type === 'contact') {
-      return `${chat.user.firstName || ''} ${chat.user.lastName || ''}`.trim() || 'Unknown';
-    } else if (chat.type === 'group' || chat.type === 'channel') {
-      return chat.data.name || '';
-    } else if (chat.type === 'bug') {
-      return chat.data.text || chat.data.id;
-    }
-    return '';
-  };
-
-  const sortUserChatItems = useCallback((chatItems: ChatItem[]) => {
-    if (!user?.id) return chatItems;
-
-    return chatItems.sort((a, b) => {
-      // Primary sort: by activity time (desc) - nulls at the end
-      const aActivityTime = a.lastMessageDate ? a.lastMessageDate.getTime() : null;
-      const bActivityTime = b.lastMessageDate ? b.lastMessageDate.getTime() : null;
-
-      // Handle nulls - put them at the end
-      if (aActivityTime === null && bActivityTime === null) {
-        // Both null - sort by title
-        const aTitle = getChatTitle(a, user.id).toLowerCase();
-        const bTitle = getChatTitle(b, user.id).toLowerCase();
-        return aTitle.localeCompare(bTitle);
+  const fetchUsersSearchData = useCallback(async (): Promise<{ activeChats: ChatItem[]; cityUsers: BasicUser[]; usersHasMore: boolean }> => {
+    if (!user) return { activeChats: [], cityUsers: [], usersHasMore: false };
+    const { fetchPlayers, fetchUserChats } = usePlayersStore.getState();
+    await Promise.all([fetchPlayers(), fetchUserChats()]);
+    const draftsResponse = await chatApi.getUserDrafts(1, 100).catch(() => ({ drafts: [] }));
+    const allDrafts = draftsResponse.drafts || [];
+    const { chats: userChats, unreadCounts } = usePlayersStore.getState();
+    const blockedUserIds = user.blockedUserIds || [];
+    const activeChats: ChatItem[] = [];
+    Object.values(userChats).forEach(chat => {
+      const otherUserId = chat.user1Id === user.id ? chat.user2Id : chat.user1Id;
+      const otherUser = chat.user1Id === user.id ? chat.user2 : chat.user1;
+      if (otherUserId && !blockedUserIds.includes(otherUserId)) {
+        const draft = matchDraftToChat(allDrafts, 'USER', chat.id);
+        const lastMessageDate = (chat.lastMessage || draft)
+          ? calculateLastMessageDate(chat.lastMessage, draft, chat.updatedAt)
+          : null;
+        activeChats.push({
+          type: 'user',
+          data: chat,
+          lastMessageDate,
+          unreadCount: unreadCounts[chat.id] || 0,
+          otherUser,
+          draft: draft || null
+        });
       }
-      if (aActivityTime === null) return 1; // a goes to end
-      if (bActivityTime === null) return -1; // b goes to end
-
-      // Both have activity time - sort desc
-      if (bActivityTime !== aActivityTime) {
-        return bActivityTime - aActivityTime;
-      }
-
-      // Secondary sort: by title (ascending)
-      const aTitle = getChatTitle(a, user.id).toLowerCase();
-      const bTitle = getChatTitle(b, user.id).toLowerCase();
-      return aTitle.localeCompare(bTitle);
     });
-  }, [user?.id]);
+    try {
+      const { data: groups, pagination } = await chatApi.getGroupChannels('users', 1);
+      const groupList = (groups || []) as GroupChannel[];
+      const groupIds = groupList.map((g: GroupChannel) => g.id);
+      const groupUnreads = groupIds.length > 0
+        ? (await chatApi.getGroupChannelsUnreadCounts(groupIds)).data || {}
+        : {};
+      const groupChatItems = groupsToChatItems(groupList, groupUnreads, allDrafts, 'users', user?.id);
+      activeChats.push(...groupChatItems);
+      sortChatItems(activeChats, 'users', user?.id);
+      const cityUsersData = await usersApi.getInvitablePlayers().then(r => r.data || []).catch(() => []);
+      return { activeChats, cityUsers: cityUsersData, usersHasMore: pagination?.hasMore ?? false };
+    } catch (err) {
+      console.error('fetchUsersSearchData failed:', err);
+      sortChatItems(activeChats, 'users', user?.id);
+      const cityUsersData = await usersApi.getInvitablePlayers().then(r => r.data || []).catch(() => []);
+      return { activeChats, cityUsers: cityUsersData, usersHasMore: false };
+    }
+  }, [user]);
 
-  const fetchChatsForFilter = useCallback(async (filter: 'users' | 'bugs' | 'channels') => {
+  const fetchUsersGroups = useCallback(async (page: number): Promise<{ chats: ChatItem[]; hasMore: boolean }> => {
+    if (!user) return { chats: [], hasMore: false };
+    try {
+      const draftsResponse = await chatApi.getUserDrafts(1, 100).catch(() => ({ drafts: [] }));
+      const allDrafts = draftsResponse.drafts || [];
+      const { data: groups, pagination } = await chatApi.getGroupChannels('users', page);
+      const groupList = (groups || []) as GroupChannel[];
+      const groupIds = groupList.map((g: GroupChannel) => g.id);
+      const groupUnreads = groupIds.length > 0
+        ? (await chatApi.getGroupChannelsUnreadCounts(groupIds)).data || {}
+        : {};
+      const chatItems = groupsToChatItems(groupList, groupUnreads, allDrafts, 'users', user?.id);
+      return { chats: chatItems, hasMore: pagination?.hasMore ?? false };
+    } catch (err) {
+      console.error('fetchUsersGroups failed:', err);
+      return { chats: [], hasMore: false };
+    }
+  }, [user]);
+
+  const fetchBugs = useCallback(async (page = 1): Promise<{ chats: ChatItem[]; hasMore: boolean }> => {
+    if (!user) return { chats: [], hasMore: false };
+    try {
+      const bf = useNavigationStore.getState().bugsFilter;
+      const filterParams = (bf.status || bf.type || bf.createdByMe)
+        ? { status: bf.status, type: bf.type, createdByMe: bf.createdByMe }
+        : undefined;
+      const { data: channels, pagination } = await chatApi.getGroupChannels('bugs', page, filterParams);
+      const channelList = (channels || []) as GroupChannel[];
+      const channelIds = channelList.map((c: GroupChannel) => c.id);
+      const channelUnreads = channelIds.length > 0
+        ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {}
+        : {};
+      const chatItems = channelsToChatItems(channelList, channelUnreads, 'bugs', { useUpdatedAtFallback: true });
+      return { chats: chatItems, hasMore: pagination?.hasMore ?? false };
+    } catch (err) {
+      console.error('fetchBugs failed:', err);
+      return { chats: [], hasMore: false };
+    }
+  }, [user]);
+
+  const fetchChannels = useCallback(async (page = 1): Promise<{ chats: ChatItem[]; hasMore: boolean }> => {
+    if (!user) return { chats: [], hasMore: false };
+    try {
+      const { data: channels, pagination } = await chatApi.getGroupChannels('channels', page);
+      const channelList = (channels || []) as GroupChannel[];
+      const channelIds = channelList.map((c: GroupChannel) => c.id);
+      const channelUnreads = channelIds.length > 0
+        ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {}
+        : {};
+      const chatItems = channelsToChatItems(channelList, channelUnreads, 'channels', { filterByIsChannel: true });
+      return { chats: chatItems, hasMore: pagination?.hasMore ?? false };
+    } catch (err) {
+      console.error('fetchChannels failed:', err);
+      return { chats: [], hasMore: false };
+    }
+  }, [user]);
+
+  const fetchAllFilters = useCallback(async () => {
     if (!user) return;
 
+    setLoading(true);
     try {
-      setLoading(true);
-      const chatItems: ChatItem[] = [];
+      const [usersData, bugsResult, channelsResult] = await Promise.all([
+        fetchUsersSearchData().catch(() => ({ activeChats: [], cityUsers: [], usersHasMore: false })),
+        fetchBugs(1).catch(() => ({ chats: [], hasMore: false })),
+        fetchChannels(1).catch(() => ({ chats: [], hasMore: false }))
+      ]);
 
-      if (filter === 'users') {
-        const { fetchPlayers, fetchUserChats } = usePlayersStore.getState();
-        await Promise.all([fetchPlayers(), fetchUserChats()]);
+      const usersChatItems = deduplicateChats(usersData.activeChats);
+      chatsCacheRef.current.users = { chats: usersChatItems, cityUsers: usersData.cityUsers, usersHasMore: usersData.usersHasMore };
+      chatsCacheRef.current.bugs = { chats: deduplicateChats(bugsResult.chats), bugsHasMore: bugsResult.hasMore };
+      chatsCacheRef.current.channels = { chats: deduplicateChats(channelsResult.chats), channelsHasMore: channelsResult.hasMore };
 
-        const draftsResponse = await chatApi.getUserDrafts(1, 100).catch(() => ({ drafts: [] }));
-        const allDrafts = draftsResponse.drafts || [];
-
-        const { chats: userChats, unreadCounts } = usePlayersStore.getState();
-
-        const blockedUserIds = user.blockedUserIds || [];
-
-
-        Object.values(userChats).forEach(chat => {
-          const otherUserId = chat.user1Id === user.id ? chat.user2Id : chat.user1Id;
-          const otherUser = chat.user1Id === user.id ? chat.user2 : chat.user1;
-
-          if (otherUserId && !blockedUserIds.includes(otherUserId)) {
-
-            const draft = matchDraftToChat(allDrafts, 'USER', chat.id);
-
-            // Only set activity time if there's a message or draft
-            const lastMessageDate = (chat.lastMessage || draft)
-              ? calculateLastMessageDate(chat.lastMessage, draft, chat.updatedAt)
-              : null;
-
-            chatItems.push({
-              type: 'user',
-              data: chat,
-              lastMessageDate,
-              unreadCount: unreadCounts[chat.id] || 0,
-              otherUser,
-              draft: draft || null
-            });
+      const activeFilter = useNavigationStore.getState().chatsFilter;
+      if (activeFilter === 'users' || activeFilter === 'bugs' || activeFilter === 'channels') {
+        const cached = chatsCacheRef.current[activeFilter];
+        if (cached) {
+          setChats(deduplicateChats(cached.chats));
+          if (cached.cityUsers) {
+            setCityUsers(cached.cityUsers);
+            setSearchableUsersData({ activeChats: cached.chats, cityUsers: cached.cityUsers });
           }
-        });
-
-        // Add groups to users tab (integrated like Telegram)
-        try {
-          const groupsResponse = await chatApi.getGroupChannels();
-          const groups = groupsResponse.data || [];
-          const groupIds = groups.map(g => g.id);
-          const groupUnreads = await fetchUnreadCounts(
-            groupIds,
-            (id) => chatApi.getGroupChannelUnreadCount(id)
-          );
-
-          groups.forEach(group => {
-            if (!group.isChannel && (group.isParticipant || group.isOwner)) {
-              const draft = matchDraftToChat(allDrafts, 'GROUP', group.id);
-              // Only set activity time if there's a message or draft
-              const lastMessageDate = (group.lastMessage || draft)
-                ? calculateLastMessageDate(group.lastMessage, draft, group.updatedAt)
-                : null;
-
-              chatItems.push({
-                type: 'group',
-                data: group,
-                lastMessageDate,
-                unreadCount: groupUnreads[group.id] || 0,
-                draft: draft || null
-              });
-            }
+          applyPaginationState(activeFilter, cached, {
+            setBugsHasMore,
+            setUsersHasMore,
+            setChannelsHasMore,
+            bugsPageRef,
+            usersPageRef,
+            channelsPageRef
           });
-        } catch (error) {
-          console.error('Failed to fetch groups:', error);
-        }
-
-
-
-        // Sort entire list (user chats + groups + contacts) by activity time only
-        sortUserChatItems(chatItems);
-      } else if (filter === 'bugs') {
-        const bugsResponse = await bugsApi.getBugs({ myBugsOnly: false });
-        const bugs = bugsResponse.data.bugs || [];
-        const bugIds = bugs.map(b => b.id);
-
-        const bugUnreads = bugIds.length > 0
-          ? await chatApi.getBugsUnreadCounts(bugIds)
-          : { data: {} as Record<string, number> };
-
-        bugs.forEach(bug => {
-          chatItems.push({
-            type: 'bug',
-            data: bug,
-            lastMessageDate: new Date(bug.updatedAt),
-            unreadCount: bugUnreads.data[bug.id] || 0
-          });
-        });
-      } else if (filter === 'channels') {
-        try {
-          const channelsResponse = await chatApi.getGroupChannels();
-          const channels = channelsResponse.data || [];
-          const channelIds = channels.map(c => c.id);
-          const channelUnreads = await fetchUnreadCounts(
-            channelIds,
-            (id) => chatApi.getGroupChannelUnreadCount(id)
-          );
-
-          channels.forEach(channel => {
-            if (channel.isChannel) {
-              // Only set activity time if there's a message
-              const lastMessageDate = channel.lastMessage
-                ? new Date(getLastMessageTime(channel.lastMessage))
-                : null;
-
-              chatItems.push({
-                type: 'channel',
-                data: channel,
-                lastMessageDate,
-                unreadCount: channelUnreads[channel.id] || 0
-              });
-            }
-          });
-        } catch (error) {
-          console.error('Failed to fetch channels:', error);
         }
       }
-
-      if (filter !== 'users') {
-        // For bugs and channels, sort by activity (draft or last message)
-        chatItems.sort((a, b) => {
-          // Primary sort: by activity time (desc) - nulls at the end
-          const aTime = a.lastMessageDate ? a.lastMessageDate.getTime() : null;
-          const bTime = b.lastMessageDate ? b.lastMessageDate.getTime() : null;
-
-          // Handle nulls - put them at the end
-          if (aTime === null && bTime === null) return 0;
-          if (aTime === null) return 1; // a goes to end
-          if (bTime === null) return -1; // b goes to end
-
-          if (bTime !== aTime) {
-            return bTime - aTime;
-          }
-
-          // Secondary: unread count (only for items that have unreadCount)
-          if ((a.type === 'user' || a.type === 'group' || a.type === 'channel' || a.type === 'bug') &&
-            (b.type === 'user' || b.type === 'group' || b.type === 'channel' || b.type === 'bug')) {
-            if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
-            if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
-          }
-
-          // Tertiary: by name/ID
-          if (a.type === 'bug' && b.type === 'bug') {
-            return a.data.id.localeCompare(b.data.id);
-          }
-          if (a.type === 'channel' && b.type === 'channel') {
-            return a.data.name.localeCompare(b.data.name);
-          }
-
-          return 0;
-        });
-      }
-
-      setChats(chatItems);
     } catch (error) {
       console.error('Failed to fetch chats:', error);
     } finally {
       setLoading(false);
     }
-  }, [user, sortUserChatItems]);
+  }, [user, fetchUsersSearchData, fetchBugs, fetchChannels]);
+
+  const fetchChatsForFilter = useCallback(async (_filter?: 'users' | 'bugs' | 'channels') => {
+    await fetchAllFilters();
+  }, [fetchAllFilters]);
+
+  const paginationSetters = useMemo(
+    () => ({
+      setBugsHasMore,
+      setUsersHasMore,
+      setChannelsHasMore,
+      bugsPageRef,
+      usersPageRef,
+      channelsPageRef
+    }),
+    []
+  );
 
   useEffect(() => {
-    if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') {
-      fetchChatsForFilter(chatsFilter);
+    if (chatsFilter !== 'users' && chatsFilter !== 'bugs' && chatsFilter !== 'channels') return;
+    if (chatsFilter === 'bugs') delete chatsCacheRef.current.bugs;
+    const cached = chatsCacheRef.current[chatsFilter];
+    if (cached) {
+      setChats(deduplicateChats(cached.chats));
+      if (cached.cityUsers) {
+        setCityUsers(cached.cityUsers);
+        setSearchableUsersData({ activeChats: cached.chats, cityUsers: cached.cityUsers });
+      }
+      applyPaginationState(chatsFilter, cached, paginationSetters);
+      setLoading(false);
+      return;
     }
-  }, [fetchChatsForFilter, chatsFilter]);
+    fetchAllFilters();
+  }, [fetchAllFilters, chatsFilter, paginationSetters]);
+
+  const prevBugsFilterRef = useRef(bugsFilter);
+  useEffect(() => {
+    if (chatsFilter !== 'bugs') return;
+    if (prevBugsFilterRef.current === bugsFilter) return;
+    prevBugsFilterRef.current = bugsFilter;
+    chatsCacheRef.current.bugs = undefined;
+    let cancelled = false;
+    fetchBugs(1).then(({ chats, hasMore }) => {
+      if (cancelled) return;
+      const deduped = deduplicateChats(chats);
+      chatsCacheRef.current.bugs = { chats: deduped, bugsHasMore: hasMore };
+      setChats(deduped);
+      setBugsHasMore(hasMore);
+      bugsPageRef.current = 1;
+    }).catch(() => {
+      if (!cancelled) setChats([]);
+    });
+    return () => { cancelled = true; };
+  }, [chatsFilter, bugsFilter, fetchBugs]);
+
+  const loadMoreBugs = useCallback(async () => {
+    const fn = createLoadMore({
+      isActive: chatsFilter === 'bugs',
+      loadingMore: bugsLoadingMore,
+      hasMore: bugsHasMore,
+      pageRef: bugsPageRef,
+      fetcher: fetchBugs,
+      setChats,
+      setLoadingMore: setBugsLoadingMore,
+      setHasMore: setBugsHasMore,
+      cacheKey: 'bugs',
+      cacheRef: chatsCacheRef,
+      deduplicate: deduplicateChats
+    });
+    await fn();
+  }, [chatsFilter, bugsLoadingMore, bugsHasMore, fetchBugs]);
+
+  const loadMoreUsers = useCallback(async () => {
+    const fn = createLoadMore({
+      isActive: chatsFilter === 'users',
+      loadingMore: usersLoadingMore,
+      hasMore: usersHasMore,
+      pageRef: usersPageRef,
+      fetcher: fetchUsersGroups,
+      setChats,
+      setLoadingMore: setUsersLoadingMore,
+      setHasMore: setUsersHasMore,
+      cacheKey: 'users',
+      cacheRef: chatsCacheRef,
+      deduplicate: deduplicateChats
+    });
+    await fn();
+  }, [chatsFilter, usersLoadingMore, usersHasMore, fetchUsersGroups]);
+
+  const loadMoreChannels = useCallback(async () => {
+    const fn = createLoadMore({
+      isActive: chatsFilter === 'channels',
+      loadingMore: channelsLoadingMore,
+      hasMore: channelsHasMore,
+      pageRef: channelsPageRef,
+      fetcher: fetchChannels,
+      setChats,
+      setLoadingMore: setChannelsLoadingMore,
+      setHasMore: setChannelsHasMore,
+      cacheKey: 'channels',
+      cacheRef: chatsCacheRef,
+      deduplicate: deduplicateChats
+    });
+    await fn();
+  }, [chatsFilter, channelsLoadingMore, channelsHasMore, fetchChannels]);
+
+  const shouldLoadMore = (chatsFilter === 'bugs' && bugsHasMore && !bugsLoadingMore) ||
+    (chatsFilter === 'users' && usersHasMore && !usersLoadingMore) ||
+    (chatsFilter === 'channels' && channelsHasMore && !channelsLoadingMore);
+  const loadMore = chatsFilter === 'bugs' ? loadMoreBugs : chatsFilter === 'users' ? loadMoreUsers : loadMoreChannels;
+
+  useEffect(() => {
+    if (!shouldLoadMore) return;
+    const el = loadMoreSentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore();
+      },
+      { root: null, rootMargin: '100px', threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [chatsFilter, shouldLoadMore, loadMore]);
 
   const fetchCityUsers = useCallback(async () => {
     if (!user?.currentCity?.id) return;
@@ -326,7 +382,13 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       setListTransition('out');
       setTimeout(() => {
         setContactsMode(false);
-        setSearchQuery('');
+        skipUrlSyncRef.current = true;
+        setSearchInput('');
+        setSearchParams((p) => {
+          const next = new URLSearchParams(p);
+          next.delete('q');
+          return next;
+        }, { replace: true });
         setListTransition('in');
         setTimeout(() => setListTransition('idle'), 300);
       }, 250);
@@ -339,14 +401,30 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         setTimeout(() => setListTransition('idle'), 300);
       }, 250);
     }
-  }, [contactsMode, fetchCityUsers]);
+  }, [contactsMode, fetchCityUsers, setSearchParams]);
 
   useEffect(() => {
     if (chatsFilter !== 'users') {
-      setSearchQuery('');
       setContactsMode(false);
     }
   }, [chatsFilter]);
+
+  useEffect(() => {
+    if (chatsFilter !== 'bugs') setBugsFilterPanelOpen(false);
+  }, [chatsFilter]);
+
+  useEffect(() => {
+    if (chatsFilter === 'users' && debouncedSearchQuery.trim() && !contactsMode) {
+      fetchCityUsers();
+    }
+  }, [chatsFilter, debouncedSearchQuery, contactsMode, fetchCityUsers]);
+
+  useEffect(() => {
+    if (chatsFilter === 'bugs') setSearchableUsersData(null);
+    else if (chatsFilter === 'channels' && debouncedSearchQuery.trim().length >= 2 && !searchableUsersData) {
+      fetchUsersSearchData().then((data) => setSearchableUsersData(data)).catch(() => setSearchableUsersData(null));
+    }
+  }, [chatsFilter, debouncedSearchQuery, searchableUsersData, fetchUsersSearchData]);
 
   const updateChatDraft = useCallback((
     prevChats: ChatItem[],
@@ -378,11 +456,11 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     });
 
     if (chatsFilter === 'users') {
-      return sortUserChatItems(updatedChats);
+      return sortChatItems(updatedChats, 'users', user?.id);
     }
 
     return updatedChats;
-  }, [chatsFilter, sortUserChatItems]);
+  }, [chatsFilter, user?.id]);
 
   const updateChatMessage = useCallback((
     prevChats: ChatItem[],
@@ -418,53 +496,19 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
           },
           lastMessageDate
         };
-      } else if (chat.type === 'bug' && chatContextType === 'BUG' && chat.data.id === contextId) {
-        return {
-          ...chat,
-          data: {
-            ...chat.data,
-            updatedAt: new Date().toISOString()
-          },
-          lastMessageDate: new Date(message.createdAt)
-        };
       }
       return chat;
     });
 
     if (chatsFilter === 'users') {
-      return sortUserChatItems(updatedChats);
-    } else if (chatsFilter === 'bugs' || chatsFilter === 'channels') {
-      updatedChats.sort((a, b) => {
-        // Primary sort: by activity time (desc) - nulls at the end
-        const aTime = a.lastMessageDate ? a.lastMessageDate.getTime() : null;
-        const bTime = b.lastMessageDate ? b.lastMessageDate.getTime() : null;
-
-        // Handle nulls - put them at the end
-        if (aTime === null && bTime === null) return 0;
-        if (aTime === null) return 1; // a goes to end
-        if (bTime === null) return -1; // b goes to end
-
-        if (bTime !== aTime) {
-          return bTime - aTime;
-        }
-        // Secondary: unread count (only for items that have unreadCount)
-        if ((a.type === 'user' || a.type === 'group' || a.type === 'channel' || a.type === 'bug') &&
-          (b.type === 'user' || b.type === 'group' || b.type === 'channel' || b.type === 'bug')) {
-          if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
-          if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
-        }
-        if (a.type === 'bug' && b.type === 'bug') {
-          return a.data.id.localeCompare(b.data.id);
-        }
-        if (a.type === 'channel' && b.type === 'channel') {
-          return a.data.name.localeCompare(b.data.name);
-        }
-        return 0;
-      });
+      return sortChatItems(updatedChats, 'users', user?.id);
+    }
+    if (chatsFilter === 'bugs' || chatsFilter === 'channels') {
+      return sortChatItems(updatedChats, chatsFilter);
     }
 
     return updatedChats;
-  }, [chatsFilter, sortUserChatItems]);
+  }, [chatsFilter, user?.id]);
 
   useEffect(() => {
     const handleRefresh = () => {
@@ -481,7 +525,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       }>;
       const { draft, chatContextType, contextId } = customEvent.detail;
 
-      setChats((prevChats) => updateChatDraft(prevChats, chatContextType, contextId, draft));
+      setChats((prevChats) => deduplicateChats(updateChatDraft(prevChats, chatContextType, contextId, draft)));
     };
 
     const handleDraftDelete = (event: Event) => {
@@ -491,7 +535,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       }>;
       const { chatContextType, contextId } = customEvent.detail;
 
-      setChats((prevChats) => updateChatDraft(prevChats, chatContextType, contextId, null));
+      setChats((prevChats) => deduplicateChats(updateChatDraft(prevChats, chatContextType, contextId, null)));
     };
 
     window.addEventListener('refresh-chat-list', handleRefresh);
@@ -513,7 +557,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
 
       const shouldUpdate =
         (chatsFilter === 'users' && (contextType === 'USER' || contextType === 'GROUP')) ||
-        (chatsFilter === 'bugs' && contextType === 'BUG') ||
+        (chatsFilter === 'bugs' && contextType === 'GROUP') ||
         (chatsFilter === 'channels' && contextType === 'GROUP');
 
       if (shouldUpdate) {
@@ -523,14 +567,14 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             if (contextType === 'GROUP' && (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId) {
               if (chatsFilter === 'channels') return chat.type === 'channel';
               if (chatsFilter === 'users') return chat.type === 'group';
+              if (chatsFilter === 'bugs') return chat.type === 'channel' && chat.data.bug;
               return true;
             }
-            if (contextType === 'BUG' && chat.type === 'bug' && chat.data.id === contextId) return true;
             return false;
           });
 
           if (chatExists) {
-            return updateChatMessage(prevChats, contextType, contextId, message);
+            return deduplicateChats(updateChatMessage(prevChats, contextType, contextId, message));
           }
 
           return prevChats;
@@ -553,13 +597,75 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     disabled: loading || isDesktop,
   });
 
-  const handleChatClick = (chatId: string, chatType: ChatType) => {
-    if (onChatSelect) {
-      onChatSelect(chatId, chatType);
+  const handleBugCreated = useCallback((groupChannelId?: string) => {
+    setShowBugModal(false);
+    if (chatsFilter === 'bugs') {
+      fetchChatsForFilter('bugs');
     }
+    if (groupChannelId && onChatSelect) {
+      onChatSelect(groupChannelId, 'channel');
+    }
+  }, [chatsFilter, fetchChatsForFilter, onChatSelect]);
+
+  const handleChatClick = useCallback((chatId: string, chatType: ChatType, options?: { initialChatType?: string; searchQuery?: string }) => {
+    onChatSelect?.(chatId, chatType, options);
+  }, [onChatSelect]);
+
+  const normalizeString = (str: string) => {
+    return transliterate(str).toLowerCase();
   };
 
-  const handleContactClick = async (userId: string) => {
+  const activeChats = useMemo(() => {
+    return chats.filter((c) => c.type === 'user' || c.type === 'group') as ChatItem[];
+  }, [chats]);
+
+  const matchesSearch = useCallback((title: string) => {
+    if (!debouncedSearchQuery.trim()) return true;
+    return normalizeString(title).includes(normalizeString(debouncedSearchQuery));
+  }, [debouncedSearchQuery]);
+
+  const filteredActiveChats = useMemo(() => {
+    const source = chatsFilter === 'channels' ? (searchableUsersData?.activeChats ?? []) : activeChats;
+    if (chatsFilter !== 'users' && chatsFilter !== 'channels') return [];
+    if (!debouncedSearchQuery.trim()) return chatsFilter === 'users' ? activeChats : [];
+    return source.filter((chat) => matchesSearch(getChatTitle(chat, user?.id || '')));
+  }, [activeChats, searchableUsersData?.activeChats, debouncedSearchQuery, chatsFilter, user?.id, matchesSearch]);
+
+  const filteredCityUsers = useMemo(() => {
+    const source = chatsFilter === 'channels' ? (searchableUsersData?.cityUsers ?? []) : cityUsers;
+    if (chatsFilter !== 'users' && chatsFilter !== 'channels') return [];
+    if (!debouncedSearchQuery.trim()) return chatsFilter === 'users' ? cityUsers : [];
+    return source.filter((u) => {
+      const fullName = `${u.firstName || ''} ${u.lastName || ''}`.trim();
+      return matchesSearch(fullName);
+    });
+  }, [cityUsers, searchableUsersData?.cityUsers, debouncedSearchQuery, chatsFilter, matchesSearch]);
+
+  const activeChatUserIds = useMemo(() => {
+    return new Set(
+      filteredActiveChats
+        .filter((c): c is Extract<ChatItem, { type: 'user' }> => c.type === 'user')
+        .map((c) => (c.data.user1Id === user?.id ? c.data.user2Id : c.data.user1Id))
+    );
+  }, [filteredActiveChats, user?.id]);
+
+  const cityUserIds = useMemo(() => new Set(filteredCityUsers.map((u) => u.id)), [filteredCityUsers]);
+
+  const filteredCityUsersExcludingActive = useMemo(() => {
+    return filteredCityUsers.filter((u) => !activeChatUserIds.has(u.id));
+  }, [filteredCityUsers, activeChatUserIds]);
+
+  const filteredActiveChatsExcludingUsers = useMemo(() => {
+    return filteredActiveChats.filter((c) => {
+      if (c.type !== 'user') return true;
+      const otherId = c.data.user1Id === user?.id ? c.data.user2Id : c.data.user1Id;
+      return !cityUserIds.has(otherId);
+    });
+  }, [filteredActiveChats, cityUserIds, user?.id]);
+
+  const isSearchMode = debouncedSearchQuery.trim().length > 0 && (chatsFilter === 'users' || chatsFilter === 'channels');
+
+  const handleContactClick = useCallback(async (userId: string) => {
     if (!user) return;
 
     try {
@@ -590,55 +696,115 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             otherUser,
           };
 
-          const updatedChats = [...filteredChats, newChatItem];
-          sortUserChatItems(updatedChats);
+          const updatedChats = deduplicateChats([...filteredChats, newChatItem]);
+          sortChatItems(updatedChats, 'users', user?.id);
           return updatedChats;
         });
       }
 
-      if (onChatSelect) {
-        onChatSelect(chat.id, 'user');
-      }
+      onChatSelect?.(chat.id, 'user', isSearchMode ? { searchQuery: debouncedSearchQuery.trim() } : undefined);
     } catch (error) {
       console.error('Failed to create/get chat with user:', error);
     }
-  };
+  }, [user, chatsFilter, onChatSelect, isSearchMode, debouncedSearchQuery]);
 
-  const normalizeString = (str: string) => {
-    return transliterate(str).toLowerCase();
-  };
+  const [messagesExpanded, setMessagesExpanded] = useState(true);
+  const [gamesExpanded, setGamesExpanded] = useState(true);
+  const [channelsExpanded, setChannelsExpanded] = useState(true);
+  const [bugsExpanded, setBugsExpanded] = useState(true);
+  const [showBugModal, setShowBugModal] = useState(false);
+  const [bugsFilterPanelOpen, setBugsFilterPanelOpen] = useState(false);
 
-  const filteredChats = useMemo(() => {
-    if (!searchQuery.trim() || chatsFilter !== 'users' || contactsMode) {
-      return chats;
+  useEffect(() => {
+    if (openBugModal && chatsFilter === 'bugs') {
+      setShowBugModal(true);
+      setOpenBugModal(false);
     }
+  }, [openBugModal, chatsFilter, setOpenBugModal]);
+  const [activeChatsExpanded, setActiveChatsExpanded] = useState(true);
+  const [usersExpanded, setUsersExpanded] = useState(true);
 
-    const normalized = normalizeString(searchQuery);
-
-    return chats.filter((chat) => {
-      if (chat.type === 'user') {
-        const otherUser = chat.data.user1Id === user?.id ? chat.data.user2 : chat.data.user1;
-        const fullName = `${otherUser?.firstName || ''} ${otherUser?.lastName || ''}`.trim();
-        return normalizeString(fullName).includes(normalized);
-      } else if (chat.type === 'contact') {
-        const fullName = `${chat.user.firstName || ''} ${chat.user.lastName || ''}`.trim();
-        return normalizeString(fullName).includes(normalized);
-      } else if (chat.type === 'group' || chat.type === 'channel') {
-        return normalizeString(chat.data.name || '').includes(normalized);
+  const displayChats = useMemo(() => {
+    if (!isSearchMode) return [];
+    const usersSection = { type: 'section' as const, label: 'users' as const };
+    const activeSection = { type: 'section' as const, label: 'active' as const };
+    const items: Array<
+      | { type: 'section'; label: 'users' | 'active' }
+      | { type: 'chat'; data: ChatItem }
+      | { type: 'contact'; user: BasicUser }
+    > = [];
+    if (contactsMode) {
+      if (filteredCityUsers.length > 0) {
+        items.push(usersSection);
+        filteredCityUsers.forEach((u) => items.push({ type: 'contact', user: u }));
       }
-      return true;
-    });
-  }, [chats, searchQuery, chatsFilter, user?.id, contactsMode]);
+      if (filteredActiveChatsExcludingUsers.length > 0) {
+        items.push(activeSection);
+        filteredActiveChatsExcludingUsers.forEach((c) => items.push({ type: 'chat', data: c }));
+      }
+    } else {
+      if (filteredActiveChats.length > 0) {
+        items.push(activeSection);
+        filteredActiveChats.forEach((c) => items.push({ type: 'chat', data: c }));
+      }
+      if (filteredCityUsersExcludingActive.length > 0) {
+        items.push(usersSection);
+        filteredCityUsersExcludingActive.forEach((u) => items.push({ type: 'contact', user: u }));
+      }
+    }
+    return items;
+  }, [isSearchMode, contactsMode, filteredActiveChats, filteredActiveChatsExcludingUsers, filteredCityUsers, filteredCityUsersExcludingActive]);
 
-  const filteredCityUsers = useMemo(() => {
-    if (!contactsMode) return [];
-    if (!searchQuery.trim()) return cityUsers;
-    const normalized = normalizeString(searchQuery);
-    return cityUsers.filter((u) => {
-      const fullName = `${u.firstName || ''} ${u.lastName || ''}`.trim();
-      return normalizeString(fullName).includes(normalized);
-    });
-  }, [contactsMode, cityUsers, searchQuery]);
+  const searchSections = useMemo(() => {
+    const active: Array<{ type: 'chat'; data: ChatItem }> = [];
+    const users: Array<{ type: 'contact'; user: BasicUser }> = [];
+    let current: 'active' | 'users' | null = null;
+    for (const item of displayChats) {
+      if (item.type === 'section') current = item.label;
+      else if (current === 'active' && item.type === 'chat') active.push(item);
+      else if (current === 'users' && item.type === 'contact') users.push(item);
+    }
+    return { active, users };
+  }, [displayChats]);
+
+  const renderActiveSection = () =>
+    searchSections.active.length > 0 ? (
+      <CollapsibleSection
+        title={t('chat.activeChats', { defaultValue: 'Active chats' })}
+        expanded={activeChatsExpanded}
+        onToggle={() => setActiveChatsExpanded((e) => !e)}
+      >
+        {searchSections.active.map((item) => (
+          <ChatListItem
+            key={getChatKey(item.data)}
+            item={item.data}
+            selectedChatId={selectedChatId}
+            selectedChatType={selectedChatType}
+            onChatClick={handleChatClick}
+            onContactClick={handleContactClick}
+            isSearchMode={isSearchMode}
+            searchQuery={debouncedSearchQuery.trim()}
+          />
+        ))}
+      </CollapsibleSection>
+    ) : null;
+
+  const renderUsersSection = () =>
+    searchSections.users.length > 0 ? (
+      <CollapsibleSection
+        title={t('chat.users', { defaultValue: 'Users' })}
+        expanded={usersExpanded}
+        onToggle={() => setUsersExpanded((e) => !e)}
+      >
+        {searchSections.users.map((item) => (
+          <CityUserCard
+            key={`contact-${item.user.id}`}
+            user={item.user}
+            onClick={() => handleContactClick(item.user.id)}
+          />
+        ))}
+      </CollapsibleSection>
+    ) : null;
 
   if (loading) {
     return (
@@ -673,27 +839,24 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     );
   }
 
-  const showContactsEmpty = contactsMode && chatsFilter === 'users' && !cityUsersLoading && filteredCityUsers.length === 0;
-  const showChatsEmpty = !contactsMode && chats.length === 0 && !loading;
+  const showContactsEmpty = contactsMode && chatsFilter === 'users' && !isSearchMode && !cityUsersLoading && cityUsers.length === 0;
+  const showChatsEmpty = !contactsMode && !isSearchMode && chats.length === 0 && !loading;
 
-  if (showChatsEmpty || showContactsEmpty) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-500 dark:text-gray-400">
-        <MessageCircle size={64} className="mb-4 opacity-50" />
-        <p className="text-lg font-medium">
-          {showContactsEmpty
-            ? (user?.currentCity ? t('chat.noCityUsers', { defaultValue: 'No users in your city' }) : t('chat.noCitySet', { defaultValue: 'Set your city to see players' }))
-            : t('chat.noConversations', { defaultValue: 'No conversations yet' })}
-        </p>
-        <p className="text-sm mt-2">
-          {showContactsEmpty && user?.currentCity && t('chat.noCityUsersHint', { defaultValue: 'Try a different search' })}
-          {showChatsEmpty && chatsFilter === 'users' && t('chat.noUserChats', { defaultValue: 'Start chatting with players' })}
-          {showChatsEmpty && chatsFilter === 'bugs' && t('chat.noBugChats', { defaultValue: 'No bug reports yet' })}
-          {showChatsEmpty && chatsFilter === 'channels' && t('chat.noChannels', { defaultValue: 'No channels yet' })}
-        </p>
-      </div>
-    );
-  }
+  const renderEmptyState = () => (
+    <div className="flex flex-col items-center justify-center flex-1 min-h-[200px] py-12 text-gray-500 dark:text-gray-400">
+      <MessageCircle size={64} className="mb-4 opacity-50" />
+      <p className="text-lg font-medium">
+        {showContactsEmpty && (user?.currentCity ? t('chat.noCityUsers', { defaultValue: 'No users in your city' }) : t('chat.noCitySet', { defaultValue: 'Set your city to see players' }))}
+        {showChatsEmpty && t('chat.noConversations', { defaultValue: 'No conversations yet' })}
+      </p>
+      <p className="text-sm mt-2">
+        {showContactsEmpty && user?.currentCity && t('chat.noCityUsersHint', { defaultValue: 'Try a different search' })}
+        {showChatsEmpty && chatsFilter === 'users' && t('chat.noUserChats', { defaultValue: 'Start chatting with players' })}
+        {showChatsEmpty && chatsFilter === 'bugs' && t('chat.noBugChats', { defaultValue: 'No bug reports yet' })}
+        {showChatsEmpty && chatsFilter === 'channels' && t('chat.noChannels', { defaultValue: 'No channels yet' })}
+      </p>
+    </div>
+  );
 
   return (
     <>
@@ -711,44 +874,67 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-        {chatsFilter === 'users' && (
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-            <div className="flex items-center gap-2">
+        {(chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') && (
+          <div className="relative">
+            <ChatListSearchBar
+              chatsFilter={chatsFilter}
+              contactsMode={contactsMode}
+              searchInput={searchInput}
+              onSearchChange={(v) => {
+                skipUrlSyncRef.current = true;
+                setSearchInput(v);
+                setSearchParams((p) => {
+                  const next = new URLSearchParams(p);
+                  if (v.trim()) next.set('q', v);
+                  else next.delete('q');
+                  return next;
+                }, { replace: true });
+              }}
+              onClearSearch={() => {
+                skipUrlSyncRef.current = true;
+                setSearchInput('');
+                setSearchParams((p) => {
+                  const next = new URLSearchParams(p);
+                  next.delete('q');
+                  return next;
+                }, { replace: true });
+              }}
+              onContactsToggle={handleContactsToggle}
+              onAddBug={() => setShowBugModal(true)}
+              isDesktop={isDesktop}
+              hasCity={!!user?.currentCity?.id}
+            />
+            {chatsFilter === 'bugs' && (
               <button
                 type="button"
-                onClick={handleContactsToggle}
-                disabled={!user?.currentCity?.id}
-                className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center border transition-colors ${
-                  contactsMode
-                    ? 'border-blue-500 bg-blue-500 text-white dark:border-blue-400 dark:bg-blue-500'
-                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
-                } ${!user?.currentCity?.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                aria-label="Contacts"
+                onClick={() => setBugsFilterPanelOpen((o) => !o)}
+                className={`absolute top-full right-4 -mt-3 w-10 h-10 rounded-full flex items-center justify-center shadow-md border transition-all z-10 ${
+                  bugsFilterPanelOpen
+                    ? 'bg-blue-500 text-white border-blue-500 dark:bg-blue-600 dark:border-blue-600'
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+                aria-label={t('common.filter', { defaultValue: 'Filter' })}
+                aria-expanded={bugsFilterPanelOpen}
               >
-                <BookUser size={20} className={contactsMode ? 'text-white' : 'text-gray-600 dark:text-gray-400'} />
+                <SlidersHorizontal size={20} />
               </button>
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
-                <input
-                  type="text"
-                  placeholder={contactsMode ? t('chat.searchUsers', { defaultValue: 'Search users' }) : t('chat.search', { defaultValue: 'Search' })}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  aria-label="Clear search"
-                >
-                  <X size={16} className="text-gray-400 dark:text-gray-500" />
-                </button>
-              )}
-              </div>
-            </div>
+            )}
           </div>
         )}
+        <AnimatePresence>
+          {chatsFilter === 'bugs' && bugsFilterPanelOpen && (
+            <motion.div
+              key="bugs-filter"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="overflow-hidden"
+            >
+              <BugsFilterPanel />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div
           className="flex-1 min-h-0 overflow-hidden"
           style={{
@@ -757,16 +943,81 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             transition: 'opacity 0.25s ease-out, transform 0.25s ease-out',
           }}
         >
-          {contactsMode && cityUsersLoading ? (
+          {!isSearchMode && contactsMode && cityUsersLoading ? (
             <div className="p-4 flex justify-center">
               <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : contactsMode ? (
+          ) : isSearchMode ? (
+            (displayChats.length === 0 && debouncedSearchQuery.trim().length < 2) ? (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-500 dark:text-gray-400">
+                <p className="font-medium">{t('chat.noSearchResults', { defaultValue: 'No results' })}</p>
+                <p className="text-sm mt-1">{t('chat.tryDifferentSearch', { defaultValue: 'Try a different search' })}</p>
+              </div>
+            ) : (
             <>
-              <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            {debouncedSearchQuery.trim().length >= 2 && (
+              <>
+                {chatsFilter === 'channels' ? (
+                  <ChatMessageSearchResults
+                    query={debouncedSearchQuery}
+                    chatsFilter={chatsFilter}
+                    insertBetween={
+                      <>
+                        {renderActiveSection()}
+                        {renderUsersSection()}
+                      </>
+                    }
+                    onResultClick={(chatId, chatType, options) => handleChatClick(chatId, chatType, { ...options, ...(debouncedSearchQuery.trim() ? { searchQuery: debouncedSearchQuery.trim() } : {}) })}
+                    messagesExpanded={messagesExpanded}
+                    gamesExpanded={gamesExpanded}
+                    channelsExpanded={channelsExpanded}
+                    bugsExpanded={bugsExpanded}
+                    onMessagesToggle={() => setMessagesExpanded((e) => !e)}
+                    onGamesToggle={() => setGamesExpanded((e) => !e)}
+                    onChannelsToggle={() => setChannelsExpanded((e) => !e)}
+                    onBugsToggle={() => setBugsExpanded((e) => !e)}
+                  />
+                ) : (
+                  <>
+                    {contactsMode ? (
+                      <>
+                        {renderUsersSection()}
+                        {renderActiveSection()}
+                      </>
+                    ) : (
+                      <>
+                        {renderActiveSection()}
+                        {renderUsersSection()}
+                      </>
+                    )}
+                    <ChatMessageSearchResults
+                      query={debouncedSearchQuery}
+                      chatsFilter={chatsFilter}
+                      onResultClick={(chatId, chatType, options) => handleChatClick(chatId, chatType, { ...options, ...(debouncedSearchQuery.trim() ? { searchQuery: debouncedSearchQuery.trim() } : {}) })}
+                      messagesExpanded={messagesExpanded}
+                      gamesExpanded={gamesExpanded}
+                      channelsExpanded={channelsExpanded}
+                      bugsExpanded={bugsExpanded}
+                      onMessagesToggle={() => setMessagesExpanded((e) => !e)}
+                      onGamesToggle={() => setGamesExpanded((e) => !e)}
+                      onChannelsToggle={() => setChannelsExpanded((e) => !e)}
+                      onBugsToggle={() => setBugsExpanded((e) => !e)}
+                    />
+                  </>
+                )}
+              </>
+            )}
+            </>
+            )
+          ) : contactsMode ? (
+            showContactsEmpty ? (
+              renderEmptyState()
+            ) : (
+            <>
+              <div className="px-3 py-2.5 text-sm font-semibold text-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
                 {t('chat.users', { defaultValue: 'Users' })}
               </div>
-              {filteredCityUsers.map((cityUser) => (
+              {cityUsers.map((cityUser) => (
                 <CityUserCard
                   key={cityUser.id}
                   user={cityUser}
@@ -774,84 +1025,41 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                 />
               ))}
             </>
+            )
+          ) : showChatsEmpty ? (
+            renderEmptyState()
           ) : (
-            filteredChats.map((chat) => {
-          if (chat.type === 'user') {
-            const key = `${chat.type}-${chat.data.id}`;
-            const liveChat = liveChats[chat.data.id] || chat.data;
-            const liveUnreadCount = liveUnreadCounts[chat.data.id] || 0;
-            const isSelected = selectedChatType === 'user' && selectedChatId === chat.data.id;
-            return (
-              <UserChatCard
-                key={key}
-                chat={liveChat}
-                unreadCount={liveUnreadCount}
-                onClick={() => handleChatClick(chat.data.id, 'user')}
-                isSelected={isSelected}
-                draft={chat.draft}
-              />
-            );
-          } else if (chat.type === 'contact') {
-            const key = `${chat.type}-${chat.userId}`;
-            const mockChat: UserChat = {
-              id: '',
-              user1Id: user?.id || '',
-              user2Id: chat.userId,
-              user1allowed: true,
-              user2allowed: true,
-              user1: user!,
-              user2: chat.user,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-            return (
-              <UserChatCard
-                key={key}
-                chat={mockChat}
-                unreadCount={0}
-                onClick={() => handleContactClick(chat.userId)}
-                isSelected={false}
-              />
-            );
-          } else if (chat.type === 'bug') {
-            const key = `${chat.type}-${chat.data.id}`;
-            const isSelected = selectedChatType === 'bug' && selectedChatId === chat.data.id;
-            return (
-              <div key={key} className={`border-b border-gray-200 dark:border-gray-700 last:border-b-0 [&>div]:mb-0 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
-                <BugCard
-                  bug={chat.data}
-                  unreadCount={chat.unreadCount}
-                  onUpdate={() => {
-                    if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') {
-                      fetchChatsForFilter(chatsFilter);
-                    }
-                  }}
-                  onDelete={(bugId) => {
-                    setChats(prev => prev.filter(c => !(c.type === 'bug' && c.data.id === bugId)));
-                  }}
+            <>
+              {chats.map((chat) => (
+                <ChatListItem
+                  key={getChatKey(chat)}
+                  item={chat}
+                  selectedChatId={selectedChatId}
+                  selectedChatType={selectedChatType}
+                  onChatClick={handleChatClick}
+                  onContactClick={handleContactClick}
+                  isSearchMode={isSearchMode}
+                  searchQuery={debouncedSearchQuery.trim()}
                 />
-              </div>
-            );
-          } else if (chat.type === 'group' || chat.type === 'channel') {
-            const key = `${chat.type}-${chat.data.id}`;
-            const chatTypeForNavigation = chat.type === 'channel' ? 'channel' : 'group';
-            const isSelected = (selectedChatType === 'group' || selectedChatType === 'channel') && selectedChatId === chat.data.id;
-            return (
-              <div key={key} className={`border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
-                <GroupChannelCard
-                  groupChannel={chat.data}
-                  unreadCount={chat.unreadCount}
-                  onClick={() => handleChatClick(chat.data.id, chatTypeForNavigation)}
-                  isSelected={isSelected}
-                  draft={chat.type === 'group' ? chat.draft : undefined}
-                />
-              </div>
-            );
-          }
-        })
+              ))}
+              {((chatsFilter === 'bugs' && bugsHasMore) || (chatsFilter === 'users' && usersHasMore) || (chatsFilter === 'channels' && channelsHasMore)) && (
+                <div ref={loadMoreSentinelRef} className="py-4 flex justify-center">
+                  {(bugsLoadingMore || usersLoadingMore || channelsLoadingMore) && (
+                    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
+      {chatsFilter === 'bugs' && (
+        <BugModal
+          isOpen={showBugModal}
+          onClose={() => setShowBugModal(false)}
+          onSuccess={handleBugCreated}
+        />
+      )}
     </>
   );
 };

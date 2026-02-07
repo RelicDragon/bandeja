@@ -776,7 +776,7 @@ class SocketService {
   /**
    * Acknowledge message receipt via socket
    */
-  public acknowledgeMessage(messageId: string, contextType: 'GAME' | 'BUG' | 'USER', contextId: string) {
+  public acknowledgeMessage(messageId: string, contextType: 'GAME' | 'BUG' | 'USER' | 'GROUP', contextId: string) {
     if (!this.socket || !this.socket.connected) {
       console.warn('[SocketService] Socket not connected, cannot acknowledge message');
       return;
@@ -807,7 +807,7 @@ class SocketService {
   /**
    * Request missed messages after reconnection
    */
-  public async syncMessages(contextType: 'GAME' | 'BUG' | 'USER', contextId: string, lastMessageId?: string) {
+  public async syncMessages(contextType: 'GAME' | 'BUG' | 'USER' | 'GROUP', contextId: string, lastMessageId?: string) {
     if (!this.socket || !this.socket.connected) {
       console.warn('[SocketService] Socket not connected, cannot sync messages');
       return;

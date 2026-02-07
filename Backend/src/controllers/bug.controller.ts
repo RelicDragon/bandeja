@@ -5,8 +5,10 @@ import { AuthRequest } from '../middleware/auth';
 import { BugService } from '../services/bug.service';
 import { BugParticipantService } from '../services/bug/participant.service';
 import { SystemMessageType } from '../utils/systemMessages';
-import { BugStatus, BugType, ChatType } from '@prisma/client';
-import { createBugSystemMessage } from './chat.controller';
+import { BugStatus, BugType, ChatType, ChatContextType } from '@prisma/client';
+import { createSystemMessage } from './chat.controller';
+import { MessageService } from '../services/chat/message.service';
+import prisma from '../config/database';
 
 export const createBug = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { text, bugType } = req.body;
@@ -19,11 +21,20 @@ export const createBug = asyncHandler(async (req: AuthRequest, res: Response) =>
     throw new ApiError(400, 'errors.bugs.typeRequired');
   }
 
-  const bug = await BugService.createBug(text, bugType, req.userId!);
+  const { groupChannel, ...bug } = await BugService.createBug(text, bugType, req.userId!);
+
+  await MessageService.createMessage({
+    chatContextType: ChatContextType.GROUP,
+    contextId: groupChannel.id,
+    senderId: req.userId!,
+    content: text.trim(),
+    mediaUrls: [],
+    chatType: ChatType.PUBLIC
+  }).catch(err => console.error('Failed to create bug description message:', err));
 
   res.status(201).json({
     success: true,
-    data: bug,
+    data: { bug, groupChannel },
   });
 });
 
@@ -38,7 +49,7 @@ export const getBugs = asyncHandler(async (req: AuthRequest, res: Response) => {
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);
 
-    if (pageNum < 1 || limitNum < 1 || limitNum > 100) {
+    if (pageNum < 1 || limitNum < 1 || limitNum > 10) {
       throw new ApiError(400, 'errors.generic');
     }
 
@@ -86,27 +97,34 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
   }
 
   const bug = await BugService.updateBug(id, { status, bugType });
+  const groupChannel = await prisma.groupChannel.findUnique({
+    where: { bugId: id },
+    select: { id: true }
+  });
+  const contextId = groupChannel?.id ?? id;
+  const chatContextType = groupChannel ? ChatContextType.GROUP : ChatContextType.BUG;
 
-  // Send system messages for status/type changes
   if (status && status !== existingBug.status) {
-    await createBugSystemMessage(
-      id,
+    await createSystemMessage(
+      contextId,
       {
         type: SystemMessageType.BUG_STATUS_CHANGED,
         variables: { status: status.toLowerCase() }
       },
-      ChatType.PUBLIC
+      ChatType.PUBLIC,
+      chatContextType
     );
   }
 
   if (bugType && bugType !== existingBug.bugType) {
-    await createBugSystemMessage(
-      id,
+    await createSystemMessage(
+      contextId,
       {
         type: SystemMessageType.BUG_TYPE_CHANGED,
         variables: { type: bugType.toLowerCase() }
       },
-      ChatType.PUBLIC
+      ChatType.PUBLIC,
+      chatContextType
     );
   }
 

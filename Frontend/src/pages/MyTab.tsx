@@ -206,9 +206,9 @@ export const MyTab = () => {
         return chatApi.markAllMessagesAsRead(game.id, chatTypes);
       });
 
-      const bugMarkPromises = bugsWithUnreadMessages.map(bug => 
-        chatApi.markAllBugMessagesAsRead(bug.id)
-      );
+      const bugMarkPromises = bugsWithUnreadMessages
+        .filter((bug: any) => bug?.groupChannelId)
+        .map((bug: any) => chatApi.markGroupChannelAsRead(bug.groupChannelId));
 
       const userChatMarkPromises = userChatsWithUnread.map(chat =>
         chatApi.markUserChatAsRead(chat.id)

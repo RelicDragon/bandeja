@@ -3,7 +3,6 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { chatApi, ChatMessage, ChatMessageWithStatus, ChatContextType, UserChat as UserChatType, OptimisticMessagePayload } from '@/api/chat';
 import { gamesApi } from '@/api/games';
-import { bugsApi } from '@/api/bugs';
 import { blockedUsersApi } from '@/api/blockedUsers';
 import { Game, ChatType, Bug } from '@/types';
 import { MessageList } from '@/components/MessageList';
@@ -28,6 +27,7 @@ import { parseSystemMessage } from '@/utils/systemMessages';
 import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users, Hash } from 'lucide-react';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
+import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { RequestToChat } from '@/components/chat/RequestToChat';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBackNavigation } from '@/utils/navigation';
@@ -68,10 +68,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   
   const locationState = location.state as LocationState | null;
   const contextType: ChatContextType = isEmbedded 
-    ? (propChatType === 'user' ? 'USER' : propChatType === 'bug' ? 'BUG' : (propChatType === 'group' || propChatType === 'channel') ? 'GROUP' : 'GAME')
+    ? (propChatType === 'user' ? 'USER' : (propChatType === 'group' || propChatType === 'channel') ? 'GROUP' : 'GAME')
     : (locationState?.contextType || 
-      (location.pathname.includes('/bugs/') ? 'BUG' : 
-       location.pathname.includes('/user-chat/') ? 'USER' :
+      (location.pathname.includes('/user-chat/') ? 'USER' :
        (location.pathname.includes('/group-chat/') || location.pathname.includes('/channel-chat/')) ? 'GROUP' : 'GAME'));
   const initialChatType = locationState?.initialChatType;
   
@@ -100,6 +99,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [isMuted, setIsMuted] = useState(false);
   const [isTogglingMute, setIsTogglingMute] = useState(false);
   const [hasSetDefaultChatType, setHasSetDefaultChatType] = useState(false);
+  const [showPlayerCard, setShowPlayerCard] = useState(false);
   const justLoadedOlderMessagesRef = useRef(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -111,10 +111,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const participation = getGameParticipationState(game?.participants ?? [], user?.id, game ?? undefined);
   const { userParticipant, isParticipant, isPlaying: isPlayingParticipant, isAdminOrOwner, hasPendingInvite, isGuest, isInJoinQueue } = participation;
   
-  const isBugCreator = bug?.senderId === user?.id;
+  const isBugChat = contextType === 'GROUP' && !!groupChannel?.bug;
+  const isBugCreator = groupChannel?.bug?.senderId === user?.id;
   const isBugAdmin = user?.isAdmin;
-  const isBugParticipant = bug?.participants?.some(p => p.userId === user?.id) ?? false;
-  const canWriteBugChat = contextType === 'BUG' && (isBugCreator || isBugAdmin || isBugParticipant);
+  const isBugParticipant = groupChannel?.participants?.some((p: any) => p.userId === user?.id) ?? false;
   
   const isChannelOwner = contextType === 'GROUP' && groupChannel && user ? isGroupChannelOwner(groupChannel, user.id) : false;
   const isChannelAdminOrOwner = contextType === 'GROUP' && groupChannel && user ? isGroupChannelAdminOrOwner(groupChannel, user.id) : false;
@@ -133,7 +133,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   }, [contextType, groupChannel, user?.id, isChannel, isChannelAdminOrOwner, isChannelParticipant]);
   
   const canAccessChat = contextType === 'USER' || 
-    contextType === 'BUG' || 
     (contextType === 'GAME' && (
       currentChatType === 'PUBLIC' || 
       currentChatType === 'PHOTOS' ||
@@ -165,12 +164,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const canWriteChat = useMemo(() => {
     if (contextType === 'GAME') return canWriteGameChat;
     if (contextType === 'GROUP') return canWriteGroupChat;
-    if (contextType === 'BUG') return canWriteBugChat;
     if (contextType === 'USER') return true;
     return false;
-  }, [contextType, canWriteGameChat, canWriteGroupChat, canWriteBugChat]);
+  }, [contextType, canWriteGameChat, canWriteGroupChat]);
   
-  const canViewPublicChat = contextType === 'USER' || contextType === 'BUG' || contextType === 'GROUP' || (contextType === 'GAME' && currentChatType === 'PUBLIC') || canAccessChat;
+  const canViewPublicChat = contextType === 'USER' || contextType === 'GROUP' || (contextType === 'GAME' && currentChatType === 'PUBLIC') || canAccessChat;
 
   const leaveModalLabels = useMemo(() => {
     if (contextType !== 'GAME' || !userParticipant) {
@@ -228,8 +226,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       } else if (contextType === 'GROUP') {
         setChatsFilter('channels');
         navigate('/chats', { replace: true });
-      } else if (contextType === 'BUG') {
-        navigate('/bugs', { replace: true });
       } else if (contextType === 'GAME') {
         navigate('/', { replace: true });
       }
@@ -243,10 +239,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       if (contextType === 'GAME') {
         const response = await gamesApi.getById(id);
         setGame(response.data);
-        return response.data;
-      } else if (contextType === 'BUG') {
-        const response = await bugsApi.getBugById(id);
-        setBug(response.data);
         return response.data;
       } else if (contextType === 'USER') {
         if (!userChat) {
@@ -283,15 +275,16 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         const response = await chatApi.getGroupChannelById(id);
         setGroupChannel(response.data);
         setGroupChannelParticipantsCount(response.data.participantsCount || 0);
+        if (response.data.bug) {
+          setBug(response.data.bug as Bug);
+        }
         return response.data;
       }
       return null;
     } catch (error) {
       console.error('Failed to load context:', error);
       if (!isEmbedded) {
-        if (contextType === 'BUG') {
-          navigate('/bugs', { replace: true });
-        } else if (contextType === 'GROUP') {
+        if (contextType === 'GROUP') {
           setChatsFilter('channels');
           navigate('/chats', { replace: true });
         } else if (contextType === 'USER') {
@@ -587,16 +580,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       } finally {
         setIsJoiningAsGuest(false);
       }
-    } else if (contextType === 'BUG') {
-      setIsJoiningAsGuest(true);
-      try {
-        await bugsApi.joinChat(id);
-        await loadContext();
-      } catch (error) {
-        console.error('Failed to join bug chat:', error);
-      } finally {
-        setIsJoiningAsGuest(false);
-      }
     } else if (contextType === 'GROUP') {
       setIsJoiningAsGuest(true);
       try {
@@ -640,13 +623,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             gameId: id,
           });
         }
-      } else if (contextType === 'BUG') {
-        await bugsApi.leaveChat(id);
-        await loadContext();
       } else if (contextType === 'GROUP') {
         await chatApi.leaveGroupChannel(id);
         await loadContext();
-        setChatsFilter('channels');
+        setChatsFilter(groupChannel?.bug ? 'bugs' : 'channels');
         navigate('/chats', { replace: true });
       }
     } catch (error) {
@@ -655,7 +635,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setIsLeavingChat(false);
       setShowLeaveConfirmation(false);
     }
-  }, [id, contextType, isLeavingChat, loadContext, navigate, location.pathname, location.state, setChatsFilter, userParticipant?.status]);
+  }, [id, contextType, isLeavingChat, loadContext, navigate, location.pathname, location.state, setChatsFilter, userParticipant?.status, groupChannel?.bug]);
 
   const handleToggleMute = useCallback(async () => {
     if (!id || isTogglingMute) return;
@@ -1096,15 +1076,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             updateUnreadCount(id, () => 0);
             
             window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-          } else if (contextType === 'BUG' && id) {
-            const markReadResponse = await chatApi.markAllBugMessagesAsRead(id);
-            const markedCount = markReadResponse.data?.count || 0;
-            
-            const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-            const newCount = Math.max(0, unreadMessages - markedCount);
-            setUnreadMessages(newCount);
-            
-            window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
           } else if (contextType === 'GROUP' && id) {
             const markReadResponse = await chatApi.markGroupChannelAsRead(id);
             const markedCount = markReadResponse.data?.count || 0;
@@ -1159,7 +1130,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     if (lastChatMessage.messageId && lastChatMessage.message?.senderId !== user?.id) {
       socketService.acknowledgeMessage(
         lastChatMessage.messageId,
-        contextType as 'GAME' | 'BUG' | 'USER',
+        contextType as 'GAME' | 'BUG' | 'USER' | 'GROUP',
         id
       );
       socketService.confirmMessageReceipt(lastChatMessage.messageId, 'socket');
@@ -1186,7 +1157,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     const currentMessages = messagesRef.current;
     if (currentMessages.length > 0) {
       const lastMessage = currentMessages[currentMessages.length - 1];
-      socketService.syncMessages(contextType as 'GAME' | 'BUG' | 'USER', id, lastMessage.id);
+      socketService.syncMessages(contextType as 'GAME' | 'BUG' | 'USER' | 'GROUP', id, lastMessage.id);
     }
   }, [lastSyncRequired, contextType, id]);
 
@@ -1289,7 +1260,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       if (game.name) return game.name;
       if (game.club) return `${game.club.name}`;
       return `${game.gameType} Game`;
-    } else if (contextType === 'BUG' && bug) {
+    } else if (isBugChat && bug) {
       return bug.text.length > 25 ? `${bug.text.substring(0, 23)}...` : bug.text;
     } else if (contextType === 'USER' && userChat) {
       const otherUser = userChat.user1Id === user?.id ? userChat.user2 : userChat.user1;
@@ -1310,7 +1281,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       const longDateD = getGameTimeDisplay({ game, displaySettings, startTime: game.startTime, kind: 'longDate', t });
       const timeRangeD = getGameTimeDisplay({ game, displaySettings, startTime: game.startTime, endTime: game.endTime, kind: 'timeRange', t });
       return `${longDateD.primaryText} • ${timeRangeD.primaryText}`;
-    } else if (contextType === 'BUG' && bug) {
+    } else if (isBugChat && bug) {
       return `${formatDate(bug.createdAt, 'PPP')} • ${t(`bug.types.${bug.bugType}`)} • ${t(`bug.statuses.${bug.status}`)}`;
     } else if (contextType === 'GROUP' && groupChannel) {
       return t('chat.participants', { count: groupChannelParticipantsCount });
@@ -1319,7 +1290,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   };
 
   const getIcon = () => {
-    if (contextType === 'BUG') {
+    if (isBugChat) {
       return <BugIcon size={16} className="text-red-500" />;
     } else if (contextType === 'GAME' && !game?.name) {
       return <MapPin size={16} className="text-gray-500 dark:text-gray-400" />;
@@ -1441,21 +1412,24 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                     </button>
                   </div>
                 )}
-                {contextType !== 'BUG' && <div className="flex-shrink-0">{getIcon()}</div>}
+                <div 
+                  className={`flex items-center gap-2 min-w-0 flex-1 ${(contextType === 'USER' || contextType === 'GROUP') ? 'cursor-pointer' : ''}`}
+                  onClick={contextType === 'USER' && userChat && user?.id ? () => setShowPlayerCard(true) : contextType === 'GROUP' ? () => {
+                    setShowParticipantsPage(true);
+                    setIsParticipantsPageAnimating(true);
+                    requestAnimationFrame(() => {
+                      requestAnimationFrame(() => {
+                        setIsParticipantsPageAnimating(false);
+                      });
+                    });
+                  } : undefined}
+                >
+                {!isBugChat && <div className="flex-shrink-0">{getIcon()}</div>}
                 <div className="min-w-0 flex-1">
-                  <h1 className={`${contextType === 'BUG' ? 'text-base' : 'text-lg'} font-semibold text-gray-900 dark:text-white flex items-center gap-2 whitespace-nowrap overflow-hidden`}>
-                    {contextType === 'BUG' && <BugIcon size={16} className="text-red-500 flex-shrink-0" />}
+                  <h1 className={`${isBugChat ? 'text-base' : 'text-lg'} font-semibold text-gray-900 dark:text-white flex items-center gap-2 whitespace-nowrap overflow-hidden`}>
+                    {isBugChat && <BugIcon size={16} className="text-red-500 flex-shrink-0" />}
                     <span 
-                      className={`truncate ${contextType === 'GROUP' ? 'cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors' : ''}`}
-                      onClick={contextType === 'GROUP' ? () => {
-                        setShowParticipantsPage(true);
-                        setIsParticipantsPageAnimating(true);
-                        requestAnimationFrame(() => {
-                          requestAnimationFrame(() => {
-                            setIsParticipantsPageAnimating(false);
-                          });
-                        });
-                      } : undefined}
+                      className={`truncate ${contextType === 'GROUP' ? 'hover:text-primary-600 dark:hover:text-primary-400 transition-colors' : ''}`}
                     >
                       {getTitle()}
                     </span>
@@ -1465,6 +1439,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                       {getSubtitle()}
                     </p>
                   )}
+                </div>
                 </div>
               </div>
               
@@ -1505,7 +1480,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               />
             </div>
           )}
-          {contextType === 'BUG' && bug && (isBugParticipant || isBugCreator || isBugAdmin) && (
+          {isBugChat && bug && (isBugParticipant || isBugCreator || isBugAdmin) && (
             <div className="flex items-center gap-2">
               <button
                 onClick={handleToggleMute}
@@ -1702,7 +1677,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           <div className="relative overflow-visible">
             <MessageInput
               gameId={contextType === 'GAME' ? id : undefined}
-              bugId={contextType === 'BUG' ? id : undefined}
               userChatId={contextType === 'USER' ? (id || userChat?.id) : undefined}
               groupChannelId={contextType === 'GROUP' ? id : undefined}
               game={game}
@@ -1766,7 +1740,14 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         />
       )}
 
-      {(contextType === 'GAME' || contextType === 'BUG' || contextType === 'GROUP') && (
+      {contextType === 'USER' && (
+        <PlayerCardBottomSheet
+          playerId={showPlayerCard && userChat && user?.id ? (userChat.user1Id === user.id ? userChat.user2Id : userChat.user1Id) ?? null : null}
+          onClose={() => setShowPlayerCard(false)}
+        />
+      )}
+
+      {(contextType === 'GAME' || isBugChat || contextType === 'GROUP') && (
         <ConfirmationModal
           isOpen={showLeaveConfirmation}
           title={contextType === 'GAME' ? leaveModalLabels.title : t('chat.leave')}

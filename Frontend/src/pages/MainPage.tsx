@@ -7,7 +7,6 @@ import { useDesktop } from '@/hooks/useDesktop';
 import { MyTab } from './MyTab';
 import { FindTab } from './FindTab';
 import { ChatsTab } from './ChatsTab';
-import { BugsTab } from './BugsTab';
 import { LeaderboardTab } from './LeaderboardTab';
 import { ProfileTab } from './ProfileTab';
 import { GameDetailsPage } from './GameDetailsPage';
@@ -16,7 +15,7 @@ import { GameSubscriptionsContent } from './GameSubscriptions';
 export const MainPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentPage, setCurrentPage, setIsAnimating, bottomTabsVisible, chatsFilter, setChatsFilter } = useNavigationStore();
+  const { currentPage, setCurrentPage, setIsAnimating, bottomTabsVisible, setChatsFilter } = useNavigationStore();
   const previousPathnameRef = useRef(location.pathname);
   const isInitialMountRef = useRef(true);
   const isDesktop = useDesktop();
@@ -45,13 +44,8 @@ export const MainPage = () => {
       } else if (path.startsWith('/games/') && !path.includes('/chat')) {
         setCurrentPage('gameDetails');
       } else if (path === '/bugs') {
-        setCurrentPage('bugs');
+        setCurrentPage('chats');
         setChatsFilter('bugs');
-      } else if (path.includes('/bugs/') && path.includes('/chat')) {
-        setChatsFilter('bugs');
-        if (currentPage !== 'chats') {
-          setCurrentPage('bugs');
-        }
       } else if (path.includes('/user-chat/')) {
         setCurrentPage('chats');
         setChatsFilter('users');
@@ -60,7 +54,6 @@ export const MainPage = () => {
         setChatsFilter('users');
       } else if (path.includes('/channel-chat/')) {
         setCurrentPage('chats');
-        setChatsFilter('channels');
       } else if (path === '/') {
         if (locationState?.fromPage && previousPath?.startsWith('/games/')) {
           setCurrentPage(locationState.fromPage);
@@ -95,8 +88,6 @@ export const MainPage = () => {
         return <FindTab />;
       case 'chats':
         return <ChatsTab />;
-      case 'bugs':
-        return <BugsTab />;
       case 'leaderboard':
         return <LeaderboardTab />;
       case 'profile':
@@ -111,28 +102,16 @@ export const MainPage = () => {
   }, [currentPage]);
 
   const isChatPage = currentPage === 'chats';
-  const isBugsPage = currentPage === 'bugs';
   const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') || 
                                  location.pathname.includes('/group-chat/') || 
-                                 location.pathname.includes('/channel-chat/') || 
-                                 (location.pathname.includes('/bugs/') && location.pathname.includes('/chat'));
+                                 location.pathname.includes('/channel-chat/');
   const shouldShowChatsSplitView = isChatPage && (isDesktop || !isOnSpecificChatRoute);
-  const shouldShowBugsSplitView = isBugsPage && (isDesktop || !isOnSpecificChatRoute);
-  const showBottomTabBar = bottomTabsVisible && (!isDesktop || (isChatPage && chatsFilter === 'bugs'));
+  const showBottomTabBar = bottomTabsVisible && (!isDesktop || isChatPage);
 
   if (isChatPage && shouldShowChatsSplitView) {
     return (
       <MainLayout>
         <ChatsTab />
-        {showBottomTabBar && !isDesktop && <BottomTabBar />}
-      </MainLayout>
-    );
-  }
-
-  if (isBugsPage && shouldShowBugsSplitView) {
-    return (
-      <MainLayout>
-        <BugsTab />
         {showBottomTabBar && !isDesktop && <BottomTabBar />}
       </MainLayout>
     );
@@ -148,10 +127,7 @@ export const MainPage = () => {
     );
   }
 
-  if ((isChatPage || isBugsPage) && !isDesktop && isOnSpecificChatRoute) {
-    if (isBugsPage) {
-      return <BugsTab />;
-    }
+  if (isChatPage && !isDesktop && isOnSpecificChatRoute) {
     return <ChatsTab />;
   }
 

@@ -515,20 +515,6 @@ function AppContent() {
           }
         />
         <Route
-          path="/bugs/:id/chat"
-          element={
-            <ProtectedRoute>
-              {!isProfileComplete(user) ? (
-                <Navigate to="/" replace />
-              ) : (
-                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                  <MainPage />
-                </Suspense>
-              )}
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/user-chat/:id"
           element={
             <ProtectedRoute>

@@ -1,5 +1,13 @@
-import { BugList } from '@/components/bugs';
+import { useEffect } from 'react';
+import { useNavigationStore } from '@/store/navigationStore';
+import { ChatsTab } from './ChatsTab';
 
 export const BugsContent = () => {
-  return <BugList isVisible={true} />;
+  const setChatsFilter = useNavigationStore((s) => s.setChatsFilter);
+
+  useEffect(() => {
+    setChatsFilter('bugs');
+  }, [setChatsFilter]);
+
+  return <ChatsTab />;
 };

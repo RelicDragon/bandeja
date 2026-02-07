@@ -9,36 +9,41 @@ export interface RouteConfig {
 }
 
 export const navigationRoutes: RouteConfig[] = [
-  // Bug chat routes
-  {
-    pattern: /^\/bugs\/[^/]+\/chat$/,
-    fallback: '/bugs',
-    contextType: 'BUG',
-    priority: 10,
-  },
-  
   // User chat routes
   {
     pattern: /^\/user-chat\/[^/]+$/,
-    fallback: '/chats',
+    fallback: (_pathname, state) =>
+      state?.fromPage === 'chats' && state?.searchQuery
+        ? `/chats?q=${encodeURIComponent(state.searchQuery)}`
+        : '/chats',
     contextType: 'USER',
     setFilter: 'users',
     priority: 10,
   },
-  
+
   // Group chat routes
   {
     pattern: /^\/group-chat\/[^/]+$/,
-    fallback: '/chats',
+    fallback: (_pathname, state) =>
+      state?.fromPage === 'chats' && state?.searchQuery
+        ? `/chats?q=${encodeURIComponent(state.searchQuery)}`
+        : '/chats',
     contextType: 'GROUP',
     setFilter: 'channels',
     priority: 10,
   },
-  
+
   // Channel chat routes
   {
     pattern: /^\/channel-chat\/[^/]+$/,
-    fallback: '/chats',
+    fallback: (_pathname, state) => {
+      if (state?.fromPage === 'bugs') return '/bugs';
+      if (state?.fromPage === 'chats' && state?.searchQuery) {
+        return `/chats?q=${encodeURIComponent(state.searchQuery)}`;
+      }
+      if (state?.fromPage === 'chats') return '/chats';
+      return '/chats';
+    },
     contextType: 'GROUP',
     setFilter: 'channels',
     priority: 10,
@@ -62,6 +67,9 @@ export const navigationRoutes: RouteConfig[] = [
       if (state?.fromLeagueSeasonGameId) {
         return `/games/${state.fromLeagueSeasonGameId}`;
       }
+      if (state?.fromPage === 'chats' && state?.searchQuery) {
+        return `/chats?q=${encodeURIComponent(state.searchQuery)}`;
+      }
       if (state?.fromPage) {
         const fromPageMap: Record<string, string> = {
           'find': '/find',
@@ -77,13 +85,6 @@ export const navigationRoutes: RouteConfig[] = [
     priority: 5,
   },
   
-  // Bugs list
-  {
-    pattern: /^\/bugs$/,
-    fallback: '/',
-    priority: 3,
-  },
-
   {
     pattern: /^\/login\/telegram$/,
     fallback: '/login',

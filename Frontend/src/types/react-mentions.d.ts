@@ -21,6 +21,7 @@ declare module 'react-mentions' {
     disabled?: boolean;
     style?: any;
     allowSuggestionsAboveCursor?: boolean;
+    inputRef?: (el: HTMLTextAreaElement | null) => void;
     children?: ReactNode;
   }
 

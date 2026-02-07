@@ -25,10 +25,6 @@ import {
   unpinUserChat,
   requestToChat,
   respondToChatRequest,
-  getBugMessages,
-  getBugUnreadCount,
-  getBugsUnreadCounts,
-  markAllBugMessagesAsRead,
   reportMessage,
   translateMessage,
   getUnreadObjects,
@@ -42,7 +38,8 @@ import {
   getDraft,
   getUserDrafts,
   deleteDraft,
-  votePoll
+  votePoll,
+  searchMessages
 } from '../controllers/chat.controller';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -79,6 +76,15 @@ const unreadObjectsLimiter = rateLimit({
   keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
 });
 
+const searchMessagesLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { success: false, message: 'Too many search requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
+
 router.post(
   '/messages',
   createMessageLimiter,
@@ -104,6 +110,17 @@ router.post(
     body('optionIds.*').optional().notEmpty().withMessage('Option ID cannot be empty')
   ]),
   votePoll
+);
+
+router.get(
+  '/messages/search',
+  searchMessagesLimiter,
+  validate([
+    query('q').isString().trim().isLength({ min: 1, max: 200 }),
+    query('page').optional().isInt({ min: 1 }),
+    query('limit').optional().isInt({ min: 1, max: 50 })
+  ]),
+  searchMessages
 );
 
 router.get('/games/:gameId/messages', getGameMessages);
@@ -170,19 +187,6 @@ router.post(
     body('chatIds.*').notEmpty().withMessage('Chat ID cannot be empty')
   ]),
   getUserChatsUnreadCounts
-);
-
-// Bug Chat Routes
-router.get('/bugs/:bugId/messages', getBugMessages);
-router.get('/bugs/:bugId/unread-count', getBugUnreadCount);
-router.post('/bugs/:bugId/mark-all-read', markAllBugMessagesAsRead);
-router.post(
-  '/bugs/unread-counts',
-  validate([
-    body('bugIds').isArray().withMessage('Bug IDs must be an array'),
-    body('bugIds.*').notEmpty().withMessage('Bug ID cannot be empty')
-  ]),
-  getBugsUnreadCounts
 );
 
 router.post(

@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 interface BugModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (groupChannelId?: string) => void;
 }
 
 export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
@@ -53,11 +53,12 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
     try {
       const platformInfo = await getPlatformInfo();
       const bugText = `${text.trim()}\n${platformInfo}`;
-      await bugsApi.createBug({ text: bugText, bugType });
+      const res = await bugsApi.createBug({ text: bugText, bugType });
       toast.success(t('bug.created'));
       setText('');
       setBugType('BUG');
-      onSuccess();
+      const groupChannelId = res.data?.groupChannel?.id;
+      onSuccess(groupChannelId);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'bug.createError';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
@@ -79,7 +80,7 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
           <DialogTitle>{t('bug.addBug')}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="px-6 py-4">
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
               {t('bug.type')}

@@ -1,6 +1,7 @@
 import { formatChatTime } from '@/utils/dateFormat';
 import { GroupChannel, ChatDraft, getLastMessageTime, getLastMessageText, isLastMessagePreview } from '@/api/chat';
 import { Users, Hash } from 'lucide-react';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useMemo } from 'react';
@@ -34,36 +35,48 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
         : 'hover:bg-gray-100 dark:hover:bg-gray-800'
         }`}
     >
-      <div className="relative flex-shrink-0">
-        {groupChannel.avatar ? (
-          <img
-            src={groupChannel.avatar}
-            alt={displayName}
-            className="w-12 h-12 rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-            {groupChannel.isChannel ? (
-              <Hash className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-            ) : (
-              <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-            )}
-          </div>
-        )}
-      </div>
+      {!groupChannel.bugId && (
+        <div className="relative flex-shrink-0">
+          {groupChannel.avatar ? (
+            <img
+              src={groupChannel.avatar}
+              alt={displayName}
+              className="w-12 h-12 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+              {groupChannel.isChannel ? (
+                <Hash className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+              ) : (
+                <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+        <div className="flex items-start justify-between mb-1 gap-2">
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white break-words min-w-0">
               {displayName}
             </h3>
-            {groupChannel.isChannel && (
-              <span className="text-xs text-gray-500 dark:text-gray-400">Channel</span>
+            {groupChannel.bug && (
+              <div className="flex flex-wrap items-center gap-1">
+                {groupChannel.bug.sender && (
+                  <PlayerAvatar player={groupChannel.bug.sender} extrasmall fullHideName showName={false} asDiv />
+                )}
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                  {t(`bug.types.${groupChannel.bug.bugType}`)}
+                </span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300">
+                  {t(`bug.statuses.${groupChannel.bug.status}`)}
+                </span>
+              </div>
             )}
           </div>
           {(lastMessage || draft) && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 flex-shrink-0">
+            <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
               {formatChatTime(
                 (() => {
                   const msg = lastMessage;

@@ -47,12 +47,6 @@ const GAME_INCLUDE = {
   },
 } as const;
 
-const BUG_INCLUDE = {
-  sender: { select: { ...USER_SELECT_FIELDS, isAdmin: true } },
-  participants: {
-    include: { user: { select: USER_SELECT_FIELDS } },
-  },
-} as const;
 
 const GAME_COUNT_CONCURRENCY = 30;
 
@@ -144,52 +138,56 @@ async function getUserChatsWithUnread(userId: string): Promise<UnreadObjectsResu
 }
 
 async function getBugsWithUnread(userId: string): Promise<UnreadObjectsResult['bugs']> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isAdmin: true },
+  const groupChannels = await prisma.groupChannel.findMany({
+    where: {
+      isChannel: true,
+      bugId: { not: null },
+      OR: [
+        { participants: { some: { userId, hidden: false } } },
+        { isPublic: true },
+      ],
+    },
+    select: { id: true },
   });
 
-  let bugIds: string[];
-  if (user?.isAdmin) {
-    const bugs = await prisma.bug.findMany({ select: { id: true } });
-    bugIds = bugs.map((b) => b.id);
-  } else {
-    const [userBugs, participantBugs] = await Promise.all([
-      prisma.bug.findMany({ where: { senderId: userId }, select: { id: true } }),
-      prisma.bugParticipant.findMany({ where: { userId }, select: { bugId: true } }),
-    ]);
-    bugIds = [
-      ...new Set([
-        ...userBugs.map((b) => b.id),
-        ...participantBugs.map((p) => p.bugId),
-      ]),
-    ];
-  }
-
-  if (bugIds.length === 0) return [];
+  const contextIds = groupChannels.map((c) => c.id);
+  if (contextIds.length === 0) return [];
 
   const unreadMap = await UnreadCountBatchService.getUnreadCountsByContext(
-    'BUG',
-    bugIds,
+    'GROUP',
+    contextIds,
     userId
   );
 
-  const bugIdsWithUnread = Object.entries(unreadMap)
+  const idsWithUnread = Object.entries(unreadMap)
     .filter(([, count]) => count > 0)
     .map(([id]) => id);
 
-  if (bugIdsWithUnread.length === 0) return [];
+  if (idsWithUnread.length === 0) return [];
 
-  const fullBugs = await prisma.bug.findMany({
-    where: { id: { in: bugIdsWithUnread } },
-    include: BUG_INCLUDE,
+  const fullChannels = await prisma.groupChannel.findMany({
+    where: { id: { in: idsWithUnread } },
+    include: {
+      bug: {
+        include: {
+          sender: { select: { ...USER_SELECT_FIELDS, isAdmin: true } },
+        },
+      },
+      participants: {
+        where: { userId },
+        include: { user: { select: USER_SELECT_FIELDS } },
+      },
+    },
   });
 
-  const bugById = Object.fromEntries(fullBugs.map((b) => [b.id, b]));
-  return bugIdsWithUnread.map((id) => ({
-    bug: bugById[id],
-    unreadCount: unreadMap[id] ?? 0,
-  }));
+  const channelById = Object.fromEntries(fullChannels.map((c) => [c.id, c]));
+  return idsWithUnread.map((id) => {
+    const channel = channelById[id]!;
+    return {
+      bug: channel.bug ? { ...channel.bug, groupChannelId: channel.id } : null,
+      unreadCount: unreadMap[id] ?? 0,
+    };
+  });
 }
 
 async function getGroupChannelsWithUnread(
@@ -198,6 +196,7 @@ async function getGroupChannelsWithUnread(
   const [channels, mutedChats] = await Promise.all([
     prisma.groupChannel.findMany({
       where: {
+        bugId: null,
         participants: { some: { userId, hidden: false } },
       },
       select: { id: true },

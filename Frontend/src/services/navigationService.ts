@@ -71,7 +71,7 @@ class NavigationService {
     navigateWithTracking(this.navigate!, `/user-chat/${userChatId}`, { replace: true });
   }
 
-  navigateToBugChat(bugId: string) {
+  async navigateToBugChat(bugId: string) {
     if (!this.ensureInitialized() || !bugId) {
       console.error('Cannot navigate to bug chat: invalid bugId or service not initialized');
       return;
@@ -83,7 +83,21 @@ class NavigationService {
     this.setAnimatingState();
     store.setCurrentPage('chats');
     store.setChatsFilter('bugs');
-    navigateWithTracking(this.navigate!, `/bugs/${bugId}/chat`, { replace: true });
+    try {
+      const { bugsApi } = await import('@/api');
+      const res = await bugsApi.getBugById(bugId);
+      const groupChannelId = res.data?.groupChannel?.id;
+      if (groupChannelId) {
+        useNavigationStore.getState().setChatsFilter('bugs');
+        navigateWithTracking(this.navigate!, `/channel-chat/${groupChannelId}`, { replace: true });
+      } else {
+        useNavigationStore.getState().setChatsFilter('bugs');
+        navigateWithTracking(this.navigate!, '/chats', { replace: true });
+      }
+    } catch {
+      useNavigationStore.getState().setChatsFilter('bugs');
+      navigateWithTracking(this.navigate!, '/chats', { replace: true });
+    }
   }
 
   navigateToGroupChat(groupChannelId: string) {
@@ -128,6 +142,22 @@ class NavigationService {
     this.setAnimatingState();
     store.setCurrentPage('chats');
     store.setChatsFilter('bugs');
+    navigateWithTracking(this.navigate!, '/bugs', { replace: true });
+  }
+
+  navigateToCreateBug() {
+    if (!this.ensureInitialized()) {
+      console.error('Cannot navigate to create bug: service not initialized');
+      return;
+    }
+
+    const store = this.getStore();
+    if (!store) return;
+
+    this.setAnimatingState();
+    store.setCurrentPage('chats');
+    store.setChatsFilter('bugs');
+    store.setOpenBugModal(true);
     navigateWithTracking(this.navigate!, '/bugs', { replace: true });
   }
 }

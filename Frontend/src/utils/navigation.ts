@@ -63,6 +63,8 @@ export const canNavigateBack = (): boolean => {
 export interface LocationState {
   fromLeagueSeasonGameId?: string;
   fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions';
+  fromFilter?: 'users' | 'bugs' | 'channels';
+  searchQuery?: string;
   isAppNavigation?: boolean;
   timestamp?: number;
 }
@@ -91,7 +93,7 @@ const isAppPath = (pathname: string): boolean =>
 
 /** Entry-point routes (direct URL, shared link, push). Never use history.back() — previous entry may be external (about:blank, google). */
 const ENTRY_POINT_PATH_RE =
-  /^\/(group-chat|user-chat|channel-chat|games)\/[^/]+(\/chat)?$|^\/bugs\/[^/]+\/chat$/;
+  /^\/(group-chat|user-chat|channel-chat|games)\/[^/]+(\/chat)?$/;
 const isEntryPointRoute = (pathname: string): boolean => ENTRY_POINT_PATH_RE.test(pathname);
 
 /** Call from App when Capacitor. On iOS, swipe-back is WebView-native (history.back()); this redirects to home if we land on a non-app path. */
@@ -112,15 +114,23 @@ const applyFallback = (
   fallback: string,
   matchedRoute: { setFilter?: 'users' | 'bugs' | 'channels' } | null
 ): void => {
-  const { navigate, setCurrentPage, setChatsFilter } = params;
-  if (matchedRoute?.setFilter && setChatsFilter) {
-    setChatsFilter(matchedRoute.setFilter);
+  const { navigate, setCurrentPage, setChatsFilter, locationState } = params;
+  if (setChatsFilter) {
+    if (fallback === '/bugs') {
+      setChatsFilter('bugs');
+    } else if (fallback === '/chats' && locationState?.fromFilter) {
+      setChatsFilter(locationState.fromFilter);
+    } else if (matchedRoute?.setFilter) {
+      setChatsFilter(matchedRoute.setFilter);
+    }
   }
   if (setCurrentPage) {
     if (fallback === '/') {
       setCurrentPage('my');
     } else if (fallback.includes('/games/')) {
       setCurrentPage('gameDetails');
+    } else if (fallback === '/bugs' || fallback === '/chats') {
+      setCurrentPage('chats');
     }
   }
   navigateWithTracking(navigate, fallback, { replace: true });
@@ -155,8 +165,32 @@ export const handleBackNavigation = (params: HandleBackNavigationParams): void =
     goToFallback();
     return;
   }
-  if (isEntryPointRoute(pathname)) {
+  const isChatFromInApp =
+    (locationState?.fromPage === 'chats' || locationState?.fromPage === 'bugs') &&
+    canNavigateBack() &&
+    (pathname.match(/^\/games\/[^/]+\/chat$/) ||
+      pathname.match(/^\/user-chat\/[^/]+$/) ||
+      pathname.match(/^\/group-chat\/[^/]+$/) ||
+      pathname.match(/^\/channel-chat\/[^/]+$/));
+  if (isEntryPointRoute(pathname) && !isChatFromInApp) {
     goToFallback();
+    return;
+  }
+  if (isChatFromInApp) {
+    const previousPathname = pathname;
+    try {
+      navigate(-1);
+    } catch (error) {
+      console.error('[Navigation] Error navigating back:', error);
+      goToFallback();
+      return;
+    }
+    setTimeout(() => {
+      const current = window.location.pathname;
+      if (current === previousPathname || !isAppPath(current)) {
+        goToFallback();
+      }
+    }, SAFETY_CHECK_MS);
     return;
   }
   if (canNavigateBack()) {

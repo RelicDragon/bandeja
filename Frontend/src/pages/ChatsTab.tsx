@@ -5,7 +5,6 @@ import { ChatList, ChatType } from '@/components/chat/ChatList';
 import { GameChat } from './GameChat';
 import { MessageCircle } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
-import { BugsTab } from './BugsTab';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { SplitViewLeftPanel, SplitViewRightPanel } from '@/components/SplitViewPanels';
 import { useDesktop } from '@/hooks/useDesktop';
@@ -18,7 +17,7 @@ export const ChatsTab = () => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedChatType, setSelectedChatType] = useState<ChatType | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const { setIsAnimating, chatsFilter, bottomTabsVisible } = useNavigationStore();
+  const { setIsAnimating, bottomTabsVisible, chatsFilter } = useNavigationStore();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const selectedChatIdRef = useRef<string | null>(null);
@@ -54,15 +53,6 @@ export const ChatsTab = () => {
           shouldUpdate = true;
         }
       }
-    } else if (path.includes('/bugs/') && path.includes('/chat')) {
-      const match = path.match(/\/bugs\/([^/]+)\/chat/);
-      if (match && match[1]) {
-        if (match[1] !== selectedChatId || selectedChatType !== 'bug') {
-          newChatId = match[1];
-          newChatType = 'bug';
-          shouldUpdate = true;
-        }
-      }
     } else if (path.includes('/group-chat/')) {
       const chatId = path.split('/group-chat/')[1]?.split('/')[0];
       if (chatId) {
@@ -81,7 +71,16 @@ export const ChatsTab = () => {
           shouldUpdate = true;
         }
       }
-    } else if (path === '/chats') {
+    } else if (path.match(/^\/games\/[^/]+\/chat$/)) {
+      const match = path.match(/^\/games\/([^/]+)\/chat$/);
+      if (match && match[1]) {
+        if (match[1] !== selectedChatId || selectedChatType !== 'game') {
+          newChatId = match[1];
+          newChatType = 'game';
+          shouldUpdate = true;
+        }
+      }
+    } else if (path === '/chats' || path === '/bugs') {
       if (selectedChatId !== null) {
         newChatId = null;
         newChatType = null;
@@ -95,55 +94,76 @@ export const ChatsTab = () => {
     }
   }, [location.pathname, selectedChatId, selectedChatType]);
 
-  useEffect(() => {
-    if (chatsFilter === 'bugs' && !location.pathname.includes('/bugs/')) {
-      setSelectedChatId(null);
-      setSelectedChatType(null);
-    }
-  }, [chatsFilter, location.pathname]);
-
   const getChatPath = useCallback((chatId: string, chatType: ChatType) => {
     return chatType === 'user' 
       ? `/user-chat/${chatId}`
-      : chatType === 'bug'
-      ? `/bugs/${chatId}/chat`
       : chatType === 'channel'
       ? `/channel-chat/${chatId}`
+      : chatType === 'game'
+      ? `/games/${chatId}/chat`
       : `/group-chat/${chatId}`;
   }, []);
 
-  const handleChatSelect = useCallback((chatId: string, chatType: ChatType) => {
+  const handleChatSelect = useCallback((chatId: string, chatType: ChatType, options?: { initialChatType?: string; searchQuery?: string }) => {
+    const fromSearch = !!options?.searchQuery;
+    const fromPage = location.pathname === '/bugs' ? ('bugs' as const) : ('chats' as const);
+    const chatState = {
+      initialChatType: options?.initialChatType,
+      fromPage,
+      fromFilter: chatsFilter,
+      ...(fromSearch ? { searchQuery: options.searchQuery } : {}),
+    };
+
+    if (fromSearch) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+      setIsAnimating(true);
+      setIsTransitioning(true);
+      setSelectedChatId(chatId);
+      setSelectedChatType(chatType);
+      try {
+        if (chatType === 'game') {
+          navigate(`/games/${chatId}`, { state: { fromPage, fromFilter: chatsFilter, searchQuery: options.searchQuery } });
+          navigate(`/games/${chatId}/chat`, { state: chatState });
+        } else {
+          const path = getChatPath(chatId, chatType);
+          navigate(path, { state: chatState });
+        }
+      } catch (error) {
+        console.error('Navigation failed:', error);
+      } finally {
+        setTimeout(() => {
+          setIsAnimating(false);
+          setIsTransitioning(false);
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+          if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+          animationTimeoutRef.current = null;
+        }, isDesktop ? 150 : 300);
+      }
+      return;
+    }
+
     if (isDesktop) {
-      if (selectedChatId === chatId && selectedChatType === chatType) {
-        return;
-      }
-      
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      
+      if (selectedChatId === chatId && selectedChatType === chatType) return;
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setIsTransitioning(true);
       requestAnimationFrame(() => {
         setSelectedChatId(chatId);
         setSelectedChatType(chatType);
-        
         const path = getChatPath(chatId, chatType);
-        navigate(path, { replace: true });
-        
+        navigate(path, { replace: true, state: chatState });
         timeoutRef.current = setTimeout(() => {
           setIsTransitioning(false);
           timeoutRef.current = null;
         }, 150);
       });
     } else {
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
-      }
-      
+      if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
       setIsAnimating(true);
       try {
         const path = getChatPath(chatId, chatType);
-        navigate(path);
+        navigate(path, { state: chatState });
         animationTimeoutRef.current = setTimeout(() => {
           setIsAnimating(false);
           animationTimeoutRef.current = null;
@@ -153,7 +173,7 @@ export const ChatsTab = () => {
         setIsAnimating(false);
       }
     }
-  }, [isDesktop, selectedChatId, selectedChatType, setIsAnimating, navigate, getChatPath]);
+  }, [isDesktop, selectedChatId, selectedChatType, setIsAnimating, navigate, getChatPath, location.pathname, chatsFilter]);
 
   const emptyState = useMemo(() => (
     <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
@@ -187,12 +207,6 @@ export const ChatsTab = () => {
       />
     </SplitViewRightPanel>
   ), [selectedChatId, selectedChatType, isTransitioning, emptyState]);
-
-  const isOnBugsListPage = chatsFilter === 'bugs' && !location.pathname.includes('/bugs/');
-  
-  if (isOnBugsListPage) {
-    return <BugsTab />;
-  }
 
   if (isDesktop) {
     return (

@@ -37,17 +37,37 @@ export const createGroupChannel = asyncHandler(async (req: AuthRequest, res: Res
 
 export const getGroupChannels = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
+  const filter = req.query.filter as 'users' | 'bugs' | 'channels' | undefined;
+  const page = (filter === 'bugs' || filter === 'users' || filter === 'channels') ? Math.max(1, Number(req.query.page) || 1) : undefined;
+  const limit = (filter === 'bugs' || filter === 'users' || filter === 'channels') ? GroupChannelService.PAGE_SIZE : undefined;
+
+  const opts: { page?: number; limit?: number; status?: string[]; bugType?: string[]; myBugsOnly?: boolean } = { page, limit };
+  if (filter === 'bugs') {
+    const status = req.query.status;
+    const bugType = req.query.bugType;
+    if (status) opts.status = (Array.isArray(status) ? status : [status]).flatMap((s) => String(s).split(',')).filter(Boolean);
+    if (bugType) opts.bugType = (Array.isArray(bugType) ? bugType : [bugType]).flatMap((t) => String(t).split(',')).filter(Boolean);
+    if (req.query.myBugsOnly === 'true') opts.myBugsOnly = true;
+  }
 
   if (!userId) {
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const groupChannels = await GroupChannelService.getGroupChannels(userId);
+  const result = await GroupChannelService.getGroupChannels(userId, filter, opts);
 
-  res.json({
-    success: true,
-    data: groupChannels
-  });
+  if (typeof result === 'object' && 'data' in result && 'pagination' in result) {
+    res.json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination
+    });
+  } else {
+    res.json({
+      success: true,
+      data: result
+    });
+  }
 });
 
 export const getPublicGroupChannels = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -258,6 +278,27 @@ export const getGroupChannelUnreadCount = asyncHandler(async (req: AuthRequest, 
   res.json({
     success: true,
     data: result
+  });
+});
+
+export const getGroupChannelsUnreadCounts = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { groupIds } = req.body;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!groupIds || !Array.isArray(groupIds) || groupIds.length === 0) {
+    throw new ApiError(400, 'groupIds array is required');
+  }
+
+  const { ReadReceiptService } = await import('../services/chat/readReceipt.service');
+  const unreadCounts = await ReadReceiptService.getGroupChannelsUnreadCounts(groupIds, userId);
+
+  res.json({
+    success: true,
+    data: unreadCounts
   });
 });
 
