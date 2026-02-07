@@ -227,7 +227,7 @@ export class ParticipantService {
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
   }
 
-  static async togglePlayingStatus(gameId: string, userId: string, isPlaying: boolean) {
+  static async togglePlayingStatus(gameId: string, userId: string, status: 'PLAYING' | 'IN_QUEUE') {
     const participant = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
@@ -244,7 +244,8 @@ export class ParticipantService {
       throw new ApiError(404, 'Not a participant of this game');
     }
 
-    const newStatus = isPlaying ? PLAYING_STATUS : IN_QUEUE_STATUS;
+    const isPlaying = status === PLAYING_STATUS;
+    const newStatus = status;
 
     if (isPlaying && participant.status !== PLAYING_STATUS) {
       const game = await prisma.game.findUnique({
@@ -548,7 +549,6 @@ export class ParticipantService {
     return 'games.joinRequestCanceled';
   }
 
-  /** Creates participant with status INVITED. Returns synthetic invite shape for backward compat. */
   static async sendInvite(
     gameId: string,
     senderId: string,

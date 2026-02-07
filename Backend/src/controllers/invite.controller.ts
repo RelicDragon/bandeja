@@ -11,7 +11,7 @@ import notificationService from '../services/notification.service';
 import { InviteService } from '../services/invite.service';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { ParticipantService } from '../services/game/participant.service';
-import { GameReadService } from '../services/game/read.service';
+import { GameReadService, participantsToInviteShape } from '../services/game/read.service';
 
 export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { receiverId, gameId, message, expiresAt } = req.body;
@@ -309,7 +309,8 @@ export const deleteExpiredInvites = asyncHandler(async (req: AuthRequest, res: R
 export const getGameInvites = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
   const game = await GameReadService.getGameById(gameId, req.userId);
-  res.json({ success: true, data: game.invites ?? [] });
+  const gameAny = game as any;
+  res.json({ success: true, data: participantsToInviteShape(gameAny.participants ?? [], game) });
 });
 
 export const cancelInvite = asyncHandler(async (req: AuthRequest, res: Response) => {

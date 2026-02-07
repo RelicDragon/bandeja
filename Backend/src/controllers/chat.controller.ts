@@ -25,17 +25,6 @@ export const createSystemMessage = async (contextId: string, messageData: { type
 
   const socketService = (global as any).socketService;
   if (socketService) {
-    // OLD events (keep for backward compatibility - GAME, BUG, USER only)
-    if (chatContextType === 'GAME') {
-      socketService.emitNewMessage(contextId, message);
-    } else if (chatContextType === 'BUG') {
-      socketService.emitNewBugMessage(contextId, message);
-    } else if (chatContextType === 'USER') {
-      await socketService.emitNewUserMessage(contextId, message);
-    }
-    // GROUP uses only unified events (no old compatibility)
-
-    // NEW unified event
     socketService.emitChatEvent(
       chatContextType,
       contextId,
@@ -47,11 +36,6 @@ export const createSystemMessage = async (contextId: string, messageData: { type
   return message;
 };
 
-// Alias for backward compatibility
-export const createBugSystemMessage = async (bugId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC) => {
-  return createSystemMessage(bugId, messageData, chatType, ChatContextType.BUG);
-};
-
 export const createMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
   console.log('[createMessage] Request received:', {
     body: req.body,
@@ -59,13 +43,12 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     headers: req.headers
   });
 
-  const { chatContextType = 'GAME', contextId, gameId, content, mediaUrls, replyToId, chatType = ChatType.PUBLIC, mentionIds = [], poll } = req.body;
+  const { chatContextType = 'GAME', contextId, content, mediaUrls, replyToId, chatType = ChatType.PUBLIC, mentionIds = [], poll } = req.body;
   const senderId = req.userId;
 
   console.log('[createMessage] Parsed data:', {
     chatContextType,
     contextId,
-    gameId,
     content: content ? `${content.substring(0, 50)}...` : null,
     mediaUrls,
     mediaUrlsType: typeof mediaUrls,
@@ -82,12 +65,9 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     throw new ApiError(401, 'Unauthorized');
   }
 
-  // Support legacy gameId parameter
-  const finalContextId = contextId || gameId;
-  console.log('[createMessage] Final contextId:', finalContextId);
-  if (!finalContextId) {
-    console.error('[createMessage] Missing contextId and gameId');
-    throw new ApiError(400, 'contextId or gameId is required');
+  if (!contextId) {
+    console.error('[createMessage] Missing contextId');
+    throw new ApiError(400, 'contextId is required');
   }
 
   // Ensure mediaUrls is an array
@@ -107,7 +87,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
   try {
     console.log('[createMessage] Calling MessageService.createMessageWithEvent with:', {
       chatContextType,
-      contextId: finalContextId,
+      contextId,
       senderId,
       contentLength: content?.length,
       mediaUrlsCount: finalMediaUrls.length,
@@ -118,7 +98,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
 
     const message = await MessageService.createMessageWithEvent({
       chatContextType: chatContextType as ChatContextType,
-      contextId: finalContextId,
+      contextId,
       senderId,
       content,
       mediaUrls: finalMediaUrls,
@@ -180,7 +160,7 @@ export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => 
     // Let's fetch the message context separately or update PollService to return it.
     const message = await prisma.chatMessage.findUnique({
       where: { id: updatedPoll!.messageId },
-      select: { chatContextType: true, contextId: true, gameId: true }
+      select: { chatContextType: true, contextId: true }
     });
 
     if (message) {
@@ -262,20 +242,10 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
     // Get the context from the message to emit to the correct room
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId },
-      select: { chatContextType: true, contextId: true, gameId: true }
+      select: { chatContextType: true, contextId: true }
     });
 
     if (message) {
-      // OLD events (keep for backward compatibility - GAME, BUG, USER only)
-      if (message.chatContextType === 'GAME') {
-        socketService.emitReadReceipt(message.gameId || message.contextId, readReceipt);
-      } else if (message.chatContextType === 'BUG') {
-        socketService.emitBugReadReceipt(message.contextId, readReceipt);
-      } else if (message.chatContextType === 'USER') {
-        socketService.emitUserReadReceipt(message.contextId, readReceipt);
-      }
-      // GROUP uses only unified events (no old compatibility)
-
       // NEW unified event
       socketService.emitChatEvent(
         message.chatContextType,
@@ -318,21 +288,10 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
     // Get the context from the message to emit to the correct room
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId },
-      select: { chatContextType: true, contextId: true, gameId: true }
+      select: { chatContextType: true, contextId: true }
     });
 
     if (message) {
-      // OLD events (keep for backward compatibility - GAME, BUG, USER only)
-      if (message.chatContextType === 'GAME') {
-        socketService.emitMessageReaction(message.gameId || message.contextId, reaction);
-      } else if (message.chatContextType === 'BUG') {
-        socketService.emitBugMessageReaction(message.contextId, reaction);
-      } else if (message.chatContextType === 'USER') {
-        socketService.emitUserMessageReaction(message.contextId, reaction);
-      }
-      // GROUP uses only unified events (no old compatibility)
-
-      // NEW unified event
       socketService.emitChatEvent(
         message.chatContextType,
         message.contextId,
@@ -363,19 +322,10 @@ export const removeReaction = asyncHandler(async (req: AuthRequest, res: Respons
     // Get the context from the message to emit to the correct room
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId },
-      select: { chatContextType: true, contextId: true, gameId: true }
+      select: { chatContextType: true, contextId: true }
     });
 
     if (message) {
-      // OLD events (keep for backward compatibility)
-      if (message.chatContextType === 'GAME') {
-        socketService.emitMessageReaction(message.gameId || message.contextId, result);
-      } else if (message.chatContextType === 'BUG') {
-        socketService.emitBugMessageReaction(message.contextId, result);
-      } else if (message.chatContextType === 'USER') {
-        socketService.emitUserMessageReaction(message.contextId, result);
-      }
-
       // NEW unified event
       socketService.emitChatEvent(
         message.chatContextType,
@@ -447,7 +397,7 @@ export const getGameParticipants = asyncHandler(async (req: AuthRequest, res: Re
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const game = await GameReadService.getGameById(gameId, userId, true);
+  const game = await GameReadService.getGameById(gameId, userId, true) as any;
   const participants = (game.participants ?? []).map((p: any) => ({
     ...p,
     isPlaying: p.status === 'PLAYING',
@@ -546,16 +496,6 @@ export const deleteMessage = asyncHandler(async (req: AuthRequest, res: Response
 
   const socketService = (global as any).socketService;
   if (socketService) {
-    // OLD events (keep for backward compatibility - GAME, BUG, USER only)
-    if (message.chatContextType === 'GAME' && message.gameId) {
-      socketService.emitMessageDeleted(message.gameId, messageId);
-    } else if (message.chatContextType === 'BUG') {
-      socketService.emitBugMessageDeleted(message.contextId, messageId);
-    } else if (message.chatContextType === 'USER') {
-      socketService.emitUserMessageDeleted(message.contextId, messageId);
-    }
-    // GROUP uses only unified events (no old compatibility)
-
     // NEW unified event
     socketService.emitChatEvent(
       message.chatContextType,

@@ -588,7 +588,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       const messageData: CreateMessageRequest = {
         chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
         contextId: finalContextId,
-        gameId: gameId,
         chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
         content: pollData.question,
         poll: pollData
@@ -670,7 +669,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             const messageData: CreateMessageRequest = {
               chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
               contextId: finalContextId,
-              gameId: gameId,
               content: trimmedContent || undefined,
               mediaUrls: originalUrls.length > 0 ? originalUrls : [],
               thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,

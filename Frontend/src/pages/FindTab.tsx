@@ -64,9 +64,6 @@ export const FindTab = () => {
     fetchData: fetchAvailableGames,
   } = useAvailableGames(user, dateRange.startDate, dateRange.endDate, true);
 
-  const handleMonthChange = () => {
-  };
-
   const handleDateRangeChange = (startDate: Date, endDate: Date) => {
     setDateRange({ startDate, endDate });
   };
@@ -121,7 +118,7 @@ export const FindTab = () => {
           user={user}
           loading={loadingAvailableGames}
           onJoin={handleJoinGame}
-          onMonthChange={handleMonthChange}
+          onMonthChange={undefined}
           onDateRangeChange={handleDateRangeChange}
           filters={filters}
           onFilterChange={(key, value) => updateFilter(key, value)}

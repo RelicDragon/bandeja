@@ -689,16 +689,6 @@ export class MessageService {
         translations: translationsArray
       };
 
-      // OLD events (keep for backward compatibility - GAME, BUG, USER only)
-      if (data.chatContextType === 'GAME') {
-        socketService.emitNewMessage(data.contextId, messageWithTranslations);
-      } else if (data.chatContextType === 'BUG') {
-        socketService.emitNewBugMessage(data.contextId, messageWithTranslations);
-      } else if (data.chatContextType === 'USER') {
-        await socketService.emitNewUserMessage(data.contextId, messageWithTranslations);
-      }
-      // GROUP uses only unified events (no old compatibility)
-
       // NEW unified event with messageId for acknowledgment
       socketService.emitChatEvent(
         data.chatContextType,

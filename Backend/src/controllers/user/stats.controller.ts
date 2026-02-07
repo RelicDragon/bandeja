@@ -383,10 +383,10 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
 
     if (playedAgainst) {
       const currentUserParticipant = game.participants.find(
-        (p: ParticipantWithUser) => p.userId === currentUserId && (p.status === 'PLAYING' || p.isPlaying === true)
+        (p: ParticipantWithUser) => p.userId === currentUserId && p.status === 'PLAYING'
       );
       const otherUserParticipant = game.participants.find(
-        (p: ParticipantWithUser) => p.userId === otherUserId && (p.status === 'PLAYING' || p.isPlaying === true)
+        (p: ParticipantWithUser) => p.userId === otherUserId && p.status === 'PLAYING'
       );
 
       if (currentUserParticipant && otherUserParticipant) {
@@ -411,7 +411,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
           id: p.id,
           userId: p.userId,
           role: p.role,
-          isPlaying: p.status === 'PLAYING' || p.isPlaying,
+          isPlaying: p.status === 'PLAYING',
           joinedAt: p.joinedAt,
           stats: p.stats,
           user: p.user,

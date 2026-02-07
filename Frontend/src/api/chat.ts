@@ -50,7 +50,6 @@ export interface ChatMessage {
   id: string;
   chatContextType: ChatContextType;
   contextId: string;
-  gameId?: string | null; // Deprecated, kept for backward compatibility
   senderId: string | null;
   content: string;
   mediaUrls: string[];
@@ -137,7 +136,6 @@ export interface OptimisticMessagePayload {
 export interface CreateMessageRequest {
   chatContextType?: ChatContextType;
   contextId?: string;
-  gameId?: string; // Deprecated, kept for backward compatibility
   content?: string;
   mediaUrls?: string[];
   thumbnailUrls?: string[];

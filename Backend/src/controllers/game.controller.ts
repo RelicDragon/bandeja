@@ -155,8 +155,8 @@ export const leaveChat = asyncHandler(async (req: AuthRequest, res: Response) =>
 
 export const togglePlayingStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { isPlaying } = req.body;
-  const message = await ParticipantService.togglePlayingStatus(id, req.userId!, isPlaying);
+  const { status } = req.body;
+  const message = await ParticipantService.togglePlayingStatus(id, req.userId!, status);
 
   res.json({
     success: true,

@@ -305,11 +305,6 @@ class SocketService {
     });
   }
 
-  // Emit new message to all users in a game room
-  public emitNewMessage(gameId: string, message: any) {
-    this.io.to(`game-${gameId}`).emit('new-message', message);
-  }
-
   // Emit message reaction to all users in a game room
   public emitMessageReaction(gameId: string, reaction: any) {
     this.io.to(`game-${gameId}`).emit('message-reaction', reaction);
@@ -325,11 +320,6 @@ class SocketService {
     this.io.to(`game-${gameId}`).emit('message-deleted', { messageId });
   }
 
-  // Emit new bug message to all users in a bug room
-  public emitNewBugMessage(bugId: string, message: any) {
-    this.io.to(`bug-${bugId}`).emit('new-bug-message', message);
-  }
-
   // Emit bug message reaction to all users in a bug room
   public emitBugMessageReaction(bugId: string, reaction: any) {
     this.io.to(`bug-${bugId}`).emit('bug-message-reaction', reaction);
@@ -343,40 +333,6 @@ class SocketService {
   // Emit bug message deletion to all users in a bug room
   public emitBugMessageDeleted(bugId: string, messageId: string) {
     this.io.to(`bug-${bugId}`).emit('bug-message-deleted', { messageId });
-  }
-
-  // Emit new user chat message to all users in a user chat room
-  public async emitNewUserMessage(chatId: string, message: any) {
-    // Emit to the room (for users currently in the chat)
-    this.io.to(`user-chat-${chatId}`).emit('new-user-chat-message', message);
-    
-    // Also emit directly to both users (for notification/badge updates even when not in chat)
-    try {
-      const chat = await prisma.userChat.findUnique({
-        where: { id: chatId },
-        select: { user1Id: true, user2Id: true }
-      });
-      
-      if (chat) {
-        // Emit to user1
-        this.connectedUsers.get(chat.user1Id)?.forEach(socketId => {
-          const socket = this.io.sockets.sockets.get(socketId);
-          if (socket) {
-            socket.emit('new-user-chat-message', message);
-          }
-        });
-        
-        // Emit to user2
-        this.connectedUsers.get(chat.user2Id)?.forEach(socketId => {
-          const socket = this.io.sockets.sockets.get(socketId);
-          if (socket) {
-            socket.emit('new-user-chat-message', message);
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Failed to emit user chat message to individual users:', error);
-    }
   }
 
   // Emit user chat message reaction to all users in a user chat room
@@ -415,7 +371,6 @@ class SocketService {
 
   /**
    * Unified method to emit chat events (message, reaction, read-receipt, deleted)
-   * This emits to the unified event name while keeping backward compatibility
    */
   public emitChatEvent(
     contextType: ChatContextType, 
@@ -586,10 +541,8 @@ class SocketService {
         gameToEmit.participants.forEach((p: any) => userIds.add(p.userId || p.user?.id));
       }
       
-      // Add all users with pending invites
-      if (gameToEmit.invites) {
-        gameToEmit.invites.forEach((invite: any) => userIds.add(invite.receiverId || invite.receiver?.id));
-      }
+      const invitedParticipants = gameToEmit.participants?.filter((p: any) => p.status === 'INVITED') || [];
+      invitedParticipants.forEach((p: any) => userIds.add(p.userId || p.user?.id));
       
       console.log(`[SocketService] Game ${gameId} - isPublic: ${gameToEmit.isPublic}, participant/userIds:`, Array.from(userIds));
       console.log(`[SocketService] Connected users count: ${this.connectedUsers.size}`);

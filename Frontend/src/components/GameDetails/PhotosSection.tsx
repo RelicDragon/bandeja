@@ -128,7 +128,8 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
           const uploadResponse = await mediaApi.uploadChatImage(file, game.id, 'GAME');
           
           await chatApi.createMessage({
-            gameId: game.id,
+            chatContextType: 'GAME',
+            contextId: game.id,
             chatType: 'PHOTOS',
             mediaUrls: [uploadResponse.originalUrl],
             thumbnailUrls: [uploadResponse.thumbnailUrl],

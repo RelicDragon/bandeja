@@ -70,8 +70,8 @@ export const gamesApi = {
     return response.data;
   },
 
-  togglePlayingStatus: async (id: string, isPlaying: boolean) => {
-    const response = await api.put<ApiResponse<Game>>(`/games/${id}/toggle-playing-status`, { isPlaying });
+  togglePlayingStatus: async (id: string, status: 'PLAYING' | 'IN_QUEUE') => {
+    const response = await api.put<ApiResponse<Game>>(`/games/${id}/toggle-playing-status`, { status });
     return response.data;
   },
 

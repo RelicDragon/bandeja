@@ -54,12 +54,11 @@ router.post('/:id/leave-chat', authenticate, gameController.leaveChat);
 
 router.post('/:id/leave', authenticate, gameController.leaveGame);
 
-// Backward compatibility: frontend sends isPlaying; backend maps to status. To be removed on 10-02-2026.
 router.put(
   '/:id/toggle-playing-status',
   authenticate,
   validate([
-    body('isPlaying').isBoolean().withMessage('isPlaying must be a boolean'),
+    body('status').isIn(['PLAYING', 'IN_QUEUE']).withMessage('status must be PLAYING or IN_QUEUE'),
   ]),
   gameController.togglePlayingStatus
 );

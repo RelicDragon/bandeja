@@ -200,7 +200,7 @@ export const EditMaxParticipantsModal = ({
       // Only process users who are still in the current participants
       for (const userId of validRemovedPlayerIds) {
         if (userId === user?.id) {
-          await gamesApi.togglePlayingStatus(game.id, false);
+          await gamesApi.togglePlayingStatus(game.id, 'IN_QUEUE');
         } else {
           await onKickUser(userId);
         }
@@ -254,7 +254,7 @@ export const EditMaxParticipantsModal = ({
     try {
       for (const userId of playersToKick) {
         if (userId === user?.id) {
-          await gamesApi.togglePlayingStatus(game.id, false);
+          await gamesApi.togglePlayingStatus(game.id, 'IN_QUEUE');
         } else {
           await onKickUser(userId);
         }

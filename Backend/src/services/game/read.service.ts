@@ -201,9 +201,8 @@ export function computeJoinQueuesFromParticipants(game: any): any[] {
     );
 }
 
-/** Backward compat: participants with status INVITED exposed as game.invites. To be removed on 10-02-2026. */
-export function computeInvitesFromParticipants(game: any): any[] {
-  const invited = game.participants?.filter((p: any) => p.status === 'INVITED') || [];
+export function participantsToInviteShape(participants: any[], game?: any): any[] {
+  const invited = participants?.filter((p: any) => p.status === 'INVITED') || [];
   return invited.map((p: any) => ({
     id: p.id,
     receiverId: p.userId,
@@ -215,7 +214,7 @@ export function computeInvitesFromParticipants(game: any): any[] {
     updatedAt: p.joinedAt,
     receiver: p.user,
     sender: p.invitedByUser ?? null,
-    game: p.game ?? (game.id === p.gameId ? game : null),
+    game: p.game ?? (game?.id === p.gameId ? game : null),
   }));
 }
 
@@ -260,16 +259,10 @@ export class GameReadService {
       }
     }
 
-    const participantsWithIsPlaying = game.participants?.map((p: any) => ({
-      ...p,
-      isPlaying: p.status === 'PLAYING',
-    })) ?? game.participants;
     return {
       ...game,
-      participants: participantsWithIsPlaying,
       isClubFavorite,
       joinQueues: computeJoinQueuesFromParticipants(game),
-      invites: computeInvitesFromParticipants(game),
     };
   }
 

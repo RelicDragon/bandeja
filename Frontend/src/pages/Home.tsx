@@ -122,10 +122,6 @@ export const HomeContent = () => {
     fetchData: fetchAvailableGames,
   } = useAvailableGames(user, dateRange.startDate, dateRange.endDate, true);
 
-  const handleMonthChange = () => {
-    // Keep for compatibility but not used for fetching
-  };
-
   const handleDateRangeChange = (startDate: Date, endDate: Date) => {
     setDateRange({ startDate, endDate });
   };
@@ -357,7 +353,7 @@ export const HomeContent = () => {
             user={user}
             loading={loadingAvailableGames}
             onJoin={handleJoinGame}
-            onMonthChange={handleMonthChange}
+            onMonthChange={undefined}
             onDateRangeChange={handleDateRangeChange}
             filters={filters}
             onFilterChange={(key, value) => updateFilter(key, value)}

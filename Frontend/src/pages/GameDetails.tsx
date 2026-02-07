@@ -355,7 +355,7 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
     if (!id) return;
 
     try {
-      await gamesApi.togglePlayingStatus(id, true);
+      await gamesApi.togglePlayingStatus(id, 'PLAYING');
       const response = await gamesApi.getById(id);
       setGame(response.data);
     } catch (error: any) {
