@@ -1,5 +1,4 @@
 import { ParticipantRole } from '@prisma/client';
-import { ApiError } from './ApiError';
 
 export interface ParticipantOperationResult {
   created: boolean;

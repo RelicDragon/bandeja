@@ -84,7 +84,7 @@ export const EditMaxParticipantsModal = ({
 
   const slotEligibleParticipants = useMemo(() => {
     return eligibleParticipants.filter(p => p.status === 'PLAYING');
-  }, [eligibleParticipants, game.entityType]);
+  }, [eligibleParticipants]);
 
   const maleParticipants = useMemo(() => {
     return eligibleParticipants.filter(p => p.user.gender === 'MALE');
@@ -108,8 +108,8 @@ export const EditMaxParticipantsModal = ({
     return eligibleParticipants.filter(p => p.user.gender !== 'FEMALE');
   }, [eligibleParticipants]);
 
-  const slotMaleParticipants = useMemo(() => maleParticipants.filter(p => p.status === 'PLAYING'), [maleParticipants, game.entityType]);
-  const slotFemaleParticipants = useMemo(() => femaleParticipants.filter(p => p.status === 'PLAYING'), [femaleParticipants, game.entityType]);
+  const slotMaleParticipants = useMemo(() => maleParticipants.filter(p => p.status === 'PLAYING'), [maleParticipants]);
+  const slotFemaleParticipants = useMemo(() => femaleParticipants.filter(p => p.status === 'PLAYING'), [femaleParticipants]);
 
   const getParticipantsForRemoval = useMemo(() => {
     if (genderTeams === 'ANY') {
