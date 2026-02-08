@@ -199,6 +199,8 @@ export interface GroupChannel {
     updatedAt?: string;
     sender?: BasicUser;
   };
+  marketItemId?: string | null;
+  marketItem?: import('@/types').MarketItem;
 }
 
 export interface GroupChannelParticipant {
@@ -238,10 +240,12 @@ export interface SearchMessagesResponse {
   gameMessages: SearchMessageResult[];
   channelMessages: SearchMessageResult[];
   bugMessages: SearchMessageResult[];
+  marketMessages: SearchMessageResult[];
   messagesPagination: { page: number; limit: number; hasMore: boolean };
   gamePagination: { page: number; limit: number; hasMore: boolean };
   channelPagination: { page: number; limit: number; hasMore: boolean };
   bugsPagination: { page: number; limit: number; hasMore: boolean };
+  marketPagination: { page: number; limit: number; hasMore: boolean };
 }
 
 export interface ChatDraft {
@@ -677,7 +681,7 @@ export const chatApi = {
 
   searchMessages: async (
     q: string,
-    opts?: { section?: 'messages' | 'games' | 'channels' | 'bugs'; messagesPage?: number; messagesLimit?: number; gamePage?: number; gameLimit?: number; bugsPage?: number; channelPage?: number; channelLimit?: number }
+    opts?: { section?: 'messages' | 'games' | 'channels' | 'bugs' | 'market'; messagesPage?: number; messagesLimit?: number; gamePage?: number; gameLimit?: number; bugsPage?: number; channelPage?: number; channelLimit?: number; marketPage?: number; marketLimit?: number }
   ): Promise<SearchMessagesResponse> => {
     const params = new URLSearchParams({ q });
     if (opts?.section) params.set('section', opts.section);
@@ -688,6 +692,8 @@ export const chatApi = {
     if (opts?.bugsPage) params.set('bugsPage', String(opts.bugsPage));
     if (opts?.channelPage) params.set('channelPage', String(opts.channelPage));
     if (opts?.channelLimit) params.set('channelLimit', String(opts.channelLimit));
+    if (opts?.marketPage) params.set('marketPage', String(opts.marketPage));
+    if (opts?.marketLimit) params.set('marketLimit', String(opts.marketLimit));
     const res = await api.get<{ success: boolean } & SearchMessagesResponse>(`/chat/messages/search?${params}`);
     return res.data;
   },

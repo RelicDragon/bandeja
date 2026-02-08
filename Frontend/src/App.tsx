@@ -501,6 +501,66 @@ function AppContent() {
           }
         />
         <Route
+          path="/marketplace"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/marketplace/create"
+          element={
+            <ProtectedRoute>
+              {!user?.currentCity && !user?.currentCityId ? (
+                <Navigate to="/select-city" replace state={{ from: '/marketplace/create' }} />
+              ) : !isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/marketplace/:id/edit"
+          element={
+            <ProtectedRoute>
+              {!user?.currentCity && !user?.currentCityId ? (
+                <Navigate to="/select-city" replace state={{ from: location.pathname }} />
+              ) : !isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/marketplace/:id"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/game-subscriptions"
           element={
             <ProtectedRoute>

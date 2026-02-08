@@ -11,7 +11,6 @@ import { RangeSlider } from './RangeSlider';
 import { Select } from './Select';
 import { ConfirmationModal } from './ConfirmationModal';
 import { Game, GenderTeam } from '@/types';
-import { isParticipantCountsTowardSlots } from '@/utils/participantStatus';
 import { useAuthStore } from '@/store/authStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
@@ -71,7 +70,7 @@ export const EditMaxParticipantsModal = ({
   }, [onClose]);
 
   const playingParticipants = originalParticipants.filter(p => !removedPlayerIds.has(p.userId));
-  const currentPlayingCount = playingParticipants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length;
+  const currentPlayingCount = playingParticipants.filter(p => p.status === 'PLAYING').length;
   const currentUserParticipant = game.participants.find(p => p.userId === user?.id);
   const isOwner = currentUserParticipant?.role === 'OWNER';
   const isAdmin = currentUserParticipant?.role === 'ADMIN';
@@ -84,7 +83,7 @@ export const EditMaxParticipantsModal = ({
   }, [playingParticipants, isAdmin, isOwner]);
 
   const slotEligibleParticipants = useMemo(() => {
-    return eligibleParticipants.filter(p => isParticipantCountsTowardSlots(p, game.entityType));
+    return eligibleParticipants.filter(p => p.status === 'PLAYING');
   }, [eligibleParticipants, game.entityType]);
 
   const maleParticipants = useMemo(() => {
@@ -109,8 +108,8 @@ export const EditMaxParticipantsModal = ({
     return eligibleParticipants.filter(p => p.user.gender !== 'FEMALE');
   }, [eligibleParticipants]);
 
-  const slotMaleParticipants = useMemo(() => maleParticipants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)), [maleParticipants, game.entityType]);
-  const slotFemaleParticipants = useMemo(() => femaleParticipants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)), [femaleParticipants, game.entityType]);
+  const slotMaleParticipants = useMemo(() => maleParticipants.filter(p => p.status === 'PLAYING'), [maleParticipants, game.entityType]);
+  const slotFemaleParticipants = useMemo(() => femaleParticipants.filter(p => p.status === 'PLAYING'), [femaleParticipants, game.entityType]);
 
   const getParticipantsForRemoval = useMemo(() => {
     if (genderTeams === 'ANY') {

@@ -9,6 +9,7 @@ import {
   uploadChatImage, 
   uploadChatDocument, 
   uploadGameMedia, 
+  uploadMarketItemImage,
   deleteFile,
   upload,
   uploadAvatarFiles
@@ -56,6 +57,12 @@ router.post(
     body('gameId').notEmpty().withMessage('Game ID is required')
   ]),
   uploadChatDocument
+);
+
+router.post(
+  '/upload/market-item/image',
+  upload.single('image'),
+  uploadMarketItemImage
 );
 
 router.post(

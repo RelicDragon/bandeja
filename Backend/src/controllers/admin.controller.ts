@@ -11,6 +11,7 @@ import { TransactionService } from '../services/transaction.service';
 import { TransactionType, MessageReportStatus } from '@prisma/client';
 import { AdminMessageReportsService } from '../services/admin/messageReports.service';
 import { AdminAppVersionService } from '../services/admin/appVersion.service';
+import { AdminMarketCategoryService } from '../services/admin/marketCategory.service';
 
 // Auth endpoints
 export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
@@ -637,4 +638,32 @@ export const deleteAppVersion = asyncHandler(async (req: AuthRequest, res: Respo
     success: true,
     message: result.message,
   });
+});
+
+export const getMarketCategories = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const categories = await AdminMarketCategoryService.getAll();
+  res.json({ success: true, data: categories });
+});
+
+export const createMarketCategory = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { name, order, isActive } = req.body;
+  const category = await AdminMarketCategoryService.create({ name, order, isActive });
+  res.status(201).json({ success: true, data: category });
+});
+
+export const updateMarketCategory = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { categoryId } = req.params;
+  const { name, order, isActive } = req.body;
+  const category = await AdminMarketCategoryService.update(categoryId, {
+    name,
+    order,
+    isActive,
+  });
+  res.json({ success: true, data: category });
+});
+
+export const deleteMarketCategory = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { categoryId } = req.params;
+  const result = await AdminMarketCategoryService.delete(categoryId);
+  res.json({ success: true, message: result.message });
 });

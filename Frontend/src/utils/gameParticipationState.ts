@@ -40,9 +40,7 @@ export function getGameParticipationState(
     return { ...EMPTY_GAME_PARTICIPATION_STATE };
   }
   const userParticipant = userId ? list.find(p => p.userId === userId) : undefined;
-  const playingCount = list.filter(p =>
-    p.status === 'PLAYING' && !(game?.entityType === 'TRAINING' && p.isTrainer)
-  ).length;
+  const playingCount = list.filter(p => p.status === 'PLAYING').length;
 
   const isParticipant = !!userParticipant;
   const isParticipantNonGuest = !!userParticipant && userParticipant.status !== 'GUEST';

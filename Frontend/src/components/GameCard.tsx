@@ -7,7 +7,6 @@ import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { GameAvatar } from '@/components/GameAvatar';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { Game } from '@/types';
-import { isParticipantCountsTowardSlots } from '@/utils/participantStatus';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
@@ -560,7 +559,7 @@ export const GameCard = ({
             <>
               <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
                 {(() => {
-                  const trainer = participants.find(p => p.isTrainer);
+                  const trainer = game.trainerId ? participants.find(p => p.userId === game.trainerId) : null;
                   return trainer ? (
                     <>
                       <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
@@ -618,7 +617,7 @@ export const GameCard = ({
                   <div className="flex items-center gap-1">
                     <Users size={14} />
                     <span>
-                      {`${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}/${game.maxParticipants}`}
+                      {`${participants.filter(p => p.status === 'PLAYING').length}/${game.maxParticipants}`}
                     </span>
                   </div>
                 </div>
@@ -675,8 +674,8 @@ export const GameCard = ({
                     <Users size={14} />
                     <span>
                       {game.entityType === 'BAR' 
-                        ? participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length
-                        : `${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}/${game.maxParticipants}`
+                        ? participants.filter(p => p.status === 'PLAYING').length
+                        : `${participants.filter(p => p.status === 'PLAYING').length}/${game.maxParticipants}`
                       }
                     </span>
                   </div>
@@ -741,8 +740,8 @@ export const GameCard = ({
                     <Users size={14} />
                     <span>
                       {game.entityType === 'BAR' 
-                        ? participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length
-                        : `${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}/${game.maxParticipants}`
+                        ? participants.filter(p => p.status === 'PLAYING').length
+                        : `${participants.filter(p => p.status === 'PLAYING').length}/${game.maxParticipants}`
                       }
                     </span>
                   </div>
@@ -796,8 +795,8 @@ export const GameCard = ({
                   <Users size={14} />
                   <span>
                     {game.entityType === 'BAR' 
-                      ? participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length
-                      : `${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}/${game.maxParticipants}`
+                      ? participants.filter(p => p.status === 'PLAYING').length
+                      : `${participants.filter(p => p.status === 'PLAYING').length}/${game.maxParticipants}`
                     }
                   </span>
                 </div>
@@ -819,7 +818,7 @@ export const GameCard = ({
         {mainPhotoUrl ? (
           <div className="flex gap-4 mb-3">
             {game.entityType === 'TRAINING' && (() => {
-              const trainer = participants.find(p => p.isTrainer);
+              const trainer = game.trainerId ? participants.find(p => p.userId === game.trainerId) : null;
               return trainer ? (
                 <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
                   <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
@@ -870,7 +869,7 @@ export const GameCard = ({
                     <>
                       <span className="text-gray-400 dark:text-gray-500">•</span>
                       <Users size={16} />
-                      <span>{participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}</span>
+                      <span>{participants.filter(p => p.status === 'PLAYING').length}</span>
                     </>
                   )}
                 </div>
@@ -879,7 +878,7 @@ export const GameCard = ({
                 <div className="flex items-center gap-2">
                   <Users size={16} />
                   <span>
-                    {`${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length} / ${game.maxParticipants}`}
+                    {`${participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
                   </span>
                   {game.minLevel !== undefined && game.maxLevel !== undefined && (
                     <>
@@ -899,7 +898,7 @@ export const GameCard = ({
         ) : (
           <div className={`text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' ? 'flex gap-4 -mt-1' : ''}`}>
             {game.entityType === 'TRAINING' && (() => {
-              const trainer = participants.find(p => p.isTrainer);
+              const trainer = game.trainerId ? participants.find(p => p.userId === game.trainerId) : null;
               return trainer ? (
                 <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
                   <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
@@ -940,7 +939,7 @@ export const GameCard = ({
                   <>
                     <span className="text-gray-400 dark:text-gray-500">•</span>
                     <Users size={16} />
-                    <span>{participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length}</span>
+                    <span>{participants.filter(p => p.status === 'PLAYING').length}</span>
                   </>
                 )}
               </div>
@@ -949,7 +948,7 @@ export const GameCard = ({
               <div className="flex items-center gap-2">
                 <Users size={16} />
                 <span>
-                  {`${participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length} / ${game.maxParticipants}`}
+                  {`${participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
                 </span>
                 {game.minLevel !== undefined && game.maxLevel !== undefined && (
                   <>
@@ -967,11 +966,11 @@ export const GameCard = ({
             </div>
           </div>
         )}
-        <div className={`space-y-2 text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' && participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length >= 1 ? 'pt-2 mt-2 border-t border-gray-200 dark:border-gray-700' : ''}`}>
+        <div className={`space-y-2 text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' && participants.filter(p => p.status === 'PLAYING').length >= 1 ? 'pt-2 mt-2 border-t border-gray-200 dark:border-gray-700' : ''}`}>
           <div className="flex items-center gap-2">
             <div className="relative -mx-0 flex-1 w-full">
               <PlayersCarousel
-                participants={participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType))}
+                participants={participants.filter(p => p.status === 'PLAYING')}
                 userId={effectiveUser?.id}
                 shouldShowCrowns={true}
                 autoHideNames={true}

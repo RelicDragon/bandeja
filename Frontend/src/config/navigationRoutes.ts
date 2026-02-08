@@ -38,6 +38,7 @@ export const navigationRoutes: RouteConfig[] = [
     pattern: /^\/channel-chat\/[^/]+$/,
     fallback: (_pathname, state) => {
       if (state?.fromPage === 'bugs') return '/bugs';
+      if (state?.fromPage === 'marketplace') return '/marketplace';
       if (state?.fromPage === 'chats' && state?.searchQuery) {
         return `/chats?q=${encodeURIComponent(state.searchQuery)}`;
       }
@@ -77,6 +78,7 @@ export const navigationRoutes: RouteConfig[] = [
           'bugs': '/bugs',
           'profile': '/profile',
           'leaderboard': '/leaderboard',
+          'marketplace': '/marketplace',
         };
         return fromPageMap[state.fromPage] || '/';
       }
@@ -85,6 +87,26 @@ export const navigationRoutes: RouteConfig[] = [
     priority: 5,
   },
   
+  {
+    pattern: /^\/marketplace\/[^/]+\/edit$/,
+    fallback: '/marketplace',
+    priority: 10,
+  },
+  {
+    pattern: /^\/marketplace\/[^/]+$/,
+    fallback: '/marketplace',
+    priority: 10,
+  },
+  {
+    pattern: /^\/marketplace\/create$/,
+    fallback: '/marketplace',
+    priority: 10,
+  },
+  {
+    pattern: /^\/marketplace\/?$/,
+    fallback: '/',
+    priority: 5,
+  },
   {
     pattern: /^\/login\/telegram$/,
     fallback: '/login',
@@ -98,6 +120,24 @@ export const navigationRoutes: RouteConfig[] = [
   {
     pattern: /^\/login$/,
     fallback: '/',
+    priority: 5,
+  },
+  {
+    pattern: /^\/profile\/?$/,
+    fallback: (_pathname, state) => {
+      if (state?.fromPage) {
+        const fromPageMap: Record<string, string> = {
+          'my': '/',
+          'find': '/find',
+          'chats': '/chats',
+          'bugs': '/bugs',
+          'leaderboard': '/leaderboard',
+          'marketplace': '/marketplace',
+        };
+        return fromPageMap[state.fromPage] || '/';
+      }
+      return '/';
+    },
     priority: 5,
   },
 

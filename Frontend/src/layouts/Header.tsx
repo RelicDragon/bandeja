@@ -17,6 +17,8 @@ import {
   LeaderboardTabController
 } from '@/components';
 import { GameSubscriptionsHeaderContent } from '@/components/headerContent/GameSubscriptionsHeaderContent';
+import { MarketplaceCreateHeaderContent } from '@/components/headerContent/MarketplaceCreateHeaderContent';
+import { MarketplaceListHeaderTitle } from '@/components/headerContent/MarketplaceListHeaderContent';
 import { ChatsTabController } from '@/components/headerContent/ChatsTabController';
 import { FindTabController } from '@/components/headerContent/FindTabController';
 
@@ -33,6 +35,7 @@ export const Header = () => {
   
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const shouldHideHeader = !user && isGameDetailsPage;
+  const isMarketplaceList = location.pathname === '/marketplace' || !!location.pathname.match(/^\/marketplace\/?$/);
 
   const previousPageRef = useRef(currentPage);
 
@@ -76,16 +79,23 @@ export const Header = () => {
           height: `calc(4rem + env(safe-area-inset-top))`
         }}
       >
-        <div className="h-16 px-4 flex" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+        <div className="h-16 px-4 flex items-center gap-4" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           <div className="flex items-center gap-3">
-            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard') ? null : (
+            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard' || (currentPage === 'marketplace' && isMarketplaceList)) ? null : (
               <button
                 onClick={handleBackClick}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-110 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current  focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current"
               >
                 <ArrowLeft size={20} />
-                {t('common.back')}
+                {!(currentPage === 'marketplace' && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/))) && t('common.back')}
               </button>
+            )}
+
+            {currentPage === 'marketplace' && isMarketplaceList && (
+              <MarketplaceListHeaderTitle />
+            )}
+            {currentPage === 'marketplace' && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/)) && (
+              <MarketplaceCreateHeaderContent />
             )}
             
             {pendingInvites > 0 && (
@@ -112,7 +122,7 @@ export const Header = () => {
           </div>
 
           <div className="flex items-center gap-4 relative ml-auto">
-            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard') && (
+            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard' || (currentPage === 'marketplace' && isMarketplaceList)) && (
               <HomeHeaderContent />
             )}
 

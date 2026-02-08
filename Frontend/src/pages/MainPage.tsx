@@ -11,6 +11,18 @@ import { LeaderboardTab } from './LeaderboardTab';
 import { ProfileTab } from './ProfileTab';
 import { GameDetailsPage } from './GameDetailsPage';
 import { GameSubscriptionsContent } from './GameSubscriptions';
+import { MarketplaceList } from './MarketplaceList';
+import { MarketplaceItemRedirect } from './MarketplaceItemRedirect';
+import { CreateMarketItem } from './CreateMarketItem';
+
+function MarketplaceContent() {
+  const location = useLocation();
+  const path = location.pathname;
+  if (path === '/marketplace/create') return <CreateMarketItem />;
+  if (path.match(/^\/marketplace\/[^/]+\/edit$/)) return <CreateMarketItem />;
+  if (path.match(/^\/marketplace\/[^/]+$/)) return <MarketplaceItemRedirect />;
+  return <MarketplaceList />;
+}
 
 export const MainPage = () => {
   const location = useLocation();
@@ -24,14 +36,16 @@ export const MainPage = () => {
     const path = location.pathname;
     const previousPath = previousPathnameRef.current;
     const isPathChanged = path !== previousPath;
-    const locationState = location.state as { fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' } | null;
+    const locationState = location.state as { fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace' } | null;
 
     if (isPathChanged || isInitialMountRef.current) {
       if (isPathChanged) {
         setIsAnimating(true);
       }
       
-      if (path === '/profile') {
+      if (path === '/marketplace' || path.startsWith('/marketplace/')) {
+        setCurrentPage('marketplace');
+      } else if (path === '/profile') {
         setCurrentPage('profile');
       } else if (path === '/chats') {
         setCurrentPage('chats');
@@ -96,6 +110,8 @@ export const MainPage = () => {
         return <GameDetailsPage />;
       case 'gameSubscriptions':
         return <GameSubscriptionsContent />;
+      case 'marketplace':
+        return <MarketplaceContent />;
       default:
         return <MyTab />;
     }

@@ -189,6 +189,9 @@ async function loadPageData(page) {
         case 'app-versions':
             loadAppVersions();
             break;
+        case 'market-categories':
+            loadMarketCategories();
+            break;
         case 'logs':
             if (!isStreamActive) {
                 if (logsData.length === 0) {

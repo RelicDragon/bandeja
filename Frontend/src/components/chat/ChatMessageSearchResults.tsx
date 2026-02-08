@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { chatApi, SearchMessageResult, ChatMessage, getLastMessageText } from '@/api/chat';
 import { getSystemMessageText } from '@/utils/systemMessages';
 import { formatRelativeTime, formatDate } from '@/utils/dateFormat';
-import { MessageCircle, Gamepad2, Swords, Trophy, Dumbbell, Beer, Bug, User } from 'lucide-react';
+import { MessageCircle, Gamepad2, Swords, Trophy, Dumbbell, Beer, Bug, User, ShoppingBag, Hash } from 'lucide-react';
 import { CollapsibleSection } from './CollapsibleSection';
 
 interface ChatMessageSearchResultsProps {
@@ -15,10 +15,12 @@ interface ChatMessageSearchResultsProps {
   gamesExpanded?: boolean;
   channelsExpanded?: boolean;
   bugsExpanded?: boolean;
+  marketListingsExpanded?: boolean;
   onMessagesToggle?: () => void;
   onGamesToggle?: () => void;
   onChannelsToggle?: () => void;
   onBugsToggle?: () => void;
+  onMarketListingsToggle?: () => void;
 }
 
 function getContextLabel(result: SearchMessageResult, t: (key: string, opts?: any) => string): string {
@@ -74,6 +76,7 @@ function getChatIcon(chatContextType: string, result: SearchMessageResult) {
   }
   if (chatContextType === 'BUG') return Bug;
   if (chatContextType === 'USER') return User;
+  if (chatContextType === 'GROUP' && (result.context as { marketItemId?: string } | null)?.marketItemId) return ShoppingBag;
   return MessageCircle;
 }
 
@@ -115,25 +118,29 @@ function ResultItem({ r, onResultClick, t }: { r: SearchMessageResult; onResultC
   );
 }
 
-export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, onResultClick, messagesExpanded = true, gamesExpanded = true, channelsExpanded = true, bugsExpanded = true, onMessagesToggle, onGamesToggle, onChannelsToggle, onBugsToggle }: ChatMessageSearchResultsProps) => {
+export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, onResultClick, messagesExpanded = true, gamesExpanded = true, channelsExpanded = true, bugsExpanded = true, marketListingsExpanded = true, onMessagesToggle, onGamesToggle, onChannelsToggle, onBugsToggle, onMarketListingsToggle }: ChatMessageSearchResultsProps) => {
   const { t } = useTranslation();
   const [messages, setMessages] = useState<SearchMessageResult[]>([]);
   const [gameMessages, setGameMessages] = useState<SearchMessageResult[]>([]);
   const [channelMessages, setChannelMessages] = useState<SearchMessageResult[]>([]);
   const [bugMessages, setBugMessages] = useState<SearchMessageResult[]>([]);
+  const [marketMessages, setMarketMessages] = useState<SearchMessageResult[]>([]);
   const [messagesPage, setMessagesPage] = useState(1);
   const [gamePage, setGamePage] = useState(1);
   const [channelPage, setChannelPage] = useState(1);
   const [bugsPage, setBugsPage] = useState(1);
+  const [marketPage, setMarketPage] = useState(1);
   const [messagesHasMore, setMessagesHasMore] = useState(false);
   const [gameHasMore, setGameHasMore] = useState(false);
   const [channelHasMore, setChannelHasMore] = useState(false);
   const [bugsHasMore, setBugsHasMore] = useState(false);
+  const [marketHasMore, setMarketHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [loadingGames, setLoadingGames] = useState(false);
   const [loadingChannels, setLoadingChannels] = useState(false);
   const [loadingBugs, setLoadingBugs] = useState(false);
+  const [loadingMarket, setLoadingMarket] = useState(false);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -141,10 +148,12 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
       setGameMessages([]);
       setChannelMessages([]);
       setBugMessages([]);
+      setMarketMessages([]);
       setMessagesPage(1);
       setGamePage(1);
       setChannelPage(1);
       setBugsPage(1);
+      setMarketPage(1);
       return;
     }
     let cancelled = false;
@@ -156,10 +165,12 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
         setGameMessages(res.gameMessages || []);
         setChannelMessages(res.channelMessages || []);
         setBugMessages(res.bugMessages || []);
+        setMarketMessages(res.marketMessages || []);
         setMessagesHasMore(res.messagesPagination?.hasMore ?? false);
         setGameHasMore(res.gamePagination?.hasMore ?? false);
         setChannelHasMore(res.channelPagination?.hasMore ?? false);
         setBugsHasMore(res.bugsPagination?.hasMore ?? false);
+        setMarketHasMore(res.marketPagination?.hasMore ?? false);
       })
       .catch(() => {
         if (!cancelled) {
@@ -167,6 +178,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
           setGameMessages([]);
           setChannelMessages([]);
           setBugMessages([]);
+          setMarketMessages([]);
         }
       })
       .finally(() => {
@@ -227,7 +239,20 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
       .finally(() => setLoadingBugs(false));
   };
 
-  const totalCount = messages.length + gameMessages.length + channelMessages.length + bugMessages.length;
+  const loadMoreMarket = () => {
+    if (!marketHasMore || loadingMarket) return;
+    setLoadingMarket(true);
+    chatApi.searchMessages(query, { section: 'market', marketPage: marketPage + 1 })
+      .then((res) => {
+        setMarketMessages((prev) => [...prev, ...(res.marketMessages || [])]);
+        setMarketHasMore(res.marketPagination?.hasMore ?? false);
+        setMarketPage((p) => p + 1);
+      })
+      .catch(() => setMarketHasMore(false))
+      .finally(() => setLoadingMarket(false));
+  };
+
+  const totalCount = messages.length + gameMessages.length + channelMessages.length + bugMessages.length + marketMessages.length;
 
   if (!query.trim()) return null;
   if (loading && totalCount === 0) {
@@ -264,6 +289,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
         title={t('chat.searchGamesSection', { defaultValue: 'Game chats' })}
         expanded={gamesExpanded}
         onToggle={onGamesToggle ?? (() => {})}
+        icon={Gamepad2}
       >
         {gameMessages.map((r) => (
           <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
@@ -278,11 +304,27 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
         title={t('chat.searchBugsChatsSection', { defaultValue: 'Bugs chats' })}
         expanded={bugsExpanded}
         onToggle={onBugsToggle ?? (() => {})}
+        icon={Bug}
       >
         {bugMessages.map((r) => (
           <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
         ))}
         {renderLoadMore(loadMoreBugs, bugsHasMore, loadingBugs)}
+      </CollapsibleSection>
+    ) : null;
+
+  const renderMarketSection = () =>
+    marketMessages.length > 0 ? (
+      <CollapsibleSection
+        title={t('chat.searchMarketListingsSection', { defaultValue: 'Listings' })}
+        expanded={marketListingsExpanded}
+        onToggle={onMarketListingsToggle ?? (() => {})}
+        icon={ShoppingBag}
+      >
+        {marketMessages.map((r) => (
+          <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
+        ))}
+        {renderLoadMore(loadMoreMarket, marketHasMore, loadingMarket)}
       </CollapsibleSection>
     ) : null;
 
@@ -295,6 +337,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               title={t('chat.searchChannelsMessagesSection', { defaultValue: "Channels' messages" })}
               expanded={channelsExpanded}
               onToggle={onChannelsToggle ?? (() => {})}
+              icon={Hash}
             >
               {channelMessages.map((r) => (
                 <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
@@ -308,6 +351,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               title={t('chat.searchUserGroupSection', { defaultValue: 'User & group chats' })}
               expanded={messagesExpanded}
               onToggle={onMessagesToggle ?? (() => {})}
+              icon={MessageCircle}
             >
               {messages.map((r) => (
                 <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
@@ -317,6 +361,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
           )}
           {renderGamesSection()}
           {renderBugsSection()}
+          {renderMarketSection()}
         </>
       ) : (
         <>
@@ -325,6 +370,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               title={t('chat.searchUserGroupSection', { defaultValue: 'User & group chats' })}
               expanded={messagesExpanded}
               onToggle={onMessagesToggle ?? (() => {})}
+              icon={MessageCircle}
             >
               {messages.map((r) => (
                 <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
@@ -338,6 +384,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               title={t('chat.searchChannelsMessagesSection', { defaultValue: "Channels' messages" })}
               expanded={channelsExpanded}
               onToggle={onChannelsToggle ?? (() => {})}
+              icon={Hash}
             >
               {channelMessages.map((r) => (
                 <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
@@ -346,6 +393,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
             </CollapsibleSection>
           )}
           {renderBugsSection()}
+          {renderMarketSection()}
         </>
       )}
     </>

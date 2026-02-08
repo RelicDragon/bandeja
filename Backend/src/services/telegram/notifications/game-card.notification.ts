@@ -70,10 +70,10 @@ export async function sendGameCard(
     throw new Error(`Game ${gameId} not found`);
   }
 
-  const countsTowardSlots = (p: any) => p.status === 'PLAYING' && !(game.entityType === 'TRAINING' && p.isTrainer);
+  const countsTowardSlots = (p: any) => p.status === 'PLAYING';
   const playingParticipants = game.participants.filter(countsTowardSlots);
   const organizer = game.entityType === 'TRAINING'
-    ? game.participants.find((p: any) => p.isTrainer) || game.participants.find((p: any) => p.role === 'OWNER')
+    ? ((game as any).trainerId ? game.participants.find((p: any) => p.userId === (game as any).trainerId) : null) || game.participants.find((p: any) => p.role === 'OWNER')
     : game.participants.find((p: any) => p.role === 'OWNER');
   const ownerName = organizer ? `${organizer.user.firstName || ''} ${organizer.user.lastName || ''}`.trim() : null;
 

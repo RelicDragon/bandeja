@@ -12,9 +12,10 @@ interface CityModalProps {
   selectedId?: string;
   onSelect?: (id: string) => void;
   onCityChanged?: () => void;
+  showNoCityOption?: boolean;
 }
 
-export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged }: CityModalProps) => {
+export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged, showNoCityOption }: CityModalProps) => {
   const { t } = useTranslation();
   const updateUser = useAuthStore((state) => state.updateUser);
   const user = useAuthStore((state) => state.user);
@@ -96,7 +97,7 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
               currentCityId={currentCityId}
               onCityClick={handleCityClick}
               isSelectorMode={isSelectorMode}
-              showNoCityOption={isSelectorMode}
+              showNoCityOption={showNoCityOption ?? isSelectorMode}
               selectedId={selectedId}
               submitting={submitting}
               showError={!isSelectorMode}

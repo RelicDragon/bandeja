@@ -30,13 +30,13 @@ export const TrainingResultsSection = ({
   const [undoing, setUndoing] = useState(false);
   const [showUndoConfirm, setShowUndoConfirm] = useState(false);
 
-  const isTrainerOrOwner = game.participants?.some(p => p.userId === user?.id && (p.isTrainer || p.role === 'OWNER'));
+  const isTrainerOrOwner = game.participants?.some(p => p.userId === user?.id && (game.trainerId === p.userId || p.role === 'OWNER'));
   const canEdit = user && (isTrainerOrOwner || user.isAdmin) && game.status !== 'ARCHIVED';
   const hasChanges = game.outcomes && game.outcomes.length > 0;
   const canUndo = hasChanges && game.status !== 'ARCHIVED' && game.resultsStatus === 'FINAL';
 
-  const trainingOwner = game.participants.find((p) => p.isTrainer || p.role === 'OWNER');
-  const playingParticipants = game.participants.filter((p) => p.status === 'PLAYING' && p.user && !p.isTrainer && p.role !== 'OWNER');
+  const trainingOwner = (game.trainerId ? game.participants.find((p) => p.userId === game.trainerId) : null) || game.participants.find((p) => p.role === 'OWNER');
+  const playingParticipants = game.participants.filter((p) => p.status === 'PLAYING' && p.user && p.role !== 'OWNER');
 
   const handleEdit = async (participantUserId: string) => {
     setEditingUserId(participantUserId);

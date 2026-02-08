@@ -8,7 +8,7 @@ interface BugsFilterState {
 }
 
 interface NavigationState {
-  currentPage: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions';
+  currentPage: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace';
   bottomTabsVisible: boolean;
   isAnimating: boolean;
   gameDetailsCanAccessChat: boolean;
@@ -23,7 +23,7 @@ interface NavigationState {
   findViewMode: 'calendar' | 'list';
   requestFindGoToCurrent: 'calendar' | 'list' | null;
   setRequestFindGoToCurrent: (mode: 'calendar' | 'list' | null) => void;
-  setCurrentPage: (page: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions') => void;
+  setCurrentPage: (page: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace') => void;
   setBottomTabsVisible: (visible: boolean) => void;
   setIsAnimating: (animating: boolean) => void;
   setGameDetailsCanAccessChat: (canAccessChat: boolean) => void;

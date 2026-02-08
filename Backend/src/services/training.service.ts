@@ -42,7 +42,7 @@ export async function updateParticipantLevel(
     }),
     prisma.game.findUnique({
       where: { id: gameId },
-      include: { participants: true },
+      select: { id: true, entityType: true, resultsStatus: true, status: true, trainerId: true, participants: true },
     }),
   ]);
 
@@ -51,13 +51,12 @@ export async function updateParticipantLevel(
   }
 
   const userParticipant = game?.participants.find(p => p.userId === userId);
-  const isTrainerOrOwner = userParticipant?.isTrainer || userParticipant?.role === 'OWNER';
+  const isTrainerOrOwner = userParticipant?.role === 'OWNER' || userParticipant?.role === 'ADMIN';
   if (!user.isTrainer && !user.isAdmin && !isTrainerOrOwner) {
     throw new ApiError(403, 'Only trainers or admins can update participant levels');
   }
 
-  const targetParticipant = game?.participants.find(p => p.userId === participantUserId);
-  if (targetParticipant?.isTrainer) {
+  if (game?.trainerId === participantUserId) {
     throw new ApiError(400, 'Cannot update trainer level');
   }
 
@@ -197,7 +196,7 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
     }),
     prisma.game.findUnique({
       where: { id: gameId },
-      include: { outcomes: true, participants: true },
+      select: { id: true, entityType: true, resultsStatus: true, status: true, trainerId: true, outcomes: true, participants: true },
     }),
   ]);
 
@@ -206,7 +205,7 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
   }
 
   const userParticipant = game?.participants.find(p => p.userId === userId);
-  const isTrainerOrOwner = userParticipant?.isTrainer || userParticipant?.role === 'OWNER';
+  const isTrainerOrOwner = userParticipant?.role === 'OWNER' || userParticipant?.role === 'ADMIN';
   if (!user.isTrainer && !user.isAdmin && !isTrainerOrOwner) {
     throw new ApiError(403, 'Only trainers or admins can undo training changes');
   }

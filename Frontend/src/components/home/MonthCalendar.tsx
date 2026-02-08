@@ -75,7 +75,7 @@ export const MonthCalendar = ({
       if (game.timeIsSet === false) return;
 
       const organizer = game.entityType === 'TRAINING'
-        ? game.participants?.find((p: any) => p.isTrainer) || game.participants?.find((p: any) => p.role === 'OWNER')
+        ? (game.trainerId ? game.participants?.find((p: any) => p.userId === game.trainerId) : null) || game.participants?.find((p: any) => p.role === 'OWNER')
         : game.participants?.find((p: any) => p.role === 'OWNER');
       if (organizer && user?.blockedUserIds?.includes(organizer.userId)) return;
 
@@ -89,9 +89,7 @@ export const MonthCalendar = ({
       }
 
       if (userFilter) {
-        const slotCount = game.entityType === 'TRAINING'
-          ? game.participants?.filter((p: any) => p.status === 'PLAYING' && !p.isTrainer).length ?? 0
-          : game.participants?.filter((p: any) => p.status === 'PLAYING').length ?? 0;
+        const slotCount = game.participants?.filter((p: any) => p.status === 'PLAYING').length ?? 0;
         if (slotCount >= game.maxParticipants) {
           return;
         }
@@ -112,7 +110,7 @@ export const MonthCalendar = ({
       }
 
       if (trainingFilter && favoriteTrainerId) {
-        const trainer = game.participants?.find((p: any) => p.isTrainer && p.userId === favoriteTrainerId);
+        const trainer = game.trainerId === favoriteTrainerId ? game.participants?.find((p: any) => p.userId === favoriteTrainerId) : null;
         if (!trainer) return;
       }
 

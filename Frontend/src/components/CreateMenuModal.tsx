@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash, Bug, X } from 'lucide-react';
+import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash, Bug, X, ShoppingBag } from 'lucide-react';
 import { EntityType } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { CreateGroupChannelForm } from './chat/CreateGroupChannelForm';
@@ -149,6 +149,14 @@ export const CreateMenuModal = ({
     }, 400);
   };
 
+  const handleCreateListing = () => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onClose();
+      navigationService.navigateToCreateListing();
+    }, 400);
+  };
+
   const getIcon = (type: EntityType) => {
     switch (type) {
       case 'GAME':
@@ -166,7 +174,7 @@ export const CreateMenuModal = ({
     }
   };
 
-  const totalItems = entityTypes.length + 6;
+  const totalItems = entityTypes.length + 8;
   let currentIndex = 0;
 
   const overlay = (
@@ -255,6 +263,29 @@ export const CreateMenuModal = ({
           >
             <Hash size={18} />
             {t('chat.channel', { defaultValue: 'Channel' })}
+          </button>
+
+          <div
+            className={`h-px bg-gray-300 dark:bg-gray-600 ${
+              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+            }`}
+            style={{
+              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`
+            }}
+          />
+
+          <button
+            onClick={(e) => { e.stopPropagation(); handleCreateListing(); }}
+            className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
+              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+            }`}
+            style={{
+              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+            }}
+          >
+            <ShoppingBag size={18} />
+            {t('marketplace.listing', { defaultValue: 'Listing' })}
           </button>
 
           <div

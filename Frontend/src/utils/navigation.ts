@@ -62,14 +62,14 @@ export const canNavigateBack = (): boolean => {
 
 export interface LocationState {
   fromLeagueSeasonGameId?: string;
-  fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions';
+  fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace';
   fromFilter?: 'users' | 'bugs' | 'channels';
   searchQuery?: string;
   isAppNavigation?: boolean;
   timestamp?: number;
 }
 
-type PageType = 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions';
+type PageType = 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace';
 
 interface HandleBackNavigationParams {
   pathname: string;
@@ -86,7 +86,7 @@ interface HandleBackNavigationParams {
 const SAFETY_CHECK_MS = 350;
 
 const APP_PATH_RE =
-  /^\/(find|chats|profile|leaderboard|games|create-game|create-league|rating|bugs|game-subscriptions|user-chat|group-chat|channel-chat|select-city|complete-profile|login|register|character)(\/.*)?$/;
+  /^\/(find|chats|profile|leaderboard|games|create-game|create-league|rating|bugs|game-subscriptions|marketplace|user-chat|group-chat|channel-chat|select-city|complete-profile|login|register|character)(\/.*)?$/;
 
 const isAppPath = (pathname: string): boolean =>
   pathname === '/' || APP_PATH_RE.test(pathname);
@@ -131,6 +131,12 @@ const applyFallback = (
       setCurrentPage('gameDetails');
     } else if (fallback === '/bugs' || fallback === '/chats') {
       setCurrentPage('chats');
+    } else if (fallback === '/marketplace') {
+      setCurrentPage('marketplace');
+    } else if (fallback === '/find') {
+      setCurrentPage('find');
+    } else if (fallback === '/leaderboard') {
+      setCurrentPage('leaderboard');
     }
   }
   navigateWithTracking(navigate, fallback, { replace: true });

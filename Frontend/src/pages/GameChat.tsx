@@ -24,9 +24,10 @@ import { isParticipantPlaying } from '@/utils/participantStatus';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { normalizeChatType, getAvailableGameChatTypes } from '@/utils/chatType';
 import { parseSystemMessage } from '@/utils/systemMessages';
-import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users, Hash } from 'lucide-react';
+import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users, Hash, Package } from 'lucide-react';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
+import { MarketItemPanel } from '@/components/marketplace';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { RequestToChat } from '@/components/chat/RequestToChat';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
@@ -100,6 +101,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [isTogglingMute, setIsTogglingMute] = useState(false);
   const [hasSetDefaultChatType, setHasSetDefaultChatType] = useState(false);
   const [showPlayerCard, setShowPlayerCard] = useState(false);
+  const [showItemPage, setShowItemPage] = useState(false);
+  const [isItemPageAnimating, setIsItemPageAnimating] = useState(false);
   const justLoadedOlderMessagesRef = useRef(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -121,6 +124,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const isChannelParticipant = contextType === 'GROUP' && groupChannel && (groupChannel.isParticipant || isChannelOwner);
   const isChannel = contextType === 'GROUP' && groupChannel?.isChannel;
   const isChannelParticipantOnly = isChannel && isChannelParticipant && !isChannelAdminOrOwner;
+  const isItemChat = contextType === 'GROUP' && !!groupChannel?.marketItem;
   
   const canWriteGroupChat = useMemo(() => {
     if (contextType !== 'GROUP' || !groupChannel || !user?.id) return false;
@@ -196,6 +200,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   }, [setBottomTabsVisible, isEmbedded]);
 
   useBackButtonHandler(() => {
+    if (showItemPage) {
+      setIsItemPageAnimating(true);
+      setTimeout(() => setShowItemPage(false), 300);
+      return true;
+    }
     if (showParticipantsPage) {
       setIsParticipantsPageAnimating(true);
       setTimeout(() => {
@@ -1315,17 +1324,39 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       return (
         <button
           onClick={() => {
-            setShowParticipantsPage(true);
-            setIsParticipantsPageAnimating(true);
-            requestAnimationFrame(() => {
+            if (isItemChat) {
+              setShowItemPage(true);
+              setIsItemPageAnimating(true);
               requestAnimationFrame(() => {
-                setIsParticipantsPageAnimating(false);
+                requestAnimationFrame(() => {
+                  setIsItemPageAnimating(false);
+                });
               });
-            });
+            } else {
+              setShowParticipantsPage(true);
+              setIsParticipantsPageAnimating(true);
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  setIsParticipantsPageAnimating(false);
+                });
+              });
+            }
           }}
           className="flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
         >
-          {groupChannel.avatar ? (
+          {groupChannel.marketItem ? (
+            groupChannel.marketItem.mediaUrls?.length ? (
+              <img
+                src={groupChannel.marketItem.mediaUrls[0]}
+                alt={groupChannel.name}
+                className="w-10 h-10 rounded-full object-cover shadow-lg dark:shadow-[0_0_8px_rgba(251,191,36,0.5),0_0_16px_rgba(251,191,36,0.3)]"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shadow-lg dark:shadow-[0_0_8px_rgba(251,191,36,0.5),0_0_16px_rgba(251,191,36,0.3)]">
+                <Package className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              </div>
+            )
+          ) : groupChannel.avatar ? (
             <img
               src={groupChannel.avatar}
               alt={groupChannel.name}
@@ -1351,7 +1382,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   return (
     <>
-    <div ref={chatContainerRef} className={`chat-container relative bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden overflow-x-hidden ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'} ${showParticipantsPage ? 'hidden' : ''}`}>
+    <div ref={chatContainerRef} className={`chat-container relative bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden overflow-x-hidden ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'} ${(showParticipantsPage || showItemPage) ? 'hidden' : ''}`}>
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: isEmbedded ? '0' : 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           {showLoadingHeader ? (
@@ -1368,6 +1399,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 {!isEmbedded && (
                   <button
                     onClick={() => {
+                      if (showItemPage) {
+                        setIsItemPageAnimating(true);
+                        setTimeout(() => setShowItemPage(false), 300);
+                        return;
+                      }
                       if (showParticipantsPage) {
                         setIsParticipantsPageAnimating(true);
                         setTimeout(() => {
@@ -1391,20 +1427,25 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                     <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
                   </button>
                 )}
-                {contextType === 'GROUP' && (
+                {(contextType === 'GROUP' && (showParticipantsPage || showItemPage || isParticipantsPageAnimating || isItemPageAnimating)) && (
                   <div
                     className={`hidden md:block transition-all duration-300 ease-in-out ${
-                      showParticipantsPage || isParticipantsPageAnimating
+                      showParticipantsPage || showItemPage || isParticipantsPageAnimating || isItemPageAnimating
                         ? 'opacity-100 translate-x-0 w-auto'
                         : 'opacity-0 translate-x-4 w-0 pointer-events-none'
                     }`}
                   >
                     <button
                       onClick={() => {
-                        setIsParticipantsPageAnimating(true);
-                        setTimeout(() => {
-                          setShowParticipantsPage(false);
-                        }, 300);
+                        if (showItemPage) {
+                          setIsItemPageAnimating(true);
+                          setTimeout(() => setShowItemPage(false), 300);
+                        } else {
+                          setIsParticipantsPageAnimating(true);
+                          setTimeout(() => {
+                            setShowParticipantsPage(false);
+                          }, 300);
+                        }
                       }}
                       className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
                     >
@@ -1415,13 +1456,23 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 <div 
                   className={`flex items-center gap-2 min-w-0 flex-1 ${(contextType === 'USER' || contextType === 'GROUP') ? 'cursor-pointer' : ''}`}
                   onClick={contextType === 'USER' && userChat && user?.id ? () => setShowPlayerCard(true) : contextType === 'GROUP' ? () => {
-                    setShowParticipantsPage(true);
-                    setIsParticipantsPageAnimating(true);
-                    requestAnimationFrame(() => {
+                    if (isItemChat) {
+                      setShowItemPage(true);
+                      setIsItemPageAnimating(true);
                       requestAnimationFrame(() => {
-                        setIsParticipantsPageAnimating(false);
+                        requestAnimationFrame(() => {
+                          setIsItemPageAnimating(false);
+                        });
                       });
-                    });
+                    } else {
+                      setShowParticipantsPage(true);
+                      setIsParticipantsPageAnimating(true);
+                      requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                          setIsParticipantsPageAnimating(false);
+                        });
+                      });
+                    }
                   } : undefined}
                 >
                 {!isBugChat && <div className="flex-shrink-0">{getIcon()}</div>}
@@ -1595,7 +1646,32 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       </header>
 
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden overflow-x-hidden relative">
-        {contextType === 'GROUP' && (showParticipantsPage || isParticipantsPageAnimating) && groupChannel && (
+        {contextType === 'GROUP' && isItemChat && (showItemPage || isItemPageAnimating) && groupChannel?.marketItem && (
+          <div 
+            className={`absolute inset-0 h-full transition-all duration-300 ease-in-out bg-gray-50 dark:bg-gray-900 ${
+              showItemPage && !isItemPageAnimating
+                ? 'opacity-100 translate-x-0 z-10'
+                : 'opacity-0 translate-x-full z-0 pointer-events-none'
+            }`}
+            onTransitionEnd={() => {
+              if (isItemPageAnimating && !showItemPage) {
+                setIsItemPageAnimating(false);
+              }
+            }}
+          >
+            <MarketItemPanel
+              item={groupChannel.marketItem}
+              onClose={() => {
+                setIsItemPageAnimating(true);
+                setTimeout(() => setShowItemPage(false), 300);
+              }}
+              onItemUpdate={() => {
+                if (id) loadContext();
+              }}
+            />
+          </div>
+        )}
+        {contextType === 'GROUP' && !isItemChat && (showParticipantsPage || isParticipantsPageAnimating) && groupChannel && (
           <div 
             className={`absolute inset-0 h-full transition-all duration-300 ease-in-out bg-gray-50 dark:bg-gray-900 ${
               showParticipantsPage && !isParticipantsPageAnimating
@@ -1625,7 +1701,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         )}
         <div
           className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ease-in-out ${
-            showParticipantsPage || isParticipantsPageAnimating
+            showParticipantsPage || showItemPage || isParticipantsPageAnimating || isItemPageAnimating
               ? 'opacity-0 -translate-x-full'
               : 'opacity-100 translate-x-0'
           }`}
@@ -1656,7 +1732,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
       </main>
 
-      {(!isInitialLoad || isEmbedded) && !(contextType === 'GROUP' && (showParticipantsPage || isParticipantsPageAnimating)) && (
+      {(!isInitialLoad || isEmbedded) && !(contextType === 'GROUP' && (showParticipantsPage || showItemPage || isParticipantsPageAnimating || isItemPageAnimating)) && (
       <footer className="md:flex-shrink-0 md:relative absolute bottom-0 left-0 right-0 z-50 md:z-40 !bg-transparent md:!bg-white md:dark:!bg-gray-800 md:border-t md:border-gray-200 md:dark:border-gray-700 border-transparent" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {isBlockedByUser && contextType === 'USER' ? (
           <div className="px-4 py-3" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>

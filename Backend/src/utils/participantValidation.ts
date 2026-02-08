@@ -10,7 +10,6 @@ interface GameWithParticipants {
   participants?: Array<{
     userId: string;
     status?: string;
-    isTrainer?: boolean;
     user?: {
       gender: Gender;
     };
@@ -93,8 +92,7 @@ export async function canAddPlayerToGame(
     throw new ApiError(404, 'User not found');
   }
 
-  const countsTowardSlots = (p: { status?: string; isTrainer?: boolean }) =>
-    p.status === 'PLAYING' && !(game.entityType === EntityType.TRAINING && p.isTrainer);
+  const countsTowardSlots = (p: { status?: string }) => p.status === 'PLAYING';
   let existingPlayingParticipants = game.participants?.filter(p => countsTowardSlots(p)) || [];
 
   if (existingPlayingParticipants.length > 0 && (!existingPlayingParticipants[0].user || !existingPlayingParticipants[0].user.gender)) {

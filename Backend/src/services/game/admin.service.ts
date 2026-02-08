@@ -151,13 +151,17 @@ export class AdminService {
       }
     }
 
-    await prisma.gameParticipant.delete({
-      where: { id: targetParticipant.id },
+    await prisma.$transaction(async (tx) => {
+      const game = await tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } });
+      if (game?.trainerId === targetUserId) {
+        await tx.game.update({ where: { id: gameId }, data: { trainerId: null } });
+      }
+      await tx.gameParticipant.delete({ where: { id: targetParticipant.id } });
     });
 
     if (targetParticipant.user) {
       const userName = getUserDisplayName(targetParticipant.user.firstName, targetParticipant.user.lastName);
-      
+
       try {
         await createSystemMessage(gameId, {
           type: SystemMessageType.USER_KICKED,
@@ -199,19 +203,33 @@ export class AdminService {
 
     if (isTrainer) {
       await prisma.$transaction(async (tx) => {
-        await tx.gameParticipant.updateMany({
-          where: { gameId, isTrainer: true },
-          data: { isTrainer: false, role: ParticipantRole.PARTICIPANT },
+        // Clear previous trainer's admin role if different user
+        const previousTrainerId = (await tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } }))?.trainerId;
+        if (previousTrainerId && previousTrainerId !== userId) {
+          await tx.gameParticipant.updateMany({
+            where: { gameId, userId: previousTrainerId, role: ParticipantRole.ADMIN },
+            data: { role: ParticipantRole.PARTICIPANT },
+          });
+        }
+        await tx.game.update({
+          where: { id: gameId },
+          data: { trainerId: userId },
         });
         await tx.gameParticipant.update({
           where: { id: targetParticipant.id },
-          data: { isTrainer: true, role: ParticipantRole.ADMIN },
+          data: { status: 'NON_PLAYING', role: ParticipantRole.ADMIN },
         });
       });
     } else {
-      await prisma.gameParticipant.update({
-        where: { id: targetParticipant.id },
-        data: { isTrainer: false, role: ParticipantRole.PARTICIPANT },
+      await prisma.$transaction(async (tx) => {
+        await tx.game.update({
+          where: { id: gameId },
+          data: { trainerId: null },
+        });
+        await tx.gameParticipant.update({
+          where: { id: targetParticipant.id },
+          data: { role: ParticipantRole.PARTICIPANT },
+        });
       });
     }
 

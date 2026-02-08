@@ -1,6 +1,6 @@
 import { formatChatTime } from '@/utils/dateFormat';
 import { GroupChannel, ChatDraft, getLastMessageTime, getLastMessageText, isLastMessagePreview } from '@/api/chat';
-import { Users, Hash } from 'lucide-react';
+import { Users, Hash, Package } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
@@ -37,7 +37,19 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
     >
       {!groupChannel.bugId && (
         <div className="relative flex-shrink-0">
-          {groupChannel.avatar ? (
+          {groupChannel.marketItem ? (
+            groupChannel.marketItem.mediaUrls?.length ? (
+              <img
+                src={groupChannel.marketItem.mediaUrls[0]}
+                alt={displayName}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                <Package className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+              </div>
+            )
+          ) : groupChannel.avatar ? (
             <img
               src={groupChannel.avatar}
               alt={displayName}

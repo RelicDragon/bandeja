@@ -712,6 +712,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const [gamesExpanded, setGamesExpanded] = useState(true);
   const [channelsExpanded, setChannelsExpanded] = useState(true);
   const [bugsExpanded, setBugsExpanded] = useState(true);
+  const [marketListingsExpanded, setMarketListingsExpanded] = useState(true);
   const [showBugModal, setShowBugModal] = useState(false);
   const [bugsFilterPanelOpen, setBugsFilterPanelOpen] = useState(false);
 
@@ -868,7 +869,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         />
       )}
       <div
-        className={isDesktop ? 'overflow-y-auto scrollbar-auto h-full bg-white dark:bg-gray-900 flex flex-col min-h-0 pb-20' : ''}
+        className={isDesktop ? 'h-full bg-white dark:bg-gray-900 flex flex-col min-h-0 overflow-hidden pb-20' : ''}
         style={{
           transform: isDesktop ? 'none' : `translateY(${pullDistance}px)`,
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
@@ -936,7 +937,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
           )}
         </AnimatePresence>
         <div
-          className="flex-1 min-h-0 overflow-hidden"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-auto"
           style={{
             opacity: listTransition === 'out' ? 0 : 1,
             transform: listTransition === 'out' ? 'scale(0.98)' : 'scale(1)',
@@ -972,10 +973,12 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                     gamesExpanded={gamesExpanded}
                     channelsExpanded={channelsExpanded}
                     bugsExpanded={bugsExpanded}
+                    marketListingsExpanded={marketListingsExpanded}
                     onMessagesToggle={() => setMessagesExpanded((e) => !e)}
                     onGamesToggle={() => setGamesExpanded((e) => !e)}
                     onChannelsToggle={() => setChannelsExpanded((e) => !e)}
                     onBugsToggle={() => setBugsExpanded((e) => !e)}
+                    onMarketListingsToggle={() => setMarketListingsExpanded((e) => !e)}
                   />
                 ) : (
                   <>
@@ -998,10 +1001,12 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                       gamesExpanded={gamesExpanded}
                       channelsExpanded={channelsExpanded}
                       bugsExpanded={bugsExpanded}
+                      marketListingsExpanded={marketListingsExpanded}
                       onMessagesToggle={() => setMessagesExpanded((e) => !e)}
                       onGamesToggle={() => setGamesExpanded((e) => !e)}
                       onChannelsToggle={() => setChannelsExpanded((e) => !e)}
                       onBugsToggle={() => setBugsExpanded((e) => !e)}
+                      onMarketListingsToggle={() => setMarketListingsExpanded((e) => !e)}
                     />
                   </>
                 )}

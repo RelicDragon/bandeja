@@ -1064,17 +1064,19 @@ export const getUserDrafts = asyncHandler(async (req: AuthRequest, res: Response
 
 export const searchMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
-  const { q, section, messagesPage = 1, messagesLimit = 20, gamePage = 1, gameLimit = 20, bugsPage = 1, channelPage = 1, channelLimit = 20 } = req.query;
+  const { q, section, messagesPage = 1, messagesLimit = 20, gamePage = 1, gameLimit = 20, bugsPage = 1, channelPage = 1, channelLimit = 20, marketPage = 1, marketLimit = 20 } = req.query;
   if (!userId) throw new ApiError(401, 'Unauthorized');
   const result = await MessageSearchService.search(userId, String(q).trim(), {
-    section: section as 'messages' | 'games' | 'channels' | 'bugs' | undefined,
+    section: section as 'messages' | 'games' | 'channels' | 'bugs' | 'market' | undefined,
     messagesPage: Number(messagesPage),
     messagesLimit: Number(messagesLimit),
     gamePage: Number(gamePage),
     gameLimit: Number(gameLimit),
     bugsPage: Number(bugsPage),
     channelPage: Number(channelPage),
-    channelLimit: Number(channelLimit)
+    channelLimit: Number(channelLimit),
+    marketPage: Number(marketPage),
+    marketLimit: Number(marketLimit)
   });
   res.json({
     success: true,
@@ -1082,10 +1084,12 @@ export const searchMessages = asyncHandler(async (req: AuthRequest, res: Respons
     gameMessages: result.gameMessages,
     channelMessages: result.channelMessages,
     bugMessages: result.bugMessages,
+    marketMessages: result.marketMessages,
     messagesPagination: result.messagesPagination,
     gamePagination: result.gamePagination,
     channelPagination: result.channelPagination,
-    bugsPagination: result.bugsPagination
+    bugsPagination: result.bugsPagination,
+    marketPagination: result.marketPagination
   });
 });
 

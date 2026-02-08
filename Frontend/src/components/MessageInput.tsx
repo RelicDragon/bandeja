@@ -803,7 +803,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
       <form onSubmit={handleSubmit} className="relative overflow-visible">
         <div className="flex items-end gap-2">
-          <div ref={attachMenuRef} className="flex flex-col-reverse items-center gap-2 flex-shrink-0 bg-transparent">
+          <div ref={attachMenuRef} className="flex flex-col-reverse items-center gap-2 flex-shrink-0 bg-transparent pb-0.5">
             <button
               type="button"
               onClick={() => setIsAttachExpanded(prev => !prev)}
@@ -841,7 +841,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           <div className={`flex-1 message-input-panel relative overflow-visible !bg-transparent md:!bg-white md:dark:!bg-gray-800 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
           }`}>
           <div ref={inputContainerRef} className="relative overflow-visible">
-            <div className="rounded-2xl bg-white dark:bg-gray-800 md:bg-transparent">
+            <div className="rounded-[24px] bg-white dark:bg-gray-800 md:bg-transparent">
               <MentionInput
               value={message}
               onChange={handleMessageChange}
@@ -865,7 +865,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             <button
               type="submit"
               disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
-              className="absolute bottom-0.5 right-1 w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_4px_24px_rgba(59,130,246,0.6),0_8px_48px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_32px_rgba(59,130,246,0.7),0_12px_56px_rgba(59,130,246,0.5)] hover:scale-105 z-10"
+              className="absolute bottom-0.5 right-[2px] w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_4px_24px_rgba(59,130,246,0.6),0_8px_48px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_32px_rgba(59,130,246,0.7),0_12px_56px_rgba(59,130,246,0.5)] hover:scale-105 z-10"
               aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
             >
               {inputBlocked ? (

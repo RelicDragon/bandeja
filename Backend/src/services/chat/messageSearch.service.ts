@@ -18,20 +18,25 @@ export interface SearchMessagesResult {
   gameMessages: SearchResult[];
   channelMessages: SearchResult[];
   bugMessages: SearchResult[];
+  marketMessages: SearchResult[];
   messagesPagination: { page: number; limit: number; hasMore: boolean };
   gamePagination: { page: number; limit: number; hasMore: boolean };
   channelPagination: { page: number; limit: number; hasMore: boolean };
   bugsPagination: { page: number; limit: number; hasMore: boolean };
+  marketPagination: { page: number; limit: number; hasMore: boolean };
 }
 
-type SectionFilter = 'messages' | 'games' | 'channels' | 'bugs';
+type SectionFilter = 'messages' | 'games' | 'channels' | 'bugs' | 'market';
 
 function buildSectionCondition(filter: SectionFilter): Prisma.Sql {
   if (filter === 'bugs') {
     return Prisma.sql`AND m."chatContextType" = 'GROUP' AND EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."bugId" IS NOT NULL)`;
   }
   if (filter === 'channels') {
-    return Prisma.sql`AND m."chatContextType" = 'GROUP' AND EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."isChannel" = true AND gc."bugId" IS NULL)`;
+    return Prisma.sql`AND m."chatContextType" = 'GROUP' AND EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."isChannel" = true AND gc."bugId" IS NULL AND gc."marketItemId" IS NULL)`;
+  }
+  if (filter === 'market') {
+    return Prisma.sql`AND m."chatContextType" = 'GROUP' AND EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."marketItemId" IS NOT NULL)`;
   }
   if (filter === 'games') {
     return Prisma.sql`AND m."chatContextType" = 'GAME'`;
@@ -214,7 +219,7 @@ export class MessageSearchService {
     userId: string,
     query: string,
     options: {
-      section?: 'messages' | 'games' | 'channels' | 'bugs';
+      section?: 'messages' | 'games' | 'channels' | 'bugs' | 'market';
       messagesPage?: number;
       messagesLimit?: number;
       gamePage?: number;
@@ -222,6 +227,8 @@ export class MessageSearchService {
       bugsPage?: number;
       channelPage?: number;
       channelLimit?: number;
+      marketPage?: number;
+      marketLimit?: number;
     } = {}
   ): Promise<SearchMessagesResult> {
     const section = options.section;
@@ -232,16 +239,20 @@ export class MessageSearchService {
     const bugsPage = Math.max(1, options.bugsPage ?? 1);
     const channelPage = Math.max(1, options.channelPage ?? 1);
     const channelLimit = Math.min(50, Math.max(1, options.channelLimit ?? 20));
+    const marketPage = Math.max(1, options.marketPage ?? 1);
+    const marketLimit = Math.min(50, Math.max(1, options.marketLimit ?? 20));
 
     const emptyResult = (): SearchMessagesResult => ({
       messages: [],
       gameMessages: [],
       channelMessages: [],
       bugMessages: [],
+      marketMessages: [],
       messagesPagination: { page: messagesPage, limit: messagesLimit, hasMore: false },
       gamePagination: { page: gamePage, limit: gameLimit, hasMore: false },
       channelPagination: { page: channelPage, limit: channelLimit, hasMore: false },
-      bugsPagination: { page: bugsPage, limit: BUGS_LIMIT, hasMore: false }
+      bugsPagination: { page: bugsPage, limit: BUGS_LIMIT, hasMore: false },
+      marketPagination: { page: marketPage, limit: marketLimit, hasMore: false }
     });
 
     const normalizedQuery = normalizeForSearch(query);
@@ -287,19 +298,29 @@ export class MessageSearchService {
         bugsPagination: { page: bugsPage, limit: BUGS_LIMIT, hasMore }
       };
     }
+    if (section === 'market') {
+      const { items, hasMore } = await runSection('market', marketPage, marketLimit);
+      return {
+        ...emptyResult(),
+        marketMessages: items,
+        marketPagination: { page: marketPage, limit: marketLimit, hasMore }
+      };
+    }
 
-    const [messagesResult, gameResult, channelResult, bugsResult] = await Promise.all([
+    const [messagesResult, gameResult, channelResult, bugsResult, marketResult] = await Promise.all([
       searchSection(userId, normalizedQuery, 'messages', 1, messagesLimit, accessCache, channelCache),
       searchSection(userId, normalizedQuery, 'games', 1, gameLimit, accessCache, channelCache),
       searchSection(userId, normalizedQuery, 'channels', 1, channelLimit, accessCache, channelCache),
-      searchSection(userId, normalizedQuery, 'bugs', 1, BUGS_LIMIT, accessCache, channelCache)
+      searchSection(userId, normalizedQuery, 'bugs', 1, BUGS_LIMIT, accessCache, channelCache),
+      searchSection(userId, normalizedQuery, 'market', 1, marketLimit, accessCache, channelCache)
     ]);
 
-    const [messages, gameMessages, channelMessages, bugMessages] = await Promise.all([
+    const [messages, gameMessages, channelMessages, bugMessages, marketMessages] = await Promise.all([
       loadContextsAndEnrich(messagesResult.results, userId),
       loadContextsAndEnrich(gameResult.results, userId),
       loadContextsAndEnrich(channelResult.results, userId),
-      loadContextsAndEnrich(bugsResult.results, userId)
+      loadContextsAndEnrich(bugsResult.results, userId),
+      loadContextsAndEnrich(marketResult.results, userId)
     ]);
 
     return {
@@ -307,10 +328,12 @@ export class MessageSearchService {
       gameMessages,
       channelMessages,
       bugMessages,
+      marketMessages,
       messagesPagination: { page: 1, limit: messagesLimit, hasMore: messagesResult.hasMore },
       gamePagination: { page: 1, limit: gameLimit, hasMore: gameResult.hasMore },
       channelPagination: { page: 1, limit: channelLimit, hasMore: channelResult.hasMore },
-      bugsPagination: { page: 1, limit: BUGS_LIMIT, hasMore: bugsResult.hasMore }
+      bugsPagination: { page: 1, limit: BUGS_LIMIT, hasMore: bugsResult.hasMore },
+      marketPagination: { page: 1, limit: marketLimit, hasMore: marketResult.hasMore }
     };
   }
 
@@ -388,7 +411,8 @@ export class MessageSearchService {
           avatar: gc.avatar,
           isChannel: gc.isChannel,
           isPublic: gc.isPublic,
-          bug: gc.bug
+          bug: gc.bug,
+          marketItemId: gc.marketItemId
         });
       }
     }

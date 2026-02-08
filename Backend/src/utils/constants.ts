@@ -171,6 +171,7 @@ export const PROFILE_SELECT_FIELDS = {
   totalPoints: true,
   gamesPlayed: true,
   gamesWon: true,
+  currentCityId: true,
   currentCity: {
     select: {
       id: true,

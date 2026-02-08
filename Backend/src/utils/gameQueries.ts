@@ -13,7 +13,6 @@ export interface GameWithPlayingParticipants {
   participants: Array<{
     userId: string;
     status: string;
-    isTrainer?: boolean;
     user?: {
       gender: Gender;
     };

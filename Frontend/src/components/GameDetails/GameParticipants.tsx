@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
 import { Game, Invite, InviteStatus, JoinQueue } from '@/types';
-import { isParticipantCountsTowardSlots } from '@/utils/participantStatus';
 import { Users, UserPlus, Sliders, CheckCircle, XCircle, Edit3, LayoutGrid, List } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PlayersCarousel } from './PlayersCarousel';
@@ -65,6 +64,7 @@ export const GameParticipants = ({
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
   const isUnauthorized = !userId;
+  const isNonPlaying = !isUnauthorized && game.participants.find(p => p.userId === userId)?.status === 'NON_PLAYING';
 
   useEffect(() => {
     getParticipantsViewMode().then(setViewMode);
@@ -94,7 +94,7 @@ export const GameParticipants = ({
   }, [game?.participants, game?.id]);
 
   const playingOwnersAndAdmins = game.participants.filter(
-    p => isParticipantCountsTowardSlots(p, game.entityType) && (p.role === 'OWNER' || p.role === 'ADMIN')
+    p => p.status === 'PLAYING' && (p.role === 'OWNER' || p.role === 'ADMIN')
   );
   const shouldShowCrowns = playingOwnersAndAdmins.length > 1;
   
@@ -127,13 +127,13 @@ export const GameParticipants = ({
               className="flex items-center gap-2"
             >
               <Edit3 size={16} />
-              {`${game.participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length} / ${game.maxParticipants}`}
+              {`${game.participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
             </Button>
           ) : (
             <span className="text-gray-600 dark:text-gray-400">
               {game.entityType === 'BAR' 
-                ? game.participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length
-                : `${game.participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType)).length} / ${game.maxParticipants}`
+                ? game.participants.filter(p => p.status === 'PLAYING').length
+                : `${game.participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`
               }
             </span>
           )}
@@ -189,7 +189,7 @@ export const GameParticipants = ({
             </p>
           </div>
         )}
-        {!isUnauthorized && !isUserPlaying && !isInJoinQueue && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && game.allowDirectJoin && (hasUnoccupiedSlots || game.entityType === 'BAR') && (
+        {!isUnauthorized && !isNonPlaying && !isUserPlaying && !isInJoinQueue && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && game.allowDirectJoin && (hasUnoccupiedSlots || game.entityType === 'BAR') && (
           <Button
             onClick={onJoin}
             size="lg"
@@ -199,7 +199,7 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        {!isUnauthorized && !isUserPlaying && !isInJoinQueue && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (!game.allowDirectJoin || (!hasUnoccupiedSlots && game.entityType !== 'BAR')) && (
+        {!isUnauthorized && !isNonPlaying && !isUserPlaying && !isInJoinQueue && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (!game.allowDirectJoin || (!hasUnoccupiedSlots && game.entityType !== 'BAR')) && (
           <Button
             onClick={onJoin}
             size="lg"
@@ -239,7 +239,7 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        {!isUnauthorized && isOwner && !isUserPlaying && hasUnoccupiedSlots && !isInJoinQueue && (
+        {!isUnauthorized && !isNonPlaying && isOwner && !isUserPlaying && hasUnoccupiedSlots && !isInJoinQueue && (
           <Button
             onClick={onAddToGame}
             size="lg"
@@ -249,8 +249,16 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
+        {isNonPlaying && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
+          hasUnoccupiedSlots
+            ? <Button onClick={onAddToGame} size="lg" className="w-full flex items-center justify-center">
+                <UserPlus size={20} className="mr-2" />
+                {t('games.playInGame', { defaultValue: 'Play in a game' })}
+              </Button>
+            : <p className="text-sm text-center text-gray-500 dark:text-gray-400">{t('games.noSlotsAvailable', { defaultValue: 'No slots available' })}</p>
+        )}
         {(() => {
-          const playingParticipants = game.participants.filter(p => isParticipantCountsTowardSlots(p, game.entityType));
+          const playingParticipants = game.participants.filter(p => p.status === 'PLAYING');
           const emptySlots = game.entityType !== 'BAR'
             ? game.maxParticipants - playingParticipants.length 
             : 0;

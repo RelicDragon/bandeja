@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { Button } from '@/components';
@@ -11,7 +11,9 @@ import { CityListContent } from '@/components/CityListContent';
 export const SelectCity = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const updateUser = useAuthStore((state) => state.updateUser);
+  const from = (location.state as { from?: string })?.from;
 
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
@@ -35,7 +37,7 @@ export const SelectCity = () => {
     try {
       const response = await usersApi.switchCity(selectedCity);
       updateUser(response.data);
-      navigate('/');
+      navigate(from || '/');
     } catch (err: any) {
       cityList.setError(err.response?.data?.message || t('errors.generic'));
     } finally {

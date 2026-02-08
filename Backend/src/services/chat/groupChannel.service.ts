@@ -122,6 +122,13 @@ export class GroupChannelService {
             sender: { select: USER_SELECT_FIELDS }
           }
         },
+        marketItem: {
+          include: {
+            seller: { select: USER_SELECT_FIELDS },
+            category: true,
+            city: true
+          }
+        },
         participants: {
           include: {
             user: {
@@ -149,12 +156,13 @@ export class GroupChannelService {
 
   static readonly PAGE_SIZE = 10;
 
-  static async getGroupChannels(userId: string, filter?: 'users' | 'bugs' | 'channels', opts?: {
+  static async getGroupChannels(userId: string, filter?: 'users' | 'bugs' | 'channels' | 'market', opts?: {
     page?: number;
     limit?: number;
     status?: string[];
     bugType?: string[];
     myBugsOnly?: boolean;
+    cityId?: string;
   }) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -210,6 +218,7 @@ export class GroupChannelService {
         {
           isChannel: true,
           bugId: null,
+          marketItemId: null,
           cityId: userCityId,
           OR: [
             {
@@ -224,9 +233,25 @@ export class GroupChannelService {
           ]
         }
       ];
+    } else if (filter === 'market') {
+      const marketWhere: any = {
+        isChannel: true,
+        bugId: null,
+        marketItemId: { not: null },
+        OR: [
+          { participants: { some: { userId, hidden: false } } },
+          { isPublic: true }
+        ]
+      };
+      if (opts?.cityId) {
+        marketWhere.cityId = opts.cityId;
+      } else if (userCityId) {
+        marketWhere.cityId = userCityId;
+      }
+      baseWhere.OR = [marketWhere];
     }
 
-    const isPaged = opts?.page != null && (filter === 'bugs' || filter === 'users' || filter === 'channels');
+    const isPaged = opts?.page != null && (filter === 'bugs' || filter === 'users' || filter === 'channels' || filter === 'market');
     const page = opts?.page ?? 1;
     const limit = opts?.limit ?? GroupChannelService.PAGE_SIZE;
 
@@ -310,6 +335,13 @@ export class GroupChannelService {
               sender: { select: USER_SELECT_FIELDS }
             }
           },
+          marketItem: {
+            include: {
+              seller: { select: USER_SELECT_FIELDS },
+              category: true,
+              city: true
+            }
+          },
           participants: {
             where: { userId },
             include: {
@@ -323,7 +355,7 @@ export class GroupChannelService {
           updatedAt: 'desc'
         }
       };
-      if (isPaged && (filter === 'users' || filter === 'channels')) {
+      if (isPaged && (filter === 'users' || filter === 'channels' || filter === 'market')) {
         findManyOpts.skip = (page - 1) * limit;
         findManyOpts.take = limit;
       }

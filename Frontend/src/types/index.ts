@@ -4,7 +4,7 @@ export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'W
 export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'BAR' | 'TRAINING';
 export type GenderTeam = 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
 export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
-export type ParticipantStatus = 'GUEST' | 'INVITED' | 'IN_QUEUE' | 'PLAYING';
+export type ParticipantStatus = 'GUEST' | 'INVITED' | 'IN_QUEUE' | 'PLAYING' | 'NON_PLAYING';
 export type Gender = 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
 export type GameStatus = 'ANNOUNCED' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
 export type ResultsStatus = 'NONE' | 'IN_PROGRESS' | 'FINAL';
@@ -146,7 +146,6 @@ export interface GameParticipant {
   inviteMessage?: string | null;
   inviteExpiresAt?: string | null;
   invitedByUser?: BasicUser | null;
-  isTrainer?: boolean;
 }
 
 export interface GameTeamPlayer {
@@ -266,6 +265,7 @@ export interface Game {
     createdAt: string;
     updatedAt: string;
   }>;
+  trainerId?: string | null;
   parentId?: string;
   parent?: {
     id: string;
@@ -439,6 +439,37 @@ export interface Bet {
   metadata?: Record<string, any>;
   createdAt: string;
   updatedAt: string;
+}
+
+export type MarketItemTradeType = 'BUY_IT_NOW' | 'SUGGESTED_PRICE' | 'AUCTION';
+export type MarketItemStatus = 'ACTIVE' | 'SOLD' | 'RESERVED' | 'WITHDRAWN';
+
+export interface MarketItemCategory {
+  id: string;
+  name: string;
+  order?: number;
+}
+
+export interface MarketItem {
+  id: string;
+  sellerId: string;
+  categoryId: string;
+  cityId: string;
+  title: string;
+  description?: string | null;
+  mediaUrls: string[];
+  tradeTypes: MarketItemTradeType[];
+  priceCents?: number | null;
+  currency: PriceCurrency;
+  auctionEndsAt?: string | null;
+  status: MarketItemStatus;
+  createdAt: string;
+  updatedAt: string;
+  seller?: BasicUser;
+  category?: MarketItemCategory;
+  city?: City;
+  groupChannel?: { id: string };
+  isParticipant?: boolean;
 }
 
 export interface ApiResponse<T> {

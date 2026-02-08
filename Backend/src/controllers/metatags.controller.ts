@@ -35,7 +35,7 @@ const generateGameMetaTags = (game: any): string => {
                    'Game';
   
   const organizer = game.entityType === 'TRAINING'
-    ? game.participants?.find((p: any) => p.isTrainer) || game.participants?.find((p: any) => p.role === 'OWNER')
+    ? ((game as any).trainerId ? game.participants?.find((p: any) => p.userId === (game as any).trainerId) : null) || game.participants?.find((p: any) => p.role === 'OWNER')
     : game.participants?.find((p: any) => p.role === 'OWNER');
   const creatorName = organizer?.user ? `${organizer.user.firstName || ''} ${organizer.user.lastName || ''}`.trim() : null;
   

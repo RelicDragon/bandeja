@@ -1,9 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Home, Calendar, MessageCircle, Trophy, User } from 'lucide-react';
+import { Home, Calendar, MessageCircle, Trophy, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigationStore } from '@/store/navigationStore';
-import { useAuthStore } from '@/store/authStore';
 import { useChatUnreadCounts } from '@/hooks/useChatUnreadCounts';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useMemo, useRef } from 'react';
@@ -18,7 +17,6 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   const { currentPage, setCurrentPage, setIsAnimating, findViewMode, setRequestFindGoToCurrent } = useNavigationStore();
   const { counts } = useChatUnreadCounts();
   const chatsUnread = counts.users + counts.bugs + counts.channels;
-  const user = useAuthStore((state) => state.user);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const isDesktop = useDesktop();
   
@@ -46,6 +44,12 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
       badge: chatsUnread,
     },
     {
+      id: 'marketplace' as const,
+      label: t('bottomTab.marketplace', { defaultValue: 'Market' }),
+      icon: ShoppingBag,
+      path: '/marketplace',
+    },
+    {
       id: 'leaderboard' as const,
       label: t('bottomTab.leaderboard', { defaultValue: 'Top' }),
       icon: Trophy,
@@ -54,7 +58,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   ], [t, counts.games, chatsUnread]);
 
 
-  const handleTabClick = (tab: 'my' | 'find' | 'chats' | 'leaderboard' | 'profile', path: string) => {
+  const handleTabClick = (tab: 'my' | 'find' | 'chats' | 'leaderboard' | 'marketplace', path: string) => {
     if (currentPage === tab) {
       if (tab === 'find') {
         setRequestFindGoToCurrent(findViewMode);
@@ -177,86 +181,6 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
               </motion.button>
             );
           })}
-          
-          <motion.button
-            ref={(el) => { tabRefs.current[4] = el; }}
-            onClick={() => handleTabClick('profile', '/profile')}
-            className="flex flex-col items-center justify-center flex-1 h-full relative group"
-            whileTap={{ scale: 0.85 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-            layout="position"
-          >
-            <motion.div
-              className="relative"
-              animate={{
-                scale: currentPage === 'profile' ? 1.4 : 1.1,
-                y: currentPage === 'profile' ? 7 : 0,
-              }}
-              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-            >
-              <motion.div
-                className={`w-6 h-6 rounded-full overflow-hidden transition-all duration-300 ${
-                  currentPage === 'profile' 
-                    ? 'ring-2 ring-primary-500/50 dark:ring-primary-400/50' 
-                    : 'ring-2 ring-transparent'
-                }`}
-                animate={{
-                  scale: currentPage === 'profile' ? [1, 1.4, 1.2] : 1,
-                }}
-                transition={{
-                  scale: { duration: 0.3, times: [0, 0.5, 1] },
-                }}
-                style={{
-                  boxShadow: currentPage === 'profile' 
-                    ? '0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 12px rgba(59, 130, 246, 0.4)'
-                    : 'none',
-                }}
-              >
-                {user?.avatar ? (
-                  <img 
-                    src={user.avatar} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User 
-                    size={24}
-                    className={`transition-colors duration-300 ${
-                      currentPage === 'profile'
-                        ? 'text-primary-600 dark:text-primary-400'
-                        : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
-                    }`}
-                  />
-                )}
-              </motion.div>
-            </motion.div>
-            
-            <div className="h-[14px] flex items-center justify-center">
-              <AnimatePresence mode="wait">
-                {currentPage !== 'profile' && (
-                  <motion.span
-                    key="profile-label"
-                    initial={{ opacity: 0, y: 8, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -4, scale: 0.8 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25, duration: 0.2 }}
-                    className="text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200"
-                  >
-                    {t('bottomTab.profile', { defaultValue: 'Profile' })}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {currentPage === 'profile' && (
-              <motion.div
-                className="absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10"
-                layoutId="activeTab"
-                initial={false}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              />
-            )}
-          </motion.button>
           </div>
         </div>
       </div>

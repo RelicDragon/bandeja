@@ -11,23 +11,16 @@ export async function addOrUpdateParticipant(
   tx: any,
   gameId: string,
   userId: string,
-  options?: { role?: ParticipantRole; isTrainer?: boolean }
+  options?: { role?: ParticipantRole; status?: string }
 ): Promise<ParticipantOperationResult> {
   const existingParticipant = await tx.gameParticipant.findFirst({
     where: { gameId, userId },
   });
 
-  if (options?.isTrainer === true) {
-    const existingTrainer = await tx.gameParticipant.findFirst({
-      where: { gameId, isTrainer: true },
-    });
-    if (existingTrainer && existingTrainer.userId !== userId) {
-      throw new ApiError(400, 'This training already has a trainer');
-    }
-  }
+  const targetStatus = options?.status || 'PLAYING';
 
   if (existingParticipant) {
-    if (existingParticipant.status === 'PLAYING') {
+    if (existingParticipant.status === targetStatus) {
       return {
         created: false,
         updated: false,
@@ -38,11 +31,10 @@ export async function addOrUpdateParticipant(
     await tx.gameParticipant.update({
       where: { id: existingParticipant.id },
       data: {
-        status: 'PLAYING',
+        status: targetStatus,
         invitedByUserId: null,
         inviteMessage: null,
         inviteExpiresAt: null,
-        ...(options?.isTrainer !== undefined && { isTrainer: options.isTrainer }),
       },
     });
 
@@ -58,8 +50,7 @@ export async function addOrUpdateParticipant(
       gameId,
       userId,
       role: options?.role || ParticipantRole.PARTICIPANT,
-      status: 'PLAYING',
-      isTrainer: options?.isTrainer ?? false,
+      status: targetStatus,
     },
   });
 

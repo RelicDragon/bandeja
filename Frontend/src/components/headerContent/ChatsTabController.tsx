@@ -1,3 +1,4 @@
+import { Bug } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -60,8 +61,9 @@ export const ChatsTabController = () => {
             ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
         }`}
+        aria-label={t('chats.bugs', { defaultValue: 'Bugs' })}
       >
-        {t('chats.bugs', { defaultValue: 'Bugs' })}
+        <Bug size={18} />
         {counts.bugs > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-medium">
             {counts.bugs > 99 ? '99+' : counts.bugs}

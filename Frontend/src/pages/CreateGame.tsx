@@ -74,6 +74,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
   const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>([]);
   const [invitedPlayers, setInvitedPlayers] = useState<BasicUser[]>([]);
+  const [creatorNonPlaying, setCreatorNonPlaying] = useState<boolean>(false);
   
   const {
     selectedDate,
@@ -340,6 +341,11 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         parentId: initialGameData?.parentId,
       };
 
+      if (entityType === 'TRAINING' && creatorNonPlaying) {
+        gameData.creatorNonPlaying = true;
+        gameData.participants = [];
+      }
+
       if (entityType !== 'TRAINING') {
         gameData.gameType = gameType;
         gameData.affectsRating = isRatingGame;
@@ -542,11 +548,20 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           user={user}
           entityType={entityType}
           canInvitePlayers={true}
+          creatorNonPlaying={creatorNonPlaying}
           onMaxParticipantsChange={handleMaxParticipantsChange}
           onAddUserToGame={handleAddMeToGame}
           onRemoveParticipant={handleRemoveParticipant}
           onRemoveInvitedPlayer={handleRemoveInvitedPlayer}
           onOpenInviteModal={() => setIsInvitePlayersModalOpen(true)}
+          onToggleCreatorNonPlaying={(nonPlaying) => {
+            setCreatorNonPlaying(nonPlaying);
+            if (nonPlaying && user?.id) {
+              setParticipants(prev => prev.filter(id => id !== user.id));
+            } else if (!nonPlaying && user?.id && !participants.includes(user.id)) {
+              setParticipants(prev => [...prev, user.id]);
+            }
+          }}
         />
 
         <GameSettingsSection

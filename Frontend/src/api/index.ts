@@ -11,6 +11,7 @@ export * from './chat';
 export * from './media';
 export * from './favorites';
 export * from './bugs';
+export * from './marketplace';
 export * from './transactions';
 export * from './ranking';
 export { default as api } from './axios';

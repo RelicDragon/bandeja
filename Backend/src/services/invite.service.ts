@@ -81,9 +81,13 @@ export class InviteService {
             throw new ApiError(400, joinResult.reason || 'errors.invites.gameFull');
           }
           await tx.gameParticipant.delete({ where: { id: participantId } });
+          const isTrainerInvite = participant.role === ParticipantRole.ADMIN && participant.game?.entityType === 'TRAINING';
+          if (isTrainerInvite) {
+            await tx.game.update({ where: { id: gameId }, data: { trainerId: receiverId } });
+          }
           await addOrUpdateParticipant(tx, gameId, receiverId, {
             role: participant.role as ParticipantRole,
-            isTrainer: participant.isTrainer ?? false,
+            status: isTrainerInvite ? 'NON_PLAYING' : undefined,
           });
         });
         await performPostJoinOperations(gameId, receiverId);

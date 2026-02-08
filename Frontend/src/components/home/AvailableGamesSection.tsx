@@ -209,7 +209,7 @@ export const AvailableGamesSection = ({
     }
 
     const organizer = game.entityType === 'TRAINING'
-      ? game.participants.find((p: any) => p.isTrainer) || game.participants.find((p: any) => p.role === 'OWNER')
+      ? (game.trainerId ? game.participants.find((p: any) => p.userId === game.trainerId) : null) || game.participants.find((p: any) => p.role === 'OWNER')
       : game.participants.find((p: any) => p.role === 'OWNER');
     if (organizer && user?.blockedUserIds?.includes(organizer.userId)) {
       return false;
@@ -224,9 +224,7 @@ export const AvailableGamesSection = ({
     }
 
     if (userFilterVal) {
-      const slotCount = game.entityType === 'TRAINING'
-        ? game.participants.filter((p: any) => p.status === 'PLAYING' && !p.isTrainer).length
-        : game.participants.filter((p: any) => p.status === 'PLAYING').length;
+      const slotCount = game.participants.filter((p: any) => p.status === 'PLAYING').length;
       if (slotCount >= game.maxParticipants) {
         return false;
       }
@@ -247,7 +245,7 @@ export const AvailableGamesSection = ({
     }
 
     if (trainingFilterVal && user?.favoriteTrainerId) {
-      const trainer = game.participants.find((p: any) => p.isTrainer && p.userId === user.favoriteTrainerId);
+      const trainer = game.trainerId === user.favoriteTrainerId ? game.participants.find((p: any) => p.userId === game.trainerId) : null;
       if (!trainer) return false;
     }
 

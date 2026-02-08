@@ -85,7 +85,7 @@ export const PlayerListModal = ({
           if (Array.isArray(participants)) {
             participants.forEach((p: { userId: string }) => participantIds.add(p.userId));
           }
-          if (!inviteAsTrainerOnly && gameData.entityType === 'TRAINING' && !participants?.some((p: { isTrainer?: boolean }) => p.isTrainer)) {
+          if (!inviteAsTrainerOnly && gameData.entityType === 'TRAINING' && !gameData.trainerId) {
             setCanInviteAsTrainer(true);
           }
         }
@@ -120,7 +120,7 @@ export const PlayerListModal = ({
     let filtered = players;
 
     if (inviteAsTrainerOnly) {
-      filtered = filtered.filter((p): p is BasicUser & { isTrainer: boolean } => p.isTrainer === true);
+      filtered = filtered.filter((p) => p.isTrainer === true);
     }
 
     if (filterGender) {

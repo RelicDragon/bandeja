@@ -114,6 +114,8 @@ model User {
   chatDrafts                  ChatDraft[]
   notificationPreferences     NotificationPreference[]
   pollVotes              PollVote[]
+  marketItems            MarketItem[]
+  trainedGames           Game[]               @relation("GameTrainer")
 
   @@index([phone])
   @@index([telegramId])
@@ -167,6 +169,7 @@ model City {
   games                  Game[]
   gameSubscriptions      GameSubscription[]
   groupChannels          GroupChannel[] @relation("GroupChannelCity")
+  marketItems            MarketItem[]
 
   @@index([isActive])
   @@index([clubsCount])
@@ -278,6 +281,7 @@ model Game {
   mainPhotoId            String?
   resultsSentToTelegram  Boolean             @default(false)
   parentId               String?
+  trainerId              String?
   leagueRoundId          String?
   leagueGroupId          String?
   timeIsSet              Boolean             @default(false)
@@ -294,6 +298,7 @@ model Game {
   city                   City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
   parent                 Game?               @relation("GameHierarchy", fields: [parentId], references: [id])
   children               Game[]              @relation("GameHierarchy")
+  trainer                User?               @relation("GameTrainer", fields: [trainerId], references: [id], onDelete: SetNull)
   leagueRound            LeagueRound?        @relation(fields: [leagueRoundId], references: [id], onDelete: SetNull)
   leagueGroup            LeagueGroup?        @relation(fields: [leagueGroupId], references: [id], onDelete: SetNull)
   participants           GameParticipant[]
@@ -313,6 +318,7 @@ model Game {
   @@index([status])
   @@index([entityType])
   @@index([parentId])
+  @@index([trainerId])
   @@index([leagueRoundId])
   @@index([leagueGroupId])
   @@index([affectsRating])
@@ -348,7 +354,6 @@ model GameParticipant {
   invitedByUserId  String?
   inviteMessage    String?
   inviteExpiresAt  DateTime?
-  isTrainer        Boolean            @default(false)
   game             Game               @relation(fields: [gameId], references: [id], onDelete: Cascade)
   user             User               @relation("ParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
   invitedByUser    User?              @relation("ParticipantInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
@@ -808,6 +813,7 @@ enum ParticipantStatus {
   INVITED
   IN_QUEUE
   PLAYING
+  NON_PLAYING
 }
 
 enum MessageState {
@@ -834,6 +840,19 @@ enum PollType {
   CLASSICAL
   MULTI_ANSWER
   QUIZ
+}
+
+enum MarketItemTradeType {
+  BUY_IT_NOW
+  SUGGESTED_PRICE
+  AUCTION
+}
+
+enum MarketItemStatus {
+  ACTIVE
+  SOLD
+  RESERVED
+  WITHDRAWN
 }
 
 model TelegramOtp {
@@ -886,6 +905,46 @@ model BugParticipant {
   @@index([userId])
 }
 
+model MarketItemCategory {
+  id        String       @id @default(cuid())
+  name      String
+  order     Int          @default(0)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  items     MarketItem[]
+
+  @@index([isActive])
+  @@index([order])
+}
+
+model MarketItem {
+  id              String                @id @default(cuid())
+  sellerId        String
+  categoryId      String
+  cityId          String
+  title           String
+  description     String?
+  mediaUrls       String[]
+  tradeTypes      MarketItemTradeType[] @default([])
+  priceCents      Int?
+  currency        PriceCurrency         @default(EUR)
+  auctionEndsAt   DateTime?
+  status          MarketItemStatus      @default(ACTIVE)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  seller          User                  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  category        MarketItemCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  city            City                  @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  groupChannel    GroupChannel?
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([cityId])
+  @@index([status])
+  @@index([createdAt])
+}
+
 model GroupChannel {
   id                   String                  @id @default(cuid())
   name                 String
@@ -893,6 +952,7 @@ model GroupChannel {
   originalAvatar       String?
   cityId               String?
   bugId                String?                 @unique
+  marketItemId         String?                 @unique
   isChannel            Boolean                 @default(false)
   isPublic             Boolean                 @default(true)
   participantsCount    Int                     @default(0)
@@ -901,6 +961,7 @@ model GroupChannel {
   updatedAt            DateTime                @updatedAt
   city                 City?                   @relation("GroupChannelCity", fields: [cityId], references: [id], onDelete: SetNull)
   bug                  Bug?                    @relation(fields: [bugId], references: [id], onDelete: Cascade)
+  marketItem           MarketItem?              @relation(fields: [marketItemId], references: [id], onDelete: Cascade)
   participants         GroupChannelParticipant[]
   invites              GroupChannelInvite[]
 
@@ -908,6 +969,7 @@ model GroupChannel {
   @@index([isChannel])
   @@index([cityId])
   @@index([bugId])
+  @@index([marketItemId])
 }
 
 model GroupChannelParticipant {

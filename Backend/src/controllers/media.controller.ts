@@ -316,6 +316,26 @@ export const uploadChatDocument = asyncHandler(async (req: AuthRequest, res: Res
   });
 });
 
+export const uploadMarketItemImage = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.file) {
+    throw new ApiError(400, 'No image file provided');
+  }
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+  const result = await ImageProcessor.processChatImage(req.file.buffer, req.file.originalname);
+  res.status(200).json({
+    success: true,
+    message: 'Image uploaded successfully',
+    data: {
+      originalUrl: result.originalPath,
+      thumbnailUrl: result.thumbnailPath,
+      originalSize: result.originalSize,
+      thumbnailSize: result.thumbnailSize
+    }
+  });
+});
+
 export const uploadGameMedia = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.file) {
     throw new ApiError(400, 'No media file provided');

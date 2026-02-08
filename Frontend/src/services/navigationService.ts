@@ -160,6 +160,20 @@ class NavigationService {
     store.setOpenBugModal(true);
     navigateWithTracking(this.navigate!, '/bugs', { replace: true });
   }
+
+  navigateToCreateListing() {
+    if (!this.ensureInitialized()) {
+      console.error('Cannot navigate to create listing: service not initialized');
+      return;
+    }
+
+    const store = this.getStore();
+    if (!store) return;
+
+    this.setAnimatingState();
+    store.setCurrentPage('marketplace');
+    navigateWithTracking(this.navigate!, '/marketplace/create', { replace: true });
+  }
 }
 
 export const navigationService = new NavigationService();

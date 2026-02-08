@@ -37,6 +37,10 @@ import {
   getAllAppVersions,
   createOrUpdateAppVersion,
   deleteAppVersion,
+  getMarketCategories,
+  createMarketCategory,
+  updateMarketCategory,
+  deleteMarketCategory,
 } from '../controllers/admin.controller';
 
 const router = Router();
@@ -87,5 +91,10 @@ router.patch('/message-reports/:reportId/status', requireAdmin, updateMessageRep
 router.get('/app-versions', requireAdmin, getAllAppVersions);
 router.post('/app-versions', requireAdmin, createOrUpdateAppVersion);
 router.delete('/app-versions/:platform', requireAdmin, deleteAppVersion);
+
+router.get('/market-categories', requireAdmin, getMarketCategories);
+router.post('/market-categories', requireAdmin, createMarketCategory);
+router.put('/market-categories/:categoryId', requireAdmin, updateMarketCategory);
+router.delete('/market-categories/:categoryId', requireAdmin, deleteMarketCategory);
 
 export default router;
