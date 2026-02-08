@@ -6,12 +6,28 @@ export const normalizeChatType = (chatType: ChatType): ChatType => {
 
 export function getAvailableGameChatTypes(
   game: { status?: string },
-  participant?: { status: string; role: string } | null
+  participant?: { status: string; role: string } | null,
+  parentParticipant?: { role: string } | null
 ): ChatType[] {
   const types: ChatType[] = [];
   if (game?.status && game.status !== 'ANNOUNCED') types.push('PHOTOS');
   types.push('PUBLIC');
-  if (participant?.status === 'PLAYING') types.push('PRIVATE');
-  if (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) types.push('ADMINS');
+
+  const isAdminOrOwner = participant && (participant.role === 'OWNER' || participant.role === 'ADMIN');
+  const isParentAdminOrOwner = parentParticipant && (parentParticipant.role === 'OWNER' || parentParticipant.role === 'ADMIN');
+
+  if (
+    participant?.status === 'PLAYING' ||
+    participant?.status === 'NON_PLAYING' ||
+    isAdminOrOwner ||
+    isParentAdminOrOwner
+  ) {
+    types.push('PRIVATE');
+  }
+
+  if (isAdminOrOwner || isParentAdminOrOwner) {
+    types.push('ADMINS');
+  }
+
   return types;
 }

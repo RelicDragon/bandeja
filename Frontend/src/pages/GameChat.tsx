@@ -136,34 +136,39 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     }
   }, [contextType, groupChannel, user?.id, isChannel, isChannelAdminOrOwner, isChannelParticipant]);
   
-  const canAccessChat = contextType === 'USER' || 
+  const parentParticipantEntry = game?.parent?.participants?.find(p => p.userId === user?.id);
+  const isParentAdminOrOwner = parentParticipantEntry?.role === 'OWNER' || parentParticipantEntry?.role === 'ADMIN';
+  const isParentParticipant = !!parentParticipantEntry;
+  const hasPrivateAccess = isPlayingParticipant || userParticipant?.status === 'NON_PLAYING' || isAdminOrOwner || isParentAdminOrOwner;
+  const hasAdminsAccess = isAdminOrOwner || isParentAdminOrOwner;
+
+  const canAccessChat = contextType === 'USER' ||
     (contextType === 'GAME' && (
-      currentChatType === 'PUBLIC' || 
+      currentChatType === 'PUBLIC' ||
       currentChatType === 'PHOTOS' ||
-      (currentChatType === 'PRIVATE' && isPlayingParticipant) ||
-      (currentChatType === 'ADMINS' && isAdminOrOwner) ||
-      isParticipant || 
-      hasPendingInvite || 
-      isGuest || 
+      (currentChatType === 'PRIVATE' && hasPrivateAccess) ||
+      (currentChatType === 'ADMINS' && hasAdminsAccess) ||
+      isParticipant ||
+      hasPendingInvite ||
+      isGuest ||
       isAdminOrOwner
-    )) || 
+    )) ||
     (contextType === 'GROUP' && (isChannelParticipant || (isChannel && groupChannel?.isPublic)));
-  
+
   const canWriteGameChat = useMemo(() => {
     if (contextType !== 'GAME' || !game || !user?.id) return false;
-    
+
     if (currentChatType === 'PUBLIC') {
-      const isParentParticipant = game.parent?.participants?.some(p => p.userId === user.id) ?? false;
       return isParticipant || isAdminOrOwner || isParentParticipant;
     } else if (currentChatType === 'ADMINS') {
-      return isAdminOrOwner;
+      return hasAdminsAccess;
     } else if (currentChatType === 'PRIVATE') {
-      return isPlayingParticipant;
+      return hasPrivateAccess;
     } else if (currentChatType === 'PHOTOS') {
       return isPlayingParticipant || isAdminOrOwner;
     }
     return false;
-  }, [contextType, game, user?.id, currentChatType, isParticipant, isAdminOrOwner, isPlayingParticipant]);
+  }, [contextType, game, user?.id, currentChatType, isParticipant, isAdminOrOwner, isPlayingParticipant, isParentParticipant, hasPrivateAccess, hasAdminsAccess]);
   
   const canWriteChat = useMemo(() => {
     if (contextType === 'GAME') return canWriteGameChat;
@@ -752,7 +757,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const getAvailableChatTypes = useCallback((): ChatType[] => {
     if (contextType !== 'GAME') return ['PUBLIC'];
     const participant = game?.participants?.find(p => p.userId === user?.id);
-    return getAvailableGameChatTypes(game ?? { status: undefined }, participant ?? undefined);
+    const parentParticipant = game?.parent?.participants?.find(p => p.userId === user?.id);
+    return getAvailableGameChatTypes(game ?? { status: undefined }, participant ?? undefined, parentParticipant ?? undefined);
   }, [contextType, game, user?.id]);
 
   const handleNewMessage = useCallback((message: ChatMessage): string | void => {
@@ -1063,7 +1069,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             const loadedIsGuest = loadedGame.participants.some(p => p.userId === user.id && (p.status === 'GUEST' || !isParticipantPlaying(p))) ?? false;
             
             if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
-              const availableChatTypes = getAvailableGameChatTypes(loadedGame, loadedUserParticipant ?? undefined);
+              const loadedParentParticipant = loadedGame.parent?.participants?.find(p => p.userId === user.id);
+              const availableChatTypes = getAvailableGameChatTypes(loadedGame, loadedUserParticipant ?? undefined, loadedParentParticipant ?? undefined);
               const markReadResponse = await chatApi.markAllMessagesAsReadForContext('GAME', id, availableChatTypes);
               const markedCount = markReadResponse.data?.count || 0;
               

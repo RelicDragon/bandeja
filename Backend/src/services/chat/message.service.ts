@@ -156,6 +156,7 @@ export class MessageService {
     );
 
     const isPlaying = participant && (participant.status === 'PLAYING');
+    const isNonPlaying = participant && (participant.status === 'NON_PLAYING');
     const isAdminOrOwner = participant && (participant.role === 'OWNER' || participant.role === 'ADMIN');
 
     if (chatType === ChatType.PUBLIC) {
@@ -169,8 +170,8 @@ export class MessageService {
     }
 
     if (chatType === ChatType.PRIVATE) {
-      if (!isPlaying) {
-        throw new ApiError(403, 'Only playing participants can access private chat');
+      if (!isPlaying && !isNonPlaying && !isAdminOrOwner && !isParentGameAdminOrOwner) {
+        throw new ApiError(403, 'Only participants can access private chat');
       }
       return;
     }
