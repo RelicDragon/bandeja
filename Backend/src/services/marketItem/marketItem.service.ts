@@ -146,7 +146,7 @@ export class MarketItemService {
       const priceStr = created.priceCents != null
         ? `${(created.priceCents / 100).toFixed(2)} ${created.currency}`
         : 'Negotiable';
-      const itemContent = `🏷️ ${created.title}\n${priceStr}`;
+      const itemContent = `🏷️ ${created.title}\n${priceStr}${created.description ? `\n\n${created.description}` : ''}`;
       await MessageService.createMessage({
         chatContextType: ChatContextType.GROUP,
         contextId: created.id,
