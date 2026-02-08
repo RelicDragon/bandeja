@@ -843,7 +843,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
                   editingMatchId={editingMatchId}
                   draggedPlayer={dragAndDrop.draggedPlayer}
                   showDeleteButton={rounds.length > 1 && canEdit && isEditingResults && !isSendingToTelegram}
-                  hideFrame={false}
+                  hideFrame={rounds.length === 1}
                   onRemoveRound={() => engine.removeRound(round.id)}
                   onToggleExpand={() => {
                     if (expandedRoundId === round.id) {
