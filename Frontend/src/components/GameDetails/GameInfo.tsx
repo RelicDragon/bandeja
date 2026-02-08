@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components';
-import { Game } from '@/types';
+import { Game, GameParticipant } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
@@ -61,6 +61,8 @@ interface GameInfoProps {
   collapsedByDefault?: boolean;
   onInviteTrainer?: () => void;
   canInviteTrainer?: boolean;
+  pendingTrainerParticipant?: GameParticipant;
+  onCancelTrainerInvite?: () => void;
 }
 
 export const GameInfo = ({
@@ -79,6 +81,8 @@ export const GameInfo = ({
   collapsedByDefault = false,
   onInviteTrainer,
   canInviteTrainer = false,
+  pendingTrainerParticipant,
+  onCancelTrainerInvite,
 }: GameInfoProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
@@ -147,7 +151,7 @@ export const GameInfo = ({
   }, [game.resultsStatus]);
 
   const organizerParticipant = game.entityType === 'TRAINING'
-    ? game.participants?.find(p => p.isTrainer) || game.participants?.find(p => p.role === 'OWNER')
+    ? (game.trainerId ? game.participants?.find(p => p.userId === game.trainerId) : null) || game.participants?.find(p => p.role === 'OWNER')
     : game.participants?.find(p => p.role === 'OWNER');
   const owner = organizerParticipant?.user;
 
@@ -476,7 +480,7 @@ export const GameInfo = ({
 
   const renderCollapsedSummary = () => {
     if (game.entityType === 'TRAINING') {
-      const trainer = game.participants?.find(p => p.isTrainer);
+      const trainer = game.trainerId ? game.participants?.find(p => p.userId === game.trainerId) : null;
       return (
         <>
           <div className="flex-shrink-0">
@@ -915,7 +919,7 @@ export const GameInfo = ({
               </div>
             </div>
           )}
-          {!isOwner && owner && !(game.entityType === 'TRAINING' && game.participants?.find(p => p.isTrainer)?.userId === game.participants?.find(p => p.role === 'OWNER')?.userId) && (
+          {!isOwner && owner && !(game.entityType === 'TRAINING' && game.trainerId === game.participants?.find(p => p.role === 'OWNER')?.userId) && (
             <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
               <Crown size={20} className="text-primary-600 dark:text-primary-400" />
               <PlayerAvatar
@@ -932,19 +936,47 @@ export const GameInfo = ({
             <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
               <Dumbbell size={20} className="text-primary-600 dark:text-primary-400 flex-shrink-0" />
               {(() => {
-                const trainer = game.participants?.find(p => p.isTrainer);
-                return trainer ? (
-                  <>
-                    <PlayerAvatar
-                      player={trainer.user}
-                      extrasmall={true}
-                      showName={false}
-                    />
-                    <span className="text-sm">
-                      {[trainer.user.firstName, trainer.user.lastName].filter(name => name && name.trim()).join(' ')}
-                    </span>
-                  </>
-                ) : (
+                const trainer = game.trainerId ? game.participants?.find(p => p.userId === game.trainerId) : null;
+                if (trainer) {
+                  return (
+                    <>
+                      <PlayerAvatar
+                        player={trainer.user}
+                        extrasmall={true}
+                        showName={false}
+                      />
+                      <span className="text-sm">
+                        {[trainer.user.firstName, trainer.user.lastName].filter(name => name && name.trim()).join(' ')}
+                      </span>
+                    </>
+                  );
+                }
+                if (pendingTrainerParticipant?.user) {
+                  return (
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <PlayerAvatar
+                        player={pendingTrainerParticipant.user}
+                        extrasmall={true}
+                        showName={false}
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">
+                        {[pendingTrainerParticipant.user.firstName, pendingTrainerParticipant.user.lastName].filter(Boolean).join(' ')}
+                      </span>
+                      <span className="text-xs text-yellow-600 dark:text-yellow-400 whitespace-nowrap">
+                        {t('games.trainerInvitePending', { defaultValue: 'Invited' })}
+                      </span>
+                      {onCancelTrainerInvite && (
+                        <button
+                          onClick={onCancelTrainerInvite}
+                          className="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 whitespace-nowrap"
+                        >
+                          {t('games.cancelTrainerInvite', { defaultValue: 'Cancel' })}
+                        </button>
+                      )}
+                    </div>
+                  );
+                }
+                return (
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
                     <UserPlus size={14} className="text-gray-400 dark:text-gray-500" />

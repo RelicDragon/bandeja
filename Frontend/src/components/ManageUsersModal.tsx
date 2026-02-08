@@ -47,7 +47,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
   const participants = game.participants.filter(p => p.userId !== user?.id);
 
   const getRoleTag = (participant: GameParticipant) => {
-    if (game.entityType === 'TRAINING' && participant.isTrainer) {
+    if (game.entityType === 'TRAINING' && game.trainerId === participant.userId) {
       return { text: t('playerCard.isTrainer'), color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' };
     }
     switch (participant.role) {
@@ -64,13 +64,13 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
     }
   };
 
-  const hasTrainer = game.entityType === 'TRAINING' && game.participants.some(p => p.isTrainer);
+  const hasTrainer = game.entityType === 'TRAINING' && (!!game.trainerId || game.participants.some(p => p.role === 'ADMIN' && p.status === 'INVITED'));
 
   const getAvailableActions = (participant: GameParticipant) => {
     const actions = [];
     
     if (isOwner) {
-      if (game.entityType === 'TRAINING' && participant.isTrainer) {
+      if (game.entityType === 'TRAINING' && game.trainerId === participant.userId) {
         actions.push({ id: 'remove-trainer', label: t('games.removeTrainer', { defaultValue: 'Remove as trainer' }), icon: Dumbbell });
         actions.push({ id: 'kick-admin', label: t('games.kickUser'), icon: UserX });
       } else if (participant.role === 'ADMIN') {

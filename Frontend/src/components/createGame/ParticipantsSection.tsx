@@ -12,11 +12,13 @@ interface ParticipantsSectionProps {
   user: BasicUser | null;
   entityType: EntityType;
   canInvitePlayers: boolean;
+  creatorNonPlaying?: boolean;
   onMaxParticipantsChange: (num: number) => void;
   onAddUserToGame: () => void;
   onRemoveParticipant: (index: number) => void;
   onRemoveInvitedPlayer?: (playerId: string) => void;
   onOpenInviteModal: () => void;
+  onToggleCreatorNonPlaying?: (nonPlaying: boolean) => void;
 }
 
 export const ParticipantsSection = ({
@@ -27,11 +29,13 @@ export const ParticipantsSection = ({
   user,
   entityType,
   canInvitePlayers,
+  creatorNonPlaying = false,
   onMaxParticipantsChange,
   onAddUserToGame,
   onRemoveParticipant,
   onRemoveInvitedPlayer,
   onOpenInviteModal,
+  onToggleCreatorNonPlaying,
 }: ParticipantsSectionProps) => {
   const { t } = useTranslation();
 
@@ -45,8 +49,8 @@ export const ParticipantsSection = ({
             key={i}
             player={user}
             isCurrentUser={true}
-            removable={true}
-            onRemoveClick={() => onRemoveParticipant(i)}
+            removable={entityType !== 'TRAINING'}
+            onRemoveClick={entityType !== 'TRAINING' ? () => onRemoveParticipant(i) : undefined}
             smallLayout={true}
           />
         );
@@ -142,7 +146,21 @@ export const ParticipantsSection = ({
             </div>
           </div>
         )}
-        {!isUserInGame && (
+        {entityType === 'TRAINING' && onToggleCreatorNonPlaying && (
+          <div className="flex items-center justify-between py-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('createGame.iWantToPlay', { defaultValue: 'I want to play' })}
+            </label>
+            <button
+              type="button"
+              onClick={() => onToggleCreatorNonPlaying(!creatorNonPlaying)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${!creatorNonPlaying ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${!creatorNonPlaying ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+        )}
+        {entityType !== 'TRAINING' && !isUserInGame && !creatorNonPlaying && (
           <Button
             onClick={onAddUserToGame}
             disabled={!canAddUser}

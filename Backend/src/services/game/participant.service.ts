@@ -583,9 +583,12 @@ export class ParticipantService {
       }
 
       if (asTrainer) {
-        const existingGame = await tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } });
-        if (existingGame?.trainerId) {
-          throw new ApiError(400, 'This training already has a trainer');
+        const [existingGame, pendingTrainerInvite] = await Promise.all([
+          tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } }),
+          tx.gameParticipant.findFirst({ where: { gameId, role: 'ADMIN', status: 'INVITED' } }),
+        ]);
+        if (existingGame?.trainerId || pendingTrainerInvite) {
+          throw new ApiError(400, 'This training already has a trainer or a pending trainer invite');
         }
       }
 

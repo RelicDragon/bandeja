@@ -409,6 +409,11 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
     }
   };
 
+  const handleCancelTrainerInvite = async () => {
+    if (!pendingTrainerInvite) return;
+    await handleCancelInvite(pendingTrainerInvite.id);
+  };
+
   const participation = getGameParticipationState(game?.participants ?? [], user?.id, game ?? undefined);
   const { isGuest, isParticipantNonGuest: isParticipant, isPlaying: isUserPlaying, isOwner: isUserOwner, isInJoinQueue, hasPendingInvite, isAdminOrOwner: isOwner, isFull } = participation;
   const canAccessChat = true;
@@ -419,6 +424,13 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
     setGameDetailsCanAccessChat(canAccessChat);
   }, [canAccessChat, setGameDetailsCanAccessChat]);
 
+
+  const pendingTrainerParticipant = game?.entityType === 'TRAINING' && !game.trainerId
+    ? game.participants?.find(p => p.status === 'INVITED' && p.role === 'ADMIN')
+    : undefined;
+  const pendingTrainerInvite = pendingTrainerParticipant
+    ? gameInvites.find(inv => inv.receiverId === pendingTrainerParticipant.userId && inv.status === 'PENDING')
+    : undefined;
 
   const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && !isFull);
   const canManageJoinQueue = Boolean(
@@ -1092,7 +1104,9 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
                 setPlayerListMode('trainer');
                 setShowPlayerList(true);
               }}
-              canInviteTrainer={game.entityType === 'TRAINING' && (isOwner || (game.participants?.some(p => p.userId === user?.id && p.role === 'ADMIN'))) && !game.participants?.some(p => p.isTrainer)}
+              canInviteTrainer={game.entityType === 'TRAINING' && (isOwner || (game.participants?.some(p => p.userId === user?.id && p.role === 'ADMIN'))) && !game.trainerId && !pendingTrainerParticipant}
+              pendingTrainerParticipant={pendingTrainerParticipant}
+              onCancelTrainerInvite={isOwner ? handleCancelTrainerInvite : undefined}
             />
           </div>
 
