@@ -62,6 +62,7 @@ export const canNavigateBack = (): boolean => {
 
 export interface LocationState {
   fromLeagueSeasonGameId?: string;
+  leagueSeasonTab?: 'general' | 'schedule' | 'standings' | 'faq';
   fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace';
   fromFilter?: 'users' | 'bugs' | 'channels';
   searchQuery?: string;
@@ -139,7 +140,11 @@ const applyFallback = (
       setCurrentPage('leaderboard');
     }
   }
-  navigateWithTracking(navigate, fallback, { replace: true });
+  const state =
+    fallback.includes('/games/') && locationState?.leagueSeasonTab
+      ? { leagueSeasonTab: locationState.leagueSeasonTab }
+      : undefined;
+  navigateWithTracking(navigate, fallback, { replace: true, state });
 };
 
 export const handleBackNavigation = (params: HandleBackNavigationParams): void => {

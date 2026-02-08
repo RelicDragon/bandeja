@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Trash2, LogOut, Copy, HelpCircle } from 'lucide-react';
@@ -62,6 +62,7 @@ interface GameDetailsContentProps {
 export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const { setGameDetailsCanAccessChat, setBottomTabsVisible } = useNavigationStore();
@@ -151,6 +152,13 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
 
     fetchGame();
   }, [id, user]);
+
+  const leagueSeasonTab = (location.state as { leagueSeasonTab?: 'general' | 'schedule' | 'standings' | 'faq' })?.leagueSeasonTab;
+  useEffect(() => {
+    if (leagueSeasonTab && game?.entityType === 'LEAGUE_SEASON') {
+      setActiveTab(leagueSeasonTab);
+    }
+  }, [id, leagueSeasonTab, game?.entityType]);
 
   const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);
   const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
@@ -846,7 +854,7 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
     try {
       const updateData: Partial<Game> = {
         clubId: editFormData.clubId || undefined,
-        courtId: editFormData.courtId || undefined,
+        courtId: editFormData.courtId ? editFormData.courtId : '',
         name: editFormData.name || undefined,
         isPublic: editFormData.isPublic,
         anyoneCanInvite: editFormData.anyoneCanInvite,
@@ -1412,7 +1420,7 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
     }
 
     if (user && activeTab === 'schedule') {
-      return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} />;
+      return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} activeTab={activeTab} />;
     }
 
     if (user && activeTab === 'standings') {
@@ -1520,13 +1528,13 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
         />
       )}
 
-      {isCourtModalOpen && game && courts.length > 1 && (
+      {isCourtModalOpen && game && courts.length >= 1 && (
         <CourtModal
           isOpen={isCourtModalOpen}
           onClose={() => setIsCourtModalOpen(false)}
           courts={courts}
           selectedId={isEditMode ? editFormData.courtId || 'notBooked' : game.courtId || 'notBooked'}
-          onSelect={isEditMode ? (courtId) => handleFormDataChange({courtId}) : handleCourtSelect}
+          onSelect={isEditMode ? (courtId) => handleFormDataChange({courtId: courtId === 'notBooked' ? '' : courtId}) : handleCourtSelect}
           entityType={game.entityType}
         />
       )}
@@ -1539,7 +1547,7 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
           selectedId={isEditMode ? editFormData.clubId : game?.clubId || ''}
           onSelect={(clubId) => {
             if (isEditMode) {
-              handleFormDataChange({clubId, courtId: 'notBooked'});
+              handleFormDataChange({clubId, courtId: ''});
               if (clubId) {
                 courtsApi.getByClubId(clubId).then(response => {
                   setCourts(response.data);

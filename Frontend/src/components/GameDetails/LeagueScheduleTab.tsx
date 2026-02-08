@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Card, ConfirmationModal } from '@/components';
 import { EditLeagueGameTeamsModal } from './EditLeagueGameTeamsModal';
@@ -17,13 +17,15 @@ interface LeagueScheduleTabProps {
   leagueSeasonId: string;
   canEdit?: boolean;
   hasFixedTeams?: boolean;
+  activeTab?: 'general' | 'schedule' | 'standings' | 'faq';
 }
 
 const ALL_GROUP_ID = 'ALL';
 
-export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTeams = false }: LeagueScheduleTabProps) => {
+export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTeams = false, activeTab = 'schedule' }: LeagueScheduleTabProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [rounds, setRounds] = useState<LeagueRound[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -160,8 +162,12 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   };
 
   const handleOpenGame = (game: Game) => {
+    navigate(`/games/${leagueSeasonId}`, {
+      replace: true,
+      state: { ...(location.state as object || {}), leagueSeasonTab: activeTab },
+    });
     navigate(`/games/${game.id}`, {
-      state: { fromLeagueSeasonGameId: leagueSeasonId }
+      state: { fromLeagueSeasonGameId: leagueSeasonId, leagueSeasonTab: activeTab },
     });
   };
 

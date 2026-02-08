@@ -790,7 +790,22 @@ export const GameInfo = ({
           <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
             <Calendar size={20} className="text-primary-600 dark:text-primary-400" />
             {game.timeIsSet === false ? (
-              <span className="text-gray-500 dark:text-gray-400 italic">{t('gameDetails.datetimeNotSet')}</span>
+              canEdit && canShowEdit ? (
+                <button
+                  onClick={() => {
+                    if (isEditMode) {
+                      onScrollToSettings();
+                    } else {
+                      onOpenTimeDurationModal();
+                    }
+                  }}
+                  className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 italic"
+                >
+                  {t('gameDetails.datetimeNotSet')}
+                </button>
+              ) : (
+                <span className="text-gray-500 dark:text-gray-400 italic">{t('gameDetails.datetimeNotSet')}</span>
+              )
             ) : (
               <div className="flex-1">
                 {canEdit && canShowEdit ? (
