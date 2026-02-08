@@ -128,7 +128,7 @@ export class ParticipantService {
       await prisma.$transaction(async (tx) => {
         await tx.gameParticipant.update({
           where: { id: participant.id },
-          data: { status: IN_QUEUE_STATUS },
+          data: { status: 'NON_PLAYING' },
         });
       });
 
@@ -147,6 +147,11 @@ export class ParticipantService {
     }
 
     await prisma.$transaction(async (tx) => {
+      // Clear trainerId if this participant is the trainer
+      const game = await tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } });
+      if (game?.trainerId === userId) {
+        await tx.game.update({ where: { id: gameId }, data: { trainerId: null } });
+      }
       await tx.gameParticipant.delete({
         where: { id: participant.id },
       });
@@ -578,10 +583,8 @@ export class ParticipantService {
       }
 
       if (asTrainer) {
-        const existingTrainer = await tx.gameParticipant.findFirst({
-          where: { gameId, isTrainer: true },
-        });
-        if (existingTrainer) {
+        const existingGame = await tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } });
+        if (existingGame?.trainerId) {
           throw new ApiError(400, 'This training already has a trainer');
         }
       }
@@ -595,7 +598,6 @@ export class ParticipantService {
           invitedByUserId: senderId,
           inviteMessage: message ?? null,
           inviteExpiresAt: expiresAt ?? null,
-          isTrainer: asTrainer ?? false,
         },
         include: {
           user: { select: USER_SELECT_FIELDS },
