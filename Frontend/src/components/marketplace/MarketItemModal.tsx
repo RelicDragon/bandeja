@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import { MarketItem } from '@/types';
 import { Button } from '@/components';
 import { Badge } from '@/components/marketplace';
+import { MarketItemEditForm } from './MarketItemEditForm';
 import { MessageCircle, MapPin, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const TRADE_TYPE_BADGE = {
@@ -43,6 +44,7 @@ export const MarketItemModal = ({
   const [joining, setJoining] = useState(false);
   useEffect(() => { setLocalItem(item); }, [item]);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const isParticipant = propIsParticipant ?? localItem.isParticipant ?? false;
   const channelId = groupChannelId ?? localItem.groupChannel?.id;
@@ -97,13 +99,28 @@ export const MarketItemModal = ({
   };
 
   const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleEditSave = (updatedItem: MarketItem) => {
+    setLocalItem(updatedItem);
+    onItemUpdate?.(updatedItem);
+    setIsEditing(false);
     onClose();
-    navigate(`/marketplace/${localItem.id}/edit`);
+  };
+
+  const handleEditCancel = () => {
+    setIsEditing(false);
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} modalId="market-item-modal">
+    <Dialog open={isOpen} onClose={isEditing ? handleEditCancel : onClose} modalId="market-item-modal">
       <DialogContent className="max-w-lg w-[90vw] max-h-[90vh] overflow-y-auto p-0">
+        {isEditing ? (
+          <div className="p-4">
+            <MarketItemEditForm item={localItem} onSave={handleEditSave} onCancel={handleEditCancel} />
+          </div>
+        ) : (<>
         <div className="aspect-square bg-gray-100 dark:bg-gray-800/80 relative flex-shrink-0">
           {mediaUrls[imageIndex] ? (
             <>
@@ -192,6 +209,7 @@ export const MarketItemModal = ({
             </>
           )}
         </div>
+        </>)}
       </DialogContent>
     </Dialog>
   );

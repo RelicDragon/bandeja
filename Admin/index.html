@@ -52,6 +52,7 @@
                 <li><a href="#" data-page="reports" class="nav-link">🚨 Reports</a></li>
                 <li><a href="#" data-page="app-versions" class="nav-link">📱 App Versions</a></li>
                 <li><a href="#" data-page="market-categories" class="nav-link">🛒 Market Categories</a></li>
+                <li><a href="#" data-page="mass-notifications" class="nav-link">📢 Mass Notifications</a></li>
                 <li><a href="#" data-page="logs" class="nav-link">📋 Logs</a></li>
             </ul>
             <button id="logoutBtn" class="btn-logout">Logout</button>
@@ -353,6 +354,32 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <div id="massNotificationsPage" class="content-page">
+                <div class="page-header">
+                    <h1>Mass Notifications</h1>
+                </div>
+                <form id="massNotificationForm" class="mass-notification-form" onsubmit="handleMassNotificationSubmit(event)">
+                    <div class="form-group">
+                        <label for="massNotificationTitle">Title *</label>
+                        <input type="text" id="massNotificationTitle" required placeholder="Notification title">
+                    </div>
+                    <div class="form-group">
+                        <label for="massNotificationText">Text *</label>
+                        <textarea id="massNotificationText" rows="5" required placeholder="Notification message"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="massNotificationCity">City (optional)</label>
+                        <select id="massNotificationCity">
+                            <option value="">All Cities</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn-primary" id="massNotificationSubmitBtn">Send to All Users</button>
+                    </div>
+                    <div id="massNotificationResult" class="mass-notification-result" style="display: none;"></div>
+                </form>
             </div>
 
             <div id="appVersionsPage" class="content-page">
@@ -871,6 +898,7 @@
     <script src="modals.js"></script>
     <script src="app-versions.js"></script>
     <script src="market-categories.js"></script>
+    <script src="mass-notifications.js"></script>
 </body>
 </html>
 

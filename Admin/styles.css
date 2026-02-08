@@ -917,3 +917,23 @@ select:focus {
     background-color: #dc2626;
 }
 
+.mass-notification-form {
+    max-width: 500px;
+}
+
+.mass-notification-result {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.mass-notification-result.success {
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid var(--secondary-color);
+}
+
+.mass-notification-result.error {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--danger-color);
+}
+

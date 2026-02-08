@@ -1,6 +1,7 @@
 export { MarketItemCard } from './MarketItemCard';
 export { MarketItemModal } from './MarketItemModal';
 export { MarketItemPanel } from './MarketItemPanel';
+export { MarketItemEditForm } from './MarketItemEditForm';
 export { TradeTypeCheckboxes } from './TradeTypeCheckboxes';
 export { PriceInput } from './PriceInput';
 export { PriceInputWithCurrency } from './PriceInputWithCurrency';

@@ -1666,7 +1666,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 setTimeout(() => setShowItemPage(false), 300);
               }}
               onItemUpdate={() => {
-                if (id) loadContext();
+                if (id) {
+                  loadContext();
+                  setTimeout(() => loadMessages(), 500);
+                }
               }}
             />
           </div>

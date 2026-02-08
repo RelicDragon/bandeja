@@ -87,7 +87,7 @@ export const updateMarketItem = asyncHandler(async (req: AuthRequest, res: Respo
   const { categoryId, cityId, title, description, mediaUrls, tradeTypes, priceCents, currency, auctionEndsAt } =
     req.body;
 
-  const item = await MarketItemService.updateMarketItem(req.userId!, id, {
+  const item = await MarketItemService.updateMarketItem(id, req.userId!, {
     categoryId,
     cityId,
     title,

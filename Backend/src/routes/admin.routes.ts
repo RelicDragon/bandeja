@@ -41,6 +41,7 @@ import {
   createMarketCategory,
   updateMarketCategory,
   deleteMarketCategory,
+  sendMassNotification,
 } from '../controllers/admin.controller';
 
 const router = Router();
@@ -96,5 +97,7 @@ router.get('/market-categories', requireAdmin, getMarketCategories);
 router.post('/market-categories', requireAdmin, createMarketCategory);
 router.put('/market-categories/:categoryId', requireAdmin, updateMarketCategory);
 router.delete('/market-categories/:categoryId', requireAdmin, deleteMarketCategory);
+
+router.post('/mass-notification', requireAdmin, sendMassNotification);
 
 export default router;

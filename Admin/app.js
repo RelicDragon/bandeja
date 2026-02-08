@@ -192,6 +192,9 @@ async function loadPageData(page) {
         case 'market-categories':
             loadMarketCategories();
             break;
+        case 'mass-notifications':
+            loadMassNotificationsPage();
+            break;
         case 'logs':
             if (!isStreamActive) {
                 if (logsData.length === 0) {

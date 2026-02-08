@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessageCircle, Newspaper } from 'lucide-react';
+import { MessageCircle, Newspaper, ShoppingBag } from 'lucide-react';
 import { GroupChannel } from '@/api/chat';
 
 interface JoinGroupChannelButtonProps {
@@ -18,10 +18,13 @@ export const JoinGroupChannelButton: React.FC<JoinGroupChannelButtonProps> = ({
 }) => {
   const { t } = useTranslation();
   const isChannel = groupChannel.isChannel;
+  const isMarketItemChat = !isChannel && !!groupChannel.marketItemId;
 
-  const buttonText = isChannel
-    ? t('chat.joinChannel', { defaultValue: 'Join Channel' })
-    : t('chat.joinGroup', { defaultValue: 'Join Group' });
+  const buttonText = isMarketItemChat
+    ? t('marketplace.discussListing', { defaultValue: 'Discuss listing' })
+    : isChannel
+      ? t('chat.joinChannel', { defaultValue: 'Join Channel' })
+      : t('chat.joinGroup', { defaultValue: 'Join Group' });
 
   const loadingText = t('chat.joining', { defaultValue: 'Joining...' });
 
@@ -38,7 +41,7 @@ export const JoinGroupChannelButton: React.FC<JoinGroupChannelButtonProps> = ({
         </>
       ) : (
         <>
-          {isChannel ? <Newspaper size={20} /> : <MessageCircle size={20} />}
+          {isMarketItemChat ? <ShoppingBag size={20} /> : isChannel ? <Newspaper size={20} /> : <MessageCircle size={20} />}
           {buttonText}
         </>
       )}

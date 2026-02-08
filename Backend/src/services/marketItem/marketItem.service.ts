@@ -10,6 +10,7 @@ import {
 } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { MessageService } from '../chat/message.service';
+import { t } from '../../utils/translations';
 
 export interface CreateMarketItemData {
   sellerId: string;
@@ -302,7 +303,102 @@ export class MarketItemService {
       }
 
       return updated;
+    }).then(async (updated) => {
+      if (!updated) return updated;
+
+      const seller = await prisma.user.findUnique({
+        where: { id: updated.sellerId },
+        select: { language: true },
+      });
+      const lang = seller?.language && seller.language !== 'auto' ? seller.language : 'en';
+
+      const changes = this.buildUpdateChanges(item, updated, lang);
+      if (changes.length > 0) {
+        const content = `✏️ ${t('marketplace.listingUpdated', lang)}:\n${changes.join('\n')}`;
+        const newMediaUrls = mediaUrls !== undefined
+          && JSON.stringify(mediaUrls) !== JSON.stringify(item.mediaUrls)
+          ? mediaUrls
+          : [];
+        await MessageService.createMessage({
+          chatContextType: ChatContextType.GROUP,
+          contextId: updated.id,
+          senderId: updated.sellerId,
+          content,
+          mediaUrls: newMediaUrls,
+          chatType: ChatType.PUBLIC,
+        }).catch((err) => {
+          console.error('[MarketItemService] Failed to send update message to chat:', err);
+        });
+      }
+
+      return updated;
     });
+  }
+
+  private static buildUpdateChanges(
+    oldItem: {
+      title: string;
+      description: string | null;
+      mediaUrls: string[];
+      tradeTypes: MarketItemTradeType[];
+      priceCents: number | null;
+      currency: PriceCurrency;
+      auctionEndsAt: Date | null;
+      categoryId: string;
+    },
+    newItem: {
+      title: string;
+      description: string | null;
+      mediaUrls: string[];
+      tradeTypes: MarketItemTradeType[];
+      priceCents: number | null;
+      currency: PriceCurrency;
+      auctionEndsAt: Date | null;
+      categoryId: string;
+      category?: { name: string } | null;
+    },
+    lang: string = 'en'
+  ): string[] {
+    const changes: string[] = [];
+
+    if (oldItem.title !== newItem.title) {
+      changes.push(`• ${t('marketplace.update.title', lang)}: ${newItem.title}`);
+    }
+    if ((oldItem.description || '') !== (newItem.description || '')) {
+      changes.push(`• ${t('marketplace.update.descriptionUpdated', lang)}`);
+    }
+    if (JSON.stringify(oldItem.mediaUrls) !== JSON.stringify(newItem.mediaUrls)) {
+      const oldCount = oldItem.mediaUrls?.length ?? 0;
+      const newCount = newItem.mediaUrls?.length ?? 0;
+      if (newCount > oldCount) {
+        changes.push(`• ${t('marketplace.update.photosAdded', lang).replace('{{count}}', String(newCount - oldCount))}`);
+      } else if (newCount < oldCount) {
+        changes.push(`• ${t('marketplace.update.photosRemoved', lang).replace('{{count}}', String(oldCount - newCount))}`);
+      } else {
+        changes.push(`• ${t('marketplace.update.photosUpdated', lang)}`);
+      }
+    }
+    if (JSON.stringify([...oldItem.tradeTypes].sort()) !== JSON.stringify([...newItem.tradeTypes].sort())) {
+      const labels = newItem.tradeTypes.map((tt) => t(`marketplace.tradeType.${tt}`, lang));
+      changes.push(`• ${t('marketplace.update.sellingType', lang)}: ${labels.join(', ')}`);
+    }
+    if (oldItem.priceCents !== newItem.priceCents || oldItem.currency !== newItem.currency) {
+      if (newItem.priceCents != null) {
+        changes.push(`• ${t('marketplace.update.price', lang)}: ${(newItem.priceCents / 100).toFixed(2)} ${newItem.currency}`);
+      } else {
+        changes.push(`• ${t('marketplace.update.priceRemoved', lang)}`);
+      }
+    }
+    if (oldItem.categoryId !== newItem.categoryId && newItem.category) {
+      changes.push(`• ${t('marketplace.update.category', lang)}: ${newItem.category.name}`);
+    }
+    if (String(oldItem.auctionEndsAt ?? '') !== String(newItem.auctionEndsAt ?? '')) {
+      if (newItem.auctionEndsAt) {
+        changes.push(`• ${t('marketplace.update.auctionEnds', lang)}: ${new Date(newItem.auctionEndsAt).toLocaleDateString()}`);
+      }
+    }
+
+    return changes;
   }
 
   static async withdrawMarketItem(id: string, userId: string) {

@@ -12,6 +12,7 @@ import { TransactionType, MessageReportStatus } from '@prisma/client';
 import { AdminMessageReportsService } from '../services/admin/messageReports.service';
 import { AdminAppVersionService } from '../services/admin/appVersion.service';
 import { AdminMarketCategoryService } from '../services/admin/marketCategory.service';
+import { AdminMassNotificationService } from '../services/admin/massNotification.service';
 
 // Auth endpoints
 export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
@@ -666,4 +667,28 @@ export const deleteMarketCategory = asyncHandler(async (req: AuthRequest, res: R
   const { categoryId } = req.params;
   const result = await AdminMarketCategoryService.delete(categoryId);
   res.json({ success: true, message: result.message });
+});
+
+export const sendMassNotification = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { title, text } = req.body;
+  const { cityId } = req.query;
+
+  if (!title?.trim() || !text?.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Title and text are required',
+    });
+  }
+
+  const results = await AdminMassNotificationService.sendMassNotification(
+    title.trim(),
+    text.trim(),
+    cityId as string | undefined
+  );
+
+  res.status(200).json({
+    success: true,
+    data: results,
+    message: `Push: ${results.pushSent} devices, Telegram: ${results.telegramSent} users`,
+  });
 });
