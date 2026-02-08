@@ -140,7 +140,7 @@ async function getUserChatsWithUnread(userId: string): Promise<UnreadObjectsResu
 async function getBugsWithUnread(userId: string): Promise<UnreadObjectsResult['bugs']> {
   const groupChannels = await prisma.groupChannel.findMany({
     where: {
-      isChannel: true,
+      isChannel: false,
       bugId: { not: null },
       OR: [
         { participants: { some: { userId, hidden: false } } },

@@ -57,6 +57,7 @@ export const groupsToChatItems = (
 
 export interface ChannelsToChatItemsOptions {
   filterByIsChannel?: boolean;
+  filterByIsGroup?: boolean;
   useUpdatedAtFallback?: boolean;
 }
 
@@ -66,10 +67,11 @@ export const channelsToChatItems = (
   sortFilter: 'bugs' | 'channels',
   options: ChannelsToChatItemsOptions = {}
 ): ChatItem[] => {
-  const { filterByIsChannel = false, useUpdatedAtFallback = false } = options;
+  const { filterByIsChannel = false, filterByIsGroup = false, useUpdatedAtFallback = false } = options;
   const items: ChatItem[] = [];
   channels.forEach((channel) => {
     if (filterByIsChannel && !channel.isChannel) return;
+    if (filterByIsGroup && channel.isChannel) return;
     const lastMessageDate = channel.lastMessage
       ? new Date(getLastMessageTime(channel.lastMessage))
       : useUpdatedAtFallback

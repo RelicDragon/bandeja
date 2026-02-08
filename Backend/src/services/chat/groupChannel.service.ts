@@ -205,7 +205,7 @@ export class GroupChannelService {
     } else if (filter === 'bugs') {
       baseWhere.OR = [
         {
-          isChannel: true,
+          isChannel: false,
           bugId: { not: null },
           OR: [
             { participants: { some: { userId, hidden: false } } },
@@ -275,7 +275,7 @@ export class GroupChannelService {
       }
       const idsResult = await prisma.groupChannel.findMany({
         where: {
-          isChannel: true,
+          isChannel: false,
           bugId: { not: null },
           OR: [
             { participants: { some: { userId, hidden: false } } },
@@ -295,7 +295,7 @@ export class GroupChannelService {
       if (orderedIds.length === 0) {
         const total = await prisma.groupChannel.count({
           where: {
-            isChannel: true,
+            isChannel: false,
             bugId: { not: null },
             OR: [
               { participants: { some: { userId, hidden: false } } },
@@ -385,7 +385,7 @@ export class GroupChannelService {
         }
         total = await prisma.groupChannel.count({
           where: {
-            isChannel: true,
+            isChannel: false,
             bugId: { not: null },
             OR: [
               { participants: { some: { userId, hidden: false } } },

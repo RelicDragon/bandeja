@@ -26,7 +26,7 @@ export class BugService {
       const groupChannel = await tx.groupChannel.create({
         data: {
           name: groupName,
-          isChannel: true,
+          isChannel: false,
           isPublic: true,
           bugId: bug.id,
           cityId: owner?.currentCityId ?? null,

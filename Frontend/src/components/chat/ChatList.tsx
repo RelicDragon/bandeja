@@ -174,7 +174,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       const channelUnreads = channelIds.length > 0
         ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {}
         : {};
-      const chatItems = channelsToChatItems(channelList, channelUnreads, 'bugs', { useUpdatedAtFallback: true });
+      const chatItems = channelsToChatItems(channelList, channelUnreads, 'bugs', { useUpdatedAtFallback: true, filterByIsGroup: true });
       return { chats: chatItems, hasMore: pagination?.hasMore ?? false };
     } catch (err) {
       console.error('fetchBugs failed:', err);

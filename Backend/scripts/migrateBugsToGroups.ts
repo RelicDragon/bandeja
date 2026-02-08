@@ -24,7 +24,7 @@ async function migrate() {
     const groupChannel = await prisma.groupChannel.create({
       data: {
         name: groupName,
-        isChannel: true,
+        isChannel: false,
         isPublic: true,
         bugId: bug.id,
         cityId: owner?.currentCityId ?? null,
