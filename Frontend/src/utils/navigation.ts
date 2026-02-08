@@ -171,18 +171,19 @@ export const handleBackNavigation = (params: HandleBackNavigationParams): void =
     goToFallback();
     return;
   }
+  const isGameChat = pathname.match(/^\/games\/[^/]+\/chat$/);
+  const hasInAppOrigin =
+    locationState?.fromPage != null || locationState?.fromLeagueSeasonGameId != null;
+  const isGameChatFromInApp =
+    isGameChat && canNavigateBack() && hasInAppOrigin;
   const isChatFromInApp =
     (locationState?.fromPage === 'chats' || locationState?.fromPage === 'bugs') &&
     canNavigateBack() &&
-    (pathname.match(/^\/games\/[^/]+\/chat$/) ||
+    (isGameChat ||
       pathname.match(/^\/user-chat\/[^/]+$/) ||
       pathname.match(/^\/group-chat\/[^/]+$/) ||
       pathname.match(/^\/channel-chat\/[^/]+$/));
-  if (isEntryPointRoute(pathname) && !isChatFromInApp) {
-    goToFallback();
-    return;
-  }
-  if (isChatFromInApp) {
+  if (isGameChatFromInApp || isChatFromInApp) {
     const previousPathname = pathname;
     try {
       navigate(-1);
@@ -197,6 +198,10 @@ export const handleBackNavigation = (params: HandleBackNavigationParams): void =
         goToFallback();
       }
     }, SAFETY_CHECK_MS);
+    return;
+  }
+  if (isEntryPointRoute(pathname)) {
+    goToFallback();
     return;
   }
   if (canNavigateBack()) {

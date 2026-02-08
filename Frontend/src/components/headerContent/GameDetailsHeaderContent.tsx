@@ -1,7 +1,8 @@
 import { MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components';
+import { useNavigateWithTracking } from '@/hooks/useNavigateWithTracking';
 
 interface GameDetailsHeaderContentProps {
   canAccessChat: boolean;
@@ -9,12 +10,13 @@ interface GameDetailsHeaderContentProps {
 
 export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderContentProps) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useNavigateWithTracking();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
 
   const handleChatClick = () => {
     if (id) {
-      navigate(`/games/${id}/chat`);
+      navigate(`/games/${id}/chat`, { state: location.state });
     }
   };
 
