@@ -1280,13 +1280,21 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
                     </>
                   ) : (
                     <>
-                      {isUserPlaying && (
+                      {isUserPlaying ? (
                         <button
                           onClick={handleLeaveGame}
                           disabled={isLeaving}
                           className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {t('gameDetails.dontPlayInGame')}
+                        </button>
+                      ) : game.status !== 'ARCHIVED' && !isFull && (
+                        <button
+                          onClick={handleAddToGame}
+                          disabled={isLeaving}
+                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {t('games.playInGame')}
                         </button>
                       )}
                     </>
