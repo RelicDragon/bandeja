@@ -45,7 +45,7 @@ export const NotificationSettingsModal = ({
 }: NotificationSettingsModalProps) => {
   const { t } = useTranslation();
   const [activeChannel, setActiveChannel] = useState<NotificationChannelType | null>(null);
-  const TOGGLE_KEYS: (keyof NotificationPreference)[] = ['sendMessages', 'sendInvites', 'sendDirectMessages', 'sendReminders', 'sendWalletNotifications'];
+  const TOGGLE_KEYS: (keyof NotificationPreference)[] = ['sendMessages', 'sendInvites', 'sendDirectMessages', 'sendReminders', 'sendWalletNotifications', 'sendMarketplaceNotifications'];
   const [isSaving, setIsSaving] = useState(false);
   const [localPrefs, setLocalPrefs] = useState<Record<string, NotificationPreference>>({});
 
@@ -80,6 +80,7 @@ export const NotificationSettingsModal = ({
         sendDirectMessages: p.sendDirectMessages,
         sendReminders: p.sendReminders,
         sendWalletNotifications: p.sendWalletNotifications,
+        sendMarketplaceNotifications: p.sendMarketplaceNotifications,
       }));
       const res = await usersApi.updateNotificationPreferences(payload);
       onUpdate(res.data);
@@ -154,6 +155,7 @@ export const NotificationSettingsModal = ({
     sendDirectMessages: { label: 'profile.sendDirectMessages', desc: 'profile.sendDirectMessagesDescription' },
     sendReminders: { label: 'profile.sendReminders', desc: 'profile.sendRemindersDescription' },
     sendWalletNotifications: { label: 'profile.walletNotifications', desc: 'profile.walletNotificationsDescription' },
+    sendMarketplaceNotifications: { label: 'profile.marketplaceNotifications', desc: 'profile.marketplaceNotificationsDescription' },
   };
 
   if (preferences.length === 0) return null;

@@ -4,6 +4,7 @@ export enum PreferenceKey {
   SEND_DIRECT_MESSAGES = 'sendDirectMessages',
   SEND_REMINDERS = 'sendReminders',
   SEND_WALLET_NOTIFICATIONS = 'sendWalletNotifications',
+  SEND_MARKETPLACE_NOTIFICATIONS = 'sendMarketplaceNotifications',
 }
 
 export enum NotificationType {
@@ -16,7 +17,8 @@ export enum NotificationType {
   GAME_REMINDER = 'GAME_REMINDER',
   GAME_RESULTS = 'GAME_RESULTS',
   NEW_GAME = 'NEW_GAME',
-  TRANSACTION = 'TRANSACTION'
+  TRANSACTION = 'TRANSACTION',
+  NEW_MARKET_ITEM = 'NEW_MARKET_ITEM'
 }
 
 export interface NotificationAction {
@@ -35,6 +37,7 @@ export interface NotificationData {
   userChatId?: string;
   groupChannelId?: string;
   transactionId?: string;
+  marketItemId?: string;
   shortDayOfWeek?: string;
 }
 

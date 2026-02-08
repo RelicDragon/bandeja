@@ -757,6 +757,8 @@
     "sendRemindersDescription": "Get notified 2 hours before your games, tournaments, or training bars start",
     "walletNotifications": "Wallet Notifications",
     "walletNotificationsDescription": "Receive notifications for wallet transactions",
+    "marketplaceNotifications": "New listings in my city",
+    "marketplaceNotificationsDescription": "Get notified when new items are listed in your city",
     "enable": "Enable",
     "disable": "Disable",
     "notificationSettings": "Notification Settings",

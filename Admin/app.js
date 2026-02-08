@@ -2,6 +2,8 @@ let API_URL = localStorage.getItem('apiUrl') || 'http://localhost:9000/api';
 let authToken = null;
 let selectedCityId = '';
 let currentInvites = [];
+let usersDataTable = null;
+let gamesDataTable = null;
 
 const elements = {
     loginPage: document.getElementById('loginPage'),
@@ -19,6 +21,16 @@ function showError(message) {
     setTimeout(() => {
         elements.loginError.textContent = '';
     }, 5000);
+}
+
+function toast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
 }
 
 function formatDate(dateString) {
@@ -209,62 +221,124 @@ async function loadPageData(page) {
     }
 }
 
-async function loadUsers() {
-    try {
-        const queryParams = selectedCityId ? `?cityId=${selectedCityId}` : '';
-        const response = await apiRequest(`/admin/users${queryParams}`);
-        if (response.success) {
-            renderUsersTable(response.data);
-        }
-    } catch (error) {
-        console.error('Failed to load users:', error);
-    }
+function escapeHtmlAttr(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function renderUsersTable(users) {
-    const tbody = document.getElementById('usersTableBody');
-    tbody.innerHTML = users.map(user => {
-        const genderDisplay = user.gender ? 
-            user.gender === 'MALE' ? 'Male' : 
-            user.gender === 'FEMALE' ? 'Female' : 
-            user.gender === 'PREFER_NOT_TO_SAY' ? 'Prefer not to say' : '-' : '-';
-        return `
-        <tr>
-            <td>${user.firstName || ''} ${user.lastName || ''}</td>
-            <td>${user.phone || '-'}</td>
-            <td>${user.email || '-'}</td>
-            <td>${genderDisplay}</td>
-            <td>${user.level.toFixed(1)}</td>
-            <td>${user.gamesPlayed}</td>
-            <td>${user.totalPoints}</td>
-            <td>
-                <span class="badge ${user.isActive ? 'badge-success' : 'badge-danger'}">
-                    ${user.isActive ? 'Active' : 'Inactive'}
-                </span>
-            </td>
-            <td>
-                <span class="badge ${user.isAdmin ? 'badge-info' : 'badge-warning'}">
-                    ${user.isAdmin ? 'Yes' : 'No'}
-                </span>
-            </td>
-            <td>
-                <span class="badge ${user.isTrainer ? 'badge-info' : 'badge-warning'}">
-                    ${user.isTrainer ? 'Yes' : 'No'}
-                </span>
-            </td>
-            <td>
-                <div class="action-buttons">
-                    <button class="btn-small btn-edit" onclick='editUserModal(${JSON.stringify(user)})'>Edit</button>
-                    <button class="btn-small btn-toggle" onclick="toggleUserStatus('${user.id}')">
-                        ${user.isActive ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button class="btn-small btn-warning" onclick='resetPasswordModal("${user.id}", "${(user.firstName || '') + ' ' + (user.lastName || '')}".trim() || "${user.phone}")'>Reset Password</button>
-                    <button class="btn-small btn-success" onclick='emitCoinsModal("${user.id}", "${(user.firstName || '') + ' ' + (user.lastName || '')}".trim() || "${user.phone}")'>Emit Coins</button>
-                </div>
-            </td>
-        </tr>
+const authLabels = { PHONE: 'PH', TELEGRAM: 'TG', APPLE: 'AP', GOOGLE: 'GG' };
+const getUserName = (u) => ((u.firstName || '') + ' ' + (u.lastName || '')).trim() || u.phone || '-';
+
+function initUsersDataTable() {
+    usersDataTable = new DataTable({
+        container: 'usersDataTable',
+        columns: [
+            { key: 'avatar', label: '', sortable: false },
+            { key: 'name', label: 'Name', accessor: (u) => getUserName(u) },
+            { key: 'phone', label: 'Phone' },
+            { key: 'auth', label: 'Auth', accessor: (u) => authLabels[u.authProvider] || u.authProvider },
+            { key: 'city', label: 'City', accessor: (u) => u.currentCity?.name },
+            { key: 'level', label: 'Level', accessor: (u) => u.level ?? 0 },
+            { key: 'games', label: 'Games', accessor: (u) => u.gamesPlayed ?? 0 },
+            { key: 'wallet', label: 'Wallet', accessor: (u) => u.wallet ?? 0 },
+            { key: 'status', label: 'Status', accessor: (u) => u.isActive ? 'Active' : 'Inactive' },
+            { key: 'roles', label: 'Roles', sortable: false },
+            { key: 'actions', label: 'Actions', sortable: false },
+        ],
+        filters: [
+            { id: 'usersSearch', type: 'search', param: 'search', placeholder: 'Search name, phone, email...' },
+        ],
+        getExtraParams: () => (selectedCityId ? { cityId: selectedCityId } : {}),
+        extraButtons: [
+            { action: 'dropCoins', label: '💰 Drop Coins', className: 'btn-success', onClick: () => dropCoinsModal() },
+            { action: 'addUser', label: '+ Add User', className: 'btn-primary', onClick: () => createUserModal() },
+        ],
+        fetchFn: async (params) => {
+            const qs = new URLSearchParams(params).toString();
+            const response = await apiRequest(`/admin/users${qs ? '?' + qs : ''}`);
+            if (!response.success) throw new Error(response.message || 'Failed');
+            window.__pageUsers = response.data;
+            window.usersCurrentPage = response.pagination?.page ?? 1;
+            return { data: response.data, pagination: response.pagination };
+        },
+        renderRow: (user) => {
+            const name = getUserName(user);
+            const authBadge = authLabels[user.authProvider] || user.authProvider || '-';
+            const cityName = user.currentCity?.name || '-';
+            const roles = [];
+            if (user.isAdmin) roles.push('Admin');
+            if (user.isTrainer) roles.push('Trainer');
+            if (user.canCreateTournament) roles.push('Tournament');
+            if (user.canCreateLeague) roles.push('League');
+            const rolesStr = roles.length ? roles.join(', ') : '-';
+            const avatarSrc = user.avatar || '';
+            const initials = (user.firstName?.[0] || '') + (user.lastName?.[0] || '') || '?';
+            const canResetPassword = user.authProvider === 'PHONE';
+            return `<tr>
+                <td><div class="user-avatar" title="${escapeHtmlAttr(name)}">${avatarSrc ? `<img src="${escapeHtmlAttr(avatarSrc)}" alt="" onerror="this.parentElement.innerHTML='<span>${escapeHtmlAttr(initials)}</span>'">` : `<span>${escapeHtmlAttr(initials)}</span>`}</div></td>
+                <td>${escapeHtml(name || '')}</td>
+                <td>${escapeHtml(user.phone || '-')}</td>
+                <td><span class="badge badge-secondary">${escapeHtml(authBadge)}</span></td>
+                <td>${escapeHtml(cityName)}</td>
+                <td>${(user.level ?? 0).toFixed(1)}</td>
+                <td>${user.gamesPlayed ?? 0}</td>
+                <td>${user.wallet ?? 0}</td>
+                <td><span class="badge ${user.isActive ? 'badge-success' : 'badge-danger'}">${user.isActive ? 'Active' : 'Inactive'}</span></td>
+                <td>${escapeHtml(rolesStr || '')}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-small btn-edit" onclick="viewUserDetail('${user.id}')">View</button>
+                        <button class="btn-small btn-edit" onclick="editUserById('${user.id}')">Edit</button>
+                        <button class="btn-small btn-toggle" onclick="toggleUserStatus('${user.id}')">${user.isActive ? 'Deactivate' : 'Activate'}</button>
+                        ${canResetPassword ? `<button class="btn-small btn-warning" onclick="resetPasswordModal('${user.id}', '${escapeHtmlAttr(name)}')">Reset Pwd</button>` : ''}
+                        <button class="btn-small btn-success" onclick="emitCoinsModal('${user.id}', '${escapeHtmlAttr(name)}')">Coins</button>
+                        ${!user.isAdmin ? `<button class="btn-small btn-delete" onclick="deleteUser('${user.id}', '${escapeHtmlAttr(name)}')">Delete</button>` : ''}
+                    </div>
+                </td>
+            </tr>`;
+        },
+        emptyMessage: 'No users found.',
+    });
+}
+
+function loadUsers(page = 1) {
+    if (!usersDataTable) initUsersDataTable();
+    usersDataTable.fetch(page);
+}
+
+function editUserById(userId) {
+    const user = window.__pageUsers?.find(u => u.id === userId);
+    if (user) editUserModal(user);
+}
+
+function viewUserDetail(userId) {
+    const user = window.__pageUsers?.find(u => u.id === userId);
+    if (!user) return;
+    document.getElementById('userDetailModalTitle').textContent = `User: ${(user.firstName || '') + ' ' + (user.lastName || '')}`.trim() || user.phone;
+    const authLabels = { PHONE: 'Phone', TELEGRAM: 'Telegram', APPLE: 'Apple', GOOGLE: 'Google' };
+    document.getElementById('userDetailContent').innerHTML = `
+        <div class="user-detail-grid">
+            <div class="form-group"><label>Auth</label><div class="form-readonly">${authLabels[user.authProvider] || user.authProvider}</div></div>
+            <div class="form-group"><label>Phone</label><div class="form-readonly">${user.phone || '-'}</div></div>
+            <div class="form-group"><label>Email</label><div class="form-readonly">${user.email || '-'}</div></div>
+            <div class="form-group"><label>City</label><div class="form-readonly">${user.currentCity?.name || '-'}</div></div>
+            <div class="form-group"><label>Level</label><div class="form-readonly">${(user.level ?? 0).toFixed(1)}</div></div>
+            <div class="form-group"><label>Games</label><div class="form-readonly">${user.gamesPlayed ?? 0} played, ${user.gamesWon ?? 0} won</div></div>
+            <div class="form-group"><label>Wallet</label><div class="form-readonly">${user.wallet ?? 0}</div></div>
+            <div class="form-group"><label>Created</label><div class="form-readonly">${formatDate(user.createdAt)}</div></div>
+        </div>
     `;
-    }).join('');
+    openModal('userDetailModal');
+}
+
+async function deleteUser(userId, userName) {
+    if (!confirm(`Delete user "${userName}"? This cannot be undone.`)) return;
+    try {
+        await apiRequest(`/admin/users/${userId}`, { method: 'DELETE' });
+        loadUsers(usersDataTable?.currentPage ?? 1);
+    } catch (error) {
+        alert('Error: ' + (error.message || 'Failed to delete'));
+    }
 }
 
 async function toggleUserStatus(userId) {
@@ -278,74 +352,115 @@ async function toggleUserStatus(userId) {
     }
 }
 
-async function loadGames() {
-    try {
-        const queryParams = selectedCityId ? `?cityId=${selectedCityId}` : '';
-        const response = await apiRequest(`/admin/games${queryParams}`);
-        if (response.success) {
-            renderGamesTable(response.data);
-        }
-    } catch (error) {
-        console.error('Failed to load games:', error);
-    }
+function getEntityLabel(entityType, gameType) {
+    if (entityType === 'BAR') return '🍺 BAR';
+    if (entityType === 'TRAINING') return '🎓 TRAINING';
+    if (entityType === 'TOURNAMENT') return '🏆 Tournament';
+    if (entityType === 'LEAGUE' || entityType === 'LEAGUE_SEASON') return '📋 League';
+    return gameType || entityType || '-';
+}
+
+function initGamesDataTable() {
+    gamesDataTable = new DataTable({
+        container: 'gamesDataTable',
+        columns: [
+            { key: 'name', label: 'Name' },
+            { key: 'organizer', label: 'Organizer' },
+            { key: 'type', label: 'Type' },
+            { key: 'location', label: 'Location' },
+            { key: 'startTime', label: 'Start Time', accessor: (g) => new Date(g.startTime).getTime() },
+            { key: 'participants', label: 'Participants' },
+            { key: 'status', label: 'Status' },
+            { key: 'results', label: 'Results' },
+            { key: 'actions', label: 'Actions', sortable: false },
+        ],
+        filters: [
+            { id: 'gamesSearch', type: 'search', param: 'search', placeholder: 'Search name, club, organizer...' },
+            { id: 'gamesStatusFilter', type: 'select', param: 'status', placeholder: 'All Status', options: [
+                { value: 'ANNOUNCED', label: 'Announced' },
+                { value: 'STARTED', label: 'Started' },
+                { value: 'FINISHED', label: 'Finished' },
+                { value: 'ARCHIVED', label: 'Archived' },
+            ]},
+            { id: 'gamesEntityFilter', type: 'select', param: 'entityType', placeholder: 'All Types', options: [
+                { value: 'GAME', label: 'Game' },
+                { value: 'BAR', label: 'Bar' },
+                { value: 'TRAINING', label: 'Training' },
+                { value: 'TOURNAMENT', label: 'Tournament' },
+                { value: 'LEAGUE', label: 'League' },
+                { value: 'LEAGUE_SEASON', label: 'League Season' },
+            ]},
+            { id: 'gamesResultsFilter', type: 'select', param: 'hasResults', placeholder: 'All', options: [
+                { value: 'true', label: 'Has Results' },
+                { value: 'false', label: 'No Results' },
+            ]},
+            { id: 'gamesStartDate', type: 'date', param: 'startDate' },
+            { id: 'gamesEndDate', type: 'date', param: 'endDate' },
+        ],
+        getExtraParams: () => (selectedCityId ? { cityId: selectedCityId } : {}),
+        fetchFn: async (params) => {
+            const qs = new URLSearchParams(params).toString();
+            const response = await apiRequest(`/admin/games${qs ? '?' + qs : ''}`);
+            if (!response.success) throw new Error(response.message || 'Failed');
+            return { data: response.data, pagination: response.pagination };
+        },
+        renderRow: (game) => {
+            const location = game.court ? `${game.court.club.name}, ${game.court.club.city.name}` : game.club?.name || game.city?.name || 'No location';
+            const parts = game.participants || [];
+            const playing = parts.filter(p => p.status === 'PLAYING').length;
+            const invited = parts.filter(p => p.status === 'INVITED').length;
+            const inQueue = parts.filter(p => p.status === 'IN_QUEUE').length;
+            const partsStr = invited || inQueue ? `${playing}/${invited}/${inQueue}` : parts.length;
+            const name = game.name || `Game ${game.gameType}`;
+            const organizer = getGameOrganizer(game);
+            const getStatusBadgeClass = (s) => ({ ANNOUNCED: 'badge-announced', READY: 'badge-ready', STARTED: 'badge-started', FINISHED: 'badge-finished', ARCHIVED: 'badge-archived' }[s] || 'badge-info');
+            return `<tr>
+                <td title="${escapeHtmlAttr(game.description || '')}">${escapeHtml(name)}</td>
+                <td>${escapeHtml(organizer)}</td>
+                <td><span class="badge ${game.entityType === 'BAR' ? 'badge-warning' : 'badge-info'}">${escapeHtml(getEntityLabel(game.entityType, game.gameType))}</span></td>
+                <td>${escapeHtml(location)}</td>
+                <td>${formatDate(game.startTime)}</td>
+                <td title="${invited || inQueue ? 'playing/invited/queue' : 'participants'}">${partsStr}</td>
+                <td><span class="badge ${getStatusBadgeClass(game.status)}">${escapeHtml(game.status)}</span></td>
+                <td><span class="badge ${game.resultsStatus !== 'NONE' ? 'badge-success' : 'badge-danger'}">${game.resultsStatus !== 'NONE' ? 'Yes' : 'No'}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-small btn-edit" onclick="viewGameModal('${game.id}')">View</button>
+                        ${game.resultsStatus !== 'NONE' ? `<button class="btn-small btn-warning" onclick="resetGameResults('${game.id}')">Reset Results</button>` : ''}
+                    </div>
+                </td>
+            </tr>`;
+        },
+        emptyMessage: 'No games found.',
+    });
+}
+
+function loadGames(page = 1) {
+    if (!gamesDataTable) initGamesDataTable();
+    gamesDataTable.fetch(page);
 }
 
 async function resetGameResults(gameId) {
     if (!confirm('Are you sure you want to reset the results for this game? This action cannot be undone.')) {
         return;
     }
-    
     try {
-        await apiRequest(`/admin/games/${gameId}/reset-results`, {
-            method: 'POST',
-        });
-        alert('Game results reset successfully');
-        loadGames();
+        await apiRequest(`/admin/games/${gameId}/reset-results`, { method: 'POST' });
+        toast('Game results reset successfully', 'success');
+        loadGames(gamesDataTable?.currentPage ?? 1);
         loadStats();
     } catch (error) {
         console.error('Failed to reset game results:', error);
-        alert('Failed to reset game results: ' + (error.message || 'Unknown error'));
+        toast('Failed to reset game results: ' + (error.message || 'Unknown error'), 'error');
     }
 }
 
-function renderGamesTable(games) {
-    const tbody = document.getElementById('gamesTableBody');
-    tbody.innerHTML = games.map(game => {
-        const location = game.court ? 
-            `${game.court.club.name}, ${game.court.club.city.name}` : 
-            'No location';
-        const parts = game.participants || [];
-        const playing = parts.filter(p => p.status === 'PLAYING').length;
-        const invited = parts.filter(p => p.status === 'INVITED').length;
-        const inQueue = parts.filter(p => p.status === 'IN_QUEUE').length;
-        const partsStr = invited || inQueue
-            ? `${playing}/${invited}/${inQueue}` 
-            : parts.length;
-        return `
-            <tr>
-                <td>
-                    <span class="badge ${game.entityType === 'BAR' ? 'badge-warning' : game.entityType === 'TRAINING' ? 'badge-info' : 'badge-info'}">
-                        ${game.entityType === 'BAR' ? '🍺 BAR' : game.entityType === 'TRAINING' ? '🎓 TRAINING' : game.gameType}
-                    </span>
-                </td>
-                <td>${location}</td>
-                <td>${formatDate(game.startTime)}</td>
-                <td title="${invited || inQueue ? 'playing/invited/queue' : 'participants'}">${partsStr}</td>
-                <td><span class="badge badge-warning">${game.status}</span></td>
-                <td>
-                    <span class="badge ${game.resultsStatus !== 'NONE' ? 'badge-success' : 'badge-danger'}">
-                        ${game.resultsStatus !== 'NONE' ? 'Yes' : 'No'}
-                    </span>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-small btn-edit" onclick='viewGameModal(${JSON.stringify(game)})'>View</button>
-                        ${game.resultsStatus !== 'NONE' ? `<button class="btn-small btn-warning" onclick="resetGameResults('${game.id}')">Reset Results</button>` : ''}
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
+function getGameOrganizer(game) {
+    const owner = game.participants?.find(p => p.role === 'OWNER');
+    if (!owner?.user) return '-';
+    const u = owner.user;
+    const name = `${u.firstName || ''} ${u.lastName || ''}`.trim();
+    return name || u.phone || '-';
 }
 
 async function loadCities() {
@@ -690,29 +805,47 @@ function updateLogsStatus(status, count) {
     document.getElementById('logsCount').textContent = `${count} logs`;
 }
 
-function viewGameModal(game) {
-    document.getElementById('gameModalTitle').textContent = `Game Details - ${game.gameType}`;
-    
-    // Game Information
+async function viewGameModal(gameId) {
+    document.getElementById('gameModal').style.display = 'flex';
+    const content = document.getElementById('gameModalContent');
+    const origContent = content.innerHTML;
+    content.innerHTML = '<div class="game-modal-loading">Loading...</div>';
+    try {
+        const response = await apiRequest(`/admin/games/${gameId}`);
+        if (!response.success || !response.data) throw new Error('Failed to load game');
+        content.innerHTML = origContent;
+        populateGameModal(response.data);
+    } catch (error) {
+        console.error('Failed to load game:', error);
+        content.innerHTML = `<div class="game-modal-error">${escapeHtml(error.message || 'Failed to load game')}</div>`;
+        toast('Failed to load game details', 'error');
+    }
+}
+
+function populateGameModal(game) {
+    document.getElementById('gameModalTitle').textContent = game.name || `Game - ${game.gameType}`;
+
     document.getElementById('gameEntityType').textContent = game.entityType || '-';
     document.getElementById('gameGameType').textContent = game.gameType || '-';
     document.getElementById('gameName').textContent = game.name || '-';
     document.getElementById('gameDescription').textContent = game.description || '-';
     document.getElementById('gameStartTime').textContent = formatDate(game.startTime);
     document.getElementById('gameEndTime').textContent = formatDate(game.endTime);
-    document.getElementById('gameMinParticipants').textContent = game.minParticipants || '-';
-    document.getElementById('gameMaxParticipants').textContent = game.maxParticipants || '-';
-    document.getElementById('gameLevel').textContent = (game.minLevel !== null && game.minLevel !== undefined && game.maxLevel !== null && game.maxLevel !== undefined) 
-        ? `${game.minLevel.toFixed(1)} - ${game.maxLevel.toFixed(1)}` 
-        : '-';
-    
-    // Location
+    document.getElementById('gameMinParticipants').textContent = game.minParticipants ?? '-';
+    document.getElementById('gameMaxParticipants').textContent = game.maxParticipants ?? '-';
+    document.getElementById('gameLevel').textContent = (game.minLevel != null && game.maxLevel != null)
+        ? `${game.minLevel.toFixed(1)} - ${game.maxLevel.toFixed(1)}` : '-';
+
     const clubName = game.court?.club?.name || game.club?.name || '-';
     const courtName = game.court?.name || '-';
+    const cityName = game.court?.club?.city?.name || game.city?.name || '-';
     document.getElementById('gameClub').textContent = clubName;
     document.getElementById('gameCourt').textContent = courtName;
-    
-    // Game Settings
+    const cityEl = document.getElementById('gameCity');
+    if (cityEl) cityEl.textContent = cityName;
+    const orgEl = document.getElementById('gameOrganizer');
+    if (orgEl) orgEl.textContent = getGameOrganizer(game);
+
     document.getElementById('gameStatus').textContent = game.status || '-';
     document.getElementById('gameHasResults').textContent = game.resultsStatus !== 'NONE' ? 'Yes' : 'No';
     document.getElementById('gameIsPublic').textContent = game.isPublic ? 'Yes' : 'No';
@@ -720,8 +853,7 @@ function viewGameModal(game) {
     document.getElementById('gameAnyoneCanInvite').textContent = game.anyoneCanInvite ? 'Yes' : 'No';
     document.getElementById('gameResultsByAnyone').textContent = game.resultsByAnyone ? 'Yes' : 'No';
     document.getElementById('gameHasBookedCourt').textContent = game.hasBookedCourt ? 'Yes' : 'No';
-    
-    // Participants
+
     const parts = game.participants || [];
     const playing = parts.filter(p => p.status === 'PLAYING').length;
     const invited = parts.filter(p => p.status === 'INVITED').length;
@@ -730,34 +862,34 @@ function viewGameModal(game) {
         ? `${playing} playing, ${invited} invited, ${inQueue} in queue (${parts.length} total) / ${game.maxParticipants || 0}`
         : `${parts.length} / ${game.maxParticipants || 0}`;
     document.getElementById('gameParticipantsCount').textContent = countStr;
-    
+
     const participantsList = document.getElementById('gameParticipantsList');
     if (game.participants && game.participants.length > 0) {
         const statusBadge = (s) => {
             const c = { PLAYING: 'badge-success', INVITED: 'badge-warning', IN_QUEUE: 'badge-info', GUEST: 'badge-secondary' }[s] || 'badge-secondary';
-            return `<span class="badge ${c}">${s?.replace('_', ' ') || '-'}</span>`;
+            return `<span class="badge ${c}">${(s || '-').replace('_', ' ')}</span>`;
         };
-        participantsList.innerHTML = game.participants.map(participant => `
+        participantsList.innerHTML = game.participants.map(p => {
+            const name = `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || p.user.phone || '-';
+            return `
             <div class="participant-item">
                 <div class="participant-info">
-                    <strong>${participant.user.firstName || ''} ${participant.user.lastName || ''}</strong>
-                    <span class="participant-role">(${participant.role})</span>
-                    ${statusBadge(participant.status)}
+                    <strong>${escapeHtml(name)}</strong>
+                    <span class="participant-role">(${p.role})</span>
+                    ${statusBadge(p.status)}
                 </div>
                 <div class="participant-details">
-                    <span class="participant-level">Level: ${participant.user.level?.toFixed(1) || 'N/A'}</span>
-                    <span class="participant-joined">Joined: ${formatDate(participant.joinedAt)}</span>
+                    <span class="participant-level">Level: ${(p.user.level ?? 0).toFixed(1)}</span>
+                    <span class="participant-joined">Joined: ${formatDate(p.joinedAt)}</span>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     } else {
         participantsList.innerHTML = '<p>No participants</p>';
     }
-    
-    // Metadata
+
     document.getElementById('gameCreatedAt').textContent = formatDate(game.createdAt);
-    
-    document.getElementById('gameModal').style.display = 'flex';
 }
 
 async function loadInvites() {
@@ -916,6 +1048,9 @@ async function acceptAllInvites() {
 }
 
 window.toggleUserStatus = toggleUserStatus;
+window.editUserById = editUserById;
+window.viewUserDetail = viewUserDetail;
+window.deleteUser = deleteUser;
 window.loadCities = loadCities;
 window.loadClubs = loadClubs;
 window.viewCenterCourts = viewCenterCourts;
@@ -1055,6 +1190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             switchPage(page);
         });
     });
+
 });
 
 window.addEventListener('beforeunload', () => {

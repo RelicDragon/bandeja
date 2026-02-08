@@ -299,12 +299,14 @@ function createUserModal() {
     document.getElementById('userForm').reset();
     document.getElementById('userForm').dataset.mode = 'create';
     document.getElementById('userForm').dataset.userId = '';
+    document.getElementById('userPasswordGroup').style.display = '';
     loadUserCityOptions();
 }
 
-function editUserModal(user) {
+async function editUserModal(user) {
     showModal('userModal');
     document.getElementById('userModalTitle').textContent = 'Edit User';
+    document.getElementById('userPasswordGroup').style.display = 'none';
     document.getElementById('userPhone').value = user.phone || '';
     document.getElementById('userFirstName').value = user.firstName || '';
     document.getElementById('userLastName').value = user.lastName || '';
@@ -312,7 +314,6 @@ function editUserModal(user) {
     document.getElementById('userGender').value = user.gender || 'PREFER_NOT_TO_SAY';
     const levelValue = typeof user.level === 'number' ? user.level : (user.level || 3.5);
     document.getElementById('userLevel').value = levelValue.toString().replace(',', '.');
-    document.getElementById('userCityId').value = user.currentCity?.id || '';
     document.getElementById('userIsActive').checked = user.isActive;
     document.getElementById('userIsAdmin').checked = user.isAdmin;
     document.getElementById('userIsTrainer').checked = user.isTrainer || false;
@@ -320,18 +321,19 @@ function editUserModal(user) {
     document.getElementById('userCanCreateLeague').checked = user.canCreateLeague || false;
     document.getElementById('userForm').dataset.mode = 'edit';
     document.getElementById('userForm').dataset.userId = user.id;
-    loadUserCityOptions();
+    await loadUserCityOptions(user.currentCity?.id || '');
 }
 
-async function loadUserCityOptions() {
+async function loadUserCityOptions(selectedCityId) {
     try {
         const response = await apiRequest('/admin/cities');
         if (response.success) {
             const select = document.getElementById('userCityId');
             select.innerHTML = '<option value="">No City</option>' +
-                response.data.map(city => 
+                response.data.map(city =>
                     `<option value="${city.id}">${city.name}</option>`
                 ).join('');
+            if (selectedCityId) select.value = selectedCityId;
         }
     } catch (error) {
         console.error('Failed to load cities:', error);
@@ -380,6 +382,10 @@ async function handleUserSubmit(e) {
         canCreateTournament: document.getElementById('userCanCreateTournament').checked,
         canCreateLeague: document.getElementById('userCanCreateLeague').checked,
     };
+    if (mode === 'create') {
+        const pwd = document.getElementById('userPassword')?.value?.trim();
+        if (pwd) data.password = pwd;
+    }
 
     try {
         if (mode === 'create') {
@@ -394,7 +400,7 @@ async function handleUserSubmit(e) {
             });
         }
         closeModal('userModal');
-        loadUsers();
+        loadUsers(mode === 'create' ? 1 : (window.usersCurrentPage || 1));
     } catch (error) {
         alert('Error: ' + error.message);
     }

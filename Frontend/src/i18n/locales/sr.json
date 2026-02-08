@@ -755,6 +755,8 @@
     "sendRemindersDescription": "Добијај обавештења 2 сата пре почетка ваших игара, турнира или тренинга",
     "walletNotifications": "Обавештења новчаника",
     "walletNotificationsDescription": "Примај обавештења о трансакцијама новчаника",
+    "marketplaceNotifications": "Нови огласи у мом граду",
+    "marketplaceNotificationsDescription": "Примајте обавештења о новим огласима у вашем граду",
     "enable": "Укључи",
     "disable": "Искључи",
     "notificationSettings": "Подешавања обавештења",

@@ -123,6 +123,7 @@ export interface NotificationPreference {
   sendDirectMessages: boolean;
   sendReminders: boolean;
   sendWalletNotifications: boolean;
+  sendMarketplaceNotifications: boolean;
 }
 
 export const usersApi = {

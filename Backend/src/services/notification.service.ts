@@ -19,6 +19,7 @@ import { createLeagueRoundStartPushNotification } from './push/notifications/lea
 import { createNewGamePushNotification } from './push/notifications/new-game-push.notification';
 import { createBetResolvedPushNotification, createBetNeedsReviewPushNotification, createBetCancelledPushNotification } from './push/notifications/bet-resolved-push.notification';
 import { createTransactionPushNotification } from './push/notifications/transaction-push.notification';
+import { createNewMarketItemPushNotification } from './push/notifications/new-market-item-push.notification';
 
 class NotificationService {
   async sendNotification(request: UnifiedNotificationRequest) {
@@ -631,6 +632,73 @@ class NotificationService {
       await telegramNotificationService.sendTransactionNotification(transactionId, userId, isSender);
     } catch (error) {
       console.error(`Failed to send transaction notification to user ${userId}:`, error);
+    }
+  }
+
+  async sendNewMarketItemNotification(
+    marketItem: { id: string; title: string; priceCents: number | null; currency: string; cityId: string },
+    sellerUserId: string
+  ) {
+    try {
+      const city = await prisma.city.findUnique({
+        where: { id: marketItem.cityId },
+        select: { id: true, name: true },
+      });
+      if (!city) return;
+
+      const recipients = await prisma.user.findMany({
+        where: {
+          currentCityId: marketItem.cityId,
+          id: { not: sellerUserId },
+          OR: [
+            { notificationPreferences: { some: { channelType: NotificationChannelType.PUSH, sendMarketplaceNotifications: true } } },
+            { notificationPreferences: { some: { channelType: NotificationChannelType.TELEGRAM, sendMarketplaceNotifications: true } } },
+            { AND: [{ telegramId: { not: null } }] },
+            { AND: [{ pushTokens: { some: {} } }] },
+          ],
+        },
+        select: {
+          id: true,
+          telegramId: true,
+          language: true,
+        },
+      });
+
+      for (const recipient of recipients) {
+        const lang = recipient.language || 'en';
+
+        const [allowPush, allowTelegram] = await Promise.all([
+          NotificationPreferenceService.doesUserAllow(recipient.id, NotificationChannelType.PUSH, PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS),
+          NotificationPreferenceService.doesUserAllow(recipient.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS),
+        ]);
+
+        if (allowPush) {
+          try {
+            const payload = createNewMarketItemPushNotification(marketItem, city.name, lang);
+            await this.sendNotification({
+              userId: recipient.id,
+              type: NotificationType.NEW_MARKET_ITEM,
+              payload,
+            });
+          } catch (error) {
+            console.error(`Failed to send push notification for new market item to user ${recipient.id}:`, error);
+          }
+        }
+
+        if (allowTelegram && recipient.telegramId) {
+          try {
+            await telegramNotificationService.sendNewMarketItemNotification(
+              marketItem,
+              city.name,
+              { id: recipient.id, telegramId: recipient.telegramId, language: recipient.language }
+            );
+          } catch (error) {
+            console.error(`Failed to send telegram notification for new market item to user ${recipient.id}:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[NotificationService] Failed to send new market item notifications:', error);
     }
   }
 

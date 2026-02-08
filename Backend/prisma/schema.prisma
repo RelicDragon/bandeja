@@ -1368,10 +1368,11 @@ model NotificationPreference {
   sendInvites             Boolean                @default(true)
   sendDirectMessages      Boolean                @default(true)
   sendReminders           Boolean                @default(true)
-  sendWalletNotifications Boolean                @default(true)
-  createdAt               DateTime               @default(now())
-  updatedAt               DateTime               @updatedAt
-  user                    User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sendWalletNotifications      Boolean                @default(true)
+  sendMarketplaceNotifications Boolean                @default(true)
+  createdAt                    DateTime               @default(now())
+  updatedAt                    DateTime               @updatedAt
+  user                         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, channelType])
   @@index([userId])

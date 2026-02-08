@@ -11,6 +11,7 @@ import {
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { MessageService } from '../chat/message.service';
 import { t } from '../../utils/translations';
+import notificationService from '../notification.service';
 
 export interface CreateMarketItemData {
   sellerId: string;
@@ -157,6 +158,12 @@ export class MarketItemService {
         chatType: ChatType.PUBLIC,
       }).catch((err) => {
         console.error('[MarketItemService] Failed to send item message to chat:', err);
+      });
+      notificationService.sendNewMarketItemNotification(
+        { id: created.id, title: created.title, priceCents: created.priceCents, currency: created.currency, cityId: created.cityId },
+        created.sellerId
+      ).catch((err) => {
+        console.error('[MarketItemService] Failed to send new market item notifications:', err);
       });
       return created;
     });

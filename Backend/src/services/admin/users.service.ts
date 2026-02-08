@@ -2,21 +2,44 @@ import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { MediaCleanupService } from '../mediaCleanup.service';
 import { Gender } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
 
-export class AdminUsersService {
-  static async getAllUsers(cityId?: string) {
-    const users = await prisma.user.findMany({
-      where: cityId ? { currentCityId: cityId } : undefined,
-      select: {
-        ...PROFILE_SELECT_FIELDS,
-        totalPoints: true,
-        gamesPlayed: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+const USERS_PAGE_SIZE = 50;
 
-    return users;
+export class AdminUsersService {
+  static async getAllUsers(params: { cityId?: string; search?: string; page?: number }) {
+    const { cityId, search, page = 1 } = params;
+    const skip = (page - 1) * USERS_PAGE_SIZE;
+
+    const where: Prisma.UserWhereInput = {};
+    if (cityId) where.currentCityId = cityId;
+    if (search && search.trim()) {
+      where.OR = [
+        { firstName: { contains: search.trim(), mode: 'insensitive' } },
+        { lastName: { contains: search.trim(), mode: 'insensitive' } },
+        { phone: { contains: search.trim(), mode: 'insensitive' } },
+        { email: { contains: search.trim(), mode: 'insensitive' } },
+        { telegramUsername: { contains: search.trim(), mode: 'insensitive' } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          ...PROFILE_SELECT_FIELDS,
+          totalPoints: true,
+          gamesPlayed: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: USERS_PAGE_SIZE,
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    return { users, total, page, pageSize: USERS_PAGE_SIZE };
   }
 
   static async toggleUserStatus(userId: string) {
@@ -39,6 +62,7 @@ export class AdminUsersService {
 
   static async createUser(data: {
     phone: string;
+    password?: string;
     email?: string;
     firstName?: string;
     lastName?: string;
@@ -53,6 +77,7 @@ export class AdminUsersService {
   }) {
     const {
       phone,
+      password,
       email,
       firstName,
       lastName,
@@ -98,9 +123,19 @@ export class AdminUsersService {
       }
     }
 
+    let passwordHash: string | undefined;
+    if (password) {
+      if (password.length < 6) {
+        throw new ApiError(400, 'Password must be at least 6 characters');
+      }
+      const { hashPassword } = await import('../../utils/hash');
+      passwordHash = await hashPassword(password);
+    }
+
     const user = await prisma.user.create({
       data: {
         phone,
+        passwordHash,
         email,
         firstName,
         lastName,

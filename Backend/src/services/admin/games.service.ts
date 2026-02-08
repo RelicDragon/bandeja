@@ -6,13 +6,99 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
+import { Prisma } from '@prisma/client';
+
+const GAMES_PAGE_SIZE = 50;
 
 export class AdminGamesService {
-  static async getAllGames(cityId?: string) {
-    const games = await prisma.game.findMany({
-      where: cityId ? {
-        cityId: cityId,
-      } : undefined,
+  static async getAllGames(params: {
+    cityId?: string;
+    search?: string;
+    status?: string;
+    entityType?: string;
+    hasResults?: boolean;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+  }) {
+    const { cityId, search, status, entityType, hasResults, startDate, endDate, page = 1 } = params;
+    const skip = (page - 1) * GAMES_PAGE_SIZE;
+
+    const where: Prisma.GameWhereInput = {};
+    if (cityId) where.cityId = cityId;
+    if (status) where.status = status as any;
+    if (entityType) where.entityType = entityType as any;
+    if (hasResults === true) where.resultsStatus = { not: 'NONE' };
+    if (hasResults === false) where.resultsStatus = 'NONE';
+    if (startDate || endDate) {
+      where.startTime = {};
+      if (startDate) (where.startTime as any).gte = new Date(startDate);
+      if (endDate) (where.startTime as any).lte = new Date(endDate);
+    }
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      where.OR = [
+        { name: { contains: term, mode: 'insensitive' } },
+        { description: { contains: term, mode: 'insensitive' } },
+        { court: { club: { name: { contains: term, mode: 'insensitive' } } } },
+        { court: { club: { city: { name: { contains: term, mode: 'insensitive' } } } } },
+        {
+          participants: {
+            some: {
+              role: 'OWNER',
+              user: {
+                OR: [
+                  { firstName: { contains: term, mode: 'insensitive' } },
+                  { lastName: { contains: term, mode: 'insensitive' } },
+                  { phone: { contains: term, mode: 'insensitive' } },
+                ],
+              },
+            },
+          },
+        },
+      ];
+    }
+
+    const [games, total] = await Promise.all([
+      prisma.game.findMany({
+        where,
+        include: {
+          court: {
+            include: {
+              club: {
+                include: {
+                  city: true,
+                },
+              },
+            },
+          },
+          club: { select: { id: true, name: true } },
+          city: { select: { id: true, name: true } },
+          participants: {
+            include: {
+              user: {
+                select: {
+                  ...USER_SELECT_FIELDS,
+                  phone: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { startTime: 'desc' },
+        skip,
+        take: GAMES_PAGE_SIZE,
+      }),
+      prisma.game.count({ where }),
+    ]);
+
+    return { games, total, page, pageSize: GAMES_PAGE_SIZE };
+  }
+
+  static async getGameById(gameId: string) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
       include: {
         court: {
           include: {
@@ -23,6 +109,9 @@ export class AdminGamesService {
             },
           },
         },
+        club: { select: { id: true, name: true } },
+        city: { select: { id: true, name: true } },
+        trainer: { select: { id: true, firstName: true, lastName: true, phone: true } },
         participants: {
           include: {
             user: {
@@ -34,11 +123,9 @@ export class AdminGamesService {
           },
         },
       },
-      orderBy: { startTime: 'desc' },
-      take: 100,
     });
-
-    return games;
+    if (!game) throw new ApiError(404, 'Game not found');
+    return game;
   }
 
   static async getAllInvites(cityId?: string) {

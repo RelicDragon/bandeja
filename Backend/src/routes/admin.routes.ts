@@ -24,6 +24,7 @@ import {
   updateCourt,
   deleteCourt,
   getAllGames,
+  getGameById,
   resetGameResults,
   getAllInvites,
   adminAcceptInvite,
@@ -57,6 +58,7 @@ router.post('/users/:userId/reset-password', requireAdmin, resetUserPassword);
 router.delete('/users/:userId', requireAdmin, deleteUser);
 
 router.get('/games', requireAdmin, getAllGames);
+router.get('/games/:gameId', requireAdmin, getGameById);
 router.post('/games/:gameId/reset-results', requireAdmin, resetGameResults);
 
 router.get('/cities', requireAdmin, getAllCities);

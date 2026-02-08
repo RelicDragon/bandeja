@@ -370,6 +370,66 @@ tbody tr:hover {
     color: white;
 }
 
+.users-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.search-input {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    min-width: 200px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 0.5rem 0;
+}
+
+.pagination-info {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -935,5 +995,127 @@ select:focus {
 .mass-notification-result.error {
     background: rgba(239, 68, 68, 0.2);
     border: 1px solid var(--danger-color);
+}
+
+.games-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-select {
+    padding: 0.5rem 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    min-width: 120px;
+}
+
+.filter-date {
+    padding: 0.5rem 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+.table-loading,
+.table-empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.badge-announced { background: #3b82f6; color: white; }
+.badge-ready { background: #8b5cf6; color: white; }
+.badge-started { background: var(--warning-color); color: white; }
+.badge-finished { background: var(--secondary-color); color: white; }
+.badge-archived { background: #64748b; color: white; }
+.badge-secondary { background: #475569; color: white; }
+
+.toast-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: none;
+}
+
+.toast {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    pointer-events: auto;
+    animation: toast-in 0.3s ease;
+}
+
+.toast.success { background: var(--secondary-color); color: white; }
+.toast.error { background: var(--danger-color); color: white; }
+.toast.info { background: var(--primary-color); color: white; }
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.game-modal-loading,
+.game-modal-error {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.game-modal-error {
+    color: var(--danger-color);
+}
+
+.data-table-filters {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.data-table-filters .search-input,
+.data-table-filters .filter-select,
+.data-table-filters .filter-date {
+    margin: 0;
+}
+
+.data-table-th {
+    cursor: default;
+    user-select: none;
+}
+
+.data-table-th[data-key] {
+    cursor: pointer;
+}
+
+.data-table-th.sort-asc::after {
+    content: ' ▲';
+    font-size: 0.7em;
+    opacity: 0.8;
+}
+
+.data-table-th.sort-desc::after {
+    content: ' ▼';
+    font-size: 0.7em;
+    opacity: 0.8;
+}
+
+.data-table-loading,
+.data-table-empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-secondary);
 }
 

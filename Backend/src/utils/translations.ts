@@ -150,6 +150,9 @@ const translations: Record<string, Record<string, string>> = {
     'marketplace.tradeType.BUY_IT_NOW': 'Buy now',
     'marketplace.tradeType.SUGGESTED_PRICE': 'Haggling welcome',
     'marketplace.tradeType.AUCTION': 'Auction',
+    'marketplace.newListingTitle': 'New listing in {city}',
+    'marketplace.newListingBody': '{title} — {price}',
+    'marketplace.viewListing': 'View listing',
   },
   ru: {
     'createGame.today': 'Сегодня',
@@ -288,6 +291,9 @@ const translations: Record<string, Record<string, string>> = {
     'marketplace.tradeType.BUY_IT_NOW': 'Купить сейчас',
     'marketplace.tradeType.SUGGESTED_PRICE': 'Торг уместен',
     'marketplace.tradeType.AUCTION': 'Аукцион',
+    'marketplace.newListingTitle': 'Новое объявление в {city}',
+    'marketplace.newListingBody': '{title} — {price}',
+    'marketplace.viewListing': 'Посмотреть объявление',
   },
   sr: {
     'createGame.today': 'Данас',
@@ -426,6 +432,9 @@ const translations: Record<string, Record<string, string>> = {
     'marketplace.tradeType.BUY_IT_NOW': 'Купи одмах',
     'marketplace.tradeType.SUGGESTED_PRICE': 'Цењкање добродошло',
     'marketplace.tradeType.AUCTION': 'Аукција',
+    'marketplace.newListingTitle': 'Нови оглас у {city}',
+    'marketplace.newListingBody': '{title} — {price}',
+    'marketplace.viewListing': 'Погледај оглас',
   },
   es: {
     'createGame.today': 'Hoy',
@@ -564,6 +573,9 @@ const translations: Record<string, Record<string, string>> = {
     'marketplace.tradeType.BUY_IT_NOW': 'Comprar ahora',
     'marketplace.tradeType.SUGGESTED_PRICE': 'Regateo bienvenido',
     'marketplace.tradeType.AUCTION': 'Subasta',
+    'marketplace.newListingTitle': 'Nuevo anuncio en {city}',
+    'marketplace.newListingBody': '{title} — {price}',
+    'marketplace.viewListing': 'Ver anuncio',
   },
 };
 

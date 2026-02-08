@@ -30,14 +30,30 @@ export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
 
 // Game Management endpoints
 export const getAllGames = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { cityId } = req.query;
+  const { cityId, search, status, entityType, hasResults, startDate, endDate, page } = req.query;
 
-  const games = await AdminGamesService.getAllGames(cityId as string);
+  const result = await AdminGamesService.getAllGames({
+    cityId: cityId as string,
+    search: search as string,
+    status: status as string,
+    entityType: entityType as string,
+    hasResults: hasResults === 'true' ? true : hasResults === 'false' ? false : undefined,
+    startDate: startDate as string,
+    endDate: endDate as string,
+    page: page ? parseInt(String(page), 10) : undefined,
+  });
 
   res.json({
     success: true,
-    data: games,
+    data: result.games,
+    pagination: { total: result.total, page: result.page, pageSize: result.pageSize },
   });
+});
+
+export const getGameById = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId } = req.params;
+  const game = await AdminGamesService.getGameById(gameId);
+  res.json({ success: true, data: game });
 });
 
 export const resetGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -386,13 +402,18 @@ export const getStats = asyncHandler(async (req: AuthRequest, res: Response) => 
 
 // User Management endpoints
 export const getAllUsers = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { cityId } = req.query;
+  const { cityId, search, page } = req.query;
 
-  const users = await AdminUsersService.getAllUsers(cityId as string);
+  const result = await AdminUsersService.getAllUsers({
+    cityId: cityId as string,
+    search: search as string,
+    page: page ? parseInt(String(page), 10) : undefined,
+  });
 
   res.json({
     success: true,
-    data: users,
+    data: result.users,
+    pagination: { total: result.total, page: result.page, pageSize: result.pageSize },
   });
 });
 
@@ -410,6 +431,7 @@ export const toggleUserStatus = asyncHandler(async (req: AuthRequest, res: Respo
 export const createUser = asyncHandler(async (req: AuthRequest, res: Response) => {
   const {
     phone,
+    password,
     email,
     firstName,
     lastName,
@@ -425,6 +447,7 @@ export const createUser = asyncHandler(async (req: AuthRequest, res: Response) =
 
   const user = await AdminUsersService.createUser({
     phone,
+    password,
     email,
     firstName,
     lastName,

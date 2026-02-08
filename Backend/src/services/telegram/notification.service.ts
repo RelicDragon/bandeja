@@ -11,6 +11,7 @@ import { sendGameReminderNotification } from './notifications/game-reminder.noti
 import { sendNewGameNotification } from './notifications/new-game.notification';
 import { sendBetResolvedNotification, sendBetNeedsReviewNotification, sendBetCancelledNotification } from './notifications/bet-resolved.notification';
 import { sendTransactionNotification as sendTransactionNotificationFunc } from './notifications/transaction.notification';
+import { sendNewMarketItemNotification } from './notifications/new-market-item.notification';
 
 class TelegramNotificationService {
   private bot: Bot | null = null;
@@ -85,6 +86,15 @@ class TelegramNotificationService {
   async sendBetCancelledNotification(betId: string, userId: string) {
     if (!this.bot) return;
     await sendBetCancelledNotification(this.bot.api, betId, userId);
+  }
+
+  async sendNewMarketItemNotification(
+    marketItem: { id: string; title: string; priceCents: number | null; currency: string },
+    cityName: string,
+    recipient: { id: string; telegramId: string; language?: string | null }
+  ) {
+    if (!this.bot) return;
+    await sendNewMarketItemNotification(this.bot.api, marketItem, cityName, recipient);
   }
 
   async sendTransactionNotification(transactionId: string, userId: string, isSender: boolean) {

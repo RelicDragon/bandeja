@@ -750,6 +750,8 @@
     "sendRemindersDescription": "Recibe notificaciones 2 horas antes de que comiencen tus juegos, torneos o entrenamientos",
     "walletNotifications": "Notificaciones de billetera",
     "walletNotificationsDescription": "Recibir notificaciones de transacciones de billetera",
+    "marketplaceNotifications": "Nuevos anuncios en mi ciudad",
+    "marketplaceNotificationsDescription": "Recibir notificaciones de nuevos artículos en tu ciudad",
     "enable": "Activar",
     "disable": "Desactivar",
     "notificationSettings": "Configuración de notificaciones",

@@ -762,6 +762,8 @@
     "sendRemindersDescription": "Получайте уведомления за 2 часа до начала ваших игр, турниров или тренировок",
     "walletNotifications": "Уведомления кошелька",
     "walletNotificationsDescription": "Получать уведомления о транзакциях кошелька",
+    "marketplaceNotifications": "Новые объявления в моём городе",
+    "marketplaceNotificationsDescription": "Получать уведомления о новых товарах в вашем городе",
     "enable": "Включить",
     "disable": "Отключить",
     "notificationSettings": "Настройки уведомлений",
