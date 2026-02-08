@@ -75,7 +75,7 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
 
   return (
     <Dialog open={isOpen} onClose={handleClose} modalId="bug-modal">
-      <DialogContent>
+      <DialogContent ignoreOutsideClickSelector="[data-select-dropdown]">
         <DialogHeader>
           <DialogTitle>{t('bug.addBug')}</DialogTitle>
         </DialogHeader>

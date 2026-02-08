@@ -57,9 +57,21 @@ const DialogContent = React.forwardRef<
     children?: React.ReactNode;
     showCloseButton?: boolean;
     closeOnInteractOutside?: boolean;
+    ignoreOutsideClickSelector?: string;
   }
->(({ className, showCloseButton = true, closeOnInteractOutside = true, children, ...props }, ref) => {
-  const preventOutside = !closeOnInteractOutside ? { onInteractOutside: (e: Event) => e.preventDefault(), onPointerDownOutside: (e: Event) => e.preventDefault() } : {};
+>(({ className, showCloseButton = true, closeOnInteractOutside = true, ignoreOutsideClickSelector, children, ...props }, ref) => {
+  const preventOutside = !closeOnInteractOutside
+    ? { onInteractOutside: (e: Event) => e.preventDefault(), onPointerDownOutside: (e: Event) => e.preventDefault() }
+    : ignoreOutsideClickSelector
+      ? {
+          onInteractOutside: (e: Event) => {
+            if ((e.target as Element).closest?.(ignoreOutsideClickSelector)) e.preventDefault();
+          },
+          onPointerDownOutside: (e: Event) => {
+            if ((e.target as Element).closest?.(ignoreOutsideClickSelector)) e.preventDefault();
+          }
+        }
+      : {};
   return (
     <DialogPortal>
       <DialogOverlay />
