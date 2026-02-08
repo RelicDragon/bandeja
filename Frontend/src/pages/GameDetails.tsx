@@ -707,7 +707,7 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
     try {
       const updateData: Partial<Game> = {
         clubId: data.clubId || undefined,
-        courtId: data.courtId || undefined,
+        courtId: data.courtId || '',
         hasBookedCourt: data.hasBookedCourt,
       };
 
@@ -795,13 +795,9 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
     if (!id) return;
 
     try {
-      const updateData: Partial<Game> = {};
-      
-      if (courtId === 'notBooked') {
-        updateData.courtId = undefined;
-      } else {
-        updateData.courtId = courtId;
-      }
+      const updateData: Partial<Game> = {
+        courtId: courtId === 'notBooked' ? '' : courtId,
+      };
 
       await gamesApi.update(id, updateData);
       

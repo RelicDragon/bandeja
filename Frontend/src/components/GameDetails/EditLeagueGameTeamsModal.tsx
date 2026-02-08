@@ -432,7 +432,7 @@ export const EditLeagueGameTeamsModal = ({
         }
       }
       if (selectedCourtId !== (game.courtId || '')) {
-        updateData.courtId = selectedCourtId || undefined;
+        updateData.courtId = selectedCourtId || '';
         hasChanges = true;
       }
       if (hasBookedCourt !== (game.hasBookedCourt || false)) {
