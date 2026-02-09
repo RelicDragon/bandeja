@@ -15,54 +15,28 @@ export class ReactionService {
 
     await MessageService.validateMessageAccess(message, userId, true);
 
-    let reaction;
-    try {
-      reaction = await prisma.messageReaction.create({
-        data: {
+    // Use upsert to atomically create or update the reaction
+    const reaction = await prisma.messageReaction.upsert({
+      where: {
+        messageId_userId: {
           messageId,
-          userId,
-          emoji
-        },
-        include: {
-          user: {
-            select: USER_SELECT_FIELDS
-          }
+          userId
         }
-      });
-    } catch (error: any) {
-      if (error.code === 'P2002') {
-        await prisma.messageReaction.updateMany({
-          where: {
-            messageId,
-            userId
-          },
-          data: {
-            emoji
-          }
-        });
-
-        reaction = await prisma.messageReaction.findFirst({
-          where: {
-            messageId,
-            userId
-          },
-          include: {
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true
-              }
-            }
-          }
-        });
-      } else {
-        throw error;
+      },
+      create: {
+        messageId,
+        userId,
+        emoji
+      },
+      update: {
+        emoji
+      },
+      include: {
+        user: {
+          select: USER_SELECT_FIELDS
+        }
       }
-    }
+    });
 
     return reaction;
   }
