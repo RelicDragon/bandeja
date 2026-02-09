@@ -29,6 +29,7 @@ export interface BasicUser {
   gender: Gender;
   approvedLevel: boolean;
   isTrainer: boolean;
+  allowMessagesFromNonContacts?: boolean;
 }
 
 export interface User extends BasicUser {
@@ -76,7 +77,6 @@ export interface User extends BasicUser {
   sendPushReminders?: boolean;
   sendPushWalletNotifications?: boolean;
   wallet?: number;
-  allowMessagesFromNonContacts?: boolean;
   blockedUserIds?: string[];
 }
 
