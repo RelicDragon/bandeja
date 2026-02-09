@@ -637,7 +637,7 @@ class NotificationService {
   }
 
   async sendNewMarketItemNotification(
-    marketItem: { id: string; title: string; priceCents: number | null; currency: string; cityId: string },
+    marketItem: { id: string; title: string; description: string | null; priceCents: number | null; currency: string; cityId: string },
     sellerUserId: string
   ) {
     try {

@@ -119,7 +119,7 @@ export class MarketItemService {
         data: {
           id: item.id,
           name,
-          isChannel: true,
+          isChannel: false,
           isPublic: true,
           marketItemId: item.id,
           cityId,
@@ -161,7 +161,7 @@ export class MarketItemService {
         console.error('[MarketItemService] Failed to send item message to chat:', err);
       });
       notificationService.sendNewMarketItemNotification(
-        { id: created.id, title: created.title, priceCents: created.priceCents, currency: created.currency, cityId: created.cityId },
+        { id: created.id, title: created.title, description: created.description, priceCents: created.priceCents, currency: created.currency, cityId: created.cityId },
         created.sellerId
       ).catch((err) => {
         console.error('[MarketItemService] Failed to send new market item notifications:', err);

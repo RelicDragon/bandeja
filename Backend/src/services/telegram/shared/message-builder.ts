@@ -35,9 +35,10 @@ export function buildMessageWithButtons(
     finalMessage = convertMarkdownMessageToHTML(message);
     
     if (urlButtons.length > 0) {
-      const viewGameText = escapeHTML(t('telegram.viewGame', lang));
-      const url = urlButtons[0].url!;
-      finalMessage += `\n\n🔗 <a href="${escapeHTML(url)}">${viewGameText}</a>`;
+      const btn = urlButtons[0];
+      const linkText = escapeHTML(btn.text || t('telegram.viewChat', lang));
+      const url = btn.url!;
+      finalMessage += `\n\n🔗 <a href="${escapeHTML(url)}">${linkText}</a>`;
     }
     
     if (callbackButtons.length > 0) {

@@ -6,7 +6,7 @@ import { buildMessageWithButtons } from '../shared/message-builder';
 
 export async function sendNewMarketItemNotification(
   api: Api,
-  marketItem: { id: string; title: string; priceCents: number | null; currency: string },
+  marketItem: { id: string; title: string; description: string | null; priceCents: number | null; currency: string },
   cityName: string,
   recipient: { id: string; telegramId: string; language?: string | null }
 ) {
@@ -24,6 +24,9 @@ export async function sendNewMarketItemNotification(
     let message = `🛒 ${escapeMarkdown(title)}\n\n${escapeMarkdown(marketItem.title)}`;
     if (priceText) {
       message += `\n💰 ${escapeMarkdown(priceText)}`;
+    }
+    if (marketItem.description) {
+      message += `\n\n${escapeMarkdown(marketItem.description)}`;
     }
 
     const buttons = [[

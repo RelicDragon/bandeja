@@ -21,7 +21,7 @@ export async function sendNewBugNotification(
 
     const buttons = [[
       {
-        text: t('telegram.viewChat', lang) || 'View',
+        text: t('telegram.viewBug', lang),
         url: `${config.frontendUrl}/channel-chat/${groupChannelId}`,
       },
     ]];

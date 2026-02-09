@@ -83,8 +83,15 @@ export async function sendGroupChatNotification(
             : `👥 ${t('notifications.group', lang)}`;
       const formattedMessage = `${shortDayOfWeek} ${contextLabel}: *${escapeMarkdown(groupChannel.name)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
       
+      const viewButtonKey = groupChannel.bug?.id
+        ? 'telegram.viewBug'
+        : groupChannel.marketItem?.id
+          ? 'telegram.viewMarketplace'
+          : groupChannel.isChannel
+            ? 'telegram.viewChannel'
+            : 'telegram.viewGroup';
       const buttons: Array<{ text: string; callback_data?: string; url?: string }> = [
-        { text: t('telegram.viewChat', lang), url: chatUrl }
+        { text: t(viewButtonKey, lang), url: chatUrl }
       ];
       if (canWrite) {
         buttons.push({ text: t('telegram.reply', lang), callback_data: `rg:${message.id}:${groupChannel.id}` });

@@ -31,7 +31,7 @@ export async function sendBugChatNotification(
     : `${config.frontendUrl}/bugs`;
 
   const buildBugButtons = (lang: string) => [[
-    { text: t('telegram.viewChat', lang), url: bugChatUrl },
+    { text: t('telegram.viewBug', lang), url: bugChatUrl },
     { text: t('telegram.reply', lang), callback_data: `rbm:${message.id}:${bug.id}` }
   ]];
 
@@ -122,10 +122,8 @@ export async function sendBugChatNotification(
         notifiedUserIds.add(userId);
         try {
           const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
-          const timezone = timezoneMap.get(user.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
-          const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
           const buttons = buildBugButtons(lang);
-          const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${getBugMessage(lang)}`, buttons, lang);
+          const { message: finalMessage, options } = buildMessageWithButtons(`${getBugMessage(lang)}`, buttons, lang);
           await api.sendMessage(user.telegramId, finalMessage, options);
         } catch (error) {
           console.error(`Failed to send Telegram notification to mentioned user ${userId}:`, error);
