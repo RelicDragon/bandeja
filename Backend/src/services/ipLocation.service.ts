@@ -74,9 +74,19 @@ export async function getLocationByIp(ip: string): Promise<{ latitude: number; l
   const cached = await prisma.ipLocationCache.findUnique({
     where: { ip },
   });
+
+  // Check if cache exists and is not older than 1 year
   if (cached) {
-    return { latitude: cached.latitude, longitude: cached.longitude };
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+    if (cached.createdAt > oneYearAgo) {
+      // Cache is fresh, return immediately without API call
+      return { latitude: cached.latitude, longitude: cached.longitude };
+    }
+    // Cache is expired, will refetch and update below
   }
+
   if (!config.abstractApi.apiKey) return null;
   abstractApiRateLimitPromise = abstractApiRateLimitPromise.then(() => waitAbstractApiRateLimit());
   await abstractApiRateLimitPromise;
@@ -104,7 +114,7 @@ export async function getLocationByIp(ip: string): Promise<{ latitude: number; l
   await prisma.ipLocationCache.upsert({
     where: { ip },
     create: { ip, latitude: loc.latitude, longitude: loc.longitude, meta: body as object },
-    update: { latitude: loc.latitude, longitude: loc.longitude, meta: body as object },
+    update: { latitude: loc.latitude, longitude: loc.longitude, meta: body as object, createdAt: new Date() },
   });
   return { latitude: loc.latitude, longitude: loc.longitude };
 }
