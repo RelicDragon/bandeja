@@ -116,6 +116,21 @@ export class GameCreateService {
     const gameType = entityType === EntityType.TRAINING 
       ? (data.gameType || 'CLASSIC')
       : data.gameType;
+
+    let trainerId: string | null = null;
+    if (entityType === EntityType.TRAINING) {
+      if (creatorNonPlaying) {
+        trainerId = userId;
+      } else {
+        const creator = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { isTrainer: true },
+        });
+        if (creator?.isTrainer) {
+          trainerId = userId;
+        }
+      }
+    }
     
     const createdGame = await prisma.game.create({
       data: {
@@ -167,7 +182,7 @@ export class GameCreateService {
           timeIsSet: data.timeIsSet ?? false,
           entityType: entityType,
         }, cityTimezone),
-        ...(creatorNonPlaying && { trainerId: userId }),
+        ...(trainerId && { trainerId }),
         participants: {
           create: {
             userId,
