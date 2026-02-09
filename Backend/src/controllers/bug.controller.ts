@@ -26,11 +26,11 @@ export const createBug = asyncHandler(async (req: AuthRequest, res: Response) =>
 
   const { groupChannel, ...bug } = await BugService.createBug(text, bugType, req.userId!);
 
-  notificationService.sendNewBugNotification(bug, groupChannel.id, bug.sender).catch(err =>
+  notificationService.sendNewBugNotification(bug, groupChannel.id, bug.sender).catch((err: unknown) =>
     console.error('Failed to send new bug notification:', err)
   );
 
-  getSocketService()?.emitNewBug().catch(err =>
+  getSocketService()?.emitNewBug().catch((err: unknown) =>
     console.error('Failed to emit new bug to developers:', err)
   );
 
@@ -41,7 +41,7 @@ export const createBug = asyncHandler(async (req: AuthRequest, res: Response) =>
     content: text.trim(),
     mediaUrls: [],
     chatType: ChatType.PUBLIC
-  }).catch(err => console.error('Failed to create bug description message:', err));
+  }).catch((err: unknown) => console.error('Failed to create bug description message:', err));
 
   res.status(201).json({
     success: true,
