@@ -202,6 +202,8 @@ export class GroupChannelService {
 
     if (filter === 'users') {
       baseWhere.OR = baseWhere.OR.filter((c: any) => c.isChannel === false);
+      baseWhere.bugId = null;
+      baseWhere.marketItemId = null;
     } else if (filter === 'bugs') {
       baseWhere.OR = [
         {
