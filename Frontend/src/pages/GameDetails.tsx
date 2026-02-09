@@ -1132,7 +1132,6 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
                 game={game}
                 myInvites={myInvites}
                 gameInvites={gameInvites}
-                isParticipant={isParticipant}
                 isGuest={isGuest}
                 isFull={isFull}
                 isOwner={isOwner}

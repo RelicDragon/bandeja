@@ -10,7 +10,6 @@ interface GameParticipantsProps {
   game: Game;
   myInvites: Invite[];
   gameInvites: Invite[];
-  isParticipant: boolean;
   isGuest: boolean;
   isFull: boolean;
   isOwner: boolean;
@@ -38,7 +37,6 @@ export const GameParticipants = ({
   game,
   myInvites,
   gameInvites,
-  isParticipant,
   isGuest,
   isFull,
   isOwner,
