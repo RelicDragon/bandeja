@@ -1,10 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/components';
 import { GameStatusIcon } from '@/components/GameStatusIcon';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { GameAvatar } from '@/components/GameAvatar';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { Game } from '@/types';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
@@ -14,7 +13,8 @@ import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/uti
 import { useNavigationStore } from '@/store/navigationStore';
 import { useAuthStore } from '@/store/authStore';
 import { chatApi } from '@/api/chat';
-import { Calendar, MapPin, Users, MessageCircle, ChevronRight, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star, Plane } from 'lucide-react';
+import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
+import { Calendar, MapPin, Users, MessageCircle, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star, Plane, Bookmark } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
@@ -24,10 +24,8 @@ interface GameCardProps {
   showChatIndicator?: boolean;
   showJoinButton?: boolean;
   onJoin?: (gameId: string, e: React.MouseEvent) => void;
-  isInitiallyCollapsed?: boolean;
-  showDate?: boolean;
+  onNoteSaved?: (gameId: string) => void;
   unreadCount?: number;
-  forceCollapsed?: boolean;
 }
 
 export const GameCard = ({ 
@@ -37,38 +35,17 @@ export const GameCard = ({
   showChatIndicator = true, 
   showJoinButton = false, 
   onJoin,
-  isInitiallyCollapsed = false,
-  showDate = true,
+  onNoteSaved,
   unreadCount = 0,
-  forceCollapsed
 }: GameCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
   const authUser = useAuthStore((state) => state.user);
   const effectiveUser = user || authUser;
-  const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
-  const [isCollapsing, setIsCollapsing] = useState(false);
   const expandedContentRef = useRef<HTMLDivElement>(null);
-  const previousForceCollapsedRef = useRef<boolean | undefined>(undefined);
   const [mainPhotoUrl, setMainPhotoUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const previousForceCollapsed = previousForceCollapsedRef.current;
-    previousForceCollapsedRef.current = forceCollapsed;
-    
-    if (forceCollapsed !== undefined && previousForceCollapsed !== forceCollapsed && forceCollapsed !== isCollapsed && !isCollapsing) {
-      setIsCollapsing(true);
-      setIsCollapsed(forceCollapsed);
-      
-      setTimeout(() => {
-        setIsCollapsing(false);
-      }, 300);
-    } else if (forceCollapsed !== undefined && previousForceCollapsed === undefined && !isCollapsing) {
-      setIsCollapsed(forceCollapsed);
-    }
-  }, [forceCollapsed, isCollapsed, isCollapsing]);
-
+  const [showNoteModal, setShowNoteModal] = useState(false);
 
   useEffect(() => {
     const loadMainPhoto = async () => {
@@ -80,7 +57,7 @@ export const GameCard = ({
       try {
         const messages = await chatApi.getGameMessages(game.id, 1, 50, 'PHOTOS');
         const mainPhotoMessage = messages.find(msg => msg.id === game.mainPhotoId);
-        
+
         if (mainPhotoMessage && mainPhotoMessage.mediaUrls && mainPhotoMessage.mediaUrls.length > 0) {
           const thumbnailUrl = mainPhotoMessage.thumbnailUrls && mainPhotoMessage.thumbnailUrls[0]
             ? mainPhotoMessage.thumbnailUrls[0]
@@ -114,6 +91,11 @@ export const GameCard = ({
   const hasUnoccupiedSlots = !participation.isFull;
   const hasMyInvites = participation.hasPendingInvite;
   const isInJoinQueue = participation.isInJoinQueue;
+
+  const userNoteDisplay = game.userNote ?? null;
+  const handleNoteSaved = useCallback(() => {
+    onNoteSaved?.(game.id);
+  }, [game.id, onNoteSaved]);
 
   const hasOtherTags = (game.photosCount ?? 0) > 0 ||
     !game.isPublic ||
@@ -156,19 +138,6 @@ export const GameCard = ({
     const participant = game.participants?.find((p) => p.userId === effectiveUser?.id);
     const state = participant?.status === 'PLAYING' ? { initialChatType: 'PRIVATE' as const } : undefined;
     navigate(`/games/${game.id}/chat`, { state });
-  };
-
-  const handleToggleCollapse = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (isCollapsing) return;
-    
-    setIsCollapsing(true);
-    setIsCollapsed(!isCollapsed);
-    
-    setTimeout(() => {
-      setIsCollapsing(false);
-    }, 300);
   };
 
   const handleCardClick = () => {
@@ -237,7 +206,7 @@ export const GameCard = ({
       case 'LEAGUE':
         return <Trophy size={40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
       case 'LEAGUE_SEASON':
-        return <Trophy size={isCollapsed ? 27 : 40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
+        return <Trophy size={40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
       case 'TRAINING':
         return <Dumbbell size={48} className="text-green-500 dark:text-green-400 opacity-15 dark:opacity-15" />;
       case 'BAR':
@@ -248,6 +217,7 @@ export const GameCard = ({
   };
 
   return (
+    <>
     <Card
       className={`hover:shadow-md hover:scale-[1.02] 
         active:scale-[1.05] transition-all duration-300 ease-in-out 
@@ -260,15 +230,14 @@ export const GameCard = ({
         </div>
       )}
       {/* Header - Always visible */}
-      <div className={`${!(isCollapsed && game.entityType === 'LEAGUE_SEASON') ? 'mb-3' : ''} relative z-10`}>
+      <div className="mb-3 relative z-10">
         {isDifferentCity && game.city?.name && (
           <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
             <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
             <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{game.city.name}</span>
           </div>
         )}
-        {!(isCollapsed && game.entityType === 'LEAGUE_SEASON') && (
-          <>
+        <>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-20 flex items-center gap-2">
               {shouldMoveIconsToTitle && (
                 <>
@@ -342,6 +311,26 @@ export const GameCard = ({
             </span>
           )}
           {!shouldMoveIconsToTitle && <GameStatusIcon status={game.status} />}
+          {!userNoteDisplay && effectiveUser && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setShowNoteModal(true);
+              }}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              className="p-1 text-gray-400 dark:text-gray-500 flex items-center hover:text-gray-600 dark:hover:text-gray-400 transition-colors cursor-pointer"
+            >
+              <Bookmark size={16} />
+            </span>
+          )}
           {(game.photosCount ?? 0) > 0 && (
             <button
               onClick={(e) => {
@@ -422,8 +411,32 @@ export const GameCard = ({
             </span>
           )}
             </div>
+
+            {/* Notes Section */}
+            {userNoteDisplay && effectiveUser && (
+              <div className="mt-3">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setShowNoteModal(true);
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="bg-yellow-50/50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800/30 rounded-lg p-2 cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors"
+                >
+                  <div className="flex items-start gap-1.5">
+                    <Bookmark size={12} className="text-yellow-500 dark:text-yellow-500/80 flex-shrink-0 mt-0.5" fill="currentColor" />
+                    <p className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words flex-1">
+                      {userNoteDisplay}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
-        )}
         <div className="absolute -top-2 -right-3 flex items-center gap-0 z-20">
           {canAccessChat && showChatIndicator && (
             <button
@@ -439,382 +452,11 @@ export const GameCard = ({
               )}
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleToggleCollapse}
-            className="pl-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
-          >
-            <div className={`transition-transform duration-300 ease-in-out ${
-              isCollapsed ? 'rotate-0' : 'rotate-90'
-            }`}>
-              <ChevronRight size={20} className="text-gray-600 dark:text-gray-400" />
-            </div>
-          </button>
         </div>
       </div>
 
-      {/* Collapsed view - Single row */}
-      {isCollapsed && (
-        <div className={`text-sm pb-4 text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-0 ${game.entityType === 'LEAGUE_SEASON' ? 'flex flex-col gap-2 -mt-1' : game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : mainPhotoUrl ? 'flex gap-4' : 'flex items-center gap-4'}`}>
-          {game.entityType === 'LEAGUE_SEASON' ? (
-            <>
-              <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                {game.leagueSeason?.league?.name && (
-                  <>
-                    <span className="text-blue-600 dark:text-blue-400">{game.leagueSeason.league.name}</span>
-                    {game.name && (
-                      <span className="text-purple-600 dark:text-purple-400"> {game.name}</span>
-                    )}
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {isUserParticipant && (
-                  <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white">
-                    <Star 
-                      size={12} 
-                      className="text-white"
-                      fill="currentColor"
-                    />
-                  </span>
-                )}
-                <GameStatusIcon status={game.status} />
-                {(game.photosCount ?? 0) > 0 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/games/${game.id}/chat`, { state: { initialChatType: 'PHOTOS' } });
-                    }}
-                    className="px-3 py-1.5 text-sm font-semibold rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1.5 shadow-[0_0_8px_rgba(168,85,247,0.4)] dark:shadow-[0_0_8px_rgba(168,85,247,0.5)] hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.6)] dark:hover:shadow-[0_0_12px_rgba(168,85,247,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
-                  >
-                    <Camera size={16} />
-                    {game.photosCount}
-                  </button>
-                )}
-                {!game.isPublic && (
-                  <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
-                    <Lock size={12} />
-                    <span className="hidden sm:inline">{t('games.private')}</span>
-                  </span>
-                )}
-                {game.genderTeams && game.genderTeams !== 'ANY' && (
-                  <div className="flex items-center gap-1">
-                    {game.genderTeams === 'MIX_PAIRS' ? (
-                      <div className="h-6 px-2 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 dark:from-blue-600 dark:to-pink-600 flex items-center justify-center gap-1">
-                        <i className="bi bi-gender-male text-white text-[10px]"></i>
-                        <i className="bi bi-gender-female -ml-1 text-white text-[10px]"></i>
-                      </div>
-                    ) : (
-                      <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                        game.genderTeams === 'MEN' 
-                          ? 'bg-blue-500 dark:bg-blue-600' 
-                          : 'bg-pink-500 dark:bg-pink-600'
-                      }`}>
-                        <i className={`bi ${game.genderTeams === 'MEN' ? 'bi-gender-male' : 'bi-gender-female'} text-white text-xs`}></i>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {participants.some(
-                  (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
-                ) && (
-                  <span className="px-2 py-1 text-xs font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-                    {t('games.owner')}
-                  </span>
-                )}
-                <span className="px-2 py-1 text-xs font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
-                  <Trophy size={12} />
-                  {t(`games.entityTypes.${game.entityType}`)}
-                </span>
-                {isGuest && (
-                  <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                    {t('chat.guest')}
-                  </span>
-                )}
-                {!game.affectsRating && (
-                  <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
-                    <Award size={12} />
-                    <Ban size={12} />
-                    <span className="hidden sm:inline">{t('games.noRating')}</span>
-                  </span>
-                )}
-                {game.hasFixedTeams && (
-                  <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1">
-                    <div className="flex items-center">
-                      <Users size={12} />
-                      <Users size={12} />
-                    </div>
-                    <span className="hidden sm:inline">{t('games.fixedTeams')}</span>
-                  </span>
-                )}
-                {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && game.resultsStatus === 'FINAL' && (
-                  <span className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
-                    <Award size={12} />
-                    {t('games.resultsAvailable')}
-                  </span>
-                )}
-              </div>
-            </>
-          ) : game.entityType === 'TRAINING' ? (
-            <>
-              <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
-                {(() => {
-                  const trainer = game.trainerId ? participants.find(p => p.userId === game.trainerId) : null;
-                  return trainer ? (
-                    <>
-                      <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
-                      <PlayerAvatar
-                        player={trainer.user}
-                        extrasmall={true}
-                        showName={true}
-                      />
-                    </>
-                  ) : null;
-                })()}
-              </div>
-              <div className="flex flex-col gap-2 flex-1">
-                <div className="flex items-center gap-1">
-                  {showDate && <Calendar size={14} />}
-                  {game.timeIsSet === false ? (
-                    <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
-                  ) : (
-                    <span>
-                      {showDate && getDateLabelResolved(game.startTime, false)}
-                      {shouldShowTiming && (
-                        <>
-                          {` ${timeDisplay.primaryText}`}
-                          {` • ${(() => {
-                            const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                            if (durationHours === Math.floor(durationHours)) {
-                              return `${durationHours}${t('common.h')}`;
-                            } else {
-                              const hours = Math.floor(durationHours);
-                              const minutes = Math.round((durationHours % 1) * 60);
-                              return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                            }
-                          })()}`}
-                        </>
-                      )}
-                    </span>
-                  )}
-                </div>
-                {(timeDisplay.hintText || timeRangeDisplay.hintText) && (
-                  <div className="flex items-center gap-1.5 opacity-75">
-                    <Plane size={14} className="text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{timeDisplay.hintText || timeRangeDisplay.hintText}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-4">
-                  {(game.court?.club || game.club) && (
-                    <div className="flex items-center gap-1">
-                      <MapPin size={14} />
-                      <span className="truncate max-w-32">
-                        {game.court?.club?.name || game.club?.name}
-                        {game.court?.name && ` • ${game.court.name}`}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <Users size={14} />
-                    <span>
-                      {`${participants.filter(p => p.status === 'PLAYING').length}/${game.maxParticipants}`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? (
-            <>
-              <div className="flex-shrink-0">
-                <GameAvatar avatar={game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar} small alt={game.name || t('gameDetails.gameAvatar')} />
-              </div>
-              <div className="flex flex-col gap-2 flex-1">
-                <div className="flex items-center gap-1">
-                  {showDate && <Calendar size={14} />}
-                  {game.timeIsSet === false ? (
-                    <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
-                  ) : (
-                    <span>
-                      {showDate && getDateLabelResolved(game.startTime, false)}
-                      {shouldShowTiming && (
-                        <>
-                          {` ${timeDisplay.primaryText}`}
-                          {game.entityType !== 'BAR' ? ` • ${(() => {
-                            const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                            if (durationHours === Math.floor(durationHours)) {
-                              return `${durationHours}${t('common.h')}`;
-                            } else {
-                              const hours = Math.floor(durationHours);
-                              const minutes = Math.round((durationHours % 1) * 60);
-                              return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                            }
-                          })()}` : ''}
-                        </>
-                      )}
-                    </span>
-                  )}
-                </div>
-                {(timeDisplay.hintText || timeRangeDisplay.hintText) && (
-                  <div className="flex items-center gap-1.5 opacity-75">
-                    <Plane size={14} className="text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{timeDisplay.hintText || timeRangeDisplay.hintText}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-4">
-                  {(game.court?.club || game.club) && (
-                    <div className="flex items-center gap-1">
-                      <MapPin size={14} />
-                      <span className="truncate max-w-32">
-                        {game.court?.club?.name || game.club?.name}
-                        {game.court?.name && ` • ${game.court.name}`}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <Users size={14} />
-                    <span>
-                      {game.entityType === 'BAR' 
-                        ? participants.filter(p => p.status === 'PLAYING').length
-                        : `${participants.filter(p => p.status === 'PLAYING').length}/${game.maxParticipants}`
-                      }
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : mainPhotoUrl ? (
-            <>
-              <div className="flex-shrink-0">
-                <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700">
-                  <img
-                    src={mainPhotoUrl}
-                    alt="Main photo"
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 flex-1">
-                <div className="flex items-center gap-1">
-                  {showDate && <Calendar size={14} />}
-                  {game.timeIsSet === false ? (
-                    <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
-                  ) : (
-                    <span>
-                      {showDate && getDateLabelResolved(game.startTime, false)}
-                      {shouldShowTiming && (
-                        <>
-                          {` ${timeDisplay.primaryText}`}
-                          {game.entityType !== 'BAR' ? ` • ${(() => {
-                            const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                            if (durationHours === Math.floor(durationHours)) {
-                              return `${durationHours}${t('common.h')}`;
-                            } else {
-                              const hours = Math.floor(durationHours);
-                              const minutes = Math.round((durationHours % 1) * 60);
-                              return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                            }
-                          })()}` : ''}
-                        </>
-                      )}
-                    </span>
-                  )}
-                </div>
-                {(timeDisplay.hintText || timeRangeDisplay.hintText) && (
-                  <div className="flex items-center gap-1.5 opacity-75">
-                    <Plane size={14} className="text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{timeDisplay.hintText || timeRangeDisplay.hintText}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-4">
-                  {(game.court?.club || game.club) && (
-                    <div className="flex items-center gap-1">
-                      <MapPin size={14} />
-                      <span className="truncate max-w-32">
-                        {game.court?.club?.name || game.club?.name}
-                        {game.court?.name && ` • ${game.court.name}`}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <Users size={14} />
-                    <span>
-                      {game.entityType === 'BAR' 
-                        ? participants.filter(p => p.status === 'PLAYING').length
-                        : `${participants.filter(p => p.status === 'PLAYING').length}/${game.maxParticipants}`
-                      }
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col gap-2 flex-1">
-              <div className="flex items-center gap-1">
-                {showDate && <Calendar size={14} />}
-                {game.timeIsSet === false ? (
-                  <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
-                ) : (
-                  <span>
-                    {showDate && getDateLabelResolved(game.startTime, false)}
-                    {shouldShowTiming && (
-                      <>
-                        {` ${timeDisplay.primaryText}`}
-                        {game.entityType !== 'BAR' ? ` • ${(() => {
-                            const durationHours = (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60);
-                            if (durationHours === Math.floor(durationHours)) {
-                              return `${durationHours}${t('common.h')}`;
-                            } else {
-                              const hours = Math.floor(durationHours);
-                              const minutes = Math.round((durationHours % 1) * 60);
-                              return minutes > 0 ? `${hours}${t('common.h')}${minutes}${t('common.m')}` : `${hours}${t('common.h')}`;
-                            }
-                          })()}` : ''}
-                      </>
-                    )}
-                  </span>
-                )}
-              </div>
-              {(timeDisplay.hintText || timeRangeDisplay.hintText) && (
-                <div className="flex items-center gap-1.5 opacity-75">
-                  <Plane size={14} className="text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{timeDisplay.hintText || timeRangeDisplay.hintText}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-4">
-                {(game.court?.club || game.club) && (
-                  <div className="flex items-center gap-1">
-                    <MapPin size={14} />
-                    <span className="truncate max-w-32">
-                      {game.court?.club?.name || game.club?.name}
-                      {game.court?.name && ` • ${game.court.name}`}
-                    </span>
-                  </div>
-                )}
-                <div className="flex items-center gap-1">
-                  <Users size={14} />
-                  <span>
-                    {game.entityType === 'BAR' 
-                      ? participants.filter(p => p.status === 'PLAYING').length
-                      : `${participants.filter(p => p.status === 'PLAYING').length}/${game.maxParticipants}`
-                    }
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Expanded content */}
-      <div 
-        ref={expandedContentRef}
-        className={`transition-all duration-300 ease-in-out relative z-10 ${
-          isCollapsed 
-            ? 'max-h-0 opacity-0 overflow-hidden' 
-            : 'opacity-100'
-        }`}
-      >
+      {/* Content */}
+      <div ref={expandedContentRef} className="relative z-10">
         {mainPhotoUrl ? (
           <div className="flex gap-4 mb-3">
             {game.entityType === 'TRAINING' && (() => {
@@ -836,6 +478,7 @@ export const GameCard = ({
                 />
               </div>
             </div>
+            {game.entityType !== 'LEAGUE_SEASON' && (
             <div className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center gap-2">
                 <Calendar size={16} />
@@ -894,6 +537,7 @@ export const GameCard = ({
                 </div>
               )}
             </div>
+            )}
           </div>
         ) : (
           <div className={`text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' ? 'flex gap-4 -mt-1' : ''}`}>
@@ -906,6 +550,7 @@ export const GameCard = ({
                 </div>
               ) : null;
             })()}
+            {game.entityType !== 'LEAGUE_SEASON' && (
             <div className="space-y-2 flex-1">
             <div className="flex items-center gap-2">
               <Calendar size={16} />
@@ -964,8 +609,10 @@ export const GameCard = ({
               </div>
             )}
             </div>
+            )}
           </div>
         )}
+        {game.entityType !== 'LEAGUE_SEASON' && (
         <div className={`space-y-2 text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' && participants.filter(p => p.status === 'PLAYING').length >= 1 ? 'pt-2 mt-2 border-t border-gray-200 dark:border-gray-700' : ''}`}>
           <div className="flex items-center gap-2">
             <div className="relative -mx-0 flex-1 w-full">
@@ -978,6 +625,7 @@ export const GameCard = ({
             </div>
           </div>
         </div>
+        )}
 
         {showJoinButton && onJoin && game.status !== 'ARCHIVED' && game.status !== 'FINISHED' && game.resultsStatus === 'NONE' && game.entityType !== 'LEAGUE' && !isParticipant && !hasMyInvites && !isInJoinQueue && (
           <div className="mt-0 mb-4">
@@ -1002,5 +650,15 @@ export const GameCard = ({
         )}
       </div>
     </Card>
+      {showNoteModal && effectiveUser && (
+        <UserGameNoteModal
+          isOpen={showNoteModal}
+          onClose={() => setShowNoteModal(false)}
+          gameId={game.id}
+          initialContent={userNoteDisplay}
+          onSaved={handleNoteSaved}
+        />
+      )}
+    </>
   );
 };

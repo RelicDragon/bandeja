@@ -324,6 +324,7 @@ export interface Game {
     preview: string;
     updatedAt: string;
   } | null;
+  userNote?: string | null;
   createdAt: string;
   updatedAt: string;
 }

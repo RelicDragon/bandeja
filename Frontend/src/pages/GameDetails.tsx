@@ -35,6 +35,7 @@ import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEn
 import { TrainingResultsSection } from '@/components/GameDetails/TrainingResultsSection';
 import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
+import { UserGameNotes } from '@/components/GameDetails/UserGameNotes';
 import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { resultsApi } from '@/api/results';
@@ -1177,6 +1178,8 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
           )}
 
           {user && <BetSection game={game} onGameUpdate={setGame} />}
+
+          {user && <UserGameNotes gameId={game.id} initialContent={game.userNote} />}
 
           {user && !isLeague && canViewSettings && (
             <div id="game-settings">

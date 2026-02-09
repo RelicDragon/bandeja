@@ -18,8 +18,8 @@ export const createLeague = asyncHandler(async (req: AuthRequest, res: Response)
 
 export const getLeagueRounds = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { leagueSeasonId } = req.params;
-  
-  const rounds = await LeagueReadService.getLeagueRounds(leagueSeasonId);
+
+  const rounds = await LeagueReadService.getLeagueRounds(leagueSeasonId, req.userId);
 
   res.json({
     success: true,

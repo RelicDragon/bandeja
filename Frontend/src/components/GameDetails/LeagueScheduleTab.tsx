@@ -389,6 +389,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
                 onOpenGame={handleOpenGame}
                 onDeleteGame={handleDeleteGame}
                 onSendStartMessage={() => handleSendStartMessage(round.id)}
+                onNoteSaved={fetchRounds}
                 selectedGameChatId={selectedGameChatId}
                 onChatGameSelect={onChatGameSelect}
                 t={t}

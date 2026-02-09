@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
 import { chatApi, CreateMessageRequest, ChatMessage, ChatContextType, GroupChannel, OptimisticMessagePayload } from '@/api/chat';
 import { mediaApi } from '@/api/media';
 import { ChatType, Game, Bug } from '@/types';
@@ -724,7 +725,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    const platform = Capacitor.getPlatform();
+    const isMobile = platform === 'ios' || platform === 'android';
+
+    // On mobile: Enter creates new line, only send button sends message
+    // On desktop: Enter sends, Shift+Enter creates new line
+    if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
       e.preventDefault();
       handleSubmit(e);
     }

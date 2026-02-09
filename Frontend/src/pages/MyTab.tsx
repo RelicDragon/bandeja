@@ -5,6 +5,7 @@ import { InvitesSection, MyGamesSection, PastGamesSection } from '@/components/h
 import { Button, MainTabFooter } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { chatApi } from '@/api/chat';
+import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useHeaderStore } from '@/store/headerStore';
@@ -103,8 +104,10 @@ const sortMyGamesByStatusAndDateTime = <T extends { status?: string; startTime: 
 export const MyTab = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { unreadMessages, setMyGamesUnreadCount, setPastGamesUnreadCount } = useHeaderStore();
-  const { activeTab } = useNavigationStore();
+  const { unreadMessages, setMyGamesUnreadCount, setPastGamesUnreadCount } = useHeaderStore(
+    useShallow((s) => ({ unreadMessages: s.unreadMessages, setMyGamesUnreadCount: s.setMyGamesUnreadCount, setPastGamesUnreadCount: s.setPastGamesUnreadCount }))
+  );
+  const activeTab = useNavigationStore((s) => s.activeTab);
 
   const [loading, setLoading] = useState(true);
 
@@ -127,6 +130,7 @@ export const MyTab = () => {
     hasMorePastGames,
     pastGamesUnreadCounts,
     loadPastGames,
+    refetchGame,
   } = usePastGames(user, activeTab === 'past-games');
 
   const mergedUnreadCounts = useMemo(() => {
@@ -313,6 +317,7 @@ export const MyTab = () => {
             invites={invites}
             onAccept={handleAcceptInvite}
             onDecline={handleDeclineInvite}
+            onNoteSaved={() => fetchData(false, true)}
           />
         </div>
 
@@ -331,6 +336,7 @@ export const MyTab = () => {
               showSkeleton={skeletonAnimation.showSkeleton}
               skeletonStates={skeletonAnimation.skeletonStates}
               gamesUnreadCounts={mergedUnreadCounts}
+              onNoteSaved={() => fetchData(false, true)}
             />
           </div>
 
@@ -348,6 +354,7 @@ export const MyTab = () => {
               user={user}
               pastGamesUnreadCounts={pastGamesUnreadCounts}
               onLoadMore={loadPastGames}
+              onNoteSaved={(gameId) => refetchGame(gameId)}
             />
           </div>
         </div>

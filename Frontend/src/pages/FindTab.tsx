@@ -123,6 +123,7 @@ export const FindTab = () => {
           filters={filters}
           onFilterChange={(key, value) => updateFilter(key, value)}
           onFiltersChange={(updates) => updateFilters(updates)}
+          onNoteSaved={() => fetchAvailableGames(true)}
         />
         <MainTabFooter isLoading={loadingAvailableGames || isRefreshing} />
       </div>

@@ -11,9 +11,10 @@ interface InvitesSectionProps {
   invites: Invite[];
   onAccept: (inviteId: string) => void;
   onDecline: (inviteId: string) => void;
+  onNoteSaved?: (gameId: string) => void;
 }
 
-export const InvitesSection = ({ invites, onAccept, onDecline }: InvitesSectionProps) => {
+export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: InvitesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { bounceNotifications, setBounceNotifications, currentPage } = useNavigationStore();
@@ -91,7 +92,7 @@ export const InvitesSection = ({ invites, onAccept, onDecline }: InvitesSectionP
                         game={invite.game}
                         user={user}
                         showChatIndicator={false}
-                        isInitiallyCollapsed={false}
+                        onNoteSaved={onNoteSaved}
                       />
                     </div>
                   )}

@@ -100,6 +100,7 @@ export const HomeContent = () => {
     hasMorePastGames,
     pastGamesUnreadCounts,
     loadPastGames,
+    refetchGame,
   } = usePastGames(user, activeTab === 'past-games');
 
   const { i18n } = useI18nTranslation();
@@ -301,6 +302,7 @@ export const HomeContent = () => {
           invites={invites}
           onAccept={handleAcceptInvite}
           onDecline={handleDeclineInvite}
+          onNoteSaved={() => fetchData(false, true)}
         />
       </div>
 
@@ -321,6 +323,7 @@ export const HomeContent = () => {
             skeletonStates={skeletonAnimation.skeletonStates}
             gamesUnreadCounts={mergedUnreadCounts}
             onSwitchToSearch={() => setActiveTab('search')}
+            onNoteSaved={() => fetchData(false, true)}
           />
         </div>
 
@@ -338,6 +341,7 @@ export const HomeContent = () => {
                 user={user}
                 pastGamesUnreadCounts={pastGamesUnreadCounts}
                 onLoadMore={loadPastGames}
+                onNoteSaved={(gameId) => refetchGame(gameId)}
               />
             </div>
 
@@ -358,6 +362,7 @@ export const HomeContent = () => {
             filters={filters}
             onFilterChange={(key, value) => updateFilter(key, value)}
             onFiltersChange={(updates) => updateFilters(updates)}
+            onNoteSaved={() => fetchAvailableGames(true)}
           />
         </div>
       </div>

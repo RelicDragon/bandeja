@@ -1855,5 +1855,11 @@
       "description": "To take photos, we need access to your camera.",
       "denied": "Camera access is currently denied. Please enable it in your device settings to take photos."
     }
+  },
+  "userGameNotes": {
+    "title": "My Notes",
+    "privacyHint": "Private notes - only you can see them",
+    "placeholder": "Add your personal notes about this game...",
+    "noNotes": "No notes yet"
   }
 }

@@ -1,8 +1,9 @@
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { getUserNotesForGames } from '../userGameNote.service';
 
 export class LeagueReadService {
-  static async getLeagueRounds(leagueSeasonId: string) {
+  static async getLeagueRounds(leagueSeasonId: string, userId?: string) {
     const rounds = await prisma.leagueRound.findMany({
       where: { leagueSeasonId },
       include: {
@@ -115,6 +116,29 @@ export class LeagueReadService {
       },
       orderBy: { orderIndex: 'asc' },
     });
+
+    // Fetch user notes if userId is provided
+    if (userId && rounds.length > 0) {
+      const allGameIds: string[] = [];
+      rounds.forEach(round => {
+        round.games.forEach(game => {
+          allGameIds.push(game.id);
+        });
+      });
+
+      if (allGameIds.length > 0) {
+        const notesMap = await getUserNotesForGames(userId, allGameIds);
+
+        // Attach userNote to each game
+        return rounds.map(round => ({
+          ...round,
+          games: round.games.map(game => ({
+            ...game,
+            userNote: notesMap.get(game.id) || null,
+          })),
+        }));
+      }
+    }
 
     return rounds;
   }

@@ -93,14 +93,85 @@ export const setupCapacitor = async () => {
       attributeFilter: ['class']
     });
 
-    await Keyboard.setResizeMode({ mode: KeyboardResize.Native });
-    
-    Keyboard.addListener('keyboardWillShow', () => {
+    // Use Body resize mode for better keyboard handling
+    await Keyboard.setResizeMode({ mode: KeyboardResize.Body });
+
+    // Store reference to currently focused input
+    let currentFocusedInput: HTMLElement | null = null;
+
+    // Track keyboard height for dynamic adjustments
+    Keyboard.addListener('keyboardWillShow', (info) => {
       document.body.classList.add('keyboard-visible');
+
+      // Store keyboard height in CSS custom property for dynamic adjustments
+      if (info && info.keyboardHeight) {
+        document.documentElement.style.setProperty('--keyboard-height', `${info.keyboardHeight}px`);
+      }
+
+      // Scroll focused input into view after keyboard appears
+      if (currentFocusedInput) {
+        setTimeout(() => {
+          currentFocusedInput?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          });
+        }, 100);
+      }
     });
 
     Keyboard.addListener('keyboardWillHide', () => {
       document.body.classList.remove('keyboard-visible');
+      document.documentElement.style.setProperty('--keyboard-height', '0px');
+      currentFocusedInput = null;
+    });
+
+    Keyboard.addListener('keyboardDidShow', (info) => {
+      // Ensure keyboard height is set even if willShow didn't fire
+      if (info && info.keyboardHeight) {
+        document.documentElement.style.setProperty('--keyboard-height', `${info.keyboardHeight}px`);
+      }
+
+      // Double-check that input is visible after keyboard animation completes
+      if (currentFocusedInput) {
+        setTimeout(() => {
+          currentFocusedInput?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          });
+        }, 50);
+      }
+    });
+
+    Keyboard.addListener('keyboardDidHide', () => {
+      document.documentElement.style.setProperty('--keyboard-height', '0px');
+      currentFocusedInput = null;
+    });
+
+    // Listen for input/textarea focus to track which element needs to be visible
+    document.addEventListener('focusin', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        currentFocusedInput = target;
+
+        // Pre-emptively scroll the input into view
+        // This helps on Android where keyboardWillShow might not fire early enough
+        setTimeout(() => {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          });
+        }, 50);
+      }
+    });
+
+    document.addEventListener('focusout', (e) => {
+      const target = e.target as HTMLElement;
+      if (target === currentFocusedInput) {
+        currentFocusedInput = null;
+      }
     });
 
   } catch (error) {

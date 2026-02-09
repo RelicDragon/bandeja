@@ -12,3 +12,4 @@ export * from './TimeDurationModal';
 export * from './LocationModal';
 export * from './EditGameTextModal';
 export * from './EditGamePriceModal';
+export * from './UserGameNoteModal';

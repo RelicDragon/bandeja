@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { getUserGameNote, getUserNotesForGames } from '../userGameNote.service';
 
 const getLeagueSeasonInclude = () => ({
   league: {
@@ -243,6 +244,7 @@ export class GameReadService {
     }
 
     let isClubFavorite = false;
+    let userNote: string | null = null;
     if (userId) {
       const gameWithRelations = game as any;
       const clubId = gameWithRelations.court?.club?.id || gameWithRelations.club?.id;
@@ -257,11 +259,15 @@ export class GameReadService {
         });
         isClubFavorite = !!favorite;
       }
+
+      const note = await getUserGameNote(userId, id);
+      userNote = note?.content || null;
     }
 
     return {
       ...game,
       isClubFavorite,
+      userNote,
       joinQueues: computeJoinQueuesFromParticipants(game),
     };
   }
@@ -341,6 +347,17 @@ export class GameReadService {
       ...(offset && { skip: offset }),
     });
 
+    // Batch fetch user notes
+    if (userId && games.length > 0) {
+      const gameIds = games.map(g => g.id);
+      const notesMap = await getUserNotesForGames(userId, gameIds);
+
+      return games.map(game => ({
+        ...game,
+        userNote: notesMap.get(game.id) || null,
+      }));
+    }
+
     return games;
   }
 
@@ -373,6 +390,17 @@ export class GameReadService {
       orderBy: { startTime: 'desc' },
     });
 
+    // Batch fetch user notes
+    if (games.length > 0) {
+      const gameIds = games.map(g => g.id);
+      const notesMap = await getUserNotesForGames(userId, gameIds);
+
+      return games.map(game => ({
+        ...game,
+        userNote: notesMap.get(game.id) || null,
+      }));
+    }
+
     return games;
   }
 
@@ -401,6 +429,17 @@ export class GameReadService {
       take: limit,
       skip: offset,
     });
+
+    // Batch fetch user notes
+    if (games.length > 0) {
+      const gameIds = games.map(g => g.id);
+      const notesMap = await getUserNotesForGames(userId, gameIds);
+
+      return games.map(game => ({
+        ...game,
+        userNote: notesMap.get(game.id) || null,
+      }));
+    }
 
     return games;
   }
@@ -462,6 +501,17 @@ export class GameReadService {
       include: getGameInclude() as any,
       orderBy: { startTime: 'desc' },
     });
+
+    // Batch fetch user notes
+    if (games.length > 0) {
+      const gameIds = games.map(g => g.id);
+      const notesMap = await getUserNotesForGames(userId, gameIds);
+
+      return games.map(game => ({
+        ...game,
+        userNote: notesMap.get(game.id) || null,
+      }));
+    }
 
     return games;
   }

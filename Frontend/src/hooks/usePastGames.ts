@@ -137,11 +137,29 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
     });
   }, [lastGameUpdate, user?.id]);
 
+  const refetchGame = useCallback(async (gameId: string) => {
+    if (!user?.id) return;
+    try {
+      const response = await gamesApi.getById(gameId);
+      const updatedGame = response.data;
+      setPastGames(prev => {
+        const idx = prev.findIndex(g => g.id === gameId);
+        if (idx === -1) return prev;
+        const next = [...prev];
+        next[idx] = updatedGame;
+        return sortGames(next);
+      });
+    } catch {
+      // ignore
+    }
+  }, [user?.id]);
+
   return {
     pastGames,
     loadingPastGames,
     hasMorePastGames,
     pastGamesUnreadCounts,
     loadPastGames,
+    refetchGame,
   };
 };

@@ -11,6 +11,7 @@ interface MyGamesSectionProps {
   skeletonStates: Record<number, 'hidden' | 'fading-in' | 'visible' | 'fading-out'>;
   gamesUnreadCounts: Record<string, number>;
   onSwitchToSearch?: () => void;
+  onNoteSaved?: (gameId: string) => void;
 }
 
 export const MyGamesSection = ({
@@ -21,6 +22,7 @@ export const MyGamesSection = ({
   skeletonStates,
   gamesUnreadCounts,
   onSwitchToSearch,
+  onNoteSaved,
 }: MyGamesSectionProps) => {
   const { t } = useTranslation();
 
@@ -90,8 +92,8 @@ export const MyGamesSection = ({
       <GameCard
         game={game}
         user={user}
-        isInitiallyCollapsed={game.entityType === 'LEAGUE_SEASON' ? true : false}
         unreadCount={gamesUnreadCounts[game.id] || 0}
+        onNoteSaved={onNoteSaved}
       />
     </div>
   );

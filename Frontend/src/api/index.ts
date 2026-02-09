@@ -14,5 +14,6 @@ export * from './bugs';
 export * from './marketplace';
 export * from './transactions';
 export * from './ranking';
+export * from './userGameNotes';
 export { default as api } from './axios';
 

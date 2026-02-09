@@ -1776,5 +1776,11 @@
       "description": "Para tomar fotos, necesitamos acceso a tu cámara.",
       "denied": "El acceso a la cámara está actualmente denegado. Por favor, habilítalo en la configuración de tu dispositivo para tomar fotos."
     }
+  },
+  "userGameNotes": {
+    "title": "Mis Notas",
+    "privacyHint": "Notas privadas - solo tú puedes verlas",
+    "placeholder": "Añade tus notas personales sobre este juego...",
+    "noNotes": "Sin notas aún"
   }
 }

@@ -1500,3 +1500,16 @@ model AppVersionRequirement {
 
   @@index([platform])
 }
+
+model UserGameNote {
+  id        String   @id @default(cuid())
+  userId    String
+  gameId    String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, gameId])
+  @@index([userId])
+  @@index([gameId])
+}

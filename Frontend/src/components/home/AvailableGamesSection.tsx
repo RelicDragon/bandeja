@@ -22,6 +22,7 @@ interface AvailableGamesSectionProps {
   filters?: GameFilters;
   onFilterChange?: (key: keyof GameFilters, value: any) => void;
   onFiltersChange?: (updates: Partial<GameFilters>) => void;
+  onNoteSaved?: (gameId: string) => void;
 }
 
 export const AvailableGamesSection = ({
@@ -33,6 +34,7 @@ export const AvailableGamesSection = ({
   filters: externalFilters,
   onFilterChange,
   onFiltersChange,
+  onNoteSaved,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -379,7 +381,7 @@ export const AvailableGamesSection = ({
                   showChatIndicator={false}
                   showJoinButton={true}
                   onJoin={onJoin}
-                  isInitiallyCollapsed={false}
+                  onNoteSaved={onNoteSaved}
                 />
               ))}
             </div>
@@ -421,7 +423,7 @@ export const AvailableGamesSection = ({
                   showChatIndicator={false}
                   showJoinButton={true}
                   onJoin={onJoin}
-                  isInitiallyCollapsed={false}
+                  onNoteSaved={onNoteSaved}
                 />
               ))}
             </div>

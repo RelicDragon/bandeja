@@ -30,6 +30,7 @@ import groupChannelRoutes from './groupChannel.routes';
 import betRoutes from './bet.routes';
 import appRoutes from './app.routes';
 import marketItemRoutes from './marketItem.routes';
+import userGameNoteRoutes from './userGameNoteRoutes';
 
 const router = Router();
 
@@ -64,6 +65,7 @@ router.use('/training', trainingRoutes);
 router.use('/group-channels', groupChannelRoutes);
 router.use('/bets', betRoutes);
 router.use('/market-items', marketItemRoutes);
+router.use('/user-game-notes', userGameNoteRoutes);
 
 export default router;
 

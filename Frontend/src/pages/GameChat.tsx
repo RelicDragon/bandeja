@@ -35,6 +35,7 @@ import { handleBackNavigation } from '@/utils/navigation';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
 import { sendWithTimeout, cancelSend, resend, cancelAllForContext } from '@/services/chatSendService';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
+import { isCapacitor } from '@/utils/capacitor';
 
 interface LocationState {
   initialChatType?: ChatType;
@@ -94,6 +95,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [showPlayerCard, setShowPlayerCard] = useState(false);
   const [showItemPage, setShowItemPage] = useState(false);
   const [isItemPageAnimating, setIsItemPageAnimating] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const justLoadedOlderMessagesRef = useRef(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -1103,6 +1105,36 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     };
   }, [id, contextType]);
 
+  // Track keyboard height for Capacitor mobile apps
+  useEffect(() => {
+    if (!isCapacitor()) return;
+
+    const updateKeyboardHeight = () => {
+      const heightStr = getComputedStyle(document.documentElement)
+        .getPropertyValue('--keyboard-height')
+        .trim();
+      const height = parseFloat(heightStr) || 0;
+      setKeyboardHeight(height);
+    };
+
+    // Listen for keyboard-visible class changes
+    const observer = new MutationObserver(() => {
+      updateKeyboardHeight();
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    // Initial check
+    updateKeyboardHeight();
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   useEffect(() => {
     if (!lastChatMessage || lastChatMessage.contextType !== contextType || lastChatMessage.contextId !== id) return;
     handleNewMessage(lastChatMessage.message);
@@ -1507,7 +1539,12 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         )}
       </header>
 
-      <main className="flex-1 flex flex-col min-h-0 overflow-hidden overflow-x-hidden relative">
+      <main
+        className="flex-1 flex flex-col min-h-0 overflow-hidden overflow-x-hidden relative transition-all duration-300"
+        style={{
+          marginBottom: isCapacitor() && keyboardHeight > 0 ? `${keyboardHeight}px` : '0px'
+        }}
+      >
         {contextType === 'GROUP' && isItemChat && (showItemPage || isItemPageAnimating) && groupChannel?.marketItem && (
           <div 
             className={`absolute inset-0 h-full transition-all duration-300 ease-in-out bg-gray-50 dark:bg-gray-900 ${
@@ -1598,7 +1635,13 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       </main>
 
       {(!isInitialLoad || isEmbedded) && !(contextType === 'GROUP' && (showParticipantsPage || showItemPage || isParticipantsPageAnimating || isItemPageAnimating)) && (
-      <footer className="md:flex-shrink-0 md:relative absolute bottom-0 left-0 right-0 z-50 md:z-40 !bg-transparent md:!bg-white md:dark:!bg-gray-800 md:border-t md:border-gray-200 md:dark:border-gray-700 border-transparent" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <footer
+        className="md:flex-shrink-0 md:relative absolute left-0 right-0 z-50 md:z-40 !bg-transparent md:!bg-white md:dark:!bg-gray-800 md:border-t md:border-gray-200 md:dark:border-gray-700 border-transparent transition-all duration-300"
+        style={{
+          bottom: isCapacitor() && keyboardHeight > 0 ? `${keyboardHeight}px` : '0px',
+          paddingBottom: isCapacitor() && keyboardHeight > 0 ? '8px' : 'env(safe-area-inset-bottom)'
+        }}
+      >
         {isBlockedByUser && contextType === 'USER' ? (
           <div className="px-4 py-3" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
             <div className="text-sm text-center text-gray-700 dark:text-gray-300 rounded-[20px] px-4 py-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700">

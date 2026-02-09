@@ -791,12 +791,48 @@ body {
 }
 
 /* Keyboard visible state */
+:root {
+  --keyboard-height: 0px;
+}
+
 body.keyboard-visible {
   height: auto !important;
 }
 
 body.keyboard-visible #root {
   min-height: auto !important;
+}
+
+/* Modern keyboard handling for iOS/Android with rounded corners */
+.capacitor-ios body.keyboard-visible,
+.capacitor-android body.keyboard-visible {
+  /* Use visual viewport height when keyboard is visible */
+  height: 100dvh;
+  max-height: 100dvh;
+}
+
+/* Handle keyboard rounded corners gap - add subtle padding to fill the space */
+.capacitor-ios .keyboard-visible footer,
+.capacitor-android .keyboard-visible footer {
+  /* Add padding to account for keyboard rounded corners (typically ~12-16px) */
+  padding-bottom: max(env(safe-area-inset-bottom), 12px);
+}
+
+/* Input areas should have proper spacing above keyboard */
+.capacitor-ios input:focus,
+.capacitor-android input:focus,
+.capacitor-ios textarea:focus,
+.capacitor-android textarea:focus {
+  /* Ensure focused input has space above keyboard rounded corners */
+  scroll-margin-bottom: 20px;
+}
+
+/* For modals and overlays when keyboard is visible */
+.capacitor-ios body.keyboard-visible .modal-content,
+.capacitor-android body.keyboard-visible .modal-content {
+  /* Adjust modal positioning to account for keyboard */
+  max-height: calc(100dvh - var(--keyboard-height, 0px) - 20px);
+  margin-bottom: max(var(--keyboard-height, 0px), env(safe-area-inset-bottom));
 }
 
 /* Chat layout improvements for mobile */
@@ -817,9 +853,21 @@ body.keyboard-visible #root {
   max-height: 100% !important;
 }
 
-body.keyboard-visible .chat-container {
-  height: 100dvh;
-  max-height: 100dvh;
+/* When keyboard is visible, adjust container height on mobile */
+@media (max-width: 767px) {
+  .capacitor-ios body.keyboard-visible .chat-container,
+  .capacitor-android body.keyboard-visible .chat-container {
+    /* Use visual viewport height which accounts for keyboard */
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  /* Ensure messages container can scroll properly */
+  .capacitor-ios body.keyboard-visible .chat-container main .overflow-y-auto,
+  .capacitor-android body.keyboard-visible .chat-container main .overflow-y-auto {
+    /* Account for keyboard height in scroll container */
+    max-height: calc(100dvh - var(--keyboard-height, 0px));
+  }
 }
 
 /* Ensure footer stays visible on mobile Safari when keyboard opens */
@@ -841,6 +889,61 @@ body.keyboard-visible .chat-container {
   .chat-container footer .message-input-panel {
     background-color: transparent !important;
   }
+}
+
+/* Enhanced keyboard handling for chat - move footer above keyboard */
+@media (max-width: 767px) {
+  /* On mobile, footer is absolutely positioned - we need to move it up */
+  .capacitor-ios body.keyboard-visible .chat-container footer,
+  .capacitor-android body.keyboard-visible .chat-container footer {
+    /* Move footer up by keyboard height minus safe area */
+    bottom: calc(var(--keyboard-height, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    /* Add padding to fill rounded corner gap */
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Smooth transition when keyboard appears/disappears */
+  .capacitor-ios .chat-container footer,
+  .capacitor-android .chat-container footer {
+    transition: bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                padding-bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Adjust chat messages area to account for moved footer */
+  .capacitor-ios body.keyboard-visible .chat-container main,
+  .capacitor-android body.keyboard-visible .chat-container main {
+    /* Reduce height to make space for footer above keyboard */
+    margin-bottom: var(--keyboard-height, 0px);
+  }
+
+  .capacitor-ios .chat-container main,
+  .capacitor-android .chat-container main {
+    transition: margin-bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Ensure message input has proper background that extends to keyboard */
+.capacitor-ios body.keyboard-visible .chat-container .message-input-panel,
+.capacitor-android body.keyboard-visible .chat-container .message-input-panel {
+  position: relative;
+}
+
+/* Add subtle gradient at bottom to blend with keyboard rounded corners */
+.capacitor-ios body.keyboard-visible .chat-container .message-input-panel::after,
+.capacitor-android body.keyboard-visible .chat-container .message-input-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -16px;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background: linear-gradient(to bottom,
+    currentColor 0%,
+    transparent 100%
+  );
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* Modal safe area support - modals with fixed inset-0 */
@@ -907,6 +1010,28 @@ input[type="range"].slider:disabled::-moz-range-thumb {
 .capacitor-ios textarea:focus {
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
+}
+
+/* Utility class for any container with inputs to handle keyboard rounded corners */
+.keyboard-safe-container {
+  transition: padding-bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.capacitor-ios body.keyboard-visible .keyboard-safe-container,
+.capacitor-android body.keyboard-visible .keyboard-safe-container {
+  /* Automatically add padding when keyboard is visible to fill rounded corner gap */
+  padding-bottom: 16px;
+}
+
+/* Alternative utility for inline/smaller adjustments */
+.keyboard-safe-padding {
+  padding-bottom: 0;
+  transition: padding-bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.capacitor-ios body.keyboard-visible .keyboard-safe-padding,
+.capacitor-android body.keyboard-visible .keyboard-safe-padding {
+  padding-bottom: 12px;
 }
 
 /* Prevent pull-to-refresh on iOS */

@@ -1,7 +1,8 @@
-import { Edit2, ExternalLink, Award, MapPin, Calendar, Trash2, Plane, MessageCircle } from 'lucide-react';
+import { Edit2, ExternalLink, Award, MapPin, Calendar, Trash2, Plane, MessageCircle, BookmarkPlus, Bookmark } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { PlayerAvatar, ConfirmationModal } from '@/components';
+import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { Game } from '@/types';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { formatDate } from '@/utils/dateFormat';
@@ -23,6 +24,7 @@ interface LeagueGameCardProps {
   showGroupTag?: boolean;
   allRounds?: RoundData[] | null;
   onDelete?: () => Promise<void> | void;
+  onNoteSaved?: () => void;
 }
 
 export const LeagueGameCard = ({
@@ -35,12 +37,14 @@ export const LeagueGameCard = ({
   showGroupTag = true,
   allRounds,
   onDelete,
+  onNoteSaved,
 }: LeagueGameCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showNoteModal, setShowNoteModal] = useState(false);
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
   const clubTz = getClubTimezone(game);
   const timeDisplay = getGameTimeDisplay({
@@ -344,6 +348,31 @@ export const LeagueGameCard = ({
         </div>
       )}
 
+      {/* User Note Display */}
+      {game.userNote && user && (
+        <div className="mt-3 mb-3">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setShowNoteModal(true);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="bg-yellow-50/50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800/30 rounded-lg p-2 cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors"
+          >
+            <div className="flex items-start gap-1.5">
+              <Bookmark size={12} className="text-yellow-500 dark:text-yellow-500/80 flex-shrink-0 mt-0.5" fill="currentColor" />
+              <p className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words flex-1">
+                {game.userNote}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {(onOpen || canEdit || canDelete || onChat) && (
         <div className="absolute bottom-2 right-2 flex items-center gap-2 z-10">
           {canDelete && (
@@ -364,6 +393,17 @@ export const LeagueGameCard = ({
               className="w-8 h-8 rounded-full border-2 border-blue-500 hover:border-blue-600 bg-white dark:bg-gray-800 text-blue-500 hover:text-blue-600 flex items-center justify-center transition-colors shadow-lg"
             >
               <Edit2 size={16} />
+            </button>
+          )}
+          {user && !game.userNote && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowNoteModal(true);
+              }}
+              className="w-8 h-8 rounded-full border-2 border-amber-500 hover:border-amber-600 bg-white dark:bg-gray-800 text-amber-500 hover:text-amber-600 flex items-center justify-center transition-colors shadow-lg"
+            >
+              <BookmarkPlus size={16} />
             </button>
           )}
           {onChat && (
@@ -405,6 +445,19 @@ export const LeagueGameCard = ({
         confirmText={isDeleting ? (t('common.deleting') || 'Deleting...') : (t('common.delete') || 'Delete')}
         cancelText={t('common.cancel') || 'Cancel'}
         confirmVariant="danger"
+      />
+
+      <UserGameNoteModal
+        isOpen={showNoteModal}
+        onClose={() => setShowNoteModal(false)}
+        gameId={game.id}
+        initialContent={game.userNote}
+        onSaved={() => {
+          setShowNoteModal(false);
+          if (onNoteSaved) {
+            onNoteSaved();
+          }
+        }}
       />
     </div>
   );

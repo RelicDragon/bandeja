@@ -31,6 +31,7 @@ interface LeagueRoundAccordionProps {
   onOpenGame: (game: Game) => void;
   onDeleteGame?: () => void;
   onSendStartMessage: () => void;
+  onNoteSaved?: () => void;
   t: TFunction;
 }
 
@@ -56,6 +57,7 @@ export const LeagueRoundAccordion = ({
   onOpenGame,
   onDeleteGame,
   onSendStartMessage,
+  onNoteSaved,
   t,
 }: LeagueRoundAccordionProps) => {
   const isDesktop = useDesktop();
@@ -249,6 +251,7 @@ export const LeagueRoundAccordion = ({
                                       ? onDeleteGame
                                       : undefined
                                   }
+                                  onNoteSaved={onNoteSaved}
                                   showGroupTag={false}
                                   allRounds={getAllRounds(game.id)}
                                 />
@@ -308,6 +311,7 @@ export const LeagueRoundAccordion = ({
                                     ? onDeleteGame
                                     : undefined
                                 }
+                                onNoteSaved={onNoteSaved}
                                 showGroupTag={false}
                                 allRounds={getAllRounds(game.id)}
                               />
@@ -336,6 +340,7 @@ export const LeagueRoundAccordion = ({
                             ? onDeleteGame
                             : undefined
                         }
+                        onNoteSaved={onNoteSaved}
                         showGroupTag={false}
                         allRounds={getAllRounds(game.id)}
                       />

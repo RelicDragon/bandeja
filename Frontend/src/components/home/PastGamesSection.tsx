@@ -10,6 +10,7 @@ interface PastGamesSectionProps {
   user: any;
   pastGamesUnreadCounts?: Record<string, number>;
   onLoadMore: () => void;
+  onNoteSaved?: (gameId: string) => void;
 }
 
 export const PastGamesSection = ({
@@ -19,6 +20,7 @@ export const PastGamesSection = ({
   user,
   pastGamesUnreadCounts = {},
   onLoadMore,
+  onNoteSaved,
 }: PastGamesSectionProps) => {
   const { t } = useTranslation();
 
@@ -40,8 +42,8 @@ export const PastGamesSection = ({
             <GameCard
               game={game}
               user={user}
-              isInitiallyCollapsed={false}
               unreadCount={pastGamesUnreadCounts[game.id] || 0}
+              onNoteSaved={onNoteSaved}
             />
           </div>
         ))
