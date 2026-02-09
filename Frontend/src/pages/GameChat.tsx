@@ -1605,10 +1605,12 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               {t('chat.blockedByUser')}
             </div>
           </div>
-        ) : contextType === 'USER' && userChat && user?.id && (
-          (user.id === userChat.user1Id && !userChat.user2allowed) ||
-          (user.id === userChat.user2Id && !userChat.user1allowed)
-        ) ? (
+        ) : contextType === 'USER' && userChat && user?.id && (() => {
+          const otherUser = user.id === userChat.user1Id ? userChat.user2 : userChat.user1;
+          const otherSideAllowed = user.id === userChat.user1Id ? userChat.user2allowed : userChat.user1allowed;
+          const otherAllowsNonContacts = otherUser?.allowMessagesFromNonContacts !== false;
+          return !otherSideAllowed && !otherAllowsNonContacts;
+        })() ? (
           <RequestToChat
             userChatId={id!}
             disabled={messages.length > 0}

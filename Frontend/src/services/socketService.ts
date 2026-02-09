@@ -37,6 +37,7 @@ export interface SocketEvents {
   'chat:unread-count': (data: { contextType: string; contextId: string; unreadCount: number }) => void;
   'sync-required': (data: { timestamp: string }) => void;
   'sync-ready': (data: { contextType: string; contextId: string }) => void;
+  'new-bug': (data: { timestamp: string }) => void;
   'reconnect': () => void;
   // Bet events
   'bet:created': (data: { gameId: string; bet: any }) => void;

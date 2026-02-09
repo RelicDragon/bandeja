@@ -15,6 +15,11 @@ export class BugService {
       select: { currentCityId: true }
     });
 
+    const developers = await prisma.user.findMany({
+      where: { isDeveloper: true, id: { not: senderId } },
+      select: { id: true }
+    });
+
     return await prisma.$transaction(async (tx) => {
       const bug = await tx.bug.create({
         data: { text: trimmed, bugType, senderId },
@@ -30,7 +35,7 @@ export class BugService {
           isPublic: true,
           bugId: bug.id,
           cityId: owner?.currentCityId ?? null,
-          participantsCount: 1
+          participantsCount: 1 + developers.length
         }
       });
 
@@ -41,6 +46,19 @@ export class BugService {
           role: ParticipantRole.OWNER
         }
       });
+
+      for (const dev of developers) {
+        await tx.bugParticipant.create({
+          data: { bugId: bug.id, userId: dev.id }
+        });
+        await tx.groupChannelParticipant.create({
+          data: {
+            groupChannelId: groupChannel.id,
+            userId: dev.id,
+            role: ParticipantRole.PARTICIPANT
+          }
+        });
+      }
 
       return { ...bug, groupChannel };
     });

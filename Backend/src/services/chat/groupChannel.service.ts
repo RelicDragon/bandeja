@@ -286,10 +286,7 @@ export class GroupChannelService {
           bug: bugWhere
         },
         select: { id: true },
-        orderBy: [
-          { bug: { bugType: 'asc' } },
-          { bug: { status: 'asc' } }
-        ],
+        orderBy: { updatedAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit
       });

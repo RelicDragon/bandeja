@@ -107,7 +107,7 @@ export const HomeHeaderContent = () => {
     <div className="relative flex items-center gap-4">
       <button
         onClick={handleProfileClick}
-        className={`flex-shrink-0 w-8 h-8 rounded-full overflow-hidden ring-2 transition-all flex items-center justify-center ${
+        className={`flex-shrink-0 w-8 h-8 rounded-full overflow-hidden ring-2 transition-all flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.7),0_0_35px_rgba(14,165,233,0.4)] dark:shadow-[0_0_20px_rgba(56,189,248,0.7),0_0_35px_rgba(56,189,248,0.4)] ${
           currentPage === 'profile'
             ? 'ring-primary-500/50 dark:ring-primary-400/50'
             : 'ring-transparent hover:ring-primary-500/30 dark:hover:ring-primary-400/30'

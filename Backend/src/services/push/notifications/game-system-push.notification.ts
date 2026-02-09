@@ -1,6 +1,6 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
-import { formatGameInfoForUser } from '../../shared/notification-base';
+import { formatGameInfoForUser, getEntityTypeLabel } from '../../shared/notification-base';
 
 function translateSystemMessage(message: any, lang: string): string {
   let messageData: any = null;
@@ -37,10 +37,14 @@ export async function createGameSystemMessagePushNotification(
   const lang = recipient.language || 'en';
   const gameInfo = await formatGameInfoForUser(game, recipient.currentCityId, lang);
   const translatedContent = translateSystemMessage(message, lang);
+  const entityLabel = getEntityTypeLabel(game.entityType, lang);
+
+  const baseTitle = `${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}`;
+  const title = entityLabel ? `${entityLabel}: ${baseTitle}` : baseTitle;
 
   return {
     type: NotificationType.GAME_SYSTEM_MESSAGE,
-    title: `${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}`,
+    title,
     body: `🔔 ${translatedContent}`,
     data: {
       gameId: game.id,

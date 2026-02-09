@@ -20,6 +20,7 @@ import { createNewGamePushNotification } from './push/notifications/new-game-pus
 import { createBetResolvedPushNotification, createBetNeedsReviewPushNotification, createBetCancelledPushNotification } from './push/notifications/bet-resolved-push.notification';
 import { createTransactionPushNotification } from './push/notifications/transaction-push.notification';
 import { createNewMarketItemPushNotification } from './push/notifications/new-market-item-push.notification';
+import { createNewBugPushNotification } from './push/notifications/new-bug-push.notification';
 
 class NotificationService {
   async sendNotification(request: UnifiedNotificationRequest) {
@@ -699,6 +700,55 @@ class NotificationService {
       }
     } catch (error) {
       console.error('[NotificationService] Failed to send new market item notifications:', error);
+    }
+  }
+
+  async sendNewBugNotification(
+    bug: { id: string; text: string; bugType: string },
+    groupChannelId: string,
+    sender: { id: string; firstName?: string | null; lastName?: string | null }
+  ) {
+    try {
+      const senderName = [sender.firstName, sender.lastName].filter(Boolean).join(' ') || 'User';
+      const developers = await prisma.user.findMany({
+        where: { isDeveloper: true, id: { not: sender.id } },
+        select: { id: true, telegramId: true, language: true }
+      });
+
+      for (const dev of developers) {
+        const [allowPush, allowTelegram] = await Promise.all([
+          NotificationPreferenceService.doesUserAllow(dev.id, NotificationChannelType.PUSH, PreferenceKey.SEND_MESSAGES),
+          NotificationPreferenceService.doesUserAllow(dev.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES),
+        ]);
+
+        const lang = dev.language || 'en';
+        if (allowPush) {
+          try {
+            const payload = createNewBugPushNotification(bug, groupChannelId, senderName, lang);
+            await this.sendNotification({
+              userId: dev.id,
+              type: NotificationType.NEW_BUG,
+              payload,
+            });
+          } catch (error) {
+            console.error(`Failed to send push notification for new bug to user ${dev.id}:`, error);
+          }
+        }
+
+        if (allowTelegram && dev.telegramId) {
+          try {
+            await telegramNotificationService.sendNewBugNotification(bug, groupChannelId, senderName, {
+              id: dev.id,
+              telegramId: dev.telegramId,
+              language: dev.language,
+            });
+          } catch (error) {
+            console.error(`Failed to send telegram notification for new bug to user ${dev.id}:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[NotificationService] Failed to send new bug notifications:', error);
     }
   }
 

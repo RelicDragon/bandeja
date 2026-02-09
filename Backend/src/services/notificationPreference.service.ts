@@ -16,6 +16,7 @@ export const NOTIFICATION_TYPE_TO_PREF: Record<NotificationType, PreferenceKey> 
   [NotificationType.GAME_RESULTS]: PreferenceKey.SEND_MESSAGES,
   [NotificationType.NEW_GAME]: PreferenceKey.SEND_MESSAGES,
   [NotificationType.NEW_MARKET_ITEM]: PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS,
+  [NotificationType.NEW_BUG]: PreferenceKey.SEND_MESSAGES,
 };
 
 export type NotificationPreferenceData = {

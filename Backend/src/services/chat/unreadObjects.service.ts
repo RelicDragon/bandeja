@@ -3,6 +3,7 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { ParticipantRole } from '@prisma/client';
 import { ChatMuteService } from './chatMute.service';
 import { UnreadCountBatchService } from './unreadCountBatch.service';
+import { ReadReceiptService } from './readReceipt.service';
 
 export interface UnreadObjectsResult {
   games: Array<{ game: any; unreadCount: number }>;
@@ -143,6 +144,7 @@ async function getBugsWithUnread(userId: string): Promise<UnreadObjectsResult['b
     where: {
       isChannel: false,
       bugId: { not: null },
+      bug: { status: { not: 'ARCHIVED' } },
       OR: [
         { participants: { some: { userId, hidden: false } } },
         { isPublic: true },
@@ -151,14 +153,10 @@ async function getBugsWithUnread(userId: string): Promise<UnreadObjectsResult['b
     select: { id: true },
   });
 
-  const contextIds = groupChannels.map((c) => c.id);
-  if (contextIds.length === 0) return [];
+  const channelIds = groupChannels.map((c) => c.id);
+  if (channelIds.length === 0) return [];
 
-  const unreadMap = await UnreadCountBatchService.getUnreadCountsByContext(
-    'GROUP',
-    contextIds,
-    userId
-  );
+  const unreadMap = await ReadReceiptService.getGroupChannelsUnreadCounts(channelIds, userId);
 
   const idsWithUnread = Object.entries(unreadMap)
     .filter(([, count]) => count > 0)

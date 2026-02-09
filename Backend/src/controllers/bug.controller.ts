@@ -8,7 +8,10 @@ import { SystemMessageType } from '../utils/systemMessages';
 import { BugStatus, BugType, ChatType, ChatContextType } from '@prisma/client';
 import { createSystemMessage } from './chat.controller';
 import { MessageService } from '../services/chat/message.service';
+import notificationService from '../services/notification.service';
 import prisma from '../config/database';
+
+const getSocketService = () => (global as any).socketService;
 
 export const createBug = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { text, bugType } = req.body;
@@ -22,6 +25,14 @@ export const createBug = asyncHandler(async (req: AuthRequest, res: Response) =>
   }
 
   const { groupChannel, ...bug } = await BugService.createBug(text, bugType, req.userId!);
+
+  notificationService.sendNewBugNotification(bug, groupChannel.id, bug.sender).catch(err =>
+    console.error('Failed to send new bug notification:', err)
+  );
+
+  getSocketService()?.emitNewBug().catch(err =>
+    console.error('Failed to emit new bug to developers:', err)
+  );
 
   await MessageService.createMessage({
     chatContextType: ChatContextType.GROUP,

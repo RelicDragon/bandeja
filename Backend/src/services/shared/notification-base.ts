@@ -21,6 +21,26 @@ export interface FormattedGameInfo {
   duration: string;
   gameName?: string;
   description?: string;
+  entityType?: string;
+}
+
+export function getEntityTypeLabel(entityType: string | undefined, lang: string): string {
+  if (!entityType || entityType === 'GAME') return '';
+  return t(`games.entityTypes.${entityType}`, lang) || entityType;
+}
+
+const SHOW_ENTITY_KEYS: Record<string, string> = {
+  TOURNAMENT: 'telegram.showTournament',
+  LEAGUE: 'telegram.showLeague',
+  LEAGUE_SEASON: 'telegram.showLeagueSeason',
+  TRAINING: 'telegram.showTraining',
+  BAR: 'telegram.showBar',
+};
+
+export function getShowEntityButtonText(entityType: string | undefined, lang: string): string {
+  if (!entityType || entityType === 'GAME') return t('telegram.showGame', lang);
+  const key = SHOW_ENTITY_KEYS[entityType];
+  return key ? (t(key, lang) !== key ? t(key, lang) : t('telegram.showGame', lang)) : t('telegram.showGame', lang);
 }
 
 export async function formatGameInfo(
@@ -51,6 +71,7 @@ export async function formatGameInfo(
     duration,
     gameName: game.name || undefined,
     description: game.description || undefined,
+    entityType: game.entityType,
   };
 }
 

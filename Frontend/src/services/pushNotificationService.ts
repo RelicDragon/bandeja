@@ -164,7 +164,10 @@ class PushNotificationService {
         break;
 
       case 'BUG_CHAT':
-        if (payload?.bugId) {
+      case 'NEW_BUG':
+        if (payload?.groupChannelId) {
+          navigationService.navigateToChannelChat(payload.groupChannelId, 'bugs');
+        } else if (payload?.bugId) {
           navigationService.navigateToBugChat(payload.bugId);
         } else {
           navigationService.navigateToBugsList();

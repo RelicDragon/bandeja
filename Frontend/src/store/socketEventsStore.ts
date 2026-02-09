@@ -82,6 +82,10 @@ interface PollVoteData {
   updatedPoll: any;
 }
 
+interface NewBugData {
+  timestamp: string;
+}
+
 interface SocketEventsState {
   gameUpdates: Map<string, GameUpdateData>;
   lastGameUpdate: GameUpdateData | null;
@@ -99,6 +103,7 @@ interface SocketEventsState {
   lastBetResolved: BetResolvedData | null;
   lastGameResultsUpdated: GameResultsUpdatedData | null;
   lastPollVote: PollVoteData | null;
+  lastNewBug: NewBugData | null;
   initialized: boolean;
   initialize: () => void;
   cleanup: () => void;
@@ -128,6 +133,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     lastBetResolved: null,
     lastGameResultsUpdated: null,
     lastPollVote: null,
+    lastNewBug: null,
     initialized: false,
     initialize: () => {
       if (get().initialized) return;
@@ -203,6 +209,10 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         set({ lastPollVote: data });
       };
 
+      const handleNewBug = (data: NewBugData) => {
+        set({ lastNewBug: data });
+      };
+
       socketService.on('new-invite', handleNewInvite);
       socketService.on('invite-deleted', handleInviteDeleted);
       socketService.on('game-updated', handleGameUpdated);
@@ -218,6 +228,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('bet:resolved', handleBetResolved);
       socketService.on('game-results-updated', handleGameResultsUpdated);
       socketService.on('poll-vote', handlePollVote);
+      socketService.on('new-bug', handleNewBug);
 
       unsubscribeHandlers = [
         () => socketService.off('new-invite', handleNewInvite),
@@ -235,6 +246,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('bet:resolved', handleBetResolved),
         () => socketService.off('game-results-updated', handleGameResultsUpdated),
         () => socketService.off('poll-vote', handlePollVote),
+        () => socketService.off('new-bug', handleNewBug),
       ];
 
       set({ initialized: true });
@@ -260,6 +272,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         lastBetResolved: null,
         lastGameResultsUpdated: null,
         lastPollVote: null,
+        lastNewBug: null,
       });
     },
     clearLastBetCreated: () => set({ lastBetCreated: null }),

@@ -29,7 +29,7 @@ import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useDebounce } from '@/components/CityMap/useDebounce';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
-import { MessageCircle, SlidersHorizontal } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { BugModal } from '@/components/bugs/BugModal';
 import { BugsFilterPanel } from '@/components/bugs/BugsFilterPanel';
 import { ChatMessageSearchResults } from './ChatMessageSearchResults';
@@ -54,6 +54,8 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const { chatsFilter, bugsFilter, openBugModal, setOpenBugModal } = useNavigationStore();
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
+  const lastChatUnreadCount = useSocketEventsStore((state) => state.lastChatUnreadCount);
+  const lastNewBug = useSocketEventsStore((state) => state.lastNewBug);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
   const urlQuery = searchParams.get('q') ?? '';
@@ -259,7 +261,6 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
 
   useEffect(() => {
     if (chatsFilter !== 'users' && chatsFilter !== 'bugs' && chatsFilter !== 'channels') return;
-    if (chatsFilter === 'bugs') delete chatsCacheRef.current.bugs;
     const cached = chatsCacheRef.current[chatsFilter];
     if (cached) {
       setChats(deduplicateChats(cached.chats));
@@ -411,6 +412,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
 
   useEffect(() => {
     if (chatsFilter !== 'bugs') setBugsFilterPanelOpen(false);
+  }, [chatsFilter]);
+
+  useEffect(() => {
+    setUnreadFilterActive(false);
   }, [chatsFilter]);
 
   useEffect(() => {
@@ -585,6 +590,32 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     handleNewMessage(lastChatMessage);
   }, [lastChatMessage, chatsFilter, updateChatMessage]);
 
+  useEffect(() => {
+    if (!lastChatUnreadCount || lastChatUnreadCount.contextType !== 'GROUP') return;
+    const { contextId, unreadCount } = lastChatUnreadCount;
+    setChats((prev) =>
+      prev.map((chat) =>
+        (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId
+          ? { ...chat, unreadCount }
+          : chat
+      )
+    );
+  }, [lastChatUnreadCount]);
+
+  useEffect(() => {
+    if (!lastNewBug || chatsFilter !== 'bugs') return;
+    let cancelled = false;
+    fetchBugs(1).then(({ chats, hasMore }) => {
+      if (cancelled) return;
+      const deduped = deduplicateChats(chats);
+      chatsCacheRef.current.bugs = { chats: deduped, bugsHasMore: hasMore };
+      setChats(deduped);
+      setBugsHasMore(hasMore);
+      bugsPageRef.current = 1;
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [lastNewBug, chatsFilter, fetchBugs]);
+
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();
     if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') {
@@ -715,6 +746,24 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const [marketListingsExpanded, setMarketListingsExpanded] = useState(true);
   const [showBugModal, setShowBugModal] = useState(false);
   const [bugsFilterPanelOpen, setBugsFilterPanelOpen] = useState(false);
+  const [unreadFilterActive, setUnreadFilterActive] = useState(false);
+
+  const unreadChatsCount = useMemo(
+    () => chats
+      .filter((c) => c.type === 'user' || c.type === 'group' || c.type === 'channel')
+      .reduce((sum, c) => sum + (c.unreadCount ?? 0), 0),
+    [chats]
+  );
+  const hasUnreadChats = unreadChatsCount > 0;
+
+  useEffect(() => {
+    if (!hasUnreadChats) setUnreadFilterActive(false);
+  }, [hasUnreadChats]);
+
+  const displayedChats = useMemo(() => {
+    if (!unreadFilterActive) return chats;
+    return chats.filter((c) => (c.type === 'user' || c.type === 'group' || c.type === 'channel') && (c.unreadCount ?? 0) > 0);
+  }, [chats, unreadFilterActive]);
 
   useEffect(() => {
     if (openBugModal && chatsFilter === 'bugs') {
@@ -876,51 +925,40 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         }}
       >
         {(chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') && (
-          <div className="relative">
-            <ChatListSearchBar
-              chatsFilter={chatsFilter}
-              contactsMode={contactsMode}
-              searchInput={searchInput}
-              onSearchChange={(v) => {
-                skipUrlSyncRef.current = true;
-                setSearchInput(v);
-                setSearchParams((p) => {
-                  const next = new URLSearchParams(p);
-                  if (v.trim()) next.set('q', v);
-                  else next.delete('q');
-                  return next;
-                }, { replace: true });
-              }}
-              onClearSearch={() => {
-                skipUrlSyncRef.current = true;
-                setSearchInput('');
-                setSearchParams((p) => {
-                  const next = new URLSearchParams(p);
-                  next.delete('q');
-                  return next;
-                }, { replace: true });
-              }}
-              onContactsToggle={handleContactsToggle}
-              onAddBug={() => setShowBugModal(true)}
-              isDesktop={isDesktop}
-              hasCity={!!user?.currentCity?.id}
-            />
-            {chatsFilter === 'bugs' && (
-              <button
-                type="button"
-                onClick={() => setBugsFilterPanelOpen((o) => !o)}
-                className={`absolute top-full right-4 -mt-3 w-10 h-10 rounded-full flex items-center justify-center shadow-md border transition-all z-10 ${
-                  bugsFilterPanelOpen
-                    ? 'bg-blue-500 text-white border-blue-500 dark:bg-blue-600 dark:border-blue-600'
-                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-                aria-label={t('common.filter', { defaultValue: 'Filter' })}
-                aria-expanded={bugsFilterPanelOpen}
-              >
-                <SlidersHorizontal size={20} />
-              </button>
-            )}
-          </div>
+          <ChatListSearchBar
+            chatsFilter={chatsFilter}
+            contactsMode={contactsMode}
+            searchInput={searchInput}
+            hasUnreadChats={hasUnreadChats}
+            unreadChatsCount={unreadChatsCount}
+            unreadFilterActive={unreadFilterActive}
+            onUnreadFilterToggle={() => setUnreadFilterActive((a) => !a)}
+            onSearchChange={(v) => {
+              skipUrlSyncRef.current = true;
+              setSearchInput(v);
+              setSearchParams((p) => {
+                const next = new URLSearchParams(p);
+                if (v.trim()) next.set('q', v);
+                else next.delete('q');
+                return next;
+              }, { replace: true });
+            }}
+            onClearSearch={() => {
+              skipUrlSyncRef.current = true;
+              setSearchInput('');
+              setSearchParams((p) => {
+                const next = new URLSearchParams(p);
+                next.delete('q');
+                return next;
+              }, { replace: true });
+            }}
+            onContactsToggle={handleContactsToggle}
+            onAddBug={() => setShowBugModal(true)}
+            isDesktop={isDesktop}
+            hasCity={!!user?.currentCity?.id}
+            bugsFilterPanelOpen={bugsFilterPanelOpen}
+            onBugsFilterToggle={() => setBugsFilterPanelOpen((o) => !o)}
+          />
         )}
         <AnimatePresence>
           {chatsFilter === 'bugs' && bugsFilterPanelOpen && (
@@ -1035,7 +1073,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             renderEmptyState()
           ) : (
             <>
-              {chats.map((chat) => (
+              {displayedChats.map((chat) => (
                 <ChatListItem
                   key={getChatKey(chat)}
                   item={chat}

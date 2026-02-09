@@ -81,10 +81,15 @@ export class MessageService {
   }
 
   static async validateUserChatAccess(userChatId: string, userId: string, requireSendPermission = false) {
-    const userChat = await prisma.userChat.findUnique({
-      where: { id: userChatId },
-      include: { user1: true, user2: true }
-    });
+    const userChat = requireSendPermission
+      ? await prisma.userChat.findUnique({
+          where: { id: userChatId },
+          include: {
+            user1: { select: { allowMessagesFromNonContacts: true } },
+            user2: { select: { allowMessagesFromNonContacts: true } }
+          }
+        })
+      : await prisma.userChat.findUnique({ where: { id: userChatId } });
 
     if (!userChat) {
       throw new ApiError(404, 'Chat not found');
@@ -95,10 +100,11 @@ export class MessageService {
     }
 
     if (requireSendPermission) {
-      if (userChat.user1Id === userId && !userChat.user2allowed) {
-        throw new ApiError(403, 'Cannot send message - user has not allowed messages');
-      }
-      if (userChat.user2Id === userId && !userChat.user1allowed) {
+      const uc = userChat as typeof userChat & { user1?: { allowMessagesFromNonContacts: boolean | null }; user2?: { allowMessagesFromNonContacts: boolean | null } };
+      const recipient = uc.user1Id === userId ? uc.user2 : uc.user1;
+      const allowed = uc.user1Id === userId ? uc.user2allowed : uc.user1allowed;
+      const recipientAllowsNonContacts = recipient?.allowMessagesFromNonContacts !== false;
+      if (!allowed && !recipientAllowsNonContacts) {
         throw new ApiError(403, 'Cannot send message - user has not allowed messages');
       }
     }

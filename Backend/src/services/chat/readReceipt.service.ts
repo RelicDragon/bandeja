@@ -264,27 +264,34 @@ export class ReadReceiptService {
       return {};
     }
 
-    const unreadCounts: Record<string, number> = {};
+    const validChats = await prisma.userChat.findMany({
+      where: {
+        id: { in: chatIds },
+        OR: [{ user1Id: userId }, { user2Id: userId }]
+      },
+      select: { id: true }
+    });
+    const validChatIds = new Set(validChats.map((c) => c.id));
 
-    for (const chatId of chatIds) {
-      try {
-        await MessageService.validateUserChatAccess(chatId, userId);
-        
-        const unreadCount = await prisma.chatMessage.count({
-          where: {
-            chatContextType: 'USER',
-            contextId: chatId,
-            senderId: { not: userId },
-            readReceipts: {
-              none: { userId }
-            }
-          }
-        });
+    const unreadCounts: Record<string, number> = Object.fromEntries(chatIds.map((id) => [id, 0]));
 
-        unreadCounts[chatId] = unreadCount;
-      } catch {
-        unreadCounts[chatId] = 0;
-      }
+    if (validChatIds.size === 0) {
+      return unreadCounts;
+    }
+
+    const counts = await prisma.chatMessage.groupBy({
+      by: ['contextId'],
+      where: {
+        chatContextType: ChatContextType.USER,
+        contextId: { in: Array.from(validChatIds) },
+        senderId: { not: userId },
+        readReceipts: { none: { userId } }
+      },
+      _count: { id: true }
+    });
+
+    for (const row of counts) {
+      unreadCounts[row.contextId] = row._count.id;
     }
 
     return unreadCounts;

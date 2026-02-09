@@ -94,8 +94,14 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
               </div>
             )}
           </div>
-          {(lastMessage || draft) && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {unreadCount > 0 && (
+              <span className="bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+            {(lastMessage || draft) && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               {formatChatTime(
                 (() => {
                   const msg = lastMessage;
@@ -111,7 +117,8 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
                 displaySettings.hour12
               )}
             </span>
-          )}
+            )}
+          </div>
         </div>
 
         {(() => {
@@ -121,19 +128,12 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
               ? (draftContent.length > 50 ? draftContent.substring(0, 50) + '...' : draftContent)
               : '';
             return (
-              <div className="flex items-center justify-between">
-                <p className="text-sm line-clamp-2 pr-2">
-                  <span className="text-red-500 dark:text-red-400">Draft:</span>
-                  {displayContent && (
-                    <span className="text-gray-500 dark:text-gray-400 italic ml-1">{displayContent}</span>
-                  )}
-                </p>
-                {unreadCount > 0 && (
-                  <span className="flex-shrink-0 bg-blue-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
+              <p className="text-sm line-clamp-2 pr-2">
+                <span className="text-red-500 dark:text-red-400">Draft:</span>
+                {displayContent && (
+                  <span className="text-gray-500 dark:text-gray-400 italic ml-1">{displayContent}</span>
                 )}
-              </div>
+              </p>
             );
           }
 
@@ -150,32 +150,25 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
                 : null;
 
             return (
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 pr-2">
-                  {hasMedia ? (
-                    <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {t('chat.photo')}
-                    </span>
-                  ) : (
-                    <>
-                      {sender && (
-                        <span className="font-medium">
-                          {sender.firstName} {sender.lastName}:{' '}
-                        </span>
-                      )}
-                      {displayText || 'No message'}
-                    </>
-                  )}
-                </p>
-                {unreadCount > 0 && (
-                  <span className="flex-shrink-0 bg-blue-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
-                    {unreadCount > 99 ? '99+' : unreadCount}
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 pr-2">
+                {hasMedia ? (
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {t('chat.photo')}
                   </span>
+                ) : (
+                  <>
+                    {sender && (
+                      <span className="font-medium">
+                        {sender.firstName} {sender.lastName}:{' '}
+                      </span>
+                    )}
+                    {displayText || 'No message'}
+                  </>
                 )}
-              </div>
+              </p>
             );
           }
 

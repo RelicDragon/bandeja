@@ -74,8 +74,14 @@ export async function sendGroupChatNotification(
       const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
       const timezone = timezoneMap.get(user.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
       const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
-      const groupIcon = groupChannel.isChannel ? '📢' : '👥';
-      const formattedMessage = `${shortDayOfWeek} ${groupIcon} *${escapeMarkdown(groupChannel.name)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
+      const contextLabel = groupChannel.bug?.id
+        ? `🐛 ${t('notifications.bugReport', lang)}`
+        : groupChannel.marketItem?.id
+          ? `🛒 ${t('notifications.marketplaceListing', lang)}`
+          : groupChannel.isChannel
+            ? `📢 ${t('notifications.channel', lang)}`
+            : `👥 ${t('notifications.group', lang)}`;
+      const formattedMessage = `${shortDayOfWeek} ${contextLabel}: *${escapeMarkdown(groupChannel.name)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
       
       const buttons: Array<{ text: string; callback_data?: string; url?: string }> = [
         { text: t('telegram.viewChat', lang), url: chatUrl }

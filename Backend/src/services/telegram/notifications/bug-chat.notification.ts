@@ -23,7 +23,8 @@ export async function sendBugChatNotification(
   const senderName = formatUserName(sender);
   const messageContent = message.content || '[Media]';
 
-  const formattedMessage = `🐛 ${escapeMarkdown(bugText)}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
+  const getBugMessage = (lang: string) =>
+    `🐛 ${escapeMarkdown(t('notifications.bugReport', lang))}: ${escapeMarkdown(bugText)}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
 
   const bugChatUrl = bug.groupChannel
     ? `${config.frontendUrl}/channel-chat/${bug.groupChannel.id}`
@@ -124,7 +125,7 @@ export async function sendBugChatNotification(
           const timezone = timezoneMap.get(user.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
           const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
           const buttons = buildBugButtons(lang);
-          const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${formattedMessage}`, buttons, lang);
+          const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${getBugMessage(lang)}`, buttons, lang);
           await api.sendMessage(user.telegramId, finalMessage, options);
         } catch (error) {
           console.error(`Failed to send Telegram notification to mentioned user ${userId}:`, error);
@@ -183,7 +184,7 @@ export async function sendBugChatNotification(
           const timezone = elseTimezoneMap.get(bugCreator.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
           const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
           const buttons = buildBugButtons(lang);
-          const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${formattedMessage}`, buttons, lang);
+          const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${getBugMessage(lang)}`, buttons, lang);
           await api.sendMessage(bugCreator.telegramId, finalMessage, options);
         } catch (error) {
           console.error(`Failed to send Telegram notification to bug creator ${bugCreator.id}:`, error);
@@ -210,7 +211,7 @@ export async function sendBugChatNotification(
         const timezone = elseTimezoneMap.get(user.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
         const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
         const buttons = buildBugButtons(lang);
-        const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${formattedMessage}`, buttons, lang);
+        const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${getBugMessage(lang)}`, buttons, lang);
         await api.sendMessage(user.telegramId, finalMessage, options);
       } catch (error) {
         console.error(`Failed to send Telegram notification to bug participant ${user.id}:`, error);
@@ -232,7 +233,7 @@ export async function sendBugChatNotification(
         const timezone = elseTimezoneMap.get(admin.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
         const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
         const buttons = buildBugButtons(lang);
-        const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${formattedMessage}`, buttons, lang);
+        const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${getBugMessage(lang)}`, buttons, lang);
         await api.sendMessage(admin.telegramId, finalMessage, options);
       } catch (error) {
         console.error(`Failed to send Telegram notification to admin ${admin.id}:`, error);

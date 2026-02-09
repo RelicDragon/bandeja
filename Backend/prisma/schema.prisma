@@ -47,6 +47,7 @@ model User {
   createdAt                  DateTime             @default(now())
   updatedAt                  DateTime             @updatedAt
   isAdmin                    Boolean              @default(false)
+  isDeveloper                Boolean              @default(false)
   isTrainer                  Boolean              @default(false)
   canCreateTournament        Boolean              @default(false)
   canCreateLeague            Boolean              @default(false)

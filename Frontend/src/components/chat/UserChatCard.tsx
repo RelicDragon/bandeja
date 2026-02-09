@@ -97,7 +97,7 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
                   )}
                 </p>
                 {unreadCount > 0 && (
-                  <span className="flex-shrink-0 bg-blue-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
+                  <span className="flex-shrink-0 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
@@ -133,7 +133,7 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
                   )}
                 </p>
                 {unreadCount > 0 && (
-                  <span className="flex-shrink-0 bg-blue-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
+                  <span className="flex-shrink-0 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}

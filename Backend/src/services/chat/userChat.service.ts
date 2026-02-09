@@ -18,10 +18,10 @@ export class UserChatService {
       },
       include: {
         user1: {
-          select: USER_SELECT_FIELDS
+          select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true }
         },
         user2: {
-          select: USER_SELECT_FIELDS
+          select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true }
         },
         pinnedByUsers: {
           where: {
@@ -59,8 +59,8 @@ export class UserChatService {
         }
       },
       include: {
-        user1: { select: USER_SELECT_FIELDS },
-        user2: { select: USER_SELECT_FIELDS }
+        user1: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } },
+        user2: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } }
       }
     });
 
@@ -77,8 +77,8 @@ export class UserChatService {
           user2allowed: user2?.allowMessagesFromNonContacts ?? true
         },
         include: {
-          user1: { select: USER_SELECT_FIELDS },
-          user2: { select: USER_SELECT_FIELDS }
+          user1: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } },
+          user2: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } }
         }
       });
     }
@@ -90,8 +90,8 @@ export class UserChatService {
     const chat = await prisma.userChat.findUnique({
       where: { id: chatId },
       include: {
-        user1: { select: USER_SELECT_FIELDS },
-        user2: { select: USER_SELECT_FIELDS }
+        user1: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } },
+        user2: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } }
       }
     });
 
@@ -253,7 +253,7 @@ export class UserChatService {
     if (socketService) {
       await socketService.emitUserChatMessageToUsers(chatId, responseMessage, responseMessage.id);
     }
-    return { message: responseMessage, userChat: await prisma.userChat.findUnique({ where: { id: chatId }, include: { user1: { select: USER_SELECT_FIELDS }, user2: { select: USER_SELECT_FIELDS } } }) };
+    return { message: responseMessage, userChat: await prisma.userChat.findUnique({ where: { id: chatId }, include: { user1: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } }, user2: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } } } }) };
   }
 }
 

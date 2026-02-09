@@ -1,6 +1,15 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { formatUserName } from '../../shared/notification-base';
 import { getShortDayOfWeekForUser } from '../../user-timezone.service';
+import { t } from '../../../utils/translations';
+
+function getGroupNotificationTitle(groupChannel: any, lang: string): string {
+  const name = groupChannel.name;
+  if (groupChannel.bug?.id) return `🐛 ${t('notifications.bugReport', lang)}: ${name}`;
+  if (groupChannel.marketItem?.id) return `🛒 ${t('notifications.marketplaceListing', lang)}: ${name}`;
+  if (groupChannel.isChannel) return `📢 ${t('notifications.channel', lang)}: ${name}`;
+  return `👥 ${t('notifications.group', lang)}: ${name}`;
+}
 
 export async function createGroupChatPushNotification(
   message: any,
@@ -14,11 +23,10 @@ export async function createGroupChatPushNotification(
 
   const senderName = formatUserName(sender);
   const messageContent = message.content || '[Media]';
-  const groupName = groupChannel.name;
-  const isChannel = groupChannel.isChannel;
-  const shortDayOfWeek = await getShortDayOfWeekForUser(new Date(), recipient?.currentCityId ?? null, recipient?.language ?? 'en');
+  const lang = recipient?.language ?? 'en';
+  const shortDayOfWeek = await getShortDayOfWeekForUser(new Date(), recipient?.currentCityId ?? null, lang);
 
-  const title = isChannel ? `📢 ${groupName}` : `👥 ${groupName}`;
+  const title = getGroupNotificationTitle(groupChannel, lang);
   const body = `${senderName}: ${messageContent}`;
 
   const data: Record<string, string> = {

@@ -520,6 +520,21 @@ class SocketService {
     });
   }
 
+  public async emitNewBug() {
+    const developers = await prisma.user.findMany({
+      where: { isDeveloper: true },
+      select: { id: true }
+    });
+    for (const dev of developers) {
+      this.connectedUsers.get(dev.id)?.forEach(socketId => {
+        const socket = this.io.sockets.sockets.get(socketId);
+        if (socket) {
+          socket.emit('new-bug', { timestamp: new Date().toISOString() });
+        }
+      });
+    }
+  }
+
   // Emit game update to all users who have access to the game
   public async emitGameUpdate(gameId: string, senderId: string, game?: any, forceUpdate: boolean = false) {
     try {

@@ -18,7 +18,8 @@ export enum NotificationType {
   GAME_RESULTS = 'GAME_RESULTS',
   NEW_GAME = 'NEW_GAME',
   TRANSACTION = 'TRANSACTION',
-  NEW_MARKET_ITEM = 'NEW_MARKET_ITEM'
+  NEW_MARKET_ITEM = 'NEW_MARKET_ITEM',
+  NEW_BUG = 'NEW_BUG'
 }
 
 export interface NotificationAction {

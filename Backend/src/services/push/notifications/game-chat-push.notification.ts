@@ -1,5 +1,5 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
-import { formatGameInfoForUser, formatUserName } from '../../shared/notification-base';
+import { formatGameInfoForUser, formatUserName, getEntityTypeLabel } from '../../shared/notification-base';
 
 export async function createGameChatPushNotification(
   message: any,
@@ -11,8 +11,10 @@ export async function createGameChatPushNotification(
   const senderName = formatUserName(sender);
   const messageContent = message.content || '[Media]';
   const gameInfo = await formatGameInfoForUser(game, recipient.currentCityId, lang);
+  const entityLabel = getEntityTypeLabel(game.entityType, lang);
 
-  const title = `${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}`;
+  const baseTitle = `${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}`;
+  const title = entityLabel ? `${entityLabel}: ${baseTitle}` : baseTitle;
   const body = `${senderName}: ${messageContent}`;
 
   return {
