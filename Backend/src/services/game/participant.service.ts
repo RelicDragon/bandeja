@@ -47,6 +47,10 @@ export class ParticipantService {
         throw new ApiError(400, 'games.alreadyInJoinQueue');
       }
 
+      if (!game.allowDirectJoin) {
+        return await this.moveExistingParticipantToQueue(gameId, userId);
+      }
+
       const currentGame = await fetchGameWithPlayingParticipants(prisma, gameId);
       const joinResult = await validatePlayerCanJoinGame(currentGame, userId);
 
