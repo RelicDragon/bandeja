@@ -292,7 +292,17 @@ export class ReadReceiptService {
 
   static async getGroupChannelsUnreadCounts(groupIds: string[], userId: string) {
     if (groupIds.length === 0) return {};
-    return UnreadCountBatchService.getUnreadCountsByContext('GROUP', groupIds, userId);
+    const participantGroups = await prisma.groupChannelParticipant.findMany({
+      where: {
+        groupChannelId: { in: groupIds },
+        userId,
+        hidden: false,
+      },
+      select: { groupChannelId: true },
+    });
+    const participantGroupIds = participantGroups.map((p) => p.groupChannelId);
+    if (participantGroupIds.length === 0) return {};
+    return UnreadCountBatchService.getUnreadCountsByContext('GROUP', participantGroupIds, userId);
   }
 
   static async markAllMessagesAsRead(gameId: string, userId: string, chatTypes: string[] = []) {

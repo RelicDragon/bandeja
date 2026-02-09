@@ -118,6 +118,8 @@
     "listingsFromCity": "Se muestran anuncios de {{city}}",
     "allTypes": "Todos los tipos",
     "noItems": "No se encontraron anuncios",
+    "myListings": "Mis anuncios",
+    "myShort": "Mis",
     "loadMore": "Cargar más",
     "uploadFailed": "Error al subir imagen",
     "notSeller": "Solo puedes editar tus propios anuncios",

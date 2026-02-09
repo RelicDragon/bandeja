@@ -31,6 +31,7 @@ export interface MarketItemFilters {
   categoryId?: string;
   tradeType?: MarketItemTradeType;
   status?: MarketItemStatus;
+  sellerId?: string;
   page?: number;
   limit?: number;
 }
@@ -175,6 +176,7 @@ export class MarketItemService {
       categoryId,
       tradeType,
       status = MarketItemStatus.ACTIVE,
+      sellerId,
       page = 1,
       limit = 20,
     } = filters;
@@ -184,6 +186,7 @@ export class MarketItemService {
     if (categoryId) where.categoryId = categoryId;
     if (tradeType) where.tradeTypes = { has: tradeType };
     if (status) where.status = status;
+    if (sellerId) where.sellerId = sellerId;
 
     const [items, total] = await Promise.all([
       prisma.marketItem.findMany({

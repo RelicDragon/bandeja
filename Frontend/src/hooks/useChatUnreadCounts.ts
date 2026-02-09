@@ -10,6 +10,7 @@ interface ChatUnreadCounts {
   games: number;
   bugs: number;
   channels: number;
+  marketplace: number;
 }
 
 interface UnreadObjectsResponse {
@@ -17,6 +18,7 @@ interface UnreadObjectsResponse {
   bugs: Array<{ bug: unknown; unreadCount: number }>;
   userChats: Array<{ chat: unknown; unreadCount: number }>;
   groupChannels: Array<{ groupChannel: GroupChannel; unreadCount: number }>;
+  marketItems: Array<{ marketItem: unknown; groupChannelId: string; unreadCount: number }>;
 }
 
 const unreadObjectsCache = new Map<string, { data: UnreadObjectsResponse; timestamp: number }>();
@@ -35,6 +37,7 @@ export const useChatUnreadCounts = () => {
     games: 0,
     bugs: 0,
     channels: 0,
+    marketplace: 0,
   });
   const [loading, setLoading] = useState(false);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -51,12 +54,14 @@ export const useChatUnreadCounts = () => {
       const gamesTotal = data.games.reduce((sum: number, item) => sum + item.unreadCount, 0);
       const bugsTotal = data.bugs.reduce((sum: number, item) => sum + item.unreadCount, 0);
       const channelsTotal = (data.groupChannels || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
+      const marketplaceTotal = (data.marketItems || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
 
       setCounts({
         users: Object.values(userChatsUnreadCounts).reduce((sum: number, count: number) => sum + count, 0),
         games: gamesTotal,
         bugs: bugsTotal,
         channels: channelsTotal,
+        marketplace: marketplaceTotal,
       });
       return;
     }
@@ -69,12 +74,14 @@ export const useChatUnreadCounts = () => {
         const gamesTotal = data.games.reduce((sum: number, item) => sum + item.unreadCount, 0);
         const bugsTotal = data.bugs.reduce((sum: number, item) => sum + item.unreadCount, 0);
         const channelsTotal = (data.groupChannels || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
+        const marketplaceTotal = (data.marketItems || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
 
         setCounts({
           users: Object.values(userChatsUnreadCounts).reduce((sum: number, count: number) => sum + count, 0),
           games: gamesTotal,
           bugs: bugsTotal,
           channels: channelsTotal,
+          marketplace: marketplaceTotal,
         });
       } catch (error) {
         console.error('Failed to fetch chat unread counts:', error);
@@ -104,12 +111,14 @@ export const useChatUnreadCounts = () => {
       const gamesTotal = data.games.reduce((sum: number, item) => sum + item.unreadCount, 0);
       const bugsTotal = data.bugs.reduce((sum: number, item) => sum + item.unreadCount, 0);
       const channelsTotal = (data.groupChannels || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
+      const marketplaceTotal = (data.marketItems || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
 
       setCounts({
         users: Object.values(userChatsUnreadCounts).reduce((sum: number, count: number) => sum + count, 0),
         games: gamesTotal,
         bugs: bugsTotal,
         channels: channelsTotal,
+        marketplace: marketplaceTotal,
       });
     } catch (error) {
       console.error('Failed to fetch chat unread counts:', error);

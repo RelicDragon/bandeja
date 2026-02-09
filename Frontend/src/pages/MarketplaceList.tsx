@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapPin } from 'lucide-react';
+import { MapPin, User } from 'lucide-react';
 import { marketplaceApi, citiesApi } from '@/api';
+import { chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
+import { useNavigationStore } from '@/store/navigationStore';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { MarketItem, MarketItemCategory, City } from '@/types';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -14,6 +17,8 @@ const PAGE_SIZE = 20;
 export const MarketplaceList = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const marketplaceTab = useNavigationStore((state) => state.marketplaceTab);
+  const isMyTab = marketplaceTab === 'my';
   const [items, setItems] = useState<MarketItem[]>([]);
   const [categories, setCategories] = useState<MarketItemCategory[]>([]);
   const [cities, setCities] = useState<City[]>([]);
@@ -23,6 +28,8 @@ export const MarketplaceList = () => {
   const pageRef = useRef(1);
   const cityId = (user?.currentCity?.id || user?.currentCityId) ?? '';
   const [filters, setFilters] = useState({ categoryId: '' });
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const lastChatUnreadCount = useSocketEventsStore((state) => state.lastChatUnreadCount);
 
   const fetchData = useCallback(async (refresh = false) => {
     const page = refresh ? 1 : pageRef.current;
@@ -31,12 +38,13 @@ export const MarketplaceList = () => {
     try {
       const [itemsRes, categoriesRes] = await Promise.all([
         marketplaceApi.getMarketItems({
-          cityId: cityId || undefined,
-          categoryId: filters.categoryId || undefined,
+          ...(isMyTab
+            ? { sellerId: user?.id }
+            : { cityId: cityId || undefined, categoryId: filters.categoryId || undefined }),
           page,
           limit: PAGE_SIZE,
         }),
-        page === 1 ? marketplaceApi.getCategories() : Promise.resolve({ data: [] }),
+        !isMyTab && page === 1 ? marketplaceApi.getCategories() : Promise.resolve({ data: [] }),
       ]);
       const pagination = (itemsRes as { data?: MarketItem[]; pagination?: { hasMore: boolean } }).pagination;
       setHasMore(pagination?.hasMore ?? false);
@@ -55,12 +63,31 @@ export const MarketplaceList = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [cityId, filters.categoryId]);
+  }, [cityId, filters.categoryId, isMyTab, user?.id]);
 
   useEffect(() => {
     pageRef.current = 1;
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    const groupIds = items
+      .map((item) => item.groupChannel?.id)
+      .filter((id): id is string => !!id);
+    if (groupIds.length === 0) return;
+    chatApi.getGroupChannelsUnreadCounts(groupIds).then((res) => {
+      setUnreadCounts(res.data || {});
+    }).catch(() => {});
+  }, [items]);
+
+  useEffect(() => {
+    if (!lastChatUnreadCount || lastChatUnreadCount.contextType !== 'GROUP') return;
+    const { contextId, unreadCount } = lastChatUnreadCount;
+    const isOurs = items.some((item) => item.groupChannel?.id === contextId);
+    if (isOurs) {
+      setUnreadCounts((prev) => ({ ...prev, [contextId]: unreadCount }));
+    }
+  }, [lastChatUnreadCount, items]);
 
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
@@ -87,25 +114,32 @@ export const MarketplaceList = () => {
   return (
     <div className="pb-8">
       <RefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} pullProgress={pullProgress} />
-      <div className="mb-6">
-        {cityId && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5">
-            <MapPin size={12} />
-            {t('marketplace.listingsFromCity', {
-              defaultValue: 'Listings from {{city}} are shown',
-              city: user?.currentCity?.name ?? cities.find((c) => c.id === cityId)?.name ?? '',
-            })}
-          </p>
-        )}
-        <MarketplaceFilters
-          categoryId={filters.categoryId}
-          categories={categories}
-          onCategoryChange={(v) => setFilters((f) => ({ ...f, categoryId: v }))}
-          labels={{
-            allCategories: t('marketplace.allCategories', { defaultValue: 'All' }),
-          }}
-        />
-      </div>
+      {isMyTab ? (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5">
+          <User size={12} />
+          {t('marketplace.myListings', { defaultValue: 'My listings' })}
+        </p>
+      ) : (
+        <div className="mb-6">
+          {cityId && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5">
+              <MapPin size={12} />
+              {t('marketplace.listingsFromCity', {
+                defaultValue: 'Listings from {{city}} are shown',
+                city: user?.currentCity?.name ?? cities.find((c) => c.id === cityId)?.name ?? '',
+              })}
+            </p>
+          )}
+          <MarketplaceFilters
+            categoryId={filters.categoryId}
+            categories={categories}
+            onCategoryChange={(v) => setFilters((f) => ({ ...f, categoryId: v }))}
+            labels={{
+              allCategories: t('marketplace.allCategories', { defaultValue: 'All' }),
+            }}
+          />
+        </div>
+      )}
 
       {loading && items.length === 0 ? (
         <div className="flex justify-center py-16">
@@ -116,9 +150,9 @@ export const MarketplaceList = () => {
           <p className="text-gray-500 dark:text-gray-400">{t('marketplace.noItems', { defaultValue: 'No listings found' })}</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="flex flex-wrap gap-2 [&>*]:w-[calc(50%-4px)] sm:[&>*]:w-[calc(33.333%-6px)] sm:[&>*]:max-w-[200px]">
           {items.map((item) => (
-            <MarketItemCard key={item.id} item={item} formatPrice={formatPrice} tradeTypeLabel={tradeTypeLabels} />
+            <MarketItemCard key={item.id} item={item} formatPrice={formatPrice} tradeTypeLabel={tradeTypeLabels} unreadCount={item.groupChannel?.id ? unreadCounts[item.groupChannel.id] : undefined} />
           ))}
         </div>
       )}

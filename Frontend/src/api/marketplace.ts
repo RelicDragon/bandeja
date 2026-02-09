@@ -6,6 +6,7 @@ export interface MarketItemFilters {
   categoryId?: string;
   tradeType?: string;
   status?: string;
+  sellerId?: string;
   page?: number;
   limit?: number;
 }

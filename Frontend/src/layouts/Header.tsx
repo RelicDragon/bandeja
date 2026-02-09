@@ -18,7 +18,7 @@ import {
 } from '@/components';
 import { GameSubscriptionsHeaderContent } from '@/components/headerContent/GameSubscriptionsHeaderContent';
 import { MarketplaceCreateHeaderContent } from '@/components/headerContent/MarketplaceCreateHeaderContent';
-import { MarketplaceListHeaderTitle } from '@/components/headerContent/MarketplaceListHeaderContent';
+import { MarketplaceTabController } from '@/components/headerContent/MarketplaceTabController';
 import { ChatsTabController } from '@/components/headerContent/ChatsTabController';
 import { FindTabController } from '@/components/headerContent/FindTabController';
 
@@ -92,7 +92,7 @@ export const Header = () => {
             )}
 
             {currentPage === 'marketplace' && isMarketplaceList && (
-              <MarketplaceListHeaderTitle />
+              <MarketplaceTabController />
             )}
             {currentPage === 'marketplace' && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/)) && (
               <MarketplaceCreateHeaderContent />

@@ -20,9 +20,11 @@ interface NavigationState {
   chatsFilter: 'users' | 'bugs' | 'channels';
   openBugModal: boolean;
   bugsFilter: BugsFilterState;
+  marketplaceTab: 'market' | 'my';
   findViewMode: 'calendar' | 'list';
   requestFindGoToCurrent: 'calendar' | 'list' | null;
   setRequestFindGoToCurrent: (mode: 'calendar' | 'list' | null) => void;
+  setMarketplaceTab: (tab: 'market' | 'my') => void;
   setCurrentPage: (page: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace') => void;
   setBottomTabsVisible: (visible: boolean) => void;
   setIsAnimating: (animating: boolean) => void;
@@ -51,6 +53,7 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   chatsFilter: 'users',
   openBugModal: false,
   bugsFilter: { status: null, type: null, createdByMe: false },
+  marketplaceTab: 'market',
   findViewMode: 'calendar',
   requestFindGoToCurrent: null,
   setCurrentPage: (page) => set({ currentPage: page }),
@@ -65,6 +68,7 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setChatsFilter: (filter) => set({ chatsFilter: filter }),
   setOpenBugModal: (open) => set({ openBugModal: open }),
   setBugsFilter: (filter) => set((state) => ({ bugsFilter: typeof filter === 'function' ? filter(state.bugsFilter) : filter })),
+  setMarketplaceTab: (tab) => set({ marketplaceTab: tab }),
   setFindViewMode: (mode) => set({ findViewMode: mode }),
   setRequestFindGoToCurrent: (mode) => set({ requestFindGoToCurrent: mode }),
 }));

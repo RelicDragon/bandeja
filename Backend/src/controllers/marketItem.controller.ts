@@ -56,17 +56,18 @@ export const createMarketItem = asyncHandler(async (req: AuthRequest, res: Respo
 });
 
 export const getMarketItems = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { cityId, categoryId, tradeType, status, page, limit } = req.query;
+  const { cityId, categoryId, tradeType, status, sellerId, page, limit } = req.query;
 
   const filters: any = {};
   if (cityId && typeof cityId === 'string') filters.cityId = cityId;
   if (categoryId && typeof categoryId === 'string') filters.categoryId = categoryId;
+  if (sellerId && typeof sellerId === 'string') filters.sellerId = sellerId;
   if (tradeType && Object.values(MarketItemTradeType).includes(tradeType as MarketItemTradeType)) {
     filters.tradeType = tradeType;
   }
   if (status && Object.values(MarketItemStatus).includes(status as MarketItemStatus)) {
     filters.status = status;
-  } else {
+  } else if (!filters.sellerId) {
     filters.status = MarketItemStatus.ACTIVE;
   }
   if (page) filters.page = parseInt(page as string, 10) || 1;

@@ -48,6 +48,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
       label: t('bottomTab.marketplace', { defaultValue: 'Market' }),
       icon: ShoppingBag,
       path: '/marketplace',
+      badge: counts.marketplace,
     },
     {
       id: 'leaderboard' as const,
@@ -55,7 +56,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
       icon: Trophy,
       path: '/leaderboard',
     },
-  ], [t, counts.games, chatsUnread]);
+  ], [t, counts.games, chatsUnread, counts.marketplace]);
 
 
   const handleTabClick = (tab: 'my' | 'find' | 'chats' | 'leaderboard' | 'marketplace', path: string) => {

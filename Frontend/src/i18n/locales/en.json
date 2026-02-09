@@ -118,6 +118,8 @@
     "listingsFromCity": "Listings from {{city}} are shown",
     "allTypes": "All types",
     "noItems": "No listings found",
+    "myListings": "My listings",
+    "myShort": "My",
     "loadMore": "Load more",
     "uploadFailed": "Failed to upload image",
     "notSeller": "You can only edit your own listings",

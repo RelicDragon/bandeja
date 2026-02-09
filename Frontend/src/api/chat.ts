@@ -346,6 +346,7 @@ export const chatApi = {
       bugs: Array<{ bug: any; unreadCount: number }>;
       userChats: Array<{ chat: UserChat; unreadCount: number }>;
       groupChannels: Array<{ groupChannel: GroupChannel; unreadCount: number }>;
+      marketItems: Array<{ marketItem: any; groupChannelId: string; unreadCount: number }>;
     }>>('/chat/unread-objects');
     return response.data;
   },

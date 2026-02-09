@@ -9,6 +9,7 @@ export interface UnreadObjectsResult {
   bugs: Array<{ bug: any; unreadCount: number }>;
   userChats: Array<{ chat: any; unreadCount: number }>;
   groupChannels: Array<{ groupChannel: any; unreadCount: number }>;
+  marketItems: Array<{ marketItem: any; groupChannelId: string; unreadCount: number }>;
 }
 
 const GAME_INCLUDE = {
@@ -197,6 +198,7 @@ async function getGroupChannelsWithUnread(
     prisma.groupChannel.findMany({
       where: {
         bugId: null,
+        marketItemId: null,
         participants: { some: { userId, hidden: false } },
       },
       select: { id: true },
@@ -248,15 +250,68 @@ async function getGroupChannelsWithUnread(
   });
 }
 
+async function getMarketItemChannelsWithUnread(
+  userId: string
+): Promise<UnreadObjectsResult['marketItems']> {
+  const [channels, mutedChats] = await Promise.all([
+    prisma.groupChannel.findMany({
+      where: {
+        marketItemId: { not: null },
+        participants: { some: { userId, hidden: false } },
+      },
+      select: { id: true, marketItemId: true },
+    }),
+    ChatMuteService.getMutedChats(userId, 'GROUP'),
+  ]);
+
+  const mutedSet = new Set(mutedChats.map((m) => m.contextId));
+  const contextIds = channels.map((c) => c.id).filter((id) => !mutedSet.has(id));
+  if (contextIds.length === 0) return [];
+
+  const unreadMap = await UnreadCountBatchService.getUnreadCountsByContext(
+    'GROUP',
+    contextIds,
+    userId
+  );
+
+  const channelIdsWithUnread = Object.entries(unreadMap)
+    .filter(([, count]) => count > 0)
+    .map(([id]) => id);
+
+  if (channelIdsWithUnread.length === 0) return [];
+
+  const fullChannels = await prisma.groupChannel.findMany({
+    where: { id: { in: channelIdsWithUnread } },
+    include: {
+      marketItem: {
+        select: { id: true, title: true, mediaUrls: true },
+      },
+    },
+  });
+
+  const channelById = Object.fromEntries(fullChannels.map((c) => [c.id, c]));
+  return channelIdsWithUnread
+    .map((id) => {
+      const channel = channelById[id]!;
+      return {
+        marketItem: channel.marketItem,
+        groupChannelId: channel.id,
+        unreadCount: unreadMap[id] ?? 0,
+      };
+    })
+    .filter((entry) => entry.marketItem != null);
+}
+
 export class UnreadObjectsService {
   static async getUnreadObjects(userId: string): Promise<UnreadObjectsResult> {
-    const [games, userChats, bugs, groupChannels] = await Promise.all([
+    const [games, userChats, bugs, groupChannels, marketItems] = await Promise.all([
       getGamesWithUnread(userId),
       getUserChatsWithUnread(userId),
       getBugsWithUnread(userId),
       getGroupChannelsWithUnread(userId),
+      getMarketItemChannelsWithUnread(userId),
     ]);
 
-    return { games, bugs, userChats, groupChannels };
+    return { games, bugs, userChats, groupChannels, marketItems };
   }
 }
