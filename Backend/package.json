@@ -16,6 +16,7 @@
     "load-playtomic-jsons": "ts-node scripts/load-playtomic-jsons.ts",
     "backfill:last-message-previews": "ts-node scripts/backfillLastMessagePreviews.ts",
     "backfill:content-searchable": "ts-node scripts/backfillContentSearchable.ts",
+    "backfill:training-trainer-id": "ts-node scripts/backfillTrainingTrainerId.ts",
     "migrateBugsToGroups": "ts-node scripts/migrateBugsToGroups.ts"
   },
   "keywords": [

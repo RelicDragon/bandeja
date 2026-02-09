@@ -90,7 +90,7 @@ class TelegramNotificationService {
   }
 
   async sendNewMarketItemNotification(
-    marketItem: { id: string; title: string; priceCents: number | null; currency: string },
+    marketItem: { id: string; title: string; description: string | null; priceCents: number | null; currency: string },
     cityName: string,
     recipient: { id: string; telegramId: string; language?: string | null }
   ) {
