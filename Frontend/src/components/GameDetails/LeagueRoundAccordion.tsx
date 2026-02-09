@@ -2,6 +2,7 @@ import { TFunction } from 'i18next';
 import { Divider } from '@/components';
 import { ChevronDown, Gamepad2, Loader2, Trash2, Send } from 'lucide-react';
 import { LeagueRound, LeagueGroup } from '@/api/leagues';
+import { useDesktop } from '@/hooks/useDesktop';
 import { Game } from '@/types';
 import { LeagueGameCard } from './LeagueGameCard';
 import { getLeagueGroupColor } from '@/utils/leagueGroupColors';
@@ -21,6 +22,8 @@ interface LeagueRoundAccordionProps {
   roundIdSendingMessage: string | null;
   selectedGroupId?: string | null;
   shouldRenderContent?: boolean;
+  selectedGameChatId?: string | null;
+  onChatGameSelect?: (gameId: string) => void;
   onToggle: () => void;
   onRequestDelete: () => void;
   onAddGame: (leagueGroupId?: string) => void;
@@ -44,6 +47,8 @@ export const LeagueRoundAccordion = ({
   roundIdSendingMessage,
   selectedGroupId = null,
   shouldRenderContent = true,
+  selectedGameChatId,
+  onChatGameSelect,
   onToggle,
   onRequestDelete,
   onAddGame,
@@ -53,6 +58,7 @@ export const LeagueRoundAccordion = ({
   onSendStartMessage,
   t,
 }: LeagueRoundAccordionProps) => {
+  const isDesktop = useDesktop();
   const [gameResultsMap, setGameResultsMap] = useState<Map<string, RoundData[] | null>>(new Map());
 
   const hasGroups = groups.length > 0;
@@ -235,6 +241,9 @@ export const LeagueRoundAccordion = ({
                                       : undefined
                                   }
                                   onOpen={() => onOpenGame(game)}
+                                  onChat={onChatGameSelect}
+                                  selectedForChat={isDesktop && selectedGameChatId === game.id}
+                                  isDesktop={isDesktop}
                                   onDelete={
                                     game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
                                       ? onDeleteGame
@@ -291,6 +300,9 @@ export const LeagueRoundAccordion = ({
                                     : undefined
                                 }
                                 onOpen={() => onOpenGame(game)}
+                                onChat={onChatGameSelect}
+                                selectedForChat={isDesktop && selectedGameChatId === game.id}
+                                isDesktop={isDesktop}
                                 onDelete={
                                   game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
                                     ? onDeleteGame
@@ -316,6 +328,9 @@ export const LeagueRoundAccordion = ({
                             : undefined
                         }
                         onOpen={() => onOpenGame(game)}
+                        onChat={onChatGameSelect}
+                        selectedForChat={isDesktop && selectedGameChatId === game.id}
+                        isDesktop={isDesktop}
                         onDelete={
                           game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
                             ? onDeleteGame

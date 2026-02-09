@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { SplitViewLeftPanel, SplitViewRightPanel } from '@/components/SplitViewPanels';
@@ -10,25 +10,40 @@ export const GameDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const isDesktop = useDesktop();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [selectedGameChatId, setSelectedGameChatId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedGameChatId(null);
+  }, [id]);
 
   if (!id) return null;
+
+  const effectiveChatId = selectedGameChatId ?? id;
+
+  const handleChatGameSelect = (gameId: string) => {
+    setSelectedGameChatId((prev) => (prev === gameId ? null : gameId));
+  };
 
   if (isDesktop) {
     const leftPanel = (
       <SplitViewLeftPanel bottomTabsVisible={false}>
         <div ref={scrollContainerRef} className="h-full overflow-y-auto overflow-x-hidden p-3">
-          <GameDetailsContent scrollContainerRef={scrollContainerRef} />
+          <GameDetailsContent
+            scrollContainerRef={scrollContainerRef}
+            selectedGameChatId={selectedGameChatId}
+            onChatGameSelect={handleChatGameSelect}
+          />
         </div>
       </SplitViewLeftPanel>
     );
 
     const rightPanel = (
       <SplitViewRightPanel
-        selectedId={`game-${id}`}
+        selectedId={`game-${effectiveChatId}`}
         isTransitioning={false}
         emptyState={null}
       >
-        <GameChat key={`game-${id}`} isEmbedded={true} chatId={id} chatType="game" />
+        <GameChat key={`game-${effectiveChatId}`} isEmbedded={true} chatId={effectiveChatId} chatType="game" />
       </SplitViewRightPanel>
     );
 
@@ -45,5 +60,10 @@ export const GameDetailsPage = () => {
     );
   }
 
-  return <GameDetailsContent />;
+  return (
+    <GameDetailsContent
+      selectedGameChatId={selectedGameChatId}
+      onChatGameSelect={handleChatGameSelect}
+    />
+  );
 };

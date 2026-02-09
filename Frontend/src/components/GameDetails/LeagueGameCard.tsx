@@ -1,4 +1,4 @@
-import { Edit2, ExternalLink, Award, MapPin, Calendar, Trash2, Plane } from 'lucide-react';
+import { Edit2, ExternalLink, Award, MapPin, Calendar, Trash2, Plane, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { PlayerAvatar, ConfirmationModal } from '@/components';
@@ -11,11 +11,15 @@ import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/uti
 import { gamesApi } from '@/api/games';
 import toast from 'react-hot-toast';
 import { RoundData } from '@/api/results';
+import { useNavigate } from 'react-router-dom';
 
 interface LeagueGameCardProps {
   game: Game;
   onEdit?: () => void;
   onOpen?: () => void;
+  onChat?: (gameId: string) => void;
+  selectedForChat?: boolean;
+  isDesktop?: boolean;
   showGroupTag?: boolean;
   allRounds?: RoundData[] | null;
   onDelete?: () => Promise<void> | void;
@@ -25,11 +29,15 @@ export const LeagueGameCard = ({
   game,
   onEdit,
   onOpen,
+  onChat,
+  selectedForChat = false,
+  isDesktop = false,
   showGroupTag = true,
   allRounds,
   onDelete,
 }: LeagueGameCardProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -336,7 +344,7 @@ export const LeagueGameCard = ({
         </div>
       )}
 
-      {(onOpen || canEdit || canDelete) && (
+      {(onOpen || canEdit || canDelete || onChat) && (
         <div className="absolute bottom-2 right-2 flex items-center gap-2 z-10">
           {canDelete && (
             <button
@@ -356,6 +364,25 @@ export const LeagueGameCard = ({
               className="w-8 h-8 rounded-full border-2 border-blue-500 hover:border-blue-600 bg-white dark:bg-gray-800 text-blue-500 hover:text-blue-600 flex items-center justify-center transition-colors shadow-lg"
             >
               <Edit2 size={16} />
+            </button>
+          )}
+          {onChat && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isDesktop) {
+                  onChat(game.id);
+                } else {
+                  navigate(`/games/${game.id}/chat`);
+                }
+              }}
+              className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors shadow-lg ${
+                selectedForChat
+                  ? 'border-violet-500 bg-violet-500 text-white dark:bg-violet-500 dark:text-white'
+                  : 'border-violet-500 hover:border-violet-600 bg-white dark:bg-gray-800 text-violet-500 hover:text-violet-600'
+              }`}
+            >
+              <MessageCircle size={16} />
             </button>
           )}
           {onOpen && (

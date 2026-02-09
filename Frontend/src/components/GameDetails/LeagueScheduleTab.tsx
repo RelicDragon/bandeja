@@ -18,11 +18,13 @@ interface LeagueScheduleTabProps {
   canEdit?: boolean;
   hasFixedTeams?: boolean;
   activeTab?: 'general' | 'schedule' | 'standings' | 'faq';
+  selectedGameChatId?: string | null;
+  onChatGameSelect?: (gameId: string) => void;
 }
 
 const ALL_GROUP_ID = 'ALL';
 
-export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTeams = false, activeTab = 'schedule' }: LeagueScheduleTabProps) => {
+export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTeams = false, activeTab = 'schedule', selectedGameChatId, onChatGameSelect }: LeagueScheduleTabProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -387,6 +389,8 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
                 onOpenGame={handleOpenGame}
                 onDeleteGame={handleDeleteGame}
                 onSendStartMessage={() => handleSendStartMessage(round.id)}
+                selectedGameChatId={selectedGameChatId}
+                onChatGameSelect={onChatGameSelect}
                 t={t}
               />
             );

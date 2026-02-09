@@ -57,9 +57,11 @@ type GameWithResults = Game & {
 
 interface GameDetailsContentProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
+  selectedGameChatId?: string | null;
+  onChatGameSelect?: (gameId: string) => void;
 }
 
-export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentProps) => {
+export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onChatGameSelect }: GameDetailsContentProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -1415,7 +1417,7 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
     }
 
     if (user && activeTab === 'schedule') {
-      return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} activeTab={activeTab} />;
+      return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} activeTab={activeTab} selectedGameChatId={selectedGameChatId} onChatGameSelect={onChatGameSelect} />;
     }
 
     if (user && activeTab === 'standings') {
