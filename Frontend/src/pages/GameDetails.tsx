@@ -423,7 +423,7 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
   };
 
   const participation = getGameParticipationState(game?.participants ?? [], user?.id, game ?? undefined);
-  const { isGuest, isParticipantNonGuest: isParticipant, isPlaying: isUserPlaying, isOwner: isUserOwner, isInJoinQueue, hasPendingInvite, isAdminOrOwner: isOwner, isFull } = participation;
+  const { isGuest, isParticipantNonGuest: isParticipant, isRealParticipant, isPlaying: isUserPlaying, isOwner: isUserOwner, isInJoinQueue, hasPendingInvite, isAdminOrOwner: isOwner, isFull } = participation;
   const canAccessChat = true;
   const canEdit = isOwner || user?.isAdmin || false;
   const canViewSettings = game?.resultsStatus === 'NONE' && canEdit && game.status !== 'ARCHIVED';
@@ -440,7 +440,7 @@ export const GameDetailsContent = ({ scrollContainerRef }: GameDetailsContentPro
     ? gameInvites.find(inv => inv.receiverId === pendingTrainerParticipant.userId && inv.status === 'PENDING')
     : undefined;
 
-  const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && !isFull);
+  const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && isRealParticipant && !isFull);
   const canManageJoinQueue = Boolean(
     isOwner ||
     participation.userParticipant?.role === 'ADMIN' ||

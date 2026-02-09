@@ -9,7 +9,7 @@ import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import notificationService from '../services/notification.service';
 import { InviteService } from '../services/invite.service';
-import { hasParentGamePermission } from '../utils/parentGamePermissions';
+import { hasParentGamePermission, hasRealParticipantStatus } from '../utils/parentGamePermissions';
 import { ParticipantService } from '../services/game/participant.service';
 import { GameReadService, participantsToInviteShape } from '../services/game/read.service';
 
@@ -38,7 +38,6 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
       throw new ApiError(404, 'errors.invites.gameNotFound');
     }
 
-    // Check if user is ADMIN/OWNER
     const isAdminOrOwner = await hasParentGamePermission(
       gameId,
       req.userId!,
@@ -46,8 +45,13 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
       req.user?.isAdmin || false
     );
 
+    const hasRealStatus = await hasRealParticipantStatus(gameId, req.userId!);
+
+    if (!hasRealStatus) {
+      throw new ApiError(403, 'errors.invites.onlyParticipantsCanSend');
+    }
+
     if (!isAdminOrOwner) {
-      // If not admin/owner, check if anyoneCanInvite is enabled and user is a participant
       if (!game.anyoneCanInvite) {
         throw new ApiError(403, 'errors.invites.onlyParticipantsCanSend');
       }

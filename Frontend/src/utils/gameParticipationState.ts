@@ -1,11 +1,12 @@
 import type { GameParticipant, Game } from '@/types';
-import { isParticipantPlaying, isParticipantGuest, isParticipantInQueue } from './participantStatus';
+import { isParticipantPlaying, isParticipantNonPlaying, isParticipantGuest, isParticipantInQueue } from './participantStatus';
 import { isUserGameAdminOrOwner } from './gameResults';
 
 export interface GameParticipationState {
   userParticipant: GameParticipant | undefined;
   isParticipant: boolean;
   isParticipantNonGuest: boolean;
+  isRealParticipant: boolean;
   isPlaying: boolean;
   isGuest: boolean;
   hasPendingInvite: boolean;
@@ -20,6 +21,7 @@ export const EMPTY_GAME_PARTICIPATION_STATE: GameParticipationState = {
   userParticipant: undefined,
   isParticipant: false,
   isParticipantNonGuest: false,
+  isRealParticipant: false,
   isPlaying: false,
   isGuest: false,
   hasPendingInvite: false,
@@ -44,6 +46,7 @@ export function getGameParticipationState(
 
   const isParticipant = !!userParticipant;
   const isParticipantNonGuest = !!userParticipant && userParticipant.status !== 'GUEST';
+  const isRealParticipant = userParticipant ? (isParticipantPlaying(userParticipant) || isParticipantNonPlaying(userParticipant)) : false;
   const isPlaying = userParticipant ? isParticipantPlaying(userParticipant) : false;
   const isGuest = userParticipant ? isParticipantGuest(userParticipant) : false;
   const hasPendingInvite = userParticipant?.status === 'INVITED';
@@ -57,6 +60,7 @@ export function getGameParticipationState(
     userParticipant,
     isParticipant,
     isParticipantNonGuest,
+    isRealParticipant,
     isPlaying,
     isGuest,
     hasPendingInvite,

@@ -450,7 +450,7 @@ export const GameParticipants = ({
           );
         })()}
         {(() => {
-          const showInviteButton = !isUnauthorized && (isOwner || (game.anyoneCanInvite && isParticipant)) && !isFull;
+          const showInviteButton = !isUnauthorized && canInvitePlayers;
           const showManageButton = !isUnauthorized && isOwner && canViewSettings;
           const buttonCount = (showInviteButton ? 1 : 0) + (showManageButton ? 1 : 0);
           

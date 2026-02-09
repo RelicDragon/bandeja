@@ -53,6 +53,21 @@ export async function hasParentGamePermission(
   return false;
 }
 
+const REAL_PARTICIPANT_STATUSES = ['PLAYING', 'NON_PLAYING'] as const;
+
+export async function hasRealParticipantStatus(gameId: string, userId: string): Promise<boolean> {
+  const current = await prisma.gameParticipant.findFirst({
+    where: { gameId, userId, status: { in: [...REAL_PARTICIPANT_STATUSES] } },
+  });
+  if (current) return true;
+  const game = await prisma.game.findUnique({ where: { id: gameId }, select: { parentId: true } });
+  if (!game?.parentId) return false;
+  const parent = await prisma.gameParticipant.findFirst({
+    where: { gameId: game.parentId, userId, status: { in: [...REAL_PARTICIPANT_STATUSES] } },
+  });
+  return !!parent;
+}
+
 /**
  * Checks if a user is a playing participant in a game (including parent game)
  */
