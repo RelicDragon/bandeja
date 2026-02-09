@@ -9,6 +9,7 @@ interface NotificationData {
   data?: {
     gameId?: string;
     bugId?: string;
+    marketItemId?: string;
     userId?: string;
     inviteId?: string;
     chatType?: string;
@@ -178,7 +179,13 @@ class PushNotificationService {
 
       case 'GROUP_CHAT':
         if (payload?.groupChannelId) {
-          navigationService.navigateToGroupChat(payload.groupChannelId);
+          if (payload.bugId) {
+            navigationService.navigateToBugChat(payload.bugId);
+          } else if (payload.marketItemId) {
+            navigationService.navigateToChannelChat(payload.groupChannelId, 'marketplace');
+          } else {
+            navigationService.navigateToGroupChat(payload.groupChannelId);
+          }
         }
         break;
 

@@ -1535,6 +1535,8 @@
     "leaveDeclineInviteMessage": "Are you sure you want to decline this invite?",
     "leaveCancelQueueTitle": "Cancel join request",
     "leaveCancelQueueMessage": "Are you sure you want to cancel your join request?",
+    "accessDenied": "Access Denied",
+    "accessDeniedMessage": "You don't have access to this chat.",
     "blockedByUser": "This user has blocked you. You cannot send messages to them.",
     "userDoesNotAllowDirectChat": "This user doesn't allow direct messages from people who are not in their contacts.",
     "requestToChat": "Request to chat",

@@ -70,19 +70,26 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between mb-1 gap-2">
           <div className="flex flex-col gap-1 min-w-0 flex-1">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white break-words min-w-0">
-              {displayName}
-            </h3>
-            {groupChannel.bug && (
-              <div className="flex flex-wrap items-center gap-1">
-                {groupChannel.bug.sender && (
-                  <PlayerAvatar player={groupChannel.bug.sender} extrasmall fullHideName showName={false} asDiv />
-                )}
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                  {t(`bug.types.${groupChannel.bug.bugType}`)}
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300">
-                  {t(`bug.statuses.${groupChannel.bug.status}`)}
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm text-gray-900 dark:text-white break-words min-w-0">
+                {displayName}
+              </h3>
+              {groupChannel.bug && (
+                <>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wide bg-amber-100/80 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                    {t(`bug.types.${groupChannel.bug.bugType}`)}
+                  </span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300">
+                    {t(`bug.statuses.${groupChannel.bug.status}`)}
+                  </span>
+                </>
+              )}
+            </div>
+            {groupChannel.bug?.sender && (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <PlayerAvatar player={groupChannel.bug.sender} extrasmall fullHideName showName={false} asDiv />
+                <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {groupChannel.bug.sender.firstName} {groupChannel.bug.sender.lastName}
                 </span>
               </div>
             )}

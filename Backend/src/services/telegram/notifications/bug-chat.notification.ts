@@ -1,5 +1,6 @@
 import { Api } from 'grammy';
 import prisma from '../../../config/database';
+import { config } from '../../../config/env';
 import { ChatContextType } from '@prisma/client';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
@@ -23,6 +24,15 @@ export async function sendBugChatNotification(
   const messageContent = message.content || '[Media]';
 
   const formattedMessage = `🐛 ${escapeMarkdown(bugText)}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
+
+  const bugChatUrl = bug.groupChannel
+    ? `${config.frontendUrl}/channel-chat/${bug.groupChannel.id}`
+    : `${config.frontendUrl}/bugs`;
+
+  const buildBugButtons = (lang: string) => [[
+    { text: t('telegram.viewChat', lang), url: bugChatUrl },
+    { text: t('telegram.reply', lang), callback_data: `rbm:${message.id}:${bug.id}` }
+  ]];
 
   const mentionIds = message.mentionIds || [];
   const hasMentions = mentionIds.length > 0;
@@ -113,12 +123,7 @@ export async function sendBugChatNotification(
           const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
           const timezone = timezoneMap.get(user.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
           const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
-          const buttons = [[
-            {
-              text: t('telegram.reply', lang),
-              callback_data: `rbm:${message.id}:${bug.id}`
-            }
-          ]];
+          const buttons = buildBugButtons(lang);
           const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${formattedMessage}`, buttons, lang);
           await api.sendMessage(user.telegramId, finalMessage, options);
         } catch (error) {
@@ -177,12 +182,7 @@ export async function sendBugChatNotification(
           const lang = await getUserLanguageFromTelegramId(bugCreator.telegramId, undefined);
           const timezone = elseTimezoneMap.get(bugCreator.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
           const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
-          const buttons = [[
-            {
-              text: t('telegram.reply', lang),
-              callback_data: `rbm:${message.id}:${bug.id}`
-            }
-          ]];
+          const buttons = buildBugButtons(lang);
           const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${formattedMessage}`, buttons, lang);
           await api.sendMessage(bugCreator.telegramId, finalMessage, options);
         } catch (error) {
@@ -209,12 +209,7 @@ export async function sendBugChatNotification(
         const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
         const timezone = elseTimezoneMap.get(user.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
         const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
-        const buttons = [[
-          {
-            text: t('telegram.reply', lang),
-            callback_data: `rbm:${message.id}:${bug.id}`
-          }
-        ]];
+        const buttons = buildBugButtons(lang);
         const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${formattedMessage}`, buttons, lang);
         await api.sendMessage(user.telegramId, finalMessage, options);
       } catch (error) {
@@ -236,12 +231,7 @@ export async function sendBugChatNotification(
         const lang = await getUserLanguageFromTelegramId(admin.telegramId, undefined);
         const timezone = elseTimezoneMap.get(admin.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
         const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
-        const buttons = [[
-          {
-            text: t('telegram.reply', lang),
-            callback_data: `rbm:${message.id}:${bug.id}`
-          }
-        ]];
+        const buttons = buildBugButtons(lang);
         const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${formattedMessage}`, buttons, lang);
         await api.sendMessage(admin.telegramId, finalMessage, options);
       } catch (error) {

@@ -115,7 +115,7 @@ class NavigationService {
     navigateWithTracking(this.navigate!, `/group-chat/${groupChannelId}`, { replace: true });
   }
 
-  navigateToChannelChat(channelId: string) {
+  navigateToChannelChat(channelId: string, fromPage?: 'marketplace' | 'bugs' | 'chats') {
     if (!this.ensureInitialized() || !channelId) {
       console.error('Cannot navigate to channel chat: invalid channelId or service not initialized');
       return;
@@ -126,8 +126,11 @@ class NavigationService {
 
     this.setAnimatingState();
     store.setCurrentPage('chats');
-    store.setChatsFilter('channels');
-    navigateWithTracking(this.navigate!, `/channel-chat/${channelId}`, { replace: true });
+    store.setChatsFilter(fromPage === 'bugs' ? 'bugs' : 'channels');
+    navigateWithTracking(this.navigate!, `/channel-chat/${channelId}`, {
+      replace: true,
+      state: fromPage ? { fromPage } : undefined
+    });
   }
 
   navigateToBugsList() {

@@ -11,6 +11,7 @@ import prisma from '../../../config/database';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
+import { config } from '../../../config/env';
 
 export async function sendGroupChatNotification(
   api: Api,
@@ -64,6 +65,11 @@ export async function sendGroupChatNotification(
       ? (participant.role === 'OWNER' || participant.role === 'ADMIN')
       : true;
 
+    const chatPath = (groupChannel.bug || groupChannel.marketItem)
+      ? `/channel-chat/${groupChannel.id}`
+      : `/group-chat/${groupChannel.id}`;
+    const chatUrl = `${config.frontendUrl}${chatPath}`;
+
     try {
       const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
       const timezone = timezoneMap.get(user.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
@@ -71,14 +77,14 @@ export async function sendGroupChatNotification(
       const groupIcon = groupChannel.isChannel ? '📢' : '👥';
       const formattedMessage = `${shortDayOfWeek} ${groupIcon} *${escapeMarkdown(groupChannel.name)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
       
-      const buttons = canWrite ? [[
-        {
-          text: t('telegram.reply', lang),
-          callback_data: `rg:${message.id}:${groupChannel.id}`
-        }
-      ]] : [];
+      const buttons: Array<{ text: string; callback_data?: string; url?: string }> = [
+        { text: t('telegram.viewChat', lang), url: chatUrl }
+      ];
+      if (canWrite) {
+        buttons.push({ text: t('telegram.reply', lang), callback_data: `rg:${message.id}:${groupChannel.id}` });
+      }
 
-      const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
+      const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, [buttons], lang);
       
       await api.sendMessage(user.telegramId, finalMessage, options);
     } catch (error) {

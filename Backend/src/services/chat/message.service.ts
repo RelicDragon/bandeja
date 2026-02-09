@@ -48,7 +48,8 @@ export class MessageService {
         sender: true,
         participants: {
           where: { userId }
-        }
+        },
+        groupChannel: { select: { id: true } }
       }
     });
 
@@ -374,7 +375,8 @@ export class MessageService {
     } else if (chatContextType === 'GROUP') {
       await this.validateGroupChannelAccess(contextId, senderId, true);
       groupChannel = await prisma.groupChannel.findUnique({
-        where: { id: contextId }
+        where: { id: contextId },
+        include: { bug: { select: { id: true } }, marketItem: { select: { id: true } } }
       });
     }
 

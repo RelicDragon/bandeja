@@ -1489,6 +1489,8 @@
     "leaveDeclineInviteMessage": "¿Estás seguro de que quieres rechazar esta invitación?",
     "leaveCancelQueueTitle": "Cancelar solicitud de unión",
     "leaveCancelQueueMessage": "¿Estás seguro de que quieres cancelar tu solicitud de unión?",
+    "accessDenied": "Acceso denegado",
+    "accessDeniedMessage": "No tienes acceso a este chat.",
     "blockedByUser": "Este usuario te ha bloqueado. No puedes enviarle mensajes.",
     "userDoesNotAllowDirectChat": "Este usuario no permite mensajes directos de personas que no están en sus contactos.",
     "requestToChat": "Solicitar chat",

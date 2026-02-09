@@ -21,15 +21,19 @@ export async function createGroupChatPushNotification(
   const title = isChannel ? `📢 ${groupName}` : `👥 ${groupName}`;
   const body = `${senderName}: ${messageContent}`;
 
+  const data: Record<string, string> = {
+    groupChannelId: groupChannel.id,
+    messageId: message.id,
+    shortDayOfWeek
+  };
+  if (groupChannel.bug?.id) data.bugId = groupChannel.bug.id;
+  if (groupChannel.marketItem?.id) data.marketItemId = groupChannel.marketItem.id;
+
   return {
     type: NotificationType.GROUP_CHAT,
     title,
     body,
-    data: {
-      groupChannelId: groupChannel.id,
-      messageId: message.id,
-      shortDayOfWeek
-    },
+    data,
     sound: 'default'
   };
 }

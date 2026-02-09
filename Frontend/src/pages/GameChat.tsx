@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { chatApi, ChatMessage, ChatMessageWithStatus, ChatContextType, UserChat as UserChatType, OptimisticMessagePayload } from '@/api/chat';
+import { chatApi, ChatMessage, ChatMessageWithStatus, ChatContextType, UserChat as UserChatType, OptimisticMessagePayload, GroupChannel } from '@/api/chat';
 import { gamesApi } from '@/api/games';
 import { blockedUsersApi } from '@/api/blockedUsers';
 import { Game, ChatType, Bug } from '@/types';
 import { MessageList } from '@/components/MessageList';
 import { MessageInput } from '@/components/MessageInput';
 import { ChatParticipantsModal } from '@/components/ChatParticipantsModal';
-import { ChatParticipantsButton } from '@/components/ChatParticipantsButton';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
@@ -24,31 +23,23 @@ import { isParticipantPlaying } from '@/utils/participantStatus';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { normalizeChatType, getAvailableGameChatTypes } from '@/utils/chatType';
 import { parseSystemMessage } from '@/utils/systemMessages';
-import { MessageCircle, ArrowLeft, MapPin, LogOut, Camera, Bug as BugIcon, Bell, BellOff, Users, Hash, Package } from 'lucide-react';
+import { MessageCircle, ArrowLeft, MapPin, Camera, Bug as BugIcon, Users, Hash, Package } from 'lucide-react';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
+import { ChatHeaderActions } from '@/components/chat/ChatHeaderActions';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
 import { MarketItemPanel } from '@/components/marketplace';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { RequestToChat } from '@/components/chat/RequestToChat';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBackNavigation } from '@/utils/navigation';
-import { messageQueueStorage, QueuedMessage } from '@/services/chatMessageQueueStorage';
-import { sendWithTimeout, cancelSend, resend, cancelAllForContext, isSending } from '@/services/chatSendService';
+import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
+import { sendWithTimeout, cancelSend, resend, cancelAllForContext } from '@/services/chatSendService';
+import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
 
 interface LocationState {
   initialChatType?: ChatType;
   contextType?: ChatContextType;
   chat?: UserChatType;
-}
-
-function queueItemMatchesServerMessage(q: QueuedMessage, m: ChatMessage, userId: string | undefined): boolean {
-  if (!userId || m.senderId !== userId) return false;
-  if (m.content !== (q.payload.content ?? '')) return false;
-  if (normalizeChatType(m.chatType) !== normalizeChatType(q.payload.chatType)) return false;
-  if ((m.replyToId ?? null) !== (q.payload.replyToId ?? null)) return false;
-  const mMentions = (m.mentionIds?.slice().sort() ?? []) as string[];
-  const qMentions = (q.payload.mentionIds?.slice().sort() ?? []) as string[];
-  return mMentions.length === qMentions.length && !mMentions.some((id, i) => id !== qMentions[i]);
 }
 
 interface GameChatProps {
@@ -78,7 +69,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [game, setGame] = useState<Game | null>(null);
   const [bug, setBug] = useState<Bug | null>(null);
   const [userChat, setUserChat] = useState<UserChatType | null>(locationState?.chat || null);
-  const [groupChannel, setGroupChannel] = useState<any>(null);
+  const [groupChannel, setGroupChannel] = useState<GroupChannel | null>(null);
   const [groupChannelParticipantsCount, setGroupChannelParticipantsCount] = useState<number>(0);
   const [messages, setMessages] = useState<ChatMessageWithStatus[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -117,7 +108,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const isBugChat = contextType === 'GROUP' && !!groupChannel?.bug;
   const isBugCreator = groupChannel?.bug?.senderId === user?.id;
   const isBugAdmin = user?.isAdmin;
-  const isBugParticipant = groupChannel?.participants?.some((p: any) => p.userId === user?.id) ?? false;
+  const isBugParticipant = groupChannel?.participants?.some((p) => p.userId === user?.id) ?? false;
+  const isBugChatParticipant = isBugChat && bug && (isBugParticipant || isBugCreator || isBugAdmin);
   
   const isChannelOwner = contextType === 'GROUP' && groupChannel && user ? isGroupChannelOwner(groupChannel, user.id) : false;
   const isChannelAdminOrOwner = contextType === 'GROUP' && groupChannel && user ? isGroupChannelAdminOrOwner(groupChannel, user.id) : false;
@@ -125,7 +117,31 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const isChannel = contextType === 'GROUP' && groupChannel?.isChannel;
   const isChannelParticipantOnly = isChannel && isChannelParticipant && !isChannelAdminOrOwner;
   const isItemChat = contextType === 'GROUP' && !!groupChannel?.marketItem;
-  
+
+  const showMute = useMemo(() => !!(
+    (contextType === 'GAME' && isParticipant) ||
+    isBugChatParticipant ||
+    contextType === 'USER' ||
+    (contextType === 'GROUP' && groupChannel && isChannelParticipant)
+  ), [contextType, isParticipant, isBugChatParticipant, groupChannel, isChannelParticipant]);
+
+  const showLeave = useMemo(() => !!(
+    (contextType === 'GAME' && isParticipant && isGuest && game?.entityType !== 'LEAGUE') ||
+    (isBugChatParticipant && !isBugCreator) ||
+    (contextType === 'GROUP' && groupChannel && !isBugChat && isChannelParticipant && !isChannelOwner)
+  ), [contextType, isParticipant, isGuest, game?.entityType, isBugChatParticipant, isBugCreator, groupChannel, isBugChat, isChannelParticipant, isChannelOwner]);
+
+  const showHeaderActions = showMute || showLeave || contextType === 'GAME';
+
+  const leaveTitle = useMemo(() => {
+    if (contextType === 'GROUP' && groupChannel) {
+      return groupChannel.isChannel
+        ? t('chat.leaveChannel', { defaultValue: 'Leave Channel' })
+        : t('chat.leaveGroup', { defaultValue: 'Leave Group' });
+    }
+    return t('chat.leave');
+  }, [contextType, groupChannel, t]);
+
   const canWriteGroupChat = useMemo(() => {
     if (contextType !== 'GROUP' || !groupChannel || !user?.id) return false;
     
@@ -323,13 +339,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         }
       }
     };
-    
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        scroll();
-        setTimeout(scroll, 50);
-        setTimeout(scroll, 150);
-      });
+      scroll();
+      setTimeout(scroll, 50);
+      setTimeout(scroll, 150);
     });
   }, []);
 
@@ -703,46 +716,18 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setMessages(response);
       setHasMoreMessages(response.length === 50);
 
-      const queue = await messageQueueStorage.getByContext(contextType, id!);
-      const queueForTab = queue.filter(q => normalizeChatType(q.payload.chatType) === normalizedChatType);
-      if (queueForTab.length > 0 && user?.id) {
-        const matchedTempIds = queueForTab.filter(q => response.some(m => queueItemMatchesServerMessage(q, m, user.id))).map(q => q.tempId);
-        matchedTempIds.forEach(tempId => messageQueueStorage.remove(tempId, contextType, id!).catch(err => { console.error('[messageQueue] remove', err); }));
-        const queueForTabFiltered = queueForTab.filter(q => !matchedTempIds.includes(q.tempId));
-        const optimisticList: ChatMessageWithStatus[] = queueForTabFiltered.map(q => ({
-          id: q.tempId,
-          chatContextType: q.contextType,
-          contextId: q.contextId,
-          senderId: user.id,
-          content: q.payload.content,
-          mediaUrls: q.payload.mediaUrls ?? q.mediaUrls ?? [],
-          thumbnailUrls: q.payload.thumbnailUrls ?? q.thumbnailUrls ?? [],
-          mentionIds: q.payload.mentionIds ?? [],
-          state: 'SENT',
-          chatType: q.payload.chatType,
-          createdAt: q.createdAt,
-          updatedAt: q.createdAt,
-          replyToId: q.payload.replyToId,
-          replyTo: q.payload.replyTo,
-          sender: user as import('@/types').BasicUser,
-          reactions: [],
-          readReceipts: [],
-          _status: q.status === 'failed' ? 'FAILED' : 'SENDING',
-          _optimisticId: q.tempId,
-        }));
-        setMessages(prev => {
-          const toAdd = optimisticList.filter(msg => !prev.some(m => (m as ChatMessageWithStatus)._optimisticId === msg._optimisticId));
-          const next = [...prev, ...toAdd];
-          messagesRef.current = next;
-          queueForTabFiltered.filter(q => q.status === 'queued' && !isSending(q.tempId) && toAdd.some(a => a._optimisticId === q.tempId)).forEach(q => {
-            sendWithTimeout(
-              { tempId: q.tempId, contextType: q.contextType, contextId: q.contextId, payload: q.payload, mediaUrls: q.mediaUrls, thumbnailUrls: q.thumbnailUrls },
-              { onFailed: handleMarkFailed }
-            );
+        if (user?.id) {
+          await applyQueuedMessagesToState({
+            contextType,
+            contextId: id!,
+            currentChatType: normalizedChatType,
+            userId: user.id,
+            user: user as import('@/types').BasicUser,
+            messagesRef,
+            setMessages,
+            handleMarkFailed,
           });
-          return next;
-        });
-      }
+        }
       
       scrollToBottom();
     } catch (error) {
@@ -754,7 +739,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     }
   }, [currentChatType, contextType, id, user, scrollToBottom, handleMarkFailed]);
 
-  const getAvailableChatTypes = useCallback((): ChatType[] => {
+  const availableChatTypes = useMemo((): ChatType[] => {
     if (contextType !== 'GAME') return ['PUBLIC'];
     const participant = game?.participants?.find(p => p.userId === user?.id);
     const parentParticipant = game?.parent?.participants?.find(p => p.userId === user?.id);
@@ -863,18 +848,18 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   const handleReadReceipt = useCallback((readReceipt: any) => {
     setMessages(prevMessages => {
+      let changed = false;
       const newMessages = prevMessages.map(message => {
         if (message.id === readReceipt.messageId) {
           const existingReceipt = message.readReceipts.find(r => r.userId === readReceipt.userId);
           if (!existingReceipt) {
-            return {
-              ...message,
-              readReceipts: [...message.readReceipts, readReceipt]
-            };
+            changed = true;
+            return { ...message, readReceipts: [...message.readReceipts, readReceipt] };
           }
         }
         return message;
       });
+      if (!changed) return prevMessages;
       messagesRef.current = newMessages;
       return newMessages;
     });
@@ -973,7 +958,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       
       try {
         const loadedContext = await loadContext();
-        
+        if (loadingIdRef.current !== currentLoadId) return;
+
         if (contextType === 'USER' && userChat && user?.id) {
           const otherUserId = userChat.user1Id === user.id ? userChat.user2Id : userChat.user1Id;
           if (otherUserId) {
@@ -988,11 +974,12 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
         try {
           const muteStatus = await chatApi.isChatMuted(contextType, id);
+          if (loadingIdRef.current !== currentLoadId) return;
           setIsMuted(muteStatus.isMuted);
         } catch (error) {
           console.error('Failed to check mute status:', error);
         }
-        
+
         if (!hasSetDefaultChatType && !initialChatType && contextType === 'GAME' && loadedContext) {
           const loadedGame = loadedContext as Game;
           const loadedParticipant = loadedGame.participants?.find(p => p.userId === user?.id);
@@ -1000,6 +987,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           setHasSetDefaultChatType(true);
           if (defaultType === 'PRIVATE' && currentChatType !== 'PRIVATE') {
             await handleChatTypeChange('PRIVATE');
+            hasLoadedRef.current = true;
             return;
           }
           if (currentChatType !== defaultType) {
@@ -1010,56 +998,28 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
           if (currentChatType !== initialChatType) {
             await handleChatTypeChange(initialChatType);
+            hasLoadedRef.current = true;
             return;
           }
         }
-        
-        await loadMessages();
 
-        const queue = await messageQueueStorage.getByContext(contextType, id);
-        const normalizedCurrent = normalizeChatType(currentChatType);
-        const queueForTab = queue.filter(q => normalizeChatType(q.payload.chatType) === normalizedCurrent);
-        if (queueForTab.length > 0 && user?.id) {
-          const serverMessages = messagesRef.current.filter(m => !(m as ChatMessageWithStatus)._optimisticId);
-          const matchedTempIds = queueForTab.filter(q => serverMessages.some(m => queueItemMatchesServerMessage(q, m, user.id))).map(q => q.tempId);
-          matchedTempIds.forEach(tempId => messageQueueStorage.remove(tempId, contextType, id).catch(err => { console.error('[messageQueue] remove', err); }));
-          const queueForTabFiltered = queueForTab.filter(q => !matchedTempIds.includes(q.tempId));
-          const optimisticList: ChatMessageWithStatus[] = queueForTabFiltered.map(q => ({
-            id: q.tempId,
-            chatContextType: q.contextType,
-            contextId: q.contextId,
-            senderId: user.id,
-            content: q.payload.content,
-            mediaUrls: q.payload.mediaUrls ?? q.mediaUrls ?? [],
-            thumbnailUrls: q.payload.thumbnailUrls ?? q.thumbnailUrls ?? [],
-            mentionIds: q.payload.mentionIds ?? [],
-            state: 'SENT',
-            chatType: q.payload.chatType,
-            createdAt: q.createdAt,
-            updatedAt: q.createdAt,
-            replyToId: q.payload.replyToId,
-            replyTo: q.payload.replyTo,
-            sender: user as import('@/types').BasicUser,
-            reactions: [],
-            readReceipts: [],
-            _status: q.status === 'failed' ? 'FAILED' : 'SENDING',
-            _optimisticId: q.tempId,
-          }));
-          setMessages(prev => {
-            const toAdd = optimisticList.filter(msg => !prev.some(m => (m as ChatMessageWithStatus)._optimisticId === msg._optimisticId));
-            const next = [...prev, ...toAdd];
-            messagesRef.current = next;
-            queueForTabFiltered.filter(q => q.status === 'queued' && !isSending(q.tempId) && toAdd.some(a => a._optimisticId === q.tempId)).forEach(q => {
-              sendWithTimeout(
-                { tempId: q.tempId, contextType: q.contextType, contextId: q.contextId, payload: q.payload, mediaUrls: q.mediaUrls, thumbnailUrls: q.thumbnailUrls },
-                { onFailed: handleMarkFailed }
-              );
-            });
-            return next;
+        await loadMessages();
+        if (loadingIdRef.current !== currentLoadId) return;
+
+        if (user?.id) {
+          await applyQueuedMessagesToState({
+            contextType,
+            contextId: id,
+            currentChatType: normalizeChatType(currentChatType),
+            userId: user.id,
+            user: user as import('@/types').BasicUser,
+            messagesRef,
+            setMessages,
+            handleMarkFailed,
           });
         }
+        if (loadingIdRef.current !== currentLoadId) return;
         
-        // Mark all messages as read when chat is opened (for all chat types)
         try {
           if (contextType === 'GAME' && loadedContext) {
             const loadedGame = loadedContext as Game;
@@ -1080,7 +1040,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               
               window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
             }
-          } else if (contextType === 'USER' && id) {
+          }
+          if (loadingIdRef.current !== currentLoadId) return;
+          if (contextType === 'USER' && id) {
             const markReadResponse = await chatApi.markAllMessagesAsReadForContext('USER', id);
             const markedCount = markReadResponse.data?.count || 0;
             
@@ -1092,7 +1054,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             updateUnreadCount(id, () => 0);
             
             window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-          } else if (contextType === 'GROUP' && id) {
+          }
+          if (loadingIdRef.current !== currentLoadId) return;
+          if (contextType === 'GROUP' && id) {
             const markReadResponse = await chatApi.markGroupChannelAsRead(id);
             const markedCount = markReadResponse.data?.count || 0;
             
@@ -1105,7 +1069,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         } catch (error) {
           console.error('Failed to mark all messages as read:', error);
         }
-        
+
         hasLoadedRef.current = true;
       } finally {
         isLoadingRef.current = false;
@@ -1205,73 +1169,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     }
   }, [isLoadingMessages, isSwitchingChatType, isLoadingMore, isInitialLoad, messages.length, scrollToBottom]);
 
-  if (isLoadingContext && !isEmbedded) {
-    return (
-      <div className="chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
-                  handleBackNavigation({
-                    pathname: location.pathname,
-                    locationState,
-                    navigate,
-                    setChatsFilter,
-                    contextType,
-                    gameId: id,
-                  });
-                }}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
-              </button>
-              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
-            </div>
-          </div>
-        </header>
-        <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <MessageList
-            messages={[]}
-            onAddReaction={handleAddReaction}
-            onRemoveReaction={handleRemoveReaction}
-            onDeleteMessage={handleDeleteMessage}
-            onReplyMessage={handleReplyMessage}
-            isLoading={false}
-            isLoadingMessages={true}
-            isSwitchingChatType={false}
-            onScrollToMessage={handleScrollToMessage}
-            hasMoreMessages={false}
-            onLoadMore={loadMoreMessages}
-            isInitialLoad={true}
-            isLoadingMore={false}
-            disableReadTracking={contextType === 'USER'}
-          />
-        </main>
-      </div>
-    );
-  }
-
-
-  if (!canViewPublicChat) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Access Denied</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">You don't have access to this chat.</p>
-          <button
-            onClick={() => navigate(`/games/${id}`)}
-            className="w-full px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-          >
-            View Game
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const getTitle = () => {
+  const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
+  const getTitle = useCallback(() => {
     if (contextType === 'GAME' && game) {
       if (game.name) return game.name;
       if (game.club) return `${game.club.name}`;
@@ -1285,11 +1184,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       return groupChannel.name;
     }
     return 'Chat';
-  };
-
-  const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
-
-  const getSubtitle = () => {
+  }, [contextType, game, isBugChat, bug, userChat, user?.id, groupChannel]);
+  const getSubtitle = useCallback(() => {
     if (contextType === 'GAME' && game) {
       if (game.timeIsSet === false) {
         return t('gameDetails.datetimeNotSet');
@@ -1303,9 +1199,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       return t('chat.participants', { count: groupChannelParticipantsCount });
     }
     return null;
-  };
-
-  const getIcon = () => {
+  }, [contextType, game, displaySettings, isBugChat, bug, groupChannel, groupChannelParticipantsCount, t]);
+  const getIcon = useCallback(() => {
     if (isBugChat) {
       return <BugIcon size={16} className="text-red-500" />;
     } else if (contextType === 'GAME' && !game?.name) {
@@ -1382,8 +1277,73 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       );
     }
     return null;
-  };
+  }, [isBugChat, contextType, game, userChat, user?.id, isItemChat, groupChannel]);
 
+  if (isLoadingContext && !isEmbedded) {
+    return (
+      <div className="chat-container bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
+        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
+                  handleBackNavigation({
+                    pathname: location.pathname,
+                    locationState,
+                    navigate,
+                    setChatsFilter,
+                    contextType,
+                    gameId: id,
+                  });
+                }}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
+              </button>
+              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
+            </div>
+          </div>
+        </header>
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <MessageList
+            messages={[]}
+            onAddReaction={handleAddReaction}
+            onRemoveReaction={handleRemoveReaction}
+            onDeleteMessage={handleDeleteMessage}
+            onReplyMessage={handleReplyMessage}
+            isLoading={false}
+            isLoadingMessages={true}
+            isSwitchingChatType={false}
+            onScrollToMessage={handleScrollToMessage}
+            hasMoreMessages={false}
+            onLoadMore={loadMoreMessages}
+            isInitialLoad={true}
+            isLoadingMore={false}
+            disableReadTracking={contextType === 'USER'}
+          />
+        </main>
+      </div>
+    );
+  }
+
+
+  if (!canViewPublicChat) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('chat.accessDenied')}</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{t('chat.accessDeniedMessage')}</p>
+          <button
+            onClick={() => navigate(`/games/${id}`)}
+            className="w-full px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+          >
+            {t('common.viewGame')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const showLoadingHeader = isEmbedded && isLoadingContext;
 
@@ -1501,134 +1461,29 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 </div>
               </div>
               
-              {contextType === 'GAME' && (
-            <div className="flex items-center gap-2">
-              {isParticipant && (
-                <>
-                  <button
-                    onClick={handleToggleMute}
-                    disabled={isTogglingMute}
-                    className={`p-2 rounded-lg transition-colors ${
-                      isMuted
-                        ? 'hover:bg-orange-100 dark:hover:bg-orange-900/20'
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
-                    title={isMuted ? t('chat.unmute', { defaultValue: 'Unmute chat' }) : t('chat.mute', { defaultValue: 'Mute chat' })}
-                  >
-                    {isMuted ? (
-                      <BellOff size={20} className="text-orange-600 dark:text-orange-400" />
-                    ) : (
-                      <Bell size={20} className="text-gray-600 dark:text-gray-400" />
-                    )}
-                  </button>
-                  {isGuest && game?.entityType !== 'LEAGUE' && (
-                    <button
-                      onClick={() => setShowLeaveConfirmation(true)}
-                      className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
-                      title={t('chat.leave')}
-                    >
-                      <LogOut size={20} className="text-red-600 dark:text-red-400" />
-                    </button>
-                  )}
-                </>
+              {showHeaderActions && (
+                <ChatHeaderActions
+                  showMute={showMute}
+                  showLeave={showLeave}
+                  showParticipantsButton={contextType === 'GAME'}
+                  isMuted={isMuted}
+                  isTogglingMute={isTogglingMute}
+                  onToggleMute={handleToggleMute}
+                  onLeaveClick={() => setShowLeaveConfirmation(true)}
+                  leaveTitle={leaveTitle}
+                  game={game}
+                  onParticipantsClick={() => setShowParticipantsModal(true)}
+                />
               )}
-              <ChatParticipantsButton 
-                game={game!} 
-                onClick={() => setShowParticipantsModal(true)}
-              />
-            </div>
-          )}
-          {isBugChat && bug && (isBugParticipant || isBugCreator || isBugAdmin) && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleToggleMute}
-                disabled={isTogglingMute}
-                className={`p-2 rounded-lg transition-colors ${
-                  isMuted
-                    ? 'hover:bg-orange-100 dark:hover:bg-orange-900/20'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-                title={isMuted ? t('chat.unmute', { defaultValue: 'Unmute chat' }) : t('chat.mute', { defaultValue: 'Mute chat' })}
-              >
-                {isMuted ? (
-                  <BellOff size={20} className="text-orange-600 dark:text-orange-400" />
-                ) : (
-                  <Bell size={20} className="text-gray-600 dark:text-gray-400" />
-                )}
-              </button>
-              {!isBugCreator && (
-                <button
-                  onClick={() => setShowLeaveConfirmation(true)}
-                  className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
-                  title={t('chat.leave')}
-                >
-                  <LogOut size={20} className="text-red-600 dark:text-red-400" />
-                </button>
-              )}
-            </div>
-          )}
-          {contextType === 'USER' && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleToggleMute}
-                disabled={isTogglingMute}
-                className={`p-2 rounded-lg transition-colors ${
-                  isMuted
-                    ? 'hover:bg-orange-100 dark:hover:bg-orange-900/20'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-                title={isMuted ? t('chat.unmute', { defaultValue: 'Unmute chat' }) : t('chat.mute', { defaultValue: 'Mute chat' })}
-              >
-                {isMuted ? (
-                  <BellOff size={20} className="text-orange-600 dark:text-orange-400" />
-                ) : (
-                  <Bell size={20} className="text-gray-600 dark:text-gray-400" />
-                )}
-              </button>
-            </div>
-          )}
-          {contextType === 'GROUP' && groupChannel && (
-            <div className="flex items-center gap-2">
-              {isChannelParticipant && (
-                <button
-                  onClick={handleToggleMute}
-                  disabled={isTogglingMute}
-                  className={`p-2 rounded-lg transition-colors ${
-                    isMuted
-                      ? 'hover:bg-orange-100 dark:hover:bg-orange-900/20'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                  }`}
-                  title={isMuted ? t('chat.unmute', { defaultValue: 'Unmute chat' }) : t('chat.mute', { defaultValue: 'Mute chat' })}
-                >
-                  {isMuted ? (
-                    <BellOff size={20} className="text-orange-600 dark:text-orange-400" />
-                  ) : (
-                    <Bell size={20} className="text-gray-600 dark:text-gray-400" />
-                  )}
-                </button>
-              )}
-              {isChannelParticipant && !isChannelOwner && (
-                <button
-                  onClick={() => setShowLeaveConfirmation(true)}
-                  className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
-                  title={groupChannel.isChannel 
-                    ? t('chat.leaveChannel', { defaultValue: 'Leave Channel' })
-                    : t('chat.leaveGroup', { defaultValue: 'Leave Group' })}
-                >
-                  <LogOut size={20} className="text-red-600 dark:text-red-400" />
-                </button>
-              )}
-            </div>
-          )}
             </>
           )}
         </div>
 
-        {!showLoadingHeader && contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || isAdminOrOwner || (game?.status && game.status !== 'ANNOUNCED')) && getAvailableChatTypes().length > 1 && (
+        {!showLoadingHeader && contextType === 'GAME' && ((isParticipant && isPlayingParticipant) || isAdminOrOwner || (game?.status && game.status !== 'ANNOUNCED')) && availableChatTypes.length > 1 && (
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div className="max-w-2xl mx-auto px-4" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
               <div className="flex justify-center space-x-1 py-2">
-                {getAvailableChatTypes().map((chatType) => (
+                {availableChatTypes.map((chatType) => (
                   <button
                     key={chatType}
                     onClick={() => handleChatTypeChange(chatType)}
