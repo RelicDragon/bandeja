@@ -17,6 +17,7 @@ export interface CreateMarketItemData {
   sellerId: string;
   categoryId: string;
   cityId: string;
+  additionalCityIds?: string[];
   title: string;
   description?: string;
   mediaUrls?: string[];
@@ -42,6 +43,7 @@ export class MarketItemService {
       sellerId,
       categoryId,
       cityId,
+      additionalCityIds = [],
       title,
       description,
       mediaUrls = [],
@@ -96,6 +98,30 @@ export class MarketItemService {
       throw new ApiError(400, 'City not found');
     }
 
+    // Validate additional cities
+    if (additionalCityIds && additionalCityIds.length > 0) {
+      // Ensure primary city not in additional cities
+      if (additionalCityIds.includes(cityId)) {
+        throw new ApiError(400, 'Primary city cannot be in additional cities list');
+      }
+
+      // Validate all additional city IDs exist
+      const additionalCities = await prisma.city.findMany({
+        where: { id: { in: additionalCityIds } },
+        select: { id: true },
+      });
+
+      if (additionalCities.length !== additionalCityIds.length) {
+        throw new ApiError(400, 'One or more additional cities not found');
+      }
+
+      // Check for duplicates
+      const uniqueCities = new Set(additionalCityIds);
+      if (uniqueCities.size !== additionalCityIds.length) {
+        throw new ApiError(400, 'Duplicate cities in additional cities list');
+      }
+    }
+
     const name = title.length > 100 ? title.substring(0, 97) + '...' : title;
 
     return prisma.$transaction(async (tx) => {
@@ -104,6 +130,7 @@ export class MarketItemService {
           sellerId,
           categoryId,
           cityId,
+          additionalCityIds: additionalCityIds || [],
           title: title.trim(),
           description: description?.trim() || null,
           mediaUrls,
@@ -161,7 +188,7 @@ export class MarketItemService {
         console.error('[MarketItemService] Failed to send item message to chat:', err);
       });
       notificationService.sendNewMarketItemNotification(
-        { id: created.id, title: created.title, description: created.description, priceCents: created.priceCents, currency: created.currency, cityId: created.cityId },
+        { id: created.id, title: created.title, description: created.description, priceCents: created.priceCents, currency: created.currency, cityId: created.cityId, additionalCityIds: created.additionalCityIds },
         created.sellerId
       ).catch((err) => {
         console.error('[MarketItemService] Failed to send new market item notifications:', err);
@@ -182,7 +209,12 @@ export class MarketItemService {
     } = filters;
 
     const where: any = {};
-    if (cityId) where.cityId = cityId;
+    if (cityId) {
+      where.OR = [
+        { cityId: cityId },
+        { additionalCityIds: { has: cityId } },
+      ];
+    }
     if (categoryId) where.categoryId = categoryId;
     if (tradeType) where.tradeTypes = { has: tradeType };
     if (status) where.status = status;
@@ -262,7 +294,33 @@ export class MarketItemService {
       throw new ApiError(400, 'Can only update active items');
     }
 
-    const { categoryId, cityId, title, description, mediaUrls, tradeTypes, priceCents, currency, auctionEndsAt } = data;
+    const { categoryId, cityId, additionalCityIds, title, description, mediaUrls, tradeTypes, priceCents, currency, auctionEndsAt } = data;
+
+    // Validate additional cities if provided
+    if (additionalCityIds !== undefined && additionalCityIds.length > 0) {
+      const finalCityId = cityId ?? item.cityId;
+
+      // Ensure primary city not in additional cities
+      if (additionalCityIds.includes(finalCityId)) {
+        throw new ApiError(400, 'Primary city cannot be in additional cities list');
+      }
+
+      // Validate all additional city IDs exist
+      const additionalCities = await prisma.city.findMany({
+        where: { id: { in: additionalCityIds } },
+        select: { id: true },
+      });
+
+      if (additionalCities.length !== additionalCityIds.length) {
+        throw new ApiError(400, 'One or more additional cities not found');
+      }
+
+      // Check for duplicates
+      const uniqueCities = new Set(additionalCityIds);
+      if (uniqueCities.size !== additionalCityIds.length) {
+        throw new ApiError(400, 'Duplicate cities in additional cities list');
+      }
+    }
 
     const finalTradeTypes = tradeTypes ?? item.tradeTypes;
     const finalPriceCents = priceCents !== undefined ? priceCents : item.priceCents;
@@ -288,6 +346,7 @@ export class MarketItemService {
         data: {
           ...(categoryId && { categoryId }),
           ...(cityId && { cityId }),
+          ...(additionalCityIds !== undefined && { additionalCityIds }),
           ...(title !== undefined && { title: title.trim() }),
           ...(description !== undefined && { description: description?.trim() || null }),
           ...(mediaUrls !== undefined && { mediaUrls }),

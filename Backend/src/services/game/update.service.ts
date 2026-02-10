@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { ParticipantRole } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { GameReadService } from './read.service';
@@ -14,8 +14,13 @@ import { BarResultsService } from '../barResults.service';
 
 export class GameUpdateService {
   static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {
+    // Validate currency if provided
+    if (data.priceCurrency && !SUPPORTED_CURRENCIES.includes(data.priceCurrency)) {
+      throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
+    }
+
     const isOnlyResultsStatusUpdate = Object.keys(data).length === 1 && data.resultsStatus !== undefined;
-    
+
     if (isOnlyResultsStatusUpdate) {
       await canModifyResults(id, userId, isAdmin);
     } else {

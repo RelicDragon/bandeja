@@ -200,7 +200,7 @@ export const GameStartSection = ({
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCloseDatePicker} />
                 <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 mx-4 max-w-md w-full border border-gray-200 dark:border-gray-800">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  <h3 className="section-title mb-4">
                     {t('createGame.selectDate')}
                   </h3>
                   <CalendarComponent
@@ -357,7 +357,7 @@ export const GameStartSection = ({
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
       <div className="flex items-center gap-2 mb-3">
         <CalendarIcon size={18} className="text-gray-500 dark:text-gray-400" />
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+        <h2 className="section-title">
           {entityType === 'TOURNAMENT' ? t('createGame.gameStartTournament') :
            entityType === 'LEAGUE' ? t('createGame.gameStartLeague') :
            entityType === 'TRAINING' ? t('createGame.gameStartTraining') :

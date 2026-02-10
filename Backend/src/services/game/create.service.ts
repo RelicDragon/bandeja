@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { EntityType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
@@ -10,12 +10,17 @@ import notificationService from '../notification.service';
 
 export class GameCreateService {
   static async createGame(data: any, userId: string) {
+    // Validate currency if provided
+    if (data.priceCurrency && !SUPPORTED_CURRENCIES.includes(data.priceCurrency)) {
+      throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
+    }
+
     let entityType = data.entityType || EntityType.GAME;
     let maxParticipants = entityType === EntityType.BAR ? 999 : (data.maxParticipants || 4);
     if (entityType === EntityType.GAME && maxParticipants >= 8) {
       entityType = EntityType.TOURNAMENT;
     }
-    
+
     let cityId: string | null = null;
 
     if (data.cityId) {

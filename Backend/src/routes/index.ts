@@ -31,6 +31,7 @@ import betRoutes from './bet.routes';
 import appRoutes from './app.routes';
 import marketItemRoutes from './marketItem.routes';
 import userGameNoteRoutes from './userGameNoteRoutes';
+import currencyRoutes from './currency.routes';
 
 const router = Router();
 
@@ -66,6 +67,7 @@ router.use('/group-channels', groupChannelRoutes);
 router.use('/bets', betRoutes);
 router.use('/market-items', marketItemRoutes);
 router.use('/user-game-notes', userGameNoteRoutes);
+router.use('/currency', currencyRoutes);
 
 export default router;
 

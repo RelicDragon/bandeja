@@ -115,7 +115,7 @@ export const UserGameNotes = ({ gameId, initialContent }: UserGameNotesProps) =>
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <StickyNote size={18} className="text-gray-500 dark:text-gray-400" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="section-title">
             {t('userGameNotes.title')}
           </h2>
           {saving && (

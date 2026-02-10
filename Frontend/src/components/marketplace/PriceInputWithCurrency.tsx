@@ -1,21 +1,24 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { PriceCurrency } from '@/types';
+import { getCurrencyOptions, CURRENCY_INFO } from '@/utils/currency';
 
-const validatePriceInput = (v: string): string => {
+const validatePriceInput = (v: string, currency: PriceCurrency): string => {
   const noE = v.replace(/[eE+-]/g, '');
   const digitsAndDot = noE.replace(/[^0-9.]/g, '');
   const parts = digitsAndDot.split('.');
   if (parts.length > 2) return parts[0] + '.' + parts.slice(1).join('');
-  if (parts[1] && parts[1].length > 2) return parts[0] + '.' + parts[1].slice(0, 2);
+
+  // Get decimal places for the currency
+  const decimals = CURRENCY_INFO[currency]?.decimals || 2;
+  if (parts[1] && parts[1].length > decimals) {
+    return parts[0] + '.' + parts[1].slice(0, decimals);
+  }
+
   return digitsAndDot;
 };
 
-const CURRENCIES: { value: PriceCurrency; label: string }[] = [
-  { value: 'EUR', label: 'EUR' },
-  { value: 'RSD', label: 'RSD' },
-  { value: 'RUB', label: 'RUB' },
-];
+const CURRENCIES = getCurrencyOptions();
 
 interface PriceInputWithCurrencyProps {
   value: string;
@@ -54,7 +57,7 @@ export const PriceInputWithCurrency = ({
         type="text"
         inputMode="decimal"
         value={value}
-        onChange={(e) => onChange(validatePriceInput(e.target.value))}
+        onChange={(e) => onChange(validatePriceInput(e.target.value, currency))}
         onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
         placeholder={placeholder}
         className="flex-1 min-w-0 bg-transparent px-3 py-2 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none border-0 rounded-l-lg"

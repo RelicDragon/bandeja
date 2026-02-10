@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .section-title {
+    @apply text-base font-semibold text-gray-900 dark:text-white;
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

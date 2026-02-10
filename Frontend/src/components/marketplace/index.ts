@@ -14,3 +14,4 @@ export { MediaGalleryField } from './MediaGalleryField';
 export { MarketplaceFilters } from './MarketplaceFilters';
 export { AuctionDurationSelector } from './AuctionDurationSelector';
 export { CategorySelector } from './CategorySelector';
+export { CitySelectorField } from './CitySelectorField';

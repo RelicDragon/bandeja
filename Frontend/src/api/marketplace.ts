@@ -14,6 +14,7 @@ export interface MarketItemFilters {
 export interface MarketItemCreateData {
   categoryId: string;
   cityId?: string;
+  additionalCityIds?: string[];
   title: string;
   description?: string;
   mediaUrls?: string[];

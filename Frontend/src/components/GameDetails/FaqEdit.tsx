@@ -167,7 +167,7 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <HelpCircle size={18} className="text-gray-500 dark:text-gray-400" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="section-title">
               FAQ
             </h2>
           </div>
@@ -317,7 +317,7 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
                     </button>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white whitespace-pre-line">
+                    <h3 className="section-title whitespace-pre-line">
                       {faq.question}
                     </h3>
                     <p className="mt-2 text-gray-700 dark:text-gray-300 whitespace-pre-line">

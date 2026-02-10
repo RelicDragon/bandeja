@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Game, PriceType, PriceCurrency } from '@/types';
 import { Select } from '@/components';
 import { gamesApi } from '@/api';
+import { useAuthStore } from '@/store/authStore';
+import { getCurrencyOptions, resolveUserCurrency } from '@/utils/currency';
 import toast from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
@@ -16,6 +18,7 @@ interface EditGamePriceModalProps {
 
 export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: EditGamePriceModalProps) => {
   const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
   const [isSaving, setIsSaving] = useState(false);
   const [priceTotal, setPriceTotal] = useState<number | null | undefined>(undefined);
   const [priceType, setPriceType] = useState<PriceType>('NOT_KNOWN');
@@ -26,14 +29,14 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
     if (isOpen) {
       setPriceTotal(game.priceTotal);
       setPriceType(game.priceType || 'NOT_KNOWN');
-      setPriceCurrency(game.priceCurrency || undefined);
+      setPriceCurrency(game.priceCurrency ?? resolveUserCurrency(user?.defaultCurrency));
       if (game.priceTotal !== undefined && game.priceTotal !== null) {
         setInputValue(game.priceTotal.toString());
       } else {
         setInputValue('');
       }
     }
-  }, [isOpen, game.priceTotal, game.priceType, game.priceCurrency]);
+  }, [isOpen, game.priceTotal, game.priceType, game.priceCurrency, user?.defaultCurrency]);
 
   useEffect(() => {
     if (priceType === 'NOT_KNOWN' || priceType === 'FREE') {
@@ -163,12 +166,8 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
                   {t('createGame.priceCurrency')}
                 </label>
                 <Select
-                  options={[
-                    { value: 'EUR', label: 'EUR' },
-                    { value: 'RSD', label: 'RSD' },
-                    { value: 'RUB', label: 'RUB' },
-                  ]}
-                  value={priceCurrency || 'EUR'}
+                  options={getCurrencyOptions()}
+                  value={priceCurrency ?? resolveUserCurrency(user?.defaultCurrency)}
                   onChange={(value) => setPriceCurrency(value as PriceCurrency)}
                   disabled={false}
                 />

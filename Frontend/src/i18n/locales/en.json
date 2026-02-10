@@ -832,6 +832,7 @@
     "weekStart": "Week Start",
     "monday": "Monday",
     "sunday": "Sunday",
+    "currency": "Currency",
     "timeFormat12h": "12-hour",
     "timeFormat24h": "24-hour",
     "characterGenerator": "Character Generator",

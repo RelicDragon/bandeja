@@ -12,6 +12,7 @@ import { GameAvatar } from '@/components/GameAvatar';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { AddToCalendarModal } from '@/components';
 import { getShareUrl } from '@/utils/shareUrl';
+import { resolveUserCurrency } from '@/utils/currency';
 import { EditGameTextModal } from './EditGameTextModal';
 import { EditGamePriceModal } from './EditGamePriceModal';
 import { isCapacitor } from '@/utils/capacitor';
@@ -1026,7 +1027,7 @@ export const GameInfo = ({
                     {game.priceType === 'FREE'
                       ? t('createGame.priceTypeFree')
                       : game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
-                      ? `${game.priceTotal} ${game.priceCurrency || 'EUR'} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
+                      ? `${game.priceTotal} ${game.priceCurrency || resolveUserCurrency(user?.defaultCurrency)} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
                       : t('createGame.priceNotSet')}
                   </button>
                 ) : (
@@ -1034,7 +1035,7 @@ export const GameInfo = ({
                     {game.priceType === 'FREE'
                       ? t('createGame.priceTypeFree')
                       : game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
-                      ? `${game.priceTotal} ${game.priceCurrency || 'EUR'} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
+                      ? `${game.priceTotal} ${game.priceCurrency || resolveUserCurrency(user?.defaultCurrency)} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
                       : ''}
                   </span>
                 )}

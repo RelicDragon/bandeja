@@ -12,6 +12,7 @@ import { mediaApi } from '@/api/media';
 import { Club, Court, EntityType, GameType, PriceType, PriceCurrency, Game, BasicUser } from '@/types';
 import { addHours } from 'date-fns';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
+import { resolveUserCurrency } from '@/utils/currency';
 import { useGameTimeDuration, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 
@@ -337,7 +338,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         participants: participants.filter((id): id is string => id !== null) as any,
         priceTotal: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceTotal : undefined,
         priceType: priceType,
-        priceCurrency: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceCurrency : undefined,
+        priceCurrency: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? (priceCurrency ?? resolveUserCurrency(user?.defaultCurrency)) : undefined,
         parentId: initialGameData?.parentId,
       };
 
@@ -620,6 +621,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           priceTotal={priceTotal}
           priceType={priceType}
           priceCurrency={priceCurrency}
+          defaultCurrency={user?.defaultCurrency}
           onPriceTotalChange={setPriceTotal}
           onPriceTypeChange={setPriceType}
           onPriceCurrencyChange={setPriceCurrency}

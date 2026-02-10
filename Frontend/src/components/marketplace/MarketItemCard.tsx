@@ -1,6 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { MarketItem } from '@/types';
+import { useState, useEffect } from 'react';
+import { MarketItem, PriceCurrency } from '@/types';
 import { MapPin } from 'lucide-react';
+import { currencyCacheService } from '@/services/currencyCache.service';
+import { formatConvertedPrice } from '@/utils/currency';
 
 const TRADE_TYPE_BADGE_CLASS = {
   BUY_IT_NOW: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
@@ -13,11 +16,67 @@ interface MarketItemCardProps {
   formatPrice: (item: MarketItem) => string;
   tradeTypeLabel: Record<string, string>;
   unreadCount?: number;
+  showLocation?: boolean;
+  userCurrency: PriceCurrency;
 }
 
-export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount }: MarketItemCardProps) => {
+export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount, showLocation = false, userCurrency }: MarketItemCardProps) => {
   const navigate = useNavigate();
   const imageUrl = item.mediaUrls?.[0];
+  const [priceDisplay, setPriceDisplay] = useState<{
+    main: string;
+    original: string;
+    showBoth: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    // Convert price to user's currency if different
+    const convertPrice = async () => {
+      if (!item.priceCents || !item.currency) {
+        setPriceDisplay(null);
+        return;
+      }
+
+      const originalCurrency = item.currency as PriceCurrency;
+
+      if (originalCurrency === userCurrency) {
+        // No conversion needed
+        setPriceDisplay({
+          main: formatPrice(item),
+          original: '',
+          showBoth: false,
+        });
+      } else {
+        // Convert to user's currency
+        try {
+          const convertedCents = await currencyCacheService.convertPrice(
+            item.priceCents,
+            originalCurrency,
+            userCurrency
+          );
+
+          const formatted = formatConvertedPrice(
+            item.priceCents,
+            originalCurrency,
+            convertedCents,
+            userCurrency
+          );
+
+          setPriceDisplay(formatted);
+        } catch (err) {
+          console.warn('[MarketItemCard] Failed to convert price:', err);
+          // Fallback to original price
+          setPriceDisplay({
+            main: formatPrice(item),
+            original: '',
+            showBoth: false,
+          });
+        }
+      }
+    };
+
+    convertPrice();
+  }, [item, userCurrency, formatPrice]);
 
   const handleClick = () => {
     if (item.groupChannel?.id) {
@@ -56,9 +115,22 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount 
       )}
       <div className="p-2 mt-auto">
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{item.title}</p>
-        <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 mt-0.5">
-          {formatPrice(item)}
-        </p>
+        {priceDisplay ? (
+          <div className="mt-0.5">
+            <p className="text-sm font-semibold text-primary-600 dark:text-primary-400">
+              {priceDisplay.main}
+            </p>
+            {priceDisplay.showBoth && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {priceDisplay.original}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 mt-0.5">
+            {formatPrice(item)}
+          </p>
+        )}
         <div className="flex items-center gap-1 mt-1 flex-wrap">
           {(item.tradeTypes ?? []).filter((tt) => tt !== 'BUY_IT_NOW').map((tt) => (
             <span
@@ -68,10 +140,15 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount 
               {tradeTypeLabel[tt] || tt}
             </span>
           ))}
-          {item.city && (
+          {showLocation && item.city && (
             <span className="flex items-center gap-0.5 text-xs text-slate-500 dark:text-slate-400">
               <MapPin size={12} />
               {item.city.name}
+              {item.additionalCityIds && item.additionalCityIds.length > 0 && (
+                <span className="text-xs opacity-70">
+                  +{item.additionalCityIds.length}
+                </span>
+              )}
             </span>
           )}
         </div>

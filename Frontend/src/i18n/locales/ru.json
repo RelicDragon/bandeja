@@ -837,6 +837,7 @@
     "weekStart": "Начало недели",
     "monday": "Понедельник",
     "sunday": "Воскресенье",
+    "currency": "Валюта",
     "timeFormat12h": "12-часовой",
     "timeFormat24h": "24-часовой",
     "characterGenerator": "Генератор персонажей",

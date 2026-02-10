@@ -830,6 +830,7 @@
     "weekStart": "Почетак недеље",
     "monday": "Понедељак",
     "sunday": "Недеља",
+    "currency": "Валута",
     "timeFormat12h": "12-часовни",
     "timeFormat24h": "24-часовни",
     "characterGenerator": "Генератор карактера",

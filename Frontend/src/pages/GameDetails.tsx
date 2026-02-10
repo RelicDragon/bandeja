@@ -1262,7 +1262,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <LogOut size={18} className="text-gray-500 dark:text-gray-400" />
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    <h2 className="section-title">
                       {t(getLeaveGameText(game?.entityType || 'GAME'))}
                     </h2>
                   </div>
@@ -1327,7 +1327,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Copy size={18} className="text-gray-500 dark:text-gray-400" />
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  <h2 className="section-title">
                     {t(getDuplicateGameText(game?.entityType || 'GAME'))}
                   </h2>
                 </div>
@@ -1401,7 +1401,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Trash2 size={18} className="text-gray-500 dark:text-gray-400" />
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  <h2 className="section-title">
                     {t(getDeleteGameText(game?.entityType || 'GAME'))}
                   </h2>
                 </div>

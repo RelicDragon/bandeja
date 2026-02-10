@@ -37,6 +37,7 @@ model User {
   lastUserIP                 String?
   latitudeByIP               Float?
   longitudeByIP              Float?
+  defaultCurrency            String               @default("EUR")
   language                   String?              @default("auto")
   timeFormat                 String               @default("auto")
   weekStart                  String               @default("auto")
@@ -920,24 +921,25 @@ model MarketItemCategory {
 }
 
 model MarketItem {
-  id              String                @id @default(cuid())
-  sellerId        String
-  categoryId      String
-  cityId          String
-  title           String
-  description     String?
-  mediaUrls       String[]
-  tradeTypes      MarketItemTradeType[] @default([])
-  priceCents      Int?
-  currency        PriceCurrency         @default(EUR)
-  auctionEndsAt   DateTime?
-  status          MarketItemStatus      @default(ACTIVE)
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-  seller          User                  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  category        MarketItemCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  city            City                  @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  groupChannel    GroupChannel?
+  id                String                @id @default(cuid())
+  sellerId          String
+  categoryId        String
+  cityId            String
+  additionalCityIds String[]              @default([])
+  title             String
+  description       String?
+  mediaUrls         String[]
+  tradeTypes        MarketItemTradeType[] @default([])
+  priceCents        Int?
+  currency          PriceCurrency         @default(EUR)
+  auctionEndsAt     DateTime?
+  status            MarketItemStatus      @default(ACTIVE)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  seller            User                  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  category          MarketItemCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  city              City                  @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  groupChannel      GroupChannel?
 
   @@index([sellerId])
   @@index([categoryId])
@@ -1309,9 +1311,36 @@ enum PriceType {
 }
 
 enum PriceCurrency {
-  EUR
-  RSD
-  RUB
+  EUR  // Euro
+  USD  // US Dollar
+  GBP  // British Pound
+  JPY  // Japanese Yen
+  CNY  // Chinese Yuan
+  CHF  // Swiss Franc
+  CAD  // Canadian Dollar
+  AUD  // Australian Dollar
+  NZD  // New Zealand Dollar
+  SEK  // Swedish Krona
+  NOK  // Norwegian Krone
+  DKK  // Danish Krone
+  PLN  // Polish Zloty
+  CZK  // Czech Koruna
+  HUF  // Hungarian Forint
+  RON  // Romanian Leu
+  BGN  // Bulgarian Lev
+  RUB  // Russian Ruble
+  RSD  // Serbian Dinar
+  TRY  // Turkish Lira
+  INR  // Indian Rupee
+  BRL  // Brazilian Real
+  MXN  // Mexican Peso
+  SGD  // Singapore Dollar
+  HKD  // Hong Kong Dollar
+  KRW  // South Korean Won
+  THB  // Thai Baht
+  MYR  // Malaysian Ringgit
+  IDR  // Indonesian Rupiah
+  PHP  // Philippine Peso
 }
 
 model PushToken {
@@ -1512,4 +1541,19 @@ model UserGameNote {
   @@unique([userId, gameId])
   @@index([userId])
   @@index([gameId])
+}
+
+model ExchangeRate {
+  id               String        @id @default(cuid())
+  baseCurrency     PriceCurrency
+  targetCurrency   PriceCurrency
+  rate             Float
+  lastUpdated      DateTime      @default(now())
+  fetchedFromAPI   DateTime      @default(now())
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@unique([baseCurrency, targetCurrency])
+  @@index([baseCurrency])
+  @@index([lastUpdated])
 }

@@ -115,6 +115,49 @@ export const TIMEZONES = [
 
 export const DEFAULT_TIMEZONE = 'Europe/Paris';
 
+export const SUPPORTED_CURRENCIES = [
+  'EUR', 'USD', 'GBP', 'JPY', 'CNY', 'CHF', 'CAD', 'AUD', 'NZD',
+  'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'RON', 'BGN',
+  'RUB', 'RSD', 'TRY', 'INR', 'BRL', 'MXN',
+  'SGD', 'HKD', 'KRW', 'THB', 'MYR', 'IDR', 'PHP'
+] as const;
+
+export const DEFAULT_CURRENCY = 'EUR';
+
+// Currency names for display
+export const CURRENCY_NAMES: Record<string, string> = {
+  EUR: 'Euro',
+  USD: 'US Dollar',
+  GBP: 'British Pound',
+  JPY: 'Japanese Yen',
+  CNY: 'Chinese Yuan',
+  CHF: 'Swiss Franc',
+  CAD: 'Canadian Dollar',
+  AUD: 'Australian Dollar',
+  NZD: 'New Zealand Dollar',
+  SEK: 'Swedish Krona',
+  NOK: 'Norwegian Krone',
+  DKK: 'Danish Krone',
+  PLN: 'Polish Zloty',
+  CZK: 'Czech Koruna',
+  HUF: 'Hungarian Forint',
+  RON: 'Romanian Leu',
+  BGN: 'Bulgarian Lev',
+  RUB: 'Russian Ruble',
+  RSD: 'Serbian Dinar',
+  TRY: 'Turkish Lira',
+  INR: 'Indian Rupee',
+  BRL: 'Brazilian Real',
+  MXN: 'Mexican Peso',
+  SGD: 'Singapore Dollar',
+  HKD: 'Hong Kong Dollar',
+  KRW: 'South Korean Won',
+  THB: 'Thai Baht',
+  MYR: 'Malaysian Ringgit',
+  IDR: 'Indonesian Rupiah',
+  PHP: 'Philippine Peso',
+};
+
 export const USER_SELECT_FIELDS = {
   id: true,
   firstName: true,
@@ -158,6 +201,7 @@ export const PROFILE_SELECT_FIELDS = {
   language: true,
   timeFormat: true,
   weekStart: true,
+  defaultCurrency: true,
   sendTelegramMessages: true,
   sendTelegramInvites: true,
   sendTelegramDirectMessages: true,

@@ -89,7 +89,7 @@ export const BetSection = ({ game }: BetSectionProps) => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <CircleDollarSign size={20} className="text-amber-500 dark:text-amber-400" />
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 className="section-title">
                 {t('bets.title', { defaultValue: 'Bets' })}
               </h2>
             </div>

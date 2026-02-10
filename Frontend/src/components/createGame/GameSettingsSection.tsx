@@ -57,7 +57,7 @@ export const GameSettingsSection = ({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+        <h2 className="section-title">
           {entityType === 'TOURNAMENT' ? t('createGame.settingsTournament') :
            entityType === 'LEAGUE' ? t('createGame.settingsLeague') :
            t('createGame.settings')}

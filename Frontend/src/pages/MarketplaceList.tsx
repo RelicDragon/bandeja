@@ -7,10 +7,12 @@ import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { MarketItem, MarketItemCategory, City } from '@/types';
+import { MarketItem, MarketItemCategory, City, PriceCurrency } from '@/types';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { Button } from '@/components';
 import { MarketItemCard, MarketplaceFilters, formatPriceDisplay } from '@/components/marketplace';
+import { currencyCacheService } from '@/services/currencyCache.service';
+import { DEFAULT_CURRENCY } from '@/utils/currency';
 
 const PAGE_SIZE = 20;
 
@@ -68,7 +70,13 @@ export const MarketplaceList = () => {
   useEffect(() => {
     pageRef.current = 1;
     fetchData();
-  }, [fetchData]);
+
+    // Prefetch exchange rates for user's currency
+    const userCurrency = (user?.defaultCurrency as PriceCurrency) || DEFAULT_CURRENCY;
+    currencyCacheService.prefetch(userCurrency).catch((err) => {
+      console.warn('[MarketplaceList] Failed to prefetch currency rates:', err);
+    });
+  }, [fetchData, user?.defaultCurrency]);
 
   useEffect(() => {
     const groupIds = items
@@ -152,7 +160,15 @@ export const MarketplaceList = () => {
       ) : (
         <div className="flex flex-wrap gap-2 [&>*]:w-[calc(50%-4px)] sm:[&>*]:w-[calc(33.333%-6px)] sm:[&>*]:max-w-[200px]">
           {items.map((item) => (
-            <MarketItemCard key={item.id} item={item} formatPrice={formatPrice} tradeTypeLabel={tradeTypeLabels} unreadCount={item.groupChannel?.id ? unreadCounts[item.groupChannel.id] : undefined} />
+            <MarketItemCard
+              key={item.id}
+              item={item}
+              formatPrice={formatPrice}
+              tradeTypeLabel={tradeTypeLabels}
+              unreadCount={item.groupChannel?.id ? unreadCounts[item.groupChannel.id] : undefined}
+              showLocation={isMyTab}
+              userCurrency={(user?.defaultCurrency as PriceCurrency) || DEFAULT_CURRENCY}
+            />
           ))}
         </div>
       )}

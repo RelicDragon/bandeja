@@ -102,7 +102,7 @@ export const GameParticipants = ({
     <Card>
       <div className="flex items-center gap-2 mb-4">
         <Users size={18} className="text-gray-500 dark:text-gray-400" />
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <h2 className="section-title">
           {game.minLevel !== undefined && game.maxLevel !== undefined && game.entityType !== 'BAR' ? `${t('games.level')} ${game.minLevel.toFixed(1)}-${game.maxLevel.toFixed(1)}` : t('games.participants')}
         </h2>
         <div className="ml-auto flex items-center gap-2">

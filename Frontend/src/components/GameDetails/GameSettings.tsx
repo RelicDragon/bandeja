@@ -124,7 +124,7 @@ export const GameSettings = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Settings size={18} className="text-gray-500 dark:text-gray-400" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="section-title">
             {settingsTitle}
           </h2>
           <button

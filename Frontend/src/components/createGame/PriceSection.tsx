@@ -2,26 +2,33 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PriceType, PriceCurrency } from '@/types';
 import { Select } from '@/components';
+import { getCurrencyOptions, getCurrencySymbol, resolveUserCurrency } from '@/utils/currency';
 
 interface PriceSectionProps {
   priceTotal: number | undefined;
   priceType: PriceType;
   priceCurrency: PriceCurrency | undefined;
+  defaultCurrency?: PriceCurrency | null;
   onPriceTotalChange: (value: number | undefined) => void;
   onPriceTypeChange: (value: PriceType) => void;
   onPriceCurrencyChange: (value: PriceCurrency | undefined) => void;
 }
 
+const displayCurrency = (currency: PriceCurrency | undefined, defaultCurrency?: PriceCurrency | null) =>
+  currency ?? resolveUserCurrency(defaultCurrency ?? undefined);
+
 export const PriceSection = ({
   priceTotal,
   priceType,
   priceCurrency,
+  defaultCurrency,
   onPriceTotalChange,
   onPriceTypeChange,
   onPriceCurrencyChange,
 }: PriceSectionProps) => {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState<string>('');
+  const effectiveCurrency = displayCurrency(priceCurrency, defaultCurrency);
 
   useEffect(() => {
     if (priceTotal !== undefined && priceTotal !== null) {
@@ -34,8 +41,8 @@ export const PriceSection = ({
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-lg font-semibold text-gray-500 dark:text-gray-400">€</span>
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+        <span className="text-lg font-semibold text-gray-500 dark:text-gray-400">{getCurrencySymbol(effectiveCurrency)}</span>
+        <h2 className="section-title">
           {t('createGame.price')}
         </h2>
       </div>
@@ -89,12 +96,8 @@ export const PriceSection = ({
                 {t('createGame.priceCurrency')}
               </label>
               <Select
-                options={[
-                  { value: 'EUR', label: 'EUR' },
-                  { value: 'RSD', label: 'RSD' },
-                  { value: 'RUB', label: 'RUB' },
-                ]}
-                value={priceCurrency || 'EUR'}
+                options={getCurrencyOptions()}
+                value={effectiveCurrency}
                 onChange={(value) => onPriceCurrencyChange(value as PriceCurrency)}
                 disabled={false}
               />

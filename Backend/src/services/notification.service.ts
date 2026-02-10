@@ -637,7 +637,7 @@ class NotificationService {
   }
 
   async sendNewMarketItemNotification(
-    marketItem: { id: string; title: string; description: string | null; priceCents: number | null; currency: string; cityId: string },
+    marketItem: { id: string; title: string; description: string | null; priceCents: number | null; currency: string; cityId: string; additionalCityIds: string[] },
     sellerUserId: string
   ) {
     try {
@@ -647,9 +647,12 @@ class NotificationService {
       });
       if (!city) return;
 
+      // Collect all cities (primary + additional)
+      const allCityIds = [marketItem.cityId, ...marketItem.additionalCityIds];
+
       const recipients = await prisma.user.findMany({
         where: {
-          currentCityId: marketItem.cityId,
+          currentCityId: { in: allCityIds },
           id: { not: sellerUserId },
           OR: [
             { notificationPreferences: { some: { channelType: NotificationChannelType.PUSH, sendMarketplaceNotifications: true } } },

@@ -63,7 +63,7 @@ export const LocationSection = ({
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
         <div className="flex items-center gap-2 mb-3">
           <MapPin size={18} className="text-gray-500 dark:text-gray-400" />
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+          <h2 className="section-title">
             {entityType === 'TOURNAMENT' ? t('createGame.locationTournament') :
              entityType === 'LEAGUE' ? t('createGame.locationLeague') :
              t('createGame.location')}

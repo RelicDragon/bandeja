@@ -6,6 +6,7 @@ import { MarketItemService } from '../services/marketItem/marketItem.service';
 import { MarketItemParticipantService } from '../services/marketItem/participant.service';
 import { MarketItemStatus, MarketItemTradeType } from '@prisma/client';
 import prisma from '../config/database';
+import { SUPPORTED_CURRENCIES } from '../utils/constants';
 
 export const getMarketCategories = asyncHandler(async (_req: AuthRequest, res: Response) => {
   const categories = await prisma.marketItemCategory.findMany({
@@ -25,6 +26,7 @@ export const createMarketItem = asyncHandler(async (req: AuthRequest, res: Respo
   const {
     categoryId,
     cityId,
+    additionalCityIds,
     title,
     description,
     mediaUrls,
@@ -39,10 +41,15 @@ export const createMarketItem = asyncHandler(async (req: AuthRequest, res: Respo
     throw new ApiError(400, 'City is required. Set your city in profile or specify it.');
   }
 
+  if (currency && !SUPPORTED_CURRENCIES.includes(currency)) {
+    throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
+  }
+
   const item = await MarketItemService.createMarketItem({
     sellerId: userId,
     categoryId,
     cityId: city,
+    additionalCityIds: Array.isArray(additionalCityIds) ? additionalCityIds : undefined,
     title,
     description,
     mediaUrls: mediaUrls || [],
@@ -85,12 +92,17 @@ export const getMarketItemById = asyncHandler(async (req: AuthRequest, res: Resp
 
 export const updateMarketItem = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { categoryId, cityId, title, description, mediaUrls, tradeTypes, priceCents, currency, auctionEndsAt } =
+  const { categoryId, cityId, additionalCityIds, title, description, mediaUrls, tradeTypes, priceCents, currency, auctionEndsAt } =
     req.body;
+
+  if (currency && !SUPPORTED_CURRENCIES.includes(currency)) {
+    throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
+  }
 
   const item = await MarketItemService.updateMarketItem(id, req.userId!, {
     categoryId,
     cityId,
+    additionalCityIds: Array.isArray(additionalCityIds) ? additionalCityIds : undefined,
     title,
     description,
     mediaUrls,

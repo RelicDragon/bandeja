@@ -15,7 +15,11 @@ export type WinnerOfGame = 'BY_MATCHES_WON' | 'BY_POINTS' | 'BY_SCORES_DELTA' | 
 export type WinnerOfMatch = 'BY_SETS' | 'BY_SCORES';
 export type MatchGenerationType = 'HANDMADE' | 'FIXED' | 'RANDOM' | 'ROUND_ROBIN' | 'ESCALERA' | 'RATING' | 'WINNERS_COURT';
 export type PriceType = 'PER_PERSON' | 'PER_TEAM' | 'TOTAL' | 'NOT_KNOWN' | 'FREE';
-export type PriceCurrency = 'EUR' | 'RSD' | 'RUB';
+export type PriceCurrency =
+  | 'EUR' | 'USD' | 'GBP' | 'JPY' | 'CNY' | 'CHF' | 'CAD' | 'AUD' | 'NZD'
+  | 'SEK' | 'NOK' | 'DKK' | 'PLN' | 'CZK' | 'HUF' | 'RON' | 'BGN'
+  | 'RUB' | 'RSD' | 'TRY' | 'INR' | 'BRL' | 'MXN'
+  | 'SGD' | 'HKD' | 'KRW' | 'THB' | 'MYR' | 'IDR' | 'PHP';
 
 import type { Round } from './gameResults';
 
@@ -58,6 +62,7 @@ export interface User extends BasicUser {
   language?: string; // Full locale (e.g., "en-US", "ru-RU") or "auto"
   timeFormat?: 'auto' | '12h' | '24h';
   weekStart?: 'auto' | 'monday' | 'sunday';
+  defaultCurrency?: string;
   genderIsSet?: boolean;
   isAdmin?: boolean;
   canCreateTournament?: boolean;
@@ -456,6 +461,7 @@ export interface MarketItem {
   sellerId: string;
   categoryId: string;
   cityId: string;
+  additionalCityIds?: string[];
   title: string;
   description?: string | null;
   mediaUrls: string[];

@@ -1,28 +1,31 @@
 import { Request } from 'express';
 import prisma from '../config/database';
-import { config } from '../config/env';
+import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from '../utils/constants';
 
-interface AbstractApiResponse {
-  location?: { longitude: number; latitude: number };
+interface IpapiResponse {
+  latitude?: number;
+  longitude?: number;
+  currency?: string;
+  [key: string]: unknown;
 }
 
-const ABSTRACT_API_INTERVAL_MS = 2000;
-const abstractApiTimestamps: number[] = [];
-let abstractApiRateLimitPromise = Promise.resolve();
+const IPAPI_INTERVAL_MS = 2000;
+const ipapiTimestamps: number[] = [];
+let ipapiRateLimitPromise = Promise.resolve();
 
-async function waitAbstractApiRateLimit(): Promise<void> {
+async function waitIpapiRateLimit(): Promise<void> {
   let now = Date.now();
   const prune = () => {
     now = Date.now();
-    abstractApiTimestamps.splice(0, abstractApiTimestamps.length, ...abstractApiTimestamps.filter((t) => now - t < ABSTRACT_API_INTERVAL_MS));
+    ipapiTimestamps.splice(0, ipapiTimestamps.length, ...ipapiTimestamps.filter((t) => now - t < IPAPI_INTERVAL_MS));
   };
   prune();
-  while (abstractApiTimestamps.length >= 1) {
-    const waitMs = abstractApiTimestamps[0] + ABSTRACT_API_INTERVAL_MS - now;
+  while (ipapiTimestamps.length >= 1) {
+    const waitMs = ipapiTimestamps[0] + IPAPI_INTERVAL_MS - now;
     if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
     prune();
   }
-  abstractApiTimestamps.push(Date.now());
+  ipapiTimestamps.push(Date.now());
 }
 
 function isLocalIp(ip: string): boolean {
@@ -70,27 +73,27 @@ export async function getClientIp(req: Request): Promise<string | null> {
   return fetchExternalIp();
 }
 
-export async function getLocationByIp(ip: string): Promise<{ latitude: number; longitude: number } | null> {
+export type LocationByIp = { latitude: number; longitude: number; currency: string };
+
+export async function getLocationByIp(ip: string): Promise<LocationByIp | null> {
   const cached = await prisma.ipLocationCache.findUnique({
     where: { ip },
   });
 
-  // Check if cache exists and is not older than 1 year
   if (cached) {
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
     if (cached.createdAt > oneYearAgo) {
-      // Cache is fresh, return immediately without API call
-      return { latitude: cached.latitude, longitude: cached.longitude };
+      const meta = cached.meta as { currency?: string } | null;
+      const rawCurrency = (meta?.currency && typeof meta.currency === 'string' ? meta.currency : DEFAULT_CURRENCY).toUpperCase();
+      const currency = SUPPORTED_CURRENCIES.includes(rawCurrency as any) ? rawCurrency : DEFAULT_CURRENCY;
+      return { latitude: cached.latitude, longitude: cached.longitude, currency };
     }
-    // Cache is expired, will refetch and update below
   }
 
-  if (!config.abstractApi.apiKey) return null;
-  abstractApiRateLimitPromise = abstractApiRateLimitPromise.then(() => waitAbstractApiRateLimit());
-  await abstractApiRateLimitPromise;
-  const url = `https://ip-intelligence.abstractapi.com/v1/?api_key=${config.abstractApi.apiKey}&ip_address=${encodeURIComponent(ip)}`;
+  ipapiRateLimitPromise = ipapiRateLimitPromise.then(() => waitIpapiRateLimit());
+  await ipapiRateLimitPromise;
+  const url = `https://ipapi.co/${encodeURIComponent(ip)}/json/`;
   const fetchWithTimeout = (timeoutMs: number) => {
     const ac = new AbortController();
     const t = setTimeout(() => ac.abort(), timeoutMs);
@@ -108,25 +111,41 @@ export async function getLocationByIp(ip: string): Promise<{ latitude: number; l
     }
   }
   if (!res.ok) return null;
-  const body = (await res.json()) as AbstractApiResponse;
-  const loc = body?.location;
-  if (loc == null || typeof loc.latitude !== 'number' || typeof loc.longitude !== 'number') return null;
+  const body = (await res.json()) as IpapiResponse;
+  const lat = body?.latitude;
+  const lon = body?.longitude;
+  if (lat == null || lon == null || typeof lat !== 'number' || typeof lon !== 'number') return null;
+  const rawCurrency = (body.currency && typeof body.currency === 'string' ? body.currency : DEFAULT_CURRENCY).toUpperCase();
+  const currency = SUPPORTED_CURRENCIES.includes(rawCurrency as any) ? rawCurrency : DEFAULT_CURRENCY;
   await prisma.ipLocationCache.upsert({
     where: { ip },
-    create: { ip, latitude: loc.latitude, longitude: loc.longitude, meta: body as object },
-    update: { latitude: loc.latitude, longitude: loc.longitude, meta: body as object, createdAt: new Date() },
+    create: { ip, latitude: lat, longitude: lon, meta: body as object },
+    update: { latitude: lat, longitude: lon, meta: body as object, createdAt: new Date() },
   });
-  return { latitude: loc.latitude, longitude: loc.longitude };
+  return { latitude: lat, longitude: lon, currency };
 }
 
 export async function updateUserIpLocation(userId: string, ip: string): Promise<void> {
   if (isLocalIp(ip)) return;
   const loc = await getLocationByIp(ip);
+
+  // Check if user has manual currency setting (not "auto")
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { defaultCurrency: true },
+  });
+
+  const shouldUpdateCurrency = !user || user.defaultCurrency === 'auto' || !user.defaultCurrency;
+
   await prisma.user.update({
     where: { id: userId },
     data: {
       lastUserIP: ip,
-      ...(loc && { latitudeByIP: loc.latitude, longitudeByIP: loc.longitude }),
+      ...(loc && {
+        latitudeByIP: loc.latitude,
+        longitudeByIP: loc.longitude,
+        ...(shouldUpdateCurrency && { defaultCurrency: loc.currency }),
+      }),
     },
   });
 }

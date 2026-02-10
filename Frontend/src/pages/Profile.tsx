@@ -14,7 +14,7 @@ import { usersApi, mediaApi, authApi, NotificationPreference } from '@/api';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
 import { Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X, UserCircle, Bell } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X, UserCircle, Bell, DollarSign } from 'lucide-react';
 import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -22,6 +22,7 @@ import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { extractLanguageCode, normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { isCapacitor, getAppInfo, isIOS } from '@/utils/capacitor';
 import { AppleIcon } from '@/components/AppleIcon';
+import { getCurrencyOptions, getCurrencySymbol } from '@/utils/currency';
 
 export const ProfileContent = () => {
   const { t, i18n } = useTranslation();
@@ -45,6 +46,7 @@ export const ProfileContent = () => {
   const [language, setLanguage] = useState(normalizeLanguageForProfile(user?.language) || 'auto');
   const [timeFormat, setTimeFormat] = useState<'auto' | '12h' | '24h'>(user?.timeFormat || 'auto');
   const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday'>(user?.weekStart || 'auto');
+  const [defaultCurrency, setDefaultCurrency] = useState<string>(user?.defaultCurrency || 'auto');
 
   const [showCityModal, setShowCityModal] = useState(false);
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
@@ -267,6 +269,11 @@ export const ProfileContent = () => {
     updateProfile({ weekStart: start });
   };
 
+  const handleChangeCurrency = (currency: string) => {
+    setDefaultCurrency(currency);
+    updateProfile({ defaultCurrency: currency });
+  };
+
   const handleAllowMessagesFromNonContactsChange = (value: boolean) => {
     setAllowMessagesFromNonContacts(value);
     updateProfile({ allowMessagesFromNonContacts: value });
@@ -417,6 +424,7 @@ export const ProfileContent = () => {
       setLanguage(normalizeLanguageForProfile(user.language) || 'auto');
       setTimeFormat(user.timeFormat || 'auto');
       setWeekStart(user.weekStart || 'auto');
+      setDefaultCurrency(user.defaultCurrency || 'auto');
     }
   }, [user]);
 
@@ -934,6 +942,24 @@ export const ProfileContent = () => {
                 ]}
                 value={weekStart}
                 onChange={(value) => handleChangeWeekStart(value as 'auto' | 'monday' | 'sunday')}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('profile.currency') || 'Currency'}
+              </label>
+              <Select
+                options={[
+                  { value: 'auto', label: t('profile.auto') || 'Auto', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  ...getCurrencyOptions().map(curr => ({
+                    value: curr.value,
+                    label: `${curr.value} (${getCurrencySymbol(curr.value)}) - ${curr.label.split(' - ')[1]}`,
+                    icon: <DollarSign size={16} className="text-gray-900 dark:text-white" />
+                  }))
+                ]}
+                value={defaultCurrency}
+                onChange={handleChangeCurrency}
               />
             </div>
 

@@ -4,7 +4,7 @@ import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
 import { ImageProcessor } from '../../utils/imageProcessor';
-import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
+import { PROFILE_SELECT_FIELDS, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { config } from '../../config/env';
 import { getClientIp, updateUserIpLocation } from '../../services/ipLocation.service';
 import { NotificationChannelType } from '@prisma/client';
@@ -45,7 +45,7 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
 export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: { lastUserIP: true, latitudeByIP: true, longitudeByIP: true },
+    select: { lastUserIP: true, latitudeByIP: true, longitudeByIP: true, defaultCurrency: true },
   });
   if (!user) {
     throw new ApiError(404, 'User not found');
@@ -56,12 +56,13 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
       lastUserIP: user.lastUserIP,
       latitudeByIP: user.latitudeByIP,
       longitudeByIP: user.longitudeByIP,
+      defaultCurrency: user.defaultCurrency,
     },
   });
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, timeFormat, weekStart, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, favoriteTrainerId } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, favoriteTrainerId } = req.body;
   
   // Explicitly ignore level and socialLevel - only backend can modify these
 
@@ -72,6 +73,10 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     if (existingEmail && existingEmail.id !== req.userId) {
       throw new ApiError(400, 'Email already in use');
     }
+  }
+
+  if (defaultCurrency !== undefined && defaultCurrency !== 'auto' && !SUPPORTED_CURRENCIES.includes(defaultCurrency)) {
+    throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
   }
 
   const currentUser = await prisma.user.findUnique({
@@ -131,6 +136,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(language !== undefined && { language }),
         ...(timeFormat !== undefined && { timeFormat }),
         ...(weekStart !== undefined && { weekStart }),
+        ...(defaultCurrency !== undefined && { defaultCurrency }),
         ...(gender !== undefined && { gender }),
         ...(finalGenderIsSet !== undefined && { genderIsSet: finalGenderIsSet }),
         ...(preferredHandLeft !== undefined && { preferredHandLeft }),

@@ -6,7 +6,7 @@ import { marketplaceApi, citiesApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { MarketItemCategory, City, PriceCurrency, MarketItemTradeType } from '@/types';
 import { Button, Input, Card } from '@/components';
-import { FormField, MediaGalleryField, TradeTypeCheckboxes, PriceInputWithCurrency, priceToCents, centsToPrice, AuctionDurationSelector, CategorySelector, INPUT_CLASS } from '@/components/marketplace';
+import { FormField, MediaGalleryField, TradeTypeCheckboxes, PriceInputWithCurrency, priceToCents, centsToPrice, AuctionDurationSelector, CategorySelector, CitySelectorField, INPUT_CLASS } from '@/components/marketplace';
 import { MapPin } from 'lucide-react';
 import { pickImages } from '@/utils/photoCapture';
 
@@ -15,6 +15,7 @@ const MARKETPLACE_DRAFT_KEY = 'marketplace_create_draft';
 type DraftForm = {
   categoryId: string;
   cityId: string;
+  additionalCityIds: string[];
   title: string;
   description: string;
   mediaUrls: string[];
@@ -73,6 +74,7 @@ export const CreateMarketItem = () => {
   const [form, setForm] = useState({
     categoryId: '',
     cityId: userCityId ?? '',
+    additionalCityIds: [] as string[],
     title: '',
     description: '',
     mediaUrls: [] as string[],
@@ -96,6 +98,7 @@ export const CreateMarketItem = () => {
               ...next,
               categoryId: draft.categoryId ?? next.categoryId,
               cityId: draft.cityId ?? userCityId ?? next.cityId,
+              additionalCityIds: draft.additionalCityIds ?? [],
               title: draft.title ?? '',
               description: draft.description ?? '',
               mediaUrls: draft.mediaUrls ?? [],
@@ -124,6 +127,7 @@ export const CreateMarketItem = () => {
         setForm({
           categoryId: item.categoryId,
           cityId: item.cityId,
+          additionalCityIds: item.additionalCityIds || [],
           title: item.title,
           description: item.description || '',
           mediaUrls: item.mediaUrls || [],
@@ -176,6 +180,7 @@ export const CreateMarketItem = () => {
         await marketplaceApi.updateMarketItem(id, {
           categoryId: form.categoryId,
           cityId,
+          additionalCityIds: form.additionalCityIds,
           title: form.title.trim(),
           description: form.description.trim() || undefined,
           mediaUrls: form.mediaUrls,
@@ -191,6 +196,7 @@ export const CreateMarketItem = () => {
         const res = await marketplaceApi.createMarketItem({
           categoryId: form.categoryId,
           cityId,
+          additionalCityIds: form.additionalCityIds,
           title: form.title.trim(),
           description: form.description.trim() || undefined,
           mediaUrls: form.mediaUrls,
@@ -266,6 +272,32 @@ export const CreateMarketItem = () => {
               categories={categories}
             />
           </div>
+
+          {(() => {
+            const cityId = form.cityId || userCityId;
+            const cityName = user?.currentCity?.name ?? cities.find((c) => c.id === cityId)?.name;
+            return cityId && cityName ? (
+              <CitySelectorField
+                primaryCityId={cityId}
+                primaryCityName={cityName}
+                additionalCityIds={form.additionalCityIds}
+                cities={cities}
+                onAddCity={(newCityId) => {
+                  setForm((f) => ({
+                    ...f,
+                    additionalCityIds: [...f.additionalCityIds, newCityId],
+                  }));
+                }}
+                onRemoveCity={(removeCityId) => {
+                  setForm((f) => ({
+                    ...f,
+                    additionalCityIds: f.additionalCityIds.filter((id) => id !== removeCityId),
+                  }));
+                }}
+                disabled={loading}
+              />
+            ) : null;
+          })()}
 
           <hr className="border-gray-200 dark:border-gray-700" />
 
