@@ -621,7 +621,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           priceTotal={priceTotal}
           priceType={priceType}
           priceCurrency={priceCurrency}
-          defaultCurrency={user?.defaultCurrency}
+          defaultCurrency={user?.defaultCurrency as PriceCurrency | undefined}
           onPriceTotalChange={setPriceTotal}
           onPriceTypeChange={setPriceType}
           onPriceCurrencyChange={setPriceCurrency}

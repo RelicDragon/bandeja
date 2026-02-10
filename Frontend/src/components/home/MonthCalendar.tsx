@@ -284,8 +284,6 @@ export const MonthCalendar = ({
           const dayData = dateCellData.get(dateStr) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false };
           const gameCount = dayData.gameCount;
           const hasGames = gameCount > 0;
-          const hasLeagueTournament = dayData.hasLeagueTournament;
-          const hasTraining = dayData.hasTraining;
           const isParticipant = dayData.isUserParticipant;
 
           return (

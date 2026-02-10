@@ -367,9 +367,12 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     if (!id) return;
 
     try {
-      await gamesApi.togglePlayingStatus(id, 'PLAYING');
+      const result = await gamesApi.togglePlayingStatus(id, 'PLAYING') as { message?: string };
       const response = await gamesApi.getById(id);
       setGame(response.data);
+      if (result?.message === 'games.addedToJoinQueue') {
+        toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
+      }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));

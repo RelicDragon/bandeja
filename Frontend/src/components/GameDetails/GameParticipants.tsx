@@ -248,12 +248,12 @@ export const GameParticipants = ({
           </Button>
         )}
         {isNonPlaying && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
-          hasUnoccupiedSlots
-            ? <Button onClick={onAddToGame} size="lg" className="w-full flex items-center justify-center">
-                <UserPlus size={20} className="mr-2" />
-                {t('games.playInGame', { defaultValue: 'Play in a game' })}
-              </Button>
-            : <p className="text-sm text-center text-gray-500 dark:text-gray-400">{t('games.noSlotsAvailable', { defaultValue: 'No slots available' })}</p>
+          <Button onClick={onAddToGame} size="lg" className="w-full flex items-center justify-center">
+            <UserPlus size={20} className="mr-2" />
+            {hasUnoccupiedSlots
+              ? t('games.playInGame', { defaultValue: 'Play in a game' })
+              : t('games.joinQueue', { defaultValue: 'Join queue' })}
+          </Button>
         )}
         {(() => {
           const playingParticipants = game.participants.filter(p => p.status === 'PLAYING');

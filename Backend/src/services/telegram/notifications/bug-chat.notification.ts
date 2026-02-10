@@ -95,7 +95,7 @@ export async function sendBugChatNotification(
       ...bugParticipants.map(p => p.user.currentCityId ?? null),
       ...admins.map(a => a.currentCityId ?? null),
     ];
-    const timezoneMap = await getTimezonesByCityIds(mentionCityIds);
+    void getTimezonesByCityIds(mentionCityIds);
 
     for (const userId of mentionIds) {
       if (userId === sender.id || notifiedUserIds.has(userId)) {

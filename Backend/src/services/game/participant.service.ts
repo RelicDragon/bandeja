@@ -129,12 +129,24 @@ export class ParticipantService {
     }
 
     if (participant.status === PLAYING_STATUS) {
-      await prisma.$transaction(async (tx) => {
-        await tx.gameParticipant.update({
-          where: { id: participant.id },
-          data: { status: 'NON_PLAYING' },
+      if (participant.role === 'OWNER') {
+        await prisma.$transaction(async (tx) => {
+          await tx.gameParticipant.update({
+            where: { id: participant.id },
+            data: { status: 'NON_PLAYING' },
+          });
         });
-      });
+      } else {
+        await prisma.$transaction(async (tx) => {
+          const game = await tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } });
+          if (game?.trainerId === userId) {
+            await tx.game.update({ where: { id: gameId }, data: { trainerId: null } });
+          }
+          await tx.gameParticipant.delete({
+            where: { id: participant.id },
+          });
+        });
+      }
 
       await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_GAME);
       await GameService.updateGameReadiness(gameId);
@@ -280,13 +292,13 @@ export class ParticipantService {
       if (!game.allowDirectJoin) {
         const isOwnerOrAdmin = participant.role === 'OWNER' || participant.role === 'ADMIN';
         if (!isOwnerOrAdmin) {
-          throw new ApiError(403, 'errors.games.directJoinNotAllowed');
+          return await this.moveExistingParticipantToQueue(gameId, userId);
         }
       }
 
       const joinResult = await validatePlayerCanJoinGame(game, userId);
       if (!joinResult.canJoin) {
-        throw new ApiError(400, joinResult.reason || 'errors.games.cannotJoin');
+        return await this.moveExistingParticipantToQueue(gameId, userId);
       }
     }
 
