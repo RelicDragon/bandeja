@@ -271,6 +271,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
   }
 
   const channelsFirst = chatsFilter === 'channels';
+  const bugsFirst = chatsFilter === 'bugs';
   const renderLoadMore = (onLoad: () => void, hasMore: boolean, loadingMore: boolean) =>
     hasMore ? (
       <button
@@ -330,7 +331,39 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
 
   return (
     <>
-      {channelsFirst ? (
+      {bugsFirst ? (
+        <>
+          {renderBugsSection()}
+          {messages.length > 0 && (
+            <CollapsibleSection
+              title={t('chat.searchUserGroupSection', { defaultValue: 'User & group chats' })}
+              expanded={messagesExpanded}
+              onToggle={onMessagesToggle ?? (() => {})}
+              icon={MessageCircle}
+            >
+              {messages.map((r) => (
+                <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
+              ))}
+              {renderLoadMore(loadMoreMessages, messagesHasMore, loadingMessages)}
+            </CollapsibleSection>
+          )}
+          {renderGamesSection()}
+          {channelMessages.length > 0 && (
+            <CollapsibleSection
+              title={t('chat.searchChannelsMessagesSection', { defaultValue: "Channels' messages" })}
+              expanded={channelsExpanded}
+              onToggle={onChannelsToggle ?? (() => {})}
+              icon={Hash}
+            >
+              {channelMessages.map((r) => (
+                <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
+              ))}
+              {renderLoadMore(loadMoreChannels, channelHasMore, loadingChannels)}
+            </CollapsibleSection>
+          )}
+          {renderMarketSection()}
+        </>
+      ) : channelsFirst ? (
         <>
           {channelMessages.length > 0 && (
             <CollapsibleSection

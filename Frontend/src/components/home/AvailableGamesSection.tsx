@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Card, GameCard, Button } from '@/components';
 import { Game } from '@/types';
-import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy } from 'lucide-react';
+import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy, Users } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { format, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
@@ -42,35 +42,40 @@ export const AvailableGamesSection = ({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [listViewStartDate, setListViewStartDate] = useState<Date>(new Date());
   const [userFilter, setUserFilter] = useState(false);
+  const [gameFilter, setGameFilter] = useState(false);
   const [trainingFilter, setTrainingFilter] = useState(false);
   const [tournamentFilter, setTournamentFilter] = useState(false);
   const [leaguesFilter, setLeaguesFilter] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   const userFilterVal = externalFilters?.userFilter ?? userFilter;
+  const gameFilterVal = externalFilters?.gameFilter ?? gameFilter;
   const trainingFilterVal = externalFilters?.trainingFilter ?? trainingFilter;
   const tournamentFilterVal = externalFilters?.tournamentFilter ?? tournamentFilter;
   const leaguesFilterVal = externalFilters?.leaguesFilter ?? leaguesFilter;
 
   const setUserFilterVal = (v: boolean) => (onFilterChange ? onFilterChange('userFilter', v) : setUserFilter(v));
 
-  const setEntityFilters = (training: boolean, tournament: boolean, leagues: boolean) => {
+  const setEntityFilters = (game: boolean, training: boolean, tournament: boolean, leagues: boolean) => {
     if (onFiltersChange) {
-      onFiltersChange({ trainingFilter: training, tournamentFilter: tournament, leaguesFilter: leagues });
+      onFiltersChange({ gameFilter: game, trainingFilter: training, tournamentFilter: tournament, leaguesFilter: leagues });
     } else {
+      setGameFilter(game);
       setTrainingFilter(training);
       setTournamentFilter(tournament);
       setLeaguesFilter(leagues);
     }
   };
 
-  const handleEntityFilterClick = (type: 'training' | 'tournament' | 'leagues') => {
-    if (type === 'training') {
-      setEntityFilters(!trainingFilterVal, false, false);
+  const handleEntityFilterClick = (type: 'game' | 'training' | 'tournament' | 'leagues') => {
+    if (type === 'game') {
+      setEntityFilters(!gameFilterVal, false, false, false);
+    } else if (type === 'training') {
+      setEntityFilters(false, !trainingFilterVal, false, false);
     } else if (type === 'tournament') {
-      setEntityFilters(false, !tournamentFilterVal, false);
+      setEntityFilters(false, false, !tournamentFilterVal, false);
     } else {
-      setEntityFilters(false, false, !leaguesFilterVal);
+      setEntityFilters(false, false, false, !leaguesFilterVal);
     }
   };
   const lastDateRangeRef = useRef<{ start: string; end: string } | null>(null);
@@ -80,6 +85,7 @@ export const AvailableGamesSection = ({
       const filters = await getGameFilters();
       if (!externalFilters) {
         setUserFilter(filters.userFilter);
+        setGameFilter(filters.gameFilter ?? false);
         setTrainingFilter(filters.trainingFilter);
         setTournamentFilter(filters.tournamentFilter ?? false);
         setLeaguesFilter(filters.leaguesFilter ?? false);
@@ -87,14 +93,21 @@ export const AvailableGamesSection = ({
       if (filters.activeTab) {
         setFindViewMode(filters.activeTab);
       }
-      
+
       if (filters.listViewStartDate) {
         const restoredDate = new Date(filters.listViewStartDate);
         if (!isNaN(restoredDate.getTime())) {
           setListViewStartDate(restoredDate);
         }
       }
-      
+
+      if (filters.calendarSelectedDate) {
+        const restoredDate = new Date(filters.calendarSelectedDate);
+        if (!isNaN(restoredDate.getTime())) {
+          setSelectedDate(restoredDate);
+        }
+      }
+
       setIsInitialized(true);
     };
     loadFilters();
@@ -106,15 +119,17 @@ export const AvailableGamesSection = ({
     const saveFilters = async () => {
       await setGameFilters({
         userFilter: userFilterVal,
+        gameFilter: gameFilterVal,
         trainingFilter: trainingFilterVal,
         tournamentFilter: tournamentFilterVal,
         leaguesFilter: leaguesFilterVal,
         activeTab: findViewMode,
         listViewStartDate: findViewMode === 'list' ? listViewStartDate.toISOString() : undefined,
+        calendarSelectedDate: findViewMode === 'calendar' ? selectedDate.toISOString() : undefined,
       });
     };
     saveFilters();
-  }, [isInitialized, userFilterVal, trainingFilterVal, tournamentFilterVal, leaguesFilterVal, findViewMode, listViewStartDate]);
+  }, [isInitialized, userFilterVal, gameFilterVal, trainingFilterVal, tournamentFilterVal, leaguesFilterVal, findViewMode, listViewStartDate, selectedDate]);
 
   const handleCityClick = () => {
     toast(t('games.switchCityInProfile'));
@@ -242,6 +257,10 @@ export const AvailableGamesSection = ({
       }
     }
 
+    if (gameFilterVal && game.entityType !== 'GAME') {
+      return false;
+    }
+
     if (trainingFilterVal && game.entityType !== 'TRAINING') {
       return false;
     }
@@ -274,15 +293,50 @@ export const AvailableGamesSection = ({
   return (
     <div className="mt-2">
       <div className="mb-4">
-        <div className="flex items-center justify-center mb-3">
-          <button 
+        <div className="flex items-center justify-between mb-3 max-w-md mx-auto">
+          <button
             onClick={handleCityClick}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
           >
-            <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <MapPin size={16} className="text-primary-600 dark:text-primary-400" />
+            <span className="text-sm font-medium text-gray-900 dark:text-white">
               {user?.currentCity?.name || t('auth.selectCity')}
-            </h2>
+            </span>
+          </button>
+          <button
+            onClick={() => setUserFilterVal(!userFilterVal)}
+            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors ${
+              userFilterVal
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <Filter size={16} className={userFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={userFilterVal ? 'currentColor' : 'none'} />
+            <span className="text-xs font-medium">{t('games.availableForMe', { defaultValue: 'Available for me' })}</span>
+          </button>
+        </div>
+        <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
+          <button
+            onClick={() => handleEntityFilterClick('game')}
+            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
+              gameFilterVal
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <Users size={18} className={gameFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={gameFilterVal ? 'currentColor' : 'none'} />
+            <span className="text-sm font-medium">{t('games.entityTypes.GAME', { defaultValue: 'Games' })}</span>
+          </button>
+          <button
+            onClick={() => handleEntityFilterClick('tournament')}
+            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
+              tournamentFilterVal
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <Swords size={18} className={tournamentFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={tournamentFilterVal ? 'currentColor' : 'none'} />
+            <span className="text-sm font-medium">{t('games.entityTypes.TOURNAMENT', { defaultValue: 'Tournament' })}</span>
           </button>
         </div>
         <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
@@ -296,30 +350,6 @@ export const AvailableGamesSection = ({
           >
             <Dumbbell size={18} className={trainingFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={trainingFilterVal ? 'currentColor' : 'none'} />
             <span className="text-sm font-medium">{t('games.training', { defaultValue: 'Training' })}</span>
-          </button>
-          <button
-            onClick={() => setUserFilterVal(!userFilterVal)}
-            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-              userFilterVal
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
-          >
-            <Filter size={18} className={userFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={userFilterVal ? 'currentColor' : 'none'} />
-            <span className="text-sm font-medium">{t('games.availableForMe', { defaultValue: 'Available for me' })}</span>
-          </button>
-        </div>
-        <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
-          <button
-            onClick={() => handleEntityFilterClick('tournament')}
-            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-              tournamentFilterVal
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
-          >
-            <Swords size={18} className={tournamentFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={tournamentFilterVal ? 'currentColor' : 'none'} />
-            <span className="text-sm font-medium">{t('games.entityTypes.TOURNAMENT', { defaultValue: 'Tournament' })}</span>
           </button>
           <button
             onClick={() => handleEntityFilterClick('leagues')}
@@ -357,6 +387,7 @@ export const AvailableGamesSection = ({
             onDateSelect={handleDateSelect}
             availableGames={availableGames}
             userFilter={userFilterVal}
+            gameFilter={gameFilterVal}
             trainingFilter={trainingFilterVal}
             tournamentFilter={tournamentFilterVal}
             leaguesFilter={leaguesFilterVal}
@@ -368,7 +399,7 @@ export const AvailableGamesSection = ({
           {filteredGames.length === 0 ? (
             <Card className="text-center py-12">
               <p className="text-gray-600 dark:text-gray-400">
-                {trainingFilterVal ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : tournamentFilterVal ? t('games.noTournamentFound', { defaultValue: 'No tournament found' }) : leaguesFilterVal ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' }) : t('games.noGamesFound')}
+                {gameFilterVal ? t('games.noGamesFound', { defaultValue: 'No games found' }) : trainingFilterVal ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : tournamentFilterVal ? t('games.noTournamentFound', { defaultValue: 'No tournament found' }) : leaguesFilterVal ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' }) : t('games.noGamesFound')}
               </p>
             </Card>
           ) : (
@@ -410,7 +441,7 @@ export const AvailableGamesSection = ({
           {filteredGames.length === 0 ? (
             <Card className="text-center py-12">
               <p className="text-gray-600 dark:text-gray-400">
-                {trainingFilterVal ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : tournamentFilterVal ? t('games.noTournamentFound', { defaultValue: 'No tournament found' }) : leaguesFilterVal ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' }) : t('games.noGamesFound')}
+                {gameFilterVal ? t('games.noGamesFound', { defaultValue: 'No games found' }) : trainingFilterVal ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : tournamentFilterVal ? t('games.noTournamentFound', { defaultValue: 'No tournament found' }) : leaguesFilterVal ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' }) : t('games.noGamesFound')}
               </p>
             </Card>
           ) : (

@@ -462,7 +462,7 @@ export const GameCard = ({
             {game.entityType === 'TRAINING' && (() => {
               const trainer = game.trainerId ? participants.find(p => p.userId === game.trainerId) : null;
               return trainer ? (
-                <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
+                <div className="flex-shrink-0 flex flex-col items-center gap-0.5 p-2 border-2 border-green-300 dark:border-green-700 rounded-lg bg-green-50/30 dark:bg-green-900/10">
                   <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
                   <PlayerAvatar player={trainer.user} extrasmall={true} showName={true} />
                 </div>
@@ -518,23 +518,35 @@ export const GameCard = ({
                 </div>
               )}
               {game.entityType !== 'BAR' && (
-                <div className="flex items-center gap-2">
-                  <Users size={16} />
-                  <span>
-                    {`${participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
-                  </span>
-                  {game.minLevel !== undefined && game.maxLevel !== undefined && (
-                    <>
-                      <span className="text-gray-400 dark:text-gray-500">•</span>
+                <>
+                  <div className="flex items-center gap-2">
+                    <Users size={16} />
+                    <span>
+                      {`${participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
+                    </span>
+                    {!game.trainerId && game.minLevel !== undefined && game.maxLevel !== undefined && (
+                      <>
+                        <span className="text-gray-400 dark:text-gray-500">•</span>
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                          {t('games.level')}:
+                        </span>
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          {game.minLevel.toFixed(1)}-{game.maxLevel.toFixed(1)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {game.trainerId && game.minLevel !== undefined && game.maxLevel !== undefined && (
+                    <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                         {t('games.level')}:
                       </span>
                       <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                         {game.minLevel.toFixed(1)}-{game.maxLevel.toFixed(1)}
                       </span>
-                    </>
+                    </div>
                   )}
-                </div>
+                </>
               )}
             </div>
             )}
@@ -544,7 +556,7 @@ export const GameCard = ({
             {game.entityType === 'TRAINING' && (() => {
               const trainer = game.trainerId ? participants.find(p => p.userId === game.trainerId) : null;
               return trainer ? (
-                <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
+                <div className="flex-shrink-0 flex flex-col items-center gap-0.5 p-2 border-2 border-green-300 dark:border-green-700 rounded-lg bg-green-50/30 dark:bg-green-900/10">
                   <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
                   <PlayerAvatar player={trainer.user} extrasmall={true} showName={true} />
                 </div>
@@ -590,23 +602,35 @@ export const GameCard = ({
               </div>
             )}
             {game.entityType !== 'BAR' && (
-              <div className="flex items-center gap-2">
-                <Users size={16} />
-                <span>
-                  {`${participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
-                </span>
-                {game.minLevel !== undefined && game.maxLevel !== undefined && (
-                  <>
-                    <span className="text-gray-400 dark:text-gray-500">•</span>
+              <>
+                <div className="flex items-center gap-2">
+                  <Users size={16} />
+                  <span>
+                    {`${participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
+                  </span>
+                  {!game.trainerId && game.minLevel !== undefined && game.maxLevel !== undefined && (
+                    <>
+                      <span className="text-gray-400 dark:text-gray-500">•</span>
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        {t('games.level')}:
+                      </span>
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        {game.minLevel.toFixed(1)}-{game.maxLevel.toFixed(1)}
+                      </span>
+                    </>
+                  )}
+                </div>
+                {game.trainerId && game.minLevel !== undefined && game.maxLevel !== undefined && (
+                  <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                       {t('games.level')}:
                     </span>
                     <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                       {game.minLevel.toFixed(1)}-{game.maxLevel.toFixed(1)}
                     </span>
-                  </>
+                  </div>
                 )}
-              </div>
+              </>
             )}
             </div>
             )}

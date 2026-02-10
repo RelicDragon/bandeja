@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Trophy, Star, Dumbbell } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enUS, ru, es, sr } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ interface MonthCalendarProps {
   onDateSelect: (date: Date) => void;
   availableGames: Game[];
   userFilter?: boolean;
+  gameFilter?: boolean;
   trainingFilter?: boolean;
   tournamentFilter?: boolean;
   leaguesFilter?: boolean;
@@ -32,6 +33,7 @@ export const MonthCalendar = ({
   onDateSelect,
   availableGames,
   userFilter = false,
+  gameFilter = false,
   trainingFilter = false,
   tournamentFilter = false,
   leaguesFilter = false,
@@ -105,6 +107,10 @@ export const MonthCalendar = ({
         }
       }
 
+      if (gameFilter && game.entityType !== 'GAME') {
+        return;
+      }
+
       if (trainingFilter && game.entityType !== 'TRAINING') {
         return;
       }
@@ -142,7 +148,7 @@ export const MonthCalendar = ({
     });
 
     return dataMap;
-  }, [availableGames, userFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user?.id, user?.level, user?.blockedUserIds]);
+  }, [availableGames, userFilter, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user?.id, user?.level, user?.blockedUserIds]);
 
   const handlePreviousMonth = () => {
     isNavigatingRef.current = true;
@@ -344,64 +350,12 @@ export const MonthCalendar = ({
                   ${visibleDays.has(index) ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
                   ${!isCurrentMonth
                     ? 'bg-gray-400 dark:bg-gray-600 text-gray-300 dark:text-gray-400'
-                    : isSelected 
+                    : isSelected
                     ? 'bg-white text-primary-500 border-2 border-primary-500'
                     : 'bg-green-500 dark:bg-green-600 text-white'
                   }
                 `}>
                   {gameCount}
-                </span>
-              )}
-              {hasLeagueTournament && (
-                <span className={`
-                  absolute -bottom-1 -right-1 flex items-center justify-center
-                  w-[18px] h-[18px] rounded-full
-                  transition-all duration-300
-                  ${visibleDays.has(index) ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
-                  ${!isCurrentMonth
-                    ? 'bg-gray-400 dark:bg-gray-600'
-                    : isSelected 
-                    ? 'bg-white text-primary-500 border-2 border-primary-500' 
-                    : 'bg-green-500 dark:bg-green-600 text-white'
-                  }
-                `}>
-                  <Trophy 
-                    size={12} 
-                    className={`
-                      ${!isCurrentMonth
-                        ? 'text-gray-300 dark:text-gray-400'
-                        : isSelected 
-                        ? 'text-primary-500' 
-                        : 'text-white'
-                      }
-                    `}
-                  />
-                </span>
-              )}
-              {hasTraining && (
-                <span className={`
-                  absolute -bottom-1 -left-1 flex items-center justify-center
-                  w-[18px] h-[18px] rounded-full
-                  transition-all duration-300
-                  ${visibleDays.has(index) ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
-                  ${!isCurrentMonth
-                    ? 'bg-gray-400 dark:bg-gray-600'
-                    : isSelected 
-                    ? 'bg-white text-primary-500 border-2 border-primary-500' 
-                    : 'bg-blue-500 dark:bg-blue-600 text-white'
-                  }
-                `}>
-                  <Dumbbell 
-                    size={12} 
-                    className={`
-                      ${!isCurrentMonth
-                        ? 'text-gray-300 dark:text-gray-400'
-                        : isSelected 
-                        ? 'text-primary-500' 
-                        : 'text-white'
-                      }
-                    `}
-                  />
                 </span>
               )}
             </button>

@@ -694,7 +694,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     });
   }, [filteredActiveChats, cityUserIds, user?.id]);
 
-  const isSearchMode = debouncedSearchQuery.trim().length > 0 && (chatsFilter === 'users' || chatsFilter === 'channels');
+  const isSearchMode = debouncedSearchQuery.trim().length > 0 && (chatsFilter === 'users' || chatsFilter === 'channels' || chatsFilter === 'bugs');
 
   const handleContactClick = useCallback(async (userId: string) => {
     if (!user) return;
