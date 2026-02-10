@@ -163,12 +163,20 @@
     "create": "Create",
     "withdrawConfirm": "Withdraw this listing?",
     "withdrawn": "Listing withdrawn",
+    "withdrawFailed": "Failed to withdraw listing",
+    "priceNotSet": "Price not set",
     "itemNotFound": "Listing not found",
     "openChat": "Open chat",
     "joinChat": "Join chat",
     "discussListing": "Discuss listing",
     "edit": "Edit",
-    "withdraw": "Withdraw"
+    "withdraw": "Withdraw",
+    "status": {
+      "active": "Active",
+      "sold": "Sold",
+      "reserved": "Reserved",
+      "withdrawn": "Withdrawn"
+    }
   },
   "chats": {
     "users": "Users",
@@ -1264,6 +1272,8 @@
   "common": {
     "yes": "Yes",
     "no": "No",
+    "showDetails": "Show Details",
+    "hideDetails": "Hide Details",
     "accept": "Accept",
     "decline": "Decline",
     "ok": "OK",
@@ -1295,6 +1305,7 @@
     "user": "User",
     "noResults": "No results found",
     "remove": "Remove",
+    "removing": "Removing...",
     "unmark": "Unmark",
     "upload": "Upload",
     "uploading": "Uploading...",

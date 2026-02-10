@@ -163,12 +163,20 @@
     "create": "Креирај",
     "withdrawConfirm": "Повући овај оглас?",
     "withdrawn": "Оглас повучен",
+    "withdrawFailed": "Неуспешно повлачење огласа",
+    "priceNotSet": "Цена није постављена",
     "itemNotFound": "Оглас није пронађен",
     "openChat": "Отвори ћаскање",
     "joinChat": "Придружи се ћаскању",
     "discussListing": "Дискутуј о огласу",
     "edit": "Уреди",
-    "withdraw": "Повуци"
+    "withdraw": "Повуци",
+    "status": {
+      "active": "Активан",
+      "sold": "Продат",
+      "reserved": "Резервисан",
+      "withdrawn": "Повучен"
+    }
   },
   "chats": {
     "users": "Корисници",
@@ -1231,6 +1239,8 @@
   "common": {
     "yes": "Да",
     "no": "Не",
+    "showDetails": "Prikaži detalje",
+    "hideDetails": "Sakrij detalje",
     "accept": "Прихвати",
     "decline": "Одбиј",
     "ok": "ОК",
@@ -1261,6 +1271,7 @@
     "user": "Корисник",
     "noResults": "Резултати нису пронађени",
     "remove": "Уклони",
+    "removing": "Уклањање...",
     "unmark": "Уклони ознаку",
     "upload": "Отпреми",
     "uploading": "Отпремање...",

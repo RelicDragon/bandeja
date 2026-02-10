@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus } from 'lucide-react';
-import { Button, PlayerAvatar, AvatarUpload } from '@/components';
+import { Button, PlayerAvatar } from '@/components';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
 import { GroupChannel, GroupChannelParticipant } from '@/api/chat';
 import { chatApi } from '@/api/chat';
@@ -10,6 +10,7 @@ import { mediaApi } from '@/api/media';
 import { useAuthStore } from '@/store/authStore';
 import { matchesSearch } from '@/utils/transliteration';
 import { GroupChannelInvitesModal } from '@/components/chat/GroupChannelInvitesModal';
+import { ChannelContextPanel } from '@/components/chat/panels';
 
 interface GroupChannelSettingsProps {
   groupChannel: GroupChannel;
@@ -37,6 +38,8 @@ export const GroupChannelSettings = ({
   const [nameError, setNameError] = useState<string | null>(null);
   const [showInvitesModal, setShowInvitesModal] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+
+  const canEditBug = user?.isAdmin || false;
 
   const currentUserParticipant = useMemo(
     () => participants.find(p => p.userId === user?.id),
@@ -264,55 +267,20 @@ export const GroupChannelSettings = ({
   return (
     <div className="h-full overflow-y-auto bg-[#eefbfc] dark:bg-gray-900" ref={scrollContainerRef}>
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-          <div className="space-y-6">
-            <div className="flex justify-center">
-              <AvatarUpload
-                currentAvatar={groupChannelData.avatar || undefined}
-                onUpload={handleAvatarUpload}
-                onRemove={handleAvatarRemove}
-                disabled={!canEdit}
-              />
-            </div>
-
-            <div>
-              {canEdit ? (
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => {
-                      setName(e.target.value);
-                      setNameError(null);
-                    }}
-                    onBlur={handleSaveName}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSaveName();
-                      }
-                    }}
-                    disabled={isSavingName}
-                    maxLength={100}
-                    className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none ${
-                      nameError ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
-                    }`}
-                    placeholder={groupChannelData.isChannel 
-                      ? t('chat.channelNamePlaceholder', { defaultValue: 'Enter channel name' })
-                      : t('chat.groupNamePlaceholder', { defaultValue: 'Enter group name' })}
-                  />
-                  {nameError && (
-                    <p className="text-sm text-red-500 dark:text-red-400">{nameError}</p>
-                  )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {name.length}/100
-                  </p>
-                </div>
-              ) : (
-                <div className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm">
-                  {groupChannelData.name}
-                </div>
-              )}
-            </div>
-          </div>
+          <ChannelContextPanel
+            groupChannel={groupChannelData}
+            name={name}
+            setName={setName}
+            canEdit={canEdit}
+            isSavingName={isSavingName}
+            nameError={nameError}
+            setNameError={setNameError}
+            onSaveName={handleSaveName}
+            onAvatarUpload={(file: File) => handleAvatarUpload(file, file)}
+            onAvatarRemove={handleAvatarRemove}
+            canEditBug={canEditBug}
+            onUpdate={onUpdate}
+          />
 
           {canEdit && (
             <Button

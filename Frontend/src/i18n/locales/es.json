@@ -163,12 +163,20 @@
     "create": "Crear",
     "withdrawConfirm": "¿Retirar este anuncio?",
     "withdrawn": "Anuncio retirado",
+    "withdrawFailed": "Error al retirar anuncio",
+    "priceNotSet": "Precio no establecido",
     "itemNotFound": "Anuncio no encontrado",
     "openChat": "Abrir chat",
     "joinChat": "Unirse al chat",
     "discussListing": "Discutir anuncio",
     "edit": "Editar",
-    "withdraw": "Retirar"
+    "withdraw": "Retirar",
+    "status": {
+      "active": "Activo",
+      "sold": "Vendido",
+      "reserved": "Reservado",
+      "withdrawn": "Retirado"
+    }
   },
   "chats": {
     "users": "Usuarios",
@@ -1219,6 +1227,8 @@
   "common": {
     "yes": "Sí",
     "no": "No",
+    "showDetails": "Mostrar detalles",
+    "hideDetails": "Ocultar detalles",
     "accept": "Aceptar",
     "decline": "Rechazar",
     "ok": "OK",
@@ -1249,6 +1259,7 @@
     "user": "Usuario",
     "noResults": "No se encontraron resultados",
     "remove": "Eliminar",
+    "removing": "Eliminando...",
     "unmark": "Desmarcar",
     "upload": "Subir",
     "uploading": "Subiendo...",

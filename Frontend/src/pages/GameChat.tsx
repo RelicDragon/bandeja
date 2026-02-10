@@ -27,6 +27,7 @@ import { MessageCircle, ArrowLeft, MapPin, Camera, Bug as BugIcon, Users, Hash, 
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { ChatHeaderActions } from '@/components/chat/ChatHeaderActions';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
+import { ChatContextPanel } from '@/components/chat/contextPanels';
 import { MarketItemPanel } from '@/components/marketplace';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { RequestToChat } from '@/components/chat/RequestToChat';
@@ -1545,6 +1546,22 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           marginBottom: isCapacitor() && keyboardHeight > 0 ? `${keyboardHeight}px` : '0px'
         }}
       >
+        {/* Context-aware collapsible panel - overhangs the chat */}
+        {!showLoadingHeader && !showParticipantsPage && !showItemPage && (
+          <ChatContextPanel
+            contextType={contextType}
+            bug={bug}
+            marketItem={groupChannel?.marketItem}
+            groupChannel={groupChannel}
+            canEditBug={isBugAdmin}
+            onUpdate={() => {
+              if (id) {
+                loadContext();
+                setTimeout(() => loadMessages(), 500);
+              }
+            }}
+          />
+        )}
         {contextType === 'GROUP' && isItemChat && (showItemPage || isItemPageAnimating) && groupChannel?.marketItem && (
           <div 
             className={`absolute inset-0 h-full transition-all duration-300 ease-in-out bg-gray-50 dark:bg-gray-900 ${
