@@ -54,17 +54,12 @@ export const BugInfoPanel = ({ bug, canEdit, onUpdate }: BugInfoPanelProps) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 space-y-4">
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-        <BugIcon size={18} className="text-red-500" />
-        {t('bug.information', { defaultValue: 'Bug Information' })}
-      </h3>
+      <BugIcon size={16} className="text-red-500" />
 
       {/* Bug Text */}
-      <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-        <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words">
-          {bugData.text}
-        </p>
-      </div>
+      <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words">
+        {bugData.text}
+      </p>
 
       {/* Bug Type and Status Selectors (only for admins) */}
       {canEdit && (
