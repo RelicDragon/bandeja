@@ -118,6 +118,7 @@ model User {
   pollVotes              PollVote[]
   marketItems            MarketItem[]
   trainedGames           Game[]               @relation("GameTrainer")
+  buyerGroupChannels     GroupChannel[]       @relation("GroupChannelBuyer")
 
   @@index([phone])
   @@index([telegramId])
@@ -939,7 +940,7 @@ model MarketItem {
   seller            User                  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   category          MarketItemCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   city              City                  @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  groupChannel      GroupChannel?
+  groupChannels     GroupChannel[]
 
   @@index([sellerId])
   @@index([categoryId])
@@ -955,7 +956,8 @@ model GroupChannel {
   originalAvatar       String?
   cityId               String?
   bugId                String?                 @unique
-  marketItemId         String?                 @unique
+  marketItemId         String?
+  buyerId              String?
   isChannel            Boolean                 @default(false)
   isPublic             Boolean                 @default(true)
   participantsCount    Int                     @default(0)
@@ -965,14 +967,17 @@ model GroupChannel {
   city                 City?                   @relation("GroupChannelCity", fields: [cityId], references: [id], onDelete: SetNull)
   bug                  Bug?                    @relation(fields: [bugId], references: [id], onDelete: Cascade)
   marketItem           MarketItem?              @relation(fields: [marketItemId], references: [id], onDelete: Cascade)
+  buyer                User?                   @relation("GroupChannelBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
   participants         GroupChannelParticipant[]
   invites              GroupChannelInvite[]
 
+  @@unique([marketItemId, buyerId], name: "GroupChannel_marketItemId_buyerId_key")
   @@index([isPublic])
   @@index([isChannel])
   @@index([cityId])
   @@index([bugId])
   @@index([marketItemId])
+  @@index([buyerId])
 }
 
 model GroupChannelParticipant {

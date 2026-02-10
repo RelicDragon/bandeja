@@ -395,6 +395,11 @@ class SocketService {
     if (contextType === 'USER' && eventType === 'message') {
       this.emitUserChatMessageToUsers(contextId, data.message, messageId);
     }
+
+    // For group channels, also emit directly to all participants
+    if (contextType === 'GROUP' && eventType === 'message') {
+      this.emitGroupChannelMessageToParticipants(contextId, data.message, messageId);
+    }
   }
 
   public async emitUserChatMessageToUsers(chatId: string, message: any, messageId?: string) {
@@ -435,6 +440,39 @@ class SocketService {
       }
     } catch (error) {
       console.error('Failed to emit user chat message to individual users:', error);
+    }
+  }
+
+  public async emitGroupChannelMessageToParticipants(groupChannelId: string, message: any, messageId?: string) {
+    try {
+      const groupChannel = await prisma.groupChannel.findUnique({
+        where: { id: groupChannelId },
+        include: {
+          participants: {
+            select: { userId: true }
+          }
+        }
+      });
+
+      if (groupChannel) {
+        // Emit to all participants (including sender to ensure they see their own message)
+        groupChannel.participants.forEach(participant => {
+          this.connectedUsers.get(participant.userId)?.forEach(socketId => {
+            const socket = this.io.sockets.sockets.get(socketId);
+            if (socket) {
+              socket.emit('chat:message', {
+                contextType: 'GROUP',
+                contextId: groupChannelId,
+                messageId,
+                timestamp: new Date().toISOString(),
+                message
+              });
+            }
+          });
+        });
+      }
+    } catch (error) {
+      console.error('Failed to emit group channel message to individual participants:', error);
     }
   }
 

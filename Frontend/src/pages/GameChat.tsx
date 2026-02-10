@@ -42,6 +42,8 @@ interface LocationState {
   initialChatType?: ChatType;
   contextType?: ChatContextType;
   chat?: UserChatType;
+  forceReload?: number;
+  fromExpressInterest?: boolean;
 }
 
 interface GameChatProps {
@@ -625,39 +627,33 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   const handleLeaveChat = useCallback(async () => {
     if (!id || isLeavingChat) return;
-    
+
     setIsLeavingChat(true);
     try {
       if (contextType === 'GAME') {
         const isGuestOnly = userParticipant?.status === 'GUEST';
         if (isGuestOnly) {
           await gamesApi.leaveChat(id);
-          await loadContext();
-          const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
-          handleBackNavigation({
-            pathname: location.pathname,
-            locationState,
-            navigate,
-            contextType: 'GAME',
-            gameId: id,
-          });
         } else {
           await gamesApi.leave(id);
-          await loadContext();
-          const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
-          handleBackNavigation({
-            pathname: location.pathname,
-            locationState,
-            navigate,
-            contextType: 'GAME',
-            gameId: id,
-          });
         }
+        navigate(-1);
       } else if (contextType === 'GROUP') {
         await chatApi.leaveGroupChannel(id);
-        await loadContext();
-        setChatsFilter(groupChannel?.bug ? 'bugs' : 'channels');
-        navigate('/chats', { replace: true });
+
+        // Navigate based on the type of group chat
+        if (groupChannel?.marketItem) {
+          // If it's a marketplace item chat, go to marketplace
+          navigate('/marketplace', { replace: true });
+        } else if (groupChannel?.bug) {
+          // If it's a bug chat, go to chats with bugs filter
+          setChatsFilter('bugs');
+          navigate('/chats', { replace: true });
+        } else {
+          // For regular channels, go to chats with channels filter
+          setChatsFilter('channels');
+          navigate('/chats', { replace: true });
+        }
       }
     } catch (error) {
       console.error('Failed to leave chat:', error);
@@ -665,7 +661,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setIsLeavingChat(false);
       setShowLeaveConfirmation(false);
     }
-  }, [id, contextType, isLeavingChat, loadContext, navigate, location.pathname, location.state, setChatsFilter, userParticipant?.status, groupChannel?.bug]);
+  }, [id, contextType, isLeavingChat, navigate, userParticipant?.status, groupChannel, setChatsFilter]);
 
   const handleToggleMute = useCallback(async () => {
     if (!id || isTogglingMute) return;
@@ -685,6 +681,12 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setIsTogglingMute(false);
     }
   }, [id, contextType, isMuted, isTogglingMute]);
+
+  const handleJoinChannel = useCallback(() => {
+    if (contextType === 'GROUP') {
+      setGroupChannel(prev => prev ? { ...prev, isParticipant: true } : prev);
+    }
+  }, [contextType]);
 
   const handleChatTypeChange = useCallback(async (newChatType: ChatType) => {
     if (newChatType === currentChatType || contextType === 'USER') return;
@@ -945,10 +947,19 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     }
   }, [id, isEmbedded, contextType]);
 
+  // Handle forceReload from navigation state (e.g., from express interest)
+  useEffect(() => {
+    if (locationState?.forceReload) {
+      // Reset loading refs to force a fresh load
+      hasLoadedRef.current = false;
+      loadingIdRef.current = undefined;
+    }
+  }, [locationState?.forceReload]);
+
   useEffect(() => {
     const loadData = async () => {
       if (!id || !user?.id) return;
-      
+
       const currentLoadId = `${id}-${contextType}`;
       if (loadingIdRef.current === currentLoadId && hasLoadedRef.current) return;
       if (isLoadingRef.current && loadingIdRef.current === currentLoadId) return;
@@ -1560,6 +1571,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                 setTimeout(() => loadMessages(), 500);
               }
             }}
+            onJoinChannel={handleJoinChannel}
           />
         )}
         {contextType === 'GROUP' && isItemChat && (showItemPage || isItemPageAnimating) && groupChannel?.marketItem && (

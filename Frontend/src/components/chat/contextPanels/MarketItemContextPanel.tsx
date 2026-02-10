@@ -2,36 +2,55 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, BookMarked, ShoppingCart, DollarSign, Gavel } from 'lucide-react';
 import type { MarketItem, PriceCurrency } from '@/types';
 import { marketplaceApi } from '@/api/marketplace';
 import { currencyCacheService } from '@/services/currencyCache.service';
 import { formatConvertedPrice, formatPrice } from '@/utils/currency';
 import { useAuthStore } from '@/store/authStore';
+import { ConfirmRemoveMarketItemModal } from '@/components/marketplace/ConfirmRemoveMarketItemModal';
+import { useMarketItemReserve } from '@/components/marketplace/useMarketItemReserve';
+import { useMarketItemExpressInterest } from '@/components/marketplace/useMarketItemExpressInterest';
 
 interface MarketItemContextPanelProps {
   marketItem: MarketItem;
   userCurrency: PriceCurrency;
   onUpdate?: () => void;
+  onJoinChannel?: () => void;
+  onEdit?: () => void;
+  shouldNavigate?: boolean;
 }
 
 export const MarketItemContextPanel = ({
   marketItem,
   userCurrency,
   onUpdate,
+  onJoinChannel,
+  onEdit,
+  shouldNavigate = false,
 }: MarketItemContextPanelProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const currentUser = useAuthStore((state) => state.user);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [priceDisplay, setPriceDisplay] = useState<{
     main: string;
     original: string;
     showBoth: boolean;
   } | null>(null);
 
-  // Check if current user is the seller
   const isOwner = currentUser?.id === marketItem.sellerId;
+
+  const { handleReserveToggle, isReserving, isReserved } = useMarketItemReserve(marketItem, onUpdate);
+
+  const { handleExpressInterest: expressInterest, expressingInterest } = useMarketItemExpressInterest(
+    marketItem,
+    {
+      onJoinChannel: () => onJoinChannel?.(),
+      shouldNavigate,
+    }
+  );
 
   useEffect(() => {
     // Convert price to user's currency if different
@@ -83,22 +102,27 @@ export const MarketItemContextPanel = ({
   }, [marketItem, userCurrency]);
 
   const handleEdit = () => {
-    navigate(`/marketplace/${marketItem.id}/edit`);
+    if (onEdit) onEdit();
+    else navigate(`/marketplace/${marketItem.id}/edit`);
   };
 
-  const handleRemove = async () => {
-    if (!confirm(t('marketplace.withdrawConfirm', { defaultValue: 'Are you sure you want to withdraw this listing?' }))) {
-      return;
-    }
+  const handleRemoveClick = () => {
+    setShowRemoveModal(true);
+  };
 
+  const handleRemoveConfirm = async (status: 'SOLD' | 'WITHDRAWN') => {
     setIsRemoving(true);
     try {
-      await marketplaceApi.withdrawMarketItem(marketItem.id);
-      toast.success(t('marketplace.withdrawn', { defaultValue: 'Listing withdrawn' }));
+      await marketplaceApi.withdrawMarketItem(marketItem.id, status);
+      const successMessage = status === 'SOLD'
+        ? t('marketplace.markedAsSold', { defaultValue: 'Listing marked as sold' })
+        : t('marketplace.withdrawn', { defaultValue: 'Listing withdrawn' });
+      toast.success(successMessage);
+      setShowRemoveModal(false);
       onUpdate?.();
     } catch (error) {
-      console.error('Failed to withdraw market item:', error);
-      toast.error(t('marketplace.withdrawFailed', { defaultValue: 'Failed to withdraw listing' }));
+      console.error('Failed to update market item status:', error);
+      toast.error(t('marketplace.updateFailed', { defaultValue: 'Failed to update listing' }));
     } finally {
       setIsRemoving(false);
     }
@@ -133,26 +157,76 @@ export const MarketItemContextPanel = ({
         )}
       </div>
 
+      {/* Trade Type Buttons (for buyers) */}
+      {!isOwner && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED') && (
+        <div className="flex flex-col gap-2">
+          {marketItem.tradeTypes?.includes('BUY_IT_NOW') && (
+            <button
+              onClick={() => expressInterest('BUY_IT_NOW')}
+              disabled={expressingInterest !== null}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ShoppingCart size={16} />
+              <span>{t('marketplace.buyNow', { defaultValue: 'Buy now' })}</span>
+            </button>
+          )}
+          {marketItem.tradeTypes?.includes('SUGGESTED_PRICE') && (
+            <button
+              onClick={() => expressInterest('SUGGESTED_PRICE')}
+              disabled={expressingInterest !== null}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <DollarSign size={16} />
+              <span>{t('marketplace.makeOffer', { defaultValue: 'Make an offer' })}</span>
+            </button>
+          )}
+          {marketItem.tradeTypes?.includes('AUCTION') && (
+            <button
+              onClick={() => expressInterest('AUCTION')}
+              disabled={expressingInterest !== null}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400 border border-violet-200 dark:border-violet-800/50 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Gavel size={16} />
+              <span>{t('marketplace.placeBid', { defaultValue: 'Place a bid' })}</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Action Buttons (only for owner) */}
-      {isOwner && marketItem.status === 'ACTIVE' && (
-        <div className="flex gap-2">
+      {isOwner && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED') && (
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={handleEdit}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors font-medium text-sm"
+            >
+              <Edit2 size={16} />
+              <span>{t('common.edit', { defaultValue: 'Edit' })}</span>
+            </button>
+            <button
+              onClick={handleRemoveClick}
+              disabled={isRemoving}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Trash2 size={16} />
+              <span>{t('marketplace.remove', { defaultValue: 'Remove' })}</span>
+            </button>
+          </div>
           <button
-            onClick={handleEdit}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors font-medium text-sm"
+            onClick={handleReserveToggle}
+            disabled={isReserving}
+            className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 border rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+              isReserved
+                ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/50 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+            }`}
           >
-            <Edit2 size={16} />
-            <span>{t('common.edit', { defaultValue: 'Edit' })}</span>
-          </button>
-          <button
-            onClick={handleRemove}
-            disabled={isRemoving}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Trash2 size={16} />
+            <BookMarked size={16} />
             <span>
-              {isRemoving
-                ? t('common.removing', { defaultValue: 'Removing...' })
-                : t('common.remove', { defaultValue: 'Remove' })}
+              {isReserved
+                ? t('marketplace.unreserve', { defaultValue: 'Unreserve' })
+                : t('marketplace.reserve', { defaultValue: 'Reserve' })}
             </span>
           </button>
         </div>
@@ -166,6 +240,14 @@ export const MarketItemContextPanel = ({
           </span>
         </div>
       )}
+
+      {/* Remove confirmation modal */}
+      <ConfirmRemoveMarketItemModal
+        isOpen={showRemoveModal}
+        onClose={() => setShowRemoveModal(false)}
+        onConfirm={handleRemoveConfirm}
+        isLoading={isRemoving}
+      />
     </div>
   );
 };

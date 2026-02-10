@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MarketItem, PriceCurrency } from '@/types';
 import { MapPin } from 'lucide-react';
 import { currencyCacheService } from '@/services/currencyCache.service';
@@ -18,9 +19,11 @@ interface MarketItemCardProps {
   unreadCount?: number;
   showLocation?: boolean;
   userCurrency: PriceCurrency;
+  onItemClick?: (item: MarketItem) => void;
 }
 
-export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount, showLocation = false, userCurrency }: MarketItemCardProps) => {
+export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount, showLocation = false, userCurrency, onItemClick }: MarketItemCardProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const imageUrl = item.mediaUrls?.[0];
   const [priceDisplay, setPriceDisplay] = useState<{
@@ -78,8 +81,15 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
     convertPrice();
   }, [item, userCurrency, formatPrice]);
 
+  const isWithdrawn = item.status === 'WITHDRAWN';
+  const isSold = item.status === 'SOLD';
+  const isReserved = item.status === 'RESERVED';
+  const isInactive = isWithdrawn || isSold || isReserved;
+
   const handleClick = () => {
-    if (item.groupChannel?.id) {
+    if (onItemClick) {
+      onItemClick(item);
+    } else if (item.groupChannel?.id) {
       navigate(`/channel-chat/${item.groupChannel.id}`, { state: { fromPage: 'marketplace' } });
     } else {
       navigate(`/marketplace/${item.id}`);
@@ -92,14 +102,18 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={(e) => e.key === 'Enter' && handleClick()}
-      className="group relative overflow-hidden rounded-xl bg-white dark:bg-slate-800/80 border border-gray-200 dark:border-slate-600 shadow-sm dark:shadow-black/20 hover:shadow-lg dark:hover:shadow-black/30 hover:border-primary-200 dark:hover:border-primary-700/50 transition-all duration-300 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 flex flex-col"
+      className={`group relative overflow-hidden rounded-xl border shadow-sm transition-all duration-300 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 flex flex-col ${
+        isInactive
+          ? 'bg-gray-100 dark:bg-slate-800/50 border-gray-300 dark:border-slate-600 opacity-75'
+          : 'bg-white dark:bg-slate-800/80 border-gray-200 dark:border-slate-600 dark:shadow-black/20 hover:shadow-lg dark:hover:shadow-black/30 hover:border-primary-200 dark:hover:border-primary-700/50'
+      }`}
     >
       {imageUrl && (
-        <div className="aspect-square bg-slate-100 dark:bg-slate-700/80 overflow-hidden relative flex-shrink-0">
+        <div className={`aspect-square bg-slate-100 dark:bg-slate-700/80 overflow-hidden relative flex-shrink-0 ${isInactive ? 'grayscale' : ''}`}>
           <img
             src={imageUrl}
             alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className={`w-full h-full object-cover transition-transform duration-300 ${isInactive ? '' : 'group-hover:scale-105'}`}
           />
           {item.mediaUrls && item.mediaUrls.length > 1 && (
             <div className="absolute bottom-1 right-1 px-1.5 py-px rounded-full bg-black/60 dark:bg-black/70 text-white text-[10px] font-medium">
@@ -108,16 +122,31 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
           )}
         </div>
       )}
+      {isWithdrawn && (
+        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-gray-500/90 dark:bg-gray-600/90 text-white text-[10px] font-medium z-10">
+          {t('marketplace.status.withdrawn', { defaultValue: 'Withdrawn' })}
+        </div>
+      )}
+      {isSold && (
+        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-green-600/90 dark:bg-green-700/90 text-white text-[10px] font-medium z-10">
+          {t('marketplace.status.sold', { defaultValue: 'Sold' })}
+        </div>
+      )}
+      {isReserved && (
+        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-amber-600/90 dark:bg-amber-700/90 text-white text-[10px] font-medium z-10">
+          {t('marketplace.status.reserved', { defaultValue: 'Reserved' })}
+        </div>
+      )}
       {unreadCount != null && unreadCount > 0 && (
         <div className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-lg shadow-red-500/30 z-10">
           {unreadCount > 99 ? '99+' : unreadCount}
         </div>
       )}
-      <div className="p-2 mt-auto">
-        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{item.title}</p>
+      <div className={`p-2 mt-auto ${!imageUrl && isInactive ? 'pt-7' : ''}`}>
+        <p className={`text-sm font-semibold truncate ${isInactive ? 'text-gray-500 dark:text-gray-400' : 'text-slate-900 dark:text-slate-100'}`}>{item.title}</p>
         {priceDisplay ? (
           <div className="mt-0.5">
-            <p className="text-sm font-semibold text-primary-600 dark:text-primary-400">
+            <p className={`text-sm font-semibold ${isInactive ? 'text-gray-500 dark:text-gray-400' : 'text-primary-600 dark:text-primary-400'}`}>
               {priceDisplay.main}
             </p>
             {priceDisplay.showBoth && (
@@ -127,7 +156,7 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
             )}
           </div>
         ) : (
-          <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 mt-0.5">
+          <p className={`text-sm font-semibold mt-0.5 ${isInactive ? 'text-gray-500 dark:text-gray-400' : 'text-primary-600 dark:text-primary-400'}`}>
             {formatPrice(item)}
           </p>
         )}

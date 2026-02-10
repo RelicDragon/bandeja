@@ -17,9 +17,9 @@ export const MarketplaceItemRedirect = () => {
     marketplaceApi.getMarketItemById(id)
       .then((res) => {
         const item = res.data;
-        if (item?.groupChannel?.id) {
+        if (item) {
           setStatus('redirecting');
-          navigate(`/channel-chat/${item.groupChannel.id}`, { replace: true, state: { fromPage: 'marketplace' } });
+          navigate('/marketplace', { replace: true, state: { openMarketItem: item } });
         } else {
           setStatus('notfound');
         }

@@ -15,6 +15,7 @@ interface ChatContextPanelProps {
   groupChannel?: GroupChannel | null;
   canEditBug?: boolean;
   onUpdate?: () => void;
+  onJoinChannel?: () => void;
 }
 
 /**
@@ -30,9 +31,10 @@ export const ChatContextPanel = ({
   groupChannel: _groupChannel,
   canEditBug = false,
   onUpdate,
+  onJoinChannel,
 }: ChatContextPanelProps) => {
   const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const currentUser = useAuthStore((state) => state.user);
   const userCurrency = resolveUserCurrency(currentUser?.defaultCurrency) as PriceCurrency;
 
@@ -63,6 +65,7 @@ export const ChatContextPanel = ({
           marketItem={marketItem}
           userCurrency={userCurrency}
           onUpdate={onUpdate}
+          onJoinChannel={onJoinChannel}
         />
       );
     }

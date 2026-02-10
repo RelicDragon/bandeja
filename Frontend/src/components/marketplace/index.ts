@@ -1,7 +1,10 @@
 export { MarketItemCard } from './MarketItemCard';
-export { MarketItemModal } from './MarketItemModal';
+export { MarketItemDrawer } from './MarketItemDrawer';
 export { MarketItemPanel } from './MarketItemPanel';
 export { MarketItemEditForm } from './MarketItemEditForm';
+export { ConfirmRemoveMarketItemModal } from './ConfirmRemoveMarketItemModal';
+export { useMarketItemReserve } from './useMarketItemReserve';
+export { useMarketItemExpressInterest } from './useMarketItemExpressInterest';
 export { TradeTypeCheckboxes } from './TradeTypeCheckboxes';
 export { PriceInput } from './PriceInput';
 export { PriceInputWithCurrency } from './PriceInputWithCurrency';

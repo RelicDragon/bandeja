@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { MapPin, User } from 'lucide-react';
 import { marketplaceApi, citiesApi } from '@/api';
 import { chatApi } from '@/api/chat';
@@ -10,7 +11,8 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { MarketItem, MarketItemCategory, City, PriceCurrency } from '@/types';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { Button } from '@/components';
-import { MarketItemCard, MarketplaceFilters, formatPriceDisplay } from '@/components/marketplace';
+import { MarketItemCard, MarketplaceFilters, formatPriceDisplay, MarketItemPanel } from '@/components/marketplace';
+import { Drawer, DrawerContent } from '@/components/ui/Drawer';
 import { currencyCacheService } from '@/services/currencyCache.service';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 
@@ -19,6 +21,8 @@ const PAGE_SIZE = 20;
 export const MarketplaceList = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const location = useLocation();
+  const navigate = useNavigate();
   const marketplaceTab = useNavigationStore((state) => state.marketplaceTab);
   const isMyTab = marketplaceTab === 'my';
   const [items, setItems] = useState<MarketItem[]>([]);
@@ -32,6 +36,7 @@ export const MarketplaceList = () => {
   const [filters, setFilters] = useState({ categoryId: '' });
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const lastChatUnreadCount = useSocketEventsStore((state) => state.lastChatUnreadCount);
+  const [selectedItem, setSelectedItem] = useState<MarketItem | null>(null);
 
   const fetchData = useCallback(async (refresh = false) => {
     const page = refresh ? 1 : pageRef.current;
@@ -71,12 +76,29 @@ export const MarketplaceList = () => {
     pageRef.current = 1;
     fetchData();
 
-    // Prefetch exchange rates for user's currency
     const userCurrency = (user?.defaultCurrency as PriceCurrency) || DEFAULT_CURRENCY;
     currencyCacheService.prefetch(userCurrency).catch((err) => {
       console.warn('[MarketplaceList] Failed to prefetch currency rates:', err);
     });
   }, [fetchData, user?.defaultCurrency]);
+
+  const openItemFromState = location.state as { openMarketItem?: MarketItem } | null;
+  useEffect(() => {
+    if (openItemFromState?.openMarketItem) {
+      setSelectedItem(openItemFromState.openMarketItem);
+      navigate('/marketplace', { replace: true, state: {} });
+    }
+  }, [navigate, openItemFromState?.openMarketItem]);
+
+  const handleItemUpdate = useCallback((updated: MarketItem | null) => {
+    if (!updated) {
+      setItems((prev) => prev.filter((i) => i.id !== selectedItem?.id));
+      setSelectedItem(null);
+    } else {
+      setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      setSelectedItem((prev) => (prev?.id === updated.id ? updated : prev));
+    }
+  }, [selectedItem?.id]);
 
   useEffect(() => {
     const groupIds = items
@@ -168,9 +190,21 @@ export const MarketplaceList = () => {
               unreadCount={item.groupChannel?.id ? unreadCounts[item.groupChannel.id] : undefined}
               showLocation={isMyTab}
               userCurrency={(user?.defaultCurrency as PriceCurrency) || DEFAULT_CURRENCY}
+              onItemClick={setSelectedItem}
             />
           ))}
         </div>
+      )}
+      {selectedItem && (
+        <Drawer open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+          <DrawerContent className="flex flex-col p-0 overflow-hidden rounded-t-3xl max-h-[95vh]">
+            <MarketItemPanel
+              item={selectedItem}
+              onClose={() => setSelectedItem(null)}
+              onItemUpdate={handleItemUpdate}
+            />
+          </DrawerContent>
+        </Drawer>
       )}
       {hasMore && items.length > 0 && (
         <div className="mt-6 flex justify-center">

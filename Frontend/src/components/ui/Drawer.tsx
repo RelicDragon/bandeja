@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { X } from 'lucide-react';
 import { Drawer as VaulDrawer } from 'vaul';
 
 interface DrawerProps {
@@ -20,6 +21,24 @@ const DrawerTrigger = VaulDrawer.Trigger;
 const DrawerPortal = VaulDrawer.Portal;
 
 const DrawerClose = VaulDrawer.Close;
+
+const DrawerCloseButton = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentPropsWithoutRef<'button'> & { 'aria-label'?: string }
+>(({ className, children, 'aria-label': ariaLabel, ...props }, ref) => (
+  <VaulDrawer.Close asChild>
+    <button
+      ref={ref}
+      type="button"
+      className={`p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-gray-600 dark:text-gray-300 ${className ?? ''}`}
+      aria-label={ariaLabel ?? 'Close'}
+      {...props}
+    >
+      {children ?? <X size={20} className="text-current" />}
+    </button>
+  </VaulDrawer.Close>
+));
+DrawerCloseButton.displayName = 'DrawerCloseButton';
 
 const DrawerOverlay = React.forwardRef<
   React.ElementRef<typeof VaulDrawer.Overlay>,
@@ -80,6 +99,7 @@ export {
   DrawerOverlay,
   DrawerTrigger,
   DrawerClose,
+  DrawerCloseButton,
   DrawerContent,
   DrawerHeader,
   DrawerFooter,

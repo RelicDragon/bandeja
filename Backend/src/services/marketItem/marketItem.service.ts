@@ -12,6 +12,7 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { MessageService } from '../chat/message.service';
 import { t } from '../../utils/translations';
 import notificationService from '../notification.service';
+import { MarketItemParticipantService } from './participant.service';
 
 export interface CreateMarketItemData {
   sellerId: string;
@@ -122,8 +123,6 @@ export class MarketItemService {
       }
     }
 
-    const name = title.length > 100 ? title.substring(0, 97) + '...' : title;
-
     return prisma.$transaction(async (tx) => {
       const item = await tx.marketItem.create({
         data: {
@@ -142,25 +141,8 @@ export class MarketItemService {
         },
       });
 
-      await tx.groupChannel.create({
-        data: {
-          id: item.id,
-          name,
-          isChannel: false,
-          isPublic: true,
-          marketItemId: item.id,
-          cityId,
-          participantsCount: 1,
-        },
-      });
-
-      await tx.groupChannelParticipant.create({
-        data: {
-          groupChannelId: item.id,
-          userId: sellerId,
-          role: ParticipantRole.OWNER,
-        },
-      });
+      // NOTE: GroupChannel creation removed - chats are now created lazily when buyers interact
+      // (via expressInterest or "Ask seller" button)
 
       return tx.marketItem.findUnique({
         where: { id: item.id },
@@ -168,25 +150,12 @@ export class MarketItemService {
           seller: { select: { ...USER_SELECT_FIELDS } },
           category: true,
           city: true,
-          groupChannel: true,
         },
       });
     }).then(async (created) => {
       if (!created) return created;
-      const priceStr = created.priceCents != null
-        ? `${(created.priceCents / 100).toFixed(2)} ${created.currency}`
-        : 'Negotiable';
-      const itemContent = `🏷️ ${created.title}\n${priceStr}${created.description ? `\n\n${created.description}` : ''}`;
-      await MessageService.createMessage({
-        chatContextType: ChatContextType.GROUP,
-        contextId: created.id,
-        senderId: created.sellerId,
-        content: itemContent,
-        mediaUrls: created.mediaUrls,
-        chatType: ChatType.PUBLIC,
-      }).catch((err) => {
-        console.error('[MarketItemService] Failed to send item message to chat:', err);
-      });
+
+      // Send notifications
       notificationService.sendNewMarketItemNotification(
         { id: created.id, title: created.title, description: created.description, priceCents: created.priceCents, currency: created.currency, cityId: created.cityId, additionalCityIds: created.additionalCityIds },
         created.sellerId
@@ -202,7 +171,7 @@ export class MarketItemService {
       cityId,
       categoryId,
       tradeType,
-      status = MarketItemStatus.ACTIVE,
+      status,
       sellerId,
       page = 1,
       limit = 20,
@@ -217,27 +186,54 @@ export class MarketItemService {
     }
     if (categoryId) where.categoryId = categoryId;
     if (tradeType) where.tradeTypes = { has: tradeType };
-    if (status) where.status = status;
+    if (status) {
+      where.status = status;
+    } else {
+      where.status = { in: [MarketItemStatus.ACTIVE, MarketItemStatus.SOLD, MarketItemStatus.RESERVED, MarketItemStatus.WITHDRAWN] };
+    }
     if (sellerId) where.sellerId = sellerId;
 
-    const [items, total] = await Promise.all([
+    // When filtering by specific status, sort by createdAt only
+    // When showing all statuses, we'll sort in-memory by custom status priority
+    const orderBy = status ? { createdAt: 'desc' as const } : { createdAt: 'desc' as const };
+
+    const [allItems, total] = await Promise.all([
       prisma.marketItem.findMany({
         where,
         include: {
           seller: { select: { ...USER_SELECT_FIELDS } },
           category: true,
           city: true,
-          groupChannel: { select: { id: true } },
+          // Note: groupChannels not included here for performance (can be fetched separately if needed)
         },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
+        orderBy,
       }),
       prisma.marketItem.count({ where }),
     ]);
 
+    // If no specific status filter, sort by custom priority: ACTIVE -> RESERVED -> SOLD -> WITHDRAWN
+    let items = allItems;
+    if (!status) {
+      const statusPriority: Record<MarketItemStatus, number> = {
+        [MarketItemStatus.ACTIVE]: 1,
+        [MarketItemStatus.RESERVED]: 2,
+        [MarketItemStatus.SOLD]: 3,
+        [MarketItemStatus.WITHDRAWN]: 4,
+      };
+
+      items = allItems.sort((a, b) => {
+        const priorityDiff = statusPriority[a.status] - statusPriority[b.status];
+        if (priorityDiff !== 0) return priorityDiff;
+        // Within same status, newer items first
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+    }
+
+    // Apply pagination after sorting
+    const paginatedItems = items.slice((page - 1) * limit, page * limit);
+
     return {
-      data: items,
+      data: paginatedItems,
       pagination: {
         page,
         limit,
@@ -254,25 +250,31 @@ export class MarketItemService {
         seller: { select: { ...USER_SELECT_FIELDS } },
         category: true,
         city: true,
-        groupChannel: true,
+        groupChannels: userId ? {
+          where: { buyerId: userId },
+          take: 1,
+        } : false,
       },
     });
     if (!item) {
       throw new ApiError(404, 'Item not found');
     }
-    let isParticipant = false;
-    if (userId && item.groupChannel) {
-      const p = await prisma.groupChannelParticipant.findUnique({
+
+    // If user is checking, find their private chat with seller
+    let buyerChat = null;
+    if (userId && userId !== item.sellerId) {
+      buyerChat = await prisma.groupChannel.findUnique({
         where: {
-          groupChannelId_userId: {
-            groupChannelId: item.groupChannel!.id,
-            userId,
+          GroupChannel_marketItemId_buyerId_key: {
+            marketItemId: id,
+            buyerId: userId,
           },
         },
+        select: { id: true },
       });
-      isParticipant = !!p;
     }
-    return { ...item, isParticipant };
+
+    return { ...item, buyerChat };
   }
 
   static async updateMarketItem(
@@ -282,7 +284,7 @@ export class MarketItemService {
   ) {
     const item = await prisma.marketItem.findUnique({
       where: { id },
-      include: { groupChannel: { select: { id: true } } },
+      include: { groupChannels: { select: { id: true }, take: 1 } },
     });
     if (!item) {
       throw new ApiError(404, 'Item not found');
@@ -359,16 +361,21 @@ export class MarketItemService {
           seller: { select: { ...USER_SELECT_FIELDS } },
           category: true,
           city: true,
-          groupChannel: true,
+          groupChannels: true,
         },
       });
 
-      if (title && item.groupChannel) {
+      // Update chat names if title changed (for all buyer chats)
+      if (title && item.groupChannels && item.groupChannels.length > 0) {
         const name = title.length > 100 ? title.substring(0, 97) + '...' : title;
-        await tx.groupChannel.update({
-          where: { id: item.groupChannel.id },
-          data: { name },
-        });
+        await Promise.all(
+          item.groupChannels.map((chat: any) =>
+            tx.groupChannel.update({
+              where: { id: chat.id },
+              data: { name },
+            })
+          )
+        );
       }
 
       return updated;
@@ -382,22 +389,27 @@ export class MarketItemService {
       const lang = seller?.language && seller.language !== 'auto' ? seller.language : 'en';
 
       const changes = this.buildUpdateChanges(item, updated, lang);
-      if (changes.length > 0) {
+      if (changes.length > 0 && updated.groupChannels && updated.groupChannels.length > 0) {
         const content = `✏️ ${t('marketplace.listingUpdated', lang)}:\n${changes.join('\n')}`;
         const newMediaUrls = mediaUrls !== undefined
           && JSON.stringify(mediaUrls) !== JSON.stringify(item.mediaUrls)
           ? mediaUrls
           : [];
-        await MessageService.createMessage({
-          chatContextType: ChatContextType.GROUP,
-          contextId: updated.id,
-          senderId: updated.sellerId,
-          content,
-          mediaUrls: newMediaUrls,
-          chatType: ChatType.PUBLIC,
-        }).catch((err) => {
-          console.error('[MarketItemService] Failed to send update message to chat:', err);
-        });
+        // Send update message to all buyer chats
+        await Promise.all(
+          updated.groupChannels.map((chat: any) =>
+            MessageService.createMessage({
+              chatContextType: ChatContextType.GROUP,
+              contextId: chat.id,
+              senderId: updated.sellerId,
+              content,
+              mediaUrls: newMediaUrls,
+              chatType: ChatType.PUBLIC,
+            }).catch((err) => {
+              console.error('[MarketItemService] Failed to send update message to chat:', err);
+            })
+          )
+        );
       }
 
       return updated;
@@ -470,7 +482,7 @@ export class MarketItemService {
     return changes;
   }
 
-  static async withdrawMarketItem(id: string, userId: string) {
+  static async withdrawMarketItem(id: string, userId: string, status: 'WITHDRAWN' | 'SOLD' | 'RESERVED' = 'WITHDRAWN') {
     const item = await prisma.marketItem.findUnique({ where: { id } });
     if (!item) {
       throw new ApiError(404, 'Item not found');
@@ -478,15 +490,312 @@ export class MarketItemService {
     if (item.sellerId !== userId) {
       throw new ApiError(403, 'Only seller can withdraw');
     }
-    return prisma.marketItem.update({
+    if (item.status !== MarketItemStatus.ACTIVE && item.status !== MarketItemStatus.RESERVED) {
+      throw new ApiError(400, 'Can only update active or reserved items');
+    }
+
+    const targetStatus = status === 'SOLD'
+      ? MarketItemStatus.SOLD
+      : status === 'RESERVED'
+        ? MarketItemStatus.RESERVED
+        : MarketItemStatus.WITHDRAWN;
+
+    return prisma.$transaction(async (tx) => {
+      const updated = await tx.marketItem.update({
+        where: { id },
+        data: { status: targetStatus },
+        include: {
+          seller: { select: { ...USER_SELECT_FIELDS } },
+          category: true,
+          city: true,
+          groupChannels: true,
+        },
+      });
+
+      // Post messages to all buyer chats about the status change
+      if (updated.groupChannels && updated.groupChannels.length > 0) {
+        const seller = await tx.user.findUnique({
+          where: { id: updated.sellerId },
+          select: { language: true },
+        });
+        const lang = seller?.language && seller.language !== 'auto' ? seller.language : 'en';
+
+        const statusMessage = status === 'SOLD'
+          ? t('marketplace.itemMarkedAsSold', lang)
+          : status === 'RESERVED'
+            ? t('marketplace.itemMarkedAsReserved', lang)
+            : t('marketplace.itemWithdrawn', lang);
+
+        // Send message to all buyer chats
+        await Promise.all(
+          updated.groupChannels.map((chat: any) =>
+            MessageService.createMessage({
+              chatContextType: ChatContextType.GROUP,
+              contextId: chat.id,
+              senderId: updated.sellerId,
+              content: `ℹ️ ${statusMessage}`,
+              mediaUrls: [],
+              chatType: ChatType.PUBLIC,
+            }).catch((err) => {
+              console.error('[MarketItemService] Failed to send status change message to chat:', err);
+            })
+          )
+        );
+      }
+
+      return updated;
+    });
+  }
+
+  static async reserveMarketItem(id: string, userId: string, reserve: boolean) {
+    const item = await prisma.marketItem.findUnique({ where: { id } });
+    if (!item) {
+      throw new ApiError(404, 'Item not found');
+    }
+    if (item.sellerId !== userId) {
+      throw new ApiError(403, 'Only seller can reserve/unreserve');
+    }
+
+    // Validate current status
+    if (reserve && item.status !== MarketItemStatus.ACTIVE) {
+      throw new ApiError(400, 'Can only reserve active items');
+    }
+    if (!reserve && item.status !== MarketItemStatus.RESERVED) {
+      throw new ApiError(400, 'Can only unreserve reserved items');
+    }
+
+    const targetStatus = reserve ? MarketItemStatus.RESERVED : MarketItemStatus.ACTIVE;
+
+    return prisma.$transaction(async (tx) => {
+      const updated = await tx.marketItem.update({
+        where: { id },
+        data: { status: targetStatus },
+        include: {
+          seller: { select: { ...USER_SELECT_FIELDS } },
+          category: true,
+          city: true,
+          groupChannels: true,
+        },
+      });
+
+      // Post messages to all buyer chats about the status change
+      if (updated.groupChannels && updated.groupChannels.length > 0) {
+        const seller = await tx.user.findUnique({
+          where: { id: updated.sellerId },
+          select: { language: true },
+        });
+        const lang = seller?.language && seller.language !== 'auto' ? seller.language : 'en';
+
+        const statusMessage = reserve
+          ? t('marketplace.itemReserved', lang)
+          : t('marketplace.itemUnreserved', lang);
+
+        // Send message to all buyer chats
+        await Promise.all(
+          updated.groupChannels.map((chat: any) =>
+            MessageService.createMessage({
+              chatContextType: ChatContextType.GROUP,
+              contextId: chat.id,
+              senderId: updated.sellerId,
+              content: `ℹ️ ${statusMessage}`,
+              mediaUrls: [],
+              chatType: ChatType.PUBLIC,
+            }).catch((err) => {
+              console.error('[MarketItemService] Failed to send status change message to chat:', err);
+            })
+          )
+        );
+      }
+
+      return updated;
+    });
+  }
+
+  static async expressInterest(id: string, userId: string, tradeType: MarketItemTradeType) {
+    const item = await prisma.marketItem.findUnique({
       where: { id },
-      data: { status: MarketItemStatus.WITHDRAWN },
       include: {
-        seller: { select: { ...USER_SELECT_FIELDS } },
-        category: true,
-        city: true,
-        groupChannel: true,
+        seller: { select: { ...USER_SELECT_FIELDS, language: true } },
       },
     });
+
+    if (!item) {
+      throw new ApiError(404, 'Item not found');
+    }
+
+    if (item.sellerId === userId) {
+      throw new ApiError(400, 'Cannot express interest in your own listing');
+    }
+
+    if (item.status !== MarketItemStatus.ACTIVE && item.status !== MarketItemStatus.RESERVED) {
+      throw new ApiError(400, 'Can only express interest in active or reserved items');
+    }
+
+    if (!item.tradeTypes.includes(tradeType)) {
+      throw new ApiError(400, 'This trade type is not available for this listing');
+    }
+
+    // Get or create private buyer-seller chat
+    const chat = await this.getOrCreateBuyerChat(id, userId);
+
+    // Get the seller's language
+    const lang = item.seller?.language && item.seller.language !== 'auto' ? item.seller.language : 'en';
+
+    // Get the translated message
+    const message = t(`marketplace.buyerInterest.${tradeType}`, lang);
+
+    // Send the message to the PRIVATE chat with socket event
+    await MessageService.createMessageWithEvent({
+      chatContextType: ChatContextType.GROUP,
+      contextId: chat.id,
+      senderId: userId,
+      content: `💬 ${message}`,
+      mediaUrls: [],
+      chatType: ChatType.PUBLIC,
+      mentionIds: [],
+    });
+
+    return { success: true, message: 'Interest expressed successfully', chatId: chat.id };
+  }
+
+  static async getOrCreateBuyerChat(marketItemId: string, buyerId: string) {
+    // Validate: item exists and is active
+    const item = await prisma.marketItem.findUnique({
+      where: { id: marketItemId },
+      select: { id: true, sellerId: true, status: true, title: true },
+    });
+
+    if (!item) {
+      throw new ApiError(404, 'Market item not found');
+    }
+
+    // Prevent seller from creating chat with themselves
+    if (item.sellerId === buyerId) {
+      throw new ApiError(400, 'Cannot create chat with yourself');
+    }
+
+    // Check for blocked users
+    const isBlocked = await prisma.blockedUser.findFirst({
+      where: {
+        OR: [
+          { userId: item.sellerId, blockedUserId: buyerId },
+          { userId: buyerId, blockedUserId: item.sellerId },
+        ],
+      },
+    });
+
+    if (isBlocked) {
+      throw new ApiError(403, 'Cannot create chat with this user');
+    }
+
+    // Check if chat already exists
+    let chat = await prisma.groupChannel.findUnique({
+      where: {
+        GroupChannel_marketItemId_buyerId_key: {
+          marketItemId,
+          buyerId,
+        },
+      },
+      include: {
+        participants: {
+          include: {
+            user: { select: { ...USER_SELECT_FIELDS } },
+          },
+        },
+      },
+    });
+
+    // If chat exists, return it
+    if (chat) {
+      return chat;
+    }
+
+    // Create new private chat in a transaction
+    const createdChat = await prisma.$transaction(async (tx) => {
+      // Create GroupChannel
+      const newChat = await tx.groupChannel.create({
+        data: {
+          name: item.title.slice(0, 100), // Store item title (display name computed in UI)
+          marketItemId,
+          buyerId,
+          isChannel: false,
+          isPublic: false, // Private chat
+          participantsCount: 2, // Seller + buyer
+        },
+      });
+
+      // Add seller as OWNER
+      await tx.groupChannelParticipant.create({
+        data: {
+          groupChannelId: newChat.id,
+          userId: item.sellerId,
+          role: ParticipantRole.OWNER,
+        },
+      });
+
+      // Add buyer as PARTICIPANT
+      await tx.groupChannelParticipant.create({
+        data: {
+          groupChannelId: newChat.id,
+          userId: buyerId,
+          role: ParticipantRole.PARTICIPANT,
+        },
+      });
+
+      // Return full chat with participants
+      return tx.groupChannel.findUnique({
+        where: { id: newChat.id },
+        include: {
+          participants: {
+            include: {
+              user: { select: { ...USER_SELECT_FIELDS } },
+            },
+          },
+        },
+      });
+    });
+
+    if (!createdChat) {
+      throw new ApiError(500, 'Failed to create chat');
+    }
+
+    return createdChat;
+  }
+
+  static async getSellerChats(marketItemId: string, sellerId: string) {
+    // Verify ownership
+    const item = await prisma.marketItem.findUnique({
+      where: { id: marketItemId },
+      select: { sellerId: true },
+    });
+
+    if (!item) {
+      throw new ApiError(404, 'Market item not found');
+    }
+
+    if (item.sellerId !== sellerId) {
+      throw new ApiError(403, 'Only the seller can view buyer conversations');
+    }
+
+    // Get all buyer chats for this item
+    const chats = await prisma.groupChannel.findMany({
+      where: {
+        marketItemId,
+        buyerId: { not: null },
+      },
+      include: {
+        buyer: { select: { ...USER_SELECT_FIELDS } },
+        participants: {
+          include: {
+            user: { select: { ...USER_SELECT_FIELDS } },
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: 'desc', // Most recent first
+      },
+    });
+
+    return chats;
   }
 }
