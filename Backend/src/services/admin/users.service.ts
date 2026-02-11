@@ -3,7 +3,7 @@ import prisma from '../../config/database';
 import { MediaCleanupService } from '../mediaCleanup.service';
 import { Gender } from '@prisma/client';
 import { Prisma } from '@prisma/client';
-import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
+import { PROFILE_SELECT_FIELDS, USER_SELECT_FIELDS } from '../../utils/constants';
 
 const USERS_PAGE_SIZE = 50;
 
@@ -274,7 +274,7 @@ export class AdminUsersService {
   static async deleteUser(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, firstName: true, lastName: true, isAdmin: true }
+      select: { ...USER_SELECT_FIELDS, isAdmin: true }
     });
 
     if (!user) {

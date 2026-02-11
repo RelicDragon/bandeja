@@ -111,7 +111,7 @@ export class AdminGamesService {
         },
         club: { select: { id: true, name: true } },
         city: { select: { id: true, name: true } },
-        trainer: { select: { id: true, firstName: true, lastName: true, phone: true } },
+        trainer: { select: { ...USER_SELECT_FIELDS, phone: true } },
         participants: {
           include: {
             user: {
@@ -187,7 +187,7 @@ export class AdminGamesService {
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
       include: {
-        user: { select: { id: true, firstName: true, lastName: true } },
+        user: { select: USER_SELECT_FIELDS },
         game: { include: { participants: true } },
       },
     });
@@ -266,7 +266,7 @@ export class AdminGamesService {
   static async declineInvite(participantId: string) {
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
-      include: { user: { select: { id: true, firstName: true, lastName: true } } },
+      include: { user: { select: USER_SELECT_FIELDS } },
     });
     if (!participant || participant.status !== 'INVITED') {
       throw new ApiError(404, 'Invite not found');

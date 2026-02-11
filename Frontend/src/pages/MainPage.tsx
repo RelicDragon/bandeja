@@ -20,6 +20,7 @@ function MarketplaceContent() {
   const path = location.pathname;
   if (path === '/marketplace/create') return <CreateMarketItem />;
   if (path.match(/^\/marketplace\/[^/]+\/edit$/)) return <CreateMarketItem />;
+  if (path === '/marketplace/my') return <MarketplaceList />;
   if (path.match(/^\/marketplace\/[^/]+$/)) return <MarketplaceItemRedirect />;
   return <MarketplaceList />;
 }
@@ -27,7 +28,7 @@ function MarketplaceContent() {
 export const MainPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentPage, setCurrentPage, setIsAnimating, bottomTabsVisible, setChatsFilter } = useNavigationStore();
+  const { currentPage, setCurrentPage, setIsAnimating, bottomTabsVisible, setChatsFilter, setMarketplaceTab } = useNavigationStore();
   const previousPathnameRef = useRef(location.pathname);
   const isInitialMountRef = useRef(true);
   const isDesktop = useDesktop();
@@ -43,12 +44,15 @@ export const MainPage = () => {
         setIsAnimating(true);
       }
       
-      if (path === '/marketplace' || path.startsWith('/marketplace/')) {
+      if (path === '/marketplace' || path === '/marketplace/my' || path.startsWith('/marketplace/')) {
         setCurrentPage('marketplace');
+        if (path === '/marketplace') setMarketplaceTab('market');
+        else if (path === '/marketplace/my') setMarketplaceTab('my');
       } else if (path === '/profile') {
         setCurrentPage('profile');
-      } else if (path === '/chats') {
+      } else if (path === '/chats' || path === '/chats/marketplace') {
         setCurrentPage('chats');
+        if (path === '/chats/marketplace') setChatsFilter('market');
       } else if (path === '/find') {
         setCurrentPage('find');
       } else if (path === '/leaderboard') {
@@ -92,7 +96,7 @@ export const MainPage = () => {
       previousPathnameRef.current = path;
       isInitialMountRef.current = false;
     }
-  }, [location.pathname, location.state, currentPage, setCurrentPage, setIsAnimating, setChatsFilter, navigate]);
+  }, [location.pathname, location.state, currentPage, setCurrentPage, setIsAnimating, setChatsFilter, setMarketplaceTab, navigate]);
 
   const renderContent = useMemo(() => {
     switch (currentPage) {

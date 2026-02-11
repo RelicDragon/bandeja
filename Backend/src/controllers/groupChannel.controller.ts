@@ -37,9 +37,9 @@ export const createGroupChannel = asyncHandler(async (req: AuthRequest, res: Res
 
 export const getGroupChannels = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
-  const filter = req.query.filter as 'users' | 'bugs' | 'channels' | undefined;
-  const page = (filter === 'bugs' || filter === 'users' || filter === 'channels') ? Math.max(1, Number(req.query.page) || 1) : undefined;
-  const limit = (filter === 'bugs' || filter === 'users' || filter === 'channels') ? GroupChannelService.PAGE_SIZE : undefined;
+  const filter = req.query.filter as 'users' | 'bugs' | 'channels' | 'market' | undefined;
+  const page = (filter === 'bugs' || filter === 'users' || filter === 'channels' || filter === 'market') ? Math.max(1, Number(req.query.page) || 1) : undefined;
+  const limit = (filter === 'bugs' || filter === 'users' || filter === 'channels' || filter === 'market') ? GroupChannelService.PAGE_SIZE : undefined;
 
   const opts: { page?: number; limit?: number; status?: string[]; bugType?: string[]; myBugsOnly?: boolean } = { page, limit };
   if (filter === 'bugs') {

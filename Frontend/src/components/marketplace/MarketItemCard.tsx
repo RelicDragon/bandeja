@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MarketItem, PriceCurrency } from '@/types';
@@ -24,7 +24,9 @@ interface MarketItemCardProps {
 
 export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount, showLocation = false, userCurrency, onItemClick }: MarketItemCardProps) => {
   const { t } = useTranslation();
+  const location = useLocation();
   const navigate = useNavigate();
+  const fromSubtab = location.pathname === '/marketplace/my' ? 'my' as const : 'market' as const;
   const imageUrl = item.mediaUrls?.[0];
   const [priceDisplay, setPriceDisplay] = useState<{
     main: string;
@@ -85,6 +87,7 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
   const isSold = item.status === 'SOLD';
   const isReserved = item.status === 'RESERVED';
   const isInactive = isWithdrawn || isSold || isReserved;
+  const isFree = item.tradeTypes?.includes('FREE');
 
   const handleClick = () => {
     if (onItemClick) {
@@ -92,7 +95,7 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
     } else if (item.groupChannel?.id) {
       navigate(`/channel-chat/${item.groupChannel.id}`, { state: { fromPage: 'marketplace' } });
     } else {
-      navigate(`/marketplace/${item.id}`);
+      navigate(`/marketplace/${item.id}`, { state: { fromMarketplaceSubtab: fromSubtab } });
     }
   };
 
@@ -144,7 +147,13 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
       )}
       <div className={`p-2 mt-auto ${!imageUrl && isInactive ? 'pt-7' : ''}`}>
         <p className={`text-sm font-semibold truncate ${isInactive ? 'text-gray-500 dark:text-gray-400' : 'text-slate-900 dark:text-slate-100'}`}>{item.title}</p>
-        {priceDisplay ? (
+        {isFree ? (
+          <div className="mt-0.5">
+            <span className="inline-block px-2 py-0.5 rounded text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+              {t('marketplace.free', { defaultValue: 'Free' })}
+            </span>
+          </div>
+        ) : priceDisplay ? (
           <div className="mt-0.5">
             <p className={`text-sm font-semibold ${isInactive ? 'text-gray-500 dark:text-gray-400' : 'text-primary-600 dark:text-primary-400'}`}>
               {priceDisplay.main}
@@ -161,7 +170,7 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
           </p>
         )}
         <div className="flex items-center gap-1 mt-1 flex-wrap">
-          {(item.tradeTypes ?? []).filter((tt) => tt !== 'BUY_IT_NOW').map((tt) => (
+          {(item.tradeTypes ?? []).filter((tt) => tt !== 'BUY_IT_NOW' && tt !== 'FREE').map((tt) => (
             <span
               key={tt}
               className={`px-1.5 py-0.5 rounded text-xs font-medium ${TRADE_TYPE_BADGE_CLASS[tt as keyof typeof TRADE_TYPE_BADGE_CLASS] || 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300'}`}

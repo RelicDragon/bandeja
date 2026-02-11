@@ -69,3 +69,4 @@ export * from './PermissionModal';
 export * from './PermissionModalProvider';
 export * from './MainTabFooter';
 export * from './marketplace';
+export * from './SegmentedSwitch';

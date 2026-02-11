@@ -34,6 +34,7 @@ export interface MarketItemFilters {
   tradeType?: MarketItemTradeType;
   status?: MarketItemStatus;
   sellerId?: string;
+  userId?: string;
   page?: number;
   limit?: number;
 }
@@ -70,18 +71,30 @@ export class MarketItemService {
     if (invalid.length > 0) {
       throw new ApiError(400, 'Invalid trade type');
     }
-    if (tradeTypes.includes(MarketItemTradeType.BUY_IT_NOW) && (priceCents == null || priceCents < 0)) {
-      throw new ApiError(400, 'Price is required for Buy it now');
-    }
-    if (tradeTypes.includes(MarketItemTradeType.AUCTION)) {
-      if (priceCents == null || priceCents < 0) {
-        throw new ApiError(400, 'Starting bid is required for Auction');
+
+    // Validate FREE trade type constraints
+    if (tradeTypes.includes(MarketItemTradeType.FREE)) {
+      if (tradeTypes.length > 1) {
+        throw new ApiError(400, 'FREE cannot be combined with other trade types');
       }
-      if (!auctionEndsAt) {
-        throw new ApiError(400, 'Auction end date is required');
+      if (priceCents != null && priceCents > 0) {
+        throw new ApiError(400, 'FREE items cannot have a price');
       }
-      if (new Date(auctionEndsAt) <= new Date()) {
-        throw new ApiError(400, 'Auction end date must be in the future');
+    } else {
+      // Non-FREE items validation
+      if (tradeTypes.includes(MarketItemTradeType.BUY_IT_NOW) && (priceCents == null || priceCents < 0)) {
+        throw new ApiError(400, 'Price is required for Buy it now');
+      }
+      if (tradeTypes.includes(MarketItemTradeType.AUCTION)) {
+        if (priceCents == null || priceCents < 0) {
+          throw new ApiError(400, 'Starting bid is required for Auction');
+        }
+        if (!auctionEndsAt) {
+          throw new ApiError(400, 'Auction end date is required');
+        }
+        if (new Date(auctionEndsAt) <= new Date()) {
+          throw new ApiError(400, 'Auction end date must be in the future');
+        }
       }
     }
 
@@ -173,6 +186,7 @@ export class MarketItemService {
       tradeType,
       status,
       sellerId,
+      userId,
       page = 1,
       limit = 20,
     } = filters;
@@ -204,7 +218,7 @@ export class MarketItemService {
           seller: { select: { ...USER_SELECT_FIELDS } },
           category: true,
           city: true,
-          // Note: groupChannels not included here for performance (can be fetched separately if needed)
+          groupChannels: userId ? { select: { id: true, buyerId: true } } : false,
         },
         orderBy,
       }),
@@ -229,11 +243,22 @@ export class MarketItemService {
       });
     }
 
-    // Apply pagination after sorting
     const paginatedItems = items.slice((page - 1) * limit, page * limit);
+    const data = userId
+      ? paginatedItems.map((item) => {
+          const { groupChannels, ...rest } = item as typeof item & {
+            groupChannels?: { id: string; buyerId: string | null }[];
+          };
+          const channels = groupChannels ?? [];
+          if (item.sellerId === userId)
+            return { ...rest, groupChannels: channels.map((c) => ({ id: c.id })) };
+          const buyerChannel = channels.find((c) => c.buyerId === userId);
+          return { ...rest, groupChannel: buyerChannel ? { id: buyerChannel.id } : null };
+        })
+      : paginatedItems;
 
     return {
-      data: paginatedItems,
+      data,
       pagination: {
         page,
         limit,
@@ -263,12 +288,10 @@ export class MarketItemService {
     // If user is checking, find their private chat with seller
     let buyerChat = null;
     if (userId && userId !== item.sellerId) {
-      buyerChat = await prisma.groupChannel.findUnique({
+      buyerChat = await prisma.groupChannel.findFirst({
         where: {
-          GroupChannel_marketItemId_buyerId_key: {
-            marketItemId: id,
-            buyerId: userId,
-          },
+          marketItemId: id,
+          buyerId: userId,
         },
         select: { id: true },
       });
@@ -327,18 +350,30 @@ export class MarketItemService {
     const finalTradeTypes = tradeTypes ?? item.tradeTypes;
     const finalPriceCents = priceCents !== undefined ? priceCents : item.priceCents;
     const finalAuctionEndsAt = auctionEndsAt !== undefined ? auctionEndsAt : item.auctionEndsAt;
-    if (finalTradeTypes.includes(MarketItemTradeType.BUY_IT_NOW) && (finalPriceCents == null || finalPriceCents < 0)) {
-      throw new ApiError(400, 'Price is required for Buy it now');
-    }
-    if (finalTradeTypes.includes(MarketItemTradeType.AUCTION)) {
-      if (finalPriceCents == null || finalPriceCents < 0) {
-        throw new ApiError(400, 'Starting bid is required for Auction');
+
+    // Validate FREE trade type constraints
+    if (finalTradeTypes.includes(MarketItemTradeType.FREE)) {
+      if (finalTradeTypes.length > 1) {
+        throw new ApiError(400, 'FREE cannot be combined with other trade types');
       }
-      if (!finalAuctionEndsAt) {
-        throw new ApiError(400, 'Auction end date is required');
+      if (finalPriceCents != null && finalPriceCents > 0) {
+        throw new ApiError(400, 'FREE items cannot have a price');
       }
-      if (new Date(finalAuctionEndsAt) <= new Date()) {
-        throw new ApiError(400, 'Auction end date must be in the future');
+    } else {
+      // Non-FREE items validation
+      if (finalTradeTypes.includes(MarketItemTradeType.BUY_IT_NOW) && (finalPriceCents == null || finalPriceCents < 0)) {
+        throw new ApiError(400, 'Price is required for Buy it now');
+      }
+      if (finalTradeTypes.includes(MarketItemTradeType.AUCTION)) {
+        if (finalPriceCents == null || finalPriceCents < 0) {
+          throw new ApiError(400, 'Starting bid is required for Auction');
+        }
+        if (!finalAuctionEndsAt) {
+          throw new ApiError(400, 'Auction end date is required');
+        }
+        if (new Date(finalAuctionEndsAt) <= new Date()) {
+          throw new ApiError(400, 'Auction end date must be in the future');
+        }
       }
     }
 
@@ -689,12 +724,10 @@ export class MarketItemService {
     }
 
     // Check if chat already exists
-    let chat = await prisma.groupChannel.findUnique({
+    let chat = await prisma.groupChannel.findFirst({
       where: {
-        GroupChannel_marketItemId_buyerId_key: {
-          marketItemId,
-          buyerId,
-        },
+        marketItemId,
+        buyerId,
       },
       include: {
         participants: {

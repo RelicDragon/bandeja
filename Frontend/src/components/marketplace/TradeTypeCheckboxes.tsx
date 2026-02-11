@@ -5,6 +5,7 @@ const SELECTED_STYLES: Record<string, string> = {
   BUY_IT_NOW: 'bg-emerald-500 text-white border-emerald-500',
   SUGGESTED_PRICE: 'bg-amber-500 text-white border-amber-500',
   AUCTION: 'bg-violet-500 text-white border-violet-500',
+  FREE: 'bg-blue-500 text-white border-blue-500',
 };
 
 const UNSELECTED = 'border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-slate-800 dark:text-white hover:border-primary-500/50';

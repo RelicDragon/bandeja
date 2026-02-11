@@ -54,13 +54,13 @@ const sortForBugsChannels = (a: ChatItem, b: ChatItem): number => {
 
 export const sortChatItems = (
   items: ChatItem[],
-  filter: 'users' | 'bugs' | 'channels',
+  filter: 'users' | 'bugs' | 'channels' | 'market',
   userId?: string
 ): ChatItem[] => {
   if (!items.length) return items;
   if (filter === 'users' && userId) {
     items.sort((a, b) => sortByActivity(a, b, (c) => getChatTitle(c, userId)));
-  } else if (filter === 'bugs' || filter === 'channels') {
+  } else if (filter === 'bugs' || filter === 'channels' || filter === 'market') {
     items.sort(sortForBugsChannels);
   }
   return items;

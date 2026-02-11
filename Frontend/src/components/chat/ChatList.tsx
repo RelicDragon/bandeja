@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import transliterate from '@sindresorhus/transliterate';
 import { CityUserCard } from './CityUserCard';
 import { ChatListItem } from './ChatListItem';
@@ -9,6 +9,8 @@ import { ChatListSearchBar } from './ChatListSearchBar';
 import { chatApi, ChatDraft, getLastMessageTime, GroupChannel } from '@/api/chat';
 import { matchDraftToChat } from '@/utils/chatListUtils';
 import { getChatTitle, sortChatItems } from '@/utils/chatListSort';
+import { getMarketChatDisplayTitle, getMarketChatDisplayTitleForSellerGrouped, getMarketChatDisplayParts } from '@/utils/marketChatUtils';
+import { useGroupChannelUnreadCounts } from '@/hooks/useGroupChannelUnreadCounts';
 import {
   deduplicateChats,
   getChatKey,
@@ -29,12 +31,16 @@ import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useDebounce } from '@/components/CityMap/useDebounce';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Package, ShoppingCart, Store } from 'lucide-react';
 import { BugModal } from '@/components/bugs/BugModal';
+import { MarketItemDrawer } from '@/components/marketplace';
+import { marketplaceApi } from '@/api/marketplace';
+import { MarketItem } from '@/types';
 import { BugsFilterPanel } from '@/components/bugs/BugsFilterPanel';
 import { ChatMessageSearchResults } from './ChatMessageSearchResults';
 import { CollapsibleSection } from './CollapsibleSection';
 import { ChatMessage } from '@/api/chat';
+import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { ChatItem, ChatType } from './chatListTypes';
 
@@ -50,6 +56,7 @@ interface ChatListProps {
 export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, selectedChatType }: ChatListProps) => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { chatsFilter, bugsFilter, openBugModal, setOpenBugModal } = useNavigationStore();
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
@@ -76,9 +83,34 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const [channelsHasMore, setChannelsHasMore] = useState(false);
   const [channelsLoadingMore, setChannelsLoadingMore] = useState(false);
   const channelsPageRef = useRef(1);
+  const [marketHasMore, setMarketHasMore] = useState(false);
+  const [marketLoadingMore, setMarketLoadingMore] = useState(false);
+  const marketPageRef = useRef(1);
+  const marketChatRole = (searchParams.get('role') === 'seller' ? 'seller' : 'buyer') as 'buyer' | 'seller';
+  const [selectedMarketItemForDrawer, setSelectedMarketItemForDrawer] = useState<MarketItem | null>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
 
-  const chatsCacheRef = useRef<Partial<Record<'users' | 'bugs' | 'channels', FilterCache>>>({});
+  const setMarketChatRole = useCallback(
+    (role: 'buyer' | 'seller') => {
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          p.set('role', role);
+          return p;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
+
+  const chatsCacheRef = useRef<Partial<Record<'users' | 'bugs' | 'channels' | 'market', FilterCache>>>({});
+  const marketChannelIds = useMemo(
+    () => (chatsFilter === 'market' ? chats.filter((c) => c.type === 'channel').map((c) => c.data.id) : []),
+    [chatsFilter, chats]
+  );
+  const marketUnreadCounts = useGroupChannelUnreadCounts(marketChannelIds);
 
   useEffect(() => {
     if (skipUrlSyncRef.current) {
@@ -201,24 +233,43 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     }
   }, [user]);
 
+  const fetchMarket = useCallback(async (page = 1): Promise<{ chats: ChatItem[]; hasMore: boolean }> => {
+    if (!user) return { chats: [], hasMore: false };
+    try {
+      const { data: channels, pagination } = await chatApi.getGroupChannels('market', page);
+      const channelList = (channels || []) as GroupChannel[];
+      const channelIds = channelList.map((c: GroupChannel) => c.id);
+      const channelUnreads = channelIds.length > 0
+        ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {}
+        : {};
+      const chatItems = channelsToChatItems(channelList, channelUnreads, 'market', { filterByIsGroup: true, useUpdatedAtFallback: true });
+      return { chats: chatItems, hasMore: pagination?.hasMore ?? false };
+    } catch (err) {
+      console.error('fetchMarket failed:', err);
+      return { chats: [], hasMore: false };
+    }
+  }, [user]);
+
   const fetchAllFilters = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
     try {
-      const [usersData, bugsResult, channelsResult] = await Promise.all([
+      const [usersData, bugsResult, channelsResult, marketResult] = await Promise.all([
         fetchUsersSearchData().catch(() => ({ activeChats: [], cityUsers: [], usersHasMore: false })),
         fetchBugs(1).catch(() => ({ chats: [], hasMore: false })),
-        fetchChannels(1).catch(() => ({ chats: [], hasMore: false }))
+        fetchChannels(1).catch(() => ({ chats: [], hasMore: false })),
+        fetchMarket(1).catch(() => ({ chats: [], hasMore: false }))
       ]);
 
       const usersChatItems = deduplicateChats(usersData.activeChats);
       chatsCacheRef.current.users = { chats: usersChatItems, cityUsers: usersData.cityUsers, usersHasMore: usersData.usersHasMore };
       chatsCacheRef.current.bugs = { chats: deduplicateChats(bugsResult.chats), bugsHasMore: bugsResult.hasMore };
       chatsCacheRef.current.channels = { chats: deduplicateChats(channelsResult.chats), channelsHasMore: channelsResult.hasMore };
+      chatsCacheRef.current.market = { chats: deduplicateChats(marketResult.chats), marketHasMore: marketResult.hasMore };
 
       const activeFilter = useNavigationStore.getState().chatsFilter;
-      if (activeFilter === 'users' || activeFilter === 'bugs' || activeFilter === 'channels') {
+      if (activeFilter === 'users' || activeFilter === 'bugs' || activeFilter === 'channels' || activeFilter === 'market') {
         const cached = chatsCacheRef.current[activeFilter];
         if (cached) {
           setChats(deduplicateChats(cached.chats));
@@ -230,9 +281,11 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             setBugsHasMore,
             setUsersHasMore,
             setChannelsHasMore,
+            setMarketHasMore,
             bugsPageRef,
             usersPageRef,
-            channelsPageRef
+            channelsPageRef,
+            marketPageRef
           });
         }
       }
@@ -241,9 +294,9 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     } finally {
       setLoading(false);
     }
-  }, [user, fetchUsersSearchData, fetchBugs, fetchChannels]);
+  }, [user, fetchUsersSearchData, fetchBugs, fetchChannels, fetchMarket]);
 
-  const fetchChatsForFilter = useCallback(async (_filter?: 'users' | 'bugs' | 'channels') => {
+  const fetchChatsForFilter = useCallback(async (_filter?: 'users' | 'bugs' | 'channels' | 'market') => {
     await fetchAllFilters();
   }, [fetchAllFilters]);
 
@@ -252,15 +305,17 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       setBugsHasMore,
       setUsersHasMore,
       setChannelsHasMore,
+      setMarketHasMore,
       bugsPageRef,
       usersPageRef,
-      channelsPageRef
+      channelsPageRef,
+      marketPageRef
     }),
     []
   );
 
   useEffect(() => {
-    if (chatsFilter !== 'users' && chatsFilter !== 'bugs' && chatsFilter !== 'channels') return;
+    if (chatsFilter !== 'users' && chatsFilter !== 'bugs' && chatsFilter !== 'channels' && chatsFilter !== 'market') return;
     const cached = chatsCacheRef.current[chatsFilter];
     if (cached) {
       setChats(deduplicateChats(cached.chats));
@@ -346,10 +401,28 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     await fn();
   }, [chatsFilter, channelsLoadingMore, channelsHasMore, fetchChannels]);
 
+  const loadMoreMarket = useCallback(async () => {
+    const fn = createLoadMore({
+      isActive: chatsFilter === 'market',
+      loadingMore: marketLoadingMore,
+      hasMore: marketHasMore,
+      pageRef: marketPageRef,
+      fetcher: fetchMarket,
+      setChats,
+      setLoadingMore: setMarketLoadingMore,
+      setHasMore: setMarketHasMore,
+      cacheKey: 'market',
+      cacheRef: chatsCacheRef,
+      deduplicate: deduplicateChats
+    });
+    await fn();
+  }, [chatsFilter, marketLoadingMore, marketHasMore, fetchMarket]);
+
   const shouldLoadMore = (chatsFilter === 'bugs' && bugsHasMore && !bugsLoadingMore) ||
     (chatsFilter === 'users' && usersHasMore && !usersLoadingMore) ||
-    (chatsFilter === 'channels' && channelsHasMore && !channelsLoadingMore);
-  const loadMore = chatsFilter === 'bugs' ? loadMoreBugs : chatsFilter === 'users' ? loadMoreUsers : loadMoreChannels;
+    (chatsFilter === 'channels' && channelsHasMore && !channelsLoadingMore) ||
+    (chatsFilter === 'market' && marketHasMore && !marketLoadingMore);
+  const loadMore = chatsFilter === 'bugs' ? loadMoreBugs : chatsFilter === 'users' ? loadMoreUsers : chatsFilter === 'market' ? loadMoreMarket : loadMoreChannels;
 
   useEffect(() => {
     if (!shouldLoadMore) return;
@@ -364,6 +437,24 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     observer.observe(el);
     return () => observer.disconnect();
   }, [chatsFilter, shouldLoadMore, loadMore]);
+
+  useEffect(() => {
+    const data = lastChatUnreadCount;
+    if (!data || data.contextType !== 'GROUP') return;
+    if (marketChannelIds.includes(data.contextId)) return;
+    let cancelled = false;
+    fetchMarket(1).then(({ chats, hasMore }) => {
+      if (cancelled) return;
+      const deduped = deduplicateChats(chats);
+      chatsCacheRef.current.market = { chats: deduped, marketHasMore: hasMore };
+      if (chatsFilter === 'market') {
+        setChats(deduped);
+        setMarketHasMore(hasMore);
+        marketPageRef.current = 1;
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [lastChatUnreadCount, marketChannelIds, chatsFilter, fetchMarket]);
 
   const fetchCityUsers = useCallback(async () => {
     if (!user?.currentCity?.id) return;
@@ -563,7 +654,8 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       const shouldUpdate =
         (chatsFilter === 'users' && (contextType === 'USER' || contextType === 'GROUP')) ||
         (chatsFilter === 'bugs' && contextType === 'GROUP') ||
-        (chatsFilter === 'channels' && contextType === 'GROUP');
+        (chatsFilter === 'channels' && contextType === 'GROUP') ||
+        (chatsFilter === 'market' && contextType === 'GROUP');
 
       if (shouldUpdate) {
         setChats((prevChats) => {
@@ -573,6 +665,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
               if (chatsFilter === 'channels') return chat.type === 'channel';
               if (chatsFilter === 'users') return chat.type === 'group';
               if (chatsFilter === 'bugs') return chat.type === 'channel' && chat.data.bug;
+              if (chatsFilter === 'market') return chat.type === 'channel' && chat.data.marketItemId;
               return true;
             }
             return false;
@@ -618,7 +711,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
 
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();
-    if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') {
+    if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') {
       await fetchChatsForFilter(chatsFilter);
     }
   }, [fetchChatsForFilter, chatsFilter]);
@@ -642,6 +735,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     onChatSelect?.(chatId, chatType, options);
   }, [onChatSelect]);
 
+  const handleCreateListing = useCallback(() => {
+    navigate('/marketplace/create', { state: { fromPage: 'chats' as const, fromFilter: 'market' as const } });
+  }, [navigate]);
+
   const normalizeString = (str: string) => {
     return transliterate(str).toLowerCase();
   };
@@ -654,6 +751,15 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     if (!debouncedSearchQuery.trim()) return true;
     return normalizeString(title).includes(normalizeString(debouncedSearchQuery));
   }, [debouncedSearchQuery]);
+
+  const matchesMarketSearch = useCallback(
+    (chat: ChatItem) => {
+      if (chat.type !== 'channel' || !chat.data.marketItemId) return false;
+      const title = getMarketChatDisplayTitle(chat.data, user?.id ?? '', marketChatRole);
+      return matchesSearch(title);
+    },
+    [user?.id, marketChatRole, matchesSearch]
+  );
 
   const filteredActiveChats = useMemo(() => {
     const source = chatsFilter === 'channels' ? (searchableUsersData?.activeChats ?? []) : activeChats;
@@ -748,12 +854,50 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const [bugsFilterPanelOpen, setBugsFilterPanelOpen] = useState(false);
   const [unreadFilterActive, setUnreadFilterActive] = useState(false);
 
-  const unreadChatsCount = useMemo(
-    () => chats
+  const marketBuyerSellerUnread = useMemo(() => {
+    let buyer = 0;
+    let seller = 0;
+    chats
+      .filter((c): c is ChatItem & { type: 'channel'; data: GroupChannel } => c.type === 'channel' && !!(c.data as GroupChannel).marketItemId)
+      .forEach((c) => {
+        const count = marketUnreadCounts[(c.data as GroupChannel).id] ?? c.unreadCount ?? 0;
+        if ((c.data as GroupChannel).buyerId === user?.id) buyer += count;
+        if ((c.data as GroupChannel).marketItem?.sellerId === user?.id) seller += count;
+      });
+    return { buyer, seller };
+  }, [chats, marketUnreadCounts, user?.id]);
+
+  const marketFilteredByRoleAndSearch = useMemo(() => {
+    if (chatsFilter !== 'market') return [];
+    const roleFiltered = chats.filter(
+      (c) =>
+        c.type === 'channel' &&
+        c.data.marketItemId &&
+        (marketChatRole === 'buyer' ? c.data.buyerId === user?.id : c.data.marketItem?.sellerId === user?.id)
+    );
+    const searchFiltered = debouncedSearchQuery.trim()
+      ? roleFiltered.filter(matchesMarketSearch)
+      : roleFiltered;
+    const sorted = [...searchFiltered];
+    sortChatItems(sorted, 'market');
+    return sorted.map((c) =>
+      c.type === 'channel'
+        ? { ...c, unreadCount: marketUnreadCounts[c.data.id] ?? c.unreadCount }
+        : c
+    ) as ChatItem[];
+  }, [chatsFilter, chats, marketChatRole, user?.id, debouncedSearchQuery, matchesMarketSearch, marketUnreadCounts]);
+
+  const unreadChatsCount = useMemo(() => {
+    if (chatsFilter === 'market') {
+      return marketFilteredByRoleAndSearch.reduce(
+        (sum, c) => sum + ('unreadCount' in c ? (c.unreadCount ?? 0) : 0),
+        0
+      );
+    }
+    return chats
       .filter((c) => c.type === 'user' || c.type === 'group' || c.type === 'channel')
-      .reduce((sum, c) => sum + (c.unreadCount ?? 0), 0),
-    [chats]
-  );
+      .reduce((sum, c) => sum + ('unreadCount' in c ? (c.unreadCount ?? 0) : 0), 0);
+  }, [chatsFilter, chats, marketFilteredByRoleAndSearch]);
   const hasUnreadChats = unreadChatsCount > 0;
 
   useEffect(() => {
@@ -761,9 +905,67 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   }, [hasUnreadChats]);
 
   const displayedChats = useMemo(() => {
+    if (chatsFilter === 'market') {
+      if (!unreadFilterActive) return marketFilteredByRoleAndSearch;
+      return marketFilteredByRoleAndSearch.filter((c) => ('unreadCount' in c ? (c.unreadCount ?? 0) : 0) > 0);
+    }
     if (!unreadFilterActive) return chats;
     return chats.filter((c) => (c.type === 'user' || c.type === 'group' || c.type === 'channel') && (c.unreadCount ?? 0) > 0);
-  }, [chats, unreadFilterActive]);
+  }, [chatsFilter, chats, unreadFilterActive, marketFilteredByRoleAndSearch]);
+
+  const marketGroupedByItem = useMemo(() => {
+    if (chatsFilter !== 'market' || marketChatRole !== 'seller') return null;
+    const map = new Map<string, { itemId: string; title: string; thumb?: string; marketItem?: MarketItem; channels: ChatItem[] }>();
+    displayedChats.forEach((c) => {
+      if (c.type !== 'channel' || !('marketItemId' in c.data) || !c.data.marketItemId) return;
+      const key = c.data.marketItemId;
+      const gc = c.data as GroupChannel;
+      if (!map.has(key)) {
+        map.set(key, {
+          itemId: key,
+          title: gc.marketItem?.title ?? '',
+          thumb: gc.marketItem?.mediaUrls?.[0],
+          marketItem: gc.marketItem,
+          channels: []
+        });
+      }
+      map.get(key)!.channels.push(c);
+    });
+    return Array.from(map.values()).sort((a, b) => {
+      const channelTime = (ch: (typeof a.channels)[number]) =>
+        ch.lastMessageDate ? ch.lastMessageDate.getTime() : new Date((ch as Extract<(typeof a.channels)[number], { type: 'channel' }>).data.updatedAt).getTime();
+      const aMax = Math.max(...a.channels.map(channelTime));
+      const bMax = Math.max(...b.channels.map(channelTime));
+      return bMax - aMax;
+    });
+  }, [chatsFilter, marketChatRole, displayedChats]);
+
+  useEffect(() => {
+    const state = (location.state as { marketRole?: 'seller' } | null)?.marketRole;
+    if (chatsFilter === 'market' && state === 'seller' && searchParams.get('role') !== 'seller') {
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          p.set('role', 'seller');
+          return p;
+        },
+        { replace: true }
+      );
+    }
+  }, [chatsFilter, location.state, searchParams, setSearchParams]);
+
+  const handleMarketItemGroupClick = useCallback(async (group: { itemId: string; marketItem?: MarketItem }) => {
+    if (group.marketItem) {
+      setSelectedMarketItemForDrawer(group.marketItem);
+      return;
+    }
+    try {
+      const res = await marketplaceApi.getMarketItemById(group.itemId);
+      setSelectedMarketItemForDrawer(res.data);
+    } catch {
+      setSelectedMarketItemForDrawer(null);
+    }
+  }, []);
 
   useEffect(() => {
     if (openBugModal && chatsFilter === 'bugs') {
@@ -771,6 +973,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       setOpenBugModal(false);
     }
   }, [openBugModal, chatsFilter, setOpenBugModal]);
+
   const [activeChatsExpanded, setActiveChatsExpanded] = useState(true);
   const [usersExpanded, setUsersExpanded] = useState(true);
 
@@ -890,20 +1093,27 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   }
 
   const showContactsEmpty = contactsMode && chatsFilter === 'users' && !isSearchMode && !cityUsersLoading && cityUsers.length === 0;
-  const showChatsEmpty = !contactsMode && !isSearchMode && chats.length === 0 && !loading;
+  const showChatsEmpty = !contactsMode && !isSearchMode && (chatsFilter === 'market' ? displayedChats.length === 0 : chats.length === 0) && !loading;
 
   const renderEmptyState = () => (
     <div className="flex flex-col items-center justify-center flex-1 min-h-[200px] py-12 text-gray-500 dark:text-gray-400">
-      <MessageCircle size={64} className="mb-4 opacity-50" />
+      {chatsFilter === 'market' ? (
+        <Package size={64} className="mb-4 opacity-50" />
+      ) : (
+        <MessageCircle size={64} className="mb-4 opacity-50" />
+      )}
       <p className="text-lg font-medium">
         {showContactsEmpty && (user?.currentCity ? t('chat.noCityUsers', { defaultValue: 'No users in your city' }) : t('chat.noCitySet', { defaultValue: 'Set your city to see players' }))}
-        {showChatsEmpty && t('chat.noConversations', { defaultValue: 'No conversations yet' })}
+        {showChatsEmpty && chatsFilter !== 'market' && t('chat.noConversations', { defaultValue: 'No conversations yet' })}
       </p>
       <p className="text-sm mt-2">
         {showContactsEmpty && user?.currentCity && t('chat.noCityUsersHint', { defaultValue: 'Try a different search' })}
         {showChatsEmpty && chatsFilter === 'users' && t('chat.noUserChats', { defaultValue: 'Start chatting with players' })}
         {showChatsEmpty && chatsFilter === 'bugs' && t('chat.noBugChats', { defaultValue: 'No bug reports yet' })}
         {showChatsEmpty && chatsFilter === 'channels' && t('chat.noChannels', { defaultValue: 'No channels yet' })}
+        {showChatsEmpty && chatsFilter === 'market' && debouncedSearchQuery.trim() && t('marketplace.noSearchResultsMarketChats', { defaultValue: 'No results for this search' })}
+        {showChatsEmpty && chatsFilter === 'market' && !debouncedSearchQuery.trim() && marketChatRole === 'buyer' && t('marketplace.noBuyerChats', { defaultValue: 'No chats as buyer' })}
+        {showChatsEmpty && chatsFilter === 'market' && !debouncedSearchQuery.trim() && marketChatRole === 'seller' && t('marketplace.noSellerChats', { defaultValue: 'No chats as seller' })}
       </p>
     </div>
   );
@@ -924,7 +1134,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-        {(chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels') && (
+        {(chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') && (
           <ChatListSearchBar
             chatsFilter={chatsFilter}
             contactsMode={contactsMode}
@@ -954,6 +1164,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             }}
             onContactsToggle={handleContactsToggle}
             onAddBug={() => setShowBugModal(true)}
+            onCreateListing={chatsFilter === 'market' ? handleCreateListing : undefined}
             isDesktop={isDesktop}
             hasCity={!!user?.currentCity?.id}
             bugsFilterPanelOpen={bugsFilterPanelOpen}
@@ -974,6 +1185,21 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             </motion.div>
           )}
         </AnimatePresence>
+        {chatsFilter === 'market' && (
+          <div className="flex items-center justify-center mt-2 mb-2">
+            <SegmentedSwitch
+              tabs={[
+                { id: 'buyer', label: t('marketplace.imBuyer', { defaultValue: "I'm buyer" }), icon: ShoppingCart, badge: marketBuyerSellerUnread.buyer },
+                { id: 'seller', label: t('marketplace.imSeller', { defaultValue: "I'm seller" }), icon: Store, badge: marketBuyerSellerUnread.seller },
+              ]}
+              activeId={marketChatRole}
+              onChange={(id) => setMarketChatRole(id as 'buyer' | 'seller')}
+              titleInActiveOnly={false}
+              layoutId="marketRoleSubtab"
+              className="mx-2"
+            />
+          </div>
+        )}
         <div
           className="flex-1 min-h-0 overflow-y-auto scrollbar-auto"
           style={{
@@ -1073,21 +1299,65 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             renderEmptyState()
           ) : (
             <>
-              {displayedChats.map((chat) => (
-                <ChatListItem
-                  key={getChatKey(chat)}
-                  item={chat}
-                  selectedChatId={selectedChatId}
-                  selectedChatType={selectedChatType}
-                  onChatClick={handleChatClick}
-                  onContactClick={handleContactClick}
-                  isSearchMode={isSearchMode}
-                  searchQuery={debouncedSearchQuery.trim()}
-                />
-              ))}
-              {((chatsFilter === 'bugs' && bugsHasMore) || (chatsFilter === 'users' && usersHasMore) || (chatsFilter === 'channels' && channelsHasMore)) && (
+              {chatsFilter === 'market' && marketGroupedByItem ? (
+                marketGroupedByItem.map((group) => (
+                  <div key={group.itemId} className="mx-2 mb-3 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleMarketItemGroupClick(group)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleMarketItemGroupClick(group)}
+                      className="rounded-t-xl px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border-l-4 border-primary-500 dark:border-primary-400 flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700/80 active:bg-gray-300 dark:active:bg-gray-700 transition-colors"
+                    >
+                      {group.thumb ? (
+                        <img src={group.thumb} alt="" className="w-8 h-8 rounded object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                          <Package className="w-4 h-4 text-primary-600" />
+                        </div>
+                      )}
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{group.title || t('marketplace.listing', { defaultValue: 'Listing' })}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
+                        {t('marketplace.chatCount', { count: group.channels.length })}
+                      </span>
+                    </div>
+                    <div className="rounded-b-xl bg-gray-50/80 dark:bg-gray-900/40 border-l-4 border-primary-200 dark:border-primary-800/60">
+                      {group.channels.map((chat) => (
+                      <ChatListItem
+                        key={getChatKey(chat)}
+                        item={chat}
+                        selectedChatId={selectedChatId}
+                        selectedChatType={selectedChatType}
+                        onChatClick={handleChatClick}
+                        onContactClick={handleContactClick}
+                        isSearchMode={isSearchMode}
+                        searchQuery={debouncedSearchQuery.trim()}
+                        displayTitle={getMarketChatDisplayTitleForSellerGrouped((chat as Extract<typeof chat, { type: 'channel' }>).data)}
+                        sellerGroupedByItem
+                      />
+                    ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                displayedChats.map((chat) => (
+                  <ChatListItem
+                    key={getChatKey(chat)}
+                    item={chat}
+                    selectedChatId={selectedChatId}
+                    selectedChatType={selectedChatType}
+                    onChatClick={handleChatClick}
+                    onContactClick={handleContactClick}
+                    isSearchMode={isSearchMode}
+                    searchQuery={debouncedSearchQuery.trim()}
+                    displayTitle={chatsFilter === 'market' && chat.type === 'channel' && user?.id ? (marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').title : getMarketChatDisplayTitle(chat.data, user.id, marketChatRole)) : undefined}
+                    displaySubtitle={chatsFilter === 'market' && chat.type === 'channel' && user?.id && marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').subtitle : undefined}
+                  />
+                ))
+              )}
+              {((chatsFilter === 'bugs' && bugsHasMore) || (chatsFilter === 'users' && usersHasMore) || (chatsFilter === 'channels' && channelsHasMore) || (chatsFilter === 'market' && marketHasMore)) && (
                 <div ref={loadMoreSentinelRef} className="py-4 flex justify-center">
-                  {(bugsLoadingMore || usersLoadingMore || channelsLoadingMore) && (
+                  {(bugsLoadingMore || usersLoadingMore || channelsLoadingMore || marketLoadingMore) && (
                     <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                   )}
                 </div>
@@ -1101,6 +1371,14 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
           isOpen={showBugModal}
           onClose={() => setShowBugModal(false)}
           onSuccess={handleBugCreated}
+        />
+      )}
+      {selectedMarketItemForDrawer && (
+        <MarketItemDrawer
+          item={selectedMarketItemForDrawer}
+          isOpen={!!selectedMarketItemForDrawer}
+          onClose={() => setSelectedMarketItemForDrawer(null)}
+          inChatContext
         />
       )}
     </>

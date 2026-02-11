@@ -9,12 +9,10 @@ export class MarketItemParticipantService {
 
   static async joinMarketItemChat(marketItemId: string, userId: string) {
     // Find buyer's specific chat with seller
-    const groupChannel = await prisma.groupChannel.findUnique({
+    const groupChannel = await prisma.groupChannel.findFirst({
       where: {
-        GroupChannel_marketItemId_buyerId_key: {
-          marketItemId,
-          buyerId: userId,
-        },
+        marketItemId,
+        buyerId: userId,
       },
     });
     if (!groupChannel) {
@@ -25,12 +23,10 @@ export class MarketItemParticipantService {
 
   static async leaveMarketItemChat(marketItemId: string, userId: string) {
     // Find buyer's specific chat with seller
-    const groupChannel = await prisma.groupChannel.findUnique({
+    const groupChannel = await prisma.groupChannel.findFirst({
       where: {
-        GroupChannel_marketItemId_buyerId_key: {
-          marketItemId,
-          buyerId: userId,
-        },
+        marketItemId,
+        buyerId: userId,
       },
     });
     if (!groupChannel) {
@@ -41,12 +37,10 @@ export class MarketItemParticipantService {
 
   static async isParticipant(marketItemId: string, userId: string): Promise<boolean> {
     // Find buyer's specific chat with seller
-    const groupChannel = await prisma.groupChannel.findUnique({
+    const groupChannel = await prisma.groupChannel.findFirst({
       where: {
-        GroupChannel_marketItemId_buyerId_key: {
-          marketItemId,
-          buyerId: userId,
-        },
+        marketItemId,
+        buyerId: userId,
       },
     });
     if (!groupChannel) return false;

@@ -155,23 +155,27 @@ export const CreateMarketItem = () => {
       toast.error(t('marketplace.cityRequired', { defaultValue: 'City is required' }));
       return;
     }
-    const priceCentsVal = priceToCents(form.priceCents);
-    if (form.tradeTypes.includes('BUY_IT_NOW') && (priceCentsVal == null || priceCentsVal < 1)) {
-      toast.error(t('marketplace.priceRequired', { defaultValue: 'Price is required for Buy now' }));
-      return;
-    }
-    if (form.tradeTypes.includes('AUCTION')) {
-      if (priceCentsVal == null || priceCentsVal < 0) {
-        toast.error(t('marketplace.startingBidRequired', { defaultValue: 'Starting bid is required for Auction' }));
+    const isFree = form.tradeTypes.includes('FREE');
+    const priceCentsVal = isFree ? undefined : priceToCents(form.priceCents);
+
+    if (!isFree) {
+      if (form.tradeTypes.includes('BUY_IT_NOW') && (priceCentsVal == null || priceCentsVal < 1)) {
+        toast.error(t('marketplace.priceRequired', { defaultValue: 'Price is required for Buy now' }));
         return;
       }
-      if (!form.auctionEndsAt) {
-        toast.error(t('marketplace.auctionEndRequired', { defaultValue: 'Auction end date is required' }));
-        return;
-      }
-      if (new Date(form.auctionEndsAt) <= new Date()) {
-        toast.error(t('marketplace.auctionEndFuture', { defaultValue: 'Auction end date must be in the future' }));
-        return;
+      if (form.tradeTypes.includes('AUCTION')) {
+        if (priceCentsVal == null || priceCentsVal < 0) {
+          toast.error(t('marketplace.startingBidRequired', { defaultValue: 'Starting bid is required for Auction' }));
+          return;
+        }
+        if (!form.auctionEndsAt) {
+          toast.error(t('marketplace.auctionEndRequired', { defaultValue: 'Auction end date is required' }));
+          return;
+        }
+        if (new Date(form.auctionEndsAt) <= new Date()) {
+          toast.error(t('marketplace.auctionEndFuture', { defaultValue: 'Auction end date must be in the future' }));
+          return;
+        }
       }
     }
     setLoading(true);
@@ -220,7 +224,17 @@ export const CreateMarketItem = () => {
     { value: 'BUY_IT_NOW', label: t('marketplace.buyItNow', { defaultValue: 'Buy now' }) },
     { value: 'SUGGESTED_PRICE', label: t('marketplace.suggestedPrice', { defaultValue: 'Haggling welcome' }) },
     { value: 'AUCTION', label: t('marketplace.auction', { defaultValue: 'Auction' }) },
+    { value: 'FREE', label: t('marketplace.free', { defaultValue: 'Free' }) },
   ];
+
+  const handleTradeTypesChange = (newTypes: MarketItemTradeType[]) => {
+    // If FREE is selected, make it exclusive and clear price
+    if (newTypes.includes('FREE')) {
+      setForm((f) => ({ ...f, tradeTypes: ['FREE'], priceCents: '' }));
+    } else {
+      setForm((f) => ({ ...f, tradeTypes: newTypes }));
+    }
+  };
 
   return (
     <div className="pb-4">
@@ -304,12 +318,12 @@ export const CreateMarketItem = () => {
           <FormField>
             <TradeTypeCheckboxes
               value={form.tradeTypes}
-              onChange={(v) => setForm((f) => ({ ...f, tradeTypes: v as MarketItemTradeType[] }))}
+              onChange={handleTradeTypesChange}
               options={tradeTypeOptions}
             />
           </FormField>
 
-          {(form.tradeTypes.includes('BUY_IT_NOW') || form.tradeTypes.includes('AUCTION')) && (
+          {!form.tradeTypes.includes('FREE') && (form.tradeTypes.includes('BUY_IT_NOW') || form.tradeTypes.includes('AUCTION')) && (
             <FormField required>
               <PriceInputWithCurrency
                 value={form.priceCents}
@@ -321,7 +335,7 @@ export const CreateMarketItem = () => {
             </FormField>
           )}
 
-          {form.tradeTypes.includes('AUCTION') && (
+          {!form.tradeTypes.includes('FREE') && form.tradeTypes.includes('AUCTION') && (
             <FormField required>
               <AuctionDurationSelector
                 value={form.auctionEndsAt}

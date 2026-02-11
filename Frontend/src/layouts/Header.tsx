@@ -35,7 +35,7 @@ export const Header = () => {
   
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const shouldHideHeader = !user && isGameDetailsPage;
-  const isMarketplaceList = location.pathname === '/marketplace' || !!location.pathname.match(/^\/marketplace\/?$/);
+  const isMarketplaceList = location.pathname === '/marketplace' || location.pathname === '/marketplace/my';
 
   const previousPageRef = useRef(currentPage);
 
@@ -80,7 +80,7 @@ export const Header = () => {
         }}
       >
         <div className="h-16 px-4 flex items-center gap-4" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
-          <div className="flex items-center gap-3">
+          <div className="flex-1 min-w-0 flex items-center gap-3">
             {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard' || (currentPage === 'marketplace' && isMarketplaceList)) ? null : (
               <button
                 onClick={handleBackClick}
@@ -121,7 +121,7 @@ export const Header = () => {
             {currentPage === 'leaderboard' && <LeaderboardTabController />}
           </div>
 
-          <div className="flex items-center gap-4 relative ml-auto">
+          <div className="flex-shrink-0 min-w-28 flex items-center justify-end gap-4">
             {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard' || (currentPage === 'marketplace' && isMarketplaceList)) && (
               <HomeHeaderContent />
             )}

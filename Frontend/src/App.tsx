@@ -13,7 +13,6 @@ const CreateLeague = lazy(() => import('./pages/CreateLeague').then(module => ({
 const CharCreation = lazy(() => import('./Gamify/Pages/CharCreation').then(module => ({ default: module.CharCreation })));
 // const Rating = lazy(() => import('./pages/Rating').then(module => ({ default: module.Rating })));
 const GameChatRoute = lazy(() => import('./pages/GameChatRoute').then(module => ({ default: module.GameChatRoute })));
-const MarketplaceSellerChats = lazy(() => import('./pages/MarketplaceSellerChats').then(module => ({ default: module.MarketplaceSellerChats })));
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
 import { isProfileComplete } from './utils/userValidation';
@@ -366,6 +365,20 @@ function AppContent() {
           }
         />
         <Route
+          path="/chats/marketplace"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/chats"
           element={
             <ProtectedRoute>
@@ -516,6 +529,20 @@ function AppContent() {
           }
         />
         <Route
+          path="/marketplace/my"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/marketplace/create"
           element={
             <ProtectedRoute>
@@ -542,20 +569,6 @@ function AppContent() {
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
                   <MainPage />
-                </Suspense>
-              )}
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/marketplace/:id/chats"
-          element={
-            <ProtectedRoute>
-              {!isProfileComplete(user) ? (
-                <Navigate to="/" replace />
-              ) : (
-                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                  <MarketplaceSellerChats />
                 </Suspense>
               )}
             </ProtectedRoute>

@@ -17,7 +17,7 @@ interface NavigationState {
   bugsButtonSlidingDown: boolean;
   activeTab: 'my-games' | 'past-games' | 'search';
   profileActiveTab: 'general' | 'statistics' | 'comparison';
-  chatsFilter: 'users' | 'bugs' | 'channels';
+  chatsFilter: 'users' | 'bugs' | 'channels' | 'market';
   openBugModal: boolean;
   bugsFilter: BugsFilterState;
   marketplaceTab: 'market' | 'my';
@@ -34,7 +34,7 @@ interface NavigationState {
   setBugsButtonSlidingDown: (sliding: boolean) => void;
   setActiveTab: (tab: 'my-games' | 'past-games' | 'search') => void;
   setProfileActiveTab: (tab: 'general' | 'statistics' | 'comparison') => void;
-  setChatsFilter: (filter: 'users' | 'bugs' | 'channels') => void;
+  setChatsFilter: (filter: 'users' | 'bugs' | 'channels' | 'market') => void;
   setOpenBugModal: (open: boolean) => void;
   setBugsFilter: (filter: BugsFilterState | ((prev: BugsFilterState) => BugsFilterState)) => void;
   setFindViewMode: (mode: 'calendar' | 'list') => void;

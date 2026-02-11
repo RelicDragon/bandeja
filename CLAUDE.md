@@ -106,8 +106,12 @@ Frontend/
 │   ├── store/            # Zustand state management stores
 │   ├── api/              # Axios API client modules
 │   ├── services/         # Frontend business logic
+│   ├── hooks/            # Custom React hooks
 │   ├── layouts/          # Layout components (Header, etc.)
 │   ├── utils/            # Helpers, formatters, validators
+│   │   ├── marketChatUtils.ts  # Marketplace chat display helpers
+│   │   ├── chatListHelpers.ts  # Chat list utilities
+│   │   └── navigation.ts       # Navigation utilities
 │   ├── i18n/            # Internationalization (en, es, ru, sr)
 │   └── App.tsx           # Root component with routing
 ├── ios/                  # Capacitor iOS project
@@ -116,10 +120,13 @@ Frontend/
 
 **State management (Zustand stores):**
 - `authStore` - Authentication state (persisted to localStorage)
-- `socketEventsStore` - Socket event subscriptions
+- `socketEventsStore` - Socket event subscriptions and unread count updates
 - `navigationStore` - Route history and deep link handling
 - `playersStore` - Player/user cache for UI performance
 - `headerStore`, `favoritesStore`, `appModeStore`
+
+**Custom hooks:**
+- `useGroupChannelUnreadCounts` - Tracks unread message counts for multiple group channels, syncs with socket events
 
 ### Database Schema (Prisma)
 
@@ -127,15 +134,18 @@ Frontend/
 - `User` - Multi-auth provider (Phone, Telegram, Apple, Google)
 - `Game` - Central entity with hierarchical structure (parent/child), supports tournaments, leagues, training
 - `ChatMessage` - Multi-context messaging (GAME, BUG, USER, GROUP)
-- `GroupChannel` - Community groups (associated with bugs or market items)
+- `GroupChannel` - Community groups AND marketplace private chats (between buyer/seller)
 - `League` - Tournament structure with seasons, groups, rounds
 - `MarketItem` - Marketplace items with categories and trade types
 - `Bet` - Betting system (SOCIAL or POOL types)
+- `ExchangeRate` - Currency conversion rates for marketplace items
 
 **Important relationships:**
 - Games can be hierarchical (parentId field) for tournament brackets
 - ChatMessage uses polymorphic contextId + chatContextType pattern
 - User preferences split across User model fields and NotificationPreference model
+- GroupChannel can be associated with bugs (1:1), market items (1:many), or standalone community groups
+- MarketItem can have multiple GroupChannels (one per buyer for private chats)
 
 ## Real-Time & Communication Architecture
 
@@ -178,7 +188,7 @@ enum ChatContextType {
   GAME      // Game public/admin/private chats
   BUG       // Bug report discussions
   USER      // Direct user-to-user chats
-  GROUP     // Community group channels
+  GROUP     // Community channels AND marketplace buyer-seller chats
 }
 
 enum ChatType {
@@ -195,6 +205,11 @@ enum ChatType {
 - `ChatDraft` model for unsent message persistence
 - `MessageReport` for content moderation
 - `contentSearchable` field for full-text search (use `messageSearch.service.ts`)
+
+**GroupChannel (GROUP context) types:**
+- Community channels: `isChannel: true`, `bugId: null`, `marketItemId: null`
+- Bug discussion groups: `isChannel: false`, `bugId: <bugId>`, unique per bug
+- Marketplace private chats: `isChannel: false`, `marketItemId: <itemId>`, `buyerId: <userId>`, multiple per item
 
 ## Game System
 
@@ -307,6 +322,19 @@ VITE_API_BASE_URL=http://localhost:3000
 VITE_MEDIA_BASE_URL=https://cdn.example.com
 ```
 
+## Currency & Exchange Rates
+
+**ExchangeRate model:**
+- Stores conversion rates between any two `PriceCurrency` values
+- Updated periodically from external API
+- Used to display marketplace prices in user's preferred currency
+- Fields: `baseCurrency`, `targetCurrency`, `rate`, `lastUpdated`, `fetchedFromAPI`
+
+**User currency preferences:**
+- User model has `defaultCurrency` field (defaults to EUR)
+- Frontend converts prices for display using exchange rates
+- Backend stores prices in original currency from seller
+
 ## Internationalization
 
 - Supported languages: English (en), Spanish (es), Russian (ru), Serbian (sr)
@@ -358,14 +386,30 @@ VITE_MEDIA_BASE_URL=https://cdn.example.com
 - BUY_IT_NOW - Fixed price purchase
 - SUGGESTED_PRICE - Negotiable price
 - AUCTION - Time-based bidding
+- FREE - Free items (cannot be combined with other trade types, no price allowed)
 
 **Item status:**
 - ACTIVE → SOLD/RESERVED/WITHDRAWN
 
-**Associated features:**
-- Each MarketItem automatically creates a GroupChannel for discussion
+**Chat system:**
+- Each MarketItem can have MULTIPLE GroupChannels (one per buyer)
+- When a buyer shows interest, a private chat (GroupChannel) is created between seller and buyer
+- GroupChannel has `buyerId` field to track which buyer the chat is for
+- Marketplace chats have `isChannel: false` (they're private 1:1 chats, not public channels)
+- Use `marketChatUtils.ts` helper functions for display titles
+- Use `useGroupChannelUnreadCounts` hook for tracking unread messages in marketplace chats
+
+**Currency & Pricing:**
+- Items stored with `priceCents` (integer) and `currency` (PriceCurrency enum)
+- `ExchangeRate` model tracks conversion rates between currencies
+- FREE items must have `priceCents: null` or `0`
+- BUY_IT_NOW requires a valid price
+- AUCTION requires starting bid and end date
+
+**Other features:**
 - Category management in Admin dashboard
-- City-scoped listings
+- City-scoped listings (with optional `additionalCityIds`)
+- Seller notifications for buyer interest
 
 ## League System
 
@@ -403,7 +447,7 @@ VITE_MEDIA_BASE_URL=https://cdn.example.com
 ## Common Pitfalls
 
 1. **Chat context confusion**: Always check `chatContextType` before querying by `contextId`
-2. **Socket room names**: Must match between client and server (e.g., `game:${gameId}`)
+2. **Socket room names**: Must match between client and server (e.g., `game:${gameId}`, `group:${channelId}`)
 3. **Prisma relations**: Use `include` or `select` to load relations, never assume they're loaded
 4. **Date handling**: Backend uses ISO strings, frontend uses `date-fns` for formatting
 5. **Mobile navigation**: Use `navigationService` instead of direct `useNavigate()` for deep link support
@@ -412,3 +456,7 @@ VITE_MEDIA_BASE_URL=https://cdn.example.com
 8. **Image URLs**: Always use `VITE_MEDIA_BASE_URL` prefix for S3 URLs in frontend
 9. **User blocking**: Check `BlockedUser` relationship before sending messages
 10. **Level changes**: Only games with `affectsRating: true` modify user levels
+11. **Marketplace chats**: Each buyer gets a separate GroupChannel - don't assume one channel per item
+12. **FREE trade type**: Cannot be combined with other trade types and must have no price
+13. **Currency handling**: Always store prices in original currency with `priceCents` (integer), convert for display only
+14. **GroupChannel types**: `isChannel: false` for marketplace/bug chats (private), `true` for community channels (public)

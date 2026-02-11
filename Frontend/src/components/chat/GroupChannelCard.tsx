@@ -14,13 +14,16 @@ interface GroupChannelCardProps {
   onClick: () => void;
   isSelected?: boolean;
   draft?: ChatDraft | null;
+  displayTitle?: string;
+  displaySubtitle?: string;
+  sellerGroupedByItem?: boolean;
 }
 
-export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSelected, draft }: GroupChannelCardProps) => {
+export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSelected, draft, displayTitle, displaySubtitle, sellerGroupedByItem }: GroupChannelCardProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
-  const displayName = groupChannel.name;
+  const displayName = displayTitle ?? groupChannel.name;
   const lastMessage = groupChannel.lastMessage;
 
   const lastMessageTime = getLastMessageTime(lastMessage);
@@ -37,7 +40,9 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
     >
       {!groupChannel.bugId && (
         <div className="relative flex-shrink-0">
-          {groupChannel.marketItem ? (
+          {groupChannel.marketItem && sellerGroupedByItem && groupChannel.buyer ? (
+            <PlayerAvatar player={groupChannel.buyer} extrasmall fullHideName showName={false} asDiv />
+          ) : groupChannel.marketItem ? (
             groupChannel.marketItem.mediaUrls?.length ? (
               <img
                 src={groupChannel.marketItem.mediaUrls[0]}
@@ -71,9 +76,16 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
         <div className="flex items-start justify-between mb-1 gap-2">
           <div className="flex flex-col gap-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-sm text-gray-900 dark:text-white break-words min-w-0">
-                {displayName}
-              </h3>
+              <div className="min-w-0 flex flex-col gap-0.5">
+                <h3 className="text-sm text-gray-900 dark:text-white break-words min-w-0">
+                  {displayName}
+                </h3>
+                {displaySubtitle && (
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate leading-tight">
+                    {displaySubtitle}
+                  </span>
+                )}
+              </div>
               {groupChannel.bug && (
                 <>
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wide bg-amber-100/80 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">

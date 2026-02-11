@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Search, X, BookUser, Plus, Mail, SlidersHorizontal } from 'lucide-react';
 
-type ChatsFilter = 'users' | 'bugs' | 'channels';
+type ChatsFilter = 'users' | 'bugs' | 'channels' | 'market';
 
 interface ChatListSearchBarProps {
   chatsFilter: ChatsFilter;
@@ -12,6 +12,7 @@ interface ChatListSearchBarProps {
   onClearSearch: () => void;
   onContactsToggle: () => void;
   onAddBug: () => void;
+  onCreateListing?: () => void;
   isDesktop?: boolean;
   hasCity?: boolean;
   hasUnreadChats?: boolean;
@@ -30,6 +31,7 @@ export const ChatListSearchBar = ({
   onClearSearch,
   onContactsToggle,
   onAddBug,
+  onCreateListing,
   isDesktop = false,
   hasCity = false,
   hasUnreadChats = false,
@@ -46,11 +48,13 @@ export const ChatListSearchBar = ({
       ? t('chat.searchChannels', { defaultValue: 'Search in channels' })
       : chatsFilter === 'bugs'
         ? t('chat.searchBugs', { defaultValue: 'Search bugs' })
-        : contactsMode
-          ? t('chat.searchUsers', { defaultValue: 'Search users' })
-          : t('chat.search', { defaultValue: 'Search' });
+        : chatsFilter === 'market'
+          ? t('marketplace.searchMarketChats', { defaultValue: 'Search market chats' })
+          : contactsMode
+            ? t('chat.searchUsers', { defaultValue: 'Search users' })
+            : t('chat.search', { defaultValue: 'Search' });
 
-  const showActionButtons = chatsFilter === 'bugs' || chatsFilter === 'users';
+  const showActionButtons = chatsFilter === 'bugs' || chatsFilter === 'users' || chatsFilter === 'market';
 
   return (
     <div className={`px-2 pb-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 ${isDesktop ? 'pt-4' : ''}`}>
@@ -106,6 +110,18 @@ export const ChatListSearchBar = ({
             >
               <Plus size={20} className="text-gray-600 dark:text-gray-400" />
             </button>
+            {onCreateListing && (
+              <button
+                type="button"
+                onClick={onCreateListing}
+                className={`absolute inset-0 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-400 ${
+                  chatsFilter === 'market' ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                }`}
+                aria-label={t('marketplace.createListing', { defaultValue: 'Create listing' })}
+              >
+                <Plus size={20} className="text-gray-600 dark:text-gray-400" />
+              </button>
+            )}
             <button
               type="button"
               onClick={onContactsToggle}

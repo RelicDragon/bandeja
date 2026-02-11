@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { City } from '@/types';
 import { X, Plus, MapPin } from 'lucide-react';
 
@@ -21,6 +22,7 @@ export function CitySelectorField({
   onRemoveCity,
   disabled,
 }: CitySelectorFieldProps) {
+  const { t } = useTranslation();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -52,14 +54,14 @@ export function CitySelectorField({
     <div className="w-full">
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
         <MapPin size={14} className="inline mr-1" />
-        Cities where this item will be visible
+        {t('marketplace.citiesVisibilityLabel')}
       </label>
 
       <div className="flex flex-wrap gap-2 items-center">
         {/* Primary city chip (non-removable) */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-sm font-medium">
           {primaryCityName}
-          <span className="text-xs opacity-80 ml-0.5">(primary)</span>
+          <span className="text-xs opacity-80 ml-0.5">{t('marketplace.primaryCity')}</span>
         </div>
 
         {/* Additional city chips (removable) */}
@@ -96,7 +98,7 @@ export function CitySelectorField({
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 text-sm font-medium hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={14} />
-              Add City
+              {t('marketplace.addCity')}
             </button>
 
             {/* Dropdown menu */}
@@ -119,7 +121,7 @@ export function CitySelectorField({
       </div>
 
       <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-        Your item will be visible to users in all selected cities. The primary city is used for the item's chat channel.
+        {t('marketplace.citiesVisibilityHelp')}
       </p>
     </div>
   );

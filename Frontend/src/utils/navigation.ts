@@ -64,7 +64,8 @@ export interface LocationState {
   fromLeagueSeasonGameId?: string;
   leagueSeasonTab?: 'general' | 'schedule' | 'standings' | 'faq';
   fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace';
-  fromFilter?: 'users' | 'bugs' | 'channels';
+  fromFilter?: 'users' | 'bugs' | 'channels' | 'market';
+  fromMarketplaceSubtab?: 'my' | 'market';
   searchQuery?: string;
   isAppNavigation?: boolean;
   timestamp?: number;
@@ -77,7 +78,7 @@ interface HandleBackNavigationParams {
   locationState: LocationState | null;
   navigate: NavigateFunction;
   setCurrentPage?: (page: PageType) => void;
-  setChatsFilter?: (filter: 'users' | 'bugs' | 'channels') => void;
+  setChatsFilter?: (filter: 'users' | 'bugs' | 'channels' | 'market') => void;
   contextType?: 'USER' | 'BUG' | 'GAME' | 'GROUP';
   gameId?: string;
   /** When false (e.g. from Capacitor backButton event.canGoBack), skip history.back and use fallback */
@@ -117,22 +118,19 @@ const applyFallback = (
 ): void => {
   const { navigate, setCurrentPage, setChatsFilter, locationState } = params;
   if (setChatsFilter) {
-    if (fallback === '/bugs') {
-      setChatsFilter('bugs');
-    } else if (fallback === '/chats' && locationState?.fromFilter) {
-      setChatsFilter(locationState.fromFilter);
-    } else if (matchedRoute?.setFilter) {
-      setChatsFilter(matchedRoute.setFilter);
-    }
+    if (fallback === '/bugs') setChatsFilter('bugs');
+    else if (fallback === '/chats/marketplace' || fallback.startsWith('/chats/marketplace?')) setChatsFilter('market');
+    else if (fallback === '/chats' && locationState?.fromFilter) setChatsFilter(locationState.fromFilter);
+    else if (matchedRoute?.setFilter) setChatsFilter(matchedRoute.setFilter);
   }
   if (setCurrentPage) {
     if (fallback === '/') {
       setCurrentPage('my');
     } else if (fallback.includes('/games/')) {
       setCurrentPage('gameDetails');
-    } else if (fallback === '/bugs' || fallback === '/chats') {
+    } else if (fallback === '/bugs' || fallback === '/chats' || fallback === '/chats/marketplace' || fallback.startsWith('/chats/marketplace?')) {
       setCurrentPage('chats');
-    } else if (fallback === '/marketplace') {
+    } else if (fallback === '/marketplace' || fallback === '/marketplace/my') {
       setCurrentPage('marketplace');
     } else if (fallback === '/find') {
       setCurrentPage('find');

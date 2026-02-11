@@ -849,6 +849,7 @@ enum MarketItemTradeType {
   BUY_IT_NOW
   SUGGESTED_PRICE
   AUCTION
+  FREE
 }
 
 enum MarketItemStatus {
@@ -971,7 +972,6 @@ model GroupChannel {
   participants         GroupChannelParticipant[]
   invites              GroupChannelInvite[]
 
-  @@unique([marketItemId, buyerId], name: "GroupChannel_marketItemId_buyerId_key")
   @@index([isPublic])
   @@index([isChannel])
   @@index([cityId])

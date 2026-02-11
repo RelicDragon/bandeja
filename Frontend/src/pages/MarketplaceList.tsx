@@ -1,18 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MapPin, User } from 'lucide-react';
 import { marketplaceApi, citiesApi } from '@/api';
-import { chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
-import { useNavigationStore } from '@/store/navigationStore';
-import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { useGroupChannelUnreadCounts } from '@/hooks/useGroupChannelUnreadCounts';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { MarketItem, MarketItemCategory, City, PriceCurrency } from '@/types';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { Button } from '@/components';
-import { MarketItemCard, MarketplaceFilters, formatPriceDisplay, MarketItemPanel } from '@/components/marketplace';
-import { Drawer, DrawerContent } from '@/components/ui/Drawer';
+import { MarketItemCard, MarketplaceFilters, formatPriceDisplay, MarketItemDrawer } from '@/components/marketplace';
 import { currencyCacheService } from '@/services/currencyCache.service';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 
@@ -23,8 +20,7 @@ export const MarketplaceList = () => {
   const user = useAuthStore((state) => state.user);
   const location = useLocation();
   const navigate = useNavigate();
-  const marketplaceTab = useNavigationStore((state) => state.marketplaceTab);
-  const isMyTab = marketplaceTab === 'my';
+  const isMyTab = location.pathname === '/marketplace/my';
   const [items, setItems] = useState<MarketItem[]>([]);
   const [categories, setCategories] = useState<MarketItemCategory[]>([]);
   const [cities, setCities] = useState<City[]>([]);
@@ -34,9 +30,22 @@ export const MarketplaceList = () => {
   const pageRef = useRef(1);
   const cityId = (user?.currentCity?.id || user?.currentCityId) ?? '';
   const [filters, setFilters] = useState({ categoryId: '' });
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const lastChatUnreadCount = useSocketEventsStore((state) => state.lastChatUnreadCount);
   const [selectedItem, setSelectedItem] = useState<MarketItem | null>(null);
+  const channelIds = useMemo(
+    () =>
+      items.flatMap((item) =>
+        item.groupChannel ? [item.groupChannel.id] : (item.groupChannels ?? []).map((c) => c.id)
+      ),
+    [items]
+  );
+  const unreadCounts = useGroupChannelUnreadCounts(channelIds);
+  const getUnreadForItem = useCallback(
+    (item: MarketItem) => {
+      if (item.groupChannel) return unreadCounts[item.groupChannel.id] ?? 0;
+      return (item.groupChannels ?? []).reduce((s, c) => s + (unreadCounts[c.id] ?? 0), 0);
+    },
+    [unreadCounts]
+  );
 
   const fetchData = useCallback(async (refresh = false) => {
     const page = refresh ? 1 : pageRef.current;
@@ -86,9 +95,9 @@ export const MarketplaceList = () => {
   useEffect(() => {
     if (openItemFromState?.openMarketItem) {
       setSelectedItem(openItemFromState.openMarketItem);
-      navigate('/marketplace', { replace: true, state: {} });
+      navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [navigate, openItemFromState?.openMarketItem]);
+  }, [navigate, location.pathname, openItemFromState?.openMarketItem]);
 
   const handleItemUpdate = useCallback((updated: MarketItem | null) => {
     if (!updated) {
@@ -100,25 +109,6 @@ export const MarketplaceList = () => {
     }
   }, [selectedItem?.id]);
 
-  useEffect(() => {
-    const groupIds = items
-      .map((item) => item.groupChannel?.id)
-      .filter((id): id is string => !!id);
-    if (groupIds.length === 0) return;
-    chatApi.getGroupChannelsUnreadCounts(groupIds).then((res) => {
-      setUnreadCounts(res.data || {});
-    }).catch(() => {});
-  }, [items]);
-
-  useEffect(() => {
-    if (!lastChatUnreadCount || lastChatUnreadCount.contextType !== 'GROUP') return;
-    const { contextId, unreadCount } = lastChatUnreadCount;
-    const isOurs = items.some((item) => item.groupChannel?.id === contextId);
-    if (isOurs) {
-      setUnreadCounts((prev) => ({ ...prev, [contextId]: unreadCount }));
-    }
-  }, [lastChatUnreadCount, items]);
-
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
     pageRef.current += 1;
@@ -126,7 +116,15 @@ export const MarketplaceList = () => {
     fetchData();
   }, [fetchData, loadingMore, hasMore]);
 
-  const formatPrice = useCallback((item: MarketItem) => formatPriceDisplay(item, t('marketplace.suggestedPrice', { defaultValue: 'Haggling welcome' })), [t]);
+  const formatPrice = useCallback(
+    (item: MarketItem) =>
+      formatPriceDisplay(
+        item,
+        t('marketplace.suggestedPrice', { defaultValue: 'Haggling welcome' }),
+        t('marketplace.free', { defaultValue: 'Free' })
+      ),
+    [t]
+  );
   const tradeTypeLabels = {
     BUY_IT_NOW: t('marketplace.buyItNow', { defaultValue: 'Buy now' }),
     SUGGESTED_PRICE: t('marketplace.suggestedPrice', { defaultValue: 'Haggling welcome' }),
@@ -187,7 +185,7 @@ export const MarketplaceList = () => {
               item={item}
               formatPrice={formatPrice}
               tradeTypeLabel={tradeTypeLabels}
-              unreadCount={item.groupChannel?.id ? unreadCounts[item.groupChannel.id] : undefined}
+              unreadCount={getUnreadForItem(item) || undefined}
               showLocation={isMyTab}
               userCurrency={(user?.defaultCurrency as PriceCurrency) || DEFAULT_CURRENCY}
               onItemClick={setSelectedItem}
@@ -196,15 +194,12 @@ export const MarketplaceList = () => {
         </div>
       )}
       {selectedItem && (
-        <Drawer open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
-          <DrawerContent className="flex flex-col p-0 overflow-hidden rounded-t-3xl max-h-[95vh]">
-            <MarketItemPanel
-              item={selectedItem}
-              onClose={() => setSelectedItem(null)}
-              onItemUpdate={handleItemUpdate}
-            />
-          </DrawerContent>
-        </Drawer>
+        <MarketItemDrawer
+          item={selectedItem}
+          isOpen={!!selectedItem}
+          onClose={() => setSelectedItem(null)}
+          onItemUpdate={handleItemUpdate}
+        />
       )}
       {hasMore && items.length > 0 && (
         <div className="mt-6 flex justify-center">

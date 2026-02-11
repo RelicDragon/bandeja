@@ -13,6 +13,9 @@ interface ChatListItemProps {
   onContactClick: (userId: string) => void;
   isSearchMode?: boolean;
   searchQuery?: string;
+  displayTitle?: string;
+  displaySubtitle?: string;
+  sellerGroupedByItem?: boolean;
 }
 
 export const ChatListItem = ({
@@ -23,6 +26,9 @@ export const ChatListItem = ({
   onContactClick,
   isSearchMode = false,
   searchQuery = '',
+  displayTitle,
+  displaySubtitle,
+  sellerGroupedByItem,
 }: ChatListItemProps) => {
   const { user } = useAuthStore();
   const liveChats = usePlayersStore((state) => state.chats);
@@ -84,6 +90,9 @@ export const ChatListItem = ({
           onClick={() => onChatClick(chat.data.id, chatTypeForNav, clickOpts)}
           isSelected={isSelected}
           draft={chat.type === 'group' ? chat.draft : undefined}
+          displayTitle={displayTitle}
+          displaySubtitle={displaySubtitle}
+          sellerGroupedByItem={sellerGroupedByItem}
         />
       </div>
     );

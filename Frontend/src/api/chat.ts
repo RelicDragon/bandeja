@@ -201,6 +201,8 @@ export interface GroupChannel {
   };
   marketItemId?: string | null;
   marketItem?: import('@/types').MarketItem;
+  buyerId?: string | null;
+  buyer?: BasicUser;
 }
 
 export interface GroupChannelParticipant {
@@ -456,13 +458,13 @@ export const chatApi = {
   },
 
   getGroupChannels: async (
-    filter?: 'users' | 'bugs' | 'channels',
+    filter?: 'users' | 'bugs' | 'channels' | 'market',
     page?: number,
     bugsFilter?: { status?: string | null; type?: string | null; createdByMe?: boolean }
   ) => {
     const params: Record<string, string> = {};
     if (filter) params.filter = filter;
-    if ((filter === 'bugs' || filter === 'users' || filter === 'channels') && page != null) params.page = String(page);
+    if ((filter === 'bugs' || filter === 'users' || filter === 'channels' || filter === 'market') && page != null) params.page = String(page);
     if (filter === 'bugs' && bugsFilter) {
       if (bugsFilter.status) params.status = bugsFilter.status;
       if (bugsFilter.type) params.bugType = bugsFilter.type;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { ChatList, ChatType } from '@/components/chat/ChatList';
 import { GameChat } from './GameChat';
 import { MessageCircle } from 'lucide-react';
@@ -13,6 +13,7 @@ export const ChatsTab = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const isDesktop = useDesktop();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedChatType, setSelectedChatType] = useState<ChatType | null>(null);
@@ -80,7 +81,7 @@ export const ChatsTab = () => {
           shouldUpdate = true;
         }
       }
-    } else if (path === '/chats' || path === '/bugs') {
+    } else if (path === '/chats' || path === '/chats/marketplace' || path === '/bugs') {
       if (selectedChatId !== null) {
         newChatId = null;
         newChatType = null;
@@ -111,6 +112,7 @@ export const ChatsTab = () => {
       initialChatType: options?.initialChatType,
       fromPage,
       fromFilter: chatsFilter,
+      ...(chatsFilter === 'market' && searchParams.get('role') === 'seller' ? { marketRole: 'seller' as const } : {}),
       ...(fromSearch ? { searchQuery: options.searchQuery } : {}),
     };
 
@@ -173,7 +175,7 @@ export const ChatsTab = () => {
         setIsAnimating(false);
       }
     }
-  }, [isDesktop, selectedChatId, selectedChatType, setIsAnimating, navigate, getChatPath, location.pathname, chatsFilter]);
+  }, [isDesktop, selectedChatId, selectedChatType, setIsAnimating, navigate, getChatPath, location.pathname, chatsFilter, searchParams]);
 
   const emptyState = useMemo(() => (
     <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">

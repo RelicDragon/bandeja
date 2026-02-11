@@ -1,42 +1,25 @@
+import { Award, Beer, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useHeaderStore } from '@/store/headerStore';
+import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 
 export const LeaderboardTabController = () => {
   const { t } = useTranslation();
   const { leaderboardType, setLeaderboardType } = useHeaderStore();
 
+  const tabs: SegmentedSwitchTab[] = [
+    { id: 'level', label: t('profile.level', { defaultValue: 'Level' }), icon: Award },
+    { id: 'games', label: t('profile.games', { defaultValue: 'Games' }), icon: Trophy },
+    { id: 'social', label: t('profile.social', { defaultValue: 'Social' }), icon: Beer },
+  ];
+
   return (
-    <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-      <button
-        onClick={() => setLeaderboardType('level')}
-        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
-          leaderboardType === 'level'
-            ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-        }`}
-      >
-        {t('profile.level') || 'Level'}
-      </button>
-      <button
-        onClick={() => setLeaderboardType('social')}
-        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
-          leaderboardType === 'social'
-            ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-        }`}
-      >
-        {t('profile.social') || 'Social'}
-      </button>
-      <button
-        onClick={() => setLeaderboardType('games')}
-        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
-          leaderboardType === 'games'
-            ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-        }`}
-      >
-        {t('profile.games') || 'Games'}
-      </button>
-    </div>
+    <SegmentedSwitch
+      tabs={tabs}
+      activeId={leaderboardType}
+      onChange={(id) => setLeaderboardType(id as 'level' | 'social' | 'games')}
+      titleInActiveOnly
+      layoutId="leaderboardSubtab"
+    />
   );
 };

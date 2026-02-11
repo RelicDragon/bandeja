@@ -16,7 +16,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   const navigate = useNavigate();
   const { currentPage, setCurrentPage, setIsAnimating, findViewMode, setRequestFindGoToCurrent } = useNavigationStore();
   const { counts } = useChatUnreadCounts();
-  const chatsUnread = counts.users + counts.bugs + counts.channels;
+  const chatsUnread = counts.users + counts.bugs + counts.channels + counts.marketplace;
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const isDesktop = useDesktop();
   

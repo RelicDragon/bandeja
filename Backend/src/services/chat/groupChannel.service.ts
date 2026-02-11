@@ -237,7 +237,7 @@ export class GroupChannelService {
       ];
     } else if (filter === 'market') {
       const marketWhere: any = {
-        isChannel: true,
+        isChannel: false,
         bugId: null,
         marketItemId: { not: null },
         OR: [
@@ -247,8 +247,6 @@ export class GroupChannelService {
       };
       if (opts?.cityId) {
         marketWhere.cityId = opts.cityId;
-      } else if (userCityId) {
-        marketWhere.cityId = userCityId;
       }
       baseWhere.OR = [marketWhere];
     }
@@ -341,6 +339,7 @@ export class GroupChannelService {
               city: true
             }
           },
+          ...(filter === 'market' ? { buyer: { select: USER_SELECT_FIELDS } } : {}),
           participants: {
             where: { userId },
             include: {

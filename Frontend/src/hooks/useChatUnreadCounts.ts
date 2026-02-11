@@ -174,8 +174,12 @@ export const useChatUnreadCounts = () => {
 
   useEffect(() => {
     if (!lastChatUnreadCount) return;
+    if (user?.id) {
+      unreadObjectsCache.delete(`unread-objects-${user.id}`);
+      unreadObjectsLoading.delete(`unread-objects-${user.id}`);
+    }
     debouncedFetch();
-  }, [lastChatUnreadCount, debouncedFetch]);
+  }, [lastChatUnreadCount, user?.id, debouncedFetch]);
 
   useEffect(() => {
     if (!lastChatReadReceipt || lastChatReadReceipt.readReceipt?.userId !== user?.id) return;

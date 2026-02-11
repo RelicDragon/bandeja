@@ -6,7 +6,7 @@ import { MarketItemService } from '../services/marketItem/marketItem.service';
 import { MarketItemParticipantService } from '../services/marketItem/participant.service';
 import { MarketItemStatus, MarketItemTradeType } from '@prisma/client';
 import prisma from '../config/database';
-import { SUPPORTED_CURRENCIES } from '../utils/constants';
+import { SUPPORTED_CURRENCIES, USER_SELECT_FIELDS } from '../utils/constants';
 
 export const getMarketCategories = asyncHandler(async (_req: AuthRequest, res: Response) => {
   const categories = await prisma.marketItemCategory.findMany({
@@ -77,6 +77,7 @@ export const getMarketItems = asyncHandler(async (req: AuthRequest, res: Respons
   }
   if (page) filters.page = parseInt(page as string, 10) || 1;
   if (limit) filters.limit = Math.min(parseInt(limit as string, 10) || 20, 50);
+  if (req.userId) filters.userId = req.userId;
 
   const result = await MarketItemService.getMarketItems(filters);
   res.json({ success: true, data: result.data, pagination: result.pagination });
@@ -176,17 +177,15 @@ export const getBuyerChat = asyncHandler(async (req: AuthRequest, res: Response)
   const { id } = req.params; // Market item ID
   const userId = req.userId!;
 
-  const chat = await prisma.groupChannel.findUnique({
+  const chat = await prisma.groupChannel.findFirst({
     where: {
-      GroupChannel_marketItemId_buyerId_key: {
-        marketItemId: id,
-        buyerId: userId,
-      },
+      marketItemId: id,
+      buyerId: userId,
     },
     include: {
       participants: {
         include: {
-          user: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+          user: { select: USER_SELECT_FIELDS },
         },
       },
     },

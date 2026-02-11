@@ -6,6 +6,7 @@ import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { hasParentGamePermission, getParentGameParticipant } from '../../utils/parentGamePermissions';
+import { USER_SELECT_FIELDS } from '../../utils/constants';
 
 export class AdminService {
   static async addAdmin(gameId: string, ownerId: string, userId: string) {
@@ -195,7 +196,7 @@ export class AdminService {
 
     const targetParticipant = await prisma.gameParticipant.findFirst({
       where: { gameId, userId },
-      include: { user: { select: { firstName: true, lastName: true } } },
+      include: { user: { select: USER_SELECT_FIELDS } },
     });
     if (!targetParticipant) {
       throw new ApiError(404, 'User is not a participant of this game');

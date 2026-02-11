@@ -447,7 +447,7 @@ export interface Bet {
   updatedAt: string;
 }
 
-export type MarketItemTradeType = 'BUY_IT_NOW' | 'SUGGESTED_PRICE' | 'AUCTION';
+export type MarketItemTradeType = 'BUY_IT_NOW' | 'SUGGESTED_PRICE' | 'AUCTION' | 'FREE';
 export type MarketItemStatus = 'ACTIVE' | 'SOLD' | 'RESERVED' | 'WITHDRAWN';
 
 export interface MarketItemCategory {
@@ -476,6 +476,7 @@ export interface MarketItem {
   category?: MarketItemCategory;
   city?: City;
   groupChannel?: { id: string };
+  groupChannels?: { id: string }[];
   isParticipant?: boolean;
 }
 

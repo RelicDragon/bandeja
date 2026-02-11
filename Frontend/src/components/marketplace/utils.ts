@@ -1,6 +1,10 @@
 import { MarketItem } from '@/types';
 
-export const formatPriceDisplay = (item: MarketItem, negotiableLabel: string) => {
+export const formatPriceDisplay = (item: MarketItem, negotiableLabel: string, freeLabel: string) => {
+  // Check if FREE trade type is present
+  if (item.tradeTypes?.includes('FREE')) {
+    return freeLabel;
+  }
   if (item.priceCents != null) return `${(item.priceCents / 100).toFixed(2)} ${item.currency}`;
   return negotiableLabel;
 };

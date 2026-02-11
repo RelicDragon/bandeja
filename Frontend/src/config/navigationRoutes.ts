@@ -4,7 +4,7 @@ export interface RouteConfig {
   pattern: RegExp;
   fallback: string | ((pathname: string, state: LocationState | null) => string);
   contextType?: 'USER' | 'BUG' | 'GAME' | 'GROUP';
-  setFilter?: 'users' | 'bugs' | 'channels';
+  setFilter?: 'users' | 'bugs' | 'channels' | 'market';
   priority: number;
 }
 
@@ -38,11 +38,22 @@ export const navigationRoutes: RouteConfig[] = [
     pattern: /^\/channel-chat\/[^/]+$/,
     fallback: (_pathname, state) => {
       if (state?.fromPage === 'bugs') return '/bugs';
-      if (state?.fromPage === 'marketplace') return '/marketplace';
-      if (state?.fromPage === 'chats' && state?.searchQuery) {
-        return `/chats?q=${encodeURIComponent(state.searchQuery)}`;
+      if (state?.fromPage === 'marketplace') {
+        const subtab = (state as { fromMarketplaceSubtab?: 'my' } | null)?.fromMarketplaceSubtab;
+        return subtab === 'my' ? '/marketplace/my' : '/marketplace';
       }
-      if (state?.fromPage === 'chats') return '/chats';
+      if (state?.fromPage === 'chats') {
+        const s = state as { fromFilter?: string; searchQuery?: string; marketRole?: string } | null;
+        const fromFilter = s?.fromFilter;
+        if (fromFilter === 'market') {
+          const params = new URLSearchParams();
+          if (s?.searchQuery) params.set('q', s.searchQuery);
+          if (s?.marketRole === 'seller') params.set('role', 'seller');
+          const qs = params.toString();
+          return qs ? `/chats/marketplace?${qs}` : '/chats/marketplace';
+        }
+        return state?.searchQuery ? `/chats?q=${encodeURIComponent(state.searchQuery)}` : '/chats';
+      }
       return '/chats';
     },
     contextType: 'GROUP',
@@ -89,17 +100,28 @@ export const navigationRoutes: RouteConfig[] = [
   
   {
     pattern: /^\/marketplace\/[^/]+\/edit$/,
-    fallback: '/marketplace',
+    fallback: (_pathname, state) =>
+      (state as { fromMarketplaceSubtab?: 'my' } | null)?.fromMarketplaceSubtab === 'my' ? '/marketplace/my' : '/marketplace',
     priority: 10,
   },
   {
     pattern: /^\/marketplace\/[^/]+$/,
-    fallback: '/marketplace',
+    fallback: (_pathname, state) =>
+      (state as { fromMarketplaceSubtab?: 'my' } | null)?.fromMarketplaceSubtab === 'my' ? '/marketplace/my' : '/marketplace',
     priority: 10,
   },
   {
     pattern: /^\/marketplace\/create$/,
-    fallback: '/marketplace',
+    fallback: (_pathname, state) => {
+      const s = state as { fromPage?: string; fromFilter?: string; fromMarketplaceSubtab?: 'my' } | null;
+      if (s?.fromPage === 'chats' && s?.fromFilter === 'market') return '/chats/marketplace';
+      return s?.fromMarketplaceSubtab === 'my' ? '/marketplace/my' : '/marketplace';
+    },
+    priority: 10,
+  },
+  {
+    pattern: /^\/marketplace\/my$/,
+    fallback: '/marketplace/my',
     priority: 10,
   },
   {

@@ -64,7 +64,7 @@ export interface ChannelsToChatItemsOptions {
 export const channelsToChatItems = (
   channels: GroupChannel[],
   channelUnreads: Record<string, number>,
-  sortFilter: 'bugs' | 'channels',
+  sortFilter: 'bugs' | 'channels' | 'market',
   options: ChannelsToChatItemsOptions = {}
 ): ChatItem[] => {
   const { filterByIsChannel = false, filterByIsGroup = false, useUpdatedAtFallback = false } = options;
@@ -94,19 +94,22 @@ export type FilterCache = {
   bugsHasMore?: boolean;
   usersHasMore?: boolean;
   channelsHasMore?: boolean;
+  marketHasMore?: boolean;
 };
 
 export type PaginationSetters = {
   setBugsHasMore: (v: boolean) => void;
   setUsersHasMore: (v: boolean) => void;
   setChannelsHasMore: (v: boolean) => void;
+  setMarketHasMore?: (v: boolean) => void;
   bugsPageRef: MutableRefObject<number>;
   usersPageRef: MutableRefObject<number>;
   channelsPageRef: MutableRefObject<number>;
+  marketPageRef?: MutableRefObject<number>;
 };
 
 export const applyPaginationState = (
-  filter: 'users' | 'bugs' | 'channels',
+  filter: 'users' | 'bugs' | 'channels' | 'market',
   cached: FilterCache,
   setters: PaginationSetters
 ) => {
@@ -119,6 +122,9 @@ export const applyPaginationState = (
   } else if (filter === 'channels') {
     setters.setChannelsHasMore(cached.channelsHasMore ?? false);
     setters.channelsPageRef.current = 1;
+  } else if (filter === 'market' && setters.setMarketHasMore && setters.marketPageRef) {
+    setters.setMarketHasMore(cached.marketHasMore ?? false);
+    setters.marketPageRef.current = 1;
   }
 };
 
@@ -131,8 +137,8 @@ export type LoadMoreConfig = {
   setChats: Dispatch<SetStateAction<ChatItem[]>>;
   setLoadingMore: (v: boolean) => void;
   setHasMore: (v: boolean) => void;
-  cacheKey: 'users' | 'bugs' | 'channels';
-  cacheRef: MutableRefObject<Partial<Record<'users' | 'bugs' | 'channels', FilterCache>>>;
+  cacheKey: 'users' | 'bugs' | 'channels' | 'market';
+  cacheRef: MutableRefObject<Partial<Record<'users' | 'bugs' | 'channels' | 'market', FilterCache>>>;
   deduplicate: (chats: ChatItem[]) => ChatItem[];
 };
 
@@ -163,7 +169,8 @@ export const createLoadMore = (config: LoadMoreConfig) => async () => {
       cached.chats = deduplicate([...cached.chats, ...moreChats]);
       if (cacheKey === 'bugs') cached.bugsHasMore = nextHasMore;
       else if (cacheKey === 'users') cached.usersHasMore = nextHasMore;
-      else cached.channelsHasMore = nextHasMore;
+      else if (cacheKey === 'channels') cached.channelsHasMore = nextHasMore;
+      else if (cacheKey === 'market') cached.marketHasMore = nextHasMore;
     }
   } finally {
     setLoadingMore(false);
