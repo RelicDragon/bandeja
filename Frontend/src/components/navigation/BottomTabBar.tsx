@@ -87,7 +87,7 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
       <div className="flex justify-center">
-        <div className="relative bg-white/30 dark:bg-gray-900/30 backdrop-blur-2xl border-t border-gray-200/20 dark:border-gray-700/20 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.48)] max-w-[300px] w-full rounded-2xl">
+        <div className="relative bg-white/30 dark:bg-gray-900/30 backdrop-blur-2xl border border-gray-300/60 dark:border-gray-600/60 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.48)] max-w-[300px] w-full rounded-2xl">
           <div className="relative flex items-center justify-around h-16 overflow-hidden">
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
