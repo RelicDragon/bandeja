@@ -166,7 +166,7 @@ class PushNotificationService {
       case 'BUG_CHAT':
       case 'NEW_BUG':
         if (payload?.groupChannelId) {
-          navigationService.navigateToChannelChat(payload.groupChannelId, 'bugs');
+          navigationService.navigateToChannelChat(payload.groupChannelId);
         } else if (payload?.bugId) {
           navigationService.navigateToBugChat(payload.bugId);
         } else {
@@ -185,7 +185,7 @@ class PushNotificationService {
           if (payload.bugId) {
             navigationService.navigateToBugChat(payload.bugId);
           } else if (payload.marketItemId) {
-            navigationService.navigateToChannelChat(payload.groupChannelId, 'marketplace');
+            navigationService.navigateToChannelChat(payload.groupChannelId);
           } else {
             navigationService.navigateToGroupChat(payload.groupChannelId);
           }

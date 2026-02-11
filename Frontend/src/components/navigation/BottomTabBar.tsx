@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Home, Calendar, MessageCircle, Trophy, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,6 +6,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { useChatUnreadCounts } from '@/hooks/useChatUnreadCounts';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useMemo, useRef } from 'react';
+import { parseLocation, placeToPageType } from '@/utils/urlSchema';
 
 interface BottomTabBarProps {
   containerPosition?: boolean;
@@ -14,11 +15,19 @@ interface BottomTabBarProps {
 export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentPage, setCurrentPage, setIsAnimating, findViewMode, setRequestFindGoToCurrent } = useNavigationStore();
+  const location = useLocation();
+  const { setRequestFindGoToCurrent } = useNavigationStore();
   const { counts } = useChatUnreadCounts();
   const chatsUnread = counts.users + counts.bugs + counts.channels + counts.marketplace;
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const isDesktop = useDesktop();
+
+  const parsed = useMemo(
+    () => parseLocation(location.pathname, location.search),
+    [location.pathname, location.search]
+  );
+  const currentPage = placeToPageType(parsed.place);
+  const findViewMode = (parsed.place === 'find' && parsed.params.view as string) || 'calendar';
   
   const shouldAnimateToLeft = isDesktop && currentPage === 'chats';
 
@@ -62,15 +71,12 @@ export const BottomTabBar = ({ containerPosition = false }: BottomTabBarProps) =
   const handleTabClick = (tab: 'my' | 'find' | 'chats' | 'leaderboard' | 'marketplace', path: string) => {
     if (currentPage === tab) {
       if (tab === 'find') {
-        setRequestFindGoToCurrent(findViewMode);
+        setRequestFindGoToCurrent(findViewMode as 'calendar' | 'list');
       }
       return;
     }
     
-    setIsAnimating(true);
-    setCurrentPage(tab);
     navigate(path, { replace: true });
-    setTimeout(() => setIsAnimating(false), 300);
   };
 
   return (

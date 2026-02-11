@@ -34,6 +34,7 @@ import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import { backButtonService } from './services/backButtonService';
 import { navigationService } from './services/navigationService';
 import { markNavigation, setupPopstateFallback } from './utils/navigation';
+import { useUrlStoreSync } from './hooks/useUrlStoreSync';
 import i18n from './i18n/config';
 import './i18n/config';
 
@@ -52,6 +53,7 @@ function AppContent() {
   const { versionCheck, isChecking: isCheckingVersion } = useAppVersionCheck();
   
   useDeepLink();
+  useUrlStoreSync();
 
   useEffect(() => {
     navigationService.initialize(navigate);

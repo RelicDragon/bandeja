@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { MapPin, User } from 'lucide-react';
 import { marketplaceApi, citiesApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
@@ -19,7 +19,7 @@ export const MarketplaceList = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const location = useLocation();
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isMyTab = location.pathname === '/marketplace/my';
   const [items, setItems] = useState<MarketItem[]>([]);
   const [categories, setCategories] = useState<MarketItemCategory[]>([]);
@@ -30,6 +30,7 @@ export const MarketplaceList = () => {
   const pageRef = useRef(1);
   const cityId = (user?.currentCity?.id || user?.currentCityId) ?? '';
   const [filters, setFilters] = useState({ categoryId: '' });
+  const itemIdFromUrl = searchParams.get('item') ?? null;
   const [selectedItem, setSelectedItem] = useState<MarketItem | null>(null);
   const channelIds = useMemo(
     () =>
@@ -91,13 +92,43 @@ export const MarketplaceList = () => {
     });
   }, [fetchData, user?.defaultCurrency]);
 
-  const openItemFromState = location.state as { openMarketItem?: MarketItem } | null;
   useEffect(() => {
-    if (openItemFromState?.openMarketItem) {
-      setSelectedItem(openItemFromState.openMarketItem);
-      navigate(location.pathname, { replace: true, state: {} });
+    if (!itemIdFromUrl) {
+      setSelectedItem(null);
+      return;
     }
-  }, [navigate, location.pathname, openItemFromState?.openMarketItem]);
+    const inList = items.find((i) => i.id === itemIdFromUrl);
+    if (inList) {
+      setSelectedItem(inList);
+      return;
+    }
+    if (selectedItem?.id === itemIdFromUrl) return;
+    let cancelled = false;
+    marketplaceApi.getMarketItemById(itemIdFromUrl).then((res) => {
+      if (!cancelled) setSelectedItem(res.data);
+    }).catch(() => {
+      if (!cancelled) setSearchParams((p) => { const n = new URLSearchParams(p); n.delete('item'); return n; }, { replace: true });
+    });
+    return () => { cancelled = true; };
+  }, [itemIdFromUrl, items, selectedItem?.id, setSearchParams]);
+
+  const openDrawer = useCallback((item: MarketItem) => {
+    setSelectedItem(item);
+    setSearchParams((p) => {
+      const next = new URLSearchParams(p);
+      next.set('item', item.id);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const closeDrawer = useCallback(() => {
+    setSelectedItem(null);
+    setSearchParams((p) => {
+      const next = new URLSearchParams(p);
+      next.delete('item');
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   const handleItemUpdate = useCallback((updated: MarketItem | null) => {
     if (!updated) {
@@ -188,7 +219,7 @@ export const MarketplaceList = () => {
               unreadCount={getUnreadForItem(item) || undefined}
               showLocation={isMyTab}
               userCurrency={(user?.defaultCurrency as PriceCurrency) || DEFAULT_CURRENCY}
-              onItemClick={setSelectedItem}
+              onItemClick={openDrawer}
             />
           ))}
         </div>
@@ -197,7 +228,7 @@ export const MarketplaceList = () => {
         <MarketItemDrawer
           item={selectedItem}
           isOpen={!!selectedItem}
-          onClose={() => setSelectedItem(null)}
+          onClose={closeDrawer}
           onItemUpdate={handleItemUpdate}
         />
       )}

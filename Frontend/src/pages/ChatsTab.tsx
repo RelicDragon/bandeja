@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChatList, ChatType } from '@/components/chat/ChatList';
 import { GameChat } from './GameChat';
 import { MessageCircle } from 'lucide-react';
@@ -13,12 +13,11 @@ export const ChatsTab = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
   const isDesktop = useDesktop();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedChatType, setSelectedChatType] = useState<ChatType | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const { setIsAnimating, bottomTabsVisible, chatsFilter } = useNavigationStore();
+  const { setIsAnimating, bottomTabsVisible } = useNavigationStore();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const selectedChatIdRef = useRef<string | null>(null);
@@ -107,14 +106,6 @@ export const ChatsTab = () => {
 
   const handleChatSelect = useCallback((chatId: string, chatType: ChatType, options?: { initialChatType?: string; searchQuery?: string }) => {
     const fromSearch = !!options?.searchQuery;
-    const fromPage = location.pathname === '/bugs' ? ('bugs' as const) : ('chats' as const);
-    const chatState = {
-      initialChatType: options?.initialChatType,
-      fromPage,
-      fromFilter: chatsFilter,
-      ...(chatsFilter === 'market' && searchParams.get('role') === 'seller' ? { marketRole: 'seller' as const } : {}),
-      ...(fromSearch ? { searchQuery: options.searchQuery } : {}),
-    };
 
     if (fromSearch) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -125,11 +116,10 @@ export const ChatsTab = () => {
       setSelectedChatType(chatType);
       try {
         if (chatType === 'game') {
-          navigate(`/games/${chatId}`, { state: { fromPage, fromFilter: chatsFilter, searchQuery: options.searchQuery } });
-          navigate(`/games/${chatId}/chat`, { state: chatState });
+          navigate(`/games/${chatId}/chat`);
         } else {
           const path = getChatPath(chatId, chatType);
-          navigate(path, { state: chatState });
+          navigate(path);
         }
       } catch (error) {
         console.error('Navigation failed:', error);
@@ -154,7 +144,7 @@ export const ChatsTab = () => {
         setSelectedChatId(chatId);
         setSelectedChatType(chatType);
         const path = getChatPath(chatId, chatType);
-        navigate(path, { replace: true, state: chatState });
+        navigate(path, { replace: true });
         timeoutRef.current = setTimeout(() => {
           setIsTransitioning(false);
           timeoutRef.current = null;
@@ -165,7 +155,7 @@ export const ChatsTab = () => {
       setIsAnimating(true);
       try {
         const path = getChatPath(chatId, chatType);
-        navigate(path, { state: chatState });
+        navigate(path);
         animationTimeoutRef.current = setTimeout(() => {
           setIsAnimating(false);
           animationTimeoutRef.current = null;
@@ -175,7 +165,7 @@ export const ChatsTab = () => {
         setIsAnimating(false);
       }
     }
-  }, [isDesktop, selectedChatId, selectedChatType, setIsAnimating, navigate, getChatPath, location.pathname, chatsFilter, searchParams]);
+  }, [isDesktop, selectedChatId, selectedChatType, setIsAnimating, navigate, getChatPath]);
 
   const emptyState = useMemo(() => (
     <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">

@@ -220,7 +220,7 @@ export const CreateMarketItem = () => {
     }
   };
 
-  const tradeTypeOptions = [
+  const tradeTypeOptions: Array<{ value: MarketItemTradeType; label: string }> = [
     { value: 'BUY_IT_NOW', label: t('marketplace.buyItNow', { defaultValue: 'Buy now' }) },
     { value: 'SUGGESTED_PRICE', label: t('marketplace.suggestedPrice', { defaultValue: 'Haggling welcome' }) },
     { value: 'AUCTION', label: t('marketplace.auction', { defaultValue: 'Auction' }) },

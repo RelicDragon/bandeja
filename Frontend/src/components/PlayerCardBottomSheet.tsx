@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Beer, Star, ArrowLeft, Send, MessageCircle, Ban, Check, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
 import { chatApi } from '@/api/chat';
@@ -11,6 +11,7 @@ import { Loading } from './Loading';
 import { PlayerAvatarView } from './PlayerAvatarView';
 import { LevelHistoryView } from './LevelHistoryView';
 import { GenderIndicator } from './GenderIndicator';
+import { MarketItem } from '@/types';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { ConfirmationModal } from './ConfirmationModal';
 import { useAuthStore } from '@/store/authStore';
@@ -21,7 +22,7 @@ import {
   DrawerClose,
 } from './ui/Drawer';
 import toast from 'react-hot-toast';
-import { canNavigateBack } from '@/utils/navigation';
+import { removeOverlay } from '@/utils/urlSchema';
 
 interface PlayerCardBottomSheetProps {
   playerId: string | null;
@@ -31,6 +32,7 @@ interface PlayerCardBottomSheetProps {
 export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomSheetProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
   const { addFavorite, removeFavorite } = useFavoritesStore();
@@ -39,7 +41,6 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [showAvatarView, setShowAvatarView] = useState(false);
   const [showSendMoneyModal, setShowSendMoneyModal] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
-  const [isClosingViaBack, setIsClosingViaBack] = useState(false);
   const [showBlockConfirmation, setShowBlockConfirmation] = useState(false);
   const [blockingUser, setBlockingUser] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -70,36 +71,13 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   }, [playerId, isCurrentUser]);
 
   const handleClose = useCallback(() => {
+    const currentParams = new URLSearchParams(location.search);
+    if (currentParams.has('player')) {
+      const cleanUrl = removeOverlay(location.pathname, location.search, 'player');
+      navigate(cleanUrl, { replace: true });
+    }
     onClose();
-  }, [onClose]);
-
-  useEffect(() => {
-    if (!playerId) {
-      setIsClosingViaBack(false);
-      return;
-    }
-    const hasHistoryState = window.history.state?.playerCardOpen;
-    if (!hasHistoryState) {
-      window.history.pushState({ playerCardOpen: true }, '');
-    }
-    const handlePopState = () => {
-      if (playerId) {
-        setIsClosingViaBack(true);
-        handleClose();
-      }
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-      if (window.history.state?.playerCardOpen && playerId && !isClosingViaBack) {
-        try {
-          if (canNavigateBack()) {
-            navigate(-1);
-          }
-        } catch { /* ignore */ }
-      }
-    };
-  }, [playerId, handleClose, isClosingViaBack, navigate]);
+  }, [onClose, location.pathname, location.search, navigate]);
 
   const handleToggleFavorite = async () => {
     if (!playerId || !stats || isBlocked) return;
@@ -263,6 +241,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                             if (telegramUrl && !isBlocked) window.open(telegramUrl, '_blank');
                           }}
                           onOpenGame={handleClose}
+                          onMarketItemClick={(item) => { handleClose(); navigate(`/marketplace/${item.id}`); }}
                         />
                       </motion.div>
                     )}
@@ -301,9 +280,10 @@ interface PlayerCardContentProps {
   onAvatarClick: () => void;
   onTelegramClick: () => void;
   onOpenGame: () => void;
+  onMarketItemClick?: (item: MarketItem) => void;
 }
 
-const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick, onOpenGame }: PlayerCardContentProps) => {
+const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick, onOpenGame, onMarketItemClick }: PlayerCardContentProps) => {
   const { user } = stats;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
@@ -381,24 +361,7 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick
       </motion.div>
 
       <motion.div variants={itemVariants}>
-        <LevelHistoryView stats={stats} padding="p-0 -mt-2" tabDarkBgClass="dark:bg-gray-700/50" hideUserCard onOpenGame={onOpenGame} />
-      </motion.div>
-
-      <motion.div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4" variants={itemVariants}>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('profile.preferredHand')}</div>
-            <div className="text-lg font-semibold text-gray-900 dark:text-white">
-              {user.preferredHandLeft && user.preferredHandRight ? `${t('profile.left')}/${t('profile.right')}` : user.preferredHandLeft ? t('profile.left') : user.preferredHandRight ? t('profile.right') : '-'}
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('profile.preferredCourtSide')}</div>
-            <div className="text-lg font-semibold text-gray-900 dark:text-white">
-              {user.preferredCourtSideLeft && user.preferredCourtSideRight ? `${t('profile.left')}/${t('profile.right')}` : user.preferredCourtSideLeft ? t('profile.left') : user.preferredCourtSideRight ? t('profile.right') : '-'}
-            </div>
-          </div>
-        </div>
+        <LevelHistoryView stats={stats} padding="p-0 -mt-2" tabDarkBgClass="dark:bg-gray-700/50" hideUserCard onOpenGame={onOpenGame} showItemsToSell onMarketItemClick={onMarketItemClick} />
       </motion.div>
     </motion.div>
   );

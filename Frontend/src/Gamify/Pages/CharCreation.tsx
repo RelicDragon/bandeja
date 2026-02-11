@@ -5,13 +5,12 @@ import { CharacterModal } from '../Components/CharacterModal';
 import { CharacterSelectors } from '../Components/CharacterSelectors';
 import { Effects } from '../Components/Effects';
 import { usePreloadModels } from '../hooks/usePreloadModels';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from 'react-i18next';
 import { Loader2, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
-import { handleBackNavigation } from '@/utils/navigation';
-import { useNavigationStore } from '@/store/navigationStore';
+import { handleBack } from '@/utils/backNavigation';
 import * as THREE from 'three';
 
 interface GameData {
@@ -89,10 +88,8 @@ function CameraController({ modelRef }: { modelRef: THREE.Group | null }) {
 
 export const CharCreation = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const { setCurrentPage, setIsAnimating } = useNavigationStore();
   const { isPreloading, preloadProgress } = usePreloadModels();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [selectedRace, setSelectedRace] = useState<string>('');
@@ -106,16 +103,7 @@ export const CharCreation = () => {
   useBackButtonHandler();
 
   const handleBackClick = () => {
-    setIsAnimating(true);
-    
-    handleBackNavigation({
-      pathname: location.pathname,
-      locationState: location.state as { fromLeagueSeasonGameId?: string; fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' } | null,
-      navigate,
-      setCurrentPage,
-    });
-    
-    setTimeout(() => setIsAnimating(false), 300);
+    handleBack(navigate);
   };
 
   useEffect(() => {

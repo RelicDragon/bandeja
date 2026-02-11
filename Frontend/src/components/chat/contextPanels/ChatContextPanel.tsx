@@ -34,7 +34,7 @@ export const ChatContextPanel = ({
   onJoinChannel,
 }: ChatContextPanelProps) => {
   const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const currentUser = useAuthStore((state) => state.user);
   const userCurrency = resolveUserCurrency(currentUser?.defaultCurrency) as PriceCurrency;
 
@@ -55,6 +55,7 @@ export const ChatContextPanel = ({
           bug={bug}
           canEdit={canEditBug}
           onUpdate={onUpdate}
+          onCollapse={() => setIsExpanded(false)}
         />
       );
     }
@@ -66,6 +67,7 @@ export const ChatContextPanel = ({
           userCurrency={userCurrency}
           onUpdate={onUpdate}
           onJoinChannel={onJoinChannel}
+          onCollapse={() => setIsExpanded(false)}
         />
       );
     }

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { marketplaceApi } from '@/api/marketplace';
 import type { MarketItem } from '@/types';
+import { buildUrl } from '@/utils/urlSchema';
 
 interface UseMarketItemExpressInterestOptions {
   onJoinChannel?: () => void;
@@ -23,24 +24,14 @@ export const useMarketItemExpressInterest = (
       setExpressingInterest(tradeType);
 
       try {
-        // Express interest (backend now returns chatId)
         const result = await marketplaceApi.expressInterest(marketItem.id, tradeType);
 
-        // Notify parent that user joined the channel (for in-chat context)
         if (options.onJoinChannel) {
           options.onJoinChannel();
         }
 
-        // Navigate to the PRIVATE chat if needed
         if (options.shouldNavigate !== false) {
-          // Force a fresh load by adding a timestamp to state
-          // This ensures GameChat reloads context even if navigating to same route
-          navigate(`/channel-chat/${result.chatId}`, {
-            state: {
-              forceReload: Date.now(),
-              fromExpressInterest: true
-            }
-          });
+          navigate(buildUrl('channelChat', { id: result.chatId }));
         }
       } catch (error) {
         console.error('Failed to express interest:', error);

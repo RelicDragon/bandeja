@@ -1,9 +1,10 @@
-import { useEffect, useRef, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { useNavigationStore } from '@/store/navigationStore';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { useDesktop } from '@/hooks/useDesktop';
+import { parseLocation, placeToPageType } from '@/utils/urlSchema';
 import { MyTab } from './MyTab';
 import { FindTab } from './FindTab';
 import { ChatsTab } from './ChatsTab';
@@ -27,76 +28,15 @@ function MarketplaceContent() {
 
 export const MainPage = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { currentPage, setCurrentPage, setIsAnimating, bottomTabsVisible, setChatsFilter, setMarketplaceTab } = useNavigationStore();
-  const previousPathnameRef = useRef(location.pathname);
-  const isInitialMountRef = useRef(true);
+  const { bottomTabsVisible } = useNavigationStore();
   const isDesktop = useDesktop();
 
-  useEffect(() => {
-    const path = location.pathname;
-    const previousPath = previousPathnameRef.current;
-    const isPathChanged = path !== previousPath;
-    const locationState = location.state as { fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace' } | null;
+  const parsed = useMemo(
+    () => parseLocation(location.pathname, location.search),
+    [location.pathname, location.search]
+  );
 
-    if (isPathChanged || isInitialMountRef.current) {
-      if (isPathChanged) {
-        setIsAnimating(true);
-      }
-      
-      if (path === '/marketplace' || path === '/marketplace/my' || path.startsWith('/marketplace/')) {
-        setCurrentPage('marketplace');
-        if (path === '/marketplace') setMarketplaceTab('market');
-        else if (path === '/marketplace/my') setMarketplaceTab('my');
-      } else if (path === '/profile') {
-        setCurrentPage('profile');
-      } else if (path === '/chats' || path === '/chats/marketplace') {
-        setCurrentPage('chats');
-        if (path === '/chats/marketplace') setChatsFilter('market');
-      } else if (path === '/find') {
-        setCurrentPage('find');
-      } else if (path === '/leaderboard') {
-        setCurrentPage('leaderboard');
-      } else if (path === '/game-subscriptions') {
-        setCurrentPage('gameSubscriptions');
-      } else if (path.startsWith('/games/') && !path.includes('/chat')) {
-        setCurrentPage('gameDetails');
-      } else if (path === '/bugs') {
-        setCurrentPage('chats');
-        setChatsFilter('bugs');
-      } else if (path.includes('/user-chat/')) {
-        setCurrentPage('chats');
-        setChatsFilter('users');
-      } else if (path.includes('/group-chat/')) {
-        setCurrentPage('chats');
-        setChatsFilter('users');
-      } else if (path.includes('/channel-chat/')) {
-        setCurrentPage('chats');
-      } else if (path === '/') {
-        if (locationState?.fromPage && previousPath?.startsWith('/games/')) {
-          setCurrentPage(locationState.fromPage);
-          if (locationState.fromPage === 'find') {
-            setIsAnimating(true);
-            setTimeout(() => {
-              navigate('/find', { replace: true });
-              setIsAnimating(false);
-            }, 0);
-          }
-        } else {
-          setCurrentPage('my');
-        }
-      } else {
-        setCurrentPage('my');
-      }
-
-      if (isPathChanged) {
-        setTimeout(() => setIsAnimating(false), 300);
-      }
-      
-      previousPathnameRef.current = path;
-      isInitialMountRef.current = false;
-    }
-  }, [location.pathname, location.state, currentPage, setCurrentPage, setIsAnimating, setChatsFilter, setMarketplaceTab, navigate]);
+  const currentPage = placeToPageType(parsed.place);
 
   const renderContent = useMemo(() => {
     switch (currentPage) {

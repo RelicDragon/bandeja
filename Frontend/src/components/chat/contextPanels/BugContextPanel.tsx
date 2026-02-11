@@ -10,12 +10,14 @@ interface BugContextPanelProps {
   bug: Bug;
   canEdit?: boolean;
   onUpdate?: () => void;
+  onCollapse?: () => void;
 }
 
 export const BugContextPanel = ({
   bug,
   canEdit = false,
   onUpdate,
+  onCollapse,
 }: BugContextPanelProps) => {
   const { t } = useTranslation();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -23,7 +25,7 @@ export const BugContextPanel = ({
 
   const handleStatusChange = useCallback(async (newStatus: BugStatus) => {
     if (!canEdit || isUpdating || !bugData) return;
-
+    onCollapse?.();
     setIsUpdating(true);
     try {
       const response = await bugsApi.updateBug(bugData.id, { status: newStatus });
@@ -36,11 +38,11 @@ export const BugContextPanel = ({
     } finally {
       setIsUpdating(false);
     }
-  }, [bugData, canEdit, isUpdating, t, onUpdate]);
+  }, [bugData, canEdit, isUpdating, t, onUpdate, onCollapse]);
 
   const handleTypeChange = useCallback(async (newType: BugType) => {
     if (!canEdit || isUpdating || !bugData) return;
-
+    onCollapse?.();
     setIsUpdating(true);
     try {
       const response = await bugsApi.updateBug(bugData.id, { bugType: newType });
@@ -53,7 +55,7 @@ export const BugContextPanel = ({
     } finally {
       setIsUpdating(false);
     }
-  }, [bugData, canEdit, isUpdating, t, onUpdate]);
+  }, [bugData, canEdit, isUpdating, t, onUpdate, onCollapse]);
 
   return (
     <div>

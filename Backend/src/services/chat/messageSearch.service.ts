@@ -41,7 +41,28 @@ function buildSectionCondition(filter: SectionFilter): Prisma.Sql {
   if (filter === 'games') {
     return Prisma.sql`AND m."chatContextType" = 'GAME'`;
   }
-  return Prisma.sql`AND m."chatContextType" IN ('USER', 'GROUP') AND NOT EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."isChannel" = true)`;
+  return Prisma.sql`AND m."chatContextType" IN ('USER', 'GROUP') AND NOT EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."isChannel" = true) AND NOT EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."marketItemId" IS NOT NULL)`;
+}
+
+type SearchRow = { id: string; relevanceScore: number; createdAt: Date };
+
+async function searchMarketByListingTitle(
+  normalizedQuery: string,
+  limit: number
+): Promise<SearchRow[]> {
+  const rows = await prisma.$queryRaw<SearchRow[]>(Prisma.sql`
+    SELECT DISTINCT ON (gc.id) m.id,
+      word_similarity(LOWER(mi.title), ${normalizedQuery}) as "relevanceScore",
+      m."createdAt"
+    FROM "ChatMessage" m
+    JOIN "GroupChannel" gc ON gc.id = m."contextId" AND gc."marketItemId" IS NOT NULL
+    JOIN "MarketItem" mi ON mi.id = gc."marketItemId"
+    WHERE m."chatContextType" = 'GROUP'
+      AND word_similarity(LOWER(mi.title), ${normalizedQuery}) > 0.1
+    ORDER BY gc.id, m."createdAt" DESC
+    LIMIT ${limit}
+  `);
+  return rows;
 }
 
 async function searchSection(
@@ -57,9 +78,66 @@ async function searchSection(
   const skipCount = (page - 1) * limit;
   const fetchSize = limit * BATCH_MULTIPLIER;
   const results: SearchResult[] = [];
+
+  if (filter === 'market') {
+    const contentCondition = Prisma.sql`
+      WHERE m."contentSearchable" IS NOT NULL AND m."contentSearchable" != ''
+        AND m."contentSearchable" %> ${normalizedQuery}
+        AND m."chatContextType" = 'GROUP'
+        AND EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."marketItemId" IS NOT NULL)
+    `;
+    const [contentRows, titleRows] = await Promise.all([
+      prisma.$queryRaw<SearchRow[]>(Prisma.sql`
+        SELECT m.id, word_similarity(m."contentSearchable", ${normalizedQuery}) as "relevanceScore", m."createdAt"
+        FROM "ChatMessage" m
+        ${contentCondition}
+        ORDER BY word_similarity(m."contentSearchable", ${normalizedQuery}) DESC, m."createdAt" DESC
+        LIMIT ${(skipCount + limit) * BATCH_MULTIPLIER}
+      `),
+      searchMarketByListingTitle(normalizedQuery, (skipCount + limit) * BATCH_MULTIPLIER)
+    ]);
+    const byId = new Map<string, SearchRow>();
+    for (const r of contentRows) byId.set(r.id, r);
+    for (const r of titleRows) {
+      const existing = byId.get(r.id);
+      if (!existing || (r.relevanceScore > (existing.relevanceScore ?? 0))) byId.set(r.id, r);
+    }
+    const merged = Array.from(byId.values()).sort(
+      (a, b) => (b.relevanceScore - a.relevanceScore) || (b.createdAt.getTime() - a.createdAt.getTime())
+    );
+    const pageIds = merged.slice(skipCount, skipCount + limit).map((r) => r.id);
+    if (pageIds.length === 0) return { results: [], hasMore: false };
+    const messages = await prisma.chatMessage.findMany({
+      where: { id: { in: pageIds } },
+      include: MessageService.getMessageInclude()
+    });
+    const scoreMap = new Map(merged.map((r) => [r.id, r.relevanceScore]));
+    const orderMap = new Map(pageIds.map((id, i) => [id, i]));
+    const sortedMessages = messages.slice().sort((a, b) => (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99));
+    for (const message of sortedMessages) {
+      const cacheKey = `${message.chatContextType}:${message.contextId}:${message.chatType ?? ''}`;
+      let hasAccess = accessCache.get(cacheKey);
+      if (hasAccess === undefined) {
+        try {
+          await MessageService.validateMessageAccess(message, userId, false);
+          hasAccess = true;
+        } catch {
+          hasAccess = false;
+        }
+        accessCache.set(cacheKey, hasAccess);
+      }
+      if (!hasAccess) continue;
+      results.push({
+        message,
+        context: null,
+        relevanceScore: scoreMap.get(message.id)
+      });
+    }
+    return { results, hasMore: merged.length > skipCount + limit };
+  }
+
   let offset = 0;
   let skipped = 0;
-
   const baseCondition = Prisma.sql`
     WHERE m."contentSearchable" IS NOT NULL AND m."contentSearchable" != ''
       AND m."contentSearchable" %> ${normalizedQuery}
@@ -81,9 +159,7 @@ async function searchSection(
   `;
 
   while (results.length < limit) {
-    const batch = await prisma.$queryRaw<
-      Array<{ id: string; relevanceScore: number; createdAt: Date }>
-    >(Prisma.sql`
+    const batch = await prisma.$queryRaw<SearchRow[]>(Prisma.sql`
       SELECT m.id, word_similarity(m."contentSearchable", ${normalizedQuery}) as "relevanceScore", m."createdAt"
       FROM "ChatMessage" m
       ${baseCondition}

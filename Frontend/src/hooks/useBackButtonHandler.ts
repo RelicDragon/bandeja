@@ -1,33 +1,21 @@
 import { useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { backButtonService } from '@/services/backButtonService';
-import { useNavigationStore } from '@/store/navigationStore';
-import { handleBackNavigation } from '@/utils/navigation';
+import { handleBack } from '@/utils/backNavigation';
 
 type BackHandler = () => boolean | void;
 
 export const useBackButtonHandler = (handler?: BackHandler) => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { setCurrentPage, setIsAnimating } = useNavigationStore();
 
   useEffect(() => {
     backButtonService.setNavigate(navigate);
   }, [navigate]);
 
   const defaultHandler = useCallback(() => {
-    setIsAnimating(true);
-    
-    handleBackNavigation({
-      pathname: location.pathname,
-      locationState: location.state as { fromLeagueSeasonGameId?: string; fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' } | null,
-      navigate,
-      setCurrentPage,
-    });
-    
-    setTimeout(() => setIsAnimating(false), 300);
+    handleBack(navigate);
     return true;
-  }, [location.pathname, location.state, navigate, setCurrentPage, setIsAnimating]);
+  }, [navigate]);
 
   useEffect(() => {
     if (handler) {

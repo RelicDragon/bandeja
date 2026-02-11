@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useEffect, useRef } from 'react';
+import { useMemo } from 'react';
 import { Bell, ArrowLeft } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -7,7 +7,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useAuthStore } from '@/store/authStore';
-import { handleBackNavigation } from '@/utils/navigation';
+import { handleBack } from '@/utils/backNavigation';
+import { parseLocation, placeToPageType } from '@/utils/urlSchema';
 import {
   HomeHeaderContent,
   GameDetailsHeaderContent,
@@ -28,8 +29,15 @@ export const Header = () => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
-  const { currentPage, setCurrentPage, setIsAnimating, gameDetailsCanAccessChat, setBounceNotifications } = useNavigationStore();
+  const { gameDetailsCanAccessChat, setBounceNotifications } = useNavigationStore();
   const isDesktop = useDesktop();
+
+  const parsed = useMemo(
+    () => parseLocation(location.pathname, location.search),
+    [location.pathname, location.search]
+  );
+  const currentPage = placeToPageType(parsed.place);
+
   const isGameDetailsPath = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
   const isGameDetailsSplitView = currentPage === 'gameDetails' && isDesktop && isGameDetailsPath;
   
@@ -37,33 +45,15 @@ export const Header = () => {
   const shouldHideHeader = !user && isGameDetailsPage;
   const isMarketplaceList = location.pathname === '/marketplace' || location.pathname === '/marketplace/my';
 
-  const previousPageRef = useRef(currentPage);
-
-  useEffect(() => {
-    previousPageRef.current = currentPage;
-  }, [currentPage]);
-
   useBackButtonHandler();
 
   const handleBackClick = () => {
-    setIsAnimating(true);
-    
-    handleBackNavigation({
-      pathname: location.pathname,
-      locationState: location.state as { fromLeagueSeasonGameId?: string } | null,
-      navigate,
-      setCurrentPage,
-    });
-    
-    setTimeout(() => setIsAnimating(false), 300);
+    handleBack(navigate);
   };
 
   const handleNotificationsClick = async () => {
-    setIsAnimating(true);
     setBounceNotifications(true);
-    setCurrentPage('my');
     navigate('/', { replace: true });
-    setTimeout(() => setIsAnimating(false), 300);
   };
 
   if (shouldHideHeader) {
@@ -140,4 +130,3 @@ export const Header = () => {
     </>
   );
 };
-

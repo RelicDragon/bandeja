@@ -7,7 +7,6 @@ function displayName(user: { firstName?: string | null; lastName?: string | null
 
 export const getMarketChatDisplayTitle = (
   channel: GroupChannel,
-  userId: string,
   role: 'buyer' | 'seller'
 ): string => {
   const title = channel.marketItem?.title?.trim() || '';
@@ -35,5 +34,5 @@ export const getMarketChatDisplayParts = (
       subtitle: sellerName || undefined
     };
   }
-  return { title: getMarketChatDisplayTitle(channel, _userId, role) };
+  return { title: getMarketChatDisplayTitle(channel, role) };
 };

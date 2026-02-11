@@ -32,7 +32,7 @@ import { MarketItemPanel } from '@/components/marketplace';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { RequestToChat } from '@/components/chat/RequestToChat';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
-import { handleBackNavigation } from '@/utils/navigation';
+import { handleBack } from '@/utils/backNavigation';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
 import { sendWithTimeout, cancelSend, resend, cancelAllForContext } from '@/services/chatSendService';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
@@ -239,16 +239,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       return true;
     }
     
-    const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
-    
-    handleBackNavigation({
-      pathname: location.pathname,
-      locationState,
-      navigate,
-      setChatsFilter,
-      contextType,
-      gameId: id,
-    });
+    handleBack(navigate);
     
     return true;
   });
@@ -1331,15 +1322,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
-                  const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
-                  handleBackNavigation({
-                    pathname: location.pathname,
-                    locationState,
-                    navigate,
-                    setChatsFilter,
-                    contextType,
-                    gameId: id,
-                  });
+                  handleBack(navigate);
                 }}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
@@ -1423,15 +1406,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
                         return;
                       }
                       
-                      const locationState = location.state as { fromLeagueSeasonGameId?: string } | null;
-                      handleBackNavigation({
-                        pathname: location.pathname,
-                        locationState,
-                        navigate,
-                        setChatsFilter,
-                        contextType,
-                        gameId: id,
-                      });
+                      handleBack(navigate);
                     }}
                     className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
                   >

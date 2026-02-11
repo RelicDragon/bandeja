@@ -1,20 +1,16 @@
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useNavigate } from 'react-router-dom';
+import { useMarketplaceFromUrl } from '@/hooks/useMarketplaceFromUrl';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 
 export const MarketplaceTabController = () => {
   const { t } = useTranslation();
-  const location = useLocation();
   const navigate = useNavigate();
-  const setMarketplaceTab = useNavigationStore((s) => s.setMarketplaceTab);
-  const isMy = location.pathname === '/marketplace/my';
-  const activeId = isMy ? 'my' : 'market';
+  const { subtab } = useMarketplaceFromUrl();
 
   const goTo = (id: string) => {
     const tab = id as 'market' | 'my';
-    setMarketplaceTab(tab);
-    navigate(tab === 'my' ? '/marketplace/my' : '/marketplace');
+    navigate(tab === 'my' ? '/marketplace/my' : '/marketplace', { replace: true });
   };
 
   const tabs: SegmentedSwitchTab[] = [
@@ -25,7 +21,7 @@ export const MarketplaceTabController = () => {
   return (
     <SegmentedSwitch
       tabs={tabs}
-      activeId={activeId}
+      activeId={subtab}
       onChange={goTo}
       titleInActiveOnly={false}
       layoutId="marketplaceSubtab"

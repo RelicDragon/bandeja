@@ -1,9 +1,7 @@
 import { NavigateFunction, NavigateOptions } from 'react-router-dom';
-import { findMatchingRoute } from '@/config/navigationRoutes';
-import { useNavigationStore } from '@/store/navigationStore';
+import { isAppPath, homeUrl } from './urlSchema';
 
 export const markNavigation = (): void => {
-  // Use History State API instead of sessionStorage
   if (window.history.state) {
     window.history.replaceState(
       { 
@@ -15,6 +13,19 @@ export const markNavigation = (): void => {
     );
   }
 };
+
+export interface LocationState {
+  fromLeagueSeasonGameId?: string;
+  leagueSeasonTab?: 'general' | 'schedule' | 'standings' | 'faq';
+  fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace';
+  fromFilter?: 'users' | 'bugs' | 'channels' | 'market';
+  fromMarketplaceSubtab?: 'my' | 'market';
+  searchQuery?: string;
+  marketRole?: 'buyer' | 'seller';
+  returnItemId?: string;
+  isAppNavigation?: boolean;
+  timestamp?: number;
+}
 
 export const navigateWithTracking = (
   navigate: NavigateFunction,
@@ -34,214 +45,16 @@ export const navigateWithTracking = (
     });
   }
   
-  // Mark current state
   setTimeout(() => markNavigation(), 0);
 };
 
-export const canNavigateBack = (): boolean => {
-  // Check history length
-  if (window.history.length <= 1) {
-    return false;
-  }
-  
-  // Check if current state has app navigation marker
-  const state = window.history.state;
-  if (!state) {
-    return false;
-  }
-  
-  // React Router stores user state in 'usr' property, check both locations
-  const hasAppNavigation = state.isAppNavigation === true || state.usr?.isAppNavigation === true;
-  
-  if (!hasAppNavigation) {
-    return false;
-  }
-  
-  return true;
-};
-
-export interface LocationState {
-  fromLeagueSeasonGameId?: string;
-  leagueSeasonTab?: 'general' | 'schedule' | 'standings' | 'faq';
-  fromPage?: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace';
-  fromFilter?: 'users' | 'bugs' | 'channels' | 'market';
-  fromMarketplaceSubtab?: 'my' | 'market';
-  searchQuery?: string;
-  isAppNavigation?: boolean;
-  timestamp?: number;
-}
-
-type PageType = 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace';
-
-interface HandleBackNavigationParams {
-  pathname: string;
-  locationState: LocationState | null;
-  navigate: NavigateFunction;
-  setCurrentPage?: (page: PageType) => void;
-  setChatsFilter?: (filter: 'users' | 'bugs' | 'channels' | 'market') => void;
-  contextType?: 'USER' | 'BUG' | 'GAME' | 'GROUP';
-  gameId?: string;
-  /** When false (e.g. from Capacitor backButton event.canGoBack), skip history.back and use fallback */
-  nativeCanGoBack?: boolean;
-}
-
-const SAFETY_CHECK_MS = 350;
-
-const APP_PATH_RE =
-  /^\/(find|chats|profile|leaderboard|games|create-game|create-league|rating|bugs|game-subscriptions|marketplace|user-chat|group-chat|channel-chat|select-city|complete-profile|login|register|character)(\/.*)?$/;
-
-const isAppPath = (pathname: string): boolean =>
-  pathname === '/' || APP_PATH_RE.test(pathname);
-
-/** Entry-point routes (direct URL, shared link, push). Never use history.back() — previous entry may be external (about:blank, google). */
-const ENTRY_POINT_PATH_RE =
-  /^\/(group-chat|user-chat|channel-chat|games)\/[^/]+(\/chat)?$/;
-const isEntryPointRoute = (pathname: string): boolean => ENTRY_POINT_PATH_RE.test(pathname);
-
-/** Call from App when Capacitor. On iOS, swipe-back is WebView-native (history.back()); this redirects to home if we land on a non-app path. */
 export const setupPopstateFallback = (navigate: NavigateFunction): (() => void) => {
   const handler = () => {
     const pathname = window.location.pathname || '';
     if (!isAppPath(pathname)) {
-      useNavigationStore.getState().setCurrentPage('my');
-      navigate('/', { replace: true });
+      navigate(homeUrl(), { replace: true });
     }
   };
   window.addEventListener('popstate', handler);
   return () => window.removeEventListener('popstate', handler);
-};
-
-const applyFallback = (
-  params: HandleBackNavigationParams,
-  fallback: string,
-  matchedRoute: { setFilter?: 'users' | 'bugs' | 'channels' } | null
-): void => {
-  const { navigate, setCurrentPage, setChatsFilter, locationState } = params;
-  if (setChatsFilter) {
-    if (fallback === '/bugs') setChatsFilter('bugs');
-    else if (fallback === '/chats/marketplace' || fallback.startsWith('/chats/marketplace?')) setChatsFilter('market');
-    else if (fallback === '/chats' && locationState?.fromFilter) setChatsFilter(locationState.fromFilter);
-    else if (matchedRoute?.setFilter) setChatsFilter(matchedRoute.setFilter);
-  }
-  if (setCurrentPage) {
-    if (fallback === '/') {
-      setCurrentPage('my');
-    } else if (fallback.includes('/games/')) {
-      setCurrentPage('gameDetails');
-    } else if (fallback === '/bugs' || fallback === '/chats' || fallback === '/chats/marketplace' || fallback.startsWith('/chats/marketplace?')) {
-      setCurrentPage('chats');
-    } else if (fallback === '/marketplace' || fallback === '/marketplace/my') {
-      setCurrentPage('marketplace');
-    } else if (fallback === '/find') {
-      setCurrentPage('find');
-    } else if (fallback === '/leaderboard') {
-      setCurrentPage('leaderboard');
-    }
-  }
-  const state =
-    fallback.includes('/games/') && locationState?.leagueSeasonTab
-      ? { leagueSeasonTab: locationState.leagueSeasonTab }
-      : undefined;
-  navigateWithTracking(navigate, fallback, { replace: true, state });
-};
-
-export const handleBackNavigation = (params: HandleBackNavigationParams): void => {
-  const { pathname, locationState, navigate, setCurrentPage, setChatsFilter: _setChatsFilter, nativeCanGoBack } = params;
-  const matchedRoute = findMatchingRoute(pathname);
-  const fallback =
-    matchedRoute
-      ? typeof matchedRoute.fallback === 'function'
-        ? matchedRoute.fallback(pathname, locationState)
-        : matchedRoute.fallback
-      : '/';
-
-  const goToFallback = () => {
-    if (matchedRoute) {
-      if (import.meta.env.DEV) {
-        console.log(`[handleBackNavigation] Navigating to fallback: ${fallback} (from: ${pathname})`);
-      }
-      applyFallback(params, fallback, matchedRoute);
-    } else {
-      if (import.meta.env.DEV) {
-        console.log('[handleBackNavigation] No route matched, falling back to home');
-      }
-      setCurrentPage?.('my');
-      navigateWithTracking(navigate, '/', { replace: true });
-    }
-  };
-
-  if (nativeCanGoBack === false) {
-    goToFallback();
-    return;
-  }
-  const isGameChat = pathname.match(/^\/games\/[^/]+\/chat$/);
-  const hasInAppOrigin =
-    locationState?.fromPage != null || locationState?.fromLeagueSeasonGameId != null;
-  const isGameChatFromInApp =
-    isGameChat && canNavigateBack() && hasInAppOrigin;
-  const isChatFromInApp =
-    (locationState?.fromPage === 'chats' || locationState?.fromPage === 'bugs') &&
-    canNavigateBack() &&
-    (isGameChat ||
-      pathname.match(/^\/user-chat\/[^/]+$/) ||
-      pathname.match(/^\/group-chat\/[^/]+$/) ||
-      pathname.match(/^\/channel-chat\/[^/]+$/));
-  if (isGameChatFromInApp || isChatFromInApp) {
-    const previousPathname = pathname;
-    try {
-      navigate(-1);
-    } catch (error) {
-      console.error('[Navigation] Error navigating back:', error);
-      goToFallback();
-      return;
-    }
-    setTimeout(() => {
-      const current = window.location.pathname;
-      if (current === previousPathname || !isAppPath(current)) {
-        goToFallback();
-      }
-    }, SAFETY_CHECK_MS);
-    return;
-  }
-  if (isEntryPointRoute(pathname)) {
-    goToFallback();
-    return;
-  }
-  if (canNavigateBack()) {
-    const previousPathname = pathname;
-    try {
-      navigate(-1);
-    } catch (error) {
-      console.error('[Navigation] Error navigating back:', error);
-      goToFallback();
-      return;
-    }
-    setTimeout(() => {
-      const current = window.location.pathname;
-      if (current === previousPathname || !isAppPath(current)) {
-        goToFallback();
-      }
-    }, SAFETY_CHECK_MS);
-    return;
-  }
-
-  goToFallback();
-};
-
-export const handleBackNavigationFromService = (
-  navigate: NavigateFunction,
-  nativeCanGoBack?: boolean
-): void => {
-  const pathname = window.location.pathname || '/';
-  const state = window.history.state;
-  const locationState = (state?.usr ?? state ?? null) as LocationState | null;
-  const { setCurrentPage, setChatsFilter } = useNavigationStore.getState();
-  handleBackNavigation({
-    pathname,
-    locationState,
-    navigate,
-    setCurrentPage,
-    setChatsFilter,
-    nativeCanGoBack,
-  });
 };

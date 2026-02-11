@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, User } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -6,14 +6,20 @@ import { CreateMenuModal } from '@/components/CreateMenuModal';
 import { useNavigationStore } from '@/store/navigationStore';
 import { EntityType } from '@/types';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { handleBackNavigation } from '@/utils/navigation';
+import { handleBack } from '@/utils/backNavigation';
+import { parseLocation, placeToPageType } from '@/utils/urlSchema';
 
 export const HomeHeaderContent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const { currentPage, setCurrentPage, setIsAnimating, setChatsFilter } = useNavigationStore();
+  const { setCurrentPage, setIsAnimating, setChatsFilter } = useNavigationStore();
+  const parsed = useMemo(
+    () => parseLocation(location.pathname, location.search),
+    [location.pathname, location.search]
+  );
+  const currentPage = placeToPageType(parsed.place);
   const buttonContainerRef = useRef<HTMLDivElement>(null);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [pendingChatType, setPendingChatType] = useState<'group' | 'channel' | null>(null);
@@ -86,21 +92,10 @@ export const HomeHeaderContent = () => {
 
   const handleProfileClick = () => {
     if (currentPage === 'profile') {
-      setIsAnimating(true);
-      handleBackNavigation({
-        pathname: location.pathname,
-        locationState: location.state as { fromLeagueSeasonGameId?: string } | null,
-        navigate,
-        setCurrentPage,
-        nativeCanGoBack: false,
-      });
-      setTimeout(() => setIsAnimating(false), 300);
+      handleBack(navigate);
       return;
     }
-    setIsAnimating(true);
-    setCurrentPage('profile');
     navigate('/profile', { replace: true });
-    setTimeout(() => setIsAnimating(false), 300);
   };
 
   return (

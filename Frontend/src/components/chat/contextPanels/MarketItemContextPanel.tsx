@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useNavigationStore } from '@/store/navigationStore';
 import toast from 'react-hot-toast';
-import { Edit2, Trash2, BookMarked, ShoppingCart, DollarSign, Gavel, MessageCircle } from 'lucide-react';
+import { Edit2, Trash2, BookMarked, ShoppingCart, DollarSign, Gavel } from 'lucide-react';
 import type { MarketItem, PriceCurrency } from '@/types';
 import { marketplaceApi } from '@/api/marketplace';
 import { currencyCacheService } from '@/services/currencyCache.service';
@@ -13,7 +12,6 @@ import { PlayerAvatar } from '@/components';
 import { ConfirmRemoveMarketItemModal } from '@/components/marketplace/ConfirmRemoveMarketItemModal';
 import { useMarketItemReserve } from '@/components/marketplace/useMarketItemReserve';
 import { useMarketItemExpressInterest } from '@/components/marketplace/useMarketItemExpressInterest';
-
 interface MarketItemContextPanelProps {
   marketItem: MarketItem;
   userCurrency: PriceCurrency;
@@ -21,7 +19,7 @@ interface MarketItemContextPanelProps {
   onItemUpdate?: (item: MarketItem) => void;
   onJoinChannel?: () => void;
   onEdit?: () => void;
-  onNavigate?: () => void;
+  onCollapse?: () => void;
   shouldNavigate?: boolean;
 }
 
@@ -32,7 +30,7 @@ export const MarketItemContextPanel = ({
   onItemUpdate,
   onJoinChannel,
   onEdit,
-  onNavigate,
+  onCollapse,
   shouldNavigate = false,
 }: MarketItemContextPanelProps) => {
   const { t } = useTranslation();
@@ -40,9 +38,6 @@ export const MarketItemContextPanel = ({
   const currentUser = useAuthStore((state) => state.user);
   const [isRemoving, setIsRemoving] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
-  const [buyerChat, setBuyerChat] = useState<any | null>(null);
-  const [loadingChat, setLoadingChat] = useState(false);
-  const [creatingChat, setCreatingChat] = useState(false);
   const [priceDisplay, setPriceDisplay] = useState<{
     main: string;
     original: string;
@@ -51,16 +46,6 @@ export const MarketItemContextPanel = ({
 
   const isOwner = currentUser?.id === marketItem.sellerId;
   const isFree = marketItem.tradeTypes?.includes('FREE');
-
-  useEffect(() => {
-    if (!currentUser || isOwner) return;
-    setLoadingChat(true);
-    marketplaceApi
-      .getBuyerChat(marketItem.id)
-      .then(setBuyerChat)
-      .catch(() => setBuyerChat(null))
-      .finally(() => setLoadingChat(false));
-  }, [marketItem.id, currentUser, isOwner]);
 
   const { handleReserveToggle, isReserving, isReserved } = useMarketItemReserve(marketItem, onItemUpdate ?? onUpdate);
 
@@ -148,36 +133,6 @@ export const MarketItemContextPanel = ({
     }
   };
 
-  const doNavigate = (path: string, state?: object) => {
-    onNavigate?.();
-    navigate(path, state);
-  };
-
-  const handleAskSeller = async () => {
-    if (buyerChat) {
-      doNavigate(`/channel-chat/${buyerChat.id}`);
-      return;
-    }
-    setCreatingChat(true);
-    try {
-      const chat = await marketplaceApi.getOrCreateBuyerChat(marketItem.id);
-      doNavigate(`/channel-chat/${chat.id}`);
-    } catch {
-      toast.error(t('marketplace.failedToOpenChat', { defaultValue: 'Failed to open chat' }));
-    } finally {
-      setCreatingChat(false);
-    }
-  };
-
-  const setCurrentPage = useNavigationStore((s) => s.setCurrentPage);
-  const setChatsFilter = useNavigationStore((s) => s.setChatsFilter);
-
-  const handleViewConversations = () => {
-    setCurrentPage('chats');
-    setChatsFilter('market');
-    navigate('/chats/marketplace?role=seller', { replace: false });
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -236,37 +191,12 @@ export const MarketItemContextPanel = ({
         )}
       </div>
 
-      {/* Ask seller / View conversations */}
-      {!isOwner && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED') && (
-        <button
-          onClick={handleAskSeller}
-          disabled={creatingChat || loadingChat}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <MessageCircle size={16} />
-          <span>
-            {buyerChat
-              ? t('marketplace.openMyChat', { defaultValue: 'Open my chat' })
-              : t('marketplace.askSeller', { defaultValue: 'Ask seller' })}
-          </span>
-        </button>
-      )}
-      {isOwner && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED') && (
-        <button
-          onClick={handleViewConversations}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium text-sm"
-        >
-          <MessageCircle size={16} />
-          <span>{t('marketplace.viewConversations', { defaultValue: 'View conversations' })}</span>
-        </button>
-      )}
-
       {/* Trade Type Buttons (for buyers) */}
       {!isOwner && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED') && !isFree && (
         <div className="flex flex-col gap-2">
           {marketItem.tradeTypes?.includes('BUY_IT_NOW') && (
             <button
-              onClick={() => expressInterest('BUY_IT_NOW')}
+              onClick={() => { onCollapse?.(); expressInterest('BUY_IT_NOW'); }}
               disabled={expressingInterest !== null}
               className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -276,7 +206,7 @@ export const MarketItemContextPanel = ({
           )}
           {marketItem.tradeTypes?.includes('SUGGESTED_PRICE') && (
             <button
-              onClick={() => expressInterest('SUGGESTED_PRICE')}
+              onClick={() => { onCollapse?.(); expressInterest('SUGGESTED_PRICE'); }}
               disabled={expressingInterest !== null}
               className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -286,7 +216,7 @@ export const MarketItemContextPanel = ({
           )}
           {marketItem.tradeTypes?.includes('AUCTION') && (
             <button
-              onClick={() => expressInterest('AUCTION')}
+              onClick={() => { onCollapse?.(); expressInterest('AUCTION'); }}
               disabled={expressingInterest !== null}
               className="flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400 border border-violet-200 dark:border-violet-800/50 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -302,14 +232,14 @@ export const MarketItemContextPanel = ({
         <div className="flex flex-col gap-2">
           <div className="flex gap-2">
             <button
-              onClick={handleEdit}
+              onClick={() => { onCollapse?.(); handleEdit(); }}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors font-medium text-sm"
             >
               <Edit2 size={16} />
               <span>{t('common.edit', { defaultValue: 'Edit' })}</span>
             </button>
             <button
-              onClick={handleRemoveClick}
+              onClick={() => { onCollapse?.(); handleRemoveClick(); }}
               disabled={isRemoving}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -318,7 +248,7 @@ export const MarketItemContextPanel = ({
             </button>
           </div>
           <button
-            onClick={handleReserveToggle}
+            onClick={() => { onCollapse?.(); handleReserveToggle(); }}
             disabled={isReserving}
             className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 border rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
               isReserved

@@ -2,7 +2,8 @@ import { App } from '@capacitor/app';
 import type { BackButtonListenerEvent } from '@capacitor/app';
 import { NavigateFunction } from 'react-router-dom';
 import { isAndroid } from '@/utils/capacitor';
-import { handleBackNavigationFromService, navigateWithTracking } from '@/utils/navigation';
+import { handleBack } from '@/utils/backNavigation';
+import { homeUrl } from '@/utils/urlSchema';
 import toast from 'react-hot-toast';
 import i18n from '@/i18n/config';
 
@@ -38,7 +39,7 @@ class BackButtonService {
     });
   }
 
-  private handleBackButton(backEvent?: BackButtonListenerEvent) {
+  private handleBackButton(_backEvent?: BackButtonListenerEvent) {
     if (this.isHandling) return;
     
     this.isHandling = true;
@@ -69,7 +70,7 @@ class BackButtonService {
         }
       }
 
-      this.defaultBackNavigation(backEvent);
+      this.defaultBackNavigation();
     } catch (error) {
       console.error('Error handling back button:', error);
     } finally {
@@ -77,20 +78,17 @@ class BackButtonService {
     }
   }
 
-  private defaultBackNavigation(backEvent?: BackButtonListenerEvent) {
+  private defaultBackNavigation() {
     try {
       const isOnHomePage = window.location.pathname === '/' || 
                            window.location.pathname === '';
       
-      // Double-press to exit on home page (Android UX pattern)
       if (isOnHomePage) {
         const now = Date.now();
         if (now - this.lastBackPress < this.DOUBLE_PRESS_DELAY) {
-          // Second press within delay - exit app
           App.exitApp();
           return;
         } else {
-          // First press - show message and wait for second press
           this.lastBackPress = now;
           const message = i18n.t('common.pressBackAgainToExit', { defaultValue: 'Press back again to exit' });
           toast(message, {
@@ -102,9 +100,8 @@ class BackButtonService {
         }
       }
       
-      // Not on home page - use shared back logic (safety net + fallback). Use native canGoBack when provided.
       if (this.navigate) {
-        handleBackNavigationFromService(this.navigate, backEvent?.canGoBack);
+        handleBack(this.navigate);
       } else {
         App.exitApp();
       }
@@ -112,7 +109,7 @@ class BackButtonService {
       console.error('Error in default back navigation:', error);
       try {
         if (this.navigate) {
-          navigateWithTracking(this.navigate, '/', { replace: true });
+          this.navigate(homeUrl(), { replace: true });
         } else {
           App.exitApp();
         }

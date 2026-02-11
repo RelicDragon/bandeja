@@ -1,3 +1,5 @@
+import { MarketItemTradeType } from '@/types';
+
 const BTN_BASE =
   'inline-flex items-center justify-center px-3 py-1.5 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/20';
 
@@ -11,13 +13,13 @@ const SELECTED_STYLES: Record<string, string> = {
 const UNSELECTED = 'border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-slate-800 dark:text-white hover:border-primary-500/50';
 
 interface TradeTypeCheckboxesProps {
-  value: string[];
-  onChange: (v: string[]) => void;
-  options: Array<{ value: string; label: string }>;
+  value: MarketItemTradeType[];
+  onChange: (v: MarketItemTradeType[]) => void;
+  options: Array<{ value: MarketItemTradeType; label: string }>;
 }
 
 export const TradeTypeCheckboxes = ({ value, onChange, options }: TradeTypeCheckboxesProps) => {
-  const toggle = (v: string) => {
+  const toggle = (v: MarketItemTradeType) => {
     const next = value.includes(v) ? value.filter((x) => x !== v) : [...value, v];
     onChange(next);
   };

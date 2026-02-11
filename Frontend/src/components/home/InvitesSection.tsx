@@ -17,7 +17,7 @@ interface InvitesSectionProps {
 export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: InvitesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { bounceNotifications, setBounceNotifications, currentPage } = useNavigationStore();
+  const { bounceNotifications, setBounceNotifications } = useNavigationStore();
   const user = useAuthStore((state) => state.user);
   const [hidingInvites, setHidingInvites] = useState<Set<string>>(new Set());
 
@@ -65,7 +65,7 @@ export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: In
             <Card
               key={invite.id}
               className={`p-4 cursor-pointer hover:shadow-lg transition-all duration-300 ${bounceNotifications ? 'animate-[pulse_0.4s_ease-in-out_3] bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700' : ''} ${hidingInvites.has(invite.id) ? 'animate-[fadeOutUp_0.3s_ease-out_forwards] opacity-0 transform -translate-y-4' : 'opacity-100'}`}
-              onClick={() => gameId && navigate(`/games/${gameId}`, { state: { fromPage: currentPage } })}
+              onClick={() => gameId && navigate(`/games/${gameId}`)}
               onAnimationEnd={() => hidingInvites.has(invite.id) && handleHideAnimationEnd(invite.id)}
             >
               <div className="flex items-start gap-3">

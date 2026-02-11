@@ -10,7 +10,7 @@ import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
-import { useNavigationStore } from '@/store/navigationStore';
+
 import { useAuthStore } from '@/store/authStore';
 import { chatApi } from '@/api/chat';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
@@ -40,7 +40,6 @@ export const GameCard = ({
 }: GameCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentPage, setCurrentPage, setIsAnimating } = useNavigationStore();
   const authUser = useAuthStore((state) => state.user);
   const effectiveUser = user || authUser;
   const expandedContentRef = useRef<HTMLDivElement>(null);
@@ -144,11 +143,7 @@ export const GameCard = ({
     if (onClick) {
       onClick();
     } else {
-      setIsAnimating(true);
-      const previousPage = currentPage;
-      setCurrentPage('gameDetails');
-      navigate(`/games/${game.id}`, { state: { fromPage: previousPage } });
-      setTimeout(() => setIsAnimating(false), 300);
+      navigate(`/games/${game.id}`);
     }
   };
 

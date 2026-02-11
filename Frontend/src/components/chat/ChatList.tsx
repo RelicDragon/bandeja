@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import transliterate from '@sindresorhus/transliterate';
 import { CityUserCard } from './CityUserCard';
 import { ChatListItem } from './ChatListItem';
@@ -87,9 +87,9 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const [marketLoadingMore, setMarketLoadingMore] = useState(false);
   const marketPageRef = useRef(1);
   const marketChatRole = (searchParams.get('role') === 'seller' ? 'seller' : 'buyer') as 'buyer' | 'seller';
+  const itemIdFromUrl = searchParams.get('item');
   const [selectedMarketItemForDrawer, setSelectedMarketItemForDrawer] = useState<MarketItem | null>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
-  const location = useLocation();
 
   const setMarketChatRole = useCallback(
     (role: 'buyer' | 'seller') => {
@@ -736,7 +736,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   }, [onChatSelect]);
 
   const handleCreateListing = useCallback(() => {
-    navigate('/marketplace/create', { state: { fromPage: 'chats' as const, fromFilter: 'market' as const } });
+    navigate('/marketplace/create');
   }, [navigate]);
 
   const normalizeString = (str: string) => {
@@ -755,7 +755,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const matchesMarketSearch = useCallback(
     (chat: ChatItem) => {
       if (chat.type !== 'channel' || !chat.data.marketItemId) return false;
-      const title = getMarketChatDisplayTitle(chat.data, user?.id ?? '', marketChatRole);
+      const title = getMarketChatDisplayTitle(chat.data, marketChatRole);
       return matchesSearch(title);
     },
     [user?.id, marketChatRole, matchesSearch]
@@ -800,7 +800,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     });
   }, [filteredActiveChats, cityUserIds, user?.id]);
 
-  const isSearchMode = debouncedSearchQuery.trim().length > 0 && (chatsFilter === 'users' || chatsFilter === 'channels' || chatsFilter === 'bugs');
+  const isSearchMode = debouncedSearchQuery.trim().length > 0 && (chatsFilter === 'users' || chatsFilter === 'channels' || chatsFilter === 'bugs' || chatsFilter === 'market');
 
   const handleContactClick = useCallback(async (userId: string) => {
     if (!user) return;
@@ -940,32 +940,53 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     });
   }, [chatsFilter, marketChatRole, displayedChats]);
 
-  useEffect(() => {
-    const state = (location.state as { marketRole?: 'seller' } | null)?.marketRole;
-    if (chatsFilter === 'market' && state === 'seller' && searchParams.get('role') !== 'seller') {
-      setSearchParams(
-        (prev) => {
-          const p = new URLSearchParams(prev);
-          p.set('role', 'seller');
-          return p;
-        },
-        { replace: true }
-      );
-    }
-  }, [chatsFilter, location.state, searchParams, setSearchParams]);
+
+
+  const openMarketItemDrawer = useCallback((item: MarketItem) => {
+    setSelectedMarketItemForDrawer(item);
+    setSearchParams((p) => {
+      const next = new URLSearchParams(p);
+      next.set('item', item.id);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const closeMarketItemDrawer = useCallback(() => {
+    setSelectedMarketItemForDrawer(null);
+    setSearchParams((p) => {
+      const next = new URLSearchParams(p);
+      next.delete('item');
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   const handleMarketItemGroupClick = useCallback(async (group: { itemId: string; marketItem?: MarketItem }) => {
     if (group.marketItem) {
-      setSelectedMarketItemForDrawer(group.marketItem);
+      openMarketItemDrawer(group.marketItem);
       return;
     }
     try {
       const res = await marketplaceApi.getMarketItemById(group.itemId);
-      setSelectedMarketItemForDrawer(res.data);
+      openMarketItemDrawer(res.data);
     } catch {
       setSelectedMarketItemForDrawer(null);
     }
-  }, []);
+  }, [openMarketItemDrawer]);
+
+  useEffect(() => {
+    if (chatsFilter !== 'market' || !itemIdFromUrl) {
+      if (!itemIdFromUrl) setSelectedMarketItemForDrawer(null);
+      return;
+    }
+    if (selectedMarketItemForDrawer?.id === itemIdFromUrl) return;
+    let cancelled = false;
+    marketplaceApi.getMarketItemById(itemIdFromUrl).then((res) => {
+      if (!cancelled) setSelectedMarketItemForDrawer(res.data);
+    }).catch(() => {
+      if (!cancelled) setSearchParams((p) => { const n = new URLSearchParams(p); n.delete('item'); return n; }, { replace: true });
+    });
+    return () => { cancelled = true; };
+  }, [chatsFilter, itemIdFromUrl, selectedMarketItemForDrawer?.id, setSearchParams]);
 
   useEffect(() => {
     if (openBugModal && chatsFilter === 'bugs') {
@@ -1244,6 +1265,22 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                     onBugsToggle={() => setBugsExpanded((e) => !e)}
                     onMarketListingsToggle={() => setMarketListingsExpanded((e) => !e)}
                   />
+                ) : chatsFilter === 'market' ? (
+                  <ChatMessageSearchResults
+                    query={debouncedSearchQuery}
+                    chatsFilter={chatsFilter}
+                    onResultClick={(chatId, chatType, options) => handleChatClick(chatId, chatType, { ...options, ...(debouncedSearchQuery.trim() ? { searchQuery: debouncedSearchQuery.trim() } : {}) })}
+                    messagesExpanded={messagesExpanded}
+                    gamesExpanded={gamesExpanded}
+                    channelsExpanded={channelsExpanded}
+                    bugsExpanded={bugsExpanded}
+                    marketListingsExpanded={marketListingsExpanded}
+                    onMessagesToggle={() => setMessagesExpanded((e) => !e)}
+                    onGamesToggle={() => setGamesExpanded((e) => !e)}
+                    onChannelsToggle={() => setChannelsExpanded((e) => !e)}
+                    onBugsToggle={() => setBugsExpanded((e) => !e)}
+                    onMarketListingsToggle={() => setMarketListingsExpanded((e) => !e)}
+                  />
                 ) : (
                   <>
                     {contactsMode ? (
@@ -1350,7 +1387,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                     onContactClick={handleContactClick}
                     isSearchMode={isSearchMode}
                     searchQuery={debouncedSearchQuery.trim()}
-                    displayTitle={chatsFilter === 'market' && chat.type === 'channel' && user?.id ? (marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').title : getMarketChatDisplayTitle(chat.data, user.id, marketChatRole)) : undefined}
+                    displayTitle={chatsFilter === 'market' && chat.type === 'channel' && user?.id ? (marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').title : getMarketChatDisplayTitle(chat.data, marketChatRole)) : undefined}
                     displaySubtitle={chatsFilter === 'market' && chat.type === 'channel' && user?.id && marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').subtitle : undefined}
                   />
                 ))
@@ -1377,8 +1414,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         <MarketItemDrawer
           item={selectedMarketItemForDrawer}
           isOpen={!!selectedMarketItemForDrawer}
-          onClose={() => setSelectedMarketItemForDrawer(null)}
-          inChatContext
+          onClose={closeMarketItemDrawer}
         />
       )}
     </>

@@ -156,12 +156,13 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     fetchGame();
   }, [id, user]);
 
-  const leagueSeasonTab = (location.state as { leagueSeasonTab?: 'general' | 'schedule' | 'standings' | 'faq' })?.leagueSeasonTab;
+  const searchParams = new URLSearchParams(location.search);
+  const tabFromUrl = searchParams.get('tab') as 'general' | 'schedule' | 'standings' | 'faq' | null;
   useEffect(() => {
-    if (leagueSeasonTab && game?.entityType === 'LEAGUE_SEASON') {
-      setActiveTab(leagueSeasonTab);
+    if (tabFromUrl && game?.entityType === 'LEAGUE_SEASON') {
+      setActiveTab(tabFromUrl);
     }
-  }, [id, leagueSeasonTab, game?.entityType]);
+  }, [id, tabFromUrl, game?.entityType]);
 
   const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);
   const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);

@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserStats, usersApi, LevelHistoryItem } from '@/api/users';
-import { useNavigationStore } from '@/store/navigationStore';
+import { buildUrl } from '@/utils/urlSchema';
 import { LevelHistoryTabController } from './LevelHistoryTabController';
 import { GamesStatsSection } from './GamesStatsSection';
 import { PlayerAvatar } from './PlayerAvatar';
+import { PlayerItemsToSell } from './PlayerItemsToSell';
+import { MarketItem } from '@/types';
 import { formatDate, formatSmartRelativeTime } from '@/utils/dateFormat';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
@@ -31,12 +33,13 @@ interface LevelHistoryViewProps {
   tabDarkBgClass?: string;
   hideUserCard?: boolean;
   onOpenGame?: () => void;
+  showItemsToSell?: boolean;
+  onMarketItemClick?: (item: MarketItem) => void;
 }
 
-export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false, onOpenGame }: LevelHistoryViewProps) => {
+export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false, onOpenGame, showItemsToSell = false, onMarketItemClick }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { setCurrentPage, setIsAnimating } = useNavigationStore();
   const { user } = stats;
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const [showSocialLevel, setShowSocialLevel] = useState(false);
@@ -71,9 +74,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
   const handleRatingChangeClick = (item: { id: string; gameId: string }) => {
     if (!item.gameId) return;
     onOpenGame?.();
-    setIsAnimating(true);
-    setCurrentPage('gameDetails');
-    navigate(`/games/${item.gameId}`);
+    navigate(buildUrl('game', { id: item.gameId }));
   };
 
   const allMergedHistory = useMemo(() => {
@@ -302,6 +303,10 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
           </div>
         </div>
       </div>
+
+      {showItemsToSell && (
+        <PlayerItemsToSell userId={user.id} onItemClick={onMarketItemClick} />
+      )}
 
       {stats.gamesStats?.length > 0 && (
         <GamesStatsSection

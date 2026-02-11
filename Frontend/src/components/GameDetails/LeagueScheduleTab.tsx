@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Card, ConfirmationModal } from '@/components';
 import { EditLeagueGameTeamsModal } from './EditLeagueGameTeamsModal';
@@ -27,7 +27,6 @@ const ALL_GROUP_ID = 'ALL';
 export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTeams = false, activeTab = 'schedule', selectedGameChatId, onChatGameSelect }: LeagueScheduleTabProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation();
   const [rounds, setRounds] = useState<LeagueRound[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -164,13 +163,8 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   };
 
   const handleOpenGame = (game: Game) => {
-    navigate(`/games/${leagueSeasonId}`, {
-      replace: true,
-      state: { ...(location.state as object || {}), leagueSeasonTab: activeTab },
-    });
-    navigate(`/games/${game.id}`, {
-      state: { fromLeagueSeasonGameId: leagueSeasonId, leagueSeasonTab: activeTab },
-    });
+    navigate(`/games/${leagueSeasonId}?tab=${activeTab}`, { replace: true });
+    navigate(`/games/${game.id}`);
   };
 
   const handleGameUpdate = async () => {

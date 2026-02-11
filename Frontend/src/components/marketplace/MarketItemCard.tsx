@@ -1,7 +1,8 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MarketItem, PriceCurrency } from '@/types';
+import { buildUrl } from '@/utils/urlSchema';
 import { MapPin } from 'lucide-react';
 import { currencyCacheService } from '@/services/currencyCache.service';
 import { formatConvertedPrice } from '@/utils/currency';
@@ -24,9 +25,7 @@ interface MarketItemCardProps {
 
 export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount, showLocation = false, userCurrency, onItemClick }: MarketItemCardProps) => {
   const { t } = useTranslation();
-  const location = useLocation();
   const navigate = useNavigate();
-  const fromSubtab = location.pathname === '/marketplace/my' ? 'my' as const : 'market' as const;
   const imageUrl = item.mediaUrls?.[0];
   const [priceDisplay, setPriceDisplay] = useState<{
     main: string;
@@ -93,9 +92,9 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
     if (onItemClick) {
       onItemClick(item);
     } else if (item.groupChannel?.id) {
-      navigate(`/channel-chat/${item.groupChannel.id}`, { state: { fromPage: 'marketplace' } });
+      navigate(buildUrl('channelChat', { id: item.groupChannel.id }));
     } else {
-      navigate(`/marketplace/${item.id}`, { state: { fromMarketplaceSubtab: fromSubtab } });
+      navigate(buildUrl('marketplaceItem', { id: item.id }));
     }
   };
 
