@@ -155,11 +155,11 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
         ) : priceDisplay ? (
           <div className="mt-0.5">
             <p className={`text-sm font-semibold ${isInactive ? 'text-gray-500 dark:text-gray-400' : 'text-primary-600 dark:text-primary-400'}`}>
-              {priceDisplay.main}
+              {priceDisplay.showBoth ? priceDisplay.original : priceDisplay.main}
             </p>
             {priceDisplay.showBoth && (
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {priceDisplay.original}
+                {priceDisplay.main}
               </p>
             )}
           </div>

@@ -172,11 +172,11 @@ export const MarketItemContextPanel = ({
         ) : priceDisplay ? (
           <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-2xl font-bold text-primary-700 dark:text-primary-300">
-              {priceDisplay.main}
+              {priceDisplay.showBoth ? priceDisplay.original : priceDisplay.main}
             </span>
             {priceDisplay.showBoth && (
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {priceDisplay.original}
+                {priceDisplay.main}
               </span>
             )}
           </div>
