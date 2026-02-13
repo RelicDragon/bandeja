@@ -16,10 +16,11 @@ class NavigationService {
     return true;
   }
 
-  navigateToGame(gameId: string, openChat: boolean = false) {
+  navigateToGame(gameId: string, openChat: boolean = false, initialChatType?: string) {
     if (!this.ensureInitialized() || !gameId) return;
     const place = openChat ? 'gameChat' : 'game';
-    this.navigate!(buildUrl(place as any, { id: gameId }), { replace: true });
+    const state = openChat && initialChatType ? { initialChatType } : undefined;
+    this.navigate!(buildUrl(place as any, { id: gameId }), { replace: true, state });
   }
 
   navigateToUserChat(userChatId: string) {

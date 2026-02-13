@@ -159,7 +159,8 @@ class PushNotificationService {
       case 'NEW_GAME':
         if (payload?.gameId) {
           const openChat = type === 'GAME_CHAT';
-          navigationService.navigateToGame(payload.gameId, openChat);
+          const initialChatType = type === 'GAME_CHAT' ? payload?.chatType : undefined;
+          navigationService.navigateToGame(payload.gameId, openChat, initialChatType);
         }
         break;
 

@@ -1,0 +1,13 @@
+{
+  "name": "playtomic-web-search",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "search": "node run-search.js",
+    "start": "node run-search.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "openai": "^4.52.0"
+  }
+}
