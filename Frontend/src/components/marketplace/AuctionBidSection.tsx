@@ -65,8 +65,11 @@ export const AuctionBidSection = ({
     if (!marketItem.tradeTypes?.includes('AUCTION') || hasWinner) return;
     fetchBids();
     socketService.joinMarketItemRoom(marketItem.id);
-    const onBid = (data: { marketItemId: string; newHighCents: number; bidCount: number }) => {
+    const onBid = (data: { marketItemId: string; newHighCents: number; bidCount: number; winnerId?: string }) => {
       if (data.marketItemId !== marketItem.id) return;
+      if (data.winnerId) {
+        onItemUpdate?.({ ...marketItem, winnerId: data.winnerId, status: 'SOLD' });
+      }
       setBidsData((prev) =>
         prev
           ? { ...prev, currentHighCents: data.newHighCents, bidCount: data.bidCount }

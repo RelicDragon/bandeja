@@ -154,6 +154,7 @@ export const placeBid = asyncHandler(async (req: AuthRequest, res: Response) => 
         bidCount: (await MarketItemBidService.getBids(id)).bidCount,
         previousHighBidderId: result.previousHighBidderId,
         isHollandWin: result.isHollandWin,
+        ...(result.isHollandWin && { winnerId: result.bid.bidderId }),
       });
     }
   }

@@ -7,6 +7,7 @@ import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { formatPrice } from '@/utils/currency';
 import { marketplaceApi } from '@/api/marketplace';
 import { useAuthStore } from '@/store/authStore';
+import { socketService } from '@/services/socketService';
 import type { MarketItem, MarketItemBid, PriceCurrency } from '@/types';
 
 interface AuctionBidsModalProps {
@@ -19,7 +20,7 @@ interface AuctionBidsModalProps {
 function bidderName(bid: MarketItemBid): string {
   const b = bid.bidder;
   if (!b) return '—';
-  return [b.firstName, b.lastName].filter(Boolean).join(' ') || b.nickname || '—';
+  return [b.firstName, b.lastName].filter(Boolean).join(' ') || '—';
 }
 
 export const AuctionBidsModal = ({
@@ -42,7 +43,7 @@ export const AuctionBidsModal = ({
   const hasWinner = !!marketItem.winnerId;
   const ended = marketItem.auctionEndsAt ? new Date(marketItem.auctionEndsAt) <= new Date() : false;
   const isActive = !hasWinner && !ended && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED');
-  const canBid = isActive && !isOwner;
+  const canBid = isActive && !isOwner && !!currentUser;
 
   const fetchBids = useCallback(async () => {
     if (!marketItem.id) return;
@@ -61,20 +62,32 @@ export const AuctionBidsModal = ({
     if (isOpen && marketItem.id) fetchBids();
   }, [isOpen, marketItem.id, fetchBids]);
 
+  useEffect(() => {
+    if (!isOpen || !marketItem.id) return;
+    const onBid = (data: { marketItemId: string }) => {
+      if (data.marketItemId === marketItem.id) fetchBids();
+    };
+    socketService.on('auction:bid', onBid);
+    return () => socketService.off('auction:bid', onBid);
+  }, [isOpen, marketItem.id, fetchBids]);
+
   const sortedBids = bidsData?.bids
     ? [...bidsData.bids].sort((a, b) =>
         isHolland ? a.amountCents - b.amountCents : b.amountCents - a.amountCents
       )
     : [];
 
-  const minCents = bidsData?.minNextBidCents ?? marketItem.startingPriceCents ?? marketItem.priceCents ?? 0;
-  const suggested = isHolland ? (marketItem.currentPriceCents ?? minCents) : minCents;
+  const startingCents = marketItem.startingPriceCents ?? marketItem.priceCents ?? 0;
+  const minCents = isHolland
+    ? (marketItem.currentPriceCents ?? startingCents)
+    : (bidsData?.minNextBidCents ?? startingCents);
+  const suggested = isHolland ? (marketItem.currentPriceCents ?? startingCents) : minCents;
 
   const handlePlaceBid = async (e: React.FormEvent) => {
     e.preventDefault();
     setBidError('');
     const cents = Math.round(parseFloat(bidAmount || '0') * 100);
-    if (cents < minCents) {
+    if (!Number.isFinite(cents) || cents < minCents) {
       setBidError(t('marketplace.bidTooLow', { defaultValue: 'Bid must be at least the minimum' }));
       return;
     }

@@ -26,7 +26,7 @@ export const SegmentedSwitch = ({
   layoutId,
   className = '',
 }: SegmentedSwitchProps) => (
-  <div className={`relative flex items-stretch gap-1 overflow-visible bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-full ${className}`.trim()}>
+  <div className={`relative flex items-stretch gap-1 overflow-visible bg-gray-100 dark:bg-gray-700 rounded-lg p-1 ${className}`.trim()}>
     {tabs.map((tab) => {
       const isActive = activeId === tab.id;
       const Icon = tab.icon;
@@ -36,7 +36,9 @@ export const SegmentedSwitch = ({
           key={tab.id}
           type="button"
           onClick={() => onChange(tab.id)}
-          className={`relative flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-md py-1.5 text-sm font-medium transition-colors duration-200 ${
+          className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-md py-1.5 ${
+            titleInActiveOnly && !isActive ? 'px-2' : 'px-3'
+          } text-sm font-medium transition-colors duration-200 ${
             titleInActiveOnly && !isActive ? 'px-2' : 'px-3'
           } ${isActive ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
           whileTap={{ scale: 0.95 }}
@@ -52,7 +54,7 @@ export const SegmentedSwitch = ({
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             />
           )}
-          <span className="relative flex min-w-0 flex-1 items-center justify-center gap-1.5">
+          <span className="relative flex min-w-0 items-center justify-center gap-1.5">
             {Icon && <Icon size={18} className="shrink-0" />}
             {titleInActiveOnly ? (
               <AnimatePresence initial={false}>
