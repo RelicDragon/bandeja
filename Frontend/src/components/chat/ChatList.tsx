@@ -42,6 +42,7 @@ import { CollapsibleSection } from './CollapsibleSection';
 import { ChatMessage } from '@/api/chat';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { useChatSyncStore } from '@/store/chatSyncStore';
 import { ChatItem, ChatType } from './chatListTypes';
 
 export type { ChatType };
@@ -63,6 +64,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
   const lastChatUnreadCount = useSocketEventsStore((state) => state.lastChatUnreadCount);
   const lastNewBug = useSocketEventsStore((state) => state.lastNewBug);
+  const lastSyncCompletedAt = useChatSyncStore((state) => state.lastSyncCompletedAt);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
   const urlQuery = searchParams.get('q') ?? '';
@@ -255,18 +257,95 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
 
     setLoading(true);
     try {
-      const [usersData, bugsResult, channelsResult, marketResult] = await Promise.all([
-        fetchUsersSearchData().catch(() => ({ activeChats: [], cityUsers: [], usersHasMore: false })),
-        fetchBugs(1).catch(() => ({ chats: [], hasMore: false })),
-        fetchChannels(1).catch(() => ({ chats: [], hasMore: false })),
-        fetchMarket(1).catch(() => ({ chats: [], hasMore: false }))
+      const bf = useNavigationStore.getState().bugsFilter;
+      const bugsFilterParams = (bf.status || bf.type || bf.createdByMe)
+        ? { status: bf.status, type: bf.type, createdByMe: bf.createdByMe }
+        : undefined;
+
+      const [
+        usersGroupsRes,
+        bugsRes,
+        channelsRes,
+        marketRes,
+        _p,
+        draftsResponse
+      ] = await Promise.all([
+        chatApi.getGroupChannels('users', 1),
+        chatApi.getGroupChannels('bugs', 1, bugsFilterParams),
+        chatApi.getGroupChannels('channels', 1),
+        chatApi.getGroupChannels('market', 1),
+        Promise.all([usePlayersStore.getState().fetchPlayers(), usePlayersStore.getState().fetchUserChats()]),
+        chatApi.getUserDrafts(1, 100).catch(() => ({ drafts: [] }))
       ]);
 
-      const usersChatItems = deduplicateChats(usersData.activeChats);
-      chatsCacheRef.current.users = { chats: usersChatItems, cityUsers: usersData.cityUsers, usersHasMore: usersData.usersHasMore };
-      chatsCacheRef.current.bugs = { chats: deduplicateChats(bugsResult.chats), bugsHasMore: bugsResult.hasMore };
-      chatsCacheRef.current.channels = { chats: deduplicateChats(channelsResult.chats), channelsHasMore: channelsResult.hasMore };
-      chatsCacheRef.current.market = { chats: deduplicateChats(marketResult.chats), marketHasMore: marketResult.hasMore };
+      const allGroupIds = [
+        ...(usersGroupsRes.data || []).map((g: GroupChannel) => g.id),
+        ...(bugsRes.data || []).map((c: GroupChannel) => c.id),
+        ...(channelsRes.data || []).map((c: GroupChannel) => c.id),
+        ...(marketRes.data || []).map((c: GroupChannel) => c.id)
+      ];
+      const uniqueGroupIds = Array.from(new Set(allGroupIds));
+      const groupUnreads =
+        uniqueGroupIds.length > 0
+          ? (await chatApi.getGroupChannelsUnreadCounts(uniqueGroupIds)).data || {}
+          : {};
+
+      const allDrafts = draftsResponse.drafts || [];
+      const usersGroupList = (usersGroupsRes.data || []) as GroupChannel[];
+      const { chats: userChats, unreadCounts } = usePlayersStore.getState();
+      const blockedUserIds = user.blockedUserIds || [];
+      const activeChats: ChatItem[] = [];
+      Object.values(userChats).forEach(chat => {
+        const otherUserId = chat.user1Id === user.id ? chat.user2Id : chat.user1Id;
+        const otherUser = chat.user1Id === user.id ? chat.user2 : chat.user1;
+        if (otherUserId && !blockedUserIds.includes(otherUserId)) {
+          const draft = matchDraftToChat(allDrafts, 'USER', chat.id);
+          const lastMessageDate = (chat.lastMessage || draft)
+            ? calculateLastMessageDate(chat.lastMessage, draft, chat.updatedAt)
+            : null;
+          activeChats.push({
+            type: 'user',
+            data: chat,
+            lastMessageDate,
+            unreadCount: unreadCounts[chat.id] || 0,
+            otherUser,
+            draft: draft || null
+          });
+        }
+      });
+      const usersGroupItems = groupsToChatItems(usersGroupList, groupUnreads, allDrafts, 'users', user?.id);
+      activeChats.push(...usersGroupItems);
+      sortChatItems(activeChats, 'users', user?.id);
+
+      const cityUsersData = await usersApi.getInvitablePlayers().then(r => r.data || []).catch(() => []);
+      const usersChatItems = deduplicateChats(activeChats);
+      const bugsChatItems = channelsToChatItems(
+        (bugsRes.data || []) as GroupChannel[],
+        groupUnreads,
+        'bugs',
+        { useUpdatedAtFallback: true, filterByIsGroup: true }
+      );
+      const channelsChatItems = channelsToChatItems(
+        (channelsRes.data || []) as GroupChannel[],
+        groupUnreads,
+        'channels',
+        { filterByIsChannel: true }
+      );
+      const marketChatItems = channelsToChatItems(
+        (marketRes.data || []) as GroupChannel[],
+        groupUnreads,
+        'market',
+        { filterByIsGroup: true, useUpdatedAtFallback: true }
+      );
+
+      chatsCacheRef.current.users = {
+        chats: usersChatItems,
+        cityUsers: cityUsersData,
+        usersHasMore: usersGroupsRes.pagination?.hasMore ?? false
+      };
+      chatsCacheRef.current.bugs = { chats: deduplicateChats(bugsChatItems), bugsHasMore: bugsRes.pagination?.hasMore ?? false };
+      chatsCacheRef.current.channels = { chats: deduplicateChats(channelsChatItems), channelsHasMore: channelsRes.pagination?.hasMore ?? false };
+      chatsCacheRef.current.market = { chats: deduplicateChats(marketChatItems), marketHasMore: marketRes.pagination?.hasMore ?? false };
 
       const activeFilter = useNavigationStore.getState().chatsFilter;
       if (activeFilter === 'users' || activeFilter === 'bugs' || activeFilter === 'channels' || activeFilter === 'market') {
@@ -294,7 +373,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     } finally {
       setLoading(false);
     }
-  }, [user, fetchUsersSearchData, fetchBugs, fetchChannels, fetchMarket]);
+  }, [user]);
 
   const fetchChatsForFilter = useCallback(async (_filter?: 'users' | 'bugs' | 'channels' | 'market') => {
     await fetchAllFilters();
@@ -510,9 +589,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   }, [chatsFilter]);
 
   useEffect(() => {
-    if (chatsFilter === 'users' && debouncedSearchQuery.trim() && !contactsMode) {
-      fetchCityUsers();
-    }
+    if (chatsFilter !== 'users' || !debouncedSearchQuery.trim() || contactsMode) return;
+    const cached = chatsCacheRef.current.users?.cityUsers;
+    if (cached?.length) return;
+    fetchCityUsers();
   }, [chatsFilter, debouncedSearchQuery, contactsMode, fetchCityUsers]);
 
   useEffect(() => {
@@ -634,14 +714,26 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       setChats((prevChats) => deduplicateChats(updateChatDraft(prevChats, chatContextType, contextId, null)));
     };
 
+    const handleViewingClearUnread = (event: Event) => {
+      const customEvent = event as CustomEvent<{ contextType: string; contextId: string }>;
+      const { contextId } = customEvent.detail;
+      setChats((prev) =>
+        prev.map((chat) =>
+          (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId ? { ...chat, unreadCount: 0 } : chat
+        )
+      );
+    };
+
     window.addEventListener('refresh-chat-list', handleRefresh);
     window.addEventListener('draft-updated', handleDraftUpdate);
     window.addEventListener('draft-deleted', handleDraftDelete);
+    window.addEventListener('chat-viewing-clear-unread', handleViewingClearUnread);
 
     return () => {
       window.removeEventListener('refresh-chat-list', handleRefresh);
       window.removeEventListener('draft-updated', handleDraftUpdate);
       window.removeEventListener('draft-deleted', handleDraftDelete);
+      window.removeEventListener('chat-viewing-clear-unread', handleViewingClearUnread);
     };
   }, [fetchChatsForFilter, chatsFilter, updateChatDraft, updateChatMessage]);
 
@@ -658,6 +750,14 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         (chatsFilter === 'market' && contextType === 'GROUP');
 
       if (shouldUpdate) {
+        const isViewingThis =
+          isDesktop &&
+          selectedChatId === contextId &&
+          ((contextType === 'USER' && selectedChatType === 'user') ||
+            (contextType === 'GROUP' && (selectedChatType === 'group' || selectedChatType === 'channel')));
+        if (isViewingThis && contextType === 'USER') {
+          usePlayersStore.getState().markChatAsRead(contextId);
+        }
         setChats((prevChats) => {
           const chatExists = prevChats.some((chat) => {
             if (contextType === 'USER' && chat.type === 'user' && chat.data.id === contextId) return true;
@@ -672,7 +772,15 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
           });
 
           if (chatExists) {
-            return deduplicateChats(updateChatMessage(prevChats, contextType, contextId, message));
+            let next = deduplicateChats(updateChatMessage(prevChats, contextType, contextId, message));
+            if (isViewingThis) {
+              next = next.map((chat) => {
+                if (contextType === 'USER' && chat.type === 'user' && chat.data.id === contextId) return { ...chat, unreadCount: 0 };
+                if (contextType === 'GROUP' && (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId) return { ...chat, unreadCount: 0 };
+                return chat;
+              });
+            }
+            return next;
           }
 
           return prevChats;
@@ -681,19 +789,27 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     };
 
     handleNewMessage(lastChatMessage);
-  }, [lastChatMessage, chatsFilter, updateChatMessage]);
+  }, [lastChatMessage, chatsFilter, updateChatMessage, isDesktop, selectedChatId, selectedChatType]);
 
   useEffect(() => {
     if (!lastChatUnreadCount || lastChatUnreadCount.contextType !== 'GROUP') return;
     const { contextId, unreadCount } = lastChatUnreadCount;
+    const isViewingThis = isDesktop && selectedChatId === contextId && (selectedChatType === 'group' || selectedChatType === 'channel');
     setChats((prev) =>
       prev.map((chat) =>
         (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId
-          ? { ...chat, unreadCount }
+          ? { ...chat, unreadCount: isViewingThis ? 0 : unreadCount }
           : chat
       )
     );
-  }, [lastChatUnreadCount]);
+  }, [lastChatUnreadCount, isDesktop, selectedChatId, selectedChatType]);
+
+  useEffect(() => {
+    if (lastSyncCompletedAt == null) return;
+    if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') {
+      fetchChatsForFilter(chatsFilter);
+    }
+  }, [lastSyncCompletedAt, chatsFilter, fetchChatsForFilter]);
 
   useEffect(() => {
     if (!lastNewBug || chatsFilter !== 'bugs') return;
@@ -758,7 +874,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       const title = getMarketChatDisplayTitle(chat.data, marketChatRole);
       return matchesSearch(title);
     },
-    [user?.id, marketChatRole, matchesSearch]
+    [marketChatRole, matchesSearch]
   );
 
   const filteredActiveChats = useMemo(() => {

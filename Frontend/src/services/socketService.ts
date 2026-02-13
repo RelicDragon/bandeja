@@ -2,6 +2,7 @@ import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/authStore';
 import { isCapacitor } from '@/utils/capacitor';
 import { useNetworkStore } from '@/utils/networkStatus';
+import { chatSyncService } from '@/services/chatSyncService';
 
 export interface NewUserChatMessage {
   contextId: string;
@@ -25,6 +26,10 @@ export interface SocketEvents {
   'left-user-chat-room': (data: { chatId: string }) => void;
   'joined-chat-room': (data: { contextType: string; contextId: string }) => void;
   'left-chat-room': (data: { contextType: string; contextId: string }) => void;
+  'joined-market-item-room': (data: { marketItemId: string }) => void;
+  'left-market-item-room': (data: { marketItemId: string }) => void;
+  'auction:bid': (data: { marketItemId: string; newHighCents: number; bidCount: number; previousHighBidderId: string | null; isHollandWin?: boolean }) => void;
+  'auction:bin-accepted': (data: { marketItemId: string; winnerId: string }) => void;
   'game-updated': (data: { gameId: string; senderId: string; game: any }) => void;
   'game-results-updated': (data: { gameId: string }) => void;
   'wallet-update': (data: { wallet: number }) => void;
@@ -361,9 +366,22 @@ class SocketService {
           // Continue with other rooms even if one fails
         }
       }
+      if (rooms.length > 0) {
+        chatSyncService.syncAllContexts(rooms).catch((err) => {
+          console.error('[SocketService] Post-rejoin sync failed:', err);
+        });
+      } else {
+        chatSyncService.refreshUnreadAndList().catch((err) => {
+          console.error('[SocketService] Post-rejoin refresh failed:', err);
+        });
+      }
     } finally {
       this.isRejoining = false;
     }
+  }
+
+  public getActiveChatRooms(): Array<{ contextType: 'GAME' | 'BUG' | 'USER' | 'GROUP'; contextId: string }> {
+    return Array.from(this.activeChatRooms.values());
   }
 
   private handleReconnect() {
@@ -484,6 +502,23 @@ class SocketService {
     } catch (error) {
       console.error(`[SocketService] Failed to join game room ${gameId}:`, error);
       throw error;
+    }
+  }
+
+  public async joinMarketItemRoom(marketItemId: string) {
+    try {
+      await this.waitForConnection();
+      if (this.socket && this.socket.connected) {
+        this.socket.emit('join-market-item-room', marketItemId);
+      }
+    } catch (error) {
+      console.error(`[SocketService] Failed to join market item room ${marketItemId}:`, error);
+    }
+  }
+
+  public leaveMarketItemRoom(marketItemId: string) {
+    if (this.socket && this.socket.connected) {
+      this.socket.emit('leave-market-item-room', marketItemId);
     }
   }
 

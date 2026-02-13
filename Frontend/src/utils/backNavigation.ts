@@ -8,7 +8,8 @@ export type BackAction =
   | { type: 'home'; url: string };
 
 export function getBackAction(): BackAction {
-  if (window.history.length > 1) {
+  const idx = window.history.state?.idx;
+  if (typeof idx === 'number' && idx > 0) {
     return { type: 'history' };
   }
   return { type: 'home', url: homeUrl() };

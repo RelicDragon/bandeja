@@ -17,6 +17,10 @@ export const NOTIFICATION_TYPE_TO_PREF: Record<NotificationType, PreferenceKey> 
   [NotificationType.NEW_GAME]: PreferenceKey.SEND_MESSAGES,
   [NotificationType.NEW_MARKET_ITEM]: PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS,
   [NotificationType.NEW_BUG]: PreferenceKey.SEND_MESSAGES,
+  [NotificationType.AUCTION_OUTBID]: PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS,
+  [NotificationType.AUCTION_NEW_BID]: PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS,
+  [NotificationType.AUCTION_WON]: PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS,
+  [NotificationType.AUCTION_BIN_ACCEPTED]: PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS,
 };
 
 export type NotificationPreferenceData = {

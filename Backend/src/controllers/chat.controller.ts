@@ -898,29 +898,11 @@ export const getMissedMessages = asyncHandler(async (req: AuthRequest, res: Resp
     throw new ApiError(400, 'Invalid contextType');
   }
 
-  // Get messages after the last known message
-  const where: any = {
-    chatContextType: contextType as ChatContextType,
-    contextId: contextId as string,
-    senderId: { not: userId }
-  };
-
-  if (lastMessageId) {
-    const lastMessage = await prisma.chatMessage.findUnique({
-      where: { id: lastMessageId as string },
-      select: { createdAt: true }
-    });
-
-    if (lastMessage) {
-      where.createdAt = { gt: lastMessage.createdAt };
-    }
-  }
-
-  const messages = await MessageService.getMessages(
+  const messages = await MessageService.getMissedMessages(
     contextType as ChatContextType,
     contextId as string,
     userId,
-    { page: 1, limit: 100 }
+    (lastMessageId as string) || undefined
   );
 
   res.json({

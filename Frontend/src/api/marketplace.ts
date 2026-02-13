@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse, MarketItem, MarketItemCategory } from '@/types';
+import { ApiResponse, MarketItem, MarketItemBid, MarketItemCategory, MarketItemBidsResponse } from '@/types';
 
 export interface MarketItemFilters {
   cityId?: string;
@@ -19,9 +19,16 @@ export interface MarketItemCreateData {
   description?: string;
   mediaUrls?: string[];
   tradeTypes: string[];
+  negotiationAcceptable?: boolean;
   priceCents?: number;
   currency?: string;
   auctionEndsAt?: string;
+  auctionType?: 'RISING' | 'HOLLAND';
+  startingPriceCents?: number;
+  reservePriceCents?: number;
+  buyItNowPriceCents?: number;
+  hollandDecrementCents?: number;
+  hollandIntervalMinutes?: number;
 }
 
 export const marketplaceApi = {
@@ -73,8 +80,26 @@ export const marketplaceApi = {
     return response.data;
   },
 
-  expressInterest: async (id: string, tradeType: 'BUY_IT_NOW' | 'SUGGESTED_PRICE' | 'AUCTION') => {
+  expressInterest: async (id: string, tradeType: 'BUY_IT_NOW' | 'SUGGESTED_PRICE' | 'AUCTION' | 'FREE') => {
     const response = await api.post<{ success: boolean; message: string; chatId: string }>(`/market-items/${id}/express-interest`, { tradeType });
+    return response.data;
+  },
+
+  getBids: async (id: string) => {
+    const response = await api.get<ApiResponse<MarketItemBidsResponse>>(`/market-items/${id}/bids`);
+    return response.data;
+  },
+
+  placeBid: async (id: string, amountCents: number) => {
+    const response = await api.post<ApiResponse<{ bid: MarketItemBid; previousHighBidderId: string | null; isHollandWin: boolean }>>(
+      `/market-items/${id}/bids`,
+      { amountCents }
+    );
+    return response.data;
+  },
+
+  acceptBuyItNow: async (id: string) => {
+    const response = await api.post<ApiResponse<{ success: boolean; amountCents: number }>>(`/market-items/${id}/accept-buy-it-now`);
     return response.data;
   },
 

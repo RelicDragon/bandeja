@@ -24,6 +24,8 @@ interface NavigationState {
   findViewMode: 'calendar' | 'list';
   requestFindGoToCurrent: 'calendar' | 'list' | null;
   setRequestFindGoToCurrent: (mode: 'calendar' | 'list' | null) => void;
+  viewingGroupChannelId: string | null;
+  setViewingGroupChannelId: (id: string | null) => void;
   setMarketplaceTab: (tab: 'market' | 'my') => void;
   setCurrentPage: (page: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace') => void;
   setBottomTabsVisible: (visible: boolean) => void;
@@ -56,7 +58,9 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   marketplaceTab: 'market',
   findViewMode: 'calendar',
   requestFindGoToCurrent: null,
+  viewingGroupChannelId: null,
   setCurrentPage: (page) => set({ currentPage: page }),
+  setViewingGroupChannelId: (id) => set({ viewingGroupChannelId: id }),
   setBottomTabsVisible: (visible) => set({ bottomTabsVisible: visible }),
   setIsAnimating: (animating) => set({ isAnimating: animating }),
   setGameDetailsCanAccessChat: (canAccessChat) => set({ gameDetailsCanAccessChat: canAccessChat }),

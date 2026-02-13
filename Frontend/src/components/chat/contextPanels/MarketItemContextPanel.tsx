@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Edit2, Trash2, BookMarked, ShoppingCart, DollarSign, Gavel } from 'lucide-react';
+import { Edit2, Trash2, BookMarked, ShoppingCart, DollarSign } from 'lucide-react';
 import type { MarketItem, PriceCurrency } from '@/types';
 import { marketplaceApi } from '@/api/marketplace';
 import { currencyCacheService } from '@/services/currencyCache.service';
@@ -10,6 +10,7 @@ import { formatConvertedPrice, formatPrice } from '@/utils/currency';
 import { useAuthStore } from '@/store/authStore';
 import { PlayerAvatar } from '@/components';
 import { ConfirmRemoveMarketItemModal } from '@/components/marketplace/ConfirmRemoveMarketItemModal';
+import { AuctionBidSection } from '@/components/marketplace/AuctionBidSection';
 import { useMarketItemReserve } from '@/components/marketplace/useMarketItemReserve';
 import { useMarketItemExpressInterest } from '@/components/marketplace/useMarketItemExpressInterest';
 interface MarketItemContextPanelProps {
@@ -192,17 +193,40 @@ export const MarketItemContextPanel = ({
       </div>
 
       {/* Trade Type Buttons (for buyers) */}
-      {!isOwner && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED') && !isFree && (
+      {!isOwner && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED') && (
         <div className="flex flex-col gap-2">
-          {marketItem.tradeTypes?.includes('BUY_IT_NOW') && (
+          {isFree && (
             <button
-              onClick={() => { onCollapse?.(); expressInterest('BUY_IT_NOW'); }}
+              onClick={() => { onCollapse?.(); expressInterest('FREE'); }}
               disabled={expressingInterest !== null}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ShoppingCart size={16} />
-              <span>{t('marketplace.buyNow', { defaultValue: 'Buy now' })}</span>
+              <span>{t('marketplace.takeForFree', { defaultValue: 'Take for free' })}</span>
             </button>
+          )}
+          {marketItem.tradeTypes?.includes('AUCTION') && !marketItem.winnerId && (
+            <AuctionBidSection
+              marketItem={marketItem}
+              userCurrency={userCurrency}
+              isOwner={false}
+              onItemUpdate={onItemUpdate}
+              onCollapse={onCollapse}
+            />
+          )}
+          {marketItem.tradeTypes?.includes('BUY_IT_NOW') && (
+            <>
+              {marketItem.negotiationAcceptable && (
+                <p className="text-xs text-gray-600 dark:text-gray-400">{t('marketplace.negotiationAcceptable', { defaultValue: 'Negotiation acceptable' })}</p>
+              )}
+              <button
+                onClick={() => { onCollapse?.(); expressInterest('BUY_IT_NOW'); }}
+                disabled={expressingInterest !== null}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ShoppingCart size={16} />
+                <span>{t('marketplace.buyNow', { defaultValue: 'Buy now' })}</span>
+              </button>
+            </>
           )}
           {marketItem.tradeTypes?.includes('SUGGESTED_PRICE') && (
             <button
@@ -211,17 +235,7 @@ export const MarketItemContextPanel = ({
               className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <DollarSign size={16} />
-              <span>{t('marketplace.makeOffer', { defaultValue: 'Make an offer' })}</span>
-            </button>
-          )}
-          {marketItem.tradeTypes?.includes('AUCTION') && (
-            <button
-              onClick={() => { onCollapse?.(); expressInterest('AUCTION'); }}
-              disabled={expressingInterest !== null}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400 border border-violet-200 dark:border-violet-800/50 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Gavel size={16} />
-              <span>{t('marketplace.placeBid', { defaultValue: 'Place a bid' })}</span>
+              <span>{t('marketplace.suggestYourPrice', { defaultValue: 'Suggest your price' })}</span>
             </button>
           )}
         </div>

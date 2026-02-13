@@ -11,6 +11,7 @@ const TRADE_TYPE_BADGE_CLASS = {
   BUY_IT_NOW: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
   SUGGESTED_PRICE: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
   AUCTION: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
+  FREE: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
 } as const;
 
 interface MarketItemCardProps {
@@ -169,7 +170,7 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
           </p>
         )}
         <div className="flex items-center gap-1 mt-1 flex-wrap">
-          {(item.tradeTypes ?? []).filter((tt) => tt !== 'BUY_IT_NOW' && tt !== 'FREE').map((tt) => (
+          {(item.tradeTypes ?? []).slice(0, 1).map((tt) => (
             <span
               key={tt}
               className={`px-1.5 py-0.5 rounded text-xs font-medium ${TRADE_TYPE_BADGE_CLASS[tt as keyof typeof TRADE_TYPE_BADGE_CLASS] || 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300'}`}

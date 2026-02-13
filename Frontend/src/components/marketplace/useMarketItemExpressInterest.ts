@@ -20,7 +20,7 @@ export const useMarketItemExpressInterest = (
   const [expressingInterest, setExpressingInterest] = useState<string | null>(null);
 
   const handleExpressInterest = useCallback(
-    async (tradeType: 'BUY_IT_NOW' | 'SUGGESTED_PRICE' | 'AUCTION') => {
+    async (tradeType: 'BUY_IT_NOW' | 'SUGGESTED_PRICE' | 'AUCTION' | 'FREE') => {
       setExpressingInterest(tradeType);
 
       try {

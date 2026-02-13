@@ -19,9 +19,8 @@ interface TradeTypeCheckboxesProps {
 }
 
 export const TradeTypeCheckboxes = ({ value, onChange, options }: TradeTypeCheckboxesProps) => {
-  const toggle = (v: MarketItemTradeType) => {
-    const next = value.includes(v) ? value.filter((x) => x !== v) : [...value, v];
-    onChange(next);
+  const select = (v: MarketItemTradeType) => {
+    onChange([v]);
   };
 
   return (
@@ -33,7 +32,7 @@ export const TradeTypeCheckboxes = ({ value, onChange, options }: TradeTypeCheck
           <button
             key={opt.value}
             type="button"
-            onClick={() => toggle(opt.value)}
+            onClick={() => select(opt.value)}
             className={BTN_BASE + (isSelected ? ` ${selectedStyle}` : ` ${UNSELECTED}`)}
           >
             {opt.label}

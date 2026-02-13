@@ -12,7 +12,7 @@ export { priceToCents, centsToPrice } from './utils';
 export { formatPriceDisplay } from './utils';
 export { Badge } from './Badge';
 export { FormField } from './FormField';
-export { INPUT_CLASS } from './constants';
+export { INPUT_CLASS, PRICING_SECTION_LABEL, PRICING_SECTION_LABEL_INLINE } from './constants';
 export { MediaGalleryField } from './MediaGalleryField';
 export { MarketplaceFilters } from './MarketplaceFilters';
 export { AuctionDurationSelector } from './AuctionDurationSelector';

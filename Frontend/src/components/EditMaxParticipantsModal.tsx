@@ -477,7 +477,7 @@ export const EditMaxParticipantsModal = ({
                 >
                   {t('gameDetails.kickAllNonMale', { 
                     count: nonMaleParticipants.length,
-                    defaultValue: `Kick all non-male players (${nonMaleParticipants.length})`
+                    defaultValue: `Remove all players who are not men (${nonMaleParticipants.length})`
                   })}
                 </Button>
               </div>
@@ -499,7 +499,7 @@ export const EditMaxParticipantsModal = ({
                 >
                   {t('gameDetails.kickAllNonFemale', { 
                     count: nonFemaleParticipants.length,
-                    defaultValue: `Kick all non-female players (${nonFemaleParticipants.length})`
+                    defaultValue: `Remove all players who are not women (${nonFemaleParticipants.length})`
                   })}
                 </Button>
               </div>
@@ -521,7 +521,7 @@ export const EditMaxParticipantsModal = ({
                 >
                   {t('gameDetails.kickAllPreferNotToSay', { 
                     count: preferNotToSayParticipants.length,
-                    defaultValue: `Kick all non-male/female players (${preferNotToSayParticipants.length})`
+                    defaultValue: `Remove players without gender specified (${preferNotToSayParticipants.length})`
                   })}
                 </Button>
               </div>
@@ -538,14 +538,14 @@ export const EditMaxParticipantsModal = ({
                         {t('gameDetails.removeMalePlayersNote', { 
                           count: getParticipantsForRemoval.maleToRemoveCount,
                           max: newMaxParticipants / 2,
-                          defaultValue: `You need to remove ${getParticipantsForRemoval.maleToRemoveCount} male player(s) (max ${newMaxParticipants / 2} males allowed).`
+                          defaultValue: `You need to remove ${getParticipantsForRemoval.maleToRemoveCount} man/men (max ${newMaxParticipants / 2} men allowed).`
                         })}
                       </p>
                       <p className="text-sm text-yellow-800 dark:text-yellow-300">
                         {t('gameDetails.removeFemalePlayersNote', { 
                           count: getParticipantsForRemoval.femaleToRemoveCount,
                           max: newMaxParticipants / 2,
-                          defaultValue: `You need to remove ${getParticipantsForRemoval.femaleToRemoveCount} female player(s) (max ${newMaxParticipants / 2} females allowed).`
+                          defaultValue: `You need to remove ${getParticipantsForRemoval.femaleToRemoveCount} woman/women (max ${newMaxParticipants / 2} women allowed).`
                         })}
                       </p>
                     </div>
@@ -554,7 +554,7 @@ export const EditMaxParticipantsModal = ({
                       {t('gameDetails.removeMalePlayersNote', { 
                         count: getParticipantsForRemoval.maleToRemoveCount,
                         max: newMaxParticipants / 2,
-                        defaultValue: `You need to remove ${getParticipantsForRemoval.maleToRemoveCount} male player(s) (max ${newMaxParticipants / 2} males allowed).`
+                        defaultValue: `You need to remove ${getParticipantsForRemoval.maleToRemoveCount} man/men (max ${newMaxParticipants / 2} men allowed).`
                       })}
                     </p>
                   ) : genderTeams === 'MIX_PAIRS' && getParticipantsForRemoval.needsFemaleRemoval ? (
@@ -562,7 +562,7 @@ export const EditMaxParticipantsModal = ({
                       {t('gameDetails.removeFemalePlayersNote', { 
                         count: getParticipantsForRemoval.femaleToRemoveCount,
                         max: newMaxParticipants / 2,
-                        defaultValue: `You need to remove ${getParticipantsForRemoval.femaleToRemoveCount} female player(s) (max ${newMaxParticipants / 2} females allowed).`
+                        defaultValue: `You need to remove ${getParticipantsForRemoval.femaleToRemoveCount} woman/women (max ${newMaxParticipants / 2} women allowed).`
                       })}
                     </p>
                   ) : (
@@ -697,21 +697,21 @@ export const EditMaxParticipantsModal = ({
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
         title={confirmationModal.type === 'NON_MALE' 
-          ? t('gameDetails.kickAllNonMaleConfirm', { defaultValue: 'Kick all non-male players?' })
+          ? t('gameDetails.kickAllNonMaleConfirm', { defaultValue: 'Remove all players who are not men?' })
           : confirmationModal.type === 'NON_FEMALE'
-          ? t('gameDetails.kickAllNonFemaleConfirm', { defaultValue: 'Kick all non-female players?' })
+          ? t('gameDetails.kickAllNonFemaleConfirm', { defaultValue: 'Remove all players who are not women?' })
           : t('gameDetails.kickAllPreferNotToSayConfirm', { defaultValue: 'Kick all players with unspecified gender?' })
         }
         message={
           confirmationModal.type === 'NON_MALE'
             ? t('gameDetails.kickAllNonMaleMessage', { 
                 count: confirmationModal.count,
-                defaultValue: `Are you sure you want to kick all ${confirmationModal.count} non-male player(s)? This action cannot be undone.`
+                defaultValue: `Are you sure you want to remove all ${confirmationModal.count} player(s) who are not men? This action cannot be undone.`
               })
             : confirmationModal.type === 'NON_FEMALE'
             ? t('gameDetails.kickAllNonFemaleMessage', { 
                 count: confirmationModal.count,
-                defaultValue: `Are you sure you want to kick all ${confirmationModal.count} non-female player(s)? This action cannot be undone.`
+                defaultValue: `Are you sure you want to remove all ${confirmationModal.count} player(s) who are not women? This action cannot be undone.`
               })
             : t('gameDetails.kickAllPreferNotToSayMessage', { 
                 count: confirmationModal.count,

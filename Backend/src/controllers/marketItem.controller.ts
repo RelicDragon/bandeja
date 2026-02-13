@@ -3,10 +3,17 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import { MarketItemService } from '../services/marketItem/marketItem.service';
+import { MarketItemBidService } from '../services/marketItem/marketItemBid.service';
 import { MarketItemParticipantService } from '../services/marketItem/participant.service';
 import { MarketItemStatus, MarketItemTradeType } from '@prisma/client';
 import prisma from '../config/database';
 import { SUPPORTED_CURRENCIES, USER_SELECT_FIELDS } from '../utils/constants';
+import notificationService from '../services/notification.service';
+import {
+  createAuctionOutbidPushNotification,
+  createAuctionNewBidPushNotification,
+  createAuctionBINAcceptedPushNotification,
+} from '../services/push/notifications/auction-push.notification';
 
 export const getMarketCategories = asyncHandler(async (_req: AuthRequest, res: Response) => {
   const categories = await prisma.marketItemCategory.findMany({
@@ -34,6 +41,12 @@ export const createMarketItem = asyncHandler(async (req: AuthRequest, res: Respo
     priceCents,
     currency,
     auctionEndsAt,
+    auctionType,
+    startingPriceCents,
+    reservePriceCents,
+    buyItNowPriceCents,
+    hollandDecrementCents,
+    hollandIntervalMinutes,
   } = req.body;
 
   const city = cityId || user?.currentCityId;
@@ -57,6 +70,12 @@ export const createMarketItem = asyncHandler(async (req: AuthRequest, res: Respo
     priceCents,
     currency,
     auctionEndsAt: auctionEndsAt ? new Date(auctionEndsAt) : undefined,
+    auctionType: auctionType ?? undefined,
+    startingPriceCents,
+    reservePriceCents,
+    buyItNowPriceCents,
+    hollandDecrementCents,
+    hollandIntervalMinutes,
   });
 
   res.status(201).json({ success: true, data: item });
@@ -89,10 +108,101 @@ export const getMarketItemById = asyncHandler(async (req: AuthRequest, res: Resp
   res.json({ success: true, data: item });
 });
 
+export const getBids = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const result = await MarketItemBidService.getBids(id, req.userId);
+  res.json({ success: true, data: result });
+});
+
+export const placeBid = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { amountCents } = req.body;
+  if (typeof amountCents !== 'number' || amountCents < 0) {
+    throw new ApiError(400, 'Valid amountCents is required');
+  }
+  const result = await MarketItemBidService.placeBid(id, req.userId!, amountCents);
+  const item = await prisma.marketItem.findUnique({
+    where: { id },
+    select: { title: true, currency: true, sellerId: true, seller: { select: { language: true } } },
+  });
+  if (item) {
+    const lang = item.seller?.language && item.seller.language !== 'auto' ? item.seller.language : 'en';
+    const marketItem = { id, title: item.title };
+    if (result.previousHighBidderId) {
+      const payload = createAuctionOutbidPushNotification(
+        marketItem,
+        result.bid.amountCents,
+        item.currency,
+        lang
+      );
+      notificationService.sendNotification({ userId: result.previousHighBidderId, type: payload.type, payload }).catch(() => {});
+    }
+    const newBidPayload = createAuctionNewBidPushNotification(
+      marketItem,
+      result.bid.amountCents,
+      item.currency,
+      lang
+    );
+    notificationService
+      .sendNotification({ userId: item.sellerId, type: newBidPayload.type, payload: newBidPayload })
+      .catch(() => {});
+    const socketService = (global as any).socketService;
+    if (socketService) {
+      socketService.emitAuctionUpdate(id, 'auction:bid', {
+        marketItemId: id,
+        newHighCents: result.bid.amountCents,
+        bidCount: (await MarketItemBidService.getBids(id)).bidCount,
+        previousHighBidderId: result.previousHighBidderId,
+        isHollandWin: result.isHollandWin,
+      });
+    }
+  }
+  res.status(201).json({ success: true, data: result });
+});
+
+export const acceptBuyItNow = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const result = await MarketItemBidService.acceptBuyItNow(id, req.userId!);
+  const item = await prisma.marketItem.findUnique({
+    where: { id },
+    select: { title: true, sellerId: true, seller: { select: { language: true } } },
+  });
+  if (item) {
+    const lang = item.seller?.language && item.seller.language !== 'auto' ? item.seller.language : 'en';
+    const marketItem = { id, title: item.title };
+    const buyerPayload = createAuctionBINAcceptedPushNotification(marketItem, true, lang);
+    const sellerPayload = createAuctionBINAcceptedPushNotification(marketItem, false, lang);
+    notificationService.sendNotification({ userId: req.userId!, type: buyerPayload.type, payload: buyerPayload }).catch(() => {});
+    notificationService.sendNotification({ userId: item.sellerId, type: sellerPayload.type, payload: sellerPayload }).catch(() => {});
+    const socketService = (global as any).socketService;
+    if (socketService) {
+      socketService.emitAuctionUpdate(id, 'auction:bin-accepted', { marketItemId: id, winnerId: req.userId! });
+    }
+  }
+  res.json({ success: true, data: result });
+});
+
 export const updateMarketItem = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { categoryId, cityId, additionalCityIds, title, description, mediaUrls, tradeTypes, priceCents, currency, auctionEndsAt } =
-    req.body;
+  const {
+    categoryId,
+    cityId,
+    additionalCityIds,
+    title,
+    description,
+    mediaUrls,
+    tradeTypes,
+    priceCents,
+    currency,
+    auctionEndsAt,
+    auctionType,
+    startingPriceCents,
+    reservePriceCents,
+    buyItNowPriceCents,
+    hollandDecrementCents,
+    hollandIntervalMinutes,
+    negotiationAcceptable,
+  } = req.body;
 
   if (currency && !SUPPORTED_CURRENCIES.includes(currency)) {
     throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
@@ -109,6 +219,13 @@ export const updateMarketItem = asyncHandler(async (req: AuthRequest, res: Respo
     priceCents,
     currency,
     auctionEndsAt: auctionEndsAt ? new Date(auctionEndsAt) : undefined,
+    auctionType: auctionType ?? undefined,
+    startingPriceCents,
+    reservePriceCents,
+    buyItNowPriceCents,
+    hollandDecrementCents,
+    hollandIntervalMinutes,
+    negotiationAcceptable,
   });
   res.json({ success: true, data: item });
 });

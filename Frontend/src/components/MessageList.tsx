@@ -26,6 +26,7 @@ interface MessageListProps {
   userChatUser1Id?: string;
   userChatUser2Id?: string;
   onChatRequestRespond?: (messageId: string, accepted: boolean) => void;
+  hasContextPanel?: boolean;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -49,6 +50,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   userChatUser1Id,
   userChatUser2Id,
   onChatRequestRespond,
+  hasContextPanel = false,
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -197,6 +199,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto bg-gray-50 dark:bg-gray-800 p-4 space-y-1 min-h-0 overscroll-contain"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
+      {hasContextPanel && <div className="pt-6 flex-shrink-0" />}
       {hasMoreMessages && !isInitialLoad && onLoadMore && shouldRenderButton && (
         <div 
           className={`flex justify-center mb-4 transition-opacity duration-300 ${

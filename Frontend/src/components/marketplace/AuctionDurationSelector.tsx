@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { addDays } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useAuthStore } from '@/store/authStore';
-const DURATION_DAYS = [1, 2, 3, 7] as const;
+const DURATION_DAYS = [1, 2, 3, 5, 7, 10] as const;
 
 const BTN_BASE =
   'inline-flex items-center justify-center px-3 py-1.5 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/20';

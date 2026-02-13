@@ -295,7 +295,7 @@ export const GameParticipants = ({
                   <>
                     <div>
                       <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        {t('games.male', { defaultValue: 'Male' })} ({carousel1Participants.length} / {maxPerGender})
+                        {t('games.male', { defaultValue: 'Men' })} ({carousel1Participants.length} / {maxPerGender})
                       </h3>
                       <div className="space-y-1">
                         {carousel1Participants.map((participant) => (
@@ -335,7 +335,7 @@ export const GameParticipants = ({
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        {t('games.female', { defaultValue: 'Female' })} ({carousel2Participants.length} / {maxPerGender})
+                        {t('games.female', { defaultValue: 'Women' })} ({carousel2Participants.length} / {maxPerGender})
                       </h3>
                       <div className="space-y-1">
                         {carousel2Participants.map((participant) => (

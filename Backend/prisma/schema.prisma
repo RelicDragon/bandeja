@@ -116,9 +116,11 @@ model User {
   chatDrafts                  ChatDraft[]
   notificationPreferences     NotificationPreference[]
   pollVotes              PollVote[]
-  marketItems            MarketItem[]
-  trainedGames           Game[]               @relation("GameTrainer")
-  buyerGroupChannels     GroupChannel[]       @relation("GroupChannelBuyer")
+  marketItems             MarketItem[]         @relation("MarketItemSeller")
+  marketItemsWon          MarketItem[]         @relation("MarketItemWinner")
+  marketItemBids          MarketItemBid[]
+  trainedGames            Game[]               @relation("GameTrainer")
+  buyerGroupChannels      GroupChannel[]       @relation("GroupChannelBuyer")
 
   @@index([phone])
   @@index([telegramId])
@@ -859,6 +861,11 @@ enum MarketItemStatus {
   WITHDRAWN
 }
 
+enum AuctionType {
+  RISING
+  HOLLAND
+}
+
 model TelegramOtp {
   id            String   @id @default(cuid())
   code          String   @db.VarChar(6)
@@ -923,31 +930,58 @@ model MarketItemCategory {
 }
 
 model MarketItem {
-  id                String                @id @default(cuid())
-  sellerId          String
-  categoryId        String
-  cityId            String
-  additionalCityIds String[]              @default([])
-  title             String
-  description       String?
-  mediaUrls         String[]
-  tradeTypes        MarketItemTradeType[] @default([])
-  priceCents        Int?
-  currency          PriceCurrency         @default(EUR)
-  auctionEndsAt     DateTime?
-  status            MarketItemStatus      @default(ACTIVE)
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
-  seller            User                  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  category          MarketItemCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  city              City                  @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  groupChannels     GroupChannel[]
+  id                     String                @id @default(cuid())
+  sellerId               String
+  categoryId             String
+  cityId                 String
+  additionalCityIds      String[]              @default([])
+  title                  String
+  description            String?
+  mediaUrls              String[]              @default([])
+  tradeTypes             MarketItemTradeType[] @default([])
+  negotiationAcceptable  Boolean?              @default(false)
+  priceCents             Int?
+  currency               PriceCurrency         @default(EUR)
+  auctionEndsAt          DateTime?
+  auctionType            AuctionType?
+  startingPriceCents     Int?
+  reservePriceCents      Int?
+  buyItNowPriceCents     Int?
+  currentPriceCents      Int?
+  hollandDecrementCents  Int?
+  hollandIntervalMinutes Int?
+  winnerId               String?
+  status                 MarketItemStatus      @default(ACTIVE)
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  seller                 User                  @relation("MarketItemSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  winner                 User?                 @relation("MarketItemWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+  category               MarketItemCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  city                   City                  @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  groupChannels          GroupChannel[]
+  bids                   MarketItemBid[]
 
   @@index([sellerId])
   @@index([categoryId])
   @@index([cityId])
   @@index([status])
   @@index([createdAt])
+  @@index([winnerId])
+}
+
+model MarketItemBid {
+  id           String     @id @default(cuid())
+  marketItemId String
+  bidderId     String
+  amountCents  Int
+  outbidAt     DateTime?
+  createdAt    DateTime   @default(now())
+  marketItem   MarketItem @relation(fields: [marketItemId], references: [id], onDelete: Cascade)
+  bidder       User       @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+
+  @@index([marketItemId])
+  @@index([bidderId])
+  @@index([marketItemId, createdAt])
 }
 
 model GroupChannel {

@@ -827,6 +827,52 @@ export class MessageService {
     return messagesWithTranslation.reverse();
   }
 
+  static async getMissedMessages(
+    chatContextType: ChatContextType,
+    contextId: string,
+    userId: string,
+    lastMessageId?: string | null
+  ) {
+    if (chatContextType === 'GAME') {
+      await this.validateGameAccess(contextId, userId);
+    } else if (chatContextType === 'BUG') {
+      await this.validateBugAccess(contextId, userId);
+    } else if (chatContextType === 'USER') {
+      await this.validateUserChatAccess(contextId, userId);
+    } else if (chatContextType === 'GROUP') {
+      await this.validateGroupChannelAccess(contextId, userId);
+    }
+
+    const where: Prisma.ChatMessageWhereInput = {
+      chatContextType,
+      contextId,
+    };
+
+    if (lastMessageId) {
+      const lastMessage = await prisma.chatMessage.findFirst({
+        where: { id: lastMessageId, chatContextType, contextId },
+        select: { createdAt: true },
+      });
+      if (lastMessage) {
+        where.createdAt = { gt: lastMessage.createdAt };
+      }
+    }
+
+    const messages = await prisma.chatMessage.findMany({
+      where,
+      include: this.getMessageInclude(),
+      orderBy: { createdAt: 'asc' },
+      take: 100,
+    });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
+    return this.enrichMessagesWithTranslations(messages, languageCode);
+  }
+
   static async updateMessageState(messageId: string, userId: string, state: MessageState) {
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId }

@@ -629,7 +629,7 @@ export const chatApi = {
     return response.data;
   },
 
-  getMissedMessages: async (contextType: ChatContextType, contextId: string, lastMessageId?: string) => {
+  getMissedMessages: async (contextType: ChatContextType, contextId: string, lastMessageId?: string): Promise<ChatMessage[]> => {
     const params = new URLSearchParams({
       contextType,
       contextId
@@ -638,7 +638,28 @@ export const chatApi = {
       params.append('lastMessageId', lastMessageId);
     }
     const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/messages/missed?${params.toString()}`);
-    return response.data;
+    return response.data.data ?? [];
+  },
+
+  invalidateUnreadCache: () => {
+    unreadCountCache.clear();
+    unreadCountPromise = null;
+  },
+
+  getUnreadCountForContext: async (contextType: ChatContextType, contextId: string): Promise<number> => {
+    if (contextType === 'GAME') {
+      const res = await chatApi.getGameUnreadCount(contextId);
+      return res.data?.count ?? 0;
+    }
+    if (contextType === 'USER') {
+      const res = await chatApi.getUserChatUnreadCount(contextId);
+      return res.data?.count ?? 0;
+    }
+    if (contextType === 'GROUP') {
+      const res = await chatApi.getGroupChannelUnreadCount(contextId);
+      return res.data?.count ?? 0;
+    }
+    return 0;
   },
 
   translateMessage: async (messageId: string) => {

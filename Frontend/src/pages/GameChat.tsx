@@ -37,6 +37,7 @@ import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
 import { sendWithTimeout, cancelSend, resend, cancelAllForContext } from '@/services/chatSendService';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
 import { isCapacitor } from '@/utils/capacitor';
+import { useChatSyncStore } from '@/store/chatSyncStore';
 
 interface LocationState {
   initialChatType?: ChatType;
@@ -109,7 +110,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   const participation = getGameParticipationState(game?.participants ?? [], user?.id, game ?? undefined);
   const { userParticipant, isParticipant, isPlaying: isPlayingParticipant, isAdminOrOwner, hasPendingInvite, isGuest, isInJoinQueue } = participation;
-  
+
+  const contextKey = useMemo(() => (id ? `${contextType}:${id}` : ''), [contextType, id]);
+  const missedForContext = useChatSyncStore((s) => (contextKey ? s.missedMessagesByContext[contextKey] ?? [] : []));
+
   const isBugChat = contextType === 'GROUP' && !!groupChannel?.bug;
   const isBugCreator = groupChannel?.bug?.senderId === user?.id;
   const isBugAdmin = user?.isAdmin;
@@ -271,30 +275,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           const { fetchUserChats, getChatById } = usePlayersStore.getState();
           await fetchUserChats();
           const foundChat = getChatById(id);
-          if (foundChat) {
-            setUserChat(foundChat);
-            const otherUserId = foundChat.user1Id === user?.id ? foundChat.user2Id : foundChat.user1Id;
-            if (otherUserId && user?.id) {
-              try {
-                const blockedBy = await blockedUsersApi.checkIfBlockedByUser(otherUserId);
-                setIsBlockedByUser(blockedBy);
-              } catch (error) {
-                console.error('Failed to check if blocked by user:', error);
-              }
-            }
-          }
+          if (foundChat) setUserChat(foundChat);
           return foundChat;
-        }
-        if (userChat && user?.id) {
-          const otherUserId = userChat.user1Id === user.id ? userChat.user2Id : userChat.user1Id;
-          if (otherUserId) {
-            try {
-              const blockedBy = await blockedUsersApi.checkIfBlockedByUser(otherUserId);
-              setIsBlockedByUser(blockedBy);
-            } catch (error) {
-              console.error('Failed to check if blocked by user:', error);
-            }
-          }
         }
         return userChat;
       } else if (contextType === 'GROUP') {
@@ -324,7 +306,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     } finally {
       setIsLoadingContext(false);
     }
-  }, [id, contextType, navigate, userChat, user?.id, isEmbedded, setChatsFilter]);
+  }, [id, contextType, navigate, userChat, isEmbedded, setChatsFilter]);
 
   const scrollToBottom = useCallback(() => {
     const scroll = () => {
@@ -342,26 +324,23 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     });
   }, []);
 
-  const loadMessages = useCallback(async (pageNum = 1, append = false) => {
+  const loadMessages = useCallback(async (pageNum = 1, append = false, chatTypeOverride?: ChatType) => {
     if (!id) return;
-    
+    const effectiveChatType = chatTypeOverride ?? currentChatType;
     try {
       if (!append) {
         setIsLoadingMessages(true);
         setIsInitialLoad(true);
       }
-      
       let response: ChatMessage[];
-      
       if (contextType === 'USER') {
         response = await chatApi.getUserChatMessages(id, pageNum, 50);
       } else if (contextType === 'GROUP') {
         response = await chatApi.getGroupChannelMessages(id, pageNum, 50);
       } else {
-        const normalizedChatType = normalizeChatType(currentChatType);
+        const normalizedChatType = normalizeChatType(effectiveChatType);
         response = await chatApi.getMessages(contextType, id, pageNum, 50, normalizedChatType);
       }
-      
       if (append) {
         setMessages(prev => {
           const newMessages = [...response, ...prev];
@@ -372,10 +351,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         messagesRef.current = response;
         setMessages(response);
         scrollToBottom();
+        const lastId = response.length > 0 ? response[response.length - 1]?.id : null;
+        if (id && lastId) useChatSyncStore.getState().setLastMessageId(contextType, id, lastId);
       }
-      
       setHasMoreMessages(response.length === 50);
-      
       if (!append) {
         setIsLoadingMessages(false);
         const delay = isEmbedded ? 100 : 500;
@@ -681,51 +660,37 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   const handleChatTypeChange = useCallback(async (newChatType: ChatType) => {
     if (newChatType === currentChatType || contextType === 'USER') return;
-    
-    const startTime = Date.now();
     setIsSwitchingChatType(true);
     setIsLoadingMessages(true);
     setCurrentChatType(newChatType);
     setPage(1);
     setHasMoreMessages(true);
-    
     try {
       const normalizedChatType = normalizeChatType(newChatType);
       const response = await chatApi.getMessages(contextType, id!, 1, 50, normalizedChatType);
-      
-      if (id && user?.id && contextType === 'GAME') {
-        const markReadResponse = await chatApi.markAllMessagesAsRead(id, [normalizedChatType]);
-        const markedCount = markReadResponse.data.count || 0;
-        
-        const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-        const newCount = Math.max(0, unreadMessages - markedCount);
-        setUnreadMessages(newCount);
-      }
-      
-      const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(0, 1500 - elapsedTime);
-      if (remainingTime > 0) {
-        await new Promise(resolve => setTimeout(resolve, remainingTime));
-      }
-      
       messagesRef.current = response;
       setMessages(response);
       setHasMoreMessages(response.length === 50);
-
-        if (user?.id) {
-          await applyQueuedMessagesToState({
-            contextType,
-            contextId: id!,
-            currentChatType: normalizedChatType,
-            userId: user.id,
-            user: user as import('@/types').BasicUser,
-            messagesRef,
-            setMessages,
-            handleMarkFailed,
-          });
-        }
-      
+      if (user?.id) {
+        await applyQueuedMessagesToState({
+          contextType,
+          contextId: id!,
+          currentChatType: normalizedChatType,
+          userId: user.id,
+          user: user as import('@/types').BasicUser,
+          messagesRef,
+          setMessages,
+          handleMarkFailed,
+        });
+      }
       scrollToBottom();
+      if (id && user?.id && contextType === 'GAME') {
+        chatApi.markAllMessagesAsRead(id, [normalizedChatType]).then((markReadResponse) => {
+          const markedCount = markReadResponse.data.count || 0;
+          const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+          setUnreadMessages(Math.max(0, unreadMessages - markedCount));
+        }).catch(() => {});
+      }
     } catch (error) {
       console.error('Failed to load messages:', error);
     } finally {
@@ -792,6 +757,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       messagesRef.current = newMessages;
       return newMessages;
     });
+
+    if (id) useChatSyncStore.getState().setLastMessageId(contextType, id, message.id);
 
     if (replacedOptimisticId) {
       messageQueueStorage.remove(replacedOptimisticId, contextType, id!).catch(err => { console.error('[messageQueue] remove', err); });
@@ -948,74 +915,74 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   }, [locationState?.forceReload]);
 
   useEffect(() => {
+    const ac = new AbortController();
+    const signal = ac.signal;
+
     const loadData = async () => {
       if (!id || !user?.id) return;
 
       const currentLoadId = `${id}-${contextType}`;
       if (loadingIdRef.current === currentLoadId && hasLoadedRef.current) return;
       if (isLoadingRef.current && loadingIdRef.current === currentLoadId) return;
-      
+
       loadingIdRef.current = currentLoadId;
       isLoadingRef.current = true;
       hasLoadedRef.current = false;
       setIsInitialLoad(true);
       setIsLoadingMessages(true);
-      
+
       try {
         const loadedContext = await loadContext();
-        if (loadingIdRef.current !== currentLoadId) return;
+        if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
 
-        if (contextType === 'USER' && userChat && user?.id) {
-          const otherUserId = userChat.user1Id === user.id ? userChat.user2Id : userChat.user1Id;
+        if (contextType === 'USER' && user?.id) {
+          const uc = (loadedContext || userChat) as UserChatType | null;
+          const otherUserId = uc ? (uc.user1Id === user.id ? uc.user2Id : uc.user1Id) : null;
           if (otherUserId) {
             try {
               const blockedBy = await blockedUsersApi.checkIfBlockedByUser(otherUserId);
+              if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
               setIsBlockedByUser(blockedBy);
             } catch (error) {
-              console.error('Failed to check if blocked by user:', error);
+              if (!signal.aborted) console.error('Failed to check if blocked by user:', error);
             }
           }
         }
 
         try {
           const muteStatus = await chatApi.isChatMuted(contextType, id);
-          if (loadingIdRef.current !== currentLoadId) return;
+          if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
           setIsMuted(muteStatus.isMuted);
         } catch (error) {
-          console.error('Failed to check mute status:', error);
+          if (!signal.aborted) console.error('Failed to check mute status:', error);
         }
 
-        if (!hasSetDefaultChatType && !initialChatType && contextType === 'GAME' && loadedContext) {
+        let effectiveChatType: ChatType = currentChatType;
+        if (!hasSetDefaultChatType && contextType === 'GAME' && loadedContext) {
+          setHasSetDefaultChatType(true);
           const loadedGame = loadedContext as Game;
           const loadedParticipant = loadedGame.participants?.find(p => p.userId === user?.id);
-          const defaultType = (loadedParticipant?.status === 'PLAYING') ? 'PRIVATE' : 'PUBLIC';
-          setHasSetDefaultChatType(true);
-          if (defaultType === 'PRIVATE' && currentChatType !== 'PRIVATE') {
-            await handleChatTypeChange('PRIVATE');
-            hasLoadedRef.current = true;
-            return;
+          const defaultType: ChatType = (loadedParticipant?.status === 'PLAYING') ? 'PRIVATE' : 'PUBLIC';
+          effectiveChatType = initialChatType ?? defaultType;
+          if (effectiveChatType !== currentChatType) {
+            setCurrentChatType(effectiveChatType);
           }
-          if (currentChatType !== defaultType) {
-            setCurrentChatType(defaultType);
-          }
-        }
-        
-        if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
-          if (currentChatType !== initialChatType) {
-            await handleChatTypeChange(initialChatType);
-            hasLoadedRef.current = true;
-            return;
+        } else if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
+          effectiveChatType = initialChatType;
+          if (effectiveChatType !== currentChatType) {
+            setCurrentChatType(effectiveChatType);
           }
         }
+        if (signal.aborted) return;
 
-        await loadMessages();
-        if (loadingIdRef.current !== currentLoadId) return;
+        await loadMessages(1, false, contextType === 'GAME' ? effectiveChatType : undefined);
+        if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
 
         if (user?.id) {
           await applyQueuedMessagesToState({
             contextType,
             contextId: id,
-            currentChatType: normalizeChatType(currentChatType),
+            currentChatType: normalizeChatType(effectiveChatType),
             userId: user.id,
             user: user as import('@/types').BasicUser,
             messagesRef,
@@ -1023,72 +990,58 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             handleMarkFailed,
           });
         }
-        if (loadingIdRef.current !== currentLoadId) return;
-        
-        try {
+        if (!signal.aborted) hasLoadedRef.current = true;
+
+        const runMarkReadBackground = () => {
           if (contextType === 'GAME' && loadedContext) {
             const loadedGame = loadedContext as Game;
             const loadedUserParticipant = loadedGame.participants.find(p => p.userId === user.id);
             const loadedIsParticipant = !!loadedUserParticipant;
             const loadedHasPendingInvite = loadedGame.participants?.some(p => p.userId === user.id && p.status === 'INVITED') ?? false;
             const loadedIsGuest = loadedGame.participants.some(p => p.userId === user.id && (p.status === 'GUEST' || !isParticipantPlaying(p))) ?? false;
-            
             if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
               const loadedParentParticipant = loadedGame.parent?.participants?.find(p => p.userId === user.id);
               const availableChatTypes = getAvailableGameChatTypes(loadedGame, loadedUserParticipant ?? undefined, loadedParentParticipant ?? undefined);
-              const markReadResponse = await chatApi.markAllMessagesAsReadForContext('GAME', id, availableChatTypes);
-              const markedCount = markReadResponse.data?.count || 0;
-              
-              const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-              const newCount = Math.max(0, unreadMessages - markedCount);
-              setUnreadMessages(newCount);
-              
-              window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
+              chatApi.markAllMessagesAsReadForContext('GAME', id, availableChatTypes).then((markReadResponse) => {
+                const markedCount = markReadResponse.data?.count || 0;
+                const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+                setUnreadMessages(Math.max(0, unreadMessages - markedCount));
+                window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
+              }).catch(() => {});
             }
+          } else if (contextType === 'USER' && id) {
+            chatApi.markAllMessagesAsReadForContext('USER', id).then((markReadResponse) => {
+              const markedCount = markReadResponse.data?.count || 0;
+              const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+              setUnreadMessages(Math.max(0, unreadMessages - markedCount));
+              const { updateUnreadCount } = usePlayersStore.getState();
+              updateUnreadCount(id, () => 0);
+              window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
+            }).catch(() => {});
+          } else if (contextType === 'GROUP' && id) {
+            chatApi.markGroupChannelAsRead(id).then((markReadResponse) => {
+              const markedCount = markReadResponse.data?.count || 0;
+              const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+              setUnreadMessages(Math.max(0, unreadMessages - markedCount));
+              window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
+            }).catch(() => {});
           }
-          if (loadingIdRef.current !== currentLoadId) return;
-          if (contextType === 'USER' && id) {
-            const markReadResponse = await chatApi.markAllMessagesAsReadForContext('USER', id);
-            const markedCount = markReadResponse.data?.count || 0;
-            
-            const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-            const newCount = Math.max(0, unreadMessages - markedCount);
-            setUnreadMessages(newCount);
-            
-            const { updateUnreadCount } = usePlayersStore.getState();
-            updateUnreadCount(id, () => 0);
-            
-            window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-          }
-          if (loadingIdRef.current !== currentLoadId) return;
-          if (contextType === 'GROUP' && id) {
-            const markReadResponse = await chatApi.markGroupChannelAsRead(id);
-            const markedCount = markReadResponse.data?.count || 0;
-            
-            const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-            const newCount = Math.max(0, unreadMessages - markedCount);
-            setUnreadMessages(newCount);
-            
-            window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-          }
-        } catch (error) {
-          console.error('Failed to mark all messages as read:', error);
-        }
-
-        hasLoadedRef.current = true;
+        };
+        runMarkReadBackground();
       } finally {
-        isLoadingRef.current = false;
+        if (!signal.aborted) isLoadingRef.current = false;
       }
     };
-    
+
     loadData();
-    
+
     return () => {
+      ac.abort();
       if (loadingIdRef.current === `${id}-${contextType}`) {
         isLoadingRef.current = false;
       }
     };
-  }, [id, user, contextType, initialChatType, currentChatType, handleChatTypeChange, hasSetDefaultChatType, loadContext, loadMessages, userChat, handleMarkFailed]);
+  }, [id, user, contextType, initialChatType, currentChatType, hasSetDefaultChatType, loadContext, loadMessages, userChat, handleMarkFailed]);
 
   const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
   const lastChatReaction = useSocketEventsStore((state) => state.lastChatReaction);
@@ -1107,6 +1060,13 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       socketService.leaveChatRoom(contextType, id);
     };
   }, [id, contextType]);
+
+  useEffect(() => {
+    if (contextType === 'GROUP' && id) {
+      useNavigationStore.getState().setViewingGroupChannelId(id);
+      return () => useNavigationStore.getState().setViewingGroupChannelId(null);
+    }
+  }, [contextType, id]);
 
   // Track keyboard height for Capacitor mobile apps
   useEffect(() => {
@@ -1139,9 +1099,36 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   }, []);
 
   useEffect(() => {
+    if (missedForContext.length === 0 || !id) return;
+    const toMerge = useChatSyncStore.getState().getAndClearMissed(contextType, id);
+    if (toMerge.length === 0) return;
+    setMessages((prev) => {
+      const ids = new Set(prev.map((m) => m.id));
+      const added = toMerge.filter((m) => !ids.has(m.id));
+      if (added.length === 0) return prev;
+      const next = [...prev, ...added].sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      messagesRef.current = next;
+      const lastId = next[next.length - 1]?.id;
+      if (lastId) useChatSyncStore.getState().setLastMessageId(contextType, id, lastId);
+      return next;
+    });
+    scrollToBottom();
+  }, [missedForContext.length, contextType, id, scrollToBottom]);
+
+  useEffect(() => {
     if (!lastChatMessage || lastChatMessage.contextType !== contextType || lastChatMessage.contextId !== id) return;
     handleNewMessage(lastChatMessage.message);
-    
+
+    if (id) {
+      if (contextType === 'USER') {
+        usePlayersStore.getState().updateUnreadCount(id, 0);
+      } else if (contextType === 'GROUP') {
+        window.dispatchEvent(new CustomEvent('chat-viewing-clear-unread', { detail: { contextType: 'GROUP', contextId: id } }));
+      }
+    }
+
     if (lastChatMessage.messageId && lastChatMessage.message?.senderId !== user?.id) {
       socketService.acknowledgeMessage(
         lastChatMessage.messageId,
@@ -1542,8 +1529,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             canEditBug={isBugAdmin}
             onUpdate={() => {
               if (id) {
-                loadContext();
-                setTimeout(() => loadMessages(), 500);
+                loadContext().then(() => loadMessages());
               }
             }}
             onJoinChannel={handleJoinChannel}
@@ -1570,8 +1556,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               }}
               onItemUpdate={() => {
                 if (id) {
-                  loadContext();
-                  setTimeout(() => loadMessages(), 500);
+                  loadContext().then(() => loadMessages());
                 }
               }}
             />
@@ -1633,6 +1618,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           userChatUser1Id={contextType === 'USER' && userChat ? userChat.user1Id : undefined}
           userChatUser2Id={contextType === 'USER' && userChat ? userChat.user2Id : undefined}
           onChatRequestRespond={handleChatRequestRespond}
+          hasContextPanel={!showLoadingHeader && !showParticipantsPage && !showItemPage}
         />
         </div>
 

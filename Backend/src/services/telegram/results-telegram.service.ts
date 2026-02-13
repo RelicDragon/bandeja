@@ -226,11 +226,11 @@ export class ResultsTelegramService {
     
     let genderInfo = '';
     if (game.genderTeams === 'MEN') {
-      genderInfo = 'This was a MALE game. ';
+      genderInfo = "This was a men's game. ";
     } else if (game.genderTeams === 'WOMEN') {
-      genderInfo = 'This was a FEMALE game. ';
+      genderInfo = "This was a women's game. ";
     } else if (game.genderTeams === 'MIX_PAIRS') {
-      genderInfo = 'This was a mixed pairs game (MALE and FEMALE players). ';
+      genderInfo = 'This was a mixed pairs game (men and women). ';
     }
     
     const prompt = `Give me a summary of match in informal manner for a group of friends. Start your summary with "Hello, ${cityName}!" or similar greeting and proceed with the summary starting from newline. ${timeInfo}${locationInfo}${contextInfo}${genderInfo}They played Padel game. Game participants are: ${participants}. This game results are: ${resultsText}. Return strictly only the summary. Make it a little funny but still informative. Use if you want additional information about users.`;

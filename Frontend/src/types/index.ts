@@ -449,6 +449,7 @@ export interface Bet {
 
 export type MarketItemTradeType = 'BUY_IT_NOW' | 'SUGGESTED_PRICE' | 'AUCTION' | 'FREE';
 export type MarketItemStatus = 'ACTIVE' | 'SOLD' | 'RESERVED' | 'WITHDRAWN';
+export type AuctionType = 'RISING' | 'HOLLAND';
 
 export interface MarketItemCategory {
   id: string;
@@ -466,9 +467,18 @@ export interface MarketItem {
   description?: string | null;
   mediaUrls: string[];
   tradeTypes: MarketItemTradeType[];
+  negotiationAcceptable?: boolean | null;
   priceCents?: number | null;
   currency: PriceCurrency;
   auctionEndsAt?: string | null;
+  auctionType?: AuctionType | null;
+  startingPriceCents?: number | null;
+  reservePriceCents?: number | null;
+  buyItNowPriceCents?: number | null;
+  currentPriceCents?: number | null;
+  hollandDecrementCents?: number | null;
+  hollandIntervalMinutes?: number | null;
+  winnerId?: string | null;
   status: MarketItemStatus;
   createdAt: string;
   updatedAt: string;
@@ -478,6 +488,24 @@ export interface MarketItem {
   groupChannel?: { id: string };
   groupChannels?: { id: string }[];
   isParticipant?: boolean;
+}
+
+export interface MarketItemBid {
+  id: string;
+  marketItemId: string;
+  bidderId: string;
+  amountCents: number;
+  outbidAt?: string | null;
+  createdAt: string;
+  bidder?: BasicUser;
+}
+
+export interface MarketItemBidsResponse {
+  bids: MarketItemBid[];
+  currentHighCents: number | null;
+  currentHighBidderId: string | null;
+  minNextBidCents: number;
+  bidCount: number;
 }
 
 export interface ApiResponse<T> {

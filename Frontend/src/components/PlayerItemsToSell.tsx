@@ -49,9 +49,10 @@ export const PlayerItemsToSell = ({ userId, onItemClick }: PlayerItemsToSellProp
   );
 
   const tradeTypeLabels: Record<string, string> = {
-    BUY_IT_NOW: t('marketplace.buyItNow', { defaultValue: 'Buy now' }),
-    SUGGESTED_PRICE: t('marketplace.suggestedPrice', { defaultValue: 'Haggling welcome' }),
-    AUCTION: t('marketplace.auction', { defaultValue: 'Auction' }),
+    FREE: t('marketplace.sellingTypeFree', { defaultValue: 'Free' }),
+    BUY_IT_NOW: t('marketplace.buyNow', { defaultValue: 'Buy now' }),
+    SUGGESTED_PRICE: t('marketplace.suggestYourPrice', { defaultValue: 'Suggest your price' }),
+    AUCTION: t('marketplace.sellingTypeAuction', { defaultValue: 'Auction' }),
   };
 
   if (loading || items.length === 0) return null;

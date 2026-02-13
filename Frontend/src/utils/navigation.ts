@@ -52,7 +52,11 @@ export const setupPopstateFallback = (navigate: NavigateFunction): (() => void) 
   const handler = () => {
     const pathname = window.location.pathname || '';
     if (!isAppPath(pathname)) {
-      navigate(homeUrl(), { replace: true });
+      try {
+        navigate(homeUrl(), { replace: true });
+      } catch {
+        window.location.replace(homeUrl());
+      }
     }
   };
   window.addEventListener('popstate', handler);

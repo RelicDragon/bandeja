@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import {
+  AuctionType,
   ChatContextType,
   ChatType,
   MarketItemStatus,
@@ -12,7 +13,6 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { MessageService } from '../chat/message.service';
 import { t } from '../../utils/translations';
 import notificationService from '../notification.service';
-import { MarketItemParticipantService } from './participant.service';
 
 export interface CreateMarketItemData {
   sellerId: string;
@@ -26,6 +26,13 @@ export interface CreateMarketItemData {
   priceCents?: number;
   currency?: PriceCurrency;
   auctionEndsAt?: Date;
+  auctionType?: AuctionType;
+  startingPriceCents?: number;
+  reservePriceCents?: number;
+  buyItNowPriceCents?: number;
+  hollandDecrementCents?: number;
+  hollandIntervalMinutes?: number;
+  negotiationAcceptable?: boolean;
 }
 
 export interface MarketItemFilters {
@@ -53,6 +60,13 @@ export class MarketItemService {
       priceCents,
       currency = 'EUR',
       auctionEndsAt,
+      auctionType,
+      startingPriceCents,
+      reservePriceCents,
+      buyItNowPriceCents,
+      hollandDecrementCents,
+      hollandIntervalMinutes,
+      negotiationAcceptable,
     } = data;
 
     if (!title?.trim()) {
@@ -64,19 +78,15 @@ export class MarketItemService {
     if (!cityId) {
       throw new ApiError(400, 'City is required');
     }
-    if (!Array.isArray(tradeTypes)) {
-      throw new ApiError(400, 'Trade types must be an array');
+    if (!Array.isArray(tradeTypes) || tradeTypes.length !== 1) {
+      throw new ApiError(400, 'Exactly one trade type must be selected');
     }
     const invalid = tradeTypes.filter((t) => !Object.values(MarketItemTradeType).includes(t));
     if (invalid.length > 0) {
       throw new ApiError(400, 'Invalid trade type');
     }
 
-    // Validate FREE trade type constraints
     if (tradeTypes.includes(MarketItemTradeType.FREE)) {
-      if (tradeTypes.length > 1) {
-        throw new ApiError(400, 'FREE cannot be combined with other trade types');
-      }
       if (priceCents != null && priceCents > 0) {
         throw new ApiError(400, 'FREE items cannot have a price');
       }
@@ -86,7 +96,8 @@ export class MarketItemService {
         throw new ApiError(400, 'Price is required for Buy it now');
       }
       if (tradeTypes.includes(MarketItemTradeType.AUCTION)) {
-        if (priceCents == null || priceCents < 0) {
+        const startPrice = startingPriceCents ?? priceCents;
+        if (startPrice == null || startPrice < 0) {
           throw new ApiError(400, 'Starting bid is required for Auction');
         }
         if (!auctionEndsAt) {
@@ -94,6 +105,12 @@ export class MarketItemService {
         }
         if (new Date(auctionEndsAt) <= new Date()) {
           throw new ApiError(400, 'Auction end date must be in the future');
+        }
+        if (reservePriceCents != null && (reservePriceCents < startPrice || (buyItNowPriceCents != null && reservePriceCents > buyItNowPriceCents))) {
+          throw new ApiError(400, 'Reserve price must be between starting price and buy it now price (if set)');
+        }
+        if (buyItNowPriceCents != null && buyItNowPriceCents < startPrice) {
+          throw new ApiError(400, 'Buy it now price must be at least the starting price');
         }
       }
     }
@@ -136,6 +153,11 @@ export class MarketItemService {
       }
     }
 
+    const startPrice = tradeTypes.includes(MarketItemTradeType.AUCTION)
+      ? (startingPriceCents ?? priceCents ?? null)
+      : (priceCents ?? null);
+    const isHolland = tradeTypes.includes(MarketItemTradeType.AUCTION) && auctionType === AuctionType.HOLLAND;
+
     return prisma.$transaction(async (tx) => {
       const item = await tx.marketItem.create({
         data: {
@@ -147,9 +169,17 @@ export class MarketItemService {
           description: description?.trim() || null,
           mediaUrls,
           tradeTypes,
-          priceCents: priceCents ?? null,
+          priceCents: priceCents ?? startPrice ?? null,
           currency,
           auctionEndsAt: auctionEndsAt ?? null,
+          auctionType: tradeTypes.includes(MarketItemTradeType.AUCTION) ? (auctionType ?? AuctionType.RISING) : null,
+          startingPriceCents: startPrice,
+          reservePriceCents: reservePriceCents ?? null,
+          buyItNowPriceCents: buyItNowPriceCents ?? null,
+          currentPriceCents: isHolland ? (startPrice ?? null) : null,
+          hollandDecrementCents: isHolland ? (hollandDecrementCents ?? null) : null,
+          hollandIntervalMinutes: isHolland ? (hollandIntervalMinutes ?? null) : null,
+          negotiationAcceptable: tradeTypes.includes(MarketItemTradeType.BUY_IT_NOW) ? (negotiationAcceptable ?? false) : null,
           status: MarketItemStatus.ACTIVE,
         },
       });
@@ -319,7 +349,25 @@ export class MarketItemService {
       throw new ApiError(400, 'Can only update active items');
     }
 
-    const { categoryId, cityId, additionalCityIds, title, description, mediaUrls, tradeTypes, priceCents, currency, auctionEndsAt } = data;
+    const {
+      categoryId,
+      cityId,
+      additionalCityIds,
+      title,
+      description,
+      mediaUrls,
+      tradeTypes,
+      priceCents,
+      currency,
+      auctionEndsAt,
+      auctionType,
+      startingPriceCents,
+      reservePriceCents,
+      buyItNowPriceCents,
+      hollandDecrementCents,
+      hollandIntervalMinutes,
+      negotiationAcceptable,
+    } = data;
 
     // Validate additional cities if provided
     if (additionalCityIds !== undefined && additionalCityIds.length > 0) {
@@ -348,24 +396,26 @@ export class MarketItemService {
     }
 
     const finalTradeTypes = tradeTypes ?? item.tradeTypes;
+    if (finalTradeTypes.length !== 1) {
+      throw new ApiError(400, 'Exactly one trade type must be selected');
+    }
     const finalPriceCents = priceCents !== undefined ? priceCents : item.priceCents;
+    const finalStartPrice =
+      startingPriceCents !== undefined ? startingPriceCents : (item.startingPriceCents ?? item.priceCents);
+    const finalReserve = reservePriceCents !== undefined ? reservePriceCents : item.reservePriceCents;
+    const finalBuyItNow = buyItNowPriceCents !== undefined ? buyItNowPriceCents : item.buyItNowPriceCents;
     const finalAuctionEndsAt = auctionEndsAt !== undefined ? auctionEndsAt : item.auctionEndsAt;
 
-    // Validate FREE trade type constraints
     if (finalTradeTypes.includes(MarketItemTradeType.FREE)) {
-      if (finalTradeTypes.length > 1) {
-        throw new ApiError(400, 'FREE cannot be combined with other trade types');
-      }
       if (finalPriceCents != null && finalPriceCents > 0) {
         throw new ApiError(400, 'FREE items cannot have a price');
       }
     } else {
-      // Non-FREE items validation
       if (finalTradeTypes.includes(MarketItemTradeType.BUY_IT_NOW) && (finalPriceCents == null || finalPriceCents < 0)) {
         throw new ApiError(400, 'Price is required for Buy it now');
       }
       if (finalTradeTypes.includes(MarketItemTradeType.AUCTION)) {
-        if (finalPriceCents == null || finalPriceCents < 0) {
+        if (finalStartPrice == null || finalStartPrice < 0) {
           throw new ApiError(400, 'Starting bid is required for Auction');
         }
         if (!finalAuctionEndsAt) {
@@ -374,8 +424,18 @@ export class MarketItemService {
         if (new Date(finalAuctionEndsAt) <= new Date()) {
           throw new ApiError(400, 'Auction end date must be in the future');
         }
+        if (finalReserve != null && (finalReserve < finalStartPrice || (finalBuyItNow != null && finalReserve > finalBuyItNow))) {
+          throw new ApiError(400, 'Reserve price must be between starting price and buy it now price (if set)');
+        }
+        if (finalBuyItNow != null && finalBuyItNow < finalStartPrice) {
+          throw new ApiError(400, 'Buy it now price must be at least the starting price');
+        }
       }
     }
+
+    const isHolland =
+      (finalTradeTypes.includes(MarketItemTradeType.AUCTION) && (auctionType ?? item.auctionType) === AuctionType.HOLLAND);
+    const nextStartPrice = startingPriceCents !== undefined ? startingPriceCents : item.startingPriceCents;
 
     return prisma.$transaction(async (tx) => {
       const updated = await tx.marketItem.update({
@@ -391,6 +451,18 @@ export class MarketItemService {
           ...(priceCents !== undefined && { priceCents }),
           ...(currency && { currency }),
           ...(auctionEndsAt !== undefined && { auctionEndsAt }),
+          ...(auctionType !== undefined && { auctionType }),
+          ...(startingPriceCents !== undefined && { startingPriceCents }),
+          ...(reservePriceCents !== undefined && { reservePriceCents }),
+          ...(buyItNowPriceCents !== undefined && { buyItNowPriceCents }),
+          ...(hollandDecrementCents !== undefined && { hollandDecrementCents }),
+          ...(hollandIntervalMinutes !== undefined && { hollandIntervalMinutes }),
+          ...(negotiationAcceptable !== undefined && {
+            negotiationAcceptable: finalTradeTypes.includes(MarketItemTradeType.BUY_IT_NOW) ? negotiationAcceptable : null,
+          }),
+          ...(isHolland &&
+            nextStartPrice != null &&
+            item.currentPriceCents == null && { currentPriceCents: nextStartPrice }),
         },
         include: {
           seller: { select: { ...USER_SELECT_FIELDS } },

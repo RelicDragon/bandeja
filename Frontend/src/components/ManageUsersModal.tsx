@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Crown, Shield, User, UserX, ArrowRightLeft, Dumbbell } from 'lucide-react';
+import { Crown, Shield, User, UserX, ArrowRightLeft, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button, PlayerAvatar } from '@/components';
 import { Game, GameParticipant } from '@/types';
 import { useAuthStore } from '@/store/authStore';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface ManageUsersModalProps {
   game: Game;
@@ -44,7 +44,14 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
   const isOwner = currentUserParticipant?.role === 'OWNER';
   const isAdmin = currentUserParticipant?.role === 'ADMIN';
 
-  const participants = game.participants.filter(p => p.userId !== user?.id);
+  const participants = game.participants
+    .filter((p) => p.userId !== user?.id)
+    .slice()
+    .sort((a, b) => {
+      const nameA = `${a.user?.firstName ?? ''} ${a.user?.lastName ?? ''}`.trim().toLowerCase();
+      const nameB = `${b.user?.firstName ?? ''} ${b.user?.lastName ?? ''}`.trim().toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
 
   const getRoleTag = (participant: GameParticipant) => {
     if (game.entityType === 'TRAINING' && game.trainerId === participant.userId) {
@@ -56,19 +63,35 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
       case 'ADMIN':
         return { text: t('games.admin'), color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' };
       case 'PARTICIPANT':
-        return { text: t('games.participant'), color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' };
       case 'GUEST':
-        return { text: t('chat.guest'), color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' };
       default:
         return { text: t('games.participant'), color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' };
     }
   };
 
-  const hasTrainer = game.entityType === 'TRAINING' && (!!game.trainerId || game.participants.some(p => p.role === 'ADMIN' && p.status === 'INVITED'));
+  const getStatusTag = (participant: GameParticipant) => {
+    switch (participant.status) {
+      case 'INVITED':
+        return { text: t('games.statusInvited'), color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' };
+      case 'IN_QUEUE':
+        return { text: t('games.statusInQueue'), color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' };
+      case 'PLAYING':
+        return { text: t('games.statusPlaying'), color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' };
+      case 'NON_PLAYING':
+        return { text: t('games.statusNonPlaying'), color: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' };
+      case 'GUEST':
+        return { text: t('games.statusGuest'), color: 'bg-slate-100 text-slate-700 dark:bg-slate-600/30 dark:text-slate-300' };
+      default:
+        return { text: t('games.statusPlaying'), color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' };
+    }
+  };
+
+  const hasTrainer = game.entityType === 'TRAINING' && (!!game.trainerId || game.participants.some((p) => p.role === 'ADMIN' && p.status === 'INVITED'));
 
   const getAvailableActions = (participant: GameParticipant) => {
     const actions = [];
-    
+    const isParticipantRole = participant.role === 'PARTICIPANT' || participant.role === 'GUEST';
+
     if (isOwner) {
       if (game.entityType === 'TRAINING' && game.trainerId === participant.userId) {
         actions.push({ id: 'remove-trainer', label: t('games.removeTrainer', { defaultValue: 'Remove as trainer' }), icon: Dumbbell });
@@ -76,7 +99,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
       } else if (participant.role === 'ADMIN') {
         actions.push({ id: 'revoke-admin', label: t('games.revokeAdmin'), icon: Shield });
         actions.push({ id: 'kick-admin', label: t('games.kickUser'), icon: UserX });
-      } else if (participant.role === 'PARTICIPANT' || participant.role === 'GUEST') {
+      } else if (isParticipantRole) {
         if (game.entityType === 'TRAINING' && !hasTrainer) {
           actions.push({ id: 'set-trainer', label: t('games.setAsTrainer', { defaultValue: 'Set as trainer' }), icon: Dumbbell });
         } else {
@@ -88,11 +111,11 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
         actions.push({ id: 'transfer-ownership', label: t('games.transferOwnership'), icon: ArrowRightLeft });
       }
     } else if (isAdmin) {
-      if (participant.role === 'PARTICIPANT' || participant.role === 'GUEST') {
+      if (isParticipantRole) {
         actions.push({ id: 'kick-user', label: t('games.kickUser'), icon: UserX });
       }
     }
-    
+
     return actions;
   };
 
@@ -111,13 +134,17 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
   return (
     <Dialog open={isOpen} onClose={handleClose} modalId="manage-users-modal">
       <DialogContent>
-        <DialogHeader>
+        <DialogHeader className="flex-col items-stretch">
           <DialogTitle>{t('games.managePlayers')}</DialogTitle>
+          <DialogDescription className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {t('games.managePlayersHint')}
+          </DialogDescription>
         </DialogHeader>
 
         <div ref={scrollContainerRef} className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
           {participants.map((participant) => {
             const roleTag = getRoleTag(participant);
+            const statusTag = getStatusTag(participant);
             const isSelected = selectedUserId === participant.userId;
             const actions = getAvailableActions(participant);
 
@@ -139,22 +166,29 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
                   <PlayerAvatar
                     player={participant.user}
                     showName={false}
-                    smallLayout={true}
-                    fullHideName={true}
+                    extrasmall
+                    fullHideName
                     role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900 dark:text-white truncate">
-                        {participant.user.firstName} {participant.user.lastName}
-                      </p>
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${roleTag.color}`}>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {participant.user.firstName} {participant.user.lastName}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      <span className={`inline-block px-1.5 py-0.5 text-[10px] font-medium rounded ${roleTag.color}`}>
                         {roleTag.text}
                       </span>
+                      <span className={`inline-block px-1.5 py-0.5 text-[10px] font-medium rounded ${statusTag.color}`}>
+                        {statusTag.text}
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Level {participant.user ? participant.user.level.toFixed(1) : '0.0'}
-                    </p>
+                  </div>
+                  <div className="flex-shrink-0 text-gray-400 dark:text-gray-500">
+                    {isSelected && actions.length > 0 ? (
+                      <ChevronUp size={20} aria-hidden />
+                    ) : (
+                      <ChevronDown size={20} aria-hidden />
+                    )}
                   </div>
                 </div>
 

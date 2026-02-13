@@ -32,6 +32,7 @@ import { useDeepLink } from './hooks/useDeepLink';
 import { extractLanguageCode } from './utils/displayPreferences';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import { backButtonService } from './services/backButtonService';
+import { appLifecycleService } from './services/appLifecycle.service';
 import { navigationService } from './services/navigationService';
 import { markNavigation, setupPopstateFallback } from './utils/navigation';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
@@ -88,17 +89,20 @@ function AppContent() {
       }
       backButtonService.initialize();
     }
-    
+
+    appLifecycleService.init();
+
     const cleanup = initNetworkListener();
-    
+
     const timer = setTimeout(() => {
       finishInitializing();
     }, 500);
-    
+
     return () => {
       cleanup();
       cleanupAuthPersistence();
       clearTimeout(timer);
+      appLifecycleService.cleanup();
       if (isCapacitor()) {
         backButtonService.cleanup();
       }

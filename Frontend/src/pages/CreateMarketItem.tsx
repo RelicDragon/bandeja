@@ -4,9 +4,12 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { marketplaceApi, citiesApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
-import { MarketItemCategory, City, PriceCurrency, MarketItemTradeType } from '@/types';
+import { MarketItemCategory, City, PriceCurrency, MarketItemTradeType, AuctionType } from '@/types';
 import { Button, Input, Card } from '@/components';
-import { FormField, MediaGalleryField, TradeTypeCheckboxes, PriceInputWithCurrency, priceToCents, centsToPrice, AuctionDurationSelector, CategorySelector, CitySelectorField, INPUT_CLASS } from '@/components/marketplace';
+import { FormField, MediaGalleryField, TradeTypeCheckboxes, PriceInputWithCurrency, priceToCents, centsToPrice, AuctionDurationSelector, CategorySelector, CitySelectorField, INPUT_CLASS, PRICING_SECTION_LABEL, PRICING_SECTION_LABEL_INLINE } from '@/components/marketplace';
+import { ToggleSwitch } from '@/components';
+import { formatPrice } from '@/utils/currency';
+import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { MapPin } from 'lucide-react';
 import { pickImages } from '@/utils/photoCapture';
 
@@ -43,7 +46,7 @@ const clearDraft = () => {
 
 export const CreateMarketItem = () => {
   const { id } = useParams<{ id: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isEdit = !!id;
@@ -79,9 +82,15 @@ export const CreateMarketItem = () => {
     description: '',
     mediaUrls: [] as string[],
     tradeTypes: ['BUY_IT_NOW'] as MarketItemTradeType[],
+    negotiationAcceptable: false,
     priceCents: '',
     currency: 'EUR' as PriceCurrency,
     auctionEndsAt: '',
+    auctionType: 'RISING' as AuctionType,
+    reservePriceCents: '',
+    buyItNowPriceCents: '',
+    hollandDecrement: '',
+    hollandIntervalMinutes: '' as '' | number,
   });
 
   useEffect(() => {
@@ -131,10 +140,16 @@ export const CreateMarketItem = () => {
           title: item.title,
           description: item.description || '',
           mediaUrls: item.mediaUrls || [],
-          tradeTypes: item.tradeTypes?.length ? item.tradeTypes : ['BUY_IT_NOW'],
-          priceCents: centsToPrice(item.priceCents),
+          tradeTypes: item.tradeTypes?.length ? [item.tradeTypes[0]] : ['BUY_IT_NOW'],
+          negotiationAcceptable: item.negotiationAcceptable ?? false,
+          priceCents: centsToPrice(item.startingPriceCents ?? item.priceCents),
           currency: (item.currency || 'EUR') as PriceCurrency,
           auctionEndsAt: item.auctionEndsAt ? new Date(item.auctionEndsAt).toISOString() : '',
+          auctionType: (item.auctionType || 'RISING') as AuctionType,
+          reservePriceCents: centsToPrice(item.reservePriceCents),
+          buyItNowPriceCents: centsToPrice(item.buyItNowPriceCents),
+          hollandDecrement: item.hollandDecrementCents != null ? centsToPrice(item.hollandDecrementCents) : '',
+          hollandIntervalMinutes: item.hollandIntervalMinutes ?? '',
         });
       }).catch(() => navigate('/marketplace'));
     }
@@ -157,15 +172,25 @@ export const CreateMarketItem = () => {
     }
     const isFree = form.tradeTypes.includes('FREE');
     const priceCentsVal = isFree ? undefined : priceToCents(form.priceCents);
+    const reserveCentsVal = form.tradeTypes.includes('AUCTION') && form.reservePriceCents !== '' ? priceToCents(form.reservePriceCents) : undefined;
+    const buyItNowCentsVal = form.tradeTypes.includes('AUCTION') && form.buyItNowPriceCents !== '' ? priceToCents(form.buyItNowPriceCents) : undefined;
 
     if (!isFree) {
-      if (form.tradeTypes.includes('BUY_IT_NOW') && (priceCentsVal == null || priceCentsVal < 1)) {
+      if (form.tradeTypes.includes('BUY_IT_NOW') && !form.tradeTypes.includes('AUCTION') && (priceCentsVal == null || priceCentsVal < 1)) {
         toast.error(t('marketplace.priceRequired', { defaultValue: 'Price is required for Buy now' }));
         return;
       }
       if (form.tradeTypes.includes('AUCTION')) {
         if (priceCentsVal == null || priceCentsVal < 0) {
           toast.error(t('marketplace.startingBidRequired', { defaultValue: 'Starting bid is required for Auction' }));
+          return;
+        }
+        if (reserveCentsVal != null && (reserveCentsVal < (priceCentsVal ?? 0) || (buyItNowCentsVal != null && reserveCentsVal > buyItNowCentsVal))) {
+          toast.error(t('marketplace.reserveBetweenStartAndBin', { defaultValue: 'Reserve must be between starting and Buy it now price' }));
+          return;
+        }
+        if (buyItNowCentsVal != null && buyItNowCentsVal < (priceCentsVal ?? 0)) {
+          toast.error(t('marketplace.binMinStarting', { defaultValue: 'Buy it now must be at least starting price' }));
           return;
         }
         if (!form.auctionEndsAt) {
@@ -175,6 +200,17 @@ export const CreateMarketItem = () => {
         if (new Date(form.auctionEndsAt) <= new Date()) {
           toast.error(t('marketplace.auctionEndFuture', { defaultValue: 'Auction end date must be in the future' }));
           return;
+        }
+        if (form.auctionType === 'HOLLAND') {
+          const decCents = form.hollandDecrement !== '' ? priceToCents(form.hollandDecrement) : undefined;
+          if (decCents == null || decCents < 1) {
+            toast.error(t('marketplace.hollandPriceDropMin', { defaultValue: 'Price drop must be at least 0.01' }));
+            return;
+          }
+          if (form.hollandIntervalMinutes === '' || Number(form.hollandIntervalMinutes) < 1) {
+            toast.error(t('marketplace.hollandIntervalMin', { defaultValue: 'Interval is required (min 1 minute)' }));
+            return;
+          }
         }
       }
     }
@@ -189,9 +225,16 @@ export const CreateMarketItem = () => {
           description: form.description.trim() || undefined,
           mediaUrls: form.mediaUrls,
           tradeTypes: form.tradeTypes,
+          negotiationAcceptable: form.tradeTypes.includes('BUY_IT_NOW') ? form.negotiationAcceptable : undefined,
           priceCents: priceCentsVal,
           currency: form.currency,
           auctionEndsAt: form.auctionEndsAt || undefined,
+          auctionType: form.tradeTypes.includes('AUCTION') ? form.auctionType : undefined,
+          startingPriceCents: form.tradeTypes.includes('AUCTION') ? priceCentsVal : undefined,
+          reservePriceCents: reserveCentsVal,
+          buyItNowPriceCents: buyItNowCentsVal,
+          hollandDecrementCents: form.auctionType === 'HOLLAND' && form.hollandDecrement !== '' ? priceToCents(form.hollandDecrement) : undefined,
+          hollandIntervalMinutes: form.auctionType === 'HOLLAND' && form.hollandIntervalMinutes !== '' ? Number(form.hollandIntervalMinutes) : undefined,
         });
         clearDraft();
         toast.success(t('marketplace.updated', { defaultValue: 'Listing updated' }));
@@ -205,9 +248,16 @@ export const CreateMarketItem = () => {
           description: form.description.trim() || undefined,
           mediaUrls: form.mediaUrls,
           tradeTypes: form.tradeTypes,
+          negotiationAcceptable: form.tradeTypes.includes('BUY_IT_NOW') ? form.negotiationAcceptable : undefined,
           priceCents: priceCentsVal,
           currency: form.currency,
           auctionEndsAt: form.auctionEndsAt || undefined,
+          auctionType: form.tradeTypes.includes('AUCTION') ? form.auctionType : undefined,
+          startingPriceCents: form.tradeTypes.includes('AUCTION') ? priceCentsVal : undefined,
+          reservePriceCents: reserveCentsVal,
+          buyItNowPriceCents: buyItNowCentsVal,
+          hollandDecrementCents: form.auctionType === 'HOLLAND' && form.hollandDecrement !== '' ? priceToCents(form.hollandDecrement) : undefined,
+          hollandIntervalMinutes: form.auctionType === 'HOLLAND' && form.hollandIntervalMinutes !== '' ? Number(form.hollandIntervalMinutes) : undefined,
         });
         clearDraft();
         toast.success(t('marketplace.created', { defaultValue: 'Listing created' }));
@@ -221,18 +271,18 @@ export const CreateMarketItem = () => {
   };
 
   const tradeTypeOptions: Array<{ value: MarketItemTradeType; label: string }> = [
-    { value: 'BUY_IT_NOW', label: t('marketplace.buyItNow', { defaultValue: 'Buy now' }) },
-    { value: 'SUGGESTED_PRICE', label: t('marketplace.suggestedPrice', { defaultValue: 'Haggling welcome' }) },
-    { value: 'AUCTION', label: t('marketplace.auction', { defaultValue: 'Auction' }) },
-    { value: 'FREE', label: t('marketplace.free', { defaultValue: 'Free' }) },
+    { value: 'BUY_IT_NOW', label: t('marketplace.sellingTypePrice', { defaultValue: 'Price' }) },
+    { value: 'AUCTION', label: t('marketplace.sellingTypeAuction', { defaultValue: 'Auction' }) },
+    { value: 'SUGGESTED_PRICE', label: t('marketplace.sellingTypeConsiderOffers', { defaultValue: 'Consider offers' }) },
+    { value: 'FREE', label: t('marketplace.sellingTypeFree', { defaultValue: 'Free' }) },
   ];
 
   const handleTradeTypesChange = (newTypes: MarketItemTradeType[]) => {
-    // If FREE is selected, make it exclusive and clear price
-    if (newTypes.includes('FREE')) {
-      setForm((f) => ({ ...f, tradeTypes: ['FREE'], priceCents: '' }));
+    const single = newTypes.length ? [newTypes[0]] : form.tradeTypes;
+    if (single[0] === 'FREE') {
+      setForm((f) => ({ ...f, tradeTypes: ['FREE'], priceCents: '', negotiationAcceptable: false }));
     } else {
-      setForm((f) => ({ ...f, tradeTypes: newTypes }));
+      setForm((f) => ({ ...f, tradeTypes: single, negotiationAcceptable: single[0] === 'BUY_IT_NOW' ? f.negotiationAcceptable : false }));
     }
   };
 
@@ -321,27 +371,212 @@ export const CreateMarketItem = () => {
               onChange={handleTradeTypesChange}
               options={tradeTypeOptions}
             />
+            {(form.tradeTypes[0] === 'FREE' || form.tradeTypes[0] === 'SUGGESTED_PRICE') && (
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                {form.tradeTypes[0] === 'FREE'
+                  ? t('marketplace.hintFree', { defaultValue: 'Item is given away at no cost. Buyers can take it for free.' })
+                  : t('marketplace.hintSuggestedPrice', { defaultValue: 'No fixed price. Buyers will suggest their price and you can accept or negotiate.' })}
+              </p>
+            )}
           </FormField>
 
-          {!form.tradeTypes.includes('FREE') && (form.tradeTypes.includes('BUY_IT_NOW') || form.tradeTypes.includes('AUCTION')) && (
-            <FormField required>
-              <PriceInputWithCurrency
-                value={form.priceCents}
-                onChange={(v) => setForm((f) => ({ ...f, priceCents: v }))}
-                currency={form.currency}
-                onCurrencyChange={(v) => setForm((f) => ({ ...f, currency: v }))}
-                placeholder="0.00"
-              />
+          {!form.tradeTypes.includes('FREE') && (form.tradeTypes.includes('BUY_IT_NOW') || form.tradeTypes.includes('AUCTION')) && (() => {
+            const cents = priceToCents(form.priceCents);
+            const priceSet = cents != null;
+            const priceDisplay = priceSet ? formatPrice(cents, form.currency) : '';
+            return (
+              <FormField required>
+                <label className={PRICING_SECTION_LABEL}>
+                  {form.tradeTypes.includes('AUCTION') ? t('marketplace.startingPrice', { defaultValue: 'Starting price' }) : t('marketplace.price', { defaultValue: 'Price' })}
+                </label>
+                <PriceInputWithCurrency
+                  value={form.priceCents}
+                  onChange={(v) => setForm((f) => ({ ...f, priceCents: v }))}
+                  currency={form.currency}
+                  onCurrencyChange={(v) => setForm((f) => ({ ...f, currency: v }))}
+                  placeholder="0.00"
+                />
+                {form.tradeTypes.includes('AUCTION') && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {priceSet
+                      ? t('marketplace.hintStartingPrice', { defaultValue: 'Opening bid; first bid must be at least {{price}}.', price: priceDisplay })
+                      : t('marketplace.setPriceFirst', { defaultValue: 'Set the price above first.' })}
+                  </p>
+                )}
+                {form.tradeTypes.includes('BUY_IT_NOW') && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {priceSet
+                      ? (form.negotiationAcceptable
+                        ? t('marketplace.hintPriceWithNegotiation', { defaultValue: 'Your asking price {{price}}. Buyers see it and can make an offer in chat; you can accept or negotiate.', price: priceDisplay })
+                        : t('marketplace.hintPrice', { defaultValue: 'Fixed price. Buyers pay {{price}} to buy.', price: priceDisplay }))
+                      : t('marketplace.setPriceFirst', { defaultValue: 'Set the price above first.' })}
+                  </p>
+                )}
+              </FormField>
+            );
+          })()}
+
+          {form.tradeTypes[0] === 'BUY_IT_NOW' && (
+            <FormField>
+              <div className="flex items-center justify-between gap-3">
+                <label className={PRICING_SECTION_LABEL_INLINE}>
+                  {t('marketplace.negotiationAcceptable', { defaultValue: 'Negotiation acceptable' })}
+                </label>
+                <ToggleSwitch checked={form.negotiationAcceptable} onChange={(v) => setForm((f) => ({ ...f, negotiationAcceptable: v }))} />
+              </div>
             </FormField>
           )}
-
           {!form.tradeTypes.includes('FREE') && form.tradeTypes.includes('AUCTION') && (
-            <FormField required>
-              <AuctionDurationSelector
-                value={form.auctionEndsAt}
-                onChange={(endTime) => setForm((f) => ({ ...f, auctionEndsAt: endTime }))}
-              />
-            </FormField>
+            <>
+              <FormField>
+                <label className={PRICING_SECTION_LABEL}>
+                  {t('marketplace.auctionType', { defaultValue: 'Auction type' })}
+                </label>
+                <SegmentedSwitch
+                  tabs={[
+                    { id: 'RISING', label: t('marketplace.auctionClassical', { defaultValue: 'Classical' }) },
+                    { id: 'HOLLAND', label: t('marketplace.auctionHolland', { defaultValue: 'Holland' }) },
+                  ]}
+                  activeId={form.auctionType}
+                  onChange={(id) => setForm((f) => ({ ...f, auctionType: id as AuctionType }))}
+                  titleInActiveOnly={false}
+                  layoutId="auction-type-create"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {form.auctionType === 'HOLLAND'
+                    ? t('marketplace.auctionTypeHintHolland', { defaultValue: 'Price drops at set intervals until someone buys at the current price.' })
+                    : t('marketplace.auctionTypeHintRising', { defaultValue: 'Highest bid wins when the auction ends, if it meets the reserve.' })}
+                </p>
+              </FormField>
+              <FormField>
+                <label className={PRICING_SECTION_LABEL}>
+                  {t('marketplace.reservePriceOptional', { defaultValue: 'Reserve price' })}
+                </label>
+                <PriceInputWithCurrency
+                  value={form.reservePriceCents}
+                  onChange={(v) => setForm((f) => ({ ...f, reservePriceCents: v }))}
+                  currency={form.currency}
+                  onCurrencyChange={(v) => setForm((f) => ({ ...f, currency: v }))}
+                  placeholder={t('marketplace.optional', { defaultValue: 'Optional' })}
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('marketplace.reservePriceHint', { defaultValue: 'You will not sell below this. Hidden from bidders. Between starting and Buy it now (if set).' })}</p>
+              </FormField>
+              {form.auctionType === 'HOLLAND' && (
+                <>
+                  <FormField>
+                    <label className={PRICING_SECTION_LABEL}>
+                      {t('marketplace.hollandDecrement', { defaultValue: 'Price drop' })} ({form.currency})
+                    </label>
+                    <Input
+                      type="number"
+                      step={0.01}
+                      min={0.01}
+                      value={form.hollandDecrement}
+                      onChange={(e) => setForm((f) => ({ ...f, hollandDecrement: e.target.value }))}
+                      placeholder="0.50"
+                      className={INPUT_CLASS}
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('marketplace.hollandDecrementHint', { defaultValue: 'Amount the displayed price decreases each interval. Min 0.01.' })}</p>
+                  </FormField>
+                  <FormField>
+                    <label className={PRICING_SECTION_LABEL}>
+                      {t('marketplace.hollandInterval', { defaultValue: 'Interval (minutes)' })}
+                    </label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={form.hollandIntervalMinutes}
+                      onChange={(e) => setForm((f) => ({ ...f, hollandIntervalMinutes: e.target.value === '' ? '' : Number(e.target.value) }))}
+                      placeholder="5"
+                      className={INPUT_CLASS}
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('marketplace.hollandIntervalHint', { defaultValue: 'How often the price drops (e.g. every 5 minutes).' })}</p>
+                  </FormField>
+                </>
+              )}
+              <FormField>
+                <label className={PRICING_SECTION_LABEL}>
+                  {t('marketplace.buyItNowPriceOptional', { defaultValue: 'Buy it now price' })}
+                </label>
+                <PriceInputWithCurrency
+                  value={form.buyItNowPriceCents}
+                  onChange={(v) => setForm((f) => ({ ...f, buyItNowPriceCents: v }))}
+                  currency={form.currency}
+                  onCurrencyChange={(v) => setForm((f) => ({ ...f, currency: v }))}
+                  placeholder={t('marketplace.optional', { defaultValue: 'Optional' })}
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('marketplace.buyItNowPriceHint', { defaultValue: 'If a buyer pays this, the auction ends immediately. Must be ≥ starting price.' })}</p>
+              </FormField>
+              <FormField required>
+                <label className={PRICING_SECTION_LABEL}>
+                  {t('marketplace.auctionEndsAt', { defaultValue: 'Auction ends' })}
+                </label>
+                <AuctionDurationSelector
+                  value={form.auctionEndsAt}
+                  onChange={(endTime) => setForm((f) => ({ ...f, auctionEndsAt: endTime }))}
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('marketplace.auctionEndsHint', { defaultValue: 'Bidding closes at this time. For rising auctions, highest bid wins if it meets the reserve.' })}</p>
+              </FormField>
+              {(() => {
+                const startCents = priceToCents(form.priceCents);
+                const hasStart = startCents != null;
+                const hasEnd = !!form.auctionEndsAt;
+                const hollandComplete =
+                  form.auctionType !== 'HOLLAND' ||
+                  (form.hollandDecrement !== '' && form.hollandIntervalMinutes !== '');
+                const notSet = t('marketplace.summaryNotSet', { defaultValue: 'not set' });
+                const startingPrice = hasStart ? formatPrice(startCents!, form.currency) : notSet;
+                const reserveCents = priceToCents(form.reservePriceCents);
+                const binCents = priceToCents(form.buyItNowPriceCents);
+                const reservePrice = reserveCents != null ? formatPrice(reserveCents, form.currency) : '';
+                const buyItNowPrice = binCents != null ? formatPrice(binCents, form.currency) : '';
+                const endsAt = hasEnd ? new Date(form.auctionEndsAt!).toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }) : notSet;
+                const parts: string[] = [];
+                if (form.auctionType === 'RISING') {
+                  parts.push(t('marketplace.auctionSummaryRisingIntro', { defaultValue: 'Start price is {{startingPrice}}. Bids will raise this price.', startingPrice }));
+                  if (reserveCents != null) {
+                    parts.push(t('marketplace.auctionSummaryReserveClause', { defaultValue: 'If the highest bid does not reach {{reservePrice}}, you will not sell it.', reservePrice }));
+                  }
+                  if (binCents != null) {
+                    parts.push(t('marketplace.auctionSummaryBuyItNowClause', { defaultValue: 'You will sell immediately if someone pays {{buyItNowPrice}}.', buyItNowPrice }));
+                  }
+                } else {
+                  const decrementStr = form.hollandDecrement !== '' ? formatPrice(priceToCents(form.hollandDecrement) ?? 0, form.currency) : notSet;
+                  const intervalStr = form.hollandIntervalMinutes !== '' ? `${form.hollandIntervalMinutes} ${t('marketplace.minutesUnit', { defaultValue: 'min' })}` : notSet;
+                  parts.push(t('marketplace.auctionSummaryHollandIntro', {
+                    defaultValue: 'Price starts at {{startingPrice}} and drops by {{decrement}} every {{interval}} until someone buys at the current price.',
+                    startingPrice,
+                    decrement: decrementStr,
+                    interval: intervalStr,
+                  }));
+                  if (binCents != null) {
+                    parts.push(t('marketplace.auctionSummaryBuyItNowClause', { defaultValue: 'You will sell immediately if someone pays {{buyItNowPrice}}.', buyItNowPrice }));
+                  }
+                }
+                parts.push(t('marketplace.auctionSummaryEndsClause', { defaultValue: 'Auction ends at {{endsAt}}.', endsAt }));
+                if (!hasStart || !hasEnd || !hollandComplete) {
+                  const missing: string[] = [];
+                  if (!hasStart) missing.push(t('marketplace.requiredStartingPrice', { defaultValue: 'starting price' }));
+                  if (!hasEnd) missing.push(t('marketplace.requiredEndDate', { defaultValue: 'end date' }));
+                  if (form.auctionType === 'HOLLAND' && form.hollandDecrement === '') {
+                    missing.push(t('marketplace.requiredPriceDrop', { defaultValue: 'price drop' }));
+                  }
+                  if (form.auctionType === 'HOLLAND' && form.hollandIntervalMinutes === '') {
+                    missing.push(t('marketplace.requiredInterval', { defaultValue: 'interval' }));
+                  }
+                  const fields =
+                    missing.length === 1
+                      ? missing[0]
+                      : missing.slice(0, -1).join(', ') + ' ' + t('marketplace.requiredListAnd', { defaultValue: 'and' }) + ' ' + missing[missing.length - 1];
+                  parts.push(t('marketplace.setAuctionValuesFirst', { defaultValue: 'Set {{fields}} above first.', fields }));
+                }
+                return (
+                  <p className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400">
+                    {parts.join(' ')}
+                  </p>
+                );
+              })()}
+            </>
           )}
         </Card>
 

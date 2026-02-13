@@ -57,19 +57,19 @@ export async function validateGenderForGame(
 
     case GenderTeam.MEN:
       if (newUser.gender !== Gender.MALE) {
-        throw new ApiError(400, 'Only male players can join this game');
+        throw new ApiError(400, 'Only men can join this game');
       }
       break;
 
     case GenderTeam.WOMEN:
       if (newUser.gender !== Gender.FEMALE) {
-        throw new ApiError(400, 'Only female players can join this game');
+        throw new ApiError(400, 'Only women can join this game');
       }
       break;
 
     case GenderTeam.MIX_PAIRS:
       if (newUser.gender !== Gender.MALE && newUser.gender !== Gender.FEMALE) {
-        throw new ApiError(400, 'Only male or female players can join this game');
+        throw new ApiError(400, 'Only men or women can join this game');
       }
       break;
   }

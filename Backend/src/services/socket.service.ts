@@ -252,6 +252,20 @@ class SocketService {
         }
       });
 
+      socket.on('join-market-item-room', (marketItemId: string) => {
+        if (marketItemId) {
+          socket.join(`market-item-${marketItemId}`);
+          socket.emit('joined-market-item-room', { marketItemId });
+        }
+      });
+
+      socket.on('leave-market-item-room', (marketItemId: string) => {
+        if (marketItemId) {
+          socket.leave(`market-item-${marketItemId}`);
+          socket.emit('left-market-item-room', { marketItemId });
+        }
+      });
+
       socket.emit('sync-required', { timestamp: new Date().toISOString() });
 
       socket.on('disconnect', () => {
@@ -830,19 +844,19 @@ class SocketService {
         console.error(`[SocketService] Cannot emit ${eventName}: missing gameId`);
         return;
       }
-      
       const roomName = `game-${gameId}`;
       const socketsInRoom = await this.io.in(roomName).fetchSockets();
-      
       if (socketsInRoom.length > 0) {
-        console.log(`[SocketService] Emitting ${eventName} to game room ${roomName} (${socketsInRoom.length} socket(s))`);
         this.io.to(roomName).emit(eventName, data);
-      } else {
-        console.log(`[SocketService] No sockets in room ${roomName} for ${eventName}`);
       }
     } else {
       console.warn(`[SocketService] Unknown event type: ${eventName}`);
     }
+  }
+
+  public emitAuctionUpdate(marketItemId: string, event: string, payload: any) {
+    const room = `market-item-${marketItemId}`;
+    this.io.to(room).emit(event, payload);
   }
 
   public getIO(): SocketIOServer {
