@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { Input, OTPInput } from '@/components';
@@ -14,25 +14,20 @@ import { signInWithGoogle } from '@/services/googleAuth.service';
 import { isIOS } from '@/utils/capacitor';
 import { AppleIcon } from '@/components/AppleIcon';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
-import { navigateWithTracking } from '@/utils/navigation';
 
 type LoginTab = 'main' | 'telegram' | 'phone';
 
-const TAB_ORDER: Record<string, number> = { '/login': 0, '/login/telegram': 1, '/login/phone': 2 };
+const TAB_ORDER: Record<LoginTab, number> = { main: 0, telegram: 1, phone: 2 };
 
 export const Login = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const prevPathRef = useRef(location.pathname);
-  const pathname = location.pathname;
-  const tab: LoginTab = pathname === '/login/telegram' ? 'telegram' : pathname === '/login/phone' ? 'phone' : 'main';
-  const prevPath = prevPathRef.current;
-  const dir = (TAB_ORDER[pathname] ?? 0) - (TAB_ORDER[prevPath] ?? 0);
-  const direction = dir > 0 ? 1 : -1;
-  if (pathname !== prevPath) prevPathRef.current = pathname;
+  const [tab, setTab] = useState<LoginTab>('main');
+  const prevTabRef = useRef<LoginTab>(tab);
+  const direction = TAB_ORDER[tab] - TAB_ORDER[prevTabRef.current];
+  if (tab !== prevTabRef.current) prevTabRef.current = tab;
 
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -49,13 +44,11 @@ export const Login = () => {
     }
   }, [error]);
 
-  const goToTab = (path: '/login' | '/login/telegram' | '/login/phone') => {
-    navigateWithTracking(navigate, path);
-  };
+  const goToTab = (next: LoginTab) => setTab(next);
 
   const handleBack = () => {
     if (tab === 'telegram') setOtp('');
-    navigate(-1);
+    setTab('main');
   };
 
   const handlePhoneLogin = async (e: React.FormEvent) => {
@@ -264,8 +257,8 @@ export const Login = () => {
 
   return (
     <AuthLayout>
-      <div className="relative overflow-x-clip">
-        <AnimatePresence initial={false} mode="wait" custom={direction}>
+      <div className="relative overflow-x-clip min-h-[340px]">
+        <AnimatePresence initial={false} mode="sync" custom={direction}>
           {tab === 'main' && (
             <motion.div
               key="main"
@@ -275,6 +268,7 @@ export const Login = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
+              className="absolute inset-0 w-full min-w-0"
             >
               <AnimatePresence mode="wait">
                 {error && <ErrorBanner key="error" error={error} />}
@@ -310,7 +304,7 @@ export const Login = () => {
                 )}
                 <button
                   type="button"
-                  onClick={() => goToTab('/login/telegram')}
+                  onClick={() => goToTab('telegram')}
                   className={`${btnBase} flex items-center justify-center gap-3 bg-gradient-to-r from-[#0088cc] to-[#0099dd] hover:from-[#007ab8] hover:to-[#0088cc] text-white shadow-lg shadow-[#0088cc]/30 hover:shadow-xl hover:shadow-[#0088cc]/40`}
                 >
                   <TelegramIcon size={20} className="text-white" />
@@ -318,7 +312,7 @@ export const Login = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => goToTab('/login/phone')}
+                  onClick={() => goToTab('phone')}
                   className="w-full h-11 flex items-center justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-700/60 rounded-lg transition-all"
                 >
                   <Phone size={16} />
@@ -337,6 +331,7 @@ export const Login = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
+              className="absolute inset-0 w-full min-w-0"
             >
               <div className="flex items-center gap-3 mb-7">
                 <button
@@ -396,6 +391,7 @@ export const Login = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
+              className="absolute inset-0 w-full min-w-0"
             >
               <div className="flex items-center gap-3 mb-7">
                 <button

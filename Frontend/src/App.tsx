@@ -267,30 +267,6 @@ function AppContent() {
           <PlayerCardModalManager>
             <Routes>
         <Route
-          path="/login/telegram"
-          element={
-            isAuthenticated ? (
-              <Navigate to="/" replace />
-            ) : (
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                <Login />
-              </Suspense>
-            )
-          }
-        />
-        <Route
-          path="/login/phone"
-          element={
-            isAuthenticated ? (
-              <Navigate to="/" replace />
-            ) : (
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                <Login />
-              </Suspense>
-            )
-          }
-        />
-        <Route
           path="/login"
           element={
             isAuthenticated ? (

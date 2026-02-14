@@ -138,8 +138,8 @@ export function buildUrl(place: Place, params?: PlaceParams, overlay?: Overlay):
     case 'selectCity': path = '/select-city'; break;
     case 'completeProfile': path = '/complete-profile'; break;
     case 'login': path = '/login'; break;
-    case 'loginPhone': path = '/login/phone'; break;
-    case 'loginTelegram': path = '/login/telegram'; break;
+    case 'loginPhone': path = '/login'; break;
+    case 'loginTelegram': path = '/login'; break;
     case 'register': path = '/register'; break;
     case 'character': path = '/character'; break;
     default: path = '/'; break;
