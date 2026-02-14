@@ -1,10 +1,6 @@
-import OpenAI from "openai";
 import { FORMAT_CLUB_SYSTEM, formatClubUser } from "../prompts/format-club.js";
 import { fillPlaceholders } from "../schema.js";
-
-function getOpenAI() {
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-}
+import { createChatCompletion } from "../lib/openaiRateLimit.js";
 
 function extractJson(content) {
   const raw = (content || "").trim();
@@ -19,14 +15,18 @@ function extractJson(content) {
   }
 }
 
-export async function runFormatAgent(detailBlob, city, country = "") {
-  const response = await getOpenAI().chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: FORMAT_CLUB_SYSTEM },
-      { role: "user", content: formatClubUser(detailBlob, city, country) },
-    ],
-  });
+export async function runFormatAgent(detailBlob, city, country = "", options = {}) {
+  const stats = options.stats ?? null;
+  const response = await createChatCompletion(
+    {
+      model: "gpt-5.2",
+      messages: [
+        { role: "system", content: FORMAT_CLUB_SYSTEM },
+        { role: "user", content: formatClubUser(detailBlob, city, country) },
+      ],
+    },
+    stats
+  );
   const content = response.choices?.[0]?.message?.content;
   const parsed = extractJson(content);
   if (!parsed) return null;

@@ -9,10 +9,12 @@ import { PlayerAvatar } from './PlayerAvatar';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { isAndroid } from '@/utils/capacitor';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import toast from 'react-hot-toast';
 
 export const ProfileLeaderboard = () => {
   const { t } = useTranslation();
+  const { translateCity } = useTranslatedGeo();
   const { user } = useAuthStore();
   const { leaderboardType, leaderboardScope, leaderboardTimePeriod, areFiltersSticky, setLeaderboardScope, setLeaderboardTimePeriod, setAreFiltersSticky } = useHeaderStore();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -259,7 +261,9 @@ export const ProfileLeaderboard = () => {
     </div>
   );
 
-  const cityName = user?.currentCity?.name || 'City';
+  const cityName = user?.currentCity
+    ? translateCity(user.currentCity.id, user.currentCity.name, user.currentCity.country)
+    : 'City';
 
   const handleSearchFocus = () => {
     setIsSearchFocused(true);

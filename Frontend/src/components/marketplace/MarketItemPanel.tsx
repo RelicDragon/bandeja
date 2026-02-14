@@ -7,6 +7,7 @@ import { MarketItemContextPanel } from '@/components/chat/contextPanels/MarketIt
 import { resolveUserCurrency, DEFAULT_CURRENCY } from '@/utils/currency';
 import { MapPin, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import { useMarketItemChatButton } from '@/components/chat/contextPanels/useMarketItemChatButton';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 
 interface MarketItemPanelProps {
   item: MarketItem;
@@ -36,6 +37,7 @@ export const MarketItemPanel = ({
   const hasPhoto = mediaUrls.length > 0;
   const userCurrency = resolveUserCurrency(user?.defaultCurrency) ?? DEFAULT_CURRENCY;
   const { show: showChatButton, chatButtonProps } = useMarketItemChatButton(localItem, { onNavigate: onClose });
+  const { translateCity } = useTranslatedGeo();
 
   const handleItemUpdate = (updatedItem: MarketItem) => {
     setLocalItem(updatedItem);
@@ -131,7 +133,7 @@ export const MarketItemPanel = ({
           {localItem.city && (
             <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
               <MapPin size={16} />
-              {localItem.city.name}
+              {translateCity(localItem.city.id, localItem.city.name, localItem.city.country)}
             </div>
           )}
         </div>

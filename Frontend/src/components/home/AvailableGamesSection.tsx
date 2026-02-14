@@ -11,6 +11,7 @@ import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MonthCalendar } from './MonthCalendar';
 import { TrainersList } from './TrainersList';
 import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
@@ -37,6 +38,7 @@ export const AvailableGamesSection = ({
   onNoteSaved,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
+  const { translateCity } = useTranslatedGeo();
   const navigate = useNavigate();
   const { setCurrentPage, setIsAnimating, findViewMode, setFindViewMode, requestFindGoToCurrent, setRequestFindGoToCurrent } = useNavigationStore();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -300,7 +302,7 @@ export const AvailableGamesSection = ({
           >
             <MapPin size={16} className="text-primary-600 dark:text-primary-400" />
             <span className="text-sm font-medium text-gray-900 dark:text-white">
-              {user?.currentCity?.name || t('auth.selectCity')}
+              {user?.currentCity ? translateCity(user.currentCity.id, user.currentCity.name, user.currentCity.country) : t('auth.selectCity')}
             </span>
           </button>
           <button

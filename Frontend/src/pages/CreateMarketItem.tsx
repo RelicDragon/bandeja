@@ -11,6 +11,7 @@ import { ToggleSwitch } from '@/components';
 import { formatPrice } from '@/utils/currency';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { MapPin } from 'lucide-react';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { pickImages } from '@/utils/photoCapture';
 
 const MARKETPLACE_DRAFT_KEY = 'marketplace_create_draft';
@@ -47,6 +48,7 @@ const clearDraft = () => {
 export const CreateMarketItem = () => {
   const { id } = useParams<{ id: string }>();
   const { t, i18n } = useTranslation();
+  const { translateCity } = useTranslatedGeo();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isEdit = !!id;
@@ -292,11 +294,12 @@ export const CreateMarketItem = () => {
         <Card className="p-3 space-y-3 border-0 shadow-none">
           {(() => {
             const cityId = form.cityId || userCityId;
-            const cityName = user?.currentCity?.name ?? cities.find((c) => c.id === cityId)?.name;
-            return cityName ? (
+            const city = user?.currentCity ?? cities.find((c) => c.id === cityId);
+            const cityDisplay = city ? translateCity(city.id, city.name, city.country) : '';
+            return cityDisplay ? (
               <p className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
                 <MapPin className="w-3.5 h-3.5 shrink-0 text-primary-500" strokeWidth={2.25} />
-                {t('marketplace.itemPlacedIn', { defaultValue: 'Your listing will be placed in {{city}}', city: cityName })}
+                {t('marketplace.itemPlacedIn', { defaultValue: 'Your listing will be placed in {{city}}', city: cityDisplay })}
               </p>
             ) : null;
           })()}
@@ -339,11 +342,12 @@ export const CreateMarketItem = () => {
 
           {(() => {
             const cityId = form.cityId || userCityId;
-            const cityName = user?.currentCity?.name ?? cities.find((c) => c.id === cityId)?.name;
-            return cityId && cityName ? (
+            const city = user?.currentCity ?? cities.find((c) => c.id === cityId);
+            const cityDisplay = city ? translateCity(city.id, city.name, city.country) : '';
+            return cityId && cityDisplay ? (
               <CitySelectorField
                 primaryCityId={cityId}
-                primaryCityName={cityName}
+                primaryCityName={cityDisplay}
                 additionalCityIds={form.additionalCityIds}
                 cities={cities}
                 onAddCity={(newCityId) => {

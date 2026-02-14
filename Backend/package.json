@@ -14,6 +14,8 @@
     "lint": "eslint src --ext .ts",
     "migrate-to-s3": "ts-node scripts/migrate-to-s3.ts",
     "load-playtomic-jsons": "ts-node scripts/load-playtomic-jsons.ts",
+    "export-geo-translations": "ts-node scripts/export-geo-translations.ts",
+    "detect-same-cities": "ts-node scripts/detect-same-cities.ts",
     "backfill:last-message-previews": "ts-node scripts/backfillLastMessagePreviews.ts",
     "backfill:content-searchable": "ts-node scripts/backfillContentSearchable.ts",
     "backfill:training-trainer-id": "ts-node scripts/backfillTrainingTrainerId.ts",

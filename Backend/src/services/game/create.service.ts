@@ -192,7 +192,7 @@ export class GameCreateService {
           create: {
             userId,
             role: 'OWNER',
-            status: creatorNonPlaying ? 'NON_PLAYING' : (ownerIsPlaying ? 'PLAYING' : 'IN_QUEUE'),
+            status: creatorNonPlaying || !ownerIsPlaying ? 'NON_PLAYING' : 'PLAYING',
           },
         },
       },

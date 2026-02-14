@@ -20,12 +20,14 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { extractLanguageCode, normalizeLanguageForProfile } from '@/utils/displayPreferences';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { isCapacitor, getAppInfo, isIOS } from '@/utils/capacitor';
 import { AppleIcon } from '@/components/AppleIcon';
 import { getCurrencyOptions, getCurrencySymbol } from '@/utils/currency';
 
 export const ProfileContent = () => {
   const { t, i18n } = useTranslation();
+  const { translateCity } = useTranslatedGeo();
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
@@ -1015,7 +1017,9 @@ export const ProfileContent = () => {
           <div className="flex items-center gap-2 mb-4">
             <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
             <span className="text-gray-900 dark:text-white">
-              {user?.currentCity?.name}
+              {user?.currentCity
+                ? translateCity(user.currentCity.id, user.currentCity.name, user.currentCity.country)
+                : ''}
             </span>
           </div>
           <Button

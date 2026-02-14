@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigation } from 'lucide-react';
+import { useGeoReady } from '@/hooks/useGeoReady';
+import { getCityDisplayName, getCityNativeName } from '@/utils/geoTranslations';
 import type { City } from '@/types';
 
 export interface CityListItemProps {
@@ -28,14 +30,18 @@ function CityListItemInner({
   onSelect,
   className = '',
 }: CityListItemProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  useGeoReady();
+  const displayName = getCityDisplayName(city.id, city.name, city.country, i18n.language);
+  const nativeName = getCityNativeName(city.id, city.name, city.country);
+  const showNative = nativeName && nativeName !== displayName;
   const ref = isScrollTarget ? scrollTargetRef : isSelected ? selectedCityRef : undefined;
   return (
     <button
       ref={ref}
       onClick={() => onSelect(city.id)}
       disabled={submitting && !isSelectorMode}
-      aria-label={isNearest ? `${city.name}, ${t('city.nearestToYou')}` : undefined}
+      aria-label={isNearest ? `${displayName}, ${t('city.nearestToYou')}` : undefined}
       className={
         isSelectorMode
           ? `w-full min-w-0 text-left px-4 py-3 rounded-xl transition-all ${
@@ -60,7 +66,12 @@ function CityListItemInner({
               <Navigation className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
             </span>
           )}
-          <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{city.name}</span>
+          <span className="font-medium text-gray-900 dark:text-white text-sm truncate">
+            {displayName}
+            {showNative && (
+              <span className="text-gray-500 dark:text-gray-400 font-normal ml-1 text-xs">{nativeName}</span>
+            )}
+          </span>
         </span>
         {isSelected && (
           <span

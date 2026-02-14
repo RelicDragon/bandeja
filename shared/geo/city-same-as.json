@@ -1,0 +1,122 @@
+{
+  "generatedAt": "2026-02-14T08:32:09.724Z",
+  "totalCities": 728,
+  "sameCityGroups": [
+    {
+      "canonicalId": "cmkxcoarr022psbd0dnxi68ia",
+      "canonicalName": "Besozzo",
+      "country": "Italy",
+      "aliasIds": [
+        "cmkxcob2g02etsbd0cua2fxff"
+      ],
+      "aliasNames": [
+        "Malgesso"
+      ]
+    },
+    {
+      "canonicalId": "cmkxcod8u04c9sbd0eupr3561",
+      "canonicalName": "Novegro-Tregarezzo",
+      "country": "Italy",
+      "aliasIds": [
+        "cmkxcob7602i3sbd0hxqxxltb"
+      ],
+      "aliasNames": [
+        "Segrate"
+      ]
+    },
+    {
+      "canonicalId": "cmkxcodcw04h3sbd0x0yfyp0h",
+      "canonicalName": "Santo Stefano di Magra",
+      "country": "Italy",
+      "aliasIds": [
+        "cmkxcoccx03olsbd03x9dghp1"
+      ],
+      "aliasNames": [
+        "Sarzana"
+      ]
+    },
+    {
+      "canonicalId": "cmkxcof5r05u3sbd0xdy24phi",
+      "canonicalName": "Kristiansand",
+      "country": "Norway",
+      "aliasIds": [
+        "cmkxcof6005ucsbd0r42lojq5"
+      ],
+      "aliasNames": [
+        "Kristiansund"
+      ]
+    },
+    {
+      "canonicalId": "cmkxcofdi061gsbd0zvtv43bd",
+      "canonicalName": "Campo de Baixo",
+      "country": "Portugal",
+      "aliasIds": [
+        "cmkxcog9o06pasbd03aoogo74"
+      ],
+      "aliasNames": [
+        "Porto Santo"
+      ]
+    },
+    {
+      "canonicalId": "cmkxcofj1066gsbd0vfkz97vl",
+      "canonicalName": "Matosinhos e Leça da Palmeira",
+      "country": "Portugal",
+      "aliasIds": [
+        "cmkxcofcz060wsbd0soxjl4yj"
+      ],
+      "aliasNames": [
+        "Perafita"
+      ]
+    }
+  ],
+  "byCanonicalId": {
+    "cmkxcoarr022psbd0dnxi68ia": {
+      "aliasIds": [
+        "cmkxcob2g02etsbd0cua2fxff"
+      ],
+      "aliasNames": [
+        "Malgesso"
+      ]
+    },
+    "cmkxcod8u04c9sbd0eupr3561": {
+      "aliasIds": [
+        "cmkxcob7602i3sbd0hxqxxltb"
+      ],
+      "aliasNames": [
+        "Segrate"
+      ]
+    },
+    "cmkxcodcw04h3sbd0x0yfyp0h": {
+      "aliasIds": [
+        "cmkxcoccx03olsbd03x9dghp1"
+      ],
+      "aliasNames": [
+        "Sarzana"
+      ]
+    },
+    "cmkxcof5r05u3sbd0xdy24phi": {
+      "aliasIds": [
+        "cmkxcof6005ucsbd0r42lojq5"
+      ],
+      "aliasNames": [
+        "Kristiansund"
+      ]
+    },
+    "cmkxcofdi061gsbd0zvtv43bd": {
+      "aliasIds": [
+        "cmkxcog9o06pasbd03aoogo74"
+      ],
+      "aliasNames": [
+        "Porto Santo"
+      ]
+    },
+    "cmkxcofj1066gsbd0vfkz97vl": {
+      "aliasIds": [
+        "cmkxcofcz060wsbd0soxjl4yj"
+      ],
+      "aliasNames": [
+        "Perafita"
+      ]
+    }
+  }
+}

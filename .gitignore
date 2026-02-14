@@ -95,6 +95,9 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+# Dr5hn geo data (clone via export script)
+shared/dr5hn-data/
+
 # Database
 *.db
 *.sqlite

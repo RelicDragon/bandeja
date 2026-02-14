@@ -12,6 +12,7 @@ import { favoritesApi } from '@/api/favorites';
 import { CreateSubscriptionDto, UpdateSubscriptionDto } from '@/api/gameSubscriptions';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 
 interface GameSubscriptionFormProps {
   subscription?: {
@@ -59,6 +60,7 @@ export const GameSubscriptionForm = ({
   onCancel,
 }: GameSubscriptionFormProps) => {
   const { t, i18n } = useTranslation();
+  const { translateCity } = useTranslatedGeo();
   const user = useAuthStore((state) => state.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enUS, [i18n.language]);
@@ -247,7 +249,7 @@ export const GameSubscriptionForm = ({
           <Select
             options={cities.map(city => ({
               value: city.id,
-              label: city.name,
+              label: translateCity(city.id, city.name, city.country),
             }))}
             value={cityId}
             onChange={setCityId}

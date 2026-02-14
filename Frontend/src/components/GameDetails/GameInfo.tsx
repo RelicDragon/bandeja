@@ -42,6 +42,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import toast from 'react-hot-toast';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import type { CalendarEventInput } from '@/utils/calendar';
@@ -86,6 +87,7 @@ export const GameInfo = ({
   onCancelTrainerInvite,
 }: GameInfoProps) => {
   const { t } = useTranslation();
+  const { translateCity } = useTranslatedGeo();
   const { user } = useAuthStore();
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
   const clubTz = getClubTimezone(game);
@@ -745,7 +747,7 @@ export const GameInfo = ({
           {isDifferentCity && game.city?.name && (
             <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
               <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
-              <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{game.city.name}</span>
+              <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{translateCity(game.city.id, game.city.name, game.city.country)}</span>
             </div>
           )}
           {renderName()}
@@ -777,7 +779,7 @@ export const GameInfo = ({
         {isDifferentCity && game.city?.name && (
           <div className="inline-flex items-center gap-1.5 mb-3 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
             <Plane size={14} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
-            <span className="text-sm font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{game.city.name}</span>
+            <span className="text-sm font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{translateCity(game.city.id, game.city.name, game.city.country)}</span>
           </div>
         )}
         <div className="flex items-start justify-between mb-4">

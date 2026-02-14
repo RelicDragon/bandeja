@@ -10,6 +10,7 @@ import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 
 import { useAuthStore } from '@/store/authStore';
 import { chatApi } from '@/api/chat';
@@ -39,6 +40,7 @@ export const GameCard = ({
   unreadCount = 0,
 }: GameCardProps) => {
   const { t } = useTranslation();
+  const { translateCity } = useTranslatedGeo();
   const navigate = useNavigate();
   const authUser = useAuthStore((state) => state.user);
   const effectiveUser = user || authUser;
@@ -229,7 +231,7 @@ export const GameCard = ({
         {isDifferentCity && game.city?.name && (
           <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
             <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
-            <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{game.city.name}</span>
+            <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{translateCity(game.city.id, game.city.name, game.city.country)}</span>
           </div>
         )}
         <>

@@ -1,6 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { citiesApi } from '@/api';
 import { City } from '@/types';
+import {
+  ensureGeoDataLoaded,
+  getGeoDataLoaded,
+  getCountrySearchNames,
+  getCitySearchNames,
+} from '@/utils/geoTranslations';
 
 function levenshtein(a: string, b: string): number {
   const an = a.length;
@@ -17,16 +23,45 @@ function levenshtein(a: string, b: string): number {
   return prevRow[bn];
 }
 
-function citySearchRelevancyScore(c: City, searchLower: string): number {
+function citySearchValues(searchNames: { en: string; es: string; ru: string; sr: string; native: string }): string[] {
+  return [searchNames.en, searchNames.es, searchNames.ru, searchNames.sr, searchNames.native]
+    .filter(Boolean)
+    .map((s) => s.toLowerCase());
+}
+
+function citySearchRelevancyScore(
+  c: City,
+  searchLower: string,
+  searchNames: { en: string; es: string; ru: string; sr: string; native: string }
+): number {
   const name = c.name.toLowerCase();
-  if (name === searchLower) return 0;
-  if (name.startsWith(searchLower)) return 1;
-  if (name.includes(searchLower)) return 3;
+  const values = citySearchValues(searchNames);
+  if (name === searchLower || values.some((v) => v === searchLower)) return 0;
+  if (values.some((v) => v.startsWith(searchLower)) || name.startsWith(searchLower)) return 1;
+  if (values.some((v) => v.includes(searchLower)) || name.includes(searchLower)) return 3;
   const maxLen = Math.max(name.length, searchLower.length);
   if (maxLen > 0 && levenshtein(name, searchLower) / maxLen <= 0.35) return 2;
   if (c.administrativeArea?.toLowerCase().includes(searchLower)) return 4;
   if (c.subAdministrativeArea?.toLowerCase().includes(searchLower)) return 5;
   return 6;
+}
+
+function matchCountrySearch(countryKey: string, searchLower: string): boolean {
+  const names = getCountrySearchNames(countryKey);
+  const values = [names.en, names.es, names.ru, names.sr, names.native]
+    .filter(Boolean)
+    .map((s) => s.toLowerCase());
+  return values.some((v) => v.includes(searchLower));
+}
+
+function matchCitySearch(
+  cityId: string,
+  cityName: string,
+  countryKey: string,
+  searchLower: string
+): boolean {
+  const names = getCitySearchNames(cityId, cityName, countryKey);
+  return citySearchValues(names).some((v) => v.includes(searchLower));
 }
 
 export type CityListView = 'country' | 'city';
@@ -53,7 +88,12 @@ export function useCityList({ enabled, currentCityId, onFetchError }: UseCityLis
   const [error, setError] = useState('');
   const [view, setView] = useState<CityListView>('country');
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [geoReady, setGeoReady] = useState(false);
   const initialViewSetRef = useRef(false);
+
+  useEffect(() => {
+    if (enabled) ensureGeoDataLoaded().then(() => setGeoReady(getGeoDataLoaded()));
+  }, [enabled]);
 
   const searchTrimmed = search.trim();
   const searchLower = searchTrimmed.length >= 2 ? searchTrimmed.toLowerCase() : '';
@@ -77,10 +117,12 @@ export function useCityList({ enabled, currentCityId, onFetchError }: UseCityLis
 
   const filteredCountries = useMemo(() => {
     if (!searchLower) return countriesWithClubs;
-    return countriesWithClubs.filter((item) =>
-      item.country.toLowerCase().includes(searchLower)
-    );
-  }, [countriesWithClubs, searchLower]);
+    const useGeo = geoReady && getGeoDataLoaded();
+    return countriesWithClubs.filter((item) => {
+      if (useGeo && matchCountrySearch(item.country, searchLower)) return true;
+      return item.country.toLowerCase().includes(searchLower);
+    });
+  }, [countriesWithClubs, searchLower, geoReady]);
 
   const currentCountryCities = useMemo(() => {
     if (!selectedCountry) return [];
@@ -89,20 +131,27 @@ export function useCityList({ enabled, currentCityId, onFetchError }: UseCityLis
 
   const filteredCitiesForCountry = useMemo(() => {
     if (!searchLower) return currentCountryCities;
+    const useGeo = geoReady && getGeoDataLoaded();
     return currentCountryCities
-      .filter(
-        (c) =>
+      .filter((c) => {
+        if (useGeo && matchCitySearch(c.id, c.name, c.country, searchLower)) return true;
+        return (
           c.name.toLowerCase().includes(searchLower) ||
           (c.administrativeArea?.toLowerCase().includes(searchLower) ?? false) ||
           (c.subAdministrativeArea?.toLowerCase().includes(searchLower) ?? false) ||
           (Math.max(c.name.length, searchLower.length) > 0 &&
             levenshtein(c.name.toLowerCase(), searchLower) / Math.max(c.name.length, searchLower.length) <= 0.35)
-      )
+        );
+      })
       .sort((a, b) => {
-        const diff = citySearchRelevancyScore(a, searchLower) - citySearchRelevancyScore(b, searchLower);
+        const namesA = getCitySearchNames(a.id, a.name, a.country);
+        const namesB = getCitySearchNames(b.id, b.name, b.country);
+        const diff =
+          citySearchRelevancyScore(a, searchLower, namesA) -
+          citySearchRelevancyScore(b, searchLower, namesB);
         return diff !== 0 ? diff : a.name.localeCompare(b.name);
       });
-  }, [currentCountryCities, searchLower]);
+  }, [currentCountryCities, searchLower, geoReady]);
 
   const selectCountry = (country: string) => {
     setSelectedCountry(country);

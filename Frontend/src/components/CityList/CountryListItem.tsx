@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getCountryFlag } from '@/utils/countryFlag';
+import { useGeoReady } from '@/hooks/useGeoReady';
+import { getCountryDisplayName, getCountryNativeName } from '@/utils/geoTranslations';
 import type { CountryWithClubs } from '@/hooks/useCityList';
 
 export interface CountryListItemProps {
@@ -11,7 +13,11 @@ export interface CountryListItemProps {
 }
 
 function CountryListItemInner({ item, isSelected, onSelect, className = '' }: CountryListItemProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  useGeoReady();
+  const displayCountry = getCountryDisplayName(item.country, i18n.language);
+  const nativeName = getCountryNativeName(item.country);
+  const showNative = nativeName && nativeName !== displayCountry;
   return (
     <button
       type="button"
@@ -24,7 +30,12 @@ function CountryListItemInner({ item, isSelected, onSelect, className = '' }: Co
     >
       <span className="flex items-center gap-2 font-medium text-sm text-gray-900 dark:text-white min-w-0 overflow-hidden">
         <span className="text-lg leading-none shrink-0">{getCountryFlag(item.country)}</span>
-        <span className="truncate">{item.country}</span>
+        <span className="truncate">
+          {displayCountry}
+          {showNative && (
+            <span className="text-gray-500 dark:text-gray-400 font-normal ml-1 text-xs">{nativeName}</span>
+          )}
+        </span>
       </span>
       <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
         {t('city.clubsCount', { count: item.clubsCount })}

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { City } from '@/types';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { X, Plus, MapPin } from 'lucide-react';
 
 interface CitySelectorFieldProps {
@@ -23,6 +24,7 @@ export function CitySelectorField({
   disabled,
 }: CitySelectorFieldProps) {
   const { t } = useTranslation();
+  const { translateCity } = useTranslatedGeo();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -74,13 +76,13 @@ export function CitySelectorField({
               key={cityId}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-medium"
             >
-              {city.name}
+              {translateCity(city.id, city.name, city.country)}
               <button
                 type="button"
                 onClick={() => onRemoveCity(cityId)}
                 disabled={disabled}
                 className="ml-1 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-full p-0.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label={`Remove ${city.name}`}
+                aria-label={`Remove ${translateCity(city.id, city.name, city.country)}`}
               >
                 <X size={14} />
               </button>
@@ -111,7 +113,7 @@ export function CitySelectorField({
                     onClick={() => handleCitySelect(city.id)}
                     className="w-full text-left px-4 py-2 text-sm text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors first:rounded-t-lg last:rounded-b-lg"
                   >
-                    {city.name}
+                    {translateCity(city.id, city.name, city.country)}
                   </button>
                 ))}
               </div>

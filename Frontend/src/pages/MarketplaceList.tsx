@@ -12,11 +12,13 @@ import { Button } from '@/components';
 import { MarketItemCard, MarketplaceFilters, formatPriceDisplay, MarketItemDrawer } from '@/components/marketplace';
 import { currencyCacheService } from '@/services/currencyCache.service';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 
 const PAGE_SIZE = 20;
 
 export const MarketplaceList = () => {
   const { t } = useTranslation();
+  const { translateCity } = useTranslatedGeo();
   const user = useAuthStore((state) => state.user);
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -186,7 +188,10 @@ export const MarketplaceList = () => {
               <MapPin size={12} />
               {t('marketplace.listingsFromCity', {
                 defaultValue: 'Listings from {{city}} are shown',
-                city: user?.currentCity?.name ?? cities.find((c) => c.id === cityId)?.name ?? '',
+                city: (() => {
+                const city = user?.currentCity ?? cities.find((c) => c.id === cityId);
+                return city ? translateCity(city.id, city.name, city.country) : '';
+              })(),
               })}
             </p>
           )}

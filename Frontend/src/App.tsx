@@ -30,6 +30,7 @@ import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
 import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersistence';
 import { useDeepLink } from './hooks/useDeepLink';
 import { extractLanguageCode } from './utils/displayPreferences';
+import { GeoProvider } from './contexts/GeoProvider';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import { backButtonService } from './services/backButtonService';
 import { appLifecycleService } from './services/appLifecycle.service';
@@ -260,10 +261,11 @@ function AppContent() {
           }}
         />
       )}
-      <ToastProvider>
-        <PermissionModalProvider />
-        <PlayerCardModalManager>
-          <Routes>
+      <GeoProvider>
+        <ToastProvider>
+          <PermissionModalProvider />
+          <PlayerCardModalManager>
+            <Routes>
         <Route
           path="/login/telegram"
           element={
@@ -653,7 +655,8 @@ function AppContent() {
         <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </PlayerCardModalManager>
-      </ToastProvider>
+        </ToastProvider>
+      </GeoProvider>
     </div>
   );
 }

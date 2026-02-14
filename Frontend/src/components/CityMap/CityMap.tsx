@@ -6,6 +6,7 @@ import L from 'leaflet';
 import type { LatLngBoundsLiteral } from 'leaflet';
 import type { City } from '@/types';
 import type { ClubMapItem } from '@/api/clubs';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { appApi } from '@/api/app';
 import { useMapViewport } from './useMapViewport';
 import { getClubHouseIcon, getUserLocationIcon } from './MarkerIcons';
@@ -141,12 +142,16 @@ const ClubMarker = memo(({
   onClubClick 
 }: ClubMarkerProps) => {
   const { t } = useTranslation();
+  const { translateCity, translateCountry } = useTranslatedGeo();
   
   const handleClick = useCallback((e: L.LeafletMouseEvent) => {
     L.DomEvent.stopPropagation(e);
     onClubClick?.(club.cityId);
     e.target.openPopup();
   }, [club.cityId, onClubClick]);
+  
+  const cityDisplay = translateCity(club.cityId, club.cityName, club.country);
+  const countryDisplay = translateCountry(club.country);
   
   return (
     <Marker
@@ -157,7 +162,7 @@ const ClubMarker = memo(({
       <Popup>
         <div className="text-sm">
           <div className="font-semibold text-gray-900">{club.name}</div>
-          <div className="text-gray-500 text-xs mt-0.5">{club.cityName}, {club.country}</div>
+          <div className="text-gray-500 text-xs mt-0.5">{cityDisplay}, {countryDisplay}</div>
           <div className="text-gray-600 mt-0.5">{t('club.courtsCount', { count: club.courtsCount })}</div>
         </div>
       </Popup>

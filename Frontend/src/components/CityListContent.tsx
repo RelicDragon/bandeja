@@ -10,6 +10,8 @@ import { CityListItem } from '@/components/CityList/CityListItem';
 import { VirtualizedList } from '@/components/CityList/VirtualizedList';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { findNearestCity } from '@/utils/nearestCity';
+import { useGeoReady } from '@/hooks/useGeoReady';
+import { getCountryDisplayName, getCountrySearchNames, getCitySearchNames } from '@/utils/geoTranslations';
 import { appApi } from '@/api/app';
 import { clubsApi, type ClubMapItem } from '@/api/clubs';
 
@@ -71,7 +73,8 @@ export const CityListContent = ({
   contentClassName = '',
   onLocationError,
 }: CityListContentProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  useGeoReady();
   const isLoading = showingLoading ?? loading;
   const selectedCityRef = useRef<HTMLButtonElement>(null);
   const scrollTargetRef = useRef<HTMLButtonElement>(null);
@@ -121,14 +124,29 @@ export const CityListContent = ({
   const searchLower = search.trim().length >= 2 ? search.trim().toLowerCase() : '';
   const filteredMapCities = useMemo(() => {
     if (!searchLower) return mapCities;
-    return mapCities.filter(
-      (c) =>
+    return mapCities.filter((c) => {
+      const countryNames = getCountrySearchNames(c.country);
+      const countryMatch = [countryNames.en, countryNames.es, countryNames.ru, countryNames.sr, countryNames.native]
+        .filter(Boolean)
+        .some((v) => v.toLowerCase().includes(searchLower));
+      if (countryMatch) return true;
+      const cityNames = getCitySearchNames(c.id, c.name, c.country);
+      const cityMatch = [cityNames.en, cityNames.es, cityNames.ru, cityNames.sr, cityNames.native]
+        .filter(Boolean)
+        .some((v) => v.toLowerCase().includes(searchLower));
+      if (cityMatch) return true;
+      return (
         c.country.toLowerCase().includes(searchLower) ||
         c.name.toLowerCase().includes(searchLower) ||
         (c.administrativeArea?.toLowerCase().includes(searchLower) ?? false) ||
         (c.subAdministrativeArea?.toLowerCase().includes(searchLower) ?? false)
-    );
+      );
+    });
   }, [mapCities, searchLower]);
+
+  const displaySelectedCountry = selectedCountry
+    ? getCountryDisplayName(selectedCountry, i18n.language)
+    : '';
 
   const handleWhereAmI = async () => {
     setLocating(true);
@@ -268,7 +286,7 @@ export const CityListContent = ({
               onClick={backToCountries}
               className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:underline min-w-0 overflow-hidden truncate"
             >
-              <span className="truncate">← {selectedCountry}</span>
+              <span className="truncate">← {displaySelectedCountry}</span>
             </button>
           )}
           <div className="flex-1 min-w-0" />

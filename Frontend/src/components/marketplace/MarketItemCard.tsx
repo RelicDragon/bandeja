@@ -6,6 +6,7 @@ import { buildUrl } from '@/utils/urlSchema';
 import { MapPin } from 'lucide-react';
 import { currencyCacheService } from '@/services/currencyCache.service';
 import { formatConvertedPrice } from '@/utils/currency';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 
 const TRADE_TYPE_BADGE_CLASS = {
   BUY_IT_NOW: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
@@ -26,6 +27,7 @@ interface MarketItemCardProps {
 
 export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount, showLocation = false, userCurrency, onItemClick }: MarketItemCardProps) => {
   const { t } = useTranslation();
+  const { translateCity } = useTranslatedGeo();
   const navigate = useNavigate();
   const imageUrl = item.mediaUrls?.[0];
   const [priceDisplay, setPriceDisplay] = useState<{
@@ -181,7 +183,7 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
           {showLocation && item.city && (
             <span className="flex items-center gap-0.5 text-xs text-slate-500 dark:text-slate-400">
               <MapPin size={12} />
-              {item.city.name}
+              {translateCity(item.city.id, item.city.name, item.city.country)}
               {item.additionalCityIds && item.additionalCityIds.length > 0 && (
                 <span className="text-xs opacity-70">
                   +{item.additionalCityIds.length}

@@ -1,29 +1,27 @@
-const SERPER_API = "https://google.serper.dev/search";
+import { tavily } from "@tavily/core";
+import { addTavilySearch } from "../ui/stats.js";
+
+function getClient() {
+  const apiKey = process.env.TAVILY_API_KEY;
+  if (!apiKey) throw new Error("TAVILY_API_KEY is required in .env for web_search");
+  return tavily({ apiKey });
+}
 
 export async function webSearch(query, options = {}) {
-  const apiKey = process.env.SERPER_API_KEY;
-  if (!apiKey) {
-    throw new Error("SERPER_API_KEY is required in .env for web_search");
-  }
-  const limit = options.limit ?? 10;
-  const res = await fetch(SERPER_API, {
-    method: "POST",
-    headers: {
-      "X-API-KEY": apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ q: query, num: limit }),
+  const limit = options.limit ?? 20;
+  const stats = options.stats ?? null;
+  const client = getClient();
+  const response = await client.search(query, {
+    maxResults: Math.min(limit, 20),
+    searchDepth: "basic",
+    topic: "general",
+    includeUsage: !!stats,
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Serper API error ${res.status}: ${text}`);
-  }
-  const data = await res.json();
-  const organic = data.organic || [];
-  const snippets = organic.slice(0, limit).map((o) => ({
-    title: o.title,
-    link: o.link,
-    snippet: o.snippet,
+  if (stats) addTavilySearch(stats, response.usage ?? null);
+  const results = (response.results ?? []).slice(0, limit).map((r) => ({
+    title: r.title ?? "",
+    link: r.url ?? "",
+    snippet: r.content ?? "",
   }));
-  return JSON.stringify({ query, results: snippets }, null, 0);
+  return JSON.stringify({ query, results }, null, 0);
 }

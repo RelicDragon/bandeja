@@ -21,7 +21,7 @@ interface PtAddress {
   administrative_area?: string;
   country: string;
   country_code?: string;
-  coordinate?: { lat: number; lon: number };
+  coordinate?: { lat?: number | string; lon?: number | string };
   timezone?: string;
 }
 
@@ -47,6 +47,19 @@ interface PtClub {
 function buildAddress(addr: PtAddress): string {
   const parts = [addr.street, addr.postal_code, addr.city, addr.country].filter(Boolean);
   return parts.map(String).join(', ');
+}
+
+function parseCoord(coord: PtAddress['coordinate']): { lat: number; lon: number } | null {
+  if (coord == null) return null;
+  const rawLat = coord.lat;
+  const rawLon = coord.lon;
+  const lat = typeof rawLat === 'string' ? parseFloat(rawLat) : rawLat;
+  const lon = typeof rawLon === 'string' ? parseFloat(rawLon) : rawLon;
+  if (typeof lat !== 'number' || typeof lon !== 'number') return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (lat === 0 && lon === 0) return null;
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+  return { lat, lon };
 }
 
 async function getOrCreateCity(
@@ -112,8 +125,8 @@ async function getOrCreateClub(
       description,
       phone,
       website,
-      latitude: coord?.lat ?? null,
-      longitude: coord?.lon ?? null,
+      latitude: coord != null ? Number(coord.lat) : null,
+      longitude: coord != null ? Number(coord.lon) : null,
       ptMeta,
     } as Prisma.ClubUncheckedCreateInput,
     select: { id: true },
@@ -180,6 +193,12 @@ async function loadFile(filePath: string): Promise<{
       clubsSkipped++;
       continue;
     }
+    const parsedCoord = parseCoord(addr.coordinate);
+    if (!parsedCoord) {
+      clubsSkipped++;
+      continue;
+    }
+    addr.coordinate = parsedCoord;
 
     // Use only this club's country/country_code (file may contain multiple countries)
     const { country, country_code } = normalizeCountry(addr.country, addr.country_code);

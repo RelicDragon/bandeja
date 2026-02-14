@@ -294,6 +294,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         minHeight: 48,
         maxHeight: 120,
         overflow: 'hidden' as const,
+        wordBreak: 'break-word' as const,
+        overflowWrap: 'break-word' as const,
       },
       highlighter: {
         padding: '12px 16px',
@@ -304,6 +306,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         minHeight: 48,
         maxHeight: 120,
         overflow: 'hidden' as const,
+        wordBreak: 'break-word' as const,
+        overflowWrap: 'break-word' as const,
       },
       input: {
         padding: '12px 16px',
@@ -318,6 +322,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         maxHeight: 120,
         overflow: 'hidden' as const,
         resize: 'none' as const,
+        wordBreak: 'break-word' as const,
+        overflowWrap: 'break-word' as const,
         ...(style || {}),
       },
     },
@@ -390,7 +396,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   };
 
   return (
-    <div ref={containerRef} className={`mention-input-wrapper ${className}`}>
+    <div ref={containerRef} className={`mention-input-wrapper min-w-0 ${className}`}>
       <MentionsInput
         value={value}
         onChange={handleChange}

@@ -7,9 +7,23 @@ import path from "path";
 
 const DELAY_MS = 2000;
 
+function mergeListItems(items) {
+  const byKey = new Map();
+  for (const it of items) {
+    const name = (it.name || "").trim();
+    if (!name) continue;
+    const key = slugify(name);
+    const existing = byKey.get(key);
+    if (!existing || (!existing.url && it.url)) byKey.set(key, { name, url: it.url || "" });
+  }
+  return [...byKey.values()];
+}
+
 function delay(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
+
+function noop() {}
 
 function ensureDefaults(club) {
   const c = { ...club };
@@ -42,23 +56,38 @@ function ensureDefaults(club) {
 export async function runPipeline(city, country = "", options = {}) {
   const outDir = options.outDir ?? path.join(process.cwd(), "jsons");
   const maxClubs = options.maxClubs ?? 0;
+  const stats = options.stats ?? null;
+  const onPhase = options.onPhase ?? noop;
+  const onProgress = options.onProgress ?? noop;
+  const onError = options.onError ?? noop;
   const clubs = [];
-  const list = await runListAgent(city, country);
+  onPhase("list", { current: 0, total: 0, clubName: "" });
+  const expandSeeds = options.expandListSeeds ?? null;
+  let list = await runListAgent(city, country, { stats });
+  if (Array.isArray(expandSeeds) && expandSeeds.length > 0) {
+    for (const hint of expandSeeds) {
+      const extra = await runListAgent(city, country, { stats, listHint: hint });
+      list = mergeListItems([...list, ...extra]);
+    }
+  }
   const toProcess = maxClubs > 0 ? list.slice(0, maxClubs) : list;
   for (let i = 0; i < toProcess.length; i++) {
     const item = toProcess[i];
     const name = (item.name || "").trim();
     if (!name) continue;
-    if (options.onProgress) options.onProgress(i + 1, toProcess.length, name);
+    const current = i + 1;
+    const total = toProcess.length;
+    onPhase("detail", { current, total, clubName: name });
+    onProgress(current, total, name);
     try {
-      const detailBlob = await runDetailAgent(name, item.url || "", city, country);
+      const detailBlob = await runDetailAgent(name, item.url || "", city, country, { stats });
       await delay(DELAY_MS);
-      const formatted = await runFormatAgent(detailBlob, city, country);
+      onPhase("format", { current, total, clubName: name });
+      const formatted = await runFormatAgent(detailBlob, city, country, { stats });
       await delay(DELAY_MS);
       if (formatted) clubs.push(ensureDefaults(formatted));
     } catch (err) {
-      if (options.onError) options.onError(name, err);
-      else console.error(`[runPipeline] ${name}:`, err.message);
+      onError(name, err);
     }
   }
   const citySlug = slugify(city);
@@ -66,5 +95,5 @@ export async function runPipeline(city, country = "", options = {}) {
   const filePath = path.join(outDir, filename);
   await fs.promises.mkdir(outDir, { recursive: true });
   await fs.promises.writeFile(filePath, JSON.stringify(clubs, null, 2), "utf-8");
-  return { filePath, clubs, count: clubs.length };
+  return { filePath, clubs, count: clubs.length, stats };
 }
