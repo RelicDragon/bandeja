@@ -466,6 +466,7 @@
     "notAuthorizedToDeclineJoinQueue": "No autorizado para rechazar solicitudes de lista de espera",
     "joinQueueRequestNotFound": "Solicitud de lista de espera no encontrada",
     "ownerCannotCancelQueue": "El creador no puede cancelar la solicitud de unión.",
+    "youHaveUserWaitingInJoinQueue": "Tienes un usuario esperando en la lista de espera",
     "joinRequestWasDeclined": "La solicitud de unión fue rechazada",
     "joinRequestAlreadyAccepted": "La solicitud de unión ya fue aceptada",
     "joinedSuccessfully": "Se unió al juego exitosamente",

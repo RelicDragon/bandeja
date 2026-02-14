@@ -466,6 +466,7 @@
     "notAuthorizedToDeclineJoinQueue": "Not authorized to decline join queue requests",
     "joinQueueRequestNotFound": "Join queue request not found",
     "ownerCannotCancelQueue": "Owner cannot cancel join queue; you must stay in the game.",
+    "youHaveUserWaitingInJoinQueue": "You have a user waiting in join queue",
     "joinRequestWasDeclined": "Join request was declined",
     "joinRequestAlreadyAccepted": "Join request was already accepted",
     "joinedSuccessfully": "Successfully joined the game",

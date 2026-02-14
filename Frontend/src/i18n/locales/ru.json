@@ -471,6 +471,7 @@
     "notAuthorizedToDeclineJoinQueue": "Не авторизован для отклонения запросов из списка ожидания",
     "joinQueueRequestNotFound": "Запрос из списка ожидания не найден",
     "ownerCannotCancelQueue": "Создатель не может отменить запрос на присоединение.",
+    "youHaveUserWaitingInJoinQueue": "У вас есть пользователь в очереди на присоединение",
     "joinRequestWasDeclined": "Запрос на присоединение был отклонен",
     "joinRequestAlreadyAccepted": "Запрос на присоединение уже был принят",
     "joinedSuccessfully": "Успешно присоединился к игре",

@@ -94,6 +94,11 @@ export const GameCard = ({
   const isInJoinQueue = participation.isInJoinQueue;
 
   const userNoteDisplay = game.userNote ?? null;
+  const joinQueueCount = game.joinQueues?.length ?? 0;
+  const showJoinQueueHint =
+    !game.allowDirectJoin &&
+    joinQueueCount > 0 &&
+    participation.isAdminOrOwner;
   const handleNoteSaved = useCallback(() => {
     onNoteSaved?.(game.id);
   }, [game.id, onNoteSaved]);
@@ -408,6 +413,19 @@ export const GameCard = ({
             </span>
           )}
             </div>
+
+            {showJoinQueueHint && (
+              <div className="mt-3">
+                <div className="bg-sky-50/50 dark:bg-sky-900/10 border border-sky-200 dark:border-sky-800/30 rounded-lg p-2">
+                  <div className="flex items-start gap-1.5">
+                    <Users size={12} className="text-sky-500 dark:text-sky-500/80 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words flex-1">
+                      {t('games.youHaveUserWaitingInJoinQueue')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Notes Section */}
             {userNoteDisplay && effectiveUser && (

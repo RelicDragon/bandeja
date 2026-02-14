@@ -469,6 +469,7 @@
     "notAuthorizedToDeclineJoinQueue": "Нисте овлашћени да одбијете захтеве са листе чекања",
     "joinQueueRequestNotFound": "Захтев са листе чекања није пронађен",
     "ownerCannotCancelQueue": "Власник не може да откаже захтев за придруживање.",
+    "youHaveUserWaitingInJoinQueue": "Имате корисника на листи чекања",
     "joinRequestWasDeclined": "Захтев за придруживање је одбијен",
     "joinRequestAlreadyAccepted": "Захтев за придруживање је већ прихваћен",
     "joinedSuccessfully": "Успешно се придружио игри",
