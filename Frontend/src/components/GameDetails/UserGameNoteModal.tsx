@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
@@ -26,16 +26,29 @@ export const UserGameNoteModal = ({
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const adjustHeight = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = '0';
+    const oneRow = 40;
+    el.style.height = `${Math.max(oneRow, el.scrollHeight)}px`;
+  }, []);
+
+  useEffect(() => {
+    adjustHeight();
+  }, [content, adjustHeight]);
+
   useEffect(() => {
     if (!isOpen) return;
     requestAnimationFrame(() => {
       const el = textareaRef.current;
       if (!el) return;
+      adjustHeight();
       el.focus();
       const end = el.value.length;
       el.setSelectionRange(end, end);
     });
-  }, [isOpen]);
+  }, [isOpen, adjustHeight]);
 
   const handleSave = async () => {
     const trimmed = content.trim();
@@ -87,7 +100,8 @@ export const UserGameNoteModal = ({
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('userGameNotes.placeholder')}
-            className="w-full min-h-[120px] px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-vertical"
+            rows={1}
+            className="w-full min-h-[2.5rem] px-4 py-3 overflow-y-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-primary-500 dark:focus:border-primary-400 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none"
             maxLength={5000}
           />
         </div>

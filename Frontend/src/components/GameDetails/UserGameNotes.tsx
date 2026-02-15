@@ -18,6 +18,19 @@ export const UserGameNotes = ({ gameId, initialContent }: UserGameNotesProps) =>
   const [saving, setSaving] = useState(false);
   const [lastSavedContent, setLastSavedContent] = useState(initialContent || '');
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const adjustHeight = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = '0';
+    const oneRow = 40;
+    el.style.height = `${Math.max(oneRow, el.scrollHeight)}px`;
+  }, []);
+
+  useEffect(() => {
+    adjustHeight();
+  }, [content, adjustHeight]);
 
   const fetchNote = useCallback(async () => {
     try {
@@ -128,10 +141,12 @@ export const UserGameNotes = ({ gameId, initialContent }: UserGameNotesProps) =>
         </p>
 
         <textarea
+          ref={textareaRef}
           value={content}
           onChange={handleContentChange}
           placeholder={t('userGameNotes.placeholder')}
-          className="w-full min-h-[120px] px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-vertical"
+          rows={1}
+          className="w-full min-h-[2.5rem] px-4 py-3 overflow-y-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-primary-500 dark:focus:border-primary-400 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none"
           maxLength={5000}
         />
       </div>
