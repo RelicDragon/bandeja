@@ -896,14 +896,14 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setIsBlockedByUser(false);
       setIsMuted(false);
       setReplyTo(null);
-      setCurrentChatType('PUBLIC');
+      setCurrentChatType(initialChatType || 'PUBLIC');
       setHasSetDefaultChatType(false);
       previousIdRef.current = id;
       loadingIdRef.current = undefined;
       hasLoadedRef.current = false;
       isLoadingRef.current = false;
     }
-  }, [id, isEmbedded, contextType]);
+  }, [id, isEmbedded, contextType, initialChatType]);
 
   // Handle forceReload from navigation state (e.g., from express interest)
   useEffect(() => {
