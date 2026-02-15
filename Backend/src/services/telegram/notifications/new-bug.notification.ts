@@ -22,7 +22,7 @@ export async function sendNewBugNotification(
     const buttons = [[
       {
         text: t('telegram.viewBug', lang),
-        url: `${config.frontendUrl}/channel-chat/${groupChannelId}`,
+        url: `${config.frontendUrl}/bugs/${groupChannelId}`,
       },
     ]];
 

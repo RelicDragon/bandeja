@@ -7,7 +7,7 @@ export function useChatsFromUrl() {
   const [searchParams] = useSearchParams();
 
   const filter: ChatsFilter =
-    location.pathname === '/bugs'
+    location.pathname === '/bugs' || location.pathname.startsWith('/bugs/')
       ? 'bugs'
       : location.pathname === '/chats/marketplace'
         ? 'market'

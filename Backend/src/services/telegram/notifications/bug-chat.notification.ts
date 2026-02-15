@@ -27,7 +27,7 @@ export async function sendBugChatNotification(
     `🐛 ${escapeMarkdown(t('notifications.bugReport', lang))}: ${escapeMarkdown(bugText)}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
 
   const bugChatUrl = bug.groupChannel
-    ? `${config.frontendUrl}/channel-chat/${bug.groupChannel.id}`
+    ? `${config.frontendUrl}/bugs/${bug.groupChannel.id}`
     : `${config.frontendUrl}/bugs`;
 
   const buildBugButtons = (lang: string) => [[

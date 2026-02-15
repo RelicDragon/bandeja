@@ -49,6 +49,13 @@ export const useDeepLink = () => {
           }
         }
         
+        if (pathname.startsWith('/bugs/')) {
+          const id = pathname.split('/bugs/')[1]?.split('/')[0];
+          if (id) {
+            navigateWithTracking(navigate, `/bugs/${id}`, { replace: true });
+            return;
+          }
+        }
         if (pathname.startsWith('/channel-chat/')) {
           const id = pathname.split('/channel-chat/')[1]?.split('/')[0];
           if (id) {
@@ -56,7 +63,7 @@ export const useDeepLink = () => {
             return;
           }
         }
-        
+
         // Simple routes (no parameters)
         const simpleRoutes: Record<string, string> = {
           '/find': '/find',

@@ -35,7 +35,7 @@ class NavigationService {
       const res = await bugsApi.getBugById(bugId);
       const groupChannelId = res.data?.groupChannel?.id;
       if (groupChannelId) {
-        this.navigate!(buildUrl('channelChat', { id: groupChannelId }), { replace: true });
+        this.navigate!(buildUrl('bugs', { id: groupChannelId }), { replace: true });
       } else {
         this.navigate!(buildUrl('bugs'), { replace: true });
       }

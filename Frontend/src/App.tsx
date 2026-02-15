@@ -485,6 +485,20 @@ function AppContent() {
           }
         />
         <Route
+          path="/bugs/:id"
+          element={
+            <ProtectedRoute>
+              {!isProfileComplete(user) ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <MainPage />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/bugs"
           element={
             <ProtectedRoute>

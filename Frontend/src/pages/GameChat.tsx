@@ -64,11 +64,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const id = isEmbedded ? propChatId : paramId;
   
   const locationState = location.state as LocationState | null;
-  const contextType: ChatContextType = isEmbedded 
+  const contextType: ChatContextType = isEmbedded
     ? (propChatType === 'user' ? 'USER' : (propChatType === 'group' || propChatType === 'channel') ? 'GROUP' : 'GAME')
-    : (locationState?.contextType || 
+    : (locationState?.contextType ||
       (location.pathname.includes('/user-chat/') ? 'USER' :
-       (location.pathname.includes('/group-chat/') || location.pathname.includes('/channel-chat/')) ? 'GROUP' : 'GAME'));
+       (location.pathname.includes('/group-chat/') || location.pathname.includes('/channel-chat/') || location.pathname.match(/^\/bugs\/[^/]+$/)) ? 'GROUP' : 'GAME'));
   const initialChatType = locationState?.initialChatType;
   
   const [game, setGame] = useState<Game | null>(null);
@@ -254,13 +254,19 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         setChatsFilter('users');
         navigate('/chats', { replace: true });
       } else if (contextType === 'GROUP') {
-        setChatsFilter('channels');
-        navigate('/chats', { replace: true });
+        const isBugChat = location.pathname.match(/^\/bugs\/[^/]+$/);
+        if (isBugChat) {
+          setChatsFilter('bugs');
+          navigate('/bugs', { replace: true });
+        } else {
+          setChatsFilter('channels');
+          navigate('/chats', { replace: true });
+        }
       } else if (contextType === 'GAME') {
         navigate('/', { replace: true });
       }
     }
-  }, [isEmbedded, isLoadingContext, game, bug, userChat, groupChannel, contextType, navigate, setChatsFilter]);
+  }, [isEmbedded, isLoadingContext, game, bug, userChat, groupChannel, contextType, navigate, setChatsFilter, location.pathname]);
 
   const loadContext = useCallback(async () => {
     if (!id) return null;
@@ -293,8 +299,14 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       console.error('Failed to load context:', error);
       if (!isEmbedded) {
         if (contextType === 'GROUP') {
-          setChatsFilter('channels');
-          navigate('/chats', { replace: true });
+          const isBugChat = window.location.pathname.match(/^\/bugs\/[^/]+$/);
+          if (isBugChat) {
+            setChatsFilter('bugs');
+            navigate('/bugs', { replace: true });
+          } else {
+            setChatsFilter('channels');
+            navigate('/chats', { replace: true });
+          }
         } else if (contextType === 'USER') {
           setChatsFilter('users');
           navigate('/chats', { replace: true });
@@ -616,9 +628,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           // If it's a marketplace item chat, go to marketplace
           navigate('/marketplace', { replace: true });
         } else if (groupChannel?.bug) {
-          // If it's a bug chat, go to chats with bugs filter
           setChatsFilter('bugs');
-          navigate('/chats', { replace: true });
+          navigate('/bugs', { replace: true });
         } else {
           // For regular channels, go to chats with channels filter
           setChatsFilter('channels');

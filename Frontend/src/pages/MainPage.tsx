@@ -62,9 +62,10 @@ export const MainPage = () => {
   }, [currentPage]);
 
   const isChatPage = currentPage === 'chats';
-  const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') || 
-                                 location.pathname.includes('/group-chat/') || 
-                                 location.pathname.includes('/channel-chat/');
+  const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') ||
+                                 location.pathname.includes('/group-chat/') ||
+                                 location.pathname.includes('/channel-chat/') ||
+                                 location.pathname.match(/^\/bugs\/[^/]+$/);
   const shouldShowChatsSplitView = isChatPage && (isDesktop || !isOnSpecificChatRoute);
   const showBottomTabBar = bottomTabsVisible && (!isDesktop || isChatPage);
 

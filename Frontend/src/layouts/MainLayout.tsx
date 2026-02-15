@@ -20,9 +20,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const isDesktopChats = isDesktop && currentPage === 'chats';
   const isDesktopGameDetails = isDesktop && currentPage === 'gameDetails';
   const isGameDetailsPath = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
-  const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') || 
-                                 location.pathname.includes('/group-chat/') || 
-                                 location.pathname.includes('/channel-chat/');
+  const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') ||
+                                 location.pathname.includes('/group-chat/') ||
+                                 location.pathname.includes('/channel-chat/') ||
+                                 location.pathname.match(/^\/bugs\/[^/]+$/);
   const isOnBugsListPage = chatsFilter === 'bugs' && !isOnSpecificChatRoute;
   const isDesktopChatsSplitView = isDesktopChats && !isOnBugsListPage;
   const isDesktopGameDetailsSplitView = isDesktopGameDetails && isGameDetailsPath;

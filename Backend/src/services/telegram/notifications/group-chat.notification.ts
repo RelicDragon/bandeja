@@ -65,9 +65,11 @@ export async function sendGroupChatNotification(
       ? (participant.role === 'OWNER' || participant.role === 'ADMIN')
       : true;
 
-    const chatPath = (groupChannel.bug || groupChannel.marketItem)
-      ? `/channel-chat/${groupChannel.id}`
-      : `/group-chat/${groupChannel.id}`;
+    const chatPath = groupChannel.bug
+      ? `/bugs/${groupChannel.id}`
+      : groupChannel.marketItem
+        ? `/channel-chat/${groupChannel.id}`
+        : `/group-chat/${groupChannel.id}`;
     const chatUrl = `${config.frontendUrl}${chatPath}`;
 
     try {

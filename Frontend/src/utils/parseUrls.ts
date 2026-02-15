@@ -34,6 +34,9 @@ function formatAppUrl(url: string): { displayText: string; urlType: 'channel' | 
     const urlObj = new URL(normalized);
     const path = urlObj.pathname;
 
+    if (path.startsWith('/bugs/') && path !== '/bugs') {
+      return { displayText: i18n.t('chats.bugs', { defaultValue: 'Bug chat' }), urlType: 'channel' };
+    }
     if (path.startsWith('/channel-chat/')) {
       return { displayText: i18n.t('common.viewChannel'), urlType: 'channel' };
     } else if (path.startsWith('/group-chat/')) {

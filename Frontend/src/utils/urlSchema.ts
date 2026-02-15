@@ -69,6 +69,7 @@ const PLACE_DEFS: PlaceDefinition[] = [
   { pattern: /^\/marketplace\/?$/, place: 'marketplace' },
   { pattern: /^\/chats\/marketplace$/, place: 'chatsMarketplace' },
   { pattern: /^\/chats\/?$/, place: 'chats' },
+  { pattern: /^\/bugs\/([^/]+)$/, place: 'bugs', extractParams: (m) => ({ id: m[1] }) },
   { pattern: /^\/bugs\/?$/, place: 'bugs' },
   { pattern: /^\/find\/?$/, place: 'find' },
   { pattern: /^\/profile\/?$/, place: 'profile' },
@@ -119,7 +120,7 @@ export function buildUrl(place: Place, params?: PlaceParams, overlay?: Overlay):
     case 'find': path = '/find'; break;
     case 'chats': path = '/chats'; break;
     case 'chatsMarketplace': path = '/chats/marketplace'; break;
-    case 'bugs': path = '/bugs'; break;
+    case 'bugs': path = params?.id ? `/bugs/${params.id}` : '/bugs'; break;
     case 'marketplace': path = '/marketplace'; break;
     case 'marketplaceMy': path = '/marketplace/my'; break;
     case 'leaderboard': path = '/leaderboard'; break;
