@@ -73,7 +73,7 @@
     "googleAccountNotLinked": "La cuenta de Google no está vinculada a este perfil",
     "cannotUnlinkLastAuthMethod": "No puedes desvincular tu último método de autenticación. Por favor, vincula otra cuenta primero.",
     "invalidAuthProvider": "Método de autenticación inválido para esta cuenta",
-    "emailAlreadyExistsUseLogin": "Ya existe una cuenta con este email. Por favor, usa el inicio de sesión en su lugar o contacta con soporte para vincular tu cuenta de Apple.",
+    "emailAlreadyExistsUseLogin": "Ya existe una cuenta con este email. Inicia sesión con tu otro método y vincula esta cuenta en Perfil.",
     "invalidIdentityToken": "Token de identidad inválido: el token debe ser una cadena no vacía",
     "appleTokenExpired": "El token de Apple ha expirado",
     "appleTokenNotYetValid": "El token de Apple aún no es válido",

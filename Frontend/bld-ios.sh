@@ -1,12 +1,10 @@
 #!/bin/bash
 
 set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/build-env.sh"
 
 echo "🔨 Building Capacitor app..."
-
-# Override environment variables for Capacitor build
-export VITE_TELEGRAM_BOT_URL=https://t.me/bandeja_padel_bot
-export VITE_MEDIA_BASE_URL=https://bandeja.me
 
 # Build the frontend
 echo "📦 Building frontend..."

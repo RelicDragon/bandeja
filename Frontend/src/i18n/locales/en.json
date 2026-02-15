@@ -73,7 +73,7 @@
     "googleAccountNotLinked": "Google account is not linked to this profile",
     "cannotUnlinkLastAuthMethod": "Cannot unlink your last authentication method. Please link another account first.",
     "invalidAuthProvider": "Invalid authentication method for this account",
-    "emailAlreadyExistsUseLogin": "An account with this email already exists. Please use login instead or contact support to link your Apple account.",
+    "emailAlreadyExistsUseLogin": "An account with this email already exists. Please sign in with your other method and link this account in Profile.",
     "invalidIdentityToken": "Invalid identity token: token must be a non-empty string",
     "appleTokenExpired": "Apple token has expired",
     "appleTokenNotYetValid": "Apple token not yet valid",

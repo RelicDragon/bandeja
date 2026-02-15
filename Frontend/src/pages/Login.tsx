@@ -39,7 +39,7 @@ export const Login = () => {
     if (error) {
       const timer = setTimeout(() => {
         setError('');
-      }, 3000);
+      }, 6000);
       return () => clearTimeout(timer);
     }
   }, [error]);
@@ -207,7 +207,7 @@ export const Login = () => {
           } catch (registerErr: any) {
             if (registerErr?.response?.status === 400) {
               const errorMessage = registerErr?.response?.data?.message || '';
-              if (errorMessage.includes('already exists')) {
+              if (errorMessage.includes('googleAccountAlreadyExists')) {
                 response = await authApi.loginGoogle({
                   idToken: result.idToken,
                   language: normalizedLanguage,

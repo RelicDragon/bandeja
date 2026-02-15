@@ -49,63 +49,51 @@ export const useAuthStore = create<AuthState>((set) => {
     isAuthenticated: !!savedToken,
     isInitializing: true,
     setAuth: async (user, token) => {
-      try {
-        const deviceLocale = navigator.language || 'en-US';
-        const normalizedLanguage = normalizeLanguageForProfile(user.language);
-        const needsLanguageNormalization = user.language && normalizedLanguage !== user.language;
-        const needsUpdate = 
-          !user.language || 
-          needsLanguageNormalization ||
-          !user.timeFormat || 
-          !user.weekStart;
-        
-        let userToSet = user;
-        
-        if (needsUpdate) {
-          const updates: Partial<User> = {};
-          if (!user.language) {
-            updates.language = deviceLocale;
-          } else if (needsLanguageNormalization) {
-            updates.language = normalizedLanguage;
-          }
-          if (!user.timeFormat) {
-            updates.timeFormat = detectTimeFormat(deviceLocale);
-          }
-          if (!user.weekStart) {
-            updates.weekStart = detectWeekStart(deviceLocale);
-          }
-          
-          if (Object.keys(updates).length > 0) {
-            try {
-              const response = await usersApi.updateProfile(updates);
-              userToSet = response.data;
-            } catch (error) {
-              console.error('Error auto-detecting preferences:', error);
-              userToSet = { ...user, ...updates };
-            }
-          }
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token', token);
+      set({ user, token, isAuthenticated: true });
+
+      const deviceLocale = navigator.language || 'en-US';
+      const normalizedLanguage = normalizeLanguageForProfile(user.language);
+      const needsLanguageNormalization = user.language && normalizedLanguage !== user.language;
+      const needsUpdate =
+        !user.language ||
+        needsLanguageNormalization ||
+        !user.timeFormat ||
+        !user.weekStart;
+
+      let userToSet = user;
+
+      if (needsUpdate) {
+        const updates: Partial<User> = {};
+        if (!user.language) {
+          updates.language = deviceLocale;
+        } else if (needsLanguageNormalization) {
+          updates.language = normalizedLanguage;
         }
-        
-        const userJson = JSON.stringify(userToSet);
-        localStorage.setItem('user', userJson);
-        localStorage.setItem('token', token);
-        set({ user: userToSet, token, isAuthenticated: true });
-        console.log('Auth saved to localStorage');
-        
-        if (userToSet.language) {
-          const langCode = extractLanguageCode(userToSet.language);
-          i18n.changeLanguage(langCode);
+        if (!user.timeFormat) {
+          updates.timeFormat = detectTimeFormat(deviceLocale);
         }
-        
-        setTimeout(() => {
-          const verifyUser = localStorage.getItem('user');
-          const verifyToken = localStorage.getItem('token');
-          if (!verifyUser || !verifyToken) {
-            console.error('localStorage verification failed - data not persisted');
+        if (!user.weekStart) {
+          updates.weekStart = detectWeekStart(deviceLocale);
+        }
+
+        if (Object.keys(updates).length > 0) {
+          try {
+            const response = await usersApi.updateProfile(updates);
+            userToSet = response.data;
+          } catch (error) {
+            console.error('Error auto-detecting preferences:', error);
+            userToSet = { ...user, ...updates };
           }
-        }, 100);
-      } catch (error) {
-        console.error('Error saving auth to localStorage:', error);
+          localStorage.setItem('user', JSON.stringify(userToSet));
+          set({ user: userToSet });
+        }
+      }
+
+      if (userToSet.language) {
+        const langCode = extractLanguageCode(userToSet.language);
+        i18n.changeLanguage(langCode);
       }
     },
     setToken: (token) => {

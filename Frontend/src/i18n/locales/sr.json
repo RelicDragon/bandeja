@@ -73,7 +73,7 @@
     "googleAccountNotLinked": "Google налог није повезан са овим профилом",
     "cannotUnlinkLastAuthMethod": "Не можете одвојити ваш последњи метод аутентификације. Молимо прво повежите други налог.",
     "invalidAuthProvider": "Неважећи метод аутентификације за овај налог",
-    "emailAlreadyExistsUseLogin": "Налог са овим email-ом већ постоји. Молимо користите пријаву уместо тога или контактирајте подршку да бисте повезали ваш Apple налог.",
+    "emailAlreadyExistsUseLogin": "Налог са овим email-ом већ постоји. Пријавите се другим начином и повежите овај налог у Профилу.",
     "invalidIdentityToken": "Неважећи токен идентитета: токен мора бити непразна ниска",
     "appleTokenExpired": "Apple токен је истекао",
     "appleTokenNotYetValid": "Apple токен још није важећи",

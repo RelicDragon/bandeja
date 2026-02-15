@@ -34,8 +34,23 @@ export const updateStatusBarStyle = async () => {
   }
 };
 
+const setAndroidViewportVars = () => {
+  const vv = window.visualViewport;
+  const w = vv ? vv.width : window.innerWidth;
+  const h = vv ? vv.height : window.innerHeight;
+  document.documentElement.style.setProperty('--viewport-width', `${w}px`);
+  document.documentElement.style.setProperty('--viewport-height', `${h}px`);
+};
+
 export const setupCapacitor = async () => {
   if (!isCapacitor()) return;
+
+  if (isAndroid()) {
+    setAndroidViewportVars();
+    window.visualViewport?.addEventListener('resize', setAndroidViewportVars);
+    window.addEventListener('resize', setAndroidViewportVars);
+    window.addEventListener('orientationchange', setAndroidViewportVars);
+  }
 
   try {
     console.log('Setting up Capacitor...');

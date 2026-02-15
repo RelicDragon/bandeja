@@ -141,6 +141,13 @@ body {
   background-color: #111827;
 }
 
+.capacitor-android html,
+.capacitor-android body,
+.capacitor-android #root {
+  min-width: var(--viewport-width, 100%);
+  width: 100%;
+}
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
