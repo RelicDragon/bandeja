@@ -240,9 +240,17 @@ export class ParticipantService {
       throw new ApiError(404, 'Not in chat as guest');
     }
 
-    await prisma.gameParticipant.delete({
-      where: { id: participant.id },
-    });
+    if (participant.role === ParticipantRole.OWNER) {
+      await prisma.gameParticipant.update({
+        where: { id: participant.id },
+        data: { status: 'NON_PLAYING' },
+      });
+      await GameService.updateGameReadiness(gameId);
+    } else {
+      await prisma.gameParticipant.delete({
+        where: { id: participant.id },
+      });
+    }
 
     await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_CHAT);
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
@@ -514,15 +522,22 @@ export class ParticipantService {
       throw new ApiError(404, 'games.joinQueueRequestNotFound');
     }
 
-    await prisma.gameParticipant.delete({
-      where: { id: participant.id },
-    });
-
-    await createSystemMessageWithNotification(
-      gameId,
-      SystemMessageType.USER_DECLINED_JOIN_QUEUE,
-      queueUserId
-    );
+    if (participant.role === ParticipantRole.OWNER) {
+      await prisma.gameParticipant.update({
+        where: { id: participant.id },
+        data: { status: 'NON_PLAYING' },
+      });
+      await GameService.updateGameReadiness(gameId);
+    } else {
+      await prisma.gameParticipant.delete({
+        where: { id: participant.id },
+      });
+      await createSystemMessageWithNotification(
+        gameId,
+        SystemMessageType.USER_DECLINED_JOIN_QUEUE,
+        queueUserId
+      );
+    }
 
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentUserId);
     await ParticipantMessageHelper.emitGameUpdateToUser(gameId, queueUserId);

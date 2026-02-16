@@ -1,6 +1,5 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { formatUserName } from '../../shared/notification-base';
-import { getShortDayOfWeekForUser } from '../../user-timezone.service';
 import { t } from '../../../utils/translations';
 
 function getGroupNotificationTitle(groupChannel: any, lang: string): string {
@@ -24,15 +23,13 @@ export async function createGroupChatPushNotification(
   const senderName = formatUserName(sender);
   const messageContent = message.content || '[Media]';
   const lang = recipient?.language ?? 'en';
-  const shortDayOfWeek = await getShortDayOfWeekForUser(new Date(), recipient?.currentCityId ?? null, lang);
 
   const title = getGroupNotificationTitle(groupChannel, lang);
   const body = `${senderName}: ${messageContent}`;
 
   const data: Record<string, string> = {
     groupChannelId: groupChannel.id,
-    messageId: message.id,
-    shortDayOfWeek
+    messageId: message.id
   };
   if (groupChannel.bug?.id) data.bugId = groupChannel.bug.id;
   if (groupChannel.marketItem?.id) data.marketItemId = groupChannel.marketItem.id;

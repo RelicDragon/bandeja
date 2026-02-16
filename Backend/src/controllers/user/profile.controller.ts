@@ -9,6 +9,8 @@ import { config } from '../../config/env';
 import { getClientIp, updateUserIpLocation } from '../../services/ipLocation.service';
 import { NotificationChannelType } from '@prisma/client';
 import { DEFAULT_PREFERENCES } from '../../services/notificationPreference.service';
+import telegramBotService from '../../services/telegram/bot.service';
+import { syncTelegramProfileFromUpdate } from '../../services/telegram/syncTelegramProfile.service';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
@@ -62,7 +64,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, favoriteTrainerId } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, favoriteTrainerId, appIcon } = req.body;
   
   // Explicitly ignore level and socialLevel - only backend can modify these
 
@@ -77,6 +79,11 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
 
   if (defaultCurrency !== undefined && defaultCurrency !== 'auto' && !SUPPORTED_CURRENCIES.includes(defaultCurrency)) {
     throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
+  }
+
+  const VALID_APP_ICONS = ['tiger', 'racket'];
+  if (appIcon !== undefined && appIcon !== null && !VALID_APP_ICONS.includes(appIcon)) {
+    throw new ApiError(400, `Invalid appIcon. Allowed: ${VALID_APP_ICONS.join(', ')}`);
   }
 
   const currentUser = await prisma.user.findUnique({
@@ -155,6 +162,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(sendPushWalletNotifications !== undefined && { sendPushWalletNotifications }),
         ...(allowMessagesFromNonContacts !== undefined && { allowMessagesFromNonContacts }),
         ...(favoriteTrainerId !== undefined && { favoriteTrainerId: favoriteTrainerId || null }),
+        ...(appIcon !== undefined && { appIcon: appIcon ?? null }),
       },
       select: PROFILE_SELECT_FIELDS,
     });
@@ -296,5 +304,38 @@ export const deleteUser = asyncHandler(async (req: AuthRequest, res: Response) =
     success: true,
     message: 'User deleted successfully',
   });
+});
+
+export const syncTelegramProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { id: true, telegramId: true },
+  });
+  if (!user?.telegramId) {
+    throw new ApiError(400, 'profile.telegramNotLinked');
+  }
+  const bot = telegramBotService.getBot();
+  if (!bot) {
+    throw new ApiError(503, 'profile.telegramBotUnavailable');
+  }
+  let chat: { username?: string; first_name: string; last_name?: string };
+  try {
+    chat = await bot.api.getChat(Number(user.telegramId)) as { username?: string; first_name: string; last_name?: string };
+  } catch {
+    throw new ApiError(400, 'profile.telegramSyncFailed');
+  }
+  await syncTelegramProfileFromUpdate(user.telegramId, {
+    username: chat.username ?? null,
+    first_name: chat.first_name ?? null,
+    last_name: chat.last_name ?? null,
+  });
+  const updated = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: PROFILE_SELECT_FIELDS,
+  });
+  if (!updated) {
+    throw new ApiError(500, 'Profile unavailable');
+  }
+  res.json({ success: true, data: updated });
 });
 

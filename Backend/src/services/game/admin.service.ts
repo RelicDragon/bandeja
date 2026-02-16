@@ -152,24 +152,36 @@ export class AdminService {
       }
     }
 
-    await prisma.$transaction(async (tx) => {
-      const game = await tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } });
-      if (game?.trainerId === targetUserId) {
-        await tx.game.update({ where: { id: gameId }, data: { trainerId: null } });
-      }
-      await tx.gameParticipant.delete({ where: { id: targetParticipant.id } });
-    });
-
-    if (targetParticipant.user) {
-      const userName = getUserDisplayName(targetParticipant.user.firstName, targetParticipant.user.lastName);
-
-      try {
-        await createSystemMessage(gameId, {
-          type: SystemMessageType.USER_KICKED,
-          variables: { userName }
+    if (targetParticipant.role === ParticipantRole.OWNER) {
+      await prisma.$transaction(async (tx) => {
+        const game = await tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } });
+        if (game?.trainerId === targetUserId) {
+          await tx.game.update({ where: { id: gameId }, data: { trainerId: null } });
+        }
+        await tx.gameParticipant.update({
+          where: { id: targetParticipant.id },
+          data: { status: 'NON_PLAYING' },
         });
-      } catch (error) {
-        console.error('Failed to create system message for user kick:', error);
+      });
+    } else {
+      await prisma.$transaction(async (tx) => {
+        const game = await tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } });
+        if (game?.trainerId === targetUserId) {
+          await tx.game.update({ where: { id: gameId }, data: { trainerId: null } });
+        }
+        await tx.gameParticipant.delete({ where: { id: targetParticipant.id } });
+      });
+
+      if (targetParticipant.user) {
+        const userName = getUserDisplayName(targetParticipant.user.firstName, targetParticipant.user.lastName);
+        try {
+          await createSystemMessage(gameId, {
+            type: SystemMessageType.USER_KICKED,
+            variables: { userName }
+          });
+        } catch (error) {
+          console.error('Failed to create system message for user kick:', error);
+        }
       }
     }
 

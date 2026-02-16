@@ -2,6 +2,7 @@ import { Middleware } from 'grammy';
 import { BotContext } from './types';
 import { getLanguageCode } from './utils';
 import { t } from '../../utils/translations';
+import { syncTelegramProfileFromUpdate } from './syncTelegramProfile.service';
 
 export const requireUser: Middleware<BotContext> = async (ctx, next) => {
   if (!ctx.from) {
@@ -11,6 +12,17 @@ export const requireUser: Middleware<BotContext> = async (ctx, next) => {
   }
   ctx.telegramId = ctx.from.id.toString();
   ctx.lang = getLanguageCode(ctx.from.language_code);
+  return next();
+};
+
+export const syncTelegramProfile: Middleware<BotContext> = async (ctx, next) => {
+  if (ctx.telegramId && ctx.from) {
+    syncTelegramProfileFromUpdate(ctx.telegramId, {
+      username: ctx.from.username ?? null,
+      first_name: ctx.from.first_name ?? null,
+      last_name: ctx.from.last_name ?? null,
+    }).catch((e) => console.error('Telegram profile sync failed', e));
+  }
   return next();
 };
 

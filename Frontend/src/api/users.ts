@@ -132,6 +132,11 @@ export const usersApi = {
     return response.data;
   },
 
+  syncTelegramProfile: async () => {
+    const response = await api.post<ApiResponse<User>>('/users/profile/sync-telegram');
+    return response.data;
+  },
+
   getNotificationPreferences: async () => {
     const response = await api.get<ApiResponse<NotificationPreference[]>>('/users/notification-preferences');
     return response.data;

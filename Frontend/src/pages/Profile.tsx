@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AnimatePresence } from 'framer-motion';
-import { Button, Card, Input, Select, ToggleGroup, ToggleSwitch, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal, MainTabFooter } from '@/components';
+import { Button, Card, Input, Select, ToggleGroup, ToggleSwitch, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal, MainTabFooter, AppIconCarousel } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
 import { BlockedUsersSection } from '@/components/BlockedUsersSection';
@@ -24,6 +24,8 @@ import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { isCapacitor, getAppInfo, isIOS } from '@/utils/capacitor';
 import { AppleIcon } from '@/components/AppleIcon';
 import { getCurrencyOptions, getCurrencySymbol } from '@/utils/currency';
+import { setNativeAppIcon } from '@/services/appIcon.service';
+import type { AppIconId } from '@/config/appIcons';
 
 export const ProfileContent = () => {
   const { t, i18n } = useTranslation();
@@ -49,6 +51,7 @@ export const ProfileContent = () => {
   const [timeFormat, setTimeFormat] = useState<'auto' | '12h' | '24h'>(user?.timeFormat || 'auto');
   const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday'>(user?.weekStart || 'auto');
   const [defaultCurrency, setDefaultCurrency] = useState<string>(user?.defaultCurrency || 'auto');
+  const [appIcon, setAppIcon] = useState<AppIconId>((user?.appIcon as AppIconId) || 'tiger');
 
   const [showCityModal, setShowCityModal] = useState(false);
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
@@ -67,6 +70,7 @@ export const ProfileContent = () => {
   const [isUnlinkingGoogle, setIsUnlinkingGoogle] = useState(false);
   const [showUnlinkAppleModal, setShowUnlinkAppleModal] = useState(false);
   const [showUnlinkGoogleModal, setShowUnlinkGoogleModal] = useState(false);
+  const [isSyncingTelegram, setIsSyncingTelegram] = useState(false);
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([]);
   const [allowMessagesFromNonContacts, setAllowMessagesFromNonContacts] = useState(user?.allowMessagesFromNonContacts !== false);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -182,6 +186,9 @@ export const ProfileContent = () => {
       setPreferredCourtSideLeft(user.preferredCourtSideLeft || false);
       setPreferredCourtSideRight(user.preferredCourtSideRight || false);
       setAllowMessagesFromNonContacts(user.allowMessagesFromNonContacts !== false);
+      if (user.appIcon === 'tiger' || user.appIcon === 'racket') {
+        setAppIcon(user.appIcon);
+      }
     }
   }, [user]);
 
@@ -274,6 +281,12 @@ export const ProfileContent = () => {
   const handleChangeCurrency = (currency: string) => {
     setDefaultCurrency(currency);
     updateProfile({ defaultCurrency: currency });
+  };
+
+  const handleAppIconChange = (id: AppIconId) => {
+    setAppIcon(id);
+    updateProfile({ appIcon: id });
+    setNativeAppIcon(id).catch(() => {});
   };
 
   const handleAllowMessagesFromNonContactsChange = (value: boolean) => {
@@ -833,6 +846,37 @@ export const ProfileContent = () => {
                   {t('profile.linkTelegram')}
                 </Button>
               )}
+              {user?.telegramId && (
+                <Button
+                  variant="outline"
+                  className="w-full h-10 text-sm font-medium mt-2"
+                  onClick={async () => {
+                    setIsSyncingTelegram(true);
+                    try {
+                      const res = await usersApi.syncTelegramProfile();
+                      const data = res?.data;
+                      if (!data) {
+                        toast.error(t('errors.generic'));
+                        return;
+                      }
+                      updateUser(data);
+                      setFirstName(data.firstName ?? '');
+                      setLastName(data.lastName ?? '');
+                      if (data.telegramUsername !== user?.telegramUsername) {
+                        toast.success(t('profile.telegram') + ' ' + (data.telegramUsername ? `@${data.telegramUsername}` : ''));
+                      }
+                    } catch (err: any) {
+                      const msg = err.response?.data?.message;
+                      toast.error(typeof msg === 'string' && msg.startsWith('profile.') ? t(msg) : msg || t('errors.generic'));
+                    } finally {
+                      setIsSyncingTelegram(false);
+                    }
+                  }}
+                  disabled={isSyncingTelegram}
+                >
+                  {isSyncingTelegram ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t('profile.updateFromTelegram')}
+                </Button>
+              )}
             </div>
           </div>
         </Card>
@@ -876,6 +920,15 @@ export const ProfileContent = () => {
                 },
               ]}
             />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('profile.appIcon') || 'App icon'}
+              </label>
+              <AppIconCarousel
+                value={appIcon}
+                onChange={handleAppIconChange}
+              />
+            </div>
           </div>
         </Card>
 

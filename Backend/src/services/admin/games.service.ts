@@ -6,7 +6,7 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
-import { Prisma } from '@prisma/client';
+import { ParticipantRole, Prisma } from '@prisma/client';
 
 const GAMES_PAGE_SIZE = 50;
 
@@ -270,6 +270,10 @@ export class AdminGamesService {
     });
     if (!participant || participant.status !== 'INVITED') {
       throw new ApiError(404, 'Invite not found');
+    }
+    if (participant.role === ParticipantRole.OWNER) {
+      await prisma.gameParticipant.update({ where: { id: participantId }, data: { status: 'NON_PLAYING' } });
+      return { message: 'invites.declinedSuccessfully' };
     }
     if (participant.gameId && participant.user) {
       const receiverName = getUserDisplayName(participant.user.firstName, participant.user.lastName);

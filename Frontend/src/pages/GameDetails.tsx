@@ -447,7 +447,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     ? gameInvites.find(inv => inv.receiverId === pendingTrainerParticipant.userId && inv.status === 'PENDING')
     : undefined;
 
-  const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && isRealParticipant && !isFull);
+  const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && isRealParticipant && !isFull && game?.status !== 'FINISHED' && game?.status !== 'ARCHIVED');
   const canManageJoinQueue = Boolean(
     isOwner ||
     participation.userParticipant?.role === 'ADMIN' ||

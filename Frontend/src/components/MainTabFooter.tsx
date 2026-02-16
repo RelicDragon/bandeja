@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react';
+import { useAuthStore } from '@/store/authStore';
+import { getFooterIconUrl } from '@/config/appIcons';
 
 interface MainTabFooterProps {
   isLoading?: boolean;
@@ -6,6 +8,8 @@ interface MainTabFooterProps {
 
 export const MainTabFooter = ({ isLoading = false }: MainTabFooterProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
+  const appIconId = useAuthStore((s) => s.user?.appIcon);
+  const footerIconUrl = getFooterIconUrl(appIconId ?? undefined);
 
   const handleClick = useCallback(() => {
     if (isAnimating || isLoading) return;
@@ -25,7 +29,7 @@ export const MainTabFooter = ({ isLoading = false }: MainTabFooterProps) => {
         aria-label="Logo"
       >
         <img
-          src="/bandeja2-white-tr.png"
+          src={footerIconUrl}
           alt="Bandeja Logo"
           className={`h-16 w-32 object-contain ${animationClass}`}
         />

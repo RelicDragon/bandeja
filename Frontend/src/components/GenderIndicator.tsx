@@ -2,9 +2,11 @@ interface GenderIndicatorProps {
   gender?: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
   layout?: 'small' | 'normal' | 'big';
   position?: 'bottom-left' | 'bottom-right';
+  wrapperClassName?: string;
+  wrapperStyle?: React.CSSProperties;
 }
 
-export const GenderIndicator = ({ gender, layout = 'normal', position = 'bottom-left' }: GenderIndicatorProps) => {
+export const GenderIndicator = ({ gender, layout = 'normal', position = 'bottom-left', wrapperClassName, wrapperStyle }: GenderIndicatorProps) => {
   const getGenderBgColor = (gender?: 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY') => {
     switch (gender) {
       case 'MALE':
@@ -40,8 +42,10 @@ export const GenderIndicator = ({ gender, layout = 'normal', position = 'bottom-
     return null;
   }
 
+  const baseClass = wrapperClassName ?? `rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900 ${getSizeClasses()}`;
+
   return (
-    <div className={`absolute ${getPositionClasses()} ${getSizeClasses()} rounded-full ${getGenderBgColor(gender)} flex items-center justify-center border-2 border-white dark:border-gray-900`}>
+    <div className={`absolute ${getPositionClasses()} ${baseClass} ${getGenderBgColor(gender)}`} style={wrapperStyle}>
       <i className={`bi ${gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'} text-white`}></i>
     </div>
   );

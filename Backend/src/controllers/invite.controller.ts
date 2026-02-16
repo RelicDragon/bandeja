@@ -234,19 +234,25 @@ export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response)
     orderBy: { joinedAt: 'desc' },
   });
   const now = new Date();
+  const toProcess = participants.filter((p) => p.game && new Date(p.game.startTime) <= now && new Date(p.game.endTime) > now);
   const toDelete: string[] = [];
-  participants.forEach((p) => {
-    if (p.game && new Date(p.game.startTime) <= now && new Date(p.game.endTime) > now) toDelete.push(p.id);
+  const ownerIds: string[] = [];
+  toProcess.forEach((p) => {
+    if (p.role === ParticipantRole.OWNER) ownerIds.push(p.id);
+    else toDelete.push(p.id);
   });
+  if (ownerIds.length > 0) {
+    await prisma.gameParticipant.updateMany({ where: { id: { in: ownerIds } }, data: { status: 'NON_PLAYING' } });
+  }
   if (toDelete.length > 0) {
     await prisma.gameParticipant.deleteMany({ where: { id: { in: toDelete } } });
-    if ((global as any).socketService) {
-      participants.filter((p) => toDelete.includes(p.id)).forEach((p) => {
-        (global as any).socketService.emitInviteDeleted(p.userId, p.id, p.gameId || undefined);
-      });
-    }
   }
-  const filtered = participants.filter((p) => !toDelete.includes(p.id));
+  if ((global as any).socketService && toProcess.length > 0) {
+    toProcess.forEach((p) => {
+      (global as any).socketService.emitInviteDeleted(p.userId, p.id, p.gameId || undefined);
+    });
+  }
+  const filtered = participants.filter((p) => !toProcess.some((t) => t.id === p.id));
   const data = filtered.map((p) => ({
     id: p.id,
     receiverId: p.userId,
@@ -299,7 +305,7 @@ export const declineInvite = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const deleteExpiredInvites = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const result = await prisma.gameParticipant.deleteMany({
+  const participants = await prisma.gameParticipant.findMany({
     where: {
       status: 'INVITED',
       OR: [
@@ -307,8 +313,19 @@ export const deleteExpiredInvites = asyncHandler(async (req: AuthRequest, res: R
         { game: { startTime: { lt: new Date() } } },
       ],
     },
+    select: { id: true, role: true },
   });
-  res.json({ success: true, message: `Deleted ${result.count} expired invites` });
+  const ownerIds = participants.filter((p) => p.role === ParticipantRole.OWNER).map((p) => p.id);
+  const toDelete = participants.filter((p) => p.role !== ParticipantRole.OWNER).map((p) => p.id);
+  if (ownerIds.length > 0) {
+    await prisma.gameParticipant.updateMany({ where: { id: { in: ownerIds } }, data: { status: 'NON_PLAYING' } });
+  }
+  let deleted = 0;
+  if (toDelete.length > 0) {
+    const result = await prisma.gameParticipant.deleteMany({ where: { id: { in: toDelete } } });
+    deleted = result.count;
+  }
+  res.json({ success: true, message: `Deleted ${deleted} expired invites` });
 });
 
 export const getGameInvites = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -322,7 +339,7 @@ export const cancelInvite = asyncHandler(async (req: AuthRequest, res: Response)
   const { id } = req.params;
   const participant = await prisma.gameParticipant.findUnique({
     where: { id },
-    select: { id: true, status: true, invitedByUserId: true, userId: true, gameId: true },
+    select: { id: true, status: true, role: true, invitedByUserId: true, userId: true, gameId: true },
   });
   if (!participant || participant.status !== 'INVITED') {
     throw new ApiError(404, 'errors.invites.notFound');
@@ -330,7 +347,11 @@ export const cancelInvite = asyncHandler(async (req: AuthRequest, res: Response)
   if (participant.invitedByUserId !== req.userId) {
     throw new ApiError(403, 'errors.invites.onlySenderCanCancel');
   }
-  await prisma.gameParticipant.delete({ where: { id } });
+  if (participant.role === ParticipantRole.OWNER) {
+    await prisma.gameParticipant.update({ where: { id }, data: { status: 'NON_PLAYING' } });
+  } else {
+    await prisma.gameParticipant.delete({ where: { id } });
+  }
   if ((global as any).socketService) {
     (global as any).socketService.emitInviteDeleted(participant.userId, id, participant.gameId || undefined);
     if (participant.invitedByUserId) {
@@ -348,10 +369,17 @@ export const deleteInvitesForStartedGame = async (gameId: string) => {
   if (!game || game.status !== 'STARTED') return;
   const participants = await prisma.gameParticipant.findMany({
     where: { gameId, status: 'INVITED' },
-    select: { id: true, userId: true, invitedByUserId: true, gameId: true },
+    select: { id: true, role: true, userId: true, invitedByUserId: true, gameId: true },
   });
   if (participants.length === 0) return;
-  await prisma.gameParticipant.deleteMany({ where: { id: { in: participants.map((p) => p.id) } } });
+  const ownerIds = participants.filter((p) => p.role === ParticipantRole.OWNER).map((p) => p.id);
+  const toDelete = participants.filter((p) => p.role !== ParticipantRole.OWNER).map((p) => p.id);
+  if (ownerIds.length > 0) {
+    await prisma.gameParticipant.updateMany({ where: { id: { in: ownerIds } }, data: { status: 'NON_PLAYING' } });
+  }
+  if (toDelete.length > 0) {
+    await prisma.gameParticipant.deleteMany({ where: { id: { in: toDelete } } });
+  }
   if ((global as any).socketService) {
     participants.forEach((p) => {
       (global as any).socketService.emitInviteDeleted(p.userId, p.id, p.gameId || undefined);
@@ -368,10 +396,17 @@ export const deleteInvitesForArchivedGame = async (gameId: string) => {
   if (!game || game.status !== 'ARCHIVED') return;
   const participants = await prisma.gameParticipant.findMany({
     where: { gameId, status: 'INVITED' },
-    select: { id: true, userId: true, invitedByUserId: true, gameId: true },
+    select: { id: true, role: true, userId: true, invitedByUserId: true, gameId: true },
   });
   if (participants.length === 0) return;
-  await prisma.gameParticipant.deleteMany({ where: { id: { in: participants.map((p) => p.id) } } });
+  const ownerIds = participants.filter((p) => p.role === ParticipantRole.OWNER).map((p) => p.id);
+  const toDelete = participants.filter((p) => p.role !== ParticipantRole.OWNER).map((p) => p.id);
+  if (ownerIds.length > 0) {
+    await prisma.gameParticipant.updateMany({ where: { id: { in: ownerIds } }, data: { status: 'NON_PLAYING' } });
+  }
+  if (toDelete.length > 0) {
+    await prisma.gameParticipant.deleteMany({ where: { id: { in: toDelete } } });
+  }
   if ((global as any).socketService) {
     participants.forEach((p) => {
       (global as any).socketService.emitInviteDeleted(p.userId, p.id, p.gameId || undefined);

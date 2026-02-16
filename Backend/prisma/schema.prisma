@@ -99,6 +99,7 @@ model User {
   sendPushReminders          Boolean              @default(true)
   sendPushWalletNotifications Boolean             @default(true)
   allowMessagesFromNonContacts Boolean            @default(true)
+  appIcon                    String?             @default("tiger")
   pushTokens                 PushToken[]
   messageReports             MessageReport[]      @relation("MessageReportReporter")
   blockedUsers               BlockedUser[]        @relation("UserBlocked")

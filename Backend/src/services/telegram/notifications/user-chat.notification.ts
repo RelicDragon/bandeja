@@ -4,7 +4,6 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatUserName } from '../../shared/notification-base';
-import { getShortDayOfWeekForUser } from '../../user-timezone.service';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
@@ -42,8 +41,7 @@ export async function sendUserChatNotification(
 
   try {
     const lang = await getUserLanguageFromTelegramId(recipient.telegramId, undefined);
-    const shortDayOfWeek = await getShortDayOfWeekForUser(new Date(), recipient.currentCityId, lang);
-    const formattedMessage = `${shortDayOfWeek} 💬 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
+    const formattedMessage = `💬 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
     
     const buttons = [[
       {

@@ -6,7 +6,6 @@ import { PreferenceKey } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
-import { getShortDayOfWeekForUser } from '../../user-timezone.service';
 import prisma from '../../../config/database';
 import { TransactionType } from '@prisma/client';
 
@@ -52,7 +51,6 @@ export async function sendTransactionNotification(
 
   try {
     const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
-    const shortDayOfWeek = await getShortDayOfWeekForUser(new Date(), user.currentCityId, lang);
     const otherUser = isSender ? transaction.toUser : transaction.fromUser;
     const amount = Math.abs(transaction.total);
 
@@ -107,8 +105,6 @@ export async function sendTransactionNotification(
       default:
         return;
     }
-
-    message = `${shortDayOfWeek} ${message}`;
 
     if (transaction.transactionRows.length > 0) {
       const description = transaction.transactionRows[0].name;

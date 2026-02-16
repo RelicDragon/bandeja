@@ -68,5 +68,6 @@ export * from './ViberIcon';
 export * from './PermissionModal';
 export * from './PermissionModalProvider';
 export * from './MainTabFooter';
+export * from './AppIconCarousel';
 export * from './marketplace';
 export * from './SegmentedSwitch';

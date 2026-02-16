@@ -55,6 +55,11 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
 
   const sizeClasses = getSizeClasses();
 
+  const levelBadgeTextBorder = sizeClasses.level.includes('w-4') ? 'text-[8px]' : sizeClasses.level.includes('w-5') ? 'text-[10px]' : 'text-xs font-bold border-2';
+  const levelBadgeClass = `${sizeClasses.level} rounded-full flex items-center justify-center text-white ${levelBadgeTextBorder} border-white dark:border-gray-900`;
+  const levelBadgeClassNoSize = `rounded-full flex items-center justify-center text-white ${levelBadgeTextBorder} border-white dark:border-gray-900`;
+  const levelBadgeStyle = { boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)' };
+
   const getGlowStyle = () => {
     if (!isFavorite) return undefined;
     if (extrasmall) {
@@ -166,6 +171,96 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
 
   const initials = `${player.firstName?.[0] || ''}${player.lastName?.[0] || ''}`.toUpperCase();
 
+  const levelRightClass = extrasmall && !player.approvedLevel ? '-right-1' : '-right-2';
+  const trainerBadgeLeftClass = extrasmall ? '-left-1' : smallLayout ? '-left-1.5' : '-left-2';
+
+  const renderAvatarContent = () => (
+    <>
+      {player.avatar ? (
+        <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
+          <img
+            src={player.avatar || ''}
+            alt={`${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player'}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className={`absolute inset-0 w-full h-full rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text}`}>
+          {initials}
+        </div>
+      )}
+      {role === 'OWNER' && (
+        <div className={`absolute -top-1 -left-1 ${sizeClasses.crown} rounded-full bg-yellow-500 dark:bg-yellow-600 flex items-center justify-center border-2 border-white dark:border-gray-900`}>
+          <Crown size={sizeClasses.crownIcon} className="text-white" />
+        </div>
+      )}
+      {role === 'ADMIN' && (
+        <div className={`absolute -top-1 -left-1 ${sizeClasses.crown} rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center border-2 border-white dark:border-gray-900`}>
+          <Crown size={sizeClasses.crownIcon} className="text-white" />
+        </div>
+      )}
+      {extrasmall && player.isTrainer && (
+        <div className={`absolute -bottom-1 ${trainerBadgeLeftClass} ${levelBadgeClass} z-10 ${player.gender && player.gender !== 'PREFER_NOT_TO_SAY' ? (player.gender === 'MALE' ? 'bg-blue-500 dark:bg-blue-600' : 'bg-pink-500 dark:bg-pink-600') : 'bg-blue-500 dark:bg-blue-600'}`} style={levelBadgeStyle}>
+          <Dumbbell size={8} className="text-white" />
+        </div>
+      )}
+      {!extrasmall && !player.isTrainer && (
+        <GenderIndicator
+          gender={player.gender}
+          layout={smallLayout ? 'small' : 'normal'}
+          position="bottom-left"
+          wrapperClassName={levelBadgeClass}
+          wrapperStyle={levelBadgeStyle}
+        />
+      )}
+      {!extrasmall && player.isTrainer && (
+        <div
+          className={`absolute -bottom-1 ${trainerBadgeLeftClass} ${levelBadgeClassNoSize} z-10 ${smallLayout ? 'h-5 px-1.5 min-w-[1.25rem]' : 'h-6 px-2 min-w-[1.5rem]'} ${player.gender && player.gender !== 'PREFER_NOT_TO_SAY' ? (player.gender === 'MALE' ? 'bg-blue-500 dark:bg-blue-600' : 'bg-pink-500 dark:bg-pink-600') : 'bg-blue-500 dark:bg-blue-600'}`}
+          style={levelBadgeStyle}
+        >
+          <Dumbbell size={smallLayout ? 10 : 12} className="text-white" />
+        </div>
+      )}
+      {appMode === 'PADEL' ? (
+        <div className={`absolute -bottom-1 ${levelRightClass}`}>
+          {player.approvedLevel ? (
+            <div
+              className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1 shadow-lg ring-4 ring-blue-300 dark:ring-blue-500 ring-offset-white dark:ring-offset-gray-900 ring-offset-1`}
+              style={{
+                ...getLevelColor(player.level, isDark),
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+              }}
+            >
+              <span className={`text-white font-bold leading-none ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'}`}>
+                {player.level.toFixed(1)}
+              </span>
+              <Check size={extrasmall ? 7 : smallLayout ? 9 : 12} className="text-white" strokeWidth={3} />
+            </div>
+          ) : (
+            <div
+              className={`relative ${levelBadgeClass}`}
+              style={{ ...getLevelColor(player.level, isDark), ...levelBadgeStyle }}
+            >
+              {player.level.toFixed(1)}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="absolute -bottom-1 -right-1 flex flex-col items-center">
+          <span className={`text-white font-bold text-center leading-none mb-0.5 ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'} bg-black bg-opacity-60 rounded px-1 py-0.5`}>
+            {player.socialLevel.toFixed(1)}
+          </span>
+          <div className="relative">
+            <Beer size={extrasmall ? 16 : smallLayout ? 20 : 24} className="text-amber-600 dark:text-amber-500 absolute inset-0" fill="currentColor" />
+            <Beer size={extrasmall ? 16 : smallLayout ? 20 : 24} className="text-white dark:text-gray-900 relative z-10" strokeWidth={1.5} />
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const wrapperClassName = `relative z-10 ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${!asDiv ? (draggable ? 'cursor-move' : 'cursor-pointer') + ' hover:opacity-80 transition-opacity ' : ''}${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : player.isTrainer ? 'ring-[3px] ring-green-500 dark:ring-green-400' : ''}`;
+
   return (
     <div className="flex flex-col items-center overflow-visible">
       <div className="relative overflow-visible">
@@ -176,100 +271,8 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
           />
         )}
         {asDiv ? (
-          <div
-            className={`relative z-10 ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
-          >
-          {player.avatar ? (
-            <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
-              <img
-                src={player.avatar || ''}
-                alt={`${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player'}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ) : (
-            <div className={`absolute inset-0 w-full h-full rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text}`}>
-              {initials}
-            </div>
-          )}
-          {role === 'OWNER' && (
-            <div className={`absolute -top-1 -left-1 ${sizeClasses.crown} rounded-full bg-yellow-500 dark:bg-yellow-600 flex items-center justify-center border-2 border-white dark:border-gray-900`}>
-              <Crown size={sizeClasses.crownIcon} className="text-white" />
-            </div>
-          )}
-          {role === 'ADMIN' && (
-            <div className={`absolute -top-1 -left-1 ${sizeClasses.crown} rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center border-2 border-white dark:border-gray-900`}>
-              <Crown size={sizeClasses.crownIcon} className="text-white" />
-            </div>
-          )}
-          {extrasmall && player.isTrainer && (
-            <div className="absolute -bottom-1 -left-1 w-4 h-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center border-2 border-white dark:border-gray-900 z-10">
-              <Dumbbell size={8} className="text-white" />
-            </div>
-          )}
-          {!extrasmall && !player.isTrainer && <GenderIndicator gender={player.gender} layout={smallLayout ? 'small' : 'normal'} position="bottom-left" />}
-          {!extrasmall && player.isTrainer && (
-            <div className={`absolute -bottom-1 -left-1 rounded-full flex items-center justify-center gap-0.5 border-2 border-white dark:border-gray-900 z-10 ${smallLayout ? 'h-5 px-1.5 min-w-[1.25rem]' : 'h-6 px-2 min-w-[1.5rem]'} ${player.gender && player.gender !== 'PREFER_NOT_TO_SAY' ? (player.gender === 'MALE' ? 'bg-blue-500 dark:bg-blue-600' : 'bg-pink-500 dark:bg-pink-600') : 'bg-blue-500 dark:bg-blue-600'}`}>
-              {player.gender && player.gender !== 'PREFER_NOT_TO_SAY' && (
-                <i className={`bi ${player.gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'} text-white ${smallLayout ? 'text-[10px]' : 'text-xs'}`}></i>
-              )}
-              <Dumbbell size={smallLayout ? 10 : 12} className="text-white" />
-            </div>
-          )}
-          {appMode === 'PADEL' ? (
-            <div className="absolute -bottom-1 -right-2">
-              {player.approvedLevel ? (
-                <div 
-                  className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1 shadow-lg ring-4 ring-blue-300 dark:ring-blue-500 ring-offset-white dark:ring-offset-gray-900 ring-offset-1`}
-                  style={{
-                    ...getLevelColor(player.level, isDark),
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                  }}
-                >
-                  <span 
-                    className={`text-white font-bold leading-none ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'}`}
-                  >
-                    {player.level.toFixed(1)}
-                  </span>
-                  <Check 
-                    size={extrasmall ? 7 : smallLayout ? 9 : 12} 
-                    className="text-white" 
-                    strokeWidth={3}
-                  />
-                </div>
-              ) : (
-                <div 
-                  className={`relative ${sizeClasses.level} rounded-full flex items-center justify-center text-white ${sizeClasses.level.includes('w-4') ? 'text-[8px]' : sizeClasses.level.includes('w-5') ? 'text-[10px]' : 'text-xs font-bold border-2'} border-white dark:border-gray-900`}
-                  style={{
-                    ...getLevelColor(player.level, isDark),
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                  }}
-                >
-                  {player.level.toFixed(1)}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="absolute -bottom-1 -right-1 flex flex-col items-center">
-              <span className={`text-white font-bold text-center leading-none mb-0.5 ${
-                extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'
-              } bg-black bg-opacity-60 rounded px-1 py-0.5`}>
-                {player.socialLevel.toFixed(1)}
-              </span>
-              <div className="relative">
-                <Beer
-                  size={extrasmall ? 16 : smallLayout ? 20 : 24}
-                  className="text-amber-600 dark:text-amber-500 absolute inset-0"
-                  fill="currentColor"
-                />
-                <Beer
-                  size={extrasmall ? 16 : smallLayout ? 20 : 24}
-                  className="text-white dark:text-gray-900 relative z-10"
-                  strokeWidth={1.5}
-                />
-              </div>
-            </div>
-          )}
+          <div className={wrapperClassName}>
+            {renderAvatarContent()}
           </div>
         ) : (
           <button
@@ -280,106 +283,13 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              if (!user) {
-                setShowAuthModal(true);
-              } else {
-                openPlayerCard(player.id);
-              }
+              if (!user) setShowAuthModal(true);
+              else openPlayerCard(player.id);
             }}
-            className={`relative z-10 ${sizeClasses.avatar} rounded-full ${draggable ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 transition-opacity flex-shrink-0 p-0 border-0 ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}
+            className={wrapperClassName}
           >
-          {player.avatar ? (
-            <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
-              <img
-                src={player.avatar || ''}
-                alt={`${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player'}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ) : (
-            <div className={`absolute inset-0 w-full h-full rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text}`}>
-              {initials}
-            </div>
-          )}
-          {role === 'OWNER' && (
-            <div className={`absolute -top-1 -left-1 ${sizeClasses.crown} rounded-full bg-yellow-500 dark:bg-yellow-600 flex items-center justify-center border-2 border-white dark:border-gray-900`}>
-              <Crown size={sizeClasses.crownIcon} className="text-white" />
-            </div>
-          )}
-          {role === 'ADMIN' && (
-            <div className={`absolute -top-1 -left-1 ${sizeClasses.crown} rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center border-2 border-white dark:border-gray-900`}>
-              <Crown size={sizeClasses.crownIcon} className="text-white" />
-            </div>
-          )}
-          {extrasmall && player.isTrainer && (
-            <div className="absolute -bottom-1 -left-1.5 w-4 h-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center border-2 border-white dark:border-gray-900 z-10">
-              <Dumbbell size={8} className="text-white" />
-            </div>
-          )}
-          {!extrasmall && !player.isTrainer && <GenderIndicator gender={player.gender} layout={smallLayout ? 'small' : 'normal'} position="bottom-left" />}
-          {!extrasmall && player.isTrainer && (
-            <div className={`absolute -bottom-1 -left-2 rounded-full flex items-center justify-center gap-0.5 border-2 border-white dark:border-gray-900 z-10 ${smallLayout ? 'h-5 px-1.5 min-w-[1.25rem]' : 'h-6 px-2 min-w-[1.5rem]'} ${player.gender && player.gender !== 'PREFER_NOT_TO_SAY' ? (player.gender === 'MALE' ? 'bg-blue-500 dark:bg-blue-600' : 'bg-pink-500 dark:bg-pink-600') : 'bg-blue-500 dark:bg-blue-600'}`}>
-              {player.gender && player.gender !== 'PREFER_NOT_TO_SAY' && (
-                <i className={`bi ${player.gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'} text-white ${smallLayout ? 'text-[10px]' : 'text-xs'}`}></i>
-              )}
-              <Dumbbell size={smallLayout ? 10 : 12} className="text-white" />
-            </div>
-          )}
-          {appMode === 'PADEL' ? (
-            <div className="absolute -bottom-1 -right-3">
-              {player.approvedLevel ? (
-                <div 
-                  className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1 shadow-lg ring-4 ring-blue-300 dark:ring-blue-500 ring-offset-white dark:ring-offset-gray-900 ring-offset-1`}
-                  style={{
-                    ...getLevelColor(player.level, isDark),
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                  }}
-                >
-                  <span 
-                    className={`text-white font-bold leading-none ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'}`}
-                  >
-                    {player.level.toFixed(1)}
-                  </span>
-                  <Check 
-                    size={extrasmall ? 7 : smallLayout ? 9 : 12} 
-                    className="text-white" 
-                    strokeWidth={3}
-                  />
-                </div>
-              ) : (
-                <div 
-                  className={`relative ${sizeClasses.level} rounded-full flex items-center justify-center text-white ${sizeClasses.level.includes('w-4') ? 'text-[8px]' : sizeClasses.level.includes('w-5') ? 'text-[10px]' : 'text-xs font-bold border-2'} border-white dark:border-gray-900`}
-                  style={{
-                    ...getLevelColor(player.level, isDark),
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                  }}
-                >
-                  {player.level.toFixed(1)}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="absolute -bottom-1 -right-1 flex flex-col items-center">
-              <span className={`text-white font-bold text-center leading-none mb-0.5 ${
-                extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'
-              } bg-black bg-opacity-60 rounded px-1 py-0.5`}>
-                {player.socialLevel.toFixed(1)}
-              </span>
-              <div className="relative">
-                <Beer
-                  size={extrasmall ? 16 : smallLayout ? 20 : 24}
-                  className="text-amber-600 dark:text-amber-500 absolute inset-0"
-                  fill="currentColor"
-                />
-                <Beer
-                  size={extrasmall ? 16 : smallLayout ? 20 : 24}
-                  className="text-white dark:text-gray-900 relative z-10"
-                  strokeWidth={1.5}
-                />
-              </div>
-            </div>
-          )}
-        </button>
+            {renderAvatarContent()}
+          </button>
         )}
         {removable && onRemoveClick && (
           <button

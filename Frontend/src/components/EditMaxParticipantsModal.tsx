@@ -95,17 +95,17 @@ export const EditMaxParticipantsModal = ({
   }, [eligibleParticipants]);
 
   const preferNotToSayParticipants = useMemo(() => {
-    return eligibleParticipants.filter(p => 
-      !p.user.gender || p.user.gender === 'PREFER_NOT_TO_SAY'
+    return eligibleParticipants.filter(p =>
+      p.role !== 'OWNER' && (!p.user.gender || p.user.gender === 'PREFER_NOT_TO_SAY')
     );
   }, [eligibleParticipants]);
 
   const nonMaleParticipants = useMemo(() => {
-    return eligibleParticipants.filter(p => p.user.gender !== 'MALE');
+    return eligibleParticipants.filter(p => p.role !== 'OWNER' && p.user.gender !== 'MALE');
   }, [eligibleParticipants]);
 
   const nonFemaleParticipants = useMemo(() => {
-    return eligibleParticipants.filter(p => p.user.gender !== 'FEMALE');
+    return eligibleParticipants.filter(p => p.role !== 'OWNER' && p.user.gender !== 'FEMALE');
   }, [eligibleParticipants]);
 
   const slotMaleParticipants = useMemo(() => maleParticipants.filter(p => p.status === 'PLAYING'), [maleParticipants]);

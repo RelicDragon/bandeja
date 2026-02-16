@@ -4,8 +4,6 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatUserName } from '../../shared/notification-base';
-import { getShortDayOfWeek, getTimezonesByCityIds } from '../../user-timezone.service';
-import { DEFAULT_TIMEZONE } from '../../../utils/constants';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import prisma from '../../../config/database';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
@@ -41,9 +39,6 @@ export async function sendGroupChatNotification(
     }
   });
 
-  const cityIds = participants.map(p => p.user.currentCityId ?? null);
-  const timezoneMap = await getTimezonesByCityIds(cityIds);
-
   for (const participant of participants) {
     const user = participant.user;
     if (user.id === sender.id) continue;
@@ -74,8 +69,6 @@ export async function sendGroupChatNotification(
 
     try {
       const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
-      const timezone = timezoneMap.get(user.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
-      const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
       const contextLabel = groupChannel.bug?.id
         ? `🐛 ${t('notifications.bugReport', lang)}`
         : groupChannel.marketItem?.id
@@ -83,7 +76,7 @@ export async function sendGroupChatNotification(
           : groupChannel.isChannel
             ? `📢 ${t('notifications.channel', lang)}`
             : `👥 ${t('notifications.group', lang)}`;
-      const formattedMessage = `${shortDayOfWeek} ${contextLabel}: *${escapeMarkdown(groupChannel.name)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
+      const formattedMessage = `${contextLabel}: *${escapeMarkdown(groupChannel.name)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
       
       const viewButtonKey = groupChannel.bug?.id
         ? 'telegram.viewBug'

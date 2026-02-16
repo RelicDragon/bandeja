@@ -8,6 +8,7 @@ import * as userController from '../controllers/user.controller';
 const router = Router();
 
 router.get('/profile', authenticate, userController.getProfile);
+router.post('/profile/sync-telegram', authenticate, userController.syncTelegramProfile);
 router.get('/notification-preferences', authenticate, userController.getNotificationPreferences);
 router.put(
   '/notification-preferences',

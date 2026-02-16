@@ -1,7 +1,7 @@
 import { Bot } from 'grammy';
 import { config } from '../../config/env';
 import { PendingReply } from './types';
-import { requireUser, requireChat, requirePrivateChat } from './middleware';
+import { requireUser, requireChat, requirePrivateChat, syncTelegramProfile } from './middleware';
 import { handleStartCommand } from './commands/start.command';
 import { generateAuthCode } from './commands/auth.command';
 import { handleMyGamesCommand } from './commands/myGames.command';
@@ -38,14 +38,14 @@ class TelegramBotService {
       console.error('Failed to fetch bot info:', error);
     }
 
-    this.bot.command('start', requireUser, requirePrivateChat, handleStartCommand);
-    this.bot.command('auth', requireUser, requirePrivateChat, generateAuthCode);
-    this.bot.command('my', requireUser, requirePrivateChat, handleMyGamesCommand);
-    this.bot.command('games', requireUser, requireChat, handleGamesCommand);
+    this.bot.command('start', requireUser, syncTelegramProfile, requirePrivateChat, handleStartCommand);
+    this.bot.command('auth', requireUser, syncTelegramProfile, requirePrivateChat, generateAuthCode);
+    this.bot.command('my', requireUser, syncTelegramProfile, requirePrivateChat, handleMyGamesCommand);
+    this.bot.command('games', requireUser, syncTelegramProfile, requireChat, handleGamesCommand);
 
-    this.bot.on('message', requireUser, requirePrivateChat, createMessageHandler(this.pendingReplies, this.bot));
+    this.bot.on('message', requireUser, syncTelegramProfile, requirePrivateChat, createMessageHandler(this.pendingReplies, this.bot));
 
-    this.bot.callbackQuery(/^(sg|rm|ia|rum|rg|rbm):/, requireUser, createCallbackHandler(this.pendingReplies));
+    this.bot.callbackQuery(/^(sg|rm|ia|rum|rg|rbm):/, requireUser, syncTelegramProfile, createCallbackHandler(this.pendingReplies));
 
     this.bot.catch((err) => {
       const ctx = err.ctx as any;

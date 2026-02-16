@@ -211,6 +211,7 @@ export const PROFILE_SELECT_FIELDS = {
   sendPushDirectMessages: true,
   sendPushReminders: true,
   allowMessagesFromNonContacts: true,
+  appIcon: true,
   wallet: true,
   totalPoints: true,
   gamesPlayed: true,

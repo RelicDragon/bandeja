@@ -8,8 +8,6 @@ import { PreferenceKey } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { formatUserName } from '../../shared/notification-base';
-import { getShortDayOfWeek, getTimezonesByCityIds } from '../../user-timezone.service';
-import { DEFAULT_TIMEZONE } from '../../../utils/constants';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { buildMessageWithButtons } from '../shared/message-builder';
 
@@ -90,13 +88,6 @@ export async function sendBugChatNotification(
       allUsers.add(admin.id);
     }
 
-    const mentionCityIds = [
-      bugCreator?.currentCityId ?? null,
-      ...bugParticipants.map(p => p.user.currentCityId ?? null),
-      ...admins.map(a => a.currentCityId ?? null),
-    ];
-    void getTimezonesByCityIds(mentionCityIds);
-
     for (const userId of mentionIds) {
       if (userId === sender.id || notifiedUserIds.has(userId)) {
         continue;
@@ -166,23 +157,14 @@ export async function sendBugChatNotification(
       }
     });
 
-    const elseCityIds = [
-      bugCreator?.currentCityId ?? null,
-      ...bugParticipants.map(p => p.user.currentCityId ?? null),
-      ...admins.map(a => a.currentCityId ?? null),
-    ];
-    const elseTimezoneMap = await getTimezonesByCityIds(elseCityIds);
-
     if (bugCreator && bugCreator.id !== sender.id) {
       const isMuted = await ChatMuteService.isChatMuted(bugCreator.id, ChatContextType.BUG, bug.id);
       const creatorAllowed = await NotificationPreferenceService.doesUserAllow(bugCreator.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
       if (!isMuted && bugCreator.telegramId && creatorAllowed) {
         try {
           const lang = await getUserLanguageFromTelegramId(bugCreator.telegramId, undefined);
-          const timezone = elseTimezoneMap.get(bugCreator.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
-          const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
           const buttons = buildBugButtons(lang);
-          const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${getBugMessage(lang)}`, buttons, lang);
+          const { message: finalMessage, options } = buildMessageWithButtons(getBugMessage(lang), buttons, lang);
           await api.sendMessage(bugCreator.telegramId, finalMessage, options);
         } catch (error) {
           console.error(`Failed to send Telegram notification to bug creator ${bugCreator.id}:`, error);
@@ -206,10 +188,8 @@ export async function sendBugChatNotification(
       notifiedUserIds.add(user.id);
       try {
         const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
-        const timezone = elseTimezoneMap.get(user.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
-        const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
         const buttons = buildBugButtons(lang);
-        const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${getBugMessage(lang)}`, buttons, lang);
+        const { message: finalMessage, options } = buildMessageWithButtons(getBugMessage(lang), buttons, lang);
         await api.sendMessage(user.telegramId, finalMessage, options);
       } catch (error) {
         console.error(`Failed to send Telegram notification to bug participant ${user.id}:`, error);
@@ -228,10 +208,8 @@ export async function sendBugChatNotification(
       notifiedUserIds.add(admin.id);
       try {
         const lang = await getUserLanguageFromTelegramId(admin.telegramId, undefined);
-        const timezone = elseTimezoneMap.get(admin.currentCityId ?? null) ?? DEFAULT_TIMEZONE;
-        const shortDayOfWeek = await getShortDayOfWeek(new Date(), timezone, lang);
         const buttons = buildBugButtons(lang);
-        const { message: finalMessage, options } = buildMessageWithButtons(`${shortDayOfWeek} ${getBugMessage(lang)}`, buttons, lang);
+        const { message: finalMessage, options } = buildMessageWithButtons(getBugMessage(lang), buttons, lang);
         await api.sendMessage(admin.telegramId, finalMessage, options);
       } catch (error) {
         console.error(`Failed to send Telegram notification to admin ${admin.id}:`, error);
