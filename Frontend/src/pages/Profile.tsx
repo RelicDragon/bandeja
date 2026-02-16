@@ -14,7 +14,7 @@ import { usersApi, mediaApi, authApi, NotificationPreference } from '@/api';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
 import { Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X, UserCircle, Bell, DollarSign } from 'lucide-react';
+import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X, Bell } from 'lucide-react';
 import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -956,8 +956,7 @@ export const ProfileContent = () => {
                   { value: 'auto', label: t('profile.auto') || 'Auto', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
                   ...getCurrencyOptions().map(curr => ({
                     value: curr.value,
-                    label: `${curr.value} (${getCurrencySymbol(curr.value)}) - ${curr.label.split(' - ')[1]}`,
-                    icon: <DollarSign size={16} className="text-gray-900 dark:text-white" />
+                    label: `${curr.value} (${getCurrencySymbol(curr.value)}) - ${curr.label.split(' - ')[1]}`
                   }))
                 ]}
                 value={defaultCurrency}
@@ -965,16 +964,6 @@ export const ProfileContent = () => {
               />
             </div>
 
-            <div>
-              <Button
-                variant="primary"
-                onClick={() => navigate('/character')}
-                className="w-full flex items-center justify-center gap-2 rounded-xl"
-              >
-                <UserCircle size={16} />
-                {t('profile.characterCreation') || 'Character Creation'}
-              </Button>
-            </div>
           </div>
         </Card>
 

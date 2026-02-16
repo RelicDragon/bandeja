@@ -189,7 +189,7 @@ export class TeamForRoundGeneration {
     leagueSeasonId: string,
     groupId: string,
     currentRoundId: string
-  ): Promise<{ playedTeammates: Set<string>; playedOpponents: Set<string> }> {
+  ): Promise<{ playedTeammates: Set<string>; playedOpponents: Map<string, number> }> {
     const previousGames = await prisma.game.findMany({
       where: {
         parentId: leagueSeasonId,
@@ -217,7 +217,7 @@ export class TeamForRoundGeneration {
     });
 
     const playedTeammates = new Set<string>();
-    const playedOpponents = new Set<string>();
+    const playedOpponents = new Map<string, number>();
 
     for (const game of previousGames) {
       if (game.fixedTeams.length >= 2) {
@@ -235,15 +235,16 @@ export class TeamForRoundGeneration {
 
           for (const p1 of team1Players) {
             for (const p2 of team2Players) {
-              const opponentPair = [p1, p2].sort().join(',');
-              playedOpponents.add(opponentPair);
+              const key = [p1, p2].sort().join(',');
+              playedOpponents.set(key, (playedOpponents.get(key) ?? 0) + 1);
             }
           }
         }
       }
     }
 
-    console.log(`[LEAGUE ROUND GEN] Group ${groupId}: Found ${playedTeammates.size} played teammate pairs, ${playedOpponents.size} played opponent pairs`);
+    const totalOpponentPlays = [...playedOpponents.values()].reduce((a, b) => a + b, 0);
+    console.log(`[LEAGUE ROUND GEN] Group ${groupId}: Found ${playedTeammates.size} played teammate pairs, ${playedOpponents.size} opponent pair keys (${totalOpponentPlays} total plays)`);
 
     return { playedTeammates, playedOpponents };
   }
@@ -358,22 +359,22 @@ export class TeamForRoundGeneration {
 
   private static pairTeamsIntoGames(
     teams: TeamPair[],
-    playedOpponents: Set<string>
+    playedOpponents: Map<string, number>
   ): Array<{ team1: TeamPair; team2: TeamPair }> {
     const games: Array<{ team1: TeamPair; team2: TeamPair }> = [];
     const availableTeams = [...teams];
-    
+
     while (availableTeams.length >= 2) {
       const team1 = availableTeams[0];
       let bestOpponentIndex = -1;
-      let bestScore = -1;
+      let bestUnNovelty = Infinity;
 
       for (let i = 1; i < availableTeams.length; i++) {
         const team2 = availableTeams[i];
-        const score = this.calculateOpponentNoveltyScore(team1, team2, playedOpponents);
+        const unNovelty = this.getOpponentUnNoveltyScore(team1, team2, playedOpponents);
 
-        if (score > bestScore) {
-          bestScore = score;
+        if (unNovelty < bestUnNovelty) {
+          bestUnNovelty = unNovelty;
           bestOpponentIndex = i;
         }
       }
@@ -394,26 +395,18 @@ export class TeamForRoundGeneration {
     return games;
   }
 
-  private static calculateOpponentNoveltyScore(
+  private static getOpponentUnNoveltyScore(
     team1: TeamPair,
     team2: TeamPair,
-    playedOpponents: Set<string>
+    playedOpponents: Map<string, number>
   ): number {
-    let score = 0;
-
-    const team1Players = [team1.player1Id, team1.player2Id];
-    const team2Players = [team2.player1Id, team2.player2Id];
-
-    for (const player1 of team1Players) {
-      for (const player2 of team2Players) {
-        const opponentPair = [player1, player2].sort().join(',');
-        if (!playedOpponents.has(opponentPair)) {
-          score += 1;
-        }
-      }
-    }
-
-    return score;
+    const getCount = (a: string, b: string) => playedOpponents.get([a, b].sort().join(',')) ?? 0;
+    return (
+      getCount(team1.player1Id, team2.player1Id) +
+      getCount(team1.player1Id, team2.player2Id) +
+      getCount(team1.player2Id, team2.player1Id) +
+      getCount(team1.player2Id, team2.player2Id)
+    );
   }
 
   private static findTeamInParticipants(

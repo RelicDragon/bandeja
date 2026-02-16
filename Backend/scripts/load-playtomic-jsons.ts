@@ -8,6 +8,7 @@ import prisma from '../src/config/database';
 import { normalizeClubName } from '../src/utils/normalizeClubName';
 import { normalizeCountry } from '../src/utils/normalizePlaytomicCountry';
 import { refreshClubCourtsCount } from '../src/utils/refreshClubCourtsCount';
+import { resolveCityName } from './lib/dr5hnCityResolver';
 
 const JSON_DIR = path.join(__dirname, '..', 'additions', 'playtomic', 'jsons');
 const PADEL = 'PADEL';
@@ -63,10 +64,12 @@ function parseCoord(coord: PtAddress['coordinate']): { lat: number; lon: number 
 }
 
 async function getOrCreateCity(
-  addr: PtAddress
+  addr: PtAddress,
+  countryCode: string | null
 ): Promise<{ id: string; created: boolean }> {
-  const name = (addr.city || '').trim();
   const country = (addr.country || '').trim();
+  const canonicalName = resolveCityName(country, countryCode, addr.city || '');
+  const name = canonicalName;
   const timezone = (addr.timezone || DEFAULT_TIMEZONE).trim();
   const subAdministrativeArea = (addr.sub_administrative_area || '').trim() || null;
   const administrativeArea = (addr.administrative_area || '').trim() || null;
@@ -209,10 +212,11 @@ async function loadFile(filePath: string): Promise<{
     };
     pt.address = normalizedAddr;
 
-    const cityKey = `${addr.city}|${country_code || country}`;
+    const countryCode = normalizedAddr.country_code || null;
+    const cityKey = `${resolveCityName(normalizedAddr.country, countryCode, addr.city)}|${country_code || normalizedAddr.country}`;
     let cityId = cityIdsByKey.get(cityKey);
     if (!cityId) {
-      const city = await getOrCreateCity(normalizedAddr);
+      const city = await getOrCreateCity(normalizedAddr, countryCode);
       cityId = city.id;
       cityIdsByKey.set(cityKey, cityId);
       if (city.created) citiesCreated++;

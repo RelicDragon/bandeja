@@ -24,8 +24,7 @@ export type Place =
   | 'login'
   | 'loginPhone'
   | 'loginTelegram'
-  | 'register'
-  | 'character';
+  | 'register';
 
 export interface PlaceParams {
   [key: string]: string | number | boolean | undefined;
@@ -86,7 +85,6 @@ const PLACE_DEFS: PlaceDefinition[] = [
   { pattern: /^\/login\/telegram$/, place: 'loginTelegram' },
   { pattern: /^\/login\/?$/, place: 'login' },
   { pattern: /^\/register\/?$/, place: 'register' },
-  { pattern: /^\/character\/?$/, place: 'character' },
   { pattern: /^\/$/, place: 'home' },
 ];
 
@@ -142,7 +140,6 @@ export function buildUrl(place: Place, params?: PlaceParams, overlay?: Overlay):
     case 'loginPhone': path = '/login'; break;
     case 'loginTelegram': path = '/login'; break;
     case 'register': path = '/register'; break;
-    case 'character': path = '/character'; break;
     default: path = '/'; break;
   }
 
@@ -217,7 +214,7 @@ export function placeToPageType(place: Place): PageType {
 }
 
 const APP_PATH_RE =
-  /^\/(find|chats|profile|leaderboard|games|create-game|create-league|rating|bugs|game-subscriptions|marketplace|user-chat|group-chat|channel-chat|select-city|complete-profile|login|register|character)(\/.*)?$/;
+  /^\/(find|chats|profile|leaderboard|games|create-game|create-league|rating|bugs|game-subscriptions|marketplace|user-chat|group-chat|channel-chat|select-city|complete-profile|login|register)(\/.*)?$/;
 
 export function isAppPath(pathname: string): boolean {
   return pathname === '/' || APP_PATH_RE.test(pathname);

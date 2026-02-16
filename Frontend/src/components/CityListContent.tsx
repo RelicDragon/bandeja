@@ -80,6 +80,7 @@ export const CityListContent = ({
   const scrollTargetRef = useRef<HTMLButtonElement>(null);
   const lastScrolledToSelectedIdRef = useRef<string | null>(null);
   const userLocationTargetRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const skipListTransitionRef = useRef(false);
   const [allowTransition, setAllowTransition] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [clubs, setClubs] = useState<ClubMapItem[]>([]);
@@ -177,6 +178,7 @@ export const CityListContent = ({
         if (showMap) {
           setPendingCityId(nearest.id);
         } else {
+          skipListTransitionRef.current = true;
           setNearestCityIdInList(nearest.id);
           selectCountry(nearest.country);
           setScrollToCityId(nearest.id);
@@ -209,6 +211,7 @@ export const CityListContent = ({
 
   useEffect(() => {
     if (view === 'country') lastScrolledToSelectedIdRef.current = null;
+    else if (view === 'city') skipListTransitionRef.current = false;
   }, [view]);
 
   useEffect(() => {
@@ -344,7 +347,7 @@ export const CityListContent = ({
           >
             <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
               <div
-                className={`flex flex-1 min-h-0 w-full ${allowTransition ? 'transition-transform duration-300 ease-out' : ''}`}
+                className={`flex flex-1 min-h-0 w-full ${allowTransition && !skipListTransitionRef.current ? 'transition-transform duration-300 ease-out' : ''}`}
                 style={{ width: '200%', transform: view === 'city' ? 'translateX(-50%)' : 'translateX(0)' }}
               >
                 <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">

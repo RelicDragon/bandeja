@@ -10,7 +10,6 @@ const CompleteProfile = lazy(() => import('./pages/CompleteProfile').then(module
 const MainPage = lazy(() => import('./pages/MainPage').then(module => ({ default: module.MainPage })));
 const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(module => ({ default: module.CreateGameWrapper })));
 const CreateLeague = lazy(() => import('./pages/CreateLeague').then(module => ({ default: module.CreateLeague })));
-const CharCreation = lazy(() => import('./Gamify/Pages/CharCreation').then(module => ({ default: module.CharCreation })));
 // const Rating = lazy(() => import('./pages/Rating').then(module => ({ default: module.Rating })));
 const GameChatRoute = lazy(() => import('./pages/GameChatRoute').then(module => ({ default: module.GameChatRoute })));
 import { useAuthStore } from './store/authStore';
@@ -389,20 +388,6 @@ function AppContent() {
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
                   <MainPage />
-                </Suspense>
-              )}
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/character"
-          element={
-            <ProtectedRoute>
-              {!isProfileComplete(user) ? (
-                <Navigate to="/" replace />
-              ) : (
-                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                  <CharCreation />
                 </Suspense>
               )}
             </ProtectedRoute>
