@@ -830,7 +830,8 @@
     "userUnblocked": "User unblocked",
     "userBlockedCannotChat": "User is blocked",
     "userBlockedCannotFavorite": "User is blocked",
-    "confirmedBy": "Level was confirmed"
+    "confirmedBy": "Level was confirmed",
+    "levelNotConfirmed": "Level is not confirmed"
   },
   "contacts": {
     "searchPlaceholder": "Search contacts...",

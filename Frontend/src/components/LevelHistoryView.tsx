@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Beer, Check, Star } from 'lucide-react';
+import { TrendingUp, TrendingDown, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7,25 +7,13 @@ import { UserStats, usersApi, LevelHistoryItem } from '@/api/users';
 import { buildUrl } from '@/utils/urlSchema';
 import { LevelHistoryTabController } from './LevelHistoryTabController';
 import { GamesStatsSection } from './GamesStatsSection';
-import { PlayerAvatar } from './PlayerAvatar';
+import { LevelHistoryAvatarSection } from './LevelHistoryAvatarSection';
+import { LevelHistoryProfileStatsSection } from './LevelHistoryProfileStatsSection';
+import { ConfirmedLevelSection } from './ConfirmedLevelSection';
 import { PlayerItemsToSell } from './PlayerItemsToSell';
 import { MarketItem } from '@/types';
-import { formatDate, formatSmartRelativeTime } from '@/utils/dateFormat';
+import { formatDate } from '@/utils/dateFormat';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
-
-const TennisBallIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 69.447 69.447"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <g transform="translate(-1271.769 -1574.648)">
-      <path d="M1341.208,1609.372a34.719,34.719,0,1,1-34.72-34.724A34.724,34.724,0,0,1,1341.208,1609.372Z" fill="#b9d613"/>
-      <path d="M1311.144,1574.993a35.139,35.139,0,0,0-4.61-.344,41.069,41.069,0,0,1-34.369,29.735,34.3,34.3,0,0,0-.381,4.635l.183-.026a45.921,45.921,0,0,0,39.149-33.881Zm29.721,34.692a45.487,45.487,0,0,0-33.488,34.054l-.071.313a34.54,34.54,0,0,0,4.818-.455,41.218,41.218,0,0,1,28.686-29.194,36.059,36.059,0,0,0,.388-4.8Z" fill="#f7f7f7"/>
-    </g>
-  </svg>
-);
 
 interface LevelHistoryViewProps {
   stats: UserStats;
@@ -41,7 +29,6 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = stats;
-  const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const [showSocialLevel, setShowSocialLevel] = useState(false);
   const [isToggleAnimating, setIsToggleAnimating] = useState(false);
   const [levelChangeEvents, setLevelChangeEvents] = useState<LevelHistoryItem[]>([]);
@@ -168,141 +155,21 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
   return (
     <div className={`${padding} space-y-3`}>
       {!hideUserCard && (
-        <>
-      <div className="relative">
-            <div className="bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 rounded-2xl p-4 text-center relative">
-              <div className="flex gap-2 items-center">
-                {user.originalAvatar ? (
-                  <button
-                    className="cursor-pointer hover:opacity-90 transition-opacity"
-                  >
-                    {user.avatar ? (
-                      <img
-                        src={user.avatar || ''}
-                        alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'}
-                        className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
-                      />
-                    ) : (
-                      <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-4xl border-4 border-white dark:border-gray-800 shadow-xl">
-                        {initials}
-                      </div>
-                    )}
-                  </button>
-                ) : user.avatar ? (
-                  <img
-                    src={user.avatar || ''}
-                    alt={`${user.firstName} ${user.lastName}`}
-                    className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
-                  />
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-4xl border-4 border-white dark:border-gray-800 shadow-xl">
-                    {initials}
-                  </div>
-                )}
-
-
-                <div className="flex flex-col text-left">
-                  <div className="text-white text-sm">
-                    {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}
-                  </div>
-                  <div className="text-white text-6xl font-bold pb-6">
-                    {showSocialLevel ? user.socialLevel.toFixed(2) : user.level.toFixed(2)}
-                  </div>
-                </div>
-              </div>
-              {!showSocialLevel && (
-                <div className="absolute bottom-3 right-3 text-white/80 text-xs">
-                  {t('rating.reliability')}: {user.reliability.toFixed(0)}%
-                </div>
-              )}
-            </div>
-            <button
-              onClick={handleToggle}
-              className="absolute top-3 right-3 w-8 h-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-md hover:shadow-lg transition-transform duration-200 flex items-center justify-center"
-              style={{ transform: isToggleAnimating ? 'scale(1.3)' : 'scale(1)' }}
-              title={showSocialLevel ? t('playerCard.switchToLevel') : t('playerCard.switchToSocialLevel')}
-            >
-              {showSocialLevel ? (
-                <TennisBallIcon />
-              ) : (
-                <Beer size={20} className="text-amber-600" />
-              )}
-            </button>
-          </div>
-
-      {!showSocialLevel && user.approvedLevel && user.approvedBy && (
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-2">
-          <div className="flex flex-col items-center gap-2">
-            <div className="bg-yellow-500 dark:bg-yellow-600 text-white px-2 py-0.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-2">
-              <Check size={14} className="text-white" strokeWidth={3} />
-              <span>{t('playerCard.confirmedBy') || 'Level was confirmed by'}</span>
-            </div>
-            <div className="flex items-center justify-center -mt-2 gap-2 text-gray-700 dark:text-gray-300 text-sm">
-              <PlayerAvatar player={user.approvedBy} showName={false} fullHideName={true} extrasmall={true} />
-              <span className="font-medium pl-2">{user.approvedBy.firstName} {user.approvedBy.lastName}</span>
-              {user.approvedWhen && (
-                <>
-                  <span className="text-gray-500 dark:text-gray-500">•</span>
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {formatSmartRelativeTime(user.approvedWhen, t)}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+        <LevelHistoryAvatarSection
+          user={user}
+          showSocialLevel={showSocialLevel}
+          onToggle={handleToggle}
+          isToggleAnimating={isToggleAnimating}
+        />
       )}
-        </>
-      )}
+      <ConfirmedLevelSection user={user} />
 
-      <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700/50 border border-gray-200/60 dark:border-gray-600/50">
-        <div className="flex items-center gap-0 border-b border-gray-200/60 dark:border-gray-600/50">
-          <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 border-r border-gray-200/60 dark:border-gray-600/50">
-            <span className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.followers') || 'Followers'}</span>
-            <span className="text-base font-semibold tabular-nums text-gray-900 dark:text-white">{stats.followersCount}</span>
-          </div>
-          <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.following') || 'Following'}</span>
-            <span className="text-base font-semibold tabular-nums text-gray-900 dark:text-white">{stats.followingCount}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-0">
-          <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 border-r border-gray-200/60 dark:border-gray-600/50">
-            <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.preferredHand')}</span>
-            <div className="flex gap-1">
-              <div
-                className={`w-5 min-h-[0.75rem] rounded-sm flex items-center justify-center min-w-0 px-0.5 py-1.5 ${user.preferredHandLeft ? 'bg-blue-500 dark:bg-blue-500 text-white shadow-[0_0_6px_rgba(59,130,246,0.6)]' : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
-                title={t('profile.left')}
-              >
-                <span className="text-[8px] font-semibold leading-none truncate">{t('profile.leftShort')}</span>
-              </div>
-              <div
-                className={`w-5 min-h-[0.75rem] rounded-sm flex items-center justify-center min-w-0 px-0.5 py-1.5 ${user.preferredHandRight ? 'bg-blue-500 dark:bg-blue-500 text-white shadow-[0_0_6px_rgba(59,130,246,0.6)]' : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
-                title={t('profile.right')}
-              >
-                <span className="text-[8px] font-semibold leading-none truncate">{t('profile.rightShort')}</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.preferredCourtSide')}</span>
-            <div className="flex gap-1">
-              <div
-                className={`w-5 min-h-[0.75rem] rounded-sm flex items-center justify-center min-w-0 px-0.5 py-1.5 ${user.preferredCourtSideLeft ? 'bg-blue-500 dark:bg-blue-500 text-white shadow-[0_0_6px_rgba(59,130,246,0.6)]' : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
-                title={t('profile.left')}
-              >
-                <span className="text-[8px] font-semibold leading-none truncate">{t('profile.leftShort')}</span>
-              </div>
-              <div
-                className={`w-5 min-h-[0.75rem] rounded-sm flex items-center justify-center min-w-0 px-0.5 py-1.5 ${user.preferredCourtSideRight ? 'bg-blue-500 dark:bg-blue-500 text-white shadow-[0_0_6px_rgba(59,130,246,0.6)]' : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}`}
-                title={t('profile.right')}
-              >
-                <span className="text-[8px] font-semibold leading-none truncate">{t('profile.rightShort')}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <LevelHistoryProfileStatsSection
+        user={user}
+        followersCount={stats.followersCount}
+        followingCount={stats.followingCount}
+      />
+
 
       {showItemsToSell && (
         <PlayerItemsToSell userId={user.id} onItemClick={onMarketItemClick} />

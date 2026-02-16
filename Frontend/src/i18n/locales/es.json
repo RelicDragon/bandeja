@@ -823,7 +823,8 @@
     "userUnblocked": "Usuario desbloqueado",
     "userBlockedCannotChat": "Usuario bloqueado",
     "userBlockedCannotFavorite": "Usuario bloqueado",
-    "confirmedBy": "Nivel confirmado"
+    "confirmedBy": "Nivel confirmado",
+    "levelNotConfirmed": "El nivel no está confirmado"
   },
   "contacts": {
     "searchPlaceholder": "Buscar contactos...",

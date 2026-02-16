@@ -829,7 +829,8 @@
     "userUnblocked": "Корисник је деблокиран",
     "userBlockedCannotChat": "Корисник је блокиран",
     "userBlockedCannotFavorite": "Корисник је блокиран",
-    "confirmedBy": "Ниво је потврђен"
+    "confirmedBy": "Ниво је потврђен",
+    "levelNotConfirmed": "Ниво није потврђен"
   },
   "contacts": {
     "searchPlaceholder": "Претражи контакте...",

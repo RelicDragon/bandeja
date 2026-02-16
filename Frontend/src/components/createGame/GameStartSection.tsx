@@ -220,7 +220,7 @@ export const GameStartSection = ({
                   {t('createGame.duration')}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {[1, 1.5, 2].map((dur) => (
+                  {(entityType === 'TOURNAMENT' ? [1, 1.5, 2, 3, 4, 6] : [1, 1.5, 2]).map((dur) => (
                     <button
                       key={dur}
                       onClick={() => onDurationChange(dur)}

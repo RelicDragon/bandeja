@@ -837,7 +837,8 @@
     "userUnblocked": "Пользователь разблокирован",
     "userBlockedCannotChat": "Пользователь заблокирован",
     "userBlockedCannotFavorite": "Пользователь заблокирован",
-    "confirmedBy": "Уровень подтвержден"
+    "confirmedBy": "Уровень подтвержден",
+    "levelNotConfirmed": "Уровень не подтверждён"
   },
   "contacts": {
     "searchPlaceholder": "Поиск контактов...",

@@ -202,7 +202,20 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
               <Crown size={sizeClasses.crownIcon} className="text-white" />
             </div>
           )}
-          {!extrasmall && <GenderIndicator gender={player.gender} layout={smallLayout ? 'small' : 'normal'} position="bottom-left" />}
+          {extrasmall && player.isTrainer && (
+            <div className="absolute -bottom-1 -left-1 w-4 h-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center border-2 border-white dark:border-gray-900 z-10">
+              <Dumbbell size={8} className="text-white" />
+            </div>
+          )}
+          {!extrasmall && !player.isTrainer && <GenderIndicator gender={player.gender} layout={smallLayout ? 'small' : 'normal'} position="bottom-left" />}
+          {!extrasmall && player.isTrainer && (
+            <div className={`absolute -bottom-1 -left-1 rounded-full flex items-center justify-center gap-0.5 border-2 border-white dark:border-gray-900 z-10 ${smallLayout ? 'h-5 px-1.5 min-w-[1.25rem]' : 'h-6 px-2 min-w-[1.5rem]'} ${player.gender && player.gender !== 'PREFER_NOT_TO_SAY' ? (player.gender === 'MALE' ? 'bg-blue-500 dark:bg-blue-600' : 'bg-pink-500 dark:bg-pink-600') : 'bg-blue-500 dark:bg-blue-600'}`}>
+              {player.gender && player.gender !== 'PREFER_NOT_TO_SAY' && (
+                <i className={`bi ${player.gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'} text-white ${smallLayout ? 'text-[10px]' : 'text-xs'}`}></i>
+              )}
+              <Dumbbell size={smallLayout ? 10 : 12} className="text-white" />
+            </div>
+          )}
           {appMode === 'PADEL' ? (
             <div className="absolute -bottom-1 -right-2">
               {player.approvedLevel ? (
@@ -298,9 +311,22 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
               <Crown size={sizeClasses.crownIcon} className="text-white" />
             </div>
           )}
-          {!extrasmall && <GenderIndicator gender={player.gender} layout={smallLayout ? 'small' : 'normal'} position="bottom-left" />}
+          {extrasmall && player.isTrainer && (
+            <div className="absolute -bottom-1 -left-1.5 w-4 h-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center border-2 border-white dark:border-gray-900 z-10">
+              <Dumbbell size={8} className="text-white" />
+            </div>
+          )}
+          {!extrasmall && !player.isTrainer && <GenderIndicator gender={player.gender} layout={smallLayout ? 'small' : 'normal'} position="bottom-left" />}
+          {!extrasmall && player.isTrainer && (
+            <div className={`absolute -bottom-1 -left-2 rounded-full flex items-center justify-center gap-0.5 border-2 border-white dark:border-gray-900 z-10 ${smallLayout ? 'h-5 px-1.5 min-w-[1.25rem]' : 'h-6 px-2 min-w-[1.5rem]'} ${player.gender && player.gender !== 'PREFER_NOT_TO_SAY' ? (player.gender === 'MALE' ? 'bg-blue-500 dark:bg-blue-600' : 'bg-pink-500 dark:bg-pink-600') : 'bg-blue-500 dark:bg-blue-600'}`}>
+              {player.gender && player.gender !== 'PREFER_NOT_TO_SAY' && (
+                <i className={`bi ${player.gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'} text-white ${smallLayout ? 'text-[10px]' : 'text-xs'}`}></i>
+              )}
+              <Dumbbell size={smallLayout ? 10 : 12} className="text-white" />
+            </div>
+          )}
           {appMode === 'PADEL' ? (
-            <div className="absolute -bottom-1 -right-2">
+            <div className="absolute -bottom-1 -right-3">
               {player.approvedLevel ? (
                 <div 
                   className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1 shadow-lg ring-4 ring-blue-300 dark:ring-blue-500 ring-offset-white dark:ring-offset-gray-900 ring-offset-1`}
@@ -362,16 +388,6 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
           >
             <X size={sizeClasses.removeIcon} className="text-white" />
           </button>
-        )}
-        {(!removable || !onRemoveClick) && player.isTrainer && (
-          <div
-            className={`absolute -top-1 -right-1 ${sizeClasses.remove} rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center border-2 border-white dark:border-gray-900 z-10`}
-            style={{
-              boxShadow: '0 4px 10px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)'
-            }}
-          >
-            <Dumbbell size={sizeClasses.removeIcon} className="text-white" />
-          </div>
         )}
       </div>
       {!fullHideName && (
