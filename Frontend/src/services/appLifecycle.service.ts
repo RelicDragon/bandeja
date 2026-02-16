@@ -3,6 +3,7 @@ import type { PluginListenerHandle } from '@capacitor/core';
 import { isCapacitor } from '@/utils/capacitor';
 import { socketService } from '@/services/socketService';
 import { chatSyncService } from '@/services/chatSyncService';
+import pushNotificationService from '@/services/pushNotificationService';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 
 let capUnsubscribe: PluginListenerHandle | null = null;
@@ -30,6 +31,7 @@ export const appLifecycleService = {
         CapApp.addListener('appStateChange', ({ isActive }) => {
           if (isActive) {
             runForegroundSync();
+            void pushNotificationService.ensureTokenSentToBackend();
           } else {
             socketService.disconnect();
           }

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
+import rateLimit from 'express-rate-limit';
 import {
   registerToken,
   removeToken,
@@ -15,8 +16,17 @@ const router = Router();
 
 router.use(authenticate);
 
+const registerTokenLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { success: false, message: 'Too many token registrations, try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 router.post(
   '/tokens',
+  registerTokenLimiter,
   validate([
     body('token').isString().notEmpty().withMessage('Token is required'),
     body('platform').isIn(['IOS', 'ANDROID', 'WEB']).withMessage('Invalid platform'),

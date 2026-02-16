@@ -12,6 +12,7 @@ export * from './media';
 export * from './favorites';
 export * from './bugs';
 export * from './marketplace';
+export * from './push';
 export * from './transactions';
 export * from './ranking';
 export * from './userGameNotes';

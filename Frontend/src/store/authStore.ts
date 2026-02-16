@@ -11,7 +11,7 @@ interface AuthState {
   isInitializing: boolean;
   setAuth: (user: User, token: string) => Promise<void>;
   setToken: (token: string) => void;
-  logout: () => void;
+  logout: () => void | Promise<void>;
   updateUser: (user: User) => void;
   finishInitializing: () => void;
 }
@@ -104,7 +104,13 @@ export const useAuthStore = create<AuthState>((set) => {
         console.error('Error saving token to localStorage:', error);
       }
     },
-    logout: () => {
+    logout: async () => {
+      try {
+        const { pushApi } = await import('@/api');
+        await pushApi.removeAllTokens();
+      } catch {
+        // ignore so logout always completes
+      }
       try {
         localStorage.removeItem('user');
         localStorage.removeItem('token');

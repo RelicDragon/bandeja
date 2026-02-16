@@ -11,6 +11,7 @@ import { Send, Phone, AlertCircle, ArrowLeft } from 'lucide-react';
 import { TelegramIcon } from '@/components';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
+import pushNotificationService from '@/services/pushNotificationService';
 import { isIOS } from '@/utils/capacitor';
 import { AppleIcon } from '@/components/AppleIcon';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
@@ -60,6 +61,7 @@ export const Login = () => {
       const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
       const response = await authApi.loginPhone({ phone, password, language: normalizedLanguage });
       await setAuth(response.data.user, response.data.token);
+      await pushNotificationService.ensureTokenSentToBackend();
 
       if (!response.data.user.currentCity) {
         navigate('/select-city');
@@ -88,6 +90,7 @@ export const Login = () => {
       const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
       const response = await authApi.verifyTelegramOtp({ code: otp, telegramId, language: normalizedLanguage });
       await setAuth(response.data.user, response.data.token);
+      await pushNotificationService.ensureTokenSentToBackend();
       localStorage.removeItem('telegramId');
 
       if (!response.data.user.currentCity) {
@@ -167,6 +170,7 @@ export const Login = () => {
         }
       }
       await setAuth(response.data.user, response.data.token);
+      await pushNotificationService.ensureTokenSentToBackend();
       if (!response.data.user.currentCity) navigate('/select-city');
       else navigate('/');
     } catch (err: any) {
@@ -228,6 +232,7 @@ export const Login = () => {
         }
       }
       await setAuth(response.data.user, response.data.token);
+      await pushNotificationService.ensureTokenSentToBackend();
       if (!response.data.user.currentCity) navigate('/select-city');
       else navigate('/');
     } catch (err: any) {

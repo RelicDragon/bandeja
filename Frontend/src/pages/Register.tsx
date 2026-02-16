@@ -5,6 +5,7 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 import { Button, Input, Select } from '@/components';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
+import pushNotificationService from '@/services/pushNotificationService';
 import { Gender } from '@/types';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
 
@@ -141,6 +142,7 @@ export const Register = () => {
         language: normalizedLanguage,
       });
       await setAuth(response.data.user, response.data.token);
+      await pushNotificationService.ensureTokenSentToBackend();
       navigate('/select-city');
     } catch (err: any) {
       const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';

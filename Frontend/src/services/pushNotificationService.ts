@@ -21,6 +21,7 @@ interface NotificationData {
 
 class PushNotificationService {
   private isInitialized = false;
+  private lastReceivedToken: string | null = null;
 
   async initialize() {
     if (!Capacitor.isNativePlatform() || this.isInitialized) {
@@ -54,9 +55,27 @@ class PushNotificationService {
     await PushNotifications.register();
   }
 
+  async ensureTokenSentToBackend() {
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+    if (!this.isInitialized) {
+      return;
+    }
+    if (this.lastReceivedToken) {
+      await this.registerTokenWithBackend(this.lastReceivedToken);
+    } else {
+      await this.register();
+    }
+  }
+
   private async registerListeners() {
     await PushNotifications.addListener('registration', async (token: Token) => {
       console.log('Push registration success, token:', token.value);
+      this.lastReceivedToken = token.value;
       await this.registerTokenWithBackend(token.value);
     });
 
@@ -81,18 +100,27 @@ class PushNotificationService {
   }
 
   private async registerTokenWithBackend(token: string) {
-    try {
-      const platform = Capacitor.getPlatform() === 'ios' ? 'IOS' : 'ANDROID';
-      
-      await api.post('/push/tokens', {
-        token,
-        platform,
-        deviceId: await this.getDeviceId()
-      });
-      
-      console.log('✅ Token registered with backend');
-    } catch (error) {
-      console.error('❌ Failed to register token with backend:', error);
+    const platform = Capacitor.getPlatform() === 'ios' ? 'IOS' : 'ANDROID';
+    const deviceId = await this.getDeviceId();
+    const delays = [0, 1000, 2000];
+    for (let attempt = 0; attempt < delays.length; attempt++) {
+      if (attempt > 0) {
+        await new Promise((r) => setTimeout(r, delays[attempt]));
+      }
+      try {
+        await api.post('/push/tokens', { token, platform, deviceId });
+        console.log('✅ Token registered with backend');
+        return;
+      } catch (error: any) {
+        const status = error?.response?.status;
+        if (status >= 400 && status < 500) {
+          console.error('❌ Failed to register token with backend (client error):', error);
+          return;
+        }
+        if (attempt === delays.length - 1) {
+          console.error('❌ Failed to register token with backend after retries:', error);
+        }
+      }
     }
   }
 

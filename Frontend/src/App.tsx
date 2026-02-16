@@ -34,6 +34,7 @@ import { GeoProvider } from './contexts/GeoProvider';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import { backButtonService } from './services/backButtonService';
 import { appLifecycleService } from './services/appLifecycle.service';
+import pushNotificationService from './services/pushNotificationService';
 import { navigationService } from './services/navigationService';
 import { markNavigation, setupPopstateFallback } from './utils/navigation';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
@@ -97,6 +98,9 @@ function AppContent() {
 
     const timer = setTimeout(() => {
       finishInitializing();
+      if (isCapacitor() && useAuthStore.getState().isAuthenticated) {
+        void pushNotificationService.ensureTokenSentToBackend();
+      }
     }, 500);
 
     return () => {
