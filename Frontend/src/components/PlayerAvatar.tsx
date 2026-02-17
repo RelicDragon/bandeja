@@ -179,8 +179,28 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
   const levelRightClass = extrasmall && !player.approvedLevel ? '-right-1' : '-right-2';
   const trainerBadgeLeftClass = extrasmall ? '-left-1' : smallLayout ? '-left-1.5' : '-left-2';
 
+  const onlineDotClass = player && isOnline
+    ? isFavorite
+      ? 'avatar-online-dot-favorite'
+      : player.isTrainer
+        ? 'avatar-online-dot-trainer'
+        : 'avatar-online-dot'
+    : '';
+
   const renderAvatarContent = () => (
     <>
+      {player && isOnline && (
+        <div
+          className={`absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white dark:border-gray-900 z-10 ${extrasmall ? 'w-1 h-1' : 'w-1.5 h-1.5'} ${onlineDotClass}`}
+          style={{
+            backgroundColor: isFavorite
+              ? (isDark ? 'rgb(250, 204, 21)' : 'rgb(234, 179, 8)')
+              : player.isTrainer
+                ? (isDark ? 'rgb(74, 222, 128)' : 'rgb(34, 197, 94)')
+                : (isDark ? 'rgb(96, 165, 250)' : 'rgb(59, 130, 246)')
+          }}
+        />
+      )}
       {player.avatar ? (
         <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
           <img

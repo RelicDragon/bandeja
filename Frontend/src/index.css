@@ -175,6 +175,96 @@ html.dark .avatar-online-border-favorite {
   animation: avatarOnlineBorderFavoriteDark 2s ease-in-out infinite;
 }
 
+@keyframes avatarOnlineDot {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.9);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 8px rgba(59, 130, 246, 0.4);
+    opacity: 0.85;
+  }
+}
+
+@keyframes avatarOnlineDotDark {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.9);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.5), 0 0 8px rgba(96, 165, 250, 0.4);
+    opacity: 0.85;
+  }
+}
+
+.avatar-online-dot {
+  animation: avatarOnlineDot 2s ease-in-out infinite;
+}
+
+html.dark .avatar-online-dot {
+  animation: avatarOnlineDotDark 2s ease-in-out infinite;
+}
+
+@keyframes avatarOnlineDotTrainer {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.9);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.5), 0 0 8px rgba(34, 197, 94, 0.4);
+    opacity: 0.85;
+  }
+}
+
+@keyframes avatarOnlineDotTrainerDark {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.9);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.5), 0 0 8px rgba(74, 222, 128, 0.4);
+    opacity: 0.85;
+  }
+}
+
+.avatar-online-dot-trainer {
+  animation: avatarOnlineDotTrainer 2s ease-in-out infinite;
+}
+
+html.dark .avatar-online-dot-trainer {
+  animation: avatarOnlineDotTrainerDark 2s ease-in-out infinite;
+}
+
+@keyframes avatarOnlineDotFavorite {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.95);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.55), 0 0 8px rgba(234, 179, 8, 0.45);
+    opacity: 0.85;
+  }
+}
+
+@keyframes avatarOnlineDotFavoriteDark {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.95);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.55), 0 0 8px rgba(250, 204, 21, 0.45);
+    opacity: 0.85;
+  }
+}
+
+.avatar-online-dot-favorite {
+  animation: avatarOnlineDotFavorite 2s ease-in-out infinite;
+}
+
+html.dark .avatar-online-dot-favorite {
+  animation: avatarOnlineDotFavoriteDark 2s ease-in-out infinite;
+}
+
 * {
   margin: 0;
   padding: 0;
