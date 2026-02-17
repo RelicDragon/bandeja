@@ -2,11 +2,13 @@ import { X, User, Crown, Beer, Check, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BasicUser } from '@/types';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useId } from 'react';
 import { GenderIndicator } from './GenderIndicator';
 import { useAppModeStore } from '@/store/appModeStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuthStore } from '@/store/authStore';
+import { usePresenceStore } from '@/store/presenceStore';
+import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { PublicGamePrompt } from './GameDetails/PublicGamePrompt';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -31,11 +33,14 @@ interface PlayerAvatarProps {
 }
 
 export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
+  const avatarPresenceKey = `avatar:${useId()}`;
+  usePresenceSubscription(avatarPresenceKey, player && !isCurrentUser ? [player.id] : []);
   const { t } = useTranslation();
   const { openPlayerCard } = usePlayerCardModal();
   const { mode: appMode } = useAppModeStore();
   const isFavorite = useFavoritesStore((state) => player ? state.isFavorite(player.id) : false);
   const user = useAuthStore((state) => state.user);
+  const isOnline = usePresenceStore((s) => player ? s.isOnline(player.id) : false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -259,7 +264,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
     </>
   );
 
-  const wrapperClassName = `relative z-10 ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${!asDiv ? (draggable ? 'cursor-move' : 'cursor-pointer') + ' hover:opacity-80 transition-opacity ' : ''}${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : player.isTrainer ? 'ring-[3px] ring-green-500 dark:ring-green-400' : ''}`;
+  const wrapperClassName = `relative z-10 ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${!asDiv ? (draggable ? 'cursor-move' : 'cursor-pointer') + ' hover:opacity-80 transition-opacity ' : ''}${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : player.isTrainer ? 'ring-[3px] ring-green-500 dark:ring-green-400' : ''}${player && isOnline ? (isFavorite ? ' avatar-online-border-favorite' : player.isTrainer ? ' avatar-online-border-trainer' : ' avatar-online-border') : ''}`;
 
   return (
     <div className="flex flex-col items-center overflow-visible">

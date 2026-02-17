@@ -809,6 +809,8 @@
     "gameIsPrivate": "Эта игра приватная",
     "clickToView": "Нажмите, чтобы посмотреть игру",
     "openTelegramChat": "Открыть чат в Telegram",
+    "online": "В сети",
+    "offline": "Не в сети",
     "openChat": "Открыть чат",
     "eventType": {
       "GAME": "Игра",

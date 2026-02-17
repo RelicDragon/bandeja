@@ -51,6 +51,9 @@ export interface SocketEvents {
   'bet:resolved': (data: { gameId: string; betId: string; winnerId: string; loserId: string }) => void;
   // Poll events
   'poll-vote': (data: { contextType: string; contextId: string; pollId: string; messageId: string; updatedPoll: any }) => void;
+  // Presence
+  'presence-initial': (data: Record<string, boolean>) => void;
+  'presence-update': (data: { online: string[]; offline: string[] }) => void;
 }
 
 class SocketService {
@@ -757,6 +760,12 @@ class SocketService {
     }
 
     this.socket.emit('typing-indicator', { gameId, isTyping });
+  }
+
+  public subscribePresence(userIds: string[]) {
+    if (!this.socket?.connected) return;
+    const safe = Array.isArray(userIds) ? userIds.slice(0, 300) : [];
+    this.socket.emit('subscribe-presence', { userIds: safe });
   }
 
   // Check if connected

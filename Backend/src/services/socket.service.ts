@@ -12,9 +12,20 @@ interface AuthenticatedSocket extends Socket {
   userChatRooms?: Set<string>;
 }
 
+const PRESENCE_FLUSH_MS = 60000;
+const PRESENCE_OFFLINE_FLUSH_MS = 2000;
+const MAX_PRESENCE_SUBSCRIPTION = 300;
+const PRESENCE_SUBSCRIBE_COOLDOWN_MS = 2000;
+const MAX_PRESENCE_USER_ID_LENGTH = 64;
+
 class SocketService {
   private io: SocketIOServer;
   private connectedUsers: Map<string, Set<string>> = new Map(); // userId -> Set of socketIds
+  private presenceSubscriptionBySocket: Map<string, Set<string>> = new Map(); // socketId -> Set of userIds
+  private presenceSubscribersByUser: Map<string, Set<string>> = new Map(); // userId -> Set of socketIds
+  private presenceBufferBySocket: Map<string, { online: Set<string>; offline: Set<string> }> = new Map();
+  private presenceFlushTimers: Map<string, NodeJS.Timeout> = new Map();
+  private presenceLastSubscribeAt: Map<string, number> = new Map();
   private messageDeliveryAttempts = new Map<string, {
     messageId: string;
     contextType: ChatContextType;
@@ -85,6 +96,7 @@ class SocketService {
           this.connectedUsers.set(socket.userId, new Set());
         }
         this.connectedUsers.get(socket.userId)!.add(socket.id);
+        this.notifyPresenceChange(socket.userId, true);
       }
 
       // Initialize rooms tracking
@@ -269,17 +281,20 @@ class SocketService {
       socket.emit('sync-required', { timestamp: new Date().toISOString() });
 
       socket.on('disconnect', () => {
-        console.log(`User ${socket.userId} disconnected`);
-        
-        if (socket.userId) {
-          const userSockets = this.connectedUsers.get(socket.userId);
+        const userId = socket.userId;
+        console.log(`User ${userId} disconnected`);
+
+        if (userId) {
+          const userSockets = this.connectedUsers.get(userId);
           if (userSockets) {
             userSockets.delete(socket.id);
             if (userSockets.size === 0) {
-              this.connectedUsers.delete(socket.userId);
+              this.connectedUsers.delete(userId);
+              this.notifyPresenceChange(userId, false);
             }
           }
         }
+        this.clearPresenceSubscription(socket.id);
       });
 
       // Handle ping from client (heartbeat)
@@ -316,7 +331,116 @@ class SocketService {
           contextId: data.contextId
         });
       });
+
+      socket.on('subscribe-presence', (data: { userIds?: string[] }) => {
+        if (!socket.userId) return;
+        const now = Date.now();
+        const last = this.presenceLastSubscribeAt.get(socket.id) ?? 0;
+        if (now - last < PRESENCE_SUBSCRIBE_COOLDOWN_MS) return;
+        this.presenceLastSubscribeAt.set(socket.id, now);
+        const raw = Array.isArray(data?.userIds) ? data.userIds : [];
+        const userIds = [...new Set(raw)]
+          .filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= MAX_PRESENCE_USER_ID_LENGTH)
+          .slice(0, MAX_PRESENCE_SUBSCRIPTION);
+        this.setPresenceSubscription(socket.id, userIds);
+        const initial: Record<string, boolean> = {};
+        for (const uid of userIds) {
+          initial[uid] = this.isUserOnline(uid);
+        }
+        socket.emit('presence-initial', initial);
+      });
     });
+  }
+
+  private clearPresenceSubscription(socketId: string): void {
+    const userIds = this.presenceSubscriptionBySocket.get(socketId);
+    this.presenceSubscriptionBySocket.delete(socketId);
+    this.presenceBufferBySocket.delete(socketId);
+    this.presenceLastSubscribeAt.delete(socketId);
+    const timer = this.presenceFlushTimers.get(socketId);
+    if (timer) {
+      clearTimeout(timer);
+      this.presenceFlushTimers.delete(socketId);
+    }
+    if (userIds) {
+      for (const uid of userIds) {
+        const subs = this.presenceSubscribersByUser.get(uid);
+        if (subs) {
+          subs.delete(socketId);
+          if (subs.size === 0) this.presenceSubscribersByUser.delete(uid);
+        }
+      }
+    }
+  }
+
+  private setPresenceSubscription(socketId: string, userIds: string[]): void {
+    const prev = this.presenceSubscriptionBySocket.get(socketId);
+    if (prev) {
+      for (const uid of prev) {
+        const subs = this.presenceSubscribersByUser.get(uid);
+        if (subs) {
+          subs.delete(socketId);
+          if (subs.size === 0) this.presenceSubscribersByUser.delete(uid);
+        }
+      }
+    }
+    const set = new Set(userIds);
+    this.presenceSubscriptionBySocket.set(socketId, set);
+    for (const uid of set) {
+      if (!this.presenceSubscribersByUser.has(uid)) {
+        this.presenceSubscribersByUser.set(uid, new Set());
+      }
+      this.presenceSubscribersByUser.get(uid)!.add(socketId);
+    }
+  }
+
+  private notifyPresenceChange(userId: string, online: boolean): void {
+    const subscriberSocketIds = this.presenceSubscribersByUser.get(userId);
+    if (!subscriberSocketIds?.size) return;
+    for (const socketId of subscriberSocketIds) {
+      if (!this.presenceBufferBySocket.has(socketId)) {
+        this.presenceBufferBySocket.set(socketId, { online: new Set(), offline: new Set() });
+      }
+      const buf = this.presenceBufferBySocket.get(socketId)!;
+      if (online) {
+        buf.offline.delete(userId);
+        buf.online.add(userId);
+      } else {
+        buf.online.delete(userId);
+        buf.offline.add(userId);
+      }
+      this.schedulePresenceFlush(socketId);
+    }
+  }
+
+  private schedulePresenceFlush(socketId: string): void {
+    const existing = this.presenceFlushTimers.get(socketId);
+    if (existing) {
+      clearTimeout(existing);
+      this.presenceFlushTimers.delete(socketId);
+    }
+    const buf = this.presenceBufferBySocket.get(socketId);
+    const delay = buf?.offline.size ? PRESENCE_OFFLINE_FLUSH_MS : PRESENCE_FLUSH_MS;
+    const timer = setTimeout(() => {
+      this.presenceFlushTimers.delete(socketId);
+      this.flushPresenceForSocket(socketId);
+    }, delay);
+    this.presenceFlushTimers.set(socketId, timer);
+  }
+
+  private flushPresenceForSocket(socketId: string): void {
+    const buf = this.presenceBufferBySocket.get(socketId);
+    if (!buf || (buf.online.size === 0 && buf.offline.size === 0)) return;
+    const socket = this.io.sockets.sockets.get(socketId);
+    if (!socket?.connected) {
+      this.presenceBufferBySocket.delete(socketId);
+      return;
+    }
+    socket.emit('presence-update', {
+      online: [...buf.online],
+      offline: [...buf.offline]
+    });
+    this.presenceBufferBySocket.delete(socketId);
   }
 
   // Emit message reaction to all users in a game room

@@ -4,3 +4,4 @@ export { switchCity, setInitialLevel } from './user/settings.controller';
 export { getUserStats, getPlayerComparison } from './user/stats.controller';
 export { getInvitablePlayers, trackUserInteraction } from './user/social.controller';
 export { setFavoriteTrainer } from './user/favoriteTrainer.controller';
+export { getPresence } from './user/presence.controller';

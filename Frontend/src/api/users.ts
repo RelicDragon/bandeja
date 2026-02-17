@@ -202,5 +202,14 @@ export const usersApi = {
     const response = await api.put<ApiResponse<{ favoriteTrainerId: string | null }>>('/users/favorite-trainer', { trainerId });
     return response.data;
   },
+
+  getPresence: async (userIds: string[]) => {
+    if (userIds.length === 0) return {} as Record<string, boolean>;
+    const ids = [...new Set(userIds)].slice(0, 100);
+    const response = await api.get<ApiResponse<Record<string, boolean>>>('/users/presence', {
+      params: { ids: ids.join(',') },
+    });
+    return response.data.data;
+  },
 };
 

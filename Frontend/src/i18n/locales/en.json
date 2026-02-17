@@ -802,6 +802,8 @@
     "gameIsPrivate": "This game is private",
     "clickToView": "Click to view game",
     "openTelegramChat": "Open Telegram Chat",
+    "online": "Online",
+    "offline": "Offline",
     "openChat": "Open Chat",
     "eventType": {
       "GAME": "Game",

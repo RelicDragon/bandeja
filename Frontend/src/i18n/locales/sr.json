@@ -801,6 +801,8 @@
     "gameIsPrivate": "Ова игра је приватна",
     "clickToView": "Кликните да видите игру",
     "openTelegramChat": "Отвори Telegram чат",
+    "online": "На мрежи",
+    "offline": "Ван мреже",
     "openChat": "Отвори ћаскање",
     "eventType": {
       "GAME": "Игра",

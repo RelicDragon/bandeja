@@ -43,7 +43,9 @@ import { ChatMessage } from '@/api/chat';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useChatSyncStore } from '@/store/chatSyncStore';
+import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import { ChatItem, ChatType } from './chatListTypes';
+import { UserChat } from '@/api/chat';
 
 export type { ChatType };
 
@@ -113,6 +115,16 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     [chatsFilter, chats]
   );
   const marketUnreadCounts = useGroupChannelUnreadCounts(marketChannelIds);
+
+  const presenceUserIds = useMemo(() => {
+    const ids: string[] = [];
+    chats.forEach((c) => {
+      if (c.type === 'user') ids.push((c.data as UserChat).user1Id === user?.id ? (c.data as UserChat).user2Id : (c.data as UserChat).user1Id);
+      else if (c.type === 'contact') ids.push(c.userId);
+    });
+    return ids;
+  }, [chats, user?.id]);
+  usePresenceSubscription('chat-list', presenceUserIds);
 
   useEffect(() => {
     if (skipUrlSyncRef.current) {

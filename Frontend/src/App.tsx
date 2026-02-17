@@ -37,6 +37,7 @@ import pushNotificationService from './services/pushNotificationService';
 import { navigationService } from './services/navigationService';
 import { markNavigation, setupPopstateFallback } from './utils/navigation';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
+import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionManager';
 import i18n from './i18n/config';
 import './i18n/config';
 
@@ -189,6 +190,7 @@ function AppContent() {
 
   const initializeSocketEvents = useSocketEventsStore((state) => state.initialize);
   const cleanupSocketEvents = useSocketEventsStore((state) => state.cleanup);
+  usePresenceSubscriptionManager();
 
   useEffect(() => {
     if (isAuthenticated && !isInitializing) {

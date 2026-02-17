@@ -795,6 +795,8 @@
     "gameIsPrivate": "Este juego es privado",
     "clickToView": "Haz clic para ver el juego",
     "openTelegramChat": "Abrir chat de Telegram",
+    "online": "En línea",
+    "offline": "Desconectado",
     "openChat": "Abrir Chat",
     "eventType": {
       "GAME": "Juego",

@@ -21,6 +21,7 @@ router.put(
 );
 
 router.get('/ip-location', authenticate, userController.getIpLocation);
+router.get('/presence', authenticate, userController.getPresence);
 
 router.put(
   '/profile',

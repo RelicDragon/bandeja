@@ -94,7 +94,10 @@ export const MainPage = () => {
 
   return (
     <MainLayout>
-      <div className="relative px-2 overflow-hidden" style={{ paddingBottom: bottomTabsVisible ? '5rem' : '0' }}>
+      <div className={`relative px-2 
+        ${currentPage !== 'my' && currentPage != 'find' 
+          ?'overflow-hidden':''}`} 
+          style={{ paddingBottom: bottomTabsVisible ? '5rem' : '0' }}>
         <div className="transition-all duration-300 ease-in-out opacity-100 transform translate-x-0">
           {renderContent}
         </div>

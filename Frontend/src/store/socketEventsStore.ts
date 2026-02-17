@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { socketService } from '@/services/socketService';
 import { invitesApi } from '@/api';
 import { useHeaderStore } from './headerStore';
+import { usePresenceStore } from './presenceStore';
 import { Game, Invite } from '@/types';
 
 interface GameUpdateData {
@@ -213,6 +214,13 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         set({ lastNewBug: data });
       };
 
+      const handlePresenceInitial = (data: Record<string, boolean>) => {
+        if (data && typeof data === 'object') usePresenceStore.getState().setPresenceInitial(data);
+      };
+      const handlePresenceUpdate = (data: { online?: string[]; offline?: string[] }) => {
+        if (data && typeof data === 'object') usePresenceStore.getState().setPresenceBatch(Array.isArray(data.online) ? data.online : [], Array.isArray(data.offline) ? data.offline : []);
+      };
+
       socketService.on('new-invite', handleNewInvite);
       socketService.on('invite-deleted', handleInviteDeleted);
       socketService.on('game-updated', handleGameUpdated);
@@ -229,6 +237,8 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('game-results-updated', handleGameResultsUpdated);
       socketService.on('poll-vote', handlePollVote);
       socketService.on('new-bug', handleNewBug);
+      socketService.on('presence-initial', handlePresenceInitial);
+      socketService.on('presence-update', handlePresenceUpdate);
 
       unsubscribeHandlers = [
         () => socketService.off('new-invite', handleNewInvite),
@@ -247,6 +257,8 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('game-results-updated', handleGameResultsUpdated),
         () => socketService.off('poll-vote', handlePollVote),
         () => socketService.off('new-bug', handleNewBug),
+        () => socketService.off('presence-initial', handlePresenceInitial),
+        () => socketService.off('presence-update', handlePresenceUpdate),
       ];
 
       set({ initialized: true });
