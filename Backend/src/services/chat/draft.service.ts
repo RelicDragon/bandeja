@@ -5,6 +5,7 @@ import { ApiError } from '../../utils/ApiError';
 const MAX_CONTENT_LENGTH = 10000;
 const MAX_MENTION_IDS = 50;
 const DRAFT_EXPIRY_DAYS = 30;
+/** List/API only expose up to this many drafts per user (oldest by updatedAt trimmed after each save). */
 const MAX_DRAFTS_PER_USER = 1000;
 
 export class DraftService {

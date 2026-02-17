@@ -264,6 +264,13 @@ router.post(
   markAllMessagesAsReadForContext
 );
 
+const mentionIdsElementValidator = (val: unknown) => {
+  if (!Array.isArray(val)) return true;
+  const invalid = val.some((id: unknown) => typeof id !== 'string' || (id as string).length < 1 || (id as string).length > 128);
+  if (invalid) throw new Error('Each mention ID must be a non-empty string (1-128 chars)');
+  return true;
+};
+
 router.post(
   '/drafts',
   draftLimiter,
@@ -272,7 +279,7 @@ router.post(
     body('contextId').notEmpty().withMessage('Context ID is required'),
     body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type'),
     body('content').optional().isString().isLength({ max: 10000 }).withMessage('Content must be a string and cannot exceed 10000 characters'),
-    body('mentionIds').optional().isArray().isLength({ max: 50 }).withMessage('Mention IDs must be an array with maximum 50 items')
+    body('mentionIds').optional().isArray().isLength({ max: 50 }).withMessage('Mention IDs must be an array with maximum 50 items').custom(mentionIdsElementValidator)
   ]),
   saveDraft
 );

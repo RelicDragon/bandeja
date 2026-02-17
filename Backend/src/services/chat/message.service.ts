@@ -763,17 +763,6 @@ export class MessageService {
       }
     }
 
-    try {
-      await DraftService.deleteDraft(
-        data.senderId,
-        data.chatContextType,
-        data.contextId,
-        data.chatType
-      );
-    } catch (error) {
-      console.error('Failed to delete draft in createMessageWithEvent:', error);
-    }
-
     return message;
   }
 

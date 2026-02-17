@@ -1,7 +1,8 @@
-import { get, set, del, keys } from 'idb-keyval';
+import { get, set, del, keys, createStore } from 'idb-keyval';
 import type { ChatContextType, ChatType } from '@/api/chat';
 import type { ChatDraft } from '@/api/chat';
 
+const draftStore = createStore('padelpulse-drafts-db', 'drafts');
 const PREFIX = 'padelpulse-draft';
 const SEP = '\u0001';
 const DRAFT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
@@ -51,10 +52,10 @@ export const draftStorage = {
   ): Promise<LocalDraftPayload | null> {
     try {
       const k = storageKey(userId, chatContextType, contextId, chatType);
-      let value = await get<LocalDraftPayload>(k);
+      let value = await get<LocalDraftPayload>(k, draftStore);
       if (value) {
         if (isExpired(value.updatedAt)) {
-          await del(k);
+          await del(k, draftStore);
           return null;
         }
         return value;
@@ -66,7 +67,7 @@ export const draftStorage = {
           await del(legacyKey);
           return null;
         }
-        await set(k, value);
+        await set(k, value, draftStore);
         await del(legacyKey);
         return value;
       }
@@ -91,7 +92,7 @@ export const draftStorage = {
         mentionIds: mentionIds ?? [],
         updatedAt: new Date().toISOString()
       };
-      await set(k, payload);
+      await set(k, payload, draftStore);
     } catch {
       // idb full or unavailable; server sync will still run
     }
@@ -105,7 +106,7 @@ export const draftStorage = {
   ): Promise<void> {
     try {
       const k = storageKey(userId, chatContextType, contextId, chatType);
-      await del(k);
+      await del(k, draftStore);
       await del(`${PREFIX}:${userId}:${chatContextType}:${contextId}:${chatType}`);
     } catch {
       // continue to attempt server delete
@@ -114,49 +115,61 @@ export const draftStorage = {
 
   async getLocalDraftsForUser(userId: string): Promise<ChatDraft[]> {
     try {
-      const allKeys = await keys();
-      const prefixNew = `${PREFIX}${SEP}${userId}${SEP}`;
-      const prefixLegacy = `${PREFIX}:${userId}:`;
       const result: ChatDraft[] = [];
       const seen = new Set<string>();
-      const addFromKey = async (key: string, parsed: ReturnType<typeof parseKey> | ReturnType<typeof parseKeyLegacy>) => {
+      const prefixNew = `${PREFIX}${SEP}${userId}${SEP}`;
+      const addDraft = (parsed: ReturnType<typeof parseKey> | ReturnType<typeof parseKeyLegacy>, value: LocalDraftPayload) => {
         if (!parsed) return;
         const dedupeKey = `${parsed.chatContextType}:${parsed.contextId}:${parsed.chatType}`;
         if (seen.has(dedupeKey)) return;
         seen.add(dedupeKey);
+        result.push({
+          id: `local-${parsed.chatContextType}-${parsed.contextId}-${parsed.chatType}`,
+          userId: parsed.userId,
+          chatContextType: parsed.chatContextType,
+          contextId: parsed.contextId,
+          chatType: parsed.chatType,
+          content: value.content,
+          mentionIds: value.mentionIds ?? [],
+          updatedAt: value.updatedAt,
+          createdAt: value.updatedAt
+        });
+      };
+      const storeKeys = await keys(draftStore);
+      for (const key of storeKeys) {
+        if (typeof key !== 'string' || !key.startsWith(prefixNew)) continue;
+        const parsed = parseKey(key);
+        try {
+          const value = await get<LocalDraftPayload>(key, draftStore);
+          if (!value) continue;
+          if (isExpired(value.updatedAt)) {
+            await del(key, draftStore);
+            continue;
+          }
+          addDraft(parsed, value);
+        } catch {
+          // skip
+        }
+      }
+      const legacyPrefix = `${PREFIX}:${userId}:`;
+      const defaultKeys = await keys();
+      for (const key of defaultKeys) {
+        if (typeof key !== 'string' || !key.startsWith(legacyPrefix)) continue;
+        const parsed = parseKeyLegacy(key);
         try {
           const value = await get<LocalDraftPayload>(key);
-          if (!value) return;
-          if (isExpired(value.updatedAt)) {
-            await del(key);
-            return;
+          if (!value || isExpired(value.updatedAt)) {
+            if (value) await del(key);
+            continue;
           }
-          result.push({
-            id: `local-${parsed.chatContextType}-${parsed.contextId}-${parsed.chatType}`,
-            userId: parsed.userId,
-            chatContextType: parsed.chatContextType,
-            contextId: parsed.contextId,
-            chatType: parsed.chatType,
-            content: value.content,
-            mentionIds: value.mentionIds ?? [],
-            updatedAt: value.updatedAt,
-            createdAt: value.updatedAt
-          });
-          if (key.includes(':')) {
-            const newKey = storageKey(parsed.userId, parsed.chatContextType, parsed.contextId, parsed.chatType);
-            await set(newKey, value);
+          addDraft(parsed, value);
+          const newKey = parsed ? storageKey(parsed.userId, parsed.chatContextType, parsed.contextId, parsed.chatType) : null;
+          if (newKey) {
+            await set(newKey, value, draftStore);
             await del(key);
           }
         } catch {
           // skip
-        }
-      };
-      for (const key of allKeys) {
-        if (typeof key !== 'string') continue;
-        if (key.startsWith(prefixNew)) {
-          await addFromKey(key, parseKey(key));
-        } else if (key.startsWith(prefixLegacy)) {
-          await addFromKey(key, parseKeyLegacy(key));
         }
       }
       result.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());

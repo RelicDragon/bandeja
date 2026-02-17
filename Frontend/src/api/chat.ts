@@ -270,6 +270,11 @@ export interface SaveDraftRequest {
   mentionIds?: string[];
 }
 
+export interface GetUserDraftsResponse {
+  data: ChatDraft[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
 export const chatApi = {
   createMessage: async (data: CreateMessageRequest) => {
     const normalizedData = {
@@ -686,12 +691,14 @@ export const chatApi = {
   },
 
   getUserDrafts: async (page: number = 1, limit: number = 50) => {
-    const response = await api.get<ApiResponse<ChatDraft[]>>('/chat/drafts/all', {
-      params: { page, limit }
-    });
+    const response = await api.get<ApiResponse<ChatDraft[]> & { pagination: GetUserDraftsResponse['pagination'] }>(
+      '/chat/drafts/all',
+      { params: { page, limit } }
+    );
+    const body = response.data;
     return {
-      drafts: response.data.data,
-      pagination: (response.data as any).pagination
+      drafts: body.data,
+      pagination: body.pagination
     };
   },
 

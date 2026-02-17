@@ -985,6 +985,18 @@ export const saveDraft = asyncHandler(async (req: AuthRequest, res: Response) =>
     throw new ApiError(400, 'mentionIds must be an array');
   }
 
+  const hasContent = typeof content === 'string' && content.trim().length > 0;
+  const hasMentions = mentionIds.length > 0;
+  if (!hasContent && !hasMentions) {
+    await DraftService.deleteDraft(
+      userId,
+      chatContextType as ChatContextType,
+      contextId,
+      chatType as ChatType
+    );
+    return res.json({ success: true, data: null });
+  }
+
   const draft = await DraftService.saveDraft(
     userId,
     chatContextType as ChatContextType,
