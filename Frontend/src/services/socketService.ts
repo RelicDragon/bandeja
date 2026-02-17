@@ -43,6 +43,7 @@ export interface SocketEvents {
   'sync-required': (data: { timestamp: string }) => void;
   'sync-ready': (data: { contextType: string; contextId: string }) => void;
   'new-bug': (data: { timestamp: string }) => void;
+  'connect': () => void;
   'reconnect': () => void;
   // Bet events
   'bet:created': (data: { gameId: string; bet: any }) => void;
