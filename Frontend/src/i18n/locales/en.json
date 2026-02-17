@@ -1626,12 +1626,15 @@
       "anonymous": "Anonymous Voting",
       "multipleAnswers": "Allow Multiple Answers",
       "create": "Create Poll",
-      "vote": "vote",
-      "votes": "votes",
+      "vote_one": "{{count}} vote",
+      "vote_other": "{{count}} votes",
       "voting": "Voting",
       "quiz": "Quiz",
       "poll": "Poll",
-      "public": "Public Vote"
+      "public": "Public Vote",
+      "multiple": "Multiple answers allowed",
+      "uniqueVoters_one": "1 user voted",
+      "uniqueVoters_other": "{{count}} users voted"
     },
     "messages": {
       "loading": "Loading messages...",

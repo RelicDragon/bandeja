@@ -1644,12 +1644,19 @@
       "anonymous": "Анонимное голосование",
       "multipleAnswers": "Несколько ответов",
       "create": "Создать",
-      "vote": "голос",
-      "votes": "голосов",
+      "vote_one": "{{count}} голос",
+      "vote_few": "{{count}} голоса",
+      "vote_many": "{{count}} голосов",
+      "vote_other": "{{count}} голосов",
       "voting": "Голосование",
       "quiz": "Викторина",
       "poll": "Опрос",
-      "public": "Публичный опрос"
+      "public": "Публичный опрос",
+      "multiple": "Разрешено несколько ответов",
+      "uniqueVoters_one": "1 пользователь проголосовал",
+      "uniqueVoters_few": "{{count}} пользователя проголосовали",
+      "uniqueVoters_many": "{{count}} пользователей проголосовали",
+      "uniqueVoters_other": "{{count}} пользователей проголосовали"
     },
     "messages": {
       "loading": "Загрузка сообщений...",

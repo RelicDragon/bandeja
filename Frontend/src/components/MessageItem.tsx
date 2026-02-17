@@ -548,7 +548,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 >
                 <div
                   data-message-bubble="true"
-                  className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? '' : 'px-4'} ${hasTranslation ? 'pt-2 pb-4' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && currentMessage.content ? 'pt-0 pb-2' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'py-0' : 'py-2'))} rounded-2xl shadow-sm relative min-w-[120px] ${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'overflow-hidden' : 'overflow-visible'} ${currentMessage.poll ? 'flex-1 min-w-0' : ''} ${isChannel
+                  className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? '' : 'px-4'} ${hasTranslation ? 'pt-2 pb-4' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 && currentMessage.content ? 'pt-0 pb-2' : (currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'py-0' : 'py-2'))} rounded-2xl shadow-sm relative min-w-[120px] ${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'overflow-hidden' : 'overflow-visible'} ${currentMessage.poll ? 'flex-1 min-w-0' : ''} ${isChannel || currentMessage.poll
                       ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'
                       : isOwnMessage
                         ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
@@ -557,7 +557,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 >
                     {/* Poll Content */}
                     {currentMessage.poll && (
-                      <div className="p-2">
+                      <div className="py-1">
                         <PollMessage poll={currentMessage.poll} messageId={currentMessage.id} onPollUpdated={onPollUpdated} />
                       </div>
                     )}

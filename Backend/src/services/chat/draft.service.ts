@@ -4,6 +4,8 @@ import { ApiError } from '../../utils/ApiError';
 
 const MAX_CONTENT_LENGTH = 10000;
 const MAX_MENTION_IDS = 50;
+const DRAFT_EXPIRY_DAYS = 30;
+const MAX_DRAFTS_PER_USER = 1000;
 
 export class DraftService {
   static async saveDraft(
@@ -61,7 +63,24 @@ export class DraftService {
       }
     });
 
+    await this.enforceMaxDraftsPerUser(userId);
     return draft;
+  }
+
+  static async enforceMaxDraftsPerUser(userId: string) {
+    const count = await prisma.chatDraft.count({ where: { userId } });
+    if (count <= MAX_DRAFTS_PER_USER) return;
+    const toRemove = await prisma.chatDraft.findMany({
+      where: { userId },
+      orderBy: { updatedAt: 'asc' },
+      take: count - MAX_DRAFTS_PER_USER,
+      select: { id: true }
+    });
+    if (toRemove.length > 0) {
+      await prisma.chatDraft.deleteMany({
+        where: { id: { in: toRemove.map((d) => d.id) } }
+      });
+    }
   }
 
   static async getDraft(
@@ -84,9 +103,19 @@ export class DraftService {
     return draft;
   }
 
+  static async deleteDraftsOlderThan(days: number = DRAFT_EXPIRY_DAYS) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    await prisma.chatDraft.deleteMany({
+      where: {
+        updatedAt: { lt: cutoff }
+      }
+    });
+  }
+
   static async getUserDrafts(userId: string, page: number = 1, limit: number = 50) {
     const skip = (page - 1) * limit;
-    
+
     const [drafts, total] = await Promise.all([
       prisma.chatDraft.findMany({
         where: {

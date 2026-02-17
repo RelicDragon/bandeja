@@ -1033,7 +1033,7 @@ export const getUserDrafts = asyncHandler(async (req: AuthRequest, res: Response
   }
 
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
+  const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit as string) || 100));
 
   const result = await DraftService.getUserDrafts(userId, page, limit);
 

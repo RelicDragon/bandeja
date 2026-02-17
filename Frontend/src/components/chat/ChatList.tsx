@@ -46,6 +46,7 @@ import { useChatSyncStore } from '@/store/chatSyncStore';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import { ChatItem, ChatType } from './chatListTypes';
 import { UserChat } from '@/api/chat';
+import { draftStorage, mergeServerAndLocalDrafts } from '@/services/draftStorage';
 
 export type { ChatType };
 
@@ -147,8 +148,9 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     if (!user) return { activeChats: [], cityUsers: [], usersHasMore: false };
     const { fetchPlayers, fetchUserChats } = usePlayersStore.getState();
     await Promise.all([fetchPlayers(), fetchUserChats()]);
-    const draftsResponse = await chatApi.getUserDrafts(1, 100).catch(() => ({ drafts: [] }));
-    const allDrafts = draftsResponse.drafts || [];
+    const draftsResponse = await chatApi.getUserDrafts(1, 1000).catch(() => ({ drafts: [] }));
+    const localDrafts = await draftStorage.getLocalDraftsForUser(user.id);
+    const allDrafts = mergeServerAndLocalDrafts(draftsResponse.drafts || [], localDrafts);
     const { chats: userChats, unreadCounts } = usePlayersStore.getState();
     const blockedUserIds = user.blockedUserIds || [];
     const activeChats: ChatItem[] = [];
@@ -193,8 +195,9 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const fetchUsersGroups = useCallback(async (page: number): Promise<{ chats: ChatItem[]; hasMore: boolean }> => {
     if (!user) return { chats: [], hasMore: false };
     try {
-      const draftsResponse = await chatApi.getUserDrafts(1, 100).catch(() => ({ drafts: [] }));
-      const allDrafts = draftsResponse.drafts || [];
+      const draftsResponse = await chatApi.getUserDrafts(1, 1000).catch(() => ({ drafts: [] }));
+      const localDrafts = await draftStorage.getLocalDraftsForUser(user.id);
+      const allDrafts = mergeServerAndLocalDrafts(draftsResponse.drafts || [], localDrafts);
       const { data: groups, pagination } = await chatApi.getGroupChannels('users', page);
       const groupList = (groups || []) as GroupChannel[];
       const groupIds = groupList.map((g: GroupChannel) => g.id);
@@ -216,14 +219,19 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       const filterParams = (bf.status || bf.type || bf.createdByMe)
         ? { status: bf.status, type: bf.type, createdByMe: bf.createdByMe }
         : undefined;
-      const { data: channels, pagination } = await chatApi.getGroupChannels('bugs', page, filterParams);
-      const channelList = (channels || []) as GroupChannel[];
+      const [channelsRes, draftsResponse] = await Promise.all([
+        chatApi.getGroupChannels('bugs', page, filterParams),
+        chatApi.getUserDrafts(1, 1000).catch(() => ({ drafts: [] }))
+      ]);
+      const channelList = ((channelsRes.data || []) as GroupChannel[]);
       const channelIds = channelList.map((c: GroupChannel) => c.id);
       const channelUnreads = channelIds.length > 0
         ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {}
         : {};
-      const chatItems = channelsToChatItems(channelList, channelUnreads, 'bugs', { useUpdatedAtFallback: true, filterByIsGroup: true });
-      return { chats: chatItems, hasMore: pagination?.hasMore ?? false };
+      const localDrafts = await draftStorage.getLocalDraftsForUser(user.id);
+      const allDrafts = mergeServerAndLocalDrafts(draftsResponse.drafts || [], localDrafts);
+      const chatItems = channelsToChatItems(channelList, channelUnreads, 'bugs', { useUpdatedAtFallback: true, filterByIsGroup: true, allDrafts });
+      return { chats: chatItems, hasMore: channelsRes.pagination?.hasMore ?? false };
     } catch (err) {
       console.error('fetchBugs failed:', err);
       return { chats: [], hasMore: false };
@@ -233,14 +241,19 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const fetchChannels = useCallback(async (page = 1): Promise<{ chats: ChatItem[]; hasMore: boolean }> => {
     if (!user) return { chats: [], hasMore: false };
     try {
-      const { data: channels, pagination } = await chatApi.getGroupChannels('channels', page);
-      const channelList = (channels || []) as GroupChannel[];
+      const [channelsRes, draftsResponse] = await Promise.all([
+        chatApi.getGroupChannels('channels', page),
+        chatApi.getUserDrafts(1, 1000).catch(() => ({ drafts: [] }))
+      ]);
+      const channelList = (channelsRes.data || []) as GroupChannel[];
       const channelIds = channelList.map((c: GroupChannel) => c.id);
       const channelUnreads = channelIds.length > 0
         ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {}
         : {};
-      const chatItems = channelsToChatItems(channelList, channelUnreads, 'channels', { filterByIsChannel: true });
-      return { chats: chatItems, hasMore: pagination?.hasMore ?? false };
+      const localDrafts = await draftStorage.getLocalDraftsForUser(user.id);
+      const allDrafts = mergeServerAndLocalDrafts(draftsResponse.drafts || [], localDrafts);
+      const chatItems = channelsToChatItems(channelList, channelUnreads, 'channels', { filterByIsChannel: true, allDrafts });
+      return { chats: chatItems, hasMore: channelsRes.pagination?.hasMore ?? false };
     } catch (err) {
       console.error('fetchChannels failed:', err);
       return { chats: [], hasMore: false };
@@ -250,14 +263,19 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const fetchMarket = useCallback(async (page = 1): Promise<{ chats: ChatItem[]; hasMore: boolean }> => {
     if (!user) return { chats: [], hasMore: false };
     try {
-      const { data: channels, pagination } = await chatApi.getGroupChannels('market', page);
-      const channelList = (channels || []) as GroupChannel[];
+      const [channelsRes, draftsResponse] = await Promise.all([
+        chatApi.getGroupChannels('market', page),
+        chatApi.getUserDrafts(1, 1000).catch(() => ({ drafts: [] }))
+      ]);
+      const channelList = (channelsRes.data || []) as GroupChannel[];
       const channelIds = channelList.map((c: GroupChannel) => c.id);
       const channelUnreads = channelIds.length > 0
         ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {}
         : {};
-      const chatItems = channelsToChatItems(channelList, channelUnreads, 'market', { filterByIsGroup: true, useUpdatedAtFallback: true });
-      return { chats: chatItems, hasMore: pagination?.hasMore ?? false };
+      const localDrafts = await draftStorage.getLocalDraftsForUser(user.id);
+      const allDrafts = mergeServerAndLocalDrafts(draftsResponse.drafts || [], localDrafts);
+      const chatItems = channelsToChatItems(channelList, channelUnreads, 'market', { filterByIsGroup: true, useUpdatedAtFallback: true, allDrafts });
+      return { chats: chatItems, hasMore: channelsRes.pagination?.hasMore ?? false };
     } catch (err) {
       console.error('fetchMarket failed:', err);
       return { chats: [], hasMore: false };
@@ -287,8 +305,11 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         chatApi.getGroupChannels('channels', 1),
         chatApi.getGroupChannels('market', 1),
         Promise.all([usePlayersStore.getState().fetchPlayers(), usePlayersStore.getState().fetchUserChats()]),
-        chatApi.getUserDrafts(1, 100).catch(() => ({ drafts: [] }))
+        chatApi.getUserDrafts(1, 1000).catch(() => ({ drafts: [] }))
       ]);
+
+      const localDrafts = await draftStorage.getLocalDraftsForUser(user.id);
+      const allDrafts = mergeServerAndLocalDrafts(draftsResponse.drafts || [], localDrafts);
 
       const allGroupIds = [
         ...(usersGroupsRes.data || []).map((g: GroupChannel) => g.id),
@@ -302,7 +323,6 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
           ? (await chatApi.getGroupChannelsUnreadCounts(uniqueGroupIds)).data || {}
           : {};
 
-      const allDrafts = draftsResponse.drafts || [];
       const usersGroupList = (usersGroupsRes.data || []) as GroupChannel[];
       const { chats: userChats, unreadCounts } = usePlayersStore.getState();
       const blockedUserIds = user.blockedUserIds || [];
@@ -335,19 +355,19 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         (bugsRes.data || []) as GroupChannel[],
         groupUnreads,
         'bugs',
-        { useUpdatedAtFallback: true, filterByIsGroup: true }
+        { useUpdatedAtFallback: true, filterByIsGroup: true, allDrafts }
       );
       const channelsChatItems = channelsToChatItems(
         (channelsRes.data || []) as GroupChannel[],
         groupUnreads,
         'channels',
-        { filterByIsChannel: true }
+        { filterByIsChannel: true, allDrafts }
       );
       const marketChatItems = channelsToChatItems(
         (marketRes.data || []) as GroupChannel[],
         groupUnreads,
         'market',
-        { filterByIsGroup: true, useUpdatedAtFallback: true }
+        { filterByIsGroup: true, useUpdatedAtFallback: true, allDrafts }
       );
 
       chatsCacheRef.current.users = {
@@ -637,6 +657,15 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         return {
           ...chat,
           draft,
+          lastMessageDate
+        };
+      } else if (chat.type === 'channel' && chatContextType === 'GROUP' && chat.data.id === contextId) {
+        const lastMessageDate = (chat.data.lastMessage || draft)
+          ? calculateLastMessageDate(chat.data.lastMessage, draft, chat.data.updatedAt)
+          : chat.lastMessageDate;
+        return {
+          ...chat,
+          draft: draft ?? null,
           lastMessageDate
         };
       }

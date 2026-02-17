@@ -89,7 +89,7 @@ export const ChatListItem = ({
           unreadCount={chat.unreadCount}
           onClick={() => onChatClick(chat.data.id, chatTypeForNav, clickOpts)}
           isSelected={isSelected}
-          draft={chat.type === 'group' ? chat.draft : undefined}
+          draft={chat.draft}
           displayTitle={displayTitle}
           displaySubtitle={displaySubtitle}
           sellerGroupedByItem={sellerGroupedByItem}

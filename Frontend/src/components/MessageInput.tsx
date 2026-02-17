@@ -16,13 +16,44 @@ import { useAuthStore } from '@/store/authStore';
 import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
 import { PollType } from '@/api/chat';
+import { draftStorage } from '@/services/draftStorage';
 
 const isValidImage = (file: File): boolean => {
   return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
 };
 
 const draftLoadingCache = new Map<string, Promise<any>>();
-const loadedDraftsCache = new Set<string>();
+
+const SAVE_DRAFT_RETRIES = 3;
+const SAVE_DRAFT_RETRY_MS = 1200;
+const DRAFT_MAX_CONTENT_LENGTH = 10000;
+
+function isRetryableDraftError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return true;
+  const err = error as { response?: { status?: number }; code?: string };
+  if (err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK') return true;
+  const status = err.response?.status;
+  if (status == null) return true;
+  if (status >= 500 || status === 408 || status === 429) return true;
+  return false;
+}
+
+async function withRetry<T>(fn: () => Promise<T>, retries = SAVE_DRAFT_RETRIES): Promise<T> {
+  let last: unknown;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      last = e;
+      if (i < retries - 1 && isRetryableDraftError(e)) {
+        await new Promise((r) => setTimeout(r, SAVE_DRAFT_RETRY_MS));
+      } else {
+        throw last;
+      }
+    }
+  }
+  throw last;
+}
 
 export interface SendQueuedParams {
   tempId: string;
@@ -118,23 +149,21 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     };
   }, [imagePreviewUrls]);
 
+  const resolvedChatType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
+
   const saveDraft = useCallback(async (content: string, mentionIds: string[]) => {
     if (!finalContextId || !user?.id) return;
 
-    const trimmedContent = content?.trim();
-    if (!trimmedContent && mentionIds.length === 0) {
+    const trimmedContent = (content?.trim() ?? '').slice(0, DRAFT_MAX_CONTENT_LENGTH);
+    const safeMentionIds = (mentionIds ?? []).slice(0, 50);
+    if (!trimmedContent && safeMentionIds.length === 0) {
+      await draftStorage.remove(user.id, contextType, finalContextId, resolvedChatType);
       try {
-        await chatApi.deleteDraft(
-          contextType,
-          finalContextId,
-          userChatId ? 'PUBLIC' : normalizeChatType(chatType)
+        await withRetry(() =>
+          chatApi.deleteDraft(contextType, finalContextId, resolvedChatType)
         );
-
         window.dispatchEvent(new CustomEvent('draft-deleted', {
-          detail: {
-            chatContextType: contextType,
-            contextId: finalContextId
-          }
+          detail: { chatContextType: contextType, contextId: finalContextId }
         }));
       } catch (error) {
         console.error('Failed to delete draft:', error);
@@ -142,26 +171,30 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       return;
     }
 
+    await draftStorage.set(
+      user.id,
+      contextType,
+      finalContextId,
+      resolvedChatType,
+      trimmedContent,
+      safeMentionIds
+    );
+    const payload = {
+      chatContextType: contextType,
+      contextId: finalContextId,
+      chatType: resolvedChatType,
+      content: trimmedContent || undefined,
+      mentionIds: safeMentionIds.length > 0 ? safeMentionIds : undefined
+    };
     try {
-      const savedDraft = await chatApi.saveDraft({
-        chatContextType: contextType,
-        contextId: finalContextId,
-        chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
-        content: trimmedContent || undefined,
-        mentionIds: mentionIds.length > 0 ? mentionIds : undefined
-      });
-
+      const savedDraft = await withRetry(() => chatApi.saveDraft(payload));
       window.dispatchEvent(new CustomEvent('draft-updated', {
-        detail: {
-          draft: savedDraft,
-          chatContextType: contextType,
-          contextId: finalContextId
-        }
+        detail: { draft: savedDraft, chatContextType: contextType, contextId: finalContextId }
       }));
     } catch (error) {
-      console.error('Failed to save draft:', error);
+      console.error('Failed to save draft to server:', error);
     }
-  }, [finalContextId, user?.id, contextType, chatType, userChatId]);
+  }, [finalContextId, user?.id, contextType, resolvedChatType]);
 
   const debouncedSaveDraft = useCallback((content: string, mentionIds: string[]) => {
     if (saveDraftTimeoutRef.current) {
@@ -216,47 +249,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     if (!finalContextId || !user?.id) return;
 
     const draftKey = `${contextType}-${finalContextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
-
-    if (loadedDraftsCache.has(draftKey)) {
-      const cachedPromise = draftLoadingCache.get(draftKey);
-      if (cachedPromise) {
-        try {
-          const draft = await cachedPromise;
-          if (draft) {
-            const hasUserTyped = messageRef.current.trim().length > 0 || mentionIdsRef.current.length > 0;
-            if (!hasUserTyped) {
-              setMessage(draft.content || '');
-              setMentionIds(draft.mentionIds || []);
-              setTimeout(() => updateMultilineState(), 100);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to load draft from cache:', error);
-        }
-      }
-      return;
-    }
-
-    if (draftLoadingCache.has(draftKey)) {
-      const existingPromise = draftLoadingCache.get(draftKey);
-      if (existingPromise) {
-        try {
-          const draft = await existingPromise;
-          if (draft) {
-            const hasUserTyped = messageRef.current.trim().length > 0 || mentionIdsRef.current.length > 0;
-            if (!hasUserTyped) {
-              setMessage(draft.content || '');
-              setMentionIds(draft.mentionIds || []);
-              setTimeout(() => updateMultilineState(), 100);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to load draft:', error);
-        }
-      }
-      return;
-    }
-
     loadingDraftKeyRef.current = draftKey;
     hasLoadedDraftRef.current = true;
 
@@ -265,38 +257,70 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       saveDraftTimeoutRef.current = null;
     }
 
-    const draftPromise = chatApi.getDraft(
-      contextType,
-      finalContextId,
-      userChatId ? 'PUBLIC' : normalizeChatType(chatType)
-    ).then(draft => {
-      loadedDraftsCache.add(draftKey);
-      setTimeout(() => {
-        draftLoadingCache.delete(draftKey);
-        loadedDraftsCache.delete(draftKey);
-      }, 5000);
-      return draft;
-    }).catch(error => {
-      draftLoadingCache.delete(draftKey);
-      throw error;
-    });
+    const applyDraftToState = (content: string, ids: string[]) => {
+      const hasUserTyped = messageRef.current.trim().length > 0 || mentionIdsRef.current.length > 0;
+      if (!hasUserTyped) {
+        setMessage(content || '');
+        setMentionIds(ids ?? []);
+        setTimeout(() => updateMultilineState(), 100);
+      }
+    };
 
-    draftLoadingCache.set(draftKey, draftPromise);
+    const local = await draftStorage.get(user.id, contextType, finalContextId, resolvedChatType);
+    if (local && loadingDraftKeyRef.current === draftKey) {
+      applyDraftToState(local.content, local.mentionIds);
+    }
+
+    let serverPromise: Promise<typeof chatApi.getDraft extends (...a: any[]) => Promise<infer R> ? R : never>;
+    if (draftLoadingCache.has(draftKey)) {
+      serverPromise = draftLoadingCache.get(draftKey)!;
+    } else {
+      serverPromise = chatApi
+        .getDraft(contextType, finalContextId, resolvedChatType)
+        .then((draft) => {
+          setTimeout(() => draftLoadingCache.delete(draftKey), 5000);
+          return draft;
+        })
+        .catch((error) => {
+          draftLoadingCache.delete(draftKey);
+          throw error;
+        });
+      draftLoadingCache.set(draftKey, serverPromise);
+    }
 
     try {
-      const draft = await draftPromise;
-      if (draft) {
-        const hasUserTyped = messageRef.current.trim().length > 0 || mentionIdsRef.current.length > 0;
-        if (!hasUserTyped) {
-          setMessage(draft.content || '');
-          setMentionIds(draft.mentionIds || []);
-          setTimeout(() => updateMultilineState(), 100);
+      const serverDraft = await serverPromise;
+      if (loadingDraftKeyRef.current !== draftKey) return;
+
+      const localUpdated = local ? new Date(local.updatedAt).getTime() : 0;
+      const serverUpdated = serverDraft ? new Date(serverDraft.updatedAt).getTime() : 0;
+      const useLocal = local && (!serverDraft || localUpdated >= serverUpdated);
+      if (useLocal && local) {
+        if (!serverDraft || localUpdated > serverUpdated) {
+          draftStorage
+            .set(user.id, contextType, finalContextId, resolvedChatType, local.content, local.mentionIds)
+            .then(() => {
+              if (loadingDraftKeyRef.current !== draftKey) return;
+              if (local.content.trim() || local.mentionIds.length > 0) {
+                saveDraft(local.content, local.mentionIds);
+              }
+            });
         }
+      } else if (serverDraft) {
+        applyDraftToState(serverDraft.content ?? '', serverDraft.mentionIds ?? []);
+        await draftStorage.set(
+          user.id,
+          contextType,
+          finalContextId,
+          resolvedChatType,
+          serverDraft.content ?? '',
+          serverDraft.mentionIds ?? []
+        );
       }
     } catch (error) {
-      console.error('Failed to load draft:', error);
+      console.error('Failed to load draft from server:', error);
     }
-  }, [finalContextId, user?.id, contextType, chatType, userChatId, updateMultilineState]);
+  }, [finalContextId, user?.id, contextType, chatType, userChatId, resolvedChatType, updateMultilineState, saveDraft]);
 
   useEffect(() => {
     if (saveDraftTimeoutRef.current) {
@@ -306,7 +330,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const draftKey = `${contextType}-${finalContextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
     if (loadingDraftKeyRef.current !== draftKey) {
       hasLoadedDraftRef.current = false;
-      loadedDraftsCache.delete(draftKey);
+      draftLoadingCache.delete(draftKey);
     }
     setMessage('');
     setMentionIds([]);
@@ -338,14 +362,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const handleDraftUpdated = (event: CustomEvent) => {
       const { chatContextType, contextId } = event.detail;
       const draftKey = `${chatContextType}-${contextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
-      loadedDraftsCache.delete(draftKey);
       draftLoadingCache.delete(draftKey);
     };
 
     const handleDraftDeleted = (event: CustomEvent) => {
       const { chatContextType, contextId } = event.detail;
       const draftKey = `${chatContextType}-${contextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
-      loadedDraftsCache.delete(draftKey);
       draftLoadingCache.delete(draftKey);
     };
 
@@ -359,22 +381,28 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   }, [contextType, finalContextId, chatType, userChatId]);
 
   useEffect(() => {
-    return () => {
+    const flush = () => {
       if (saveDraftTimeoutRef.current) {
         clearTimeout(saveDraftTimeoutRef.current);
         saveDraftTimeoutRef.current = null;
-
-        if (finalContextId && user?.id) {
-          const currentMessage = messageRef.current?.trim();
-          const currentMentionIds = mentionIdsRef.current || [];
-
-          if (currentMessage || currentMentionIds.length > 0) {
-            saveDraft(currentMessage || '', currentMentionIds).catch(error => {
-              console.error('Failed to save draft on unmount:', error);
-            });
-          }
+      }
+      if (finalContextId && user?.id) {
+        const currentMessage = messageRef.current?.trim();
+        const currentMentionIds = mentionIdsRef.current || [];
+        if (currentMessage || currentMentionIds.length > 0) {
+          saveDraft(currentMessage || '', currentMentionIds).catch(error => {
+            console.error('Failed to save draft:', error);
+          });
         }
       }
+    };
+    const onHidden = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    document.addEventListener('visibilitychange', onHidden);
+    return () => {
+      document.removeEventListener('visibilitychange', onHidden);
+      flush();
     };
   }, [finalContextId, user?.id, saveDraft]);
 
@@ -597,8 +625,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       const created = await chatApi.createMessage(messageData);
 
       onMessageSent?.();
-      onMessageCreated?.('temp-' + Date.now(), created); // Optimistic ID is tricky here without proper handling, but we just need to refresh list
+      onMessageCreated?.('temp-' + Date.now(), created);
 
+      if (user?.id) {
+        const resolvedType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
+        await draftStorage.remove(user.id, contextType, finalContextId, resolvedType);
+        try {
+          await chatApi.deleteDraft(contextType, finalContextId, resolvedType);
+          window.dispatchEvent(new CustomEvent('draft-deleted', {
+            detail: { chatContextType: contextType, contextId: finalContextId }
+          }));
+        } catch (err) {
+          console.error('Failed to delete draft after poll:', err);
+        }
+      }
     } catch (error) {
       console.error('Failed to create poll:', error);
       toast.error(t('chat.sendFailed'));
@@ -687,12 +727,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             saveDraftTimeoutRef.current = null;
           }
           if (finalContextId && user?.id) {
+            const resolvedType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
+            await draftStorage.remove(user.id, contextType, finalContextId, resolvedType);
             try {
-              await chatApi.deleteDraft(
-                contextType,
-                finalContextId,
-                userChatId ? 'PUBLIC' : normalizeChatType(chatType)
-              );
+              await chatApi.deleteDraft(contextType, finalContextId, resolvedType);
               window.dispatchEvent(new CustomEvent('draft-deleted', {
                 detail: { chatContextType: contextType, contextId: finalContextId }
               }));

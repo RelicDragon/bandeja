@@ -65,23 +65,26 @@ export const channelsToChatItems = (
   channels: GroupChannel[],
   channelUnreads: Record<string, number>,
   sortFilter: 'bugs' | 'channels' | 'market',
-  options: ChannelsToChatItemsOptions = {}
+  options: ChannelsToChatItemsOptions & { allDrafts?: ChatDraft[] } = {}
 ): ChatItem[] => {
-  const { filterByIsChannel = false, filterByIsGroup = false, useUpdatedAtFallback = false } = options;
+  const { filterByIsChannel = false, filterByIsGroup = false, useUpdatedAtFallback = false, allDrafts = [] } = options;
   const items: ChatItem[] = [];
   channels.forEach((channel) => {
     if (filterByIsChannel && !channel.isChannel) return;
     if (filterByIsGroup && channel.isChannel) return;
-    const lastMessageDate = channel.lastMessage
-      ? new Date(getLastMessageTime(channel.lastMessage))
-      : useUpdatedAtFallback
-        ? new Date(channel.updatedAt)
-        : null;
+    const draft = matchDraftToChat(allDrafts, 'GROUP', channel.id);
+    const lastMessageDate =
+      channel.lastMessage || draft
+        ? calculateLastMessageDate(channel.lastMessage, draft, channel.updatedAt)
+        : useUpdatedAtFallback
+          ? new Date(channel.updatedAt)
+          : null;
     items.push({
       type: 'channel',
       data: channel,
       lastMessageDate,
-      unreadCount: channelUnreads[channel.id] || 0
+      unreadCount: channelUnreads[channel.id] || 0,
+      draft: draft || null
     });
   });
   sortChatItems(items, sortFilter);

@@ -1597,12 +1597,19 @@
       "anonymous": "Anonimno glasanje",
       "multipleAnswers": "Više odgovora",
       "create": "Napravi",
-      "vote": "glas",
-      "votes": "glasova",
+      "vote_one": "{{count}} glas",
+      "vote_few": "{{count}} glasa",
+      "vote_many": "{{count}} glasova",
+      "vote_other": "{{count}} glasova",
       "voting": "Glasanje",
       "quiz": "Kviz",
       "poll": "Anketa",
-      "public": "Javno glasanje"
+      "public": "Javno glasanje",
+      "multiple": "Dozvoljeno više odgovora",
+      "uniqueVoters_one": "1 korisnik je glasao",
+      "uniqueVoters_few": "{{count}} korisnika su glasala",
+      "uniqueVoters_many": "{{count}} korisnika su glasala",
+      "uniqueVoters_other": "{{count}} korisnika su glasala"
     },
     "messages": {
       "loading": "Учитавање порука...",

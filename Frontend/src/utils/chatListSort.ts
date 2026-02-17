@@ -5,7 +5,7 @@ export type ChatItem =
   | { type: 'user'; data: UserChat; lastMessageDate: Date | null; unreadCount: number; otherUser?: BasicUser; draft?: ChatDraft | null }
   | { type: 'contact'; userId: string; user: BasicUser; interactionCount: number; isFavorite: boolean; lastMessageDate: null }
   | { type: 'group'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number; draft?: ChatDraft | null }
-  | { type: 'channel'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number };
+  | { type: 'channel'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number; draft?: ChatDraft | null };
 
 export const getChatTitle = (chat: ChatItem, currentUserId: string): string => {
   if (chat.type === 'user') {

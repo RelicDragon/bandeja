@@ -1580,12 +1580,15 @@
       "anonymous": "Votación anónima",
       "multipleAnswers": "Permitir respuestas múltiples",
       "create": "Crear encuesta",
-      "vote": "voto",
-      "votes": "votos",
+      "vote_one": "{{count}} voto",
+      "vote_other": "{{count}} votos",
       "voting": "Votando",
       "quiz": "Cuestionario",
       "poll": "Encuesta",
-      "public": "Voto público"
+      "public": "Voto público",
+      "multiple": "Se permiten varias respuestas",
+      "uniqueVoters_one": "1 usuario votó",
+      "uniqueVoters_other": "{{count}} usuarios votaron"
     },
     "messages": {
       "loading": "Cargando mensajes...",

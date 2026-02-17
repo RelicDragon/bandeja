@@ -9,6 +9,7 @@ import { GameStatusScheduler } from './services/gameStatusScheduler.service';
 import { TelegramGamesScheduler } from './services/telegram/gamesScheduler.service';
 import { CurrencyScheduler } from './services/currencyScheduler.service';
 import { AuctionScheduler } from './services/auctionScheduler.service';
+import { DraftScheduler } from './services/draftScheduler.service';
 import { createServer } from 'http';
 
 const startServer = async () => {
@@ -33,6 +34,9 @@ const startServer = async () => {
 
     const auctionScheduler = new AuctionScheduler();
     auctionScheduler.start();
+
+    const draftScheduler = new DraftScheduler();
+    draftScheduler.start();
 
     // Create HTTP server
     const httpServer = createServer(app);
@@ -61,6 +65,7 @@ const startServer = async () => {
         telegramGamesScheduler.stop();
         currencyScheduler.stop();
         auctionScheduler.stop();
+        draftScheduler.stop();
         telegramBotService.stop();
         pushNotificationService.shutdown();
         

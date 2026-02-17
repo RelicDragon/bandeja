@@ -298,7 +298,6 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick
   const { user } = stats;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const isOnline = usePresenceStore((state) => state.isOnline(user.id));
-  const isOffline = usePresenceStore((state) => state.isOffline(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const hasTelegram = !!(user.telegramId || user.telegramUsername);
 
@@ -311,10 +310,10 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick
         className={`relative h-48 rounded-2xl ${isBlocked ? 'bg-gradient-to-br from-red-500 to-red-700 dark:from-red-600 dark:to-red-800' : 'bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800'}`}
         variants={itemVariants}
       >
-        {(isOnline || isOffline) && (
-          <span className={`absolute top-2 left-2 z-10 flex items-center gap-1 rounded-full bg-white/95 dark:bg-gray-900/95 px-2 py-0.5 text-xs font-medium shadow border border-gray-200 dark:border-gray-700 ${isOnline ? 'text-gray-800 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-green-500 dark:bg-green-400' : 'bg-gray-400 dark:bg-gray-500'}`} aria-hidden />
-            {isOnline ? t('playerCard.online') : t('playerCard.offline')}
+        {isOnline && (
+          <span className="absolute top-2 left-2 z-10 flex items-center gap-1 rounded-full bg-white/95 dark:bg-gray-900/95 px-2 py-0.5 text-xs font-medium shadow border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400" aria-hidden />
+            {t('playerCard.online')}
           </span>
         )}
         <div className="absolute inset-0 flex items-center justify-center gap-6">
