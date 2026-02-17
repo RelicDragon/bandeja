@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
-const MAX_MERGED_IDS = 300;
-const AVATAR_IDS_CAP = 60;
+const MAX_MERGED_IDS = 3000;
+const AVATAR_IDS_CAP = 1000;
 
 const isAvatarKey = (key: string) => key.startsWith('avatar:');
 

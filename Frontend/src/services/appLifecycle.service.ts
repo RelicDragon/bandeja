@@ -9,9 +9,17 @@ import { useChatSyncStore } from '@/store/chatSyncStore';
 let capUnsubscribe: PluginListenerHandle | null = null;
 let visibilityCleanup: (() => void) | null = null;
 
-function runForegroundSync(): void {
+async function runForegroundSync(): Promise<void> {
   if (useChatSyncStore.getState().syncInProgress) return;
   socketService.ensureConnection();
+  try {
+    await Promise.race([
+      socketService.waitForConnection(),
+      new Promise<void>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+    ]);
+  } catch {
+    // proceed with sync even if socket not ready
+  }
   const rooms = socketService.getActiveChatRooms();
   if (rooms.length > 0) {
     chatSyncService.syncAllContexts(rooms).catch((err) => {

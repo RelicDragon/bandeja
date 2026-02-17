@@ -25,6 +25,7 @@ import { socketService } from './services/socketService';
 import { useSocketEventsStore } from './store/socketEventsStore';
 import { isCapacitor, isIOS, isAndroid } from './utils/capacitor';
 import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerUtils';
+import { cleanupCapacitorNetwork } from './utils/capacitorNetwork';
 import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
 import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersistence';
 import { useDeepLink } from './hooks/useDeepLink';
@@ -110,6 +111,7 @@ function AppContent() {
       appLifecycleService.cleanup();
       if (isCapacitor()) {
         backButtonService.cleanup();
+        cleanupCapacitorNetwork();
       }
     };
   }, [finishInitializing]);

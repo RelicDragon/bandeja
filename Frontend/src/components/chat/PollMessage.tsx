@@ -8,12 +8,14 @@ import { PollVotersModal } from './PollVotersModal';
 interface PollMessageProps {
     poll: Poll;
     messageId: string;
+    onPollUpdated?: (messageId: string, updatedPoll: Poll) => void;
 }
 
-export const PollMessage: React.FC<PollMessageProps> = ({ poll }) => {
+export const PollMessage: React.FC<PollMessageProps> = ({ poll, messageId, onPollUpdated }) => {
     const { t } = useTranslation();
     const { user } = useAuthStore();
     const [isVoting, setIsVoting] = useState(false);
+    const [votingOptionId, setVotingOptionId] = useState<string | null>(null);
     const [votersModalOpen, setVotersModalOpen] = useState(false);
 
     const totalVotes = poll.votes.length;
@@ -31,6 +33,7 @@ export const PollMessage: React.FC<PollMessageProps> = ({ poll }) => {
         }
 
         setIsVoting(true);
+        setVotingOptionId(optionId);
         try {
             let newOptionIds: string[];
 
@@ -54,11 +57,13 @@ export const PollMessage: React.FC<PollMessageProps> = ({ poll }) => {
                 }
             }
 
-            await chatApi.votePoll(poll.id, newOptionIds);
+            const updatedPoll = await chatApi.votePoll(poll.id, newOptionIds);
+            onPollUpdated?.(messageId, updatedPoll);
         } catch (error) {
             console.error('Failed to vote:', error);
         } finally {
             setIsVoting(false);
+            setVotingOptionId(null);
         }
     };
 
@@ -91,7 +96,8 @@ export const PollMessage: React.FC<PollMessageProps> = ({ poll }) => {
                     const isCorrect = isQuiz && option.isCorrect;
                     const isQuizLocked = isQuiz && hasVoted;
 
-                    let optionClass = `relative overflow-hidden rounded-lg border transition-all duration-200 ${isQuizLocked ? 'cursor-not-allowed' : 'cursor-pointer'} group`;
+                    const isThisOptionVoting = isVoting && votingOptionId === option.id;
+                    let optionClass = `relative overflow-hidden rounded-lg border transition-all duration-200 ${isQuizLocked || isVoting ? 'cursor-not-allowed' : 'cursor-pointer'} ${isVoting ? 'opacity-80' : ''} group`;
                     let progressBarClass = "absolute left-0 top-0 bottom-0 transition-all duration-500";
                     let icon: React.ReactNode;
                     let iconColor = "";
@@ -133,19 +139,27 @@ export const PollMessage: React.FC<PollMessageProps> = ({ poll }) => {
                     return (
                         <div
                             key={option.id}
-                            onClick={() => handleVote(option.id)}
+                            onClick={() => !isVoting && handleVote(option.id)}
                             className={optionClass}
+                            style={isVoting ? { pointerEvents: 'none' } : undefined}
                         >
                             <div className={progressBarClass} style={{ width: `${percentage}%` }} />
                             <div className="relative px-3 py-2 flex items-center justify-between z-10">
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <div className={`shrink-0 ${iconColor}`}>{icon}</div>
+                                    {isThisOptionVoting ? (
+                                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+                                    ) : (
+                                        <div className={`shrink-0 ${iconColor}`}>{icon}</div>
+                                    )}
                                     <span className="text-sm text-gray-900 dark:text-gray-100 truncate">{option.text}</span>
                                 </div>
-                                {hasVoted && (
+                                {hasVoted && !isThisOptionVoting && (
                                     <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0 ml-2 tabular-nums">
                                         {percentage}%{voteCount > 0 && ` (${voteCount})`}
                                     </span>
+                                )}
+                                {isThisOptionVoting && (
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0 ml-2">{t('chat.poll.voting')}</span>
                                 )}
                             </div>
                         </div>

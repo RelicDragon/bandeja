@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChatMessage } from '@/api/chat';
+import { ChatMessage, Poll } from '@/api/chat';
 import { AnimatedMessageItem } from './AnimatedMessageItem';
 import { useContextMenuManager } from '@/hooks/useContextMenuManager';
 import { ArrowUp } from 'lucide-react';
@@ -11,6 +11,7 @@ interface MessageListProps {
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onReplyMessage: (message: ChatMessage) => void;
+  onPollUpdated?: (messageId: string, updatedPoll: Poll) => void;
   onResendQueued?: (tempId: string) => void;
   onRemoveFromQueue?: (tempId: string) => void;
   isLoading?: boolean;
@@ -35,6 +36,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   onRemoveReaction,
   onDeleteMessage,
   onReplyMessage,
+  onPollUpdated,
   onResendQueued,
   onRemoveFromQueue,
   isLoading = false,
@@ -225,6 +227,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             onRemoveReaction={onRemoveReaction}
             onDeleteMessage={onDeleteMessage}
             onReplyMessage={onReplyMessage}
+            onPollUpdated={onPollUpdated}
             onResendQueued={onResendQueued}
             onRemoveFromQueue={onRemoveFromQueue}
             contextMenuState={contextMenuState}

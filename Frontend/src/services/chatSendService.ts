@@ -1,4 +1,4 @@
-import { chatApi, ChatContextType, CreateMessageRequest } from '@/api/chat';
+import { chatApi, ChatContextType, ChatMessage, CreateMessageRequest } from '@/api/chat';
 import { messageQueueStorage, QueuedMessage } from './chatMessageQueueStorage';
 import { normalizeChatType } from '@/utils/chatType';
 
@@ -31,6 +31,7 @@ export interface SendQueuedParams {
 
 export interface SendQueuedCallbacks {
   onFailed: (tempId: string) => void;
+  onSuccess?: (message: ChatMessage) => void;
   onRemoved?: (tempId: string) => void;
 }
 
@@ -39,7 +40,7 @@ export function sendWithTimeout(
   callbacks: SendQueuedCallbacks
 ): void {
   const { tempId, contextType, contextId, payload, mediaUrls = [], thumbnailUrls = [] } = params;
-  const { onFailed } = callbacks;
+  const { onFailed, onSuccess } = callbacks;
 
   clearTimeoutFor(tempId);
 
@@ -66,8 +67,9 @@ export function sendWithTimeout(
   contextByTempId.set(tempId, contextKey(contextType, contextId));
 
   chatApi.createMessage(request).then(
-    () => {
+    (created) => {
       clearTimeoutFor(tempId);
+      onSuccess?.(created);
     },
     () => {
       clearTimeoutFor(tempId);

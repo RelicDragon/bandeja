@@ -107,6 +107,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const messagesRef = useRef<ChatMessageWithStatus[]>([]);
   const loadingIdRef = useRef<string | undefined>(undefined);
   const hasLoadedRef = useRef(false);
+  const handleNewMessageRef = useRef<(message: ChatMessage) => string | void>(() => {});
 
   const participation = getGameParticipationState(game?.participants ?? [], user?.id, game ?? undefined);
   const { userParticipant, isParticipant, isPlaying: isPlayingParticipant, isAdminOrOwner, hasPendingInvite, isGuest, isInJoinQueue } = participation;
@@ -399,19 +400,83 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   }, [hasMoreMessages, isLoadingMore, page, loadMessages]);
 
   const handleAddReaction = useCallback(async (messageId: string, emoji: string) => {
+    if (!user?.id) return;
+    const optimisticReaction = {
+      id: `pending-${Date.now()}`,
+      messageId,
+      userId: user.id,
+      emoji,
+      createdAt: new Date().toISOString(),
+      user: user as import('@/types').BasicUser,
+      _pending: true as const,
+    };
+    setMessages(prev => {
+      const next = prev.map(m =>
+        m.id === messageId
+          ? { ...m, reactions: [...m.reactions.filter(r => r.userId !== user.id), optimisticReaction] }
+          : m
+      );
+      messagesRef.current = next;
+      return next;
+    });
     try {
-      await chatApi.addReaction(messageId, { emoji });
+      const reaction = await chatApi.addReaction(messageId, { emoji });
+      setMessages(prev => {
+        const next = prev.map(m =>
+          m.id === messageId
+            ? { ...m, reactions: [...m.reactions.filter(r => r.userId !== reaction.userId), reaction] }
+            : m
+        );
+        messagesRef.current = next;
+        return next;
+      });
     } catch (error) {
       console.error('Failed to add reaction:', error);
+      setMessages(prev => {
+        const next = prev.map(m =>
+          m.id === messageId
+            ? { ...m, reactions: m.reactions.filter(r => !(r.userId === user.id && (r as { _pending?: boolean })._pending)) }
+            : m
+        );
+        messagesRef.current = next;
+        return next;
+      });
     }
-  }, []);
+  }, [user]);
 
   const handleRemoveReaction = useCallback(async (messageId: string) => {
+    if (!user?.id) return;
+    const message = messagesRef.current.find(m => m.id === messageId);
+    const removedReactions = message?.reactions.filter(r => r.userId === user.id) ?? [];
+    setMessages(prev => {
+      const next = prev.map(m =>
+        m.id === messageId ? { ...m, reactions: m.reactions.filter(r => r.userId !== user.id) } : m
+      );
+      messagesRef.current = next;
+      return next;
+    });
     try {
       await chatApi.removeReaction(messageId);
     } catch (error) {
       console.error('Failed to remove reaction:', error);
+      setMessages(prev => {
+        const next = prev.map(m =>
+          m.id === messageId ? { ...m, reactions: [...m.reactions, ...removedReactions] } : m
+        );
+        messagesRef.current = next;
+        return next;
+      });
     }
+  }, [user?.id]);
+
+  const handlePollUpdated = useCallback((messageId: string, updatedPoll: import('@/api/chat').Poll) => {
+    setMessages(prev => {
+      const next = prev.map(m =>
+        m.id === messageId && m.poll ? { ...m, poll: updatedPoll } : m
+      );
+      messagesRef.current = next;
+      return next;
+    });
   }, []);
 
   const handleDeleteMessage = useCallback(async (messageId: string) => {
@@ -497,7 +562,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     thumbnailUrls?: string[];
   }) => {
     if (params.contextId !== id) return;
-    sendWithTimeout(params, { onFailed: handleMarkFailed });
+    sendWithTimeout(params, { onFailed: handleMarkFailed, onSuccess: (created) => handleNewMessageRef.current?.(created) });
   }, [id, handleMarkFailed]);
 
   const handleResendQueued = useCallback((tempId: string) => {
@@ -509,7 +574,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       messagesRef.current = next;
       return next;
     });
-    resend(tempId, contextType, id, { onFailed: handleMarkFailed }).catch(err => { console.error('[messageQueue] resend', err); });
+    resend(tempId, contextType, id, { onFailed: handleMarkFailed, onSuccess: (created) => handleNewMessageRef.current?.(created) }).catch(err => { console.error('[messageQueue] resend', err); });
   }, [id, contextType, handleMarkFailed]);
 
   const handleRemoveFromQueue = useCallback((tempId: string) => {
@@ -692,6 +757,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           messagesRef,
           setMessages,
           handleMarkFailed,
+          onMessageCreated: (created) => handleNewMessageRef.current?.(created),
         });
       }
       scrollToBottom();
@@ -777,6 +843,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       return replacedOptimisticId;
     }
   }, [contextType, currentChatType, id, user?.id]);
+  handleNewMessageRef.current = handleNewMessage;
 
   const handleMessageReaction = useCallback((reaction: any) => {
     if (reaction.action === 'removed') {
@@ -999,6 +1066,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             messagesRef,
             setMessages,
             handleMarkFailed,
+            onMessageCreated: (created) => handleNewMessageRef.current?.(created),
           });
         }
         if (!signal.aborted) hasLoadedRef.current = true;
@@ -1337,6 +1405,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             onRemoveReaction={handleRemoveReaction}
             onDeleteMessage={handleDeleteMessage}
             onReplyMessage={handleReplyMessage}
+            onPollUpdated={handlePollUpdated}
             isLoading={false}
             isLoadingMessages={true}
             isSwitchingChatType={false}
@@ -1614,6 +1683,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           onRemoveReaction={handleRemoveReaction}
           onDeleteMessage={handleDeleteMessage}
           onReplyMessage={handleReplyMessage}
+          onPollUpdated={handlePollUpdated}
           onResendQueued={handleResendQueued}
           onRemoveFromQueue={handleRemoveFromQueue}
           isLoading={isLoadingMore}

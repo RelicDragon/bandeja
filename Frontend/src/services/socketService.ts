@@ -15,6 +15,8 @@ export interface UserChatReadReceipt {
   chatId?: string;
 }
 
+export type SocketConnectionState = 'disconnected' | 'connecting' | 'connected';
+
 export interface SocketEvents {
   'new-invite': (invite: any) => void;
   'invite-deleted': (data: { inviteId: string; gameId?: string }) => void;
@@ -79,6 +81,11 @@ class SocketService {
   private socketListeners: Map<string, (...args: any[]) => void> = new Map();
   private waitForConnectionListeners: Array<() => void> = [];
   private connectCallbacks: Set<() => void> = new Set();
+  private connectionState: SocketConnectionState = 'disconnected';
+  private connectionStateListeners: Set<(state: SocketConnectionState) => void> = new Set();
+  private delayedRetryTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private readonly delayedRetryMs = 20000;
+  private readonly reconnectDelayMaxMs = 30000;
 
   constructor() {
     // Don't auto-connect in constructor - let components trigger connection when needed
@@ -94,6 +101,18 @@ class SocketService {
       SocketService.instance = new SocketService();
     }
     return SocketService.instance;
+  }
+
+  private setConnectionState(state: SocketConnectionState) {
+    if (this.connectionState === state) return;
+    this.connectionState = state;
+    this.connectionStateListeners.forEach((cb) => {
+      try {
+        cb(state);
+      } catch (e) {
+        console.error('[SocketService] connectionState listener error:', e);
+      }
+    });
   }
 
   private setupNetworkListeners() {
@@ -123,13 +142,14 @@ class SocketService {
   private handleNetworkOnline() {
     console.log('[SocketService] Network online - resuming connection');
     this.isOffline = false;
-    
-    // Resume heartbeat if socket is connected
     if (this.socket && this.socket.connected) {
       this.startHeartbeat();
     } else if (!this.isConnecting && !this.socket?.connected) {
-      // Attempt to reconnect if not already connected
       this.reconnectAttempts = 0;
+      if (this.delayedRetryTimeoutId) {
+        clearTimeout(this.delayedRetryTimeoutId);
+        this.delayedRetryTimeoutId = null;
+      }
       this.connect();
     }
   }
@@ -138,23 +158,35 @@ class SocketService {
     console.log('[SocketService] Network offline - pausing heartbeat');
     this.isOffline = true;
     this.stopHeartbeat();
-    
-    // Cancel any pending reconnection attempts
     if (this.reconnectTimeoutId) {
       clearTimeout(this.reconnectTimeoutId);
       this.reconnectTimeoutId = null;
     }
+    if (this.delayedRetryTimeoutId) {
+      clearTimeout(this.delayedRetryTimeoutId);
+      this.delayedRetryTimeoutId = null;
+    }
+    if (this.socket) {
+      this.waitForConnectionListeners.forEach(cleanup => cleanup());
+      this.waitForConnectionListeners = [];
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+      this.socketListeners.clear();
+      this.isConnecting = false;
+      this.setConnectionState('disconnected');
+    }
   }
 
   private connect() {
-    // Prevent multiple simultaneous connection attempts
     if (this.isConnecting || (this.socket && this.socket.connected)) {
       console.log('Socket connection already in progress or connected');
       return;
     }
 
+    this.setupNetworkListeners();
+
     const token = useAuthStore.getState().token;
-    
     if (!token) {
       console.warn('No auth token available for Socket.IO connection');
       return;
@@ -167,6 +199,7 @@ class SocketService {
     }
 
     this.isConnecting = true;
+    this.setConnectionState('connecting');
 
     // Stop heartbeat before cleaning up
     this.stopHeartbeat();
@@ -218,6 +251,11 @@ class SocketService {
       console.log('[SocketService] Socket.IO connected, socket ID:', this.socket?.id);
       this.isConnecting = false;
       this.reconnectAttempts = 0;
+      if (this.delayedRetryTimeoutId) {
+        clearTimeout(this.delayedRetryTimeoutId);
+        this.delayedRetryTimeoutId = null;
+      }
+      this.setConnectionState('connected');
       this.reregisterSocketListeners();
       const isOnline = useNetworkStore.getState().isOnline;
       if (!this.isOffline && isOnline) {
@@ -237,7 +275,8 @@ class SocketService {
       console.log('[SocketService] Socket.IO disconnected:', reason);
       this.isConnecting = false;
       this.stopHeartbeat();
-      
+      this.setConnectionState('disconnected');
+
       // Only reconnect for unintentional disconnects
       // 'io client disconnect' means we explicitly disconnected, so don't reconnect
       if (reason !== 'io client disconnect') {
@@ -256,7 +295,12 @@ class SocketService {
     this.socket.on('connect_error', (error) => {
       console.error('[SocketService] Socket.IO connection error:', error);
       this.isConnecting = false;
-      this.handleReconnect();
+      this.setConnectionState('disconnected');
+      const msg = (error?.message ?? '').toLowerCase();
+      const isAuthError = msg.includes('auth') || (error as any)?.data?.status === 401;
+      if (!isAuthError) {
+        this.handleReconnect();
+      }
     });
 
     this.socket.on('error', (error) => {
@@ -403,19 +447,31 @@ class SocketService {
     }
     
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max reconnection attempts reached');
+      console.warn('[SocketService] Max reconnection attempts reached, scheduling delayed retry');
       this.stopHeartbeat();
+      this.setConnectionState('disconnected');
+      if (this.delayedRetryTimeoutId) return;
+      const delayedMs = this.delayedRetryMs * (0.9 + Math.random() * 0.2);
+      this.delayedRetryTimeoutId = setTimeout(() => {
+        this.delayedRetryTimeoutId = null;
+        const isOnline = useNetworkStore.getState().isOnline;
+        if (!this.isOffline && isOnline && (!this.socket || !this.socket.connected)) {
+          this.reconnectAttempts = 0;
+          this.connect();
+        }
+      }, Math.round(delayedMs));
       return;
     }
 
     this.reconnectAttempts++;
-    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-    
-    console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
-    
+    const baseDelay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+    const cappedDelay = Math.min(baseDelay, this.reconnectDelayMaxMs);
+    const delay = Math.round(cappedDelay * (0.7 + Math.random() * 0.6));
+    console.log(`[SocketService] Reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+    this.setConnectionState('connecting');
+
     this.reconnectTimeoutId = setTimeout(() => {
       this.reconnectTimeoutId = null;
-      // Check if still online and not already connected before connecting
       const isOnline = useNetworkStore.getState().isOnline;
       if (!this.isOffline && isOnline && (!this.socket || !this.socket.connected)) {
         this.connect();
@@ -423,11 +479,16 @@ class SocketService {
     }, delay);
   }
 
-  // Ensure connection is established (non-blocking)
   public ensureConnection() {
-    if (!this.socket || !this.socket.connected) {
-      this.connect();
+    if (this.socket?.connected) return;
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      this.reconnectAttempts = 0;
     }
+    if (this.delayedRetryTimeoutId) {
+      clearTimeout(this.delayedRetryTimeoutId);
+      this.delayedRetryTimeoutId = null;
+    }
+    this.connect();
   }
 
   // Wait for connection to be established
@@ -769,9 +830,17 @@ class SocketService {
     this.socket.emit('subscribe-presence', { userIds: safe });
   }
 
-  // Check if connected
   public getConnectionStatus(): boolean {
     return this.socket ? this.socket.connected : false;
+  }
+
+  public getConnectionState(): SocketConnectionState {
+    return this.connectionState;
+  }
+
+  public onConnectionStateChange(callback: (state: SocketConnectionState) => void): () => void {
+    this.connectionStateListeners.add(callback);
+    return () => this.connectionStateListeners.delete(callback);
   }
 
   // Get socket instance
@@ -782,9 +851,7 @@ class SocketService {
   // Disconnect
   public disconnect() {
     this.stopHeartbeat();
-    this.activeChatRooms.clear();
     this.isRejoining = false;
-    this.eventSubscribers.clear();
     this.socketListeners.clear();
     
     // Clean up waitForConnection listeners
@@ -795,7 +862,11 @@ class SocketService {
       clearTimeout(this.reconnectTimeoutId);
       this.reconnectTimeoutId = null;
     }
-    
+    if (this.delayedRetryTimeoutId) {
+      clearTimeout(this.delayedRetryTimeoutId);
+      this.delayedRetryTimeoutId = null;
+    }
+
     // Clean up network subscription
     if (this.networkUnsubscribe) {
       this.networkUnsubscribe();
@@ -810,6 +881,7 @@ class SocketService {
       this.isConnecting = false;
       this.reconnectAttempts = 0;
     }
+    this.setConnectionState('disconnected');
   }
 
   // Reconnect with new token

@@ -31,6 +31,7 @@ interface MessageItemProps {
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onReplyMessage: (message: ChatMessage) => void;
+  onPollUpdated?: (messageId: string, updatedPoll: import('@/api/chat').Poll) => void;
   onResendQueued?: (tempId: string) => void;
   onRemoveFromQueue?: (tempId: string) => void;
   contextMenuState: ContextMenuState;
@@ -51,6 +52,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onRemoveReaction,
   onDeleteMessage,
   onReplyMessage,
+  onPollUpdated,
   onResendQueued,
   onRemoveFromQueue,
   contextMenuState,
@@ -227,6 +229,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
   const getCurrentUserReaction = () => {
     return currentMessage.reactions.find(r => r.userId === user?.id)?.emoji;
+  };
+
+  const isReactionPending = () => {
+    const r = currentMessage.reactions.find(r => r.userId === user?.id);
+    return !!(r && (r as { _pending?: boolean })._pending);
   };
 
   const getReactionCounts = () => {
@@ -551,7 +558,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     {/* Poll Content */}
                     {currentMessage.poll && (
                       <div className="p-2">
-                        <PollMessage poll={currentMessage.poll} messageId={currentMessage.id} />
+                        <PollMessage poll={currentMessage.poll} messageId={currentMessage.id} onPollUpdated={onPollUpdated} />
                       </div>
                     )}
 
@@ -875,16 +882,28 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                       <button
                         data-reaction-button="true"
                         onClick={handleQuickReaction}
-                        className="relative flex flex-col items-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-1 transition-colors"
+                        disabled={isReactionPending()}
+                        className="relative flex flex-col items-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-1 transition-colors disabled:opacity-70 disabled:cursor-wait"
                       >
-                        <span className="text-lg">
-                          {getCurrentUserReaction() || (
-                            <span className="text-gray-600 dark:text-white">♡</span>
-                          )}
-                        </span>
-                        <span className={`text-xs text-gray-500 dark:text-gray-400 -mt-1 ${getCurrentUserReaction() && getReactionCounts()[getCurrentUserReaction()!] > 1 ? 'visible' : 'invisible'}`}>
-                          {getCurrentUserReaction() ? getReactionCounts()[getCurrentUserReaction()!] || '1' : '1'}
-                        </span>
+                        {isReactionPending() ? (
+                          <div className="flex flex-col items-center">
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                              {getCurrentUserReaction() || '…'}
+                            </span>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="text-lg">
+                              {getCurrentUserReaction() || (
+                                <span className="text-gray-600 dark:text-white">♡</span>
+                              )}
+                            </span>
+                            <span className={`text-xs text-gray-500 dark:text-gray-400 -mt-1 ${getCurrentUserReaction() && getReactionCounts()[getCurrentUserReaction()!] > 1 ? 'visible' : 'invisible'}`}>
+                              {getCurrentUserReaction() ? getReactionCounts()[getCurrentUserReaction()!] || '1' : '1'}
+                            </span>
+                          </>
+                        )}
                       </button>
 
                       {currentMessage.reactions.length > 0 && (

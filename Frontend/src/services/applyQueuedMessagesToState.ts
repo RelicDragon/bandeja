@@ -1,5 +1,5 @@
 import type React from 'react';
-import { ChatContextType, ChatMessageWithStatus } from '@/api/chat';
+import { ChatContextType, ChatMessage, ChatMessageWithStatus } from '@/api/chat';
 import { BasicUser, ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { messageQueueStorage, QueuedMessage } from '@/services/chatMessageQueueStorage';
@@ -24,8 +24,9 @@ export async function applyQueuedMessagesToState(params: {
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   handleMarkFailed: (tempId: string) => void;
+  onMessageCreated?: (message: ChatMessage) => void;
 }): Promise<void> {
-  const { contextType, contextId, currentChatType, userId, user, messagesRef, setMessages, handleMarkFailed } = params;
+  const { contextType, contextId, currentChatType, userId, user, messagesRef, setMessages, handleMarkFailed, onMessageCreated } = params;
   const queue = await messageQueueStorage.getByContext(contextType, contextId);
   const normalizedCurrent = normalizeChatType(currentChatType);
   const queueForTab = queue.filter(q => normalizeChatType(q.payload.chatType) === normalizedCurrent);
@@ -64,7 +65,7 @@ export async function applyQueuedMessagesToState(params: {
     queueForTabFiltered.filter(q => q.status === 'queued' && !isSending(q.tempId) && toAdd.some(a => a._optimisticId === q.tempId)).forEach(q => {
       sendWithTimeout(
         { tempId: q.tempId, contextType: q.contextType, contextId: q.contextId, payload: q.payload, mediaUrls: q.mediaUrls, thumbnailUrls: q.thumbnailUrls },
-        { onFailed: handleMarkFailed }
+        { onFailed: handleMarkFailed, onSuccess: onMessageCreated }
       );
     });
     return next;
