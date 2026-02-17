@@ -6,7 +6,7 @@ import { PlayerAvatar } from '@/components';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { usersApi } from '@/api';
 import { BasicUser } from '@/types';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 interface TrainersListProps {
@@ -36,6 +36,28 @@ export const TrainersList = ({ show }: TrainersListProps) => {
     return Object.values(users)
       .filter((player): player is BasicUser & { isTrainer: boolean } => player.isTrainer === true);
   }, [users, user?.currentCity?.id]);
+
+  const selectedTrainer = useMemo(
+    () => (user?.favoriteTrainerId ? trainers.find((t) => t.id === user.favoriteTrainerId) : null),
+    [trainers, user?.favoriteTrainerId]
+  );
+
+  const [displayedTrainer, setDisplayedTrainer] = useState<BasicUser | null>(null);
+  const [hintVisible, setHintVisible] = useState(false);
+  useEffect(() => {
+    if (selectedTrainer) {
+      setDisplayedTrainer(selectedTrainer);
+      setHintVisible(false);
+      const t = setTimeout(() => setHintVisible(true), 0);
+      return () => clearTimeout(t);
+    } else if (displayedTrainer) {
+      const t = setTimeout(() => {
+        setDisplayedTrainer(null);
+        setHintVisible(false);
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [selectedTrainer, displayedTrainer]);
 
   const handleSelectTrainer = useCallback(
     async (trainerId: string) => {
@@ -85,17 +107,17 @@ export const TrainersList = ({ show }: TrainersListProps) => {
           : 'max-h-0 opacity-0 -translate-y-4 mb-0'
       }`}
     >
-      <div className="px-4 relative md:flex md:flex-col md:items-center">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 md:text-center">
+      <div className="px-4 relative max-w-md mx-auto">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
           {t('trainers.ourTrainers', { defaultValue: 'Our trainers' })}
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 md:text-center">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
           {t('trainers.selectToFilterHint', { defaultValue: 'Tap a trainer to filter trainings by them' })}
         </p>
-        <div className="relative md:w-full">
+        <div className="relative">
           <div
             ref={carouselRef}
-            className="overflow-x-auto overflow-y-hidden scrollbar-hide flex gap-2 pb-4 md:justify-center"
+            className="overflow-x-auto overflow-y-hidden scrollbar-hide flex gap-2 pb-4"
           >
             {trainers.map((trainer) => {
               const isSelected = user?.favoriteTrainerId === trainer.id;
@@ -157,6 +179,35 @@ export const TrainersList = ({ show }: TrainersListProps) => {
             </>
           )}
         </div>
+        {displayedTrainer && (
+          <div
+            className={`transition-all duration-300 ease-in-out overflow-hidden w-full ${
+              show && selectedTrainer && hintVisible ? 'max-h-24 opacity-100 translate-y-0 -mt-2 mb-2' : 'max-h-0 opacity-0 -translate-y-4 mt-0 mb-0'
+            }`}
+          >
+            <div className="w-fit flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
+            <button
+              type="button"
+              onClick={() => user?.favoriteTrainerId && handleSelectTrainer(user.favoriteTrainerId)}
+              className="flex-shrink-0 w-7 h-7 rounded-full border border-primary-300 dark:border-primary-600 bg-white dark:bg-gray-800 flex items-center justify-center text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors"
+              aria-label={t('trainers.clearTrainerFilter', { defaultValue: 'Clear trainer filter' })}
+            >
+              <X size={14} />
+            </button>
+            <span className="[&>div]:pointer-events-none">
+              <PlayerAvatar player={displayedTrainer} asDiv extrasmall fullHideName />
+            </span>
+            <div className="flex flex-col items-start">
+              <span className="text-xs text-primary-600 dark:text-primary-400 leading-tight">
+                {t('trainers.trainingsBy', { defaultValue: 'Trainings by' })}
+              </span>
+              <span className="text-sm text-primary-700 dark:text-primary-300 font-medium leading-tight">
+                {[displayedTrainer.firstName, displayedTrainer.lastName].filter(Boolean).join(' ') || ''}
+              </span>
+            </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

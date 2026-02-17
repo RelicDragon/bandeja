@@ -1,11 +1,27 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, Swords, Dumbbell, Trophy, Beer } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enUS, ru, es, sr } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+
+type DisplayEntityType = 'GAME' | 'TOURNAMENT' | 'TRAINING' | 'LEAGUE' | 'BAR';
+
+const ENTITY_ICONS: Record<DisplayEntityType, typeof Users> = {
+  GAME: Users,
+  TOURNAMENT: Swords,
+  TRAINING: Dumbbell,
+  LEAGUE: Trophy,
+  BAR: Beer,
+};
+
+const PILL_ENTITY_ORDER: DisplayEntityType[] = ['GAME', 'TOURNAMENT', 'TRAINING', 'LEAGUE', 'BAR'];
+
+function toDisplayEntityType(entityType: Game['entityType']): DisplayEntityType {
+  return entityType === 'LEAGUE_SEASON' ? 'LEAGUE' : entityType;
+}
 
 interface MonthCalendarProps {
   selectedDate: Date;
@@ -70,8 +86,10 @@ export const MonthCalendar = ({
   const startDate = useMemo(() => startOfWeek(monthStart, { locale, weekStartsOn }), [monthStart, locale, weekStartsOn]);
   const endDate = useMemo(() => endOfWeek(monthEnd, { locale, weekStartsOn }), [monthEnd, locale, weekStartsOn]);
 
+  const noEntityFilter = !gameFilter && !trainingFilter && !tournamentFilter && !leaguesFilter;
+
   const dateCellData = useMemo(() => {
-    const dataMap = new Map<string, { gameCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean; hasTraining: boolean }>();
+    const dataMap = new Map<string, { gameCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean; hasTraining: boolean; participantEntityTypes: Set<DisplayEntityType> }>();
     
     availableGames.forEach(game => {
       if (game.timeIsSet === false) return;
@@ -88,6 +106,12 @@ export const MonthCalendar = ({
 
       if (!isPublic && !isUserParticipantInGame && !(leaguesFilter && isLeagueGame)) {
         return;
+      }
+
+      if (isUserParticipantInGame) {
+        const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>() };
+        existing.participantEntityTypes.add(toDisplayEntityType(game.entityType));
+        dataMap.set(gameDate, existing);
       }
 
       if (userFilter) {
@@ -128,7 +152,7 @@ export const MonthCalendar = ({
         return;
       }
 
-      const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false };
+      const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>() };
       
       existing.gameCount++;
       
@@ -281,17 +305,19 @@ export const MonthCalendar = ({
           const isSelected = isSameDay(day, selectedDate);
           const isTodayDate = isToday(day);
           const dateStr = format(startOfDay(day), 'yyyy-MM-dd');
-          const dayData = dateCellData.get(dateStr) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false };
+          const dayData = dateCellData.get(dateStr) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>() };
           const gameCount = dayData.gameCount;
           const hasGames = gameCount > 0;
           const isParticipant = dayData.isUserParticipant;
+          const participantTypes = PILL_ENTITY_ORDER.filter(t => dayData.participantEntityTypes.has(t));
+          const showPill = noEntityFilter && isParticipant && participantTypes.length > 0;
 
           return (
             <button
               key={index}
               onClick={() => handleDateClick(day)}
               className={`
-                relative w-full p-2 rounded-lg text-sm transition-all flex items-center justify-center
+                relative w-full p-2 rounded-lg text-sm transition-all flex flex-col items-center justify-center gap-0.5
                 ${!isCurrentMonth 
                   ? `text-gray-300 dark:text-gray-600 cursor-not-allowed ${hasGames ? 'border-2 border-gray-300/50 dark:border-gray-600/50' : ''}` 
                   : isSelected
@@ -312,33 +338,6 @@ export const MonthCalendar = ({
                 minHeight: 0,
               }}
             >
-              {isParticipant && (
-                <span className={`
-                  absolute -top-1 -left-1 flex items-center justify-center
-                  w-[18px] h-[18px] rounded-full
-                  transition-all duration-300
-                  ${visibleDays.has(index) ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
-                  ${!isCurrentMonth
-                    ? 'bg-gray-400 dark:bg-gray-600'
-                    : isSelected 
-                    ? 'bg-white text-primary-500 border-2 border-primary-500' 
-                    : 'bg-yellow-500 dark:bg-yellow-600 text-white'
-                  }
-                `}>
-                  <Star 
-                    size={12} 
-                    className={`
-                      ${!isCurrentMonth
-                        ? 'text-gray-300 dark:text-gray-400'
-                        : isSelected 
-                        ? 'text-primary-500' 
-                        : 'text-white'
-                      }
-                    `}
-                    fill="currentColor"
-                  />
-                </span>
-              )}
               <span>{format(day, 'd')}</span>
               {gameCount > 0 && (
                 <span className={`
@@ -354,6 +353,26 @@ export const MonthCalendar = ({
                   }
                 `}>
                   {gameCount}
+                </span>
+              )}
+              {showPill && (
+                <span className={`
+                  absolute -bottom-1.5 left-1/2 -translate-x-1/2 
+                  inline-flex items-center justify-center 
+                  gap-0.5 px-0.5 py-0.5 rounded-full w-fit
+                  transition-all duration-300 border shadow-sm
+                  ${visibleDays.has(index) ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
+                  ${!isCurrentMonth
+                    ? 'bg-gray-400/80 dark:bg-gray-600/80 border-gray-500/50 dark:border-gray-500/50'
+                    : isSelected
+                    ? 'bg-white/95 text-primary-600 border-primary-200 dark:border-primary-700'
+                    : 'bg-yellow-500/95 dark:bg-yellow-600/95 text-white border-yellow-600/50 dark:border-yellow-500/50'
+                  }
+                `}>
+                  {participantTypes.map((t) => {
+                    const Icon = ENTITY_ICONS[t];
+                    return Icon ? <Icon key={t} size={10} className="shrink-0" /> : null;
+                  })}
                 </span>
               )}
             </button>

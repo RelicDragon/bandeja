@@ -379,7 +379,9 @@
   },
   "trainers": {
     "ourTrainers": "Наши тренери",
-    "selectToFilterHint": "Додирните тренера да филтрирате тренинге"
+    "selectToFilterHint": "Додирните тренера да филтрирате тренинге",
+    "trainingsBy": "Тренинзи од",
+    "clearTrainerFilter": "Поништи филтер тренера"
   },
   "games": {
     "title": "Пронађи игре",

@@ -380,7 +380,9 @@
   },
   "trainers": {
     "ourTrainers": "Наши тренеры",
-    "selectToFilterHint": "Нажмите на тренера, чтобы фильтровать тренировки"
+    "selectToFilterHint": "Нажмите на тренера, чтобы фильтровать тренировки",
+    "trainingsBy": "Тренировки от",
+    "clearTrainerFilter": "Сбросить фильтр тренера"
   },
   "games": {
     "title": "Найти игры",

@@ -378,7 +378,9 @@
   },
   "trainers": {
     "ourTrainers": "Nuestros entrenadores",
-    "selectToFilterHint": "Toca un entrenador para filtrar entrenamientos"
+    "selectToFilterHint": "Toca un entrenador para filtrar entrenamientos",
+    "trainingsBy": "Entrenamientos de",
+    "clearTrainerFilter": "Quitar filtro de entrenador"
   },
   "games": {
     "title": "Buscar juegos",
