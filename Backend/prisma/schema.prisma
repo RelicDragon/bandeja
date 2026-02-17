@@ -679,6 +679,7 @@ model ChatDraft {
 
   @@unique([userId, chatContextType, contextId, chatType])
   @@index([userId])
+  @@index([userId, updatedAt])
   @@index([chatContextType, contextId])
   @@index([updatedAt])
 }

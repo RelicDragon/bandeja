@@ -6,7 +6,7 @@ import transliterate from '@sindresorhus/transliterate';
 import { CityUserCard } from './CityUserCard';
 import { ChatListItem } from './ChatListItem';
 import { ChatListSearchBar } from './ChatListSearchBar';
-import { chatApi, ChatDraft, getLastMessageTime, GroupChannel } from '@/api/chat';
+import { chatApi, ChatDraft, ChatContextType, getLastMessageTime, GroupChannel } from '@/api/chat';
 import { matchDraftToChat } from '@/utils/chatListUtils';
 import { getChatTitle, sortChatItems } from '@/utils/chatListSort';
 import { getMarketChatDisplayTitle, getMarketChatDisplayTitleForSellerGrouped, getMarketChatDisplayParts } from '@/utils/marketChatUtils';
@@ -113,6 +113,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const chatsCacheRef = useRef<Partial<Record<'users' | 'bugs' | 'channels' | 'market', FilterCache>>>({});
   const draftsCacheRef = useRef<ChatDraft[] | null>(null);
 
+  /** Fetches server drafts (page 1, limit 1000) and merges with local. Max 1000 server drafts per user; older drafts are not loaded. */
   const getMergedDrafts = useCallback(
     async (forceRefetch = false): Promise<ChatDraft[]> => {
       if (!user?.id) return [];
@@ -127,6 +128,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     },
     [user?.id]
   );
+
+  useEffect(() => () => {
+    draftsCacheRef.current = null;
+  }, [user?.id]);
 
   const applyDraftToCache = useCallback((
     draft: ChatDraft | null,
@@ -786,7 +791,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       if (draftsCacheRef.current !== null) {
         applyDraftToCache(null, chatContextType, contextId, chatType);
       }
-      setChats((prevChats) => deduplicateChats(updateChatDraft(prevChats, chatContextType, contextId, null)));
+      const remainingDraft = draftsCacheRef.current
+        ? matchDraftToChat(draftsCacheRef.current, chatContextType as ChatContextType, contextId)
+        : null;
+      setChats((prevChats) => deduplicateChats(updateChatDraft(prevChats, chatContextType, contextId, remainingDraft)));
     };
 
     const handleViewingClearUnread = (event: Event) => {
@@ -799,16 +807,22 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       );
     };
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') draftsCacheRef.current = null;
+    };
+
     window.addEventListener('refresh-chat-list', handleRefresh);
     window.addEventListener('draft-updated', handleDraftUpdate);
     window.addEventListener('draft-deleted', handleDraftDelete);
     window.addEventListener('chat-viewing-clear-unread', handleViewingClearUnread);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('refresh-chat-list', handleRefresh);
       window.removeEventListener('draft-updated', handleDraftUpdate);
       window.removeEventListener('draft-deleted', handleDraftDelete);
       window.removeEventListener('chat-viewing-clear-unread', handleViewingClearUnread);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [fetchChatsForFilter, chatsFilter, updateChatDraft, updateChatMessage, applyDraftToCache]);
 

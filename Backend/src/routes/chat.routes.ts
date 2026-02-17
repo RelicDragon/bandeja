@@ -51,10 +51,11 @@ router.use(authenticate);
 
 const draftLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: 30,
+  max: 60,
   message: 'Too many draft requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
 });
 
 const createMessageLimiter = rateLimit({

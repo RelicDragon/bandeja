@@ -985,6 +985,17 @@ export const saveDraft = asyncHandler(async (req: AuthRequest, res: Response) =>
     throw new ApiError(400, 'mentionIds must be an array');
   }
 
+  try {
+    const ctx = chatContextType as ChatContextType;
+    const cid = contextId as string;
+    if (ctx === 'GAME') await MessageService.validateGameAccess(cid, userId);
+    else if (ctx === 'USER') await MessageService.validateUserChatAccess(cid, userId);
+    else if (ctx === 'GROUP') await MessageService.validateGroupChannelAccess(cid, userId);
+    else if (ctx === 'BUG') await MessageService.validateBugAccess(cid, userId);
+  } catch {
+    throw new ApiError(403, 'Access denied to this context');
+  }
+
   const hasContent = typeof content === 'string' && content.trim().length > 0;
   const hasMentions = mentionIds.length > 0;
   if (!hasContent && !hasMentions) {
@@ -1022,6 +1033,23 @@ export const getDraft = asyncHandler(async (req: AuthRequest, res: Response) => 
 
   if (!chatContextType || !contextId) {
     throw new ApiError(400, 'chatContextType and contextId are required');
+  }
+
+  try {
+    const ctx = chatContextType as ChatContextType;
+    const cid = contextId as string;
+    if (ctx === 'GAME') {
+      await MessageService.validateGameAccess(cid, userId);
+    } else if (ctx === 'USER') {
+      await MessageService.validateUserChatAccess(cid, userId);
+    } else if (ctx === 'GROUP') {
+      await MessageService.validateGroupChannelAccess(cid, userId);
+    } else if (ctx === 'BUG') {
+      await MessageService.validateBugAccess(cid, userId);
+    }
+  } catch (err) {
+    console.warn('getDraft access denied', { userId, chatContextType, contextId, err });
+    return res.json({ success: true, data: null });
   }
 
   const draft = await DraftService.getDraft(

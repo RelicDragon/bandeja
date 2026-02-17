@@ -4,9 +4,15 @@ import { ApiError } from '../../utils/ApiError';
 
 const MAX_CONTENT_LENGTH = 10000;
 const MAX_MENTION_IDS = 50;
-const DRAFT_EXPIRY_DAYS = 30;
-/** List/API only expose up to this many drafts per user (oldest by updatedAt trimmed after each save). */
+const DEFAULT_DRAFT_EXPIRY_DAYS = 30;
 const MAX_DRAFTS_PER_USER = 1000;
+
+function getDraftExpiryDays(): number {
+  const env = process.env.DRAFT_EXPIRY_DAYS;
+  if (env == null || env === '') return DEFAULT_DRAFT_EXPIRY_DAYS;
+  const n = parseInt(env, 10);
+  return Number.isFinite(n) && n >= 1 ? n : DEFAULT_DRAFT_EXPIRY_DAYS;
+}
 
 export class DraftService {
   static async saveDraft(
@@ -17,7 +23,9 @@ export class DraftService {
     content?: string,
     mentionIds: string[] = []
   ) {
-    if (content && content.length > MAX_CONTENT_LENGTH) {
+    const rawContent = typeof content === 'string' ? content : '';
+    const trimmedContent = rawContent.trim().slice(0, MAX_CONTENT_LENGTH);
+    if (rawContent.length > MAX_CONTENT_LENGTH) {
       throw new ApiError(400, `Draft content cannot exceed ${MAX_CONTENT_LENGTH} characters`);
     }
 
@@ -27,61 +35,58 @@ export class DraftService {
 
     if (mentionIds.length > 0) {
       const validUserIds = await prisma.user.findMany({
-        where: {
-          id: { in: mentionIds }
-        },
+        where: { id: { in: mentionIds } },
         select: { id: true }
       });
-
       const validIds = new Set(validUserIds.map(u => u.id));
       const invalidIds = mentionIds.filter(id => !validIds.has(id));
-
       if (invalidIds.length > 0) {
         throw new ApiError(400, `Invalid user IDs: ${invalidIds.join(', ')}`);
       }
     }
 
-    const draft = await prisma.chatDraft.upsert({
-      where: {
-        userId_chatContextType_contextId_chatType: {
+    const contentToStore = trimmedContent || null;
+    const mentionIdsToStore = mentionIds || [];
+
+    const draft = await prisma.$transaction(async (tx) => {
+      const row = await tx.chatDraft.upsert({
+        where: {
+          userId_chatContextType_contextId_chatType: {
+            userId,
+            chatContextType,
+            contextId,
+            chatType
+          }
+        },
+        update: { content: contentToStore, mentionIds: mentionIdsToStore },
+        create: {
           userId,
           chatContextType,
           contextId,
-          chatType
+          chatType,
+          content: contentToStore,
+          mentionIds: mentionIdsToStore
         }
-      },
-      update: {
-        content: content || null,
-        mentionIds: mentionIds || []
-      },
-      create: {
-        userId,
-        chatContextType,
-        contextId,
-        chatType,
-        content: content || null,
-        mentionIds: mentionIds || []
-      }
-    });
-
-    await this.enforceMaxDraftsPerUser(userId);
-    return draft;
-  }
-
-  static async enforceMaxDraftsPerUser(userId: string) {
-    const count = await prisma.chatDraft.count({ where: { userId } });
-    if (count <= MAX_DRAFTS_PER_USER) return;
-    const toRemove = await prisma.chatDraft.findMany({
-      where: { userId },
-      orderBy: { updatedAt: 'asc' },
-      take: count - MAX_DRAFTS_PER_USER,
-      select: { id: true }
-    });
-    if (toRemove.length > 0) {
-      await prisma.chatDraft.deleteMany({
-        where: { id: { in: toRemove.map((d) => d.id) } }
       });
-    }
+
+      const count = await tx.chatDraft.count({ where: { userId } });
+      if (count > MAX_DRAFTS_PER_USER) {
+        const toRemove = await tx.chatDraft.findMany({
+          where: { userId },
+          orderBy: { updatedAt: 'asc' },
+          take: count - MAX_DRAFTS_PER_USER,
+          select: { id: true }
+        });
+        if (toRemove.length > 0) {
+          await tx.chatDraft.deleteMany({
+            where: { id: { in: toRemove.map((d) => d.id) } }
+          });
+        }
+      }
+      return row;
+    });
+
+    return draft;
   }
 
   static async getDraft(
@@ -104,14 +109,27 @@ export class DraftService {
     return draft;
   }
 
-  static async deleteDraftsOlderThan(days: number = DRAFT_EXPIRY_DAYS) {
+  static readonly EXPIRY_BATCH_SIZE = 1000;
+
+  static async deleteDraftsOlderThan(days?: number): Promise<number> {
+    const expiryDays = days ?? getDraftExpiryDays();
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - days);
-    await prisma.chatDraft.deleteMany({
-      where: {
-        updatedAt: { lt: cutoff }
-      }
-    });
+    cutoff.setDate(cutoff.getDate() - expiryDays);
+    let totalDeleted = 0;
+    for (;;) {
+      const toDelete = await prisma.chatDraft.findMany({
+        where: { updatedAt: { lt: cutoff } },
+        take: this.EXPIRY_BATCH_SIZE,
+        select: { id: true }
+      });
+      if (toDelete.length === 0) break;
+      await prisma.chatDraft.deleteMany({
+        where: { id: { in: toDelete.map((d) => d.id) } }
+      });
+      totalDeleted += toDelete.length;
+      if (toDelete.length < this.EXPIRY_BATCH_SIZE) break;
+    }
+    return totalDeleted;
   }
 
   static async getUserDrafts(userId: string, page: number = 1, limit: number = 50) {
@@ -160,14 +178,5 @@ export class DraftService {
         chatType
       }
     });
-  }
-
-  static async clearDraft(
-    userId: string,
-    chatContextType: ChatContextType,
-    contextId: string,
-    chatType: ChatType
-  ) {
-    await this.deleteDraft(userId, chatContextType, contextId, chatType);
   }
 }
