@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { chatApi, UserChat } from '@/api/chat';
 import { usersApi } from '@/api/users';
 import { useAuthStore } from './authStore';
+import { useSocketEventsStore } from './socketEventsStore';
 import { BasicUser } from '@/types';
 import type { NewUserChatMessage, UserChatReadReceipt } from '@/services/socketService';
 
@@ -70,66 +71,61 @@ const setupSocketSubscriptions = () => {
   if (socketSubscriptionsSetup) return;
   socketSubscriptionsSetup = true;
 
-  import('@/store/socketEventsStore').then(({ useSocketEventsStore }) => {
-    newMessageHandler = (message: NewUserChatMessage) => {
-      console.log('[playersStore] New user chat message received:', message);
-      const store = usePlayersStore.getState();
-      const { user } = useAuthStore.getState();
-      const chat = store.getChatById(message.contextId);
-      console.log('[playersStore] Chat found in store:', chat ? `Yes (${chat.id})` : 'No');
-      if (chat) {
-        console.log('[playersStore] Current unread counts:', store.unreadCounts);
-        
-        // Update the chat's lastMessage in the store
-        usePlayersStore.setState((state) => ({
-          chats: {
-            ...state.chats,
-            [chat.id]: {
-              ...state.chats[chat.id],
-              lastMessage: message as any,
-              updatedAt: new Date().toISOString(),
-            },
+  newMessageHandler = (message: NewUserChatMessage) => {
+    console.log('[playersStore] New user chat message received:', message);
+    const store = usePlayersStore.getState();
+    const { user } = useAuthStore.getState();
+    const chat = store.getChatById(message.contextId);
+    console.log('[playersStore] Chat found in store:', chat ? `Yes (${chat.id})` : 'No');
+    if (chat) {
+      console.log('[playersStore] Current unread counts:', store.unreadCounts);
+
+      usePlayersStore.setState((state) => ({
+        chats: {
+          ...state.chats,
+          [chat.id]: {
+            ...state.chats[chat.id],
+            lastMessage: message as any,
+            updatedAt: new Date().toISOString(),
           },
-        }));
-        
-        // Only increment unread count if the message is from another user
-        if (message.senderId && message.senderId !== user?.id) {
-          store.updateUnreadCount(chat.id, (current) => (current || 0) + 1);
-        }
-      } else {
-        console.log('[playersStore] Chat not found, fetching user chats...');
-        store.fetchUserChats();
-      }
-    };
+        },
+      }));
 
-    readReceiptHandler = (readReceipt: UserChatReadReceipt) => {
-      const { user } = useAuthStore.getState();
-      if (readReceipt.userId === user?.id) {
-        usePlayersStore.getState().fetchUnreadCounts();
+      if (message.senderId && message.senderId !== user?.id) {
+        store.updateUnreadCount(chat.id, (current) => (current || 0) + 1);
       }
-    };
+    } else {
+      console.log('[playersStore] Chat not found, fetching user chats...');
+      store.fetchUserChats();
+    }
+  };
 
-    // Subscribe to centralized store using store instance
-    let lastChatMessage: any = null;
-    let lastChatReadReceipt: any = null;
+  readReceiptHandler = (readReceipt: UserChatReadReceipt) => {
+    const { user } = useAuthStore.getState();
+    if (readReceipt.userId === user?.id) {
+      usePlayersStore.getState().fetchUnreadCounts();
+    }
+  };
 
-    unifiedMessageHandler = useSocketEventsStore.subscribe((state) => {
-      if (state.lastChatMessage !== lastChatMessage) {
-        lastChatMessage = state.lastChatMessage;
-        if (lastChatMessage && lastChatMessage.contextType === 'USER' && newMessageHandler) {
-          newMessageHandler(lastChatMessage.message);
-        }
+  let lastChatMessage: any = null;
+  let lastChatReadReceipt: any = null;
+
+  unifiedMessageHandler = useSocketEventsStore.subscribe((state) => {
+    if (state.lastChatMessage !== lastChatMessage) {
+      lastChatMessage = state.lastChatMessage;
+      if (lastChatMessage && lastChatMessage.contextType === 'USER' && newMessageHandler) {
+        newMessageHandler(lastChatMessage.message);
       }
-    });
+    }
+  });
 
-    unifiedReadReceiptHandler = useSocketEventsStore.subscribe((state) => {
-      if (state.lastChatReadReceipt !== lastChatReadReceipt) {
-        lastChatReadReceipt = state.lastChatReadReceipt;
-        if (lastChatReadReceipt && lastChatReadReceipt.contextType === 'USER' && readReceiptHandler) {
-          readReceiptHandler(lastChatReadReceipt.readReceipt);
-        }
+  unifiedReadReceiptHandler = useSocketEventsStore.subscribe((state) => {
+    if (state.lastChatReadReceipt !== lastChatReadReceipt) {
+      lastChatReadReceipt = state.lastChatReadReceipt;
+      if (lastChatReadReceipt && lastChatReadReceipt.contextType === 'USER' && readReceiptHandler) {
+        readReceiptHandler(lastChatReadReceipt.readReceipt);
       }
-    });
+    }
   });
 };
 
