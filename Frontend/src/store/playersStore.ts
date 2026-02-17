@@ -45,7 +45,7 @@ interface UsersState {
   markChatAsRead: (chatId: string) => void;
   addChat: (chat: UserChat) => Promise<void>;
   
-  fetchPlayers: () => Promise<void>;
+  fetchPlayers: () => Promise<BasicUser[]>;
   fetchUserChats: () => Promise<void>;
   fetchUnreadCounts: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -367,17 +367,17 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     }
   },
 
-  fetchPlayers: async () => {
+  fetchPlayers: async (): Promise<BasicUser[]> => {
     const state = get();
     const now = Date.now();
 
     if (state.isFetching) {
-      return;
+      return Object.values(state.users);
     }
 
     const cacheValid = state.lastPlayersFetchTime > 0 && now - state.lastPlayersFetchTime < CACHE_DURATION;
     if (cacheValid) {
-      return;
+      return Object.values(state.users);
     }
 
     set({ loading: true, isFetching: true });
@@ -406,9 +406,11 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
           isFetching: false,
         };
       });
+      return players;
     } catch (error) {
       console.error('Failed to fetch players:', error);
       set({ loading: false, isFetching: false });
+      return [];
     }
   },
 
