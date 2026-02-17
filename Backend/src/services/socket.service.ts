@@ -12,9 +12,9 @@ interface AuthenticatedSocket extends Socket {
   userChatRooms?: Set<string>;
 }
 
-const PRESENCE_FLUSH_MS = 60000;
+const PRESENCE_ONLINE_FLUSH_MS = 5000;
 const PRESENCE_OFFLINE_FLUSH_MS = 2000;
-const MAX_PRESENCE_SUBSCRIPTION = 300;
+const MAX_PRESENCE_SUBSCRIPTION = 3000;
 const PRESENCE_SUBSCRIBE_COOLDOWN_MS = 2000;
 const MAX_PRESENCE_USER_ID_LENGTH = 64;
 
@@ -420,7 +420,7 @@ class SocketService {
       this.presenceFlushTimers.delete(socketId);
     }
     const buf = this.presenceBufferBySocket.get(socketId);
-    const delay = buf?.offline.size ? PRESENCE_OFFLINE_FLUSH_MS : PRESENCE_FLUSH_MS;
+    const delay = buf?.offline.size ? PRESENCE_OFFLINE_FLUSH_MS : PRESENCE_ONLINE_FLUSH_MS;
     const timer = setTimeout(() => {
       this.presenceFlushTimers.delete(socketId);
       this.flushPresenceForSocket(socketId);

@@ -56,9 +56,8 @@ export function usePresenceSubscriptionManager() {
       idsRef.current = ids;
       if (uid) usePresenceStore.getState().setPresenceInitial({ [uid]: true });
       if (ids.length > 0) socketService.subscribePresence(ids);
-      const isReconnect = !firstConnectRef.current;
       firstConnectRef.current = false;
-      if (isReconnect && ids.length > 0) {
+      if (ids.length > 0) {
         usersApi.getPresence(ids).then((data) => {
           if (Object.keys(data).length > 0) usePresenceStore.getState().setPresenceInitial(data);
         }).catch(() => {});

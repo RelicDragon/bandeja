@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const MAX_PRESENCE_KEYS = 500;
+const MAX_PRESENCE_KEYS = 3500;
 
 function pruneToMax(next: Record<string, boolean>, max: number): Record<string, boolean> {
   const keys = Object.keys(next);

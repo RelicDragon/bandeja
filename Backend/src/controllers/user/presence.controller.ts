@@ -4,7 +4,7 @@ import { AuthRequest } from '../../middleware/auth';
 
 const getSocketService = () => (global as any).socketService;
 
-const MAX_PRESENCE_IDS = 100;
+const MAX_PRESENCE_IDS = 3000;
 const MAX_ID_LENGTH = 64;
 
 export const getPresence = asyncHandler(async (req: AuthRequest, res: Response) => {

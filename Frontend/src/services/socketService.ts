@@ -826,7 +826,7 @@ class SocketService {
 
   public subscribePresence(userIds: string[]) {
     if (!this.socket?.connected) return;
-    const safe = Array.isArray(userIds) ? userIds.slice(0, 300) : [];
+    const safe = Array.isArray(userIds) ? userIds.slice(0, 3000) : [];
     this.socket.emit('subscribe-presence', { userIds: safe });
   }
 

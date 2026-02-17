@@ -205,7 +205,7 @@ export const usersApi = {
 
   getPresence: async (userIds: string[]) => {
     if (userIds.length === 0) return {} as Record<string, boolean>;
-    const ids = [...new Set(userIds)].slice(0, 100);
+    const ids = [...new Set(userIds)].slice(0, 3000);
     const response = await api.get<ApiResponse<Record<string, boolean>>>('/users/presence', {
       params: { ids: ids.join(',') },
     });
