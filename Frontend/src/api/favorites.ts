@@ -1,5 +1,6 @@
 import api from './axios';
 import { ApiResponse } from '@/types';
+import type { BasicUser } from '@/types';
 
 export const favoritesApi = {
   addToFavorites: async (clubId: string) => {
@@ -16,6 +17,16 @@ export const favoritesApi = {
 
   getUserFavoriteUserIds: async (): Promise<string[]> => {
     const response = await api.get<ApiResponse<string[]>>('/favorites/users');
+    return response.data.data;
+  },
+
+  getFollowing: async (): Promise<BasicUser[]> => {
+    const response = await api.get<ApiResponse<BasicUser[]>>('/favorites/users/following');
+    return response.data.data;
+  },
+
+  getFollowers: async (): Promise<BasicUser[]> => {
+    const response = await api.get<ApiResponse<BasicUser[]>>('/favorites/users/followers');
     return response.data.data;
   },
 

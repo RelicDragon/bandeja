@@ -13,7 +13,7 @@ export class DraftScheduler {
     const tz = process.env.TZ || 'local';
     console.log(`📝 Draft scheduler started (expiry daily 03:00, TZ=${tz})`);
     this.cronJob = cron.schedule('0 3 * * *', async () => {
-      await this.runExpiry();
+      await  this.runExpiry();
     });
   }
 

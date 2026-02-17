@@ -957,6 +957,11 @@
     "general": "General",
     "statistics": "Statistics",
     "comparison": "Comparison",
+    "followers": "Followers",
+    "community": "Community",
+    "following": "Following",
+    "noFollowing": "Not following anyone yet",
+    "noFollowers": "No followers yet",
     "place": "Place",
     "top": "Top",
     "level": "Level",
@@ -1570,6 +1575,7 @@
   "chat": {
     "noMessages": "No messages yet",
     "users": "Users",
+    "otherUsers": "Other users",
     "activeChats": "Active chats",
     "reactions": {
       "addReaction": "Add reaction",

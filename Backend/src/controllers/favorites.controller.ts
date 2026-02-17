@@ -271,3 +271,31 @@ export const getUserFavoriteUserIds = asyncHandler(async (req: AuthRequest, res:
     data: favoriteUserIds,
   });
 });
+
+export const getFollowing = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const rows = await prisma.userFavoriteUser.findMany({
+    where: { userId: req.userId! },
+    include: {
+      favoriteUser: { select: USER_SELECT_FIELDS },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  res.json({
+    success: true,
+    data: rows.map((r) => r.favoriteUser),
+  });
+});
+
+export const getFollowers = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const rows = await prisma.userFavoriteUser.findMany({
+    where: { favoriteUserId: req.userId! },
+    include: {
+      user: { select: USER_SELECT_FIELDS },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  res.json({
+    success: true,
+    data: rows.map((r) => r.user),
+  });
+});

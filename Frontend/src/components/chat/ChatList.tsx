@@ -22,6 +22,7 @@ import {
   type FilterCache
 } from '@/utils/chatListHelpers';
 import { usersApi } from '@/api/users';
+import { favoritesApi } from '@/api/favorites';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
@@ -77,6 +78,8 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const [contactsMode, setContactsMode] = useState(false);
   const [cityUsers, setCityUsers] = useState<BasicUser[]>([]);
   const [cityUsersLoading, setCityUsersLoading] = useState(false);
+  const [followingUsers, setFollowingUsers] = useState<BasicUser[]>([]);
+  const [followersUsers, setFollowersUsers] = useState<BasicUser[]>([]);
   const [searchableUsersData, setSearchableUsersData] = useState<{ activeChats: ChatItem[]; cityUsers: BasicUser[] } | null>(null);
   const [listTransition, setListTransition] = useState<'idle' | 'out' | 'in'>('idle');
   const [bugsHasMore, setBugsHasMore] = useState(false);
@@ -613,6 +616,27 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     }
   }, [user?.currentCity?.id]);
 
+  const fetchContactsData = useCallback(async () => {
+    if (!user?.currentCity?.id) return;
+    setCityUsersLoading(true);
+    try {
+      const [usersRes, following, followers] = await Promise.all([
+        usersApi.getInvitablePlayers().then((r) => r.data || []).catch(() => []),
+        favoritesApi.getFollowing().catch(() => []),
+        favoritesApi.getFollowers().catch(() => [])
+      ]);
+      setCityUsers(usersRes);
+      setFollowingUsers(following);
+      setFollowersUsers(followers);
+    } catch {
+      setCityUsers([]);
+      setFollowingUsers([]);
+      setFollowersUsers([]);
+    } finally {
+      setCityUsersLoading(false);
+    }
+  }, [user?.currentCity?.id]);
+
   const handleContactsToggle = useCallback(() => {
     if (contactsMode) {
       setListTransition('out');
@@ -632,12 +656,12 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       setListTransition('out');
       setTimeout(() => {
         setContactsMode(true);
-        fetchCityUsers();
+        fetchContactsData();
         setListTransition('in');
         setTimeout(() => setListTransition('idle'), 300);
       }, 250);
     }
-  }, [contactsMode, fetchCityUsers, setSearchParams]);
+  }, [contactsMode, fetchContactsData, setSearchParams]);
 
   useEffect(() => {
     if (chatsFilter !== 'users') {
@@ -982,6 +1006,15 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       return matchesSearch(fullName);
     });
   }, [cityUsers, searchableUsersData?.cityUsers, debouncedSearchQuery, chatsFilter, matchesSearch]);
+
+  const contactSections = useMemo(() => {
+    const followingIds = new Set(followingUsers.map((u) => u.id));
+    const followerIds = new Set(followersUsers.map((u) => u.id));
+    const following = cityUsers.filter((u) => followingIds.has(u.id));
+    const followers = cityUsers.filter((u) => followerIds.has(u.id) && !followingIds.has(u.id));
+    const other = cityUsers.filter((u) => !followingIds.has(u.id) && !followerIds.has(u.id));
+    return { following, followers, other };
+  }, [cityUsers, followingUsers, followersUsers]);
 
   const activeChatUserIds = useMemo(() => {
     return new Set(
@@ -1525,10 +1558,40 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
               renderEmptyState()
             ) : (
             <>
+              {contactSections.following.length > 0 && (
+                <>
+                  <div className="px-3 py-2.5 text-sm font-semibold text-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                    {t('profile.following')}
+                  </div>
+                  {contactSections.following.map((cityUser) => (
+                    <CityUserCard
+                      key={cityUser.id}
+                      user={cityUser}
+                      onClick={() => handleContactClick(cityUser.id)}
+                    />
+                  ))}
+                </>
+              )}
+              {contactSections.followers.length > 0 && (
+                <>
+                  <div className="px-3 py-2.5 text-sm font-semibold text-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                    {t('profile.followers')}
+                  </div>
+                  {contactSections.followers.map((cityUser) => (
+                    <CityUserCard
+                      key={cityUser.id}
+                      user={cityUser}
+                      onClick={() => handleContactClick(cityUser.id)}
+                    />
+                  ))}
+                </>
+              )}
               <div className="px-3 py-2.5 text-sm font-semibold text-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                {t('chat.users', { defaultValue: 'Users' })}
+                {contactSections.following.length === 0 && contactSections.followers.length === 0
+                  ? t('chat.users', { defaultValue: 'Users' })
+                  : t('chat.otherUsers', { defaultValue: 'Other users' })}
               </div>
-              {cityUsers.map((cityUser) => (
+              {contactSections.other.map((cityUser) => (
                 <CityUserCard
                   key={cityUser.id}
                   user={cityUser}

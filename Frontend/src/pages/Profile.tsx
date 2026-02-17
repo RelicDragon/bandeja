@@ -6,6 +6,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Button, Card, Input, Select, ToggleGroup, ToggleSwitch, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal, MainTabFooter, AppIconCarousel } from '@/components';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
+import { ProfileFollowers } from '@/components/ProfileFollowers';
 import { BlockedUsersSection } from '@/components/BlockedUsersSection';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
@@ -1113,6 +1114,10 @@ export const ProfileContent = () => {
           <Card>
             <ProfileComparison />
           </Card>
+        )}
+
+        {profileActiveTab === 'followers' && (
+          <ProfileFollowers />
         )}
       </div>
 

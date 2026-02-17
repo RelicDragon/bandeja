@@ -950,6 +950,11 @@
     "general": "General",
     "statistics": "Estadísticas",
     "comparison": "Comparación",
+    "followers": "Seguidores",
+    "community": "Comunidad",
+    "following": "Siguiendo",
+    "noFollowing": "Aún no sigues a nadie",
+    "noFollowers": "Aún no tienes seguidores",
     "place": "Lugar",
     "top": "Top",
     "level": "Nivel",
@@ -1524,6 +1529,7 @@
   "chat": {
     "noMessages": "Aún no hay mensajes",
     "users": "Usuarios",
+    "otherUsers": "Otros usuarios",
     "activeChats": "Chats activos",
     "reactions": {
       "addReaction": "Añadir reacción",

@@ -956,6 +956,11 @@
     "general": "Опште",
     "statistics": "Статистика",
     "comparison": "Поређење",
+    "followers": "Пратиоци",
+    "community": "Заједница",
+    "following": "Пратим",
+    "noFollowing": "Још никог не пратите",
+    "noFollowers": "Још немате пратиоца",
     "place": "Место",
     "top": "Топ",
     "level": "Ниво",
@@ -1541,6 +1546,7 @@
   "chat": {
     "noMessages": "Још нема порука",
     "users": "Корисници",
+    "otherUsers": "Остали корисници",
     "activeChats": "Активна ћаскања",
     "reactions": {
       "addReaction": "Додај реакцију",

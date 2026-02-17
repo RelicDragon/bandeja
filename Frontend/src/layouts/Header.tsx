@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
-import { Bell, ArrowLeft } from 'lucide-react';
+import { Bell, ArrowLeft, User, BarChart3, GitCompare, Users } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -14,9 +14,9 @@ import {
   GameDetailsHeaderContent,
   GameModeToggle,
   MyGamesTabController,
-  ProfileTabController,
   LeaderboardTabController
 } from '@/components';
+import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import { GameSubscriptionsHeaderContent } from '@/components/headerContent/GameSubscriptionsHeaderContent';
 import { MarketplaceCreateHeaderContent } from '@/components/headerContent/MarketplaceCreateHeaderContent';
 import { MarketplaceTabController } from '@/components/headerContent/MarketplaceTabController';
@@ -29,7 +29,7 @@ export const Header = () => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
-  const { gameDetailsCanAccessChat, setBounceNotifications } = useNavigationStore();
+  const { gameDetailsCanAccessChat, setBounceNotifications, profileActiveTab, setProfileActiveTab } = useNavigationStore();
   const isDesktop = useDesktop();
 
   const parsed = useMemo(
@@ -107,7 +107,20 @@ export const Header = () => {
             {currentPage === 'my' && <MyGamesTabController />}
             {currentPage === 'find' && <FindTabController />}
             {currentPage === 'chats' && <ChatsTabController />}
-            {currentPage === 'profile' && <ProfileTabController />}
+            {currentPage === 'profile' && (
+              <SegmentedSwitch
+                tabs={[
+                  { id: 'general', label: t('profile.general') || 'General', icon: User },
+                  { id: 'statistics', label: t('profile.statistics') || 'Statistics', icon: BarChart3 },
+                  { id: 'comparison', label: t('profile.comparison') || 'Comparison', icon: GitCompare },
+                  { id: 'followers', label: t('profile.community') || 'Community', icon: Users },
+                ] as SegmentedSwitchTab[]}
+                activeId={profileActiveTab}
+                onChange={(id) => setProfileActiveTab(id as 'general' | 'statistics' | 'comparison' | 'followers')}
+                titleInActiveOnly={true}
+                layoutId="profile-subtabs"
+              />
+            )}
             {currentPage === 'leaderboard' && <LeaderboardTabController />}
           </div>
 

@@ -964,6 +964,11 @@
     "general": "Общее",
     "statistics": "Статистика",
     "comparison": "Сравнение",
+    "followers": "Подписчики",
+    "community": "Сообщество",
+    "following": "Подписки",
+    "noFollowing": "Пока ни на кого не подписаны",
+    "noFollowers": "Пока нет подписчиков",
     "place": "Место",
     "top": "Топ",
     "level": "Уровень",
@@ -1588,6 +1593,7 @@
   "chat": {
     "noMessages": "Пока нет сообщений",
     "users": "Пользователи",
+    "otherUsers": "Другие пользователи",
     "activeChats": "Активные чаты",
     "reactions": {
       "addReaction": "Добавить реакцию",
