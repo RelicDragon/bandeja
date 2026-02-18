@@ -45,6 +45,7 @@
             <ul class="nav-menu">
                 <li><a href="#" data-page="overview" class="nav-link active">📊 Overview</a></li>
                 <li><a href="#" data-page="users" class="nav-link">👥 Users</a></li>
+                <li><a href="#" data-page="online-users" class="nav-link">🟢 Online Users</a></li>
                 <li><a href="#" data-page="games" class="nav-link">🎮 Games</a></li>
                 <li><a href="#" data-page="invites" class="nav-link">📨 Invites</a></li>
                 <li><a href="#" data-page="cities" class="nav-link">🌆 Cities</a></li>
@@ -121,6 +122,31 @@
                     <h1>Users Management</h1>
                 </div>
                 <div id="usersDataTable"></div>
+            </div>
+
+            <div id="onlineUsersPage" class="content-page">
+                <div class="page-header">
+                    <h1>Online Users</h1>
+                    <div class="online-users-controls">
+                        <span id="onlineUsersCount" class="online-users-count">0 online</span>
+                        <span id="onlineUsersUpdated" class="online-users-updated"></span>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="onlineUsersTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>City</th>
+                                <th>Level</th>
+                                <th>Auth</th>
+                            </tr>
+                        </thead>
+                        <tbody id="onlineUsersTableBody">
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div id="gamesPage" class="content-page">

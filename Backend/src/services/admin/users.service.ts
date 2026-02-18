@@ -42,6 +42,15 @@ export class AdminUsersService {
     return { users, total, page, pageSize: USERS_PAGE_SIZE };
   }
 
+  static async getUsersByIds(ids: string[]) {
+    if (!ids.length) return [];
+    return prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: PROFILE_SELECT_FIELDS,
+      orderBy: { firstName: 'asc', lastName: 'asc' },
+    });
+  }
+
   static async toggleUserStatus(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },

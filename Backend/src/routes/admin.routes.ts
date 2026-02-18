@@ -3,6 +3,7 @@ import { requireAdmin } from '../middleware/auth';
 import {
   loginAdmin,
   getStats,
+  getOnlineUsers,
   getAllUsers,
   toggleUserStatus,
   createUser,
@@ -49,6 +50,7 @@ const router = Router();
 
 router.post('/login', loginAdmin);
 router.get('/stats', requireAdmin, getStats);
+router.get('/online-users', requireAdmin, getOnlineUsers);
 
 router.get('/users', requireAdmin, getAllUsers);
 router.post('/users', requireAdmin, createUser);

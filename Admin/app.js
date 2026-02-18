@@ -4,6 +4,7 @@ let selectedCityId = '';
 let currentInvites = [];
 let usersDataTable = null;
 let gamesDataTable = null;
+let onlineUsersPollInterval = null;
 
 const elements = {
     loginPage: document.getElementById('loginPage'),
@@ -112,6 +113,10 @@ function switchPage(pageName) {
     if (pageName !== 'logs' && isStreamActive) {
         stopLogStream();
     }
+    if (pageName !== 'online-users' && onlineUsersPollInterval) {
+        clearInterval(onlineUsersPollInterval);
+        onlineUsersPollInterval = null;
+    }
 
     const activeLink = document.querySelector(`[data-page="${pageName}"]`);
     const pageId = pageName.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase()) + 'Page';
@@ -174,6 +179,40 @@ async function loadStats() {
     }
 }
 
+const ONLINE_USERS_POLL_MS = 3000;
+
+function startOnlineUsersPoll() {
+    if (onlineUsersPollInterval) return;
+    onlineUsersPollInterval = setInterval(loadOnlineUsers, ONLINE_USERS_POLL_MS);
+}
+
+async function loadOnlineUsers() {
+    const countEl = document.getElementById('onlineUsersCount');
+    const updatedEl = document.getElementById('onlineUsersUpdated');
+    const tbody = document.getElementById('onlineUsersTableBody');
+    if (!countEl || !updatedEl || !tbody) return;
+    try {
+        const response = await apiRequest('/admin/online-users');
+        if (!response.success) return;
+        const users = response.data || [];
+        countEl.textContent = `${users.length} online`;
+        updatedEl.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        tbody.innerHTML = users.map(u => `
+            <tr>
+                <td>${escapeHtmlAttr(getUserName(u))}</td>
+                <td>${escapeHtmlAttr(u.phone || '-')}</td>
+                <td>${escapeHtmlAttr(u.currentCity?.name || '-')}</td>
+                <td>${u.level ?? '-'}</td>
+                <td>${authLabels[u.authProvider] || u.authProvider || '-'}</td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Failed to load online users:', error);
+        countEl.textContent = 'Error';
+        updatedEl.textContent = '';
+    }
+}
+
 async function loadPageData(page) {
     switch (page) {
         case 'overview':
@@ -181,6 +220,10 @@ async function loadPageData(page) {
             break;
         case 'users':
             loadUsers();
+            break;
+        case 'online-users':
+            loadOnlineUsers();
+            startOnlineUsersPoll();
             break;
         case 'games':
             loadGames();

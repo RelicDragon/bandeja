@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { recordPresenceActivity } from './middleware/recordPresenceActivity';
 import { config } from './config/env';
 
 const app: Application = express();
@@ -56,6 +57,7 @@ const limiter = rateLimit({
 });
 
 app.use('/api/', limiter);
+app.use('/api', recordPresenceActivity);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

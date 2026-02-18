@@ -2,7 +2,7 @@
 
 ## Overview
 
-User online status is shown across the app (avatars, player card). Presence is derived from Socket.IO connection state. The frontend uses a single merged subscription per socket (from a key-based wanted store) and excludes the current user; offline changes are batched and flushed in ~2s, online-only in 60s. REST fallback is used on reconnect and for one-off checks (e.g. player card).
+User online status is shown across the app (avatars, player card). Presence is **activity-based**: a user is online if they had activity in the last 2 minutes. Activity is recorded on any authenticated API request (JWT middleware) and on socket connect. The frontend uses a single merged subscription per socket (from a key-based wanted store) and excludes the current user; offline changes are batched and flushed in ~2s, online-only in 60s. REST fallback is used on reconnect and for one-off checks (e.g. player card).
 
 ---
 
@@ -10,9 +10,12 @@ User online status is shown across the app (avatars, player card). Presence is d
 
 ### Source of truth
 
-- **`connectedUsers`** (in `Backend/src/services/socket.service.ts`): `Map<userId, Set<socketId>>`. User is online if they have at least one connected socket.
-- On **connect**: user is added to `connectedUsers`, `notifyPresenceChange(userId, true)` runs for subscribers.
-- On **disconnect**: user is removed when their last socket disconnects, `notifyPresenceChange(userId, false)` runs; presence subscription for that socket is cleared.
+- **`PresenceService`** (`Backend/src/services/presence.service.ts`): `lastActivityByUser: Map<userId, timestamp>`. User is online iff `Date.now() - lastActivityByUser.get(userId) < 2 minutes`.
+- **Activity recording**:
+  - **API**: `recordPresenceActivity` middleware runs on every `/api` request; if a valid JWT is present, decodes `userId` and calls `socketService.recordActivity(userId)` (no DB fetch).
+  - **Socket connect**: when a user connects, `presenceService.recordActivity(socket.userId)` is called so opening the app counts as activity.
+- **Expiry**: an interval (every 30s) removes users whose last activity is older than 2 minutes and calls `notifyPresenceChange(userId, false)` for subscribers.
+- **`connectedUsers`** in `socket.service.ts` is still used for **routing** (emitting events to a user’s sockets, game/chat rooms) and for `getOnlineUsersForGame` / `isUserInChatRoom`; it is **not** used for presence (isUserOnline / getAllOnlineUserIds).
 
 ### Socket events
 
@@ -31,15 +34,17 @@ User online status is shown across the app (avatars, player card). Presence is d
 - On presence change (user came online/offline), each subscribing socket gets that userId added to its **buffer** (online/offline sets).
 - A **per-socket timer** flushes the buffer. If the buffer contains any **offline** IDs, the timer is set to `PRESENCE_OFFLINE_FLUSH_MS` (2s); otherwise `PRESENCE_FLUSH_MS` (60s). Existing timer is cleared and rescheduled when new changes are buffered, so offline status is delivered within ~2s and online-only batches stay at 60s to limit load.
 
-### Constants (`socket.service.ts`)
+### Constants
 
-| Constant | Value | Meaning |
-|----------|--------|--------|
-| `PRESENCE_FLUSH_MS` | 60000 | Flush interval when buffer has online-only updates. |
-| `PRESENCE_OFFLINE_FLUSH_MS` | 2000 | Flush interval when buffer has any offline update (faster feedback). |
-| `MAX_PRESENCE_SUBSCRIPTION` | 300 | Max userIds per socket subscription. |
-| `PRESENCE_SUBSCRIBE_COOLDOWN_MS` | 2000 | Min time between subscribe-presence from the same socket. |
-| `MAX_PRESENCE_USER_ID_LENGTH` | 64 | Max length of each userId in subscription. |
+| Location | Constant | Value | Meaning |
+|----------|----------|--------|--------|
+| `presence.service.ts` | `ACTIVITY_TTL_MS` | 120000 | User is online if activity within 2 minutes. |
+| `presence.service.ts` | `EXPIRY_CHECK_MS` | 30000 | Interval to expire inactive users and notify offline. |
+| `socket.service.ts` | `PRESENCE_ONLINE_FLUSH_MS` | 5000 | Flush interval when buffer has online-only updates. |
+| `socket.service.ts` | `PRESENCE_OFFLINE_FLUSH_MS` | 2000 | Flush interval when buffer has any offline update. |
+| `socket.service.ts` | `MAX_PRESENCE_SUBSCRIPTION` | 3000 | Max userIds per socket subscription. |
+| `socket.service.ts` | `PRESENCE_SUBSCRIBE_COOLDOWN_MS` | 2000 | Min time between subscribe-presence from the same socket. |
+| `socket.service.ts` | `MAX_PRESENCE_USER_ID_LENGTH` | 64 | Max length of each userId in subscription. |
 
 ### REST fallback
 
@@ -112,8 +117,8 @@ User online status is shown across the app (avatars, player card). Presence is d
 
 1. App mounts → `usePresenceSubscriptionManager()` runs; when socket events are initialized it subscribes with merged wanted IDs (excluding current user), debounced. Current user is set online in the store on connect.
 2. Visible **PlayerAvatar**s register with keys `avatar:${useId()}`; **ChatList** and **PlayerCardBottomSheet** register with `chat-list` and `player-card`. Merged list = all list-key IDs + up to 60 avatar-key IDs (capped), then max 300 total.
-3. Manager sends `subscribe-presence` with merged ids (debounced) → server replies with `presence-initial` → store updated → avatars show border by type on any screen.
-4. When any subscribed user connects/disconnects, server buffers the change; buffers with offline flush in ~2s, online-only in 60s → `presence-update` → store updated → UI re-renders.
+3. Manager sends `subscribe-presence` with merged ids (debounced) → server replies with `presence-initial` (online = activity in last 2 min) → store updated → avatars show border by type on any screen.
+4. When a user’s activity is recorded (API request or socket connect), server notifies subscribers → `presence-update` (online). When 2 min pass with no activity, expiry loop notifies → `presence-update` (offline). Buffers flush offline in ~2s, online-only in 5s.
 5. User opens a player card → sheet registers `player-card`, fetches `getPresence([playerId])` → store updated → Online/Offline pill shown when known.
 6. On socket reconnect, manager re-subscribes with merged ids and calls `getPresence(ids)` to refill the store; on first connect only subscribe (no REST).
 
@@ -123,7 +128,7 @@ User online status is shown across the app (avatars, player card). Presence is d
 
 | Area | Files |
 |------|--------|
-| Backend | `src/services/socket.service.ts`, `src/controllers/user/presence.controller.ts`, `src/routes/user.routes.ts`, `src/controllers/user.controller.ts` |
+| Backend | `src/services/presence.service.ts`, `src/services/socket.service.ts`, `src/middleware/recordPresenceActivity.ts`, `src/app.ts`, `src/controllers/user/presence.controller.ts`, `src/routes/user.routes.ts`, `src/controllers/user.controller.ts` |
 | Frontend store | `store/presenceStore.ts`, `store/presenceWantedStore.ts`, `store/socketEventsStore.ts` |
 | Frontend socket | `services/socketService.ts` |
 | Frontend hook / API | `hooks/usePresenceSubscription.ts`, `hooks/usePresenceSubscriptionManager.ts`, `api/users.ts` |

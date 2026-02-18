@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '../config/database';
 import { GameReadService } from './game/read.service';
 import { ChatContextType } from '@prisma/client';
+import { presenceService } from './presence.service';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -55,6 +56,8 @@ class SocketService {
 
     this.setupMiddleware();
     this.setupEventHandlers();
+    presenceService.setNotifier((userId, online) => this.notifyPresenceChange(userId, online));
+    presenceService.startExpiryLoop();
   }
 
   private setupMiddleware() {
@@ -90,13 +93,12 @@ class SocketService {
     this.io.on('connection', (socket: AuthenticatedSocket) => {
       console.log(`User ${socket.userId} connected with socket ${socket.id}`);
 
-      // Track connected user
       if (socket.userId) {
         if (!this.connectedUsers.has(socket.userId)) {
           this.connectedUsers.set(socket.userId, new Set());
         }
         this.connectedUsers.get(socket.userId)!.add(socket.id);
-        this.notifyPresenceChange(socket.userId, true);
+        presenceService.recordActivity(socket.userId);
       }
 
       // Initialize rooms tracking
@@ -290,7 +292,6 @@ class SocketService {
             userSockets.delete(socket.id);
             if (userSockets.size === 0) {
               this.connectedUsers.delete(userId);
-              this.notifyPresenceChange(userId, false);
             }
           }
         }
@@ -848,9 +849,16 @@ class SocketService {
     }
   }
 
-  // Check if user is online
   public isUserOnline(userId: string): boolean {
-    return this.connectedUsers.has(userId) && this.connectedUsers.get(userId)!.size > 0;
+    return presenceService.isUserOnline(userId);
+  }
+
+  public getAllOnlineUserIds(): string[] {
+    return presenceService.getAllOnlineUserIds();
+  }
+
+  public recordActivity(userId: string): void {
+    presenceService.recordActivity(userId);
   }
 
   // Get online users for a game

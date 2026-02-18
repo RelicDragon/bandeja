@@ -400,6 +400,13 @@ export const getStats = asyncHandler(async (req: AuthRequest, res: Response) => 
   });
 });
 
+export const getOnlineUsers = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const socketService = (global as any).socketService;
+  const ids = socketService?.getAllOnlineUserIds?.() ?? [];
+  const users = await AdminUsersService.getUsersByIds(ids);
+  res.json({ success: true, data: users });
+});
+
 // User Management endpoints
 export const getAllUsers = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { cityId, search, page } = req.query;

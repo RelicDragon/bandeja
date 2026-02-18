@@ -443,6 +443,21 @@ tbody tr:hover {
     margin: 0;
 }
 
+.online-users-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.online-users-count {
+    font-weight: 600;
+}
+
+.online-users-updated {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
 .center-info {
     flex: 1;
 }
