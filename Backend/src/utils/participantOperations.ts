@@ -59,20 +59,3 @@ export async function addOrUpdateParticipant(
     participant: newParticipant,
   };
 }
-
-export async function performPostJoinOperations(
-  gameId: string,
-  userId: string
-): Promise<void> {
-  const { InviteService } = await import('../services/invite.service');
-  const { ParticipantMessageHelper } = await import('../services/game/participantMessageHelper');
-  const { GameService } = await import('../services/game/game.service');
-
-  await Promise.all([
-    InviteService.deleteInvitesForUserInGame(gameId, userId),
-    ParticipantMessageHelper.sendJoinMessage(gameId, userId),
-  ]);
-
-  await GameService.updateGameReadiness(gameId);
-  await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
-}

@@ -5,6 +5,10 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { ChatContextType, ParticipantRole, InviteStatus, ChatType, Prisma, BugStatus, BugType } from '@prisma/client';
 import { MessageService } from './message.service';
+import { UserChatService } from './userChat.service';
+import { TranslationService } from './translation.service';
+import { t } from '../../utils/translations';
+import { config } from '../../config/env';
 
 type GcWithParticipants = Awaited<ReturnType<typeof prisma.groupChannel.findMany>>[number] & {
   participants: Array<{ userId: string; role: ParticipantRole }>;
@@ -682,13 +686,6 @@ export class GroupChannelService {
 
     // Send invitation message to user-chat
     try {
-      const { UserChatService } = await import('./userChat.service');
-      const { MessageService } = await import('./message.service');
-      const { TranslationService } = await import('./translation.service');
-      const { t } = await import('../../utils/translations');
-      const { config } = await import('../../config/env');
-      const { ChatType } = await import('@prisma/client');
-
       // Get or create user-chat between sender and receiver
       const userChat = await UserChatService.getOrCreateChatWithUser(senderId, receiverId);
 

@@ -1,6 +1,7 @@
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { MediaCleanupService } from '../mediaCleanup.service';
+import { hashPassword } from '../../utils/hash';
 import { Gender } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { PROFILE_SELECT_FIELDS, USER_SELECT_FIELDS } from '../../utils/constants';
@@ -137,7 +138,6 @@ export class AdminUsersService {
       if (password.length < 6) {
         throw new ApiError(400, 'Password must be at least 6 characters');
       }
-      const { hashPassword } = await import('../../utils/hash');
       passwordHash = await hashPassword(password);
     }
 
@@ -269,7 +269,6 @@ export class AdminUsersService {
       throw new ApiError(404, 'User not found');
     }
 
-    const { hashPassword } = await import('../../utils/hash');
     const passwordHash = await hashPassword(newPassword);
 
     await prisma.user.update({

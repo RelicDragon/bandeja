@@ -2,6 +2,9 @@ import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
+import { LeagueGameResultsService } from './league/gameResults.service';
+import { SocialParticipantLevelService } from './socialParticipantLevel.service';
+import { calculateGameStatus } from '../utils/gameStatus';
 
 
 export async function getGameResults(gameId: string) {
@@ -143,7 +146,6 @@ export async function deleteGameResults(gameId: string) {
 
   await prisma.$transaction(async (tx) => {
     if (game.affectsRating && game.outcomes.length > 0) {
-      const { LeagueGameResultsService } = await import('./league/gameResults.service');
       await LeagueGameResultsService.unsyncGameResults(gameId, tx);
 
       for (const outcome of game.outcomes) {
@@ -168,7 +170,6 @@ export async function deleteGameResults(gameId: string) {
       where: { gameId },
     });
 
-    const { SocialParticipantLevelService } = await import('./socialParticipantLevel.service');
     await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
 
     await tx.levelChangeEvent.deleteMany({
@@ -185,7 +186,6 @@ export async function deleteGameResults(gameId: string) {
     if (updatedGame) {
       const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
       
-      const { calculateGameStatus } = await import('../utils/gameStatus');
       await tx.game.update({
         where: { id: gameId },
         data: {
@@ -222,7 +222,6 @@ export async function resetGameResults(gameId: string) {
 
   await prisma.$transaction(async (tx) => {
     if (game.affectsRating && game.outcomes.length > 0) {
-      const { LeagueGameResultsService } = await import('./league/gameResults.service');
       await LeagueGameResultsService.unsyncGameResults(gameId, tx);
 
       for (const outcome of game.outcomes) {
@@ -295,7 +294,6 @@ export async function resetGameResults(gameId: string) {
       where: { gameId },
     });
 
-    const { SocialParticipantLevelService } = await import('./socialParticipantLevel.service');
     await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
 
     await tx.levelChangeEvent.deleteMany({
@@ -312,7 +310,6 @@ export async function resetGameResults(gameId: string) {
     if (updatedGame) {
       const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
       
-      const { calculateGameStatus } = await import('../utils/gameStatus');
       await tx.game.update({
         where: { id: gameId },
         data: {
@@ -353,7 +350,6 @@ export async function editGameResults(gameId: string) {
 
   await prisma.$transaction(async (tx) => {
     if (game.affectsRating && game.outcomes.length > 0) {
-      const { LeagueGameResultsService } = await import('./league/gameResults.service');
       await LeagueGameResultsService.unsyncGameResults(gameId, tx);
 
       for (const outcome of game.outcomes) {
@@ -382,7 +378,6 @@ export async function editGameResults(gameId: string) {
       },
     });
 
-    const { SocialParticipantLevelService } = await import('./socialParticipantLevel.service');
     await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
 
     await tx.levelChangeEvent.deleteMany({
@@ -399,7 +394,6 @@ export async function editGameResults(gameId: string) {
       if (updatedGame) {
         const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
         
-        const { calculateGameStatus } = await import('../utils/gameStatus');
         await tx.game.update({
           where: { id: gameId },
           data: {

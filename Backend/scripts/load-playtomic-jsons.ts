@@ -9,6 +9,7 @@ import { normalizeClubName } from '../src/utils/normalizeClubName';
 import { normalizeCountry } from '../src/utils/normalizePlaytomicCountry';
 import { refreshClubCourtsCount } from '../src/utils/refreshClubCourtsCount';
 import { resolveCityName } from './lib/dr5hnCityResolver';
+import { refreshAllCitiesFromClubs } from '../src/utils/updateCityCenter';
 
 const JSON_DIR = path.join(__dirname, '..', 'additions', 'playtomic', 'jsons');
 const PADEL = 'PADEL';
@@ -278,7 +279,6 @@ async function main(): Promise<void> {
     }
   }
 
-  const { refreshAllCitiesFromClubs } = await import('../src/utils/updateCityCenter');
   const citiesUpdated = await refreshAllCitiesFromClubs();
   console.log(
     `[load-playtomic] Done. clubsProcessed: ${totalClubs}, skipped: ${totalSkipped}, citiesCreated: ${totalCities}, clubsCreated: ${totalClubsCreated}, courtsCreated: ${totalCourts}, citiesRefreshed: ${citiesUpdated}`

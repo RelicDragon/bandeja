@@ -12,6 +12,7 @@ import { DraftService } from './draft.service';
 import { ChatMuteService } from './chatMute.service';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
 import { computeContentSearchable } from '../../utils/messageSearchContent';
+import { ImageProcessor } from '../../utils/imageProcessor';
 
 export class MessageService {
   static async validateGameAccess(gameId: string, userId: string) {
@@ -921,7 +922,6 @@ export class MessageService {
     await this.validateMessageAccess(message, userId, true);
 
     if (message.mediaUrls && message.mediaUrls.length > 0) {
-      const { ImageProcessor } = await import('../../utils/imageProcessor');
       for (const mediaUrl of message.mediaUrls) {
         try {
           await ImageProcessor.deleteFile(mediaUrl);
@@ -932,7 +932,6 @@ export class MessageService {
     }
 
     if (message.thumbnailUrls && message.thumbnailUrls.length > 0) {
-      const { ImageProcessor } = await import('../../utils/imageProcessor');
       for (const thumbnailUrl of message.thumbnailUrls) {
         try {
           await ImageProcessor.deleteFile(thumbnailUrl);

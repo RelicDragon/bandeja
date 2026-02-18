@@ -6,6 +6,11 @@ import { updateGameOutcomes } from './gameWinner.service';
 import { updateMatchWinners } from './matchWinner.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { LeagueGameResultsService } from '../league/gameResults.service';
+import { SocialParticipantLevelService } from '../socialParticipantLevel.service';
+import { calculateGameStatus, isResultsBasedEntityType, ARCHIVE_BY_FINISHED_DATE_TYPES } from '../../utils/gameStatus';
+import { resolveGameBets } from '../bets/betResolution.service';
+import resultsSenderService from '../telegram/resultsSender.service';
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
   const prismaClient = tx || prisma;
@@ -143,10 +148,7 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
     return;
   }
 
-  const { LeagueGameResultsService } = await import('../league/gameResults.service');
   await LeagueGameResultsService.unsyncGameResults(gameId, tx);
-
-  const { SocialParticipantLevelService } = await import('../socialParticipantLevel.service');
   await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
 
   for (const outcome of game.outcomes) {
@@ -286,7 +288,6 @@ export async function applyGameOutcomes(
 
   if (updatedGame) {
     const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
-    const { calculateGameStatus, isResultsBasedEntityType, ARCHIVE_BY_FINISHED_DATE_TYPES } = await import('../../utils/gameStatus');
     const previousResultsStatus = updatedGame.resultsStatus;
     
     const isResultsBased = isResultsBasedEntityType(updatedGame.entityType);
@@ -344,11 +345,9 @@ export async function applyGameOutcomes(
       }
     }
 
-    const { LeagueGameResultsService } = await import('../league/gameResults.service');
     await LeagueGameResultsService.syncGameResults(gameId, tx);
 
     if (previousResultsStatus !== 'FINAL' && game.entityType !== EntityType.BAR && game.entityType !== EntityType.LEAGUE_SEASON) {
-      const { SocialParticipantLevelService } = await import('../socialParticipantLevel.service');
       await SocialParticipantLevelService.applySocialParticipantLevelChanges(gameId, tx);
     }
     
@@ -450,7 +449,6 @@ export async function recalculateGameOutcomes(gameId: string) {
   if (result.shouldResolveBets) {
     console.log(`[BET RESOLUTION] Triggering bet resolution for game ${gameId} (results finalizing)`);
     try {
-      const { resolveGameBets } = await import('../bets/betResolution.service');
       await resolveGameBets(gameId);
       console.log(`[BET RESOLUTION] Bet resolution completed for game ${gameId}`);
     } catch (error) {
@@ -460,10 +458,9 @@ export async function recalculateGameOutcomes(gameId: string) {
   
   console.log(`[TELEGRAM NOTIFICATION] Preparing to send notifications for game ${gameId}`);
   
-  setImmediate(async () => {
-    const telegramResultsSenderService = await import('../telegram/resultsSender.service');
+  setImmediate(() => {
     console.log(`[TELEGRAM NOTIFICATION] Calling sendGameFinished for game ${gameId}, isEdited: ${wasEdited}`);
-    telegramResultsSenderService.default.sendGameFinished(gameId, wasEdited).catch((error: any) => {
+    resultsSenderService.sendGameFinished(gameId, wasEdited).catch((error: unknown) => {
       console.error(`Failed to send game finished notifications for game ${gameId}:`, error);
     });
   });

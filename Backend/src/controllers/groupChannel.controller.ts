@@ -3,6 +3,8 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import { GroupChannelService } from '../services/chat/groupChannel.service';
+import { MessageService } from '../services/chat/message.service';
+import { ReadReceiptService } from '../services/chat/readReceipt.service';
 import { ChatType } from '@prisma/client';
 
 export const createGroupChannel = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -251,7 +253,6 @@ export const getGroupChannelMessages = asyncHandler(async (req: AuthRequest, res
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const { MessageService } = await import('../services/chat/message.service');
   const messages = await MessageService.getMessages('GROUP', id, userId, {
     page: Number(page),
     limit: Number(limit),
@@ -272,7 +273,6 @@ export const getGroupChannelUnreadCount = asyncHandler(async (req: AuthRequest, 
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const { ReadReceiptService } = await import('../services/chat/readReceipt.service');
   const result = await ReadReceiptService.getUnreadCountForContext('GROUP', id, userId);
 
   res.json({
@@ -293,7 +293,6 @@ export const getGroupChannelsUnreadCounts = asyncHandler(async (req: AuthRequest
     throw new ApiError(400, 'groupIds array is required');
   }
 
-  const { ReadReceiptService } = await import('../services/chat/readReceipt.service');
   const unreadCounts = await ReadReceiptService.getGroupChannelsUnreadCounts(groupIds, userId);
 
   res.json({
@@ -310,7 +309,6 @@ export const markGroupChannelAsRead = asyncHandler(async (req: AuthRequest, res:
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const { ReadReceiptService } = await import('../services/chat/readReceipt.service');
   const result = await ReadReceiptService.markAllMessagesAsReadForContext('GROUP', id, userId, undefined);
 
   const socketService = (global as any).socketService;

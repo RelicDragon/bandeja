@@ -4,6 +4,7 @@ import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@p
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { getDistinctLeagueGroupColor } from './groupColors';
 import { createLeagueGame } from './gameCreation.util';
+import { TeamForRoundGeneration } from './generation/TeamForRoundGeneration';
 
 export class LeagueCreateService {
   static async createLeague(data: any, userId: string) {
@@ -179,7 +180,6 @@ export class LeagueCreateService {
   static async handleRoundCreationType(creationType: string, leagueRoundId: string) {
     switch (creationType) {
       case 'TEAM_FOR_ROUND':
-        const { TeamForRoundGeneration } = await import('./generation/TeamForRoundGeneration');
         await TeamForRoundGeneration.generateGamesForRound(leagueRoundId);
         break;
       default:

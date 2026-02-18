@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { ClubIntegrationService } from '../clubIntegration/clubIntegration.service';
 
 export interface BookedCourtSlot {
   courtId: string | null;
@@ -118,10 +119,6 @@ export class BookedCourtsService {
         });
 
         if (club?.integrationScriptName) {
-          const { ClubIntegrationService } = await import(
-            '../clubIntegration/clubIntegration.service'
-          );
-
           const start = new Date(startDate);
           const end = new Date(endDate);
           const duration = 1;

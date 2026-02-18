@@ -4,7 +4,8 @@ import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import { generateToken } from '../utils/jwt';
 import { hashPassword, comparePassword } from '../utils/hash';
-import { AuthProvider } from '@prisma/client';
+import { AuthProvider, NotificationChannelType } from '@prisma/client';
+import { NotificationPreferenceService } from '../services/notificationPreference.service';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 import { verifyAppleIdentityToken } from '../services/apple/appleAuth.service';
 import { verifyGoogleIdToken } from '../services/google/googleAuth.service';
@@ -147,8 +148,6 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
     select: PROFILE_SELECT_FIELDS,
   });
 
-  const { NotificationPreferenceService } = await import('../services/notificationPreference.service');
-  const { NotificationChannelType } = await import('@prisma/client');
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
 
   const token = generateToken({ userId: user.id, telegramId: user.telegramId! });
@@ -185,8 +184,6 @@ export const loginWithTelegram = asyncHandler(async (req: Request, res: Response
     user.language = language;
   }
 
-  const { NotificationPreferenceService } = await import('../services/notificationPreference.service');
-  const { NotificationChannelType } = await import('@prisma/client');
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
 
   const token = generateToken({ userId: user.id, telegramId: user.telegramId! });

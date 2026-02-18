@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import { Gender, GenderTeam, EntityType, GameStatus } from '@prisma/client';
 import { ApiError } from './ApiError';
+import { fetchGameWithPlayingParticipants } from './gameQueries';
 
 interface GameWithParticipants {
   id: string;
@@ -181,7 +182,6 @@ export async function validateAndGetGameInTransaction(
   gameId: string,
   userId: string
 ): Promise<{ game: GameWithStatus; joinResult: PlayerJoinResult }> {
-  const { fetchGameWithPlayingParticipants } = await import('./gameQueries');
   const game = await fetchGameWithPlayingParticipants(tx, gameId);
   const joinResult = await validatePlayerCanJoinGame(game, userId);
 

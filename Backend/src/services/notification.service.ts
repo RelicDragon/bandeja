@@ -21,6 +21,7 @@ import { createBetResolvedPushNotification, createBetNeedsReviewPushNotification
 import { createTransactionPushNotification } from './push/notifications/transaction-push.notification';
 import { createNewMarketItemPushNotification } from './push/notifications/new-market-item-push.notification';
 import { createNewBugPushNotification } from './push/notifications/new-bug-push.notification';
+import { GameSubscriptionService } from './gameSubscription.service';
 
 class NotificationService {
   async sendNotification(request: UnifiedNotificationRequest) {
@@ -551,8 +552,6 @@ class NotificationService {
     if (!game.clubId) {
       return;
     }
-
-    const { GameSubscriptionService } = await import('./gameSubscription.service');
 
     const usersWithSubscriptions = await prisma.user.findMany({
       where: {

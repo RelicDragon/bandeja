@@ -1,6 +1,7 @@
 import { formatDateInTimezone, getDateLabelInTimezone, getShortDayOfWeek, getUserTimezoneFromCityId } from '../user-timezone.service';
-import { formatDuration } from '../telegram/utils';
+import { formatDuration, escapeMarkdown } from '../telegram/utils';
 import { t } from '../../utils/translations';
+import { config } from '../../config/env';
 
 export interface GameInfo {
   id: string;
@@ -165,7 +166,6 @@ export async function formatNewGameText(
 
   let escapeFn: (text: string) => string;
   if (shouldEscape) {
-    const { escapeMarkdown } = await import('../telegram/utils');
     escapeFn = escapeMarkdown;
   } else {
     escapeFn = (text: string) => text;
@@ -222,7 +222,6 @@ export async function formatNewGameText(
   }
   
   if (includeLink) {
-    const { config } = await import('../../config/env');
     const viewGameText = t('telegram.viewGame', lang);
     text += `🔗 ${escapeFn(viewGameText)}: ${config.frontendUrl}/games/${game.id}\n`;
   }

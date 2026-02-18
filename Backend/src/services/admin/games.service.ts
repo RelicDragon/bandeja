@@ -6,6 +6,8 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
+import { LeagueGameResultsService } from '../league/gameResults.service';
+import { calculateGameStatus } from '../../utils/gameStatus';
 import { ParticipantRole, Prisma } from '@prisma/client';
 
 const GAMES_PAGE_SIZE = 50;
@@ -309,7 +311,6 @@ export class AdminGamesService {
 
     await prisma.$transaction(async (tx) => {
       if (game.affectsRating && game.outcomes.length > 0) {
-        const { LeagueGameResultsService } = await import('../league/gameResults.service');
         await LeagueGameResultsService.unsyncGameResults(gameId, tx);
 
         for (const outcome of game.outcomes) {
@@ -395,7 +396,6 @@ export class AdminGamesService {
       
       if (updatedGame) {
         const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
-        const { calculateGameStatus } = await import('../../utils/gameStatus');
         await tx.game.update({
           where: { id: gameId },
           data: {

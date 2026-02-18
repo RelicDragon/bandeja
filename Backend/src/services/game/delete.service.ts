@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { ImageProcessor } from '../../utils/imageProcessor';
 
 export class GameDeleteService {
   static async deleteGame(id: string) {
@@ -22,7 +23,6 @@ export class GameDeleteService {
     }
 
     if (game.mediaUrls && game.mediaUrls.length > 0) {
-      const { ImageProcessor } = await import('../../utils/imageProcessor');
       for (const mediaUrl of game.mediaUrls) {
         try {
           await ImageProcessor.deleteFile(mediaUrl);

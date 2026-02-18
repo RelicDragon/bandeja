@@ -11,6 +11,7 @@ import { SystemMessageType } from '../../utils/systemMessages';
 import telegramNotificationService from '../telegram/notification.service';
 import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../user-timezone.service';
 import { BarResultsService } from '../barResults.service';
+import { ImageProcessor } from '../../utils/imageProcessor';
 
 export class GameUpdateService {
   static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {
@@ -67,12 +68,10 @@ export class GameUpdateService {
       });
 
       if (data.avatar === null && currentGame?.avatar) {
-        const ImageProcessor = (await import('../../utils/imageProcessor')).ImageProcessor;
         await ImageProcessor.deleteFile(currentGame.avatar);
         updateData.avatar = null;
       }
       if (data.originalAvatar === null && currentGame?.originalAvatar) {
-        const ImageProcessor = (await import('../../utils/imageProcessor')).ImageProcessor;
         await ImageProcessor.deleteFile(currentGame.originalAvatar);
         updateData.originalAvatar = null;
       }
