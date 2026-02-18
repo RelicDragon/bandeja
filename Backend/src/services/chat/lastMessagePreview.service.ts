@@ -24,11 +24,11 @@ export function extractPreviewFromMessage(message: MessageForPreview): string {
     return `[TYPE:POLL]${text}`;
   }
 
-  // Handle system messages - store tag with the JSON
+  // Handle system messages - store tag with the JSON (match frontend: type + variables)
   if (text.trim().startsWith('{')) {
     try {
       const parsed = JSON.parse(text);
-      if (parsed.type && parsed.text) {
+      if (parsed.type && parsed.variables && typeof parsed.variables === 'object') {
         return `[TYPE:SYSTEM]${text}`;
       }
     } catch {

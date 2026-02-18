@@ -248,7 +248,7 @@ router.post(
 router.get(
   '/messages/missed',
   validate([
-    query('contextType').isIn(['GAME', 'BUG', 'USER']).withMessage('Invalid contextType'),
+    query('contextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid contextType'),
     query('contextId').notEmpty().withMessage('contextId is required'),
     query('lastMessageId').optional().isString().withMessage('lastMessageId must be a string')
   ]),
