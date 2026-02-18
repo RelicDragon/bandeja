@@ -314,6 +314,8 @@ body {
 .capacitor-android #root {
   min-width: var(--viewport-width, 100%);
   width: 100%;
+  min-height: var(--viewport-height-full, 100vh);
+  height: var(--viewport-height-full, 100%);
 }
 
 .scrollbar-hide::-webkit-scrollbar {

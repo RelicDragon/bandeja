@@ -34,12 +34,17 @@ export const updateStatusBarStyle = async () => {
   }
 };
 
-const setAndroidViewportVars = () => {
+const fullScreenHeightCssPx = () =>
+  Math.round(window.screen.height / window.devicePixelRatio);
+
+export const setAndroidViewportVars = () => {
   const vv = window.visualViewport;
   const w = vv ? vv.width : window.innerWidth;
   const h = vv ? vv.height : window.innerHeight;
+  const full = fullScreenHeightCssPx();
   document.documentElement.style.setProperty('--viewport-width', `${w}px`);
   document.documentElement.style.setProperty('--viewport-height', `${h}px`);
+  document.documentElement.style.setProperty('--viewport-height-full', `${full}px`);
 };
 
 export const setupCapacitor = async () => {

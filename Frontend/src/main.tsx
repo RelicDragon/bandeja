@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
-import { setupCapacitor, setupBrowserKeyboardDetection } from './utils/capacitorSetup';
+import { setupCapacitor, setupBrowserKeyboardDetection, setAndroidViewportVars } from './utils/capacitorSetup';
 import { isCapacitor, isAndroid } from './utils/capacitor';
 import { initializeSocialLogin } from './services/socialLoginInit.service';
 
@@ -9,6 +9,7 @@ const CACHE_VERSION = 'v1';
 
 if (isCapacitor() && isAndroid()) {
   document.body.classList.add('capacitor-android');
+  setAndroidViewportVars();
 }
 setupCapacitor();
 setupBrowserKeyboardDetection();
