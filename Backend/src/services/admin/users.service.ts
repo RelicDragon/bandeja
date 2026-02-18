@@ -48,7 +48,7 @@ export class AdminUsersService {
     return prisma.user.findMany({
       where: { id: { in: ids } },
       select: PROFILE_SELECT_FIELDS,
-      orderBy: { firstName: 'asc', lastName: 'asc' },
+      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
     });
   }
 
