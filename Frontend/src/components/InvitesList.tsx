@@ -53,6 +53,11 @@ export const InvitesList = ({ invites, onCancelInvite, canCancel }: InvitesListP
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                     {invite.receiver?.firstName} {invite.receiver?.lastName}
                   </p>
+                  {invite.receiver?.verbalStatus && (
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                      {invite.receiver.verbalStatus}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-600 dark:text-gray-400">
                     {t('invites.inviteSent')}
                   </p>

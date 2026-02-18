@@ -158,8 +158,15 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
                 <div>
                   <PlayerAvatar player={standing.user} extrasmall showName={false} fullHideName={true} />
                 </div>
-                <div className="text-sm font-small text-gray-900 dark:text-gray-100 break-words line-clamp-2">
-                  {[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ') || '-'}
+                <div className="min-w-0">
+                  <div className="text-sm font-small text-gray-900 dark:text-gray-100 break-words line-clamp-2">
+                    {[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ') || '-'}
+                  </div>
+                  {standing.user.verbalStatus && (
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                      {standing.user.verbalStatus}
+                    </p>
+                  )}
                 </div>
                 <div className="text-center text-sm font-medium text-gray-900 dark:text-gray-100">
                   {standing.wins}-{standing.ties}-{standing.losses}

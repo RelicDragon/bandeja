@@ -96,6 +96,11 @@ export const ChatParticipantsModal = ({ game: initialGame, onClose, currentChatT
                         {participant.firstName} {participant.lastName}
                       </p>
                     </div>
+                    {participant.verbalStatus && (
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                        {participant.verbalStatus}
+                      </p>
+                    )}
                     <div className="flex items-center gap-1 mt-0.5">
                       {participant.role === 'OWNER' ? (
                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${

@@ -146,9 +146,14 @@ export const TrainersList = ({ show }: TrainersListProps) => {
                       showName={false}
                     />
                   </span>
-                  <div className="mt-1 text-xs h-8 w-full text-gray-700 dark:text-gray-300 break-words text-center leading-tight flex flex-col items-center justify-start">
+                  <div className="mt-1 text-xs min-h-8 w-full text-gray-700 dark:text-gray-300 break-words text-center leading-tight flex flex-col items-center justify-start">
                     <span className="text-center truncate leading-none max-w-20">{trainer.firstName || ''}</span>
                     <span className="text-center truncate leading-none max-w-20">{trainer.lastName || ''}</span>
+                    {trainer.verbalStatus && (
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-20 block">
+                        {trainer.verbalStatus}
+                      </span>
+                    )}
                   </div>
                 </button>
               );

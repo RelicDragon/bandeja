@@ -331,7 +331,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
           const player = team.players[i];
           if (player) {
             playerSlots.push(
-              <div key={player.userId} className="flex items-center gap-2">
+              <div key={player.userId} className="flex items-center gap-2 min-w-0">
                 <PlayerAvatar
                   player={player.user}
                   showName={false}
@@ -339,9 +339,16 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
                   removable={canEdit}
                   onRemoveClick={() => handleRemovePlayer(index, player.userId)}
                 />
-                <span className="text-[10px] font-medium text-gray-900 dark:text-white">
-                  {player.user.firstName} {player.user.lastName}
-                </span>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-medium text-gray-900 dark:text-white block truncate">
+                    {player.user.firstName} {player.user.lastName}
+                  </span>
+                  {player.user.verbalStatus && (
+                    <span className="text-[9px] text-gray-500 dark:text-gray-400 block truncate">
+                      {player.user.verbalStatus}
+                    </span>
+                  )}
+                </div>
               </div>
             );
           } else {

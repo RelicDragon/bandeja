@@ -98,6 +98,11 @@ export const BlockedUsersSection = () => {
               <div className="font-medium text-gray-900 dark:text-white truncate">
                 {blockedUser.blockedUser.firstName} {blockedUser.blockedUser.lastName}
               </div>
+              {blockedUser.blockedUser.verbalStatus && (
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                  {blockedUser.blockedUser.verbalStatus}
+                </p>
+              )}
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 {t('profile.blockedOn') || 'Blocked on'} {formatDate(blockedUser.createdAt, 'PPP')}
               </div>

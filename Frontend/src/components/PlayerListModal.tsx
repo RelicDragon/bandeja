@@ -287,6 +287,11 @@ export const PlayerListModal = ({
                             </span>
                           )}
                         </div>
+                        {player.verbalStatus && (
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                            {player.verbalStatus}
+                          </p>
+                        )}
                       </div>
                       <div className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
                         isSelected ? 'border-primary-600 bg-primary-600 dark:border-primary-500 dark:bg-primary-500' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'

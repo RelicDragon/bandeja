@@ -317,6 +317,11 @@ export const GameParticipants = ({
                               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                                 {participant.user.firstName} {participant.user.lastName}
                               </p>
+                              {participant.user.verbalStatus && (
+                                <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                                  {participant.user.verbalStatus}
+                                </p>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -357,6 +362,11 @@ export const GameParticipants = ({
                               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                                 {participant.user.firstName} {participant.user.lastName}
                               </p>
+                              {participant.user.verbalStatus && (
+                                <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                                  {participant.user.verbalStatus}
+                                </p>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -396,6 +406,11 @@ export const GameParticipants = ({
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {participant.user.firstName} {participant.user.lastName}
                           </p>
+                          {participant.user.verbalStatus && (
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                              {participant.user.verbalStatus}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}

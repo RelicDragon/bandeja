@@ -407,6 +407,11 @@ export const GroupChannelSettings = ({
                                 {roleTag.text}
                               </span>
                             </div>
+                            {participant.user.verbalStatus && (
+                              <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                {participant.user.verbalStatus}
+                              </p>
+                            )}
                           </div>
                         </div>
 

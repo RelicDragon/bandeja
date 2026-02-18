@@ -232,7 +232,11 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
                     <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate mb-0.5">
                       {outcome.user.firstName} {outcome.user.lastName}
                     </h3>
-                    
+                    {outcome.user.verbalStatus && (
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate mb-1">
+                        {outcome.user.verbalStatus}
+                      </p>
+                    )}
                     <div className="relative overflow-hidden min-h-[2.5rem]">
                       <AnimatePresence mode="wait" initial={false}>
                         {mode === 'ratings' ? (

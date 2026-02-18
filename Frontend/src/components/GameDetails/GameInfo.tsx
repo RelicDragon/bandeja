@@ -957,16 +957,23 @@ export const GameInfo = ({
                 const trainer = game.trainerId ? game.participants?.find(p => p.userId === game.trainerId) : null;
                 if (trainer) {
                   return (
-                    <>
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <PlayerAvatar
                         player={trainer.user}
                         extrasmall={true}
                         showName={false}
                       />
-                      <span className="text-sm">
-                        {[trainer.user.firstName, trainer.user.lastName].filter(name => name && name.trim()).join(' ')}
-                      </span>
-                    </>
+                      <div className="min-w-0">
+                        <span className="text-sm block truncate">
+                          {[trainer.user.firstName, trainer.user.lastName].filter(name => name && name.trim()).join(' ')}
+                        </span>
+                        {trainer.user.verbalStatus && (
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400 block truncate">
+                            {trainer.user.verbalStatus}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   );
                 }
                 if (pendingTrainerParticipant?.user) {
@@ -977,9 +984,16 @@ export const GameInfo = ({
                         extrasmall={true}
                         showName={false}
                       />
-                      <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">
-                        {[pendingTrainerParticipant.user.firstName, pendingTrainerParticipant.user.lastName].filter(Boolean).join(' ')}
-                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-sm text-gray-700 dark:text-gray-300 block truncate">
+                          {[pendingTrainerParticipant.user.firstName, pendingTrainerParticipant.user.lastName].filter(Boolean).join(' ')}
+                        </span>
+                        {pendingTrainerParticipant.user.verbalStatus && (
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400 block truncate">
+                            {pendingTrainerParticipant.user.verbalStatus}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-xs text-yellow-600 dark:text-yellow-400 whitespace-nowrap">
                         {t('games.trainerInvitePending', { defaultValue: 'Invited' })}
                       </span>

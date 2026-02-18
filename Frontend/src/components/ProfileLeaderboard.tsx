@@ -223,12 +223,19 @@ export const ProfileLeaderboard = () => {
                       showName={false}
                       fullHideName={true}
                     />
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {[entry.firstName, entry.lastName].filter(Boolean).join(' ')}
-                      {isCurrentUser && (
-                        <span className="ml-2 text-xs text-primary-600 dark:text-primary-400">
-                          ({t('profile.you')})
-                        </span>
+                    <div>
+                      <div className="text-sm text-gray-900 dark:text-white">
+                        {[entry.firstName, entry.lastName].filter(Boolean).join(' ')}
+                        {isCurrentUser && (
+                          <span className="ml-2 text-xs text-primary-600 dark:text-primary-400">
+                            ({t('profile.you')})
+                          </span>
+                        )}
+                      </div>
+                      {entry.verbalStatus && (
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                          {entry.verbalStatus}
+                        </p>
                       )}
                     </div>
                   </div>

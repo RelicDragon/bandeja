@@ -284,6 +284,11 @@ export const GroupChannelInvitesModal = ({
                       <p className="font-medium text-gray-900 dark:text-white truncate">
                         {player.firstName} {player.lastName}
                       </p>
+                      {player.verbalStatus && (
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                          {player.verbalStatus}
+                        </p>
+                      )}
                       {!invite && (
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           {t('games.level', { defaultValue: 'Level' })} {player.level.toFixed(1)}

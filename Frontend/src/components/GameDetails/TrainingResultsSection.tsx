@@ -123,10 +123,17 @@ export const TrainingResultsSection = ({
                           showName={false}
                           fullHideName={true}
                         />
-                        <div className="text-sm text-gray-900 dark:text-white">
-                          {[participant.user.firstName, participant.user.lastName]
-                            .filter(Boolean)
-                            .join(' ')}
+                        <div>
+                          <div className="text-sm text-gray-900 dark:text-white">
+                            {[participant.user.firstName, participant.user.lastName]
+                              .filter(Boolean)
+                              .join(' ')}
+                          </div>
+                          {participant.user.verbalStatus && (
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                              {participant.user.verbalStatus}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </td>

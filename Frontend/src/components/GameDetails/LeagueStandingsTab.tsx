@@ -222,8 +222,15 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
                       showName={false}
                       fullHideName={true}
                     />
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ')}
+                    <div>
+                      <div className="text-sm text-gray-900 dark:text-white">
+                        {[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ')}
+                      </div>
+                      {standing.user.verbalStatus && (
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                          {standing.user.verbalStatus}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ) : null}

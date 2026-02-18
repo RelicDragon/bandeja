@@ -268,10 +268,15 @@ export const LeagueGroupEditorModal = ({
             fullHideName={true}
             extrasmall
           />
-          <div className="text-sm">
-            <p className="font-medium text-gray-900 dark:text-white">
+          <div className="text-sm min-w-0">
+            <p className="font-medium text-gray-900 dark:text-white truncate">
               {participant.user.firstName} {participant.user.lastName}
             </p>
+            {participant.user.verbalStatus && (
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                {participant.user.verbalStatus}
+              </p>
+            )}
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {t('gameDetails.points')}: {participant.points}
             </p>
@@ -508,9 +513,16 @@ export const LeagueGroupEditorModal = ({
                                           fullHideName={true}
                                           extrasmall
                                         />
-                                        <span className="font-medium truncate">
-                                          {participant.user.firstName} {participant.user.lastName}
-                                        </span>
+                                        <div className="min-w-0 flex-1">
+                                          <span className="font-medium truncate block">
+                                            {participant.user.firstName} {participant.user.lastName}
+                                          </span>
+                                          {participant.user.verbalStatus && (
+                                            <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate block">
+                                              {participant.user.verbalStatus}
+                                            </span>
+                                          )}
+                                        </div>
                                       </>
                                     ) : (
                                       <span className="font-medium truncate">

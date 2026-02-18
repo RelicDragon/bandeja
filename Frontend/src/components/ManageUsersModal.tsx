@@ -174,6 +174,11 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {participant.user.firstName} {participant.user.lastName}
                     </p>
+                    {participant.user.verbalStatus && (
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                        {participant.user.verbalStatus}
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-1 mt-1">
                       <span className={`inline-block px-1.5 py-0.5 text-[10px] font-medium rounded ${roleTag.color}`}>
                         {roleTag.text}
