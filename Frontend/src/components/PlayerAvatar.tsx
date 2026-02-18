@@ -185,7 +185,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
     <>
       {player && isOnline && (
         <div
-          className={`absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white dark:border-gray-900 z-10 ${extrasmall ? 'w-1 h-1' : 'w-1.5 h-1.5'} ${onlineDotClass}`}
+          className={`absolute rounded-full border border-white dark:border-gray-900 z-10 ${extrasmall ? 'w-1 h-1' : 'w-1.5 h-1.5'} ${onlineDotClass} ${removable && onRemoveClick ? 'right-0 top-1/2 -translate-y-1/2 translate-x-1/2' : 'top-1 right-1 -translate-y-1/2 translate-x-1/2'}`}
           style={{
             backgroundColor: isDark ? 'rgb(185, 28, 28)' : 'rgb(239, 68, 68)'
           }}
