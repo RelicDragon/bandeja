@@ -180,50 +180,73 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
   });
 }
 
+function isReauthError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  const code = error && typeof error === 'object' && 'code' in error ? String((error as { code: unknown }).code) : '';
+  const s = (msg + ' ' + code).toLowerCase();
+  return s.includes('reauth') || s.includes('[16]') || s.includes('account reauth failed');
+}
+
+async function signInWithGoogleNative(): Promise<GoogleAuthResult | null> {
+  const response = await SocialLogin.login({
+    provider: 'google',
+    options: {
+      scopes: ['email', 'profile'],
+      forceRefreshToken: false,
+      forcePrompt: false,
+    },
+  });
+
+  const result: GoogleLoginResponse = response.result;
+
+  if (result.responseType === 'offline') {
+    return {
+      idToken: '',
+      serverAuthCode: result.serverAuthCode,
+    };
+  }
+
+  const onlineResult: GoogleLoginResponseOnline = result;
+
+  if (!onlineResult.idToken) {
+    throw new Error('No ID token received from Google');
+  }
+
+  return {
+    idToken: onlineResult.idToken,
+    accessToken: onlineResult.accessToken?.token,
+    profile: onlineResult.profile ? {
+      email: onlineResult.profile.email || undefined,
+      name: onlineResult.profile.name || undefined,
+      givenName: onlineResult.profile.givenName || undefined,
+      familyName: onlineResult.profile.familyName || undefined,
+      picture: onlineResult.profile.imageUrl || undefined,
+    } : undefined,
+  };
+}
+
 export async function signInWithGoogle(): Promise<GoogleAuthResult | null> {
   try {
     const isNative = Capacitor.isNativePlatform();
-    
+
     if (isNative) {
       if (!config.googleWebClientId) {
         throw new Error('Google Web Client ID not configured');
       }
 
-      const response = await SocialLogin.login({
-        provider: 'google',
-        options: {
-          scopes: ['email', 'profile'],
-          forceRefreshToken: false,
-          forcePrompt: false,
-        },
-      });
-
-      const result: GoogleLoginResponse = response.result;
-
-      if (result.responseType === 'offline') {
-        return {
-          idToken: '',
-          serverAuthCode: result.serverAuthCode,
-        };
+      try {
+        return await signInWithGoogleNative();
+      } catch (firstError) {
+        if (isReauthError(firstError)) {
+          try {
+            await SocialLogin.logout({ provider: 'google' });
+          } catch {
+            // ignore logout errors
+          }
+          return await signInWithGoogleNative();
+        }
+        throw firstError;
       }
-
-      const onlineResult: GoogleLoginResponseOnline = result;
-
-      if (!onlineResult.idToken) {
-        throw new Error('No ID token received from Google');
-      }
-
-      return {
-        idToken: onlineResult.idToken,
-        accessToken: onlineResult.accessToken?.token,
-        profile: onlineResult.profile ? {
-          email: onlineResult.profile.email || undefined,
-          name: onlineResult.profile.name || undefined,
-          givenName: onlineResult.profile.givenName || undefined,
-          familyName: onlineResult.profile.familyName || undefined,
-          picture: onlineResult.profile.imageUrl || undefined,
-        } : undefined,
-      };
     } else {
       return await signInWithGoogleWeb();
     }
@@ -231,7 +254,7 @@ export async function signInWithGoogle(): Promise<GoogleAuthResult | null> {
     const errorMessage = error instanceof Error ? error.message : '';
     const errorCode = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
     const errorString = (errorMessage + errorCode).toLowerCase();
-    
+
     const canceledMessages = [
       'canceled',
       'cancelled',
@@ -242,11 +265,11 @@ export async function signInWithGoogle(): Promise<GoogleAuthResult | null> {
       'user cancelled',
       'user dismissed',
     ];
-    
-    const isCancelled = canceledMessages.some(msg => 
+
+    const isCancelled = canceledMessages.some(msg =>
       errorString.includes(msg.toLowerCase())
     );
-    
+
     if (isCancelled) {
       return null;
     }
