@@ -99,7 +99,7 @@ export const BlockedUsersSection = () => {
                 {blockedUser.blockedUser.firstName} {blockedUser.blockedUser.lastName}
               </div>
               {blockedUser.blockedUser.verbalStatus && (
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                <p className="verbal-status">
                   {blockedUser.blockedUser.verbalStatus}
                 </p>
               )}

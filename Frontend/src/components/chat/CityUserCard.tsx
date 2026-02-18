@@ -20,7 +20,7 @@ export const CityUserCard = ({ user, onClick }: CityUserCardProps) => {
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">{name}</h3>
         {user.verbalStatus && (
-          <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+          <p className="verbal-status">
             {user.verbalStatus}
           </p>
         )}

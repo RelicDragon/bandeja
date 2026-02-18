@@ -54,7 +54,7 @@ export const InvitesList = ({ invites, onCancelInvite, canCancel }: InvitesListP
                     {invite.receiver?.firstName} {invite.receiver?.lastName}
                   </p>
                   {invite.receiver?.verbalStatus && (
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                    <p className="verbal-status">
                       {invite.receiver.verbalStatus}
                     </p>
                   )}

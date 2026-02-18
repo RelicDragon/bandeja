@@ -58,7 +58,7 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
               {[otherUser.firstName, otherUser.lastName].filter(Boolean).join(' ') || 'Unknown'}
             </h3>
             {otherUser.verbalStatus && (
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+              <p className="verbal-status">
                 {otherUser.verbalStatus}
               </p>
             )}

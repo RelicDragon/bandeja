@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react';
+import { Check, Beer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PlayerAvatar } from './PlayerAvatar';
 import { formatSmartRelativeTime } from '@/utils/dateFormat';
@@ -15,6 +15,18 @@ export const ConfirmedLevelSection = ({ user }: ConfirmedLevelSectionProps) => {
   return (
     <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700/50 border border-gray-200/60 dark:border-gray-600/50">
       <div className="px-3 py-2.5">
+        <div className="flex justify-center mb-2">
+          <span className="bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-md flex items-center gap-1 inline-flex">
+            {user.approvedLevel && <Check size={14} className="text-white" strokeWidth={3} />}
+            <span>{user.level.toFixed(2)}</span>
+            <span>•</span>
+            <div className="relative flex items-center">
+              <Beer size={14} className="text-amber-600 dark:text-amber-500 absolute" fill="currentColor" />
+              <Beer size={14} className="text-white dark:text-gray-900 relative z-10" strokeWidth={1.5} />
+            </div>
+            <span>{user.socialLevel.toFixed(2)}</span>
+          </span>
+        </div>
         {confirmed ? (
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2 text-green-700 dark:text-green-400">

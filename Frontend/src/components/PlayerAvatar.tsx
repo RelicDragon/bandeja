@@ -53,7 +53,7 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
   }, []);
 
   const getSizeClasses = () => {
-    if (extrasmall) return { avatar: 'w-8 h-8', text: 'text-xs', name: 'mt-0.5 text-[10px] h-8 leading-tight', level: 'w-4 h-4 text-[8px]', crown: 'w-4 h-4', crownIcon: 8, remove: 'w-4 h-4', removeIcon: 8 };
+    if (extrasmall) return { avatar: 'w-8 h-8', text: 'text-xs', name: 'pt-1.5   text-[10px] h-8 leading-tight', level: 'w-4 h-4 text-[8px]', crown: 'w-4 h-4', crownIcon: 8, remove: 'w-4 h-4', removeIcon: 8 };
     if (smallLayout) return { avatar: 'w-12 h-12', text: 'text-sm', name: 'mt-1 text-xs h-8 w-full', level: 'w-5 h-5 text-[10px]', crown: 'w-5 h-5', crownIcon: 10, remove: 'w-5 h-5', removeIcon: 10 };
     return { avatar: 'w-16 h-16', text: 'text-lg', name: 'mt-2 text-sm h-10', level: 'w-7 h-7 text-xs font-bold border-2', crown: 'w-6 h-6', crownIcon: 12, remove: 'w-6 h-6', removeIcon: 14 };
   };
@@ -186,9 +186,9 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
       {player && isOnline && (
         <div
           //className={`absolute rounded-full border border-white dark:border-gray-900 z-10 ${extrasmall ? 'w-1 h-1' : 'w-1.5 h-1.5'} ${onlineDotClass} ${removable && onRemoveClick ? 'right-0 top-1/2 -translate-y-1/2 translate-x-1/2' : 'top-1 right-1 -translate-y-1/2 translate-x-1/2'}`}
-          className={`absolute rounded-full border border-white dark:border-gray-900 z-10 ${extrasmall ? 'w-1 h-1' : 'w-1.5 h-1.5'} ${onlineDotClass} ${removable && onRemoveClick ? 'right-0 top-1/2 -translate-y-1/2 translate-x-1/2' : 'top-1 right-1 -translate-y-1/2 translate-x-1/2'}`}
+          className={`absolute rounded-full border border-white dark:border-gray-900 z-10 ${extrasmall ? 'w-1.5 h-1.5' : 'w-2 h-2'} ${onlineDotClass} ${removable && onRemoveClick ? 'right-0 top-1/2 -translate-y-1/2 translate-x-1/2' : 'top-1 right-1 -translate-y-1/2 translate-x-1/2'}`}
           style={{
-            backgroundColor: isDark ? 'rgb(185, 28, 28)' : 'rgb(239, 68, 68)'
+            backgroundColor: isDark ? 'rgb(37, 99, 235)' : 'rgb(59, 130, 246)'
           }}
         />
       )}

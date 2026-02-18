@@ -163,7 +163,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
                     {[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ') || '-'}
                   </div>
                   {standing.user.verbalStatus && (
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                    <p className="verbal-status">
                       {standing.user.verbalStatus}
                     </p>
                   )}

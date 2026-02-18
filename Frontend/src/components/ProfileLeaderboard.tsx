@@ -233,7 +233,7 @@ export const ProfileLeaderboard = () => {
                         )}
                       </div>
                       {entry.verbalStatus && (
-                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                        <p className="verbal-status">
                           {entry.verbalStatus}
                         </p>
                       )}

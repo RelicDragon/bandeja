@@ -968,7 +968,7 @@ export const GameInfo = ({
                           {[trainer.user.firstName, trainer.user.lastName].filter(name => name && name.trim()).join(' ')}
                         </span>
                         {trainer.user.verbalStatus && (
-                          <span className="text-[10px] text-gray-500 dark:text-gray-400 block truncate">
+                          <span className="verbal-status block">
                             {trainer.user.verbalStatus}
                           </span>
                         )}
@@ -989,7 +989,7 @@ export const GameInfo = ({
                           {[pendingTrainerParticipant.user.firstName, pendingTrainerParticipant.user.lastName].filter(Boolean).join(' ')}
                         </span>
                         {pendingTrainerParticipant.user.verbalStatus && (
-                          <span className="text-[10px] text-gray-500 dark:text-gray-400 block truncate">
+                          <span className="verbal-status block">
                             {pendingTrainerParticipant.user.verbalStatus}
                           </span>
                         )}

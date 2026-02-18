@@ -150,7 +150,7 @@ export const TrainersList = ({ show }: TrainersListProps) => {
                     <span className="text-center truncate leading-none max-w-20">{trainer.firstName || ''}</span>
                     <span className="text-center truncate leading-none max-w-20">{trainer.lastName || ''}</span>
                     {trainer.verbalStatus && (
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-20 block">
+                      <span className="verbal-status max-w-20 block">
                         {trainer.verbalStatus}
                       </span>
                     )}

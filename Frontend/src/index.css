@@ -6,6 +6,9 @@
   .section-title {
     @apply text-base font-semibold text-gray-900 dark:text-white;
   }
+  .verbal-status {
+    @apply text-[9px] text-gray-500 dark:text-gray-400 truncate -mt-0.5 -mb-0.5;
+  }
 }
 
 @keyframes fadeIn {
@@ -177,22 +180,22 @@ html.dark .avatar-online-border-favorite {
 
 @keyframes avatarOnlineDot {
   0%, 100% {
-    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.9);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.9);
     opacity: 1;
   }
   50% {
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.5), 0 0 8px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 8px rgba(59, 130, 246, 0.4);
     opacity: 0.85;
   }
 }
 
 @keyframes avatarOnlineDotDark {
   0%, 100% {
-    box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.9);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.9);
     opacity: 1;
   }
   50% {
-    box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.5), 0 0 8px rgba(185, 28, 28, 0.4);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.5), 0 0 8px rgba(37, 99, 235, 0.4);
     opacity: 0.85;
   }
 }

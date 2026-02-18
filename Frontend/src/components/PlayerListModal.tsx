@@ -288,7 +288,7 @@ export const PlayerListModal = ({
                           )}
                         </div>
                         {player.verbalStatus && (
-                          <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                          <p className="verbal-status">
                             {player.verbalStatus}
                           </p>
                         )}

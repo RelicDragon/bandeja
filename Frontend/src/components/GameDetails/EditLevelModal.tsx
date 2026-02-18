@@ -101,7 +101,7 @@ export const EditLevelModal = ({
                   {[user.firstName, user.lastName].filter(Boolean).join(' ') || 'User'}
                 </span>
                 {user.verbalStatus && (
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  <p className="verbal-status">
                     {user.verbalStatus}
                   </p>
                 )}

@@ -344,7 +344,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
                     {player.user.firstName} {player.user.lastName}
                   </span>
                   {player.user.verbalStatus && (
-                    <span className="text-[9px] text-gray-500 dark:text-gray-400 block truncate">
+                    <span className="verbal-status block">
                       {player.user.verbalStatus}
                     </span>
                   )}

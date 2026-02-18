@@ -106,8 +106,8 @@ export const TeamPlayerSelector = ({
                     {participant.user.firstName} {participant.user.lastName}
                   </p>
                   {participant.user.verbalStatus && (
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
-                      {participant.user.verbalStatus}
+<p className="verbal-status">
+                    {participant.user.verbalStatus}
                     </p>
                   )}
                 </div>

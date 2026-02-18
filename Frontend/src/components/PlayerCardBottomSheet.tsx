@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Beer, Star, ArrowLeft, Send, MessageCircle, Ban, Check, Dumbbell } from 'lucide-react';
+import { X, Star, ArrowLeft, Send, MessageCircle, Ban, Check, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
@@ -350,22 +350,10 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick
             </h2>
             {user.lastName && <h3 className="text-xl font-semibold">{user.lastName}</h3>}
             {user.verbalStatus && (
-              <div className="mt-2 text-white/90 text-sm font-medium">
+              <div className="mt-0 text-white/90 text-[9px] font-medium">
                 {user.verbalStatus}
               </div>
             )}
-            <div className="mt-2 flex items-center gap-0">
-              <span className="bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 inline-flex">
-                {user.approvedLevel && <Check size={14} className="text-white" strokeWidth={3} />}
-                <span>{user.level.toFixed(2)}</span>
-                <span>•</span>
-                <div className="relative flex items-center">
-                  <Beer size={14} className="text-amber-600 dark:text-amber-500 absolute" fill="currentColor" />
-                  <Beer size={14} className="text-white dark:text-gray-900 relative z-10" strokeWidth={1.5} />
-                </div>
-                <span>{user.socialLevel.toFixed(2)}</span>
-              </span>
-            </div>
           </div>
         </div>
         {hasTelegram && (

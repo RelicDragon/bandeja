@@ -233,7 +233,7 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
                       {outcome.user.firstName} {outcome.user.lastName}
                     </h3>
                     {outcome.user.verbalStatus && (
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate mb-1">
+                      <p className="verbal-status">
                         {outcome.user.verbalStatus}
                       </p>
                     )}

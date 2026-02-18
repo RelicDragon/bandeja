@@ -130,7 +130,7 @@ export const TrainingResultsSection = ({
                               .join(' ')}
                           </div>
                           {participant.user.verbalStatus && (
-                            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                            <p className="verbal-status">
                               {participant.user.verbalStatus}
                             </p>
                           )}

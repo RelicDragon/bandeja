@@ -97,7 +97,7 @@ export const ChatParticipantsModal = ({ game: initialGame, onClose, currentChatT
                       </p>
                     </div>
                     {participant.verbalStatus && (
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                      <p className="verbal-status">
                         {participant.verbalStatus}
                       </p>
                     )}
