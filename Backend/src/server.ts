@@ -10,9 +10,19 @@ import { TelegramGamesScheduler } from './services/telegram/gamesScheduler.servi
 import { CurrencyScheduler } from './services/currencyScheduler.service';
 import { AuctionScheduler } from './services/auctionScheduler.service';
 import { DraftScheduler } from './services/draftScheduler.service';
+import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
 
 const startServer = async () => {
+  process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    setImmediate(() => reportCriticalError(reason, 'unhandledRejection').catch(() => {}));
+  });
+  process.on('uncaughtException', (err: Error) => {
+    console.error('Uncaught Exception:', err);
+    setImmediate(() => reportCriticalError(err, 'uncaughtException').catch(() => {}));
+  });
+
   try {
     initializeLogManager();
     console.log('📋 Log manager initialized');
@@ -22,6 +32,12 @@ const startServer = async () => {
 
     await telegramBotService.initialize();
     pushNotificationService.initialize();
+
+    const originalConsoleError = console.error;
+    console.error = (...args: unknown[]) => {
+      originalConsoleError.apply(console, args);
+      if (args[0] instanceof Error) setImmediate(() => maybeReportFromConsole(args[0]));
+    };
 
     const gameStatusScheduler = new GameStatusScheduler();
     gameStatusScheduler.start();
@@ -87,13 +103,6 @@ const startServer = async () => {
         process.exit(1);
       }, 10000);
     };
-
-    process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
-      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-    });
-    process.on('uncaughtException', (err: Error) => {
-      console.error('Uncaught Exception:', err);
-    });
 
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
