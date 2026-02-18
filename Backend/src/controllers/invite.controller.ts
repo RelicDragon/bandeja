@@ -228,6 +228,12 @@ export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response)
           entityType: true,
           court: { select: { id: true, name: true, club: { select: { id: true, name: true } } } },
           club: { select: { id: true, name: true } },
+          participants: {
+            include: {
+              user: { select: USER_SELECT_FIELDS },
+              invitedByUser: { select: USER_SELECT_FIELDS },
+            },
+          },
         },
       },
     },

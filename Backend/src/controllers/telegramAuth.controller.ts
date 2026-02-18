@@ -42,10 +42,10 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
     if (otp.username && user.telegramUsername !== otp.username) {
       updateData.telegramUsername = otp.username;
     }
-    if (otp.firstName && user.firstName !== otp.firstName) {
+    if (otp.firstName && (user.firstName == null || user.firstName.trim() === '')) {
       updateData.firstName = otp.firstName;
     }
-    if (otp.lastName && user.lastName !== otp.lastName) {
+    if (otp.lastName && (user.lastName == null || user.lastName.trim() === '')) {
       updateData.lastName = otp.lastName;
     }
     if (language) {
