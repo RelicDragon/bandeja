@@ -53,9 +53,16 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
-            {[otherUser.firstName, otherUser.lastName].filter(Boolean).join(' ') || 'Unknown'}
-          </h3>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+              {[otherUser.firstName, otherUser.lastName].filter(Boolean).join(' ') || 'Unknown'}
+            </h3>
+            {otherUser.verbalStatus && (
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                {otherUser.verbalStatus}
+              </p>
+            )}
+          </div>
           {(chat.lastMessage || draft) && (
             <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 flex-shrink-0">
               {formatChatTime(

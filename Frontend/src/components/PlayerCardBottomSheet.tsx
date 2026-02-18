@@ -349,6 +349,11 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick
               {isBlocked && <span className="ml-2 text-lg font-semibold opacity-90">({t('playerCard.blocked') || 'Blocked'})</span>}
             </h2>
             {user.lastName && <h3 className="text-xl font-semibold">{user.lastName}</h3>}
+            {user.verbalStatus && (
+              <div className="mt-2 text-white/90 text-sm font-medium">
+                {user.verbalStatus}
+              </div>
+            )}
             <div className="mt-2 flex items-center gap-0">
               <span className="bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1 inline-flex">
                 {user.approvedLevel && <Check size={14} className="text-white" strokeWidth={3} />}
@@ -377,6 +382,14 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick
           </button>
         )}
       </motion.div>
+
+      {stats.user.bio && (
+        <motion.div variants={itemVariants} className="px-6 -mt-2">
+          <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+            "{stats.user.bio}"
+          </p>
+        </motion.div>
+      )}
 
       <motion.div variants={itemVariants}>
         <LevelHistoryView stats={stats} padding="p-0 -mt-2" tabDarkBgClass="dark:bg-gray-700/50" hideUserCard onOpenGame={onOpenGame} showItemsToSell onMarketItemClick={onMarketItemClick} />

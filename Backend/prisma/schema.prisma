@@ -45,6 +45,8 @@ model User {
   preferredHandRight         Boolean              @default(false)
   preferredCourtSideLeft     Boolean              @default(false)
   preferredCourtSideRight    Boolean              @default(false)
+  verbalStatus               String?              @db.VarChar(32)
+  bio                        String?              @db.VarChar(128)
   createdAt                  DateTime             @default(now())
   updatedAt                  DateTime             @updatedAt
   isAdmin                    Boolean              @default(false)

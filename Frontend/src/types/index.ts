@@ -34,6 +34,8 @@ export interface BasicUser {
   approvedLevel: boolean;
   isTrainer: boolean;
   allowMessagesFromNonContacts?: boolean;
+  verbalStatus?: string | null;
+  bio?: string | null;
 }
 
 export interface User extends BasicUser {

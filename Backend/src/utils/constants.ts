@@ -168,6 +168,8 @@ export const USER_SELECT_FIELDS = {
   gender: true,
   approvedLevel: true,
   isTrainer: true,
+  verbalStatus: true,
+  bio: true,
 } as const;
 
 export const PROFILE_SELECT_FIELDS = {

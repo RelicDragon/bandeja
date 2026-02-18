@@ -53,6 +53,8 @@ export const ProfileContent = () => {
   const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday'>(user?.weekStart || 'auto');
   const [defaultCurrency, setDefaultCurrency] = useState<string>(user?.defaultCurrency || 'auto');
   const [appIcon, setAppIcon] = useState<AppIconId>((user?.appIcon as AppIconId) || 'tiger');
+  const [verbalStatus, setVerbalStatus] = useState(user?.verbalStatus || '');
+  const [bio, setBio] = useState(user?.bio || '');
 
   const [showCityModal, setShowCityModal] = useState(false);
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
@@ -187,6 +189,8 @@ export const ProfileContent = () => {
       setPreferredCourtSideLeft(user.preferredCourtSideLeft || false);
       setPreferredCourtSideRight(user.preferredCourtSideRight || false);
       setAllowMessagesFromNonContacts(user.allowMessagesFromNonContacts !== false);
+      setVerbalStatus(user.verbalStatus || '');
+      setBio(user.bio || '');
       if (user.appIcon === 'tiger' || user.appIcon === 'racket') {
         setAppIcon(user.appIcon);
       }
@@ -214,6 +218,20 @@ export const ProfileContent = () => {
   const handleEmailChange = (value: string) => {
     setEmail(value);
     debouncedUpdate({ email: value || undefined });
+  };
+
+  const handleVerbalStatusChange = (value: string) => {
+    if (value.length <= 32) {
+      setVerbalStatus(value);
+      debouncedUpdate({ verbalStatus: value || null }, true);
+    }
+  };
+
+  const handleBioChange = (value: string) => {
+    if (value.length <= 128) {
+      setBio(value);
+      debouncedUpdate({ bio: value || null }, true);
+    }
   };
 
   const handleGenderChange = (value: Gender) => {
@@ -615,6 +633,36 @@ export const ProfileContent = () => {
               value={email}
               onChange={(e) => handleEmailChange(e.target.value)}
             />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('profile.verbalStatus')}
+              </label>
+              <Input
+                value={verbalStatus}
+                onChange={(e) => handleVerbalStatusChange(e.target.value)}
+                placeholder={t('profile.verbalStatusPlaceholder')}
+                maxLength={32}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {verbalStatus.length}/32 {t('profile.characters')}
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('profile.bio')}
+              </label>
+              <textarea
+                value={bio}
+                onChange={(e) => handleBioChange(e.target.value)}
+                placeholder={t('profile.bioPlaceholder')}
+                maxLength={128}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {bio.length}/128 {t('profile.characters')}
+              </p>
+            </div>
             {(!user?.genderIsSet || !genderIsSet) ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

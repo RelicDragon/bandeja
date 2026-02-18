@@ -64,7 +64,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, favoriteTrainerId, appIcon } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, favoriteTrainerId, appIcon, verbalStatus, bio } = req.body;
   
   // Explicitly ignore level and socialLevel - only backend can modify these
 
@@ -84,6 +84,14 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
   const VALID_APP_ICONS = ['tiger', 'racket'];
   if (appIcon !== undefined && appIcon !== null && !VALID_APP_ICONS.includes(appIcon)) {
     throw new ApiError(400, `Invalid appIcon. Allowed: ${VALID_APP_ICONS.join(', ')}`);
+  }
+
+  if (verbalStatus !== undefined && verbalStatus !== null && verbalStatus.length > 32) {
+    throw new ApiError(400, 'Verbal status must be 32 characters or less');
+  }
+
+  if (bio !== undefined && bio !== null && bio.length > 128) {
+    throw new ApiError(400, 'Bio must be 128 characters or less');
   }
 
   const currentUser = await prisma.user.findUnique({
@@ -163,6 +171,8 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(allowMessagesFromNonContacts !== undefined && { allowMessagesFromNonContacts }),
         ...(favoriteTrainerId !== undefined && { favoriteTrainerId: favoriteTrainerId || null }),
         ...(appIcon !== undefined && { appIcon: appIcon ?? null }),
+        ...(verbalStatus !== undefined && { verbalStatus }),
+        ...(bio !== undefined && { bio }),
       },
       select: PROFILE_SELECT_FIELDS,
     });
