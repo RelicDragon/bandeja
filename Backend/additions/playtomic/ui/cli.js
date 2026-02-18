@@ -35,29 +35,11 @@ export function startLive() {
 }
 
 export function stopLive() {
-  if (lastLines > 0) {
+  if (lastLines > 0 && process.stdout.isTTY) {
     process.stdout.write("\x1b[" + lastLines + "A");
-    for (let i = 0; i < lastLines; i++) {
-      process.stdout.write("\r" + CLEAR);
-      if (i < lastLines - 1) process.stdout.write("\n");
-    }
-    process.stdout.write("\x1b[" + (lastLines - 1) + "A");
-    lastLines = 0;
+    for (let i = 0; i < lastLines; i++) process.stdout.write("\r" + CLEAR + (i < lastLines - 1 ? "\n" : ""));
   }
-}
-
-function moveUpAndWrite(lines) {
-  if (lastLines > 0) process.stdout.write("\x1b[" + lastLines + "A");
   lastLines = 0;
-  for (const s of lines) {
-    process.stdout.write("\r" + CLEAR + s + "\n");
-    lastLines += 1;
-  }
-}
-
-function writeLine(s) {
-  process.stdout.write("\r" + CLEAR + s + "\n");
-  lastLines += 1;
 }
 
 export function render(state, stats) {
@@ -82,7 +64,16 @@ export function render(state, stats) {
   const line3 = `   ${DIM}${tv}  |  ${oa}${RESET}`;
   const lines = [line1, line2, line3];
   if (error) lines.push(`   ${BOLD}\u2716${RESET} ${error}`);
-  moveUpAndWrite(lines);
+
+  if (!process.stdout.isTTY) {
+    if (lastLines === 0) process.stdout.write(lines.join("\n") + "\n");
+    lastLines = lines.length;
+    return;
+  }
+
+  if (lastLines > 0) process.stdout.write("\x1b[" + lastLines + "A");
+  for (const s of lines) process.stdout.write("\r" + CLEAR + s + "\n");
+  lastLines = lines.length;
 }
 
 export function renderFinal(filePath, count, stats) {

@@ -1,0 +1,412 @@
+[
+  {
+    "tenant_id": "adecd3b9-5222-4f36-9f0f-a11cf0dff923",
+    "tenant_name": "Sportski centar Spartak (Padel tereni)",
+    "slug": "sportski-centar-spartak-padel-tereni",
+    "address": {
+      "street": "Pilanska bb (krug velesajma)",
+      "postal_code": "",
+      "city": "Banja Luka",
+      "sub_administrative_area": "",
+      "administrative_area": "Republika Srpska",
+      "country": "Bosnia and Herzegovina",
+      "country_code": "BA",
+      "coordinate": {
+        "lat": "44.7836292",
+        "lon": "17.2095448"
+      },
+      "timezone": "Europe/Sarajevo"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+387 65 679 999; +387 66 256 207",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "50a8496b-47c2-4532-b297-78413678b87b",
+        "name": "Padel 1 - Covered",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "",
+        "closing_time": ""
+      },
+      "TUESDAY": {
+        "opening_time": "",
+        "closing_time": ""
+      },
+      "WEDNESDAY": {
+        "opening_time": "",
+        "closing_time": ""
+      },
+      "THURSDAY": {
+        "opening_time": "",
+        "closing_time": ""
+      },
+      "FRIDAY": {
+        "opening_time": "",
+        "closing_time": ""
+      },
+      "SATURDAY": {
+        "opening_time": "",
+        "closing_time": ""
+      },
+      "SUNDAY": {
+        "opening_time": "",
+        "closing_time": ""
+      },
+      "HOLIDAYS": {
+        "opening_time": "",
+        "closing_time": ""
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Multi-sport complex in Banja Luka (Pilanska bb, krug velesajma) offering padel with at least one covered court (playable in all weather), alongside other sports/activities and an on-site cafe (Caffe Spartak)."
+  },
+  {
+    "tenant_id": "cc53e233-873b-4855-a2fa-94ee414c463f",
+    "tenant_name": "Sportski park Tesla",
+    "slug": "sportski-park-tesla",
+    "address": {
+      "street": "Njegoševa 45a",
+      "postal_code": "78000",
+      "city": "Banja Luka",
+      "sub_administrative_area": "Petrićevac",
+      "administrative_area": "Republika Srpska",
+      "country": "Bosnia and Herzegovina",
+      "country_code": "BA",
+      "coordinate": {
+        "lat": "44.7837045",
+        "lon": "17.1919152"
+      },
+      "timezone": "Europe/Sarajevo"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+387 65 548 212",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "7c92ce66-1e79-481e-b3f6-49e23686cbf7",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Sportski park Tesla is a private, shaded sports and recreation complex in the Petrićevac neighborhood of Banja Luka. It offers multiple outdoor sports options (including padel), tennis (2 clay courts), small/large football areas, a children’s outdoor playground area and an on-site self-service café bar, with options for events like sports birthdays and company teambuilding."
+  },
+  {
+    "tenant_id": "fc12bcec-184a-4d19-9f8c-01e37e238dd9",
+    "tenant_name": "Padel tereni Spartak Banja Luka",
+    "slug": "padel-tereni-spartak-banja-luka",
+    "address": {
+      "street": "Pilanska bb",
+      "postal_code": "unknown",
+      "city": "Banja Luka",
+      "sub_administrative_area": "Banja Luka",
+      "administrative_area": "Republika Srpska",
+      "country": "Bosnia and Herzegovina",
+      "country_code": "BA",
+      "coordinate": {
+        "lat": "44.7838907",
+        "lon": "17.2069793"
+      },
+      "timezone": "Europe/Sarajevo"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+387 65 679 999",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "53f9ffa7-6ac9-44bf-afca-e9aad50d865b",
+        "name": "Padel Court 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel courts within Sportski centar Spartak in Banja Luka. Promotion materials mention a covered (indoor) padel court and phone reservations."
+  },
+  {
+    "tenant_id": "bcc5cb5d-59c9-49a0-9f26-9a13efe75e25",
+    "tenant_name": "Spartak",
+    "slug": "spartak",
+    "address": {
+      "street": "Škola fudbala Spartak, Pilanska, Malta, Banja Luka, Grad Banja Luka, Република Српска / Republika Srpska, 78109, Bosna i Hercegovina / Босна и Херцеговина",
+      "postal_code": "",
+      "city": "Banja Luka",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Bosnia and Herzegovina",
+      "country_code": "BA",
+      "coordinate": {
+        "lat": "44.7837785",
+        "lon": "17.2073806"
+      },
+      "timezone": "Europe/Sarajevo"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ad733dea-4086-4abd-bec7-8f8080a161af",
+        "name": "Padel 1 - Unknown",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel courts within Sports Center Spartak in Banja Luka, open to recreational players and competitors. Details such as exact address, phone, opening hours, number of courts and facilities are not provided on the referenced Mapingo listing."
+  },
+  {
+    "tenant_id": "226a4796-1518-4f45-a29b-b0a79c70c866",
+    "tenant_name": "UG Padel Klub Sportska Kutija Banja Luka",
+    "slug": "ug-padel-klub-sportska-kutija-banja-luka",
+    "address": {
+      "street": "Dr. Mladena Stojanovića bb",
+      "postal_code": "",
+      "city": "Banja Luka",
+      "sub_administrative_area": "Banja Luka",
+      "administrative_area": "Republika Srpska",
+      "country": "Bosnia and Herzegovina",
+      "country_code": "BA",
+      "coordinate": {
+        "lat": "44.7793304",
+        "lon": "17.2021215"
+      },
+      "timezone": "Europe/Sarajevo"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+387 66 380 483",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "82c83316-b703-49fd-98da-3fc89beae951",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "UG Padel Klub Sportska Kutija Banja Luka is a registered padel club/association in Banja Luka; detailed sports-facility information (courts, hours, amenities) is not publicly available in the provided business registry listings."
+  }
+]

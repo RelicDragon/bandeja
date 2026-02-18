@@ -1,0 +1,472 @@
+[
+  {
+    "tenant_id": "78fd067f-fcb3-4ca3-9c84-1865d9fa2c86",
+    "tenant_name": "TC Arena Sarajevo",
+    "slug": "tc-arena-sarajevo",
+    "address": {
+      "street": "Aleja Bosne Srebrene bb",
+      "postal_code": "71000",
+      "city": "Sarajevo",
+      "sub_administrative_area": "Centar Sarajevo",
+      "administrative_area": "Federation of Bosnia and Herzegovina",
+      "country": "Bosnia and Herzegovina",
+      "country_code": "BA",
+      "coordinate": {
+        "lat": "43.8434681",
+        "lon": "18.3395880"
+      },
+      "timezone": "Europe/Sarajevo"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+387 62 710 707",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "02d576ba-5842-4f47-9a7f-6a47792a794a",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "6ee5c530-0480-4824-a14d-d54ad10e51da",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "24:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "24:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "24:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "24:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "24:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "24:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "24:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "24:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "TC Arena Sarajevo (TC Arena d.o.o.) is a multi-sport center in Sarajevo (Aleja Bosne Srebrene area) focused on padel and football, offering 2 padel courts and 3 football pitches, plus coaching, tournament/event organization, and wellness/massage services, with on-site café/vitamin bar areas. Website: https://tcarena.ba/"
+  },
+  {
+    "tenant_id": "0e3c622c-07ff-4fe4-b074-59e959578b63",
+    "tenant_name": "Padel Centar Hotel Hills",
+    "slug": "padel-centar-hills",
+    "address": {
+      "street": "Butmirska cesta 18 (Hotel Hills Sarajevo)",
+      "postal_code": "71000",
+      "city": "Sarajevo",
+      "sub_administrative_area": "Ilidža",
+      "administrative_area": "Federation of Bosnia and Herzegovina",
+      "country": "Bosnia and Herzegovina",
+      "country_code": "BA",
+      "coordinate": {
+        "lat": "43.8268075",
+        "lon": "18.3131698"
+      },
+      "timezone": "Europe/Sarajevo"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+387 61 532 892, +387 62 460 700",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "a000e85d-182e-4326-b57f-dc17b9218a61",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "e1993a68-5780-412f-a795-bfe5870875b0",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "dbdf9ddf-a9f5-4ea3-859e-b12545fd194a",
+        "name": "Padel 3 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "e41c1c9c-49c4-4edc-a6ab-2c72d774da72",
+        "name": "Padel 4 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "01:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Modern padel center located at Hotel Hills Sarajevo offering 4 covered indoor padel courts, with on-site parking, cafe/restaurant, and showers. Reservations are available via the Sportin app."
+  },
+  {
+    "tenant_id": "31ce069a-d17c-4f03-bba9-94b36aa1cab8",
+    "tenant_name": "Mahagoni Padel Klub / Padel centar Mahagoni",
+    "slug": "mahagoni-padel-klub-padel-centar-mahagoni",
+    "address": {
+      "street": "Duška Trifunovića 2",
+      "postal_code": "71123",
+      "city": "Lukavica",
+      "sub_administrative_area": "Istočno Sarajevo",
+      "administrative_area": "Republika Srpska",
+      "country": "Bosnia and Herzegovina",
+      "country_code": "BA",
+      "coordinate": {
+        "lat": "44.7537413",
+        "lon": "17.1741509"
+      },
+      "timezone": "Europe/Sarajevo"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+387 65 167 042",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "e411baca-c042-44b4-8900-5aa91fcf67b4",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "670bb3b7-eb44-4424-9426-a51b397574e9",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ce2b2c0d-59fa-4871-9caa-cccc3223a916",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel centar Mahagoni is a padel-focused sports facility in Lukavica (East Sarajevo/Sarajevo area) with three modern courts, offering court reservations, trainings (including personal training), and organization of leagues, tournaments, and private events (e.g., birthdays, team buildings)."
+  },
+  {
+    "tenant_id": "60eaf812-30d1-4c3d-a744-afe5383b4f49",
+    "tenant_name": "Padel Club SMASH Sarajevo",
+    "slug": "padel-club-smash-sarajevo",
+    "address": {
+      "street": "Unknown (associated with Padel Centar Hills / Hotel Hills area)",
+      "postal_code": "71000",
+      "city": "Sarajevo",
+      "sub_administrative_area": "Ilidža",
+      "administrative_area": "Federation of Bosnia and Herzegovina",
+      "country": "Bosnia and Herzegovina",
+      "country_code": "BA",
+      "coordinate": {
+        "lat": "43.8846577",
+        "lon": "18.4089336"
+      },
+      "timezone": "Europe/Sarajevo"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "unknown",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "760c1450-14d6-40ed-ba10-4447f87a5688",
+        "name": "Padel Court - Unknown",
+        "sport": "PADEL",
+        "features": [
+          "indoor or outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Club SMASH is a Sarajevo-based padel club focused on padel school and coaching, offering individual and group padel training sessions (per Instagram bio)."
+  },
+  {
+    "tenant_id": "9bf7ae94-0bed-4c29-8917-27fddb52d9d1",
+    "tenant_name": "Q-Padel Academy (Sarajevo)",
+    "slug": "q-padel-academy-sarajevo",
+    "address": {
+      "street": "Kotromanića, Sarajevo, Akademija387",
+      "postal_code": "unknown",
+      "city": "Sarajevo",
+      "sub_administrative_area": "unknown",
+      "administrative_area": "unknown",
+      "country": "Bosnia and Herzegovina",
+      "country_code": "BA",
+      "coordinate": {
+        "lat": "43.8555679",
+        "lon": "18.4107872"
+      },
+      "timezone": "Europe/Sarajevo"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+387 66 400 021",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "4fa00fdf-d07f-404b-8fdb-eda1c579d86c",
+        "name": "Padel 1 - Unknown",
+        "sport": "PADEL",
+        "features": [
+          "unknown",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel training/academy program in Sarajevo focused on structured coaching and player development, including modern methodology, game analysis, and progress tracking (per public messaging on their Instagram)."
+  }
+]

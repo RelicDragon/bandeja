@@ -1,11 +1,14 @@
 import "dotenv/config";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, readdirSync, renameSync, mkdirSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { createChatCompletion } from "../lib/openaiRateLimit.js";
 import { geocode } from "../lib/geocode.js";
 import { webSearch } from "../tools/search.js";
 
-const INPUT = process.argv[2] || "jsons/moscow-russia-clubs.json";
-const OUTPUT = process.argv[3] || INPUT.replace(/\.json$/i, "-verified.json");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const JSONS_DIR = join(__dirname, "..", "jsons");
+const JSONS_ORIGINALS_DIR = join(__dirname, "..", "jsons-originals");
 
 function isDirectoryListing(club) {
   const name = (club.tenant_name || "").toLowerCase();
@@ -123,9 +126,9 @@ function hasValidCoords(club) {
   return Number.isFinite(nlat) && Number.isFinite(nlon) && nlat !== 0 && nlon !== 0;
 }
 
-async function main() {
-  console.log("Verify clubs: reading", INPUT);
-  const raw = readFileSync(INPUT, "utf8");
+async function verifyFile(inputPath, outputPath) {
+  console.log("Verify clubs: reading", inputPath);
+  const raw = readFileSync(inputPath, "utf8");
   let clubs = JSON.parse(raw);
   if (!Array.isArray(clubs)) clubs = [clubs];
   const total = clubs.length;
@@ -185,9 +188,44 @@ async function main() {
     }
   }
 
-  writeFileSync(OUTPUT, JSON.stringify(withCoords, null, 2), "utf8");
+  writeFileSync(outputPath, JSON.stringify(withCoords, null, 2), "utf8");
   console.log("Done. Verified clubs:", withCoords.length);
-  console.log("Written to", OUTPUT);
+  console.log("Written to", outputPath);
+}
+
+async function main() {
+  const singleInput = process.argv[2];
+  const jsonFiles = singleInput
+    ? [singleInput]
+    : readdirSync(JSONS_DIR)
+        .filter((f) => f.endsWith(".json") && !f.includes("-verified"))
+        .map((f) => join(JSONS_DIR, f))
+        .sort();
+
+  if (jsonFiles.length === 0) {
+    console.log("No JSON files in", JSONS_DIR);
+    return;
+  }
+
+  console.log("Processing", jsonFiles.length, "file(s) from jsons folder");
+  const fromJsonsDir = !singleInput;
+  if (fromJsonsDir) mkdirSync(JSONS_ORIGINALS_DIR, { recursive: true });
+
+  for (const inputPath of jsonFiles) {
+    let readPath = inputPath;
+    const baseName = join(inputPath).split(/[/\\]/).pop();
+    if (fromJsonsDir) {
+      const originalsPath = join(JSONS_ORIGINALS_DIR, baseName);
+      renameSync(inputPath, originalsPath);
+      readPath = originalsPath;
+    }
+    const outputPath = process.argv[3] && jsonFiles.length === 1
+      ? process.argv[3]
+      : fromJsonsDir
+        ? join(JSONS_DIR, baseName.replace(/\.json$/i, "-verified.json"))
+        : inputPath.replace(/\.json$/i, "-verified.json");
+    await verifyFile(readPath, outputPath);
+  }
 }
 
 main().catch((err) => {
