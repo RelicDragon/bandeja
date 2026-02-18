@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult, ValidationChain } from 'express-validator';
 import { ApiError } from '../utils/ApiError';
+import { config } from '../config/env';
 
 export const validate = (validations: ValidationChain[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -18,7 +19,9 @@ export const validate = (validations: ValidationChain[]) => {
       return next(new ApiError(400, errorMessages));
     }
 
-    console.log('[validate] Validation passed');
+    if (config.nodeEnv === 'development') {
+      console.log('[validate] Validation passed');
+    }
     next();
   };
 };

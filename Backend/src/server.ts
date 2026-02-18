@@ -57,10 +57,17 @@ const startServer = async () => {
 
     const gracefulShutdown = async (signal: string) => {
       console.log(`\n${signal} received. Starting graceful shutdown...`);
-      
+
+      try {
+        await socketService.close();
+        console.log('Socket.IO closed');
+      } catch (e) {
+        console.error('Error closing Socket.IO:', e);
+      }
+
       server.close(async () => {
         console.log('HTTP server closed');
-        
+
         gameStatusScheduler.stop();
         telegramGamesScheduler.stop();
         currencyScheduler.stop();
@@ -68,10 +75,10 @@ const startServer = async () => {
         draftScheduler.stop();
         telegramBotService.stop();
         pushNotificationService.shutdown();
-        
+
         await prisma.$disconnect();
         console.log('Database connection closed');
-        
+
         process.exit(0);
       });
 
@@ -80,6 +87,13 @@ const startServer = async () => {
         process.exit(1);
       }, 10000);
     };
+
+    process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    });
+    process.on('uncaughtException', (err: Error) => {
+      console.error('Uncaught Exception:', err);
+    });
 
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));

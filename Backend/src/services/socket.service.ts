@@ -89,6 +89,17 @@ class SocketService {
     });
   }
 
+  private wrapAsync(socket: AuthenticatedSocket, handler: (...args: any[]) => Promise<void>): (...args: any[]) => void {
+    return (...args: any[]) => {
+      Promise.resolve(handler(...args)).catch((err) => {
+        console.error('[SocketService] Unhandled error in socket handler:', err);
+        if (socket.connected) {
+          socket.emit('error', { message: 'An error occurred' });
+        }
+      });
+    };
+  }
+
   private setupEventHandlers() {
     this.io.on('connection', (socket: AuthenticatedSocket) => {
       console.log(`User ${socket.userId} connected with socket ${socket.id}`);
@@ -106,32 +117,26 @@ class SocketService {
       socket.bugRooms = new Set();
       socket.userChatRooms = new Set();
 
-      // Handle joining game chat rooms
-      socket.on('join-game-room', async (gameId: string) => {
-        try {
-          if (!socket.userId) return;
+      socket.on('join-game-room', this.wrapAsync(socket, async (gameId: string) => {
+        if (!socket.userId) return;
 
-          const game = await prisma.game.findUnique({
-            where: { id: gameId }
-          });
+        const game = await prisma.game.findUnique({
+          where: { id: gameId }
+        });
 
-          if (!game) {
-            console.log(`[SocketService] User ${socket.userId} tried to join non-existent game room ${gameId}`);
-            socket.emit('error', { message: 'Game not found' });
-            return;
-          }
-
-          socket.join(`game-${gameId}`);
-          socket.gameRooms?.add(gameId);
-          
-          const socketsInRoom = await this.io.in(`game-${gameId}`).fetchSockets();
-          console.log(`[SocketService] User ${socket.userId} joined game room ${gameId} (${socketsInRoom.length} total socket(s) in room)`);
-          socket.emit('joined-game-room', { gameId });
-        } catch (error) {
-          console.error('[SocketService] Error joining game room:', error);
-          socket.emit('error', { message: 'Failed to join game room' });
+        if (!game) {
+          console.log(`[SocketService] User ${socket.userId} tried to join non-existent game room ${gameId}`);
+          socket.emit('error', { message: 'Game not found' });
+          return;
         }
-      });
+
+        socket.join(`game-${gameId}`);
+        socket.gameRooms?.add(gameId);
+
+        const socketsInRoom = await this.io.in(`game-${gameId}`).fetchSockets();
+        console.log(`[SocketService] User ${socket.userId} joined game room ${gameId} (${socketsInRoom.length} total socket(s) in room)`);
+        socket.emit('joined-game-room', { gameId });
+      }));
 
       // Handle leaving game chat rooms
       socket.on('leave-game-room', (gameId: string) => {
@@ -141,31 +146,24 @@ class SocketService {
         socket.emit('left-game-room', { gameId });
       });
 
-      // Handle joining bug chat rooms
-      socket.on('join-bug-room', async (bugId: string) => {
-        try {
-          if (!socket.userId) return;
+      socket.on('join-bug-room', this.wrapAsync(socket, async (bugId: string) => {
+        if (!socket.userId) return;
 
-          // Verify bug exists (everyone can view bug chats)
-          const bug = await prisma.bug.findUnique({
-            where: { id: bugId }
-          });
+        const bug = await prisma.bug.findUnique({
+          where: { id: bugId }
+        });
 
-          if (!bug) {
-            socket.emit('error', { message: 'Bug not found' });
-            return;
-          }
-
-          socket.join(`bug-${bugId}`);
-          socket.bugRooms?.add(bugId);
-
-          console.log(`User ${socket.userId} joined bug room ${bugId}`);
-          socket.emit('joined-bug-room', { bugId });
-        } catch (error) {
-          console.error('Error joining bug room:', error);
-          socket.emit('error', { message: 'Failed to join bug room' });
+        if (!bug) {
+          socket.emit('error', { message: 'Bug not found' });
+          return;
         }
-      });
+
+        socket.join(`bug-${bugId}`);
+        socket.bugRooms?.add(bugId);
+
+        console.log(`User ${socket.userId} joined bug room ${bugId}`);
+        socket.emit('joined-bug-room', { bugId });
+      }));
 
       // Handle leaving bug chat rooms
       socket.on('leave-bug-room', (bugId: string) => {
@@ -175,37 +173,29 @@ class SocketService {
         socket.emit('left-bug-room', { bugId });
       });
 
-      // Handle joining user chat rooms
-      socket.on('join-user-chat-room', async (chatId: string) => {
-        try {
-          if (!socket.userId) return;
+      socket.on('join-user-chat-room', this.wrapAsync(socket, async (chatId: string) => {
+        if (!socket.userId) return;
 
-          // Verify user has access to this chat
-          const chat = await prisma.userChat.findUnique({
-            where: { id: chatId }
-          });
+        const chat = await prisma.userChat.findUnique({
+          where: { id: chatId }
+        });
 
-          if (!chat) {
-            socket.emit('error', { message: 'Chat not found' });
-            return;
-          }
-
-          // Check if user is one of the participants
-          if (chat.user1Id !== socket.userId && chat.user2Id !== socket.userId) {
-            socket.emit('error', { message: 'Access denied to user chat' });
-            return;
-          }
-
-          socket.join(`user-chat-${chatId}`);
-          socket.userChatRooms?.add(chatId);
-
-          console.log(`User ${socket.userId} joined user chat room ${chatId}`);
-          socket.emit('joined-user-chat-room', { chatId });
-        } catch (error) {
-          console.error('Error joining user chat room:', error);
-          socket.emit('error', { message: 'Failed to join user chat room' });
+        if (!chat) {
+          socket.emit('error', { message: 'Chat not found' });
+          return;
         }
-      });
+
+        if (chat.user1Id !== socket.userId && chat.user2Id !== socket.userId) {
+          socket.emit('error', { message: 'Access denied to user chat' });
+          return;
+        }
+
+        socket.join(`user-chat-${chatId}`);
+        socket.userChatRooms?.add(chatId);
+
+        console.log(`User ${socket.userId} joined user chat room ${chatId}`);
+        socket.emit('joined-user-chat-room', { chatId });
+      }));
 
       // Handle leaving user chat rooms
       socket.on('leave-user-chat-room', (chatId: string) => {
@@ -215,46 +205,40 @@ class SocketService {
         socket.emit('left-user-chat-room', { chatId });
       });
 
-      // Unified join-chat-room handler (for GROUP and future context types)
-      socket.on('join-chat-room', async (data: { contextType: ChatContextType; contextId: string }) => {
-        try {
-          if (!socket.userId) return;
+      socket.on('join-chat-room', this.wrapAsync(socket, async (data: { contextType: ChatContextType; contextId: string }) => {
+        if (!socket.userId) return;
 
-          if (data.contextType === 'GROUP') {
-            const groupChannel = await prisma.groupChannel.findUnique({
-              where: { id: data.contextId },
-              include: {
-                participants: {
-                  where: { userId: socket.userId }
-                }
+        if (data.contextType === 'GROUP') {
+          const groupChannel = await prisma.groupChannel.findUnique({
+            where: { id: data.contextId },
+            include: {
+              participants: {
+                where: { userId: socket.userId }
               }
-            });
-
-            if (!groupChannel) {
-              socket.emit('error', { message: 'Group/Channel not found' });
-              return;
             }
+          });
 
-            const userParticipant = groupChannel.participants.find(p => p.userId === socket.userId);
-            const isOwner = userParticipant?.role === 'OWNER';
-            const isParticipant = !!userParticipant;
-
-            if (!isOwner && !isParticipant && !groupChannel.isPublic) {
-              socket.emit('error', { message: 'Access denied to group/channel' });
-              return;
-            }
-
-            const room = this.getChatRoomName('GROUP', data.contextId);
-            socket.join(room);
-
-            console.log(`User ${socket.userId} joined group room ${data.contextId}`);
-            socket.emit('joined-chat-room', { contextType: 'GROUP', contextId: data.contextId });
+          if (!groupChannel) {
+            socket.emit('error', { message: 'Group/Channel not found' });
+            return;
           }
-        } catch (error) {
-          console.error('[SocketService] Error joining chat room:', error);
-          socket.emit('error', { message: 'Failed to join chat room' });
+
+          const userParticipant = groupChannel.participants.find(p => p.userId === socket.userId);
+          const isOwner = userParticipant?.role === 'OWNER';
+          const isParticipant = !!userParticipant;
+
+          if (!isOwner && !isParticipant && !groupChannel.isPublic) {
+            socket.emit('error', { message: 'Access denied to group/channel' });
+            return;
+          }
+
+          const room = this.getChatRoomName('GROUP', data.contextId);
+          socket.join(room);
+
+          console.log(`User ${socket.userId} joined group room ${data.contextId}`);
+          socket.emit('joined-chat-room', { contextType: 'GROUP', contextId: data.contextId });
         }
-      });
+      }));
 
       // Handle leaving unified chat rooms
       socket.on('leave-chat-room', (data: { contextType: ChatContextType; contextId: string }) => {
@@ -310,28 +294,25 @@ class SocketService {
         }
       });
 
-      // Handle message acknowledgment
-      socket.on('chat:message-ack', async (data: { messageId: string; contextType: ChatContextType; contextId: string }) => {
+      socket.on('chat:message-ack', this.wrapAsync(socket, async (data: { messageId: string; contextType: ChatContextType; contextId: string }) => {
         if (!socket.userId) return;
 
         this.markSocketDelivered(data.messageId, socket.userId);
         console.log(`[SocketService] Message ${data.messageId} acknowledged by user ${socket.userId}`);
-      });
+      }));
 
-      // Handle sync request from client
-      socket.on('sync-messages', async (data: { 
-        contextType: ChatContextType; 
-        contextId: string; 
-        lastMessageId?: string 
+      socket.on('sync-messages', this.wrapAsync(socket, async (data: {
+        contextType: ChatContextType;
+        contextId: string;
+        lastMessageId?: string;
       }) => {
         if (!socket.userId) return;
 
-        // Notify client that sync is ready
         socket.emit('sync-ready', {
           contextType: data.contextType,
           contextId: data.contextId
         });
-      });
+      }));
 
       socket.on('subscribe-presence', (data: { userIds?: string[] }) => {
         if (!socket.userId) return;
@@ -993,6 +974,21 @@ class SocketService {
 
   public getIO(): SocketIOServer {
     return this.io;
+  }
+
+  public close(): Promise<void> {
+    for (const timer of this.presenceFlushTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.presenceFlushTimers.clear();
+    this.presenceBufferBySocket.clear();
+    this.presenceSubscriptionBySocket.clear();
+    this.presenceSubscribersByUser.clear();
+    this.presenceLastSubscribeAt.clear();
+    presenceService.stop();
+    return new Promise((resolve) => {
+      this.io.close(() => resolve());
+    });
   }
 }
 
