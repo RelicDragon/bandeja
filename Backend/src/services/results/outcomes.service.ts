@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import { WinnerOfGame, Prisma, EntityType } from '@prisma/client';
 import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
+import { updateMatchWinners } from './matchWinner.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 
@@ -380,7 +381,6 @@ export async function recalculateGameOutcomes(gameId: string) {
     await undoGameOutcomes(gameId, tx);
 
     console.log(`[RECALCULATE GAME OUTCOMES] Step 2: Updating match winners based on set scores`);
-    const { updateMatchWinners } = await import('./matchWinner.service');
     await updateMatchWinners(gameId, tx);
 
     console.log(`[RECALCULATE GAME OUTCOMES] Step 3: Generating new outcomes`);
