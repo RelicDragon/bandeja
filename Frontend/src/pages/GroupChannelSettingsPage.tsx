@@ -46,6 +46,8 @@ export const GroupChannelSettings = ({
   const canEdit = isOwner || isAdmin;
   const isParticipant = useMemo(() => !!currentUserParticipant || groupChannelData.isParticipant, [currentUserParticipant, groupChannelData.isParticipant]);
 
+  const onParticipantsCountChangeRef = useRef(onParticipantsCountChange);
+  onParticipantsCountChangeRef.current = onParticipantsCountChange;
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -57,7 +59,7 @@ export const GroupChannelSettings = ({
       const participantsList = participantsData.data || [];
       setParticipants(participantsList);
       setGroupChannelData(groupChannelData.data);
-      onParticipantsCountChange?.(groupChannelData.data.participantsCount || 0);
+      onParticipantsCountChangeRef.current?.(groupChannelData.data.participantsCount || 0);
     } catch (error: any) {
       console.error('Failed to load data:', error);
       toast.error(
@@ -67,7 +69,7 @@ export const GroupChannelSettings = ({
     } finally {
       setLoading(false);
     }
-  }, [groupChannel.id, t, onParticipantsCountChange]);
+  }, [groupChannel.id, t]);
 
   useEffect(() => {
     loadData();
