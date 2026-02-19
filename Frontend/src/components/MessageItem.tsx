@@ -819,10 +819,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     {/* Time and read status inside bubble */}
                     <div className={`absolute bottom-1 right-2 flex flex-nowrap items-center gap-1 ${isChannel ? 'text-gray-400 dark:text-gray-500' : (isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500')}`}>
                       <span className="text-[10px] whitespace-nowrap shrink-0">
-                        {formatMessageTime(currentMessage.createdAt)}
                         {currentMessage.editedAt && (
-                          <Pencil size={10} className="inline opacity-80 ml-0.5" title={t('chat.edited', { defaultValue: 'edited' })} />
+                          <span title={t('chat.edited', { defaultValue: 'edited' })}>
+                            <Pencil size={10} className="inline opacity-80 mr-1" />
+                          </span>
                         )}
+                        {formatMessageTime(currentMessage.createdAt)}
                       </span>
                       {isOwnMessage && (
                         <div className="flex items-center relative">
