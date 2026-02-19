@@ -52,9 +52,7 @@ export const GameSetupModal = ({
   const [activeTab, setActiveTab] = useState<'general' | 'winner' | 'matches'>('general');
   const [fixedNumberOfSets, setFixedNumberOfSets] = useState(initialValues?.fixedNumberOfSets ?? 0);
   const [maxTotalPointsPerSet, setMaxTotalPointsPerSet] = useState(initialValues?.maxTotalPointsPerSet ?? 0);
-  const [maxPointsPerTeam, setMaxPointsPerTeam] = useState(initialValues?.maxPointsPerTeam ?? 0);
   const [customSetPoints, setCustomSetPoints] = useState('');
-  const [customTeamPoints, setCustomTeamPoints] = useState('');
   const [winnerOfGame, setWinnerOfGame] = useState<WinnerOfGame>(
     initialValues?.winnerOfGame ?? 'BY_MATCHES_WON'
   );
@@ -73,7 +71,6 @@ export const GameSetupModal = ({
   const [ballsInGames, setBallsInGames] = useState(initialValues?.ballsInGames ?? false);
 
   const SET_PRESETS = [16, 21, 24, 32];
-  const TEAM_PRESETS = [7, 15, 20];
 
   useEffect(() => {
     if (matchGenerationType === 'HANDMADE' || matchGenerationType === 'FIXED') {
@@ -84,20 +81,16 @@ export const GameSetupModal = ({
   useEffect(() => {
     if (!isOpen || !initialValues) return;
     const setVal = initialValues.maxTotalPointsPerSet ?? 0;
-    const teamVal = initialValues.maxPointsPerTeam ?? 0;
     setCustomSetPoints(
       setVal > 0 && !SET_PRESETS.includes(setVal) ? String(setVal) : ''
     );
-    setCustomTeamPoints(
-      teamVal > 0 && !TEAM_PRESETS.includes(teamVal) ? String(teamVal) : ''
-    );
-  }, [isOpen, initialValues?.maxTotalPointsPerSet, initialValues?.maxPointsPerTeam]);
+  }, [isOpen, initialValues?.maxTotalPointsPerSet]);
 
   const handleConfirm = () => {
     onConfirm({
       fixedNumberOfSets,
       maxTotalPointsPerSet,
-      maxPointsPerTeam,
+      maxPointsPerTeam: 0,
       winnerOfGame,
       winnerOfMatch,
       matchGenerationType,
@@ -120,24 +113,9 @@ export const GameSetupModal = ({
     }
   };
 
-  const handleCustomTeamPoints = (value: string) => {
-    setCustomTeamPoints(value);
-    const num = parseInt(value);
-    if (!isNaN(num) && num > 0 && num <= 50) {
-      setMaxPointsPerTeam(num);
-    } else if (value === '') {
-      setMaxPointsPerTeam(0);
-    }
-  };
-
   const handleSetPresetClick = (num: number) => {
     setMaxTotalPointsPerSet(num);
-    setCustomSetPoints('');
-  };
-
-  const handleTeamPresetClick = (num: number) => {
-    setMaxPointsPerTeam(num);
-    setCustomTeamPoints('');
+    setCustomSetPoints(String(num));
   };
 
   const handleFixedNumberOfSetsChange = (num: number) => {
@@ -218,7 +196,14 @@ export const GameSetupModal = ({
                   </button>
                 ))}
               </div>
+              {fixedNumberOfSets !== 1 && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  {t('gameResults.fixedNumberOfSetsAmericanoHint')}
+                </p>
+              )}
             </div>
+
+            <hr className="border-gray-200 dark:border-gray-700 my-4" />
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -246,7 +231,7 @@ export const GameSetupModal = ({
                       onClick={() => handleSetPresetClick(num)}
                       disabled={!isEditing}
                       className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                        maxTotalPointsPerSet === num && !customSetPoints
+                        maxTotalPointsPerSet === num
                           ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
                           : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
                       } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
@@ -270,61 +255,15 @@ export const GameSetupModal = ({
                     max: 100
                   </span>
                 </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  {maxTotalPointsPerSet === 0
+                    ? t('gameResults.maxTotalPointsPerSetHintAny')
+                    : t('gameResults.maxTotalPointsPerSetHintSet', { count: maxTotalPointsPerSet })}
+                </p>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                {t('gameResults.maxPointsPerTeam')}
-              </label>
-              <div className="space-y-2">
-                <div className="flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => {
-                      setMaxPointsPerTeam(0);
-                      setCustomTeamPoints('');
-                    }}
-                    disabled={!isEditing}
-                    className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                      maxPointsPerTeam === 0
-                        ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                    } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  >
-                    {t('gameResults.any')}
-                  </button>
-                  {TEAM_PRESETS.map((num) => (
-                    <button
-                      key={num}
-                      onClick={() => handleTeamPresetClick(num)}
-                      disabled={!isEditing}
-                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                        maxPointsPerTeam === num && !customTeamPoints
-                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                      } ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    >
-                      {num}
-                    </button>
-                  ))}
-                </div>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={customTeamPoints}
-                    onChange={(e) => handleCustomTeamPoints(e.target.value)}
-                    placeholder={t('gameResults.customValue')}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-primary-500 focus:bg-white dark:focus:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 transition-all duration-200 outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                    max: 50
-                  </span>
-                </div>
-              </div>
-            </div>
+            <hr className="border-gray-200 dark:border-gray-700 my-4" />
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
