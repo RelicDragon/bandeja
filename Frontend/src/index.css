@@ -312,13 +312,21 @@ body {
   background-color: #111827;
 }
 
-.capacitor-android html,
+.capacitor-android html {
+  min-width: 100%;
+  width: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: var(--viewport-height, 100vh);
+}
+
 .capacitor-android body,
 .capacitor-android #root {
-  min-width: var(--viewport-width, 100%);
+  min-width: 100%;
   width: 100%;
-  min-height: var(--viewport-height-full, 100vh);
-  height: var(--viewport-height-full, 100%);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: var(--viewport-height, 100vh);
 }
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -870,39 +878,39 @@ body {
 
 /* Capacitor Safe Area Support */
 .safe-area-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
 }
 
 .safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
 }
 
 .safe-area-left {
-  padding-left: env(safe-area-inset-left);
+  padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
 }
 
 .safe-area-right {
-  padding-right: env(safe-area-inset-right);
+  padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
 }
 
 .safe-area-all {
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) var(--safe-area-inset-right, env(safe-area-inset-right, 0px)) var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
 }
 
 .safe-area-inset-top {
-  top: env(safe-area-inset-top);
+  top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
 }
 
 .safe-area-inset-bottom {
-  bottom: env(safe-area-inset-bottom);
+  bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
 }
 
 .safe-area-inset-left {
-  left: env(safe-area-inset-left);
+  left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
 }
 
 .safe-area-inset-right {
-  right: env(safe-area-inset-right);
+  right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
 }
 
 /* Capacitor specific styles */
@@ -992,8 +1000,9 @@ body.keyboard-visible #root {
 /* Modern keyboard handling for iOS/Android with rounded corners */
 .capacitor-ios body.keyboard-visible,
 .capacitor-android body.keyboard-visible {
-  /* Use visual viewport height when keyboard is visible */
+  height: 100vh;
   height: 100dvh;
+  max-height: 100vh;
   max-height: 100dvh;
 }
 
@@ -1001,7 +1010,7 @@ body.keyboard-visible #root {
 .capacitor-ios .keyboard-visible footer,
 .capacitor-android .keyboard-visible footer {
   /* Add padding to account for keyboard rounded corners (typically ~12-16px) */
-  padding-bottom: max(env(safe-area-inset-bottom), 12px);
+  padding-bottom: max(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)), 12px);
 }
 
 /* Input areas should have proper spacing above keyboard */
@@ -1016,14 +1025,16 @@ body.keyboard-visible #root {
 /* For modals and overlays when keyboard is visible */
 .capacitor-ios body.keyboard-visible .modal-content,
 .capacitor-android body.keyboard-visible .modal-content {
-  /* Adjust modal positioning to account for keyboard */
+  max-height: calc(100vh - var(--keyboard-height, 0px) - 20px);
   max-height: calc(100dvh - var(--keyboard-height, 0px) - 20px);
-  margin-bottom: max(var(--keyboard-height, 0px), env(safe-area-inset-bottom));
+  margin-bottom: max(var(--keyboard-height, 0px), var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
 }
 
 /* Chat layout improvements for mobile */
 .chat-container {
+  height: 100vh;
   height: 100dvh;
+  max-height: 100vh;
   max-height: 100dvh;
   position: fixed;
   inset: 0;
@@ -1043,15 +1054,15 @@ body.keyboard-visible #root {
 @media (max-width: 767px) {
   .capacitor-ios body.keyboard-visible .chat-container,
   .capacitor-android body.keyboard-visible .chat-container {
-    /* Use visual viewport height which accounts for keyboard */
+    height: 100vh;
     height: 100dvh;
+    max-height: 100vh;
     max-height: 100dvh;
   }
 
-  /* Ensure messages container can scroll properly */
   .capacitor-ios body.keyboard-visible .chat-container main .overflow-y-auto,
   .capacitor-android body.keyboard-visible .chat-container main .overflow-y-auto {
-    /* Account for keyboard height in scroll container */
+    max-height: calc(100vh - var(--keyboard-height, 0px));
     max-height: calc(100dvh - var(--keyboard-height, 0px));
   }
 }
@@ -1083,9 +1094,9 @@ body.keyboard-visible #root {
   .capacitor-ios body.keyboard-visible .chat-container footer,
   .capacitor-android body.keyboard-visible .chat-container footer {
     /* Move footer up by keyboard height minus safe area */
-    bottom: calc(var(--keyboard-height, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(var(--keyboard-height, 0px) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
     /* Add padding to fill rounded corner gap */
-    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: max(16px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
   }
 
   /* Smooth transition when keyboard appears/disappears */
@@ -1134,7 +1145,7 @@ body.keyboard-visible #root {
 
 /* Modal safe area support - modals with fixed inset-0 */
 .modal-safe-area {
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) var(--safe-area-inset-right, env(safe-area-inset-right, 0px)) var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
 }
 
 /* Range slider styles */
@@ -1231,19 +1242,19 @@ input[type="range"].slider:disabled::-moz-range-thumb {
 
 /* Specific safe area utilities */
 .safe-area-pt {
-  padding-top: max(env(safe-area-inset-top), 0px);
+  padding-top: max(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)), 0px);
 }
 
 .safe-area-pb {
-  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  padding-bottom: max(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)), 0px);
 }
 
 .safe-area-pl {
-  padding-left: max(env(safe-area-inset-left), 0px);
+  padding-left: max(var(--safe-area-inset-left, env(safe-area-inset-left, 0px)), 0px);
 }
 
 .safe-area-pr {
-  padding-right: max(env(safe-area-inset-right), 0px);
+  padding-right: max(var(--safe-area-inset-right, env(safe-area-inset-right, 0px)), 0px);
 }
 
 /* Modal animations */

@@ -17,9 +17,14 @@ const config: CapacitorConfig = {
     preferredContentMode: 'mobile'
   },
   android: {
-    allowMixedContent: false
+    allowMixedContent: false,
+    backgroundColor: '#f9fafb',
+    minWebViewVersion: 60
   },
   plugins: {
+    SystemBars: {
+      insetsHandling: 'css'
+    },
     StatusBar: {
       style: 'light',
       overlaysWebView: true

@@ -34,17 +34,26 @@ export const updateStatusBarStyle = async () => {
   }
 };
 
-const fullScreenHeightCssPx = () =>
-  Math.round(window.screen.height / window.devicePixelRatio);
+const getAndroidViewportHeight = (): number => {
+  const vv = window.visualViewport;
+  const a = vv?.height ?? 0;
+  const b = window.innerHeight ?? 0;
+  const c = (typeof document.documentElement?.clientHeight === 'number') ? document.documentElement.clientHeight : 0;
+  const h = Math.max(a, b, c, 100);
+  return Math.round(h);
+};
+
+const getAndroidViewportWidth = (): number => {
+  const vv = window.visualViewport;
+  const w = vv?.width ?? window.innerWidth ?? document.documentElement?.clientWidth ?? 0;
+  return Math.max(Math.round(w), 100);
+};
 
 export const setAndroidViewportVars = () => {
-  const vv = window.visualViewport;
-  const w = vv ? vv.width : window.innerWidth;
-  const h = vv ? vv.height : window.innerHeight;
-  const full = fullScreenHeightCssPx();
+  const w = getAndroidViewportWidth();
+  const h = getAndroidViewportHeight();
   document.documentElement.style.setProperty('--viewport-width', `${w}px`);
   document.documentElement.style.setProperty('--viewport-height', `${h}px`);
-  document.documentElement.style.setProperty('--viewport-height-full', `${full}px`);
 };
 
 export const setupCapacitor = async () => {
@@ -52,9 +61,15 @@ export const setupCapacitor = async () => {
 
   if (isAndroid()) {
     setAndroidViewportVars();
+    requestAnimationFrame(() => setAndroidViewportVars());
+    window.addEventListener('load', () => setAndroidViewportVars());
     window.visualViewport?.addEventListener('resize', setAndroidViewportVars);
+    window.visualViewport?.addEventListener('scroll', setAndroidViewportVars);
     window.addEventListener('resize', setAndroidViewportVars);
-    window.addEventListener('orientationchange', setAndroidViewportVars);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(setAndroidViewportVars, 50);
+      requestAnimationFrame(setAndroidViewportVars);
+    });
   }
 
   try {
