@@ -347,6 +347,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     const preventContextMenu = (e: Event) => {
       e.preventDefault();
       e.stopPropagation();
+      const me = e as MouseEvent;
+      if (me.button === 2 && !isOffline) {
+        onOpenContextMenu(currentMessage.id, { x: me.clientX, y: me.clientY });
+      }
     };
 
     const handleMouseDown = (e: MouseEvent) => {
