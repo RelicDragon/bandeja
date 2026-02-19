@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Search, XCircle, Check, User, X } from 'lucide-react';
+import { Search, User } from 'lucide-react';
 import { PlayerAvatar } from '@/components';
 import { GroupChannelInvite } from '@/api/chat';
 import { chatApi } from '@/api/chat';
@@ -65,11 +65,15 @@ export const GroupChannelInvitesModal = ({
   const [allUsers, setAllUsers] = useState<BasicUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const originalOrderRef = useRef<Map<string, number>>(new Map());
-  const [confirmingPlayerId, setConfirmingPlayerId] = useState<string | null>(null);
+  const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
   const [invitingPlayerId, setInvitingPlayerId] = useState<string | null>(null);
-  const [exitingPlayerId, setExitingPlayerId] = useState<string | null>(null);
 
   const participantsIdsRef = useRef<string[]>([]);
+  const activeCardRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    activeCardRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [activePlayerId]);
   
   useEffect(() => {
     participantsIdsRef.current = participants.map(p => p.userId);
@@ -172,24 +176,15 @@ export const GroupChannelInvitesModal = ({
     );
   }, [allUsersWithInvites, searchQuery]);
 
-  const handlePlayerClick = useCallback((playerId: string) => {
+  const handleCardClick = useCallback((playerId: string) => {
+    if (invitingPlayerId) return;
     const invite = getInviteForUser(playerId);
-    if (invite) {
-      return;
-    }
-    if (confirmingPlayerId === playerId) {
-      setExitingPlayerId(playerId);
-      setTimeout(() => {
-        setConfirmingPlayerId(null);
-        setExitingPlayerId(null);
-      }, 300);
-      return;
-    }
-    setConfirmingPlayerId(playerId);
-  }, [getInviteForUser, confirmingPlayerId]);
+    if (invite && !(isOwner || isAdmin || invite.senderId === user?.id)) return;
+    setActivePlayerId((prev) => (prev === playerId ? null : playerId));
+  }, [getInviteForUser, invitingPlayerId, isOwner, isAdmin, user?.id]);
 
   const handleConfirmInvite = useCallback(async (playerId: string) => {
-    setConfirmingPlayerId(null);
+    setActivePlayerId(null);
     setInvitingPlayerId(playerId);
     
     try {
@@ -212,15 +207,10 @@ export const GroupChannelInvitesModal = ({
     }
   }, [groupChannelId, t, onUpdate]);
 
-  const handleCancelInviteConfirm = useCallback(() => {
-    if (confirmingPlayerId) {
-      setExitingPlayerId(confirmingPlayerId);
-      setTimeout(() => {
-        setConfirmingPlayerId(null);
-        setExitingPlayerId(null);
-      }, 300);
-    }
-  }, [confirmingPlayerId]);
+  const handleCancelInviteClick = useCallback(async (inviteId: string) => {
+    setActivePlayerId(null);
+    await handleCancelInvite(inviteId);
+  }, [handleCancelInvite]);
 
   return (
     <>
@@ -249,54 +239,58 @@ export const GroupChannelInvitesModal = ({
             <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-3 space-y-1">
             {filteredAllUsers.length === 0 ? (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <User size={48} className="mx-auto mb-4 opacity-50" />
                 <p>{t('chat.noUsersFound', { defaultValue: 'No users found' })}</p>
               </div>
             ) : (
-              filteredAllUsers.map((player) => {
+              filteredAllUsers.map((player, index) => {
                 const invite = getInviteForUser(player.id);
-                const isConfirming = confirmingPlayerId === player.id;
+                const isActive = activePlayerId === player.id;
                 const isInviting = invitingPlayerId === player.id;
-                const isSender = invite?.senderId === user?.id;
-                const canCancel = invite && ((isOwner || isAdmin) || isSender);
+                const canCancel = invite && ((isOwner || isAdmin) || invite.senderId === user?.id);
+                const isClickable = !invite || canCancel;
+                const isLast = index === filteredAllUsers.length - 1;
+                const floatingAbove = isLast;
 
                 return (
                   <div
                     key={player.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                      isConfirming
-                        ? 'bg-primary-50 dark:bg-primary-900/20'
-                        : invite
+                    ref={activePlayerId === player.id ? activeCardRef : undefined}
+                    role={isClickable ? 'button' : undefined}
+                    tabIndex={isClickable ? 0 : undefined}
+                    onClick={isClickable ? () => handleCardClick(player.id) : undefined}
+                    onKeyDown={isClickable ? (e) => e.key === 'Enter' && handleCardClick(player.id) : undefined}
+                    className={`relative flex items-center gap-2 py-1.5 px-2 rounded-lg transition-all border-2 ${
+                      isActive
+                        ? invite && canCancel
+                          ? 'bg-primary-50 dark:bg-primary-900/20 border-red-500 dark:border-red-400'
+                          : 'bg-primary-50 dark:bg-primary-900/20 border-primary-500 dark:border-primary-400'
+                        : 'border-transparent ' + (invite
                         ? 'bg-gray-50 dark:bg-gray-800/50'
-                        : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
-                    }`}
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-800/50')
+                    } ${isClickable ? 'cursor-pointer' : ''}`}
                   >
                     <PlayerAvatar
                       player={player}
                       showName={false}
-                      smallLayout={true}
                       fullHideName={true}
+                      extrasmall={true}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white truncate">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {player.firstName} {player.lastName}
                       </p>
                       {player.verbalStatus && (
-                        <p className="verbal-status">
+                        <p className="verbal-status text-xs">
                           {player.verbalStatus}
-                        </p>
-                      )}
-                      {!invite && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {t('games.level', { defaultValue: 'Level' })} {player.level.toFixed(1)}
                         </p>
                       )}
                       {invite && (
                         <>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             {t('chat.invitedBy', { defaultValue: 'Invited by' })} {invite.sender.firstName} {invite.sender.lastName}
                           </p>
                           <p className="text-xs text-primary-600 dark:text-primary-400">
@@ -305,56 +299,41 @@ export const GroupChannelInvitesModal = ({
                         </>
                       )}
                     </div>
-                    <div className="flex items-center min-w-[120px] justify-end">
-                      {invite ? (
-                        canCancel && (
-                          <button
-                            onClick={() => handleCancelInvite(invite.id)}
-                            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-300 ease-in-out"
-                            title={t('chat.cancelInvite', { defaultValue: 'Cancel invite' })}
-                          >
-                            <XCircle size={18} />
-                          </button>
-                        )
-                      ) : isConfirming ? (
-                        <div 
-                          className={`flex items-center gap-2 ${
-                            exitingPlayerId === player.id ? 'button-container-exit' : 'button-container-enter'
-                          }`}
-                        >
+                    {isActive && (
+                      <div
+                        className={`absolute right-0 z-10 button-container-enter ${
+                          floatingAbove ? 'bottom-full -mb-3' : 'top-full -mt-3'
+                        }`}
+                        style={{ transformOrigin: floatingAbove ? 'bottom right' : 'top right' }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {invite ? (
+                          canCancel && (
+                            <button
+                              onClick={() => handleCancelInviteClick(invite.id)}
+                              className="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-800 rounded-lg shadow-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            >
+                              {t('chat.cancelInvite', { defaultValue: 'Cancel invite' })}
+                            </button>
+                          )
+                        ) : (
                           <button
                             onClick={() => handleConfirmInvite(player.id)}
                             disabled={isInviting}
-                            className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95"
-                            aria-label="Confirm"
+                            className="px-3 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg shadow-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
                             {isInviting ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span className="inline-flex items-center gap-1">
+                                <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                {t('chat.invite', { defaultValue: 'Invite' })}
+                              </span>
                             ) : (
-                              <Check size={18} />
+                              t('chat.invite', { defaultValue: 'Invite' })
                             )}
                           </button>
-                          <button
-                            onClick={handleCancelInviteConfirm}
-                            disabled={isInviting}
-                            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95"
-                            aria-label="Cancel"
-                          >
-                            <X size={18} />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handlePlayerClick(player.id)}
-                          disabled={isInviting}
-                          className={`px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out text-sm font-medium transform hover:scale-105 active:scale-95 ${
-                            exitingPlayerId === player.id ? 'button-container-enter' : ''
-                          }`}
-                        >
-                          {t('chat.invite', { defaultValue: 'Invite' })}
-                        </button>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })

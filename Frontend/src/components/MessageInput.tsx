@@ -8,6 +8,7 @@ import { ChatType, Game, Bug } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { ReplyPreview } from './ReplyPreview';
+import { EditPreview } from './EditPreview';
 import { MentionInput } from './MentionInput';
 import { JoinGroupChannelButton } from './JoinGroupChannelButton';
 import { PollCreationModal } from './chat/PollCreationModal';
@@ -85,6 +86,11 @@ interface MessageInputProps {
   onGroupChannelUpdate?: () => void | Promise<void>;
   contextType?: ChatContextType;
   contextId?: string;
+  editingMessage?: ChatMessage | null;
+  onCancelEdit?: () => void;
+  onEditMessage?: (updated: ChatMessage) => void;
+  lastOwnMessage?: ChatMessage | null;
+  onStartEditMessage?: (message: ChatMessage) => void;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
@@ -108,6 +114,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onGroupChannelUpdate,
   contextType: propContextType,
   contextId: propContextId,
+  editingMessage = null,
+  onCancelEdit,
+  onEditMessage,
+  lastOwnMessage = null,
+  onStartEditMessage,
 }) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
@@ -257,11 +268,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const messageRef = useRef(message);
   const mentionIdsRef = useRef(mentionIds);
+  const editingMessageRef = useRef(editingMessage);
 
   useEffect(() => {
     messageRef.current = message;
     mentionIdsRef.current = mentionIds;
-  }, [message, mentionIds]);
+    editingMessageRef.current = editingMessage;
+  }, [message, mentionIds, editingMessage]);
 
   const loadDraft = useCallback(async () => {
     if (!finalContextId || !user?.id) return;
@@ -417,6 +430,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         clearTimeout(saveDraftTimeoutRef.current);
         saveDraftTimeoutRef.current = null;
       }
+      if (editingMessageRef.current) return;
       if (finalContextId && user?.id) {
         const currentMessage = messageRef.current?.trim();
         const currentMentionIds = mentionIdsRef.current || [];
@@ -627,10 +641,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     };
   };
 
+  useEffect(() => {
+    if (editingMessage) {
+      setMessage(editingMessage.content ?? '');
+      setMentionIds(editingMessage.mentionIds ?? []);
+      updateMultilineState();
+    }
+    // Intentionally only react to id: prefill once when entering edit mode; avoid resetting while user types
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingMessage?.id]);
+
   const handleMessageChange = (newValue: string, newMentionIds: string[]) => {
     setMessage(newValue);
     setMentionIds(newMentionIds);
-    debouncedSaveDraft(newValue, newMentionIds);
+    if (!editingMessage) debouncedSaveDraft(newValue, newMentionIds);
     updateMultilineState();
   };
 
@@ -687,6 +711,37 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled) return;
+
+    if (editingMessage && onEditMessage) {
+      const trimmedContent = message.trim();
+      if (!trimmedContent) return;
+      setIsLoading(true);
+      try {
+        const updated = await chatApi.editMessage(editingMessage.id, {
+          content: trimmedContent,
+          mentionIds: [...mentionIds],
+        });
+        onEditMessage(updated);
+        setMessage('');
+        setMentionIds([]);
+        onCancelEdit?.();
+        requestAnimationFrame(() => {
+          (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
+        });
+      } catch (err: unknown) {
+        console.error('Edit message failed:', err);
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 404) {
+          onCancelEdit?.();
+          toast.error(t('chat.editMessageDeleted', { defaultValue: 'Message was deleted' }));
+        } else {
+          toast.error(t('chat.sendFailed') || 'Failed to update message');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
 
     if (!finalContextId) {
       console.error('[MessageInput] Missing contextId:', { gameId, bugId, userChatId, groupChannelId });
@@ -803,11 +858,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const platform = Capacitor.getPlatform();
     const isMobile = platform === 'ios' || platform === 'android';
 
-    // On mobile: Enter creates new line, only send button sends message
-    // On desktop: Enter sends, Shift+Enter creates new line
     if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
       e.preventDefault();
       handleSubmit(e);
+      return;
+    }
+    if (e.key === 'ArrowUp' && !isMobile && !message.trim() && !replyTo && !editingMessage && lastOwnMessage && onStartEditMessage) {
+      e.preventDefault();
+      onStartEditMessage(lastOwnMessage);
     }
   };
 
@@ -849,7 +907,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {replyTo && (
+      {editingMessage && (
+        <EditPreview
+          message={editingMessage}
+          onCancel={onCancelEdit!}
+          className="mb-3"
+        />
+      )}
+      {replyTo && !editingMessage && (
         <ReplyPreview
           replyTo={{
             id: replyTo.id,

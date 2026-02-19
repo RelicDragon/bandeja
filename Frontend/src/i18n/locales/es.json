@@ -1545,20 +1545,27 @@
     },
     "contextMenu": {
       "reply": "Responder",
+      "edit": "Editar",
       "copy": "Copiar",
       "details": "Detalles",
+      "pin": "Fijar",
+      "unpin": "Desfijar",
       "delete": "Eliminar",
       "report": "Reportar",
       "copyMessage": "Copiar mensaje",
       "deleteMessage": "Eliminar mensaje",
       "replyTo": "Responder a {{name}}",
       "readBy": "Leído por",
+      "notReadYet": "Aún no leído",
       "back": "Atrás",
       "translate": "Traducir",
       "translating": "Traduciendo..."
     },
     "translationUnavailable": "La traducción no está disponible temporalmente. Por favor, inténtalo de nuevo más tarde.",
     "translationError": "Error al traducir el mensaje. Por favor, inténtalo de nuevo.",
+    "pinFailed": "Error al fijar el mensaje",
+    "unpinFailed": "Error al desfijar el mensaje",
+    "pinnedMessageNotFound": "El mensaje ya no está disponible",
     "report": {
       "title": "Reportar Mensaje",
       "description": "¿Por qué estás reportando este mensaje?",
@@ -1577,6 +1584,12 @@
         "OTHER": "Otro"
       }
     },
+    "edited": "editado",
+    "editingLabel": "Editando",
+    "cancelEdit": "Cancelar edición",
+    "created": "Creado",
+    "editedAt": "Editado",
+    "noContent": "(sin texto)",
     "reply": {
       "replyingTo": "Respondiendo a {{name}}",
       "cancelReply": "Cancelar respuesta",
@@ -1669,6 +1682,7 @@
     "requestToChat": "Solicitar chat",
     "invalidImageType": "Tipo de imagen inválido. Por favor selecciona un archivo de imagen válido.",
     "sendFailed": "Error al enviar el mensaje",
+    "editMessageDeleted": "El mensaje fue eliminado",
     "failedToSend": "Error al enviar",
     "resend": "Reenviar",
     "missingContextId": "Falta el contexto del chat",

@@ -3,7 +3,7 @@ import { Server as HTTPServer } from 'http';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/database';
 import { GameReadService } from './game/read.service';
-import { ChatContextType } from '@prisma/client';
+import { ChatContextType, ChatType } from '@prisma/client';
 import { presenceService } from './presence.service';
 
 interface AuthenticatedSocket extends Socket {
@@ -495,7 +495,7 @@ class SocketService {
   public emitChatEvent(
     contextType: ChatContextType, 
     contextId: string, 
-    eventType: 'message' | 'reaction' | 'read-receipt' | 'deleted' | 'poll-vote',
+    eventType: 'message' | 'message-updated' | 'reaction' | 'read-receipt' | 'deleted' | 'poll-vote',
     data: any,
     messageId?: string
   ) {
@@ -520,6 +520,16 @@ class SocketService {
     if (contextType === 'GROUP' && eventType === 'message') {
       this.emitGroupChannelMessageToParticipants(contextId, data.message, messageId);
     }
+  }
+
+  public emitPinnedMessagesUpdated(contextType: ChatContextType, contextId: string, chatType: ChatType): void {
+    const room = this.getChatRoomName(contextType, contextId);
+    this.io.to(room).emit('chat:pinned-messages-updated', {
+      contextType,
+      contextId,
+      chatType,
+      timestamp: new Date().toISOString()
+    });
   }
 
   public async emitUserChatMessageToUsers(chatId: string, message: any, messageId?: string) {

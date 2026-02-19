@@ -15,6 +15,7 @@ interface AnimatedMessageItemProps {
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onReplyMessage: (message: ChatMessage) => void;
+  onEditMessage?: (message: ChatMessage) => void;
   onPollUpdated?: (messageId: string, updatedPoll: import('@/api/chat').Poll) => void;
   onResendQueued?: (tempId: string) => void;
   onRemoveFromQueue?: (tempId: string) => void;
@@ -28,6 +29,9 @@ interface AnimatedMessageItemProps {
   userChatUser1Id?: string;
   userChatUser2Id?: string;
   onChatRequestRespond?: (messageId: string, accepted: boolean) => void;
+  isPinned?: boolean;
+  onPin?: (message: ChatMessage) => void;
+  onUnpin?: (messageId: string) => void;
 }
 
 export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
@@ -37,6 +41,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   onRemoveReaction,
   onDeleteMessage,
   onReplyMessage,
+  onEditMessage,
   onPollUpdated,
   onResendQueued,
   onRemoveFromQueue,
@@ -50,6 +55,9 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   userChatUser1Id,
   userChatUser2Id,
   onChatRequestRespond,
+  isPinned = false,
+  onPin,
+  onUnpin,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -80,6 +88,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
         onRemoveReaction={onRemoveReaction}
         onDeleteMessage={onDeleteMessage}
         onReplyMessage={onReplyMessage}
+        onEditMessage={onEditMessage}
         onPollUpdated={onPollUpdated}
         onResendQueued={onResendQueued}
         onRemoveFromQueue={onRemoveFromQueue}
@@ -93,6 +102,9 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
         userChatUser1Id={userChatUser1Id}
         userChatUser2Id={userChatUser2Id}
         onChatRequestRespond={onChatRequestRespond}
+        isPinned={isPinned}
+        onPin={onPin}
+        onUnpin={onUnpin}
       />
     </div>
   );

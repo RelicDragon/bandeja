@@ -775,11 +775,11 @@ export class MessageService {
       page?: number;
       limit?: number;
       chatType?: ChatType;
+      beforeMessageId?: string;
     }
   ) {
-    const { page = 1, limit = 50, chatType = ChatType.PUBLIC } = options;
+    const { page = 1, limit = 50, chatType = ChatType.PUBLIC, beforeMessageId } = options;
 
-    // Validate access based on context type
     if (chatContextType === 'GAME') {
       const { participant, game } = await this.validateGameAccess(contextId, userId);
       await this.validateChatTypeAccess(participant, chatType, game, userId, contextId, false);
@@ -791,15 +791,41 @@ export class MessageService {
       await this.validateGroupChannelAccess(contextId, userId);
     }
 
-    const skip = (Number(page) - 1) * Number(limit);
-
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { language: true },
     });
-
     const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
 
+    if (beforeMessageId) {
+      const beforeMessage = await prisma.chatMessage.findFirst({
+        where: {
+          id: beforeMessageId,
+          chatContextType,
+          contextId,
+          chatType: chatType as ChatType
+        },
+        select: { createdAt: true }
+      });
+      if (!beforeMessage) {
+        return [];
+      }
+      const messages = await prisma.chatMessage.findMany({
+        where: {
+          chatContextType,
+          contextId,
+          chatType: chatType as ChatType,
+          createdAt: { lt: beforeMessage.createdAt }
+        },
+        include: this.getMessageInclude(),
+        orderBy: { createdAt: 'desc' },
+        take: Number(limit)
+      });
+      const withTranslation = await this.enrichMessagesWithTranslations(messages, languageCode);
+      return withTranslation.reverse();
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
     const messages = await prisma.chatMessage.findMany({
       where: {
         chatContextType,
@@ -813,7 +839,6 @@ export class MessageService {
     });
 
     const messagesWithTranslation = await this.enrichMessagesWithTranslations(messages, languageCode);
-
     return messagesWithTranslation.reverse();
   }
 
@@ -861,6 +886,49 @@ export class MessageService {
     });
     const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
     return this.enrichMessagesWithTranslations(messages, languageCode);
+  }
+
+  static async updateMessageContent(
+    messageId: string,
+    userId: string,
+    data: { content: string; mentionIds?: string[] }
+  ) {
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+      include: { poll: { select: { question: true } } }
+    });
+
+    if (!message) {
+      throw new ApiError(404, 'Message not found');
+    }
+
+    if (message.senderId !== userId) {
+      throw new ApiError(403, 'You can only edit your own messages');
+    }
+
+    await this.validateMessageAccess(message, userId, true);
+
+    const content = (data.content ?? '').trim();
+    if (!content) {
+      throw new ApiError(400, 'Content cannot be empty');
+    }
+
+    const mentionIds = Array.isArray(data.mentionIds) ? data.mentionIds : message.mentionIds;
+    const contentSearchable = computeContentSearchable(content, message.poll?.question);
+
+    const updated = await prisma.chatMessage.update({
+      where: { id: messageId },
+      data: {
+        content,
+        mentionIds,
+        contentSearchable,
+        editedAt: new Date()
+      },
+      include: this.getMessageInclude()
+    });
+
+    await updateLastMessagePreview(message.chatContextType, message.contextId);
+    return updated;
   }
 
   static async updateMessageState(messageId: string, userId: string, state: MessageState) {

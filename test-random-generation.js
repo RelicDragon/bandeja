@@ -15,95 +15,12 @@ const RED = '\x1b[31m';
 const YELLOW = '\x1b[33m';
 const RESET = '\x1b[0m';
 
-function getPairKey(player1, player2) {
-  return player1 < player2 ? `${player1}-${player2}` : `${player2}-${player1}`;
+function pairKey(a, b) {
+  return a < b ? `${a}-${b}` : `${b}-${a}`;
 }
 
-function getPairUsageHistory(rounds) {
-  const pairCounts = new Map();
-  
-  for (const round of rounds) {
-    for (const match of round.matches) {
-      if (match.teamA.length >= 2) {
-        const pairKey = getPairKey(match.teamA[0], match.teamA[1]);
-        pairCounts.set(pairKey, (pairCounts.get(pairKey) || 0) + 1);
-      }
-      
-      if (match.teamB.length >= 2) {
-        const pairKey = getPairKey(match.teamB[0], match.teamB[1]);
-        pairCounts.set(pairKey, (pairCounts.get(pairKey) || 0) + 1);
-      }
-    }
-  }
-  
-  return pairCounts;
-}
-
-function getIndividualOpponentHistory(rounds) {
-  const opponentCounts = new Map();
-  
-  for (const round of rounds) {
-    for (const match of round.matches) {
-      const allTeamA = match.teamA;
-      const allTeamB = match.teamB;
-      
-      for (const playerA of allTeamA) {
-        for (const playerB of allTeamB) {
-          const opponentKey = getPairKey(playerA, playerB);
-          opponentCounts.set(opponentKey, (opponentCounts.get(opponentKey) || 0) + 1);
-        }
-      }
-    }
-  }
-  
-  return opponentCounts;
-}
-
-function getMatchesPlayedCounts(playerIds, rounds) {
-  const matchCounts = new Map();
-  
-  for (const playerId of playerIds) {
-    matchCounts.set(playerId, 0);
-  }
-  
-  for (const round of rounds) {
-    for (const match of round.matches) {
-      for (const playerId of match.teamA) {
-        if (matchCounts.has(playerId)) {
-          matchCounts.set(playerId, (matchCounts.get(playerId) || 0) + 1);
-        }
-      }
-      
-      for (const playerId of match.teamB) {
-        if (matchCounts.has(playerId)) {
-          matchCounts.set(playerId, (matchCounts.get(playerId) || 0) + 1);
-        }
-      }
-    }
-  }
-  
-  return matchCounts;
-}
-
-function getOpponentMatchupHistory(rounds) {
-  const matchupCounts = new Map();
-  
-  for (const round of rounds) {
-    for (const match of round.matches) {
-      if (match.teamA.length >= 2 && match.teamB.length >= 2) {
-        const pairA = getPairKey(match.teamA[0], match.teamA[1]);
-        const pairB = getPairKey(match.teamB[0], match.teamB[1]);
-        const matchupKey = pairA < pairB ? `${pairA}-vs-${pairB}` : `${pairB}-vs-${pairA}`;
-        matchupCounts.set(matchupKey, (matchupCounts.get(matchupKey) || 0) + 1);
-      }
-    }
-  }
-  
-  return matchupCounts;
-}
-
-function shuffleArray(array) {
-  const result = [...array];
+function shuffle(arr) {
+  const result = [...arr];
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [result[i], result[j]] = [result[j], result[i]];
@@ -111,416 +28,362 @@ function shuffleArray(array) {
   return result;
 }
 
-function generateAllPossiblePairs(players, usedPairCounts, matchesPlayedCounts) {
-  const allPairs = [];
-  
-  for (let i = 0; i < players.length - 1; i++) {
-    for (let j = i + 1; j < players.length; j++) {
-      const p1 = players[i];
-      const p2 = players[j];
-      const pairKey = getPairKey(p1, p2);
-      const usageCount = usedPairCounts.get(pairKey) || 0;
-      const matchesP1 = matchesPlayedCounts.get(p1) || 0;
-      const matchesP2 = matchesPlayedCounts.get(p2) || 0;
-      const maxMatches = Math.max(matchesP1, matchesP2);
-      const totalMatches = matchesP1 + matchesP2;
-      
-      allPairs.push({
-        pair: [p1, p2],
-        pairKey,
-        usageCount,
-        maxMatches,
-        totalMatches,
-        score: usageCount * 1000000 + maxMatches * 1000 + totalMatches * 10
-      });
-    }
-  }
-  
-  allPairs.sort((a, b) => {
-    if (a.usageCount !== b.usageCount) return a.usageCount - b.usageCount;
-    if (a.maxMatches !== b.maxMatches) return a.maxMatches - b.maxMatches;
-    return a.totalMatches - b.totalMatches;
-  });
-  
-  return allPairs;
+function hasPlayers(match) {
+  return match.teamA.length > 0 && match.teamB.length > 0;
 }
 
-function selectPairsFromSorted(sortedPairs, neededPairs, randomize = false) {
-  const selected = [];
-  const usedPlayers = new Set();
-  const usedPairKeys = new Set();
-  
-  let pairsList = sortedPairs;
-  if (randomize) {
-    const groups = new Map();
-    for (const pairInfo of sortedPairs) {
-      const key = `${pairInfo.usageCount}-${pairInfo.maxMatches}-${pairInfo.totalMatches}`;
-      if (!groups.has(key)) {
-        groups.set(key, []);
-      }
-      groups.get(key).push(pairInfo);
-    }
-    
-    pairsList = [];
-    for (const group of groups.values()) {
-      pairsList.push(...shuffleArray(group));
-    }
-  }
-  
-  for (const pairInfo of pairsList) {
-    if (selected.length >= neededPairs) break;
-    
-    const [p1, p2] = pairInfo.pair;
-    
-    if (usedPlayers.has(p1) || usedPlayers.has(p2)) continue;
-    if (usedPairKeys.has(pairInfo.pairKey)) continue;
-    
-    selected.push(pairInfo.pair);
-    usedPlayers.add(p1);
-    usedPlayers.add(p2);
-    usedPairKeys.add(pairInfo.pairKey);
-  }
-  
-  return selected;
-}
-
-function selectPairsPlayerCentric(allPairs, players, matchesPlayedCounts, neededPairs) {
-  const sortedPlayers = [...players].sort((a, b) => {
-    const matchesA = matchesPlayedCounts.get(a) || 0;
-    const matchesB = matchesPlayedCounts.get(b) || 0;
-    if (matchesA !== matchesB) return matchesA - matchesB;
-    return Math.random() - 0.5;
-  });
-  
-  const pairMap = new Map();
-  for (const pairInfo of allPairs) {
-    const key = pairInfo.pairKey;
-    pairMap.set(key, pairInfo);
-  }
-  
-  const selected = [];
-  const usedPlayers = new Set();
-  
-  for (let i = 0; i < sortedPlayers.length - 1 && selected.length < neededPairs; i++) {
-    const p1 = sortedPlayers[i];
-    if (usedPlayers.has(p1)) continue;
-    
-    let bestPair = null;
-    let bestScore = Infinity;
-    
-    for (let j = i + 1; j < sortedPlayers.length; j++) {
-      const p2 = sortedPlayers[j];
-      if (usedPlayers.has(p2)) continue;
-      
-      const pairKey = getPairKey(p1, p2);
-      const pairInfo = pairMap.get(pairKey);
-      
-      if (!pairInfo) continue;
-      
-      if (pairInfo.score < bestScore) {
-        bestScore = pairInfo.score;
-        bestPair = pairInfo;
-      }
-    }
-    
-    if (bestPair) {
-      selected.push(bestPair.pair);
-      usedPlayers.add(bestPair.pair[0]);
-      usedPlayers.add(bestPair.pair[1]);
-    }
-  }
-  
-  return selected;
-}
-
-function generateAllPossiblePairsFromFixedTeams(fixedTeams, usedPairCounts, matchesPlayedCounts) {
-  const allPairs = [];
-  
-  for (const pair of fixedTeams) {
-    if (pair.length < 2) continue;
-    
-    const p1 = pair[0];
-    const p2 = pair[1];
-    const pairKey = getPairKey(p1, p2);
-    const usageCount = usedPairCounts.get(pairKey) || 0;
-    const matchesP1 = matchesPlayedCounts.get(p1) || 0;
-    const matchesP2 = matchesPlayedCounts.get(p2) || 0;
-    const maxMatches = Math.max(matchesP1, matchesP2);
-    const totalMatches = matchesP1 + matchesP2;
-    
-    allPairs.push({
-      pair: [p1, p2],
-      pairKey,
-      usageCount,
-      maxMatches,
-      totalMatches,
-      score: usageCount * 1000000 + maxMatches * 1000 + totalMatches * 10
-    });
-  }
-  
-  allPairs.sort((a, b) => {
-    if (a.usageCount !== b.usageCount) return a.usageCount - b.usageCount;
-    if (a.maxMatches !== b.maxMatches) return a.maxMatches - b.maxMatches;
-    return a.totalMatches - b.totalMatches;
-  });
-  
-  return allPairs;
-}
-
-function generateAllPossibleMatchups(pairs, opponentMatchups, individualOpponentHistory) {
-  const allMatchups = [];
-  
-  for (let i = 0; i < pairs.length - 1; i++) {
-    for (let j = i + 1; j < pairs.length; j++) {
-      const pairA = pairs[i];
-      const pairB = pairs[j];
-      const pairAKey = getPairKey(pairA[0], pairA[1]);
-      const pairBKey = getPairKey(pairB[0], pairB[1]);
-      const matchupKey = pairAKey < pairBKey ? `${pairAKey}-vs-${pairBKey}` : `${pairBKey}-vs-${pairAKey}`;
-      const teamMatchupCount = opponentMatchups.get(matchupKey) || 0;
-      
-      let maxIndividualOpponentCount = 0;
-      for (const playerA of pairA) {
-        for (const playerB of pairB) {
-          const opponentKey = getPairKey(playerA, playerB);
-          const count = individualOpponentHistory.get(opponentKey) || 0;
-          maxIndividualOpponentCount = Math.max(maxIndividualOpponentCount, count);
+function buildTeammateHistory(rounds) {
+  const counts = new Map();
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      if (!hasPlayers(match)) continue;
+      for (const team of [match.teamA, match.teamB]) {
+        if (team.length >= 2) {
+          const key = pairKey(team[0], team[1]);
+          counts.set(key, (counts.get(key) || 0) + 1);
         }
       }
-      
-      allMatchups.push({
-        pairAIndex: i,
-        pairBIndex: j,
-        teamMatchupCount,
-        maxIndividualOpponentCount,
-        score: teamMatchupCount * 1000 + maxIndividualOpponentCount * 10
-      });
     }
   }
-  
-  allMatchups.sort((a, b) => {
-    if (a.teamMatchupCount !== b.teamMatchupCount) return a.teamMatchupCount - b.teamMatchupCount;
-    return a.maxIndividualOpponentCount - b.maxIndividualOpponentCount;
-  });
-  
-  return allMatchups;
+  return counts;
 }
 
-function selectMatchupsFromSorted(sortedMatchups, numMatches, randomize = false) {
-  const selected = [];
-  const usedPairIndices = new Set();
-  
-  let matchupsList = sortedMatchups;
-  if (randomize) {
-    const groups = new Map();
-    for (const matchup of sortedMatchups) {
-      const key = `${matchup.teamMatchupCount}-${matchup.maxIndividualOpponentCount}`;
-      if (!groups.has(key)) {
-        groups.set(key, []);
+function buildOpponentHistory(rounds) {
+  const counts = new Map();
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      if (!hasPlayers(match)) continue;
+      for (const a of match.teamA) {
+        for (const b of match.teamB) {
+          const key = pairKey(a, b);
+          counts.set(key, (counts.get(key) || 0) + 1);
+        }
       }
-      groups.get(key).push(matchup);
-    }
-    
-    matchupsList = [];
-    for (const group of groups.values()) {
-      matchupsList.push(...shuffleArray(group));
     }
   }
-  
-  for (const matchup of matchupsList) {
+  return counts;
+}
+
+function buildMatchesPlayed(playerIds, rounds) {
+  const counts = new Map();
+  for (const id of playerIds) counts.set(id, 0);
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      if (!hasPlayers(match)) continue;
+      for (const id of [...match.teamA, ...match.teamB]) {
+        if (counts.has(id)) counts.set(id, counts.get(id) + 1);
+      }
+    }
+  }
+  return counts;
+}
+
+function getLastRoundTeamKeys(rounds) {
+  const keys = new Set();
+  if (rounds.length === 0) return keys;
+  const last = rounds[rounds.length - 1];
+  for (const match of last.matches) {
+    if (!hasPlayers(match)) continue;
+    for (const team of [match.teamA, match.teamB]) {
+      if (team.length >= 2) keys.add(pairKey(team[0], team[1]));
+    }
+  }
+  return keys;
+}
+
+function generateAllPossiblePairs(players) {
+  const pairs = [];
+  for (let i = 0; i < players.length - 1; i++) {
+    for (let j = i + 1; j < players.length; j++) {
+      pairs.push({ pair: [players[i], players[j]], key: pairKey(players[i], players[j]) });
+    }
+  }
+  return pairs;
+}
+
+function buildPairPool(allPairs, teammateHistory, lastRoundKeys) {
+  if (allPairs.length === 0) return [];
+
+  let minCount = Infinity;
+  for (const { key } of allPairs) {
+    const count = teammateHistory.get(key) || 0;
+    if (count < minCount) minCount = count;
+  }
+
+  const minPool = allPairs.filter(p => (teammateHistory.get(p.key) || 0) === minCount);
+
+  if (lastRoundKeys.size === 0) return minPool;
+
+  const filtered = minPool.filter(p => !lastRoundKeys.has(p.key));
+  return filtered.length > 0 ? filtered : minPool;
+}
+
+function selectFromPool(pool, matchesPlayed, neededPairs, teammateHistory) {
+  const selected = [];
+  const usedPlayers = new Set();
+
+  const playerSet = new Set();
+  for (const { pair } of pool) {
+    playerSet.add(pair[0]);
+    playerSet.add(pair[1]);
+  }
+
+  const sortedPlayers = shuffle([...playerSet]).sort(
+    (a, b) => (matchesPlayed.get(a) || 0) - (matchesPlayed.get(b) || 0)
+  );
+
+  const playerPairsMap = new Map();
+  for (const p of pool) {
+    for (const id of p.pair) {
+      if (!playerPairsMap.has(id)) playerPairsMap.set(id, []);
+      playerPairsMap.get(id).push(p);
+    }
+  }
+
+  for (const player of sortedPlayers) {
+    if (selected.length >= neededPairs) break;
+    if (usedPlayers.has(player)) continue;
+
+    const candidates = (playerPairsMap.get(player) || [])
+      .filter(p => !usedPlayers.has(p.pair[0]) && !usedPlayers.has(p.pair[1]));
+
+    if (candidates.length === 0) continue;
+
+    const sorted = shuffle(candidates).sort((a, b) => {
+      const partnerA = a.pair[0] === player ? a.pair[1] : a.pair[0];
+      const partnerB = b.pair[0] === player ? b.pair[1] : b.pair[0];
+      const matchDiff = (matchesPlayed.get(partnerA) || 0) - (matchesPlayed.get(partnerB) || 0);
+      if (matchDiff !== 0) return matchDiff;
+      if (teammateHistory) {
+        return (teammateHistory.get(a.key) || 0) - (teammateHistory.get(b.key) || 0);
+      }
+      return 0;
+    });
+
+    selected.push(sorted[0].pair);
+    usedPlayers.add(sorted[0].pair[0]);
+    usedPlayers.add(sorted[0].pair[1]);
+  }
+
+  return selected;
+}
+
+const SELECTION_RETRIES = 20;
+
+function selectTeamPairs(pool, allPairs, matchesPlayed, neededPairs, teammateHistory) {
+  let best = [];
+
+  for (let i = 0; i < SELECTION_RETRIES; i++) {
+    const result = selectFromPool(pool, matchesPlayed, neededPairs, teammateHistory);
+    if (result.length === neededPairs) return result;
+    if (result.length > best.length) best = result;
+  }
+
+  const minCount = allPairs.reduce(
+    (min, p) => Math.min(min, teammateHistory.get(p.key) || 0), Infinity
+  );
+  const fullMinPool = allPairs.filter(p => (teammateHistory.get(p.key) || 0) === minCount);
+
+  if (fullMinPool.length > pool.length) {
+    for (let i = 0; i < SELECTION_RETRIES; i++) {
+      const result = selectFromPool(fullMinPool, matchesPlayed, neededPairs, teammateHistory);
+      if (result.length === neededPairs) return result;
+      if (result.length > best.length) best = result;
+    }
+  }
+
+  const levels = [...new Set(allPairs.map(p => teammateHistory.get(p.key) || 0))].sort((a, b) => a - b);
+
+  for (const level of levels) {
+    if (level <= minCount) continue;
+    const expanded = allPairs.filter(p => (teammateHistory.get(p.key) || 0) <= level);
+    for (let i = 0; i < SELECTION_RETRIES; i++) {
+      const result = selectFromPool(expanded, matchesPlayed, neededPairs, teammateHistory);
+      if (result.length === neededPairs) return result;
+      if (result.length > best.length) best = result;
+    }
+  }
+
+  return best;
+}
+
+function formMatchups(pairs, opponentHistory) {
+  const matches = [];
+  const shuffledPairs = shuffle([...pairs]);
+  const used = new Set();
+
+  for (let i = 0; i < shuffledPairs.length; i++) {
+    if (used.has(i)) continue;
+
+    const team1 = shuffledPairs[i];
+    let bestScore = Infinity;
+    const candidates = [];
+
+    for (let j = i + 1; j < shuffledPairs.length; j++) {
+      if (used.has(j)) continue;
+
+      let score = 0;
+      for (const a of team1) {
+        for (const b of shuffledPairs[j]) {
+          score += opponentHistory.get(pairKey(a, b)) || 0;
+        }
+      }
+
+      if (score < bestScore) {
+        bestScore = score;
+        candidates.length = 0;
+        candidates.push(j);
+      } else if (score === bestScore) {
+        candidates.push(j);
+      }
+    }
+
+    if (candidates.length > 0) {
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      used.add(i);
+      used.add(chosen);
+      matches.push({ teamA: team1, teamB: shuffledPairs[chosen] });
+    }
+  }
+
+  return matches;
+}
+
+function generateFixedTeamMatchups(fixedTeams, matchesPlayed, opponentHistory, numMatches) {
+  const allMatchups = [];
+
+  for (let i = 0; i < fixedTeams.length - 1; i++) {
+    for (let j = i + 1; j < fixedTeams.length; j++) {
+      const tA = fixedTeams[i];
+      const tB = fixedTeams[j];
+
+      const balanceScore = [...tA, ...tB].reduce(
+        (sum, id) => sum + (matchesPlayed.get(id) || 0), 0
+      );
+
+      let opponentScore = 0;
+      for (const a of tA) {
+        for (const b of tB) {
+          opponentScore += opponentHistory.get(pairKey(a, b)) || 0;
+        }
+      }
+
+      allMatchups.push({ teamAIdx: i, teamBIdx: j, balanceScore, opponentScore });
+    }
+  }
+
+  const sorted = shuffle(allMatchups).sort((a, b) => {
+    if (a.balanceScore !== b.balanceScore) return a.balanceScore - b.balanceScore;
+    return a.opponentScore - b.opponentScore;
+  });
+
+  const selected = [];
+  const usedTeams = new Set();
+
+  for (const m of sorted) {
     if (selected.length >= numMatches) break;
-    
-    if (usedPairIndices.has(matchup.pairAIndex) || usedPairIndices.has(matchup.pairBIndex)) continue;
-    
-    selected.push(matchup);
-    usedPairIndices.add(matchup.pairAIndex);
-    usedPairIndices.add(matchup.pairBIndex);
+    if (usedTeams.has(m.teamAIdx) || usedTeams.has(m.teamBIdx)) continue;
+    selected.push({ teamA: fixedTeams[m.teamAIdx], teamB: fixedTeams[m.teamBIdx] });
+    usedTeams.add(m.teamAIdx);
+    usedTeams.add(m.teamBIdx);
   }
-  
+
   return selected;
 }
 
 function generateRandomRound(players, fixedTeams, previousRounds, numMatches) {
-  const shuffledPlayers = shuffleArray([...players]);
-  const shuffledFixedTeams = fixedTeams ? shuffleArray([...fixedTeams]) : null;
-  
-  const usedPairCounts = getPairUsageHistory(previousRounds);
-  const allPlayerIds = shuffledFixedTeams ? shuffledFixedTeams.flat() : shuffledPlayers;
-  const matchesPlayedCounts = getMatchesPlayedCounts(allPlayerIds, previousRounds);
+  const allPlayerIds = fixedTeams ? fixedTeams.flat() : players;
+  const matchesPlayed = buildMatchesPlayed(allPlayerIds, previousRounds);
+  const opponentHistory = buildOpponentHistory(previousRounds);
+
+  if (fixedTeams && fixedTeams.length > 0) {
+    return generateFixedTeamMatchups(fixedTeams, matchesPlayed, opponentHistory, numMatches);
+  }
+
+  const teammateHistory = buildTeammateHistory(previousRounds);
+  const lastRoundKeys = getLastRoundTeamKeys(previousRounds);
+  const allPairs = generateAllPossiblePairs(players);
+
+  if (allPairs.length === 0) return [];
+
+  const pool = buildPairPool(allPairs, teammateHistory, lastRoundKeys);
   const neededPairs = numMatches * 2;
-  
-  let allPairs;
-  if (shuffledFixedTeams && shuffledFixedTeams.length > 0) {
-    allPairs = generateAllPossiblePairsFromFixedTeams(shuffledFixedTeams, usedPairCounts, matchesPlayedCounts);
-  } else {
-    allPairs = generateAllPossiblePairs(shuffledPlayers, usedPairCounts, matchesPlayedCounts);
-  }
-  
-  const pairsByUsage = new Map();
-  for (const pairInfo of allPairs) {
-    const usageKey = pairInfo.usageCount;
-    if (!pairsByUsage.has(usageKey)) {
-      pairsByUsage.set(usageKey, []);
-    }
-    pairsByUsage.get(usageKey).push(pairInfo);
-  }
-  
-  const sortedUsageLevels = Array.from(pairsByUsage.keys()).sort((a, b) => a - b);
-  
-  let pairs = null;
-  
-  for (let levelIndex = 0; levelIndex < sortedUsageLevels.length; levelIndex++) {
-    const availablePairsForLevel = [];
-    
-    for (let i = 0; i <= levelIndex; i++) {
-      availablePairsForLevel.push(...pairsByUsage.get(sortedUsageLevels[i]));
-    }
-    
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const selectedPairs = selectPairsFromSorted(availablePairsForLevel, neededPairs, attempt > 0);
-      if (selectedPairs.length === neededPairs) {
-        pairs = selectedPairs;
-        break;
-      }
-    }
-    
-    if (pairs) break;
-    
-    for (let attempt = 0; attempt < 10; attempt++) {
-      const selectedPairs = selectPairsPlayerCentric(availablePairsForLevel, allPlayerIds, matchesPlayedCounts, neededPairs);
-      if (selectedPairs.length === neededPairs) {
-        pairs = selectedPairs;
-        break;
-      }
-    }
-    
-    if (pairs) break;
-  }
-  
-  if (!pairs) {
-    pairs = selectPairsFromSorted(allPairs, neededPairs, false);
-  }
-  
-  const opponentMatchups = getOpponentMatchupHistory(previousRounds);
-  const individualOpponentHistory = getIndividualOpponentHistory(previousRounds);
-  
-  const allMatchups = generateAllPossibleMatchups(pairs, opponentMatchups, individualOpponentHistory);
-  
-  const matchupsByLevel = new Map();
-  for (const matchup of allMatchups) {
-    const levelKey = `${matchup.teamMatchupCount}-${matchup.maxIndividualOpponentCount}`;
-    if (!matchupsByLevel.has(levelKey)) {
-      matchupsByLevel.set(levelKey, []);
-    }
-    matchupsByLevel.get(levelKey).push(matchup);
-  }
-  
-  const sortedLevels = Array.from(matchupsByLevel.keys()).sort((a, b) => {
-    const [aTeam, aInd] = a.split('-').map(Number);
-    const [bTeam, bInd] = b.split('-').map(Number);
-    if (aTeam !== bTeam) return aTeam - bTeam;
-    return aInd - bInd;
-  });
-  
-  for (const level of sortedLevels) {
-    const matchupsAtLevel = matchupsByLevel.get(level);
-    
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const selectedMatchups = selectMatchupsFromSorted(matchupsAtLevel, numMatches, attempt > 0);
-      if (selectedMatchups.length === numMatches) {
-        return selectedMatchups.map(matchup => ({
-          teamA: pairs[matchup.pairAIndex],
-          teamB: pairs[matchup.pairBIndex],
-        }));
-      }
-    }
-  }
-  
-  const selectedMatchups = selectMatchupsFromSorted(allMatchups, numMatches, false);
-  return selectedMatchups.map(matchup => ({
-    teamA: pairs[matchup.pairAIndex],
-    teamB: pairs[matchup.pairBIndex],
-  }));
+  const teamPairs = selectTeamPairs(pool, allPairs, matchesPlayed, neededPairs, teammateHistory);
+
+  if (teamPairs.length < 2) return [];
+
+  const pairsToMatch = teamPairs.length % 2 === 0 ? teamPairs : teamPairs.slice(0, -1);
+  return formMatchups(pairsToMatch, opponentHistory);
 }
 
 function formatTeam(team) {
   return team.join('');
 }
 
-function formatMatch(match, roundNum, matchNum, previousRounds, hasFixedTeams) {
-  const pairUsageHistory = getPairUsageHistory(previousRounds);
-  const opponentMatchups = getOpponentMatchupHistory(previousRounds);
-  const individualOpponentHistory = getIndividualOpponentHistory(previousRounds);
-  
-  const teamAKey = getPairKey(match.teamA[0], match.teamA[1]);
-  const teamBKey = getPairKey(match.teamB[0], match.teamB[1]);
-  const matchupKey = teamAKey < teamBKey ? `${teamAKey}-vs-${teamBKey}` : `${teamBKey}-vs-${teamAKey}`;
-  
-  const teamAUsed = !hasFixedTeams && (pairUsageHistory.get(teamAKey) || 0) > 0;
-  const teamBUsed = !hasFixedTeams && (pairUsageHistory.get(teamBKey) || 0) > 0;
-  const matchUsed = (opponentMatchups.get(matchupKey) || 0) > 0;
-  
+function formatMatch(match, matchNum, previousRounds, hasFixedTeams) {
+  const teammateHistory = buildTeammateHistory(previousRounds);
+  const opponentHistory = buildOpponentHistory(previousRounds);
+
+  const teamAKey = pairKey(match.teamA[0], match.teamA[1]);
+  const teamBKey = pairKey(match.teamB[0], match.teamB[1]);
+
+  const teamAUsed = !hasFixedTeams && (teammateHistory.get(teamAKey) || 0) > 0;
+  const teamBUsed = !hasFixedTeams && (teammateHistory.get(teamBKey) || 0) > 0;
+
   const individualOpponents = [];
   for (const playerA of match.teamA) {
     for (const playerB of match.teamB) {
-      const opponentKey = getPairKey(playerA, playerB);
-      if ((individualOpponentHistory.get(opponentKey) || 0) > 0) {
-        individualOpponents.push(opponentKey);
+      const key = pairKey(playerA, playerB);
+      const count = opponentHistory.get(key) || 0;
+      if (count > 0) {
+        individualOpponents.push(`${key}:${count}`);
       }
     }
   }
-  
+
   let teamAStr = formatTeam(match.teamA);
   let teamBStr = formatTeam(match.teamB);
-  
+
   if (teamAUsed) teamAStr = `${RED}${teamAStr}${RESET}`;
   if (teamBUsed) teamBStr = `${RED}${teamBStr}${RESET}`;
-  
+
   let matchStr = `${teamAStr} - ${teamBStr}`;
-  if (matchUsed) {
-    matchStr = `${YELLOW}${matchStr}${RESET}`;
-  }
-  
+
   let result = `${matchNum}. ${matchStr}`;
   if (individualOpponents.length > 0) {
-    result += ` (${individualOpponents.join(', ')})`;
+    result += ` ${YELLOW}(${individualOpponents.join(', ')})${RESET}`;
   }
-  
+
   return result;
 }
 
 async function main() {
-  console.log('Random Match Generation Test\n');
-  
+  console.log('Random Match Generation Test (Pool-based Algorithm)\n');
+
   const hasFixedTeamInput = await question('Has fixed teams? (y/n): ');
   const hasFixedTeams = hasFixedTeamInput.toLowerCase() === 'y';
-  
+
   const playersInput = await question('Number of players: ');
   const courtsInput = await question('Number of courts: ');
-  
+
   const numPlayers = parseInt(playersInput);
   const numCourts = parseInt(courtsInput);
-  
+
   if (isNaN(numPlayers) || isNaN(numCourts) || numPlayers < 4 || numCourts < 1) {
     console.log('Invalid input');
     rl.close();
     return;
   }
-  
+
   const players = [];
   for (let i = 0; i < numPlayers; i++) {
     players.push(String.fromCharCode(65 + i));
   }
-  
-  const courts = [];
-  for (let i = 0; i < numCourts; i++) {
-    courts.push(`Court${i + 1}`);
-  }
-  
+
   let fixedTeams = null;
   if (hasFixedTeams) {
     fixedTeams = [];
-    const shuffled = shuffleArray([...players]);
+    const shuffled = shuffle([...players]);
     for (let i = 0; i < shuffled.length; i += 2) {
       if (i + 1 < shuffled.length) {
         fixedTeams.push([shuffled[i], shuffled[i + 1]]);
@@ -531,107 +394,89 @@ async function main() {
       console.log(`  ${idx + 1}. ${formatTeam(team)}`);
     });
   }
-  
+
+  const totalPairs = hasFixedTeams ? fixedTeams.length : (numPlayers * (numPlayers - 1)) / 2;
+  const numMatches = Math.min(numCourts, Math.floor(numPlayers / 4));
+  const pairsPerRound = numMatches * 2;
+  const fullCycleRounds = hasFixedTeams ? null : Math.ceil(totalPairs / pairsPerRound);
+
   console.log(`\nPlayers: ${players.join(', ')}`);
-  console.log(`Courts: ${courts.join(', ')}`);
+  console.log(`Courts: ${numCourts}, Matches/round: ${numMatches}`);
+  if (!hasFixedTeams) {
+    console.log(`Total possible pairs: ${totalPairs}, Pairs/round: ${pairsPerRound}, Full cycle: ${fullCycleRounds} rounds`);
+  }
   console.log('\nPress Enter to generate rounds...\n');
-  
+
   const previousRounds = [];
   let roundNum = 0;
-  
+
   while (true) {
     await question('');
-    
+
     roundNum++;
-    const numMatches = Math.min(numCourts, Math.floor(numPlayers / 4));
-    
+
     const matches = generateRandomRound(players, fixedTeams, previousRounds, numMatches);
-    
+
     if (matches.length === 0) {
       console.log(`Round ${roundNum}: No matches possible\n`);
       continue;
     }
-    
+
     const round = { matches };
     previousRounds.push(round);
-    
+
     console.log(`Round ${roundNum}`);
     matches.forEach((match, idx) => {
-      console.log(formatMatch(match, roundNum, idx + 1, previousRounds.slice(0, -1), hasFixedTeams));
+      console.log(formatMatch(match, idx + 1, previousRounds.slice(0, -1), hasFixedTeams));
     });
-    
-    if (numPlayers !== numCourts * 4) {
-      const matchCounts = getMatchesPlayedCounts(players, previousRounds);
-      const maxMatches = Math.max(...Array.from(matchCounts.values()));
+
+    const matchCounts = buildMatchesPlayed(players, previousRounds);
+    const maxMatches = Math.max(...Array.from(matchCounts.values()));
+    const minMatches = Math.min(...Array.from(matchCounts.values()));
+
+    if (maxMatches !== minMatches) {
       const sortedPlayers = [...players].sort();
       const countStrings = sortedPlayers.map(p => {
         const count = matchCounts.get(p) || 0;
         const diff = maxMatches - count;
         const countStr = `${p}${count}`;
-        if (diff === 0) {
-          return countStr;
-        } else if (diff === 1) {
-          return `${YELLOW}${countStr}${RESET}`;
-        } else {
-          return `${RED}${countStr}${RESET}`;
-        }
+        if (diff === 0) return countStr;
+        if (diff === 1) return `${YELLOW}${countStr}${RESET}`;
+        return `${RED}${countStr}${RESET}`;
       });
-      console.log(`Match counts: ${countStrings.join(' ')}`);
+      console.log(`Matches played: ${countStrings.join(' ')}`);
     }
-    
-    const individualOpponentHistory = getIndividualOpponentHistory(previousRounds);
+
+    const opponentHistory = buildOpponentHistory(previousRounds);
     const uniqueOpponentCounts = new Map();
-    
-    for (const player of players) {
-      uniqueOpponentCounts.set(player, new Set());
+    for (const player of players) uniqueOpponentCounts.set(player, new Set());
+
+    for (const [key] of opponentHistory.entries()) {
+      const [p1, p2] = key.split('-');
+      if (uniqueOpponentCounts.has(p1)) uniqueOpponentCounts.get(p1).add(p2);
+      if (uniqueOpponentCounts.has(p2)) uniqueOpponentCounts.get(p2).add(p1);
     }
-    
-    for (const [opponentKey, _] of individualOpponentHistory.entries()) {
-      const [p1, p2] = opponentKey.split('-');
-      if (uniqueOpponentCounts.has(p1)) {
-        uniqueOpponentCounts.get(p1).add(p2);
-      }
-      if (uniqueOpponentCounts.has(p2)) {
-        uniqueOpponentCounts.get(p2).add(p1);
-      }
-    }
-    
+
     const sortedPlayers = [...players].sort();
-    const uniqueOpponentStrings = sortedPlayers.map(p => {
-      const count = uniqueOpponentCounts.get(p)?.size || 0;
-      return `${p}${count}`;
-    });
-    console.log(`Unique opponents: ${uniqueOpponentStrings.join(' ')}`);
-    
-    const allUsedPairs = getPairUsageHistory(previousRounds);
-    const sortedPairs = Array.from(allUsedPairs.entries())
-      .filter(([_, count]) => count > 0)
-      .sort((a, b) => {
-        if (a[1] !== b[1]) return b[1] - a[1];
-        return a[0].localeCompare(b[0]);
-      });
-    
-    if (sortedPairs.length > 0) {
-      console.log(`Used pairs (${sortedPairs.length} unique):`);
-      const pairsByCount = new Map();
-      sortedPairs.forEach(([pair, count]) => {
-        if (!pairsByCount.has(count)) {
-          pairsByCount.set(count, []);
-        }
-        pairsByCount.get(count).push(pair);
-      });
-      Array.from(pairsByCount.entries())
-        .sort((a, b) => b[0] - a[0])
-        .forEach(([count, pairs]) => {
-          if (count > 1) {
-            console.log(`  ${count}x: ${pairs.join(', ')}`);
-          }
-        });
+    const uniqueOppStrings = sortedPlayers.map(p => `${p}${uniqueOpponentCounts.get(p)?.size || 0}`);
+    console.log(`Unique opponents: ${uniqueOppStrings.join(' ')}`);
+
+    if (!hasFixedTeams) {
+      const teammateHistory = buildTeammateHistory(previousRounds);
+      const usedPairs = Array.from(teammateHistory.entries())
+        .filter(([_, count]) => count > 0)
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+      const repeated = usedPairs.filter(([_, count]) => count > 1);
+      if (repeated.length > 0) {
+        console.log(`${RED}Repeated teammate pairs:${RESET}`);
+        repeated.forEach(([pair, count]) => console.log(`  ${RED}${count}x: ${pair}${RESET}`));
+      }
+      console.log(`Teammate pairs used: ${usedPairs.length}/${totalPairs}`);
     }
+
+    console.log('');
   }
 }
 
 main().catch(console.error);
-
-
-

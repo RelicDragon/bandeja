@@ -38,6 +38,7 @@ export interface SocketEvents {
   'error': (error: { message: string }) => void;
   // Unified chat events
   'chat:message': (data: { contextType: string; contextId: string; message: any; messageId?: string; timestamp?: string }) => void;
+  'chat:message-updated': (data: { contextType: string; contextId: string; message: any; messageId?: string; timestamp?: string }) => void;
   'chat:reaction': (data: { contextType: string; contextId: string; reaction: any }) => void;
   'chat:read-receipt': (data: { contextType: string; contextId: string; readReceipt: any }) => void;
   'chat:deleted': (data: { contextType: string; contextId: string; messageId: string }) => void;

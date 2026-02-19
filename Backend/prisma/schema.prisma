@@ -71,6 +71,7 @@ model User {
   userChats1                 UserChat[]           @relation("UserChat1")
   userChats2                 UserChat[]           @relation("UserChat2")
   pinnedUserChats            PinnedUserChat[]
+  pinnedMessages             PinnedMessage[]
   messageReactions           MessageReaction[]
   messageReadReceipts        MessageReadReceipt[]
   currentCity                City?                @relation("UserCurrentCity", fields: [currentCityId], references: [id])
@@ -588,6 +589,7 @@ model ChatMessage {
   chatType        ChatType             @default(PUBLIC)
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
+  editedAt        DateTime?
   replyToId       String?
   replyTo         ChatMessage?         @relation("MessageReply", fields: [replyToId], references: [id])
   replies         ChatMessage[]        @relation("MessageReply")
@@ -598,6 +600,7 @@ model ChatMessage {
   translations    MessageTranslation[]
   poll            Poll?
   pollId          String?              @unique
+  pinnedIn        PinnedMessage[]
 
   @@index([chatContextType, contextId])
   @@index([gameId])
@@ -607,6 +610,23 @@ model ChatMessage {
   @@index([replyToId])
   @@index([chatType])
   @@index([contextId])
+}
+
+model PinnedMessage {
+  id               String          @id @default(cuid())
+  chatContextType  ChatContextType
+  contextId        String
+  chatType         ChatType        @default(PUBLIC)
+  messageId        String
+  order            Int             @default(0)
+  pinnedById       String
+  createdAt        DateTime        @default(now())
+  message          ChatMessage     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  pinnedBy         User            @relation(fields: [pinnedById], references: [id], onDelete: Cascade)
+
+  @@unique([chatContextType, contextId, chatType, messageId])
+  @@index([chatContextType, contextId, chatType])
+  @@index([messageId])
 }
 
 model Poll {

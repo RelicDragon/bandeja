@@ -2,107 +2,12 @@ import { createId } from '@paralleldrive/cuid2';
 import { Match, Round } from '@/types/gameResults';
 import { Game } from '@/types';
 
-function getPairKey(player1: string, player2: string): string {
-  return player1 < player2 ? `${player1}-${player2}` : `${player2}-${player1}`;
+function pairKey(a: string, b: string): string {
+  return a < b ? `${a}-${b}` : `${b}-${a}`;
 }
 
-function getPairUsageHistory(rounds: Round[]): Map<string, number> {
-  const pairCounts = new Map<string, number>();
-  
-  for (const round of rounds) {
-    for (const match of round.matches) {
-      const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
-      if (validSets.length === 0) continue;
-      
-      if (match.teamA.length >= 2) {
-        const pairKey = getPairKey(match.teamA[0], match.teamA[1]);
-        pairCounts.set(pairKey, (pairCounts.get(pairKey) || 0) + 1);
-      }
-      
-      if (match.teamB.length >= 2) {
-        const pairKey = getPairKey(match.teamB[0], match.teamB[1]);
-        pairCounts.set(pairKey, (pairCounts.get(pairKey) || 0) + 1);
-      }
-    }
-  }
-  
-  return pairCounts;
-}
-
-function getIndividualOpponentHistory(rounds: Round[]): Map<string, number> {
-  const opponentCounts = new Map<string, number>();
-  
-  for (const round of rounds) {
-    for (const match of round.matches) {
-      const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
-      if (validSets.length === 0) continue;
-      
-      const allTeamA = match.teamA;
-      const allTeamB = match.teamB;
-      
-      for (const playerA of allTeamA) {
-        for (const playerB of allTeamB) {
-          const opponentKey = getPairKey(playerA, playerB);
-          opponentCounts.set(opponentKey, (opponentCounts.get(opponentKey) || 0) + 1);
-        }
-      }
-    }
-  }
-  
-  return opponentCounts;
-}
-
-function getMatchesPlayedCounts(playerIds: string[], rounds: Round[]): Map<string, number> {
-  const matchCounts = new Map<string, number>();
-  
-  for (const playerId of playerIds) {
-    matchCounts.set(playerId, 0);
-  }
-  
-  for (const round of rounds) {
-    for (const match of round.matches) {
-      const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
-      if (validSets.length === 0) continue;
-      
-      for (const playerId of match.teamA) {
-        if (matchCounts.has(playerId)) {
-          matchCounts.set(playerId, (matchCounts.get(playerId) || 0) + 1);
-        }
-      }
-      
-      for (const playerId of match.teamB) {
-        if (matchCounts.has(playerId)) {
-          matchCounts.set(playerId, (matchCounts.get(playerId) || 0) + 1);
-        }
-      }
-    }
-  }
-  
-  return matchCounts;
-}
-
-function getOpponentMatchupHistory(rounds: Round[]): Map<string, number> {
-  const matchupCounts = new Map<string, number>();
-  
-  for (const round of rounds) {
-    for (const match of round.matches) {
-      const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
-      if (validSets.length === 0) continue;
-      
-      if (match.teamA.length >= 2 && match.teamB.length >= 2) {
-        const pairA = getPairKey(match.teamA[0], match.teamA[1]);
-        const pairB = getPairKey(match.teamB[0], match.teamB[1]);
-        const matchupKey = pairA < pairB ? `${pairA}-vs-${pairB}` : `${pairB}-vs-${pairA}`;
-        matchupCounts.set(matchupKey, (matchupCounts.get(matchupKey) || 0) + 1);
-      }
-    }
-  }
-  
-  return matchupCounts;
-}
-
-function shuffleArray<T>(array: T[]): T[] {
-  const result = [...array];
+function shuffle<T>(arr: T[]): T[] {
+  const result = [...arr];
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [result[i], result[j]] = [result[j], result[i]];
@@ -110,328 +15,377 @@ function shuffleArray<T>(array: T[]): T[] {
   return result;
 }
 
-interface PairInfo {
-  pair: string[];
-  pairKey: string;
-  usageCount: number;
-  maxMatches: number;
-  totalMatches: number;
-  score: number;
+function hasPlayers(match: Match): boolean {
+  return match.teamA.length > 0 && match.teamB.length > 0;
+}
+
+function buildTeammateHistory(rounds: Round[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      if (!hasPlayers(match)) continue;
+      for (const team of [match.teamA, match.teamB]) {
+        if (team.length >= 2) {
+          const key = pairKey(team[0], team[1]);
+          counts.set(key, (counts.get(key) || 0) + 1);
+        }
+      }
+    }
+  }
+  return counts;
+}
+
+function buildOpponentHistory(rounds: Round[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      if (!hasPlayers(match)) continue;
+      for (const a of match.teamA) {
+        for (const b of match.teamB) {
+          const key = pairKey(a, b);
+          counts.set(key, (counts.get(key) || 0) + 1);
+        }
+      }
+    }
+  }
+  return counts;
+}
+
+function buildMatchesPlayed(playerIds: string[], rounds: Round[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const id of playerIds) counts.set(id, 0);
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      if (!hasPlayers(match)) continue;
+      for (const id of [...match.teamA, ...match.teamB]) {
+        if (counts.has(id)) counts.set(id, counts.get(id)! + 1);
+      }
+    }
+  }
+  return counts;
+}
+
+function getLastRoundTeamKeys(rounds: Round[]): Set<string> {
+  const keys = new Set<string>();
+  if (rounds.length === 0) return keys;
+  const last = rounds[rounds.length - 1];
+  for (const match of last.matches) {
+    if (!hasPlayers(match)) continue;
+    for (const team of [match.teamA, match.teamB]) {
+      if (team.length >= 2) keys.add(pairKey(team[0], team[1]));
+    }
+  }
+  return keys;
+}
+
+interface PairCandidate {
+  pair: [string, string];
+  key: string;
 }
 
 function generateAllPossiblePairs(
   participants: any[],
-  usedPairCounts: Map<string, number>,
-  matchesPlayedCounts: Map<string, number>,
   genderTeams?: string
-): PairInfo[] {
-  const isMixPairs = genderTeams === 'MIX_PAIRS';
-  const allPairs: PairInfo[] = [];
-  
-  if (isMixPairs) {
-    const malePlayers = participants
-      .filter(p => p.user.gender === 'MALE')
-      .map(p => p.userId);
-    const femalePlayers = participants
-      .filter(p => p.user.gender === 'FEMALE')
-      .map(p => p.userId);
-    
-    for (const male of malePlayers) {
-      for (const female of femalePlayers) {
-        const pairKey = getPairKey(male, female);
-        const usageCount = usedPairCounts.get(pairKey) || 0;
-        const matchesMale = matchesPlayedCounts.get(male) || 0;
-        const matchesFemale = matchesPlayedCounts.get(female) || 0;
-        const maxMatches = Math.max(matchesMale, matchesFemale);
-        const totalMatches = matchesMale + matchesFemale;
-        
-        allPairs.push({
-          pair: [male, female],
-          pairKey,
-          usageCount,
-          maxMatches,
-          totalMatches,
-          score: usageCount * 1000000 + maxMatches * 1000 + totalMatches * 10
-        });
+): PairCandidate[] {
+  const pairs: PairCandidate[] = [];
+
+  if (genderTeams === 'MIX_PAIRS') {
+    const males = participants.filter((p: any) => p.user.gender === 'MALE');
+    const females = participants.filter((p: any) => p.user.gender === 'FEMALE');
+    for (const m of males) {
+      for (const f of females) {
+        pairs.push({ pair: [m.userId, f.userId], key: pairKey(m.userId, f.userId) });
       }
     }
   } else {
-    const players = genderTeams === 'MEN'
-      ? participants.filter(p => p.user.gender === 'MALE').map(p => p.userId)
-      : genderTeams === 'WOMEN'
-      ? participants.filter(p => p.user.gender === 'FEMALE').map(p => p.userId)
-      : participants.map(p => p.userId);
-    
-    for (let i = 0; i < players.length - 1; i++) {
-      for (let j = i + 1; j < players.length; j++) {
-        const p1 = players[i];
-        const p2 = players[j];
-        const pairKey = getPairKey(p1, p2);
-        const usageCount = usedPairCounts.get(pairKey) || 0;
-        const matchesP1 = matchesPlayedCounts.get(p1) || 0;
-        const matchesP2 = matchesPlayedCounts.get(p2) || 0;
-        const maxMatches = Math.max(matchesP1, matchesP2);
-        const totalMatches = matchesP1 + matchesP2;
-        
-        allPairs.push({
-          pair: [p1, p2],
-          pairKey,
-          usageCount,
-          maxMatches,
-          totalMatches,
-          score: usageCount * 1000000 + maxMatches * 1000 + totalMatches * 10
-        });
+    for (let i = 0; i < participants.length - 1; i++) {
+      for (let j = i + 1; j < participants.length; j++) {
+        const a = participants[i].userId;
+        const b = participants[j].userId;
+        pairs.push({ pair: [a, b], key: pairKey(a, b) });
       }
     }
   }
-  
-  allPairs.sort((a, b) => {
-    if (a.usageCount !== b.usageCount) return a.usageCount - b.usageCount;
-    if (a.maxMatches !== b.maxMatches) return a.maxMatches - b.maxMatches;
-    return a.totalMatches - b.totalMatches;
-  });
-  
-  return allPairs;
+
+  return pairs;
 }
 
-function selectPairsFromSorted(sortedPairs: PairInfo[], neededPairs: number, randomize = false): string[][] {
-  const selected: string[][] = [];
+function buildPairPool(
+  allPairs: PairCandidate[],
+  teammateHistory: Map<string, number>,
+  lastRoundKeys: Set<string>
+): PairCandidate[] {
+  if (allPairs.length === 0) return [];
+
+  let minCount = Infinity;
+  for (const { key } of allPairs) {
+    const count = teammateHistory.get(key) || 0;
+    if (count < minCount) minCount = count;
+  }
+
+  const minPool = allPairs.filter(p => (teammateHistory.get(p.key) || 0) === minCount);
+
+  if (lastRoundKeys.size === 0) return minPool;
+
+  const filtered = minPool.filter(p => !lastRoundKeys.has(p.key));
+  return filtered.length > 0 ? filtered : minPool;
+}
+
+function selectFromPool(
+  pool: PairCandidate[],
+  matchesPlayed: Map<string, number>,
+  neededPairs: number,
+  teammateHistory?: Map<string, number>
+): [string, string][] {
+  const selected: [string, string][] = [];
   const usedPlayers = new Set<string>();
-  const usedPairKeys = new Set<string>();
-  
-  let pairsList = sortedPairs;
-  if (randomize) {
-    const groups = new Map<string, PairInfo[]>();
-    for (const pairInfo of sortedPairs) {
-      const key = `${pairInfo.usageCount}-${pairInfo.maxMatches}-${pairInfo.totalMatches}`;
-      if (!groups.has(key)) {
-        groups.set(key, []);
-      }
-      groups.get(key)!.push(pairInfo);
-    }
-    
-    pairsList = [];
-    for (const group of groups.values()) {
-      pairsList.push(...shuffleArray(group));
+
+  const playerSet = new Set<string>();
+  for (const { pair } of pool) {
+    playerSet.add(pair[0]);
+    playerSet.add(pair[1]);
+  }
+
+  const sortedPlayers = shuffle([...playerSet]).sort(
+    (a, b) => (matchesPlayed.get(a) || 0) - (matchesPlayed.get(b) || 0)
+  );
+
+  const playerPairsMap = new Map<string, PairCandidate[]>();
+  for (const p of pool) {
+    for (const id of p.pair) {
+      if (!playerPairsMap.has(id)) playerPairsMap.set(id, []);
+      playerPairsMap.get(id)!.push(p);
     }
   }
-  
-  for (const pairInfo of pairsList) {
+
+  for (const player of sortedPlayers) {
     if (selected.length >= neededPairs) break;
-    
-    const [p1, p2] = pairInfo.pair;
-    
-    if (usedPlayers.has(p1) || usedPlayers.has(p2)) continue;
-    if (usedPairKeys.has(pairInfo.pairKey)) continue;
-    
-    selected.push(pairInfo.pair);
-    usedPlayers.add(p1);
-    usedPlayers.add(p2);
-    usedPairKeys.add(pairInfo.pairKey);
-  }
-  
-  return selected;
-}
+    if (usedPlayers.has(player)) continue;
 
-function selectPairsPlayerCentric(
-  allPairs: PairInfo[],
-  players: string[],
-  matchesPlayedCounts: Map<string, number>,
-  neededPairs: number
-): string[][] {
-  const sortedPlayers = [...players].sort((a, b) => {
-    const matchesA = matchesPlayedCounts.get(a) || 0;
-    const matchesB = matchesPlayedCounts.get(b) || 0;
-    if (matchesA !== matchesB) return matchesA - matchesB;
-    return Math.random() - 0.5;
-  });
-  
-  const pairMap = new Map<string, PairInfo>();
-  for (const pairInfo of allPairs) {
-    pairMap.set(pairInfo.pairKey, pairInfo);
-  }
-  
-  const selected: string[][] = [];
-  const usedPlayers = new Set<string>();
-  
-  for (let i = 0; i < sortedPlayers.length - 1 && selected.length < neededPairs; i++) {
-    const p1 = sortedPlayers[i];
-    if (usedPlayers.has(p1)) continue;
-    
-    let bestPair: PairInfo | null = null;
-    let bestScore = Infinity;
-    
-    for (let j = i + 1; j < sortedPlayers.length; j++) {
-      const p2 = sortedPlayers[j];
-      if (usedPlayers.has(p2)) continue;
-      
-      const pairKey = getPairKey(p1, p2);
-      const pairInfo = pairMap.get(pairKey);
-      
-      if (!pairInfo) continue;
-      
-      if (pairInfo.score < bestScore) {
-        bestScore = pairInfo.score;
-        bestPair = pairInfo;
+    const candidates = (playerPairsMap.get(player) || [])
+      .filter(p => !usedPlayers.has(p.pair[0]) && !usedPlayers.has(p.pair[1]));
+
+    if (candidates.length === 0) continue;
+
+    const sorted = shuffle(candidates).sort((a, b) => {
+      const partnerA = a.pair[0] === player ? a.pair[1] : a.pair[0];
+      const partnerB = b.pair[0] === player ? b.pair[1] : b.pair[0];
+      const matchDiff = (matchesPlayed.get(partnerA) || 0) - (matchesPlayed.get(partnerB) || 0);
+      if (matchDiff !== 0) return matchDiff;
+      if (teammateHistory) {
+        return (teammateHistory.get(a.key) || 0) - (teammateHistory.get(b.key) || 0);
       }
-    }
-    
-    if (bestPair) {
-      selected.push(bestPair.pair);
-      usedPlayers.add(bestPair.pair[0]);
-      usedPlayers.add(bestPair.pair[1]);
-    }
+      return 0;
+    });
+
+    selected.push(sorted[0].pair);
+    usedPlayers.add(sorted[0].pair[0]);
+    usedPlayers.add(sorted[0].pair[1]);
   }
-  
+
   return selected;
 }
 
-function generateAllPossiblePairsFromFixedTeams(
-  game: Game,
-  usedPairCounts: Map<string, number>,
-  matchesPlayedCounts: Map<string, number>
-): PairInfo[] {
-  const fixedTeams = game.fixedTeams || [];
-  let teamPairs = fixedTeams.map(team => team.players.map(p => p.userId));
-  
-  if (game.genderTeams === 'MEN') {
-    teamPairs = fixedTeams
-      .filter(team => team.players.every(p => p.user.gender === 'MALE'))
-      .map(team => team.players.map(p => p.userId));
-  } else if (game.genderTeams === 'WOMEN') {
-    teamPairs = fixedTeams
-      .filter(team => team.players.every(p => p.user.gender === 'FEMALE'))
-      .map(team => team.players.map(p => p.userId));
-  } else if (game.genderTeams === 'MIX_PAIRS') {
-    teamPairs = fixedTeams
-      .filter(team => {
-        const genders = team.players.map(p => p.user.gender);
-        return genders.includes('MALE') && genders.includes('FEMALE') &&
-               !genders.includes('PREFER_NOT_TO_SAY');
-      })
-      .map(team => team.players.map(p => p.userId));
-  } else if (game.genderTeams !== 'ANY' && game.genderTeams) {
-    teamPairs = fixedTeams
-      .filter(team => team.players.every(p => p.user.gender !== 'PREFER_NOT_TO_SAY'))
-      .map(team => team.players.map(p => p.userId));
+const SELECTION_RETRIES = 20;
+
+function selectTeamPairs(
+  pool: PairCandidate[],
+  allPairs: PairCandidate[],
+  matchesPlayed: Map<string, number>,
+  neededPairs: number,
+  teammateHistory: Map<string, number>
+): [string, string][] {
+  let best: [string, string][] = [];
+
+  for (let i = 0; i < SELECTION_RETRIES; i++) {
+    const result = selectFromPool(pool, matchesPlayed, neededPairs, teammateHistory);
+    if (result.length === neededPairs) return result;
+    if (result.length > best.length) best = result;
   }
-  
-  const allPairs: PairInfo[] = [];
-  
-  for (const pair of teamPairs) {
-    if (pair.length < 2) continue;
-    
-    const p1 = pair[0];
-    const p2 = pair[1];
-    const pairKey = getPairKey(p1, p2);
-    const usageCount = usedPairCounts.get(pairKey) || 0;
-    const matchesP1 = matchesPlayedCounts.get(p1) || 0;
-    const matchesP2 = matchesPlayedCounts.get(p2) || 0;
-    const maxMatches = Math.max(matchesP1, matchesP2);
-    const totalMatches = matchesP1 + matchesP2;
-    
-    allPairs.push({
-      pair: [p1, p2],
-      pairKey,
-      usageCount,
-      maxMatches,
-      totalMatches,
-      score: usageCount * 1000000 + maxMatches * 1000 + totalMatches * 10
-    });
+
+  const minCount = allPairs.reduce(
+    (min, p) => Math.min(min, teammateHistory.get(p.key) || 0), Infinity
+  );
+  const fullMinPool = allPairs.filter(p => (teammateHistory.get(p.key) || 0) === minCount);
+
+  if (fullMinPool.length > pool.length) {
+    for (let i = 0; i < SELECTION_RETRIES; i++) {
+      const result = selectFromPool(fullMinPool, matchesPlayed, neededPairs, teammateHistory);
+      if (result.length === neededPairs) return result;
+      if (result.length > best.length) best = result;
+    }
   }
-  
-  allPairs.sort((a, b) => {
-    if (a.usageCount !== b.usageCount) return a.usageCount - b.usageCount;
-    if (a.maxMatches !== b.maxMatches) return a.maxMatches - b.maxMatches;
-    return a.totalMatches - b.totalMatches;
-  });
-  
-  return allPairs;
+
+  const levels = [...new Set(allPairs.map(p => teammateHistory.get(p.key) || 0))].sort((a, b) => a - b);
+
+  for (const level of levels) {
+    if (level <= minCount) continue;
+    const expanded = allPairs.filter(p => (teammateHistory.get(p.key) || 0) <= level);
+    for (let i = 0; i < SELECTION_RETRIES; i++) {
+      const result = selectFromPool(expanded, matchesPlayed, neededPairs, teammateHistory);
+      if (result.length === neededPairs) return result;
+      if (result.length > best.length) best = result;
+    }
+  }
+
+  return best;
 }
 
-interface MatchupInfo {
-  pairAIndex: number;
-  pairBIndex: number;
-  teamMatchupCount: number;
-  maxIndividualOpponentCount: number;
-  score: number;
-}
+function formMatchups(
+  pairs: [string, string][],
+  opponentHistory: Map<string, number>
+): { teamA: [string, string]; teamB: [string, string] }[] {
+  const matches: { teamA: [string, string]; teamB: [string, string] }[] = [];
+  const shuffledPairs = shuffle([...pairs]);
+  const used = new Set<number>();
 
-function generateAllPossibleMatchups(
-  pairs: string[][],
-  opponentMatchups: Map<string, number>,
-  individualOpponentHistory: Map<string, number>
-): MatchupInfo[] {
-  const allMatchups: MatchupInfo[] = [];
-  
-  for (let i = 0; i < pairs.length - 1; i++) {
-    for (let j = i + 1; j < pairs.length; j++) {
-      const pairA = pairs[i];
-      const pairB = pairs[j];
-      const pairAKey = getPairKey(pairA[0], pairA[1]);
-      const pairBKey = getPairKey(pairB[0], pairB[1]);
-      const matchupKey = pairAKey < pairBKey ? `${pairAKey}-vs-${pairBKey}` : `${pairBKey}-vs-${pairAKey}`;
-      const teamMatchupCount = opponentMatchups.get(matchupKey) || 0;
-      
-      let maxIndividualOpponentCount = 0;
-      for (const playerA of pairA) {
-        for (const playerB of pairB) {
-          const opponentKey = getPairKey(playerA, playerB);
-          const count = individualOpponentHistory.get(opponentKey) || 0;
-          maxIndividualOpponentCount = Math.max(maxIndividualOpponentCount, count);
+  for (let i = 0; i < shuffledPairs.length; i++) {
+    if (used.has(i)) continue;
+
+    const team1 = shuffledPairs[i];
+    let bestScore = Infinity;
+    const candidates: number[] = [];
+
+    for (let j = i + 1; j < shuffledPairs.length; j++) {
+      if (used.has(j)) continue;
+
+      let score = 0;
+      for (const a of team1) {
+        for (const b of shuffledPairs[j]) {
+          score += opponentHistory.get(pairKey(a, b)) || 0;
         }
       }
-      
-      allMatchups.push({
-        pairAIndex: i,
-        pairBIndex: j,
-        teamMatchupCount,
-        maxIndividualOpponentCount,
-        score: teamMatchupCount * 1000 + maxIndividualOpponentCount * 10
-      });
+
+      if (score < bestScore) {
+        bestScore = score;
+        candidates.length = 0;
+        candidates.push(j);
+      } else if (score === bestScore) {
+        candidates.push(j);
+      }
+    }
+
+    if (candidates.length > 0) {
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      used.add(i);
+      used.add(chosen);
+      matches.push({ teamA: team1, teamB: shuffledPairs[chosen] });
     }
   }
-  
-  allMatchups.sort((a, b) => {
-    if (a.teamMatchupCount !== b.teamMatchupCount) return a.teamMatchupCount - b.teamMatchupCount;
-    return a.maxIndividualOpponentCount - b.maxIndividualOpponentCount;
-  });
-  
-  return allMatchups;
+
+  return matches;
 }
 
-function selectMatchupsFromSorted(sortedMatchups: MatchupInfo[], numMatches: number, randomize = false): MatchupInfo[] {
-  const selected: MatchupInfo[] = [];
-  const usedPairIndices = new Set<number>();
-  
-  let matchupsList = sortedMatchups;
-  if (randomize) {
-    const groups = new Map<string, MatchupInfo[]>();
-    for (const matchup of sortedMatchups) {
-      const key = `${matchup.teamMatchupCount}-${matchup.maxIndividualOpponentCount}`;
-      if (!groups.has(key)) {
-        groups.set(key, []);
+function generateFixedTeamMatchups(
+  fixedTeams: string[][],
+  matchesPlayed: Map<string, number>,
+  opponentHistory: Map<string, number>,
+  numMatches: number
+): { teamA: string[]; teamB: string[] }[] {
+  const allMatchups: {
+    teamAIdx: number;
+    teamBIdx: number;
+    balanceScore: number;
+    opponentScore: number;
+  }[] = [];
+
+  for (let i = 0; i < fixedTeams.length - 1; i++) {
+    for (let j = i + 1; j < fixedTeams.length; j++) {
+      const tA = fixedTeams[i];
+      const tB = fixedTeams[j];
+
+      const balanceScore = [...tA, ...tB].reduce(
+        (sum, id) => sum + (matchesPlayed.get(id) || 0), 0
+      );
+
+      let opponentScore = 0;
+      for (const a of tA) {
+        for (const b of tB) {
+          opponentScore += opponentHistory.get(pairKey(a, b)) || 0;
+        }
       }
-      groups.get(key)!.push(matchup);
-    }
-    
-    matchupsList = [];
-    for (const group of groups.values()) {
-      matchupsList.push(...shuffleArray(group));
+
+      allMatchups.push({ teamAIdx: i, teamBIdx: j, balanceScore, opponentScore });
     }
   }
-  
-  for (const matchup of matchupsList) {
+
+  const sorted = shuffle(allMatchups).sort((a, b) => {
+    if (a.balanceScore !== b.balanceScore) return a.balanceScore - b.balanceScore;
+    return a.opponentScore - b.opponentScore;
+  });
+
+  const selected: { teamA: string[]; teamB: string[] }[] = [];
+  const usedTeams = new Set<number>();
+
+  for (const m of sorted) {
     if (selected.length >= numMatches) break;
-    
-    if (usedPairIndices.has(matchup.pairAIndex) || usedPairIndices.has(matchup.pairBIndex)) continue;
-    
-    selected.push(matchup);
-    usedPairIndices.add(matchup.pairAIndex);
-    usedPairIndices.add(matchup.pairBIndex);
+    if (usedTeams.has(m.teamAIdx) || usedTeams.has(m.teamBIdx)) continue;
+    selected.push({ teamA: fixedTeams[m.teamAIdx], teamB: fixedTeams[m.teamBIdx] });
+    usedTeams.add(m.teamAIdx);
+    usedTeams.add(m.teamBIdx);
   }
-  
+
   return selected;
+}
+
+function getEligibleParticipants(game: Game) {
+  let participants = game.participants.filter(p => p.status === 'PLAYING');
+
+  if (game.genderTeams === 'MEN') {
+    participants = participants.filter(p => p.user.gender === 'MALE');
+  } else if (game.genderTeams === 'WOMEN') {
+    participants = participants.filter(p => p.user.gender === 'FEMALE');
+  } else if (game.genderTeams === 'MIX_PAIRS') {
+    participants = participants.filter(p =>
+      p.user.gender === 'MALE' || p.user.gender === 'FEMALE'
+    );
+  } else if (game.genderTeams && game.genderTeams !== 'ANY') {
+    participants = participants.filter(p => p.user.gender !== 'PREFER_NOT_TO_SAY');
+  }
+
+  return participants;
+}
+
+function getNumMatches(game: Game, participants: any[]): number {
+  const numCourts = game.gameCourts?.length || 1;
+
+  if (game.genderTeams === 'MIX_PAIRS') {
+    const males = participants.filter((p: any) => p.user.gender === 'MALE').length;
+    const females = participants.filter((p: any) => p.user.gender === 'FEMALE').length;
+    return Math.min(numCourts, Math.floor(Math.min(males, females) / 2));
+  }
+
+  return Math.min(numCourts, Math.floor(participants.length / 4));
+}
+
+function getFilteredFixedTeams(game: Game): string[][] {
+  const teams = (game.fixedTeams || []).filter(t => t.players.length >= 2);
+
+  if (game.genderTeams === 'MEN') {
+    return teams
+      .filter(t => t.players.every(p => p.user.gender === 'MALE'))
+      .map(t => t.players.map(p => p.userId));
+  }
+  if (game.genderTeams === 'WOMEN') {
+    return teams
+      .filter(t => t.players.every(p => p.user.gender === 'FEMALE'))
+      .map(t => t.players.map(p => p.userId));
+  }
+  if (game.genderTeams === 'MIX_PAIRS') {
+    return teams
+      .filter(t => {
+        const g = t.players.map(p => p.user.gender);
+        return g.includes('MALE') && g.includes('FEMALE');
+      })
+      .map(t => t.players.map(p => p.userId));
+  }
+  if (game.genderTeams && game.genderTeams !== 'ANY') {
+    return teams
+      .filter(t => t.players.every(p => p.user.gender !== 'PREFER_NOT_TO_SAY'))
+      .map(t => t.players.map(p => p.userId));
+  }
+
+  return teams.map(t => t.players.map(p => p.userId));
 }
 
 export function generateRandomRound(
@@ -439,154 +393,53 @@ export function generateRandomRound(
   previousRounds: Round[],
   initialSets: Array<{ teamA: number; teamB: number }>
 ): Match[] {
-  let playingParticipants = game.participants.filter(p => p.status === 'PLAYING');
-  
-  if (game.genderTeams === 'MEN') {
-    playingParticipants = playingParticipants.filter(p => p.user.gender === 'MALE');
-  } else if (game.genderTeams === 'WOMEN') {
-    playingParticipants = playingParticipants.filter(p => p.user.gender === 'FEMALE');
-  } else if (game.genderTeams === 'MIX_PAIRS') {
-    playingParticipants = playingParticipants.filter(p => 
-      p.user.gender === 'MALE' || p.user.gender === 'FEMALE'
-    );
-  } else if (game.genderTeams && game.genderTeams !== 'ANY') {
-    playingParticipants = playingParticipants.filter(p => 
-      p.user.gender !== 'PREFER_NOT_TO_SAY'
-    );
-  }
-  
-  const numPlayers = playingParticipants.length;
-  
-  if (numPlayers < 4) {
-    return [];
-  }
-  
-  const numCourts = game.gameCourts?.length || 1;
-  const numMatches = Math.min(numCourts, Math.floor(numPlayers / 4));
-  
-  const sortedCourts = game.gameCourts 
+  const participants = getEligibleParticipants(game);
+  if (participants.length < 4) return [];
+
+  const numMatches = getNumMatches(game, participants);
+  if (numMatches === 0) return [];
+
+  const sortedCourts = game.gameCourts
     ? [...game.gameCourts].sort((a, b) => a.order - b.order)
     : [];
-  
-  const shuffledParticipants = shuffleArray([...playingParticipants]);
-  
-  const players = shuffledParticipants.map(p => p.userId);
-  const usedPairCounts = getPairUsageHistory(previousRounds);
-  const neededPairs = numMatches * 2;
-  
-  let allPairs: PairInfo[];
-  let allPlayerIds: string[];
-  let matchesPlayedCounts: Map<string, number>;
-  
+
+  const allPlayerIds = participants.map(p => p.userId);
+  const matchesPlayed = buildMatchesPlayed(allPlayerIds, previousRounds);
+  const opponentHistory = buildOpponentHistory(previousRounds);
+
   if (game.hasFixedTeams && game.fixedTeams && game.fixedTeams.length > 0) {
-    const shuffledGame = {
-      ...game,
-      fixedTeams: shuffleArray([...game.fixedTeams])
-    };
-    allPlayerIds = shuffledGame.fixedTeams.flatMap(team => team.players.map(p => p.userId));
-    matchesPlayedCounts = getMatchesPlayedCounts(allPlayerIds, previousRounds);
-    allPairs = generateAllPossiblePairsFromFixedTeams(shuffledGame, usedPairCounts, matchesPlayedCounts);
-  } else {
-    const filteredPlayers = game.genderTeams === 'MEN'
-      ? shuffledParticipants.filter(p => p.user.gender === 'MALE').map(p => p.userId)
-      : game.genderTeams === 'WOMEN'
-      ? shuffledParticipants.filter(p => p.user.gender === 'FEMALE').map(p => p.userId)
-      : players;
-    allPlayerIds = filteredPlayers;
-    matchesPlayedCounts = getMatchesPlayedCounts(allPlayerIds, previousRounds);
-    allPairs = generateAllPossiblePairs(shuffledParticipants, usedPairCounts, matchesPlayedCounts, game.genderTeams);
+    const fixedTeamPairs = getFilteredFixedTeams(game);
+    const matchups = generateFixedTeamMatchups(fixedTeamPairs, matchesPlayed, opponentHistory, numMatches);
+
+    return matchups.map((m, idx) => ({
+      id: createId(),
+      teamA: m.teamA,
+      teamB: m.teamB,
+      sets: initialSets,
+      courtId: sortedCourts[idx]?.courtId,
+    }));
   }
-  
-  const pairsByUsage = new Map<number, PairInfo[]>();
-  for (const pairInfo of allPairs) {
-    const usageKey = pairInfo.usageCount;
-    if (!pairsByUsage.has(usageKey)) {
-      pairsByUsage.set(usageKey, []);
-    }
-    pairsByUsage.get(usageKey)!.push(pairInfo);
-  }
-  
-  const sortedUsageLevels = Array.from(pairsByUsage.keys()).sort((a, b) => a - b);
-  
-  let pairs: string[][] | null = null;
-  
-  for (let levelIndex = 0; levelIndex < sortedUsageLevels.length; levelIndex++) {
-    const availablePairsForLevel: PairInfo[] = [];
-    
-    for (let i = 0; i <= levelIndex; i++) {
-      availablePairsForLevel.push(...pairsByUsage.get(sortedUsageLevels[i])!);
-    }
-    
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const selectedPairs = selectPairsFromSorted(availablePairsForLevel, neededPairs, attempt > 0);
-      if (selectedPairs.length === neededPairs) {
-        pairs = selectedPairs;
-        break;
-      }
-    }
-    
-    if (pairs) break;
-    
-    for (let attempt = 0; attempt < 10; attempt++) {
-      const selectedPairs = selectPairsPlayerCentric(availablePairsForLevel, allPlayerIds, matchesPlayedCounts, neededPairs);
-      if (selectedPairs.length === neededPairs) {
-        pairs = selectedPairs;
-        break;
-      }
-    }
-    
-    if (pairs) break;
-  }
-  
-  if (!pairs) {
-    pairs = selectPairsFromSorted(allPairs, neededPairs, false);
-  }
-  
-  const opponentMatchups = getOpponentMatchupHistory(previousRounds);
-  const individualOpponentHistory = getIndividualOpponentHistory(previousRounds);
-  
-  const allMatchups = generateAllPossibleMatchups(pairs, opponentMatchups, individualOpponentHistory);
-  
-  const matchupsByLevel = new Map<string, MatchupInfo[]>();
-  for (const matchup of allMatchups) {
-    const levelKey = `${matchup.teamMatchupCount}-${matchup.maxIndividualOpponentCount}`;
-    if (!matchupsByLevel.has(levelKey)) {
-      matchupsByLevel.set(levelKey, []);
-    }
-    matchupsByLevel.get(levelKey)!.push(matchup);
-  }
-  
-  const sortedLevels = Array.from(matchupsByLevel.keys()).sort((a, b) => {
-    const [aTeam, aInd] = a.split('-').map(Number);
-    const [bTeam, bInd] = b.split('-').map(Number);
-    if (aTeam !== bTeam) return aTeam - bTeam;
-    return aInd - bInd;
-  });
-  
-  for (const level of sortedLevels) {
-    const matchupsAtLevel = matchupsByLevel.get(level)!;
-    
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const selectedMatchups = selectMatchupsFromSorted(matchupsAtLevel, numMatches, attempt > 0);
-      if (selectedMatchups.length === numMatches) {
-        return selectedMatchups.map((matchup, idx) => ({
-          id: createId(),
-          teamA: pairs[matchup.pairAIndex],
-          teamB: pairs[matchup.pairBIndex],
-          sets: initialSets,
-          courtId: sortedCourts[idx]?.courtId,
-        }));
-      }
-    }
-  }
-  
-  const selectedMatchups = selectMatchupsFromSorted(allMatchups, numMatches, false);
-  return selectedMatchups.map((matchup, idx) => ({
+
+  const teammateHistory = buildTeammateHistory(previousRounds);
+  const lastRoundKeys = getLastRoundTeamKeys(previousRounds);
+  const allPairs = generateAllPossiblePairs(participants, game.genderTeams);
+
+  if (allPairs.length === 0) return [];
+
+  const pool = buildPairPool(allPairs, teammateHistory, lastRoundKeys);
+  const neededPairs = numMatches * 2;
+  const teamPairs = selectTeamPairs(pool, allPairs, matchesPlayed, neededPairs, teammateHistory);
+
+  if (teamPairs.length < 2) return [];
+
+  const pairsToMatch = teamPairs.length % 2 === 0 ? teamPairs : teamPairs.slice(0, -1);
+  const matchups = formMatchups(pairsToMatch, opponentHistory);
+
+  return matchups.map((m, idx) => ({
     id: createId(),
-    teamA: pairs[matchup.pairAIndex],
-    teamB: pairs[matchup.pairBIndex],
+    teamA: m.teamA,
+    teamB: m.teamB,
     sets: initialSets,
     courtId: sortedCourts[idx]?.courtId,
   }));
 }
-

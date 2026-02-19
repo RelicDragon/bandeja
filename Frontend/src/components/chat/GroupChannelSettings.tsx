@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus } from 'lucide-react';
+import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button, PlayerAvatar } from '@/components';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
 import { GroupChannel, GroupChannelParticipant } from '@/api/chat';
@@ -359,30 +359,39 @@ export const GroupChannelSettings = ({
                           <PlayerAvatar
                             player={participant.user}
                             showName={false}
-                            extrasmall={true}
-                            fullHideName={true}
+                            extrasmall
+                            fullHideName
                             role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-gray-900 dark:text-white truncate">
-                                {participant.user.firstName} {participant.user.lastName}
-                                {isCurrentUser && (
-                                  <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                                    ({t('chat.you', { defaultValue: 'You' })})
-                                  </span>
-                                )}
-                              </p>
-                              <span className={`px-2 py-1 text-xs font-medium rounded ${roleTag.color}`}>
-                                {roleTag.text}
-                              </span>
-                            </div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {participant.user.firstName} {participant.user.lastName}
+                              {isCurrentUser && (
+                                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                                  ({t('chat.you', { defaultValue: 'You' })})
+                                </span>
+                              )}
+                            </p>
                             {participant.user.verbalStatus && (
                               <p className="verbal-status">
                                 {participant.user.verbalStatus}
                               </p>
                             )}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              <span className={`inline-block px-1.5 py-0.5 text-[10px] font-medium rounded ${roleTag.color}`}>
+                                {roleTag.text}
+                              </span>
+                            </div>
                           </div>
+                          {!isCurrentUser && (
+                            <div className="flex-shrink-0 text-gray-400 dark:text-gray-500">
+                              {isSelected && actions.length > 0 ? (
+                                <ChevronUp size={20} aria-hidden />
+                              ) : (
+                                <ChevronDown size={20} aria-hidden />
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         {!isCurrentUser && (

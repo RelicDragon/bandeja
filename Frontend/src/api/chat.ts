@@ -59,6 +59,7 @@ export interface ChatMessage {
   chatType: ChatType;
   createdAt: string;
   updatedAt: string;
+  editedAt?: string | null;
   replyToId?: string;
   replyTo?: {
     id: string;
@@ -285,12 +286,22 @@ export const chatApi = {
     return response.data.data;
   },
 
-  getGameMessages: async (gameId: string, page = 1, limit = 50, chatType: ChatType = 'PUBLIC') => {
-    const normalizedChatType = normalizeChatType(chatType);
+  editMessage: async (messageId: string, body: { content: string; mentionIds?: string[] }) => {
+    const response = await api.patch<ApiResponse<ChatMessage>>(`/chat/messages/${messageId}`, body);
+    return response.data.data;
+  },
 
-    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/games/${gameId}/messages`, {
-      params: { page, limit, chatType: normalizedChatType }
-    });
+  getGameMessages: async (
+    gameId: string,
+    page = 1,
+    limit = 50,
+    chatType: ChatType = 'PUBLIC',
+    beforeMessageId?: string
+  ) => {
+    const normalizedChatType = normalizeChatType(chatType);
+    const params: Record<string, string | number> = { page, limit, chatType: normalizedChatType };
+    if (beforeMessageId) params.beforeMessageId = beforeMessageId;
+    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/games/${gameId}/messages`, { params });
     return response.data.data;
   },
 
@@ -316,6 +327,27 @@ export const chatApi = {
 
   deleteMessage: async (messageId: string) => {
     const response = await api.delete<ApiResponse<{ success: boolean }>>(`/chat/messages/${messageId}`);
+    return response.data;
+  },
+
+  getPinnedMessages: async (
+    contextType: ChatContextType,
+    contextId: string,
+    chatType: ChatType = 'PUBLIC'
+  ): Promise<ChatMessage[]> => {
+    const response = await api.get<ApiResponse<ChatMessage[]>>('/chat/pinned-messages', {
+      params: { contextType, contextId, chatType: normalizeChatType(chatType) }
+    });
+    return response.data.data;
+  },
+
+  pinMessage: async (messageId: string) => {
+    const response = await api.post<ApiResponse<{ pinned: boolean }>>(`/chat/messages/${messageId}/pin`);
+    return response.data;
+  },
+
+  unpinMessage: async (messageId: string) => {
+    const response = await api.delete<ApiResponse<{ pinned: boolean }>>(`/chat/messages/${messageId}/pin`);
     return response.data;
   },
 
@@ -405,10 +437,10 @@ export const chatApi = {
     return response.data;
   },
 
-  getUserChatMessages: async (chatId: string, page = 1, limit = 50) => {
-    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/user-chats/${chatId}/messages`, {
-      params: { page, limit }
-    });
+  getUserChatMessages: async (chatId: string, page = 1, limit = 50, beforeMessageId?: string) => {
+    const params: Record<string, string | number> = { page, limit };
+    if (beforeMessageId) params.beforeMessageId = beforeMessageId;
+    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/user-chats/${chatId}/messages`, { params });
     return response.data.data;
   },
 
@@ -450,14 +482,20 @@ export const chatApi = {
     return response.data;
   },
 
-  // Generic method for any context type
-  getMessages: async (chatContextType: ChatContextType, contextId: string, page = 1, limit = 50, chatType: ChatType = 'PUBLIC') => {
+  getMessages: async (
+    chatContextType: ChatContextType,
+    contextId: string,
+    page = 1,
+    limit = 50,
+    chatType: ChatType = 'PUBLIC',
+    beforeMessageId?: string
+  ) => {
     if (chatContextType === 'GAME') {
-      return chatApi.getGameMessages(contextId, page, limit, chatType);
+      return chatApi.getGameMessages(contextId, page, limit, chatType, beforeMessageId);
     } else if (chatContextType === 'USER') {
-      return chatApi.getUserChatMessages(contextId, page, limit);
+      return chatApi.getUserChatMessages(contextId, page, limit, beforeMessageId);
     } else if (chatContextType === 'GROUP') {
-      return chatApi.getGroupChannelMessages(contextId, page, limit);
+      return chatApi.getGroupChannelMessages(contextId, page, limit, beforeMessageId);
     }
     throw new Error(`Unsupported chat context type: ${chatContextType}`);
   },
@@ -540,10 +578,10 @@ export const chatApi = {
     return response.data;
   },
 
-  getGroupChannelMessages: async (id: string, page = 1, limit = 50) => {
-    const response = await api.get<ApiResponse<ChatMessage[]>>(`/group-channels/${id}/messages`, {
-      params: { page, limit }
-    });
+  getGroupChannelMessages: async (id: string, page = 1, limit = 50, beforeMessageId?: string) => {
+    const params: Record<string, string | number> = { page, limit };
+    if (beforeMessageId) params.beforeMessageId = beforeMessageId;
+    const response = await api.get<ApiResponse<ChatMessage[]>>(`/group-channels/${id}/messages`, { params });
     return response.data.data;
   },
 

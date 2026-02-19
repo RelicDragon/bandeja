@@ -17,7 +17,7 @@ import { ReportMessageModal } from './ReportMessageModal';
 import { parseMentions } from '@/utils/parseMentions';
 import { parseUrls } from '@/utils/parseUrls';
 import { extractLanguageCode } from '@/utils/language';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Pencil } from 'lucide-react';
 
 interface ContextMenuState {
   isOpen: boolean;
@@ -31,6 +31,7 @@ interface MessageItemProps {
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onReplyMessage: (message: ChatMessage) => void;
+  onEditMessage?: (message: ChatMessage) => void;
   onPollUpdated?: (messageId: string, updatedPoll: import('@/api/chat').Poll) => void;
   onResendQueued?: (tempId: string) => void;
   onRemoveFromQueue?: (tempId: string) => void;
@@ -44,6 +45,9 @@ interface MessageItemProps {
   userChatUser1Id?: string;
   userChatUser2Id?: string;
   onChatRequestRespond?: (messageId: string, accepted: boolean) => void;
+  isPinned?: boolean;
+  onPin?: (message: ChatMessage) => void;
+  onUnpin?: (messageId: string) => void;
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -52,6 +56,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onRemoveReaction,
   onDeleteMessage,
   onReplyMessage,
+  onEditMessage,
   onPollUpdated,
   onResendQueued,
   onRemoveFromQueue,
@@ -65,6 +70,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   userChatUser1Id,
   userChatUser2Id,
   onChatRequestRespond,
+  isPinned = false,
+  onPin,
+  onUnpin,
 }) => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -809,8 +817,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     )}
 
                     {/* Time and read status inside bubble */}
-                    <div className={`absolute bottom-1 right-2 flex items-center gap-1 ${isChannel ? 'text-gray-400 dark:text-gray-500' : (isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500')}`}>
-                      <span className="text-[10px]">{formatMessageTime(currentMessage.createdAt)}</span>
+                    <div className={`absolute bottom-1 right-2 flex flex-nowrap items-center gap-1 ${isChannel ? 'text-gray-400 dark:text-gray-500' : (isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500')}`}>
+                      <span className="text-[10px] whitespace-nowrap shrink-0">
+                        {formatMessageTime(currentMessage.createdAt)}
+                        {currentMessage.editedAt && (
+                          <Pencil size={10} className="inline opacity-80 ml-0.5" title={t('chat.edited', { defaultValue: 'edited' })} />
+                        )}
+                      </span>
                       {isOwnMessage && (
                         <div className="flex items-center relative">
                           {isSending ? (
@@ -949,6 +962,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           isOwnMessage={isOwnMessage}
           currentReaction={getCurrentUserReaction()}
           onReply={onReplyMessage}
+          onEdit={onEditMessage}
           onCopy={handleCopyMessage}
           onDelete={onDeleteMessage}
           onReactionSelect={onAddReaction}
@@ -958,6 +972,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           onDeleteStart={handleDeleteStart}
           onReport={(msg) => setReportMessage(msg)}
           onTranslationUpdate={handleTranslationUpdate}
+          isPinned={isPinned}
+          onPin={onPin}
+          onUnpin={onUnpin}
         />
       )}
 

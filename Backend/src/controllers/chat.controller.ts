@@ -18,6 +18,7 @@ import { DraftService } from '../services/chat/draft.service';
 import { GameReadService } from '../services/game/read.service';
 import { PollService } from '../services/chat/poll.service';
 import { MessageSearchService } from '../services/chat/messageSearch.service';
+import { PinnedMessageService } from '../services/chat/pinnedMessage.service';
 import prisma from '../config/database';
 
 export const createSystemMessage = async (contextId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC, chatContextType: ChatContextType = ChatContextType.GAME) => {
@@ -192,7 +193,7 @@ export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => 
 export const getGameMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
   const userId = req.userId;
-  const { page = 1, limit = 50, chatType = ChatType.PUBLIC } = req.query;
+  const { page = 1, limit = 50, chatType = ChatType.PUBLIC, beforeMessageId } = req.query;
 
   if (!userId) {
     throw new ApiError(401, 'Unauthorized');
@@ -201,12 +202,103 @@ export const getGameMessages = asyncHandler(async (req: AuthRequest, res: Respon
   const messages = await MessageService.getMessages('GAME', gameId, userId, {
     page: Number(page),
     limit: Number(limit),
-    chatType: chatType as ChatType
+    chatType: chatType as ChatType,
+    ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
   });
 
   res.json({
     success: true,
     data: messages
+  });
+});
+
+export const getPinnedMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+  const { contextType, contextId, chatType = ChatType.PUBLIC } = req.query;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+  if (!contextType || !contextId || typeof contextType !== 'string' || typeof contextId !== 'string') {
+    throw new ApiError(400, 'contextType and contextId are required');
+  }
+  if (!['GAME', 'BUG', 'USER', 'GROUP'].includes(contextType)) {
+    throw new ApiError(400, 'Invalid contextType');
+  }
+
+  const messages = await PinnedMessageService.getPinnedMessages(
+    contextType as ChatContextType,
+    contextId,
+    (typeof chatType === 'string' ? chatType : ChatType.PUBLIC) as ChatType,
+    userId
+  );
+
+  res.json({
+    success: true,
+    data: messages
+  });
+});
+
+export const pinMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { messageId } = req.params;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  await PinnedMessageService.pinMessage(messageId, userId);
+
+  res.json({
+    success: true,
+    data: { pinned: true }
+  });
+});
+
+export const unpinMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { messageId } = req.params;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  await PinnedMessageService.unpinMessage(messageId, userId);
+
+  res.json({
+    success: true,
+    data: { pinned: false }
+  });
+});
+
+export const updateMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { messageId } = req.params;
+  const { content, mentionIds } = req.body;
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const updatedMessage = await MessageService.updateMessageContent(messageId, userId, {
+    content: content ?? '',
+    mentionIds
+  });
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    socketService.emitChatEvent(
+      updatedMessage.chatContextType,
+      updatedMessage.contextId,
+      'message-updated',
+      { message: updatedMessage },
+      updatedMessage.id
+    );
+  }
+
+  res.json({
+    success: true,
+    data: updatedMessage
   });
 });
 
@@ -543,7 +635,7 @@ export const getOrCreateChatWithUser = asyncHandler(async (req: AuthRequest, res
 export const getUserChatMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { chatId } = req.params;
   const userId = req.userId;
-  const { page = 1, limit = 50 } = req.query;
+  const { page = 1, limit = 50, beforeMessageId } = req.query;
 
   if (!userId) {
     throw new ApiError(401, 'Unauthorized');
@@ -552,7 +644,8 @@ export const getUserChatMessages = asyncHandler(async (req: AuthRequest, res: Re
   const messages = await MessageService.getMessages('USER', chatId, userId, {
     page: Number(page),
     limit: Number(limit),
-    chatType: ChatType.PUBLIC
+    chatType: ChatType.PUBLIC,
+    ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
   });
 
   res.json({

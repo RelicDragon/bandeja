@@ -1569,20 +1569,27 @@
     },
     "contextMenu": {
       "reply": "Одговори",
+      "edit": "Измени",
       "copy": "Копирај",
       "details": "Детаљи",
+      "pin": "Закачи",
+      "unpin": "Откачи",
       "delete": "Обриши",
       "report": "Пријави",
       "copyMessage": "Копирај поруку",
       "deleteMessage": "Обриши поруку",
       "replyTo": "Одговори {{name}}",
       "readBy": "Прочитано",
+      "notReadYet": "Још није прочитано",
       "back": "Назад",
       "translate": "Преведи",
       "translating": "Преводи се..."
     },
     "translationUnavailable": "Превод је привремено недоступан. Молимо покушајте касније.",
     "translationError": "Неуспешно превођење поруке. Молимо покушајте поново.",
+    "pinFailed": "Није могуће закачити поруку",
+    "unpinFailed": "Није могуће откачити поруку",
+    "pinnedMessageNotFound": "Порука више није доступна",
     "report": {
       "title": "Пријави поруку",
       "description": "Зашто пријављујете ову поруку?",
@@ -1601,6 +1608,12 @@
         "OTHER": "Остало"
       }
     },
+    "edited": "измењено",
+    "editingLabel": "Измена",
+    "cancelEdit": "Откажи измену",
+    "created": "Креирано",
+    "editedAt": "Измењено",
+    "noContent": "(нема текста)",
     "reply": {
       "replyingTo": "Одговарам {{name}}",
       "cancelReply": "Откажи одговор",
@@ -1699,6 +1712,7 @@
     "requestToChat": "Затражи ћаскање",
     "invalidImageType": "Неисправан тип слике. Молимо изаберите важећу слику.",
     "sendFailed": "Није успело слање поруке",
+    "editMessageDeleted": "Порука је обрисана",
     "failedToSend": "Није успело слање",
     "resend": "Пошаљи поново",
     "missingContextId": "Недостаје контекст ћаскања",

@@ -5,6 +5,7 @@ import {
   createMessage,
   getGameMessages,
   getGameParticipants,
+  updateMessage,
   updateMessageState,
   markMessageAsRead,
   addReaction,
@@ -39,7 +40,10 @@ import {
   getUserDrafts,
   deleteDraft,
   votePoll,
-  searchMessages
+  searchMessages,
+  getPinnedMessages,
+  pinMessage,
+  unpinMessage
 } from '../controllers/chat.controller';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -85,6 +89,22 @@ const searchMessagesLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
 });
+
+const pinMessageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { success: false, message: 'Too many pin/unpin requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
+
+const mentionIdsElementValidator = (val: unknown) => {
+  if (!Array.isArray(val)) return true;
+  const invalid = val.some((id: unknown) => typeof id !== 'string' || (id as string).length < 1 || (id as string).length > 128);
+  if (invalid) throw new Error('Each mention ID must be a non-empty string (1-128 chars)');
+  return true;
+};
 
 router.post(
   '/messages',
@@ -140,6 +160,17 @@ router.get('/unread-objects', unreadObjectsLimiter, getUnreadObjects);
 router.get('/user-games', getUserChatGames);
 
 router.patch(
+  '/messages/:messageId',
+  createMessageLimiter,
+  validate([
+    param('messageId').notEmpty().withMessage('Message ID is required'),
+    body('content').isString().trim().isLength({ min: 1, max: 10000 }).withMessage('Content must be 1-10000 characters'),
+    body('mentionIds').optional().isArray().isLength({ max: 50 }).withMessage('mentionIds must be an array with max 50 items').custom(mentionIdsElementValidator)
+  ]),
+  updateMessage
+);
+
+router.patch(
   '/messages/:messageId/state',
   validate([
     param('messageId').notEmpty().withMessage('Message ID is required'),
@@ -162,6 +193,28 @@ router.post(
 
 router.delete('/messages/:messageId/reactions', removeReaction);
 router.delete('/messages/:messageId', deleteMessage);
+
+router.get(
+  '/pinned-messages',
+  validate([
+    query('contextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('contextType is required'),
+    query('contextId').notEmpty().withMessage('contextId is required'),
+    query('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type')
+  ]),
+  getPinnedMessages
+);
+router.post(
+  '/messages/:messageId/pin',
+  pinMessageLimiter,
+  validate([param('messageId').notEmpty().withMessage('Message ID is required')]),
+  pinMessage
+);
+router.delete(
+  '/messages/:messageId/pin',
+  pinMessageLimiter,
+  validate([param('messageId').notEmpty().withMessage('Message ID is required')]),
+  unpinMessage
+);
 
 // User Chat Routes
 router.get('/user-chats', getUserChats);
@@ -264,13 +317,6 @@ router.post(
   ]),
   markAllMessagesAsReadForContext
 );
-
-const mentionIdsElementValidator = (val: unknown) => {
-  if (!Array.isArray(val)) return true;
-  const invalid = val.some((id: unknown) => typeof id !== 'string' || (id as string).length < 1 || (id as string).length > 128);
-  if (invalid) throw new Error('Each mention ID must be a non-empty string (1-128 chars)');
-  return true;
-};
 
 router.post(
   '/drafts',

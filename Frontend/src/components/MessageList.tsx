@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatMessage, Poll } from '@/api/chat';
 import { AnimatedMessageItem } from './AnimatedMessageItem';
@@ -11,6 +11,7 @@ interface MessageListProps {
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onReplyMessage: (message: ChatMessage) => void;
+  onEditMessage?: (message: ChatMessage) => void;
   onPollUpdated?: (messageId: string, updatedPoll: Poll) => void;
   onResendQueued?: (tempId: string) => void;
   onRemoveFromQueue?: (tempId: string) => void;
@@ -28,6 +29,9 @@ interface MessageListProps {
   userChatUser2Id?: string;
   onChatRequestRespond?: (messageId: string, accepted: boolean) => void;
   hasContextPanel?: boolean;
+  pinnedMessageIds?: string[];
+  onPin?: (message: ChatMessage) => void;
+  onUnpin?: (messageId: string) => void;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -36,6 +40,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   onRemoveReaction,
   onDeleteMessage,
   onReplyMessage,
+  onEditMessage,
   onPollUpdated,
   onResendQueued,
   onRemoveFromQueue,
@@ -53,8 +58,12 @@ export const MessageList: React.FC<MessageListProps> = ({
   userChatUser2Id,
   onChatRequestRespond,
   hasContextPanel = false,
+  pinnedMessageIds = [],
+  onPin,
+  onUnpin,
 }) => {
   const { t } = useTranslation();
+  const pinnedSet = useMemo(() => new Set(pinnedMessageIds), [pinnedMessageIds]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
@@ -227,6 +236,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             onRemoveReaction={onRemoveReaction}
             onDeleteMessage={onDeleteMessage}
             onReplyMessage={onReplyMessage}
+            onEditMessage={onEditMessage}
             onPollUpdated={onPollUpdated}
             onResendQueued={onResendQueued}
             onRemoveFromQueue={onRemoveFromQueue}
@@ -240,6 +250,9 @@ export const MessageList: React.FC<MessageListProps> = ({
             userChatUser1Id={userChatUser1Id}
             userChatUser2Id={userChatUser2Id}
             onChatRequestRespond={onChatRequestRespond}
+            isPinned={pinnedSet.has(message.id)}
+            onPin={onPin}
+            onUnpin={onUnpin}
           />
         </div>
       ))}

@@ -1596,20 +1596,27 @@
     },
     "contextMenu": {
       "reply": "Reply",
+      "edit": "Edit",
       "copy": "Copy",
       "details": "Details",
+      "pin": "Pin",
+      "unpin": "Unpin",
       "delete": "Delete",
       "report": "Report",
       "copyMessage": "Copy message",
       "deleteMessage": "Delete message",
       "replyTo": "Reply to {{name}}",
       "readBy": "Read by",
+      "notReadYet": "Not read yet",
       "back": "Back",
       "translate": "Translate",
       "translating": "Translating..."
     },
     "translationUnavailable": "Translation is temporarily unavailable. Please try again later.",
     "translationError": "Failed to translate message. Please try again.",
+    "pinFailed": "Failed to pin message",
+    "unpinFailed": "Failed to unpin message",
+    "pinnedMessageNotFound": "Message no longer available",
     "report": {
       "title": "Report Message",
       "description": "Why are you reporting this message?",
@@ -1628,6 +1635,12 @@
         "OTHER": "Other"
       }
     },
+    "edited": "edited",
+    "editingLabel": "Editing",
+    "cancelEdit": "Cancel edit",
+    "created": "Created",
+    "editedAt": "Edited",
+    "noContent": "(no text)",
     "reply": {
       "replyingTo": "Replying to {{name}}",
       "cancelReply": "Cancel reply",
@@ -1720,6 +1733,7 @@
     "requestToChat": "Request to chat",
     "invalidImageType": "Invalid image type. Please select a valid image file.",
     "sendFailed": "Failed to send message",
+    "editMessageDeleted": "Message was deleted",
     "failedToSend": "Failed to send",
     "resend": "Resend",
     "missingContextId": "Missing chat context",

@@ -96,6 +96,7 @@ interface SocketEventsState {
   lastChatReaction: ChatReactionData | null;
   lastChatReadReceipt: ChatReadReceiptData | null;
   lastChatDeleted: ChatDeletedData | null;
+  lastChatMessageUpdated: ChatMessageData | null;
   lastChatUnreadCount: ChatUnreadCountData | null;
   lastSyncRequired: { timestamp: string } | null;
   lastBetCreated: BetCreatedData | null;
@@ -126,6 +127,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     lastChatReaction: null,
     lastChatReadReceipt: null,
     lastChatDeleted: null,
+    lastChatMessageUpdated: null,
     lastChatUnreadCount: null,
     lastSyncRequired: null,
     lastBetCreated: null,
@@ -173,6 +175,10 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
 
       const handleChatDeleted = (data: ChatDeletedData) => {
         set({ lastChatDeleted: data });
+      };
+
+      const handleChatMessageUpdated = (data: ChatMessageData) => {
+        set({ lastChatMessageUpdated: data });
       };
 
       const handleChatUnreadCount = (data: ChatUnreadCountData) => {
@@ -228,6 +234,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('chat:reaction', handleChatReaction);
       socketService.on('chat:read-receipt', handleChatReadReceipt);
       socketService.on('chat:deleted', handleChatDeleted);
+      socketService.on('chat:message-updated', handleChatMessageUpdated);
       socketService.on('chat:unread-count', handleChatUnreadCount);
       socketService.on('sync-required', handleSyncRequired);
       socketService.on('bet:created', handleBetCreated);
@@ -248,6 +255,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('chat:reaction', handleChatReaction),
         () => socketService.off('chat:read-receipt', handleChatReadReceipt),
         () => socketService.off('chat:deleted', handleChatDeleted),
+        () => socketService.off('chat:message-updated', handleChatMessageUpdated),
         () => socketService.off('chat:unread-count', handleChatUnreadCount),
         () => socketService.off('sync-required', handleSyncRequired),
         () => socketService.off('bet:created', handleBetCreated),
@@ -276,6 +284,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         lastChatReaction: null,
         lastChatReadReceipt: null,
         lastChatDeleted: null,
+        lastChatMessageUpdated: null,
         lastChatUnreadCount: null,
         lastSyncRequired: null,
         lastBetCreated: null,

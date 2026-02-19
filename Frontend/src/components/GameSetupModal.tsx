@@ -39,6 +39,8 @@ interface GameSetupModalProps {
   }) => void;
 }
 
+const SET_PRESETS = [16, 21, 24, 32];
+
 export const GameSetupModal = ({ 
   isOpen, 
   entityType, 
@@ -70,8 +72,6 @@ export const GameSetupModal = ({
   const [pointsPerTie, setPointsPerTie] = useState(initialValues?.pointsPerTie ?? 0);
   const [ballsInGames, setBallsInGames] = useState(initialValues?.ballsInGames ?? false);
 
-  const SET_PRESETS = [16, 21, 24, 32];
-
   useEffect(() => {
     if (matchGenerationType === 'HANDMADE' || matchGenerationType === 'FIXED') {
       setProhibitMatchesEditing(false);
@@ -84,7 +84,7 @@ export const GameSetupModal = ({
     setCustomSetPoints(
       setVal > 0 && !SET_PRESETS.includes(setVal) ? String(setVal) : ''
     );
-  }, [isOpen, initialValues?.maxTotalPointsPerSet]);
+  }, [isOpen, initialValues]);
 
   const handleConfirm = () => {
     onConfirm({

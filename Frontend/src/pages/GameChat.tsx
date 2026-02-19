@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { chatApi, ChatMessage, ChatMessageWithStatus, ChatContextType, UserChat as UserChatType, OptimisticMessagePayload, GroupChannel } from '@/api/chat';
 import { gamesApi } from '@/api/games';
 import { blockedUsersApi } from '@/api/blockedUsers';
@@ -28,6 +29,7 @@ import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { ChatHeaderActions } from '@/components/chat/ChatHeaderActions';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
 import { ChatContextPanel } from '@/components/chat/contextPanels';
+import { PinnedMessagesBar } from '@/components/chat/PinnedMessagesBar';
 import { MarketItemPanel } from '@/components/marketplace';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { RequestToChat } from '@/components/chat/RequestToChat';
@@ -38,6 +40,7 @@ import { sendWithTimeout, cancelSend, resend, cancelAllForContext } from '@/serv
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
 import { isCapacitor } from '@/utils/capacitor';
 import { useChatSyncStore } from '@/store/chatSyncStore';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface LocationState {
   initialChatType?: ChatType;
@@ -83,6 +86,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [page, setPage] = useState(1);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
   const [showParticipantsPage, setShowParticipantsPage] = useState(false);
   const [isParticipantsPageAnimating, setIsParticipantsPageAnimating] = useState(false);
@@ -100,6 +104,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [showItemPage, setShowItemPage] = useState(false);
   const [isItemPageAnimating, setIsItemPageAnimating] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [pinnedMessages, setPinnedMessages] = useState<ChatMessage[]>([]);
+  const [pinnedBarTopIndex, setPinnedBarTopIndex] = useState(0);
+  const [loadingScrollTargetId, setLoadingScrollTargetId] = useState<string | null>(null);
   const justLoadedOlderMessagesRef = useRef(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -202,6 +209,19 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     if (contextType === 'USER') return true;
     return false;
   }, [contextType, canWriteGameChat, canWriteGroupChat]);
+
+  const lastOwnMessage = useMemo(() => {
+    if (!user?.id || messages.length === 0) return null;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].senderId === user.id) return messages[i];
+    }
+    return null;
+  }, [user?.id, messages]);
+
+  const effectiveChatType = useMemo(
+    () => (contextType === 'GAME' ? normalizeChatType(currentChatType) : 'PUBLIC') as ChatType,
+    [contextType, currentChatType]
+  );
   
   const canViewPublicChat = contextType === 'USER' || contextType === 'GROUP' || (contextType === 'GAME' && currentChatType === 'PUBLIC') || canAccessChat;
 
@@ -399,6 +419,136 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     }, 500);
   }, [hasMoreMessages, isLoadingMore, page, loadMessages]);
 
+  const fetchPinnedMessages = useCallback(async () => {
+    if (!id || !canAccessChat) return;
+    try {
+      const list = await chatApi.getPinnedMessages(contextType, id, effectiveChatType);
+      setPinnedMessages(list);
+      setPinnedBarTopIndex(0);
+    } catch {
+      setPinnedMessages([]);
+      setPinnedBarTopIndex(0);
+    }
+  }, [id, contextType, effectiveChatType, canAccessChat]);
+
+  const loadMessagesBeforeMessageId = useCallback(
+    async (messageId: string): Promise<boolean> => {
+      if (!id) return false;
+      let cursor: string | undefined = messageId;
+      const maxIterations = 20;
+      for (let i = 0; i < maxIterations; i++) {
+        const batch = await chatApi.getMessages(contextType, id, 1, 50, effectiveChatType, cursor);
+        if (batch.length > 0) {
+          setMessages(prev => {
+            const next = [...batch, ...prev];
+            messagesRef.current = next;
+            return next;
+          });
+          if (batch.some(m => m.id === messageId)) return true;
+          if (batch.length < 50) return false;
+          cursor = batch[0].id;
+        } else {
+          return false;
+        }
+      }
+      return false;
+    },
+    [id, contextType, effectiveChatType]
+  );
+
+  const handleScrollToMessage = useCallback((messageId: string) => {
+    if (!chatContainerRef.current) return;
+    const messageElement = chatContainerRef.current.querySelector(`#message-${messageId}`) as HTMLElement;
+    if (messageElement) {
+      const messagesContainer = messageElement.closest('.overflow-y-auto') as HTMLElement;
+      if (messagesContainer) {
+        const messageOffsetTop = messageElement.offsetTop;
+        const containerHeight = messagesContainer.clientHeight;
+        const messageHeight = messageElement.offsetHeight;
+        const targetScrollTop = messageOffsetTop - (containerHeight / 2) + (messageHeight / 2);
+        messagesContainer.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: 'smooth'
+        });
+      } else {
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      messageElement.classList.add('message-highlight', 'ring-2', 'ring-blue-500', 'ring-opacity-50', 'bg-blue-50', 'dark:bg-blue-900/20');
+      setTimeout(() => {
+        messageElement.classList.remove('message-highlight', 'ring-2', 'ring-blue-500', 'ring-opacity-50', 'bg-blue-50', 'dark:bg-blue-900/20');
+      }, 3000);
+    }
+  }, []);
+
+  const scrollToMessageId = useCallback(
+    async (messageId: string) => {
+      const inList = messagesRef.current.some(m => m.id === messageId);
+      if (inList) {
+        handleScrollToMessage(messageId);
+        return;
+      }
+      setLoadingScrollTargetId(messageId);
+      try {
+        const found = await loadMessagesBeforeMessageId(messageId);
+        if (found) {
+          handleScrollToMessage(messageId);
+        } else {
+          toast.error(t('chat.pinnedMessageNotFound', { defaultValue: 'Message no longer available' }));
+        }
+      } finally {
+        setLoadingScrollTargetId(null);
+      }
+    },
+    [handleScrollToMessage, loadMessagesBeforeMessageId, t]
+  );
+
+  const pinnedMessagesOrdered = useMemo(() => {
+    const n = pinnedMessages.length;
+    if (!n) return [];
+    return Array.from({ length: n }, (_, i) => pinnedMessages[(pinnedBarTopIndex + i) % n]);
+  }, [pinnedMessages, pinnedBarTopIndex]);
+
+  const handlePinnedBarClick = useCallback(
+    (_messageId: string) => {
+      const n = pinnedMessages.length;
+      if (!n) return;
+      const topMessageId = pinnedMessages[pinnedBarTopIndex].id;
+      scrollToMessageId(topMessageId);
+      setPinnedBarTopIndex((prev) => (prev - 1 + n) % n);
+    },
+    [pinnedMessages, pinnedBarTopIndex, scrollToMessageId]
+  );
+
+  useEffect(() => {
+    if (pinnedBarTopIndex >= pinnedMessages.length) {
+      setPinnedBarTopIndex(0);
+    }
+  }, [pinnedMessages.length, pinnedBarTopIndex]);
+
+  const handlePinMessage = useCallback(
+    async (message: ChatMessage) => {
+      try {
+        await chatApi.pinMessage(message.id);
+        await fetchPinnedMessages();
+      } catch {
+        toast.error(t('chat.pinFailed', { defaultValue: 'Failed to pin message' }));
+      }
+    },
+    [fetchPinnedMessages, t]
+  );
+
+  const handleUnpinMessage = useCallback(
+    async (messageId: string) => {
+      try {
+        await chatApi.unpinMessage(messageId);
+        await fetchPinnedMessages();
+      } catch {
+        toast.error(t('chat.unpinFailed', { defaultValue: 'Failed to unpin message' }));
+      }
+    },
+    [fetchPinnedMessages, t]
+  );
+
   const handleAddReaction = useCallback(async (messageId: string, emoji: string) => {
     if (!user?.id) return;
     const optimisticReaction = {
@@ -498,6 +648,26 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   const handleCancelReply = useCallback(() => {
     setReplyTo(null);
+  }, []);
+
+  const handleEditMessage = useCallback((message: ChatMessage) => {
+    setEditingMessage(message);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingMessage(null);
+  }, []);
+
+  const handleMessageUpdated = useCallback((updated: ChatMessage) => {
+    setMessages(prev => {
+      const idx = prev.findIndex(m => m.id === updated.id);
+      if (idx < 0) return prev;
+      const next = [...prev];
+      next[idx] = { ...updated, _status: prev[idx]._status, _optimisticId: (prev[idx] as ChatMessageWithStatus)._optimisticId } as ChatMessageWithStatus;
+      messagesRef.current = next;
+      return next;
+    });
+    setEditingMessage(null);
   }, []);
 
   const handleAddOptimisticMessage = useCallback((payload: OptimisticMessagePayload): string => {
@@ -611,37 +781,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     messageQueueStorage.remove(optimisticId, contextType, id!).catch(err => { console.error('[messageQueue] remove', err); });
     cancelSend(optimisticId);
   }, [contextType, id]);
-
-  const handleScrollToMessage = useCallback((messageId: string) => {
-    if (!chatContainerRef.current) return;
-    
-    const messageElement = chatContainerRef.current.querySelector(`#message-${messageId}`) as HTMLElement;
-    if (messageElement) {
-      const messagesContainer = messageElement.closest('.overflow-y-auto') as HTMLElement;
-      
-      if (messagesContainer) {
-        const messageOffsetTop = messageElement.offsetTop;
-        const containerHeight = messagesContainer.clientHeight;
-        const messageHeight = messageElement.offsetHeight;
-        const targetScrollTop = messageOffsetTop - (containerHeight / 2) + (messageHeight / 2);
-        
-        messagesContainer.scrollTo({
-          top: Math.max(0, targetScrollTop),
-          behavior: 'smooth'
-        });
-      } else {
-        messageElement.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' 
-        });
-      }
-      
-      messageElement.classList.add('message-highlight', 'ring-2', 'ring-blue-500', 'ring-opacity-50', 'bg-blue-50', 'dark:bg-blue-900/20');
-      setTimeout(() => {
-        messageElement.classList.remove('message-highlight', 'ring-2', 'ring-blue-500', 'ring-opacity-50', 'bg-blue-50', 'dark:bg-blue-900/20');
-      }, 3000);
-    }
-  }, []);
 
   const handleJoinAsGuest = useCallback(async () => {
     if (!id) return;
@@ -912,6 +1051,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       messagesRef.current = newMessages;
       return newMessages;
     });
+    setEditingMessage(prev => (prev?.id === data.messageId ? null : prev));
   }, []);
 
   const handleChatRequestRespond = useCallback(async (messageId: string, accepted: boolean) => {
@@ -974,6 +1114,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       setIsBlockedByUser(false);
       setIsMuted(false);
       setReplyTo(null);
+      setEditingMessage(null);
+      setPinnedMessages([]);
       setCurrentChatType(initialChatType || 'PUBLIC');
       setHasSetDefaultChatType(false);
       previousIdRef.current = id;
@@ -1122,7 +1264,25 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     };
   }, [id, user, contextType, initialChatType, currentChatType, hasSetDefaultChatType, loadContext, loadMessages, userChat, handleMarkFailed]);
 
+  useEffect(() => {
+    if (!id || !canAccessChat) return;
+    fetchPinnedMessages();
+  }, [id, currentChatType, canAccessChat, fetchPinnedMessages]);
+
+  useEffect(() => {
+    const socket = socketService.getSocket();
+    if (!socket || !id) return;
+    const handler = (data: { contextType: string; contextId: string }) => {
+      if (data.contextType === contextType && data.contextId === id) fetchPinnedMessages();
+    };
+    socket.on('chat:pinned-messages-updated', handler);
+    return () => {
+      socket.off('chat:pinned-messages-updated', handler);
+    };
+  }, [id, contextType, fetchPinnedMessages]);
+
   const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
+  const lastChatMessageUpdated = useSocketEventsStore((state) => state.lastChatMessageUpdated);
   const lastChatReaction = useSocketEventsStore((state) => state.lastChatReaction);
   const lastChatReadReceipt = useSocketEventsStore((state) => state.lastChatReadReceipt);
   const lastChatDeleted = useSocketEventsStore((state) => state.lastChatDeleted);
@@ -1231,7 +1391,13 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   useEffect(() => {
     if (!lastChatDeleted || lastChatDeleted.contextType !== contextType || lastChatDeleted.contextId !== id) return;
     handleMessageDeleted({ messageId: lastChatDeleted.messageId });
-  }, [lastChatDeleted, contextType, id, handleMessageDeleted]);
+    fetchPinnedMessages();
+  }, [lastChatDeleted, contextType, id, handleMessageDeleted, fetchPinnedMessages]);
+
+  useEffect(() => {
+    if (!lastChatMessageUpdated || lastChatMessageUpdated.contextType !== contextType || lastChatMessageUpdated.contextId !== id || !lastChatMessageUpdated.message) return;
+    handleMessageUpdated(lastChatMessageUpdated.message);
+  }, [lastChatMessageUpdated, contextType, id, handleMessageUpdated]);
 
   useEffect(() => {
     if (!lastSyncRequired || !id) return;
@@ -1593,12 +1759,57 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         )}
       </header>
 
+      <AnimatePresence>
+        {!showLoadingHeader && pinnedMessagesOrdered.length > 0 && !showParticipantsPage && !showItemPage && (
+          <motion.div
+            key="pinned-bar"
+            initial={{ opacity: 0, maxHeight: 0 }}
+            animate={{ opacity: 1, maxHeight: 80 }}
+            exit={{ opacity: 0, maxHeight: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <PinnedMessagesBar
+              pinnedMessages={[pinnedMessagesOrdered[0]]}
+              currentIndex={pinnedBarTopIndex + 1}
+              totalCount={pinnedMessages.length}
+              loadingScrollTargetId={loadingScrollTargetId}
+              onItemClick={handlePinnedBarClick}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <main
         className="flex-1 flex flex-col min-h-0 overflow-hidden overflow-x-hidden relative transition-all duration-300"
         style={{
           marginBottom: isCapacitor() && keyboardHeight > 0 ? `${keyboardHeight}px` : '0px'
         }}
       >
+        <AnimatePresence>
+          {!showLoadingHeader && pinnedMessagesOrdered.length > 0 && !showParticipantsPage && !showItemPage && (
+            <motion.div
+              key="pinned-shadow"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="absolute top-0 left-0 right-0 z-[1] pointer-events-none"
+            >
+              <div
+                className="h-4 w-full dark:hidden"
+                style={{
+                  background: 'linear-gradient(to bottom, rgba(0,0,0,0.1), transparent)',
+                }}
+              />
+              <div
+                className="h-4 w-full hidden dark:block"
+                style={{
+                  background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), transparent)',
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
         {/* Context-aware collapsible panel - overhangs the chat */}
         {!showLoadingHeader && !showParticipantsPage && !showItemPage && (
           <ChatContextPanel
@@ -1683,6 +1894,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           onRemoveReaction={handleRemoveReaction}
           onDeleteMessage={handleDeleteMessage}
           onReplyMessage={handleReplyMessage}
+          onEditMessage={handleEditMessage}
           onPollUpdated={handlePollUpdated}
           onResendQueued={handleResendQueued}
           onRemoveFromQueue={handleRemoveFromQueue}
@@ -1700,6 +1912,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           userChatUser2Id={contextType === 'USER' && userChat ? userChat.user2Id : undefined}
           onChatRequestRespond={handleChatRequestRespond}
           hasContextPanel={!showLoadingHeader && !showParticipantsPage && !showItemPage}
+          pinnedMessageIds={pinnedMessages.map(m => m.id)}
+          onPin={canWriteChat ? handlePinMessage : undefined}
+          onUnpin={canWriteChat ? handleUnpinMessage : undefined}
         />
         </div>
 
@@ -1746,6 +1961,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               disabled={false}
               replyTo={replyTo}
               onCancelReply={handleCancelReply}
+              editingMessage={editingMessage}
+              onCancelEdit={handleCancelEdit}
+              onEditMessage={handleMessageUpdated}
+              lastOwnMessage={lastOwnMessage}
+              onStartEditMessage={handleEditMessage}
               onScrollToMessage={handleScrollToMessage}
               chatType={currentChatType}
               onGroupChannelUpdate={contextType === 'GROUP' ? () => { loadContext(); } : undefined}

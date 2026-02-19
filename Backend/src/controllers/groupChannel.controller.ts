@@ -247,7 +247,7 @@ export const unhideGroupChannel = asyncHandler(async (req: AuthRequest, res: Res
 export const getGroupChannelMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const userId = req.userId;
-  const { page = 1, limit = 50, chatType = ChatType.PUBLIC } = req.query;
+  const { page = 1, limit = 50, chatType = ChatType.PUBLIC, beforeMessageId } = req.query;
 
   if (!userId) {
     throw new ApiError(401, 'Unauthorized');
@@ -256,7 +256,8 @@ export const getGroupChannelMessages = asyncHandler(async (req: AuthRequest, res
   const messages = await MessageService.getMessages('GROUP', id, userId, {
     page: Number(page),
     limit: Number(limit),
-    chatType: chatType as ChatType
+    chatType: chatType as ChatType,
+    ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
   });
 
   res.json({

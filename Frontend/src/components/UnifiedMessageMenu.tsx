@@ -8,13 +8,14 @@ import { formatDate } from '@/utils/dateFormat';
 import { REACTION_EMOJIS, formatFullDateTime, getUserDisplayName, getUserInitials } from '@/utils/messageMenuUtils';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
-import { Flag, Languages } from 'lucide-react';
+import { Flag, Languages, Pencil, Pin, PinOff } from 'lucide-react';
 
 interface UnifiedMessageMenuProps {
   message: ChatMessage;
   isOwnMessage: boolean;
   currentReaction?: string;
   onReply: (message: ChatMessage) => void;
+  onEdit?: (message: ChatMessage) => void;
   onCopy: (message: ChatMessage) => void;
   onDelete: (messageId: string) => void;
   onReactionSelect: (messageId: string, emoji: string) => void;
@@ -24,6 +25,9 @@ interface UnifiedMessageMenuProps {
   onDeleteStart?: (messageId: string) => void;
   onReport?: (message: ChatMessage) => void;
   onTranslationUpdate?: (messageId: string, translation: { languageCode: string; translation: string }) => void;
+  isPinned?: boolean;
+  onPin?: (message: ChatMessage) => void;
+  onUnpin?: (messageId: string) => void;
 }
 
 export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
@@ -31,6 +35,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   isOwnMessage,
   currentReaction,
   onReply,
+  onEdit,
   onCopy,
   onDelete,
   onReactionSelect,
@@ -40,6 +45,9 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   onDeleteStart,
   onReport,
   onTranslationUpdate,
+  isPinned = false,
+  onPin,
+  onUnpin,
 }) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
@@ -342,7 +350,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       {/* Context menu */}
       <div
         ref={menuRef}
-        className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-[9999] min-w-[200px] max-w-[90vw] overflow-hidden pointer-events-auto"
+        className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-lg z-[9999] min-w-[200px] max-w-[90vw] overflow-hidden pointer-events-auto"
         style={{
           left: '50%',
           top: `${menuTop}px`,
@@ -408,7 +416,15 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </svg>
               <span>{t('chat.contextMenu.reply')}</span>
             </button>
-            
+            {isOwnMessage && onEdit && message.content != null && !message.poll && (
+              <button
+                onClick={() => { onEdit(message); onClose(); }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
+              >
+                <Pencil className="w-4 h-4" />
+                <span>{t('chat.contextMenu.edit', { defaultValue: 'Edit' })}</span>
+              </button>
+            )}
             <button
               onClick={handleCopy}
               className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
@@ -418,7 +434,24 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </svg>
               <span>{t('chat.contextMenu.copy')}</span>
             </button>
-            
+            {onPin && !isPinned && (
+              <button
+                onClick={() => { onPin(message); onClose(); }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
+              >
+                <Pin className="w-4 h-4" />
+                <span>{t('chat.contextMenu.pin')}</span>
+              </button>
+            )}
+            {onUnpin && isPinned && (
+              <button
+                onClick={() => { onUnpin(message.id); onClose(); }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
+              >
+                <PinOff className="w-4 h-4" />
+                <span>{t('chat.contextMenu.unpin')}</span>
+              </button>
+            )}
             {message.content && message.content.trim() && (
               <button
                 onClick={handleTranslate}
@@ -477,17 +510,21 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
           {/* Message Details */}
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              <div>{formatFullDateTime(message.createdAt, user)}</div>
+              <div>{message.editedAt ? `${t('chat.created', { defaultValue: 'Created' })}: ` : ''}{formatFullDateTime(message.createdAt, user)}</div>
+              {message.editedAt && (
+                <div>{t('chat.editedAt', { defaultValue: 'Edited' })}: {formatFullDateTime(message.editedAt, user)}</div>
+              )}
               <div>{message.sender ? getUserDisplayName(message.sender) : 'Unknown User'}</div>
             </div>
           </div>
 
           {/* Read Receipts */}
           <div className="px-3 py-2">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-              <div className="font-medium">{t('chat.contextMenu.readBy')} ({message.readReceipts?.length || 0})</div>
-            </div>
-            
+            {(message.readReceipts?.length ?? 0) > 0 && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                <div className="font-medium">{t('chat.contextMenu.readBy')} ({message.readReceipts.length})</div>
+              </div>
+            )}
             {message.readReceipts && message.readReceipts.length > 0 ? (
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {getReadReceiptsWithReactions().map((receipt) => (
@@ -522,7 +559,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </div>
             ) : (
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                No read receipts yet
+                {t('chat.contextMenu.notReadYet', { defaultValue: 'Not read yet' })}
               </div>
             )}
           </div>

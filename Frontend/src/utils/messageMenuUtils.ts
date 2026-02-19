@@ -2,6 +2,25 @@ import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { User } from '@/types';
 
+export interface MessagePreviewLike {
+  content?: string | null;
+  mediaUrls?: string[];
+  poll?: { question?: string };
+}
+
+export function getMessagePreviewText(message: MessagePreviewLike): string {
+  if (message.content && message.content.trim()) {
+    return message.content.trim();
+  }
+  if (message.mediaUrls?.length) {
+    return '📷 Photo';
+  }
+  if (message.poll?.question) {
+    return `📊 ${message.poll.question}`;
+  }
+  return 'Message';
+}
+
 export const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '😡', '🎉', '🔥'];
 
 export const formatFullDateTime = (dateString: string, user?: User | null): string => {
