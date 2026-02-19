@@ -81,6 +81,18 @@ export const GameSetupModal = ({
     }
   }, [matchGenerationType]);
 
+  useEffect(() => {
+    if (!isOpen || !initialValues) return;
+    const setVal = initialValues.maxTotalPointsPerSet ?? 0;
+    const teamVal = initialValues.maxPointsPerTeam ?? 0;
+    setCustomSetPoints(
+      setVal > 0 && !SET_PRESETS.includes(setVal) ? String(setVal) : ''
+    );
+    setCustomTeamPoints(
+      teamVal > 0 && !TEAM_PRESETS.includes(teamVal) ? String(teamVal) : ''
+    );
+  }, [isOpen, initialValues?.maxTotalPointsPerSet, initialValues?.maxPointsPerTeam]);
+
   const handleConfirm = () => {
     onConfirm({
       fixedNumberOfSets,
