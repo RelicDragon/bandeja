@@ -405,6 +405,10 @@
     "resultsAvailable": "Results",
     "public": "Public",
     "private": "Private",
+    "confirmJoinTitle": "Join game?",
+    "confirmJoinMessage": "Are you sure you want to join this game?",
+    "confirmJoinQueueTitle": "Join the queue?",
+    "confirmJoinQueueMessage": "Are you sure you want to join the waiting list?",
     "gameTypes": {
       "CLASSIC": "Classic",
       "AMERICANO": "Americano",

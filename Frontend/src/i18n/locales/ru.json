@@ -407,6 +407,10 @@
     "resultsAvailable": "Результаты",
     "public": "Публичная",
     "private": "Приватная",
+    "confirmJoinTitle": "Присоединиться к игре?",
+    "confirmJoinMessage": "Вы уверены, что хотите присоединиться к этой игре?",
+    "confirmJoinQueueTitle": "Встать в очередь?",
+    "confirmJoinQueueMessage": "Вы уверены, что хотите встать в список ожидания?",
     "gameTypes": {
       "CLASSIC": "Классика",
       "AMERICANO": "Американо",

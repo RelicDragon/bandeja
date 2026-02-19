@@ -406,6 +406,10 @@
     "resultsAvailable": "Резултати",
     "public": "Јавна",
     "private": "Приватна",
+    "confirmJoinTitle": "Придружи се игри?",
+    "confirmJoinMessage": "Да ли сте сигурни да желите да се придружите овој игри?",
+    "confirmJoinQueueTitle": "Придружи се реду?",
+    "confirmJoinQueueMessage": "Да ли сте сигурни да желите да се придружите листи чекања?",
     "gameTypes": {
       "CLASSIC": "Класична",
       "AMERICANO": "Американо",

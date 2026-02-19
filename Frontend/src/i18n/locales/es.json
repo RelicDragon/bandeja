@@ -405,6 +405,10 @@
     "resultsAvailable": "Resultados",
     "public": "Público",
     "private": "Privado",
+    "confirmJoinTitle": "¿Unirse al juego?",
+    "confirmJoinMessage": "¿Seguro que quieres unirte a este juego?",
+    "confirmJoinQueueTitle": "¿Unirse a la cola?",
+    "confirmJoinQueueMessage": "¿Seguro que quieres unirte a la lista de espera?",
     "gameTypes": {
       "CLASSIC": "Clásico",
       "AMERICANO": "Americano",

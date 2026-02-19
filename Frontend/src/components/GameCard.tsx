@@ -15,6 +15,7 @@ import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { useAuthStore } from '@/store/authStore';
 import { chatApi } from '@/api/chat';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { Calendar, MapPin, Users, MessageCircle, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star, Plane, Bookmark } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -47,6 +48,8 @@ export const GameCard = ({
   const expandedContentRef = useRef<HTMLDivElement>(null);
   const [mainPhotoUrl, setMainPhotoUrl] = useState<string | null>(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
+  const [showJoinConfirm, setShowJoinConfirm] = useState(false);
+  const [joinAction, setJoinAction] = useState<'game' | 'queue' | null>(null);
 
   useEffect(() => {
     const loadMainPhoto = async () => {
@@ -670,7 +673,11 @@ export const GameCard = ({
           <div className="mt-0 mb-4">
             {hasUnoccupiedSlots ? (
               <Button
-                onClick={(e) => onJoin(game.id, e)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setJoinAction('game');
+                  setShowJoinConfirm(true);
+                }}
                 className="w-full"
                 size="sm"
               >
@@ -678,7 +685,11 @@ export const GameCard = ({
               </Button>
             ) : (
               <Button
-                onClick={(e) => onJoin(game.id, e)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setJoinAction('queue');
+                  setShowJoinConfirm(true);
+                }}
                 className="w-full"
                 size="sm"
               >
@@ -696,6 +707,15 @@ export const GameCard = ({
           gameId={game.id}
           initialContent={userNoteDisplay}
           onSaved={handleNoteSaved}
+        />
+      )}
+      {showJoinConfirm && joinAction && (
+        <ConfirmationModal
+          isOpen={showJoinConfirm}
+          onClose={() => { setShowJoinConfirm(false); setJoinAction(null); }}
+          onConfirm={() => { onJoin?.(game.id, {} as React.MouseEvent); setShowJoinConfirm(false); setJoinAction(null); }}
+          title={joinAction === 'game' ? t('games.confirmJoinTitle') : t('games.confirmJoinQueueTitle')}
+          message={joinAction === 'game' ? t('games.confirmJoinMessage') : t('games.confirmJoinQueueMessage')}
         />
       )}
     </>
