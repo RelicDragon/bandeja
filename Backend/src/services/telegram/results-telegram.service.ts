@@ -4,6 +4,7 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { config } from '../../config/env';
 import { getAiService } from '../ai/ai.service';
+import { LLM_REASON } from '../ai/llmReasons';
 import { TranslationService } from '../chat/translation.service';
 import { escapeHTML, trimTextForTelegram } from './utils';
 import { RankingService } from '../ranking.service';
@@ -60,7 +61,11 @@ export class ResultsTelegramService {
     );
   }
 
-  static async generateResultsSummary(game: any, language: string): Promise<string> {
+  static async generateResultsSummary(
+    game: any,
+    language: string,
+    initiatedByUserId?: string
+  ): Promise<string> {
     const ai = getAiService();
     if (!ai.isConfigured()) {
       throw new ApiError(503, 'AI service is not configured');
@@ -247,6 +252,8 @@ export class ResultsTelegramService {
         ],
         temperature: 0.7,
         max_tokens: 1000,
+        reason: LLM_REASON.TELEGRAM_RESULTS,
+        userId: initiatedByUserId,
       });
       return summary;
     } catch (error: any) {

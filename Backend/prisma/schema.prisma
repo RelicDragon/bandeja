@@ -1620,3 +1620,22 @@ model ExchangeRate {
   @@index([baseCurrency])
   @@index([lastUpdated])
 }
+
+model LlmUsageLog {
+  id            String   @id @default(cuid())
+  provider      String   @db.VarChar(32)
+  model         String   @db.VarChar(128)
+  reason        String?  @db.VarChar(64)
+  userId        String?
+  input         String   @db.Text
+  output        String   @db.Text
+  inputTokens   Int?
+  outputTokens  Int?
+  createdAt     DateTime @default(now())
+
+  @@index([provider])
+  @@index([model])
+  @@index([userId])
+  @@index([reason])
+  @@index([createdAt])
+}

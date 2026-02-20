@@ -1,3 +1,5 @@
+import type { LlmReason } from './llmReasons';
+
 export type AiProvider = 'openai' | 'deepseek';
 
 export interface ChatMessage {
@@ -10,6 +12,8 @@ export interface CreateCompletionOptions {
   model?: string;
   temperature?: number;
   max_tokens?: number;
+  reason?: LlmReason | string;
+  userId?: string;
 }
 
 export interface IAiService {

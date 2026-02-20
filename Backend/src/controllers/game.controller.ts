@@ -334,7 +334,11 @@ export const prepareTelegramSummary = asyncHandler(async (req: AuthRequest, res:
   const { game, city } = await validateGameForTelegram(id, req.userId!);
 
   const language = city.telegramPinnedLanguage || 'en-US';
-  const summary = await ResultsTelegramService.generateResultsSummary(game, language);
+  const summary = await ResultsTelegramService.generateResultsSummary(
+    game,
+    language,
+    req.userId ?? undefined
+  );
 
   res.json({
     success: true,
@@ -358,7 +362,11 @@ export const sendResultsToTelegram = asyncHandler(async (req: AuthRequest, res: 
   if (summaryText && typeof summaryText === 'string' && summaryText.trim()) {
     finalSummaryText = summaryText.trim();
   } else {
-    finalSummaryText = await ResultsTelegramService.generateResultsSummary(game, language);
+    finalSummaryText = await ResultsTelegramService.generateResultsSummary(
+      game,
+      language,
+      req.userId ?? undefined
+    );
   }
 
   const mainPhotoUrl = await ResultsTelegramService.getMainPhotoUrl(game);

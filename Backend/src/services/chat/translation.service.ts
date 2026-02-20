@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { getAiService } from '../ai/ai.service';
+import { LLM_REASON } from '../ai/llmReasons';
 
 export class TranslationService {
   static extractLanguageCode(locale: string | null | undefined): string {
@@ -11,7 +12,11 @@ export class TranslationService {
     return parts[0]?.toLowerCase() || 'en';
   }
 
-  static async getTranslationFromChatGPT(text: string, targetLanguage: string): Promise<string> {
+  static async getTranslationFromChatGPT(
+    text: string,
+    targetLanguage: string,
+    userId?: string
+  ): Promise<string> {
     const ai = getAiService();
     if (!ai.isConfigured()) {
       throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
@@ -59,6 +64,8 @@ export class TranslationService {
         ],
         temperature: 0.3,
         max_tokens: 500,
+        reason: LLM_REASON.MESSAGE_TRANSLATION,
+        userId,
       });
       return translation;
     } catch (error: any) {
@@ -98,7 +105,11 @@ export class TranslationService {
       };
     }
 
-    const translation = await this.getTranslationFromChatGPT(messageContent, normalizedLanguageCode);
+    const translation = await this.getTranslationFromChatGPT(
+      messageContent,
+      normalizedLanguageCode,
+      userId
+    );
 
     const savedTranslation = await prisma.messageTranslation.create({
       data: {

@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { config } from '../../config/env';
 import type { IAiService, CreateCompletionOptions } from './types';
+import { logLlmUsage } from './llmUsageLog.service';
 
 const OPENAI_DEFAULT_MODEL = 'gpt-5-mini';
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
@@ -29,9 +30,10 @@ export function getAiService(): IAiService {
     async createCompletion(options: CreateCompletionOptions): Promise<string> {
       const c = getClient();
       if (!c) throw new Error('AI service is not configured');
+      const provider = config.ai.provider;
       const model =
         options.model ??
-        (config.ai.provider === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : OPENAI_DEFAULT_MODEL);
+        (provider === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : OPENAI_DEFAULT_MODEL);
       const response = await c.chat.completions.create({
         model,
         messages: options.messages,
@@ -40,6 +42,17 @@ export function getAiService(): IAiService {
       });
       const text = response.choices[0]?.message?.content?.trim();
       if (text == null) throw new Error('Empty AI response');
+      const usage = response.usage;
+      logLlmUsage({
+        provider,
+        model,
+        reason: options.reason ?? undefined,
+        userId: options.userId ?? undefined,
+        input: JSON.stringify(options.messages),
+        output: text,
+        inputTokens: usage?.prompt_tokens ?? null,
+        outputTokens: usage?.completion_tokens ?? null,
+      });
       return text;
     },
   };
