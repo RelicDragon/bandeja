@@ -3,8 +3,8 @@ import { InputFile } from 'grammy';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { config } from '../../config/env';
+import { getAiService } from '../ai/ai.service';
 import { TranslationService } from '../chat/translation.service';
-import OpenAI from 'openai';
 import { escapeHTML, trimTextForTelegram } from './utils';
 import { RankingService } from '../ranking.service';
 import { getUserTimezoneFromCityId, formatDateInTimezone, convertToUserTimezone } from '../user-timezone.service';
@@ -61,8 +61,9 @@ export class ResultsTelegramService {
   }
 
   static async generateResultsSummary(game: any, language: string): Promise<string> {
-    if (!config.openai.apiKey) {
-      throw new ApiError(503, 'OpenAI service is not configured');
+    const ai = getAiService();
+    if (!ai.isConfigured()) {
+      throw new ApiError(503, 'AI service is not configured');
     }
 
     const playingParticipants = game.participants?.filter((p: any) => p.status === 'PLAYING') || [];
@@ -235,39 +236,21 @@ export class ResultsTelegramService {
     
     const prompt = `Give me a summary of match in informal manner for a group of friends. Start your summary with "Hello, ${cityName}!" or similar greeting and proceed with the summary starting from newline. ${timeInfo}${locationInfo}${contextInfo}${genderInfo}They played Padel game. Game participants are: ${participants}. This game results are: ${resultsText}. Return strictly only the summary. Make it a little funny but still informative. Use if you want additional information about users.`;
 
-    if (!config.openai.apiKey) {
-      throw new ApiError(503, 'OpenAI service is not configured');
-    }
-
     try {
-      const openai = new OpenAI({
-        apiKey: config.openai.apiKey,
-      });
-
-      const response = await openai.chat.completions.create({
-        model: 'gpt-5-mini',
+      const summary = await ai.createCompletion({
         messages: [
           {
             role: 'system',
             content: `You are a friendly sports commentator. Write summaries in ${targetLanguageName} in an informal, fun way for a group of friends.`,
           },
-          {
-            role: 'user',
-            content: prompt,
-          },
+          { role: 'user', content: prompt },
         ],
         temperature: 0.7,
         max_tokens: 1000,
       });
-
-      const summary = response.choices[0]?.message?.content?.trim();
-      if (!summary) {
-        throw new ApiError(503, 'Failed to generate summary');
-      }
-
       return summary;
     } catch (error: any) {
-      console.error('ChatGPT summary generation error:', error);
+      console.error('AI summary generation error:', error);
       throw new ApiError(503, 'Failed to generate summary. Please try again later.');
     }
   }

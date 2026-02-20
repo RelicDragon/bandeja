@@ -1,11 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { config } from '../../config/env';
-import OpenAI from 'openai';
-
-const openai = config.openai.apiKey ? new OpenAI({
-  apiKey: config.openai.apiKey,
-}) : null;
+import { getAiService } from '../ai/ai.service';
 
 export class TranslationService {
   static extractLanguageCode(locale: string | null | undefined): string {
@@ -17,7 +12,8 @@ export class TranslationService {
   }
 
   static async getTranslationFromChatGPT(text: string, targetLanguage: string): Promise<string> {
-    if (!openai) {
+    const ai = getAiService();
+    if (!ai.isConfigured()) {
       throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
     }
 
@@ -53,34 +49,23 @@ export class TranslationService {
     const targetLanguageName = languageNames[targetLanguage] || targetLanguage;
 
     try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-5-mini',
+      const translation = await ai.createCompletion({
         messages: [
           {
             role: 'system',
             content: `You are a professional translator. Translate the following text to ${targetLanguageName}. Provide only the translation without any additional text, explanations, or formatting.`,
           },
-          {
-            role: 'user',
-            content: text,
-          },
+          { role: 'user', content: text },
         ],
         temperature: 0.3,
         max_tokens: 500,
       });
-
-      const translation = response.choices[0]?.message?.content?.trim();
-      if (!translation) {
-        throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
-      }
-
       return translation;
     } catch (error: any) {
       if (error instanceof ApiError) {
         throw error;
       }
-      console.error('ChatGPT translation error:', error);
-      // Return 503 Service Unavailable for translation service errors
+      console.error('Translation error:', error);
       throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
     }
   }

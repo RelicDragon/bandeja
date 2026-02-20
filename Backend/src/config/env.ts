@@ -39,6 +39,12 @@ export const config = {
   openai: {
     apiKey: process.env.OPENAI_API_KEY || '',
   },
+  deepseek: {
+    apiKey: process.env.DEEPSEEK_API_KEY || '',
+  },
+  ai: {
+    provider: (process.env.AI_PROVIDER || 'openai') as 'openai' | 'deepseek',
+  },
   apple: {
     clientId: process.env.APPLE_CLIENT_ID || 'com.funified.bandeja',
   },
