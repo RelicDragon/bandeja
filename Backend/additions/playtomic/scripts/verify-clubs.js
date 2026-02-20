@@ -31,7 +31,7 @@ async function verifyWithOpenAI(club) {
   const desc = (club.description || "").slice(0, 300);
   const response = await createChatCompletion(
     {
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "user",
@@ -70,7 +70,7 @@ async function geocodeWithTavily(club) {
   if (!snippets) return null;
   const response = await createChatCompletion(
     {
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "user",
@@ -96,7 +96,7 @@ async function geocodeWithOpenAI(club) {
   if (!fullAddress) return null;
   const response = await createChatCompletion(
     {
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "user",
