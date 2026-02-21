@@ -4,6 +4,7 @@ import { UserChat } from '@/api/chat';
 import { ChatItem, ChatType } from './chatListTypes';
 import { usePlayersStore } from '@/store/playersStore';
 import { useAuthStore } from '@/store/authStore';
+import { MAX_PINNED_CHATS } from '@/utils/chatListConstants';
 
 interface ChatListItemProps {
   item: ChatItem;
@@ -16,6 +17,10 @@ interface ChatListItemProps {
   displayTitle?: string;
   displaySubtitle?: string;
   sellerGroupedByItem?: boolean;
+  pinnedCount?: number;
+  pinningId?: string | null;
+  onPinUserChat?: (chatId: string, isPinned: boolean) => void;
+  onPinGroupChannel?: (channelId: string, isPinned: boolean) => void;
 }
 
 export const ChatListItem = ({
@@ -29,6 +34,10 @@ export const ChatListItem = ({
   displayTitle,
   displaySubtitle,
   sellerGroupedByItem,
+  pinnedCount = 0,
+  pinningId = null,
+  onPinUserChat,
+  onPinGroupChannel,
 }: ChatListItemProps) => {
   const { user } = useAuthStore();
   const liveChats = usePlayersStore((state) => state.chats);
@@ -41,6 +50,8 @@ export const ChatListItem = ({
     const liveChat = liveChats[chat.data.id] || chat.data;
     const liveUnreadCount = liveUnreadCounts[chat.data.id] || 0;
     const isSelected = selectedChatType === 'user' && selectedChatId === chat.data.id;
+    const isPinned = !!liveChat.isPinned;
+    const isPinning = pinningId === chat.data.id;
     return (
       <UserChatCard
         key={`user-${chat.data.id}`}
@@ -49,6 +60,10 @@ export const ChatListItem = ({
         onClick={() => onChatClick(chat.data.id, 'user', clickOpts)}
         isSelected={isSelected}
         draft={chat.draft}
+        isPinned={isPinned}
+        onPinToggle={onPinUserChat ? () => onPinUserChat(chat.data.id, isPinned) : undefined}
+        canPin={pinnedCount < MAX_PINNED_CHATS || isPinned}
+        isPinning={isPinning}
       />
     );
   }
@@ -79,6 +94,8 @@ export const ChatListItem = ({
   if (chat.type === 'group' || chat.type === 'channel') {
     const chatTypeForNav: ChatType = chat.type === 'channel' ? 'channel' : 'group';
     const isSelected = (selectedChatType === 'group' || selectedChatType === 'channel') && selectedChatId === chat.data.id;
+    const isPinned = !!chat.data.isPinned;
+    const isPinning = pinningId === chat.data.id;
     return (
       <div
         key={`${chat.type}-${chat.data.id}`}
@@ -93,6 +110,10 @@ export const ChatListItem = ({
           displayTitle={displayTitle}
           displaySubtitle={displaySubtitle}
           sellerGroupedByItem={sellerGroupedByItem}
+          isPinned={isPinned}
+          onPinToggle={onPinGroupChannel ? () => onPinGroupChannel(chat.data.id, isPinned) : undefined}
+          canPin={pinnedCount < MAX_PINNED_CHATS || isPinned}
+          isPinning={isPinning}
         />
       </div>
     );

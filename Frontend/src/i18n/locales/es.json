@@ -1562,10 +1562,16 @@
       "translating": "Traduciendo..."
     },
     "translationUnavailable": "La traducción no está disponible temporalmente. Por favor, inténtalo de nuevo más tarde.",
+    "translationRateLimited": "Demasiadas solicitudes de traducción. Inténtalo de nuevo en unos segundos.",
     "translationError": "Error al traducir el mensaje. Por favor, inténtalo de nuevo.",
     "pinFailed": "Error al fijar el mensaje",
     "unpinFailed": "Error al desfijar el mensaje",
     "pinnedMessageNotFound": "El mensaje ya no está disponible",
+    "pinChat": "Fijar chat",
+    "unpinChat": "Desfijar chat",
+    "pinChatFailed": "Error al fijar el chat",
+    "unpinChatFailed": "Error al desfijar el chat",
+    "maxPinnedChatsReached": "Puedes fijar hasta {{max}} chats.",
     "report": {
       "title": "Reportar Mensaje",
       "description": "¿Por qué estás reportando este mensaje?",

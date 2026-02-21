@@ -12,8 +12,12 @@ import { EditPreview } from './EditPreview';
 import { MentionInput } from './MentionInput';
 import { JoinGroupChannelButton } from './JoinGroupChannelButton';
 import { PollCreationModal } from './chat/PollCreationModal';
+import { TranslationLanguageModal } from './chat/TranslationLanguageModal';
+import { TranslateToButton } from './chat/TranslateToButton';
+import { UndoTranslateButton } from './chat/UndoTranslateButton';
 import { X, ListPlus, Paperclip, Image } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { usersApi } from '@/api/users';
 import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
 import { PollType } from '@/api/chat';
@@ -28,6 +32,7 @@ const draftLoadingCache = new Map<string, Promise<any>>();
 const SAVE_DRAFT_RETRIES = 3;
 const SAVE_DRAFT_RETRY_MS = 1200;
 const DRAFT_MAX_CONTENT_LENGTH = 10000;
+const TRANSLATE_DRAFT_MAX_LENGTH = 4000;
 
 function isRetryableDraftError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return true;
@@ -121,7 +126,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onStartEditMessage,
 }) => {
   const { t } = useTranslation();
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const [message, setMessage] = useState('');
   const [mentionIds, setMentionIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -131,6 +136,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isAttachExpanded, setIsAttachExpanded] = useState(false);
+  const [originalMessageBeforeTranslate, setOriginalMessageBeforeTranslate] = useState<string | null>(null);
+  const [originalMentionIdsBeforeTranslate, setOriginalMentionIdsBeforeTranslate] = useState<string[] | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translationModalOpen, setTranslationModalOpen] = useState(false);
+  const translateToLanguage = user?.translateToLanguage ?? null;
   const attachMenuRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const saveDraftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -378,6 +388,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
     setMessage('');
     setMentionIds([]);
+    setOriginalMessageBeforeTranslate(null);
+    setOriginalMentionIdsBeforeTranslate(null);
     loadDraft();
   }, [finalContextId, contextType, chatType, loadDraft, userChatId, resolvedChatType]);
 
@@ -654,6 +666,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleMessageChange = (newValue: string, newMentionIds: string[]) => {
     setMessage(newValue);
     setMentionIds(newMentionIds);
+    setOriginalMessageBeforeTranslate(null);
+    setOriginalMentionIdsBeforeTranslate(null);
     if (!editingMessage) debouncedSaveDraft(newValue, newMentionIds);
     updateMultilineState();
   };
@@ -724,6 +738,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         onEditMessage(updated);
         setMessage('');
         setMentionIds([]);
+        setOriginalMessageBeforeTranslate(null);
+        setOriginalMentionIdsBeforeTranslate(null);
         onCancelEdit?.();
         requestAnimationFrame(() => {
           (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
@@ -773,6 +789,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         setMessage('');
         setMentionIds([]);
         setSelectedImages([]);
+        setOriginalMessageBeforeTranslate(null);
+        setOriginalMentionIdsBeforeTranslate(null);
         hasLoadedDraftRef.current = false;
         setTimeout(() => updateMultilineState(), 100);
         onCancelReply?.();
@@ -834,6 +852,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             setMessage('');
             setMentionIds([]);
             setSelectedImages([]);
+            setOriginalMessageBeforeTranslate(null);
+            setOriginalMentionIdsBeforeTranslate(null);
             hasLoadedDraftRef.current = false;
             setTimeout(() => updateMultilineState(), 100);
             onCancelReply?.();
@@ -868,6 +888,91 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       onStartEditMessage(lastOwnMessage);
     }
   };
+
+  const runTranslateDraft = useCallback(async (text: string, code: string, currentMentionIds: string[]) => {
+    const result = await chatApi.translateDraft(text, code);
+    setOriginalMessageBeforeTranslate(text);
+    setOriginalMentionIdsBeforeTranslate(currentMentionIds.length ? [...currentMentionIds] : null);
+    setMessage(result.translation);
+    setMentionIds([]);
+    setTimeout(() => updateMultilineState(), 100);
+  }, [updateMultilineState]);
+
+  const handleTranslateLanguageSelect = useCallback(async (languageCode: string) => {
+    const code = languageCode.toLowerCase();
+    try {
+      const res = await usersApi.updateProfile({ translateToLanguage: code });
+      const nextUser = res?.data;
+      if (nextUser && user) updateUser({ ...user, ...nextUser });
+      else if (nextUser) updateUser(nextUser);
+      setTranslationModalOpen(false);
+      const trimmed = message.trim();
+      if (trimmed) {
+        if (trimmed.length > TRANSLATE_DRAFT_MAX_LENGTH) {
+          toast.error(t('chat.translateTextTooLong', { defaultValue: 'Text is too long to translate.', max: TRANSLATE_DRAFT_MAX_LENGTH }));
+          return;
+        }
+        setIsTranslating(true);
+        try {
+          await runTranslateDraft(trimmed, code, mentionIds);
+        } catch (err) {
+          console.error('Translate draft failed:', err);
+          const status = (err as { response?: { status?: number } })?.response?.status;
+          toast.error(status === 429 ? t('chat.translationRateLimited', { defaultValue: 'Too many translation requests. Please try again in a few seconds.' }) : t('chat.translationUnavailable', { defaultValue: 'Translation is temporarily unavailable.' }));
+        } finally {
+          setIsTranslating(false);
+        }
+      }
+    } catch (err) {
+      console.error('Update translateToLanguage failed:', err);
+      toast.error(t('chat.sendFailed') || 'Failed to save');
+    }
+  }, [message, mentionIds, updateUser, user, runTranslateDraft, t]);
+
+  const handleTranslateClick = useCallback(async () => {
+    if (!translateToLanguage) return;
+    const trimmed = message.trim();
+    if (!trimmed) {
+      toast.error(t('chat.enterTextToTranslate', { defaultValue: 'Enter text to translate.' }));
+      return;
+    }
+    if (trimmed.length > TRANSLATE_DRAFT_MAX_LENGTH) {
+      toast.error(t('chat.translateTextTooLong', { defaultValue: 'Text is too long to translate.', max: TRANSLATE_DRAFT_MAX_LENGTH }));
+      return;
+    }
+    setIsTranslating(true);
+    try {
+      await runTranslateDraft(trimmed, translateToLanguage, mentionIds);
+    } catch (err) {
+      console.error('Translate draft failed:', err);
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      toast.error(status === 429 ? t('chat.translationRateLimited', { defaultValue: 'Too many translation requests. Please try again in a few seconds.' }) : t('chat.translationUnavailable', { defaultValue: 'Translation is temporarily unavailable.' }));
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [translateToLanguage, message, mentionIds, runTranslateDraft, t]);
+
+  const handleRemoveTranslateLanguage = useCallback(async () => {
+    try {
+      const res = await usersApi.updateProfile({ translateToLanguage: null });
+      const nextUser = res?.data;
+      if (nextUser && user) updateUser({ ...user, ...nextUser });
+      else if (nextUser) updateUser(nextUser);
+    } catch (err) {
+      console.error('Clear translateToLanguage failed:', err);
+      toast.error(t('chat.sendFailed') || 'Failed to save');
+    }
+  }, [updateUser, user, t]);
+
+  const handleUndoTranslate = useCallback(() => {
+    if (originalMessageBeforeTranslate != null) {
+      setMessage(originalMessageBeforeTranslate);
+      setMentionIds(originalMentionIdsBeforeTranslate ?? []);
+      setOriginalMessageBeforeTranslate(null);
+      setOriginalMentionIdsBeforeTranslate(null);
+      setTimeout(() => updateMultilineState(), 100);
+    }
+  }, [originalMessageBeforeTranslate, originalMentionIdsBeforeTranslate, updateMultilineState]);
 
   const handleJoinChannel = async () => {
     if (!groupChannelId || !groupChannel) return;
@@ -907,6 +1012,24 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      <div className="flex items-center justify-end gap-2 mb-2">
+        {originalMessageBeforeTranslate != null && (
+          <UndoTranslateButton onClick={handleUndoTranslate} disabled={isDisabled || inputBlocked} />
+        )}
+        <TranslateToButton
+          translateToLanguage={translateToLanguage}
+          isTranslating={isTranslating}
+          disabled={isDisabled || inputBlocked}
+          onOpenModal={() => setTranslationModalOpen(true)}
+          onTranslate={handleTranslateClick}
+          onRemoveLanguage={handleRemoveTranslateLanguage}
+        />
+      </div>
+      <TranslationLanguageModal
+        open={translationModalOpen}
+        onClose={() => setTranslationModalOpen(false)}
+        onSelect={handleTranslateLanguageSelect}
+      />
       {editingMessage && (
         <EditPreview
           message={editingMessage}

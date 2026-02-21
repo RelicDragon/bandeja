@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
-import { chatApi } from '@/api/chat';
 import { blockedUsersApi } from '@/api/blockedUsers';
 import { Loading } from './Loading';
 import { PlayerAvatarView } from './PlayerAvatarView';
@@ -16,6 +15,7 @@ import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { ConfirmationModal } from './ConfirmationModal';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
+import { usePlayersStore } from '@/store/playersStore';
 import { usePresenceStore } from '@/store/presenceStore';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import {
@@ -114,12 +114,21 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     if (!playerId || startingChat || isBlocked) return;
     setStartingChat(true);
     try {
-      const response = await chatApi.getOrCreateChatWithUser(playerId);
-      const chat = response.data;
-      if (chat) {
-        onClose();
-        navigate(`/user-chat/${chat.id}`, { state: { chat, contextType: 'USER' } });
+      const chat = await usePlayersStore.getState().getOrCreateAndAddUserChat(playerId);
+      if (!chat) {
+        toast.error(t('errors.generic', { defaultValue: 'Something went wrong' }));
+        return;
       }
+      const previousPath = location.pathname + (location.search || '');
+      onClose();
+      navigate(`/user-chat/${chat.id}`, {
+        state: {
+          chat,
+          contextType: 'USER',
+          fromPlayerCard: true,
+          previousPath,
+        },
+      });
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));

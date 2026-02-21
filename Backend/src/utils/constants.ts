@@ -201,6 +201,7 @@ export const PROFILE_SELECT_FIELDS = {
   isActive: true,
   authProvider: true,
   language: true,
+  translateToLanguage: true,
   timeFormat: true,
   weekStart: true,
   defaultCurrency: true,

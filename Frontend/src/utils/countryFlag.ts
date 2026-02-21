@@ -110,8 +110,40 @@ const COUNTRY_TO_FLAG: Record<string, string> = {
 
 const DEFAULT_FLAG = '🌐';
 
+const LANGUAGE_CODE_TO_COUNTRY: Record<string, string> = {
+  en: 'United Kingdom',
+  es: 'Spain',
+  ru: 'Russia',
+  sr: 'Serbia',
+  fr: 'France',
+  de: 'Germany',
+  it: 'Italy',
+  pt: 'Portugal',
+  nl: 'Netherlands',
+  pl: 'Poland',
+  cs: 'Czech Republic',
+  sk: 'Slovakia',
+  hr: 'Croatia',
+  bg: 'Bulgaria',
+  ro: 'Romania',
+  hu: 'Hungary',
+  el: 'Greece',
+  tr: 'Turkey',
+  ar: 'Saudi Arabia',
+  zh: 'China',
+  ja: 'Japan',
+  ko: 'South Korea',
+};
+
 export function getCountryFlag(countryName: string): string {
   if (!countryName?.trim()) return DEFAULT_FLAG;
   const normalized = countryName.trim();
   return COUNTRY_TO_FLAG[normalized] ?? COUNTRY_TO_FLAG[normalized.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())] ?? DEFAULT_FLAG;
+}
+
+export function getLanguageFlag(languageCode: string): string {
+  if (!languageCode?.trim()) return DEFAULT_FLAG;
+  const code = languageCode.trim().toLowerCase().split('-')[0];
+  const country = LANGUAGE_CODE_TO_COUNTRY[code];
+  return country ? getCountryFlag(country) : DEFAULT_FLAG;
 }

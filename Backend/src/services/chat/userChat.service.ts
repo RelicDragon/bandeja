@@ -39,7 +39,8 @@ export class UserChatService {
       lastMessage: chat.lastMessagePreview
         ? { preview: chat.lastMessagePreview, updatedAt: chat.updatedAt }
         : null,
-      isPinned: chat.pinnedByUsers.length > 0
+      isPinned: chat.pinnedByUsers.length > 0,
+      pinnedAt: chat.pinnedByUsers[0]?.pinnedAt?.toISOString() ?? null
     }));
   }
 
@@ -113,26 +114,32 @@ export class UserChatService {
     });
   }
 
+  static readonly MAX_PINNED_CHATS = 5;
+
   static async pinUserChat(userId: string, chatId: string) {
     await this.getChatById(chatId, userId);
 
-    const pinnedChat = await prisma.pinnedUserChat.upsert({
-      where: {
-        userId_userChatId: {
-          userId,
-          userChatId: chatId
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.pinnedUserChat.findUnique({
+        where: { userId_userChatId: { userId, userChatId: chatId } }
+      });
+      if (!existing) {
+        const [pinnedUserCount, pinnedGroupCount] = await Promise.all([
+          tx.pinnedUserChat.count({ where: { userId } }),
+          tx.pinnedGroupChannel.count({ where: { userId } })
+        ]);
+        if (pinnedUserCount + pinnedGroupCount >= this.MAX_PINNED_CHATS) {
+          throw new ApiError(400, 'MAX_PINNED_CHATS');
         }
-      },
-      update: {
-        pinnedAt: new Date()
-      },
-      create: {
-        userId,
-        userChatId: chatId
       }
+      return tx.pinnedUserChat.upsert({
+        where: {
+          userId_userChatId: { userId, userChatId: chatId }
+        },
+        update: { pinnedAt: new Date() },
+        create: { userId, userChatId: chatId }
+      });
     });
-
-    return pinnedChat;
   }
 
   static async unpinUserChat(userId: string, chatId: string) {

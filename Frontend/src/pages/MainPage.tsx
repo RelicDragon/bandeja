@@ -5,6 +5,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { useDesktop } from '@/hooks/useDesktop';
 import { parseLocation, placeToPageType } from '@/utils/urlSchema';
+import type { UserChatFromPlayerCardState } from '@/types';
 import { MyTab } from './MyTab';
 import { FindTab } from './FindTab';
 import { ChatsTab } from './ChatsTab';
@@ -89,6 +90,22 @@ export const MainPage = () => {
   }
 
   if (isChatPage && !isDesktop && isOnSpecificChatRoute) {
+    const pcState = location.state as UserChatFromPlayerCardState | null;
+    const fromPlayerCard = pcState?.fromPlayerCard === true;
+    const previousPath = typeof pcState?.previousPath === 'string' ? pcState.previousPath : undefined;
+    if (fromPlayerCard && previousPath) {
+      const [pathname, search] = previousPath.includes('?') ? [previousPath.split('?')[0], previousPath.split('?')[1] ?? ''] : [previousPath, ''];
+      const prevParsed = parseLocation(pathname, search);
+      const tabOverride = placeToPageType(prevParsed.place);
+      return (
+        <MainLayout>
+          <div className="relative px-2 overflow-hidden" style={{ paddingBottom: bottomTabsVisible ? '5rem' : '0' }}>
+            <ChatsTab />
+          </div>
+          {bottomTabsVisible && <BottomTabBar tabOverride={tabOverride} previousPath={previousPath} />}
+        </MainLayout>
+      );
+    }
     return <ChatsTab />;
   }
 

@@ -11,6 +11,7 @@ import { NotificationChannelType } from '@prisma/client';
 import { DEFAULT_PREFERENCES } from '../../services/notificationPreference.service';
 import telegramBotService from '../../services/telegram/bot.service';
 import { syncTelegramProfileFromUpdate } from '../../services/telegram/syncTelegramProfile.service';
+import { TRANSLATE_TO_LANGUAGE_CODES } from '../../services/chat/translation.service';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
@@ -64,7 +65,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, favoriteTrainerId, appIcon, verbalStatus, bio } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, favoriteTrainerId, appIcon, verbalStatus, bio } = req.body;
   
   // Explicitly ignore level and socialLevel - only backend can modify these
 
@@ -84,6 +85,13 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
   const VALID_APP_ICONS = ['tiger', 'racket'];
   if (appIcon !== undefined && appIcon !== null && !VALID_APP_ICONS.includes(appIcon)) {
     throw new ApiError(400, `Invalid appIcon. Allowed: ${VALID_APP_ICONS.join(', ')}`);
+  }
+
+  if (translateToLanguage !== undefined && translateToLanguage !== null && translateToLanguage !== '') {
+    const code = String(translateToLanguage).toLowerCase();
+    if (!TRANSLATE_TO_LANGUAGE_CODES.includes(code)) {
+      throw new ApiError(400, `Invalid translateToLanguage. Allowed: ${TRANSLATE_TO_LANGUAGE_CODES.join(', ')}`);
+    }
   }
 
   if (verbalStatus !== undefined && verbalStatus !== null && verbalStatus.length > 32) {
@@ -149,6 +157,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(avatar !== undefined && { avatar }),
         ...(originalAvatar !== undefined && { originalAvatar }),
         ...(language !== undefined && { language }),
+        ...(translateToLanguage !== undefined && { translateToLanguage: translateToLanguage === null || translateToLanguage === '' ? null : String(translateToLanguage).toLowerCase() }),
         ...(timeFormat !== undefined && { timeFormat }),
         ...(weekStart !== undefined && { weekStart }),
         ...(defaultCurrency !== undefined && { defaultCurrency }),

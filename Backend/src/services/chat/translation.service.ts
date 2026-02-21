@@ -3,6 +3,33 @@ import { ApiError } from '../../utils/ApiError';
 import { getAiService } from '../ai/ai.service';
 import { LLM_REASON } from '../ai/llmReasons';
 
+export const TRANSLATION_LANGUAGE_NAMES: Record<string, string> = {
+  en: 'English',
+  ru: 'Russian',
+  sr: 'Serbian',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German',
+  it: 'Italian',
+  pt: 'Portuguese',
+  nl: 'Dutch',
+  pl: 'Polish',
+  cs: 'Czech',
+  sk: 'Slovak',
+  hr: 'Croatian',
+  bg: 'Bulgarian',
+  ro: 'Romanian',
+  hu: 'Hungarian',
+  el: 'Greek',
+  tr: 'Turkish',
+  ar: 'Arabic',
+  zh: 'Chinese',
+  ja: 'Japanese',
+  ko: 'Korean',
+};
+
+export const TRANSLATE_TO_LANGUAGE_CODES = Object.keys(TRANSLATION_LANGUAGE_NAMES);
+
 export class TranslationService {
   static extractLanguageCode(locale: string | null | undefined): string {
     if (!locale || locale === 'auto') {
@@ -26,32 +53,7 @@ export class TranslationService {
       throw new ApiError(400, 'Text to translate is required');
     }
 
-    const languageNames: Record<string, string> = {
-      'en': 'English',
-      'ru': 'Russian',
-      'sr': 'Serbian',
-      'es': 'Spanish',
-      'fr': 'French',
-      'de': 'German',
-      'it': 'Italian',
-      'pt': 'Portuguese',
-      'nl': 'Dutch',
-      'pl': 'Polish',
-      'cs': 'Czech',
-      'sk': 'Slovak',
-      'hr': 'Croatian',
-      'bg': 'Bulgarian',
-      'ro': 'Romanian',
-      'hu': 'Hungarian',
-      'el': 'Greek',
-      'tr': 'Turkish',
-      'ar': 'Arabic',
-      'zh': 'Chinese',
-      'ja': 'Japanese',
-      'ko': 'Korean',
-    };
-
-    const targetLanguageName = languageNames[targetLanguage] || targetLanguage;
+    const targetLanguageName = TRANSLATION_LANGUAGE_NAMES[targetLanguage] || targetLanguage;
 
     try {
       const translation = await ai.createCompletion({
@@ -63,7 +65,7 @@ export class TranslationService {
           { role: 'user', content: text },
         ],
         temperature: 0.3,
-        max_tokens: 500,
+        max_tokens: 1500,
         reason: LLM_REASON.MESSAGE_TRANSLATION,
         userId,
       });

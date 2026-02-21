@@ -1,6 +1,6 @@
 import { formatChatTime } from '@/utils/dateFormat';
 import { GroupChannel, ChatDraft, getLastMessageTime, getLastMessageText, isLastMessagePreview } from '@/api/chat';
-import { Users, Hash, Package } from 'lucide-react';
+import { Users, Hash, Package, Pin, Loader2 } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
@@ -17,9 +17,13 @@ interface GroupChannelCardProps {
   displayTitle?: string;
   displaySubtitle?: string;
   sellerGroupedByItem?: boolean;
+  isPinned?: boolean;
+  onPinToggle?: () => void;
+  canPin?: boolean;
+  isPinning?: boolean;
 }
 
-export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSelected, draft, displayTitle, displaySubtitle, sellerGroupedByItem }: GroupChannelCardProps) => {
+export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSelected, draft, displayTitle, displaySubtitle, sellerGroupedByItem, isPinned = false, onPinToggle, canPin = true, isPinning = false }: GroupChannelCardProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
@@ -106,33 +110,48 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             {unreadCount > 0 && (
               <span className="bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
             {(lastMessage || draft) && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {formatChatTime(
-                (() => {
-                  const msg = lastMessage;
-                  return draftTime > lastMessageTime && draft
-                    ? draft.updatedAt
-                    : msg
-                      ? isLastMessagePreview(msg)
-                        ? msg.updatedAt
-                        : (msg as { createdAt: string }).createdAt
-                      : new Date().toISOString();
-                })(),
-                displaySettings.locale,
-                displaySettings.hour12
-              )}
-            </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {formatChatTime(
+                  (() => {
+                    const msg = lastMessage;
+                    return draftTime > lastMessageTime && draft
+                      ? draft.updatedAt
+                      : msg
+                        ? isLastMessagePreview(msg)
+                          ? msg.updatedAt
+                          : (msg as { createdAt: string }).createdAt
+                        : new Date().toISOString();
+                  })(),
+                  displaySettings.locale,
+                  displaySettings.hour12
+                )}
+              </span>
+            )}
+            {onPinToggle != null && (
+              <button
+                type="button"
+                onClick={onPinToggle}
+                disabled={isPinned ? isPinning : !canPin || isPinning}
+                className={`p-1 rounded disabled:opacity-50 disabled:pointer-events-none ${isPinned ? 'text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                aria-label={isPinned ? t('chat.unpinChat') : t('chat.pinChat')}
+                aria-busy={isPinning}
+              >
+                {isPinning ? (
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                ) : (
+                  <Pin className={`w-4 h-4 ${isPinned ? 'rotate-[-90deg] fill-current' : ''}`} aria-hidden />
+                )}
+              </button>
             )}
           </div>
         </div>
-
         {(() => {
           if (showDraft) {
             const draftContent = draft?.content || '';

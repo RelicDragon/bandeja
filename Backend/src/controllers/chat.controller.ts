@@ -13,7 +13,7 @@ import { MessageReportService } from '../services/chat/messageReport.service';
 import { UnreadObjectsService } from '../services/chat/unreadObjects.service';
 import { withTimeout } from '../utils/promiseWithTimeout';
 import { ChatMuteService } from '../services/chat/chatMute.service';
-import { TranslationService } from '../services/chat/translation.service';
+import { TranslationService, TRANSLATE_TO_LANGUAGE_CODES } from '../services/chat/translation.service';
 import { DraftService } from '../services/chat/draft.service';
 import { GameReadService } from '../services/game/read.service';
 import { PollService } from '../services/chat/poll.service';
@@ -865,6 +865,32 @@ export const translateMessage = asyncHandler(async (req: AuthRequest, res: Respo
   res.json({
     success: true,
     data: translation
+  });
+});
+
+const TRANSLATE_DRAFT_MAX_LENGTH = 4000;
+
+export const translateDraft = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+  if (!userId) throw new ApiError(401, 'Unauthorized');
+
+  const { text, languageCode } = req.body;
+  const trimmed = typeof text === 'string' ? text.trim() : '';
+  if (!trimmed) throw new ApiError(400, 'Text to translate is required');
+  if (trimmed.length > TRANSLATE_DRAFT_MAX_LENGTH) {
+    throw new ApiError(400, `Text must be at most ${TRANSLATE_DRAFT_MAX_LENGTH} characters.`);
+  }
+
+  const code = typeof languageCode === 'string' ? languageCode.toLowerCase() : '';
+  if (!code || !TRANSLATE_TO_LANGUAGE_CODES.includes(code)) {
+    throw new ApiError(400, `Invalid languageCode. Allowed: ${TRANSLATE_TO_LANGUAGE_CODES.join(', ')}`);
+  }
+
+  const translation = await TranslationService.getTranslationFromChatGPT(trimmed, code, userId);
+
+  res.json({
+    success: true,
+    data: { translation, languageCode: code },
   });
 });
 

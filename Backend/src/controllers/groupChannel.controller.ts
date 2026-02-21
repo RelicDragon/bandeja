@@ -440,3 +440,19 @@ export const cancelInvite = asyncHandler(async (req: AuthRequest, res: Response)
     data: result
   });
 });
+
+export const pinGroupChannel = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const userId = req.userId;
+  if (!userId) throw new ApiError(401, 'Unauthorized');
+  const pinned = await GroupChannelService.pinGroupChannel(userId, id);
+  res.json({ success: true, data: pinned });
+});
+
+export const unpinGroupChannel = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const userId = req.userId;
+  if (!userId) throw new ApiError(401, 'Unauthorized');
+  await GroupChannelService.unpinGroupChannel(userId, id);
+  res.json({ success: true });
+});

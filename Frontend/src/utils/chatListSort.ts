@@ -52,16 +52,40 @@ const sortForBugsChannels = (a: ChatItem, b: ChatItem): number => {
   return 0;
 };
 
+const isPinned = (item: ChatItem): boolean => {
+  if (item.type === 'user' || item.type === 'group' || item.type === 'channel') {
+    return !!item.data.isPinned;
+  }
+  return false;
+};
+
+const getPinnedAt = (item: ChatItem): string | null => {
+  if (item.type === 'user' || item.type === 'group' || item.type === 'channel') {
+    return item.data.pinnedAt ?? null;
+  }
+  return null;
+};
+
 export const sortChatItems = (
   items: ChatItem[],
   filter: 'users' | 'bugs' | 'channels' | 'market',
   userId?: string
 ): ChatItem[] => {
   if (!items.length) return items;
+  const pinned = items.filter(isPinned);
+  const unpinned = items.filter((c) => !isPinned(c));
+  pinned.sort((a, b) => {
+    const aAt = getPinnedAt(a);
+    const bAt = getPinnedAt(b);
+    if (!aAt && !bAt) return 0;
+    if (!aAt) return 1;
+    if (!bAt) return -1;
+    return new Date(aAt).getTime() - new Date(bAt).getTime();
+  });
   if (filter === 'users' && userId) {
-    items.sort((a, b) => sortByActivity(a, b, (c) => getChatTitle(c, userId)));
+    unpinned.sort((a, b) => sortByActivity(a, b, (c) => getChatTitle(c, userId)));
   } else if (filter === 'bugs' || filter === 'channels' || filter === 'market') {
-    items.sort(sortForBugsChannels);
+    unpinned.sort(sortForBugsChannels);
   }
-  return items;
+  return [...pinned, ...unpinned];
 };

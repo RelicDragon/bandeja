@@ -1,5 +1,6 @@
 import { NavigateFunction } from 'react-router-dom';
 import { buildUrl, type PlaceParams } from '@/utils/urlSchema';
+import { useNavigationStore } from '@/store/navigationStore';
 
 class NavigationService {
   private navigate: NavigateFunction | null = null;
@@ -61,7 +62,8 @@ class NavigationService {
 
   navigateToCreateBug() {
     if (!this.ensureInitialized()) return;
-    this.navigate!(buildUrl('bugs', { create: '1' }), { replace: true });
+    useNavigationStore.getState().setOpenBugModal(true);
+    this.navigate!(buildUrl('bugs'), { replace: true });
   }
 
   navigateToCreateListing() {

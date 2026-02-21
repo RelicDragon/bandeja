@@ -44,9 +44,11 @@ interface UsersState {
   updateUnreadCount: (chatId: string, count: number | ((current: number) => number)) => void;
   markChatAsRead: (chatId: string) => void;
   addChat: (chat: UserChat) => Promise<void>;
-  
+  getOrCreateAndAddUserChat: (userId: string) => Promise<UserChat | null>;
+
   fetchPlayers: () => Promise<BasicUser[]>;
   fetchUserChats: () => Promise<void>;
+  invalidateUserChatsCache: () => void;
   fetchUnreadCounts: () => Promise<void>;
   refresh: () => Promise<void>;
   clear: () => void;
@@ -367,6 +369,20 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     }
   },
 
+  getOrCreateAndAddUserChat: async (userId: string): Promise<UserChat | null> => {
+    try {
+      const response = await chatApi.getOrCreateChatWithUser(userId);
+      const chat = response?.data;
+      if (!chat) return null;
+      const { addChat } = get();
+      await addChat(chat);
+      return chat;
+    } catch (error) {
+      console.error('Failed to get or create user chat:', error);
+      return null;
+    }
+  },
+
   fetchPlayers: async (): Promise<BasicUser[]> => {
     const state = get();
     const now = Date.now();
@@ -483,6 +499,10 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       console.error('Failed to fetch user chats:', error);
       set({ chatsLoading: false, isFetchingChats: false });
     }
+  },
+
+  invalidateUserChatsCache: () => {
+    set({ lastChatsFetchTime: 0 });
   },
 
   fetchUnreadCounts: async () => {

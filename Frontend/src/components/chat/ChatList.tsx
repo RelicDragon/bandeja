@@ -48,6 +48,9 @@ import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import { ChatItem, ChatType } from './chatListTypes';
 import { UserChat } from '@/api/chat';
 import { draftStorage, mergeServerAndLocalDrafts } from '@/services/draftStorage';
+import toast from 'react-hot-toast';
+import { AxiosError } from 'axios';
+import { MAX_PINNED_CHATS } from '@/utils/chatListConstants';
 
 export type { ChatType };
 
@@ -397,8 +400,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         });
         const usersGroupItems = groupsToChatItems(usersGroupList, groupUnreads, allDrafts, 'users', user?.id);
         activeChats.push(...usersGroupItems);
-        sortChatItems(activeChats, 'users', user?.id);
-        const usersChatItems = deduplicateChats(activeChats);
+        const usersChatItems = deduplicateChats(sortChatItems(activeChats, 'users', user?.id));
         const cityUsersArray = Array.isArray(cityUsersData) ? cityUsersData : [];
         const cacheEntry: FilterCache = {
           chats: usersChatItems,
@@ -1069,6 +1071,56 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     onChatSelect?.(chatId, chatType, options);
   }, [onChatSelect]);
 
+  const [pinningId, setPinningId] = useState<string | null>(null);
+
+  const handlePinUserChat = useCallback(
+    async (chatId: string, isPinned: boolean) => {
+      setPinningId(chatId);
+      try {
+        if (isPinned) await chatApi.unpinUserChat(chatId);
+        else await chatApi.pinUserChat(chatId);
+        usePlayersStore.getState().invalidateUserChatsCache();
+        chatsCacheRef.current.users = undefined;
+        chatListModuleCache.chats.users = undefined;
+        await fetchChatsForFilter('users');
+      } catch (e) {
+        const msg = (e as AxiosError<{ message?: string }>)?.response?.data?.message;
+        if (msg === 'MAX_PINNED_CHATS') {
+          toast.error(t('chat.maxPinnedChatsReached', { max: MAX_PINNED_CHATS }));
+        } else {
+          toast.error(isPinned ? t('chat.unpinChatFailed') : t('chat.pinChatFailed'));
+        }
+      } finally {
+        setPinningId(null);
+      }
+    },
+    [fetchChatsForFilter, t]
+  );
+
+  const handlePinGroupChannel = useCallback(
+    async (channelId: string, isPinned: boolean) => {
+      setPinningId(channelId);
+      try {
+        if (isPinned) await chatApi.unpinGroupChannel(channelId);
+        else await chatApi.pinGroupChannel(channelId);
+        usePlayersStore.getState().invalidateUserChatsCache();
+        chatsCacheRef.current.users = undefined;
+        chatListModuleCache.chats.users = undefined;
+        await fetchChatsForFilter('users');
+      } catch (e) {
+        const msg = (e as AxiosError<{ message?: string }>)?.response?.data?.message;
+        if (msg === 'MAX_PINNED_CHATS') {
+          toast.error(t('chat.maxPinnedChatsReached', { max: MAX_PINNED_CHATS }));
+        } else {
+          toast.error(isPinned ? t('chat.unpinChatFailed') : t('chat.pinChatFailed'));
+        }
+      } finally {
+        setPinningId(null);
+      }
+    },
+    [fetchChatsForFilter, t]
+  );
+
   const handleCreateListing = useCallback(() => {
     navigate('/marketplace/create');
   }, [navigate]);
@@ -1148,44 +1200,37 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const handleContactClick = useCallback(async (userId: string) => {
     if (!user) return;
 
-    try {
-      const response = await chatApi.getOrCreateChatWithUser(userId);
-      const chat = response.data;
+    const chat = await usePlayersStore.getState().getOrCreateAndAddUserChat(userId);
+    if (!chat) return;
 
-      const { addChat } = usePlayersStore.getState();
-      await addChat(chat);
+    const updatedUnreadCounts = usePlayersStore.getState().unreadCounts;
+    const otherUser = chat.user1Id === user.id ? chat.user2 : chat.user1;
 
-      const updatedUnreadCounts = usePlayersStore.getState().unreadCounts;
-      const otherUser = chat.user1Id === user.id ? chat.user2 : chat.user1;
+    if (chatsFilter === 'users' && otherUser) {
+      setChats((prevChats) => {
+        const filteredChats = prevChats.filter(
+          (item) => !(item.type === 'contact' && item.userId === userId)
+        );
 
-      if (chatsFilter === 'users' && otherUser) {
-        setChats((prevChats) => {
-          const filteredChats = prevChats.filter(
-            (item) => !(item.type === 'contact' && item.userId === userId)
-          );
+        const lastMessageDate = chat.lastMessage
+          ? new Date(getLastMessageTime(chat.lastMessage))
+          : null;
 
-          const lastMessageDate = chat.lastMessage
-            ? new Date(getLastMessageTime(chat.lastMessage))
-            : null;
+        const newChatItem: ChatItem = {
+          type: 'user',
+          data: chat,
+          lastMessageDate,
+          unreadCount: updatedUnreadCounts[chat.id] || 0,
+          otherUser,
+        };
 
-          const newChatItem: ChatItem = {
-            type: 'user',
-            data: chat,
-            lastMessageDate,
-            unreadCount: updatedUnreadCounts[chat.id] || 0,
-            otherUser,
-          };
-
-          const updatedChats = deduplicateChats([...filteredChats, newChatItem]);
-          sortChatItems(updatedChats, 'users', user?.id);
-          return updatedChats;
-        });
-      }
-
-      onChatSelect?.(chat.id, 'user', isSearchMode ? { searchQuery: debouncedSearchQuery.trim() } : undefined);
-    } catch (error) {
-      console.error('Failed to create/get chat with user:', error);
+        const updatedChats = deduplicateChats([...filteredChats, newChatItem]);
+        sortChatItems(updatedChats, 'users', user?.id);
+        return updatedChats;
+      });
     }
+
+    onChatSelect?.(chat.id, 'user', isSearchMode ? { searchQuery: debouncedSearchQuery.trim() } : undefined);
   }, [user, chatsFilter, onChatSelect, isSearchMode, debouncedSearchQuery]);
 
   const [messagesExpanded, setMessagesExpanded] = useState(true);
@@ -1255,6 +1300,11 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     if (!unreadFilterActive) return chats;
     return chats.filter((c) => (c.type === 'user' || c.type === 'group' || c.type === 'channel') && (c.unreadCount ?? 0) > 0);
   }, [chatsFilter, chats, unreadFilterActive, marketFilteredByRoleAndSearch]);
+
+  const pinnedCountUsers = useMemo(() => {
+    if (chatsFilter !== 'users') return 0;
+    return chats.filter((c) => (c.type === 'user' || c.type === 'group') && c.data.isPinned).length;
+  }, [chatsFilter, chats]);
 
   const marketGroupedByItem = useMemo(() => {
     if (chatsFilter !== 'market' || marketChatRole !== 'seller') return null;
@@ -1401,6 +1451,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             onContactClick={handleContactClick}
             isSearchMode={isSearchMode}
             searchQuery={debouncedSearchQuery.trim()}
+            pinnedCount={chatsFilter === 'users' ? pinnedCountUsers : undefined}
+            pinningId={chatsFilter === 'users' ? pinningId : undefined}
+            onPinUserChat={chatsFilter === 'users' ? handlePinUserChat : undefined}
+            onPinGroupChannel={chatsFilter === 'users' ? handlePinGroupChannel : undefined}
           />
         ))}
       </CollapsibleSection>
@@ -1744,6 +1798,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                         searchQuery={debouncedSearchQuery.trim()}
                         displayTitle={getMarketChatDisplayTitleForSellerGrouped((chat as Extract<typeof chat, { type: 'channel' }>).data)}
                         sellerGroupedByItem
+                        pinnedCount={chatsFilter === 'users' ? pinnedCountUsers : undefined}
+                        pinningId={chatsFilter === 'users' ? pinningId : undefined}
+                        onPinUserChat={chatsFilter === 'users' ? handlePinUserChat : undefined}
+                        onPinGroupChannel={chatsFilter === 'users' ? handlePinGroupChannel : undefined}
                       />
                     ))}
                     </div>
@@ -1762,6 +1820,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                     searchQuery={debouncedSearchQuery.trim()}
                     displayTitle={chatsFilter === 'market' && chat.type === 'channel' && user?.id ? (marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').title : getMarketChatDisplayTitle(chat.data, marketChatRole)) : undefined}
                     displaySubtitle={chatsFilter === 'market' && chat.type === 'channel' && user?.id && marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').subtitle : undefined}
+                    pinnedCount={chatsFilter === 'users' ? pinnedCountUsers : undefined}
+                    pinningId={chatsFilter === 'users' ? pinningId : undefined}
+                    onPinUserChat={chatsFilter === 'users' ? handlePinUserChat : undefined}
+                    onPinGroupChannel={chatsFilter === 'users' ? handlePinGroupChannel : undefined}
                   />
                 ))
               )}

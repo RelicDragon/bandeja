@@ -173,6 +173,7 @@ export interface UserChat {
   user2: BasicUser;
   lastMessage?: ChatMessage | LastMessagePreview | null;
   isPinned?: boolean;
+  pinnedAt?: string | null;
 }
 
 export interface GroupChannel {
@@ -204,6 +205,8 @@ export interface GroupChannel {
   marketItem?: import('@/types').MarketItem;
   buyerId?: string | null;
   buyer?: BasicUser;
+  isPinned?: boolean;
+  pinnedAt?: string | null;
 }
 
 export interface GroupChannelParticipant {
@@ -482,6 +485,16 @@ export const chatApi = {
     return response.data;
   },
 
+  pinGroupChannel: async (channelId: string) => {
+    const response = await api.post<ApiResponse<{ id: string; pinnedAt: string }>>(`/group-channels/${channelId}/pin`);
+    return response.data;
+  },
+
+  unpinGroupChannel: async (channelId: string) => {
+    const response = await api.delete<ApiResponse<{ success: boolean }>>(`/group-channels/${channelId}/pin`);
+    return response.data;
+  },
+
   getMessages: async (
     chatContextType: ChatContextType,
     contextId: string,
@@ -708,6 +721,14 @@ export const chatApi = {
   translateMessage: async (messageId: string) => {
     const response = await api.post<ApiResponse<{ translation: string; languageCode: string }>>(
       `/chat/messages/${messageId}/translate`
+    );
+    return response.data.data;
+  },
+
+  translateDraft: async (text: string, languageCode: string) => {
+    const response = await api.post<ApiResponse<{ translation: string; languageCode: string }>>(
+      '/chat/translate-draft',
+      { text: text.trim(), languageCode }
     );
     return response.data.data;
   },

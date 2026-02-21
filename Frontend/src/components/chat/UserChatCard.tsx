@@ -9,6 +9,7 @@ import { useMemo } from 'react';
 import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { parseMessagePreview } from '@/utils/messagePreview';
+import { Pin, Loader2 } from 'lucide-react';
 
 interface UserChatCardProps {
   chat: UserChat;
@@ -16,9 +17,13 @@ interface UserChatCardProps {
   onClick?: () => void;
   isSelected?: boolean;
   draft?: ChatDraft | null;
+  isPinned?: boolean;
+  onPinToggle?: () => void;
+  canPin?: boolean;
+  isPinning?: boolean;
 }
 
-export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = false, draft }: UserChatCardProps) => {
+export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = false, draft, isPinned = false, onPinToggle, canPin = true, isPinning = false }: UserChatCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -63,28 +68,45 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
               </p>
             )}
           </div>
-          {(chat.lastMessage || draft) && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 flex-shrink-0">
-              {formatChatTime(
-                (() => {
-                  const lastMessageTime = getLastMessageTime(chat.lastMessage);
-                  const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
-                  const msg = chat.lastMessage;
-                  return draftTime > lastMessageTime && draft
-                    ? draft.updatedAt
-                    : msg
-                      ? isLastMessagePreview(msg)
-                        ? msg.updatedAt
-                        : (msg as { createdAt: string }).createdAt
-                      : new Date().toISOString();
-                })(),
-                displaySettings.locale,
-                displaySettings.hour12
-              )}
-            </span>
-          )}
+          <div className="flex items-center gap-1 ml-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            {(chat.lastMessage || draft) && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {formatChatTime(
+                  (() => {
+                    const lastMessageTime = getLastMessageTime(chat.lastMessage);
+                    const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
+                    const msg = chat.lastMessage;
+                    return draftTime > lastMessageTime && draft
+                      ? draft.updatedAt
+                      : msg
+                        ? isLastMessagePreview(msg)
+                          ? msg.updatedAt
+                          : (msg as { createdAt: string }).createdAt
+                        : new Date().toISOString();
+                  })(),
+                  displaySettings.locale,
+                  displaySettings.hour12
+                )}
+              </span>
+            )}
+            {onPinToggle != null && (
+              <button
+                type="button"
+                onClick={onPinToggle}
+                disabled={isPinned ? isPinning : !canPin || isPinning}
+                className={`p-1 rounded disabled:opacity-50 disabled:pointer-events-none ${isPinned ? 'text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                aria-label={isPinned ? t('chat.unpinChat') : t('chat.pinChat')}
+                aria-busy={isPinning}
+              >
+                {isPinning ? (
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                ) : (
+                  <Pin className={`w-4 h-4 ${isPinned ? 'rotate-[-90deg] fill-current' : ''}`} aria-hidden />
+                )}
+              </button>
+            )}
+          </div>
         </div>
-
         {(() => {
           const lastMessageTime = getLastMessageTime(chat.lastMessage);
           const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;

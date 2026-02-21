@@ -39,6 +39,7 @@ model User {
   longitudeByIP              Float?
   defaultCurrency            String               @default("EUR")
   language                   String?              @default("auto")
+  translateToLanguage        String?              @db.VarChar(10)
   timeFormat                 String               @default("auto")
   weekStart                  String               @default("auto")
   preferredHandLeft          Boolean              @default(false)
@@ -71,6 +72,7 @@ model User {
   userChats1                 UserChat[]           @relation("UserChat1")
   userChats2                 UserChat[]           @relation("UserChat2")
   pinnedUserChats            PinnedUserChat[]
+  pinnedGroupChannels        PinnedGroupChannel[]
   pinnedMessages             PinnedMessage[]
   messageReactions           MessageReaction[]
   messageReadReceipts        MessageReadReceipt[]
@@ -1029,6 +1031,7 @@ model GroupChannel {
   buyer                User?                   @relation("GroupChannelBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
   participants         GroupChannelParticipant[]
   invites              GroupChannelInvite[]
+  pinnedByUsers       PinnedGroupChannel[]
 
   @@index([isPublic])
   @@index([isChannel])
@@ -1036,6 +1039,19 @@ model GroupChannel {
   @@index([bugId])
   @@index([marketItemId])
   @@index([buyerId])
+}
+
+model PinnedGroupChannel {
+  id               String       @id @default(cuid())
+  userId           String
+  groupChannelId   String
+  pinnedAt         DateTime     @default(now())
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupChannel     GroupChannel @relation(fields: [groupChannelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupChannelId])
+  @@index([userId])
+  @@index([groupChannelId])
 }
 
 model GroupChannelParticipant {

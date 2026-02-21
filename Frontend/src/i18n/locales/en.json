@@ -1613,10 +1613,16 @@
       "translating": "Translating..."
     },
     "translationUnavailable": "Translation is temporarily unavailable. Please try again later.",
+    "translationRateLimited": "Too many translation requests. Please try again in a few seconds.",
     "translationError": "Failed to translate message. Please try again.",
     "pinFailed": "Failed to pin message",
     "unpinFailed": "Failed to unpin message",
     "pinnedMessageNotFound": "Message no longer available",
+    "pinChat": "Pin chat",
+    "unpinChat": "Unpin chat",
+    "pinChatFailed": "Failed to pin chat",
+    "unpinChatFailed": "Failed to unpin chat",
+    "maxPinnedChatsReached": "You can pin up to {{max}} chats.",
     "report": {
       "title": "Report Message",
       "description": "Why are you reporting this message?",

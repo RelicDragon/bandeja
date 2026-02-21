@@ -28,6 +28,7 @@ import {
   respondToChatRequest,
   reportMessage,
   translateMessage,
+  translateDraft,
   getUnreadObjects,
   muteChat,
   unmuteChat,
@@ -94,6 +95,15 @@ const pinMessageLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
   message: { success: false, message: 'Too many pin/unpin requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
+
+const translateDraftLimiter = rateLimit({
+  windowMs: 5 * 1000,
+  max: 3,
+  message: { success: false, message: 'Too many translation requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
@@ -259,6 +269,16 @@ router.post(
     param('messageId').notEmpty().withMessage('Message ID is required')
   ]),
   translateMessage
+);
+
+router.post(
+  '/translate-draft',
+  translateDraftLimiter,
+  validate([
+    body('text').isString().notEmpty().withMessage('Text is required'),
+    body('languageCode').isString().notEmpty().withMessage('languageCode is required'),
+  ]),
+  translateDraft
 );
 
 // Chat Mute Routes

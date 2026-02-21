@@ -81,6 +81,20 @@ router.post(
 );
 
 router.post(
+  '/:id/pin',
+  authenticate,
+  validate([param('id').notEmpty().withMessage('Group/Channel ID is required')]),
+  groupChannelController.pinGroupChannel
+);
+
+router.delete(
+  '/:id/pin',
+  authenticate,
+  validate([param('id').notEmpty().withMessage('Group/Channel ID is required')]),
+  groupChannelController.unpinGroupChannel
+);
+
+router.post(
   '/:id/invite',
   authenticate,
   validate([

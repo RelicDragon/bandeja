@@ -62,6 +62,7 @@ export interface User extends BasicUser {
   favoriteTrainerId?: string | null;
   approvedBy?: BasicUser | null;
   language?: string; // Full locale (e.g., "en-US", "ru-RU") or "auto"
+  translateToLanguage?: string | null;
   timeFormat?: 'auto' | '12h' | '24h';
   weekStart?: 'auto' | 'monday' | 'sunday';
   defaultCurrency?: string;
@@ -521,4 +522,9 @@ export interface ApiResponse<T> {
 export interface LoginResponse {
   user: User;
   token: string;
+}
+
+export interface UserChatFromPlayerCardState {
+  fromPlayerCard: true;
+  previousPath: string;
 }

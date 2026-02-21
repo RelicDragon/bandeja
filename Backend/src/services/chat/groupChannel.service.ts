@@ -12,19 +12,23 @@ import { config } from '../../config/env';
 
 type GcWithParticipants = Awaited<ReturnType<typeof prisma.groupChannel.findMany>>[number] & {
   participants: Array<{ userId: string; role: ParticipantRole }>;
+  pinnedByUsers?: Array<{ pinnedAt: Date }>;
 };
 
 function mapGroupChannelToResponse(gc: GcWithParticipants, userId: string) {
   const userParticipant = gc.participants.find((p) => p.userId === userId);
   const isOwner = userParticipant?.role === ParticipantRole.OWNER;
   const isParticipant = !!userParticipant;
+  const pinned = gc.pinnedByUsers && gc.pinnedByUsers.length > 0 ? gc.pinnedByUsers[0] : null;
   return {
     ...gc,
     lastMessage: gc.lastMessagePreview
       ? { preview: gc.lastMessagePreview, updatedAt: gc.updatedAt }
       : null,
     isParticipant,
-    isOwner
+    isOwner,
+    isPinned: !!pinned,
+    pinnedAt: pinned?.pinnedAt?.toISOString() ?? null
   };
 }
 
@@ -322,7 +326,8 @@ export class GroupChannelService {
                 select: USER_SELECT_FIELDS
               }
             }
-          }
+          },
+          pinnedByUsers: { where: { userId }, select: { pinnedAt: true } }
         }
       });
       const idToIndex = new Map(orderedIds.map((id, i) => [id, i]));
@@ -351,7 +356,8 @@ export class GroupChannelService {
                 select: USER_SELECT_FIELDS
               }
             }
-          }
+          },
+          pinnedByUsers: { where: { userId }, select: { pinnedAt: true } }
         },
         orderBy: {
           updatedAt: 'desc'
@@ -422,6 +428,52 @@ export class GroupChannelService {
     });
 
     return groupChannels;
+  }
+
+  static async pinGroupChannel(userId: string, groupChannelId: string) {
+    const channel = await prisma.groupChannel.findUnique({
+      where: { id: groupChannelId },
+      include: {
+        participants: { where: { userId, hidden: false }, take: 1 }
+      }
+    });
+    if (!channel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+    const canAccess = channel.participants.length > 0 || channel.isPublic;
+    if (!canAccess) {
+      throw new ApiError(403, 'Access denied');
+    }
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.pinnedGroupChannel.findUnique({
+        where: { userId_groupChannelId: { userId, groupChannelId } }
+      });
+      if (!existing) {
+        const [pinnedUserCount, pinnedGroupCount] = await Promise.all([
+          tx.pinnedUserChat.count({ where: { userId } }),
+          tx.pinnedGroupChannel.count({ where: { userId } })
+        ]);
+        if (pinnedUserCount + pinnedGroupCount >= UserChatService.MAX_PINNED_CHATS) {
+          throw new ApiError(400, 'MAX_PINNED_CHATS');
+        }
+      }
+      return tx.pinnedGroupChannel.upsert({
+        where: { userId_groupChannelId: { userId, groupChannelId } },
+        update: { pinnedAt: new Date() },
+        create: { userId, groupChannelId }
+      });
+    });
+  }
+
+  static async unpinGroupChannel(userId: string, groupChannelId: string) {
+    const channel = await prisma.groupChannel.findUnique({ where: { id: groupChannelId } });
+    if (!channel) {
+      throw new ApiError(404, 'Group/Channel not found');
+    }
+    await prisma.pinnedGroupChannel.delete({
+      where: { userId_groupChannelId: { userId, groupChannelId } }
+    }).catch(() => {});
+    return { success: true };
   }
 
   static async updateGroupChannel(
