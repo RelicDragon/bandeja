@@ -1615,6 +1615,8 @@
     "translationUnavailable": "Translation is temporarily unavailable. Please try again later.",
     "translationRateLimited": "Too many translation requests. Please try again in a few seconds.",
     "translationError": "Failed to translate message. Please try again.",
+    "translateToLanguage": "Translate to",
+    "dontUseTranslationInThisChat": "Don't use translation in this chat",
     "pinFailed": "Failed to pin message",
     "unpinFailed": "Failed to unpin message",
     "pinnedMessageNotFound": "Message no longer available",

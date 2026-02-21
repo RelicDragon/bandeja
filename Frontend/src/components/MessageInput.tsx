@@ -933,6 +933,35 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   }, [message, mentionIds, onTranslateToLanguageChange, runTranslateDraft, t]);
 
+  const handleTranslateClick = useCallback(async () => {
+    if (!translateToLanguage) return;
+    const trimmed = message.trim();
+    if (!trimmed) return;
+    if (trimmed.length > TRANSLATE_DRAFT_MAX_LENGTH) {
+      toast.error(t('chat.translateTextTooLong', { defaultValue: 'Text is too long to translate.', max: TRANSLATE_DRAFT_MAX_LENGTH }));
+      return;
+    }
+    setIsTranslating(true);
+    await new Promise((r) => setTimeout(r, 0));
+    try {
+      await runTranslateDraft(trimmed, translateToLanguage, mentionIds);
+    } catch (err) {
+      console.error('Translate draft failed:', err);
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      toast.error(status === 429 ? t('chat.translationRateLimited', { defaultValue: 'Too many translation requests. Please try again in a few seconds.' }) : t('chat.translationUnavailable', { defaultValue: 'Translation is temporarily unavailable.' }));
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [translateToLanguage, message, mentionIds, runTranslateDraft, t]);
+
+  const handleTranslateButtonClick = useCallback(() => {
+    if (translateToLanguage && !message.trim()) {
+      setTranslationModalOpen(true);
+    } else {
+      handleTranslateClick();
+    }
+  }, [translateToLanguage, message, handleTranslateClick]);
+
   const handleRemoveTranslateLanguage = useCallback(async () => {
     try {
       if (onTranslateToLanguageChange) {
@@ -943,17 +972,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       toast.error(t('chat.sendFailed') || 'Failed to save');
     }
   }, [onTranslateToLanguageChange, t]);
-
-  const handleTranslationModalSelect = useCallback(
-    (code: string | null) => {
-      if (code === null) {
-        handleRemoveTranslateLanguage();
-      } else {
-        handleTranslateLanguageSelect(code);
-      }
-    },
-    [handleRemoveTranslateLanguage, handleTranslateLanguageSelect]
-  );
 
   const handleUndoTranslate = useCallback(() => {
     if (originalMessageBeforeTranslate != null) {
@@ -1008,16 +1026,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           <UndoTranslateButton onClick={handleUndoTranslate} disabled={isDisabled || inputBlocked || isTranslating} />
         )}
         <TranslateToButton
+          translateToLanguage={translateToLanguage}
           isTranslating={isTranslating}
-          disabled={isDisabled || inputBlocked || (!!translateToLanguage && !message.trim())}
+          disabled={isDisabled || inputBlocked}
+          translateDisabled={!message.trim()}
           onOpenModal={() => setTranslationModalOpen(true)}
+          onTranslate={handleTranslateButtonClick}
         />
       </div>
       <TranslationLanguageModal
         open={translationModalOpen}
         onClose={() => setTranslationModalOpen(false)}
-        onSelect={handleTranslationModalSelect}
-        selectedLanguage={translateToLanguage}
+        onSelect={handleTranslateLanguageSelect}
+        selectedLanguageCode={translateToLanguage}
+        onRemoveLanguage={handleRemoveTranslateLanguage}
       />
       {editingMessage && (
         <EditPreview

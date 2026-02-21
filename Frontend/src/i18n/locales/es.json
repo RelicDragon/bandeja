@@ -1564,6 +1564,8 @@
     "translationUnavailable": "La traducción no está disponible temporalmente. Por favor, inténtalo de nuevo más tarde.",
     "translationRateLimited": "Demasiadas solicitudes de traducción. Inténtalo de nuevo en unos segundos.",
     "translationError": "Error al traducir el mensaje. Por favor, inténtalo de nuevo.",
+    "translateToLanguage": "Traducir a",
+    "dontUseTranslationInThisChat": "No usar traducción en este chat",
     "pinFailed": "Error al fijar el mensaje",
     "unpinFailed": "Error al desfijar el mensaje",
     "pinnedMessageNotFound": "El mensaje ya no está disponible",

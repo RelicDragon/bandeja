@@ -1588,6 +1588,8 @@
     "translationUnavailable": "Превод је привремено недоступан. Молимо покушајте касније.",
     "translationRateLimited": "Превише захтева за превод. Покушајте поново за неколико секунди.",
     "translationError": "Неуспешно превођење поруке. Молимо покушајте поново.",
+    "translateToLanguage": "Преведи на",
+    "dontUseTranslationInThisChat": "Не користи превод у овом ћаскању",
     "pinFailed": "Није могуће закачити поруку",
     "unpinFailed": "Није могуће откачити поруку",
     "pinnedMessageNotFound": "Порука више није доступна",
