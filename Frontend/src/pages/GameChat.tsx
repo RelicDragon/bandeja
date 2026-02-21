@@ -271,6 +271,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   useEffect(() => {
     if (!isEmbedded && !isLoadingContext && !game && !bug && !userChat && !groupChannel) {
+      if (contextType === 'USER' && id) {
+        return;
+      }
       if (contextType === 'USER') {
         setChatsFilter('users');
         navigate('/chats', { replace: true });
@@ -287,7 +290,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         navigate('/', { replace: true });
       }
     }
-  }, [isEmbedded, isLoadingContext, game, bug, userChat, groupChannel, contextType, navigate, setChatsFilter, location.pathname]);
+  }, [isEmbedded, isLoadingContext, game, bug, userChat, groupChannel, contextType, id, navigate, setChatsFilter, location.pathname]);
 
   const loadContext = useCallback(async () => {
     if (!id) return null;
@@ -328,6 +331,15 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             setChatsFilter('channels');
             navigate('/chats', { replace: true });
           }
+        } else if (contextType === 'USER' && id) {
+          const { getChatById } = usePlayersStore.getState();
+          const found = getChatById(id);
+          if (found) {
+            setUserChat(found);
+            return found;
+          }
+          setChatsFilter('users');
+          navigate('/chats', { replace: true });
         } else if (contextType === 'USER') {
           setChatsFilter('users');
           navigate('/chats', { replace: true });

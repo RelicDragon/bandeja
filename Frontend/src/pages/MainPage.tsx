@@ -70,11 +70,21 @@ export const MainPage = () => {
   const shouldShowChatsSplitView = isChatPage && (isDesktop || !isOnSpecificChatRoute);
   const showBottomTabBar = bottomTabsVisible && (!isDesktop || isChatPage);
 
+  const pcState = location.state as UserChatFromPlayerCardState | null;
+  const fromPlayerCard = pcState?.fromPlayerCard === true;
+  const previousPath = typeof pcState?.previousPath === 'string' ? pcState.previousPath : undefined;
+  const tabOverrideFromPlayerCard = fromPlayerCard && previousPath
+    ? placeToPageType(parseLocation(previousPath.includes('?') ? previousPath.split('?')[0] : previousPath, previousPath.includes('?') ? (previousPath.split('?')[1] ?? '') : '').place)
+    : undefined;
+
   if (isChatPage && shouldShowChatsSplitView) {
     return (
       <MainLayout>
         <ChatsTab />
         {showBottomTabBar && !isDesktop && <BottomTabBar />}
+        {showBottomTabBar && isDesktop && tabOverrideFromPlayerCard && previousPath && (
+          <BottomTabBar tabOverride={tabOverrideFromPlayerCard} previousPath={previousPath} />
+        )}
       </MainLayout>
     );
   }
@@ -90,19 +100,13 @@ export const MainPage = () => {
   }
 
   if (isChatPage && !isDesktop && isOnSpecificChatRoute) {
-    const pcState = location.state as UserChatFromPlayerCardState | null;
-    const fromPlayerCard = pcState?.fromPlayerCard === true;
-    const previousPath = typeof pcState?.previousPath === 'string' ? pcState.previousPath : undefined;
-    if (fromPlayerCard && previousPath) {
-      const [pathname, search] = previousPath.includes('?') ? [previousPath.split('?')[0], previousPath.split('?')[1] ?? ''] : [previousPath, ''];
-      const prevParsed = parseLocation(pathname, search);
-      const tabOverride = placeToPageType(prevParsed.place);
+    if (tabOverrideFromPlayerCard && previousPath) {
       return (
         <MainLayout>
           <div className="relative px-2 overflow-hidden" style={{ paddingBottom: bottomTabsVisible ? '5rem' : '0' }}>
             <ChatsTab />
           </div>
-          {bottomTabsVisible && <BottomTabBar tabOverride={tabOverride} previousPath={previousPath} />}
+          {bottomTabsVisible && <BottomTabBar tabOverride={tabOverrideFromPlayerCard} previousPath={previousPath} />}
         </MainLayout>
       );
     }

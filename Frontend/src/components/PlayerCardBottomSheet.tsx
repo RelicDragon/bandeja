@@ -120,7 +120,6 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         return;
       }
       const previousPath = location.pathname + (location.search || '');
-      onClose();
       navigate(`/user-chat/${chat.id}`, {
         state: {
           chat,
@@ -129,6 +128,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           previousPath,
         },
       });
+      setTimeout(() => onClose(), 0);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));

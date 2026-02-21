@@ -1012,7 +1012,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="flex items-center justify-end gap-2 mb-2">
+      <div className="flex items-center justify-end gap-2 mb-1">
         {originalMessageBeforeTranslate != null && (
           <UndoTranslateButton onClick={handleUndoTranslate} disabled={isDisabled || inputBlocked} />
         )}
