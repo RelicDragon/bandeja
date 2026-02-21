@@ -188,7 +188,9 @@ function isReauthError(error: unknown): boolean {
 }
 
 async function signInWithGoogleNative(): Promise<GoogleAuthResult | null> {
-  const response = await SocialLogin.login({
+  const LOGIN_TIMEOUT_MS = 60_000;
+
+  const loginPromise = SocialLogin.login({
     provider: 'google',
     options: {
       scopes: ['email', 'profile'],
@@ -196,6 +198,12 @@ async function signInWithGoogleNative(): Promise<GoogleAuthResult | null> {
       forcePrompt: false,
     },
   });
+
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Google Sign-In timed out. Please try again.')), LOGIN_TIMEOUT_MS)
+  );
+
+  const response = await Promise.race([loginPromise, timeoutPromise]);
 
   const result: GoogleLoginResponse = response.result;
 
@@ -254,6 +262,16 @@ export async function signInWithGoogle(): Promise<GoogleAuthResult | null> {
     const errorMessage = error instanceof Error ? error.message : '';
     const errorCode = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
     const errorString = (errorMessage + errorCode).toLowerCase();
+
+    const isNativeSignInFailure = errorString.includes('google sign-in failed') ||
+      errorString.includes('error retrieving access token') ||
+      errorString.includes('failed to authorize') ||
+      errorString.includes('failed to get access token') ||
+      errorString.includes('timed out');
+
+    if (isNativeSignInFailure) {
+      throw error;
+    }
 
     const canceledMessages = [
       'canceled',

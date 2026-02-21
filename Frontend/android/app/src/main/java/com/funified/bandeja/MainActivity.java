@@ -63,12 +63,13 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (getBridge() != null && data != null
+        if (getBridge() != null
                 && requestCode >= GoogleProvider.REQUEST_AUTHORIZE_GOOGLE_MIN
                 && requestCode <= GoogleProvider.REQUEST_AUTHORIZE_GOOGLE_MAX) {
             PluginHandle handle = getBridge().getPlugin("SocialLogin");
             if (handle != null && handle.getInstance() instanceof SocialLoginPlugin) {
-                ((SocialLoginPlugin) handle.getInstance()).handleGoogleLoginIntent(requestCode, data);
+                Intent intentToForward = data != null ? data : new Intent();
+                ((SocialLoginPlugin) handle.getInstance()).handleGoogleLoginIntent(requestCode, intentToForward);
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
