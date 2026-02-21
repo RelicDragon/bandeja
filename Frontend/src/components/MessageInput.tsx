@@ -365,7 +365,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           finalContextId,
           resolvedChatType,
           serverDraft.content ?? '',
-          serverDraft.mentionIds ?? []
+          serverDraft.mentionIds ?? [],
+          serverDraft.updatedAt
         );
       }
     } catch (error) {

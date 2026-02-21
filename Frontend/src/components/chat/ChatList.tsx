@@ -851,7 +851,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     const { chats: storeChats, unreadCounts } = usePlayersStore.getState();
     const updatedChats = prevChats.map((chat) => {
       if (chat.type === 'user' && chatContextType === 'USER' && chat.data.id === contextId) {
-        const updatedChat = storeChats[contextId] || chat.data;
+        const fromStore = storeChats[contextId];
+        const updatedChat = fromStore
+          ? { ...chat.data, ...fromStore, isPinned: fromStore.isPinned ?? chat.data.isPinned }
+          : chat.data;
         const draft = chat.draft || null;
         const lastMessageDate = ((updatedChat.lastMessage || message) || draft)
           ? calculateLastMessageDate(updatedChat.lastMessage || message, draft, updatedChat.updatedAt)

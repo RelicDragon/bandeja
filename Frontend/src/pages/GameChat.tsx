@@ -270,7 +270,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   });
 
   useEffect(() => {
-    if (!isEmbedded && !isLoadingContext && !game && !bug && !userChat && !groupChannel) {
+    const hasChatInState = contextType === 'USER' && locationState?.chat;
+    if (!isEmbedded && !isLoadingContext && !game && !bug && !userChat && !groupChannel && !hasChatInState) {
       if (contextType === 'USER') {
         setChatsFilter('users');
         navigate('/chats', { replace: true });
@@ -287,7 +288,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         navigate('/', { replace: true });
       }
     }
-  }, [isEmbedded, isLoadingContext, game, bug, userChat, groupChannel, contextType, navigate, setChatsFilter, location.pathname]);
+  }, [isEmbedded, isLoadingContext, game, bug, userChat, groupChannel, contextType, navigate, setChatsFilter, location.pathname, locationState?.chat]);
 
   const loadContext = useCallback(async () => {
     if (!id) return null;
@@ -1083,12 +1084,17 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       });
       if (result.userChat) {
         setUserChat((prev) => prev ? { ...prev, ...result.userChat } : result.userChat);
-        usePlayersStore.setState((state) => ({
-          chats: {
-            ...state.chats,
-            [result.userChat!.id]: { ...state.chats[result.userChat!.id], ...result.userChat },
-          },
-        }));
+        usePlayersStore.setState((state) => {
+          const existing = state.chats[result.userChat!.id];
+          const merged = { ...existing, ...result.userChat };
+          if (merged.isPinned === undefined && existing?.isPinned !== undefined) merged.isPinned = existing.isPinned;
+          return {
+            chats: {
+              ...state.chats,
+              [result.userChat!.id]: merged,
+            },
+          };
+        });
       }
     } catch (err) {
       console.error('Respond to chat request failed:', err);

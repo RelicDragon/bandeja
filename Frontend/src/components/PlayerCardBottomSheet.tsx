@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, ArrowLeft, Send, MessageCircle, Ban, Check, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -46,6 +46,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [blockingUser, setBlockingUser] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const isCurrentUser = playerId === user?.id;
+  const navigatingToChatRef = useRef(false);
 
   useEffect(() => {
     if (!playerId) return;
@@ -81,9 +82,15 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   }, [playerId, isCurrentUser]);
 
   const handleClose = useCallback(() => {
+    if (navigatingToChatRef.current) {
+      navigatingToChatRef.current = false;
+      onClose();
+      return;
+    }
+    const currentPath = window.location.pathname;
     const currentSearch = window.location.search;
-    if (currentSearch.includes('player=')) {
-      const currentPath = window.location.pathname;
+    const isChatPath = currentPath.includes('/user-chat/') || currentPath.includes('/group-chat/') || currentPath.includes('/channel-chat/') || /^\/bugs\/[^/]+$/.test(currentPath);
+    if (currentSearch.includes('player=') && !isChatPath) {
       const cleanUrl = removeOverlay(currentPath, currentSearch, 'player');
       navigate(cleanUrl, { replace: true });
     }
@@ -119,10 +126,15 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         toast.error(t('errors.generic', { defaultValue: 'Something went wrong' }));
         return;
       }
+      navigatingToChatRef.current = true;
       navigate(`/user-chat/${chat.id}`, {
         state: { chat, contextType: 'USER' },
       });
-      onClose();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          onClose();
+        });
+      });
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));

@@ -83,14 +83,15 @@ export const draftStorage = {
     contextId: string,
     chatType: ChatType,
     content: string,
-    mentionIds: string[]
+    mentionIds: string[],
+    updatedAt?: string
   ): Promise<void> {
     try {
       const k = storageKey(userId, chatContextType, contextId, chatType);
       const payload: LocalDraftPayload = {
         content,
         mentionIds: mentionIds ?? [],
-        updatedAt: new Date().toISOString()
+        updatedAt: updatedAt ?? new Date().toISOString()
       };
       await set(k, payload, draftStore);
     } catch {
