@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, ArrowLeft, Send, MessageCircle, Ban, Check, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
 import { blockedUsersApi } from '@/api/blockedUsers';
@@ -34,7 +34,6 @@ interface PlayerCardBottomSheetProps {
 export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomSheetProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
   const { addFavorite, removeFavorite } = useFavoritesStore();
@@ -82,13 +81,14 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   }, [playerId, isCurrentUser]);
 
   const handleClose = useCallback(() => {
-    const currentParams = new URLSearchParams(location.search);
-    if (currentParams.has('player')) {
-      const cleanUrl = removeOverlay(location.pathname, location.search, 'player');
+    const currentSearch = window.location.search;
+    if (currentSearch.includes('player=')) {
+      const currentPath = window.location.pathname;
+      const cleanUrl = removeOverlay(currentPath, currentSearch, 'player');
       navigate(cleanUrl, { replace: true });
     }
     onClose();
-  }, [onClose, location.pathname, location.search, navigate]);
+  }, [onClose, navigate]);
 
   const handleToggleFavorite = async () => {
     if (!playerId || !stats || isBlocked) return;
@@ -119,16 +119,10 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         toast.error(t('errors.generic', { defaultValue: 'Something went wrong' }));
         return;
       }
-      const previousPath = location.pathname + (location.search || '');
       navigate(`/user-chat/${chat.id}`, {
-        state: {
-          chat,
-          contextType: 'USER',
-          fromPlayerCard: true,
-          previousPath,
-        },
+        state: { chat, contextType: 'USER' },
       });
-      setTimeout(() => onClose(), 0);
+      onClose();
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));

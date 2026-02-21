@@ -726,6 +726,27 @@ body {
   animation: spin-slow 8s linear infinite;
 }
 
+@keyframes translate-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@-webkit-keyframes translate-spinner {
+  to {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+.translate-activity-spinner {
+  display: inline-block;
+  transform-origin: center;
+  -webkit-animation: translate-spinner 0.8s linear infinite;
+  animation: translate-spinner 0.8s linear infinite;
+  will-change: transform;
+}
+
 @keyframes wavy-dots {
   0%, 100% {
     transform: translateY(0);
@@ -1067,25 +1088,18 @@ body.keyboard-visible #root {
   }
 }
 
-/* Ensure footer stays visible on mobile Safari when keyboard opens */
+/* Footer: always floating over chat, no background panel (same on desktop and mobile) */
 .chat-container footer {
-  position: relative;
-  z-index: 40;
+  position: absolute !important;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: transparent !important;
+  z-index: 50;
   flex-shrink: 0;
 }
-
-@media (max-width: 767px) {
-  .chat-container footer {
-    position: absolute !important;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: transparent !important;
-    z-index: 50;
-  }
-  .chat-container footer .message-input-panel {
-    background-color: transparent !important;
-  }
+.chat-container footer .message-input-panel {
+  background-color: transparent !important;
 }
 
 /* Enhanced keyboard handling for chat - move footer above keyboard */

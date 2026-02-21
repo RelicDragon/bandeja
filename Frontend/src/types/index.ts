@@ -523,8 +523,3 @@ export interface LoginResponse {
   user: User;
   token: string;
 }
-
-export interface UserChatFromPlayerCardState {
-  fromPlayerCard: true;
-  previousPath: string;
-}

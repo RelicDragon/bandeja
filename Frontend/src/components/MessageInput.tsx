@@ -913,6 +913,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           return;
         }
         setIsTranslating(true);
+        await new Promise((r) => setTimeout(r, 0));
         try {
           await runTranslateDraft(trimmed, code, mentionIds);
         } catch (err) {
@@ -941,6 +942,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       return;
     }
     setIsTranslating(true);
+    await new Promise((r) => setTimeout(r, 0));
     try {
       await runTranslateDraft(trimmed, translateToLanguage, mentionIds);
     } catch (err) {
@@ -1014,7 +1016,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     >
       <div className="flex items-center justify-end gap-2 mb-1">
         {originalMessageBeforeTranslate != null && (
-          <UndoTranslateButton onClick={handleUndoTranslate} disabled={isDisabled || inputBlocked} />
+          <UndoTranslateButton onClick={handleUndoTranslate} disabled={isDisabled || inputBlocked || isTranslating} />
         )}
         <TranslateToButton
           translateToLanguage={translateToLanguage}
@@ -1072,19 +1074,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
       <form onSubmit={handleSubmit} className="relative overflow-visible">
         <div className="flex items-end gap-2">
-          <div ref={attachMenuRef} className="flex flex-col-reverse items-center gap-2 flex-shrink-0 bg-transparent pb-0.5">
+          <div ref={attachMenuRef} className="pb-0.5 relative flex flex-shrink-0 items-end flex-col-reverse">
             <button
               type="button"
               onClick={() => setIsAttachExpanded(prev => !prev)}
               disabled={isDisabled || inputBlocked}
-              className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+              className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)]"
               title={t('chat.attach', 'Attach')}
             >
               <Paperclip size={20} className="text-gray-700 dark:text-gray-300" />
             </button>
             <div
-              className={`flex flex-col-reverse items-center gap-2 transition-all duration-300 ease-out bg-transparent ${
-                isAttachExpanded ? 'max-h-28 opacity-100 overflow-visible' : 'max-h-0 opacity-0 pointer-events-none overflow-hidden'
+              className={`absolute bottom-full left-0 mb-2 flex flex-col-reverse items-center gap-2 transition-all duration-300 ease-out bg-transparent z-50 ${
+                isAttachExpanded ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
               }`}
             >
               <button
@@ -1107,10 +1109,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               </button>
             </div>
           </div>
-          <div className={`flex-1 message-input-panel relative overflow-visible !bg-transparent md:!bg-white md:dark:!bg-gray-800 rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
+          <div className={`flex-1 message-input-panel relative overflow-visible !bg-transparent rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
           }`}>
           <div ref={inputContainerRef} className="relative overflow-visible">
-            <div className="rounded-[24px] bg-white dark:bg-gray-800 md:bg-transparent">
+            <div className="rounded-[24px] bg-white dark:bg-gray-800">
               <MentionInput
               value={message}
               onChange={handleMessageChange}
