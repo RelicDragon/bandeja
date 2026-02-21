@@ -677,6 +677,22 @@ export const chatApi = {
     return response.data.data;
   },
 
+  getChatTranslationPreference: async (chatContextType: ChatContextType, contextId: string) => {
+    const response = await api.get<ApiResponse<{ translateToLanguage: string | null }>>('/chat/translation-preference', {
+      params: { chatContextType, contextId }
+    });
+    return response.data.data?.translateToLanguage ?? null;
+  },
+
+  setChatTranslationPreference: async (chatContextType: ChatContextType, contextId: string, translateToLanguage: string | null) => {
+    const response = await api.put<ApiResponse<{ translateToLanguage: string | null }>>('/chat/translation-preference', {
+      chatContextType,
+      contextId,
+      translateToLanguage
+    });
+    return response.data.data?.translateToLanguage ?? null;
+  },
+
   confirmMessageReceipt: async (messageId: string, deliveryMethod: 'socket' | 'push') => {
     const response = await api.post<ApiResponse<{ success: boolean }>>('/chat/messages/confirm-receipt', {
       messageId,

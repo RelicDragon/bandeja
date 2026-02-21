@@ -12,7 +12,7 @@ import { TelegramIcon } from '@/components';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
 import pushNotificationService from '@/services/pushNotificationService';
-import { isIOS } from '@/utils/capacitor';
+import { isIOS, isCapacitor, getAppInfo } from '@/utils/capacitor';
 import { AppleIcon } from '@/components/AppleIcon';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
 
@@ -35,6 +35,7 @@ export const Login = () => {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
 
   useEffect(() => {
     if (error) {
@@ -44,6 +45,14 @@ export const Login = () => {
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  useEffect(() => {
+    if (isCapacitor()) {
+      getAppInfo().then((info) => {
+        if (info) setAppVersion({ version: info.version, buildNumber: String(info.buildNumber) });
+      });
+    }
+  }, []);
 
   const goToTab = (next: LoginTab) => setTab(next);
 
@@ -459,6 +468,11 @@ export const Login = () => {
           {t('auth.eula') || 'Terms of Service'}
         </a>
       </p>
+      {appVersion && (
+        <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
+          App Version: {appVersion.version} (Build {appVersion.buildNumber})
+        </p>
+      )}
     </AuthLayout>
   );
 };

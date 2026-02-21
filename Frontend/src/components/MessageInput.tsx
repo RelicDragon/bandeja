@@ -17,7 +17,6 @@ import { TranslateToButton } from './chat/TranslateToButton';
 import { UndoTranslateButton } from './chat/UndoTranslateButton';
 import { X, ListPlus, Paperclip, Image } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
-import { usersApi } from '@/api/users';
 import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
 import { PollType } from '@/api/chat';
@@ -96,6 +95,8 @@ interface MessageInputProps {
   onEditMessage?: (updated: ChatMessage) => void;
   lastOwnMessage?: ChatMessage | null;
   onStartEditMessage?: (message: ChatMessage) => void;
+  translateToLanguage?: string | null;
+  onTranslateToLanguageChange?: (translateToLanguage: string | null) => void | Promise<void>;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
@@ -124,9 +125,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onEditMessage,
   lastOwnMessage = null,
   onStartEditMessage,
+  translateToLanguage: translateToLanguageProp = null,
+  onTranslateToLanguageChange,
 }) => {
   const { t } = useTranslation();
-  const { user, updateUser } = useAuthStore();
+  const { user } = useAuthStore();
   const [message, setMessage] = useState('');
   const [mentionIds, setMentionIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -140,7 +143,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [originalMentionIdsBeforeTranslate, setOriginalMentionIdsBeforeTranslate] = useState<string[] | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationModalOpen, setTranslationModalOpen] = useState(false);
-  const translateToLanguage = user?.translateToLanguage ?? null;
+  const translateToLanguage = translateToLanguageProp ?? null;
   const attachMenuRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const saveDraftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -902,10 +905,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleTranslateLanguageSelect = useCallback(async (languageCode: string) => {
     const code = languageCode.toLowerCase();
     try {
-      const res = await usersApi.updateProfile({ translateToLanguage: code });
-      const nextUser = res?.data;
-      if (nextUser && user) updateUser({ ...user, ...nextUser });
-      else if (nextUser) updateUser(nextUser);
+      if (onTranslateToLanguageChange) {
+        await onTranslateToLanguageChange(code);
+      }
       setTranslationModalOpen(false);
       const trimmed = message.trim();
       if (trimmed) {
@@ -929,43 +931,29 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       console.error('Update translateToLanguage failed:', err);
       toast.error(t('chat.sendFailed') || 'Failed to save');
     }
-  }, [message, mentionIds, updateUser, user, runTranslateDraft, t]);
-
-  const handleTranslateClick = useCallback(async () => {
-    if (!translateToLanguage) return;
-    const trimmed = message.trim();
-    if (!trimmed) {
-      toast.error(t('chat.enterTextToTranslate', { defaultValue: 'Enter text to translate.' }));
-      return;
-    }
-    if (trimmed.length > TRANSLATE_DRAFT_MAX_LENGTH) {
-      toast.error(t('chat.translateTextTooLong', { defaultValue: 'Text is too long to translate.', max: TRANSLATE_DRAFT_MAX_LENGTH }));
-      return;
-    }
-    setIsTranslating(true);
-    await new Promise((r) => setTimeout(r, 0));
-    try {
-      await runTranslateDraft(trimmed, translateToLanguage, mentionIds);
-    } catch (err) {
-      console.error('Translate draft failed:', err);
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      toast.error(status === 429 ? t('chat.translationRateLimited', { defaultValue: 'Too many translation requests. Please try again in a few seconds.' }) : t('chat.translationUnavailable', { defaultValue: 'Translation is temporarily unavailable.' }));
-    } finally {
-      setIsTranslating(false);
-    }
-  }, [translateToLanguage, message, mentionIds, runTranslateDraft, t]);
+  }, [message, mentionIds, onTranslateToLanguageChange, runTranslateDraft, t]);
 
   const handleRemoveTranslateLanguage = useCallback(async () => {
     try {
-      const res = await usersApi.updateProfile({ translateToLanguage: null });
-      const nextUser = res?.data;
-      if (nextUser && user) updateUser({ ...user, ...nextUser });
-      else if (nextUser) updateUser(nextUser);
+      if (onTranslateToLanguageChange) {
+        await onTranslateToLanguageChange(null);
+      }
     } catch (err) {
       console.error('Clear translateToLanguage failed:', err);
       toast.error(t('chat.sendFailed') || 'Failed to save');
     }
-  }, [updateUser, user, t]);
+  }, [onTranslateToLanguageChange, t]);
+
+  const handleTranslationModalSelect = useCallback(
+    (code: string | null) => {
+      if (code === null) {
+        handleRemoveTranslateLanguage();
+      } else {
+        handleTranslateLanguageSelect(code);
+      }
+    },
+    [handleRemoveTranslateLanguage, handleTranslateLanguageSelect]
+  );
 
   const handleUndoTranslate = useCallback(() => {
     if (originalMessageBeforeTranslate != null) {
@@ -1020,18 +1008,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           <UndoTranslateButton onClick={handleUndoTranslate} disabled={isDisabled || inputBlocked || isTranslating} />
         )}
         <TranslateToButton
-          translateToLanguage={translateToLanguage}
           isTranslating={isTranslating}
-          disabled={isDisabled || inputBlocked}
+          disabled={isDisabled || inputBlocked || (!!translateToLanguage && !message.trim())}
           onOpenModal={() => setTranslationModalOpen(true)}
-          onTranslate={handleTranslateClick}
-          onRemoveLanguage={handleRemoveTranslateLanguage}
         />
       </div>
       <TranslationLanguageModal
         open={translationModalOpen}
         onClose={() => setTranslationModalOpen(false)}
-        onSelect={handleTranslateLanguageSelect}
+        onSelect={handleTranslationModalSelect}
+        selectedLanguage={translateToLanguage}
       />
       {editingMessage && (
         <EditPreview

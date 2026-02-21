@@ -33,6 +33,8 @@ import {
   muteChat,
   unmuteChat,
   isChatMuted,
+  getChatTranslationPreference,
+  setChatTranslationPreference,
   confirmMessageReceipt,
   getMissedMessages,
   markAllMessagesAsReadForContext,
@@ -307,6 +309,25 @@ router.get(
     query('contextId').notEmpty().withMessage('Context ID is required')
   ]),
   isChatMuted
+);
+
+router.get(
+  '/translation-preference',
+  validate([
+    query('chatContextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid chat context type'),
+    query('contextId').notEmpty().withMessage('Context ID is required')
+  ]),
+  getChatTranslationPreference
+);
+
+router.put(
+  '/translation-preference',
+  validate([
+    body('chatContextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid chat context type'),
+    body('contextId').notEmpty().withMessage('Context ID is required'),
+    body('translateToLanguage').optional({ nullable: true }).isString().isLength({ max: 10 }).withMessage('translateToLanguage must be a string up to 10 chars')
+  ]),
+  setChatTranslationPreference
 );
 
 router.post(

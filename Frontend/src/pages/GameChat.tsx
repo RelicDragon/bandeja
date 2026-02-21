@@ -99,6 +99,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [isBlockedByUser, setIsBlockedByUser] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isTogglingMute, setIsTogglingMute] = useState(false);
+  const [translateToLanguageForChat, setTranslateToLanguageForChat] = useState<string | null>(null);
   const [hasSetDefaultChatType, setHasSetDefaultChatType] = useState(false);
   const [showPlayerCard, setShowPlayerCard] = useState(false);
   const [showItemPage, setShowItemPage] = useState(false);
@@ -1183,6 +1184,14 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           if (!signal.aborted) console.error('Failed to check mute status:', error);
         }
 
+        try {
+          const pref = await chatApi.getChatTranslationPreference(contextType, id);
+          if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
+          setTranslateToLanguageForChat(pref);
+        } catch (error) {
+          if (!signal.aborted) console.error('Failed to load translation preference:', error);
+        }
+
         let effectiveChatType: ChatType = currentChatType;
         if (!hasSetDefaultChatType && contextType === 'GAME' && loadedContext) {
           setHasSetDefaultChatType(true);
@@ -1977,6 +1986,12 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               onGroupChannelUpdate={contextType === 'GROUP' ? () => { loadContext(); } : undefined}
               contextType={contextType}
               contextId={id ?? ''}
+              translateToLanguage={translateToLanguageForChat}
+              onTranslateToLanguageChange={async (value) => {
+                if (!id) return;
+                await chatApi.setChatTranslationPreference(contextType, id, value);
+                setTranslateToLanguageForChat(value);
+              }}
             />
           </div>
         ) : (
