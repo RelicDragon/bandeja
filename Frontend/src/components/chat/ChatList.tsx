@@ -1801,10 +1801,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                         searchQuery={debouncedSearchQuery.trim()}
                         displayTitle={getMarketChatDisplayTitleForSellerGrouped((chat as Extract<typeof chat, { type: 'channel' }>).data)}
                         sellerGroupedByItem
-                        pinnedCount={chatsFilter === 'users' ? pinnedCountUsers : undefined}
-                        pinningId={chatsFilter === 'users' ? pinningId : undefined}
-                        onPinUserChat={chatsFilter === 'users' ? handlePinUserChat : undefined}
-                        onPinGroupChannel={chatsFilter === 'users' ? handlePinGroupChannel : undefined}
+                        pinnedCount={undefined}
+                        pinningId={undefined}
+                        onPinUserChat={undefined}
+                        onPinGroupChannel={undefined}
                       />
                     ))}
                     </div>
@@ -1821,12 +1821,12 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                     onContactClick={handleContactClick}
                     isSearchMode={isSearchMode}
                     searchQuery={debouncedSearchQuery.trim()}
-                    displayTitle={chatsFilter === 'market' && chat.type === 'channel' && user?.id ? (marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').title : getMarketChatDisplayTitle(chat.data, marketChatRole)) : undefined}
-                    displaySubtitle={chatsFilter === 'market' && chat.type === 'channel' && user?.id && marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').subtitle : undefined}
-                    pinnedCount={chatsFilter === 'users' ? pinnedCountUsers : undefined}
-                    pinningId={chatsFilter === 'users' ? pinningId : undefined}
-                    onPinUserChat={chatsFilter === 'users' ? handlePinUserChat : undefined}
-                    onPinGroupChannel={chatsFilter === 'users' ? handlePinGroupChannel : undefined}
+                    displayTitle={chat.type === 'channel' && user?.id ? (marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').title : getMarketChatDisplayTitle(chat.data, marketChatRole)) : undefined}
+                    displaySubtitle={chat.type === 'channel' && user?.id && marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').subtitle : undefined}
+                    pinnedCount={undefined}
+                    pinningId={undefined}
+                    onPinUserChat={undefined}
+                    onPinGroupChannel={undefined}
                   />
                 ))
               )}
