@@ -938,6 +938,8 @@
     "controlNotifications": "Управление уведомлениями",
     "allowMessagesFromNonContacts": "Разрешить сообщения от незнакомцев",
     "allowMessagesFromNonContactsDescription": "Позволить любому в вашем городе отправлять вам личные сообщения. Отключите, чтобы получать сообщения только от контактов.",
+    "showOnlineStatus": "Показывать мой статус «в сети»",
+    "showOnlineStatusHint": "Другие не будут видеть ваш статус; вы также не будете видеть статусы других пользователей.",
     "verbalStatus": "Статус",
     "verbalStatusPlaceholder": "Что у вас на уме?",
     "bio": "О себе",

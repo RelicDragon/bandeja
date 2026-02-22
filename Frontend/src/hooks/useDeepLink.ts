@@ -64,6 +64,7 @@ export const useDeepLink = () => {
           }
         }
 
+
         if (pathname === '/marketplace' || pathname === '/marketplace/my') {
           const search = url.search || '';
           navigateWithTracking(navigate, `${pathname}${search}`, { replace: true });

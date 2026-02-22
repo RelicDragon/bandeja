@@ -13,6 +13,7 @@ import { AdminMessageReportsService } from '../services/admin/messageReports.ser
 import { AdminAppVersionService } from '../services/admin/appVersion.service';
 import { AdminMarketCategoryService } from '../services/admin/marketCategory.service';
 import { AdminMassNotificationService } from '../services/admin/massNotification.service';
+import prisma from '../config/database';
 
 // Auth endpoints
 export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
@@ -403,7 +404,15 @@ export const getStats = asyncHandler(async (req: AuthRequest, res: Response) => 
 export const getOnlineUsers = asyncHandler(async (req: AuthRequest, res: Response) => {
   const socketService = (global as any).socketService;
   const ids = socketService?.getAllOnlineUserIds?.() ?? [];
-  const users = await AdminUsersService.getUsersByIds(ids);
+  if (ids.length === 0) {
+    return res.json({ success: true, data: [] });
+  }
+  const visible = await prisma.user.findMany({
+    where: { id: { in: ids }, showOnlineStatus: true },
+    select: { id: true },
+  });
+  const visibleIds = visible.map((u) => u.id);
+  const users = await AdminUsersService.getUsersByIds(visibleIds);
   res.json({ success: true, data: users });
 });
 

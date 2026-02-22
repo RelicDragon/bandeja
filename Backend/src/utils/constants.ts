@@ -214,6 +214,7 @@ export const PROFILE_SELECT_FIELDS = {
   sendPushDirectMessages: true,
   sendPushReminders: true,
   allowMessagesFromNonContacts: true,
+  showOnlineStatus: true,
   appIcon: true,
   wallet: true,
   totalPoints: true,

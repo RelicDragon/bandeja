@@ -922,6 +922,8 @@
     "controlNotifications": "Controlar notificaciones",
     "allowMessagesFromNonContacts": "Permitir mensajes de no contactos",
     "allowMessagesFromNonContactsDescription": "Permitir que cualquiera en tu ciudad te envíe mensajes directos. Desactiva para recibir mensajes solo de contactos.",
+    "showOnlineStatus": "Mostrar mi estado en línea",
+    "showOnlineStatusHint": "Los demás no verán tu estado; tú tampoco verás el estado de otros usuarios.",
     "gender": "Género",
     "male": "Hombre",
     "female": "Mujer",

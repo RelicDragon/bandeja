@@ -76,6 +76,7 @@ export const ProfileContent = () => {
   const [isSyncingTelegram, setIsSyncingTelegram] = useState(false);
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([]);
   const [allowMessagesFromNonContacts, setAllowMessagesFromNonContacts] = useState(user?.allowMessagesFromNonContacts !== false);
+  const [showOnlineStatus, setShowOnlineStatus] = useState(user?.showOnlineStatus !== false);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const updateProfile = useCallback(async (updates: Partial<User>) => {
@@ -189,6 +190,7 @@ export const ProfileContent = () => {
       setPreferredCourtSideLeft(user.preferredCourtSideLeft || false);
       setPreferredCourtSideRight(user.preferredCourtSideRight || false);
       setAllowMessagesFromNonContacts(user.allowMessagesFromNonContacts !== false);
+      setShowOnlineStatus(user.showOnlineStatus !== false);
       setVerbalStatus(user.verbalStatus || '');
       setBio(user.bio || '');
       if (user.appIcon === 'tiger' || user.appIcon === 'racket') {
@@ -311,6 +313,11 @@ export const ProfileContent = () => {
   const handleAllowMessagesFromNonContactsChange = (value: boolean) => {
     setAllowMessagesFromNonContacts(value);
     updateProfile({ allowMessagesFromNonContacts: value });
+  };
+
+  const handleShowOnlineStatusChange = (value: boolean) => {
+    setShowOnlineStatus(value);
+    updateProfile({ showOnlineStatus: value });
   };
 
   const handleLogout = () => {
@@ -1086,6 +1093,22 @@ export const ProfileContent = () => {
               <ToggleSwitch
                 checked={allowMessagesFromNonContacts}
                 onChange={handleAllowMessagesFromNonContactsChange}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-4 py-2">
+              <div className="flex-1 min-w-0">
+                <label className="text-sm font-medium text-gray-900 dark:text-white block">
+                  {t('profile.showOnlineStatus')}
+                </label>
+                {!showOnlineStatus && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {t('profile.showOnlineStatusHint')}
+                  </p>
+                )}
+              </div>
+              <ToggleSwitch
+                checked={showOnlineStatus}
+                onChange={handleShowOnlineStatusChange}
               />
             </div>
             {notificationPreferences.length > 0 && (

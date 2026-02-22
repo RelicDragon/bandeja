@@ -104,6 +104,7 @@ model User {
   sendPushReminders          Boolean              @default(true)
   sendPushWalletNotifications Boolean             @default(true)
   allowMessagesFromNonContacts Boolean            @default(true)
+  showOnlineStatus             Boolean            @default(true)
   appIcon                    String?             @default("tiger")
   pushTokens                 PushToken[]
   messageReports             MessageReport[]      @relation("MessageReportReporter")

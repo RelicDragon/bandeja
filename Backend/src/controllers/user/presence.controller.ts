@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { AuthRequest } from '../../middleware/auth';
+import prisma from '../../config/database';
 
 const getSocketService = () => (global as any).socketService;
 
@@ -19,8 +20,18 @@ export const getPresence = asyncHandler(async (req: AuthRequest, res: Response) 
     .slice(0, MAX_PRESENCE_IDS);
   const socketService = getSocketService();
   const result: Record<string, boolean> = {};
+  if (ids.length === 0) {
+    return res.json({ success: true, data: result });
+  }
+  const showStatus = await prisma.user.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, showOnlineStatus: true },
+  });
+  const showStatusById = new Map(showStatus.map((u) => [u.id, u.showOnlineStatus]));
   for (const id of ids) {
-    result[id] = socketService?.isUserOnline?.(id) ?? false;
+    const visible = showStatusById.get(id) !== false;
+    const online = socketService?.isUserOnline?.(id) ?? false;
+    result[id] = visible && online;
   }
   res.json({ success: true, data: result });
 });

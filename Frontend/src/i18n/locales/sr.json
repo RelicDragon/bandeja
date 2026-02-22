@@ -930,6 +930,8 @@
     "controlNotifications": "Контрола обавештења",
     "allowMessagesFromNonContacts": "Дозволи поруке од неконтаката",
     "allowMessagesFromNonContactsDescription": "Дозволи било коме у вашем граду да вам шаље директне поруке. Искључите да бисте примали поруке само од контаката.",
+    "showOnlineStatus": "Прикажи мој статус на мрежи",
+    "showOnlineStatusHint": "Остали неће видети ваш статус; ни ви нећете видети статусе других корисника.",
     "verbalStatus": "Статус",
     "verbalStatusPlaceholder": "Шта вам је на уму?",
     "bio": "Биографија",

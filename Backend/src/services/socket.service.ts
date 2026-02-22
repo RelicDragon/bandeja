@@ -56,7 +56,9 @@ class SocketService {
 
     this.setupMiddleware();
     this.setupEventHandlers();
-    presenceService.setNotifier((userId, online) => this.notifyPresenceChange(userId, online));
+    presenceService.setNotifier((userId, online) => {
+      this.notifyPresenceChange(userId, online).catch((err) => console.error('[SocketService] notifyPresenceChange', err));
+    });
     presenceService.startExpiryLoop();
   }
 
@@ -314,23 +316,41 @@ class SocketService {
         });
       }));
 
-      socket.on('subscribe-presence', (data: { userIds?: string[] }) => {
+      socket.on('subscribe-presence', this.wrapAsync(socket, async (data: { userIds?: string[] }) => {
         if (!socket.userId) return;
         const now = Date.now();
         const last = this.presenceLastSubscribeAt.get(socket.id) ?? 0;
         if (now - last < PRESENCE_SUBSCRIBE_COOLDOWN_MS) return;
         this.presenceLastSubscribeAt.set(socket.id, now);
+        const viewer = await prisma.user.findUnique({
+          where: { id: socket.userId },
+          select: { showOnlineStatus: true },
+        });
+        if (viewer?.showOnlineStatus === false) {
+          socket.emit('presence-initial', {});
+          return;
+        }
         const raw = Array.isArray(data?.userIds) ? data.userIds : [];
         const userIds = [...new Set(raw)]
           .filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= MAX_PRESENCE_USER_ID_LENGTH)
           .slice(0, MAX_PRESENCE_SUBSCRIPTION);
-        this.setPresenceSubscription(socket.id, userIds);
+        if (userIds.length === 0) {
+          this.setPresenceSubscription(socket.id, []);
+          socket.emit('presence-initial', {});
+          return;
+        }
+        const withStatus = await prisma.user.findMany({
+          where: { id: { in: userIds }, showOnlineStatus: true },
+          select: { id: true },
+        });
+        const filteredIds = withStatus.map((u) => u.id);
+        this.setPresenceSubscription(socket.id, filteredIds);
         const initial: Record<string, boolean> = {};
-        for (const uid of userIds) {
+        for (const uid of filteredIds) {
           initial[uid] = this.isUserOnline(uid);
         }
         socket.emit('presence-initial', initial);
-      });
+      }));
     });
   }
 
@@ -376,7 +396,12 @@ class SocketService {
     }
   }
 
-  private notifyPresenceChange(userId: string, online: boolean): void {
+  private async notifyPresenceChange(userId: string, online: boolean): Promise<void> {
+    const subject = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { showOnlineStatus: true },
+    });
+    if (subject?.showOnlineStatus === false) return;
     const subscriberSocketIds = this.presenceSubscribersByUser.get(userId);
     if (!subscriberSocketIds?.size) return;
     for (const socketId of subscriberSocketIds) {

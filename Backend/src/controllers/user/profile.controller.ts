@@ -65,7 +65,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, favoriteTrainerId, appIcon, verbalStatus, bio } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, showOnlineStatus, favoriteTrainerId, appIcon, verbalStatus, bio } = req.body;
   
   // Explicitly ignore level and socialLevel - only backend can modify these
 
@@ -101,6 +101,11 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
   if (bio !== undefined && bio !== null && bio.length > 128) {
     throw new ApiError(400, 'Bio must be 128 characters or less');
   }
+
+  const normalizedShowOnlineStatus =
+    showOnlineStatus === undefined
+      ? undefined
+      : showOnlineStatus === true || showOnlineStatus === 'true';
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
@@ -178,6 +183,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(sendPushReminders !== undefined && { sendPushReminders }),
         ...(sendPushWalletNotifications !== undefined && { sendPushWalletNotifications }),
         ...(allowMessagesFromNonContacts !== undefined && { allowMessagesFromNonContacts }),
+        ...(normalizedShowOnlineStatus !== undefined && { showOnlineStatus: normalizedShowOnlineStatus }),
         ...(favoriteTrainerId !== undefined && { favoriteTrainerId: favoriteTrainerId || null }),
         ...(appIcon !== undefined && { appIcon: appIcon ?? null }),
         ...(verbalStatus !== undefined && { verbalStatus }),

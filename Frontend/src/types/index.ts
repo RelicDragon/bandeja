@@ -86,6 +86,7 @@ export interface User extends BasicUser {
   sendPushWalletNotifications?: boolean;
   wallet?: number;
   blockedUserIds?: string[];
+  showOnlineStatus?: boolean;
   appIcon?: string | null;
 }
 

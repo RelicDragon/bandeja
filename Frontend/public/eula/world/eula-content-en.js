@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['en'] = `<h1>Privacy Policy & User Agreement</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 12/01/2025<br>
+<strong>Last updated:</strong> 22/02/2025<br>
 Applies worldwide</p>
 
 <h2>1. Privacy Policy</h2>
@@ -18,6 +18,7 @@ Applies worldwide</p>
 <li><strong>User Content:</strong> Game results, match records, player ratings, messages, photos, and other content you create</li>
 <li><strong>Usage Data:</strong> Game statistics, app interactions, feature usage, and performance data</li>
 <li><strong>Telegram Data:</strong> If you register via Telegram, we access your Telegram user ID and username</li>
+<li><strong>Activity Status:</strong> Online/offline status and time of last visit, used to show presence in the app</li>
 </ul>
 
 <h3>1.2 How We Use Your Information</h3>
