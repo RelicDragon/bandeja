@@ -13,6 +13,7 @@ import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
 import pushNotificationService from '@/services/pushNotificationService';
 import { isIOS, isCapacitor, getAppInfo } from '@/utils/capacitor';
+import { openEula } from '@/utils/openEula';
 import { AppleIcon } from '@/components/AppleIcon';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
 
@@ -462,7 +463,7 @@ export const Login = () => {
           className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors underline decoration-2 underline-offset-2"
           onClick={(e) => {
             e.preventDefault();
-            window.open('/eula/world/eula.html', '_blank');
+            openEula();
           }}
         >
           {t('auth.eula') || 'Terms of Service'}

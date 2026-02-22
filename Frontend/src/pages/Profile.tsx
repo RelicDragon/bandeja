@@ -23,6 +23,7 @@ import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { extractLanguageCode, normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { isCapacitor, getAppInfo, isIOS } from '@/utils/capacitor';
+import { openEula } from '@/utils/openEula';
 import { AppleIcon } from '@/components/AppleIcon';
 import { getCurrencyOptions, getCurrencySymbol } from '@/utils/currency';
 import { setNativeAppIcon } from '@/services/appIcon.service';
@@ -1276,7 +1277,7 @@ export const ProfileContent = () => {
             className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors underline"
             onClick={(e) => {
               e.preventDefault();
-              window.open('/eula/world/eula.html', '_blank');
+              openEula();
             }}
           >
             {t('auth.eula') || 'Terms of Service'}

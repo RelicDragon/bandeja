@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import pushNotificationService from '@/services/pushNotificationService';
 import { Gender } from '@/types';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
+import { openEula } from '@/utils/openEula';
 
 export const Register = () => {
   const { t, i18n } = useTranslation();
@@ -332,7 +333,7 @@ export const Register = () => {
               className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors underline"
               onClick={(e) => {
                 e.preventDefault();
-                window.open('/eula/world/eula.html', '_blank');
+                openEula();
               }}
             >
               {t('auth.eula') || 'Terms of Service'}

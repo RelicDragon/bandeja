@@ -23,6 +23,14 @@ export type PriceCurrency =
 
 import type { Round } from './gameResults';
 
+export interface TrainerReviewStarCounts {
+  1: number;
+  2: number;
+  3: number;
+  4: number;
+  5: number;
+}
+
 export interface BasicUser {
   id: string;
   firstName?: string;
@@ -36,6 +44,30 @@ export interface BasicUser {
   allowMessagesFromNonContacts?: boolean;
   verbalStatus?: string | null;
   bio?: string | null;
+  trainerRating?: number | null;
+  trainerReviewCount?: number;
+  trainerReviewCount1?: number;
+  trainerReviewCount2?: number;
+  trainerReviewCount3?: number;
+  trainerReviewCount4?: number;
+  trainerReviewCount5?: number;
+}
+
+export interface TrainerReview {
+  id: string;
+  trainerId: string;
+  reviewerId: string;
+  gameId: string;
+  stars: number;
+  text?: string | null;
+  createdAt: string;
+  reviewer?: BasicUser;
+}
+
+export interface TrainerReviewSummary {
+  rating: number | null;
+  reviewCount: number;
+  starCounts: TrainerReviewStarCounts;
 }
 
 export interface User extends BasicUser {

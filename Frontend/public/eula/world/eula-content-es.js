@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['es'] = `<h1>Política de Privacidad y Acuerdo de Usuario</h1>
 <p><strong>Aplicación:</strong> Padel Bandeja<br>
 <strong>Fecha de vigencia:</strong> 12/01/2025<br>
-<strong>Última actualización:</strong> 12/01/2025<br>
+<strong>Última actualización:</strong> 22/02/2025<br>
 Aplica en todo el mundo</p>
 
 <h2>1. Política de Privacidad</h2>
@@ -18,6 +18,7 @@ Aplica en todo el mundo</p>
 <li><strong>Contenido del Usuario:</strong> Resultados de juegos, registros de partidos, calificaciones de jugadores, mensajes, fotos y otro contenido que crees</li>
 <li><strong>Datos de Uso:</strong> Estadísticas de juegos, interacciones con la aplicación, uso de funciones y datos de rendimiento</li>
 <li><strong>Datos de Telegram:</strong> Si te registras vía Telegram, accedemos a tu ID de usuario de Telegram y nombre de usuario</li>
+<li><strong>Estado de actividad:</strong> Estado en línea/desconectado y hora del último acceso, utilizados para mostrar la presencia en la aplicación</li>
 </ul>
 
 <h3>1.2 Cómo Utilizamos tu Información</h3>
@@ -64,6 +65,16 @@ Aplica en todo el mundo</p>
 
 <h3>1.8 Transferencias Internacionales de Datos</h3>
 <p>Tu información puede ser transferida y procesada en países distintos a tu país de residencia. Aseguramos que existan salvaguardas apropiadas para proteger tus datos de acuerdo con esta política.</p>
+
+<h3>1.9 Estado en línea y actividad</h3>
+<p>Procesamos datos sobre tu actividad en la aplicación (estado en línea/desconectado, hora del último acceso) con las siguientes finalidades y condiciones.</p>
+<ul>
+<li><strong>Qué recopilamos:</strong> Tu estado en línea/desconectado y la hora de tu último acceso a la aplicación.</li>
+<li><strong>Finalidad:</strong> Facilitar la comunicación en el chat permitiendo que otros usuarios vean cuándo estás disponible.</li>
+<li><strong>Quién puede verlo:</strong> Esta información es visible para otros usuarios registrados de la aplicación.</li>
+<li><strong>Tu control:</strong> De acuerdo con el enfoque de privacidad por diseño, tienes control total. En la configuración de la aplicación puedes desactivar la visibilidad de tu estado con la opción «Mostrar mi estado en línea» (exclusión voluntaria). Por defecto tu estado es visible; puedes desactivarlo en cualquier momento.</li>
+<li><strong>Base legal:</strong> Nos apoyamos en el Interés legítimo: mostrar la presencia es una función básica del servicio que los usuarios esperan. La función está activada por defecto, con opción obligatoria de desactivarla en la configuración.</li>
+</ul>
 
 <h2>2. Acuerdo de Usuario</h2>
 
@@ -149,6 +160,6 @@ Aplica en todo el mundo</p>
 <p><strong>Correo Electrónico:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>Este documento fue actualizado por última vez el 12/01/2025. Nos reservamos el derecho de actualizar esta política y acuerdo en cualquier momento.</p>
+<p>Este documento fue actualizado por última vez el 22/02/2025. Nos reservamos el derecho de actualizar esta política y acuerdo en cualquier momento.</p>
 <p>Contacto: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

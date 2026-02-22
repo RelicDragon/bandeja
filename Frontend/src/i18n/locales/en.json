@@ -1951,7 +1951,15 @@
     "undoTrainingConfirm": "Are you sure you want to undo all training changes? This will revert all level and reliability changes.",
     "undoSuccess": "Training changes undone successfully",
     "levelUpdated": "Level updated successfully",
-    "actions": "Actions"
+    "actions": "Actions",
+    "rateThisTraining": "Rate this training",
+    "youRated": "You rated {{stars}} stars",
+    "reviewTextPlaceholder": "Optional comment (max 1000 characters)",
+    "submitReview": "Submit review",
+    "reviewSubmitted": "Thank you for your review!",
+    "selectStars": "Please select a rating (1-5 stars)",
+    "reviewCount_one": "{{count}} review",
+    "reviewCount_other": "{{count}} reviews"
   },
   "bets": {
     "title": "Challenge",

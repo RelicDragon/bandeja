@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/components';
 import { GameStatusIcon } from '@/components/GameStatusIcon';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { Game } from '@/types';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
@@ -483,6 +484,7 @@ export const GameCard = ({
                 <div className="flex-shrink-0 flex flex-col items-center gap-0.5 p-2 border-2 border-green-300 dark:border-green-700 rounded-lg bg-green-50/30 dark:bg-green-900/10">
                   <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
                   <PlayerAvatar player={trainer.user} extrasmall={true} showName={true} />
+                  <TrainerRatingBadge trainer={trainer.user} size="sm" showReviewCount={false} />
                 </div>
               ) : null;
             })()}
@@ -577,6 +579,7 @@ export const GameCard = ({
                 <div className="flex-shrink-0 flex flex-col items-center gap-0.5 p-2 border-2 border-green-300 dark:border-green-700 rounded-lg bg-green-50/30 dark:bg-green-900/10">
                   <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
                   <PlayerAvatar player={trainer.user} extrasmall={true} showName={true} />
+                  <TrainerRatingBadge trainer={trainer.user} size="sm" showReviewCount={false} />
                 </div>
               ) : null;
             })()}

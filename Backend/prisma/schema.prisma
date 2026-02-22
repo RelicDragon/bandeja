@@ -106,6 +106,13 @@ model User {
   allowMessagesFromNonContacts Boolean            @default(true)
   showOnlineStatus             Boolean            @default(true)
   appIcon                    String?             @default("tiger")
+  trainerRating               Float?
+  trainerReviewCount          Int                 @default(0)
+  trainerReviewCount1         Int                 @default(0)
+  trainerReviewCount2         Int                 @default(0)
+  trainerReviewCount3         Int                 @default(0)
+  trainerReviewCount4         Int                 @default(0)
+  trainerReviewCount5         Int                 @default(0)
   pushTokens                 PushToken[]
   messageReports             MessageReport[]      @relation("MessageReportReporter")
   blockedUsers               BlockedUser[]        @relation("UserBlocked")
@@ -129,6 +136,8 @@ model User {
   marketItemBids          MarketItemBid[]
   trainedGames            Game[]               @relation("GameTrainer")
   buyerGroupChannels      GroupChannel[]       @relation("GroupChannelBuyer")
+  reviewsReceivedAsTrainer TrainerReview[]      @relation("TrainerReviewsReceived")
+  reviewsGiven            TrainerReview[]      @relation("TrainerReviewsGiven")
 
   @@index([phone])
   @@index([telegramId])
@@ -323,6 +332,7 @@ model Game {
   leagueSeason           LeagueSeason?       @relation("GameLeagueSeason")
   faqs                   GameFaq[]
   bets                   Bet[]
+  trainerReviews         TrainerReview[]
 
   @@index([clubId])
   @@index([courtId])
@@ -354,6 +364,25 @@ model GameFaq {
 
   @@index([gameId])
   @@index([order])
+}
+
+model TrainerReview {
+  id         String   @id @default(cuid())
+  trainerId  String
+  reviewerId String
+  gameId     String
+  stars      Int
+  text       String?  @db.VarChar(1000)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  trainer    User     @relation("TrainerReviewsReceived", fields: [trainerId], references: [id], onDelete: Cascade)
+  reviewer   User     @relation("TrainerReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([trainerId, reviewerId, gameId])
+  @@index([trainerId])
+  @@index([gameId])
+  @@index([reviewerId])
 }
 
 model GameParticipant {

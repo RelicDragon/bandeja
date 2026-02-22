@@ -1174,6 +1174,10 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
               user={user}
               onUpdateParticipantLevel={handleUpdateParticipantLevel}
               onUndoTraining={handleUndoTraining}
+              onReviewSubmitted={async () => {
+                const response = await gamesApi.getById(game.id);
+                setGame(response.data);
+              }}
             />
           )}
 

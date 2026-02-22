@@ -938,7 +938,7 @@
     "controlNotifications": "Управление уведомлениями",
     "allowMessagesFromNonContacts": "Разрешить сообщения от незнакомцев",
     "allowMessagesFromNonContactsDescription": "Позволить любому в вашем городе отправлять вам личные сообщения. Отключите, чтобы получать сообщения только от контактов.",
-    "showOnlineStatus": "Показывать мой статус «в сети»",
+    "showOnlineStatus": "Показывать мой сетевой статус",
     "showOnlineStatusHint": "Другие не будут видеть ваш статус; вы также не будете видеть статусы других пользователей.",
     "verbalStatus": "Статус",
     "verbalStatusPlaceholder": "Что у вас на уме?",
@@ -1966,7 +1966,17 @@
     "undoTrainingConfirm": "Вы уверены, что хотите отменить все изменения тренировки? Это вернет все изменения уровня и надежности.",
     "undoSuccess": "Изменения тренировки успешно отменены",
     "levelUpdated": "Уровень успешно обновлен",
-    "actions": "Действия"
+    "actions": "Действия",
+    "rateThisTraining": "Оценить тренировку",
+    "youRated": "Вы поставили {{stars}} звёзд",
+    "reviewTextPlaceholder": "Необязательный комментарий (макс. 1000 символов)",
+    "submitReview": "Отправить отзыв",
+    "reviewSubmitted": "Спасибо за ваш отзыв!",
+    "selectStars": "Выберите оценку (1–5 звёзд)",
+    "reviewCount_one": "{{count}} отзыв",
+    "reviewCount_few": "{{count}} отзыва",
+    "reviewCount_many": "{{count}} отзывов",
+    "reviewCount_other": "{{count}} отзывов"
   },
   "bets": {
     "title": "Вызов",

@@ -46,6 +46,49 @@ body.dark .container {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
+.eula-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+body.dark .eula-top-bar {
+    border-bottom-color: #374151;
+}
+.eula-back-btn {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+body.dark .eula-back-btn {
+    background: #1e293b;
+    border-color: #475569;
+    color: #e2e8f0;
+}
+.eula-back-btn:hover {
+    background: #e2e8f0;
+}
+body.dark .eula-back-btn:hover {
+    background: #334155;
+}
+.eula-back-btn.visible {
+    display: flex;
+}
+.eula-top-bar .lang-switch {
+    margin-left: auto;
+}
 .lang-switch {
     display: flex;
     justify-content: flex-end;
@@ -408,6 +451,12 @@ document.addEventListener('click', (e) => {
 
 window.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    const inApp = new URLSearchParams(window.location.search).get('inapp') === '1';
+    const backBtn = document.getElementById('eula-back-btn');
+    if (backBtn && inApp) {
+        backBtn.classList.add('visible');
+        backBtn.addEventListener('click', function() { window.history.back(); });
+    }
     const savedLang = localStorage.getItem('language') || 'en';
     if (languages[savedLang]) {
         const items = document.querySelectorAll('.lang-selector-item');
@@ -445,7 +494,9 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
 
 <div class="container">
 
-<div class="lang-switch">
+<div class="eula-top-bar">
+    <button type="button" class="eula-back-btn" id="eula-back-btn" aria-label="Back">← Back</button>
+    <div class="lang-switch" style="margin-bottom:0; padding-bottom:0; border-bottom:none;">
     <div class="lang-selector">
         <button class="lang-selector-button" onclick="toggleLangMenu(event)">
             <span class="flag" id="current-flag">🇬🇧</span>
@@ -473,6 +524,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
             </button>
         </div>
     </div>
+</div>
 </div>
 
 <div id="eula-content-container"></div>

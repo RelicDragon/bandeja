@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['sr'] = `<h1>Politika privatnosti i Korisnički ugovor</h1>
 <p><strong>Aplikacija:</strong> Padel Bandeja<br>
 <strong>Datum stupanja na snagu:</strong> 12.01.2025<br>
-<strong>Poslednje ažuriranje:</strong> 12.01.2025<br>
+<strong>Poslednje ažuriranje:</strong> 22.02.2025<br>
 Primenjuje se širom sveta</p>
 
 <h2>1. Politika privatnosti</h2>
@@ -18,6 +18,7 @@ Primenjuje se širom sveta</p>
 <li><strong>Korisnički sadržaj:</strong> Rezultati igara, zapisi mečeva, rejtingi igrača, poruke, fotografije i drugi sadržaj koji kreirate</li>
 <li><strong>Podaci o korišćenju:</strong> Statistika igara, interakcije sa aplikacijom, korišćenje funkcija i podaci o performansama</li>
 <li><strong>Telegram podaci:</strong> Ako se registrujete preko Telegrama, pristupamo vašem Telegram korisničkom ID-u i korisničkom imenu</li>
+<li><strong>Status aktivnosti:</strong> Status online/offline i vreme poslednje posete, koriste se za prikaz prisustva u aplikaciji</li>
 </ul>
 
 <h3>1.2 Kako koristimo vaše informacije</h3>
@@ -64,6 +65,16 @@ Primenjuje se širom sveta</p>
 
 <h3>1.8 Međunarodni transferi podataka</h3>
 <p>Vaše informacije mogu biti prenete i obrađene u zemljama različitim od vaše zemlje prebivališta. Osiguravamo odgovarajuće zaštitne mere za zaštitu vaših podataka u skladu sa ovom politikom.</p>
+
+<h3>1.9 Online status i aktivnost</h3>
+<p>Obradjujemo podatke o vašoj aktivnosti u aplikaciji (status online/offline, vreme poslednje posete) u navedene svrhe i pod uslovima ispod.</p>
+<ul>
+<li><strong>Šta prikupljamo:</strong> Vaš status online/offline i vreme poslednje posete aplikaciji.</li>
+<li><strong>Svrha:</strong> Olakšavanje komunikacije u četu tako što drugi korisnici vide kada ste dostupni.</li>
+<li><strong>Ko može da vidi:</strong> Ove informacije su vidljive drugim prijavljenim korisnicima aplikacije.</li>
+<li><strong>Vaša kontrola:</strong> U skladu sa principima privatnosti po dizajnu, imate punu kontrolu. U podešavanjima aplikacije možete isključiti vidljivost vašeg statusa opcijom „Prikaži moj mrežni status“ (isključenje). Podrazumevano je status vidljiv drugima; možete ga isključiti u bilo kom trenutku.</li>
+<li><strong>Pravni osnov:</strong> Oslanjamo se na legitimni interes: prikaz prisustva je osnovna funkcija usluge koju korisnici očekuju. Funkcija je podrazumevano uključena, sa obaveznom opcijom isključivanja u podešavanjima.</li>
+</ul>
 
 <h2>2. Korisnički ugovor</h2>
 
@@ -149,6 +160,6 @@ Primenjuje se širom sveta</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>Ovaj dokument je poslednji put ažuriran 12.01.2025. Zadržavamo pravo da ažuriramo ovu politiku i ugovor u bilo kom trenutku.</p>
+<p>Ovaj dokument je poslednji put ažuriran 22.02.2025. Zadržavamo pravo da ažuriramo ovu politiku i ugovor u bilo kom trenutku.</p>
 <p>Kontakt: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

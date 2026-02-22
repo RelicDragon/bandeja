@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Edit2, Undo2, Loader2 } from 'lucide-react';
+import { Edit2, Undo2, Loader2, Star } from 'lucide-react';
 import { Card, Button } from '@/components';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { Game, User, GameOutcome } from '@/types';
+import { Game, User, GameOutcome, TrainerReview } from '@/types';
 import { EditLevelModal } from './EditLevelModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { usersApi } from '@/api/users';
+import { trainingApi } from '@/api/training';
 import toast from 'react-hot-toast';
 
 interface TrainingResultsSectionProps {
@@ -15,6 +16,7 @@ interface TrainingResultsSectionProps {
   user: User | null;
   onUpdateParticipantLevel: (gameId: string, userId: string, level: number, reliability: number) => Promise<void>;
   onUndoTraining: (gameId: string) => Promise<void>;
+  onReviewSubmitted?: () => void;
 }
 
 export const TrainingResultsSection = ({
@@ -22,6 +24,7 @@ export const TrainingResultsSection = ({
   user,
   onUpdateParticipantLevel,
   onUndoTraining,
+  onReviewSubmitted,
 }: TrainingResultsSectionProps) => {
   const { t } = useTranslation();
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -29,11 +32,65 @@ export const TrainingResultsSection = ({
   const [fullUserProfile, setFullUserProfile] = useState<User | null>(null);
   const [undoing, setUndoing] = useState(false);
   const [showUndoConfirm, setShowUndoConfirm] = useState(false);
+  const [myReview, setMyReview] = useState<TrainerReview | null | undefined>(undefined);
+  const [loadingMyReview, setLoadingMyReview] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewStars, setReviewStars] = useState(0);
+  const [reviewText, setReviewText] = useState('');
 
   const isTrainerOrOwner = game.participants?.some(p => p.userId === user?.id && (game.trainerId === p.userId || p.role === 'OWNER'));
   const canEdit = user && (isTrainerOrOwner || user.isAdmin) && game.status !== 'ARCHIVED';
   const hasChanges = game.outcomes && game.outcomes.length > 0;
   const canUndo = hasChanges && game.status !== 'ARCHIVED' && game.resultsStatus === 'FINAL';
+
+  const canLeaveReview =
+    user &&
+    game.trainerId &&
+    user.id !== game.trainerId &&
+    game.participants?.some((p) => p.userId === user.id && p.status === 'PLAYING');
+
+  useEffect(() => {
+    if (!canLeaveReview || !game.id) return;
+    let cancelled = false;
+    setLoadingMyReview(true);
+    trainingApi
+      .getMyReview(game.id)
+      .then((res) => {
+        if (cancelled) return;
+        if (res.data != null) setMyReview(res.data);
+        else setMyReview(null);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          toast.error(t('errors.generic', { defaultValue: 'Something went wrong. Please try again.' }));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMyReview(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [game.id, canLeaveReview, t]);
+
+  const handleSubmitReview = async () => {
+    if (reviewStars < 1 || reviewStars > 5) {
+      toast.error(t('training.selectStars', { defaultValue: 'Please select a rating (1-5 stars)' }));
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      const res = await trainingApi.submitReview(game.id, reviewStars, reviewText.trim() || undefined);
+      setMyReview(res.data!.review);
+      onReviewSubmitted?.();
+      toast.success(t('training.reviewSubmitted', { defaultValue: 'Thank you for your review!' }));
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ? t(msg, { defaultValue: msg }) : t('errors.generic'));
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   const trainingOwner = (game.trainerId ? game.participants.find((p) => p.userId === game.trainerId) : null) || game.participants.find((p) => p.role === 'OWNER');
   const playingParticipants = game.participants.filter((p) => p.status === 'PLAYING' && p.user && p.role !== 'OWNER');
@@ -200,6 +257,72 @@ export const TrainingResultsSection = ({
           </div>
         )}
       </Card>
+
+      {canLeaveReview && (
+        <Card className="mt-4">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {t('training.rateThisTraining', { defaultValue: 'Rate this training' })}
+            </h2>
+          </div>
+          <div className="p-4">
+            {loadingMyReview ? (
+              <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 py-4">
+                <Loader2 size={18} className="animate-spin" />
+                <span className="text-sm">{t('common.loading')}</span>
+              </div>
+            ) : myReview != null ? (
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <Star size={18} className="fill-current" />
+                <span className="font-medium">
+                  {t('training.youRated', { stars: myReview.stars, defaultValue: 'You rated {{stars}} stars' })}
+                </span>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-1 mb-3">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setReviewStars(s)}
+                      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      aria-label={`${s} stars`}
+                    >
+                      <Star
+                        size={28}
+                        className={reviewStars >= s ? 'fill-amber-500 text-amber-500' : 'text-gray-300 dark:text-gray-600'}
+                      />
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value.slice(0, 1000))}
+                  placeholder={t('training.reviewTextPlaceholder', { defaultValue: 'Optional comment (max 1000 characters)' })}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 mb-3 min-h-[80px]"
+                  maxLength={1000}
+                  rows={3}
+                />
+                <Button
+                  onClick={handleSubmitReview}
+                  disabled={submittingReview}
+                  className="w-full flex items-center justify-center"
+                >
+                  {submittingReview ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin mr-2" />
+                      {t('common.loading')}
+                    </>
+                  ) : (
+                    t('training.submitReview', { defaultValue: 'Submit review' })
+                  )}
+                </Button>
+              </>
+            )}
+          </div>
+        </Card>
+      )}
 
       {editingUserId && (() => {
         const participant = playingParticipants.find((p) => p.userId === editingUserId);

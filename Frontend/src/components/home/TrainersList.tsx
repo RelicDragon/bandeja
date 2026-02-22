@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { usePlayersStore } from '@/store/playersStore';
 import { useAuthStore } from '@/store/authStore';
 import { PlayerAvatar } from '@/components';
+import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { usersApi } from '@/api';
 import { BasicUser } from '@/types';
@@ -146,7 +147,7 @@ export const TrainersList = ({ show }: TrainersListProps) => {
                       showName={false}
                     />
                   </span>
-                  <div className="mt-1 text-xs min-h-8 w-full text-gray-700 dark:text-gray-300 break-words text-center leading-tight flex flex-col items-center justify-start">
+                  <div className="mt-1 text-xs min-h-8 w-full text-gray-700 dark:text-gray-300 break-words text-center leading-tight flex flex-col items-center justify-start gap-0.5">
                     <span className="text-center truncate leading-none max-w-20">{trainer.firstName || ''}</span>
                     <span className="text-center truncate leading-none max-w-20">{trainer.lastName || ''}</span>
                     {trainer.verbalStatus && (
@@ -154,6 +155,7 @@ export const TrainersList = ({ show }: TrainersListProps) => {
                         {trainer.verbalStatus}
                       </span>
                     )}
+                    <TrainerRatingBadge trainer={trainer} size="sm" showReviewCount={true} />
                   </div>
                 </button>
               );

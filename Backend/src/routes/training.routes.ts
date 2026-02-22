@@ -28,4 +28,20 @@ router.post(
   trainingController.undoTraining
 );
 
+router.post(
+  '/:gameId/review',
+  authenticate,
+  validate([
+    body('stars').isInt({ min: 1, max: 5 }).withMessage('Stars must be between 1 and 5'),
+    body('text').optional().isString().isLength({ max: 1000 }).withMessage('Text must be at most 1000 characters'),
+  ]),
+  trainingController.submitReview
+);
+
+router.get(
+  '/:gameId/my-review',
+  authenticate,
+  trainingController.getMyReview
+);
+
 export default router;

@@ -66,6 +66,16 @@ Applies worldwide</p>
 <h3>1.8 International Data Transfers</h3>
 <p>Your information may be transferred to and processed in countries other than your country of residence. We ensure appropriate safeguards are in place to protect your data in accordance with this policy.</p>
 
+<h3>1.9 Online and Activity Status</h3>
+<p>We process data about your activity in the app (online/offline status, time of last visit) for the following purposes and under the conditions below.</p>
+<ul>
+<li><strong>What we collect:</strong> Your online/offline status and the time of your last visit to the app.</li>
+<li><strong>Purpose:</strong> To facilitate communication in chat by letting other users see when you are available.</li>
+<li><strong>Who can see it:</strong> This information is visible to other signed-in users of the application.</li>
+<li><strong>Your control:</strong> In line with privacy-by-design principles, you have full control. In the app settings you can turn off visibility of your status using the option &quot;Show my online status&quot; (opt-out). By default, your status is visible to others; you can disable it at any time.</li>
+<li><strong>Legal basis:</strong> We rely on Legitimate Interest: displaying presence is a core feature of the service that users expect. The feature is on by default, with a mandatory option to disable it in settings.</li>
+</ul>
+
 <h2>2. User Agreement</h2>
 
 <h3>2.1 Acceptance of Terms</h3>
@@ -150,6 +160,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>This document was last updated on 12/01/2025. We reserve the right to update this policy and agreement at any time.</p>
+<p>This document was last updated on 22/02/2025. We reserve the right to update this policy and agreement at any time.</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

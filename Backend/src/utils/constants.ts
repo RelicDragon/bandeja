@@ -170,6 +170,13 @@ export const USER_SELECT_FIELDS = {
   isTrainer: true,
   verbalStatus: true,
   bio: true,
+  trainerRating: true,
+  trainerReviewCount: true,
+  trainerReviewCount1: true,
+  trainerReviewCount2: true,
+  trainerReviewCount3: true,
+  trainerReviewCount4: true,
+  trainerReviewCount5: true,
 } as const;
 
 export const PROFILE_SELECT_FIELDS = {

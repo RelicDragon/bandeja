@@ -8,6 +8,7 @@ import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/uti
 import { GameStatusIcon } from '@/components';
 import { ShareModal } from '@/components/ShareModal';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
 import { GameAvatar } from '@/components/GameAvatar';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { AddToCalendarModal } from '@/components';
@@ -963,7 +964,7 @@ export const GameInfo = ({
                         extrasmall={true}
                         showName={false}
                       />
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex flex-col gap-0.5">
                         <span className="text-sm block truncate">
                           {[trainer.user.firstName, trainer.user.lastName].filter(name => name && name.trim()).join(' ')}
                         </span>
@@ -972,6 +973,7 @@ export const GameInfo = ({
                             {trainer.user.verbalStatus}
                           </span>
                         )}
+                        <TrainerRatingBadge trainer={trainer.user} size="sm" showReviewCount={true} />
                       </div>
                     </div>
                   );

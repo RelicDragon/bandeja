@@ -10,6 +10,7 @@ import { Loading } from './Loading';
 import { PlayerAvatarView } from './PlayerAvatarView';
 import { LevelHistoryView } from './LevelHistoryView';
 import { GenderIndicator } from './GenderIndicator';
+import { TrainerRatingBadge } from './TrainerRatingBadge';
 import { MarketItem } from '@/types';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { ConfirmationModal } from './ConfirmationModal';
@@ -367,6 +368,11 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick
             {user.verbalStatus && (
               <div className="mt-0 text-white/90 text-[9px] font-medium">
                 {user.verbalStatus}
+              </div>
+            )}
+            {user.isTrainer && (
+              <div className="flex items-center gap-1 mt-1 text-amber-300">
+                <TrainerRatingBadge trainer={user} size="sm" showReviewCount={true} />
               </div>
             )}
           </div>
