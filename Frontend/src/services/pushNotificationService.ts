@@ -214,10 +214,20 @@ class PushNotificationService {
           if (payload.bugId) {
             navigationService.navigateToBugChat(payload.bugId);
           } else if (payload.marketItemId) {
-            navigationService.navigateToChannelChat(payload.groupChannelId);
+            navigationService.navigateToMarketplace({ item: payload.marketItemId });
           } else {
             navigationService.navigateToGroupChat(payload.groupChannelId);
           }
+        }
+        break;
+
+      case 'NEW_MARKET_ITEM':
+      case 'AUCTION_OUTBID':
+      case 'AUCTION_NEW_BID':
+      case 'AUCTION_WON':
+      case 'AUCTION_BIN_ACCEPTED':
+        if (payload?.marketItemId) {
+          navigationService.navigateToMarketplace({ item: payload.marketItemId });
         }
         break;
 

@@ -32,7 +32,7 @@ export async function sendNewMarketItemNotification(
     const buttons = [[
       {
         text: t('marketplace.viewListing', lang) || 'View listing',
-        url: `${config.frontendUrl}/marketplace/${marketItem.id}`
+        url: `${config.frontendUrl}/marketplace?item=${marketItem.id}`
       }
     ]];
 
