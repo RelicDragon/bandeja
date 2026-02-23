@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { socketService } from '@/services/socketService';
 import { invitesApi } from '@/api';
 import { useHeaderStore } from './headerStore';
+import { useAuthStore } from './authStore';
 import { usePresenceStore } from './presenceStore';
 import { Game, Invite } from '@/types';
 
@@ -221,9 +222,14 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       };
 
       const handlePresenceInitial = (data: Record<string, boolean>) => {
+        if (useAuthStore.getState().user?.showOnlineStatus === false) {
+          usePresenceStore.getState().clearPresence();
+          return;
+        }
         if (data && typeof data === 'object') usePresenceStore.getState().setPresenceInitial(data);
       };
       const handlePresenceUpdate = (data: { online?: string[]; offline?: string[] }) => {
+        if (useAuthStore.getState().user?.showOnlineStatus === false) return;
         if (data && typeof data === 'object') usePresenceStore.getState().setPresenceBatch(Array.isArray(data.online) ? data.online : [], Array.isArray(data.offline) ? data.offline : []);
       };
 

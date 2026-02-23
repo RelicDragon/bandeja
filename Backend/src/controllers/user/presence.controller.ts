@@ -9,6 +9,16 @@ const MAX_PRESENCE_IDS = 3000;
 const MAX_ID_LENGTH = 64;
 
 export const getPresence = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const result: Record<string, boolean> = {};
+  if (req.userId) {
+    const viewer = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { showOnlineStatus: true },
+    });
+    if (viewer?.showOnlineStatus === false) {
+      return res.json({ success: true, data: result });
+    }
+  }
   const idsParam = req.query.ids;
   const raw = typeof idsParam === 'string'
     ? idsParam.split(',').map((id) => String(id).trim()).filter(Boolean)
@@ -19,7 +29,6 @@ export const getPresence = asyncHandler(async (req: AuthRequest, res: Response) 
     .filter((id) => id.length > 0 && id.length <= MAX_ID_LENGTH)
     .slice(0, MAX_PRESENCE_IDS);
   const socketService = getSocketService();
-  const result: Record<string, boolean> = {};
   if (ids.length === 0) {
     return res.json({ success: true, data: result });
   }

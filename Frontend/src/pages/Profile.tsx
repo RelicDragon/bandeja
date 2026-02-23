@@ -7,6 +7,7 @@ import { Button, Card, Input, Select, ToggleGroup, ToggleSwitch, AvatarUpload, F
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
 import { ProfileFollowers } from '@/components/ProfileFollowers';
+import { ProfileTrainerReviews } from '@/components/ProfileTrainerReviews';
 import { BlockedUsersSection } from '@/components/BlockedUsersSection';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
@@ -35,7 +36,7 @@ export const ProfileContent = () => {
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
-  const { profileActiveTab } = useNavigationStore();
+  const { profileActiveTab, setProfileActiveTab } = useNavigationStore();
 
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
@@ -469,6 +470,12 @@ export const ProfileContent = () => {
       setDefaultCurrency(user.defaultCurrency || 'auto');
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user && !user.isTrainer && profileActiveTab === 'reviews') {
+      setProfileActiveTab('general');
+    }
+  }, [user, user?.isTrainer, profileActiveTab, setProfileActiveTab]);
 
   useEffect(() => {
     return () => {
@@ -1188,8 +1195,12 @@ export const ProfileContent = () => {
           </Card>
         )}
 
-        {profileActiveTab === 'followers' && (
+{profileActiveTab === 'followers' && (
           <ProfileFollowers />
+        )}
+
+        {profileActiveTab === 'reviews' && user?.isTrainer && (
+          <ProfileTrainerReviews />
         )}
       </div>
 

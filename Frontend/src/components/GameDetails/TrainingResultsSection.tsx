@@ -5,6 +5,7 @@ import { Edit2, Undo2, Loader2, Star } from 'lucide-react';
 import { Card, Button } from '@/components';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { Game, User, GameOutcome, TrainerReview } from '@/types';
+import { formatDate } from '@/utils/dateFormat';
 import { EditLevelModal } from './EditLevelModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { usersApi } from '@/api/users';
@@ -33,10 +34,14 @@ export const TrainingResultsSection = ({
   const [undoing, setUndoing] = useState(false);
   const [showUndoConfirm, setShowUndoConfirm] = useState(false);
   const [myReview, setMyReview] = useState<TrainerReview | null | undefined>(undefined);
+  const [editingReview, setEditingReview] = useState(false);
   const [loadingMyReview, setLoadingMyReview] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewStars, setReviewStars] = useState(0);
   const [reviewText, setReviewText] = useState('');
+
+  const isReviewEdited = (r: TrainerReview) =>
+    r.updatedAt && new Date(r.updatedAt).getTime() - new Date(r.createdAt).getTime() > 2000;
 
   const isTrainerOrOwner = game.participants?.some(p => p.userId === user?.id && (game.trainerId === p.userId || p.role === 'OWNER'));
   const canEdit = user && (isTrainerOrOwner || user.isAdmin) && game.status !== 'ARCHIVED';
@@ -82,13 +87,26 @@ export const TrainingResultsSection = ({
     try {
       const res = await trainingApi.submitReview(game.id, reviewStars, reviewText.trim() || undefined);
       setMyReview(res.data!.review);
+      setEditingReview(false);
       onReviewSubmitted?.();
-      toast.success(t('training.reviewSubmitted', { defaultValue: 'Thank you for your review!' }));
+      toast.success(
+        myReview != null
+          ? t('training.reviewUpdated', { defaultValue: 'Review updated' })
+          : t('training.reviewSubmitted', { defaultValue: 'Thank you for your review!' })
+      );
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast.error(msg ? t(msg, { defaultValue: msg }) : t('errors.generic'));
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  const startEditReview = () => {
+    if (myReview) {
+      setReviewStars(myReview.stars);
+      setReviewText(myReview.text?.trim() ?? '');
+      setEditingReview(true);
     }
   };
 
@@ -138,7 +156,7 @@ export const TrainingResultsSection = ({
     <>
       <Card>
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="section-title">
             {t('training.trainingResults')}
           </h2>
         </div>
@@ -261,7 +279,7 @@ export const TrainingResultsSection = ({
       {canLeaveReview && (
         <Card className="mt-4">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="section-title">
               {t('training.rateThisTraining', { defaultValue: 'Rate this training' })}
             </h2>
           </div>
@@ -271,27 +289,48 @@ export const TrainingResultsSection = ({
                 <Loader2 size={18} className="animate-spin" />
                 <span className="text-sm">{t('common.loading')}</span>
               </div>
-            ) : myReview != null ? (
-              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                <Star size={18} className="fill-current" />
-                <span className="font-medium">
-                  {t('training.youRated', { stars: myReview.stars, defaultValue: 'You rated {{stars}} stars' })}
-                </span>
+            ) : myReview != null && !editingReview ? (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <Star size={18} className="fill-current" />
+                  <span className="font-medium">
+                    {t('training.youRated', { count: myReview.stars, stars: myReview.stars })}
+                  </span>
+                </div>
+                {myReview.text?.trim() && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                    {myReview.text.trim()}
+                  </p>
+                )}
+                {isReviewEdited(myReview) && myReview.updatedAt && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('training.edited', { defaultValue: 'Edited' })} {formatDate(myReview.updatedAt, 'PPp')}
+                  </div>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={startEditReview}
+                  className="self-start inline-flex items-center gap-2 rounded-xl px-3 py-2 -ml-1 text-primary-600 hover:text-primary-700 hover:bg-primary-50 dark:text-primary-400 dark:hover:text-primary-300 dark:hover:bg-primary-900/20 focus:ring-2 focus:ring-primary-500/30"
+                >
+                  <Edit2 size={16} className="shrink-0" />
+                  {t('training.editReview', { defaultValue: 'Edit review' })}
+                </Button>
               </div>
             ) : (
               <>
-                <div className="flex gap-1 mb-3">
+                <div className="flex items-center gap-1 mb-4">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <button
                       key={s}
                       type="button"
                       onClick={() => setReviewStars(s)}
-                      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      className="p-1.5 rounded-lg transition-all duration-200 hover:bg-amber-50 dark:hover:bg-amber-950/30 active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900"
                       aria-label={`${s} stars`}
                     >
                       <Star
                         size={28}
-                        className={reviewStars >= s ? 'fill-amber-500 text-amber-500' : 'text-gray-300 dark:text-gray-600'}
+                        className={`transition-colors ${reviewStars >= s ? 'fill-amber-500 text-amber-500' : 'text-gray-300 dark:text-gray-600 hover:text-amber-400/70 dark:hover:text-amber-500/50'}`}
                       />
                     </button>
                   ))}
@@ -300,24 +339,40 @@ export const TrainingResultsSection = ({
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value.slice(0, 1000))}
                   placeholder={t('training.reviewTextPlaceholder', { defaultValue: 'Optional comment (max 1000 characters)' })}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 mb-3 min-h-[80px]"
+                  className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-800/80 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 mb-4 min-h-[88px] focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 dark:focus:ring-primary-400/40 transition-shadow resize-none"
                   maxLength={1000}
                   rows={3}
                 />
-                <Button
-                  onClick={handleSubmitReview}
-                  disabled={submittingReview}
-                  className="w-full flex items-center justify-center"
-                >
-                  {submittingReview ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin mr-2" />
-                      {t('common.loading')}
-                    </>
-                  ) : (
-                    t('training.submitReview', { defaultValue: 'Submit review' })
+                <div className="flex gap-3">
+                  {editingReview && (
+                    <Button
+                      variant="ghost"
+                      size="md"
+                      onClick={() => setEditingReview(false)}
+                      className="flex-1 rounded-xl min-h-[44px]"
+                    >
+                      {t('common.cancel')}
+                    </Button>
                   )}
-                </Button>
+                  <Button
+                    onClick={handleSubmitReview}
+                    disabled={submittingReview}
+                    variant="primary"
+                    size="md"
+                    className={`rounded-xl min-h-[44px] inline-flex items-center justify-center ${editingReview ? 'flex-1' : 'w-full'}`}
+                  >
+                    {submittingReview ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin shrink-0 mr-2" />
+                        {t('common.loading')}
+                      </>
+                    ) : myReview != null ? (
+                      t('training.updateReview', { defaultValue: 'Save changes' })
+                    ) : (
+                      t('training.submitReview', { defaultValue: 'Submit review' })
+                    )}
+                  </Button>
+                </div>
               </>
             )}
           </div>

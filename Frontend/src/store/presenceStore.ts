@@ -15,6 +15,7 @@ interface PresenceState {
   online: Record<string, boolean>;
   setPresenceInitial: (initial: Record<string, boolean>) => void;
   setPresenceBatch: (online: string[], offline: string[]) => void;
+  clearPresence: () => void;
   isOnline: (userId: string) => boolean;
   isOffline: (userId: string) => boolean;
   isUnknown: (userId: string) => boolean;
@@ -40,6 +41,7 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
       return { online: pruneToMax(next, MAX_PRESENCE_KEYS) };
     });
   },
+  clearPresence: () => set({ online: {} }),
   isOnline: (userId) => get().online[userId] === true,
   isOffline: (userId) => get().online[userId] === false,
   isUnknown: (userId) => !(userId in get().online),

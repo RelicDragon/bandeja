@@ -961,6 +961,12 @@
     "comparison": "Comparación",
     "followers": "Seguidores",
     "community": "Comunidad",
+    "review": "Reseñas",
+    "noReviewsYet": "Aún no hay reseñas",
+    "reviewsLoadFailed": "Error al cargar las reseñas",
+    "allReviews": "Todas las reseñas",
+    "loadMoreReviews": "Cargar más",
+    "anonymous": "Anónimo",
     "following": "Siguiendo",
     "noFollowing": "Aún no sigues a nadie",
     "noFollowers": "Aún no tienes seguidores",
@@ -1977,7 +1983,7 @@
   "userGameNotes": {
     "title": "Mis Notas",
     "privacyHint": "Notas privadas - solo tú puedes verlas",
-    "placeholder": "Añade tus notas personales sobre este juego...",
+    "placeholder": "Añade tus notas...",
     "noNotes": "Sin notas aún"
   }
 }

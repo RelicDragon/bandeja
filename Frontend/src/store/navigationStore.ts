@@ -16,7 +16,7 @@ interface NavigationState {
   bugsButtonSlidingUp: boolean;
   bugsButtonSlidingDown: boolean;
   activeTab: 'my-games' | 'past-games' | 'search';
-  profileActiveTab: 'general' | 'statistics' | 'comparison' | 'followers';
+  profileActiveTab: 'general' | 'statistics' | 'comparison' | 'followers' | 'reviews';
   chatsFilter: 'users' | 'bugs' | 'channels' | 'market';
   openBugModal: boolean;
   bugsFilter: BugsFilterState;
@@ -35,7 +35,7 @@ interface NavigationState {
   setBugsButtonSlidingUp: (sliding: boolean) => void;
   setBugsButtonSlidingDown: (sliding: boolean) => void;
   setActiveTab: (tab: 'my-games' | 'past-games' | 'search') => void;
-  setProfileActiveTab: (tab: 'general' | 'statistics' | 'comparison' | 'followers') => void;
+  setProfileActiveTab: (tab: 'general' | 'statistics' | 'comparison' | 'followers' | 'reviews') => void;
   setChatsFilter: (filter: 'users' | 'bugs' | 'channels' | 'market') => void;
   setOpenBugModal: (open: boolean) => void;
   setBugsFilter: (filter: BugsFilterState | ((prev: BugsFilterState) => BugsFilterState)) => void;

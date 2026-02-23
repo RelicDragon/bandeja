@@ -82,6 +82,11 @@ export const BetSection = ({ game }: BetSectionProps) => {
     return null;
   }
 
+  const isFinishedOrArchived = game.status === 'FINISHED' || game.status === 'ARCHIVED';
+  if (bets.length === 0 && isFinishedOrArchived) {
+    return null;
+  }
+
   return (
     <>
       <Card>

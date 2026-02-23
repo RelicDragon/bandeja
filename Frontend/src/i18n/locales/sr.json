@@ -974,6 +974,12 @@
     "comparison": "Поређење",
     "followers": "Пратиоци",
     "community": "Заједница",
+    "review": "Рецензије",
+    "noReviewsYet": "Још нема рецензија",
+    "reviewsLoadFailed": "Није могуће учитати рецензије",
+    "allReviews": "Све рецензије",
+    "loadMoreReviews": "Учитај још",
+    "anonymous": "Анонимно",
     "following": "Пратим",
     "noFollowing": "Још никог не пратите",
     "noFollowers": "Још немате пратиоца",
@@ -2008,7 +2014,7 @@
   "userGameNotes": {
     "title": "Моје Белешке",
     "privacyHint": "Приватне белешке - само ви их можете видети",
-    "placeholder": "Додајте личне белешке о овој игри...",
+    "placeholder": "Додајте белешке...",
     "noNotes": "Још нема белешки"
   }
 }

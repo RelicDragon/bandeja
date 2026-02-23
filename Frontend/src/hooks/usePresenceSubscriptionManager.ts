@@ -17,11 +17,18 @@ export function usePresenceSubscriptionManager() {
   const wantedByKey = usePresenceWantedStore((s) => s.wantedByKey);
   const getMergedWantedIds = usePresenceWantedStore((s) => s.getMergedWantedIds);
   const currentUserId = useAuthStore((s) => s.user?.id ?? null);
+  const showOnlineStatus = useAuthStore((s) => s.user?.showOnlineStatus !== false);
   const prevKeyRef = useRef<string>('');
   const idsRef = useRef<string[]>([]);
   const firstConnectRef = useRef(true);
   const currentUserIdRef = useRef(currentUserId);
   currentUserIdRef.current = currentUserId;
+
+  useEffect(() => {
+    if (!showOnlineStatus) {
+      usePresenceStore.getState().clearPresence();
+    }
+  }, [showOnlineStatus]);
 
   useEffect(() => {
     if (!initialized) return;
@@ -41,12 +48,12 @@ export function usePresenceSubscriptionManager() {
       prevKeyRef.current = key;
       if (socketService.getConnectionStatus()) {
         socketService.subscribePresence(merged);
-        if (currentUserId) usePresenceStore.getState().setPresenceInitial({ [currentUserId]: true });
+        if (showOnlineStatus && currentUserId) usePresenceStore.getState().setPresenceInitial({ [currentUserId]: true });
       }
     }
     const t = setTimeout(run, SUBSCRIBE_DEBOUNCE_MS);
     return () => clearTimeout(t);
-  }, [initialized, wantedByKey, currentUserId, getMergedWantedIds]);
+  }, [initialized, wantedByKey, currentUserId, showOnlineStatus, getMergedWantedIds]);
 
   useEffect(() => {
     if (!initialized) return;
@@ -54,10 +61,11 @@ export function usePresenceSubscriptionManager() {
       const uid = currentUserIdRef.current;
       const ids = usePresenceWantedStore.getState().getMergedWantedIds(uid ?? undefined);
       idsRef.current = ids;
-      if (uid) usePresenceStore.getState().setPresenceInitial({ [uid]: true });
+      if (showOnlineStatus && uid) usePresenceStore.getState().setPresenceInitial({ [uid]: true });
+      if (!showOnlineStatus) usePresenceStore.getState().clearPresence();
       if (ids.length > 0) socketService.subscribePresence(ids);
       firstConnectRef.current = false;
-      if (ids.length > 0) {
+      if (showOnlineStatus && ids.length > 0) {
         usersApi.getPresence(ids).then((data) => {
           if (Object.keys(data).length > 0) usePresenceStore.getState().setPresenceInitial(data);
         }).catch(() => {});
@@ -69,5 +77,5 @@ export function usePresenceSubscriptionManager() {
       socketService.off('reconnect', onConnect);
       socketService.off('connect', onConnect);
     };
-  }, [initialized]);
+  }, [initialized, showOnlineStatus]);
 }

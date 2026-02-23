@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
-import { Bell, ArrowLeft, User, BarChart3, GitCompare, Users } from 'lucide-react';
+import { Bell, ArrowLeft, User, BarChart3, GitCompare, Users, Star } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -114,9 +114,10 @@ export const Header = () => {
                   { id: 'statistics', label: t('profile.statistics') || 'Statistics', icon: BarChart3 },
                   { id: 'comparison', label: t('profile.comparison') || 'Comparison', icon: GitCompare },
                   { id: 'followers', label: t('profile.community') || 'Community', icon: Users },
+                  ...(user?.isTrainer ? [{ id: 'reviews', label: t('profile.review') || 'Review', icon: Star }] : []),
                 ] as SegmentedSwitchTab[]}
                 activeId={profileActiveTab}
-                onChange={(id) => setProfileActiveTab(id as 'general' | 'statistics' | 'comparison' | 'followers')}
+                onChange={(id) => setProfileActiveTab(id as 'general' | 'statistics' | 'comparison' | 'followers' | 'reviews')}
                 titleInActiveOnly={true}
                 layoutId="profile-subtabs"
               />

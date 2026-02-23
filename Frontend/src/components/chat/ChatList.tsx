@@ -1823,10 +1823,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                     searchQuery={debouncedSearchQuery.trim()}
                     displayTitle={chat.type === 'channel' && user?.id ? (marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').title : getMarketChatDisplayTitle(chat.data, marketChatRole)) : undefined}
                     displaySubtitle={chat.type === 'channel' && user?.id && marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').subtitle : undefined}
-                    pinnedCount={undefined}
-                    pinningId={undefined}
-                    onPinUserChat={undefined}
-                    onPinGroupChannel={undefined}
+                    pinnedCount={chatsFilter === 'users' ? pinnedCountUsers : undefined}
+                    pinningId={chatsFilter === 'users' ? pinningId : undefined}
+                    onPinUserChat={chatsFilter === 'users' ? handlePinUserChat : undefined}
+                    onPinGroupChannel={chatsFilter === 'users' ? handlePinGroupChannel : undefined}
                   />
                 ))
               )}

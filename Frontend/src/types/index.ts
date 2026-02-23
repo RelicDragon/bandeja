@@ -61,6 +61,7 @@ export interface TrainerReview {
   stars: number;
   text?: string | null;
   createdAt: string;
+  updatedAt?: string;
   reviewer?: BasicUser;
 }
 

@@ -973,6 +973,12 @@
     "comparison": "Comparison",
     "followers": "Followers",
     "community": "Community",
+    "review": "Review",
+    "noReviewsYet": "No reviews yet",
+    "reviewsLoadFailed": "Failed to load reviews",
+    "allReviews": "All reviews",
+    "loadMoreReviews": "Load more",
+    "anonymous": "Anonymous",
     "following": "Following",
     "noFollowing": "Not following anyone yet",
     "noFollowers": "No followers yet",
@@ -1474,6 +1480,7 @@
     "upload": "Upload",
     "uploading": "Uploading...",
     "processing": "Processing...",
+    "retry": "Retry",
     "h": "h",
     "m": "m",
     "showMore": "Show More",
@@ -1953,10 +1960,15 @@
     "levelUpdated": "Level updated successfully",
     "actions": "Actions",
     "rateThisTraining": "Rate this training",
-    "youRated": "You rated {{stars}} stars",
+    "youRated_one": "You rated {{stars}} star",
+    "youRated_other": "You rated {{stars}} stars",
     "reviewTextPlaceholder": "Optional comment (max 1000 characters)",
     "submitReview": "Submit review",
     "reviewSubmitted": "Thank you for your review!",
+    "reviewUpdated": "Review updated",
+    "editReview": "Edit review",
+    "updateReview": "Save changes",
+    "edited": "Edited",
     "selectStars": "Please select a rating (1-5 stars)",
     "reviewCount_one": "{{count}} review",
     "reviewCount_other": "{{count}} reviews"
@@ -2069,7 +2081,7 @@
   "userGameNotes": {
     "title": "My Notes",
     "privacyHint": "Private notes - only you can see them",
-    "placeholder": "Add your personal notes about this game...",
+    "placeholder": "Add your notes...",
     "noNotes": "No notes yet"
   }
 }
