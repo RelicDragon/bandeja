@@ -58,9 +58,10 @@ interface ResultsTableViewProps {
   onAddRound: () => void;
   onCellClick: (roundId: string, matchId: string) => void;
   onDeleteRound?: (roundId: string) => void;
+  onRoundHeaderClick?: (round: Round, roundNumber: number) => void;
 }
 
-export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound, onCellClick, onDeleteRound }: ResultsTableViewProps) => {
+export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound, onCellClick, onDeleteRound, onRoundHeaderClick }: ResultsTableViewProps) => {
   const { t } = useTranslation();
   const isLandscape = useIsLandscape();
   const [roundIdToDelete, setRoundIdToDelete] = useState<string | null>(null);
@@ -194,7 +195,7 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
         <table className="text-sm border-collapse w-full" style={{ userSelect: isDragging.current ? 'none' : undefined }}>
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-800">
-              <th className="sticky top-0 left-0 z-20 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 w-6">#</th>
+              <th className="sticky top-0 left-0 z-20 bg-gray-50 dark:bg-gray-800 px-1 py-2 w-6" aria-hidden="true" />
               <th
                 className="sticky top-0 left-4 z-20 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400"
                 style={nameColStyle}
@@ -211,9 +212,17 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
                   </div>
                 </div>
               </th>
-              {rounds.map((_, i) => (
-                <th key={i} className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 min-w-[40px]">
-                  {i + 1}
+              {rounds.map((round, i) => (
+                <th key={round.id} className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-center min-w-[40px]">
+                  <button
+                    type="button"
+                    onClick={() => onRoundHeaderClick?.(round, i + 1)}
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-gray-400 dark:border-gray-500 text-xs font-semibold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:border-primary-500 hover:text-primary-600 dark:hover:border-primary-400 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                    title={t('gameResults.roundMatches', { defaultValue: 'Round {{number}} matches', number: i + 1 })}
+                    aria-label={t('gameResults.roundMatches', { defaultValue: 'Round {{number}} matches', number: i + 1 })}
+                  >
+                    {i + 1}
+                  </button>
                 </th>
               ))}
               <th className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 min-w-[40px]" title={t('gameResults.gamesPlayed', { defaultValue: 'Matches played' })}>

@@ -1,27 +1,27 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Swords } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { PlayerAvatar } from '@/components';
 import { Round } from '@/types/gameResults';
-import { Game } from '@/types';
+import { Game, BasicUser } from '@/types';
 
 interface RoundAddedModalProps {
   isOpen: boolean;
   onClose: () => void;
   round: Round | null;
   game: Game | null;
+  roundNumber?: number;
 }
 
-function fullName(firstName?: string | null, lastName?: string | null): string {
-  return `${firstName ?? ''} ${lastName ?? ''}`.trim() || '—';
-}
-
-export function RoundAddedModal({ isOpen, onClose, round, game }: RoundAddedModalProps) {
+export function RoundAddedModal({ isOpen, onClose, round, game, roundNumber }: RoundAddedModalProps) {
   const { t } = useTranslation();
+
   const playerMap = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, BasicUser>();
     if (!game?.participants) return map;
     for (const p of game.participants) {
-      if (p.user) map.set(p.userId, fullName(p.user.firstName, p.user.lastName));
+      if (p.user) map.set(p.userId, p.user);
     }
     return map;
   }, [game?.participants]);
@@ -53,7 +53,9 @@ export function RoundAddedModal({ isOpen, onClose, round, game }: RoundAddedModa
       if (matches?.length) {
         result.push({
           courtId,
-          label: courtId ? (courtIdToName.get(courtId) ?? t('gameResults.courtNumber', { defaultValue: 'Court {{number}}', number: ++courtIndex })) : t('gameResults.courtNumber', { defaultValue: 'Court {{number}}', number: ++courtIndex }),
+          label: courtId
+            ? (courtIdToName.get(courtId) ?? t('gameResults.courtNumber', { defaultValue: 'Court {{number}}', number: ++courtIndex }))
+            : t('gameResults.courtNumber', { defaultValue: 'Court {{number}}', number: ++courtIndex }),
           matches,
         });
       }
@@ -87,29 +89,96 @@ export function RoundAddedModal({ isOpen, onClose, round, game }: RoundAddedModa
     <Dialog open={isOpen} onClose={onClose} modalId="round-added-modal">
       <DialogContent showCloseButton={true} closeOnInteractOutside={true}>
         <DialogHeader>
-          <DialogTitle>{t('gameResults.roundAdded', { defaultValue: 'Round added' })}</DialogTitle>
+          <DialogTitle>
+            {roundNumber != null
+              ? t('gameResults.roundNumber', { defaultValue: 'Round {{number}}', number: roundNumber })
+              : t('gameResults.roundAdded', { defaultValue: 'Round added' })}
+          </DialogTitle>
         </DialogHeader>
-        <div className="px-6 pb-6 overflow-y-auto max-h-[60vh]">
+        <div className="px-4 pb-5 pt-4 overflow-y-auto max-h-[60vh] space-y-4">
           {sections.map(({ courtId, label, matches }) => (
-            <div key={courtId ?? 'none'} className="mb-4">
-              <div className="text-sm font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 pb-1 mb-2">
-                ——— {label} ———
-              </div>
-              {matches.map((match) => {
-                const t1 = (match.teamA.map((id) => playerMap.get(id) ?? id).join(' + ')) || '—';
-                const t2 = (match.teamB.map((id) => playerMap.get(id) ?? id).join(' + ')) || '—';
-                return (
-                  <div key={match.id} className="text-sm text-gray-800 dark:text-gray-200 py-1.5">
-                    <div className="font-medium">{t1}</div>
-                    <div className="text-gray-500 dark:text-gray-400 text-center my-0.5">{t('gameResults.vs', { defaultValue: 'vs' })}</div>
-                    <div className="font-medium">{t2}</div>
-                  </div>
-                );
-              })}
-            </div>
+            <CourtSection key={courtId ?? 'none'} label={label}>
+              {matches.map((match) => (
+                <MatchRow
+                  key={match.id}
+                  teamA={match.teamA}
+                  teamB={match.teamB}
+                  playerMap={playerMap}
+                />
+              ))}
+            </CourtSection>
           ))}
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function CourtSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 shrink-0">
+          {label}
+        </span>
+        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+      </div>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function MatchRow({
+  teamA,
+  teamB,
+  playerMap,
+}: {
+  teamA: string[];
+  teamB: string[];
+  playerMap: Map<string, BasicUser>;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 px-3 py-3">
+      <div className="flex items-center gap-2">
+        <TeamAvatars playerIds={teamA} playerMap={playerMap} />
+        <div className="shrink-0 flex flex-col items-center justify-center">
+          <Swords className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+          <span className="text-[10px] font-bold uppercase text-gray-400 dark:text-gray-500 leading-none mt-0.5">
+            {t('gameResults.vs', { defaultValue: 'vs' })}
+          </span>
+        </div>
+        <TeamAvatars playerIds={teamB} playerMap={playerMap} justify="end" />
+      </div>
+    </div>
+  );
+}
+
+function TeamAvatars({
+  playerIds,
+  playerMap,
+  justify = 'start',
+}: {
+  playerIds: string[];
+  playerMap: Map<string, BasicUser>;
+  justify?: 'start' | 'end';
+}) {
+  return (
+    <div className={`flex-1 flex ${justify === 'end' ? 'justify-end' : 'justify-start'} gap-1`}>
+      {playerIds.map((id) => {
+        const player = playerMap.get(id);
+        return (
+          <PlayerAvatar
+            key={id}
+            player={player ?? null}
+            extrasmall
+            showName
+            asDiv
+          />
+        );
+      })}
+    </div>
   );
 }

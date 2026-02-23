@@ -106,6 +106,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const [showAnnouncedConfirm, setShowAnnouncedConfirm] = useState(false);
   const [tableSetModal, setTableSetModal] = useState<{ roundId: string; matchId: string } | null>(null);
   const [roundAddedForModal, setRoundAddedForModal] = useState<Round | null>(null);
+  const [roundAddedModalRoundNumber, setRoundAddedModalRoundNumber] = useState<number | undefined>(undefined);
 
   const engineRounds = useGameResultsStore((s) => s.rounds);
   const engineCanEdit = useGameResultsStore((s) => s.canEdit);
@@ -1090,7 +1091,10 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     await GameResultsEngine.addRound();
     const rounds = useGameResultsStore.getState().rounds;
     const newRound = rounds[rounds.length - 1] ?? null;
-    if (newRound) setRoundAddedForModal(newRound);
+    if (newRound) {
+      setRoundAddedForModal(newRound);
+      setRoundAddedModalRoundNumber(undefined);
+    }
   }, []);
   const handleTableDeleteRound = useCallback(
     (roundId: string) => {
@@ -1244,7 +1248,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
           )}
 
           {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
-            <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={setRoundAddedForModal} />
+            <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); }} />
           )}
 
           {!isLeague && game.resultsStatus === 'NONE' && (
@@ -1567,10 +1571,24 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
             onAddRound={handleTableAddRound}
             onCellClick={handleTableCellClick}
             onDeleteRound={handleTableDeleteRound}
+            onRoundHeaderClick={(round, roundNumber) => {
+              setRoundAddedForModal(round);
+              setRoundAddedModalRoundNumber(roundNumber);
+            }}
           />
         {renderTableSetModal()}
+        <RoundAddedModal
+          isOpen={!!roundAddedForModal}
+          onClose={() => {
+            setRoundAddedForModal(null);
+            setRoundAddedModalRoundNumber(undefined);
+          }}
+          round={roundAddedForModal}
+          game={game}
+          roundNumber={roundAddedModalRoundNumber}
+        />
         <div className="hidden" aria-hidden="true">
-          <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={setRoundAddedForModal} />
+          <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); }} />
         </div>
       </>
     );
@@ -1812,9 +1830,13 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
       <RoundAddedModal
         isOpen={!!roundAddedForModal}
-        onClose={() => setRoundAddedForModal(null)}
+        onClose={() => {
+          setRoundAddedForModal(null);
+          setRoundAddedModalRoundNumber(undefined);
+        }}
         round={roundAddedForModal}
         game={game}
+        roundNumber={roundAddedModalRoundNumber}
       />
       </div>
       </div>
