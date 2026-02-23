@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { PriceCurrency } from '@/types';
-import { getCurrencyOptions, CURRENCY_INFO } from '@/utils/currency';
+import { CURRENCY_INFO } from '@/utils/currency';
+import { CurrencySelectorModal } from '@/components/CurrencySelectorModal';
 
 const validatePriceInput = (v: string, currency: PriceCurrency): string => {
   const noE = v.replace(/[eE+-]/g, '');
@@ -17,8 +18,6 @@ const validatePriceInput = (v: string, currency: PriceCurrency): string => {
 
   return digitsAndDot;
 };
-
-const CURRENCIES = getCurrencyOptions();
 
 interface PriceInputWithCurrencyProps {
   value: string;
@@ -37,20 +36,10 @@ export const PriceInputWithCurrency = ({
   placeholder = '0.00',
   className = '',
 }: PriceInputWithCurrencyProps) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const fn = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
-  }, []);
+  const [currencyModalOpen, setCurrencyModalOpen] = useState(false);
 
   return (
     <div
-      ref={ref}
       className={`flex items-stretch rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus-within:ring-2 focus-within:ring-primary-500/20 dark:focus-within:ring-primary-400/20 focus-within:border-primary-500 dark:focus-within:border-primary-400 ${className}`}
     >
       <input
@@ -62,34 +51,21 @@ export const PriceInputWithCurrency = ({
         placeholder={placeholder}
         className="flex-1 min-w-0 bg-transparent px-3 py-2 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none border-0 rounded-l-lg"
       />
-      <div className="relative border-l border-slate-200 dark:border-slate-600">
+      <div className="border-l border-slate-200 dark:border-slate-600">
         <button
           type="button"
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => setCurrencyModalOpen(true)}
           className="flex items-center gap-1 px-3 py-2 text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-600/50 rounded-r-lg"
         >
           <span>{currency}</span>
-          <ChevronDown size={14} className={`text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown size={14} className="text-slate-500" />
         </button>
-        {open && (
-          <div className="absolute right-0 top-full mt-1 py-1 z-50 min-w-[4rem] bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg">
-            {CURRENCIES.map((c) => (
-              <button
-                key={c.value}
-                type="button"
-                onClick={() => {
-                  onCurrencyChange(c.value);
-                  setOpen(false);
-                }}
-                className={`w-full px-3 py-2 text-left text-sm ${
-                  c.value === currency ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400' : 'text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
-                }`}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-        )}
+        <CurrencySelectorModal
+          open={currencyModalOpen}
+          onClose={() => setCurrencyModalOpen(false)}
+          selected={currency}
+          onSelect={onCurrencyChange}
+        />
       </div>
     </div>
   );

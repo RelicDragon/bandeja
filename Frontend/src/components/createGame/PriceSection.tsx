@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown } from 'lucide-react';
 import { PriceType, PriceCurrency } from '@/types';
 import { Select } from '@/components';
-import { getCurrencyOptions, getCurrencySymbol, resolveUserCurrency } from '@/utils/currency';
+import { getCurrencySymbol, resolveUserCurrency } from '@/utils/currency';
+import { CurrencySelectorModal } from '@/components/CurrencySelectorModal';
 
 interface PriceSectionProps {
   priceTotal: number | undefined;
@@ -28,6 +30,7 @@ export const PriceSection = ({
 }: PriceSectionProps) => {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState<string>('');
+  const [currencyModalOpen, setCurrencyModalOpen] = useState(false);
   const effectiveCurrency = displayCurrency(priceCurrency, defaultCurrency);
 
   useEffect(() => {
@@ -95,11 +98,20 @@ export const PriceSection = ({
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                 {t('createGame.priceCurrency')}
               </label>
-              <Select
-                options={getCurrencyOptions()}
-                value={effectiveCurrency}
-                onChange={(value) => onPriceCurrencyChange(value as PriceCurrency)}
-                disabled={false}
+              <button
+                type="button"
+                onClick={() => setCurrencyModalOpen(true)}
+                className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50"
+              >
+                <span>{effectiveCurrency}</span>
+                <ChevronDown size={16} className="text-gray-500" />
+              </button>
+              <CurrencySelectorModal
+                open={currencyModalOpen}
+                onClose={() => setCurrencyModalOpen(false)}
+                selected={effectiveCurrency}
+                onSelect={(c) => onPriceCurrencyChange(c)}
+                title={t('createGame.priceCurrency')}
               />
             </div>
           </>

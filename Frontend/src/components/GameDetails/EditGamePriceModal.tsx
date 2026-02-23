@@ -5,9 +5,11 @@ import { Game, PriceType, PriceCurrency } from '@/types';
 import { Select } from '@/components';
 import { gamesApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
-import { getCurrencyOptions, resolveUserCurrency } from '@/utils/currency';
+import { resolveUserCurrency } from '@/utils/currency';
 import toast from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import { CurrencySelectorModal } from '@/components/CurrencySelectorModal';
+import { ChevronDown } from 'lucide-react';
 
 interface EditGamePriceModalProps {
   isOpen: boolean;
@@ -24,6 +26,7 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
   const [priceType, setPriceType] = useState<PriceType>('NOT_KNOWN');
   const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(undefined);
   const [inputValue, setInputValue] = useState<string>('');
+  const [currencyModalOpen, setCurrencyModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -165,11 +168,20 @@ export const EditGamePriceModal = ({ isOpen, onClose, game, onGameUpdate }: Edit
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                   {t('createGame.priceCurrency')}
                 </label>
-                <Select
-                  options={getCurrencyOptions()}
-                  value={priceCurrency ?? resolveUserCurrency(user?.defaultCurrency)}
-                  onChange={(value) => setPriceCurrency(value as PriceCurrency)}
-                  disabled={false}
+                <button
+                  type="button"
+                  onClick={() => setCurrencyModalOpen(true)}
+                  className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                >
+                  <span>{priceCurrency ?? resolveUserCurrency(user?.defaultCurrency)}</span>
+                  <ChevronDown size={16} className="text-gray-500" />
+                </button>
+                <CurrencySelectorModal
+                  open={currencyModalOpen}
+                  onClose={() => setCurrencyModalOpen(false)}
+                  selected={priceCurrency ?? resolveUserCurrency(user?.defaultCurrency)}
+                  onSelect={setPriceCurrency}
+                  title={t('createGame.priceCurrency')}
                 />
               </div>
             </>
