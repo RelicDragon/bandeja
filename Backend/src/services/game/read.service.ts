@@ -116,6 +116,67 @@ const getGamesParentInclude = () => ({
   },
 });
 
+const getAvailableGamesInclude = () => ({
+  city: {
+    select: {
+      id: true,
+      name: true,
+      country: true,
+      telegramGroupId: true,
+      timezone: true,
+    },
+  },
+  club: {
+    select: {
+      id: true,
+      name: true,
+      address: true,
+      cityId: true,
+    },
+  },
+  court: {
+    include: {
+      club: {
+        select: {
+          id: true,
+          name: true,
+          address: true,
+        },
+      },
+    },
+  },
+  participants: {
+    include: {
+      user: {
+        select: USER_SELECT_FIELDS,
+      },
+    },
+  },
+  leagueSeason: {
+    include: getLeagueSeasonInclude(),
+  },
+  leagueGroup: {
+    select: {
+      id: true,
+      name: true,
+      color: true,
+    },
+  },
+  leagueRound: {
+    select: {
+      id: true,
+      orderIndex: true,
+    },
+  },
+  parent: {
+    include: {
+      leagueSeason: {
+        include: getLeagueSeasonInclude(),
+      },
+    },
+  },
+});
+
 export const getGameInclude = () => ({
   ...getBaseGameInclude(),
   ...getGameIncludeCourtInclude(),
@@ -498,11 +559,10 @@ export class GameReadService {
 
     const games = await prisma.game.findMany({
       where,
-      include: getGameInclude() as any,
+      include: getAvailableGamesInclude() as any,
       orderBy: { startTime: 'desc' },
     });
 
-    // Batch fetch user notes
     if (games.length > 0) {
       const gameIds = games.map(g => g.id);
       const notesMap = await getUserNotesForGames(userId, gameIds);

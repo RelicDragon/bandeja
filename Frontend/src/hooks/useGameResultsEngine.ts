@@ -18,7 +18,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
   const initialized = useGameResultsStore((state) => state.initialized);
   const canEdit = useGameResultsStore((state) => state.canEdit);
   const gameState = useGameResultsStore((state) => state.gameState);
-  const expandedRoundId = useGameResultsStore((state) => state.expandedRoundId);
+  const expandedRoundIds = useGameResultsStore((state) => state.expandedRoundIds);
   const editingMatchId = useGameResultsStore((state) => state.editingMatchId);
   const syncStatus = useGameResultsStore((state) => state.syncStatus);
   const serverProblem = useGameResultsStore((state) => state.serverProblem);
@@ -74,7 +74,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     GameResultsEngine.updateMatch(roundId, matchId, match), []);
   const setMatchCourt = useCallback((roundId: string, matchId: string, courtId: string) =>
     GameResultsEngine.setMatchCourt(roundId, matchId, courtId), []);
-  const setExpandedRoundId = useCallback((roundId: string | null) => GameResultsEngine.setExpandedRoundId(roundId), []);
+  const toggleRoundExpanded = useCallback((roundId: string) => GameResultsEngine.toggleRoundExpanded(roundId), []);
   const setEditingMatchId = useCallback((matchId: string | null) => GameResultsEngine.setEditingMatchId(matchId), []);
   const syncToServer = useCallback(() => GameResultsEngine.syncToServer(), []);
   const getGameResults = useCallback(() => GameResultsEngine.getGameResults(), []);
@@ -90,7 +90,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     initialized,
     canEdit,
     gameState,
-    expandedRoundId,
+    expandedRoundIds,
     editingMatchId,
     syncStatus,
     serverProblem,
@@ -103,7 +103,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     removePlayerFromTeam,
     updateMatch,
     setMatchCourt,
-    setExpandedRoundId,
+    toggleRoundExpanded,
     setEditingMatchId,
     syncToServer,
     getGameResults,
@@ -118,7 +118,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     initialized,
     canEdit,
     gameState,
-    expandedRoundId,
+    expandedRoundIds,
     editingMatchId,
     syncStatus,
     serverProblem,
@@ -131,7 +131,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     removePlayerFromTeam,
     updateMatch,
     setMatchCourt,
-    setExpandedRoundId,
+    toggleRoundExpanded,
     setEditingMatchId,
     syncToServer,
     getGameResults,

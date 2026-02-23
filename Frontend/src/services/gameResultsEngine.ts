@@ -19,7 +19,7 @@ interface GameResultsState {
   canEdit: boolean;
   loading: boolean;
   initialized: boolean;
-  expandedRoundId: string | null;
+  expandedRoundIds: string[];
   editingMatchId: string | null;
   syncStatus: SyncStatus;
   serverProblem: boolean;
@@ -38,7 +38,7 @@ const useGameResultsStore = create<GameResultsStore>((set) => ({
   canEdit: false,
   loading: false,
   initialized: false,
-  expandedRoundId: null,
+  expandedRoundIds: [],
   editingMatchId: null,
   syncStatus: 'IDLE',
   serverProblem: false,
@@ -178,10 +178,8 @@ class GameResultsEngineClass {
         latestStoreState.gameId === gameId && latestStoreState.rounds.length > 0;
 
       const finalRounds = shouldKeepLatestRounds ? latestStoreState.rounds : rounds;
-      const finalExpandedRoundId =
-        shouldKeepLatestRounds
-          ? (latestStoreState.expandedRoundId ?? (finalRounds.length > 0 ? finalRounds[finalRounds.length - 1].id : null))
-          : (finalRounds.length > 0 ? finalRounds[finalRounds.length - 1].id : null);
+      const lastRoundId = finalRounds.length > 0 ? finalRounds[finalRounds.length - 1].id : null;
+      const finalExpandedRoundIds = lastRoundId ? [lastRoundId] : [];
 
       useGameResultsStore.setState({
         gameId,
@@ -189,7 +187,7 @@ class GameResultsEngineClass {
         rounds: finalRounds,
         initialized: true,
         loading: false,
-        expandedRoundId: finalExpandedRoundId,
+        expandedRoundIds: finalExpandedRoundIds,
       });
     } catch (error) {
       console.error('Failed to initialize game results:', error);
@@ -334,7 +332,7 @@ class GameResultsEngineClass {
       canEdit: false,
       loading: false,
       initialized: false,
-      expandedRoundId: null,
+      expandedRoundIds: [],
       editingMatchId: null,
       syncStatus: 'IDLE',
       serverProblem: false,
@@ -366,7 +364,7 @@ class GameResultsEngineClass {
       async () => {
         useGameResultsStore.setState({
           rounds: [...state.rounds, newRoundData],
-          expandedRoundId: roundId,
+          expandedRoundIds: [roundId],
         });
       },
       async () => {
@@ -386,7 +384,7 @@ class GameResultsEngineClass {
         
         useGameResultsStore.setState({
           rounds: newRounds,
-          expandedRoundId: state.expandedRoundId === roundId ? (newRounds[0]?.id || null) : state.expandedRoundId,
+          expandedRoundIds: state.expandedRoundIds.filter(id => id !== roundId),
         });
       },
       async () => {
@@ -681,8 +679,18 @@ class GameResultsEngineClass {
     );
   }
 
-  setExpandedRoundId(roundId: string | null): void {
-    useGameResultsStore.setState({ expandedRoundId: roundId });
+  setExpandedRoundIds(ids: string[]): void {
+    useGameResultsStore.setState({ expandedRoundIds: ids });
+  }
+
+  toggleRoundExpanded(roundId: string): void {
+    useGameResultsStore.setState((state) => {
+      const has = state.expandedRoundIds.includes(roundId);
+      const next = has
+        ? state.expandedRoundIds.filter(id => id !== roundId)
+        : [...state.expandedRoundIds, roundId];
+      return { expandedRoundIds: next };
+    });
   }
 
   setEditingMatchId(matchId: string | null): void {
@@ -719,7 +727,7 @@ class GameResultsEngineClass {
     useGameResultsStore.setState({ 
       rounds: [],
       serverProblem: false,
-      expandedRoundId: null,
+      expandedRoundIds: [],
       editingMatchId: null,
     });
   }

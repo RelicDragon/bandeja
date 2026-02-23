@@ -28,6 +28,7 @@ import { OfflineBanner } from './OfflineBanner';
 import { GameResultsModals } from './GameResultsModals';
 import { TelegramSummaryModal } from './TelegramSummaryModal';
 import { Send, Edit } from 'lucide-react';
+import { useNavigationStore } from '@/store/navigationStore';
 
 interface GameResultsEntryEmbeddedProps {
   game: Game;
@@ -66,7 +67,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
 
   const canEdit = engine.canEdit;
   const engineLoading = engine.loading;
-  const expandedRoundId = engine.expandedRoundId;
+  const expandedRoundIds = engine.expandedRoundIds;
   const editingMatchId = engine.editingMatchId;
   const serverProblem = engine.serverProblem;
   const rounds = engine.rounds;
@@ -303,7 +304,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   };
 
   const handleMatchDrop = async (matchId: string, team: 'teamA' | 'teamB', draggedPlayer: string) => {
-    const roundId = expandedRoundId || (rounds.length > 0 ? rounds[0].id : null);
+    const roundId = rounds.find(r => r.matches.some(m => m.id === matchId))?.id ?? (rounds.length > 0 ? rounds[0].id : null);
     if (!roundId) return;
     await engine.addPlayerToTeam(roundId, matchId, team, draggedPlayer);
   };
@@ -573,7 +574,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
         onGameUpdate(updatedGame);
         closeModal();
         setActiveTab('scores');
-        engine.setExpandedRoundId(null);
         engine.setEditingMatchId(null);
       }
       toast.success(t('common.restarted') || 'Game restarted successfully');
@@ -626,7 +626,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
     const { matchTeam } = modal;
     const { roundId, matchId, team } = matchTeam;
     
-    const actualRoundId = roundId || expandedRoundId || (rounds.length > 0 ? rounds[0].id : null);
+    const actualRoundId = roundId || (editingMatchId ? rounds.find(r => r.matches.some(m => m.id === editingMatchId))?.id : null) || expandedRoundIds[0] || (rounds.length > 0 ? rounds[0].id : null);
     if (!actualRoundId) return;
     const round = rounds.find(r => r.id === actualRoundId);
     if (!round) return;
@@ -687,6 +687,15 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   const effectiveShowCourts = (currentGame?.gameCourts?.length || 0) > 0;
   const effectiveHorizontalLayout = currentGame?.fixedNumberOfSets === 1;
 
+  const { setGameDetailsCanShowTableView } = useNavigationStore();
+  const canShowTableView = currentGame?.fixedNumberOfSets === 1 &&
+    (currentGame?.resultsStatus === 'FINAL' || currentGame?.resultsStatus === 'IN_PROGRESS');
+
+  useEffect(() => {
+    setGameDetailsCanShowTableView(!!canShowTableView);
+    return () => setGameDetailsCanShowTableView(false);
+  }, [canShowTableView, setGameDetailsCanShowTableView]);
+
   if (canInitialize === null) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
@@ -723,7 +732,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
           rounds={rounds}
           players={players}
           currentGame={currentGame}
-          expandedRoundId={expandedRoundId}
+          primaryRoundId={editingMatchId ? rounds.find(r => r.matches.some(m => m.id === editingMatchId))?.id ?? expandedRoundIds[0] ?? rounds[0]?.id : (expandedRoundIds[0] ?? rounds[0]?.id)}
           effectiveHorizontalLayout={effectiveHorizontalLayout}
           onClose={closeModal}
           onUpdateSetResult={updateSetResult}
@@ -750,7 +759,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
       </div>
     );
   }
-  
+
   return (
     <>
       <OfflineBanner
@@ -838,7 +847,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
                   roundIndex={index}
                   players={players}
                   isPresetGame={isPresetGame}
-                  isExpanded={expandedRoundId === round.id}
+                  isExpanded={expandedRoundIds.includes(round.id)}
                   canEditResults={canEdit && isEditingResults && isResultsEntryMode && !isSendingToTelegram}
                   editingMatchId={editingMatchId}
                   draggedPlayer={dragAndDrop.draggedPlayer}
@@ -846,12 +855,11 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
                   hideFrame={rounds.length === 1}
                   onRemoveRound={() => engine.removeRound(round.id)}
                   onToggleExpand={() => {
-                    if (expandedRoundId === round.id) {
-                      engine.setExpandedRoundId(null);
-                      engine.setEditingMatchId(null);
-                    } else {
-                      engine.setExpandedRoundId(round.id);
+                    if (expandedRoundIds.includes(round.id)) {
+                      const roundHasEditingMatch = round.matches.some(m => m.id === editingMatchId);
+                      if (roundHasEditingMatch) engine.setEditingMatchId(null);
                     }
+                    engine.toggleRoundExpanded(round.id);
                   }}
                   onAddMatch={() => engine.addMatch(round.id)}
                   onRemoveMatch={(matchId) => engine.removeMatch(round.id, matchId)}
@@ -907,10 +915,11 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
                 </div>
               )}
 
-              {!isPresetGame && !currentGame?.prohibitMatchesEditing && editingMatchId && canEdit && isEditingResults && !isSendingToTelegram && expandedRoundId && (() => {
-                const expandedRound = rounds.find(r => r.id === expandedRoundId);
+              {!isPresetGame && !currentGame?.prohibitMatchesEditing && editingMatchId && canEdit && isEditingResults && !isSendingToTelegram && (() => {
+                const expandedRound = rounds.find(r => r.matches.some(m => m.id === editingMatchId));
                 const editingMatch = expandedRound?.matches.find(m => m.id === editingMatchId);
-                const roundMatches = expandedRound?.matches || [];
+                if (!expandedRound || !editingMatch) return null;
+                const roundMatches = expandedRound.matches;
 
                 return (
                   <AvailablePlayersFooter
@@ -935,7 +944,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
           rounds={rounds}
           players={players}
           currentGame={currentGame}
-          expandedRoundId={expandedRoundId}
+          primaryRoundId={editingMatchId ? rounds.find(r => r.matches.some(m => m.id === editingMatchId))?.id ?? expandedRoundIds[0] ?? rounds[0]?.id : (expandedRoundIds[0] ?? rounds[0]?.id)}
           effectiveHorizontalLayout={effectiveHorizontalLayout}
           onClose={closeModal}
           onUpdateSetResult={updateSetResult}

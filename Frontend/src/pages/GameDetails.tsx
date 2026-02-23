@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -32,6 +32,8 @@ import { FaqEdit } from '@/components/GameDetails/FaqEdit';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { LocationModal, TimeDurationModal } from '@/components/GameDetails';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
+import { ResultsTableView } from '@/components/gameResults/ResultsTableView';
+import { HorizontalScoreEntryModal } from '@/components/gameResults';
 import { TrainingResultsSection } from '@/components/GameDetails/TrainingResultsSection';
 import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
@@ -47,6 +49,9 @@ import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
 import { Round } from '@/types/gameResults';
 import { isUserGameAdminOrOwner, canUserEditResults } from '@/utils/gameResults';
+import { isParticipantPlaying } from '@/utils/participantStatus';
+import { BasicUser } from '@/types';
+import { createPortal } from 'react-dom';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { socketService } from '@/services/socketService';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
@@ -68,7 +73,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setGameDetailsCanAccessChat, setBottomTabsVisible } = useNavigationStore();
+  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsShowTableView, setGameDetailsShowTableView } = useNavigationStore();
 
   const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
@@ -97,6 +102,16 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [showAnnouncedConfirm, setShowAnnouncedConfirm] = useState(false);
+  const [tableSetModal, setTableSetModal] = useState<{ roundId: string; matchId: string } | null>(null);
+
+  const engineRounds = useGameResultsStore((s) => s.rounds);
+  const engineCanEdit = useGameResultsStore((s) => s.canEdit);
+  const engineInitialized = useGameResultsStore((s) => s.initialized);
+
+  const tablePlayers = useMemo<BasicUser[]>(
+    () => (game?.participants?.filter(isParticipantPlaying).map(p => p.user) || []) as BasicUser[],
+    [game?.participants]
+  );
 
   const handleFaqsChange = useCallback((hasFaqs: boolean) => {
     setHasFaqs(hasFaqs);
@@ -237,8 +252,9 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     setBottomTabsVisible(false);
     return () => {
       setBottomTabsVisible(true);
+      setGameDetailsShowTableView(false);
     };
-  }, [setBottomTabsVisible]);
+  }, [setBottomTabsVisible, setGameDetailsShowTableView]);
 
   useEffect(() => {
     if (scrollContainerRef?.current) {
@@ -1088,6 +1104,69 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const isLeague = game.entityType === 'LEAGUE';
   const isLeagueSeason = game.entityType === 'LEAGUE_SEASON';
 
+  const tableIsEditing = engineCanEdit && game.resultsStatus === 'IN_PROGRESS';
+
+  const handleTableCellClick = (roundId: string, matchId: string) => {
+    if (!tableIsEditing) return;
+    setTableSetModal({ roundId, matchId });
+  };
+
+  const handleTableScoreSave = async (matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => {
+    if (!tableSetModal) return;
+    const round = engineRounds.find(r => r.id === tableSetModal.roundId);
+    const match = round?.matches.find(m => m.id === matchId);
+    if (!match) return;
+
+    const newSets = [...match.sets];
+    const fixedNumberOfSets = game.fixedNumberOfSets || 0;
+    if (fixedNumberOfSets > 0) {
+      while (newSets.length < fixedNumberOfSets && newSets.length <= setIndex) {
+        newSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
+      }
+    } else {
+      while (newSets.length <= setIndex) {
+        newSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
+      }
+    }
+    newSets[setIndex] = { teamA: teamAScore, teamB: teamBScore, isTieBreak: isTieBreak || false };
+
+    await GameResultsEngine.updateMatch(tableSetModal.roundId, matchId, {
+      teamA: match.teamA,
+      teamB: match.teamB,
+      sets: newSets,
+      courtId: match.courtId,
+    });
+    setTableSetModal(null);
+  };
+
+  const handleTableAddRound = async () => {
+    await GameResultsEngine.addRound();
+  };
+
+  const renderTableSetModal = () => {
+    if (!tableSetModal) return null;
+    const round = engineRounds.find(r => r.id === tableSetModal.roundId);
+    const match = round?.matches.find(m => m.id === tableSetModal.matchId);
+    if (!match) return null;
+
+    return createPortal(
+      <HorizontalScoreEntryModal
+        isOpen={true}
+        match={match}
+        setIndex={0}
+        players={tablePlayers}
+        maxTotalPointsPerSet={game.maxTotalPointsPerSet}
+        maxPointsPerTeam={game.maxPointsPerTeam}
+        fixedNumberOfSets={game.fixedNumberOfSets}
+        onSave={handleTableScoreSave}
+        onRemove={() => {}}
+        onClose={() => setTableSetModal(null)}
+        canRemove={false}
+      />,
+      document.body
+    );
+  };
+
   const renderTabContent = () => {
     if (!isLeagueSeason || activeTab === 'general') {
       return (
@@ -1441,6 +1520,26 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
     return null;
   };
+
+  if (gameDetailsShowTableView && !isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING') {
+    return (
+      <>
+        <div className="h-[calc(100vh-4rem-env(safe-area-inset-top))] bg-white dark:bg-gray-900">
+          <ResultsTableView
+            rounds={engineRounds}
+            players={tablePlayers}
+            isEditing={tableIsEditing}
+            onAddRound={handleTableAddRound}
+            onCellClick={handleTableCellClick}
+          />
+        </div>
+        {renderTableSetModal()}
+        <div className="hidden" aria-hidden="true">
+          <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

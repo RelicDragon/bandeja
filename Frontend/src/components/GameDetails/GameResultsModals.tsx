@@ -15,7 +15,7 @@ interface GameResultsModalsProps {
   rounds: Round[];
   players: BasicUser[];
   currentGame: Game | null;
-  expandedRoundId: string | null;
+  primaryRoundId: string | null;
   effectiveHorizontalLayout: boolean;
   onClose: () => void;
   onUpdateSetResult: (roundId: string, matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => Promise<void>;
@@ -35,7 +35,7 @@ export const GameResultsModals = ({
   rounds,
   players,
   currentGame,
-  expandedRoundId,
+  primaryRoundId,
   effectiveHorizontalLayout,
   onClose,
   onUpdateSetResult,
@@ -110,7 +110,7 @@ export const GameResultsModals = ({
   }
 
   if (modal.type === 'player') {
-    const roundId = modal.matchTeam.roundId || expandedRoundId || (rounds.length > 0 ? rounds[0].id : null);
+    const roundId = modal.matchTeam.roundId || primaryRoundId || (rounds.length > 0 ? rounds[0].id : null);
     const round = roundId ? rounds.find(r => r.id === roundId) : null;
     
     const selectedPlayerIds = round ? (() => {

@@ -12,6 +12,8 @@ interface NavigationState {
   bottomTabsVisible: boolean;
   isAnimating: boolean;
   gameDetailsCanAccessChat: boolean;
+  gameDetailsShowTableView: boolean;
+  gameDetailsCanShowTableView: boolean;
   bounceNotifications: boolean;
   bugsButtonSlidingUp: boolean;
   bugsButtonSlidingDown: boolean;
@@ -33,6 +35,8 @@ interface NavigationState {
   setBottomTabsVisible: (visible: boolean) => void;
   setIsAnimating: (animating: boolean) => void;
   setGameDetailsCanAccessChat: (canAccessChat: boolean) => void;
+  setGameDetailsShowTableView: (show: boolean) => void;
+  setGameDetailsCanShowTableView: (can: boolean) => void;
   setBounceNotifications: (bounce: boolean) => void;
   setBugsButtonSlidingUp: (sliding: boolean) => void;
   setBugsButtonSlidingDown: (sliding: boolean) => void;
@@ -49,6 +53,8 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   bottomTabsVisible: true,
   isAnimating: false,
   gameDetailsCanAccessChat: false,
+  gameDetailsShowTableView: false,
+  gameDetailsCanShowTableView: false,
   bounceNotifications: false,
   bugsButtonSlidingUp: false,
   bugsButtonSlidingDown: false,
@@ -68,6 +74,8 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setBottomTabsVisible: (visible) => set({ bottomTabsVisible: visible }),
   setIsAnimating: (animating) => set({ isAnimating: animating }),
   setGameDetailsCanAccessChat: (canAccessChat) => set({ gameDetailsCanAccessChat: canAccessChat }),
+  setGameDetailsShowTableView: (show) => set({ gameDetailsShowTableView: show }),
+  setGameDetailsCanShowTableView: (can) => set({ gameDetailsCanShowTableView: can }),
   setBounceNotifications: (bounce) => set({ bounceNotifications: bounce }),
   setBugsButtonSlidingUp: (sliding) => set({ bugsButtonSlidingUp: sliding }),
   setBugsButtonSlidingDown: (sliding) => set({ bugsButtonSlidingDown: sliding }),
