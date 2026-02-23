@@ -36,7 +36,8 @@ export const AuctionBidsModal = ({
   const [loading, setLoading] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
   const [placing, setPlacing] = useState(false);
-  const [bidError, setBidError] = useState('');
+  const [bidValidationMin, setBidValidationMin] = useState<string | null>(null);
+  const [bidApiError, setBidApiError] = useState('');
 
   const isHolland = marketItem.auctionType === 'HOLLAND';
   const currency = (marketItem.currency || 'EUR') as PriceCurrency;
@@ -85,10 +86,11 @@ export const AuctionBidsModal = ({
 
   const handlePlaceBid = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBidError('');
+    setBidValidationMin(null);
+    setBidApiError('');
     const cents = Math.round(parseFloat(bidAmount || '0') * 100);
     if (!Number.isFinite(cents) || cents < minCents) {
-      setBidError(t('marketplace.bidTooLow', { defaultValue: 'Bid must be at least the minimum' }));
+      setBidValidationMin(formatPrice(minCents, currency));
       return;
     }
     setPlacing(true);
@@ -99,11 +101,13 @@ export const AuctionBidsModal = ({
       await fetchBids();
       onBidPlaced?.();
     } catch (err: any) {
-      setBidError(err.response?.data?.message || t('marketplace.bidFailed', { defaultValue: 'Failed to place bid' }));
+      setBidApiError(err.response?.data?.message || t('marketplace.bidFailed', { defaultValue: 'Failed to place bid' }));
     } finally {
       setPlacing(false);
     }
   };
+
+  const hasBidError = bidValidationMin || bidApiError;
 
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="auction-bids-modal">
@@ -124,21 +128,30 @@ export const AuctionBidsModal = ({
                   <p className="text-sm font-medium text-violet-800 dark:text-violet-200">
                     {t('marketplace.minimumToBeat', { defaultValue: 'Minimum to beat' })}: {formatPrice(minCents, currency)}
                   </p>
-                  <form onSubmit={handlePlaceBid} className="mt-2 flex gap-2 items-end">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min={minCents / 100}
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(e.target.value)}
-                      placeholder={(suggested / 100).toFixed(2)}
-                      className="flex-1"
-                    />
-                    <Button type="submit" variant="primary" size="md" disabled={placing}>
-                      {placing ? t('common.loading', { defaultValue: '...' }) : t('marketplace.placeBid', { defaultValue: 'Place bid' })}
-                    </Button>
+                  <form onSubmit={handlePlaceBid} noValidate className="mt-2 flex flex-col gap-1">
+                    <div className="flex gap-2 items-start">
+                      <div className="flex-1 space-y-0.5 min-w-0">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={bidAmount}
+                          onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E') e.preventDefault(); }}
+                          onChange={(e) => { setBidAmount(e.target.value); setBidValidationMin(null); setBidApiError(''); }}
+                          placeholder={(suggested / 100).toFixed(2)}
+                          className={`w-full ${hasBidError ? 'border-red-500 dark:border-red-400 focus-visible:ring-red-500' : ''}`}
+                        />
+                        {bidValidationMin && (
+                          <p className="text-xs text-red-500 dark:text-red-400 mt-0.5 px-0.5">
+                            {t('marketplace.bidMinHint', { min: bidValidationMin, defaultValue: 'Min. {{min}}' })}
+                          </p>
+                        )}
+                        {bidApiError && <p className="text-xs text-red-500 dark:text-red-400 mt-0.5 px-0.5">{bidApiError}</p>}
+                      </div>
+                      <Button type="submit" variant="primary" size="md" disabled={placing} className="shrink-0">
+                        {placing ? t('common.loading', { defaultValue: '...' }) : t('marketplace.placeBid', { defaultValue: 'Place bid' })}
+                      </Button>
+                    </div>
                   </form>
-                  {bidError && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{bidError}</p>}
                 </div>
               )}
               <div className="overflow-y-auto flex-1 min-h-0 space-y-1">

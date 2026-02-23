@@ -27,14 +27,16 @@ export const PlaceBidModal = ({
   const { t } = useTranslation();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [validationMin, setValidationMin] = useState<string | null>(null);
+  const [apiError, setApiError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setValidationMin(null);
+    setApiError('');
     const cents = Math.round(parseFloat(amount || '0') * 100);
     if (cents < minCents) {
-      setError(t('marketplace.bidTooLow', { defaultValue: 'Bid must be at least the minimum' }));
+      setValidationMin(formatPrice(minCents, currency));
       return;
     }
     setLoading(true);
@@ -43,11 +45,13 @@ export const PlaceBidModal = ({
       setAmount('');
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || t('marketplace.bidFailed', { defaultValue: 'Failed to place bid' }));
+      setApiError(err.response?.data?.message || t('marketplace.bidFailed', { defaultValue: 'Failed to place bid' }));
     } finally {
       setLoading(false);
     }
   };
+
+  const hasError = validationMin || apiError;
 
   const suggested = isHolland ? (currentPriceCents ?? minCents) : minCents;
 
@@ -57,7 +61,7 @@ export const PlaceBidModal = ({
         <DialogHeader>
           <DialogTitle>{t('marketplace.placeBid', { defaultValue: 'Place a bid' })}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3 p-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-3 p-4">
           {isHolland ? (
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {t('marketplace.hollandBidHint', { defaultValue: 'Current price' })}: {formatPrice(suggested, currency)}
@@ -67,16 +71,23 @@ export const PlaceBidModal = ({
               {t('marketplace.minBid', { defaultValue: 'Minimum bid' })}: {formatPrice(minCents, currency)}
             </p>
           )}
-          <Input
-            type="number"
-            step="0.01"
-            min={minCents / 100}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder={(suggested / 100).toFixed(2)}
-            className="w-full"
-          />
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          <div className="space-y-0.5">
+            <Input
+              type="number"
+              step="0.01"
+              value={amount}
+              onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E') e.preventDefault(); }}
+              onChange={(e) => { setAmount(e.target.value); setValidationMin(null); setApiError(''); }}
+              placeholder={(suggested / 100).toFixed(2)}
+              className={`w-full ${hasError ? 'border-red-500 dark:border-red-400 focus-visible:ring-red-500' : ''}`}
+            />
+            {validationMin && (
+              <p className="text-xs text-red-500 dark:text-red-400 mt-0.5 px-0.5">
+                {t('marketplace.bidMinHint', { min: validationMin, defaultValue: 'Min. {{min}}' })}
+              </p>
+            )}
+            {apiError && <p className="text-xs text-red-500 dark:text-red-400 mt-0.5 px-0.5">{apiError}</p>}
+          </div>
           <div className="flex gap-2 justify-end">
             <Button type="button" variant="secondary" size="md" onClick={onClose}>
               {t('common.cancel', { defaultValue: 'Cancel' })}

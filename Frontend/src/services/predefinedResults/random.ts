@@ -8,6 +8,8 @@ import {
   getEligibleParticipants,
   getNumMatches,
   getFilteredFixedTeams,
+  cloneSets,
+  InitialSets,
 } from './matchUtils';
 
 function pairKey(a: string, b: string): string {
@@ -169,12 +171,58 @@ function selectFromPool(
 
 const SELECTION_RETRIES = 20;
 
+function fallbackPairsByPlayCount(
+  allPairs: PairCandidate[],
+  matchesPlayed: Map<string, number>,
+  neededPairs: number,
+  genderTeams?: string
+): [string, string][] {
+  const playerSet = new Set<string>();
+  for (const { pair } of allPairs) {
+    playerSet.add(pair[0]);
+    playerSet.add(pair[1]);
+  }
+
+  const sortedPlayers = shuffle([...playerSet]).sort(
+    (a, b) => (matchesPlayed.get(a) || 0) - (matchesPlayed.get(b) || 0)
+  );
+
+  const neededPlayers = neededPairs * 2;
+  const selected = sortedPlayers.slice(0, neededPlayers);
+  const pairs: [string, string][] = [];
+
+  if (genderTeams === 'MIX_PAIRS') {
+    const pairLookup = new Set(allPairs.map(p => p.key));
+    const used = new Set<string>();
+    for (const a of selected) {
+      if (used.has(a)) continue;
+      for (const b of selected) {
+        if (a === b || used.has(b)) continue;
+        if (pairLookup.has(pairKey(a, b))) {
+          pairs.push([a, b]);
+          used.add(a);
+          used.add(b);
+          break;
+        }
+      }
+      if (pairs.length >= neededPairs) break;
+    }
+  } else {
+    for (let i = 0; i + 1 < selected.length && pairs.length < neededPairs; i += 2) {
+      pairs.push([selected[i], selected[i + 1]]);
+    }
+  }
+
+  return pairs;
+}
+
 function selectTeamPairs(
   pool: PairCandidate[],
   allPairs: PairCandidate[],
   matchesPlayed: Map<string, number>,
   neededPairs: number,
-  teammateHistory: Map<string, number>
+  teammateHistory: Map<string, number>,
+  genderTeams?: string
 ): [string, string][] {
   let best: [string, string][] = [];
 
@@ -209,16 +257,24 @@ function selectTeamPairs(
     }
   }
 
+  if (best.length < neededPairs) {
+    const fallback = fallbackPairsByPlayCount(allPairs, matchesPlayed, neededPairs, genderTeams);
+    if (fallback.length > best.length) best = fallback;
+  }
+
   return best;
 }
 
-function formMatchups(
+const MATCHUP_ATTEMPTS = 10;
+
+function formMatchupsOnce(
   pairs: [string, string][],
   opponentHistory: Map<string, number>
-): { teamA: [string, string]; teamB: [string, string] }[] {
+): { matches: { teamA: [string, string]; teamB: [string, string] }[]; totalScore: number } {
   const matches: { teamA: [string, string]; teamB: [string, string] }[] = [];
   const shuffledPairs = shuffle([...pairs]);
   const used = new Set<number>();
+  let totalScore = 0;
 
   for (let i = 0; i < shuffledPairs.length; i++) {
     if (used.has(i)) continue;
@@ -251,10 +307,30 @@ function formMatchups(
       used.add(i);
       used.add(chosen);
       matches.push({ teamA: team1, teamB: shuffledPairs[chosen] });
+      totalScore += bestScore;
     }
   }
 
-  return matches;
+  return { matches, totalScore };
+}
+
+function formMatchups(
+  pairs: [string, string][],
+  opponentHistory: Map<string, number>
+): { teamA: [string, string]; teamB: [string, string] }[] {
+  let bestResult = formMatchupsOnce(pairs, opponentHistory);
+
+  for (let i = 1; i < MATCHUP_ATTEMPTS; i++) {
+    const attempt = formMatchupsOnce(pairs, opponentHistory);
+    if (
+      attempt.matches.length > bestResult.matches.length ||
+      (attempt.matches.length === bestResult.matches.length && attempt.totalScore < bestResult.totalScore)
+    ) {
+      bestResult = attempt;
+    }
+  }
+
+  return bestResult.matches;
 }
 
 function generateFixedTeamMatchups(
@@ -309,10 +385,64 @@ function generateFixedTeamMatchups(
   return selected;
 }
 
+function selectByLeastPlayed<T extends { userId: string }>(
+  players: T[],
+  matchesPlayed: Map<string, number>,
+  needed: number
+): T[] {
+  if (players.length <= needed) return players;
+
+  const shuffled = shuffle([...players]);
+  shuffled.sort(
+    (a, b) => (matchesPlayed.get(a.userId) || 0) - (matchesPlayed.get(b.userId) || 0)
+  );
+
+  return shuffled.slice(0, needed);
+}
+
+function selectPlayersForRound(
+  participants: any[],
+  matchesPlayed: Map<string, number>,
+  neededPlayers: number,
+  genderTeams?: string
+): any[] {
+  if (participants.length <= neededPlayers) return participants;
+
+  if (genderTeams === 'MIX_PAIRS') {
+    const males = participants.filter((p: any) => p.user.gender === 'MALE');
+    const females = participants.filter((p: any) => p.user.gender === 'FEMALE');
+    const neededPerGender = neededPlayers / 2;
+    return [
+      ...selectByLeastPlayed(males, matchesPlayed, neededPerGender),
+      ...selectByLeastPlayed(females, matchesPlayed, neededPerGender),
+    ];
+  }
+
+  return selectByLeastPlayed(participants, matchesPlayed, neededPlayers);
+}
+
+function selectTeamsForRound(
+  teams: string[][],
+  matchesPlayed: Map<string, number>,
+  neededTeams: number
+): string[][] {
+  if (teams.length <= neededTeams) return teams;
+
+  const withPlayCount = teams.map(team => ({
+    team,
+    totalPlayed: team.reduce((sum, id) => sum + (matchesPlayed.get(id) || 0), 0),
+  }));
+
+  const shuffled = shuffle(withPlayCount);
+  shuffled.sort((a, b) => a.totalPlayed - b.totalPlayed);
+
+  return shuffled.slice(0, neededTeams).map(t => t.team);
+}
+
 export function generateRandomRound(
   game: Game,
   previousRounds: Round[],
-  initialSets: Array<{ teamA: number; teamB: number }>
+  initialSets: InitialSets
 ): Match[] {
   const participants = getEligibleParticipants(game);
   if (participants.length < 4) return [];
@@ -330,37 +460,54 @@ export function generateRandomRound(
 
   if (game.hasFixedTeams && game.fixedTeams && game.fixedTeams.length > 0) {
     const fixedTeamPairs = getFilteredFixedTeams(game);
-    const matchups = generateFixedTeamMatchups(fixedTeamPairs, matchesPlayed, opponentHistory, numMatches);
+    const neededTeams = numMatches * 2;
+    const selectedTeams = selectTeamsForRound(fixedTeamPairs, matchesPlayed, neededTeams);
+    const matchups = generateFixedTeamMatchups(selectedTeams, matchesPlayed, opponentHistory, numMatches);
 
     return matchups.map((m, idx) => ({
       id: createId(),
       teamA: m.teamA,
       teamB: m.teamB,
-      sets: initialSets,
+      sets: cloneSets(initialSets),
       courtId: sortedCourts[idx]?.courtId,
     }));
   }
 
+  const neededPlayers = numMatches * 4;
+  const selectedParticipants = selectPlayersForRound(
+    participants, matchesPlayed, neededPlayers, game.genderTeams
+  );
+
   const teammateHistory = buildTeammateHistory(previousRounds);
   const lastRoundKeys = getLastRoundTeamKeys(previousRounds);
-  const allPairs = generateAllPossiblePairs(participants, game.genderTeams);
+  const allPairs = generateAllPossiblePairs(selectedParticipants, game.genderTeams);
 
   if (allPairs.length === 0) return [];
 
   const pool = buildPairPool(allPairs, teammateHistory, lastRoundKeys);
   const neededPairs = numMatches * 2;
-  const teamPairs = selectTeamPairs(pool, allPairs, matchesPlayed, neededPairs, teammateHistory);
+  const teamPairs = selectTeamPairs(pool, allPairs, matchesPlayed, neededPairs, teammateHistory, game.genderTeams);
 
   if (teamPairs.length < 2) return [];
 
-  const pairsToMatch = teamPairs.length % 2 === 0 ? teamPairs : teamPairs.slice(0, -1);
+  let pairsToMatch: [string, string][];
+  if (teamPairs.length % 2 === 0) {
+    pairsToMatch = teamPairs;
+  } else {
+    const byPlayCount = [...teamPairs].sort(
+      (a, b) =>
+        (matchesPlayed.get(b[0]) || 0) + (matchesPlayed.get(b[1]) || 0) -
+        ((matchesPlayed.get(a[0]) || 0) + (matchesPlayed.get(a[1]) || 0))
+    );
+    pairsToMatch = byPlayCount.slice(1);
+  }
   const matchups = formMatchups(pairsToMatch, opponentHistory);
 
   return matchups.map((m, idx) => ({
     id: createId(),
     teamA: m.teamA,
     teamB: m.teamB,
-    sets: initialSets,
+    sets: cloneSets(initialSets),
     courtId: sortedCourts[idx]?.courtId,
   }));
 }

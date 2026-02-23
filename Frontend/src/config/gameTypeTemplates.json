@@ -25,7 +25,8 @@
     "pointsPerWin": 0,
     "pointsPerLoose": 0,
     "pointsPerTie": 0,
-    "ballsInGames": false
+    "ballsInGames": false,
+    "fixedNumberOfSets": 1
   },
   "ROUND_ROBIN": {
     "winnerOfMatch": "BY_SETS",
@@ -43,7 +44,8 @@
     "pointsPerWin": 0,
     "pointsPerLoose": 0,
     "pointsPerTie": 0,
-    "ballsInGames": false
+    "ballsInGames": false,
+    "fixedNumberOfSets": 1
   },
   "CUSTOM": {
     "winnerOfMatch": "BY_SCORES",

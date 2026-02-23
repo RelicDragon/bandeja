@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { PriceCurrency } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
-import { SUPPORTED_CURRENCIES, CURRENCY_INFO, getCurrencyName } from '@/utils/currency';
+import { getCurrenciesForModal, CURRENCY_INFO, getCurrencyName, PRIORITY_CURRENCIES } from '@/utils/currency';
 
 interface CurrencySelectorModalProps {
   open: boolean;
@@ -33,9 +33,10 @@ export const CurrencySelectorModal = ({
         </DialogHeader>
         <div className="overflow-y-auto max-h-[60vh] p-4">
           <div className="grid grid-cols-5 gap-1.5">
-            {SUPPORTED_CURRENCIES.map((code) => {
+            {getCurrenciesForModal().map((code) => {
               const info = CURRENCY_INFO[code];
               const isSelected = code === selected;
+              const isPriority = PRIORITY_CURRENCIES.includes(code);
               return (
                 <button
                   key={code}
@@ -45,7 +46,9 @@ export const CurrencySelectorModal = ({
                     flex flex-col items-center justify-center aspect-square w-full min-w-0 py-1.5 px-1 rounded-md border-2 transition-colors
                     ${isSelected
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
+                      : isPriority
+                        ? 'border-amber-300 dark:border-amber-600 bg-amber-50/80 dark:bg-amber-900/20 text-gray-800 dark:text-gray-200 hover:border-amber-400 dark:hover:border-amber-500'
+                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
                     }
                   `}
                 >

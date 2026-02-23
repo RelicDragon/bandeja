@@ -144,7 +144,9 @@ export const CreateMarketItem = () => {
           mediaUrls: item.mediaUrls || [],
           tradeTypes: item.tradeTypes?.length ? [item.tradeTypes[0]] : ['BUY_IT_NOW'],
           negotiationAcceptable: item.negotiationAcceptable ?? false,
-          priceCents: centsToPrice(item.startingPriceCents ?? item.priceCents),
+          priceCents: centsToPrice(
+            item.tradeTypes?.includes('AUCTION') ? (item.startingPriceCents ?? item.priceCents) : (item.priceCents ?? item.startingPriceCents)
+          ),
           currency: (item.currency || 'EUR') as PriceCurrency,
           auctionEndsAt: item.auctionEndsAt ? new Date(item.auctionEndsAt).toISOString() : '',
           auctionType: (item.auctionType || 'RISING') as AuctionType,
@@ -477,6 +479,7 @@ export const CreateMarketItem = () => {
                       step={0.01}
                       min={0.01}
                       value={form.hollandDecrement}
+                      onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E') e.preventDefault(); }}
                       onChange={(e) => setForm((f) => ({ ...f, hollandDecrement: e.target.value }))}
                       placeholder="0.50"
                       className={INPUT_CLASS}
@@ -491,6 +494,7 @@ export const CreateMarketItem = () => {
                       type="number"
                       min={1}
                       value={form.hollandIntervalMinutes}
+                      onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E') e.preventDefault(); }}
                       onChange={(e) => setForm((f) => ({ ...f, hollandIntervalMinutes: e.target.value === '' ? '' : Number(e.target.value) }))}
                       placeholder="5"
                       className={INPUT_CLASS}

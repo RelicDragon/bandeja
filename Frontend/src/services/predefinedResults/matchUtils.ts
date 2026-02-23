@@ -58,6 +58,64 @@ export function getNumMatches(game: Game, participants: any[]): number {
   return Math.min(numCourts, Math.floor(participants.length / 4));
 }
 
+export type InitialSets = Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>;
+
+export function cloneSets(sets: InitialSets): InitialSets {
+  return sets.map(s => ({ ...s }));
+}
+
+export function buildLastRoundPlayed(playerIds: string[], rounds: Round[]): Map<string, number> {
+  const lastPlayed = new Map<string, number>();
+  for (const id of playerIds) lastPlayed.set(id, -1);
+  for (let r = 0; r < rounds.length; r++) {
+    for (const match of rounds[r].matches) {
+      if (!hasPlayers(match)) continue;
+      for (const id of [...match.teamA, ...match.teamB]) {
+        if (lastPlayed.has(id)) lastPlayed.set(id, r);
+      }
+    }
+  }
+  return lastPlayed;
+}
+
+export function pairKey(id1: string, id2: string): string {
+  return id1 < id2 ? `${id1}:${id2}` : `${id2}:${id1}`;
+}
+
+export function buildPartnerCounts(rounds: Round[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      if (!hasPlayers(match)) continue;
+      for (const team of [match.teamA, match.teamB]) {
+        for (let i = 0; i < team.length; i++) {
+          for (let j = i + 1; j < team.length; j++) {
+            const key = pairKey(team[i], team[j]);
+            counts.set(key, (counts.get(key) || 0) + 1);
+          }
+        }
+      }
+    }
+  }
+  return counts;
+}
+
+export function buildOpponentCounts(rounds: Round[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      if (!hasPlayers(match)) continue;
+      for (const a of match.teamA) {
+        for (const b of match.teamB) {
+          const key = pairKey(a, b);
+          counts.set(key, (counts.get(key) || 0) + 1);
+        }
+      }
+    }
+  }
+  return counts;
+}
+
 export function getFilteredFixedTeams(game: Game): string[][] {
   const teams = (game.fixedTeams || []).filter(t => t.players.length >= 2);
 

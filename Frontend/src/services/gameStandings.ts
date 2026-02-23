@@ -182,7 +182,7 @@ function compareScoresDelta(aStats: PlayerStats, bStats: PlayerStats): number {
 }
 
 function compareLevelAtStart(aUser: BasicUser, bUser: BasicUser): number {
-  return aUser.level - bUser.level;
+  return bUser.level - aUser.level;
 }
 
 function getHeadToHeadWinner(

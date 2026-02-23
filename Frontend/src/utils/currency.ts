@@ -47,6 +47,14 @@ export const CURRENCY_INFO: Record<PriceCurrency, CurrencyInfo> = {
 
 export const SUPPORTED_CURRENCIES: PriceCurrency[] = Object.keys(CURRENCY_INFO) as PriceCurrency[];
 
+export const PRIORITY_CURRENCIES: PriceCurrency[] = ['EUR', 'USD', 'RSD'];
+
+export function getCurrenciesForModal(): PriceCurrency[] {
+  const priority = PRIORITY_CURRENCIES.filter((c) => SUPPORTED_CURRENCIES.includes(c));
+  const rest = SUPPORTED_CURRENCIES.filter((c) => !PRIORITY_CURRENCIES.includes(c));
+  return [...priority, ...rest];
+}
+
 export const DEFAULT_CURRENCY: PriceCurrency = 'EUR';
 
 export function resolveUserCurrency(userCurrency?: string | null): PriceCurrency {

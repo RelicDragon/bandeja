@@ -1,18 +1,19 @@
 import { createId } from '@paralleldrive/cuid2';
 import { Match, Round } from '@/types/gameResults';
 import { Game } from '@/types';
+import { cloneSets, InitialSets } from './matchUtils';
 
 export function generateFixedRound(
   _game: Game,
   previousRounds: Round[],
-  initialSets: Array<{ teamA: number; teamB: number }>
+  initialSets: InitialSets
 ): Match[] {
   if (previousRounds.length === 0) {
     return [{
       id: createId(),
       teamA: [],
       teamB: [],
-      sets: initialSets,
+      sets: cloneSets(initialSets),
     }];
   }
 
@@ -27,7 +28,7 @@ export function generateFixedRound(
         id: createId(),
         teamA: [...prevMatch.teamA],
         teamB: [...prevMatch.teamB],
-        sets: initialSets,
+        sets: cloneSets(initialSets),
         courtId: firstRound.matches?.[i]?.courtId,
       });
     }
@@ -36,7 +37,7 @@ export function generateFixedRound(
       id: createId(),
       teamA: [],
       teamB: [],
-      sets: initialSets,
+      sets: cloneSets(initialSets),
     });
   }
 
