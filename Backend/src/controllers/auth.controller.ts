@@ -10,6 +10,7 @@ import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 import { verifyAppleIdentityToken } from '../services/apple/appleAuth.service';
 import { verifyGoogleIdToken } from '../services/google/googleAuth.service';
 import { AuthRequest } from '../middleware/auth';
+import { TransactionService } from '../services/transaction.service';
 
 export const registerWithPhone = asyncHandler(async (req: Request, res: Response) => {
   const { phone, password, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
@@ -51,6 +52,12 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
     },
     select: PROFILE_SELECT_FIELDS,
   });
+
+  try {
+    await TransactionService.createRegistrationBonus(user.id);
+  } catch (e) {
+    console.error('[registerWithPhone] Registration bonus failed:', e);
+  }
 
   const token = generateToken({ userId: user.id, phone: user.phone! });
 
@@ -147,6 +154,12 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
     },
     select: PROFILE_SELECT_FIELDS,
   });
+
+  try {
+    await TransactionService.createRegistrationBonus(user.id);
+  } catch (e) {
+    console.error('[registerWithTelegram] Registration bonus failed:', e);
+  }
 
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
 
@@ -317,6 +330,11 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
     select: PROFILE_SELECT_FIELDS,
     });
     console.log('[APPLE_REGISTER] User created successfully, id:', user.id);
+    try {
+      await TransactionService.createRegistrationBonus(user.id);
+    } catch (e) {
+      console.error('[APPLE_REGISTER] Registration bonus failed:', e);
+    }
   } catch (createError: any) {
     console.error('[APPLE_REGISTER] Error creating user:', createError);
     if (createError.code === 'P2002' && createError.meta?.target?.includes('appleSub')) {
@@ -584,6 +602,11 @@ export const registerWithGoogle = asyncHandler(async (req: Request, res: Respons
       },
       select: PROFILE_SELECT_FIELDS,
     });
+    try {
+      await TransactionService.createRegistrationBonus(user.id);
+    } catch (e) {
+      console.error('[registerWithGoogle] Registration bonus failed:', e);
+    }
   } catch (createError: any) {
     if (createError.code === 'P2002' && createError.meta?.target?.includes('googleId')) {
       throw new ApiError(400, 'auth.googleAccountAlreadyExists');

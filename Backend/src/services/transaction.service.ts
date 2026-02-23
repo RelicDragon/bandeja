@@ -406,5 +406,13 @@ export class TransactionService {
 
     return results;
   }
+
+  static async createRegistrationBonus(userId: string) {
+    await this.createTransaction({
+      type: TransactionType.NEW_COIN,
+      toUserId: userId,
+      transactionRows: [{ name: 'Registration Bonus', price: 100, qty: 1 }],
+    });
+  }
 }
 
