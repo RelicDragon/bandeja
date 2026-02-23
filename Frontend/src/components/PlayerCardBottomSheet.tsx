@@ -18,6 +18,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { usePresenceStore } from '@/store/presenceStore';
+import { useNavigationStore } from '@/store/navigationStore';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import {
   Drawer,
@@ -82,6 +83,12 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     }).catch(() => {});
   }, [playerId, isCurrentUser]);
 
+  const markReopenOnBack = useCallback(() => {
+    if (!playerId) return;
+    const sourceIdx = window.history.state?.idx ?? 0;
+    useNavigationStore.getState().setPendingPlayerCardReopen({ playerId, sourceIdx });
+  }, [playerId]);
+
   const handleClose = useCallback(() => {
     if (navigatingToChatRef.current) {
       navigatingToChatRef.current = false;
@@ -127,6 +134,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         toast.error(t('errors.generic', { defaultValue: 'Something went wrong' }));
         return;
       }
+      markReopenOnBack();
       navigatingToChatRef.current = true;
       navigate(`/user-chat/${chat.id}`, {
         state: { chat, contextType: 'USER' },
@@ -267,8 +275,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                             const telegramUrl = getTelegramUrl();
                             if (telegramUrl && !isBlocked) window.open(telegramUrl, '_blank');
                           }}
-                          onOpenGame={handleClose}
-                          onMarketItemClick={(item) => { handleClose(); navigate(`/marketplace/${item.id}`); }}
+                          onOpenGame={() => { markReopenOnBack(); handleClose(); }}
+                          onMarketItemClick={(item) => { markReopenOnBack(); handleClose(); navigate(`/marketplace/${item.id}`); }}
                         />
                       </motion.div>
                     )}

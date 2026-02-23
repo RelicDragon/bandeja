@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { InvitesSection, MyGamesSection, PastGamesSection } from '@/components/home';
-import { Button, MainTabFooter } from '@/components';
+import { Button, Divider, MainTabFooter } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { chatApi } from '@/api/chat';
 import { useShallow } from 'zustand/react/shallow';
@@ -320,6 +320,15 @@ export const MyTab = () => {
             onNoteSaved={() => fetchData(false, true)}
           />
         </div>
+
+        {invites.length > 0 && activeTab === 'my-games' && (
+          <>
+            <Divider />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              {t('home.myGames')}
+            </h2>
+          </>
+        )}
 
         <div className="relative min-h-[100px]">
           <div

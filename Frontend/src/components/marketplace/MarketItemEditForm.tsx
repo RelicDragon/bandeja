@@ -306,6 +306,7 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
                   onChange={(id) => setForm((f) => ({ ...f, auctionType: id as AuctionType }))}
                   titleInActiveOnly={false}
                   layoutId="auction-type-edit"
+                  className="w-fit"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {form.auctionType === 'HOLLAND'

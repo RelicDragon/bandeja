@@ -54,7 +54,7 @@ export function AuctionDurationSelector({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-row flex-wrap gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {DURATION_DAYS.map((days) => {
           const isSelected = selectedDays === days;
           return (

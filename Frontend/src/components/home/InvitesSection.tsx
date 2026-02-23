@@ -68,55 +68,78 @@ export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: In
               onClick={() => gameId && navigate(`/games/${gameId}`)}
               onAnimationEnd={() => hidingInvites.has(invite.id) && handleHideAnimationEnd(invite.id)}
             >
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <PlayerAvatar 
-                    player={invite.sender}
-                  />
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 ring-2 ring-white dark:ring-gray-900 rounded-full">
+                    <PlayerAvatar
+                      player={invite.sender}
+                      extrasmall
+                      fullHideName
+                      showName={false}
+                      asDiv
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {invite.sender.firstName} {invite.sender.lastName}
+                      </p>
+                      {invite.sender.gender && invite.sender.gender !== 'PREFER_NOT_TO_SAY' && (
+                        <span className={`inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[10px] ${
+                          invite.sender.gender === 'MALE' ? 'bg-blue-500 text-white' : 'bg-pink-500 text-white'
+                        }`}>
+                          <i className={`bi ${invite.sender.gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'}`} />
+                        </span>
+                      )}
+                    </div>
+                    {invite.sender.verbalStatus && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                        {invite.sender.verbalStatus}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    {t('invites.invitedYou')}
-                  </p>                  
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {t('invites.invitedYou')}
+                </p>
 
-                  {invite.message && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 italic mb-3">
-                      "{invite.message}"
-                    </p>
-                  )}
+                {invite.message && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+                    "{invite.message}"
+                  </p>
+                )}
 
-                  {invite.game && (
-                    <div className="mb-3">
-                      <GameCard
-                        game={invite.game}
-                        user={user}
-                        showChatIndicator={false}
-                        onNoteSaved={onNoteSaved}
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      onClick={() => handleAccept(invite.id)}
-                      variant="primary"
-                      size="sm"
-                      className="flex-1 flex items-center justify-center gap-1.5"
-                    >
-                      <Check size={16} />
-                      {t('invites.accept')}
-                    </Button>
-                    <Button
-                      onClick={() => handleDecline(invite.id)}
-                      variant="secondary"
-                      size="sm"
-                      className="flex-1 flex items-center justify-center gap-1.5"
-                    >
-                      <X size={16} />
-                      {t('invites.decline')}
-                    </Button>
+                {invite.game && (
+                  <div>
+                    <GameCard
+                      game={invite.game}
+                      user={user}
+                      showChatIndicator={false}
+                      onNoteSaved={onNoteSaved}
+                    />
                   </div>
+                )}
+
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    onClick={() => handleAccept(invite.id)}
+                    variant="primary"
+                    size="sm"
+                    className="flex-1 flex items-center justify-center gap-1.5"
+                  >
+                    <Check size={16} />
+                    {t('invites.accept')}
+                  </Button>
+                  <Button
+                    onClick={() => handleDecline(invite.id)}
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1 flex items-center justify-center gap-1.5"
+                  >
+                    <X size={16} />
+                    {t('invites.decline')}
+                  </Button>
                 </div>
               </div>
             </Card>
