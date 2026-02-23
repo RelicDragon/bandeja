@@ -14,6 +14,9 @@ interface NavigationState {
   gameDetailsCanAccessChat: boolean;
   gameDetailsShowTableView: boolean;
   gameDetailsCanShowTableView: boolean;
+  gameDetailsTableAddRoundCallback: (() => void) | null;
+  gameDetailsTableIsEditing: boolean;
+  setGameDetailsTableAddRound: (callback: (() => void) | null, isEditing: boolean) => void;
   bounceNotifications: boolean;
   bugsButtonSlidingUp: boolean;
   bugsButtonSlidingDown: boolean;
@@ -55,6 +58,9 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   gameDetailsCanAccessChat: false,
   gameDetailsShowTableView: false,
   gameDetailsCanShowTableView: false,
+  gameDetailsTableAddRoundCallback: null,
+  gameDetailsTableIsEditing: false,
+  setGameDetailsTableAddRound: (callback, isEditing) => set({ gameDetailsTableAddRoundCallback: callback, gameDetailsTableIsEditing: isEditing }),
   bounceNotifications: false,
   bugsButtonSlidingUp: false,
   bugsButtonSlidingDown: false,

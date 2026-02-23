@@ -1,7 +1,8 @@
-import { MessageCircle, TableProperties } from 'lucide-react';
+import { MessageCircle, Plus, TableProperties } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components';
+import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useNavigateWithTracking } from '@/hooks/useNavigateWithTracking';
 import { useNavigationStore } from '@/store/navigationStore';
 
@@ -13,7 +14,8 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
   const { t } = useTranslation();
   const navigate = useNavigateWithTracking();
   const { id } = useParams<{ id: string }>();
-  const { gameDetailsCanShowTableView, gameDetailsShowTableView, setGameDetailsShowTableView } = useNavigationStore();
+  const isLandscape = useIsLandscape();
+  const { gameDetailsCanShowTableView, gameDetailsShowTableView, setGameDetailsShowTableView, gameDetailsTableAddRoundCallback, gameDetailsTableIsEditing } = useNavigationStore();
 
   const handleChatClick = () => {
     if (id) {
@@ -24,18 +26,25 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
   return (
     <>
       {gameDetailsCanShowTableView && (
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-          <button
+        <div
+          className="absolute left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 h-16"
+          style={{ top: 'env(safe-area-inset-top)' }}
+        >
+          <Button
             onClick={() => setGameDetailsShowTableView(!gameDetailsShowTableView)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-              gameDetailsShowTableView
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
+            variant={gameDetailsShowTableView ? 'primary' : 'secondary'}
+            size="sm"
+            className="flex items-center gap-2"
           >
             <TableProperties size={18} />
-            {t('gameResults.tableView', { defaultValue: 'Table View' })}
-          </button>
+            {t('gameResults.tableView')}
+          </Button>
+          {isLandscape && gameDetailsShowTableView && gameDetailsTableIsEditing && gameDetailsTableAddRoundCallback && (
+            <Button onClick={gameDetailsTableAddRoundCallback} variant="primary" size="sm" className="flex items-center gap-2">
+              <Plus size={16} />
+              {t('gameResults.addRound')}
+            </Button>
+          )}
         </div>
       )}
       {canAccessChat && (

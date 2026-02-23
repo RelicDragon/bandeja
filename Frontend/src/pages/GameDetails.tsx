@@ -73,7 +73,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsShowTableView, setGameDetailsShowTableView } = useNavigationStore();
+  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsShowTableView, setGameDetailsTableAddRound } = useNavigationStore();
 
   const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
@@ -106,7 +106,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
   const engineRounds = useGameResultsStore((s) => s.rounds);
   const engineCanEdit = useGameResultsStore((s) => s.canEdit);
-  const engineInitialized = useGameResultsStore((s) => s.initialized);
 
   const tablePlayers = useMemo<BasicUser[]>(
     () => (game?.participants?.filter(isParticipantPlaying).map(p => p.user) || []) as BasicUser[],
@@ -252,9 +251,8 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     setBottomTabsVisible(false);
     return () => {
       setBottomTabsVisible(true);
-      setGameDetailsShowTableView(false);
     };
-  }, [setBottomTabsVisible, setGameDetailsShowTableView]);
+  }, [setBottomTabsVisible]);
 
   useEffect(() => {
     if (scrollContainerRef?.current) {
@@ -1080,6 +1078,24 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     }
   };
 
+  const tableIsEditing = game ? (engineCanEdit && game.resultsStatus === 'IN_PROGRESS') : false;
+  const isTableViewActive = !!(game && gameDetailsShowTableView && game.entityType !== 'LEAGUE_SEASON' && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING');
+  const handleTableAddRound = useCallback(async () => {
+    await GameResultsEngine.addRound();
+  }, []);
+  const handleTableDeleteRound = useCallback(
+    (roundId: string) => {
+      GameResultsEngine.removeRound(roundId, t);
+    },
+    [t]
+  );
+  useEffect(() => {
+    if (isTableViewActive) {
+      setGameDetailsTableAddRound(handleTableAddRound, tableIsEditing);
+    }
+    return () => setGameDetailsTableAddRound(null, false);
+  }, [isTableViewActive, tableIsEditing, handleTableAddRound, setGameDetailsTableAddRound]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-60px)]">
@@ -1103,8 +1119,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
   const isLeague = game.entityType === 'LEAGUE';
   const isLeagueSeason = game.entityType === 'LEAGUE_SEASON';
-
-  const tableIsEditing = engineCanEdit && game.resultsStatus === 'IN_PROGRESS';
 
   const handleTableCellClick = (roundId: string, matchId: string) => {
     if (!tableIsEditing) return;
@@ -1137,10 +1151,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
       courtId: match.courtId,
     });
     setTableSetModal(null);
-  };
-
-  const handleTableAddRound = async () => {
-    await GameResultsEngine.addRound();
   };
 
   const renderTableSetModal = () => {
@@ -1531,6 +1541,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
             isEditing={tableIsEditing}
             onAddRound={handleTableAddRound}
             onCellClick={handleTableCellClick}
+            onDeleteRound={handleTableDeleteRound}
           />
         </div>
         {renderTableSetModal()}
