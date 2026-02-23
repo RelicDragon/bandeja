@@ -92,7 +92,7 @@ export class InviteService {
             where: { gameId, userId: receiverId },
           });
           if (existingParticipant?.status === 'PLAYING') return;
-          const joinResult = await validatePlayerCanJoinGame(currentGame, receiverId);
+          const joinResult = await validatePlayerCanJoinGame(currentGame, receiverId, { skipLevelCheck: true });
           if (!joinResult.canJoin && joinResult.shouldQueue) {
             throw new ApiError(400, joinResult.reason || 'errors.invites.gameFull');
           }

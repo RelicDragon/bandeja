@@ -33,7 +33,9 @@ import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal'
 import { LocationModal, TimeDurationModal } from '@/components/GameDetails';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
 import { ResultsTableView } from '@/components/gameResults/ResultsTableView';
-import { HorizontalScoreEntryModal } from '@/components/gameResults';
+import { HorizontalScoreEntryModal, RoundAddedModal } from '@/components/gameResults';
+import { SetResultModal } from '@/components/SetResultModal';
+import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { TrainingResultsSection } from '@/components/GameDetails/TrainingResultsSection';
 import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
@@ -103,9 +105,11 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const [isResetting, setIsResetting] = useState(false);
   const [showAnnouncedConfirm, setShowAnnouncedConfirm] = useState(false);
   const [tableSetModal, setTableSetModal] = useState<{ roundId: string; matchId: string } | null>(null);
+  const [roundAddedForModal, setRoundAddedForModal] = useState<Round | null>(null);
 
   const engineRounds = useGameResultsStore((s) => s.rounds);
   const engineCanEdit = useGameResultsStore((s) => s.canEdit);
+  const isLandscape = useIsLandscape();
 
   const tablePlayers = useMemo<BasicUser[]>(
     () => (game?.participants?.filter(isParticipantPlaying).map(p => p.user) || []) as BasicUser[],
@@ -365,6 +369,8 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
       
       if (message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
+      } else if (message === 'games.addedToQueueLevelOutOfRange') {
+        toast.error(t('games.addedToQueueLevelOutOfRange', { defaultValue: 'Your level is outside the range set by the owner. You have been added to the queue.' }));
       } else {
         toast.success(t(message, { defaultValue: message }));
       }
@@ -1079,9 +1085,12 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   };
 
   const tableIsEditing = game ? (engineCanEdit && game.resultsStatus === 'IN_PROGRESS') : false;
-  const isTableViewActive = !!(game && gameDetailsShowTableView && game.entityType !== 'LEAGUE_SEASON' && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING');
+  const isTableViewActive = !!(game && gameDetailsShowTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE');
   const handleTableAddRound = useCallback(async () => {
     await GameResultsEngine.addRound();
+    const rounds = useGameResultsStore.getState().rounds;
+    const newRound = rounds[rounds.length - 1] ?? null;
+    if (newRound) setRoundAddedForModal(newRound);
   }, []);
   const handleTableDeleteRound = useCallback(
     (roundId: string) => {
@@ -1159,22 +1168,38 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     const match = round?.matches.find(m => m.id === tableSetModal.matchId);
     if (!match) return null;
 
-    return createPortal(
-      <HorizontalScoreEntryModal
-        isOpen={true}
-        match={match}
-        setIndex={0}
-        players={tablePlayers}
-        maxTotalPointsPerSet={game.maxTotalPointsPerSet}
-        maxPointsPerTeam={game.maxPointsPerTeam}
-        fixedNumberOfSets={game.fixedNumberOfSets}
-        onSave={handleTableScoreSave}
+    const courts = game.gameCourts?.map(gc => gc.court) || [];
+    const court = courts.find((c: { id: string }) => c.id === match.courtId);
+    const courtLabel = court?.name ?? (!match.courtId ? t('gameResults.bench', { defaultValue: 'Bench' }) : t('gameResults.court', { defaultValue: 'Court' }));
+
+    const commonProps = {
+      isOpen: true,
+      match,
+      setIndex: 0,
+      players: tablePlayers,
+      courtLabel,
+      maxTotalPointsPerSet: game.maxTotalPointsPerSet,
+      maxPointsPerTeam: game.maxPointsPerTeam,
+      fixedNumberOfSets: game.fixedNumberOfSets,
+      onSave: handleTableScoreSave,
+      onClose: () => setTableSetModal(null),
+      canRemove: false,
+    };
+
+    const modal = isLandscape ? (
+      <SetResultModal
+        {...commonProps}
+        ballsInGames={game.ballsInGames || false}
         onRemove={() => {}}
-        onClose={() => setTableSetModal(null)}
-        canRemove={false}
-      />,
-      document.body
+      />
+    ) : (
+      <HorizontalScoreEntryModal
+        {...commonProps}
+        onRemove={() => {}}
+      />
     );
+
+    return createPortal(modal, document.body);
   };
 
   const renderTabContent = () => {
@@ -1219,7 +1244,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
           )}
 
           {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
-            <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} />
+            <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={setRoundAddedForModal} />
           )}
 
           {!isLeague && game.resultsStatus === 'NONE' && (
@@ -1531,11 +1556,11 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     return null;
   };
 
-  if (gameDetailsShowTableView && !isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING') {
+  if (gameDetailsShowTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE') {
     return (
       <>
-        <div className="h-[calc(100vh-4rem-env(safe-area-inset-top))] bg-white dark:bg-gray-900">
           <ResultsTableView
+            game={game}
             rounds={engineRounds}
             players={tablePlayers}
             isEditing={tableIsEditing}
@@ -1543,10 +1568,9 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
             onCellClick={handleTableCellClick}
             onDeleteRound={handleTableDeleteRound}
           />
-        </div>
         {renderTableSetModal()}
         <div className="hidden" aria-hidden="true">
-          <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} />
+          <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={setRoundAddedForModal} />
         </div>
       </>
     );
@@ -1785,6 +1809,13 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
           }}
         />
       )}
+
+      <RoundAddedModal
+        isOpen={!!roundAddedForModal}
+        onClose={() => setRoundAddedForModal(null)}
+        round={roundAddedForModal}
+        game={game}
+      />
       </div>
       </div>
     </>

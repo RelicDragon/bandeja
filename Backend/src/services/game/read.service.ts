@@ -246,7 +246,7 @@ export const getGameInclude = () => ({
 
 export function computeJoinQueuesFromParticipants(game: any): any[] {
   const inQueueParticipants = game.participants?.filter(
-    (p: any) => p.status === 'IN_QUEUE' && p.role === 'PARTICIPANT'
+    (p: any) => p.status === 'IN_QUEUE'
   ) || [];
   return inQueueParticipants
     .map((p: any) => ({

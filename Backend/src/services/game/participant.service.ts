@@ -56,7 +56,8 @@ export class ParticipantService {
       const joinResult = await validatePlayerCanJoinGame(currentGame, userId);
 
       if (!joinResult.canJoin && joinResult.shouldQueue) {
-        return await this.moveExistingParticipantToQueue(gameId, userId);
+        await this.moveExistingParticipantToQueue(gameId, userId);
+        return joinResult.reason || 'games.addedToJoinQueue';
       }
 
       await prisma.$transaction(async (tx) => {
@@ -85,8 +86,8 @@ export class ParticipantService {
     const joinResult = await validatePlayerCanJoinGame(game, userId);
 
     if (!joinResult.canJoin && joinResult.shouldQueue) {
-      // NEW: Create non-playing participant instead of joinQueue
-      return await this.addToQueueAsParticipant(gameId, userId);
+      await this.addToQueueAsParticipant(gameId, userId);
+      return joinResult.reason || 'games.addedToJoinQueue';
     }
 
     await prisma.$transaction(async (tx) => {

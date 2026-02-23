@@ -10,6 +10,8 @@ export interface GameWithPlayingParticipants {
   entityType: EntityType;
   allowDirectJoin: boolean;
   anyoneCanInvite: boolean;
+  minLevel?: number | null;
+  maxLevel?: number | null;
   participants: Array<{
     userId: string;
     status: string;

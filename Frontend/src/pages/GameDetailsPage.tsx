@@ -14,14 +14,15 @@ export const GameDetailsPage = () => {
   const setGameDetailsShowTableView = useNavigationStore((s) => s.setGameDetailsShowTableView);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedGameChatId, setSelectedGameChatId] = useState<string | null>(null);
+  const prevIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
+    if (prevIdRef.current !== undefined && prevIdRef.current !== id) {
+      setGameDetailsShowTableView(false);
+    }
+    prevIdRef.current = id ?? undefined;
     setSelectedGameChatId(null);
-  }, [id]);
-
-  useEffect(() => {
-    return () => setGameDetailsShowTableView(false);
-  }, [setGameDetailsShowTableView]);
+  }, [id, setGameDetailsShowTableView]);
 
   if (!id) return null;
 

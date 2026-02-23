@@ -4,6 +4,7 @@ import { OutcomesDisplay } from '@/components';
 import { gamesApi } from '@/api';
 import { resultsApi } from '@/api/results';
 import { BasicUser, Game } from '@/types';
+import type { Round } from '@/types/gameResults';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
@@ -29,13 +30,15 @@ import { GameResultsModals } from './GameResultsModals';
 import { TelegramSummaryModal } from './TelegramSummaryModal';
 import { Send, Edit } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
+import { useIsLandscape } from '@/hooks/useIsLandscape';
 
 interface GameResultsEntryEmbeddedProps {
   game: Game;
   onGameUpdate: (game: Game) => void;
+  onRoundAdded?: (round: Round) => void;
 }
 
-export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntryEmbeddedProps) => {
+export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: GameResultsEntryEmbeddedProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const [canInitialize, setCanInitialize] = useState<boolean | null>(null);
@@ -685,10 +688,12 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
   };
 
   const effectiveShowCourts = (currentGame?.gameCourts?.length || 0) > 0;
-  const effectiveHorizontalLayout = currentGame?.fixedNumberOfSets === 1;
+  const isLandscape = useIsLandscape();
+  const effectiveHorizontalLayout = !isLandscape;
 
   const { setGameDetailsCanShowTableView } = useNavigationStore();
-  const canShowTableView = currentGame?.fixedNumberOfSets === 1 &&
+  const canShowTableView = currentGame?.entityType === 'TOURNAMENT' &&
+    currentGame?.fixedNumberOfSets === 1 &&
     (currentGame?.resultsStatus === 'FINAL' || currentGame?.resultsStatus === 'IN_PROGRESS');
 
   useEffect(() => {
@@ -906,6 +911,9 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate }: GameResultsEntr
                     onClick={async () => {
                       await initializeRoundsIfNeeded();
                       await engine.addRound();
+                      const rounds = useGameResultsStore.getState().rounds;
+                      const newRound = rounds.length > 0 ? rounds[rounds.length - 1] : undefined;
+                      if (newRound) onRoundAdded?.(newRound);
                     }}
                     className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors shadow-lg flex items-center gap-2"
                   >

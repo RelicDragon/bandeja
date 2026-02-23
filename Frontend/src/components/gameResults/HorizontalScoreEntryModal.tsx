@@ -11,6 +11,7 @@ interface HorizontalScoreEntryModalProps {
   match: Match;
   setIndex: number;
   players: BasicUser[];
+  courtLabel?: string | null;
   maxTotalPointsPerSet?: number;
   maxPointsPerTeam?: number;
   fixedNumberOfSets?: number;
@@ -25,6 +26,7 @@ export const HorizontalScoreEntryModal = ({
   match,
   setIndex,
   players,
+  courtLabel,
   maxTotalPointsPerSet,
   maxPointsPerTeam,
   fixedNumberOfSets,
@@ -109,7 +111,7 @@ export const HorizontalScoreEntryModal = ({
       
       <DialogHeader className="mb-3 sm:mb-5 md:mb-8">
         <DialogTitle>
-          {fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')}
+          {courtLabel != null && courtLabel !== '' ? courtLabel : (fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult'))}
         </DialogTitle>
       </DialogHeader>
       

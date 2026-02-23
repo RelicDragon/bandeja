@@ -8,4 +8,5 @@ export { OutcomesDisplay } from './OutcomesDisplay';
 export { ConflictResolutionModal } from './ConflictResolutionModal';
 export { PlayerStatsPanel } from './PlayerStatsPanel';
 export { SyncConflictModal } from './SyncConflictModal';
+export { RoundAddedModal } from './RoundAddedModal';
 

@@ -98,9 +98,8 @@ export const GameCard = ({
   const isInJoinQueue = participation.isInJoinQueue;
 
   const userNoteDisplay = game.userNote ?? null;
-  const joinQueueCount = game.joinQueues?.length ?? 0;
+  const joinQueueCount = participants.filter(p => p.status === 'IN_QUEUE').length;
   const showJoinQueueHint =
-    !game.allowDirectJoin &&
     joinQueueCount > 0 &&
     participation.isAdminOrOwner;
   const handleNoteSaved = useCallback(() => {

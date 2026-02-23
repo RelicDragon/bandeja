@@ -58,6 +58,10 @@ export const GameResultsModals = ({
     const match = round?.matches.find(m => m.id === modal.matchId);
     if (!match || !round) return null;
 
+    const courts = currentGame?.gameCourts?.map(gc => gc.court) || [];
+    const court = courts.find((c: { id: string }) => c.id === match.courtId);
+    const courtLabel = court?.name ?? (!match.courtId ? t('gameResults.bench', { defaultValue: 'Bench' }) : t('gameResults.court', { defaultValue: 'Court' }));
+
     const canRemove = (() => {
       const currentSet = match.sets[modal.setIndex];
       if (!currentSet) return false;
@@ -73,6 +77,7 @@ export const GameResultsModals = ({
         match={match}
         setIndex={modal.setIndex}
         players={players}
+        courtLabel={courtLabel}
         maxTotalPointsPerSet={currentGame?.maxTotalPointsPerSet}
         maxPointsPerTeam={currentGame?.maxPointsPerTeam}
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}
@@ -91,6 +96,7 @@ export const GameResultsModals = ({
         match={match}
         setIndex={modal.setIndex}
         players={players}
+        courtLabel={courtLabel}
         maxTotalPointsPerSet={currentGame?.maxTotalPointsPerSet}
         maxPointsPerTeam={currentGame?.maxPointsPerTeam}
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}

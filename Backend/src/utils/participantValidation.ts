@@ -21,12 +21,18 @@ export interface GameWithStatus extends GameWithParticipants {
   status: GameStatus;
   allowDirectJoin?: boolean;
   anyoneCanInvite?: boolean;
+  minLevel?: number | null;
+  maxLevel?: number | null;
 }
 
 export interface PlayerJoinResult {
   canJoin: boolean;
   shouldQueue: boolean;
   reason?: string;
+}
+
+export interface ValidatePlayerJoinOptions {
+  skipLevelCheck?: boolean;
 }
 
 export function validateGameCanAcceptParticipants(game: { status: GameStatus }): void {
@@ -158,9 +164,22 @@ export async function canAddPlayerToGame(
 
 export async function validatePlayerCanJoinGame(
   game: GameWithStatus,
-  userId: string
+  userId: string,
+  options?: ValidatePlayerJoinOptions
 ): Promise<PlayerJoinResult> {
   validateGameCanAcceptParticipants(game);
+
+  const checkLevel = !options?.skipLevelCheck;
+  if (checkLevel && game.entityType !== EntityType.BAR && game.minLevel != null && game.maxLevel != null) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { level: true },
+    });
+    if (user && (user.level < game.minLevel || user.level > game.maxLevel)) {
+      return { canJoin: false, shouldQueue: true, reason: 'games.addedToQueueLevelOutOfRange' };
+    }
+  }
+
   await validateGenderForGame(game, userId);
   return await canAddPlayerToGame(game, userId);
 }
