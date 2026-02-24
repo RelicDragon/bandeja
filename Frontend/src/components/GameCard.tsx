@@ -725,7 +725,12 @@ export const GameCard = ({
         <ConfirmationModal
           isOpen={showJoinConfirm}
           onClose={() => { setShowJoinConfirm(false); setJoinAction(null); }}
-          onConfirm={() => { onJoin?.(game.id, {} as React.MouseEvent); setShowJoinConfirm(false); setJoinAction(null); }}
+          onConfirm={() => {
+            const noopEvent = { stopPropagation: () => {}, preventDefault: () => {} } as React.MouseEvent;
+            onJoin?.(game.id, noopEvent);
+            setShowJoinConfirm(false);
+            setJoinAction(null);
+          }}
           title={joinAction === 'game' ? t('games.confirmJoinTitle') : t('games.confirmJoinQueueTitle')}
           message={joinAction === 'game' ? t('games.confirmJoinMessage') : t('games.confirmJoinQueueMessage')}
         />

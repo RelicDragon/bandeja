@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -62,6 +63,7 @@ const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: st
 
 export const HomeContent = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const { unreadMessages } = useHeaderStore();
 
@@ -255,9 +257,9 @@ export const HomeContent = () => {
       } else {
         toast.success(t(message, { defaultValue: message }));
       }
-      
       fetchData(false, true);
       fetchAvailableGames(true);
+      navigate(`/games/${gameId}`);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
