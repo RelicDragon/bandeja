@@ -52,39 +52,20 @@ export async function createOrUpdateReview(
       _count: { id: true },
       _sum: { stars: true },
     });
-    const starCounts = await tx.trainerReview.groupBy({
-      by: ['stars'],
-      where: { trainerId },
-      _count: { id: true },
-    });
 
     const total = agg[0]?._count?.id ?? 0;
     const sum = agg[0]?._sum?.stars ?? 0;
     const rating = total > 0 ? sum / total : null;
-    const count1 = starCounts.find((s) => s.stars === 1)?._count?.id ?? 0;
-    const count2 = starCounts.find((s) => s.stars === 2)?._count?.id ?? 0;
-    const count3 = starCounts.find((s) => s.stars === 3)?._count?.id ?? 0;
-    const count4 = starCounts.find((s) => s.stars === 4)?._count?.id ?? 0;
-    const count5 = starCounts.find((s) => s.stars === 5)?._count?.id ?? 0;
 
     await tx.user.update({
       where: { id: trainerId },
       data: {
         trainerRating: rating,
         trainerReviewCount: total,
-        trainerReviewCount1: count1,
-        trainerReviewCount2: count2,
-        trainerReviewCount3: count3,
-        trainerReviewCount4: count4,
-        trainerReviewCount5: count5,
       },
     });
 
-    const summary = {
-      rating,
-      reviewCount: total,
-      starCounts: { 1: count1, 2: count2, 3: count3, 4: count4, 5: count5 },
-    };
+    const summary = { rating, reviewCount: total };
     return { review, summary };
   });
 
@@ -99,32 +80,15 @@ export async function recomputeTrainerRating(trainerId: string) {
     _sum: { stars: true },
   });
 
-  const starCounts = await prisma.trainerReview.groupBy({
-    by: ['stars'],
-    where: { trainerId },
-    _count: { id: true },
-  });
-
   const total = agg[0]?._count?.id ?? 0;
   const sum = agg[0]?._sum?.stars ?? 0;
   const rating = total > 0 ? sum / total : null;
-
-  const count1 = starCounts.find((s) => s.stars === 1)?._count?.id ?? 0;
-  const count2 = starCounts.find((s) => s.stars === 2)?._count?.id ?? 0;
-  const count3 = starCounts.find((s) => s.stars === 3)?._count?.id ?? 0;
-  const count4 = starCounts.find((s) => s.stars === 4)?._count?.id ?? 0;
-  const count5 = starCounts.find((s) => s.stars === 5)?._count?.id ?? 0;
 
   await prisma.user.update({
     where: { id: trainerId },
     data: {
       trainerRating: rating,
       trainerReviewCount: total,
-      trainerReviewCount1: count1,
-      trainerReviewCount2: count2,
-      trainerReviewCount3: count3,
-      trainerReviewCount4: count4,
-      trainerReviewCount5: count5,
     },
   });
 }
@@ -132,28 +96,10 @@ export async function recomputeTrainerRating(trainerId: string) {
 export async function getTrainerReviewSummary(trainerId: string) {
   const user = await prisma.user.findUnique({
     where: { id: trainerId },
-    select: {
-      trainerRating: true,
-      trainerReviewCount: true,
-      trainerReviewCount1: true,
-      trainerReviewCount2: true,
-      trainerReviewCount3: true,
-      trainerReviewCount4: true,
-      trainerReviewCount5: true,
-    },
+    select: { trainerRating: true, trainerReviewCount: true },
   });
   if (!user) return null;
-  return {
-    rating: user.trainerRating,
-    reviewCount: user.trainerReviewCount,
-    starCounts: {
-      1: user.trainerReviewCount1,
-      2: user.trainerReviewCount2,
-      3: user.trainerReviewCount3,
-      4: user.trainerReviewCount4,
-      5: user.trainerReviewCount5,
-    },
-  };
+  return { rating: user.trainerRating, reviewCount: user.trainerReviewCount };
 }
 
 export async function getTrainerReviews(

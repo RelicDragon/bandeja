@@ -215,6 +215,7 @@ export async function applyGameOutcomes(
   for (const outcome of finalOutcomes) {
     const user = await tx.user.findUnique({
       where: { id: outcome.userId },
+      select: { id: true, level: true, reliability: true },
     });
 
     if (!user) continue;

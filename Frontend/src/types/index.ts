@@ -23,14 +23,6 @@ export type PriceCurrency =
 
 import type { Round } from './gameResults';
 
-export interface TrainerReviewStarCounts {
-  1: number;
-  2: number;
-  3: number;
-  4: number;
-  5: number;
-}
-
 export interface BasicUser {
   id: string;
   firstName?: string;
@@ -46,11 +38,7 @@ export interface BasicUser {
   bio?: string | null;
   trainerRating?: number | null;
   trainerReviewCount?: number;
-  trainerReviewCount1?: number;
-  trainerReviewCount2?: number;
-  trainerReviewCount3?: number;
-  trainerReviewCount4?: number;
-  trainerReviewCount5?: number;
+  isPremium?: boolean;
 }
 
 export interface TrainerReview {
@@ -68,7 +56,6 @@ export interface TrainerReview {
 export interface TrainerReviewSummary {
   rating: number | null;
   reviewCount: number;
-  starCounts: TrainerReviewStarCounts;
 }
 
 export interface User extends BasicUser {

@@ -1086,7 +1086,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   };
 
   const tableIsEditing = game ? (engineCanEdit && game.resultsStatus === 'IN_PROGRESS') : false;
-  const isTableViewActive = !!(game && gameDetailsShowTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE');
+  const isTableViewActive = !!(game && gameDetailsShowTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE' && (user?.isPremium || game.resultsStatus === 'FINAL'));
   const handleTableAddRound = useCallback(async () => {
     await GameResultsEngine.addRound();
     const rounds = useGameResultsStore.getState().rounds;
@@ -1560,7 +1560,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     return null;
   };
 
-  if (gameDetailsShowTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE') {
+  if (gameDetailsShowTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE' && (user?.isPremium || game.resultsStatus === 'FINAL')) {
     return (
       <>
           <ResultsTableView

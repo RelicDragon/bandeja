@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/components';
 import { GameStatusIcon } from '@/components/GameStatusIcon';
+import { AnnouncedFireIcon } from '@/components/AnnouncedFireIcon';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
@@ -94,6 +95,13 @@ export const GameCard = ({
   const displaySettings = effectiveUser ? resolveDisplaySettings(effectiveUser) : resolveDisplaySettings(null);
 
   const hasUnoccupiedSlots = !participation.isFull;
+  const owner = participants.find((p) => p.role === 'OWNER');
+  const ownerIsPremium = owner?.user?.isPremium === true;
+  const showFireIcon =
+    ownerIsPremium &&
+    game.status === 'ANNOUNCED' &&
+    ((['GAME', 'TOURNAMENT', 'TRAINING', 'LEAGUE_SEASON'].includes(game.entityType) && hasUnoccupiedSlots) ||
+      game.entityType === 'BAR');
   const hasMyInvites = participation.hasPendingInvite;
   const isInJoinQueue = participation.isInJoinQueue;
 
@@ -246,6 +254,7 @@ export const GameCard = ({
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-20 flex items-center gap-2">
               {shouldMoveIconsToTitle && (
                 <>
+                  {showFireIcon && <AnnouncedFireIcon />}
                   {isUserParticipant && (
                     <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white flex-shrink-0">
                       <Star 
@@ -255,7 +264,7 @@ export const GameCard = ({
                       />
                     </span>
                   )}
-                  <GameStatusIcon status={game.status} />
+                  {!showFireIcon && <GameStatusIcon status={game.status} />}
                 </>
               )}
               <span>
@@ -306,6 +315,7 @@ export const GameCard = ({
               </span>
             </h3>
             <div className="flex items-center gap-2 mb-1 pr-10 flex-wrap">
+          {!shouldMoveIconsToTitle && showFireIcon && <AnnouncedFireIcon />}
           {!shouldMoveIconsToTitle && isUserParticipant && (
             <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white">
               <Star 
@@ -315,7 +325,7 @@ export const GameCard = ({
               />
             </span>
           )}
-          {!shouldMoveIconsToTitle && <GameStatusIcon status={game.status} />}
+          {!shouldMoveIconsToTitle && !showFireIcon && <GameStatusIcon status={game.status} />}
           {!userNoteDisplay && effectiveUser && (
             <span
               role="button"

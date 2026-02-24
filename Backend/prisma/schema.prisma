@@ -55,6 +55,7 @@ model User {
   isTrainer                  Boolean              @default(false)
   canCreateTournament        Boolean              @default(false)
   canCreateLeague            Boolean              @default(false)
+  isPremium                  Boolean              @default(false)
   gender                     Gender               @default(PREFER_NOT_TO_SAY)
   genderIsSet                Boolean              @default(false)
   approvedLevel               Boolean              @default(false)
@@ -108,11 +109,6 @@ model User {
   appIcon                    String?             @default("tiger")
   trainerRating               Float?
   trainerReviewCount          Int                 @default(0)
-  trainerReviewCount1         Int                 @default(0)
-  trainerReviewCount2         Int                 @default(0)
-  trainerReviewCount3         Int                 @default(0)
-  trainerReviewCount4         Int                 @default(0)
-  trainerReviewCount5         Int                 @default(0)
   pushTokens                 PushToken[]
   messageReports             MessageReport[]      @relation("MessageReportReporter")
   blockedUsers               BlockedUser[]        @relation("UserBlocked")
