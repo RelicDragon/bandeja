@@ -15,7 +15,7 @@ import toast from 'react-hot-toast';
 const QUESTIONS = ['q1', 'q2', 'q3', 'q4', 'q5'] as const;
 const SLIDE_DURATION_MS = 300;
 const SLIDE_COUNT = QUESTIONS.length + 1;
-const STEP_TRANSITION = { duration: 0.28, ease: [0.32, 0.72, 0, 1] };
+const STEP_TRANSITION = { duration: 0.28, ease: [0.32, 0.72, 0, 1] as const };
 const SLIDE_OFFSET = 20;
 
 export const WelcomeScreen = () => {
