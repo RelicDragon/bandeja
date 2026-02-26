@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -9,13 +9,22 @@ interface MainLayoutProps {
   children: ReactNode;
 }
 
+const INIT_SHELL_DURATION_MS = 400;
+
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const { bottomTabsVisible, currentPage, chatsFilter } = useNavigationStore();
+  const { bottomTabsVisible, currentPage, chatsFilter, initShellAnimationPlayed, setInitShellAnimationPlayed } = useNavigationStore();
   const isDesktop = useDesktop();
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const shouldHideHeader = !user && isGameDetailsPage;
+  const isHomeInit = location.pathname === '/' && !initShellAnimationPlayed;
+
+  useEffect(() => {
+    if (!isHomeInit) return;
+    const t = setTimeout(() => setInitShellAnimationPlayed(true), INIT_SHELL_DURATION_MS + 50);
+    return () => clearTimeout(t);
+  }, [isHomeInit, setInitShellAnimationPlayed]);
 
   const isDesktopChats = isDesktop && currentPage === 'chats';
   const isDesktopGameDetails = isDesktop && currentPage === 'gameDetails';
@@ -33,7 +42,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {!shouldHideHeader && (
         <div className="relative z-50">
-          <Header />
+          <Header animateEntry={isHomeInit} />
         </div>
       )}
       <main 

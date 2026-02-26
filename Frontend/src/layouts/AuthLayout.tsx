@@ -69,7 +69,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
       {/* Main content */}
       <div className="w-full max-w-md min-w-0 relative z-10">
         {/* Card */}
-        <div className="auth-panel bg-white/90 dark:bg-slate-800/90 backdrop-blur-3xl rounded-3xl shadow-2xl shadow-slate-900/10 dark:shadow-black/40 border border-slate-200/80 dark:border-slate-700/60 p-8 sm:p-10 transition-all duration-300 min-w-0 overflow-visible">
+        <div className="auth-panel bg-white/90 dark:bg-slate-800/90 backdrop-blur-3xl rounded-3xl shadow-2xl shadow-slate-900/10 dark:shadow-black/40 border border-slate-200/80 dark:border-slate-700/60 pt-16 p-8 sm:p-10 transition-all duration-300 min-w-0 overflow-visible">
           <div className="flex justify-center mb-6 -mt-2">
             <img
               src="/bandeja2-white-tr.png"

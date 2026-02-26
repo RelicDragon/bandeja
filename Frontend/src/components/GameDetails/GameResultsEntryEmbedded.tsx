@@ -694,7 +694,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const { setGameDetailsCanShowTableView } = useNavigationStore();
   const canShowTableView = currentGame?.entityType === 'TOURNAMENT' &&
     currentGame?.fixedNumberOfSets === 1 &&
-    (currentGame?.resultsStatus === 'FINAL' || (!!user?.isPremium && currentGame?.resultsStatus === 'IN_PROGRESS'));
+    (currentGame?.resultsStatus === 'FINAL' || currentGame?.resultsStatus === 'IN_PROGRESS');
 
   useEffect(() => {
     setGameDetailsCanShowTableView(!!canShowTableView);

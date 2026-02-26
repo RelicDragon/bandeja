@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { Bell, ArrowLeft, User, BarChart3, GitCompare, Users, Star } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -23,7 +24,11 @@ import { MarketplaceTabController } from '@/components/headerContent/Marketplace
 import { ChatsTabController } from '@/components/headerContent/ChatsTabController';
 import { FindTabController } from '@/components/headerContent/FindTabController';
 
-export const Header = () => {
+interface HeaderProps {
+  animateEntry?: boolean;
+}
+
+export const Header = ({ animateEntry = false }: HeaderProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,12 +67,12 @@ export const Header = () => {
 
   return (
     <>
-      <header 
-        className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed top-0 right-0 left-0 z-40 shadow-lg transition-all duration-300" 
-        style={{ 
-          paddingTop: 'env(safe-area-inset-top)', 
-          height: `calc(4rem + env(safe-area-inset-top))`
-        }}
+      <motion.header
+        className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed top-0 right-0 left-0 z-40 shadow-lg transition-all duration-300"
+        style={{ paddingTop: 'env(safe-area-inset-top)', height: `calc(4rem + env(safe-area-inset-top))` }}
+        initial={animateEntry ? { y: '-100%' } : false}
+        animate={{ y: 0 }}
+        transition={animateEntry ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : { duration: 0 }}
       >
         <div className="h-16 px-4 flex items-center gap-4" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           <div className="flex-1 min-w-0 flex items-center gap-3">
@@ -139,7 +144,7 @@ export const Header = () => {
             )}
           </div>
         </div>
-      </header>
+      </motion.header>
       {currentPage !== 'profile' && <GameModeToggle />}
     </>
   );

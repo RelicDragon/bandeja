@@ -11,6 +11,7 @@ import { usePresenceStore } from '@/store/presenceStore';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { PublicGamePrompt } from './GameDetails/PublicGamePrompt';
+import { getLevelColor } from '@/utils/levelColor';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface PlayerAvatarProps {
@@ -80,54 +81,6 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
     return {
       boxShadow: '0 0 16px rgba(234, 179, 8, 0.6), 0 0 22px rgba(234, 179, 8, 0.4), 0 0 28px rgba(234, 179, 8, 0.2)'
     };
-  };
-
-  const interpolateColor = (start: [number, number, number], end: [number, number, number], t: number): [number, number, number] => {
-    return [
-      Math.round(start[0] + (end[0] - start[0]) * t),
-      Math.round(start[1] + (end[1] - start[1]) * t),
-      Math.round(start[2] + (end[2] - start[2]) * t),
-    ];
-  };
-
-  const getLevelColor = (level: number, isDark: boolean = false): { backgroundColor: string } => {
-    const levelValue = Math.max(0, Math.min(7, level));
-    
-    const colorStops: Array<{ level: number; rgb: [number, number, number] }> = [
-      { level: 0, rgb: [59, 130, 246] },   // blue-500
-      { level: 2, rgb: [34, 197, 94] },    // green-500
-      { level: 3, rgb: [234, 179, 8] },    // yellow-500
-      { level: 4, rgb: [249, 115, 22] },  // orange-500
-      { level: 5, rgb: [239, 68, 68] },    // red-500
-      { level: 6, rgb: [245, 158, 11] },   // amber-500
-      { level: 7, rgb: [168, 85, 247] },   // purple-500
-    ];
-
-    const darkMultiplier = isDark ? 0.85 : 1;
-
-    if (levelValue <= colorStops[0].level) {
-      const [r, g, b] = colorStops[0].rgb;
-      return { backgroundColor: `rgb(${Math.round(r * darkMultiplier)}, ${Math.round(g * darkMultiplier)}, ${Math.round(b * darkMultiplier)})` };
-    }
-
-    if (levelValue >= colorStops[colorStops.length - 1].level) {
-      const [r, g, b] = colorStops[colorStops.length - 1].rgb;
-      return { backgroundColor: `rgb(${Math.round(r * darkMultiplier)}, ${Math.round(g * darkMultiplier)}, ${Math.round(b * darkMultiplier)})` };
-    }
-
-    for (let i = 0; i < colorStops.length - 1; i++) {
-      const currentStop = colorStops[i];
-      const nextStop = colorStops[i + 1];
-
-      if (levelValue >= currentStop.level && levelValue <= nextStop.level) {
-        const t = (levelValue - currentStop.level) / (nextStop.level - currentStop.level);
-        const [r, g, b] = interpolateColor(currentStop.rgb, nextStop.rgb, t);
-        return { backgroundColor: `rgb(${Math.round(r * darkMultiplier)}, ${Math.round(g * darkMultiplier)}, ${Math.round(b * darkMultiplier)})` };
-      }
-    }
-
-    const [r, g, b] = colorStops[0].rgb;
-    return { backgroundColor: `rgb(${Math.round(r * darkMultiplier)}, ${Math.round(g * darkMultiplier)}, ${Math.round(b * darkMultiplier)})` };
   };
 
   useEffect(() => {

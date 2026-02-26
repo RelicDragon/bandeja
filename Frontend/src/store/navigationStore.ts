@@ -10,6 +10,7 @@ interface BugsFilterState {
 interface NavigationState {
   currentPage: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace';
   bottomTabsVisible: boolean;
+  initShellAnimationPlayed: boolean;
   isAnimating: boolean;
   gameDetailsCanAccessChat: boolean;
   gameDetailsShowTableView: boolean;
@@ -36,6 +37,7 @@ interface NavigationState {
   setMarketplaceTab: (tab: 'market' | 'my') => void;
   setCurrentPage: (page: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace') => void;
   setBottomTabsVisible: (visible: boolean) => void;
+  setInitShellAnimationPlayed: (played: boolean) => void;
   setIsAnimating: (animating: boolean) => void;
   setGameDetailsCanAccessChat: (canAccessChat: boolean) => void;
   setGameDetailsShowTableView: (show: boolean) => void;
@@ -54,6 +56,7 @@ interface NavigationState {
 export const useNavigationStore = create<NavigationState>((set) => ({
   currentPage: 'my',
   bottomTabsVisible: true,
+  initShellAnimationPlayed: false,
   isAnimating: false,
   gameDetailsCanAccessChat: false,
   gameDetailsShowTableView: false,
@@ -78,6 +81,7 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setViewingGroupChannelId: (id) => set({ viewingGroupChannelId: id }),
   setPendingPlayerCardReopen: (data) => set({ pendingPlayerCardReopen: data }),
   setBottomTabsVisible: (visible) => set({ bottomTabsVisible: visible }),
+  setInitShellAnimationPlayed: (played) => set({ initShellAnimationPlayed: played }),
   setIsAnimating: (animating) => set({ isAnimating: animating }),
   setGameDetailsCanAccessChat: (canAccessChat) => set({ gameDetailsCanAccessChat: canAccessChat }),
   setGameDetailsShowTableView: (show) => set({ gameDetailsShowTableView: show }),

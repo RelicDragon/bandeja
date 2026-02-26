@@ -1,9 +1,19 @@
 import { Router } from 'express';
 import { NotificationChannelType } from '@prisma/client';
 import { body } from 'express-validator';
+import rateLimit from 'express-rate-limit';
 import { validate } from '../middleware/validate';
-import { authenticate } from '../middleware/auth';
+import { authenticate, AuthRequest } from '../middleware/auth';
 import * as userController from '../controllers/user.controller';
+
+const welcomeScreenLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { success: false, message: 'Too many attempts. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
 
 const router = Router();
 
@@ -51,6 +61,34 @@ router.post(
   ]),
   userController.setInitialLevel
 );
+
+router.post(
+  '/welcome-screen',
+  authenticate,
+  welcomeScreenLimiter,
+  validate([
+    body('answers')
+      .isArray()
+      .withMessage('answers must be an array')
+      .custom((val: unknown) => {
+        if (!Array.isArray(val) || val.length !== 5) {
+          throw new Error('Exactly 5 answers required');
+        }
+        const valid = ['A', 'B', 'C', 'D'];
+        for (let i = 0; i < val.length; i++) {
+          if (typeof val[i] !== 'string' || !valid.includes(val[i] as string)) {
+            throw new Error(`Answer ${i + 1} must be A, B, C, or D`);
+          }
+        }
+        return true;
+      }),
+  ]),
+  userController.completeWelcome
+);
+
+router.post('/welcome-screen/reset', authenticate, userController.resetWelcome);
+
+router.post('/welcome-screen/skip', authenticate, userController.skipWelcome);
 
 router.get('/compare/:otherUserId', authenticate, userController.getPlayerComparison);
 

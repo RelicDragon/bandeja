@@ -28,8 +28,9 @@ function MarketplaceContent() {
 
 export const MainPage = () => {
   const location = useLocation();
-  const { bottomTabsVisible } = useNavigationStore();
+  const { bottomTabsVisible, initShellAnimationPlayed } = useNavigationStore();
   const isDesktop = useDesktop();
+  const animateShellEntry = location.pathname === '/' && !initShellAnimationPlayed;
 
   const parsed = useMemo(
     () => parseLocation(location.pathname, location.search),
@@ -73,7 +74,7 @@ export const MainPage = () => {
     return (
       <MainLayout>
         <ChatsTab />
-        {showBottomTabBar && !isDesktop && <BottomTabBar />}
+        {showBottomTabBar && !isDesktop && <BottomTabBar animateEntry={animateShellEntry} />}
       </MainLayout>
     );
   }
@@ -83,7 +84,7 @@ export const MainPage = () => {
     return (
       <MainLayout>
         <GameDetailsPage />
-        {bottomTabsVisible && <BottomTabBar />}
+        {bottomTabsVisible && <BottomTabBar animateEntry={animateShellEntry} />}
       </MainLayout>
     );
   }
@@ -102,7 +103,7 @@ export const MainPage = () => {
           {renderContent}
         </div>
       </div>
-      {bottomTabsVisible && <BottomTabBar />}
+      {bottomTabsVisible && <BottomTabBar animateEntry={animateShellEntry} />}
     </MainLayout>
   );
 };

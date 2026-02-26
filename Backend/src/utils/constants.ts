@@ -192,6 +192,7 @@ export const PROFILE_SELECT_FIELDS = {
   googleEmailVerified: true,
   originalAvatar: true,
   genderIsSet: true,
+  welcomeScreenPassed: true,
   reliability: true,
   isAdmin: true,
   canCreateTournament: true,

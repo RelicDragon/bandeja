@@ -7,6 +7,7 @@ const Login = lazy(() => import('./pages/Login').then(module => ({ default: modu
 const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })));
 const SelectCity = lazy(() => import('./pages/SelectCity').then(module => ({ default: module.SelectCity })));
 const CompleteProfile = lazy(() => import('./pages/CompleteProfile').then(module => ({ default: module.CompleteProfile })));
+const WelcomeScreen = lazy(() => import('./pages/WelcomeScreen').then(module => ({ default: module.WelcomeScreen })));
 const MainPage = lazy(() => import('./pages/MainPage').then(module => ({ default: module.MainPage })));
 const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(module => ({ default: module.CreateGameWrapper })));
 const CreateLeague = lazy(() => import('./pages/CreateLeague').then(module => ({ default: module.CreateLeague })));
@@ -326,10 +327,26 @@ function AppContent() {
           }
         />
         <Route
+          path="/welcome"
+          element={
+            <ProtectedRoute>
+              {user?.welcomeScreenPassed ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                  <WelcomeScreen />
+                </Suspense>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/"
           element={
             <ProtectedRoute>
-              {!user?.currentCity ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !user?.currentCity ? (
                 <Navigate to="/select-city" replace />
               ) : !isProfileComplete(user) ? (
                 <Navigate to="/complete-profile" replace />
@@ -345,7 +362,9 @@ function AppContent() {
           path="/find"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -359,7 +378,9 @@ function AppContent() {
           path="/chats/marketplace"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -373,7 +394,9 @@ function AppContent() {
           path="/chats"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -387,7 +410,9 @@ function AppContent() {
           path="/profile"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -401,7 +426,9 @@ function AppContent() {
           path="/leaderboard"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -414,8 +441,8 @@ function AppContent() {
         <Route
           path="/games/:id"
           element={
-            isAuthenticated && !isProfileComplete(user) ? (
-              <Navigate to="/" replace />
+            isAuthenticated && (!user?.welcomeScreenPassed || !isProfileComplete(user)) ? (
+              <Navigate to={!user?.welcomeScreenPassed ? "/welcome" : "/"} replace />
             ) : (
               <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
                 <MainPage />
@@ -427,7 +454,9 @@ function AppContent() {
           path="/create-game"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -441,7 +470,9 @@ function AppContent() {
           path="/create-league"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -467,7 +498,9 @@ function AppContent() {
           path="/games/:id/chat"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -481,7 +514,9 @@ function AppContent() {
           path="/bugs/:id"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -495,7 +530,9 @@ function AppContent() {
           path="/bugs"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -509,7 +546,9 @@ function AppContent() {
           path="/marketplace"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -523,7 +562,9 @@ function AppContent() {
           path="/marketplace/my"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -537,7 +578,9 @@ function AppContent() {
           path="/marketplace/create"
           element={
             <ProtectedRoute>
-              {!user?.currentCity && !user?.currentCityId ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !user?.currentCity && !user?.currentCityId ? (
                 <Navigate to="/select-city" replace state={{ from: '/marketplace/create' }} />
               ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
@@ -553,7 +596,9 @@ function AppContent() {
           path="/marketplace/:id/edit"
           element={
             <ProtectedRoute>
-              {!user?.currentCity && !user?.currentCityId ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !user?.currentCity && !user?.currentCityId ? (
                 <Navigate to="/select-city" replace state={{ from: location.pathname }} />
               ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
@@ -569,7 +614,9 @@ function AppContent() {
           path="/marketplace/:id"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -583,7 +630,9 @@ function AppContent() {
           path="/game-subscriptions"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -597,7 +646,9 @@ function AppContent() {
           path="/user-chat/:id"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -611,7 +662,9 @@ function AppContent() {
           path="/group-chat/:id"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
@@ -625,7 +678,9 @@ function AppContent() {
           path="/channel-chat/:id"
           element={
             <ProtectedRoute>
-              {!isProfileComplete(user) ? (
+              {!user?.welcomeScreenPassed ? (
+                <Navigate to="/welcome" replace />
+              ) : !isProfileComplete(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>

@@ -12,8 +12,8 @@ export const validate = (validations: ValidationChain[]) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.error('[validate] Validation errors:', errors.array());
-      const errorMessages = errors.array().map(err => {
-        const field = 'param' in err ? err.param : 'field' in err ? err.field : 'unknown';
+      const errorMessages = errors.array().map((err: { param?: string; path?: string; msg?: string; field?: string }) => {
+        const field = err.param ?? err.path ?? err.field ?? 'unknown';
         return `${field}: ${err.msg}`;
       }).join(', ');
       return next(new ApiError(400, errorMessages));

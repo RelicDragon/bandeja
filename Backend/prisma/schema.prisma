@@ -58,6 +58,7 @@ model User {
   isPremium                  Boolean              @default(false)
   gender                     Gender               @default(PREFER_NOT_TO_SAY)
   genderIsSet                Boolean              @default(false)
+  welcomeScreenPassed        Boolean              @default(false)
   approvedLevel               Boolean              @default(false)
   approvedById                String?
   approvedWhen                DateTime?

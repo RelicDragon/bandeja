@@ -12,9 +12,10 @@ interface BottomTabBarProps {
   containerPosition?: boolean;
   tabOverride?: PageType;
   previousPath?: string;
+  animateEntry?: boolean;
 }
 
-export const BottomTabBar = ({ containerPosition = false, tabOverride, previousPath }: BottomTabBarProps) => {
+export const BottomTabBar = ({ containerPosition = false, tabOverride, previousPath, animateEntry = false }: BottomTabBarProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -87,11 +88,13 @@ export const BottomTabBar = ({ containerPosition = false, tabOverride, previousP
   };
 
   return (
-    <motion.div 
+    <motion.div
       layoutId={isDesktop ? "bottom-tab-bar" : undefined}
       className={containerPosition && shouldAnimateToLeft ? "absolute bottom-0 left-0 right-0 z-50" : "fixed bottom-0 left-0 right-0 z-50"}
       style={{ paddingBottom: `max(${isDesktop ? '1rem' : '0.5rem'}, env(safe-area-inset-bottom))` }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      initial={animateEntry ? { y: '100%' } : undefined}
+      animate={animateEntry ? { y: 0 } : undefined}
+      transition={animateEntry ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : { type: 'spring', stiffness: 300, damping: 30 }}
     >
       <div className="flex justify-center">
         <div className="relative bg-white/30 dark:bg-gray-900/30 backdrop-blur-2xl border border-gray-300/60 dark:border-gray-600/60 shadow-[0_-12px_48px_rgba(0,0,0,0.22),0_-4px_24px_rgba(0,0,0,0.14),-20px_0_40px_rgba(0,0,0,0.18),20px_0_40px_rgba(0,0,0,0.18)] dark:shadow-[0_0_12px_rgba(218,165,32,0.26),0_0_24px_rgba(255,215,0,0.07),0_-6px_20px_rgba(0,0,0,0.14)] max-w-[300px] w-full rounded-2xl">
