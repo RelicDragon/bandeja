@@ -7,14 +7,16 @@ import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { usersApi } from '@/api';
 import { BasicUser } from '@/types';
+import { Game } from '@/types';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 interface TrainersListProps {
   show: boolean;
+  availableGames?: Game[];
 }
 
-export const TrainersList = ({ show }: TrainersListProps) => {
+export const TrainersList = ({ show, availableGames = [] }: TrainersListProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
@@ -34,9 +36,17 @@ export const TrainersList = ({ show }: TrainersListProps) => {
   const trainers = useMemo(() => {
     if (!user?.currentCity?.id) return [];
 
-    return Object.values(users)
+    const list = Object.values(users)
       .filter((player): player is BasicUser & { isTrainer: boolean } => player.isTrainer === true);
-  }, [users, user?.currentCity?.id]);
+
+    const trainingCountByTrainerId = availableGames.reduce<Record<string, number>>((acc, game) => {
+      if (game.entityType !== 'TRAINING' || !game.trainerId) return acc;
+      acc[game.trainerId] = (acc[game.trainerId] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    return [...list].sort((a, b) => (trainingCountByTrainerId[b.id] ?? 0) - (trainingCountByTrainerId[a.id] ?? 0));
+  }, [users, user?.currentCity?.id, availableGames]);
 
   const selectedTrainer = useMemo(
     () => (user?.favoriteTrainerId ? trainers.find((t) => t.id === user.favoriteTrainerId) : null),

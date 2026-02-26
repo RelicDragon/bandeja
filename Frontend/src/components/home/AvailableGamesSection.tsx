@@ -380,7 +380,7 @@ export const AvailableGamesSection = ({
         </div>
       </div>
 
-      <TrainersList show={trainingFilterVal} />
+      <TrainersList show={trainingFilterVal} availableGames={availableGames} />
 
       {findViewMode === 'calendar' ? (
         <>

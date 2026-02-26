@@ -22,12 +22,12 @@ interface RatingUpdate {
 }
 
 const BASE_LEVEL_CHANGE = 0.05;
-const MAX_LEVEL_CHANGE = 0.3;
+const MAX_LEVEL_CHANGE = 0.2;
 export const RELIABILITY_INCREMENT = 0.1;
 const POINTS_PER_WIN = 10;
 
 const MIN_MULTIPLIER = 0.3;
-const MAX_MULTIPLIER = 3.0;
+const MAX_MULTIPLIER = 2.0;
 const CLOSE_MATCH_THRESHOLD = 3;
 const BLOWOUT_THRESHOLD = 15;
 
@@ -135,8 +135,11 @@ export function calculateRatingUpdate(
 
   if (matchResult.setScores && matchResult.setScores.length > 0) {
     const result = calculateDifferentialMultiplier(matchResult.setScores);
-    multiplier = result.multiplier;
     totalPointDifferential = result.totalPointDifferential;
+
+    const levelGap = Math.abs(playerStats.level - matchResult.opponentsLevel);
+    const expectednessScale = 1 / (1 + levelGap);
+    multiplier = 1.0 + (result.multiplier - 1.0) * expectednessScale;
   }
 
   let levelChange = baseLevelChange * multiplier;
