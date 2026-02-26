@@ -75,7 +75,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsShowTableView, setGameDetailsTableAddRound } = useNavigationStore();
+  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound } = useNavigationStore();
 
   const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
@@ -111,6 +111,11 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const engineRounds = useGameResultsStore((s) => s.rounds);
   const engineCanEdit = useGameResultsStore((s) => s.canEdit);
   const isLandscape = useIsLandscape();
+  const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
+
+  useEffect(() => {
+    setGameDetailsTableViewOverride(null);
+  }, [isLandscape, setGameDetailsTableViewOverride]);
 
   const tablePlayers = useMemo<BasicUser[]>(
     () => (game?.participants?.filter(isParticipantPlaying).map(p => p.user) || []) as BasicUser[],
@@ -1086,7 +1091,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   };
 
   const tableIsEditing = game ? (engineCanEdit && game.resultsStatus === 'IN_PROGRESS') : false;
-  const isTableViewActive = !!(game && gameDetailsShowTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE' && (user?.isPremium || game.resultsStatus === 'FINAL'));
+  const isTableViewActive = !!(game && effectiveTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE' && (user?.isPremium || game.resultsStatus === 'FINAL'));
   const handleTableAddRound = useCallback(async () => {
     await GameResultsEngine.addRound();
     const rounds = useGameResultsStore.getState().rounds;
@@ -1560,7 +1565,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     return null;
   };
 
-  if (gameDetailsShowTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE' && (user?.isPremium || game.resultsStatus === 'FINAL')) {
+  if (effectiveTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE' && (user?.isPremium || game.resultsStatus === 'FINAL')) {
     return (
       <>
           <ResultsTableView

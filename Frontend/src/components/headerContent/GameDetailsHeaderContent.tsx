@@ -15,7 +15,8 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
   const navigate = useNavigateWithTracking();
   const { id } = useParams<{ id: string }>();
   const isLandscape = useIsLandscape();
-  const { gameDetailsCanShowTableView, gameDetailsShowTableView, setGameDetailsShowTableView, gameDetailsTableAddRoundCallback, gameDetailsTableIsEditing } = useNavigationStore();
+  const { gameDetailsCanShowTableView, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, gameDetailsTableAddRoundCallback, gameDetailsTableIsEditing } = useNavigationStore();
+  const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
 
   const handleChatClick = () => {
     if (id) {
@@ -31,15 +32,15 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
           style={{ top: 'env(safe-area-inset-top)' }}
         >
           <Button
-            onClick={() => setGameDetailsShowTableView(!gameDetailsShowTableView)}
-            variant={gameDetailsShowTableView ? 'primary' : 'secondary'}
+            onClick={() => setGameDetailsTableViewOverride(!effectiveTableView)}
+            variant={effectiveTableView ? 'primary' : 'secondary'}
             size="sm"
             className="flex items-center gap-2"
           >
             <TableProperties size={18} />
             {t('gameResults.tableView')}
           </Button>
-          {isLandscape && gameDetailsShowTableView && gameDetailsTableIsEditing && gameDetailsTableAddRoundCallback && (
+          {isLandscape && effectiveTableView && gameDetailsTableIsEditing && gameDetailsTableAddRoundCallback && (
             <Button onClick={gameDetailsTableAddRoundCallback} variant="primary" size="sm" className="flex items-center gap-2">
               <Plus size={16} />
               {t('gameResults.addRound')}

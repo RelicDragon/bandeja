@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { SplitViewLeftPanel, SplitViewRightPanel } from '@/components/SplitViewPanels';
 import { useDesktop } from '@/hooks/useDesktop';
+import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useNavigationStore } from '@/store/navigationStore';
 import { GameDetailsContent } from './GameDetails';
 import { GameChat } from './GameChat';
@@ -10,19 +11,21 @@ import { GameChat } from './GameChat';
 export const GameDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const isDesktop = useDesktop();
-  const gameDetailsShowTableView = useNavigationStore((s) => s.gameDetailsShowTableView);
-  const setGameDetailsShowTableView = useNavigationStore((s) => s.setGameDetailsShowTableView);
+  const isLandscape = useIsLandscape();
+  const gameDetailsTableViewOverride = useNavigationStore((s) => s.gameDetailsTableViewOverride);
+  const setGameDetailsTableViewOverride = useNavigationStore((s) => s.setGameDetailsTableViewOverride);
+  const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedGameChatId, setSelectedGameChatId] = useState<string | null>(null);
   const prevIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (prevIdRef.current !== undefined && prevIdRef.current !== id) {
-      setGameDetailsShowTableView(false);
+      setGameDetailsTableViewOverride(null);
     }
     prevIdRef.current = id ?? undefined;
     setSelectedGameChatId(null);
-  }, [id, setGameDetailsShowTableView]);
+  }, [id, setGameDetailsTableViewOverride]);
 
   if (!id) return null;
 
@@ -45,7 +48,7 @@ export const GameDetailsPage = () => {
       </SplitViewLeftPanel>
     );
 
-    if (gameDetailsShowTableView) {
+    if (effectiveTableView) {
       return (
         <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
           <div ref={scrollContainerRef} className="h-full overflow-y-auto overflow-x-hidden">

@@ -323,7 +323,7 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const isOnline = usePresenceStore((state) => state.isOnline(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
-  const hasTelegram = !!(user.telegramId || user.telegramUsername);
+  const hasTelegram = !!(user.telegramId || (user.telegramUsername && user.telegramUsername.trim()));
 
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const } } };

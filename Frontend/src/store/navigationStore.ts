@@ -13,7 +13,7 @@ interface NavigationState {
   initShellAnimationPlayed: boolean;
   isAnimating: boolean;
   gameDetailsCanAccessChat: boolean;
-  gameDetailsShowTableView: boolean;
+  gameDetailsTableViewOverride: boolean | null;
   gameDetailsCanShowTableView: boolean;
   gameDetailsTableAddRoundCallback: (() => void) | null;
   gameDetailsTableIsEditing: boolean;
@@ -40,7 +40,7 @@ interface NavigationState {
   setInitShellAnimationPlayed: (played: boolean) => void;
   setIsAnimating: (animating: boolean) => void;
   setGameDetailsCanAccessChat: (canAccessChat: boolean) => void;
-  setGameDetailsShowTableView: (show: boolean) => void;
+  setGameDetailsTableViewOverride: (override: boolean | null) => void;
   setGameDetailsCanShowTableView: (can: boolean) => void;
   setBounceNotifications: (bounce: boolean) => void;
   setBugsButtonSlidingUp: (sliding: boolean) => void;
@@ -59,7 +59,7 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   initShellAnimationPlayed: false,
   isAnimating: false,
   gameDetailsCanAccessChat: false,
-  gameDetailsShowTableView: false,
+  gameDetailsTableViewOverride: null,
   gameDetailsCanShowTableView: false,
   gameDetailsTableAddRoundCallback: null,
   gameDetailsTableIsEditing: false,
@@ -84,7 +84,7 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setInitShellAnimationPlayed: (played) => set({ initShellAnimationPlayed: played }),
   setIsAnimating: (animating) => set({ isAnimating: animating }),
   setGameDetailsCanAccessChat: (canAccessChat) => set({ gameDetailsCanAccessChat: canAccessChat }),
-  setGameDetailsShowTableView: (show) => set({ gameDetailsShowTableView: show }),
+  setGameDetailsTableViewOverride: (override) => set({ gameDetailsTableViewOverride: override }),
   setGameDetailsCanShowTableView: (can) => set({ gameDetailsCanShowTableView: can }),
   setBounceNotifications: (bounce) => set({ bounceNotifications: bounce }),
   setBugsButtonSlidingUp: (sliding) => set({ bugsButtonSlidingUp: sliding }),
