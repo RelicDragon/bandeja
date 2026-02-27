@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -112,9 +112,13 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const engineCanEdit = useGameResultsStore((s) => s.canEdit);
   const isLandscape = useIsLandscape();
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
+  const prevLandscapeRef = useRef(isLandscape);
 
   useEffect(() => {
-    setGameDetailsTableViewOverride(null);
+    if (prevLandscapeRef.current !== isLandscape) {
+      prevLandscapeRef.current = isLandscape;
+      setGameDetailsTableViewOverride(null);
+    }
   }, [isLandscape, setGameDetailsTableViewOverride]);
 
   const tablePlayers = useMemo<BasicUser[]>(
