@@ -33,20 +33,22 @@ export const TrainersList = ({ show, availableGames = [] }: TrainersListProps) =
     }
   }, [show, user?.id, fetchPlayers]);
 
+  const trainingCountByTrainerId = useMemo(() => {
+    return availableGames.reduce<Record<string, number>>((acc, game) => {
+      if (game.entityType !== 'TRAINING' || !game.trainerId) return acc;
+      acc[game.trainerId] = (acc[game.trainerId] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [availableGames]);
+
   const trainers = useMemo(() => {
     if (!user?.currentCity?.id) return [];
 
     const list = Object.values(users)
       .filter((player): player is BasicUser & { isTrainer: boolean } => player.isTrainer === true);
 
-    const trainingCountByTrainerId = availableGames.reduce<Record<string, number>>((acc, game) => {
-      if (game.entityType !== 'TRAINING' || !game.trainerId) return acc;
-      acc[game.trainerId] = (acc[game.trainerId] ?? 0) + 1;
-      return acc;
-    }, {});
-
     return [...list].sort((a, b) => (trainingCountByTrainerId[b.id] ?? 0) - (trainingCountByTrainerId[a.id] ?? 0));
-  }, [users, user?.currentCity?.id, availableGames]);
+  }, [users, user?.currentCity?.id, trainingCountByTrainerId]);
 
   const selectedTrainer = useMemo(
     () => (user?.favoriteTrainerId ? trainers.find((t) => t.id === user.favoriteTrainerId) : null),
@@ -132,12 +134,13 @@ export const TrainersList = ({ show, availableGames = [] }: TrainersListProps) =
           >
             {trainers.map((trainer) => {
               const isSelected = user?.favoriteTrainerId === trainer.id;
+              const trainingCount = trainingCountByTrainerId[trainer.id] ?? 0;
               return (
                 <button
                   key={trainer.id}
                   type="button"
                   onClick={() => handleSelectTrainer(trainer.id)}
-                  className={`flex-shrink-0 flex flex-col items-center min-w-[5rem] w-max p-2 rounded-xl border-2 transition-all ${
+                  className={`relative flex-shrink-0 flex flex-col items-center min-w-[5rem] w-max p-2 rounded-xl border-2 transition-all ${
                     isSelected
                       ? 'bg-primary-100 dark:bg-primary-900/40 border-primary-500 dark:border-primary-400'
                       : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-600'
@@ -157,6 +160,11 @@ export const TrainersList = ({ show, availableGames = [] }: TrainersListProps) =
                       showName={false}
                     />
                   </span>
+                  {trainingCount > 0 && (
+                    <span className="absolute top-0 right-0 z-10 min-w-[1.25rem] h-5 px-1 rounded-full bg-primary-500 dark:bg-primary-600 text-white text-[10px] font-semibold flex items-center justify-center shadow-xl shadow-black/30">
+                      {trainingCount}
+                    </span>
+                  )}
                   <div className="mt-1 text-xs min-h-8 w-full text-gray-700 dark:text-gray-300 break-words text-center leading-tight flex flex-col items-center justify-start gap-0.5">
                     <span className="text-center truncate leading-none max-w-20">{trainer.firstName || ''}</span>
                     <span className="text-center truncate leading-none max-w-20">{trainer.lastName || ''}</span>
