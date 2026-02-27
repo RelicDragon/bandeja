@@ -8,7 +8,7 @@ export interface LevelHistoryItem {
   levelAfter: number;
   levelChange: number;
   createdAt: string;
-  eventType?: 'GAME' | 'LUNDA' | 'SET' | 'OTHER' | 'SOCIAL_BAR';
+  eventType?: 'GAME' | 'LUNDA' | 'SET' | 'QUESTIONNAIRE' | 'OTHER' | 'SOCIAL_BAR' | 'SOCIAL_PARTICIPANT';
 }
 
 export type GamesStatType = '30' | '90' | 'all';

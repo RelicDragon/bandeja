@@ -50,7 +50,7 @@ export async function completeWelcomeScreen(userId: string, answers: string[]) {
         userId,
         levelBefore,
         levelAfter: userRating,
-        eventType: LevelChangeEventType.SET,
+        eventType: LevelChangeEventType.QUESTIONNAIRE,
         gameId: null,
         linkEntityType: null,
       },
@@ -68,10 +68,19 @@ export async function completeWelcomeScreen(userId: string, answers: string[]) {
 }
 
 export async function resetWelcomeScreen(userId: string) {
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: { welcomeScreenPassed: false },
-    select: PROFILE_SELECT_FIELDS,
+  const user = await prisma.$transaction(async (tx) => {
+    await tx.levelChangeEvent.deleteMany({
+      where: {
+        userId,
+        eventType: LevelChangeEventType.QUESTIONNAIRE,
+        gameId: null,
+      },
+    });
+    return tx.user.update({
+      where: { id: userId },
+      data: { level: 1.0, welcomeScreenPassed: false },
+      select: PROFILE_SELECT_FIELDS,
+    });
   });
   if (!user) throw new ApiError(404, 'User not found');
   return user;
@@ -98,7 +107,7 @@ export async function skipWelcomeScreen(userId: string) {
         userId,
         levelBefore,
         levelAfter: 1.0,
-        eventType: LevelChangeEventType.SET,
+        eventType: LevelChangeEventType.QUESTIONNAIRE,
         gameId: null,
         linkEntityType: null,
       },

@@ -267,16 +267,18 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                       if (cx == null || cy == null || !payload) return null;
                       const data = payload as { itemId: string; index: number; eventType?: string };
                       if (!data?.itemId) return null;
-                      const isSet = data.eventType === 'SET';
-                      const fill = isSet ? 'rgb(251, 191, 36)' : (showSocialLevel ? 'rgb(251, 191, 36)' : 'rgb(59, 130, 246)');
+                      const isQuestionnaireOrSet = data.eventType === 'SET' || data.eventType === 'QUESTIONNAIRE';
+                      const isQuestionnaire = data.eventType === 'QUESTIONNAIRE';
+                      const fill = isQuestionnaireOrSet ? (isQuestionnaire ? 'rgb(34, 197, 94)' : 'rgb(251, 191, 36)') : (showSocialLevel ? 'rgb(251, 191, 36)' : 'rgb(59, 130, 246)');
                       const handleClick = createDotClickHandler(data);
 
-                      if (isSet) {
+                      if (isQuestionnaireOrSet) {
                         const r = 9;
+                        const starBgClass = isQuestionnaire ? 'bg-green-500 dark:bg-green-600' : 'bg-yellow-500 dark:bg-yellow-600';
                         return (
                           <g transform={`translate(${cx}, ${cy})`} style={{ cursor: 'pointer', pointerEvents: 'all' }} onClick={handleClick} onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }} onTouchEnd={handleClick}>
                             <foreignObject x={-r} y={-r} width={r * 2} height={r * 2}>
-                              <div {...({ xmlns: "http://www.w3.org/1999/xhtml" } as any)} className="flex items-center justify-center w-full h-full rounded-full bg-yellow-500 dark:bg-yellow-600 text-white" style={{ width: r * 2, height: r * 2 }}>
+                              <div {...({ xmlns: "http://www.w3.org/1999/xhtml" } as any)} className={`flex items-center justify-center w-full h-full rounded-full ${starBgClass} text-white`} style={{ width: r * 2, height: r * 2 }}>
                                 <Star size={12} className="text-white" fill="currentColor" />
                               </div>
                             </foreignObject>
@@ -306,16 +308,18 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                       if (cx == null || cy == null || !payload) return null;
                       const data = payload as { itemId: string; index: number; eventType?: string };
                       if (!data?.itemId) return null;
-                      const isSet = data.eventType === 'SET';
-                      const fill = isSet ? 'rgb(251, 191, 36)' : (showSocialLevel ? 'rgb(251, 191, 36)' : 'rgb(59, 130, 246)');
+                      const isQuestionnaireOrSet = data.eventType === 'SET' || data.eventType === 'QUESTIONNAIRE';
+                      const isQuestionnaire = data.eventType === 'QUESTIONNAIRE';
+                      const fill = isQuestionnaireOrSet ? (isQuestionnaire ? 'rgb(34, 197, 94)' : 'rgb(251, 191, 36)') : (showSocialLevel ? 'rgb(251, 191, 36)' : 'rgb(59, 130, 246)');
                       const handleClick = createDotClickHandler(data);
 
-                      if (isSet) {
+                      if (isQuestionnaireOrSet) {
                         const r = 10;
+                        const starBgClass = isQuestionnaire ? 'bg-green-500 dark:bg-green-600' : 'bg-yellow-500 dark:bg-yellow-600';
                         return (
                           <g transform={`translate(${cx}, ${cy})`} style={{ cursor: 'pointer', pointerEvents: 'all' }} onClick={handleClick} onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }} onTouchEnd={handleClick}>
                             <foreignObject x={-r} y={-r} width={r * 2} height={r * 2}>
-                              <div {...({ xmlns: "http://www.w3.org/1999/xhtml" } as any)} className="flex items-center justify-center w-full h-full rounded-full bg-yellow-500 dark:bg-yellow-600 text-white ring-2 ring-white" style={{ width: r * 2, height: r * 2 }}>
+                              <div {...({ xmlns: "http://www.w3.org/1999/xhtml" } as any)} className={`flex items-center justify-center w-full h-full rounded-full ${starBgClass} text-white ring-2 ring-white`} style={{ width: r * 2, height: r * 2 }}>
                                 <Star size={12} className="text-white" fill="currentColor" />
                               </div>
                             </foreignObject>
@@ -434,9 +438,11 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                     </span>
                     {item.eventType && (
                       <span className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap flex-shrink-0 ${
-                        item.eventType === 'SET'
-                          ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
-                          : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        item.eventType === 'QUESTIONNAIRE'
+                          ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                          : item.eventType === 'SET'
+                            ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                            : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                       }`}>
                         {t(`playerCard.eventType.${item.eventType}`)}
                       </span>
