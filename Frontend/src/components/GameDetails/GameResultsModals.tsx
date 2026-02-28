@@ -81,6 +81,7 @@ export const GameResultsModals = ({
         maxTotalPointsPerSet={currentGame?.maxTotalPointsPerSet}
         maxPointsPerTeam={currentGame?.maxPointsPerTeam}
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}
+        ballsInGames={currentGame?.ballsInGames || false}
         onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak) => {
           onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak);
         }}

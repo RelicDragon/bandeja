@@ -1208,6 +1208,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     ) : (
       <HorizontalScoreEntryModal
         {...commonProps}
+        ballsInGames={game.ballsInGames || false}
         onRemove={() => {}}
       />
     );
