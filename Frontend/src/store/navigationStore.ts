@@ -14,11 +14,9 @@ interface NavigationState {
   isAnimating: boolean;
   gameDetailsCanAccessChat: boolean;
   gameDetailsTableViewOverride: boolean | null;
-  gameDetailsTableViewActive: boolean;
   gameDetailsCanShowTableView: boolean;
   gameDetailsTableAddRoundCallback: (() => void) | null;
   gameDetailsTableIsEditing: boolean;
-  setGameDetailsTableViewActive: (active: boolean) => void;
   setGameDetailsTableAddRound: (callback: (() => void) | null, isEditing: boolean) => void;
   bounceNotifications: boolean;
   bugsButtonSlidingUp: boolean;
@@ -43,7 +41,6 @@ interface NavigationState {
   setIsAnimating: (animating: boolean) => void;
   setGameDetailsCanAccessChat: (canAccessChat: boolean) => void;
   setGameDetailsTableViewOverride: (override: boolean | null) => void;
-  setGameDetailsTableViewActive: (active: boolean) => void;
   setGameDetailsCanShowTableView: (can: boolean) => void;
   setBounceNotifications: (bounce: boolean) => void;
   setBugsButtonSlidingUp: (sliding: boolean) => void;
